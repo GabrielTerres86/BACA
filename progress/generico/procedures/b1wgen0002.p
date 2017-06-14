@@ -672,12 +672,15 @@
                
                11/04/2017 - Alterado rotina carrega_dados_proposta_finalidade para limpar temptable antes
                             de popular. 
-                            Ajustado para exluir tbcrd_cessao_credito quando a proposta for excluida.
+							Ajustado para exluir tbcrd_cessao_credito quando a proposta for excluida.
                             PRJ343 - Cessao de credito (Odirlei-AMcom)
 
 			  12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
                            de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
-				 
+              
+              06/06/2017 - Alteraçao na rotina proc_qualif_operacao, pois nao estava considerando as prestacoes 
+                           calculadas nos meses anteriores, apenas do mes atual.
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3898,7 +3901,7 @@ PROCEDURE proc_qualif_operacao:
         IF  NOT CAN-DO(par_dsctrliq, aux_nrctremp)   THEN
             NEXT.
 
-        aux_qtprecal = 0.
+        aux_qtprecal = crabepr.qtprecal.
 
         RUN saldo-devedor-epr (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -3920,8 +3923,13 @@ PROCEDURE proc_qualif_operacao:
                                OUTPUT TABLE tt-erro).
 
         /* Prestacoes restantes */
-        ASSIGN aux_qtprecal = aux_qtprecal + par_qtprecal
-               aux_qtpreapg = IF   crabepr.qtpreemp < aux_qtprecal   THEN
+
+        IF   crabepr.tpemprst = 0   THEN
+         DO:
+             ASSIGN aux_qtprecal = aux_qtprecal + par_qtprecal.
+         END.
+
+        ASSIGN aux_qtpreapg = IF   crabepr.qtpreemp < aux_qtprecal   THEN
                                    0
                               ELSE
                                    crabepr.qtpreemp - aux_qtprecal
@@ -12575,7 +12583,7 @@ PROCEDURE leitura_lem:
 
     IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
        RETURN "NOK".
-
-    RETURN "OK".
     
+  RETURN "OK". 
+  
 END PROCEDURE.
