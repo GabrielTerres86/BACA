@@ -14820,6 +14820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   
     vr_saldo_devedor     NUMBER(25,2) := 0;  
     vr_txmensal          craplcr.txmensal%TYPE;
+    vr_txdiaria          craplcr.txdiaria%TYPE;
     vr_dtvencto          DATE;
     vr_dtiniiof          DATE;
     vr_dtfimiof          DATE;
@@ -14874,6 +14875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       CLOSE cr_craplcr;
       -- Taxa de juros remunerados mensal
       vr_txmensal := ROUND((POWER(1 + (nvl(rw_craplcr.txmensal,0) / 100),1) - 1) * 100,2);
+      vr_txdiaria := POWER((1 + (rw_craplcr.txmensal / 100)),(1/30))-1;
     ELSE
       CLOSE cr_craplcr;
     END IF; 
@@ -14892,7 +14894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
     FOR vr_ind IN 1..pr_qtpreemp LOOP
       IF vr_ind = 1 THEN
-        vr_saldo_devedor := pr_vlemprst;
+        vr_saldo_devedor := ROUND(pr_vlemprst * (POWER((1 + vr_txdiaria),((pr_dtdpagto - pr_dtmvtolt) - 30))),2);
       ELSE
         vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
       END IF;
