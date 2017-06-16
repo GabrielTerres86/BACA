@@ -24,9 +24,11 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  
   -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom) 
   --
-  -- 08/06/2017 - #665812 Le cadastro de critica CRAPCRI (Belli-Envolti)
   --
-  -- 09/06/2017 - #660327 Le informação do modulo  (Belli-Envolti)
+  --  08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)
+  --  09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo  (Belli-Envolti)
+  --  09/06/2017 - #660327 informa acesso dispara a procudere pc_set_modulo  (Belli-Envolti)
+  --  16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal(Belli-Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -427,8 +429,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --                          VARCHAR2 na rotina pc_submit_job (Carlos)
   --
   --             08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)
-  --
-  --             09/06/2017 - #660327 Le informação do modulo  (Belli-Envolti)
+  --             09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo  (Belli-Envolti)
+  --             09/06/2017 - #660327 informa acesso dispara a procudere pc_set_modulo  (Belli-Envolti)
+  --             16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal(Belli-Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -449,13 +452,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- Se estivermos na cadeia Progress
     --IF NVL(gene0001.fn_param_sistema('CRED',0,'FL_CADEIA_PROGRESS'),'N') = 'N' THEN
       -- Setar o formato de data cfme padrão do Progress
-      EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''MM/DD/YYYY''';
+      -- Setar configuração caracteres separadores cfme padrão
+      
+    -- Belli 16/06/2017 - Chamado 660327
+    -- Alteração incluindo num comando setar a forma de data e o decimal
+      
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''MM/DD/YYYY''
+                                         NLS_NUMERIC_CHARACTERS = '',.''';
     --ELSE
       -- Setar o formato de data cfme os padrões BR
       --EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
     --END IF;
-    -- Setar configuração caracteres separadores cfme padrão
-    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = '',.''';
     
     -- Seta modulo
     -- 09/06 Belli                                 
