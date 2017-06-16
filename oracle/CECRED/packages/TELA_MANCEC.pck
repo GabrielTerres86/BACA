@@ -39,7 +39,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
   --
   --    Objetivo  : BO ref. a Mensageria da tela MANCEC
   --
-  --    Alteracoes:                              
+  --    Alteracoes: 16/06/2017 - Incluida geracao de log para as operacoes da tela MANCEC.
+  --                             Log estara disponivel na LOGTEL.
+  --                             Heitor (Mouts) - Chamado 683935
   --    
   ---------------------------------------------------------------------------------------------------------------
 
