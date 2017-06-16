@@ -291,6 +291,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
   
     vr_stsnrcal BOOLEAN;
     vr_inpessoa NUMBER;
+    
+    vr_nmcheque crapcec.nmcheque%type;
+    vr_nrcpfcgc crapcec.nrcpfcgc%type;
   
     --Controle de erro
     vr_exc_erro EXCEPTION;
@@ -322,6 +325,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
          AND cdb.cdagechq = pr_cdagechq
          AND cdb.nrctachq = pr_nrctachq;
     rw_crapcdb cr_crapcdb%ROWTYPE;
+    
+    CURSOR cr_crapcec(pr_cdcooper IN crapcec.cdcooper%TYPE
+                     ,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
+                     ,pr_cdbanchq IN crapcec.cdbanchq%TYPE
+                     ,pr_cdagechq IN crapcec.cdagechq%TYPE
+                     ,pr_nrctachq IN crapcec.nrctachq%TYPE) IS
+      SELECT cec.nmcheque
+           , cec.nrcpfcgc
+        FROM crapcec cec
+       WHERE cec.cdcooper = pr_cdcooper
+         AND cec.cdcmpchq = pr_cdcmpchq
+         AND cec.cdbanchq = pr_cdbanchq
+         AND cec.cdagechq = pr_cdagechq
+         AND cec.nrctachq = pr_nrctachq
+         AND cec.nrdconta = 0;
+    rw_crapcec cr_crapcec%ROWTYPE;
   
   BEGIN
   
@@ -394,9 +413,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
           vr_dscritic := 'Erro ao Inserir Emitente. Erro: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
+      
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 1 -- Erro tratato
+                                ,pr_nmarqlog     => 'mancec.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    'Inclusao de Cheque = CMP ' || pr_cdcmpchq 
+                                                    || ' - BAN ' || pr_cdbanchq
+                                                    || ' - AGE ' || pr_cdagechq
+                                                    || ' - CTA ' || pr_nrctachq);
     END IF;
   
     IF pr_cddopcao = 'A' THEN
+      OPEN cr_crapcec(vr_cdcooper,pr_cdcmpchq,pr_cdbanchq,pr_cdagechq,pr_nrctachq);
+      FETCH cr_crapcec into vr_nmcheque, vr_nrcpfcgc;
+      CLOSE cr_crapcec;
+
       BEGIN
         UPDATE crapcec cec
            SET cec.nmcheque = TRIM(UPPER(pr_nmemichq)),
@@ -412,7 +445,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
           vr_dscritic := 'Erro ao Atualizar Emitente. Erro: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
-    
+      
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 1 -- Erro tratato
+                                ,pr_nmarqlog     => 'mancec.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    'Alteracao de Cheque = CMP ' || pr_cdcmpchq 
+                                                    || ' - BAN ' || pr_cdbanchq
+                                                    || ' - AGE ' || pr_cdagechq
+                                                    || ' - CTA ' || pr_nrctachq
+                                                    || ' - Nome de '||vr_nmcheque||' para '||TRIM(UPPER(pr_nmemichq))
+                                                    || ' - CpfCgc de '||vr_nrcpfcgc||' para '||pr_nrcpfchq
+                                                    ||'.');
     END IF;
   
     IF pr_cddopcao = 'E' THEN
@@ -468,11 +513,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCEC AS
           vr_dscritic := 'Erro ao Excluir Emitente. Erro: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
-    
+      
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 1 -- Erro tratato
+                                ,pr_nmarqlog     => 'mancec.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    'Exclusao de Cheque = CMP ' || pr_cdcmpchq 
+                                                    || ' - BAN ' || pr_cdbanchq
+                                                    || ' - AGE ' || pr_cdagechq
+                                                    || ' - CTA ' || pr_nrctachq);
     END IF;
-  
+
     COMMIT;
-  
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Retorno não OK          
