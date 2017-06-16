@@ -2657,7 +2657,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para verificar se serviço de SMS.
 
-       Alteracoes: ----
+       Alteracoes: 14/06/2017 - Alterado para sempre cancelar pacote ativo, quando
+                                a validação encontrar críticas. (Renato Darosci)
 
     ............................................................................ */
     --------------->> CURSORES <<----------------
@@ -2763,6 +2764,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -- Fechar o cursor
     CLOSE btch0001.cr_crapdat;   
   
+    rw_contrato_sms := NULL;
+    --> Buscar contrato ativo do cooperado
+    OPEN cr_contrato_sms;
+    FETCH cr_contrato_sms INTO rw_contrato_sms;
+    CLOSE cr_contrato_sms;    
+        
+  
     --> Verificar se coop esta habilitada a enviar SMS de cobrança
     rw_sms_param := NULL;
     OPEN cr_sms_param;
@@ -2772,6 +2780,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     IF nvl(rw_sms_param.flgenvia_sms,0) = 0 THEN
       -- Se coop nao estiver liberada, retornar zero na situação do serviço
       pr_flsitsms := 0;
+      
+      --> Verificar se possui contrato ativo
+      IF NVL(rw_contrato_sms.idcontrato,0) > 0 THEN
+        --> Canlemaneto do contrato de SMS ativo
+        COBR0005.pc_cancel_contrato_sms 
+                             (pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
+                             ,pr_nrdconta    => pr_nrdconta    --> Conta do associado
+                             ,pr_idseqttl    => 1              --> Sequencial do titular
+                             ,pr_idcontrato  => rw_contrato_sms.idcontrato  --> Numero do contrato de SMS
+                             ,pr_idorigem    => 7   /*Batch-automatico*/    --> id origem 
+                             ,pr_cdoperad    => 996            --> Codigo do operador
+                             ,pr_nmdatela    => pr_nmdatela    --> Identificador da tela da operacao
+                             ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
+                             ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
+                             -----> OUT <----           
+                             ,pr_dsretorn    => vr_dscritic    --> Mensagem de retorno             
+                             ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
+                             ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
+                                                                  
+        -- Se retornou erro
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_erro;
+        END IF;  
+        
+        rw_contrato_sms.idcontrato := 0;
+      END IF;
+      
       RETURN;
     END IF;
     
@@ -2793,6 +2829,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE cr_crapceb;
       -- Se cooperado nao possuir ceb ativo, retornar zero na situação do serviço
       pr_flsitsms := 0;
+      
+      --> Verificar se possui contrato ativo
+      IF NVL(rw_contrato_sms.idcontrato,0) > 0 THEN
+        --> Canlemaneto do contrato de SMS ativo
+        COBR0005.pc_cancel_contrato_sms 
+                             (pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
+                             ,pr_nrdconta    => pr_nrdconta    --> Conta do associado
+                             ,pr_idseqttl    => 1              --> Sequencial do titular
+                             ,pr_idcontrato  => rw_contrato_sms.idcontrato  --> Numero do contrato de SMS
+                             ,pr_idorigem    => 7   /*Batch-automatico*/    --> id origem 
+                             ,pr_cdoperad    => 996            --> Codigo do operador
+                             ,pr_nmdatela    => pr_nmdatela    --> Identificador da tela da operacao
+                             ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
+                             ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
+                             -----> OUT <----           
+                             ,pr_dsretorn    => vr_dscritic    --> Mensagem de retorno             
+                             ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
+                             ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
+                                                                  
+        -- Se retornou erro
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_erro;
+        END IF;  
+        
+        rw_contrato_sms.idcontrato := 0;
+      END IF;
+      
       RETURN;
       
     END IF;
@@ -2823,12 +2887,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
     END LOOP;
     
-    rw_contrato_sms := NULL;
-    --> Buscar contrato ativo do cooperado
-    OPEN cr_contrato_sms;
-    FETCH cr_contrato_sms INTO rw_contrato_sms;
-    CLOSE cr_contrato_sms;    
-        
     --> Caso possuir lançamentos pendentes, cancelar serviço
     IF nvl(vr_tot_qtlatpen,0) > 0 THEN
       --> vr_dsalerta := 'Cooperado possui '||vr_tot_qtlatpen|| ' tarifa(s) de SMS de Cobrança pendente(s).';      
@@ -7245,15 +7303,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : Março/2017                     Ultima atualizacao: --/--/----
+       Data    : Março/2017                     Ultima atualizacao: 14/06/2017
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para para lançar tarifa do pacote de SMS
 
-       Alteracoes: ----
+       Alteracoes: 13/06/2017 - Incluir cláusula para considerar apenas pacotes
+                                na consulta do cursor CR_SMSCTR (Renato Darosci)
 
+                   14/06/2017 - Incluir verificação de pacotes ativos, para que 
+                                seja chamada a rotina de renovação apenas para 
+                                pacotes que ainda estejam ativos. (Renato Darosci)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     
@@ -7268,8 +7330,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              ctr.tpnome_emissao
         FROM tbcobran_sms_contrato ctr
        WHERE ctr.dhcancela IS NULL
+         AND ctr.idpacote   > 2   -- Apenas pacotes
          AND trunc(ctr.dhadesao) < trunc(SYSDATE - 30);
 
+    -- Verificar se o pacote a ser renovado encontra-se ativo
+    CURSOR cr_pacote_ativo(pr_cdcooper  tbcobran_sms_pacotes.cdcooper%TYPE
+                          ,pr_idpacote  tbcobran_sms_pacotes.idpacote%TYPE) IS
+      SELECT 1
+        FROM tbcobran_sms_pacotes t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.idpacote  = pr_idpacote
+         AND t.flgstatus = 1; -- Flag indicando PACOTE ATIVO
     
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -7283,6 +7354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dscritic     VARCHAR2(2000);
     vr_cdcritic     INTEGER;
     
+    vr_indativo     NUMBER;
     vr_idcontrato   NUMBER;
     vr_dsalerta     VARCHAR2(2000);
     vr_dsretorn     VARCHAR2(2000);
@@ -7365,34 +7437,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         RAISE vr_exc_erro;
       END IF; 
       
-      --> Se serviço nao estiver habilitado para a coop ou coperad
-      IF vr_flsitsms = 0 THEN
+      --> Se serviço estiver habilitado
+      IF vr_flsitsms = 1 THEN
         
-        --> Canlemaneto do contrato de SMS
-        COBR0005.pc_cancel_contrato_sms 
-                               (pr_cdcooper    => rw_smsctr.cdcooper    --> Codigo da cooperativa
-                               ,pr_nrdconta    => rw_smsctr.nrdconta    --> Conta do associado
-                               ,pr_idseqttl    => 1                     --> Sequencial do titular
-                               ,pr_idcontrato  => rw_smsctr.idcontrato  --> Numero do contrato de SMS
-                               ,pr_idorigem    => 7 /*Batch-automatico*/--> id origem 
-                               ,pr_cdoperad    => 996            --> Codigo do operador
-                               ,pr_nmdatela    => 'COBR0005'     --> Identificador da tela da operacao
-                               ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
-                               ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
-                               -----> OUT <----           
-                               ,pr_dsretorn    => vr_dscritic    --> Mensagem de retorno             
-                               ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
-                               ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
-                                                                
-        -- Se retornou erro
-        IF NVL(vr_cdcritic,0) > 0 OR 
-           TRIM(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;  
-        
-      ELSE
-      
-        --> Canlemaneto do contrato de SMS
+        --> Cancelamento do contrato atual de SMS
         COBR0005.pc_cancel_contrato_sms 
                                (pr_cdcooper    => rw_smsctr.cdcooper    --> Codigo da cooperativa
                                ,pr_nrdconta    => rw_smsctr.nrdconta    --> Conta do associado
@@ -7412,9 +7460,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         IF NVL(vr_cdcritic,0) > 0 OR 
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF; 
+        END IF;  
         
-        --> Rotina para geração do contrato de SMS
+        -- Verifica se o pacote a ser renovado existe e está ativo
+        OPEN  cr_pacote_ativo(rw_smsctr.cdcooper
+                             ,rw_smsctr.idpacote);
+        FETCH cr_pacote_ativo INTO vr_indativo;
+      
+        -- Se não houver retorno, indica pacote inexistente ou inativo
+        IF cr_pacote_ativo%NOTFOUND THEN
+          vr_indativo := 0;
+        END IF;
+                                                                
+        -- Fechar o cursor
+        CLOSE cr_pacote_ativo;
+        
+        -- Se o pacote estiver ativo
+        IF NVL(vr_indativo,0) = 1 THEN
+          --> Rotina para geração do novo contrato de SMS
         pc_gera_contrato_sms (pr_cdcooper  => rw_smsctr.cdcooper  --> Codigo da cooperativa
                              ,pr_nrdconta  => rw_smsctr.nrdconta  --> Conta do associado
                              ,pr_idseqttl  => rw_smsctr.idseqttl  --> Sequencial do titular
@@ -7436,16 +7499,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         IF NVL(vr_cdcritic,0) > 0 OR 
            TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
-        END IF;
-        
-      
-      
-      END IF;
-      
+          END IF; -- Critica
+        END IF; -- Verificar pacote ativo
+      END IF; -- Serviço habilitado
      
     END LOOP;
     
-   
     --> Controla log proc_batch
     pc_controla_log_batch(pr_dstiplog => 'F'); 
     
@@ -8189,7 +8248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
       pc_controla_log_batch(pr_dstiplog => 'E',
                             pr_dscritic => vr_dscritic);
-      --> Commir apos gerar os alertas
+      --> Commit apos gerar os alertas
       COMMIT;
       
       
