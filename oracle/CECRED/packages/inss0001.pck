@@ -123,6 +123,12 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                 31/05/2016 - Ajuste na pc_busca_demonst_sicredi para não gravar dados do XML que não são
                              referentes ao mês da consulta
                              Retirar o TO_DATE no insert da "DCB" (Guilherme/SUPERO)
+                            
+               19/05/2017 - Incluido nome do módulo logado em todas procedures
+                            Eliminada a rotina pc_popula_dcb_inss                             
+                            Incluido tipo de falha variavel na Procedure pc_retorna_linha_log implica em alterar 10 procedures que a disparam
+                            Colocado no padrão todas chamadas pc_gera_log_batch em torno de 60 chamadas
+                            (Belli - Envolti - Chamado 660327 e 664301)              
 
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -1173,6 +1179,13 @@ create or replace package body cecred.INSS0001 as
                             campo cdpesqbb, também ajustado cursor cr_tbinss_dcb para listarmos
                             somente o registro mais antigo da tabela junto com o NB
                             na fn_verifica_renovacao_vida (Lucas Ranghetti #626129)
+                            
+               19/05/2017 - Incluido nome do módulo logado em todas procedures
+                            Eliminada a rotina pc_popula_dcb_inss                             
+                            Incluido tipo de falha variavel na Procedure pc_retorna_linha_log implica em alterar 10 procedures que a disparam
+                            Colocado no padrão todas chamadas pc_gera_log_batch em torno de 60 chamadas
+                            (Belli - Envolti - Chamado 660327 e 664301)              
+                            
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -7264,6 +7277,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2  --Descricao erro
                                      );
+
                                      
         --Se ocorreu erro
         IF vr_des_reto = 'NOK' THEN
@@ -8308,7 +8322,7 @@ create or replace package body cecred.INSS0001 as
       END IF;   
             
       -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
-      ----vr_retornvl := 'NOK';         
+      --vr_retornvl := 'NOK';         
       
       IF vr_retornvl = 'NOK' THEN
         
@@ -8329,7 +8343,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 1          --Tipo 4 gera alerta -- 19/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro 
                                      
@@ -12155,7 +12169,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 1          --Tipo 4 gera mensagem -- 14/06/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -13924,6 +13938,9 @@ create or replace package body cecred.INSS0001 as
     vr_exc_saida  EXCEPTION; 
     vr_exc_status EXCEPTION; 
     
+    -- variavel que vai indicar se a mensagem é erro ou alerta - Belli 14/06/2017 ch 660327    
+    vr_cd_tipo_mensagem number (5):= 3; -- Codigo 3 onde na rotina final faz de para gerar 2 erro    
+    
     BEGIN 
       
       -- Incluir nome do módulo logado
@@ -14293,6 +14310,11 @@ create or replace package body cecred.INSS0001 as
               pr_cddopcao = 'A'  AND
               vr_dscritic LIKE ('%0008%') THEN
             
+              if vr_dscritic LIKE ('%0008%') THEN
+                  -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 14/06/2017 ch 660327
+                  vr_cd_tipo_mensagem := 1; 
+              end if;
+              
             --Gera exceção 
             RAISE vr_exc_status;    
             
@@ -14458,7 +14480,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271 9/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -14971,6 +14993,9 @@ create or replace package body cecred.INSS0001 as
     vr_nmarqpdf VARCHAR2(100);
     vr_auxconta PLS_INTEGER:= 0;
     
+    -- variavel que vai indicar se a mensagem é erro ou alerta - Belli 14/06/2017 ch 660327    
+    vr_cd_tipo_mensagem number (5):= 3; -- Codigo 3 onde na rotina final faz de para gerar 2 erro
+        
     BEGIN
       --Limpar tabela erros
       vr_tab_erro.DELETE;
@@ -15321,6 +15346,12 @@ create or replace package body cecred.INSS0001 as
                                        
         --Se ocorreu erro
         IF vr_des_reto <> 'OK' THEN
+            
+          if vr_dscritic LIKE ('%0008%') THEN
+                  -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 14/06/2017 ch 660327
+                  vr_cd_tipo_mensagem := 1; 
+          end if;
+              
           vr_retornvl:= vr_des_reto;
           RAISE vr_exc_saida;
         END IF;                                
@@ -15402,7 +15433,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271 9/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -15703,7 +15734,11 @@ create or replace package body cecred.INSS0001 as
     --Variaveis de Excecoes
     vr_exc_ok    EXCEPTION;                                       
     vr_exc_erro  EXCEPTION;                                       
-    vr_exc_saida EXCEPTION; 
+    vr_exc_saida EXCEPTION;
+        
+    -- variavel que vai indicar se a mensagem é erro ou alerta - Belli 14/06/2017 ch 660327    
+    vr_cd_tipo_mensagem number (5):= 3; -- Codigo 3 onde na rotina final faz de para gerar 2 erro
+    
     BEGIN
 		  -- Incluir nome do módulo logado
       -- Belli 09/06/2017
@@ -15917,6 +15952,9 @@ create or replace package body cecred.INSS0001 as
             
             --Monta mensagem de critica
             vr_dscritic:= 'Beneficiario nao encontrado.';
+            
+            -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 14/06/2017 ch 660327
+            vr_cd_tipo_mensagem := 1; 
             
             --Levantar Excecao
             RAISE vr_exc_saida;
@@ -16697,7 +16735,7 @@ create or replace package body cecred.INSS0001 as
         IF vr_cdcritic <> 0 AND vr_dscritic IS NULL THEN
           vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
-          
+                  
         -- Gravar Linha Log
         inss0001.pc_retorna_linha_log(pr_cdcooper => pr_cdcooper     --Codigo Cooperativa 
                                      ,pr_cdprogra => pr_nmdatela     --Nome do Programa
@@ -16707,9 +16745,9 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_nrrecben => pr_nrrecben     --Numero Recebimento Beneficio
                                      ,pr_nmmetodo => 'Consulta'      --Nome do metodo
                                      ,pr_cdderror => vr_cdcritic     --Codigo Erro
-                                     ,pr_dsderror => vr_dscritic      --Descricao Erro
+                                     ,pr_dsderror => vr_dscritic     --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog     --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3            --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271 9/05/2017 Belli
                                      ,pr_des_reto => vr_des_reto     --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2);  --Descricao erro
                      
