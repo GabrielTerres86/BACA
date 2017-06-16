@@ -264,7 +264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 12/05/2017
+   Data    : Maio/2015                      Ultima atualizacao: 14/06/2017
 
    Dados referentes ao programa:
 
@@ -280,6 +280,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                             do job pc_processo_controlador (Carlos)
                
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+			   
+			   14/06/2017 - Criando a opcao M conforme solicitado no chamado 660583. (Kelvin)
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -1573,11 +1575,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_email_destino := gene0001.fn_param_sistema('CRED', pr_cdcooper,'FOLHAIB_EMAIL_ALERT_PROC')||','||gene0001.fn_param_sistema('CRED', pr_cdcooper,'FOLHAIB_EMAIL_ALERT_FIN');
 
 
-    vr_email_assunto := 'Folha de Pagamento - Pagtos sem Retorno SPB - Coop ' || pr_cdcooper;
+    vr_email_assunto := 'Folha de Pagamento - Pagtos sem confirmação SPB - Coop ' || pr_cdcooper;
     vr_email_corpo   := 'O horário limite de retorno do SPB foi atingido e ainda temos ' ||
-                        'pagamentos pendentes de retorno com crédito até a data de hoje. Abaixo ' ||
-                        'trazemos uma listagem dos mesmos. Solicitamos que a situação seja alinhada  ' ||
-                        ' com a TI para que os mesmos sejam Estornados ou marcados como Transmitidos. '||
+                        'pagamentos pendentes de confirmação de transmissão até a data de hoje. ' ||
+                        'Solicitamos que a situação seja alinhada com a área de Segmento e Produtos PJ, '||
+                        'para que os mesmos sejam Estornados ou marcados como Transmitidos. Abaixo ' ||
+                        'trazemos uma listagem dos mesmos. '||
                         '<br>' ||
                         '<br>' ||
                         '<table>' ||
@@ -1622,12 +1625,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     IF length(vr_lista) > 0 THEN
 
       vr_lista := vr_lista || '</tbody></table>';
-
-      gene0002.pc_clob_para_arquivo(pr_clob => vr_email_corpo || vr_lista
-                                   ,pr_caminho => '/micros/cecred/marcos'
-                                   ,pr_arquivo => 'email.html'
-                                   ,pr_des_erro => vr_dscritic);
-
 
       -- Envia e-mail para a central de folha de pagamento
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper

@@ -337,6 +337,17 @@ PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- Código do programa
                                      ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
                               ); 
 
+  PROCEDURE pc_trfsal_opcao_m(pr_cdcooper IN INTEGER        --> Cooperativa
+                             ,pr_cdempres IN INTEGER        --> Codigo da empresa                             
+                             ,pr_retxml   OUT CLOB          --> Retorno do resultado
+                             ,pr_cdcritic OUT INTEGER       --> Codigo do erro
+                             ,pr_dscritic OUT VARCHAR2);  --> Descricao do erro  
+                             
+  PROCEDURE pc_trfsal_transmitidos(pr_cdcooper IN INTEGER        --> Cooperativa 
+                                  ,pr_nrridlfp IN craplcs.nrridlfp%TYPE
+                                  ,pr_cdcritic OUT INTEGER       --> Codigo do erro
+                                  ,pr_dscritic OUT VARCHAR2);  --> Descricao do erro                                                        
+
 END sspb0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
@@ -347,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 08/06/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 14/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -372,6 +383,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --           02/03/2017 - Ajustes PRJ335 - OFSSA (Odirlei-AMcom)   
   --
   --           08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
+  --
+  --           14/06/2017 - Criando a opcao M conforme solicitado no chamado 660583. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -421,6 +434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     AND  (pr_flgdispb = 9 OR crapban.flgdispb = pr_flgdispb);
   rw_crapban cr_crapban%ROWTYPE;
 
+  vr_idprglog NUMBER;
+  
   /* Procedure para gravar log da TED */
   PROCEDURE pc_grava_log_ted (pr_cdcooper IN INTEGER  --Codigo cooperativa
                              ,pr_dttransa IN DATE     --Data transacao
@@ -3008,7 +3023,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                (Carlos Rafael Tanholi)      
                   
                   02/03/2017 - Incluir parametro para permitir não validar o horario de limite de TED.
-                               PRJ335 - OFSSA (Odirlei-AMcom)     
+                               PRJ335 - OFSSA (Odirlei-AMcom)                 
                                
                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
@@ -3428,7 +3443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     ELSIF pr_tpdctadb = 3 THEN -- Conta de Pagamento
       vr_dsdctadb := 'PG';
     END IF;
-  
+
     -- Tp. conta - Destinatário
     IF pr_tpdctacr = 1 THEN -- Conta Corrente
       vr_dsdctacr := 'CC';
@@ -3437,7 +3452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     ELSIF pr_tpdctacr = 3 THEN -- Conta de Pagamento
       vr_dsdctacr := 'PG';
     END IF;
-    
+
     -- Format da data deve ser AAAA-MM-DD
     vr_dtmvtolt := to_char(rw_crapdat.dtmvtocd,'RRRR-MM-DD');
 
@@ -5600,5 +5615,240 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
   END pc_busca_log_TED_estorn;
   
+  PROCEDURE pc_trfsal_opcao_m(pr_cdcooper IN INTEGER        --> Cooperativa
+                             ,pr_cdempres IN INTEGER        --> Codigo da empresa                             
+                             ,pr_retxml   OUT CLOB          --> Retorno do resultado
+                             ,pr_cdcritic OUT INTEGER       --> Codigo do erro
+                             ,pr_dscritic OUT VARCHAR2) IS  --> Descricao do erro   
+  /*---------------------------------------------------------------------------------------
+  
+    Programa : pc_trfsal_opcao_m                  Antigo: Não há
+    Sistema  : Ayllos
+    Sigla    : CRED
+    Autor    : Kelvin Souza Ott
+    Data     : Junho/2017.                   Ultima atualizacao: --/--/----
+  
+   Dados referentes ao programa:
+  
+   Frequencia: Sempre que for chamado
+   Objetivo  : Realizar a busca dos pagamentos que não houve retorno do banco central.
+  
+  */----------------------------------------------------------------------------------------
+    CURSOR cr_retorno_bacen(pr_cdcooper crapcop.cdcooper%TYPE
+                           ,pr_dtmvtoan crapdat.dtmvtoan%TYPE
+                           ,pr_cdempres crappfp.cdempres%TYPE) IS
+      SELECT lfp.cdempres
+            ,lcs.nrdconta 
+            ,lcs.cdagenci 
+            ,lcs.dtmvtolt 
+            ,lcs.dttransf 
+            ,lcs.vllanmto 
+            ,ccs.cdbantrf
+            ,ccs.cdagetrf
+            ,ccs.nrctatrf
+            ,lcs.nrridlfp
+            ,lcs.cdcooper
+            ,lcs.nrdocmto
+            ,lcs.flgenvio
+            ,ccs.nmfuncio
+            ,lcs.nmarqenv
+            ,lcs.hrtransf
+            ,lcs.idopetrf
+            ,lcs.cdhistor
+        FROM crappfp pfp
+        JOIN craplfp lfp
+          ON lfp.cdcooper = pfp.cdcooper
+         AND lfp.cdempres = pfp.cdempres
+         AND lfp.nrseqpag = pfp.nrseqpag
+        JOIN craplcs lcs
+          ON lcs.cdcooper = lfp.cdcooper
+         AND lcs.nrdconta = lfp.nrdconta        
+         AND lcs.dtmvtolt = trunc(pfp.dthorcre)
+         AND lcs.nrridlfp = lfp.progress_recid
+        JOIN crapccs ccs
+          ON ccs.cdcooper = lcs.cdcooper
+         AND ccs.nrdconta = lcs.nrdconta
+       WHERE pfp.cdcooper = 1
+         AND lfp.idtpcont = 'T' --> CTASAL
+         AND lfp.idsitlct = 'L' --> Ainda pendente de retorno
+         AND pfp.flsitcre = 1
+         AND lcs.cdhistor = gene0001.fn_param_sistema('CRED',1,'FOLHAIB_HIS_DEB_TECSAL')
+         AND pfp.cdempres = pr_cdempres
+       ORDER BY lcs.nrdconta;
+    rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+  
+    --Variaveis auxiliares
+    vr_contador INTEGER := 0;
+    vr_retxml   XMLType;
+    vr_dsauxml  VARCHAR2(32767);
+  
+    --Variaveis de erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+  
+    --Variaveis de Excecao
+    vr_exc_erro EXCEPTION;         
+  
+    --Escrever no arquivo CLOB
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
+      vr_des_dados VARCHAR2(32767);
+    BEGIN
+      -- retirar caracteres acentuados
+      vr_des_dados := gene0007.fn_caract_acento(pr_des_dados);
+      --Escrever no arquivo XML
+      dbms_lob.writeappend(pr_retxml,length(vr_des_dados),vr_des_dados);
+    END;
+  
+  BEGIN
+
+    -- Busca data do sistema
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+       
+    -- Se nao encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      CLOSE BTCH0001.cr_crapdat;
+      
+      -- Codigo da critica
+      vr_cdcritic:= 1;
+
+      -- Montar mensagem de critica
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+      
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    
+    END IF;
+    
+    -- Inicializar o CLOB
+    dbms_lob.createtemporary(pr_retxml, TRUE);
+    dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);
+    
+    -- Insere o cabeçalho do XML
+    pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+    
+    FOR rw_retorno_bacen IN cr_retorno_bacen(pr_cdcooper
+                                            ,rw_crapdat.dtmvtoan
+                                            ,pr_cdempres) LOOP
+      
+      vr_contador := vr_contador + 1;
+                                              
+            
+      pc_escreve_xml('<dados>');
+      
+      pc_escreve_xml('<cdempres>'|| rw_retorno_bacen.cdempres ||'</cdempres>
+                      <nrdconta>'|| rw_retorno_bacen.nrdconta ||'</nrdconta>
+                      <cdagenci>'|| rw_retorno_bacen.cdagenci ||'</cdagenci>
+                      <dtmvtolt>'|| to_char(rw_retorno_bacen.dtmvtolt,'dd/mm/rrrr') ||'</dtmvtolt>
+                      <dttransf>'|| to_char(rw_retorno_bacen.dttransf,'dd/mm/rrrr') ||'</dttransf>
+                      <vllanmto>'|| rw_retorno_bacen.vllanmto ||'</vllanmto>
+                      <cdbantrf>'|| rw_retorno_bacen.cdbantrf ||'</cdbantrf>
+                      <cdagetrf>'|| rw_retorno_bacen.cdagetrf ||'</cdagetrf>
+                      <nrctatrf>'|| rw_retorno_bacen.nrctatrf ||'</nrctatrf>
+                      <nrridlfp>'|| rw_retorno_bacen.nrridlfp ||'</nrridlfp>
+                      <cdcooper>'|| rw_retorno_bacen.cdcooper ||'</cdcooper>
+                      <nrdocmto>'|| rw_retorno_bacen.nrdocmto ||'</nrdocmto>
+                      <flgenvio>'|| rw_retorno_bacen.flgenvio ||'</flgenvio>
+                      <nmfuncio>'|| rw_retorno_bacen.nmfuncio ||'</nmfuncio>
+                      <nmarqenv>'|| rw_retorno_bacen.nmarqenv ||'</nmarqenv>
+                      <hrtransf>'|| rw_retorno_bacen.hrtransf ||'</hrtransf>
+                      <idopetrf>'|| rw_retorno_bacen.idopetrf ||'</idopetrf>
+                      <cdhistor>'|| rw_retorno_bacen.cdhistor ||'</cdhistor>');      
+      
+      pc_escreve_xml('</dados>');
+           
+    END LOOP;
+    
+    pc_escreve_xml('</root>');
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN      
+      ROLLBACK;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;      
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'SSPB0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => vr_dscritic || ' ' || SQLERRM
+                           , pr_idprglog => vr_idprglog);       
+
+    WHEN OTHERS THEN
+      ROLLBACK;      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro não tratado. '|| SQLERRM;    
+
+  END pc_trfsal_opcao_m;
+  
+  PROCEDURE pc_trfsal_transmitidos(pr_cdcooper IN INTEGER        --> Cooperativa 
+                                  ,pr_nrridlfp IN craplcs.nrridlfp%TYPE
+                                  ,pr_cdcritic OUT INTEGER       --> Codigo do erro
+                                  ,pr_dscritic OUT VARCHAR2) IS  --> Descricao do erro
+  /*---------------------------------------------------------------------------------------
+  
+    Programa : pc_trfsal_transmitidos                  Antigo: Não há
+    Sistema  : Ayllos
+    Sigla    : CRED
+    Autor    : Kelvin Souza Ott
+    Data     : Junho/2017.                   Ultima atualizacao: --/--/----
+  
+   Dados referentes ao programa:
+  
+   Frequencia: Sempre que for chamado
+   Objetivo  : Atualiza para transmitido os pagamanetos que não houveram retorno
+               do banco central.
+  
+  */----------------------------------------------------------------------------------------
+      
+   --Variaveis de erro
+   vr_cdcritic crapcri.cdcritic%TYPE;
+   vr_dscritic VARCHAR2(4000);
+   
+   --Variaveis de Excecao
+   vr_exc_erro EXCEPTION;         
+  
+  BEGIN
+    BEGIN
+     UPDATE craplfp lfp
+        SET lfp.idsitlct = 'T'
+           ,lfp.dsobslct = NULL
+      WHERE lfp.progress_recid = pr_nrridlfp;
+    EXCEPTION
+      WHEN OTHERS THEN  
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao atualizar a tabela craplfp: ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN      
+      ROLLBACK;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;      
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'SSPB0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => vr_dscritic || ' ' || SQLERRM
+                           , pr_idprglog => vr_idprglog);       
+
+    WHEN OTHERS THEN
+      ROLLBACK;      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro não tratado. '|| SQLERRM;    
+
+  END pc_trfsal_transmitidos; 
 END sspb0001;
 /
