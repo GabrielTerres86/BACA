@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Maio/2000.                      Ultima atualizacao: 04/11/2016
+   Data    : Maio/2000.                      Ultima atualizacao: 06/06/2017
 
    Dados referentes ao programa:
 
@@ -431,17 +431,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
        END;
 
-	     -- Gerar LOG
-       -- 07/06/2017 Belli
-	     PROCEDURE pc_log  
-         IS
-         --          
+	   -- Gerar LOG
+	   PROCEDURE pc_log IS
+     BEGIN
+        -- ..........................................................................
+        --
+        --  Programa : pc_log
+        --  Sistema : Conta-Corrente - Cooperativa de Credito
+        --  Sigla    : CRED
+        --  Autor    : Cesar Belli - Envolti
+        --  Data     : Junho/2017              Ultima atualizacao: 06/06/2017
+        --
+        --  Dados referentes ao programa:
+        --
+        --  Frequencia: Sempre que for chamado
+        --  Objetivo  : Gravar tabelas de logs TBEGN_PRGLOG e TBGEN_PRGLOG_OCORRENCIA
+        --              conforme parâmetros
+        -- ...........................................................................
+        --          
+       DECLARE
          vr_modulo           VARCHAR2   (100);
          vr_acao             VARCHAR2   (100);            
          vr_nmarqlog         VARCHAR2  (4000);    
          vr_dstpocorrencia   varchar2  (4000);
          vr_des_log          varchar2  (4000);  
-         vr_tpocorrencia     number       (5)   := null; 
+         vr_tpocorrencia     number       (5) := null; 
          vr_cdretorno        crapcri.cdcritic%TYPE;
          vr_dsretorno        crapcri.dscritic%TYPE;
          vr_idprglog         tbgen_prglog.idprglog%TYPE := 0;  
@@ -452,8 +466,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          vr_tpocorrencia := 1; -- 1 erro de negócio
          IF vr_cdcritic > 0 THEN
             BEGIN
-              -- Call the procedure
-              -- FALTA buscar  vr_tpocorrencia  
+              -- Falta buscar vr_tpocorrencia  
               cecred.gene0001.pc_le_crapcri(
                                 pr_cdcritic    => vr_cdcritic,
                                 pr_tab_crapcri => pr_tab_crapcri,
@@ -463,9 +476,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
               IF vr_cdretorno = 1 THEN
                  --Se possui erro na tabela erros
                  IF pr_tab_crapcri.Count > 0 THEN        
-                     --vr_cdcritic        := pr_tab_crapcri(pr_tab_crapcri.first).cdcritic;
-                     --vr_dscritic        := pr_tab_crapcri(pr_tab_crapcri.first).dscritic;
-                  ----   vr_tpocorrencia := 1; -- pr_tab_crapcri(pr_tab_crapcri.first).tpocorrencia;
                      vr_tpocorrencia := pr_tab_crapcri(pr_tab_crapcri.first).tpcritic;
                  END IF;
               END IF;                           
@@ -481,20 +491,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
             END;       
          END IF;
    
-         --if vr_cdcritic = 1047 then
-         --   vr_tpocorrencia := 4; -- 4 mensagem
-         --else
-         --   vr_tpocorrencia := 1; -- 1 erro de negócio 
-         --end if;
-   
          if vr_tpocorrencia in (3, 4) then
-                vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
+            vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
             
          elsif vr_tpocorrencia in (1, 2) then
-                vr_dstpocorrencia := 'ERRO: '; -- 1 erro de negócio 
+            vr_dstpocorrencia := 'ERRO: '; -- 1 erro de negócio 
             
          else
-                vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
+            vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
          end if;
          
          DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
@@ -512,8 +516,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - gene0001.fn_param_sistema' 
              || ' , vr_des_log= '  || vr_des_log
              || ' , pr_cdcooper= ' || pr_cdcooper
-             || ' , vr_cdcritic= ' || vr_cdcritic
-             ); 
+             || ' , vr_cdcritic= ' || vr_cdcritic); 
              DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - 2 - Verificar essa saida com erro=' || sqlerrm);
              vr_nmarqlog := 'proc_batch.log';
          END;       
@@ -536,8 +539,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - cecred.pc_log_programa' 
              || ' , vr_des_log= '  || vr_des_log
              || ' , pr_cdcooper= ' || pr_cdcooper
-             || ' , vr_cdcritic= ' || vr_cdcritic
-             ); 
+             || ' , vr_cdcritic= ' || vr_cdcritic); 
              DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - 3 Verificar essa saida com erro=' || sqlerrm);
          END;
                
@@ -546,12 +548,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG' 
              || ' , vr_des_erro= ' || vr_des_erro
              || ' , pr_cdcooper= ' || pr_cdcooper
-             || ' , vr_cdcritic= ' || vr_cdcritic
-             ); 
+             || ' , vr_cdcritic= ' || vr_cdcritic); 
              DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - Final - Verificar essa saida com erro=' || sqlerrm);                   
        END;
-       -- 07/06 Belli - End
-       
+     END pc_log;
+     --
 
      ---------------------------------------
      -- Inicio Bloco Principal pc_crps287
@@ -914,7 +915,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                    --Se possui erro na tabela erros
                    IF vr_tab_erro.Count > 0 THEN
                      
-                      -- Ignora descrição não tratada pois ela foi montada - Belli 14/06/2017 ch 665812
+                      -- Ignora descrição não tratada pois ela foi montada - ch 665812
                       if vr_cdcritic <> 9999 then
                           vr_des_erro:= vr_tab_erro(vr_tab_erro.LAST).dscritic;
                       end if;
@@ -930,7 +931,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                                               ' ,vlcheque: '||To_Char(rw_crapcst.vlcheque,'999g999g999g990d00');
                    
                    --Escrever erro log
-                   -- 07/06/2017 Belli
                    pc_log;
                                                                                   
                    --Continuar processamento com proximo registro
