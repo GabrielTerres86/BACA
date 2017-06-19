@@ -368,34 +368,32 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
 
--- Definição de tabela de memória que compreende a mesma estrutura da crapcri
--- Belli 0806/2017 chamado 665812
---
+  -- Definição de tabela de memória que compreende a mesma estrutura da crapcri
+  -- Chamado 665812
   TYPE typ_reg_crapcri IS
     RECORD(
      cdcritic            crapcri.cdcritic%TYPE
     ,dscritic            crapcri.dscritic%TYPE
     ,progress_recid      crapcri.progress_recid%TYPE
     ,tpcritic            crapcri.tpcritic%TYPE
-    ,flgchama            crapcri.flgchama%TYPE
-    );
-  --      
+    ,flgchama            crapcri.flgchama%TYPE);
+
   TYPE typ_tab_crapcri IS
     TABLE OF typ_reg_crapcri
     INDEX BY BINARY_INTEGER;
-   -- Vetor para armazenar as informações de crapcri
-   
+
+  -- Vetor para armazenar as informações de crapcri
   vr_tab_crapcri typ_tab_crapcri; 
   
-/* Retorno do cadastro de critica crapcri */
--- Belli 08/06/2017 chamado 665812
+  /* Retorno do cadastro de critica crapcri */
+  -- Chamado 665812
   PROCEDURE pc_le_crapcri(pr_cdcritic     IN  crapcri.cdcritic%TYPE
                          ,pr_tab_crapcri  OUT GENE0001.typ_tab_crapcri
                          ,pr_dsretorno    OUT varchar2
                          ,pr_cdretorno    OUT number);
---
+
   /* Informação do modulo em execução na sessão */
--- Belli 08/06/2017 chamado 660327
+  -- Chamado 660327
   PROCEDURE pc_set_modulo(pr_module IN VARCHAR2
                          ,pr_action IN VARCHAR2 DEFAULT NULL);
 --           
@@ -431,9 +429,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --                          VARCHAR2 na rotina pc_submit_job (Carlos)
   --
   --             08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)
-  --             09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo  (Belli-Envolti)
-  --             09/06/2017 - #660327 informa acesso dispara a procudere pc_set_modulo  (Belli-Envolti)
-  --             16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal(Belli-Envolti)
+  --             09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo (Belli-Envolti)
+  --             09/06/2017 - #660327 informa acesso dispara a procedure pc_set_modulo (Belli-Envolti)
+  --             16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal (Belli-Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -450,24 +448,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   /* Informação do modulo em execução na sessão */
   PROCEDURE pc_informa_acesso(pr_module IN VARCHAR2
                              ,pr_action IN VARCHAR2 DEFAULT NULL) IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_informa_acesso
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : 
+    --  Data     :                                  Ultima atualizacao: 09/06/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia  : Sempre que chamado por outros programas.
+    --   Objetivo    : Setar padrões de banco para data e number
+    --
+    --   Alterações  : 09/06/2017 - Setar padrões de data e number em um só comando
+    --                              (Belli - Envolti) Chamado 660327
+    -- .............................................................................
   BEGIN
-    -- Se estivermos na cadeia Progress
-    --IF NVL(gene0001.fn_param_sistema('CRED',0,'FL_CADEIA_PROGRESS'),'N') = 'N' THEN
-      -- Setar o formato de data cfme padrão do Progress
-      -- Setar configuração caracteres separadores cfme padrão
-      
-    -- Belli 16/06/2017 - Chamado 660327
+    -- Chamado 660327
     -- Alteração incluindo num comando setar a forma de data e o decimal
-      
     EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''MM/DD/YYYY''
                                          NLS_NUMERIC_CHARACTERS = '',.''';
-    --ELSE
-      -- Setar o formato de data cfme os padrões BR
-      --EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
-    --END IF;
     
     -- Seta modulo
-    -- 09/06 Belli                                 
 		GENE0001.pc_set_modulo(pr_module => pr_module, pr_action => pr_action);      
     
   END;
@@ -2653,6 +2656,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       
     EXCEPTION
       WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => '_'||pr_jobname ||'_');  
+      
         ROLLBACK;
         -- Preparar saída com erro
         pr_des_erro := 'Erro na rotina gene0001.pc_submit_job --> '||sqlerrm;
@@ -2868,7 +2873,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   END pc_lista_cooperativas;
 
 /* Retorno do cadastro de critica crapcri */
--- Belli 08/06/2017
   PROCEDURE pc_le_crapcri 
     (pr_cdcritic     IN  crapcri.cdcritic%TYPE
     ,pr_tab_crapcri  OUT GENE0001.typ_tab_crapcri
@@ -2925,45 +2929,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       pr_dsretorno   := 'Inicio';
       vr_seq         := 0;
       
-      --teste := 0/0;
-            
       IF pr_cdcritic is NULL THEN
         
           pr_cdretorno   := 3;
           pr_dsretorno   := 'Paramêtro de entrada nulo';
       
       ELSE          
-            -- Busca cadastro da critica cfme parâmetro passado
-            OPEN cr_crapcri;
-            BEGIN
-              FETCH cr_crapcri
-              INTO 
-               vr_dscritic
-              ,vr_progress_recid
-              ,vr_tpcritic
-              ,vr_flgchama
-              ;
-              --teste := 0/0;
+          -- Busca cadastro da critica cfme parâmetro passado
+          OPEN cr_crapcri;
+          BEGIN
+            FETCH cr_crapcri
+            INTO 
+             vr_dscritic
+            ,vr_progress_recid
+            ,vr_tpcritic
+            ,vr_flgchama
+            ;
       
-              IF cr_crapcri%NOTFOUND THEN
-           
-                 -- Se não encontrou nenhum registro
-                 pr_cdretorno      := 2; 
-                 pr_dsretorno      := 'Cadastro crapcri não existe';
-              ELSE
-                 -- Se encontrou o registro
-                 MONTA_TYPE;      
-                 pr_cdretorno      := 1; 
-                 pr_dsretorno      := 'Sucesso';        
-              END IF;
-            EXCEPTION
-              WHEN OTHERS THEN
-                pr_cdretorno := 8;
-                pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FETCH --> ' || SQLERRM;
-            END;
+            IF cr_crapcri%NOTFOUND THEN
+               -- Se não encontrou nenhum registro
+               pr_cdretorno      := 2; 
+               pr_dsretorno      := 'Cadastro crapcri não existe';
+            ELSE
+               -- Se encontrou o registro
+               MONTA_TYPE;      
+               pr_cdretorno      := 1; 
+               pr_dsretorno      := 'Sucesso';        
+            END IF;
+          EXCEPTION
+            WHEN OTHERS THEN
+              pr_cdretorno := 8;
+              pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FETCH --> ' || SQLERRM;
+          END;
          
-            -- Apenas fechar o cursor
-            CLOSE cr_crapcri;    
+          -- Apenas fechar o cursor
+          CLOSE cr_crapcri;    
       END IF; 
       
     EXCEPTION
@@ -2972,16 +2972,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
         pr_dsretorno := 'Erro na rotina GENE0001.pc_le_crapcri FINAL --> ' || SQLERRM;
     END;
   END pc_le_crapcri;
---    
+
   /* Informação do modulo em execução na sessão */
--- Belli 08/06/2017 chamado 660327
   PROCEDURE pc_set_modulo    (pr_module IN VARCHAR2
                              ,pr_action IN VARCHAR2 DEFAULT NULL) IS
   BEGIN
   /*---------------------------------------------------------------------------------------------------------------
-   Programa : GENE0001
+   Programa : pc_set_modulo
    Autor    : Cesar Belli
-   Data     : 09/06/2017                        Ultima atualizacao: Belli 09/06/2017   
+   Data     : 09/06/2017                        Ultima atualizacao: 09/06/2017   
    Chamado  : 660327
 
    Dados referentes ao programa:
