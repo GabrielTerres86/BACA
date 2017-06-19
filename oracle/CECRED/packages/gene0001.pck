@@ -373,9 +373,11 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 --
   TYPE typ_reg_crapcri IS
     RECORD(
-     cdcritic        crapcri.cdcritic%TYPE
-    ,dscritic        crapcri.dscritic%TYPE
-    ,progress_recid  crapcri.progress_recid%TYPE
+     cdcritic            crapcri.cdcritic%TYPE
+    ,dscritic            crapcri.dscritic%TYPE
+    ,progress_recid      crapcri.progress_recid%TYPE
+    ,tpcritic            crapcri.tpcritic%TYPE
+    ,flgchama            crapcri.flgchama%TYPE
     );
   --      
   TYPE typ_tab_crapcri IS
@@ -407,7 +409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 16/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -2886,17 +2888,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Alteracoes:
     ..............................................................................*/
+
     DECLARE
   	  CURSOR cr_crapcri IS
   	    SELECT dscritic
               ,progress_recid
+              ,tpcritic
+              ,flgchama 
   		  FROM crapcri
   	     WHERE cdcritic = pr_cdcritic;
          
       vr_dscritic         crapcri.dscritic%TYPE := NULL;
       vr_progress_recid   crapcri.progress_recid%TYPE := NULL;
+      vr_tpcritic         crapcri.tpcritic%TYPE := NULL;
+      vr_flgchama         crapcri.flgchama%TYPE := NULL;
       vr_seq              BINARY_INTEGER;
-      teste               number (1) := 0;
+      vr_teste            number (1) := 0;
       
     PROCEDURE MONTA_TYPE 
       IS
@@ -2907,6 +2914,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       pr_tab_crapcri(vr_seq).cdcritic       := pr_cdcritic;
       pr_tab_crapcri(vr_seq).dscritic       := vr_dscritic;
       pr_tab_crapcri(vr_seq).progress_recid := vr_progress_recid;
+      pr_tab_crapcri(vr_seq).tpcritic       := vr_tpcritic;
+      pr_tab_crapcri(vr_seq).flgchama       := vr_flgchama;
     END;
     --
     --   INICIO  PROCESSO
@@ -2930,8 +2939,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
               FETCH cr_crapcri
               INTO 
                vr_dscritic
-              ,vr_progress_recid; 
-           
+              ,vr_progress_recid
+              ,vr_tpcritic
+              ,vr_flgchama
+              ;
               --teste := 0/0;
       
               IF cr_crapcri%NOTFOUND THEN
