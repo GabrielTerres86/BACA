@@ -48,7 +48,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
     -- dtmvtolt'); ?></td>
     retorno VARCHAR2(150),
     nrctrprp NUMBER,
-    dslinklg VARCHAR2(1000)
+    dsprotocolo VARCHAR2(1000)
     );
 
   TYPE typ_reg_crapope IS RECORD(
@@ -140,6 +140,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
                                    ,pr_cdcritic    OUT crapcri.cdcritic%TYPE --> Cód. da crítica
                                    ,pr_dscritic    OUT crapcri.dscritic%TYPE --> Descrição da crítica
                                    ,pr_tab_crawepr OUT typ_tab_crawepr);
+
+  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbepr_acionamento.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
+                               ,pr_xmllog      IN VARCHAR2                           -- XML com informacoes de LOG
+                               ,pr_cdcritic   OUT PLS_INTEGER                        -- Codigo da critica
+                               ,pr_dscritic   OUT VARCHAR2                           -- Descricao da critica
+                               ,pr_retxml  IN OUT NOCOPY XMLType                     -- Arquivo de retorno do XML
+                               ,pr_nmdcampo   OUT VARCHAR2                           -- Nome do campo com erro
+                               ,pr_des_erro   OUT VARCHAR2);                         -- Erros do processo
 
 END TELA_CONPRO;
 /
@@ -1286,7 +1294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Daniel Zimmermann
-        Data    : Março/16.                    Ultima atualizacao: --/--/----
+        Data    : Março/16.                    Ultima atualizacao: 12/06/2017
     
         Dados referentes ao programa:
     
@@ -1296,7 +1304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 12/06/2017 - Retornar o protocolo. (Jaison/Marcos - PRJ337)
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -1452,8 +1460,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
             gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                    pr_tag_pai  => 'inf',
                                    pr_posicao  => vr_auxconta,
-                                   pr_tag_nova => 'dslinklg',
-                                   pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).dslinklg,
+                                   pr_tag_nova => 'dsprotocolo',
+                                   pr_tag_cont => vr_tab_crawepr(vr_ind_crawepr).dsprotocolo,
                                    pr_des_erro => vr_dscritic);																	 																	 
 																	 
             -- Sai do loop se for o último registro ou se chegar no número de registros solicitados
@@ -1526,7 +1534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Daniel Zimmermann
-      Data    : Março/16.                    Ultima atualizacao: --/--/----
+      Data    : Março/16.                    Ultima atualizacao: 12/06/2017
     
       Dados referentes ao programa:
     
@@ -1536,7 +1544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       Observacao: -----
     
-      Alteracoes:
+      Alteracoes: 12/06/2017 - Retornar o protocolo. (Jaison/Marcos - PRJ337)
     ..............................................................................*/
     DECLARE
       ----------------------------- VARIAVEIS ---------------------------------
@@ -1601,13 +1609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 							 WHEN (A.CDSTATUS_HTTP BETWEEN 500 AND 599) THEN
 								'Falha na comunicacao com servico Ibratan.'
 							END) retorno,
-							DECODE(A.DSPROTOCOLO
-										,NULL,'-'
-										, Replace(
-												gene0001.fn_param_sistema('CRED',0, 'HOST_WEBSRV_MOTOR_IBRA') ||
-												gene0001.fn_param_sistema('CRED',0, 'URI_WEBSRV_MOTOR_IBRALOG')
-														 ,'[@@dsprotocolo@@]',a.dsprotocolo)
-										) dslinkmotor
+							a.dsprotocolo
         
           FROM tbepr_acionamento a
         
@@ -1683,7 +1685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         END IF;
         
         pr_tab_crawepr(vr_ind_crawepr).nrctrprp := rw_crawepr.nrctrprp;
-        pr_tab_crawepr(vr_ind_crawepr).dslinklg := rw_crawepr.dslinkmotor;
+        pr_tab_crawepr(vr_ind_crawepr).dsprotocolo := rw_crawepr.dsprotocolo;
         
       
       END LOOP;
@@ -1708,6 +1710,158 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
     END;
   END pc_consulta_acionamento;
+
+  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbepr_acionamento.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
+                               ,pr_xmllog      IN VARCHAR2                           -- XML com informacoes de LOG
+                               ,pr_cdcritic   OUT PLS_INTEGER                        -- Codigo da critica
+                               ,pr_dscritic   OUT VARCHAR2                           -- Descricao da critica
+                               ,pr_retxml  IN OUT NOCOPY XMLType                     -- Arquivo de retorno do XML
+                               ,pr_nmdcampo   OUT VARCHAR2                           -- Nome do campo com erro
+                               ,pr_des_erro   OUT VARCHAR2) IS                       -- Erros do processo
+  /* .............................................................................
+  
+    Programa: pc_gera_arq_detalhe
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Junho/2017                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para gerar o arquivo de detalhes da proposta.
+
+    Alteracoes: 
+  ..............................................................................*/
+
+    -- Variaveis Locais
+    vr_cdcooper       INTEGER;
+    vr_nmdatela       VARCHAR2(100);
+    vr_nmeacao        VARCHAR2(100);
+    vr_cdagenci       VARCHAR2(100);
+    vr_nrdcaixa       VARCHAR2(100);
+    vr_idorigem       VARCHAR2(100);
+    vr_cdoperad       VARCHAR2(100);
+    vr_dsdirarq       VARCHAR2(1000);
+    vr_nmarquiv       VARCHAR2(1000);
+    vr_dscomando      VARCHAR2(1000);
+       
+    -- Variaveis de Erro
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3);
+    vr_tab_erro GENE0001.typ_tab_erro;
+    
+    -- Variaveis de Excecao
+    vr_exc_saida EXCEPTION;
+         
+    BEGIN
+      -- Inicializar Variavel
+      vr_cdcritic := 0;
+      vr_dscritic := NULL;
+      vr_nmarquiv := pr_dsprotocolo || '.pdf';
+
+      -- Extrair dados do XML de requisicao
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Diretorio para salvar
+      vr_dsdirarq := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
+                                           ,pr_cdcooper => 3
+                                           ,pr_nmsubdir => '/log/webservices'); 
+
+      -- Comando para download
+      vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
+
+      -- Concatenar o caminho do arquivo a ser baixado
+      vr_dscomando := vr_dscomando || ' ' || vr_dsdirarq || '/' || vr_nmarquiv;
+
+      -- Concatenar a URL para Download
+      vr_dscomando := vr_dscomando || ' '
+                   || GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
+                   || GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
+                   || '_result/' || pr_dsprotocolo || '/pdf';
+
+      -- Executar comando para Download
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomando
+                           ,pr_typ_saida   => vr_des_reto
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se ocorreu erro
+      IF vr_des_reto = 'ERR' THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Se NAO encontrou o arquivo
+      IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
+        vr_dscritic := 'Arquivo nao encontrado.';
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Enviar arquivo para Web
+      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
+                                  ,pr_cdagenci => vr_cdagenci
+                                  ,pr_nrdcaixa => vr_nrdcaixa
+                                  ,pr_nmarqpdf => vr_dsdirarq || '/' || vr_nmarquiv
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+      -- Se ocorreu erro
+      IF vr_des_reto = 'NOK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_dscritic := 'Erro ao enviar arquivo para web.';  
+        END IF;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Comando para remover arquivo
+      vr_dscomando := 'rm ' || vr_dsdirarq || '/' || vr_nmarquiv || ' 2>/dev/null';
+
+      -- Remover Arquivo
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_dscomando
+                           ,pr_typ_saida   => vr_des_reto
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se ocorreu erro
+      IF vr_des_reto = 'ERR' THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'nmarqpdf', pr_tag_cont => vr_nmarquiv, pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela TELA_CONPRO: ' || SQLERRM;
+
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_gera_arq_detalhe;
 
 END TELA_CONPRO;
 /

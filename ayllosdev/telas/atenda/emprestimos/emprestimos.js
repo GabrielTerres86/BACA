@@ -105,6 +105,7 @@
  * 084: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
  * 085: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
  * 086: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
+ * 087: [12/06/2017] Retornar o protocolo. (Jaison/Marcos - PRJ337)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -9206,4 +9207,35 @@ function validaDadosAlterarSomenteValorProposta(){
 		}
 	});	
     return false;
+}
+
+function abreProtocoloAcionamento(dsprotocolo) {
+
+    showMsgAguardo('Aguarde, carregando...');
+
+    // Executa script de através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/form_acionamentos.php',
+        data: {
+            dsprotocolo: dsprotocolo,
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			if (response.substr(0,4) == "hide") {
+				eval(response);
+			} else {
+                $('#nmarquiv', '#frmImprimir').val(response);
+                var action = UrlSite + 'telas/atenda/emprestimos/form_acionamentos.php';
+                carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
+			}
+            return false;
+        }
+    });
 }
