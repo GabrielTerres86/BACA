@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 29/05/2017
+   Data    : Novembro/98                     Ultima atualizacao: 19/06/2017
 
    Dados referentes ao programa:
 
@@ -549,6 +549,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                29/05/2017 - Alterado tamanho da variavel vr_indice para suportar
                             3 numeros (Tiago/Thiago).             
+
+               19/06/2017 - Ajuste para enviar apenas cheques em desconto aprovados (insitana = 1)
+                            PRJ300-Desconto de cheque(Odirlei-AMcom)
+
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -824,7 +828,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            nrcheque
       from crapcdb
      where crapcdb.cdcooper = pr_cdcooper
-       and crapcdb.nrborder = pr_nrborder;
+       and crapcdb.nrborder = pr_nrborder
+       AND crapcdb.insitana = 1; --> apenas os aprovados
   -- Desconto de cheques
   cursor cr_crapcdb2 (pr_cdcooper in crapcdb.cdcooper%type,
                       pr_dtmvtoan in crapcdb.dtlibera%type,
@@ -841,6 +846,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      where crapcdb.cdcooper = pr_cdcooper
        and crapcdb.dtlibera > pr_dtmvtoan
        and crapcdb.dtlibera <= pr_dtmvtolt
+       AND crapcdb.insitana = 1 --> apenas os aprovados
        and crapcdb.dtlibbdc is not null
        and crapcdb.dtdevolu is null;
   -- Desconto de cheques
@@ -858,6 +864,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       from crapcdb
      where crapcdb.cdcooper = pr_cdcooper
        and crapcdb.dtdevolu = pr_dtdevolu
+       and crapcdb.insitana = 1 --> apenas os aprovados
        and crapcdb.insitchq = 1; -- Resgatado
   -- Borderô de desconto de títulos
   cursor cr_crapbdt (pr_cdcooper in crapbdt.cdcooper%type,
@@ -2780,6 +2787,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        where crapcdb.cdcooper = pr_cdcooper
          and crapcdb.dtlibera > pr_dtmvtolt
          and crapcdb.dtlibbdc < pr_dtmvtopr
+         AND crapcdb.insitana = 1 --> Apenas aprovados
          and ( crapcdb.dtdevolu is null
                OR
               (crapcdb.dtdevolu is not null AND
