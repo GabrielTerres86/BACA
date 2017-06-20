@@ -1160,7 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 19/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1500,6 +1500,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
        12/04/2017 - Incluir validacao para faturas vencidas para agendamentos conforme
                     ja faz a rotina de pagamento PM.AGROLANDIA (Tiago #647174)    
+                    
+       19/06/2017 - Ajustes na pc_debita_convenio_cecred para lançar o lote com a procedure insere_lote
+                    da package lote0001.pck (Tiago/Rodrigo #612884).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -19996,7 +19999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : CRED - Convenios
     --  Sigla    : PAGA0001
     --  Autor    : Fabrício
-    --  Data     : Janeiro/2015.                   Ultima atualizacao: 04/04/2017
+    --  Data     : Janeiro/2015.                   Ultima atualizacao: 19/06/2017
     --
     --  Dados referentes ao programa:
     --
@@ -20044,9 +20047,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            qdo cai nessas situações algumas vezes acabava efetivando
     --                            o debito mesmo sem protocolo por exemplo SD590929 e SD594359
     --                            (Tiago/Fabricio).
-	--
-	--               04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-	-- 	                         (Jonata - RKAM M311).
+	  --
+	  --               04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+	  -- 	                         (Jonata - RKAM M311).
+    --    
+    --               19/06/2017 - Ajustes para lançar o lote com a procedure insere_lote
+    --                            da package lote0001.pck (Tiago/Rodrigo #612884).
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -20094,29 +20100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_exc_erro  EXCEPTION;
 
       -- Cursores
-
-      -- Cursor para verificar se lote existe
-      CURSOR cr_craplot(pr_cdcooper IN crapcop.cdcooper%TYPE
-                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                       ,pr_cdagenci IN craplot.cdagenci%TYPE
-                       ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
-                       ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
-        SELECT lot.nrseqdig
-              ,lot.qtcompln
-              ,lot.qtinfoln
-              ,lot.vlcompdb
-              ,lot.nrdolote
-              ,lot.cdbccxlt
-              ,lot.cdagenci
-              ,lot.dtmvtolt
-              ,lot.ROWID
-          FROM craplot lot
-         WHERE lot.cdcooper = pr_cdcooper
-           AND lot.dtmvtolt = pr_dtmvtolt
-           AND lot.cdagenci = pr_cdagenci
-           AND lot.cdbccxlt = pr_cdbccxlt
-           AND lot.nrdolote = pr_nrdolote;
-      rw_craplot cr_craplot%ROWTYPE;
+      rw_craplot lote0001.cr_craplot%ROWTYPE;
 
       CURSOR cr_craplcm(pr_cdcooper IN craplcm.cdcooper%TYPE
                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
@@ -21041,59 +21025,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           vr_nrdocmto := rw_craplau.nrdocmto;
 
           vr_cdbccxlt := rw_craplau.cdbccxlt;
-          -- Buscar lote
-          OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
-                          pr_dtmvtolt => pr_dtmvtolt,
-                          pr_cdagenci => vr_cdagenci,
-                          pr_cdbccxlt => vr_cdbccxlt,
-                          pr_nrdolote => vr_nrdolote);
-          FETCH cr_craplot INTO rw_craplot;
+          
+          -- Procedimento para inserir o lote e não deixar tabela lockada
+          lote0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
+                                 ,pr_dtmvtolt => pr_dtmvtolt
+                                 ,pr_cdagenci => vr_cdagenci
+                                 ,pr_cdbccxlt => vr_cdbccxlt
+                                 ,pr_nrdolote => vr_nrdolote
+                                 ,pr_cdoperad => '1'
+                                 ,pr_nrdcaixa => 100
+                                 ,pr_tplotmov => 1
+                                 ,pr_cdhistor => 0
+                                 ,pr_craplot  => rw_craplot
+                                 ,pr_dscritic => vr_dscritic);
 
-          -- Verificar se lote existe
-          IF cr_craplot%NOTFOUND THEN
-            BEGIN
-              -- criar registros de lote na tabela
-              INSERT INTO craplot
-                (dtmvtolt
-                ,cdagenci
-                ,cdbccxlt
-                ,nrdolote
-                ,cdbccxpg
-                ,tplotmov
-                ,cdcooper)
-              VALUES
-                (pr_dtmvtolt
-                ,vr_cdagenci
-                ,vr_cdbccxlt
-                ,vr_nrdolote
-                ,11  --cdbccxpg
-                ,1   --tplotmov
-                ,pr_cdcooper)
-              RETURNING ROWID,
-                        craplot.dtmvtolt,
-                        craplot.cdagenci,
-                        craplot.cdbccxlt,
-                        craplot.nrdolote,
-                        craplot.nrseqdig
-                        INTO
-                        rw_craplot.rowid,
-                        rw_craplot.dtmvtolt,
-                        rw_craplot.cdagenci,
-                        rw_craplot.cdbccxlt,
-                        rw_craplot.nrdolote,
-                        rw_craplot.nrseqdig;
-            EXCEPTION
-              WHEN OTHERS THEN
-                -- Fechar cursor de lote
-                CLOSE cr_craplot;
-                -- se ocorreu algum erro durante a criação
-                vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
-              RAISE vr_exc_erro;
-            END;
-            rw_craplot.nrseqdig := 0;
+          -- se encontrou erro ao buscar lote, abortar programa
+          IF vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
           END IF;
-          -- Fechar cursor de lote
-          CLOSE cr_craplot;
 
           LOOP
             IF cr_craplcm%ISOPEN THEN
@@ -21263,7 +21213,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               RAISE vr_exc_erro;
           END;
 
-          -- Atualiza a capa do lote
+/*
+          -- Atualiza a capa do lote tiago
           BEGIN
             UPDATE craplot
                SET nrseqdig = rw_craplot.nrseqdig
@@ -21296,6 +21247,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               
               
               vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
+              RAISE vr_exc_erro;
+          END;
+*/
+          FOR i IN 1..100 LOOP
+            BEGIN
+              -- Leitura do lote
+              OPEN lote0001.cr_craplot(pr_cdcooper  => rw_craplot.cdcooper,
+                                       pr_dtmvtolt  => rw_craplot.dtmvtolt,
+                                       pr_cdagenci  => rw_craplot.cdagenci,
+                                       pr_cdbccxlt  => rw_craplot.cdbccxlt,
+                                       pr_nrdolote  => rw_craplot.nrdolote); 
+              FETCH lote0001.cr_craplot INTO rw_craplot;
+              CLOSE lote0001.cr_craplot;
+              vr_dscritic := NULL;
+              EXIT;
+            EXCEPTION
+              WHEN OTHERS THEN
+                IF lote0001.cr_craplot%ISOPEN THEN
+                  CLOSE lote0001.cr_craplot;
+                END IF;
+                -- setar critica caso for o ultimo
+                IF i = 100 THEN
+                  vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
+                END IF;
+                -- aguardar 0,5 seg. antes de tentar novamente
+                sys.dbms_lock.sleep(0.1);
+            END;
+          END LOOP;
+            
+          -- se encontrou erro ao buscar lote, abortar programa
+          IF vr_dscritic IS NOT NULL THEN
+             ROLLBACK;         
+             pc_nao_efetivado(pr_cdcooper  => pr_cdcooper
+                             ,pr_flultexe  => vr_flultexe
+                             ,pr_rwcraplau => rw_craplau
+                             ,pr_cdagesic  => rw_crapcop.cdagesic
+                             ,pr_nrctacns  => rw_crapass.nrctacns
+                             ,pr_cdcritic  => vr_auxcdcri
+                             ,pr_dscritic  => vr_auxdscri);
+                
+             IF vr_auxcdcri > 0 OR
+                TRIM(vr_auxdscri) IS NOT NULL THEN 
+                         
+                IF vr_auxcdcri > 0 THEN
+                   vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_auxcdcri); -- BUSCA DESCRICAO DA CRITICA
+                ELSE
+                   vr_dscritic := vr_auxdscri;
+                END IF;
+                RAISE vr_exc_erro;
+             END IF;                            
+                          
+             RAISE vr_exc_erro;
+          END IF;
+
+          -- Atualizar lote de criação da Tit, deixado por ultimo para diminuir tempo de lock
+          BEGIN
+            UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                              ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                              ,craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + rw_craplau.vllanaut
+                              ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + rw_craplau.vllanaut
+            WHERE craplot.ROWID = rw_craplot.ROWID
+            RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
+              --Levantar Excecao
               RAISE vr_exc_erro;
           END;
 
