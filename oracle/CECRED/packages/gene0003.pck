@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 21/02/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 19/06/2017
 
     Dados referentes ao programa:
 
@@ -206,6 +206,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              
                 21/02/2017 - #584244 Atualizada a rotina pc_process_email_penden para não gravar mais os erros
                              de envio no proc_batch, apenas no log proc_envio_email (Carlos)
+                             
+                19/06/2017 - #642644 Ajustada a rotina pc_solicita_email para gravar a mensagem de 
+                             "email enviado" no proc_message, inclusive no ELSE dos anexos (Carlos)
 ..............................................................................*/
 
   /* Saída com erro */
@@ -1148,7 +1151,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                     -- Grava log para avisar que o anexo será enviado para o destinatário
                     BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                               ,pr_ind_tipo_log => 1 -- Processo normal
-                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_tab_anexos(vr_ind_a).dspathan||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.');
+                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_tab_anexos(vr_ind_a).dspathan||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.'
+                                              ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                   END IF;
                 EXCEPTION
                   WHEN OTHERS THEN
