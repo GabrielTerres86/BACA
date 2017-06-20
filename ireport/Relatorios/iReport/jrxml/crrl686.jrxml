@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl686" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
-	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="505"/>
+	<property name="ireport.zoom" value="2.2"/>
+	<property name="ireport.x" value="23"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -33,14 +33,17 @@
 	<field name="dtcredit" class="java.lang.String">
 		<fieldDescription><![CDATA[dtcredit]]></fieldDescription>
 	</field>
-	<field name="dtvisual" class="java.lang.String">
-		<fieldDescription><![CDATA[dtvisual]]></fieldDescription>
-	</field>
 	<field name="qtdddias" class="java.lang.String">
 		<fieldDescription><![CDATA[ancestor::float/@qtdddias]]></fieldDescription>
 	</field>
 	<field name="flsldpen" class="java.lang.String">
 		<fieldDescription><![CDATA[ancestor::float/@flsldpen]]></fieldDescription>
+	</field>
+	<field name="dtocorre" class="java.lang.String">
+		<fieldDescription><![CDATA[dtocorre]]></fieldDescription>
+	</field>
+	<field name="tot_vlsldpen" class="java.lang.Double">
+		<fieldDescription><![CDATA[tot_vlsldpen]]></fieldDescription>
 	</field>
 	<variable name="sub_total" class="java.lang.Double" resetType="Group" resetGroup="Float" calculation="Sum">
 		<variableExpression><![CDATA[$F{vltotpag}]]></variableExpression>
@@ -50,37 +53,64 @@
 		<variableExpression><![CDATA[$F{vltotpag}]]></variableExpression>
 		<initialValueExpression><![CDATA[]]></initialValueExpression>
 	</variable>
-	<group name="Saldo" isReprintHeaderOnEachPage="true">
+	<group name="Saldo" isReprintHeaderOnEachPage="true" keepTogether="true">
 		<groupExpression><![CDATA[$F{flsldpen}]]></groupExpression>
 		<groupHeader>
 			<band height="16">
 				<staticText>
-					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="0" width="112" height="8">
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="0" width="99" height="8">
 						<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "S")]]></printWhenExpression>
 					</reportElement>
 					<textElement>
 						<font fontName="Courier New" size="7" isUnderline="false"/>
 					</textElement>
-					<text><![CDATA[SALDO PENDENTE]]></text>
+					<text><![CDATA[RECEBIDOS ANTERIORMENTE]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="0" y="0" width="87" height="8">
+						<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "N")]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[RECEBIDOS NESTA DATA]]></text>
 				</staticText>
 			</band>
 		</groupHeader>
 		<groupFooter>
-			<band height="24">
+			<band height="28">
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="265" y="8" width="65" height="8"/>
+					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="265" y="4" width="65" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$V{total_geral}]]></textFieldExpression>
 				</textField>
 				<staticText>
-					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="16" y="8" width="124" height="8"/>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="16" y="4" width="124" height="8"/>
 					<textElement>
 						<font fontName="Courier New" size="7" isUnderline="false"/>
 					</textElement>
 					<text><![CDATA[TOTAL GERAL ==>]]></text>
 				</staticText>
+				<staticText>
+					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="16" y="17" width="124" height="8" isRemoveLineWhenBlank="true">
+						<printWhenExpression><![CDATA[$F{tot_vlsldpen} != null ? true : false]]></printWhenExpression>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" isUnderline="false"/>
+					</textElement>
+					<text><![CDATA[TOTAL SALDO PENDENTE ==>]]></text>
+				</staticText>
+				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+					<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="265" y="17" width="65" height="8" isRemoveLineWhenBlank="true">
+						<printWhenExpression><![CDATA[$F{tot_vlsldpen} != null ? true : false]]></printWhenExpression>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{tot_vlsldpen}]]></textFieldExpression>
+				</textField>
 			</band>
 		</groupFooter>
 	</group>
@@ -131,36 +161,28 @@
 					<text><![CDATA[-------------------------------------------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="79fb0daa-2517-4349-b5b2-8a5fd1c8c3c0" x="377" y="0" width="64" height="8">
-						<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "N")]]></printWhenExpression>
-					</reportElement>
+					<reportElement uuid="79fb0daa-2517-4349-b5b2-8a5fd1c8c3c0" x="377" y="0" width="64" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
-					<text><![CDATA[CREDITO EM]]></text>
+					<text><![CDATA[RECEBIDO EM]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="e56e5cbd-ec2a-4eba-ac5c-9aa1aab829de" x="377" y="8" width="64" height="8">
-						<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "N")]]></printWhenExpression>
-					</reportElement>
+					<reportElement uuid="e56e5cbd-ec2a-4eba-ac5c-9aa1aab829de" x="377" y="8" width="64" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
 					<text><![CDATA[-------------------------------------------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="79fb0daa-2517-4349-b5b2-8a5fd1c8c3c0" x="491" y="0" width="61" height="8">
-						<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "N")]]></printWhenExpression>
-					</reportElement>
+					<reportElement uuid="79fb0daa-2517-4349-b5b2-8a5fd1c8c3c0" x="491" y="0" width="61" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
-					<text><![CDATA[VISUALIZAR EM]]></text>
+					<text><![CDATA[CRÉDITO EM]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="e56e5cbd-ec2a-4eba-ac5c-9aa1aab829de" x="491" y="8" width="61" height="8">
-						<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "N")]]></printWhenExpression>
-					</reportElement>
+					<reportElement uuid="e56e5cbd-ec2a-4eba-ac5c-9aa1aab829de" x="491" y="8" width="61" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
@@ -183,7 +205,7 @@
 			</band>
 		</groupHeader>
 		<groupFooter>
-			<band height="16">
+			<band height="14">
 				<staticText>
 					<reportElement uuid="f5dd01e1-d401-400d-a3a6-8e39bc69df68" x="16" y="0" width="124" height="8"/>
 					<textElement>
@@ -239,14 +261,14 @@
 	</columnHeader>
 	<detail>
 		<band height="8" splitType="Prevent">
-			<textField>
+			<textField isBlankWhenNull="true">
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="16" y="0" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nrcnvcob}]]></textFieldExpression>
 			</textField>
-			<textField pattern="" isBlankWhenNull="false">
+			<textField pattern="" isBlankWhenNull="true">
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="175" y="0" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
@@ -261,22 +283,18 @@
 				<textFieldExpression><![CDATA[$F{vltotpag}]]></textFieldExpression>
 			</textField>
 			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="377" y="0" width="64" height="8">
-					<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "N")]]></printWhenExpression>
-				</reportElement>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="377" y="0" width="64" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtocorre}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="491" y="0" width="61" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dtcredit}]]></textFieldExpression>
-			</textField>
-			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
-				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="491" y="0" width="61" height="8">
-					<printWhenExpression><![CDATA[new Boolean($F{flsldpen} == "N")]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Right">
-					<font fontName="Courier New" size="7"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{dtvisual}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="99" y="0" width="37" height="8" isRemoveLineWhenBlank="true"/>
