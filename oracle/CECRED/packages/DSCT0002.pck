@@ -18,6 +18,10 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --  
   --              02/03/2017 - Tornar a pc_lista_avalistas publica. (P210.2 - Jaison/Daniel)
   --
+  --              20/06/2017 - Incluida validacao de tamanho na atribuicao do campo de operador
+  --                           (ID + Nome) pois estava estourando a variavel.
+  --                           Heitor (Mouts) - Chamado 695581
+  --
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Tabela para armazenar parametros para desconto de titulo(antigo b1wgen0030tt.i/tt-dsctit.)
@@ -3915,7 +3919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           12) - 1) * 100,6);
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
-      vr_rel_dsopecoo := vr_tab_dados_border(vr_idxborde).dsopecoo;
+      vr_rel_dsopecoo := substr(vr_tab_dados_border(vr_idxborde).dsopecoo,1,40);
       
      
       --> Informacoes da Carteira de Cobranca
