@@ -7103,7 +7103,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								cheque, onde é creditado o valor líquido da operação na conta do 
 								cooperado, como também os encargos (IOF e tarifa (se houver)).
 
-    Alteracoes: -----
+    Alteracoes: 20/06/2017 - Ajuste na verificação de cheques que estão pendente de entrega.
+                             PRJ300-Desconto de cheque(Lombardi)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7490,24 +7491,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         vr_dscritic := 'Borderô possui cheque(s) aprovado(s) pendentes de entrega. Liberação não permitida.';
         RAISE vr_exc_erro;
       END IF;
-      
-      -- Deleta crítica de cheque pendente de entrega se existir
-      BEGIN
-        DELETE crapabc abc
-         WHERE abc.cdcooper = pr_cdcooper
-           AND abc.nrborder = pr_nrborder
-           AND abc.cdcmpchq = rw_crapcdb.cdcmpchq
-           AND abc.cdbanchq = rw_crapcdb.cdbanchq
-           AND abc.cdagechq = rw_crapcdb.cdagechq
-           AND abc.nrctachq = rw_crapcdb.nrctachq
-           AND abc.nrcheque = rw_crapcdb.nrcheque
-           AND abc.cdocorre = 26;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao excluir críticas do borderô.';
-          RAISE vr_exc_erro;
-      END;
       
 			-- Alimentar PlTable com dados do cheque
 			vr_index_cheque := vr_tab_cheques.count;
@@ -8647,7 +8630,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Resgatar cheques custodiados no dia de movimento
 
-    Alteracoes: -----
+    Alteracoes: 20/06/2017 - Retirado update na tabela crapcdb.
+                             PRJ300-Desconto de cheque(Lombardi)
+                             
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
