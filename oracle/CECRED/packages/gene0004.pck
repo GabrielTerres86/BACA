@@ -84,7 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 03/11/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 06/04/2017
   --
   --  Dados referentes ao programa:
   --
@@ -135,6 +135,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --              29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
   --                           do código e não mais pela descrição (Renato Darosci - Supero)
   --
+  --              06/04/2017 - Criei novo cursor sobre a CRAPACE para ser executado sem o parametro nmrotina 
+  --                           desta forma melhorando a performance. (Carlos Rafael Tanholi - SD 538898)  
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedures/functions de uso privado */
@@ -177,8 +179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --                            feitas muitas chamadas da função. Dúvidas sobre a alteração podem ser 
     --                            tratadas também com o Rodrigo Siewerdt. (Renato Darosci - Supero)
 	--
-	--				 21/10/2016 - Ajustado cursor da craptel para não executar função desnecessariamente
-	--							  (Rodrigo)
+	  --				       21/10/2016 - Ajustado cursor da craptel para não executar função desnecessariamente (Rodrigo)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -393,7 +394,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 11/05/2016
+    --  Data     : Maio/2014.                   Ultima atualizacao: 06/04/2017
     --
     --  Dados referentes ao programa:
     --
@@ -404,11 +405,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --                            com permissoes de acesso as telas do sistema
     --                            para utilizar o indice da tabela
     --                            (Douglas - Chamado 450570)
+    --
+    --               06/04/2017 - Criei novo cursor sobre a CRAPACE para ser executado
+    --                            sem o parametro nmrotina desta forma melhorando a performance
+    --                            (Carlos Rafael Tanholi - SD 538898)
     -- .............................................................................
   BEGIN
     DECLARE
       vr_exc_saida   EXCEPTION;             --> Controle de erros
       vr_cddepart    crapope.cddepart%TYPE; --> Descrição do departamento
+      vr_nmdatela crapace.nmdatela%TYPE;      
 
       -- Busca dados do cadastro com permissoes de acesso as telas do sistema
       CURSOR cr_crapace(pr_cdcooper IN crapace.cdcooper%TYPE
@@ -418,13 +424,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                        ,pr_cddopcao IN crapace.cddopcao%TYPE) IS
         SELECT ce.nmdatela
         FROM crapace ce
+        WHERE ce.cdcooper        = pr_cdcooper
+          AND UPPER(ce.cdoperad) = UPPER(pr_cdoperad)
+          AND UPPER(ce.nmdatela) = UPPER(pr_nmdatela)
+          AND UPPER(ce.nmrotina) = UPPER(pr_nmrotina)
+          AND UPPER(ce.cddopcao) = UPPER(pr_cddopcao)
+          AND ce.idambace        = 2;
+
+
+      -- Busca dados do cadastro com permissoes de acesso as telas do sistema
+      -- sem informar o nmrotina
+      CURSOR cr_crapace_2(pr_cdcooper IN crapace.cdcooper%TYPE
+                         ,pr_cdoperad IN crapace.cdoperad%TYPE
+                         ,pr_nmdatela IN crapace.nmdatela%TYPE
+                         ,pr_cddopcao IN crapace.cddopcao%TYPE) IS
+        SELECT ce.nmdatela
+        FROM crapace ce
         WHERE ce.cdcooper          = pr_cdcooper
           AND UPPER(ce.cdoperad)   = UPPER(pr_cdoperad)
           AND UPPER(ce.nmdatela)   = UPPER(pr_nmdatela)
-          AND UPPER(NVL(ce.nmrotina,' ')) = UPPER(NVL(pr_nmrotina,' '))
           AND UPPER(ce.cddopcao)   = UPPER(pr_cddopcao)
           AND ce.idambace          = 2;
-      vr_nmdatela crapace.nmdatela%TYPE;
+          
     BEGIN
       -- Valida o acesso ao sistema
       pc_valida_acesso_sistema(pr_cdcooper => pr_cdcooper
@@ -444,6 +465,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
 
       -- Verifica qual é o departamento de operação
       IF vr_cddepart <> 20 THEN
+        
+        -- valida o nome da rotina para definir qual o cursor utilizar
+        IF (pr_nmrotina IS NULL) THEN
+          -- Verifica as permissões de execução no cadastro
+          OPEN cr_crapace_2(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_cddopcao);
+          FETCH cr_crapace_2
+           INTO vr_nmdatela;
+          -- Verifica se foi encontrada permissão
+          IF cr_crapace_2%NOTFOUND THEN
+            CLOSE cr_crapace_2;
+            pr_cdcritic := 36;
+            pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+            RAISE vr_exc_saida;
+          ELSE
+            CLOSE cr_crapace_2; 
+          END IF;  
+
+        ELSE
         -- Verifica as permissões de execução no cadastro
         OPEN cr_crapace(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_nmrotina, pr_cddopcao);
         FETCH cr_crapace
@@ -457,6 +496,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         ELSE
           CLOSE cr_crapace; 
         END IF;
+        END IF;
+      
       END IF;
 
       -- Se não gerar consistência limpa críticas
