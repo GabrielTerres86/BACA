@@ -26,6 +26,7 @@ $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 $tlcooper = (isset($_POST['tlcooper'])) ? $_POST['tlcooper'] : 0;
 $contigen = (isset($_POST['contigen'])) ? $_POST['contigen'] : 0;
 $incomite = (isset($_POST['incomite'])) ? $_POST['incomite'] : 0;
+$anlautom = (isset($_POST['anlautom'])) ? $_POST['anlautom'] : 0;
 $nmregmpf = (isset($_POST['nmregmpf'])) ? $_POST['nmregmpf'] : '';
 $nmregmpj = (isset($_POST['nmregmpj'])) ? $_POST['nmregmpj'] : '';
 $qtsstime = (isset($_POST['qtsstime'])) ? $_POST['qtsstime'] : 0;
@@ -41,53 +42,54 @@ if ( $cddopcao == 'X' ) {
 	$cdopcao = $cddopcao;
 }
 
-if ($cdopcao == 'A'){
-	if ((!isset($_POST['nmregmpf'])) || $_POST['nmregmpf'] == ''){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PF &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpf\', \'#frmParest\').focus()");';
-		exit();
-	}
+// Somente quando Analise Automatica Obrigatória
+if ($anlautom == 1 && $cdopcao == 'A'){
+  if ((!isset($_POST['nmregmpf'])) || $_POST['nmregmpf'] == ''){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PF &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpf\', \'#frmParest\').focus()");';
+    exit();
+  }
   
   if ((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == ''){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
-		exit();
-	}
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
+    exit();
+  }
 
-	if ((!isset($_POST['qtsstime'])) || $_POST['qtsstime'] == ''){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Timeout An&aacute;lise Autom&aacute;tica &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtsstime\', \'#frmParest\').focus()");';
-		exit();
-	}
-	
-	if ((!isset($_POST['qtmeschq'])) || $_POST['qtmeschq'] == ''){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Qtde de meses para Dev. Cheques &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmeschq\', \'#frmParest\').focus()");';
-		exit();
-	}
-	if ((!isset($_POST['qtmesest'])) || $_POST['qtmesest'] == ''){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Qtde de meses para Estouros &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmesest\', \'#frmParest\').focus()");';
-		exit();
-	}
-	if ((!isset($_POST['qtmesemp'])) || $_POST['qtmesemp'] == ''){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Qtde de meses para Atraso de Empr&eacute;stimos &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmesemp\', \'#frmParest\').focus()");';
-		exit();
-	}
+  if ((!isset($_POST['qtsstime'])) || $_POST['qtsstime'] == ''){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Timeout An&aacute;lise Autom&aacute;tica &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtsstime\', \'#frmParest\').focus()");';
+    exit();
+  }
+  
+  if ((!isset($_POST['qtmeschq'])) || $_POST['qtmeschq'] == ''){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Qtde de meses para Dev. Cheques &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmeschq\', \'#frmParest\').focus()");';
+    exit();
+  }
+  if ((!isset($_POST['qtmesest'])) || $_POST['qtmesest'] == ''){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Qtde de meses para Estouros &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmesest\', \'#frmParest\').focus()");';
+    exit();
+  }
+  if ((!isset($_POST['qtmesemp'])) || $_POST['qtmesemp'] == ''){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Qtde de meses para Atraso de Empr&eacute;stimos &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#qtmesemp\', \'#frmParest\').focus()");';
+    exit();
+  }
 
-	if (preg_match('/[^a-zA-Z0-9_]/',$nmregmpf) == 1){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmpf\', \'#frmParest\').focus()");';
-		exit();
-	}
+  if (preg_match('/[^a-zA-Z0-9_]/',$nmregmpf) == 1){
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmpf\', \'#frmParest\').focus()");';
+    exit();
+  }
   
   if (preg_match('/[^a-zA-Z0-9_]/',$nmregmpj) == 1){
-		echo 'hideMsgAguardo();';
-		echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
-		exit();
-	}
-}
+    echo 'hideMsgAguardo();';
+    echo 'showError("error","Informe somente letras, n&uacute;meros e \'_\' neste campo! O preenchimento de \"Espa&ccedil;os\" n&atilde;o &eacute; permitido!","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
+    exit();
+  }
+}  
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cdopcao)) <> '') {		
 	exibeErroNew($msgError);
@@ -113,6 +115,7 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <flgativo>1</flgativo>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
+  $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
 	$xml .= "   <nmregmpf>" . $nmregmpf . "</nmregmpf>";
   $xml .= "   <nmregmpj>" . $nmregmpj . "</nmregmpj>";
 	$xml .= "   <qtsstime>" . $qtsstime . "</qtsstime>";
@@ -158,6 +161,13 @@ if ( $cddopcao == 'C') {
 			} else {
 				echo '$("#incomite", "#divAlteracao").val("0");';
 			}
+      
+      if ( getByTagName($r->tags, 'anlautom') == 'SIM' ) {
+				echo '$("#anlautom", "#divAlteracao").val("1");';
+			} else {
+				echo '$("#anlautom", "#divAlteracao").val("0");';
+			}
+      
 			echo '$("#nmregmpf", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpf').'");';
       echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
 			echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
