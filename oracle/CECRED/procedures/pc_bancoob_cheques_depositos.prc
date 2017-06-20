@@ -1,10 +1,11 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in crapcop.cdcooper%type) IS
+CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in crapcop.cdcooper%TYPE,
+                                                                pr_dscritic OUT VARCHAR2) IS
  /* ..........................................................................
 
    JOB: PC_BANCOOB_RECEBE_ARQUIVO_CEXT
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : CARLOS HENRIQUE WEINHOLD
-   Data    : Novembro/2015.                     Ultima atualizacao: 30/11/2015
+   Data    : Novembro/2015.                     Ultima atualizacao: 20/02/2017
 
    Dados referentes ao programa:
 
@@ -19,6 +20,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
                             
                30/11/2015 - #366319 Retirada do programa crps250 do job (Carlos)
 
+               20/02/2017 - #551202 Ajuste da nomenclatura do job para JBCOMPE_CRPS252 (Carlos)
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
   vr_cdprogra   crapprg.cdprogra%TYPE;           --> Código do programa
@@ -35,7 +37,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
   vr_listadir    VARCHAR2(2000);
   vr_dscritic    VARCHAR2(4000);
   pr_cdcritic    PLS_INTEGER;
-  pr_dscritic    VARCHAR2(4000);
   vr_flgexecu252 BOOLEAN := FALSE;
 
   
@@ -72,25 +73,33 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
       IF pr_cdcooper = 3 THEN
         FOR rw_crapcop IN cr_crapcop LOOP
           
-          vr_dsplsql := 'begin cecred.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper => '||rw_crapcop.cdcooper ||'); end;';
-          vr_jobname := 'PRG250_252_'||rw_crapcop.cdcooper||'$';
+          vr_dsplsql := 'DECLARE vr_dscritic VARCHAR2(500); 
+            begin cecred.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper => '||rw_crapcop.cdcooper ||', 
+              pr_dscritic => vr_dscritic); 
+              IF vr_dscritic IS NOT NULL THEN
+                raise_application_error(-20001, vr_dscritic);
+              END IF;
+            end;';
+          vr_jobname := 'JBCOMPE_252_'||rw_crapcop.cdcooper||'$';
           
           -- Faz a chamada ao programa paralelo atraves de JOB
-          gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper              --> Código da cooperativa
-                                ,pr_cdprogra  => 'CRPS250_252'       --> Código do programa
+          gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
+                                ,pr_cdprogra  => 'CRPS252'     --> Código do programa
                                 ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
                                 ,pr_dthrexe   => TO_TIMESTAMP_tz(to_char((SYSDATE + (1/24)),'DD/MM/RRRR HH24:MI'),
-                                                                                            'DD/MM/RRRR HH24:MI') --> Incrementar mais 1 hora
-                                ,pr_interva   => NULL                     --> apenas uma vez
-                                ,pr_jobname   => vr_jobname               --> Nome randomico criado
+                                                                                            'DD/MM/RRRR HH24:MI') --> Incrementar 1 hora
+                                ,pr_interva   => NULL              --> apenas uma vez
+                                ,pr_jobname   => vr_jobname        --> Nome randomico criado
                                 ,pr_des_erro  => vr_dserro);  
           
-          IF TRIM(vr_dserro) is not null then
+          IF TRIM(vr_dserro) IS NOT NULL THEN
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                        pr_ind_tipo_log => 2, --> erro tratado
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                          ' - PC_BANCOOB_CHEQUES_DEPOSITOS --> (Coop:'||rw_crapcop.cdcooper||')' || vr_dserro,
-                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                                          ' - ' || vr_jobname || ' --> (Coop:'||rw_crapcop.cdcooper||')' || vr_dserro,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                       pr_dstiplog     => 'E',
+                                       pr_cdprograma   => vr_jobname);
           END IF;  
           
         END LOOP;--> Fim loop coop
@@ -127,13 +136,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
             vr_flgexecu252 := vr_listadir IS NOT NULL;
           END IF;  
           
-          vr_dsplsql := 'begin cecred.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper => '||pr_cdcooper ||'); end;';
-          vr_jobname := 'PRG250_252_'||pr_cdcooper||'$';
+          vr_dsplsql := 'DECLARE vr_dscritic VARCHAR2(500); 
+            begin cecred.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper => '|| pr_cdcooper ||', 
+              pr_dscritic => vr_dscritic); 
+              IF vr_dscritic IS NOT NULL THEN
+                raise_application_error(-20001, vr_dscritic);
+              END IF;
+            end;';
+          
+          vr_jobname := 'JBCOMPE_252_'||pr_cdcooper;
           
           -- Verifica se executa crps252
           IF vr_flgexecu252 THEN
             pc_crps252(pr_cdcooper => pr_cdcooper,
-                       pr_flgresta => 1,
+                       pr_cdprogra =>  vr_jobname,
                        pr_stprogra =>  vr_cdprogra,
                        pr_infimsol =>  vr_infimsol,
                        pr_cdcritic =>  vr_cdcritic,
@@ -142,35 +158,43 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
             IF TRIM(vr_dserro) IS NOT NULL THEN
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                          pr_ind_tipo_log => 2, --> erro tratado
-                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - PC_CRPS252 --> ' || vr_dserro,
-                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                         pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                            ' - ' || vr_jobname || ' --> ' || vr_dserro,
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                         pr_dstiplog     => 'E',
+                                         pr_cdprograma   => vr_jobname);
             END IF;
 
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                          pr_ind_tipo_log => 2, --> erro tratado
-                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - PC_CRPS252 --> Executado',
-                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                         pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                            ' - ' || vr_jobname || ' --> Executado',
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                         pr_dstiplog     => 'E',
+                                         pr_cdprograma   => vr_jobname);
 
-          ELSIF (SYSDATE < trunc(SYSDATE)+(15/24)) THEN -- Se for antes das 15:00 pode reagendar
+          ELSIF (SYSDATE < trunc(SYSDATE)+(15/24)) THEN -- Se for antes das 15:00 (trunc(SYSDATE)+(15/24)) pode reagendar
+
+            vr_jobname := vr_jobname||'$';
 
             -- Faz a chamada ao programa paralelo atraves de JOB
-            gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper              --> Código da cooperativa
-                                  ,pr_cdprogra  => 'CRPS250_252'       --> Código do programa
-                                  ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
+            gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper     --> Código da cooperativa
+                                  ,pr_cdprogra  => 'CRPS252'       --> Código do programa
+                                  ,pr_dsplsql   => vr_dsplsql      --> Bloco PLSQL a executar
                                   ,pr_dthrexe   => TO_TIMESTAMP_tz(to_char((SYSDATE + (1/24)),'DD/MM/RRRR HH24:MI'),
                                                                                               'DD/MM/RRRR HH24:MI') --> Incrementar mais 1 hora
-                                  ,pr_interva   => NULL                     --> apenas uma vez
-                                  ,pr_jobname   => vr_jobname               --> Nome randomico criado
+                                  ,pr_interva   => NULL            --> apenas uma vez
+                                  ,pr_jobname   => vr_jobname      --> Nome randomico criado
                                   ,pr_des_erro  => vr_dserro);  
             
             IF TRIM(vr_dserro) is not null then
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                          pr_ind_tipo_log => 2, --> erro tratado
-                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - PC_BANCOOB_CHEQUES_DEPOSITOS --> (Coop:'||pr_cdcooper||')' || vr_dserro,
-                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                         pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                            ' - ' || vr_jobname || ' --> (Coop:'||pr_cdcooper||')' || vr_dserro,
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                         pr_dstiplog     => 'E',
+                                         pr_cdprograma   => vr_jobname);
             END IF;            
           END IF;
 
@@ -194,6 +218,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
+    
+      cecred.pc_internal_exception(pr_cdcooper);
     
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
