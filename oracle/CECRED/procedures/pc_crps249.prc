@@ -11205,44 +11205,45 @@ BEGIN
 
   -- Fecha cursor
   CLOSE cr_craplcm_tot;
-
-  -- Cabecalho
-  vr_cdestrut := 50;
-  vr_linhadet := trim(vr_cdestrut)||
-                 trim(to_char(vr_dtmvtoan,'yymmdd'))||','||
-                 trim(to_char(vr_dtmvtoan,'ddmmyy'))||','||
-                 '1802,'||
-                 '7118,'||
-                 TRIM(TO_CHAR(rw_craplcm_tot.vllanmto,'99999999999990.00')) || ',' ||
-                 '5210,'||
-                 '"(crps249) PROVISAO JUROS CH. ESPECIAL."';
-
-  gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-
-  -- Leitura de lançamentos por PA
-  OPEN cr_craplcm8(pr_cdcooper => pr_cdcooper
-                  ,pr_cdhistor => vr_cdhistor
-                  ,pr_dtmvtolt => vr_dtmvtolt);
-
-  LOOP
-
-    FETCH cr_craplcm8 INTO rw_craplcm8;
-
-    -- Sai do loop quando chegar ao final dos registros da consulta
-    EXIT WHEN cr_craplcm8%NOTFOUND;
-
-    -- Escreve valor por PA no arquivo
-    -- Colocada condicao pois estava gerando erro no RADAR
-    IF rw_craplcm8.vllanmto <> 0 THEN
-       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, rw_craplcm8.cdagenci || ',' || TRIM(TO_CHAR(rw_craplcm8.vllanmto,'99999999999990.00')));
-    END IF;
-
-  END LOOP;
-
-  -- Fecha cursor
-  CLOSE cr_craplcm8;
   
-  IF rw_craplcm_tot.vllanmto > 0 THEN
+  IF rw_craplcm_tot.vllanmto > 0 THEN  
+
+    -- Cabecalho
+    vr_cdestrut := 50;
+    vr_linhadet := trim(vr_cdestrut)||
+                   trim(to_char(vr_dtmvtoan,'yymmdd'))||','||
+                   trim(to_char(vr_dtmvtoan,'ddmmyy'))||','||
+                   '1802,'||
+                   '7118,'||
+                   TRIM(TO_CHAR(rw_craplcm_tot.vllanmto,'99999999999990.00')) || ',' ||
+                   '5210,'||
+                   '"(crps249) PROVISAO JUROS CH. ESPECIAL."';
+
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+    -- Leitura de lançamentos por PA
+    OPEN cr_craplcm8(pr_cdcooper => pr_cdcooper
+                    ,pr_cdhistor => vr_cdhistor
+                    ,pr_dtmvtolt => vr_dtmvtolt);
+
+    LOOP
+
+      FETCH cr_craplcm8 INTO rw_craplcm8;
+
+      -- Sai do loop quando chegar ao final dos registros da consulta
+      EXIT WHEN cr_craplcm8%NOTFOUND;
+
+      -- Escreve valor por PA no arquivo
+      -- Colocada condicao pois estava gerando erro no RADAR
+      IF rw_craplcm8.vllanmto <> 0 THEN
+         gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, rw_craplcm8.cdagenci || ',' || TRIM(TO_CHAR(rw_craplcm8.vllanmto,'99999999999990.00')));
+      END IF;
+
+    END LOOP;
+
+    -- Fecha cursor
+    CLOSE cr_craplcm8;
+    
         
     -- Inicializando a Pl-Table
     vr_arq_op_cred(14)(999)(1) := 0;
