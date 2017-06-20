@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 29/05/2017
+   Data    : Novembro/98                     Ultima atualizacao: 19/06/2017
 
    Dados referentes ao programa:
 
@@ -514,36 +514,36 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
                             
-			         23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
-			                      na leitura do cursor cr_crapepr. (Reinert)
+			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+			                na leitura do cursor cr_crapepr. (Reinert)
 							
-      			   28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+			   28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).   
 
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
-			                     (Daniel)
+			                (Daniel)
                             
                28/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
 
-      			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
-			              				SD 549917 (Carlos Rafael Tanholi)
+			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
+							SD 549917 (Carlos Rafael Tanholi)
 
                16/11/2016 - Ajustar cursor cr_craplcm6 para efetuar a busca correta das 
                             Despesas Sicredi (Lucas Ranghetti #508130)
                      
-      			   30/11/2016 - Correção para buscar corretamente registro da crapstn
-			                      de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
-                     
+			   30/11/2016 - Correção para buscar corretamente registro da crapstn
+			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
+                      
                06/03/2017 - Alterações Projeto 307 - Automatização Arquivos Contábeis Ayllos
                             Inclusão de novos históricos e retirada de lançamentos de reversão (Jontas-Supero)
-                            
+                     
                17/03/2017 - Ajustes referente ao projeto M338.1, não estourar a conta corrente com cobrança 
-			                      de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
-              							(Adriano - SD 632569).
+			                de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
+							(Adriano - SD 632569).
+
+							 21/03/2017 - Adicionado tratamento de recarga de celular no arquivo 
+														contábil - PRJ321. (Reinert)
               
-               21/03/2017 - Adicionado tratamento de recarga de celular no arquivo 
-				            contábil - PRJ321. (Reinert)
-                    
                23/03/2017 - Ajustes PRJ343 - Emprestimo cessao de credito(Odirlei-AMcom)
       
                13/04/2017 - Alterações Projeto 307 - Automatização Arquivos Contábeis Ayllos
@@ -553,7 +553,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                08/05/2017 - Detalhado no arquivo os registros de LIMITES CONCEDIDOS
                             PARA DESCONTO DE CHEQUES/TITULOS (Tiago/Thiago #611703).            
-               
+                            
                24/05/2017 - Ajuste para apresentar valores de provisão juros CH. especial de pessoa
                             juridica apenas se encontrar algum valor
                            (Adriano - SD 675239).
@@ -561,6 +561,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                29/05/2017 - Alterado tamanho da variavel vr_indice para suportar
                             3 numeros (Tiago/Thiago).             
+
+               19/06/2017 - Ajuste para enviar apenas cheques em desconto aprovados (insitana = 1)
+                            PRJ300-Desconto de cheque(Odirlei-AMcom)
+
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -837,7 +841,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            nrcheque
       from crapcdb
      where crapcdb.cdcooper = pr_cdcooper
-       and crapcdb.nrborder = pr_nrborder;
+       and crapcdb.nrborder = pr_nrborder
+       AND crapcdb.insitana = 1; --> apenas os aprovados
   -- Desconto de cheques
   cursor cr_crapcdb2 (pr_cdcooper in crapcdb.cdcooper%type,
                       pr_dtmvtoan in crapcdb.dtlibera%type,
@@ -854,6 +859,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      where crapcdb.cdcooper = pr_cdcooper
        and crapcdb.dtlibera > pr_dtmvtoan
        and crapcdb.dtlibera <= pr_dtmvtolt
+       AND crapcdb.insitana = 1 --> apenas os aprovados
        and crapcdb.dtlibbdc is not null
        and crapcdb.dtdevolu is null;
   -- Desconto de cheques
@@ -871,6 +877,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       from crapcdb
      where crapcdb.cdcooper = pr_cdcooper
        and crapcdb.dtdevolu = pr_dtdevolu
+       and crapcdb.insitana = 1 --> apenas os aprovados
        and crapcdb.insitchq = 1; -- Resgatado
   -- Borderô de desconto de títulos
   cursor cr_crapbdt (pr_cdcooper in crapbdt.cdcooper%type,
@@ -1427,7 +1434,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND ass.inpessoa        = pr_inpessoa
 			 AND ass.cdcooper        = tope.cdcooper
 			 AND ass.nrdconta        = tope.nrdconta
-  GROUP BY ass.cdagenci;  	
+  GROUP BY ass.cdagenci;
 	-- Repasse recarga de celular
 	CURSOR cr_craptvl_recarg (pr_cdcooper IN crapcop.cdcooper%TYPE
 	                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
@@ -3026,6 +3033,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        where crapcdb.cdcooper = pr_cdcooper
          and crapcdb.dtlibera > pr_dtmvtolt
          and crapcdb.dtlibbdc < pr_dtmvtopr
+         AND crapcdb.insitana = 1 --> Apenas aprovados
          and ( crapcdb.dtdevolu is null
                OR
               (crapcdb.dtdevolu is not null AND
@@ -4889,7 +4897,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1542).nrctaori_jur := 7138;
         vr_tab_historico(1542).nrctades_jur := 7033;
         vr_tab_historico(1542).dsrefere_jur := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-
+     
         vr_tab_historico(1508).nrctaori_fis := 7018;
         vr_tab_historico(1508).nrctades_fis := 7123;
         vr_tab_historico(1508).dsrefere_fis := 'ESTORNO JUROS DE MORA CONTR. EMPR. TX. PRE-FIXADA - PESSOA FISICA';
@@ -4903,14 +4911,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1712).nrctaori_jur := 7019;
         vr_tab_historico(1712).nrctades_jur := 7123;
         vr_tab_historico(1712).dsrefere_jur := 'ESTORNO JUROS EMPRESTIMOS PRE-FIXADO - PESSOA JURIDICA';
-                
+
         vr_tab_historico(1713).nrctaori_fis := 7030;
         vr_tab_historico(1713).nrctades_fis := 7136;
         vr_tab_historico(1713).dsrefere_fis := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA FISICA';
         vr_tab_historico(1713).nrctaori_jur := 7031;
         vr_tab_historico(1713).nrctades_jur := 7136;
         vr_tab_historico(1713).dsrefere_jur := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO - PESSOA JURIDICA';
-           
+
         vr_tab_historico(1722).nrctaori_fis := 7030;
         vr_tab_historico(1722).nrctades_fis := 7136;
         vr_tab_historico(1722).dsrefere_fis := 'ESTORNO JUROS FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
@@ -5036,7 +5044,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(2093).nrctaori_jur := 7043;
         vr_tab_historico(2093).nrctades_jur := 7042;
         vr_tab_historico(2093).dsrefere_jur := 'JUROS DE MORA CONTRATO FINANCIAMENTO TX.POS-FIXADA - PESSOA JURIDICA';
-     
+
         vr_tab_historico(2094).nrctaori_fis := 7043;
         vr_tab_historico(2094).nrctades_fis := 7041;
         vr_tab_historico(2094).dsrefere_fis := 'JURO MORA FINANCIAM. POS-FIXADO PAGO PELO AVALISTA - PESSOA FISICA';
@@ -5058,8 +5066,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1719).nrctades_jur := 7138;
         vr_tab_historico(1719).dsrefere_jur := 'ESTORNO MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
         
-     END;
-     
+   END;  
+
           -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico_mic IS
   BEGIN
@@ -5159,790 +5167,790 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         -- Levantar Excecao
         RAISE vr_exc_erro;
      END IF;
-
+      
      --Este trecho gerar apenas uma vez por mês
      IF to_char(vr_dtmvtolt, 'mm') <> to_char(vr_dtmvtopr, 'mm') THEN
-     IF vr_arq_op_cred(2)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - PESSOA FISICA
+       IF vr_arq_op_cred(2)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5536,1641,vr_arq_op_cred(2)(999)(1),'"DESCONTO DE CHEQUE - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-                                      
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+                                        
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
+          
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
+  
+       END IF;
 
-     END IF;
-
-     IF vr_arq_op_cred(2)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - REVERSAO
+       IF vr_arq_op_cred(2)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,5536,vr_arq_op_cred(2)(999)(1),'"'||vr_dsprefix||'DESCONTO DE CHEQUE - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-                
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+                  
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(2)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - PESSOA JURIDICA
+       IF vr_arq_op_cred(2)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5537,1641,vr_arq_op_cred(2)(999)(2),'"DESCONTO DE CHEQUE - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
+          
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(2)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - REVERSAO
+       IF vr_arq_op_cred(2)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 2 - DESCONTO DE CHEQUE - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,5537,vr_arq_op_cred(2)(999)(2),'"'||vr_dsprefix||'DESCONTO DE CHEQUE - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(3)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - PESSOA FISICA
+       IF vr_arq_op_cred(3)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5504,1621,vr_arq_op_cred(3)(999)(1),'"EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */                              
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */                              
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-                      
-     IF vr_arq_op_cred(3)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
+       END IF;
+                        
+       IF vr_arq_op_cred(3)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,5504,vr_arq_op_cred(3)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */                              
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
+          /* Deve ser duplicado as linhas separadas por PA */                              
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
+  
+       END IF;
 
-     END IF;
-
-     IF vr_arq_op_cred(3)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
+       IF vr_arq_op_cred(3)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5505,1621,vr_arq_op_cred(3)(999)(2),'"EMPRESTIMOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(3)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
+       IF vr_arq_op_cred(3)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,5505,vr_arq_op_cred(3)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita                                   
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita                                   
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
+          
+          pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(4)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - PESSOA FISICA
+       IF vr_arq_op_cred(4)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5548,1662,vr_arq_op_cred(4)(999)(1),'"FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
+          
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(4)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
+       END IF;
+       
+       IF vr_arq_op_cred(4)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,5548,vr_arq_op_cred(4)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(4)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
+       END IF;
+       
+       IF vr_arq_op_cred(4)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5549,1662,vr_arq_op_cred(4)(999)(2),'"FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(4)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
+       END IF;
+       
+       IF vr_arq_op_cred(4)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,5549,vr_arq_op_cred(4)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(5)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
+       END IF;
+       
+       IF vr_arq_op_cred(5)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5516,1664,vr_arq_op_cred(5)(999)(1),'"EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
+          
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(5)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
+       IF vr_arq_op_cred(5)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,5516,vr_arq_op_cred(5)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(5)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+       IF vr_arq_op_cred(5)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5517,1664,vr_arq_op_cred(5)(999)(2),'"EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(5)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
+       END IF;
+       
+       IF vr_arq_op_cred(5)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,5517,vr_arq_op_cred(5)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(6)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 6 - FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
+       IF vr_arq_op_cred(6)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 6 - FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5562,1667,vr_arq_op_cred(6)(999)(1),'"FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
+                      
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-     
-     END IF;
+       
+       END IF;
 
-     IF vr_arq_op_cred(6)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
+       IF vr_arq_op_cred(6)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1667,5562,vr_arq_op_cred(6)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
+                      
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(6)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+       IF vr_arq_op_cred(6)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5563,1667,vr_arq_op_cred(6)(999)(2),'"FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(6)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
+       IF vr_arq_op_cred(6)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 6 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1667,5563,vr_arq_op_cred(6)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(7)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
+       IF vr_arq_op_cred(7)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1642,5538,vr_arq_op_cred(7)(999)(1),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(7)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - REVERSAO
+       END IF;
+       
+       IF vr_arq_op_cred(7)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5538,1642,vr_arq_op_cred(7)(999)(1),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
+                      
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-     
-     END IF; 
+       
+       END IF; 
 
-     IF vr_arq_op_cred(7)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
+       IF vr_arq_op_cred(7)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1642,5539,vr_arq_op_cred(7)(999)(2),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file);   
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(7)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - REVERSAO
+       IF vr_arq_op_cred(7)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5539,1642,vr_arq_op_cred(7)(999)(2),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(8)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+       IF vr_arq_op_cred(8)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5540,1643,vr_arq_op_cred(8)(999)(1),'"DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(8)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - REVERSAO
+       IF vr_arq_op_cred(8)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,5540,vr_arq_op_cred(8)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(8)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+       IF vr_arq_op_cred(8)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5541,1643,vr_arq_op_cred(8)(999)(2),'"DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+          
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(8)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - REVERSAO
+       IF vr_arq_op_cred(8)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,5541,vr_arq_op_cred(8)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                      
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                      
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-     
-     END IF;
+       
+       END IF;
 
-     IF vr_arq_op_cred(9)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+       IF vr_arq_op_cred(9)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5544,1645,vr_arq_op_cred(9)(999)(1),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+                      
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(9)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
+       IF vr_arq_op_cred(9)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,5544,vr_arq_op_cred(9)(999)(1),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+                      
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(9)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+       END IF;
+       
+       IF vr_arq_op_cred(9)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5545,1645,vr_arq_op_cred(9)(999)(2),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(9)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
+       END IF;
+       
+       IF vr_arq_op_cred(9)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,5545,vr_arq_op_cred(9)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-     
-     IF vr_arq_op_cred(10)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+       END IF;
+       
+       IF vr_arq_op_cred(10)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1644,5542,vr_arq_op_cred(10)(999)(1),'"RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+                      
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(10)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - REVERSAO
+       IF vr_arq_op_cred(10)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5542,1644,vr_arq_op_cred(10)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */ 
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */ 
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
+                      
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(10)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+       IF vr_arq_op_cred(10)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1644,5543,vr_arq_op_cred(10)(999)(2),'"RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                        ,pr_inpessoa => 2 -- Tipo de Pessoa
                        ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
+       END IF;
 
-     IF vr_arq_op_cred(10)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - REVERSAO
+       IF vr_arq_op_cred(10)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - REVERSAO
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5543,1644,vr_arq_op_cred(10)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                       ,pr_inpessoa => 2 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
-     END IF;
-   
-     IF vr_arq_op_cred(11)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5546,vr_arq_op_cred(11)(999)(1),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-                      ,pr_inpessoa => 1 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-                      ,pr_inpessoa => 1 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-     END IF;
-
-     IF vr_arq_op_cred(11)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5546,1646,vr_arq_op_cred(11)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-                      ,pr_inpessoa => 1 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
-                      ,pr_inpessoa => 1 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-     END IF;
-
-     IF vr_arq_op_cred(11)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5547,vr_arq_op_cred(11)(999)(2),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-                      ,pr_inpessoa => 2 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-                      ,pr_inpessoa => 2 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-     END IF;
-
-     IF vr_arq_op_cred(11)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5547,1646,vr_arq_op_cred(11)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                         
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-                      ,pr_inpessoa => 2 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-        pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
-                      ,pr_inpessoa => 2 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-     END IF;
-
-     IF vr_arq_op_cred(12)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 12 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7024,vr_arq_op_cred(12)(999)(1),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
-                      ,pr_inpessoa => 1 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
-                      ,pr_inpessoa => 1 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-
-     END IF;
-
-     IF vr_arq_op_cred(12)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 12 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
-          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7025,vr_arq_op_cred(12)(999)(2),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
-                      ,pr_inpessoa => 2 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
-                      ,pr_inpessoa => 2 -- Tipo de Pessoa
-                      ,pr_inputfile => vr_input_file); 
-                    
-
-     END IF;
+       END IF;
      
-     IF vr_arq_op_cred(13)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 13 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
+       IF vr_arq_op_cred(11)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5546,vr_arq_op_cred(11)(999)(1),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(11)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5546,1646,vr_arq_op_cred(11)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(11)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5547,vr_arq_op_cred(11)(999)(2),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(11)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5547,1646,vr_arq_op_cred(11)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                         
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+          pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+       END IF;
+
+       IF vr_arq_op_cred(12)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 12 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7024,vr_arq_op_cred(12)(999)(1),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+          
+          pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
+                      ,pr_inpessoa => 1 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+          
+       END IF;
+
+       IF vr_arq_op_cred(12)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 12 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
+          vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7025,vr_arq_op_cred(12)(999)(2),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA"');
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+          pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
+                      ,pr_inpessoa => 2 -- Tipo de Pessoa
+                      ,pr_inputfile => vr_input_file); 
+
+
+       END IF;
+       
+       IF vr_arq_op_cred(13)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 13 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7024,vr_arq_op_cred(13)(999)(1),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1 -- Tipo de Pessoa
                     ,pr_inputfile => vr_input_file); 
-        
-        pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
+                    
+          pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                       ,pr_inputfile => vr_input_file); 
 
 
-     END IF;
-
-     IF vr_arq_op_cred(13)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 13 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
+       END IF;
+       
+       IF vr_arq_op_cred(13)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 13 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7025,vr_arq_op_cred(13)(999)(2),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2 -- Tipo de Pessoa
                     ,pr_inputfile => vr_input_file); 
-                    
-        pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
+                      
+          pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2 -- Tipo de Pessoa
                     ,pr_inputfile => vr_input_file); 
-        
-     END IF;
-     
-     IF vr_arq_op_cred(15)(999)(1) > 0 THEN
-        -- Monta cabacalho - Arq 15 - PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
+
+       END IF;
+
+       IF vr_arq_op_cred(15)(999)(1) > 0 THEN
+          -- Monta cabacalho - Arq 15 - PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7131,7022,vr_arq_op_cred(15)(999)(1),'"APROPRIACAO RECEITA DE CHEQUE RECEBIDO PARA DESCONTO - PESSOA FISICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
                       ,pr_inpessoa => 1 -- Tipo de Pessoa
                      ,pr_inputfile => vr_input_file); 
 
-        pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
+          pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
                       ,pr_inpessoa => 1
                       ,pr_inputfile => vr_input_file); -- Tipo de Pessoa
 
-     END IF;
-     
-     IF vr_arq_op_cred(15)(999)(2) > 0 THEN
-        -- Monta cabacalho - Arq 15 - PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
+       END IF;
+       
+       IF vr_arq_op_cred(15)(999)(2) > 0 THEN
+          -- Monta cabacalho - Arq 15 - PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
           vr_setlinha := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7131,7023,vr_arq_op_cred(15)(999)(2),'"APROPRIACAO RECEITA DE CHEQUE RECEBIDO PARA DESCONTO - PESSOA JURIDICA"');
-        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */
-        pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
+          /* Deve ser duplicado as linhas separadas por PA */
+          pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
                       ,pr_inpessoa => 2
                       ,pr_inputfile => vr_input_file); -- Tipo de Pessoa
 
-        pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
+          pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
                       ,pr_inpessoa => 2
                       ,pr_inputfile => vr_input_file); -- Tipo de Pessoa
 
-     END IF;
+       END IF;
      END IF; --Mensal
 
      vr_tab_valores_ag.DELETE;
@@ -5967,14 +5975,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                    
+
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                         ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                       
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
                           
                        END LOOP;
-
+                    
                        -- limpa a table de reveraso
                        vr_tab_valores_ag.DELETE;
                     END IF;
@@ -6007,7 +6015,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  ELSE -- Monta as linhas separadas por agencia
                     vr_index := vr_tab_valores_ag.COUNT()+1;
                     vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
-                                             ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                                                   ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
 
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
@@ -6029,13 +6037,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                       
+
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                         ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                       
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
                        END LOOP;
-
+                       
                        -- limpa a table de reveraso
                        vr_tab_valores_ag.DELETE;
                     END IF;
@@ -6070,7 +6078,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  ELSE -- Monta as linhas separadas por agencia
                     vr_index := vr_tab_valores_ag.COUNT()+1;
                     vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
-                                             ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                                                 ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
 
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
@@ -6094,13 +6102,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                       
+
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                         ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                       
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
                        END LOOP;
-
+                       
                        -- limpa a table de reveraso
                        vr_tab_valores_ag.DELETE;
 
@@ -6135,7 +6143,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  ELSE -- Monta as linhas separadas por agencia
                     vr_index := vr_tab_valores_ag.COUNT()+1;
                     vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
-                                             ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                                                 ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
 
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
@@ -6176,13 +6184,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        -- escreve a linha duplicada
                        vr_index := vr_tab_valores_ag.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
-                    
+
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                         ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                       
+
                           vr_index := vr_tab_valores_ag.NEXT(vr_index);
                        END LOOP;
-
+                    
                        -- limpa a table de reveraso
                        vr_tab_valores_ag.DELETE;
 
@@ -6276,7 +6284,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  ELSE -- Monta as linhas separadas por agencia
                     vr_index := vr_tab_valores_ag.COUNT()+1;
                     vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
-                                             ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                                                 ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
 
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
@@ -6320,13 +6328,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     -- escreve a linha duplicada
                     vr_index := vr_tab_valores_ag.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
-                    
+
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                      ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                    
+
                        vr_index := vr_tab_valores_ag.NEXT(vr_index);
                     END LOOP;
-
+                    
                     -- limpa a table de reveraso
                     vr_tab_valores_ag.DELETE;
 
@@ -6364,7 +6372,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               ELSE -- Monta as linhas separadas por agencia
                  vr_index := vr_tab_valores_ag.COUNT()+1;
                  vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
-                                          ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                                              ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
 
                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
@@ -6379,10 +6387,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         -- escreve a linha duplicada
         vr_index := vr_tab_valores_ag.FIRST;
         WHILE vr_index IS NOT NULL LOOP
-        
+
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-        
+
            vr_index := vr_tab_valores_ag.NEXT(vr_index);
         END LOOP;
         
@@ -6408,13 +6416,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     -- escreve a linha duplicada
                     vr_index := vr_tab_valores_ag.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
-                 
+
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                      ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                    
+
                        vr_index := vr_tab_valores_ag.NEXT(vr_index);
                     END LOOP;
-
+                 
                     -- limpa a table de reveraso
                     vr_tab_valores_ag.DELETE;
 
@@ -6448,7 +6456,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               ELSE -- Monta as linhas separadas por agencia
                  vr_index := vr_tab_valores_ag.COUNT()+1;
                  vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
-                                          ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                                              ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
 
                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
@@ -6463,12 +6471,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         -- escreve a linha duplicada
         vr_index := vr_tab_valores_ag.FIRST;
         WHILE vr_index IS NOT NULL LOOP
-     
+
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-        
+
            vr_index := vr_tab_valores_ag.NEXT(vr_index);
-        END LOOP;
+        END LOOP;  
            END IF;
                     
      vr_tab_valores_ag.DELETE;
@@ -6573,12 +6581,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     -- escreve a linha duplicada
                     vr_index := vr_tab_valores_ag.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
-                 
+
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                      ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-                    
+
                        vr_index := vr_tab_valores_ag.NEXT(vr_index);
-                    END LOOP;
+                    END LOOP;  
 
                     -- limpa a table de reveraso
                     vr_tab_valores_ag.DELETE;
@@ -6770,7 +6778,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                    ,rw_craprej.vlsdapli
                                                    ,'"RECEITA COBRANCA BB - PESSOA FISICA"');
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                  ,pr_des_text => vr_setlinha); --> Texto para escrita
+                                                     ,pr_des_text => vr_setlinha); --> Texto para escrita
                     
 
                  ELSE -- Pessoa Juridica
@@ -6785,15 +6793,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-                 END IF;
+                    END IF;
               ELSE -- Monta as linhas separadas por agencia
                  vr_index := vr_tab_valores_ag.COUNT()+1;
                  vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
                                           ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
-
+                    
                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
-              END IF;
+                 END IF;
                     END IF;
                     
         ELSIF rw_craprej.cdhistor IN (1023,1316,1318,1322,1324,1326,1328,1330,1332,1334,1336,1338,2030,2031,2034,2035) THEN
@@ -6864,7 +6872,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               ELSE -- Monta as linhas separadas por agencia
                  vr_index := vr_tab_valores_ag.COUNT()+1;
                  vr_tab_valores_ag(vr_index) := LPAD(rw_craprej.cdagenci,3,0)||','
-                                          ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                                              ||TRIM(TO_CHAR(rw_craprej.vlsdapli,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
 
                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita
@@ -6954,14 +6962,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         -- escreve a linha duplicada
         vr_index := vr_tab_valores_ag.FIRST;
         WHILE vr_index IS NOT NULL LOOP
-     
+
            gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                          ,pr_des_text => vr_tab_valores_ag(vr_index)); --> Texto para escrita                   
-        
+
            vr_index := vr_tab_valores_ag.NEXT(vr_index);
         END LOOP;
         
-     END IF;     
+     END IF;
      
      --
      FOR rw_craprej IN cr_crapret4(pr_cdcooper,vr_dtmvtolt) LOOP
@@ -11425,7 +11433,7 @@ BEGIN
   FOR rw_operadora IN cr_operadora(pr_cdcooper => pr_cdcooper
 		                              ,pr_dtmvtolt => vr_dtmvtolt) LOOP
 																	
-    IF rw_operadora.totrecarga > 0 AND rw_operadora.perreceita > 0 THEN	
+    IF rw_operadora.totrecarga > 0 AND rw_operadora.perreceita > 0 THEN																	
       
       --Valores por Operadora e tipo pessoa
       IF vr_tab_recarga_celular.exists(rw_operadora.cdoperadora) THEN
@@ -11488,27 +11496,27 @@ BEGIN
   vr_chave := vr_tab_recarga_celular.first;
   WHILE vr_chave IS NOT NULL LOOP
     
-    /* Linha 1 - Cabecalho*/
-    vr_cdestrut := '55';
-    vr_linhadet := trim(vr_cdestrut)||
-                   trim(vr_dtmvtolt_yymmdd)||','||
-                   trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                   '4340,'|| 
-                   '7543,'||
+			/* Linha 1 - Cabecalho*/
+			vr_cdestrut := '55';
+			vr_linhadet := trim(vr_cdestrut)||
+										 trim(vr_dtmvtolt_yymmdd)||','||
+										 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+										 '4340,'|| 
+										 '7543,'||
                    trim(to_char(((vr_tab_recarga_celular(vr_chave).totrecarga_pf + vr_tab_recarga_celular(vr_chave).totrecarga_pj) * (vr_tab_recarga_celular(vr_chave).perreceita / 100)), '999999990.00'))||','||
-                   '5210,'||
-                   '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
+										 '5210,'||
+										 '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
                    vr_tab_recarga_celular(vr_chave).nmoperadora || '"';
-    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-    
+			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);																	
+			
     --
     vr_cdagenci := vr_tab_age_recarga_celular(vr_chave).first;
     WHILE vr_cdagenci IS NOT NULL LOOP
 
       vr_linhadet := to_char(vr_cdagenci, 'fm000')|| ',' ||
                       trim(to_char(((vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pf + vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pj) * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100)),
-                      '999999990.00'));
-      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+												'999999990.00'));
+				gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       
       --
       IF vr_tab_receita_cel_pf.exists(vr_cdagenci) THEN
@@ -11562,7 +11570,7 @@ BEGIN
       END IF;
 
       vr_cdagenci := vr_tab_receita_cel_pf.next(vr_cdagenci); 
-    END LOOP; 
+			END LOOP;
     
   END IF;
   --
@@ -11590,11 +11598,11 @@ BEGIN
         vr_linhadet := to_char(vr_cdagenci, 'fm000')|| ',' ||
                         trim(to_char(vr_tab_receita_cel_pj(vr_cdagenci),'999999990.00'));
         gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-      END IF;        
+		END IF;
           
       vr_cdagenci := vr_tab_receita_cel_pj.next(vr_cdagenci); 
-  END LOOP;
-  
+	END LOOP;
+	
   END IF;
   -- Fim RECEITA RECARGA DE CELULAR ...........................................	
 
@@ -11624,26 +11632,26 @@ BEGIN
 
     pc_proc_cbl_mensal(pr_cdcooper);
 
-      END IF;
-
-    -- Gera o arquivo AAMMDD_OPCRED.txt - Dados para contabilidade
-    pc_gera_arq_op_cred (vr_dscritic);
+  END IF;
+  
+  -- Gera o arquivo AAMMDD_OPCRED.txt - Dados para contabilidade
+  pc_gera_arq_op_cred (vr_dscritic);
     
-    IF vr_dscritic IS NOT NULL THEN
-       vr_cdcritic := 0;
-       RAISE vr_exc_saida;
-    END IF;
+  IF vr_dscritic IS NOT NULL THEN
+     vr_cdcritic := 0;
+     RAISE vr_exc_saida;
+  END IF;
     
-    vr_nmarqdat_ope_cred_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_OPCRED.txt';
+  vr_nmarqdat_ope_cred_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_OPCRED.txt';
 
-    -- Copia o arquivo gerado para o diretório final convertendo para DOS
-    gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||' > '||vr_dsdircop||'/'||vr_nmarqdat_ope_cred_nov||' 2>/dev/null',
-                                pr_typ_saida   => vr_typ_said,
-                                pr_des_saida   => vr_dscritic);
-    -- Testar erro
-    if vr_typ_said = 'ERR' then
-      gene0001.pc_print('Erro ao copiar o arquivo '||vr_nmarqdat_ope_cred||': '||vr_dscritic);
-    end if;   
+  -- Copia o arquivo gerado para o diretório final convertendo para DOS
+  gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||' > '||vr_dsdircop||'/'||vr_nmarqdat_ope_cred_nov||' 2>/dev/null',
+                              pr_typ_saida   => vr_typ_said,
+                              pr_des_saida   => vr_dscritic);
+  -- Testar erro
+  if vr_typ_said = 'ERR' then
+    gene0001.pc_print('Erro ao copiar o arquivo '||vr_nmarqdat_ope_cred||': '||vr_dscritic);
+  end if; 
   --Fim geração arquivo AAMMDD_OPCRED.txt
   
   --Gera arquivo AAMMDD_PREJUIZO.txt

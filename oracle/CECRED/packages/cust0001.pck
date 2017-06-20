@@ -3156,6 +3156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                custodia, tarifa será criada no processo batch, para permitir
                                resgatar o cheque no mesmo dia sem cobrar a tarifa.
                                PRJ300-Desconto de cheque(Odirlei-AMcom)
+                               
+                  20/06/2017 - Deleta crítica de cheque pendente de entrega se existir.
+                               PRJ300-Desconto de cheque(Lombardi)
       ............................................................................. */
     
      BEGIN
@@ -3907,6 +3910,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                  
              END;
                
+             -- Deleta crítica de cheque pendente de entrega se existir
+             BEGIN
+               DELETE crapabc abc
+                WHERE abc.cdcooper = pr_cdcooper
+                  AND abc.nrborder = rw_crapdcc_2.nrborder
+                  AND abc.cdcmpchq = rw_crapdcc_2.cdcmpchq
+                  AND abc.cdbanchq = rw_crapdcc_2.cdbanchq
+                  AND abc.cdagechq = rw_crapdcc_2.cdagechq
+                  AND abc.nrctachq = rw_crapdcc_2.nrctachq
+                  AND abc.nrcheque = rw_crapdcc_2.nrcheque
+                  AND abc.cdocorre = 26;
+             EXCEPTION
+               WHEN OTHERS THEN
+                 vr_cdcritic := 0;
+                 vr_dscritic := 'Erro ao excluir críticas do borderô.';
+                 RAISE vr_exc_erro;
+             END;
+             
            END LOOP;      
            
            BEGIN
@@ -7261,7 +7282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     Objetivo  : Rotina para efetuar resgate dos cheques em custódia
 
     Alteracoes: 08/06/2017 - Ajustado a montagem do numero do documento. (Daniel)
-                                                     
+                             
                 01/06/2017 - Removido Commit e rollback, rotinas chamadoras devem controlar isto.
                              PRJ300 - Desconto de cheque (Odirlei-AMcom)
                         
