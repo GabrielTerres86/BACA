@@ -4568,7 +4568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 02/05/2016
+     Data    : Maio/14.                    Ultima atualizacao: 20/06/2017
 
      Dados referentes ao programa:
 
@@ -4660,6 +4660,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                 02/05/2016 - Adicionado validacao na solicitacao de UPGRADE/DOWNGRADE para nao gerar
                              solicitacao de cartao adicional nessa situacao (Douglas - Chamado 441407)             
+                
+                20/06/2017 - Alterar a ordem que as informações são enviadas no arquivo CCR3.
+                             Primeiro vamos enviar as linhas de Alteração Cadastral e depois as linhas
+                             de UPGRADE/DOWNGRADE (Douglas - Chamado 662595)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -5665,6 +5669,180 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             CLOSE btch0001.cr_crapdat;
           END IF;
 
+          -- Processar alterações de dados dos Cooperados que possuem Cartão de Crédito
+          FOR rw_crapcrd_loop_alt IN cr_crapcrd_loop_alt(rw_crapcol.cdcooper) LOOP
+            
+             /*OPEN cr_crawcrd_loop_alt (pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
+                                      pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd,
+                                      pr_tpcartao => rw_crapcrd_loop_alt.tpcartao,
+                                      pr_nrdconta => rw_crapcrd_loop_alt.nrdconta,
+                                      pr_nrcrcard => rw_crapcrd_loop_alt.nrcrcard,
+                                      pr_nrctrcrd => rw_crapcrd_loop_alt.nrctrcrd);
+            FETCH cr_crawcrd_loop_alt INTO rw_crawcrd_loop_alt;
+
+            IF cr_crawcrd_loop_alt%NOTFOUND THEN
+
+              CLOSE cr_crawcrd_loop_alt;
+              CONTINUE;
+            END IF;
+
+            CLOSE cr_crawcrd_loop_alt;*/
+
+            -- Só Permitir Operação 2 quando cartão já emitido SD 179666
+            /*IF rw_crawcrd_loop_alt.insitcrd IN (0,1,2) THEN
+              CONTINUE;
+            END IF;*/     -- Código desnecessário, pois o select já filtra por INSITCRD = 3 OU 4
+            
+            -- Busca alterações, após processar todas as inclusões
+            OPEN cr_crapalt(pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
+                            pr_nrdconta => rw_crapcrd_loop_alt.nrdconta,
+                            pr_dtaltini => vr_dtultenv,   -- Desde a data do ultimo envio do arquivo
+                            pr_dtaltfim => rw_crapdat.dtmvtoan);
+            FETCH cr_crapalt INTO rw_crapalt;
+
+            -- Se encontrar,
+            IF cr_crapalt%FOUND THEN
+              -- procura por alteração de Endereço PF
+              IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
+                 upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
+                 upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
+              -- procura por alteracao de endereco PJ
+                 upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
+                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
+                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
+                 upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         OR
+              -- procura por alteração de PAC
+                 upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
+                 upper(rw_crapalt.dsaltera) LIKE '%PA %'              OR
+                 -- procura por alteração de telefone
+                 upper(rw_crapalt.dsaltera) LIKE '%TELEF.%'
+                 THEN
+
+                  -- Busca Administradora de Cartões
+                  OPEN cr_crapadc(pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
+                                  pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd);
+                  FETCH cr_crapadc INTO rw_crapadc;
+
+                  -- Se nao encontrar
+                  IF cr_crapadc%NOTFOUND THEN
+                    -- Fechar o cursor pois efetuaremos raise
+                    CLOSE cr_crapadc;
+                    -- Montar mensagem de critica
+                    vr_cdcritic := 605;
+                    RAISE vr_exc_saida;
+                  ELSE
+                    -- fechar o cursor
+                    CLOSE cr_crapadc;
+                  END IF;
+
+                  -- Busca Grupo de Afinidade
+                  OPEN cr_crapacb(pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
+                                  pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd);
+                  FETCH cr_crapacb INTO rw_crapacb;
+
+                  -- Se nao encontrar
+                  IF cr_crapacb%NOTFOUND THEN
+                    -- Fechar o cursor pois efetuaremos raise
+                    CLOSE cr_crapacb;
+                    -- Montar mensagem de critica
+                    vr_dscritic := 'Grupo de Afinidade nao encontrado para administradora ' ||
+                                   to_char(rw_crapcrd_loop_alt.cdadmcrd) || '.';
+                    RAISE vr_exc_saida;
+                  ELSE
+                    -- Apenas fechar o cursor
+                    CLOSE cr_crapacb;
+                  END IF;
+
+                  -- Setar as variáveis de controle para FALSE
+                  vr_flaltafn := FALSE;
+                  vr_flalttpe := FALSE;
+                  vr_flaltcep := FALSE;
+                  vr_flalttfc := FALSE;
+
+                  -- Verificar se houve alteração no grupo de afinidade - por PA
+                  IF upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
+                     upper(rw_crapalt.dsaltera) LIKE '%PA %'              THEN
+                    vr_flaltafn := TRUE;
+                  END IF;
+
+                  -- verificar se houve alteração no Bairro ou Rua
+                  IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
+                     upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
+                     upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
+                     upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
+                     upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
+                     upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
+                     upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
+                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
+                     upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
+                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR 
+                     upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
+                     upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
+                     upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
+                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     THEN
+                    vr_flalttpe := TRUE;
+                  END IF;
+
+                  -- Verificar se foi alterado Estado, cidade ou CEP
+                  IF upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
+                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
+                     upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
+                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
+                     upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
+                     upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
+                     upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
+                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
+                     upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
+                    vr_flaltcep := TRUE;
+                  END IF;
+
+                  -- Verificar se houve alteração do telefone do cooperado
+                  IF upper(rw_crapalt.dsaltera) LIKE '%TELEF.%' THEN
+                    vr_flalttfc := TRUE;
+                  END IF;
+
+                  -- Tp. Operac.: Modificação de Conta Cartão (ENDEREÇO OU PA)
+                  vr_tipooper := '02';
+                  
+                  -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
+                  gera_linha_registro_tipo1 (rw_crapcrd_loop_alt,
+                                             rw_crapcol,
+                                             rw_crapdat,
+                                             rw_crapadc,
+                                             rw_crapcrd_loop_alt.nrcctitg,
+                                             vr_tipooper,
+                                             rw_crapcrd_loop_alt.inpessoa,
+                                            (rw_crapcrd_loop_alt.nrctrcrd + 1000000),
+                                             rw_crapcrd_loop_alt.cdagenci, -- Canal de Venda
+                                             rw_crapacb.cdgrafin,
+                                             vr_flaltafn,    -- pr_flaltafn
+                                             vr_flaltcep,    -- pr_flaltcep
+                                             vr_flalttpe,    -- pr_flalttpe
+                                             vr_flalttfc);   -- pr_flalttfc
+              END IF;
+            END IF;
+
+            -- fecha cursor
+            CLOSE cr_crapalt;
+
+          END LOOP;
+
           -- Executa LOOP em registro de Cartões para gravar DETALHE
           FOR rw_crawcrd IN cr_crawcrd(rw_crapcol.cdcooper) LOOP
             BEGIN
@@ -6154,179 +6332,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
           END LOOP;
 
-          -- Processar alterações de dados dos Cooperados que possuem Cartão de Crédito
-          FOR rw_crapcrd_loop_alt IN cr_crapcrd_loop_alt(rw_crapcol.cdcooper) LOOP
-            
-             /*OPEN cr_crawcrd_loop_alt (pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
-                                      pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd,
-                                      pr_tpcartao => rw_crapcrd_loop_alt.tpcartao,
-                                      pr_nrdconta => rw_crapcrd_loop_alt.nrdconta,
-                                      pr_nrcrcard => rw_crapcrd_loop_alt.nrcrcard,
-                                      pr_nrctrcrd => rw_crapcrd_loop_alt.nrctrcrd);
-            FETCH cr_crawcrd_loop_alt INTO rw_crawcrd_loop_alt;
-
-            IF cr_crawcrd_loop_alt%NOTFOUND THEN
-
-              CLOSE cr_crawcrd_loop_alt;
-              CONTINUE;
-            END IF;
-
-            CLOSE cr_crawcrd_loop_alt;*/
-
-            -- Só Permitir Operação 2 quando cartão já emitido SD 179666
-            /*IF rw_crawcrd_loop_alt.insitcrd IN (0,1,2) THEN
-              CONTINUE;
-            END IF;*/     -- Código desnecessário, pois o select já filtra por INSITCRD = 3 OU 4
-            
-            -- Busca alterações, após processar todas as inclusões
-            OPEN cr_crapalt(pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
-                            pr_nrdconta => rw_crapcrd_loop_alt.nrdconta,
-                            pr_dtaltini => vr_dtultenv,   -- Desde a data do ultimo envio do arquivo
-                            pr_dtaltfim => rw_crapdat.dtmvtoan);
-            FETCH cr_crapalt INTO rw_crapalt;
-
-            -- Se encontrar,
-            IF cr_crapalt%FOUND THEN
-              -- procura por alteração de Endereço PF
-              IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
-                 upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
-                 upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
-                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
-                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
-                 upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
-                 upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
-                 upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
-                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
-                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
-                 upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
-                 upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
-                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR
-                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
-                 upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
-                 upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
-              -- procura por alteracao de endereco PJ
-                 upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
-                 upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
-                 upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
-                 upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
-                 upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     OR
-                 upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
-                 upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         OR
-              -- procura por alteração de PAC
-                 upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                 upper(rw_crapalt.dsaltera) LIKE '%PA %'              OR
-                 -- procura por alteração de telefone
-                 upper(rw_crapalt.dsaltera) LIKE '%TELEF.%'
-                 THEN
-
-                  -- Busca Administradora de Cartões
-                  OPEN cr_crapadc(pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
-                                  pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd);
-                  FETCH cr_crapadc INTO rw_crapadc;
-
-                  -- Se nao encontrar
-                  IF cr_crapadc%NOTFOUND THEN
-                    -- Fechar o cursor pois efetuaremos raise
-                    CLOSE cr_crapadc;
-                    -- Montar mensagem de critica
-                    vr_cdcritic := 605;
-                    RAISE vr_exc_saida;
-                  ELSE
-                    -- fechar o cursor
-                    CLOSE cr_crapadc;
-                  END IF;
-
-                  -- Busca Grupo de Afinidade
-                  OPEN cr_crapacb(pr_cdcooper => rw_crapcrd_loop_alt.cdcooper,
-                                  pr_cdadmcrd => rw_crapcrd_loop_alt.cdadmcrd);
-                  FETCH cr_crapacb INTO rw_crapacb;
-
-                  -- Se nao encontrar
-                  IF cr_crapacb%NOTFOUND THEN
-                    -- Fechar o cursor pois efetuaremos raise
-                    CLOSE cr_crapacb;
-                    -- Montar mensagem de critica
-                    vr_dscritic := 'Grupo de Afinidade nao encontrado para administradora ' ||
-                                   to_char(rw_crapcrd_loop_alt.cdadmcrd) || '.';
-                    RAISE vr_exc_saida;
-                  ELSE
-                    -- Apenas fechar o cursor
-                    CLOSE cr_crapacb;
-                  END IF;
-
-                  -- Setar as variáveis de controle para FALSE
-                  vr_flaltafn := FALSE;
-                  vr_flalttpe := FALSE;
-                  vr_flaltcep := FALSE;
-                  vr_flalttfc := FALSE;
-
-                  -- Verificar se houve alteração no grupo de afinidade - por PA
-                  IF upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                     upper(rw_crapalt.dsaltera) LIKE '%PA %'              THEN
-                    vr_flaltafn := TRUE;
-                  END IF;
-
-                  -- verificar se houve alteração no Bairro ou Rua
-                  IF upper(rw_crapalt.dsaltera) LIKE '%END.RES. 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%ENDERECO 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%NRO.END. 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%NR.END. 1.TTL%'    OR
-                     upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. 1.TTL%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%COMPL.END. 1.TTL%' OR
-                     upper(rw_crapalt.dsaltera) LIKE '%APTO. 1.TTL%'      OR
-                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO 1.TTL%'     OR
-                     upper(rw_crapalt.dsaltera) LIKE '%END.RES.,%'        OR
-                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO,%'          OR 
-                     upper(rw_crapalt.dsaltera) LIKE '%END.RES. COM.,%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%NR.END. COM.,%'    OR
-                     upper(rw_crapalt.dsaltera) LIKE '%COMPLEM. COM.,%'   OR
-                     upper(rw_crapalt.dsaltera) LIKE '%BAIRRO COM.,%'     THEN
-                    vr_flalttpe := TRUE;
-                  END IF;
-
-                  -- Verificar se foi alterado Estado, cidade ou CEP
-                  IF upper(rw_crapalt.dsaltera) LIKE '%CEP 1.TTL%'        OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE 1.TTL%'     OR
-                     upper(rw_crapalt.dsaltera) LIKE '%UF 1.TTL%'         OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE,%'          OR
-                     upper(rw_crapalt.dsaltera) LIKE '%UF,%'              OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CEP,%'             OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CEP COM.,%'        OR
-                     upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
-                     upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         THEN
-                    vr_flaltcep := TRUE;
-                  END IF;
-
-                  -- Verificar se houve alteração do telefone do cooperado
-                  IF upper(rw_crapalt.dsaltera) LIKE '%TELEF.%' THEN
-                    vr_flalttfc := TRUE;
-                  END IF;
-
-                  -- Tp. Operac.: Modificação de Conta Cartão (ENDEREÇO OU PA)
-                  vr_tipooper := '02';
-
-                  -- LINHA RELATIVA AOS DADOS DA CONTA CARTAO (Tipo 1)
-                  gera_linha_registro_tipo1 (rw_crapcrd_loop_alt,
-                                             rw_crapcol,
-                                             rw_crapdat,
-                                             rw_crapadc,
-                                             rw_crapcrd_loop_alt.nrcctitg,
-                                             vr_tipooper,
-                                             rw_crapcrd_loop_alt.inpessoa,
-                                            (rw_crapcrd_loop_alt.nrctrcrd + 1000000),
-                                             rw_crapcrd_loop_alt.cdagenci, -- Canal de Venda
-                                             rw_crapacb.cdgrafin,
-                                             vr_flaltafn,    -- pr_flaltafn
-                                             vr_flaltcep,    -- pr_flaltcep
-                                             vr_flalttpe,    -- pr_flalttpe
-                                             vr_flalttfc);   -- pr_flalttfc
-              END IF;
-            END IF;
-
-          -- fecha cursor
-          CLOSE cr_crapalt;
-
-          END LOOP;
         END LOOP;
 
         -- monta TRAILER do arquivo
