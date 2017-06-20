@@ -11241,55 +11241,58 @@ BEGIN
 
   -- Fecha cursor
   CLOSE cr_craplcm8;
-        
-  -- Inicializando a Pl-Table
-  vr_arq_op_cred(14)(999)(1) := 0;
-  vr_arq_op_cred(14)(999)(2) := 0;
-        
-  -- Separando as informacoes de PROVISAO JUROS CH. ESPECIAL por agencia e tipo de pessoa
-  FOR rw_craplcm_age IN cr_craplcm_age(pr_cdcooper => pr_cdcooper
-                                      ,pr_cdhistor => vr_cdhistor
-                                      ,pr_dtmvtolt => vr_dtmvtolt) LOOP
-                                            
-     vr_arq_op_cred(14)(rw_craplcm_age.cdagenci)(rw_craplcm_age.inpessoa) := rw_craplcm_age.vllanmto;
-     vr_arq_op_cred(14)(999)(rw_craplcm_age.inpessoa) := vr_arq_op_cred(14)(999)(rw_craplcm_age.inpessoa) + rw_craplcm_age.vllanmto;
-        
-  END LOOP; 
   
-  IF vr_arq_op_cred(14)(999)(1) > 0 THEN
-      -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
-      vr_linhadet := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtoan,btch0001.rw_crapdat.dtmvtoan,7118,7014,vr_arq_op_cred(14)(999)(1),'"PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA"');
-      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arquivo_txt --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_linhadet); --> Texto para escrita
+  IF rw_craplcm_tot.vllanmto > 0 THEN
         
-      /* Deve ser duplicado as linhas separadas por PA */
-      pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
-                  ,pr_inpessoa => 1
-                  ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+    -- Inicializando a Pl-Table
+    vr_arq_op_cred(14)(999)(1) := 0;
+    vr_arq_op_cred(14)(999)(2) := 0;
+          
+    -- Separando as informacoes de PROVISAO JUROS CH. ESPECIAL por agencia e tipo de pessoa
+    FOR rw_craplcm_age IN cr_craplcm_age(pr_cdcooper => pr_cdcooper
+                                        ,pr_cdhistor => vr_cdhistor
+                                        ,pr_dtmvtolt => vr_dtmvtolt) LOOP
+                                              
+       vr_arq_op_cred(14)(rw_craplcm_age.cdagenci)(rw_craplcm_age.inpessoa) := rw_craplcm_age.vllanmto;
+       vr_arq_op_cred(14)(999)(rw_craplcm_age.inpessoa) := vr_arq_op_cred(14)(999)(rw_craplcm_age.inpessoa) + rw_craplcm_age.vllanmto;
+          
+    END LOOP; 
+    
+    IF vr_arq_op_cred(14)(999)(1) > 0 THEN
+        -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
+        vr_linhadet := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtoan,btch0001.rw_crapdat.dtmvtoan,7118,7014,vr_arq_op_cred(14)(999)(1),'"PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA"');
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arquivo_txt --> Handle do arquivo aberto
+                                      ,pr_des_text => vr_linhadet); --> Texto para escrita
+          
+        /* Deve ser duplicado as linhas separadas por PA */
+        pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
+                    ,pr_inpessoa => 1
+                    ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
 
-      pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
-                  ,pr_inpessoa => 1
-                  ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+        pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
+                    ,pr_inpessoa => 1
+                    ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
 
-   END IF;
+     END IF;
 
-   IF vr_arq_op_cred(14)(999)(2) > 0 THEN
-      -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
-      vr_linhadet := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtoan,btch0001.rw_crapdat.dtmvtoan,7118,7015,vr_arq_op_cred(14)(999)(2),'"PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA"');
-      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arquivo_txt --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_linhadet); --> Texto para escrita
-        
-      /* Deve ser duplicado as linhas separadas por PA */
-      pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
-                  ,pr_inpessoa => 2
-                  ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+     IF vr_arq_op_cred(14)(999)(2) > 0 THEN
+        -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
+        vr_linhadet := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtoan,btch0001.rw_crapdat.dtmvtoan,7118,7015,vr_arq_op_cred(14)(999)(2),'"PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA"');
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arquivo_txt --> Handle do arquivo aberto
+                                      ,pr_des_text => vr_linhadet); --> Texto para escrita
+          
+        /* Deve ser duplicado as linhas separadas por PA */
+        pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
+                    ,pr_inpessoa => 2
+                    ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
 
-      pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
-                  ,pr_inpessoa => 2
-                  ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
+        pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
+                    ,pr_inpessoa => 2
+                    ,pr_inputfile => vr_arquivo_txt); -- Tipo de Pessoa
 
-   END IF;
-  
+     END IF;
+
+  END IF;
   -- LIBERACAO CONTRATO DE FINAME BNDES"
   vr_cdhistor := 1529;
   vr_vllanmto := 0;
