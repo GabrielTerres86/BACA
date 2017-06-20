@@ -850,6 +850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         FROM CRAPLCM l,
              crapcop c 
        WHERE l.nrdconta = c.nrctacmp
+         AND l.cdcooper = 3    --Apenas lançamentos da central
          AND l.cdhistor in (574, 577, 787, 788, 789, 790, 807, 808, 809, 811, 812, 813, 814, 822, 839)
          AND l.dtmvtolt = pr_dtmvtolt
          AND c.cdcooper = pr_cdcooper
