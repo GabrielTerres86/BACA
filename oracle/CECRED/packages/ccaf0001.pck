@@ -229,15 +229,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
   --  Sistema  : Procedure para verificar se a data de pagto do titulo eh feriado
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 06/06/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para verificar se a data de pagto do titulo eh feriado
 
-  -- Alteracoes: 06/06/2017 - Incluido set de modulo ( Belli Envolti ) - Ch 665812
-  
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -282,7 +280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       --Tipo de Dados para cursor data
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
     BEGIN
-	    -- Incluir nome do módulo logado
+	    -- Incluir nome do módulo logado - Chamado 665812 06/06/2017
 		  GENE0001.pc_set_modulo(pr_module => 'CCAF0001', pr_action => 'CCAF0001.pc_verifica_feriado');
       
       --Inicializar variaveis retorno
@@ -484,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : WEB
    Autor   : David
-   Data    : Maio/2013.                        Ultima atualizacao: 06/06/2017
+   Data    : Maio/2013.                        Ultima atualizacao: 22/06/2016
 
    Dados referentes ao programa:
 
@@ -518,12 +516,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
-      
-      vr_cdcritic_tab craperr.cdcritic%TYPE := null;
-      vr_dscritic_tab craperr.dscritic%TYPE := null;
-      
+            
     BEGIN
-	    -- Incluir nome do módulo logado
+	    -- Incluir nome do módulo logado - Chamado 665812 06/06/2017
 		  GENE0001.pc_set_modulo(pr_module => 'CCAF0001', pr_action => 'CCAF0001.pc_valida_banco_agencia');
       
       --Inicializar retorno erro
@@ -542,8 +537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         --Fechar Cursor
         CLOSE cr_crapban;
         --Gerar erro
-        vr_cdcritic_tab := 57;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic := 57;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -553,8 +547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       -- Tratamento para nao receber cheques de determinados bancos
       IF rw_crapban.cdbccxlt IN (8,347,353,356/** Banco Real **/,409,453) THEN
         --Gerar erro
-        vr_cdcritic_tab := 57;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic := 57;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -565,15 +558,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                       ,pr_cdageban => pr_cdagechq);
       --Posicionar no primeiro registro
       FETCH cr_crapagb INTO rw_crapagb;
-
       --Se Nao encontrou
       IF cr_crapagb%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_crapagb;
         --Gerar erro
                                      
-        vr_cdcritic_tab := 15;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic := 15;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -591,8 +582,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
           --Fechar Cursor
           CLOSE cr_crapagb_ativa;
           -- Mensagem que esta no Progress e nao foi convertida
-          vr_cdcritic_tab := 1027;
-          vr_dscritic_tab := vr_dscritic;
+          -- vr_dscritic := 'Nenhuma agencia ativa no banco.';
+          
+          pr_cdcritic := 1027;
                     
           --Levantar Excecao
           RAISE vr_exc_erro;
@@ -600,7 +592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         --Fechar Cursor
         CLOSE cr_crapagb_ativa;
       END IF;
-      
+                    
     EXCEPTION
       WHEN vr_exc_erro THEN
         
@@ -608,27 +600,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                              ,pr_cdagenci => 0
                              ,pr_nrdcaixa => 0
                              ,pr_nrsequen => 1 -- Sequencia 
-                             ,pr_cdcritic => vr_cdcritic_tab
-                             ,pr_dscritic => vr_dscritic_tab
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
-          
-        pr_cdcritic := vr_cdcritic_tab;
-        pr_dscritic := vr_dscritic_tab;
+                             
+        pr_dscritic := vr_dscritic;
                              
       WHEN OTHERS THEN
           
-        vr_cdcritic_tab := 9999;
+        pr_cdcritic := 9999;
         
         GENE0001.pc_gera_erro(pr_cdcooper => 0
                              ,pr_cdagenci => 0
                              ,pr_nrdcaixa => 0
                              ,pr_nrsequen => 1 -- Sequencia 
-                             ,pr_cdcritic => vr_cdcritic_tab
-                             ,pr_dscritic => vr_dscritic_tab
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
-        
-        pr_cdcritic := vr_cdcritic_tab;      
-        pr_dscritic := vr_dscritic_tab || ' CCAF0001.pc_valida_banco_agencia - ' ||sqlerrm;
+           
+        pr_dscritic := vr_dscritic || ' CCAF0001.pc_valida_banco_agencia - ' ||sqlerrm;
     END;
   END pc_valida_banco_agencia;
 
@@ -651,7 +641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : WEB
    Autor   : David
-   Data    : Maio/2013.                        Ultima atualizacao: 06/06/2017
+   Data    : Maio/2013.                        Ultima atualizacao:
 
    Dados referentes ao programa:
 
@@ -697,13 +687,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
       
-      vr_cdcritic_tab    craperr.cdcritic%TYPE := null;
-      vr_dscritic_tab    craperr.dscritic%TYPE := null;
-      vr_ja_tem_tab_erro VARCHAR2(3)           := null;
+      -- Chamado 665812 06/06/2017 
+      vr_ja_tem_tab_erro VARCHAR2(3) := null;
+      
     BEGIN
-      -- Incluir nome do módulo logado
+	    -- Incluir nome do módulo logado - Chamado 665812 06/06/2017
 		  GENE0001.pc_set_modulo(pr_module => 'CCAF0001', pr_action => 'CCAF0001.pc_calcula_bloqueio_cheque');
- 
+      
       --Inicializar retorno erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
@@ -718,11 +708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         -- Fechar o cursor pois haver¿ raise
         CLOSE cr_crapcop;
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 794;
-        --Gerar erro
-        vr_cdcritic_tab := vr_cdcritic;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic:= 794;
         --Levantar Excecao
         RAISE vr_exc_erro;
       ELSE
@@ -741,11 +727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         --Fechar Cursor
         CLOSE cr_crapage;
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 962;
-        --Gerar erro
-        vr_cdcritic_tab := vr_cdcritic;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic:= 962;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -760,11 +742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         -- Fechar o cursor pois haver¿ raise
         CLOSE BTCH0001.cr_crapdat;
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 1;
-        --Gerar erro
-        vr_cdcritic_tab := vr_cdcritic;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic:= 1;
         --Levantar Excecao
         RAISE vr_exc_erro;
       ELSE
@@ -782,11 +760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       /* Validacao do cheque */
       IF pr_vlcheque <= 0 THEN
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 269;
-        --Gerar erro
-        vr_cdcritic_tab := vr_cdcritic;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic:= 269;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -801,8 +775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
         vr_ja_tem_tab_erro := 'sim';
-        vr_cdcritic_tab    := vr_cdcritic;
-        vr_dscritic_tab    := vr_dscritic;
+        pr_dscritic:= vr_dscritic;
+        pr_cdcritic:= vr_cdcritic;
         RAISE vr_exc_erro;
       END IF;
 
@@ -845,10 +819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         CLOSE cr_crapcaf;
         --Mensagem de erro
         vr_dscritic:= 'Cidade nao cadastrada.';
-        vr_cdcritic:= 0;
-        --Gerar erro
-        vr_cdcritic_tab := vr_cdcritic;
-        vr_dscritic_tab := vr_dscritic;
+        pr_cdcritic:= 0;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -943,40 +914,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
           pr_dtblqchq:= pr_dtblqchq + 1;
         END IF;
       END LOOP;   
-       
+                  
     EXCEPTION
       WHEN vr_exc_erro THEN
-
+        
         if vr_ja_tem_tab_erro is null then
             GENE0001.pc_gera_erro(
                               pr_cdcooper => 0
                              ,pr_cdagenci => 0
                              ,pr_nrdcaixa => 0
                              ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => vr_cdcritic_tab
-                             ,pr_dscritic => vr_dscritic_tab
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
+                             
+             pr_dscritic := vr_dscritic;
           
         end if;
-        
-        pr_cdcritic := vr_cdcritic_tab;
-        pr_dscritic := vr_dscritic_tab;
-         
+                 
       WHEN OTHERS THEN
-       
-        vr_cdcritic_tab := 9999;
+        
+        pr_cdcritic := 9999;
                 
         GENE0001.pc_gera_erro(pr_cdcooper => 0
                              ,pr_cdagenci => 0
                              ,pr_nrdcaixa => 0
                              ,pr_nrsequen => 1 -- Sequencia 
-                             ,pr_cdcritic => vr_cdcritic_tab
-                             ,pr_dscritic => vr_dscritic_tab
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
-                                                         
-        pr_cdcritic := vr_cdcritic_tab;
-        pr_dscritic := vr_dscritic_tab || ' CCAF0001.pc_calcula_bloqueio_cheque - '  || sqlerrm;
-
+                                            
+        pr_dscritic:= vr_dscritic || ' CCAF0001.pc_calcula_bloqueio_cheque - '  || sqlerrm;
     END;
   END pc_calcula_bloqueio_cheque;
 
