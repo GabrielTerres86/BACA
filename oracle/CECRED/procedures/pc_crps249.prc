@@ -11273,7 +11273,7 @@ BEGIN
 
    END IF;
 
-   IF vr_arq_op_cred(14)(999)(1) > 0 THEN
+   IF vr_arq_op_cred(14)(999)(2) > 0 THEN
       -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
       vr_linhadet := fn_set_cabecalho('70',btch0001.rw_crapdat.dtmvtoan,btch0001.rw_crapdat.dtmvtoan,7118,7015,vr_arq_op_cred(14)(999)(2),'"PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA"');
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arquivo_txt --> Handle do arquivo aberto
