@@ -43,7 +43,7 @@ if ( $cddopcao == 'X' ) {
 }
 
 // Somente quando Analise Automatica Obrigatória
-if ($anlautom == 1 && $cdopcao == 'A'){
+if ($anlautom == 1 && $cdopcao == 'A' && $tlcooper <> 0){
   if ((!isset($_POST['nmregmpf'])) || $_POST['nmregmpf'] == ''){
     echo 'hideMsgAguardo();';
     echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PF &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpf\', \'#frmParest\').focus()");';
@@ -115,9 +115,9 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <flgativo>1</flgativo>";
 	$xml .= "   <incomite>" . $incomite . "</incomite>";
 	$xml .= "   <contigen>" . $contigen . "</contigen>";
-  $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
+    $xml .= "   <anlautom>" . $anlautom . "</anlautom>";
 	$xml .= "   <nmregmpf>" . $nmregmpf . "</nmregmpf>";
-  $xml .= "   <nmregmpj>" . $nmregmpj . "</nmregmpj>";
+    $xml .= "   <nmregmpj>" . $nmregmpj . "</nmregmpj>";
 	$xml .= "   <qtsstime>" . $qtsstime . "</qtsstime>";
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
@@ -154,6 +154,8 @@ if ( $cddopcao == 'C') {
 				echo '$("#contigen", "#divAlteracao").val("1");';
 			} else {
 				echo '$("#contigen", "#divAlteracao").val("0");';
+				echo '$("#incomite", "#divAlteracao").desabilitaCampo();';
+				echo '$("#incomite", "#divAlteracao").val("0");';
 			}
 			
 			if ( getByTagName($r->tags, 'incomite') == 'SIM' ) {
@@ -162,14 +164,26 @@ if ( $cddopcao == 'C') {
 				echo '$("#incomite", "#divAlteracao").val("0");';
 			}
       
-      if ( getByTagName($r->tags, 'anlautom') == 'SIM' ) {
+			if ( getByTagName($r->tags, 'anlautom') == 'SIM' ) {
 				echo '$("#anlautom", "#divAlteracao").val("1");';
 			} else {
 				echo '$("#anlautom", "#divAlteracao").val("0");';
+				echo '$("#nmregmpf", "#divAlteracao").desabilitaCampo();';
+				echo '$("#nmregmpj", "#divAlteracao").desabilitaCampo();';
+				echo '$("#qtsstime", "#divAlteracao").desabilitaCampo();';
+				echo '$("#qtmeschq", "#divAlteracao").desabilitaCampo();';
+				echo '$("#qtmesest", "#divAlteracao").desabilitaCampo();';
+				echo '$("#qtmesemp", "#divAlteracao").desabilitaCampo();';
+				echo '$("#nmregmpf", "#divAlteracao").val("");';
+				echo '$("#nmregmpj", "#divAlteracao").val("");';
+				echo '$("#qtsstime", "#divAlteracao").val("0");';
+				echo '$("#qtmeschq", "#divAlteracao").val("0");';
+				echo '$("#qtmesest", "#divAlteracao").val("0");';
+				echo '$("#qtmesemp", "#divAlteracao").val("0");';
 			}
-      
+
 			echo '$("#nmregmpf", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpf').'");';
-      echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
+			echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
 			echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
 			echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
 			echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';

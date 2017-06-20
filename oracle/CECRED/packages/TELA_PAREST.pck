@@ -462,7 +462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                       1,
                       'SIM',
                       0,'NAO') comite,
-                      DECODE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+               DECODE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                 pr_cdcooper => cop.cdcooper,
                                                 pr_cdacesso => 'ANALISE_OBRIG_MOTOR_CRED'),
                       1,
@@ -637,97 +637,98 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
             RAISE vr_exc_saida;
         END;
         
-        BEGIN
-          UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_anlautom
-           WHERE prm.nmsistem = 'CRED'
-             AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'ANALISE_OBRIG_MOTOR_CRED';
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (3). ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-        END;
+				IF NVL(pr_tlcooper, 0) <> 0 THEN
+					BEGIN
+						UPDATE crapprm prm
+							 SET prm.dsvlrprm = pr_anlautom
+						 WHERE prm.nmsistem = 'CRED'
+							 AND prm.cdcooper = rw_crapcop.cdcooper
+							 AND prm.cdacesso = 'ANALISE_OBRIG_MOTOR_CRED';
+					EXCEPTION
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao atualizar tabela crapprm (3). ' || SQLERRM;
+							--Sair do programa
+							RAISE vr_exc_saida;
+					END;        
 				
-				BEGIN
-          UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_nmregmpf
-           WHERE prm.nmsistem = 'CRED'
-             AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'REGRA_ANL_MOTOR_IBRA_PF';
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (4). ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-        END;
-        
-        BEGIN
-          UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_nmregmpj
-           WHERE prm.nmsistem = 'CRED'
-             AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'REGRA_ANL_MOTOR_IBRA_PJ';
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (5). ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-        END;
-      
-				BEGIN
-          UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_qtsstime
-           WHERE prm.nmsistem = 'CRED'
-             AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'TIME_RESP_MOTOR_IBRA';
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (6). ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-        END;
+					BEGIN
+						UPDATE crapprm prm
+							 SET prm.dsvlrprm = pr_nmregmpf
+						 WHERE prm.nmsistem = 'CRED'
+							 AND prm.cdcooper = rw_crapcop.cdcooper
+							 AND prm.cdacesso = 'REGRA_ANL_MOTOR_IBRA_PF';
+					EXCEPTION
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao atualizar tabela crapprm (4). ' || SQLERRM;
+							--Sair do programa
+							RAISE vr_exc_saida;
+					END;
+	        
+					BEGIN
+						UPDATE crapprm prm
+							 SET prm.dsvlrprm = pr_nmregmpj
+						 WHERE prm.nmsistem = 'CRED'
+							 AND prm.cdcooper = rw_crapcop.cdcooper
+							 AND prm.cdacesso = 'REGRA_ANL_MOTOR_IBRA_PJ';
+					EXCEPTION
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao atualizar tabela crapprm (5). ' || SQLERRM;
+							--Sair do programa
+							RAISE vr_exc_saida;
+					END;
+	      
+					BEGIN
+						UPDATE crapprm prm
+							 SET prm.dsvlrprm = pr_qtsstime
+						 WHERE prm.nmsistem = 'CRED'
+							 AND prm.cdcooper = rw_crapcop.cdcooper
+							 AND prm.cdacesso = 'TIME_RESP_MOTOR_IBRA';
+					EXCEPTION
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao atualizar tabela crapprm (6). ' || SQLERRM;
+							--Sair do programa
+							RAISE vr_exc_saida;
+					END;
 
-				BEGIN
-          UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_qtmeschq
-           WHERE prm.nmsistem = 'CRED'
-             AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'QTD_MES_HIST_DEV_CHEQUES';
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (7). ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-        END;
+					BEGIN
+						UPDATE crapprm prm
+							 SET prm.dsvlrprm = pr_qtmeschq
+						 WHERE prm.nmsistem = 'CRED'
+							 AND prm.cdcooper = rw_crapcop.cdcooper
+							 AND prm.cdacesso = 'QTD_MES_HIST_DEV_CHEQUES';
+					EXCEPTION
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao atualizar tabela crapprm (7). ' || SQLERRM;
+							--Sair do programa
+							RAISE vr_exc_saida;
+					END;
 
-				BEGIN
-          UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_qtmesest
-           WHERE prm.nmsistem = 'CRED'
-             AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'QTD_MES_HIST_ESTOUROS';
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (8). ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-        END;
+					BEGIN
+						UPDATE crapprm prm
+							 SET prm.dsvlrprm = pr_qtmesest
+						 WHERE prm.nmsistem = 'CRED'
+							 AND prm.cdcooper = rw_crapcop.cdcooper
+							 AND prm.cdacesso = 'QTD_MES_HIST_ESTOUROS';
+					EXCEPTION
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao atualizar tabela crapprm (8). ' || SQLERRM;
+							--Sair do programa
+							RAISE vr_exc_saida;
+					END;
 
-				BEGIN
-          UPDATE crapprm prm
-             SET prm.dsvlrprm = pr_qtmesemp
-           WHERE prm.nmsistem = 'CRED'
-             AND prm.cdcooper = rw_crapcop.cdcooper
-             AND prm.cdacesso = 'QTD_MES_HIST_EMPREST';
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar tabela crapprm (9). ' || SQLERRM;
-            --Sair do programa
-            RAISE vr_exc_saida;
-        END;
-
+					BEGIN
+						UPDATE crapprm prm
+							 SET prm.dsvlrprm = pr_qtmesemp
+						 WHERE prm.nmsistem = 'CRED'
+							 AND prm.cdcooper = rw_crapcop.cdcooper
+							 AND prm.cdacesso = 'QTD_MES_HIST_EMPREST';
+					EXCEPTION
+						WHEN OTHERS THEN
+							vr_dscritic := 'Erro ao atualizar tabela crapprm (9). ' || SQLERRM;
+							--Sair do programa
+							RAISE vr_exc_saida;
+					END;
+        END IF;				
       END LOOP;
     
       COMMIT;
