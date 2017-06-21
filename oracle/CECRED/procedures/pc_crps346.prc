@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Junho/2003.                         Ultima atualizacao: 14/10/2016
+   Data    : Junho/2003.                         Ultima atualizacao: 01/02/2017
 
    Dados referentes ao programa:
 
@@ -182,6 +182,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
 			               Quando executava pela COMPEFORA, os registros de lancamento
 						   nao eram encontrados, imprimindo em branco.
 						   Jonata (Mouts) - Chamado 588174
+
+              01/02/2017 - Tratar incorporacao da Transulcred. (Fabricio)
 
    ............................................................................. */
 
@@ -629,6 +631,8 @@ BEGIN
     vr_tab_crapcop(2).cdcooper := 4;  /* Incorporacao Concredi */
   ELSIF pr_cdcooper = 13 THEN
     vr_tab_crapcop(2).cdcooper := 15; /* Incorporacao Credimilsul */
+  ELSIF pr_cdcooper = 9 THEN
+    vr_tab_crapcop(2).cdcooper := 17; /* Incorporacao Transulcred */
   END IF;
     
   -- inicializar variavel de controle se existe algum arquivo a ser processado
