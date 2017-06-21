@@ -8,6 +8,7 @@
  * ALTERACOES   : 000: [05/09/2012] Mudar para layout padrao (Gabriel) 
                   001: [12/11/2014] Projeto consultas automatizadas (Jonata-RKAM). 
 				  002: [25/01/2016] Alterar a chamada do botao Salvar. (James)
+				  003: [21/06/2017] Alterar a chamada do botão Continuar no caso de operacao C_HIPOTECA. (Mateus - MOUTS)
  */	
  ?>
 
@@ -48,7 +49,7 @@
 		<a href="#" class="botao" id="btSalvar" onClick="validaHipoteca('insereHipoteca(\'A_HIPOTECA\',\'A_FINALIZA\');','A_HIPOTECA'); return false;">Continuar</a>
 	<? } else if ($operacao == 'C_HIPOTECA') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_PROT_CRED'); return false;">Continuar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_HIPOTECA'); return false;">Continuar</a>
 	<? } else if ($operacao == 'E_HIPOTECA') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'I_HIPOTECA') { ?>
