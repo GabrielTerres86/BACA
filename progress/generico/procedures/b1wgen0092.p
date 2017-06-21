@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 27/10/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 17/01/2017
     
    Dados referentes ao programa:
    
@@ -147,9 +147,9 @@
                            na oferta de debito automatico na procedure busca_convenios_codbarras
                            (Lucas Ranghetti #488846)
 
-                                27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
-                                             mais referencias iguais para a mesma conta (busca-autori).
-                                                              (Chamado 528246) - (Fabricio)
+			        27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+			                     mais referencias iguais para a mesma conta (busca-autori).
+						              (Chamado 528246) - (Fabricio)
                           
               13/10/2016 - Tratamento para permitir a exclusao da autorizacao do debito
                            automatico somente no proximo dia util apos o cancelamento 
@@ -165,6 +165,13 @@
 
                           07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                            departamento passando a considerar o código (Renato Darosci)
+                           
+              17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
+                           (Lucas Ranghetti #581878)
+
+              09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
+                           esquerda no campo de senha informada pelo usuário
+                           Rafael (Mouts) - Chamado 657038
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -247,7 +254,7 @@ PROCEDURE busca-autori:
                 FIND crapatr WHERE crapatr.cdcooper = par_cdcooper  AND
                                    crapatr.nrdconta = par_nrdconta  AND
                                    crapatr.cdrefere = par_cdrefere  AND
-                                                                   crapatr.cdhistor = INT(par_cdhistor)
+								   crapatr.cdhistor = INT(par_cdhistor)
                                    USE-INDEX crapatr1
                                    NO-LOCK NO-ERROR NO-WAIT.
               
@@ -648,7 +655,7 @@ PROCEDURE valida-conta:
     
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0.
-            
+    	
     Busca: DO WHILE TRUE:
 
         IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
@@ -1068,7 +1075,7 @@ PROCEDURE valida-dados:
            par_nmdcampo = "".
     
     Valida: DO WHILE TRUE:
-
+    
         FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
                        NO-LOCK NO-ERROR.
               
@@ -1159,13 +1166,6 @@ PROCEDURE valida-dados:
                                  LEAVE Valida.
                              END.
                              
-                        IF   par_cdrefere < 1000000000 THEN
-                              DO:
-                                 ASSIGN aux_cdcritic = 654
-                                        par_nmdcampo = "cdrefere".
-                                 LEAVE Valida.
-                              END.
-                                    
                     END.
                 ELSE    
                 IF  par_cdhistor = 667 OR
@@ -1456,7 +1456,7 @@ PROCEDURE valida-dados:
                                        par_nmdcampo = "".
                                 LEAVE Valida.
                             END.
-
+                            
                          /* Permitir a exclusao do debito somente no proximo dia util apos 
                             o cancelamento */
                          IF  crapatr.dtfimatr = par_dtmvtolt THEN
@@ -1911,7 +1911,7 @@ PROCEDURE grava-dados:
                 IF par_cdagenci = 0 THEN
                    ASSIGN par_cdagenci = glb_cdagenci.
                 /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-                                
+				
                 /* Achou a crapatr, reativa o registro */
                 IF  aux_flgachtr = TRUE  THEN
                     DO:
@@ -1927,11 +1927,11 @@ PROCEDURE grava-dados:
                                        crapatr.flgmaxdb = aux_flgmaxdb
                                        crapatr.vlrmaxdb = par_vlrmaxdb
                                        crapatr.tpautori = aux_tpautori
-                                                                                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+										/* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                                        crapatr.cdopeori = par_cdoperad
                                        crapatr.cdageori = par_cdagenci
                                        crapatr.dtinsori = TODAY
-                                                                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                						/* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                                        crapatr.dshisext = par_nmfatura.
                                        
                                 VALIDATE crapatr.                               
@@ -2170,7 +2170,7 @@ PROCEDURE grava-dados:
                                 BUFFER-COPY crapatr TO tt-autori-atl.
                             END.
                         ELSE
-                            DO:
+                            DO:     
                                 CREATE tt-autori-atl.
                                 ASSIGN tt-autori-atl.cdcooper = par_cdcooper
                                        tt-autori-atl.nrdconta = par_nrdconta.
@@ -2276,7 +2276,7 @@ PROCEDURE busca_convenios_codbarras:
                 IF  NOT AVAIL crapscn THEN
                     NEXT.
                 ELSE
-                    ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                      ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
             DO:                
@@ -2293,14 +2293,14 @@ PROCEDURE busca_convenios_codbarras:
                            gnconve.cdhisdeb <> 0                AND 
                            crapcon.cdempcon = 1058)
                            NO-LOCK NO-ERROR.
-                                         
+
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87 THEN
-                    ASSIGN aux_nmempcon = gnconve.nmempres.
+						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
-
+            
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
                    aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
@@ -2580,7 +2580,7 @@ PROCEDURE altera_autorizacao:
                                               crapscn.dsoparre = 'E'                       AND
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
-                                              NO-LOCK NO-ERROR NO-WAIT.                                                          
+                                              NO-LOCK NO-ERROR NO-WAIT.							  
                 IF  NOT AVAIL gnconve AND
                     NOT AVAIL crapscn THEN
                 DO:
@@ -5510,7 +5510,7 @@ PROCEDURE valida_senha_cooperado:
                           crapcrm.nrdconta = par_nrdconta     
                           NO-LOCK:
 
-       IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrm.dssencar) THEN
+       IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapcrm.dssencar) THEN
            DO:
                ASSIGN aux_flgsevld = TRUE.
                LEAVE.
@@ -5524,7 +5524,7 @@ PROCEDURE valida_senha_cooperado:
                              AND  crapcrd.nrdconta = par_nrdconta
                              NO-LOCK:                
                       
-              IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrd.dssentaa) THEN
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapcrd.dssentaa) THEN
                   DO:
                       ASSIGN aux_flgsevld = TRUE.
                       LEAVE.
@@ -5947,8 +5947,8 @@ PROCEDURE atualiza_inassele:
    DEF VAR aux_cdcritic AS INT                                     NO-UNDO.
    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
    DEF VAR aux_vlrantes AS INTEGER                                 NO-UNDO.
-   DEF VAR aux_vldepois AS INTEGER                                 NO-UNDO.        
-  
+   DEF VAR aux_vldepois AS INTEGER                                 NO-UNDO.
+   
    DEF VAR aux_dsdantes AS CHAR                                    NO-UNDO.
    DEF VAR aux_dsdepois AS CHAR                                    NO-UNDO.        
   
@@ -5984,22 +5984,22 @@ PROCEDURE atualiza_inassele:
           ELSE 
               ASSIGN aux_dsdepois = "NAO"
                      aux_dsdantes = "SIM".
-            
+
           IF  aux_vlrantes <> aux_vldepois THEN          
-          UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " +
-                          STRING(TIME,"HH:MM:SS") + "' --> '"  +
-                          " Operador " + par_cdoperad +
+              UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " +
+                              STRING(TIME,"HH:MM:SS") + "' --> '"  +
+                              " Operador " + par_cdoperad +
                               " Incluir/Alterou a Fatura " + STRING(par_cdrefere) +
-                          " - " + "Conta " +
-                          STRING(par_nrdconta,"zzzz,zzz,9") + 
+                              " - " + "Conta " +
+                              STRING(par_nrdconta,"zzzz,zzz,9") + 
                               "' --> '" + "Assinatura Eletronica" +
                               " de " + aux_dsdantes +
                               " para " + aux_dsdepois +
-                          " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
-                          "/log/autori.log").
+                              " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                              "/log/autori.log").
           
        END.
-   ELSE
+   ELSE 
        DO:
             RUN gera_erro ( INPUT par_cdcooper,
                             INPUT par_cdagenci,
