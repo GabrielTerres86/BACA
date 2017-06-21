@@ -10,8 +10,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Programa: pc_crps535 - antigo Fontes/crps535.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Guilherme / Precise
-   Data    : Dezembro/2009                   Ultima atualizacao: 22/07/2016
+   Autor   : Guilherme/SUPERO
+   Data    : Dezembro/2009                   Ultima atualizacao: 02/12/2016
 
    Dados referentes ao programa:
 
@@ -20,7 +20,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                devolvidos.
                Emite relatorio 529 e 530.
 
-   Alteracoes: 15/12/2009 - Versao Inicial (Guilherme / Precise)
+   Alteracoes: 15/12/2009 - Versao Inicial (Guilherme/SUPERO)
 
                04/06/2010 - Acertos Gerais (Ze).
 
@@ -120,6 +120,11 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
 
                25/08/2016 - Permite integrar arquivos de cheques DVA615 devido
                             aos cheques VLB (Elton - SD 476261)
+
+			   04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
+
+               02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -351,6 +356,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
       FROM crapcst
      WHERE crapcst.cdcooper        = pr_cdcooper
        AND upper(crapcst.dsdocmc7) = upper(pr_dsdocmc7)
+       AND crapcst.nrborder        = 0
       ORDER BY PROGRESS_RECID DESC;
   rw_crapcst cr_crapcst%ROWTYPE;
 
@@ -652,13 +658,13 @@ BEGIN
   vr_nome_arq_log := gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE');
 
   -- VIACON - Tratamento para buscar dados cooperativa incorporada
-  IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+  IF pr_cdcooper IN (1,9,13) THEN
 
-    IF pr_cdcooper = 1 THEN
-      vr_cdcooper := 4;
-    ELSE
-      vr_cdcooper := 15;
-    END IF;
+    CASE pr_cdcooper
+      WHEN 1   THEN vr_cdcooper := 4;  --    VIACREDI --> CONCREDI
+      WHEN 13  THEN vr_cdcooper := 15; --     SCRCRED --> CREDIMILSUL
+      WHEN 9   THEN vr_cdcooper := 17; -- TRANSPOCRED --> TRANSULCRED
+    END CASE;
 
     -- Buscar os dados da cooperativa
     OPEN  cr_crabcop(vr_cdcooper);
@@ -765,7 +771,7 @@ BEGIN
       END IF;
 
       -- VIACON - Tratamento para incluir arquivos das cooperativas incorporadas
-      IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+      IF  pr_cdcooper IN (1,9,13) THEN
 
         -- Verifica através da extensão do arquivo a qual grupo o mesmo pertence
         IF    vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crabcop.cdagectl,4,'0')||'%.D%N') THEN
@@ -804,7 +810,6 @@ BEGIN
                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic);
-    --
 
 
     -- Atualiza variaveis iniciais do controle
@@ -971,23 +976,23 @@ BEGIN
 
         IF cr_crapcop_ctl%FOUND THEN
           /* Tratamento para incorporação viacon scrmil */
-          IF (pr_cdcooper = 1 and vr_cdcopaco = 4) or
-             (pr_cdcooper = 13 and vr_cdcopaco = 15) then
-             open cr_craptco_inc(pr_cdcooper => pr_cdcooper,
+          IF (pr_cdcooper = 1  AND vr_cdcopaco = 4 ) OR
+             (pr_cdcooper = 13 AND vr_cdcopaco = 15) OR
+             (pr_cdcooper = 9  AND vr_cdcopaco = 17) THEN
+             OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                  pr_cdcopant => vr_cdcopaco,
                                  pr_nrctaant => vr_nrctachd,
                                  pr_flgativo => 1);
-             fetch cr_craptco_inc into rw_craptco_inc;
+             FETCH cr_craptco_inc INTO rw_craptco_inc;
 
-             if cr_craptco_inc%found then
+             IF cr_craptco_inc%FOUND THEN
                 /* Variaveis recebem valores da nova conta */
                 vr_nrctachd := rw_craptco_inc.nrdconta;
                 vr_cdcopaco := pr_cdcooper;
-             end if;
-             close cr_craptco_inc;
+             END IF;
+             CLOSE cr_craptco_inc;
 
-          end if;
-
+          END IF;
 					-- Abre o cursor contendo os dados dos cheques
 					OPEN cr_crapchd(pr_cdcooper => vr_cdcopaco,
 													pr_cdbanchq => vr_cdbanchq,
@@ -1090,7 +1095,7 @@ BEGIN
 
             vr_nrdconta := SUBSTR(vr_dstexto,67,12);
 
-            IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
+            IF (pr_cdcooper IN (1,9,13)) AND
                 vr_arquivos(ind).idarquivo > 2 THEN
                 
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
@@ -1390,8 +1395,8 @@ BEGIN
 
 				-- Se é depósito intercoop.
 				IF vr_cdcopaco <> pr_cdcooper THEN
-					BEGIN
 
+					BEGIN
 						INSERT INTO crapddi
 									 (cdcooper,
 										cdcopaco,
@@ -1415,7 +1420,6 @@ BEGIN
 										vr_cdalinea,
 										rw_crapdat.dtmvtolt,
 										vr_dtdapres);
-
 					EXCEPTION
 						WHEN OTHERS THEN
 							vr_cdcritic := 0;
@@ -1473,10 +1477,8 @@ BEGIN
             -- Se for conta migrada das cooperativas 4 ou 15 nas condicoes
             -- abaixo devera atribui para crawrel.cdagenci o codigo do novo
             -- PA na coopertaiva nova
-
-
-            IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
-              vr_arquivos(ind).idarquivo > 3 THEN
+            IF  (pr_cdcooper IN (1,9,13))
+            AND vr_arquivos(ind).idarquivo > 3 THEN
               
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                   pr_cdcopant => vr_cdcopaco,
@@ -2139,17 +2141,17 @@ BEGIN
                             pr_infimsol => pr_infimsol,
                             pr_stprogra => pr_stprogra);
   --
-  commit;
+  COMMIT;
 
-exception
-  when vr_exc_fimprg then
+EXCEPTION
+  WHEN vr_exc_fimprg THEN
     -- Se foi retornado apenas código
-    if nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+    IF nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
+    END IF;
     -- Se foi gerada critica para envio ao log
-    if nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
+    IF nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, -- Erro tratato
@@ -2157,31 +2159,31 @@ exception
                                  pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic );
-    end if;
+    END IF;
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                              ,pr_cdprogra => vr_cdprogra
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
     -- Efetuar commit pois gravaremos o que foi processo até então
-    commit;
+    COMMIT;
 
-  when vr_exc_saida then
+  WHEN vr_exc_saida THEN
     -- Se foi retornado apenas código
-    if nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+    IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
+    END IF;
     -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
     -- Efetuar rollback
-    rollback;
-  when others then
+    ROLLBACK;
+  WHEN OTHERS THEN
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
-    pr_dscritic := sqlerrm;
-    -- Efetuar rollback
-    rollback;
-end;
+    pr_dscritic := SQLERRM;
+    -- EFETUAR ROLLBACK
+    ROLLBACK;
+END;
 /
