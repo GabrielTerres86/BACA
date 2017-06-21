@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 18/04/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 29/05/2017
 
    Dados referentes ao programa:
 
@@ -300,15 +300,18 @@
                             
                22/09/2016 - Incluido tratamento para verificacao de contrato de 
                             acordo, Prj. 302 (Jean Michel).
-                            
+
                14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
                             (Jaison/James - PRJ302)
 
-			   29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
-							(Jonata RKAM M311)
-
+			         29/03/2017 - Ajutes para utilizar rotina a rotina pc_gerandb
+							              (Jonata RKAM M311)
+                            
                18/04/2017 - Incluir chamada da rotina do Oracle pc_gerandb ao inves
                             de chamar a include do PROGRESS (Lucas Ranghetti #652806)
+                            
+               29/05/2017 - Alterar chamada da procedure pc_gerandb por pc_gerandb_car
+                            (Lucas Ranghetti #681579)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1228,7 +1231,7 @@ DO WHILE TRUE:
                             ASSIGN aux_flgerros = TRUE
                                     glb_cdcritic = 598.
 
-					   ASSIGN aux_cdrefere = crapatr.cdrefere WHEN AVAIL crapatr.
+					             ASSIGN aux_cdrefere = crapatr.cdrefere WHEN AVAIL crapatr.
 
                     END.
 
@@ -1244,32 +1247,32 @@ DO WHILE TRUE:
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }              
 
                 /* Verifica se ha contratos de acordo */
-              RUN STORED-PROCEDURE pc_gerandb
+              RUN STORED-PROCEDURE pc_gerandb_car
                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                                     ,INPUT craplau.cdhistor
                                                     ,INPUT craplcm.nrdconta
-													,INPUT aux_cdrefere
+                                                    ,INPUT STRING(aux_cdrefere)
                                                     ,INPUT craplau.vllanaut                                                    
                                                     ,INPUT craplau.cdseqtel
-                                                    ,INPUT craplau.nrdocmto
+                                                    ,INPUT STRING(craplau.nrdocmto)
                                                     ,INPUT crapcop.cdagesic
                                                     ,INPUT crapass.nrctacns
-													,INPUT crapass.cdagenci
+												                          	,INPUT crapass.cdagenci
                                                     ,INPUT craplau.cdempres
-													,INPUT craplau.idlancto
+											                          		,INPUT craplau.idlancto
                                                     ,INPUT glb_cdcritic
                                                     ,OUTPUT 0
                                                     ,OUTPUT "").
 
-              CLOSE STORED-PROC pc_gerandb
+              CLOSE STORED-PROC pc_gerandb_car
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
               
               ASSIGN glb_cdcritic = 0
                      glb_dscritic = ""
-                     glb_cdcritic = INT(pc_gerandb.pr_cdcritic) WHEN pc_gerandb.pr_cdcritic <> ?
-                     glb_dscritic = TRIM(pc_gerandb.pr_dscritic) WHEN pc_gerandb.pr_dscritic <> ?.
+                     glb_cdcritic = INT(pc_gerandb_car.pr_cdcritic) WHEN pc_gerandb_car.pr_cdcritic <> ?
+                     glb_dscritic = TRIM(pc_gerandb_car.pr_dscritic) WHEN pc_gerandb_car.pr_dscritic <> ?.
                
                 IF glb_cdcritic > 0 THEN
                     DO:
@@ -2249,7 +2252,7 @@ DO WHILE TRUE:
                         " Valor: " + TRIM(STRING(craplcm.vllanmto,
                                                  "zzzzzz,zzz,zz9.99")) +
 
-                        " Contrato: " + STRING(INTE(craplcm.cdpesqbb)) +
+                        " Contrato: " + craplcm.cdpesqbb +
                         " >> log/landpv.log").
     
       /* Trazer nome do supervisor */
