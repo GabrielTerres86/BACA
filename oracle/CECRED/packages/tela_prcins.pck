@@ -15,7 +15,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PRCINS AS
 --								             e não o encontra, pois ele é gravado com o nome da tela.
 --								            (Adriano - SD 409943)
 --    
--- 20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta) - (Belli Envolti) - Chamado 660286
+--                20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta)
+--                           - (Belli Envolti) - Chamado 660286
 --    
 ---------------------------------------------------------------------------------------------------------------
 
@@ -117,11 +118,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
 --                             o padrao de formatacao de data e valor do sistema, para utilizar
 --                             padrao brasileiro ao inves do padrao americano, quando acessado
 --                             pela WEB (Douglas - Chamado 424716)
-
---				  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
---    
---          20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta)
---                     - (Belli Envolti) - Chamado 660286
+--
+--      				  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+--      
+--                20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta)
+--                           - (Belli Envolti) - Chamado 660286
 --    
 ---------------------------------------------------------------------------------------------------------------
   /* Rotina para buscar as cooperativas */
@@ -1502,7 +1503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 22/03/2017                        Ultima atualizacao: 
+    Data    : 22/03/2017                        Ultima atualizacao: 20/06/2017
 
     Dados referentes ao programa:
 
@@ -1512,6 +1513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
     Alteracoes: 
     
           20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta)
+                     - Incluir nome do módulo logado
                      - (Belli Envolti) - Chamado 660286
                      
     ............................................................................. */
@@ -1534,7 +1536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
       vr_indicador_gera_log  VARCHAR2(3) := 'Sim';
       
     BEGIN      
-	    -- Incluir nome do módulo logado -- Belli 20/06/2017
+	    -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'TELA_PRCINS',pr_action => 'TELA_PRCINS.pc_importar_prova_vida');
       
       pr_nmdcampo := NULL;
