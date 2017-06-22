@@ -520,10 +520,7 @@ BEGIN
                    
            end if;
            
-           if vr_dscritic is not null  then
-              continue;
-           end if;
-         
+                    
       /***************************************/
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
