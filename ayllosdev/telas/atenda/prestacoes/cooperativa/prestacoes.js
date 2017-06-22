@@ -46,6 +46,7 @@
  * 037: [12/01/2015] Impressao do demonstrativo de empres. pre-aprovado feito no TAA e Int.Bank.(Carlos Rafael Tanholi - Pré-Aprovado fase II).
  * 038: [15/03/2016] Odirlei (AMCOM): Alterado rotina mostraEmail para verificar se deve permitir o envio de email para o comite. PRJ207 - Esteira
  * 039: [27/07/2016] Alterado função controlaFoco(Evandro - RKAM)
+ * 040: [22/06/2017] Alterado para mostrar frame de portabilidade independente de ter selecionado um contrato ou não. (Projeto 357 - Reinert)
 
  */
 
@@ -226,7 +227,7 @@ function controlaOperacao(operacao) {
 				}
 			}
 		});
-		if ( nrctremp == '' ) { return false; }
+		if ( nrctremp == '' && operacao != 'PORTAB_CRED') { return false; }
 	}
 
 	switch (operacao) {
@@ -412,10 +413,12 @@ function controlaOperacao(operacao) {
 			return false;
 			break;
 		case 'PORTAB_APRV' :
+			if ( nrctremp == '' ) { return false; }
 			mostraDivPortabilidadeAprovar(operacao);
 			return false;
 			break;
 		case 'PORTAB_EXTR' :
+			if ( nrctremp == '' ) { return false; }
 			imprimeExtratoPortabilidade();
 			return false;
 			break;
