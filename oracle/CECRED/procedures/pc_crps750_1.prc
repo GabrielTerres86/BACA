@@ -1196,7 +1196,7 @@ BEGIN
                                  ,rw_craplot_8457.dtmvtolt
                                  ,0
                                  ,rw_crapepr.nrdconta
-                                 ,to_number(to_char(sysdate,'hh24miss')||to_char(pr_nrparepr))--rw_crapepr.nrctremp
+                                 ,to_number(to_char(sysdate,'hh24missmi')||to_char(pr_nrparepr))
                                  ,rw_craplot_8457.nrseqdig + 1
                                  ,2
                                  ,0
@@ -1334,7 +1334,7 @@ BEGIN
 
             -- Procedure para lancar Multa e Juros de Mora para o TR
             EMPR0009.pc_efetiva_pag_atraso_tr_prc(pr_cdcooper => pr_cdcooper
-                                             ,pr_cdagenci => 0
+                                             ,pr_cdagenci => vr_cdagenci
                                              ,pr_cdoperad => pr_cdoperad
                                              ,pr_nmdatela => vr_cdprogra
                                              ,pr_idorigem => 1
