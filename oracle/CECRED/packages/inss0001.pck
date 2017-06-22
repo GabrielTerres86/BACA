@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 13/02/2017
+   Data    : 16/05/2011                        Ultima atualizacao: 16/04/2017
 
    Dados referentes ao programa:
 
@@ -128,8 +128,11 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                             Eliminada a rotina pc_popula_dcb_inss                             
                             Incluido tipo de falha variavel na Procedure pc_retorna_linha_log implica em alterar 10 procedures que a disparam
                             Colocado no padrão todas chamadas pc_gera_log_batch em torno de 60 chamadas
-                            (Belli - Envolti - Chamado 660327 e 664301)              
-
+                            (Belli - Envolti - Chamado 660327 )
+                            
+               16/06/2017 - No retorno das procedures pc_efetua_requisicao_soap e pc_elimina_arquivos_requis
+                            Codigo 1 onde na rotina final faz de para gerar 4 alerta - (Belli Envolti) Ch 664301
+                          
   --------------------------------------------------------------------------------------------------------------- */
 
    --Tipo de Tabela Com inicial dos meses do ano
@@ -1097,7 +1100,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 17/03/2017
+   Data    : 27/08/2013                        Ultima atualizacao: 16/04/2017
 
    Dados referentes ao programa:
 
@@ -1184,8 +1187,11 @@ create or replace package body cecred.INSS0001 as
                             Eliminada a rotina pc_popula_dcb_inss                             
                             Incluido tipo de falha variavel na Procedure pc_retorna_linha_log implica em alterar 10 procedures que a disparam
                             Colocado no padrão todas chamadas pc_gera_log_batch em torno de 60 chamadas
-                            (Belli - Envolti - Chamado 660327 e 664301)              
+                            (Belli - Envolti - Chamado 660327 )    
                             
+               16/06/2017 - No retorno das procedures pc_efetua_requisicao_soap e pc_elimina_arquivos_requis
+                            Codigo 1 onde na rotina final faz de para gerar 4 alerta - (Belli Envolti) Ch 664301
+                                                                
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -6010,7 +6016,7 @@ create or replace package body cecred.INSS0001 as
                 
         /** Valida SOAP retornado pelo WebService **/
         
-        -- belli 29/05 gene0002_belli
+        -- Teste Belli 29/05 e 16/06 gene0002_belli
         
         gene0002.pc_arquivo_para_xml (pr_nmarquiv => pr_msgreceb    --> Nome do caminho completo) 
                                      ,pr_xmltype  => vr_XML         --> Saida para o XML
@@ -15554,7 +15560,10 @@ create or replace package body cecred.INSS0001 as
                               (Adriano - SD 473539).
                               
                  05/12/2016 - Ajustes Incorporação Transulcred -> Transpocred.
-                              PRJ342 (Odirlei-AMcom)              
+                              PRJ342 (Odirlei-AMcom) 
+                                               
+                 16/06/2017 - Codigo 1 onde na rotina final faz de para gerar 4 alerta - (Belli Envolti) Ch 664301
+                 
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -15886,6 +15895,10 @@ create or replace package body cecred.INSS0001 as
         --Se ocorreu erro
         IF vr_des_reto = 'NOK' THEN
           --Levantar Excecao
+            
+          -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 16/06/2017 ch 664301
+          vr_cd_tipo_mensagem := 1; 
+            
           RAISE vr_exc_saida;
         END IF;
           
@@ -16720,6 +16733,10 @@ create or replace package body cecred.INSS0001 as
       IF vr_des_reto = 'NOK' THEN
         vr_dscritic:= vr_dscritic2;
         --Levantar Excecao
+            
+          -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 16/06/2017 ch 664301
+          vr_cd_tipo_mensagem := 1; 
+          
         RAISE vr_exc_erro;
       END IF;     
       
