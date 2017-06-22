@@ -21,7 +21,8 @@ BEGIN
   Frequencia: Diaria
   Objetivo  : Priorização das parcelas de empréstimos (TR e PP) para pagamentos
 
-  Alteracoes: 
+  Alteracoes: 22/06/2017 - Correção do tratamento de erros, não deve abortar o programa e
+                           sim continuar para o próximo registro - Jean - Mout´S
     ............................................................................. */
 
   DECLARE
