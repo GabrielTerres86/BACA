@@ -571,7 +571,7 @@ BEGIN
                                ,pr_nrparepr IN crappep.nrparepr%TYPE ) IS  --> numero da parcela
 
       -- Variaveis para gravação da craplot
-      vr_cdagenci CONSTANT PLS_INTEGER := 1;
+      vr_cdagenci INTEGER := pr_cdagenci;
       vr_cdbccxlt CONSTANT PLS_INTEGER := 100;
       
       ------------------------------- CURSORES ---------------------------------
