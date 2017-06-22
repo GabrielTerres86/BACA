@@ -24,7 +24,7 @@ begin
 
       pc_crps750(pr_cdcooper => vr_coop.cdcooper
                , pr_cdagenci => 0
-               , pr_nmdatela => 'crps750'
+               , pr_nmdatela => ''crps750''
                , pr_idparale => 1
                , pr_stprogra => vr_stprogra
                , pr_infimsol => vr_infimsol
