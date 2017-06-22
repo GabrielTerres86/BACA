@@ -66,7 +66,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
    Sigla   : CRED
 
    Autor   : Jonata - RKAM
-   Data    : Maio/2017                       Ultima atualizacao: 
+   Data    : Maio/2017                       Ultima atualizacao: 15/06/2017
 
    Dados referentes ao programa:
 
@@ -74,7 +74,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
    Objetivo  : Mostrar a tela PARRGP para Mostrar a tela PARRGP para permitir a listagem, inserção, alteração e exclusão dos 
                parâmetros para Provisão das Garantias Prestadas pelas Cooperativas do Grupo.
                
-   Alteracoes: 
+   Alteracoes: 15/06/2017 - Ajustes decorrente a homologação do projeto P408 (Jonata - RKAM).
+
   ---------------------------------------------------------------------------------------------------------------*/
   
    
@@ -366,14 +367,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - Mouts
-    Data     : Maio/2017                          Ultima atualizacao:
+    Data     : Maio/2017                          Ultima atualizacao: 15/06/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Responsável pela inclusão/exclusão/alteração de provisão da tela PARRGP.
     
-    Alterações : 
+    Alterações : 15/06/2017 - Ajustes decorrente a homologação do projeto P408 (Jonata - RKAM).
+
     -------------------------------------------------------------------------------------------------------------*/                                
      
     CURSOR cr_mvto_1(pr_idproduto IN tbrisco_provisgarant_movto.idproduto%TYPE) IS
@@ -480,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
         
     END IF;
       
-    IF pr_cddopcao IN ('A','E') THEN
+    IF pr_cddopcao IN ('A','I') THEN
       
       IF TRIM(pr_dsproduto) IS NULL THEN
       
@@ -566,33 +568,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
         
       END IF;
       
-      IF NVL(pr_idorigem_recurso,0) = 0                           OR
-         RISC0003.fn_valor_opcao_dominio(pr_idorigem_recurso) = 0 THEN
+      IF instr(pr_tparquivo,'BRDE') = 0 THEN
         
-        -- Montar mensagem de critica
-        pr_nmdcampo := 'idorigem_recurso';
-        vr_dscritic := 'Código de origem do recurso inválida.';
-        RAISE vr_exc_erro;
+        IF NVL(pr_idorigem_recurso,0) = 0                           OR
+           RISC0003.fn_valor_opcao_dominio(pr_idorigem_recurso) = 0 THEN
+          
+          -- Montar mensagem de critica
+          pr_nmdcampo := 'idorigem_recurso';
+          vr_dscritic := 'Código de origem do recurso inválida.';
+          RAISE vr_exc_erro;
+          
+        END IF;
         
-      END IF;
+        IF NVL(pr_idindexador,0) = 0                           OR
+           RISC0003.fn_valor_opcao_dominio(pr_idindexador) = 0 THEN
+          
+          -- Montar mensagem de critica
+          pr_nmdcampo := 'idindexador';
+          vr_dscritic := 'Indexador inválido.';
+          RAISE vr_exc_erro;
+          
+        END IF;
+        
+        IF NVL(pr_idnat_operacao,0) = 0                           OR
+           RISC0003.fn_valor_opcao_dominio(pr_idnat_operacao) = 0 THEN
+          
+          -- Montar mensagem de critica
+          pr_nmdcampo := 'idnat_operacao';
+          vr_dscritic := 'Natureza de operaçãO inválida.';
+          RAISE vr_exc_erro;
+          
+        END IF;
       
-      IF NVL(pr_idindexador,0) = 0                           OR
-         RISC0003.fn_valor_opcao_dominio(pr_idindexador) = 0 THEN
-        
-        -- Montar mensagem de critica
-        pr_nmdcampo := 'idindexador';
-        vr_dscritic := 'Indexador inválido.';
-        RAISE vr_exc_erro;
-        
-      END IF;
-      
-      IF NVL(pr_perindexador,0) = 0 THEN
-        
-        -- Montar mensagem de critica
-        pr_nmdcampo := 'perindexador';
-        vr_dscritic := 'Percentual do indexador inválido.';
-        RAISE vr_exc_erro;
-        
       END IF;
       
       IF NVL(pr_idvariacao_cambial,0) = 0                           OR
@@ -612,16 +619,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
         vr_dscritic := 'Código de origem do CEP inválido.';
         RAISE vr_exc_erro;
           
-      END IF;
-      
-      IF NVL(pr_idnat_operacao,0) = 0                           OR
-         RISC0003.fn_valor_opcao_dominio(pr_idnat_operacao) = 0 THEN
-        
-        -- Montar mensagem de critica
-        pr_nmdcampo := 'idnat_operacao';
-        vr_dscritic := 'Natureza de operaçãO inválida.';
-        RAISE vr_exc_erro;
-        
       END IF;
       
       IF NVL(pr_idcaract_especial,0) = 0                           OR
@@ -670,31 +667,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
         
       END IF;  
       
-      IF nvl(pr_vltaxa_juros,0) = 0 THEN
-        
-        -- Montar mensagem de critica
-        pr_nmdcampo := 'vltaxa_juros';
-        vr_dscritic := 'Taxa de juros não informada.';
-        RAISE vr_exc_erro;
-        
-      END IF; 
-      
-      OPEN cr_tbrisco_prodt_3(pr_idproduto => pr_idproduto);
-                                        
-      FETCH cr_tbrisco_prodt_3 INTO rw_tbrisco_prodt_3;
-        
-      IF cr_tbrisco_prodt_3%NOTFOUND THEN
-          
-        CLOSE cr_tbrisco_prodt_3;
-        
-        -- Montar mensagem de critica
-        vr_dscritic := 'Produto não encontrado!';
-        RAISE vr_exc_erro; 
-              
-      END IF;
-      
-      CLOSE cr_tbrisco_prodt_3; 
-    
     END IF;
     
     IF pr_cddopcao = 'E' THEN
@@ -718,6 +690,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
         CLOSE cr_mvto_1;
         
       END IF;
+      
+      OPEN cr_tbrisco_prodt_3(pr_idproduto => pr_idproduto);
+                                        
+      FETCH cr_tbrisco_prodt_3 INTO rw_tbrisco_prodt_3;
+        
+      IF cr_tbrisco_prodt_3%NOTFOUND THEN
+          
+        CLOSE cr_tbrisco_prodt_3;
+        
+        -- Montar mensagem de critica
+        vr_dscritic := 'Produto não encontrado!';
+        RAISE vr_exc_erro; 
+              
+      END IF;
+      
+      CLOSE cr_tbrisco_prodt_3; 
       
       BEGIN
         
@@ -796,6 +784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
         WHEN OTHERS THEN
           -- Montar mensagem de critica
           vr_dscritic := 'Não foi possível atualizar o registro.';
+          
           RAISE vr_exc_erro;
           
       END;

@@ -1,11 +1,11 @@
 <?php
 /*!
- * FONTE        : importar_arquivo.php                    Última alteração:
+ * FONTE        : importar_arquivo.php                    Última alteração: 19/06/2017
  * CRIAÇÃO      : Jonata (RKAM)
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Rotina para importação de arquivo da tela MOVRGP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 19/06/2017 - Ajuste para deixar desabilitado o campo de incormações (Jonata - RKAM). 
  *
  */
 ?>
@@ -120,7 +120,7 @@
 					
 					$('#dsinform','#divRotina').addClass('textarea');
 					$('#dsinform','#divRotina').css({ 'width': '650px','height': '200px','margin': '3px 0px 3px 3px'  });
-					$('#dsinform','#divRotina').setMask("STRING", "200", charPermitido(), "");
+					$('#dsinform','#divRotina').desabilitaCampo();
 					$('#divRotina').centralizaRotinaH();
 					exibeRotina($('#divRotina'));
 				    hideMsgAguardo();

@@ -1,11 +1,11 @@
 <? 
 /*!
- * FONTE        : tab_registros.php						Última alteração:  
+ * FONTE        : tab_registros.php						Última alteração: 19/06/2017  
  * CRIAÇÃO      : Jonata - RKAM
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Tabela que apresenta os parametros da tela PARRGP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 19/06/2017 - Ajuste para incluir a coluna com a data de vencimento da operação (Jonata - RKAM). 
                     
  * --------------
  */ 
@@ -33,6 +33,7 @@
 						<th>Contrato</th>
 						<th>Valor Opera&ccedil;&atilde;o</th>
 						<th>Saldo</th>
+						<th>Data Vencimento</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -43,6 +44,7 @@
 							<td><span><? echo getByTagName($result->tags,'nrctremp'); ?></span> <? echo getByTagName($result->tags,'nrctremp'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'vloperacao'); ?></span><? echo getByTagName($result->tags,'vloperacao'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'vlsaldo_pendente'); ?></span><? echo getByTagName($result->tags,'vlsaldo_pendente'); ?> </td>
+							<td><span><? echo getByTagName($result->tags,'dtvenc_operacao'); ?></span><? echo getByTagName($result->tags,'dtvenc_operacao'); ?> </td>
 							
 							<input type="hidden" id="aux_idmovto_risco" name="aux_idmovto_risco" value="<? echo getByTagName($result->tags,'idmovto_risco'); ?>" />
 														

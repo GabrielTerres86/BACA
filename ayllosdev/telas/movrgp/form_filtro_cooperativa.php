@@ -1,11 +1,11 @@
 <? 
 /*!
- * FONTE        : form_filtro_cooperativa.php.php						Última alteração:  
+ * FONTE        : form_filtro_cooperativa.php.php						Última alteração: 19/06/2017 
  * CRIAÇÃO      : Jonata - RKAM
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Apresenta o form com os filtros da tela MOVRGP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 19/06/2017 - Ajuste para realizar a exportação de todas as cooperativas (Jonata - RKAM). 
                     
  * --------------
  */ 
@@ -42,11 +42,16 @@
 
 	<?if($cddopcao == 'F'){?>
 	
-		<a href="#" class="botao" id="btProsseguir" onClick="efetuarFechamentoDigitacao(); return false;">Prosseguir</a>	
+		<a href="#" class="botao" id="btProsseguir" onClick="showConfirmacao('Voc&ecirc; tem certeza que deseja efetuar o fechamento do per&iacute;odo?','Confirma&ccedil;&atilde;o - Ayllos','efetuarFechamentoDigitacao();','$(\'#btVoltar\',\'#divBotoesFiltroCoop\').focus();','sim.gif','nao.gif');return false;">Prosseguir</a>	
 	
 	<?}else if($cddopcao == 'R'){ ?>
 	
-		<a href="#" class="botao" id="btProsseguir" onClick="efetuarReaberturaDigitacao(); return false;">Prosseguir</a>	
+		<a href="#" class="botao" id="btProsseguir" onClick="showConfirmacao('Voc&ecirc; tem certeza que deseja efetuar a reabertura do per&iacute;odo?','Confirma&ccedil;&atilde;o - Ayllos','efetuarReaberturaDigitacao();','$(\'#btVoltar\',\'#divBotoesFiltroCoop\').focus();','sim.gif','nao.gif');return false;">Prosseguir</a>	
+		
+	
+	<?}else if($cddopcao == 'L'){ ?>
+	
+		<a href="#" class="botao" id="btProsseguir" onClick="controleOperacao(); return false;">Prosseguir</a>	
 		
 	<?}else{?>
 	
@@ -65,9 +70,10 @@
 		
 		$cdcooper = getByTagName($cooperativas[$i]->tags,"CDCOOPER");
 		$nmrescop = getByTagName($cooperativas[$i]->tags,"NMRESCOP");
+		$selected = ($cdcooper == 3) ? 'selected' : '';
 		?>
 		
-		$('#cdcopsel','#frmFiltroCoop').append('<option value="<?echo $cdcooper;?>"><? echo $nmrescop;?></option>');
+		$('#cdcopsel','#frmFiltroCoop').append('<option value="<?echo $cdcooper;?>" <?echo $selected;?>><? echo $nmrescop;?></option>');
 
 	<?}?>	
 	

@@ -150,6 +150,8 @@
     	
 	if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
 		echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("'.getByTagName($descricao,"iddominio").'");';
+		echo '$("#idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrctacosif").'");';
+		echo '$("#dsconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"dsctacosif").'");';
 	}
 	
 	if( $nomeProcedure == 'BUSCADESCASSOCIADO' ){

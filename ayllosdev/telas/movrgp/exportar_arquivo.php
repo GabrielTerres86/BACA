@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Rotina para exportação de arquivo da tela MOVRGP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 19/06/2017 - Ajuste para realizar a exportação de todas as cooperativas (Jonata - RKAM).
  *
  */
 ?>
@@ -29,9 +29,7 @@
         exibirErro('error',$msgError,'Alerta - Ayllos','',false);
     }
 
-	$cdcopsel = (isset($_POST["cdcopsel"])) ? $_POST["cdcopsel"] : 0;
 	$dtrefere = (isset($_POST["dtrefere"])) ? $_POST["dtrefere"] : '';
-	$cdproduto = (isset($_POST["cdproduto"])) ? $_POST["cdproduto"] : 0;
 	
 	validaDados();
   
@@ -39,9 +37,7 @@
 	$xmlExportar .= "<Root>";
 	$xmlExportar .= "   <Dados>";
 	$xmlExportar .= "	   <cddopcao>".$cddopcao."</cddopcao>";
-	$xmlExportar .= "	   <cdcopsel>".$cdcopsel."</cdcopsel>";
 	$xmlExportar .= "	   <dtrefere>".$dtrefere."</dtrefere>";
-	$xmlExportar .= "	   <idproduto>".$cdproduto."</idproduto>";
 	$xmlExportar .= "   </Dados>";
 	$xmlExportar .= "</Root>";
 		
@@ -66,19 +62,9 @@
 		
     function validaDados(){
 		
-		//Código da cooperativa
-        if (  $GLOBALS["cdcopsel"] == 0 ){
-            exibirErro('error','C&oacute;digo da cooperativa inv&aacute;lido.','Alerta - Ayllos','$(\'#cdproduto\',\'#frmFiltroProduto\').focus();',false);
-        }
-		
 		//Data de referência
         if (  $GLOBALS["dtrefere"] == '' ){
             exibirErro('error','Data de refer&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','$(\'#cdproduto\',\'#frmFiltroProduto\').focus();',false);
-        }
-		
-		//Código do produto
-        if (  $GLOBALS["cdproduto"] == 0 ){
-            exibirErro('error','C&oacute;digo do produto inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'cdproduto\',\'frmFiltroProduto\');',false);
         }
 		
 	}

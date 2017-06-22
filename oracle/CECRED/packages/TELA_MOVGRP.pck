@@ -6,14 +6,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MOVRGP AS
    Sigla   : CRED
 
    Autor   : Jonata - RKAM
-   Data    : Maio/2017                       Ultima atualizacao:  
+   Data    : Maio/2017                       Ultima atualizacao: 15/06/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela MOVGRP para permitir o lançamento manual de contratos para geração das informações do Doc3040.
 
-   Alteracoes: 
+   Alteracoes: 15/06/2017 - Ajustes decorrente a homologação do projeto P408 (Jonata - RKAM).
+
    */  
    
    PROCEDURE pc_carrega_cooperativas(pr_cddopcao IN VARCHAR2     --Número da conta
@@ -46,9 +47,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MOVRGP AS
                                   ,pr_nmdcampo OUT VARCHAR2     --Nome do Campo
                                   ,pr_des_erro OUT VARCHAR2);  --Saida OK/NOK
                                      
-   PROCEDURE pc_exportar(pr_cdcopsel IN crapcop.cdcooper%TYPE --Código da cooperativa selecionada
-                        ,pr_idproduto IN tbrisco_provisgarant_prodt.idproduto%TYPE --Código do produto
-                        ,pr_dtrefere IN VARCHAR2      --Data de referência
+   PROCEDURE pc_exportar(pr_dtrefere IN VARCHAR2      --Data de referência
                         ,pr_cddopcao IN VARCHAR2      --Número da conta
                         ,pr_xmllog   IN VARCHAR2      --XML com informações de LOG
                         ,pr_cdcritic OUT PLS_INTEGER  --Código da crítica
@@ -179,7 +178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
    Sigla   : CRED
 
    Autor   : Jonata - RKAM
-   Data    : Maio/2017                       Ultima atualizacao: 01/06/2017
+   Data    : Maio/2017                       Ultima atualizacao: 15/06/2017
 
    Dados referentes ao programa:
 
@@ -188,7 +187,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
 
    Alteracoes: 01/06/2017 - Ajuste para retirar validação de valor do percentaul, poderá ser enviado valor zerado
                             (Jonata - RKAM).
-           
+
+               15/06/2017 - Ajustes decorrente a homologação do projeto P408 (Jonata - RKAM).
+			              
   ---------------------------------------------------------------------------------------------------------------*/
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE)IS
   SELECT crapcop.cdcooper
@@ -260,14 +261,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao:
+    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Busca informações para carregar campo de cooperativas da tela MOVRGP
     
-    Alterações : 
+    Alterações : 19/06/2017 - Ajuste para devolver a cooperativa "0 - Todas" (Jonata - RKAM).
+
     -------------------------------------------------------------------------------------------------------------*/                                
       
     -- Variaveis de locais
@@ -333,12 +335,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         --> Varrer a lista de informações
         IF vr_tab_desc_coop.count > 0 THEN
         
-          IF pr_cddopcao = 'J'        AND 
-             vr_tab_desc_coop(1) <> 3 THEN
+          IF pr_cddopcao = 'L' THEN
+            
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dados', pr_posicao => 0, pr_tag_nova => 'cooperativa', pr_tag_cont => null, pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperativa', pr_posicao => vr_contador, pr_tag_nova => 'cdcooper', pr_tag_cont => '0', pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperativa', pr_posicao => vr_contador, pr_tag_nova => 'nmrescop', pr_tag_cont => '0 - TODAS', pr_des_erro => vr_dscritic);
+            
+            EXIT;
+            
+          ELSIF pr_cddopcao = 'J'        AND 
+                vr_tab_desc_coop(1) <> 3 THEN
             
             CONTINUE;
             
           END IF;
+          
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dados', pr_posicao => 0, pr_tag_nova => 'cooperativa', pr_tag_cont => null, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperativa', pr_posicao => vr_contador, pr_tag_nova => 'cdcooper', pr_tag_cont => vr_tab_desc_coop(1), pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperativa', pr_posicao => vr_contador, pr_tag_nova => 'nmrescop', pr_tag_cont => vr_tab_desc_coop(1) || ' - ' || vr_tab_desc_coop(2), pr_des_erro => vr_dscritic);
@@ -543,14 +554,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao:
+    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Busca movimentos da tela MOVRGP
     
-    Alterações : 
+    Alterações : 19/06/2017 - Ajuste para retornar a data de vencimento da operação (Jonata - RKAM).
     -------------------------------------------------------------------------------------------------------------*/                                
     CURSOR cr_risco_prodt(pr_idproduto IN tbrisco_provisgarant_prodt.idproduto%TYPE) IS 
     SELECT ppg.tpdestino
@@ -569,6 +580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
           ,mvt.nrctremp
           ,mvt.vloperacao
           ,mvt.vlsaldo_pendente
+          ,mvt.dtvenc_operacao 
           ,ass.inpessoa
       FROM tbrisco_provisgarant_prodt prd
           ,tbrisco_provisgarant_movto mvt LEFT JOIN crapass ass
@@ -785,6 +797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'movimento', pr_posicao => vr_contador, pr_tag_nova => 'nrctremp', pr_tag_cont => to_char(rw_movimentos.nrctremp,'fm9999g999g990'), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'movimento', pr_posicao => vr_contador, pr_tag_nova => 'vloperacao', pr_tag_cont => to_char(rw_movimentos.vloperacao,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'movimento', pr_posicao => vr_contador, pr_tag_nova => 'vlsaldo_pendente', pr_tag_cont => to_char(rw_movimentos.vlsaldo_pendente,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);            
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'movimento', pr_posicao => vr_contador, pr_tag_nova => 'dtvenc_operacao', pr_tag_cont => to_char(rw_movimentos.dtvenc_operacao,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);            
         
         vr_contador:= vr_contador + 1;
         
@@ -842,9 +855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     
   END pc_carrega_movimentos;
   
-  PROCEDURE pc_exportar(pr_cdcopsel IN crapcop.cdcooper%TYPE --Código da cooperativa selecionada
-                       ,pr_idproduto IN tbrisco_provisgarant_prodt.idproduto%TYPE --Código do produto
-                       ,pr_dtrefere IN VARCHAR2      --Data de referência
+  PROCEDURE pc_exportar(pr_dtrefere IN VARCHAR2      --Data de referência
                        ,pr_cddopcao IN VARCHAR2      --Número da conta
                        ,pr_xmllog   IN VARCHAR2      --XML com informações de LOG
                        ,pr_cdcritic OUT PLS_INTEGER  --Código da crítica
@@ -859,14 +870,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao:
+    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realiza a exportação de informações da tela MOVRGP
     
-    Alterações : 
+    Alterações : 19/06/2017 - Retirado o uso da cooperativa e produto, pois será sempre realizado
+	                          a exportação para todas as cooperativas
+							  (Jonata - RKAM).
     -------------------------------------------------------------------------------------------------------------*/                                
       
     -- Variaveis de locais
@@ -919,22 +932,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
       
     END IF; 
     
-    IF nvl(pr_cdcopsel,0) = 0 THEN
-      
-      -- Montar mensagem de critica
-      vr_dscritic := 'Cooperativa inválida.';
-      RAISE vr_exc_erro;
-      
-    END IF;
-    
-    IF nvl(pr_idproduto,0) = 0 THEN
-      
-      -- Montar mensagem de critica
-      vr_dscritic := 'Produto não informado.';
-      RAISE vr_exc_erro;
-      
-    END IF;
-    
     IF TRIM(pr_dtrefere) IS NULL THEN
       
       -- Montar mensagem de critica
@@ -964,12 +961,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;
     
-    risc0003.pc_exporta_dados_csv(pr_cdcooper  => pr_cdcopsel
-                                 ,pr_idproduto => pr_idproduto
-                                 ,pr_dtbase    => vr_dtrefere
+    risc0003.pc_exporta_dados_csv(pr_dtbase    => vr_dtrefere
                                  ,pr_dsarquiv  => vr_dsarquiv
                                  ,pr_dscritic  => vr_dscritic); 
-                                 
+                               
     --Se houve erro na rotina:
     IF vr_dscritic IS NOT NULL THEN
       
@@ -985,30 +980,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                                         ,pr_nmsubdir => 'rl');
                                        
     --Nome do Arquivo
-    vr_nmarquiv:= to_char(vr_cdcooper,'fm9999999990') || '_' || 
-                  to_char(sysdate,'RRRRMMDD')         || '_' || 
-                  to_char(pr_idproduto,'fm9999999990') || '.csv';
+    vr_nmarquiv:= to_char(sysdate,'RRRRMMDD')           || '_' || 
+                  vr_cdoperad                           ||
+                  Trunc(DBMS_RANDOM.Value(50000,99999)) || '.csv';
         
-    -- Abre arquivo crrl579.csv
-    gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto, --> Diretório do arquivo
-                             pr_nmarquiv => vr_nmarquiv,    --> Nome do arquivo
-                             pr_tipabert => 'W',            --> Modo de abertura (R,W,A)
-                             pr_utlfileh => vr_arquivo_txt, --> Handle do arquivo aberto
-                             pr_des_erro => vr_dscritic);   --> Retorno da critica
-
+    -- Criar o arquivo a partir do CLOB
+    gene0002.pc_clob_para_arquivo(pr_clob => vr_dsarquiv
+                                 ,pr_caminho => vr_nmdireto
+                                 ,pr_arquivo => vr_nmarquiv
+                                 ,pr_des_erro => vr_dscritic);
     -- Se retornou erro
     IF  vr_dscritic IS NOT NULL  THEN
       RAISE vr_exc_saida;
     END IF;
 
-    -- Escreve conteúdo 
-    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt,vr_dsarquiv);
-    
-    -- Fechar o arquivo 
-    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_txt);
-    
-    --O ireport já irá gerar o relatório em formato pdf e por isso, iremos apenas
-    --envia-lo ao servidor web.           
+    -- Envia-lo ao servidor web.           
     gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
                                 ,pr_cdagenci => vr_cdagenci
                                 ,pr_nrdcaixa => vr_nrdcaixa
@@ -1047,9 +1033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                               ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                   ' -->  Operador '|| vr_cdoperad || ' - ' ||
                                                   'Efetuou a exportacao  de arquivo: ' || 
-                                                  'Codigo: ' || gene0002.fn_mask(pr_idproduto,'z.zzz.zz9') ||
-                                                  ', Cooperativa: ' || to_char(rw_crapcop.cdcooper,'fm9999990') || '- ' || rw_crapcop.nmrescop|| 
-                                                  ', Data de referencia: ' || to_char(vr_dtrefere,'DD/MM/RRRR') || '.');
+                                                  ' Data de referencia: ' || to_char(vr_dtrefere,'DD/MM/RRRR') || '.');
     
     pr_des_erro := 'OK';
     
@@ -1098,23 +1082,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao:
+    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realiza a importação de informações da tela MOVRGP
     
-    Alterações : 
+    Alterações : 19/06/2017 - Ajuste para não considerar a cooperativa ao buscar os movimentos (Jonata - RKAM).
+
     -------------------------------------------------------------------------------------------------------------*/                                
       
-    CURSOR cr_risco(pr_cdcooper IN crapcop.cdcooper%TYPE
-                   ,pr_dtbase   IN tbrisco_provisgarant_movto.dtbase%TYPE
+    CURSOR cr_risco(pr_dtbase   IN tbrisco_provisgarant_movto.dtbase%TYPE
                    ,pr_idproduto IN tbrisco_provisgarant_movto.idproduto%TYPE)IS        
     SELECT COUNT(*)
       FROM tbrisco_provisgarant_movto mvt
-     WHERE mvt.cdcooper = pr_cdcooper
-       AND mvt.dtbase   = pr_dtbase
+     WHERE mvt.dtbase   = pr_dtbase
        AND mvt.idproduto = DECODE(pr_idproduto, 0, mvt.idproduto, pr_idproduto);
        
     -- Variaveis de locais
@@ -1225,8 +1208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     
     IF pr_tpoperacao <> 'GI' THEN
       
-      OPEN cr_risco(pr_cdcooper  => pr_cdcopsel
-                   ,pr_dtbase    => vr_dtrefere
+      OPEN cr_risco(pr_dtbase    => vr_dtrefere
                    ,pr_idproduto => pr_idproduto);
                    
       FETCH cr_risco INTO vr_qtregist;
@@ -1521,7 +1503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao: 01/06/2017
+    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
     
     Dados referentes ao programa:
     
@@ -1530,6 +1512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     
     Alterações : 01/06/2017 - Ajuste para retirar validação de valor do percentaul, poderá ser enviado valor zerado
                             (Jonata - RKAM).
+
+				 19/06/2017 - Retirado validação da classificação de operação (Jonata - RKAM).
                             
     -------------------------------------------------------------------------------------------------------------*/                                
       
@@ -1836,15 +1820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;  
     
-    IF rw_risco_prodt.cdclassifica_operacao = 'AA' AND
-       pr_cdclassifica_operacao <> 'AA'            THEN 
-        
-      -- Montar mensagem de critica
-      pr_nmdcampo := 'cdclassificao';
-      vr_dscritic := 'Código da classificação inválida para o produto informado.';
-      RAISE vr_exc_erro;
-        
-    END IF;         
+         
                        
     IF rw_risco_prodt.flpermite_fluxo_financeiro = 1 AND
        NVL(pr_qtdparcelas,0) = 0                     THEN
@@ -2376,7 +2352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao: 01/06/2017
+    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
     
     Dados referentes ao programa:
     
@@ -2385,6 +2361,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     
     Alterações : 01/06/2017 - Ajuste para retirar validação de valor do percentaul, poderá ser enviado valor zerado
                              (Jonata - RKAM).
+
+				 19/06/2017 - Retirado validação da classificação de operação (Jonata - RKAM).
                             
     -------------------------------------------------------------------------------------------------------------*/                                
       
@@ -2674,15 +2652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;     
     
-    IF rw_risco_prodt.cdclassifica_operacao = 'AA' AND
-       pr_cdclassifica_operacao <> 'AA'            THEN 
-        
-      -- Montar mensagem de critica
-      pr_nmdcampo := 'cdclassificao';
-      vr_dscritic := 'Código da classificação inválida para o produto informado.';
-      RAISE vr_exc_erro;
-        
-    END IF;       
+    
                        
     IF rw_risco_prodt.flpermite_fluxo_financeiro = 1 AND
        NVL(pr_qtdparcelas,0) = 0                     THEN

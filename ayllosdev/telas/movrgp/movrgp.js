@@ -1,11 +1,11 @@
 /*****************************************************************************************
  Fonte: movrgp.js                                                   
  Autor: Jonata - RKAM                                                 
- Data : Maio/2017           					   Última Alteração:        
+ Data : Maio/2017           					   Última Alteração: 19/06/2017       
                                                                   
  Objetivo  : Biblioteca de funções da tela MOVRGP                 
                                                                   
- Alterações:  
+ Alterações: 19/06/2017 - Ajuste para realizar a exportação de todas as cooperativas (Jonata - RKAM). 
 						  
 ******************************************************************************************/
 
@@ -228,7 +228,17 @@ function formataFiltroCoop(){
 	$('#frmFiltroCoop').css('display','block');
 	$('#divBotoesFiltroCoop').css('display','block');
 
-	cCdcopsel.focus();
+	if($('#cddopcao','#frmCabMovrgp').val() == 'L'){
+		
+		cCdcopsel.desabilitaCampo();
+		cDtrefere.focus();
+		
+	}else{
+		
+		cCdcopsel.focus();
+		
+	}
+	
 	
 	return false;
 	
@@ -386,9 +396,7 @@ function formataFormProdutos(){
 function exportarArquivo() {
 
     var cddopcao = $("#cddopcao", "#frmCabMovrgp").val();
-	var cdcopsel = $('#cdcopsel','#frmFiltroCoop').val();
 	var dtrefere = $('#dtrefere','#frmFiltroCoop').val();
-	var cdproduto = $('#cdproduto','#frmFiltroProduto').val();
 	
 	$('input,select').removeClass('campoErro');
 	
@@ -401,9 +409,7 @@ function exportarArquivo() {
         url: UrlSite + "telas/movrgp/exportar_arquivo.php",
         data: {
             cddopcao   : cddopcao,
-            cdcopsel   : cdcopsel, 
-			dtrefere   : dtrefere, 
-			cdproduto  : cdproduto, 
+            dtrefere   : dtrefere, 
 			redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -782,9 +788,10 @@ function formataTabelaProdutos(){
 					
 	var arrayLargura = new Array(); 
 		arrayLargura[0] = '30%';
-		arrayLargura[1] = '15%';
+		arrayLargura[1] = '10%';
 		arrayLargura[2] = '15%';
 		arrayLargura[3] = '20%';
+		arrayLargura[4] = '30%';
 							
 	var arrayAlinha = new Array();
 		arrayAlinha[0] = 'left';
@@ -792,6 +799,7 @@ function formataTabelaProdutos(){
 		arrayAlinha[2] = 'right';
 		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'right';
+		arrayAlinha[5] = 'right';
 				
 		
 	if ($('#cddopcao','#frmCabMovrgp').val() == 'E'){		
@@ -1184,7 +1192,7 @@ function formataDetalhes(){
 		if ($('#cdclassificacao_produto', '#fsetDetalhes').val() == 'AA') {
 			
 		    $('#cdclassifica_operacao', '#fsetDetalhes').prop('selected', true).val($('#cdclassificacao_produto', '#fsetDetalhes').val());
-            $('#cdclassifica_operacao','#fsetDetalhes').desabilitaCampo();
+            
 		}
 			   
         if($('#cddopcao','#frmCabMovrgp').val() == 'I'){
@@ -1193,6 +1201,12 @@ function formataDetalhes(){
 			
 		}		
 	
+        cIdgarantia.desabilitaCampo();
+        cIdorigem_recurso.desabilitaCampo();
+        cIdindexador.desabilitaCampo();
+        cPerindexador.desabilitaCampo();
+        cIdnat_operacao.desabilitaCampo();
+       
 		cNrdconta.focus();
 		
 	}
@@ -1278,7 +1292,7 @@ function controlaPesquisas() {
     /*-------------------------------------*/
 
 	//Conta
-    $('#nrdconta', '#' + nomeForm).unbind('change').bind('change', function () {
+    $('#nrdconta', '#' + nomeForm).unbind('blur').bind('blur', function () {
 		filtrosDesc = 'cdcooper|' + $('#cdcopsel', '#frmFiltroCoop').val();
 		buscaDescricao("ZOOM0001", "BUSCADESCASSOCIADO", "Pesquisa Associados", $(this).attr('name'), 'nmprimtl',normalizaNumero($(this).val()), 'nmprimtl', filtrosDesc, 'frmDetalhes');
         
@@ -1286,7 +1300,9 @@ function controlaPesquisas() {
     });
 	
     //Garantia
-    $('#idgarantia', '#' + nomeForm).unbind('change').bind('change', function () {
+    $('#idgarantia', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
+		$('#iddominio_idgarantia','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|8';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsgarantia', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -1294,7 +1310,9 @@ function controlaPesquisas() {
     });
 	
 	// Origem recurso
-    $('#idorigem_recurso', '#' + nomeForm).unbind('change').bind('change', function () {
+    $('#idorigem_recurso', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
+		$('#iddominio_idorigem_recurso','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|3';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsorigem_recurso', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -1302,7 +1320,9 @@ function controlaPesquisas() {
     });
 	
 	// Indexador
-    $('#idindexador', '#' + nomeForm).unbind('change').bind('change', function () {
+    $('#idindexador', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
+		$('#iddominio_idindexador','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|4';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsindexador', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -1310,7 +1330,9 @@ function controlaPesquisas() {
     });
 	
 	// Natureza Operação
-    $('#idnat_operacao', '#' + nomeForm).unbind('change').bind('change', function () {
+    $('#idnat_operacao', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
+		$('#iddominio_idnat_operacao','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|6';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsnat_operacao', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -1404,19 +1426,19 @@ function controleOperacao(){
 
 function Gera_Impressao(nmarquivo, callback) {
 
-    hideMsgAguardo();
+     hideMsgAguardo();
 
     var action = UrlSite + 'telas/movrgp/download_arquivo.php';
 
-    $('#nmarquivo', '#frmFiltroProduto').remove();
-    $('#sidlogin', '#frmFiltroProduto').remove();
-    $('#opcao', '#frmFiltroProduto').remove();
+    $('#nmarquivo', '#frmFiltroCoop').remove();
+    $('#sidlogin', '#frmFiltroCoop').remove();
+    $('#opcao', '#frmFiltroCoop').remove();
 
-    $('#frmFiltroProduto').append('<input type="hidden" id="nmarquivo" name="nmarquivo" value="' + nmarquivo + '" />');
-    $('#frmFiltroProduto').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
-    $('#frmFiltroProduto').append('<input type="hidden" id="opcao" name="opcao" value="' + $('#cddopcao', '#frmCabMovrgp').val() + '" />');
+    $('#frmFiltroCoop').append('<input type="hidden" id="nmarquivo" name="nmarquivo" value="' + nmarquivo + '" />');
+    $('#frmFiltroCoop').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin', '#frmMenu').val() + '" />');
+    $('#frmFiltroCoop').append('<input type="hidden" id="opcao" name="opcao" value="' + $('#cddopcao', '#frmCabMovrgp').val() + '" />');
 
-    carregaImpressaoAyllos("frmFiltroProduto", action, callback);
+    carregaImpressaoAyllos("frmFiltroCoop", action, callback);
 	
 	return false;
 

@@ -1,11 +1,11 @@
 <? 
 /*!
- * FONTE        : tab_registros.php						Última alteração:  
+ * FONTE        : tab_registros.php						Última alteração: 15/06/2017
  * CRIAÇÃO      : Jonata - Mouts
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Tabela que apresenta os parametros da tela PARRGP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 15/06/2017 - Ajuste para incluir a coluna Tipoo de garantia (Jonata - RKAM).
                     
  * --------------
  */ 
@@ -32,6 +32,7 @@
 						<th>Produto</th>
 						<th>Destino</th>
 						<th>Importa Arquivo</th>
+						<th>Tipo de Garantia</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -41,6 +42,7 @@
 							<td><span><? echo getByTagName($result->tags,'dsproduto'); ?></span> <? echo getByTagName($result->tags,'dsproduto'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'dscdestino'); ?></span> <? echo getByTagName($result->tags,'dscdestino'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'tparquivo'); ?></span><? echo getByTagName($result->tags,'tparquivo'); ?> </td>
+							<td><span><? echo getByTagName($result->tags,'dsgarantia'); ?></span><? echo getByTagName($result->tags,'dsgarantia'); ?> </td>
 														
 							<input type="hidden" id="aux_idproduto" name="aux_idproduto" value="<? echo getByTagName($result->tags,'idproduto'); ?>" />
 							<input type="hidden" id="aux_dsproduto" name="aux_dsproduto" value="<? echo getByTagName($result->tags,'dsproduto'); ?>" />

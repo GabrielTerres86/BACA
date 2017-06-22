@@ -1,11 +1,11 @@
 <?php
 /*!
- * FONTE        : manter_rotina.php                    Última alteração:
- * CRIAÇÃO      : Jonata (RKAM)
- * DATA CRIAÇÃO : Maio/2017
- * OBJETIVO     : Rotina para alterar/incluir/excluir informações da tela PARRGP
+ * FONTE        : manter_rotina.php                    Ãšltima alteraÃ§Ã£o: 15/06/2017
+ * CRIAÃ‡ÃƒO      : Jonata (RKAM)
+ * DATA CRIAÃ‡ÃƒO : Maio/2017
+ * OBJETIVO     : Rotina para alterar/incluir/excluir informaÃ§Ãµes da tela PARRGP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÃ‡Ã•ES   : 15/06/2017 - Retirado/incluido a validaÃ§Ã£o de campos para verificar se sÃ£o obrigatÃ³rios o envio (Jonata - RKAM).
  *
  */
 ?>
@@ -19,7 +19,7 @@
     require_once('../../class/xmlfile.php');
     isPostMethod();
 
-    // Carrega permissões do operador
+    // Carrega permissÃµes do operador
     require_once('../../includes/carrega_permissoes.php');
 
     $cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
@@ -84,7 +84,7 @@
 	
 	$xmlObjManterRotina = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjManterRotina->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro  = $xmlObjManterRotina->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -111,7 +111,7 @@
             exibirErro('error','C&oacute;digo do produto inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'dsproduto\',\'frmDetalhes\');',false);
         }
 
-        //Descrição do produto
+        //DescriÃ§Ã£o do produto
         if ( $GLOBALS["dsproduto"] == ''){
             exibirErro('error','A descri&ccedil;&atilde;o deve ser informada.','Alerta - Ayllos','focaCampoErro(\'dsproduto\',\'frmDetalhes\');',false);
         }
@@ -131,6 +131,27 @@
             exibirErro('error','Tpo do arquivo inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'tparquivo\',\'frmDetalhes\');',false);
         }
 
+		$pos = strpos($GLOBALS["tparquivo"], "BRDE");
+		
+		if($pos === false){
+			
+			//Origem do recurso
+			if ( $GLOBALS["idorigem_recurso"] == 0){
+				exibirErro('error','Origem do recurso inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idorigem_recurso\', \'frmDetalhes\');',false);
+			}
+			
+			//Indexador do produto
+			if ( $GLOBALS["idindexador"] == 0){
+				exibirErro('error','Indexador inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'idindexador\', \'frmDetalhes\');',false);
+			}
+			
+			//Natureza de operaÃ§Ã£o
+			if ( $GLOBALS["idnat_operacao"] == 0){
+				exibirErro('error','Natureza de opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idnat_operacao\', \'frmDetalhes\');',false);
+			}
+						
+		}
+		
         //ID da garantia
         if ( $GLOBALS["idgarantia"] == 0){
             exibirErro('error','C&oacute;digo da garantia inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idgarantia\',\'frmDetalhes\');',false);
@@ -145,63 +166,38 @@
         if ( $GLOBALS["idconta_cosif"] == 0){
             exibirErro('error','Conta COSIF inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idconta_cosif\',\'frmDetalhes\');',false);
         }
-
-        //Origem do recurso
-        if ( $GLOBALS["idorigem_recurso"] == 0){
-            exibirErro('error','Origem do recurso inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idorigem_recurso\', \'frmDetalhes\');',false);
-        }
-
-        //Indexador do produto
-        if ( $GLOBALS["idindexador"] == 0){
-            exibirErro('error','Indexador inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'idindexador\', \'frmDetalhes\');',false);
-        }
-						
-		//Percentual do indexador
-        if ( $GLOBALS["perindexador"] == 0){
-            exibirErro('error','Percentual do indexador inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'perindexador\', \'frmDetalhes\');',false);
-        }
 			
-		//ID da variação cambial
+		//ID da variaÃ§Ã£o cambial
         if ( $GLOBALS["idvariacao_cambial"] == ''){
             exibirErro('error','C&oacute;digo da varia&ccedil;&atilde;o cambial inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'idvariacao_cambial\', \'frmDetalhes\');',false);
         }
 			
 		//Origem do CEP
         if ( $GLOBALS["idorigem_cep"] == ''){
-                exibirErro('error','Informe o telefone do respons&aacute;vel.','Alerta - Ayllos','focaCampoErro(\'idorigem_cep\', \'divTabela\');',false);
-            }
-			
-		//Natureza de operação
-        if ( $GLOBALS["idnat_operacao"] == 0){
-            exibirErro('error','Natureza de opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idnat_operacao\', \'frmDetalhes\');',false);
-        }
+			exibirErro('error','Informe o telefone do respons&aacute;vel.','Alerta - Ayllos','focaCampoErro(\'idorigem_cep\', \'divTabela\');',false);
+		}
 			
 		//ID da caracteristica especial
         if ( $GLOBALS["idcaract_especial"] == 0){
             exibirErro('error','Caracter&iacute;stica inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idcaract_especial\', \'frmDetalhes\');',false);
         }
 			
-		//Saida de operação
+		//Saida de operaÃ§Ã£o
         if ( $GLOBALS["flpermite_saida_operacao"] == ''){
             exibirErro('error','Permite sa&iacute;da n&atilde;o informado.','Alerta - Ayllos','focaCampoErro(\'flpermite_saida_operacao\', \'frmDetalhes\');',false);
         }
 		
-		//Saida de operação
+		//Saida de operaÃ§Ã£o
         if ( $GLOBALS["flpermite_fluxo_financeiro"] == ''){
             exibirErro('error','Permite fluxo financeiro n&atilde;o informado.','Alerta - Ayllos','focaCampoErro(\'flpermite_fluxo_financeiro\', \'frmDetalhes\');',false);
         }
 		
-		//Saida de operação
+		//Saida de operaÃ§Ã£o
         if ( $GLOBALS["flreaprov_mensal"] == ''){
             exibirErro('error','Reaproveitamento mensal n&atilde;o informado.','Alerta - Ayllos','focaCampoErro(\'flreaprov_mensal\', \'frmDetalhes\');',false);
         }
 		
-		//Taxa de juros
-        if ( $GLOBALS["vltaxa_juros"] == ''){
-            exibirErro('error','Taxa de juros n&atilde;o informada.','Alerta - Ayllos','focaCampoErro(\'vltaxa_juros\', \'frmDetalhes\');',false);
-        }
-		
-		//Classificação da operação
+		//ClassificaÃ§Ã£o da operaÃ§Ã£o
         if ( $GLOBALS["cdclassifica_operacao"] == ''){
             exibirErro('error','Classifica&ccedil;atilde;o n&atilde;o informada.','Alerta - Ayllos','focaCampoErro(\'cdclassifica_operacao\', \'frmDetalhes\');',false);
         }
