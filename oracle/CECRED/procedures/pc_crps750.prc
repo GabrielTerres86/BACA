@@ -618,10 +618,7 @@ BEGIN
          pr_dscritic:= NULL;
       -- Efetuar commit pois gravaremos o que foi processado ate entao
      COMMIT;
-     raise_application_error(-20100,'Conta: ' || vr_nrdconta || ', emp:  ' || vr_nrctremp ||
-                                    ',  Parc.: ' || vr_nrparcela ||  '  ' ||vr_dscritic ||
-                                    'Tipo: ' || vr_idtpprd);
-
+    
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas codigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
