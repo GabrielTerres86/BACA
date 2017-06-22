@@ -62,7 +62,7 @@
 
   Programa: b1wgen0043.p
   Autor   : Gabriel
-  Data    : Setembro/2009                       Ultima Atualizacao: 24/12/2015
+  Data    : Setembro/2009                       Ultima Atualizacao: 21/03/2017
                                                                       
   Dados referentes ao programa:
   
@@ -226,6 +226,9 @@
 			               assumir a nota referente ao risco A.
 						   Chamado 431839 (Andrey - RKAM)
 
+              21/03/2017 - Alterado rotina obtem_emprestimo_risco, para definir menor
+                           risco como Risco E aux_innivris = 6.
+                           PRJ443 - Cessao de cartao de credito(Odirlei-AMcom)
 .............................................................................*/
   
   
@@ -4072,6 +4075,7 @@ PROCEDURE obtem_emprestimo_risco:
     DEF  INPUT PARAM par_nmdatela AS CHAR                            NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                            NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                            NO-UNDO.
+    DEF  INPUT PARAM par_cdlcremp AS INTE                            NO-UNDO.
     DEF  INPUT PARAM par_nrctrliq AS INTE EXTENT 10                  NO-UNDO.
     DEF  INPUT PARAM par_dsctrliq AS CHAR                            NO-UNDO.
 
@@ -4154,7 +4158,7 @@ PROCEDURE obtem_emprestimo_risco:
     FIND tt-ocorren NO-LOCK NO-ERROR.
     IF AVAIL tt-ocorren AND tt-ocorren.innivris <> 0 THEN
        ASSIGN aux_innivris = tt-ocorren.innivris.
-
+ 
     IF TRIM(par_dsctrliq)        <> ""                AND 
        UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN
        ASSIGN aux_flgrefin = TRUE.
@@ -4226,13 +4230,35 @@ PROCEDURE obtem_emprestimo_risco:
         
           IF AVAIL b1-crapfin AND b1-crapfin.tpfinali = 1 THEN
              DO:
-                 /* Risco D */
-                 IF aux_innivris < 5 THEN
-                    ASSIGN aux_innivris = 5.
+                 /* Risco E */
+                 IF aux_innivris < 6 THEN
+                    ASSIGN aux_innivris = 6.                 
 
              END. /* END IF AVAIL crapfin THEN */
 
        END. /* END IF par_cdfinemp > 0 THEN */
+
+    /* Chamado: 522658 */
+    IF par_cdlcremp > 0 THEN
+       DO:
+           IF par_cdcooper = 2 AND CAN-DO("800,850,900",STRING(par_cdlcremp)) THEN
+              DO:
+                  /* Risco E */
+                  IF aux_innivris < 6 THEN
+                     ASSIGN aux_innivris = 6.
+              END.
+           ELSE 
+           IF par_cdcooper <> 2 AND CAN-DO("800,900",STRING(par_cdlcremp)) THEN
+              DO:
+                  /* Risco E */
+                  IF aux_innivris < 6 THEN
+                     ASSIGN aux_innivris = 6.
+              END.
+              
+       END. /* END IF par_cdfinemp > 0 THEN */
+
+    IF aux_innivris = 10 THEN
+      ASSIGN aux_innivris = 9.    
 
     RUN descricoes_risco(INPUT par_cdcooper,
                          INPUT 0,
@@ -5417,7 +5443,7 @@ PROCEDURE calcula_rating_juridica:
     DEF OUTPUT PARAM aux_vlutiliz AS DECI                            NO-UNDO.
     
     /* Variaveis para o calculo do Rating */
-    DEF  VAR         aux_nranoope AS INTE                            NO-UNDO. 
+    DEF  VAR         aux_nranoope AS DECI                            NO-UNDO. 
     DEF  VAR         aux_qtdiapra AS INTE                            NO-UNDO.
     DEF  VAR         aux_vlendivi AS DECI                            NO-UNDO.
     DEF  VAR         aux_vlmedfat AS DECI                            NO-UNDO.
