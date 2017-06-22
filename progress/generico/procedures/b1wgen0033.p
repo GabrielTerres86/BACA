@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 26/05/2017
+    Data    : Agosto/2008                     Ultima Atualizacao: 21/06/2017
            
     Dados referentes ao programa:
                 
@@ -218,6 +218,8 @@
 				             resultados a 1 ano SD553284 (Tiago/Thiago).
 								
 				26/05/2017 - Alteracao no contrato conforme solicitado no chamado 655583. (Kelvin)
+				
+				21/06/2017 - Ajuste emergencial no formato do cnpj do contrato. (Kelvin #655583)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -3836,7 +3838,7 @@ PROCEDURE imprimir_proposta_seguro:
 
         ASSIGN aux_dsendres = TRIM(tt-prop-seguros.dsendres) +
                        ", " + TRIM(STRING(tt-prop-seguros.nrendres))
-			   aux_dscgcseg = STRING(tt-seguradora.nrcgcseg)
+			   aux_dscgcseg = STRING(tt-seguradora.nrcgcseg,'99999999999999')
 			   aux_nmresseg = TRIM(tt-seguradora.nmresseg).
 		
 		
