@@ -1,4 +1,5 @@
 -- 14/06/2017 - #551231 Padronização do nome do job e inclusão dos logs de controle de início, erro e fim de execução (Carlos)
+
 BEGIN
   sys.dbms_scheduler.drop_job(job_name => 'CECRED.EVENTOPROGRID$');
 
