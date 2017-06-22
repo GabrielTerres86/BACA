@@ -1,5 +1,5 @@
 begin
-  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBEPR_PAGAMENTOS_02',
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBEPR_PAGAMENTOS_01',
                                 job_type            => 'PLSQL_BLOCK',
                                 job_action          => 'declare
   vr_stprogra integer;
