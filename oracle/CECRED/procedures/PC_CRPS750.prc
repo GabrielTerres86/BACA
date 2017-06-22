@@ -21,7 +21,8 @@ BEGIN
   Frequencia: Diaria
   Objetivo  : Priorização das parcelas de empréstimos (TR e PP) para pagamentos
 
-  Alteracoes: 
+  Alteracoes: 22/06/2017 - Correção do tratamento de erros, não deve abortar o programa e
+                           sim continuar para o próximo registro - Jean - Mout´S
     ............................................................................. */
 
   DECLARE
@@ -519,9 +520,6 @@ BEGIN
                    
            end if;
            
-           if vr_dscritic is not null  then
-              continue;
-           end if;
          
       /***************************************/
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
@@ -618,9 +616,6 @@ BEGIN
          pr_dscritic:= NULL;
       -- Efetuar commit pois gravaremos o que foi processado ate entao
      COMMIT;
-     raise_application_error(-20100,'Conta: ' || vr_nrdconta || ', emp:  ' || vr_nrctremp ||
-                                    ',  Parc.: ' || vr_nrparcela ||  '  ' ||vr_dscritic ||
-                                    'Tipo: ' || vr_idtpprd);
 
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas codigo
