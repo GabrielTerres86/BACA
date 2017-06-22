@@ -520,7 +520,7 @@ BEGIN
            end if;
            
            if vr_dscritic is not null  then
-              raise vr_exc_fimprg;
+              continue;
            end if;
          
       /***************************************/
