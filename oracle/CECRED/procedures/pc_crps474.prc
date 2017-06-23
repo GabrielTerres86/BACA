@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Gabriel
-  Data    : Fevereiro/2012.                    Ultima atualizacao: 11/04/2017
+  Data    : Fevereiro/2012.                    Ultima atualizacao: 23/06/2017
 
   Dados referentes ao programa:
 
@@ -117,6 +117,8 @@ BEGIN
               22/03/2017 - Retorno das alterações referentes ao chamado #551205 (Carlos)
               
               11/04/2017 - Logar início e fim do job apenas com pr_cdagenci = 0 (não paralelo) (Carlos)
+              
+              23/06/2017 - #674963 Não logar críticas 995 (Carlos)
 
     ............................................................................. */
 
@@ -1266,7 +1268,10 @@ BEGIN
 
 		  --Desfazer transacao
           ROLLBACK TO SAVEPOINT sav_trans_474;
-          IF vr_tab_erro.count > 0 THEN
+          
+          IF vr_tab_erro.count > 0 AND
+             vr_tab_erro(vr_tab_erro.FIRST).cdcritic <> 995 THEN
+
             vr_cdcritic := 0;            
             vr_dscritic := 'ERRO coop ' || rw_crappep.cdcooper ||
                            ' nrdconta ' || rw_crappep.nrdconta ||
@@ -1408,6 +1413,7 @@ BEGIN
         END;
       END IF;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       -- Efetuar retorno do erro nao tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
