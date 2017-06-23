@@ -10,7 +10,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Abril/96.                       Ultima atualizacao: 28/09/2016
+   Data    : Abril/96.                       Ultima atualizacao: 15/03/2017
 
    Dados referentes ao programa:
 
@@ -91,8 +91,11 @@ BEGIN
                05/07/2016 - Ajuste para incrementar corretamente o index utilziado para carregar a tabela
                             com os registros de poupança programada  (Adriano).
                
-     	       28/09/2016 - Alteração do diretório para geração de arquivo contábil.
-                            P308 (Ricardo Linhares).                 
+     	         28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares). 
+                            
+               15/03/2017 - Remover linhas de reversão das contas de resultado e incluir
+                            lançamentos de novos históricos para o arquivo Rdar ou Matera (Jonatas - Supero)                
 
 
 ............................................................................. */
@@ -185,6 +188,14 @@ BEGIN
     vr_tot_rppagejur  NUMBER := 0;                    --> Valor Total de Poup Ativas de Pessoas Juridica
     vr_tot_vlrprvfis  NUMBER := 0;                    --> Valor Total de Provisao Mensal de Pessoas Fisicas
     vr_tot_vlrprvjur  NUMBER := 0;                    --> Valor Total de Provisao Mensal de Pessoas Juridica
+    
+    --PJ307    
+    vr_tot_vlrajusprv_fis NUMBER := 0;                 --> Valor Total Ajustes Provisão Pessoas Fisicas    
+    vr_tot_vlrajusprv_jur NUMBER := 0;                 --> Valor Total Ajustes Provisão Pessoas Juridicas    
+    vr_tot_vlrajudprv_fis NUMBER := 0;                 --> Valor Total de Ajustes Provisão Pessoas Fisicas  
+    vr_tot_vlrajudprv_jur NUMBER := 0;                 --> Valor Total de Ajustes Provisão Pessoas Juridicas
+    --
+    
     vr_dsprefix       CONSTANT VARCHAR2(15) := 'REVERSAO '; --> Constante de complemento inicial das mensagens de reversão
     vr_dscomand       VARCHAR2(400);                  --> Comando UNIX
     vr_typ_saida      VARCHAR2(400);                  --> Verificar erro na execução do Script UNIX
@@ -193,9 +204,6 @@ BEGIN
     -- Variaveis para diretórios de arquivos contábeis
     vr_dircon VARCHAR2(200);
  	  vr_arqcon VARCHAR2(200);
-    vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
-    vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
-    vc_cdtodascooperativas INTEGER := 0;  
 
     -- Busca dos dados da cooperativa
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS   --> Código da cooperativa
@@ -345,6 +353,22 @@ BEGIN
     -- Instancia e indexa por agencia as provisoes mensais de pessoa juridica
     TYPE typ_tot_vlrprvmes_jur IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
     vr_tot_vlrprvmes_jur typ_tot_vlrprvmes_jur;    
+    
+    -- Instancia e indexa por agencia as ajustes provisoes mensais de pessoa fisica
+    TYPE typ_tot_vlrajusprvmes_fis IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+    vr_tot_vlrajusprvmes_fis typ_tot_vlrajusprvmes_fis;
+    
+    -- Instancia e indexa por agencia as ajustes provisoes mensais de pessoa juridica
+    TYPE typ_tot_vlrajusprvmes_jur IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+    vr_tot_vlrajusprvmes_jur typ_tot_vlrajusprvmes_jur;    
+    
+    -- Instancia e indexa por agencia as ajustes de provisoes mensais de pessoa fisica
+    TYPE typ_tot_vlrajudprvmes_fis IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+    vr_tot_vlrajudprvmes_fis typ_tot_vlrajudprvmes_fis;
+    
+    -- Instancia e indexa por agencia as ajustes de provisoes mensais de pessoa juridica
+    TYPE typ_tot_vlrajudprvmes_jur IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+    vr_tot_vlrajudprvmes_jur typ_tot_vlrajudprvmes_jur;       
 
     -- Procedure para consistir e gravar dados na CRAPPRB
     PROCEDURE pc_cria_crapprb (pr_prazodia  IN NUMBER                  --> Prazo de dias
@@ -1004,11 +1028,69 @@ BEGIN
           vr_res_vlajuprv := vr_res_vlajuprv + vr_craplpp.vllanmto;
           -- Atribuir valores para Pl-Table separando por PF e PJ
           vr_tab_total(vr_craplpp.inpessoa).vlajuprv := vr_tab_total(vr_craplpp.inpessoa).vlajuprv + vr_craplpp.vllanmto;
+          
+          IF vr_craplpp.cdhistor = 154 THEN
+            
+            IF vr_craplpp.inpessoa = 1 THEN
+               
+               -- Separando as opcoes de ajuste previsao mensal por agencia
+               IF vr_tot_vlrajusprvmes_fis.EXISTS(vr_craplpp.cdagenci) THEN
+                  vr_tot_vlrajusprvmes_fis(vr_craplpp.cdagenci) := vr_tot_vlrajusprvmes_fis(vr_craplpp.cdagenci) + vr_craplpp.vllanmto;
+               ELSE
+                  vr_tot_vlrajusprvmes_fis(vr_craplpp.cdagenci) := vr_craplpp.vllanmto;
+               END IF;
+
+               -- Gravando as informacoe para gerar o valor de ajuste provisao mensal de pessoa fisica
+               vr_tot_vlrajusprv_fis := vr_tot_vlrajusprv_fis + vr_craplpp.vllanmto;
+            ELSE
+
+               -- Separando as opcoes de ajuste previsao mensal por agencia
+               IF vr_tot_vlrajusprvmes_jur.EXISTS(vr_craplpp.cdagenci) THEN
+                  vr_tot_vlrajusprvmes_jur(vr_craplpp.cdagenci) := vr_tot_vlrajusprvmes_jur(vr_craplpp.cdagenci) + vr_craplpp.vllanmto;
+               ELSE
+                  vr_tot_vlrajusprvmes_jur(vr_craplpp.cdagenci) := vr_craplpp.vllanmto;
+               END IF;
+
+               -- Gravando as informacoe para gerar o valor de ajuste provisao mensal de pessoa fisica
+               vr_tot_vlrajusprv_jur := vr_tot_vlrajusprv_jur + vr_craplpp.vllanmto;
+            END IF;          
+          
+          END IF;
+          
         WHEN vr_craplpp.cdhistor IN (156,155) THEN
           -- Atribuir valores para as variáveis agrupando por tipo de pessoa
           vr_res_vlajuprv := vr_res_vlajuprv - vr_craplpp.vllanmto;
           -- Atribuir valores para Pl-Table separando por PF e PJ
           vr_tab_total(vr_craplpp.inpessoa).vlajuprv := vr_tab_total(vr_craplpp.inpessoa).vlajuprv - vr_craplpp.vllanmto;
+          
+          IF vr_craplpp.cdhistor = 155 THEN
+            
+            IF vr_craplpp.inpessoa = 1 THEN
+               
+               -- Separando as opcoes de ajuste de previsao mensal por agencia
+               IF vr_tot_vlrajudprvmes_fis.EXISTS(vr_craplpp.cdagenci) THEN
+                  vr_tot_vlrajudprvmes_fis(vr_craplpp.cdagenci) := vr_tot_vlrajudprvmes_fis(vr_craplpp.cdagenci) + vr_craplpp.vllanmto;
+               ELSE
+                  vr_tot_vlrajudprvmes_fis(vr_craplpp.cdagenci) := vr_craplpp.vllanmto;
+               END IF;
+
+               -- Gravando as informacoe para gerar o valor de ajuste de  provisao mensal de pessoa fisica
+               vr_tot_vlrajudprv_fis := vr_tot_vlrajudprv_fis + vr_craplpp.vllanmto;
+            ELSE
+
+               -- Separando as opcoes de ajuste de previsao mensal por agencia
+               IF vr_tot_vlrajudprvmes_jur.EXISTS(vr_craplpp.cdagenci) THEN
+                  vr_tot_vlrajudprvmes_jur(vr_craplpp.cdagenci) := vr_tot_vlrajudprvmes_jur(vr_craplpp.cdagenci) + vr_craplpp.vllanmto;
+               ELSE
+                  vr_tot_vlrajudprvmes_jur(vr_craplpp.cdagenci) := vr_craplpp.vllanmto;
+               END IF;
+
+               -- Gravando as informacoe para gerar o valor de ajuste de provisao mensal de pessoa fisica
+               vr_tot_vlrajudprv_jur := vr_tot_vlrajudprv_jur + vr_craplpp.vllanmto;
+            END IF;          
+          
+          END IF;          
+          
         WHEN vr_craplpp.cdhistor = 863 THEN
           -- Atribuir valores para as variáveis agrupando por tipo de pessoa
           vr_res_vlrtirrf := vr_res_vlrtirrf + vr_craplpp.vllanmto;
@@ -1288,7 +1370,7 @@ BEGIN
                         gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                         --> Conta Origem
                         gene0002.fn_mask(4277, pr_dsforma => '9999')||','||                                         --> Conta Destino
                         TRIM(TO_CHAR(vr_tot_rppagefis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                         '"SALDO TOTAL DE TITULOS ATIVOS POUPANCA PROGRAMADA - COOPERADOS PESSOA FISICA"';           --> Descricao
 
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1328,7 +1410,7 @@ BEGIN
                         gene0002.fn_mask(4277, pr_dsforma => '9999')||','||                                        --> Conta Destino
                         gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                        --> Conta Origem
                         TRIM(TO_CHAR(vr_tot_rppagefis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                        --> Fixo
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                        --> Fixo
                         '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS ATIVOS POUPANCA PROGRAMADA - COOPERADOS PESSOA FISICA"';          --> Descricao
 
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1371,7 +1453,7 @@ BEGIN
                         gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                         --> Conta Origem
                         gene0002.fn_mask(4278, pr_dsforma => '9999')||','||                                         --> Conta Destino
                         TRIM(TO_CHAR(vr_tot_rppagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                         '"SALDO TOTAL DE TITULOS ATIVOS POUPANCA PROGRAMADA - COOPERADOS PESSOA JURIDICA"';         --> Descricao
 
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1408,7 +1490,7 @@ BEGIN
                         gene0002.fn_mask(4278, pr_dsforma => '9999')||','||                                         --> Conta Destino
                         gene0002.fn_mask(4257, pr_dsforma => '9999')||','||                                         --> Conta Origem
                         TRIM(TO_CHAR(vr_tot_rppagejur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                         '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS ATIVOS POUPANCA PROGRAMADA - COOPERADOS PESSOA JURIDICA"';         --> Descricao
                         
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1449,7 +1531,7 @@ BEGIN
                         gene0002.fn_mask(8063, pr_dsforma => '9999')||','||                                         --> Conta Origem
                         gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
                         TRIM(TO_CHAR(vr_tot_vlrprvfis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                         '"PROVISAO DO MES - POUPANCA PROGRAMADA COOPERADOS PESSOA FISICA"';                         --> Descricao
 
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1477,43 +1559,6 @@ BEGIN
              END LOOP;
            END LOOP; -- fim repete
          END IF;
-         
-         -- Montando o cabecalho para fazer a reversao das
-         -- conta para estornar os valores caso necessario
-         vr_setlinha := '70'||                                                                                      --> Informacao inicial
-                        TO_CHAR(rw_crapdat.dtmvtopr,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
-                        TO_CHAR(rw_crapdat.dtmvtopr,'DDMMYY')||','||                                                --> Data DDMMAA
-                        gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                        gene0002.fn_mask(8063, pr_dsforma => '9999')||','||                                         --> Conta Destino
-                        TRIM(TO_CHAR(vr_tot_vlrprvfis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
-                        '"'||vr_dsprefix||'PROVISAO DO MES - POUPANCA PROGRAMADA COOPERADOS PESSOA FISICA"';                         --> Descricao
-
-         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-         
-         -- Verifica se existe valores       
-         IF vr_tot_vlrprvmes_fis.COUNT > 0 THEN
-           -- imprimir as informações para cada conta, ou seja, duplicado
-           FOR repete IN 1..2 LOOP
-             -- Gravas as informacoes de valores por agencia
-             FOR vr_idx_agencia IN vr_tot_vlrprvmes_fis.FIRST()..vr_tot_vlrprvmes_fis.LAST() LOOP
-               -- Verifica se existe a informacao
-               IF vr_tot_vlrprvmes_fis.EXISTS(vr_idx_agencia) THEN
-                 -- Se o valor é maior que zero
-                 IF vr_tot_vlrprvmes_fis(vr_idx_agencia) > 0 THEN
-                   -- Montar linha para gravar no arquivo
-                   vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tot_vlrprvmes_fis(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
-                   -- Escrever linha no arquivo
-                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                 ,pr_des_text => vr_setlinha); --> Texto para escrita
-                 END IF;
-               END IF;
-               -- Limpa variavel
-               vr_setlinha := '';       
-             END LOOP;
-           END LOOP; -- fim repete
-         END IF;
        END IF; -- Se total maior que zero
        
        -- Se o valro total é maior que zero
@@ -1527,7 +1572,7 @@ BEGIN
                         gene0002.fn_mask(8064, pr_dsforma => '9999')||','||                                         --> Conta Origem
                         gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
                         TRIM(TO_CHAR(vr_tot_vlrprvjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
                         '"PROVISAO DO MES - POUPANCA PROGRAMADA COOPERADOS PESSOA JURIDICA"';                       --> Descricao
 
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1555,33 +1600,163 @@ BEGIN
              END LOOP;
            END LOOP; -- fim repete
          END IF;
+       END IF; -- Se total maior que zero
+       
+       --Histórico 154
+       -- Se o valro total é maior que zero
+       IF nvl(vr_tot_vlrajusprv_fis,0) > 0 THEN
          
-         -- Montando o cabecalho para fazer a reversao das
-         -- conta para estornar os valores caso necessario
+         /*** Montando as informacoes de PESSOA FISICA ***/
+         -- Montando o cabecalho das contas do dia atual
          vr_setlinha := '70'||                                                                                      --> Informacao inicial
-                        TO_CHAR(rw_crapdat.dtmvtopr,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
-                        TO_CHAR(rw_crapdat.dtmvtopr,'DDMMYY')||','||                                                --> Data DDMMAA
+                        TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
+                        TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                                --> Data DDMMAA
+                        gene0002.fn_mask(8063, pr_dsforma => '9999')||','||                                         --> Conta Origem
                         gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
-                        gene0002.fn_mask(8064, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                        TRIM(TO_CHAR(vr_tot_vlrprvjur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
-                        gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
-                        '"'||vr_dsprefix||'PROVISAO DO MES - POUPANCA PROGRAMADA COOPERADOS PESSOA JURIDICA"';                       --> Descricao
-                        
+                        TRIM(TO_CHAR(vr_tot_vlrajusprv_fis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
+                        '"AJUSTE PROVISAO POUPANCA PROGRAMADA – PESSOA FISICA"';                         --> Descricao
+
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
          
          -- Verifica se existe valores       
-         IF vr_tot_vlrprvmes_jur.COUNT > 0 THEN   
+         IF vr_tot_vlrajusprvmes_fis.COUNT > 0 THEN
            -- imprimir as informações para cada conta, ou seja, duplicado
            FOR repete IN 1..2 LOOP
              -- Gravas as informacoes de valores por agencia
-             FOR vr_idx_agencia IN vr_tot_vlrprvmes_jur.FIRST()..vr_tot_vlrprvmes_jur.LAST() LOOP
+             FOR vr_idx_agencia IN vr_tot_vlrajusprvmes_fis.FIRST()..vr_tot_vlrajusprvmes_fis.LAST() LOOP
                -- Verifica se existe a informacao
-               IF vr_tot_vlrprvmes_jur.EXISTS(vr_idx_agencia) THEN  
-                 -- Se o valor é maior que zero
-                 IF vr_tot_vlrprvmes_jur(vr_idx_agencia) > 0 THEN  
+               IF vr_tot_vlrajusprvmes_fis.EXISTS(vr_idx_agencia) THEN
+                 -- Se o valor for maior que zero
+                 IF vr_tot_vlrajusprvmes_fis(vr_idx_agencia) > 0 THEN
                    -- Montar linha para gravar no arquivo
-                   vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tot_vlrprvmes_jur(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                   vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tot_vlrajusprvmes_fis(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                   -- Escrever linha no arquivo
+                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                 ,pr_des_text => vr_setlinha); --> Texto para escrita
+                 END IF;
+               END IF;
+               -- Limpa variavel
+               vr_setlinha := '';       
+             END LOOP;
+           END LOOP; -- fim repete
+         END IF;
+       END IF; -- Se total maior que zero
+       
+       -- Se o valro total é maior que zero
+       IF nvl(vr_tot_vlrajusprv_jur,0) > 0 THEN
+       
+         /*** Montando as informacoes de PESSOA JURIDICA ***/       
+         -- Montando o cabecalho das contas do dia atual
+         vr_setlinha := '70'||                                                                                      --> Informacao inicial
+                        TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
+                        TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                                --> Data DDMMAA
+                        gene0002.fn_mask(8064, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                        gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                        TRIM(TO_CHAR(vr_tot_vlrajusprv_jur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
+                        '"AJUSTE PROVISAO POUPANCA PROGRAMADA – PESSOA JURIDICA"';                       --> Descricao
+
+         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
+             
+         -- Verifica se existe valores       
+         IF vr_tot_vlrajusprvmes_jur.COUNT > 0 THEN   
+           -- imprimir as informações para cada conta, ou seja, duplicado
+           FOR repete IN 1..2 LOOP
+             -- Gravas as informacoes de valores por agencia
+             FOR vr_idx_agencia IN vr_tot_vlrajusprvmes_jur.FIRST()..vr_tot_vlrajusprvmes_jur.LAST() LOOP
+               -- Verifica se existe a informacao
+               IF vr_tot_vlrajusprvmes_jur.EXISTS(vr_idx_agencia) THEN       
+                 -- Se o valor é maior que zero
+                 IF vr_tot_vlrajusprvmes_jur(vr_idx_agencia) > 0 THEN       
+                   -- Montar linha para gravar no arquivo
+                   vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tot_vlrajusprvmes_jur(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                   --Escrever linha no arquivo
+                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                 ,pr_des_text => vr_setlinha); --> Texto para escrita
+                 END IF;
+               END IF;
+               -- Limpa variavel
+               vr_setlinha := '';       
+             END LOOP;
+           END LOOP; -- fim repete
+         END IF;
+       END IF; -- Se total maior que zero
+       
+
+       --Histórico 155
+       -- Se o valro total é maior que zero
+       IF nvl(vr_tot_vlrajudprv_fis,0) > 0 THEN
+         
+         /*** Montando as informacoes de PESSOA FISICA ***/
+         -- Montando o cabecalho das contas do dia atual
+         vr_setlinha := '70'||                                                                                      --> Informacao inicial
+                        TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
+                        TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                                --> Data DDMMAA
+                        gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                        gene0002.fn_mask(8063, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                        TRIM(TO_CHAR(vr_tot_vlrajudprv_fis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
+                        '"AJUSTE DE PROVISAO POUPANCA PROGRAMADA – PESSOA FISICA"';                         --> Descricao
+
+         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
+         
+         -- Verifica se existe valores       
+         IF vr_tot_vlrajudprvmes_fis.COUNT > 0 THEN
+           -- imprimir as informações para cada conta, ou seja, duplicado
+           FOR repete IN 1..2 LOOP
+             -- Gravas as informacoes de valores por agencia
+             FOR vr_idx_agencia IN vr_tot_vlrajudprvmes_fis.FIRST()..vr_tot_vlrajudprvmes_fis.LAST() LOOP
+               -- Verifica se existe a informacao
+               IF vr_tot_vlrajudprvmes_fis.EXISTS(vr_idx_agencia) THEN
+                 -- Se o valor for maior que zero
+                 IF vr_tot_vlrajudprvmes_fis(vr_idx_agencia) > 0 THEN
+                   -- Montar linha para gravar no arquivo
+                   vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tot_vlrajudprvmes_fis(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
+                   -- Escrever linha no arquivo
+                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                                 ,pr_des_text => vr_setlinha); --> Texto para escrita
+                 END IF;
+               END IF;
+               -- Limpa variavel
+               vr_setlinha := '';       
+             END LOOP;
+           END LOOP; -- fim repete
+         END IF;
+       END IF; -- Se total maior que zero
+       
+       -- Se o valro total é maior que zero
+       IF nvl(vr_tot_vlrajudprv_jur,0) > 0 THEN
+       
+         /*** Montando as informacoes de PESSOA JURIDICA ***/       
+         -- Montando o cabecalho das contas do dia atual
+         vr_setlinha := '70'||                                                                                      --> Informacao inicial
+                        TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
+                        TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                                --> Data DDMMAA
+                        gene0002.fn_mask(8123, pr_dsforma => '9999')||','||                                         --> Conta Origem
+                        gene0002.fn_mask(8064, pr_dsforma => '9999')||','||                                         --> Conta Destino
+                        TRIM(TO_CHAR(vr_tot_vlrajudprv_jur, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PJ
+                        gene0002.fn_mask(5210, pr_dsforma => '9999')||','||                                         --> Fixo
+                        '"AJUSTE DE PROVISAO POUPANCA PROGRAMADA – PESSOA JURIDICA"';                       --> Descricao
+
+         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
+                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
+             
+         -- Verifica se existe valores       
+         IF vr_tot_vlrajudprvmes_jur.COUNT > 0 THEN   
+           -- imprimir as informações para cada conta, ou seja, duplicado
+           FOR repete IN 1..2 LOOP
+             -- Gravas as informacoes de valores por agencia
+             FOR vr_idx_agencia IN vr_tot_vlrajudprvmes_jur.FIRST()..vr_tot_vlrajudprvmes_jur.LAST() LOOP
+               -- Verifica se existe a informacao
+               IF vr_tot_vlrajudprvmes_jur.EXISTS(vr_idx_agencia) THEN       
+                 -- Se o valor é maior que zero
+                 IF vr_tot_vlrajudprvmes_jur(vr_idx_agencia) > 0 THEN       
+                   -- Montar linha para gravar no arquivo
+                   vr_setlinha := to_char(vr_idx_agencia,'FM009')||','||TRIM(TO_CHAR(vr_tot_vlrajudprvmes_jur(vr_idx_agencia), 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
                    --Escrever linha no arquivo
                    gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                  ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -1605,8 +1780,9 @@ BEGIN
        END;
 
        -- Busca o diretório para contabilidade
-       vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-       vr_dircon := vr_dircon || vc_dircon;
+       vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => 0
+                                             ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
        vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_POUP.txt';       
        
        -- Executa comando UNIX para converter arq para Dos

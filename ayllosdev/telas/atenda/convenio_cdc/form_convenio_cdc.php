@@ -8,7 +8,9 @@
  * ALTERAÇÕES   : 11/08/2016 - Inclusao de campos para apresentacao no site da cooperativa.
  *                             (Jaison/Anderson)
  *
- *                19/01/2016 - Alterado layout do form de conveio e adicionado lupa para o CEP. (Reinert)
+ *                19/01/2017 - Alterado layout do form de convenio e adicionado lupa para o CEP. (Reinert)
+ *					
+ *				  27/03/2017 - Adicionado o botão "Dossie DigiDOC". (Projeto 357 - Reinert)
  * --------------
  */	
 ?>
@@ -58,9 +60,10 @@
 
 <div id="divBotoes">	
 	<? if ( in_array($operacao,array('AC',''))){ ?>
-	<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="fechaRotina(divRotina)" />
+		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="fechaRotina(divRotina)" />
 		<input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif"  onClick="controlaOperacao('CA')" />
         <input type="image" id="btFiliais" src="<? echo $UrlImagens; ?>botoes/filiais.png"  onClick="controlaOperacao('FILIAIS')" />
+		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(4);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
 	<? } else if ( $operacao == 'CA' ){ ?>
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="controlaOperacao('AC')" />		
 		<input type="image" id="btSalvar"  src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="controlaOperacao('ALTERAR')" />

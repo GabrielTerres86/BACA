@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autora  : Mirtes
-       Data    : Marco/2004.                        Ultima atualizacao: 23/06/2016
+       Data    : Marco/2004.                        Ultima atualizacao: 25/05/2017
 
        Dados referentes ao programa:
 
@@ -159,6 +159,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  (Lucas Ranghetti/Fabricio)
                                  
                     23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 6 - WebService (Marcos)
+                                 
+                    25/05/2017 - Ajustar as informações de log de operações (Rodrigo)
                                  
     ............................................................................ */
 
@@ -635,12 +637,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             END IF;
           
           END IF;
-          
-          -- Gerando linha em branco no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra);
+
           --descricao da critica
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
@@ -648,13 +645,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
           IF rw_gnconve.tpdenvio NOT IN(1,4) THEN
             -- Envio centralizado de log de erro
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_ind_tipo_log => 1 -- Mensagem
                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
                                                          || vr_dscritic || ' '
                                                          || vr_nmarqdat || ' -  Arrecadacao Cx. - '
-                                                         || rw_gnconve.nmempres
-                                                         || ': _________');
+                                                         || rw_gnconve.nmempres);
 
           ELSE
             --envia e-mail
@@ -675,12 +671,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
               RAISE vr_exc_saida;
             END IF;
           END IF;
-
-          -- Gerando linha em branco no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra);
         END;
       END pc_transmite_arquivo;
 
@@ -1211,11 +1201,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
           ELSE
             --montando a critica de movimento
-            vr_dscritic := 'Sem movtos Convenio - ' || rw_gnconve.cdconven;
+            vr_dscritic := 'Sem movtos Convenio - ' || rw_gnconve.cdconven || '  - ' || rw_gnconve.nmempres;
 
             -- Gerando mensagem no log
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_ind_tipo_log => 1 -- Mensagem
                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                        || vr_cdprogra || ' --> '
                                                        || vr_dscritic );
@@ -1370,15 +1360,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
         --nome da empresa
         vr_nmempres := rw_gnconve.nmempres;
 
-        --gerando a mensagem a respeito do convenio que esta sendo processado
-        vr_dscritic := 'Executando Convenio - ' || rw_gnconve.cdconven || '  - ' || rw_gnconve.nmempres;
-
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic);
         --indica que é o primeiro convenio
         vr_flgfirst     := TRUE;
         vr_nrseqdig     := 0;

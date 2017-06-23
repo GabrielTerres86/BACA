@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 09/11/2016
+    Data    : Agosto/2008                     Ultima Atualizacao: 26/05/2017
            
     Dados referentes ao programa:
                 
@@ -216,6 +216,8 @@
 
 				09/11/2016 - Corrigido Problemas na impressao da proposta, nao limitar mais os 
 				             resultados a 1 ano SD553284 (Tiago/Thiago).
+								
+				26/05/2017 - Alteracao no contrato conforme solicitado no chamado 655583. (Kelvin)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -295,6 +297,8 @@ DEF VAR aux_premitot    AS DECIMAL                                    NO-UNDO.
 DEF VAR aux_comprela    AS CHAR                                       NO-UNDO.
 DEF VAR rel_prestami    AS CHAR                                       NO-UNDO.
 DEF VAR aux_vlmorada    AS DECI                                       NO-UNDO.
+DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			  NO-UNDO.
+DEF VAR aux_nmresseg    LIKE crapcsg.nmresseg FORMAT "x(30)"          NO-UNDO.
 
 DEF VAR aux_casa3325    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0401    AS CHAR FORMAT "x(76)"                        NO-UNDO.
@@ -327,12 +331,12 @@ FORM
     "\033\1230                PROPOSTA DE SEGURO RESIDENCIAL" AT 20
     SKIP
     "CNPJ -" AT 22
-    tt-seguradora.nrcgcseg 
+    aux_dscgcseg
     SKIP
     "   Processo SUSEP - 15414.000146/2005-83" AT 13 
     SKIP
     "   Seguro garantido pela: " AT 12
-    tt-seguradora.nmresseg 
+    aux_nmresseg 
     SKIP(2)
     "Proposta: " AT 22
     tt-seguros.nrctrseg 
@@ -466,10 +470,90 @@ FORM
     SKIP
     "domicilio apos alta hospitalar, assessoria administrativa.  SERVICOS" 
     SKIP
+    "EMERGENCIAIS - SEM VINCULO AO EVENTO: organizacao e envio de flores,"
+    SKIP
+    "indicacao   de   profissional."
+    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_2.
+
+FORM 
+    SKIP
+    "domicilio apos alta hospitalar, assessoria administrativa.  SERVICOS" 
+    SKIP
     "EMERGENCIAIS - SEM VINCULO AO EVENTO: indicacao  medico  hospitalar,"
     SKIP
     "organizacao  e  envio  de   flores,   indicacao   de   profissional."
-    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_2.
+    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_2_1.	
+
+FORM 
+    SKIP
+    "Todos  os  servicos  disponibilizados  pela  assistencia  24  horas,"
+    SKIP
+    "possuem limites e condicoes contratuais que  deverao  ser  lidas  no"
+    SKIP
+    "manual do segurado.                                                 "
+    SKIP
+    SKIP(2)
+    "\033\107Declaracao do Segurado"
+    SKIP(2)
+	"1) ter recebido e lido as condicoes contratuais  em  versao integral"
+	SKIP
+	"deste  seguro e estou de acordo; 2) que  as  informacoes  fornecidas"  
+    SKIP
+	"nesta proposta de seguro estao corretas, e que estou ciente de que a" 
+    SKIP
+	"veracidade das respostas prestadas neste documento  sao fundamentais" 
+	SKIP
+	"e  determinantes  para  a  precificacao  e  aceitacao  do  risco.  A"
+	SKIP
+	"inexatidao e/ou  omissao acarretam a perda do direito a indenizacao,"
+	SKIP
+	"conforme Art. 766 do Codigo Civil Brasileiro. 3) que comprometo-me a"
+	SKIP
+	"comunicar  por  escrito a Corretora e Seguradora, qualquer alteracao"
+	SKIP
+	"realizada  em  relacao  a  essa  proposta  ou qualquer alteracao nas"
+	SKIP
+	"condicoes  do  risco;  4) estar  de  acordo que o Estipulante  acima" 
+	SKIP
+	"forneca meus dados cadastrais e patrimoniais a Corretora e que  essa" 
+	SKIP
+	"disponibilize  a  Seguradora; 5) estar ciente  e  que  expressamente"  
+	SKIP
+	"autorizo  a  inclusao  de  todos  os  meus   dados   e   informacoes"   
+	SKIP
+	"relacionadas  ao  presente  seguro, assim como de todos os eventuais"   	
+	SKIP
+	"sinistros e ocorrencias  referentes ao mesmo, em banco de dados, aos" 
+	SKIP
+	"quais  a  seguradora podera recorrer para analise de riscos atuais e"
+	SKIP
+	"futuros  e na  liquidacao de processos de sinistros; 6) estou ciente"
+	SKIP
+	"que  a  Seguradora  dispora, para aceitacao ou recusa, de 15(quinze)"
+	SKIP	
+	"dias da data do recebimento desta  proposta em suas filiais. Em caso"
+	SKIP
+	"de  recusa da aceitacao desta proposta, o premio pago sera devolvido"
+	SKIP
+	"com correcao  monetaria estabelecida nas Condicoes Gerais do Seguro;"
+	SKIP
+	"7) que  estou  ciente de que o risco ora proposto sera aceito apenas"
+	SKIP
+	"se estiver de acordo com  as  regras de aceitacao da Seguradora e de"
+	SKIP
+	"que o nao pagamento da primeira parcela do seguro ate seu vencimento"
+	SKIP
+	"acarretara  o  cancelamento  do  seguro;  8)  a  Seguradora   podera"
+	SKIP
+	"enviar proposta  de renovacao   automatica  ao  Segurado, juntamente"
+	SKIP
+	"com  as  condicoes  para   renovacao  do   contrato  e  nao  havendo" 
+	SKIP
+	"manifestacao das  partes contratantes, o seguro  sera  renovado. Por"
+    SKIP	
+    aux_casa3325
+    SKIP
+    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_3.
 
 FORM 
     SKIP
@@ -524,7 +608,7 @@ FORM
     SKIP
     aux_casa3325
     SKIP
-    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_3.
+    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_3_3_1.	
 
 FORM                                                                     
     aux_casa0401
@@ -546,6 +630,35 @@ FORM
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_4.
 
 FORM
+    "\033\107Principais Exclusoes do Seguro Residencial                  "  
+    SKIP(2) 
+    "* Local de risco que nao seja o especificado no Certificado de      "
+	SKIP
+	"Seguro;"
+    SKIP  
+    "* Imovel de veraneio ou fim de semana, chacaras, sitios, fazendas;  "
+    SKIP
+    "* Imoveis coletivos (republicas, pensoes, asilos e similares);      "
+    SKIP 
+    "* Imovel que nao esteja  sendo  utilizado  para  fim  exclusivamente"
+    SKIP
+    "residencial,  mesmo  que  no  imovel  funcione  atividade  comercial"
+    SKIP
+    "informal;" 
+    SKIP    
+    "* Manutencao e utilizacao inadequada dos padroes  recomendados  pelo"
+    SKIP
+    "fabricante, deterioracao gradativa,  desarranjo  mecanico,  desgaste"
+    SKIP
+    "natural decorrente do uso, excesso ou falta de corda;               "
+    SKIP    
+    "* Erosao,  corrosao,  oxidacao,  ferrugem,   variacao   atmosferica," 
+    SKIP  
+    "incrustacao, fadiga;                                                "  
+    SKIP
+    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_4_1.
+	
+	FORM
     "\033\107Principais Exclusoes do Seguro Residencial                  "  
     SKIP(2) 
     "* Local de risco que nao seja o especificado na apolice de seguro;  "
@@ -582,7 +695,7 @@ FORM
     SKIP  
     "incrustacao, fadiga;                                                "  
     SKIP
-    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_4_1.
+    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_4_1_1.
 
 FORM
     "* Chuva, mofo, bolor e fungos, cupim, processo de limpeza,  acao  de" 
@@ -662,7 +775,48 @@ FORM
     SKIP
     'registro na SUSEP, nome completo, CNPJ ou CPF."'
     SKIP(2)
-    "PELA  PRESENTE,  AUTORIZO  A  DEBITAR  MENSALMENTE  EM  MINHA  CONTA"
+	"Telefones Uteis" 
+	SKIP
+	"Assistencia 24 Horas: 0800 725 2064"
+	
+	SKIP
+	"Central de Atendimento a Sinistros Capitais e Regioes Metropolitanas" 
+	SKIP
+	"0800 7252064 (2° a 6º feira das 8h00 as 20h00)"
+	SKIP
+	"Central de Atendimento do Estipulante"
+	SKIP
+	"(47)3231-4646 (2º a 6º feira das 8h00 as 20h00)"
+	SKIP
+	"Central de Atendimento a Clientes com deficiencia auditiva ou de fala"
+	SKIP
+	"0800 724 5084 (24h00 por dia 7 dias por semana)"
+	SKIP
+	"Ouvidoria - ouvidoria@chubb.com"
+	SKIP
+	"0800 722 5059 (2º a 6º feira das 8h00 as 18h00)"
+	SKIP
+	"Caixa Postal 310, Agencia 72300019, CEP: 01031-970"
+	SKIP
+	"A Ouvidoria e um canal de comunicacao, imparcial e  independente, que"
+	SKIP
+	"as  Companhias  do  Grupo Chunn  disponibilizaram  para seus clientes"
+	SKIP
+	"e  colaboradores. E dever  desta  area  atuar de acordo com as normas" 
+	SKIP
+	"relativas  aos  direitos  dos  consumidores  e  a mediar,  esclarecer"
+	SKIP
+	",prevenir  e/ou  solucionar   possiveis   conflitos.  Este  canal  de"
+	SKIP
+	"comunicacao so pode ser utilizado quando clientes e colaboradores nao" 
+    SKIP
+	"encontrarem  uma  solucao  satisfatoria  para  suas  reclamacoes, nos" 
+    SKIP
+	"meios  tradicionais  de  atendimento das Companhias(SAC - Servicos de"
+	SKIP
+	"Atendimento  ao  Consumidor;  Fale Conosco; Sinistros; entre outros)."
+	SKIP(2)
+	"PELA  PRESENTE,  AUTORIZO  A  DEBITAR  MENSALMENTE  EM  MINHA  CONTA"
     SKIP
     "CORRENTE DE NUMERO " rel_nrdconta2 " , O  VALOR  DAS  PARCELAS  DO SEGURO" 
     SKIP
@@ -674,6 +828,37 @@ FORM
     SKIP
     "PRESENTE SEGURO.\033\110"
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_5.
+	
+FORM
+    SKIP(3)
+    "Observacoes Gerais"
+    SKIP
+    '"A aceitacao do risco e a concretizacao do seguro estao  sujeitos  a'
+    SKIP
+    'analise da Seguradora."'
+    SKIP
+    '"O registro deste plano na SUSEP na implica, por parte da  Autarquia'
+    SKIP
+    ', incentivo ou recomendacao a sua comercializacao."'
+    SKIP
+    '"O Segurado podera consultar a situacao cadastral de seu corretor de'
+    SKIP
+    "seguros, no  site  www.susep.gov.br,  por  meio  do  numero  de  seu"
+    SKIP
+    'registro na SUSEP, nome completo, CNPJ ou CPF."'
+    SKIP(2)
+    "PELA  PRESENTE,  AUTORIZO  A  DEBITAR  MENSALMENTE  EM  MINHA  CONTA"
+    SKIP
+    "CORRENTE DE NUMERO " rel_nrdconta2 " , O  VALOR  DAS  PARCELAS  DO SEGURO" 
+    SKIP
+    "ABAIXO DESCRITO."
+    SKIP
+    "\033\107OBSERVACAO IMPORTANTE: CASO  NO  DIA  DO  DEBITO  NAO  EXISTA  SALDO"
+    SKIP
+    "DISPONIVEL NA CONTA  CORRENTE  INDICADA,  CONSIDERA-SE  CANCELADO  O" 
+    SKIP
+    "PRESENTE SEGURO.\033\110"
+    WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_5_1_1.	
 
 FORM SKIP(2)
     "       TIPO          Proposta  Plano        Dia     Parcelas Mensais"
@@ -3650,12 +3835,15 @@ PROCEDURE imprimir_proposta_seguro:
                                   tt-prop-seguros.qtparcel.
 
         ASSIGN aux_dsendres = TRIM(tt-prop-seguros.dsendres) +
-                       ", " + TRIM(STRING(tt-prop-seguros.nrendres)).
-                 
-        /*Primeira via*/
+                       ", " + TRIM(STRING(tt-prop-seguros.nrendres))
+			   aux_dscgcseg = STRING(tt-seguradora.nrcgcseg)
+			   aux_nmresseg = TRIM(tt-seguradora.nmresseg).
+		
+		
+		/*Primeira via*/
         DISPLAY STREAM str_1 
-                tt-seguradora.nrcgcseg 
-                tt-seguradora.nmresseg
+                aux_dscgcseg 
+                aux_nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
         
@@ -3774,37 +3962,78 @@ PROCEDURE imprimir_proposta_seguro:
         
         DISP STREAM str_1 WITH FRAME f_autori_casa_3.
         DISP STREAM str_1 WITH FRAME f_autori_casa_3_1.
-        DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
+		
+		/* Propostas com inicio de vigencia maior ou igual a 20/06/2016 */
+        IF  rel_dtinivig > 06/20/2017 THEN 
+			DO:
+				DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
+				
+				DISP STREAM str_1 
+				 aux_casa3325
+				 WITH FRAME f_autori_casa_3_3.
+				 
+				DISP STREAM str_1
+ 					 aux_casa0401 
+					 aux_casa0402
+					 aux_casa0403
+					 aux_casa0404
+					 aux_casa0405
+					 aux_casa0406
+					 aux_casa0407
+					 aux_casa0408
+					 WITH FRAME f_autori_casa_4.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
 
-        DISP STREAM str_1 
-             aux_casa3325
-             WITH FRAME f_autori_casa_3_3.
+				DISP STREAM str_1
+					 aux_casa4307
+					 aux_casa4308
+					 aux_casa4309
+					 WITH FRAME f_autori_casa_4_3.
 
-        DISP STREAM str_1
-             aux_casa0401
-             aux_casa0402
-             aux_casa0403
-             aux_casa0404
-             aux_casa0405
-             aux_casa0406
-             aux_casa0407
-             aux_casa0408
-             WITH FRAME f_autori_casa_4.
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
+				
+				DISP STREAM str_1 
+					 rel_nrdconta2
+					 WITH FRAME f_autori_casa_5.
+			END.
+		ELSE
+			DO:
+				DISP STREAM str_1 WITH FRAME f_autori_casa_3_2_1.
+				
+				DISP STREAM str_1 
+				 aux_casa3325
+				 WITH FRAME f_autori_casa_3_3_1.
+				 
+				DISP STREAM str_1
+ 					 aux_casa0401 
+					 aux_casa0402
+					 aux_casa0403
+					 aux_casa0404
+					 aux_casa0405
+					 aux_casa0406
+					 aux_casa0407
+					 aux_casa0408
+					 WITH FRAME f_autori_casa_4.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_1_1.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
 
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
+				DISP STREAM str_1
+					 aux_casa4307
+					 aux_casa4308
+					 aux_casa4309
+					 WITH FRAME f_autori_casa_4_3.
 
-        DISP STREAM str_1
-             aux_casa4307
-             aux_casa4308
-             aux_casa4309
-             WITH FRAME f_autori_casa_4_3.
-
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
-        
-        DISP STREAM str_1 
-             rel_nrdconta2
-             WITH FRAME f_autori_casa_5.
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
+				
+				DISP STREAM str_1 
+					 rel_nrdconta2
+					 WITH FRAME f_autori_casa_5_1_1.
+			END.
 
         DISP STREAM str_1
             rel_nrctrseg 
@@ -3825,8 +4054,8 @@ PROCEDURE imprimir_proposta_seguro:
         
         /*Segunda via*/
         DISPLAY STREAM str_1 
-                tt-seguradora.nrcgcseg 
-                tt-seguradora.nmresseg
+                aux_dscgcseg 
+                aux_nmresseg
                 tt-seguros.nrctrseg
                 WITH FRAME f_autori_casa_c.                     
         
@@ -3945,38 +4174,79 @@ PROCEDURE imprimir_proposta_seguro:
         
         DISP STREAM str_1 WITH FRAME f_autori_casa_3.
         DISP STREAM str_1 WITH FRAME f_autori_casa_3_1.
-        DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
-
-        DISP STREAM str_1 
-             aux_casa3325
-             WITH FRAME f_autori_casa_3_3.
-
-        DISP STREAM str_1
-             aux_casa0401
-             aux_casa0402
-             aux_casa0403
-             aux_casa0404
-             aux_casa0405
-             aux_casa0406
-             aux_casa0407
-             aux_casa0408
-             WITH FRAME f_autori_casa_4.
-
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
-
-        DISP STREAM str_1
-             aux_casa4307
-             aux_casa4308
-             aux_casa4309
-             WITH FRAME f_autori_casa_4_3.
-
-        DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
         
-        DISP STREAM str_1 
-             rel_nrdconta2
-             WITH FRAME f_autori_casa_5.
+		/* Propostas com inicio de vigencia maior ou igual a 20/06/2017 */
+        IF  rel_dtinivig > 06/20/2017 THEN 
+			DO:
+				DISP STREAM str_1 WITH FRAME f_autori_casa_3_2.
+				
+				DISP STREAM str_1 
+				 aux_casa3325
+				 WITH FRAME f_autori_casa_3_3.
+				 
+				DISP STREAM str_1
+ 					 aux_casa0401 
+					 aux_casa0402
+					 aux_casa0403
+					 aux_casa0404
+					 aux_casa0405
+					 aux_casa0406
+					 aux_casa0407
+					 aux_casa0408
+					 WITH FRAME f_autori_casa_4.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_1.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
 
+				DISP STREAM str_1
+					 aux_casa4307
+					 aux_casa4308
+					 aux_casa4309
+					 WITH FRAME f_autori_casa_4_3.
+
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
+				
+				DISP STREAM str_1 
+					 rel_nrdconta2
+					 WITH FRAME f_autori_casa_5.
+			END.
+		ELSE
+			DO:
+				DISP STREAM str_1 WITH FRAME f_autori_casa_3_2_1.
+				
+				DISP STREAM str_1 
+				 aux_casa3325
+				 WITH FRAME f_autori_casa_3_3_1.
+				 
+				DISP STREAM str_1
+ 					 aux_casa0401 
+					 aux_casa0402
+					 aux_casa0403
+					 aux_casa0404
+					 aux_casa0405
+					 aux_casa0406
+					 aux_casa0407
+					 aux_casa0408
+					 WITH FRAME f_autori_casa_4.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_1_1.
+				
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_2.
+
+				DISP STREAM str_1
+					 aux_casa4307
+					 aux_casa4308
+					 aux_casa4309
+					 WITH FRAME f_autori_casa_4_3.
+
+				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
+				
+				DISP STREAM str_1 
+					 rel_nrdconta2
+					 WITH FRAME f_autori_casa_5_1_1.
+			END.
+       
         DISP STREAM str_1
             rel_nrctrseg 
             tt-prop-seguros.tpplaseg
@@ -5960,7 +6230,7 @@ PROCEDURE busca_seguros:
                  crapseg.cdcooper = par_cdcooper:
     
             IF (crapseg.nrdconta <> par_nrdconta AND par_nrdconta <> 0) THEN NEXT.
-              
+            
             CREATE tt-seguros.
             ASSIGN tt-seguros.cdcooper      = crapseg.cdcooper
                    tt-seguros.cdagenci      = crapseg.cdagenci

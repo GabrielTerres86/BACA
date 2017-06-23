@@ -85,9 +85,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     ,flgstfin crapfin.flgstfin%TYPE
     ,tpfinali crapfin.tpfinali%TYPE);
        
-   /* Tabela para guardar as finalidades de empréstimos */
+  /* Tabela para guardar as finalidades de empréstimos */
   TYPE typ_tab_finalidades_empr IS TABLE OF typ_finalidades_empr INDEX BY PLS_INTEGER;
-              
+  
   /* Tabela para guardar as naturezas de ocupação */
   TYPE typ_natureza_ocupacao IS RECORD 
     (cdnatocp gncdnto.cdnatocp%TYPE
@@ -280,6 +280,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
   PROCEDURE pc_busca_finalidades_empr_web(pr_cdfinemp  IN crapfin.cdfinemp%TYPE -- Código da finalidade
                                          ,pr_dsfinemp  IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                          ,pr_flgstfin  IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
+                                         ,pr_lstipfin  IN VARCHAR2 DEFAULT NULL -- lista com os tipo de finalidade ou nulo para todas
                                          ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
                                          ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
                                          ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
@@ -301,8 +302,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                           ,pr_des_erro OUT VARCHAR2             -- Saida OK/NOK
                                           ,pr_clob_ret OUT CLOB                 -- Tabela clob                                 
                                           ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
-                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                           
-                                                                                                        
+                                          ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro   
+                                                                                  
   PROCEDURE pc_busca_gncdnto_car( pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da finalidade
                                  ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da finalidade
                                  ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
@@ -385,7 +386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                     
                12/06/2016 - Criação das rotinas para consulta de linhas de crédito e finalidades de empréstimo
                             (Andrei - RKAM).
-                                                 
+                    
                07/02/2017 - Criacao da pc_busca_operacao_conta. (Jaison/Oscar - PRJ335)
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
@@ -3390,6 +3391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                      ,pr_cdfinemp IN crapfin.cdfinemp%TYPE -- Código da finalidade
                                      ,pr_dsfinemp IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                      ,pr_flgstfin IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
+                                     ,pr_lstipfin IN VARCHAR2 DEFAULT NULL -- lista com os tipo de finalidade ou nulo para todas
                                      ,pr_nrregist IN INTEGER               -- Número de registro
                                      ,pr_nriniseq IN INTEGER               -- Número sequencial do registro
                                      ,pr_qtregist OUT INTEGER              -- Quantidade de registro
@@ -3404,14 +3406,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei
-    Data     : Julho/2016                           Ultima atualizacao:
+    Data     : Julho/2016                           Ultima atualizacao: 29/03/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Pesquisa finalidades de empréstimo
     
-    Alterações : 
+    Alterações : 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
+                              PRJ343 - Cessao de credito. (Odirlei-Amcom)
     -------------------------------------------------------------------------------------------------------------*/                                    
   
   CURSOR cr_crapfin(pr_cdcooper IN crapfin.cdcooper%TYPE
@@ -3428,6 +3431,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
      OR crapfin.cdfinemp = pr_cdfinemp)
     AND(pr_flgstfin = 3 --Todas as situações
      OR crapfin.flgstfin = pr_flgstfin)
+    AND (pr_lstipfin IS NULL OR 
+         'S' = gene0002.fn_existe_valor(pr_base  => pr_lstipfin, 
+                                        pr_busca => crapfin.tpfinali, 
+                                        pr_delimite => ',')
+         ) 
     AND UPPER(crapfin.dsfinemp) LIKE '%' || pr_dsfinemp || '%';
   rw_crapfin cr_crapfin%ROWTYPE;
   
@@ -3488,6 +3496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
   PROCEDURE pc_busca_finalidades_empr_web(pr_cdfinemp  IN crapfin.cdfinemp%TYPE -- Código da finalidade
                                          ,pr_dsfinemp  IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                          ,pr_flgstfin  IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
+                                         ,pr_lstipfin  IN VARCHAR2              -- lista com os tipo de finalidade ou nulo para todas
                                          ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
                                          ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
                                          ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
@@ -3503,14 +3512,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei  
-    Data     : Julho/2016                          Ultima atualizacao:
+    Data     : Julho/2016                          Ultima atualizacao: 29/03/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Pesquisa finalidades de empréstimo para WEB, apenas chama a pc_busca_finalidades_empr.
     
-    Alterações : 
+    Alterações : 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
+                              PRJ343 - Cessao de credito. (Odirlei-Amcom)
+                               
     -------------------------------------------------------------------------------------------------------------*/                                    
    --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -3577,6 +3588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                              ,pr_cdfinemp => nvl(pr_cdfinemp,0) -- Código da finalidade
                              ,pr_dsfinemp => UPPER(pr_dsfinemp) -- Descrição da finalidade
                              ,pr_flgstfin => pr_flgstfin        -- Situação da finalidade
+                             ,pr_lstipfin => pr_lstipfin        -- lista com os tipo de finalidade ou nulo para todas
                              ,pr_nrregist => pr_nrregist        -- Número de registro
                              ,pr_nriniseq => pr_nriniseq        -- Número sequencial do registro
                              ,pr_qtregist => vr_qtregist        -- Quantidade de registro
@@ -3843,7 +3855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic:= 'Erro na pc_busca_finalidades_empr_car --> '|| SQLERRM;
       
   END pc_busca_finalidades_empr_car; 
-
+  
   PROCEDURE pc_busca_operacao_conta(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE --> Codigo da operacao
                                    ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE --> Descricao da operacao
                                    ,pr_nrregist   IN INTEGER                       --> Quantidade de registros                            

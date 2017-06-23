@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Diego         
-   Data    : Maio/2006                         Ultima alteracao: 08/01/2014 
+   Data    : Maio/2006                         Ultima alteracao: 18/05/2017 
    
    Dados referentes ao programa:
 
@@ -17,6 +17,9 @@
                08/01/2014 - Incluido criacao de arquivo de log tab041.log
                             para registrar mudanca de horario para consulta 
                             na LOGTEL (Tiago).
+                            
+               18/05/2017 - #657602 Alterado o horario minimo permitido para
+                            aguardar os arquivos da COMPEBB (Carlos)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -43,7 +46,7 @@ FORM SKIP(2)
      SKIP(3)
      tel_nrdhhini AT 5   LABEL "Horario limite para aguardar a COMPE"
                          FORMAT "99" AUTO-RETURN
-                         HELP "Informe o horario limite (4 a 9)."
+                         HELP "Informe o horario limite (3 a 9)."
      ":"          AT 45 
      tel_nrdmmini AT 46  NO-LABEL FORMAT "99" 
                          HELP "Informe os minutos limite (0 a 59)."
@@ -113,7 +116,7 @@ DO WHILE TRUE:
                        .
                   ELSE
                        DO:
-                           IF   tel_nrdhhini < 4   OR
+                           IF   tel_nrdhhini < 3   OR
                                 tel_nrdhhini > 9   OR
                                (tel_nrdhhini = 9   AND
                                 tel_nrdmmini > 0)  THEN

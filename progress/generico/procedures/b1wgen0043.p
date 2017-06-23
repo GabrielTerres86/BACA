@@ -62,7 +62,7 @@
 
   Programa: b1wgen0043.p
   Autor   : Gabriel
-  Data    : Setembro/2009                       Ultima Atualizacao: 24/12/2015
+  Data    : Setembro/2009                       Ultima Atualizacao: 21/03/2017
                                                                       
   Dados referentes ao programa:
   
@@ -226,6 +226,9 @@
 			               assumir a nota referente ao risco A.
 						   Chamado 431839 (Andrey - RKAM)
 
+              21/03/2017 - Alterado rotina obtem_emprestimo_risco, para definir menor
+                           risco como Risco E aux_innivris = 6.
+                           PRJ443 - Cessao de cartao de credito(Odirlei-AMcom)
 .............................................................................*/
   
   
@@ -4227,9 +4230,10 @@ PROCEDURE obtem_emprestimo_risco:
         
           IF AVAIL b1-crapfin AND b1-crapfin.tpfinali = 1 THEN
              DO:
-                 /* Risco D */
-                 IF aux_innivris < 5 THEN
-                    ASSIGN aux_innivris = 5.
+             
+                 /* Risco E */
+                 IF aux_innivris < 6 THEN
+                    ASSIGN aux_innivris = 6.                 
 
              END. /* END IF AVAIL crapfin THEN */
 

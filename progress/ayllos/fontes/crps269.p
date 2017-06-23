@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah 
-   Data    : Agosto/1999                       Ultima atualizacao: 25/09/2015
+   Data    : Agosto/1999                       Ultima atualizacao: 05/06/2017
    
    Dados referentes ao programa:
 
@@ -75,6 +75,9 @@
 
                25/09/2015 - Substituido os emials do SEGUROS DE VIDA
                             (Tiago/Gielow #332160).
+							
+			   05/06/2017 - Substituindo emails do seguro, conforme
+						    solicitado no chamado 683083. (Kelvin)
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -364,7 +367,7 @@ IF   tot_qtsegnov > 0 OR tot_qtsegcan > 0 OR tot_qtsegalt > 0 THEN
          RUN enviar_email IN b1wgen0011
                             (INPUT glb_cdcooper,
                              INPUT glb_cdprogra,
-                             INPUT "projetocecred@mdsinsure.com,"           +
+                             INPUT "cecred.ftpchubb@mdsinsure.com,"         +
                                    "pendencia.cecredseguros@mdsinsure.com," +
                                    "seguros@cecred.coop.br",
                              INPUT "SEGUROS DE VIDA",

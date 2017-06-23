@@ -217,41 +217,43 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
-  /*---------------------------------------------------------------------------------------------------------------
-
-    Programa : GENE0005
-    Sistema  : Rotinas auxiliares para busca de informacões do negocio
-    Sigla    : GENE
-    Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 16/05/2017
-  
-   Dados referentes ao programa:
-  
-   Frequencia: -----
-   Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
-   Alteracoes: 
-               04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
-                            para passagem do parâmetro pr_tipo_busca, para melhoria
-                            de performance.
-                            Chamado 291693 (Heitor - RKAM)
-  
-               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-  
-               10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
-                            crapass em campos de indice que possuem UPPER
-                            (Adriano - SD 463762).
-
-               16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
-
-               20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
-                            (Adriano - SD 620221).
-  
-               23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
-
-               16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
-                            novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
-                            
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : GENE0005
+  --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
+  --  Sigla    : GENE
+  --  Autor    : Marcos Ernani Martini - Supero
+  --  Data     : Maio/2013.                   Ultima atualizacao: 15/05/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
+  -- Alteracoes: 
+  --             04/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
+  --                          para passagem do parâmetro pr_tipo_busca, para melhoria
+  --                          de performance.
+  --                          Chamado 291693 (Heitor - RKAM)
+  --
+  --             30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  --
+  --             10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
+  --                          crapass em campos de indice que possuem UPPER
+  --                          (Adriano - SD 463762).
+  --
+  --			       16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
+  --
+  --             20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
+  --                          (Adriano - SD 620221).
+  --
+  --             23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
+  --
+  --             15/05/2017 - Correcao na fn_valida_dia_util para abortar execucao quando for passada uma data nula.
+  --                          SD 670255.(Carlos Rafael Tanholi)
+  --
+  --             16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
+  --                          novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
+  ---------------------------------------------------------------------------------------------------------------
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
@@ -1126,16 +1128,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                            ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
                                            ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
 
-                 -- Se ocorreu erro, gerar critica
-                 IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
-                   -- Zerar saldo devedor
-                   vr_vlsdeved := 0;
-                   -- Gerar critica
-                   RAISE vr_exc_erro;
-                 END IF;
 
+               -- Se ocorreu erro, gerar critica
+               IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+                 -- Zerar saldo devedor
+                 vr_vlsdeved := 0;
+                 -- Gerar critica
+                 RAISE vr_exc_erro;
                END IF;
-             ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
+			 END IF;
+           ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr
                EMPR0001.pc_saldo_devedor_epr(pr_cdcooper   => pr_cdcooper           --> Cooperativa conectada
                                             ,pr_cdagenci   => pr_cdagenci         --> Codigo da agencia
@@ -1394,12 +1396,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --                            - Alterado para tratar o ultimo dia util do ano ao invez do ultimo dia do ano
     --                              devido a compe financeira utlizar o ultimo dia util do ano para o fechamento anual
     --                              SD 240181 (Odirlei-AMcom)
+    --
+    --                 15/05/2017 - Correcao para abortar execucao quando for passada uma data nula, evitando
+    --                              que a rotina caia no loop infinito gerando atraso no processo. SD 670255.
+    --                              (Carlos Rafael Tanholi)    
     -- .............................................................................
     DECLARE
       -- Data auxiliar
       vr_dtmvtolt  crapdat.dtmvtolt%TYPE;
       vr_excultdia INTEGER;
       vr_dtultano  crapdat.dtmvtolt%TYPE;
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;      
       
       -- Buscar informacoes dos feriados
       CURSOR cr_crapfer (pr_excultdia IN INTEGER) IS
@@ -1409,6 +1417,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Indica pra tabela de feriados
       vr_index BINARY_INTEGER;
     BEGIN
+      -- valida data nula  
+      IF pr_dtmvtolt IS NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    
       -- Iniciar com a data passada removendo as horas
       vr_dtmvtolt := TRUNC(pr_dtmvtolt);
       
@@ -1469,11 +1482,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Retornar a data calculada
       RETURN vr_dtmvtolt;
     EXCEPTION
+			WHEN vr_exc_saida THEN
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Processo normal
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0005 --> fn_valida_dia_util - Coop.: '||pr_cdcooper||' - Data inválida (NULL)');
+        RETURN NULL;
       WHEN OTHERS THEN
         -- Iniciar LOG de execucão
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> Coop. --> '||pr_cdcooper||' --> Não foi possivel verificar data util para o dia --> '||vr_dtmvtolt);
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0005 --> fn_valida_dia_util - Coop.: '||pr_cdcooper||' - Não foi possivel verificar data util para o dia: '||vr_dtmvtolt);
         RETURN null;
     END;
   END fn_valida_dia_util;
@@ -2581,7 +2599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
          WHERE a.idinconsist_grp = pr_iddgrupo
            AND a.tpconfig_email <> 0 -- Deve ser diferente de NAO ENVIAR EMAIL
            AND a.tpconfig_email = decode(pr_tpincons,1, 2, -- Se o erro for de alerta, enviar somente se estiver configurado para ERROS E ALERTAS
-                                                        a.tpperiodicidade_email)
+                                                        a.tpconfig_email)
            AND a.tpperiodicidade_email = 1; -- Enviar email Online
       rw_inconsist_grp cr_inconsist_grp%ROWTYPE;
       

@@ -172,6 +172,9 @@
 
 	           01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
 
+               06/12/2016 - Incluido mensagens STR0025 E PAG0121 referente ao
+                            Bacenjud (Prj 341 - Andrino - Mouts)
+
 			   05/01/2017 - Ajuste para retirada de caracterer especiais
 							(Adriano - SD 556053)
 
@@ -251,6 +254,7 @@ DEF VAR aux_NumCtrlIF     AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCtrlRem    AS CHAR                                   NO-UNDO.
 DEF VAR aux_CodDevTransf  AS CHAR                                   NO-UNDO.
 DEF VAR aux_VlrLanc       AS CHAR                                   NO-UNDO.
+DEF VAR aux_IdentcDep     AS CHAR                                   NO-UNDO.
 DEF VAR aux_DtMovto       AS CHAR                                   NO-UNDO.
 DEF VAR aux_ISPBIFDebtd   AS CHAR                                   NO-UNDO.
 DEF VAR aux_BancoDeb      AS INT                                    NO-UNDO.
@@ -540,6 +544,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_TpPessoaCred  = ""
            aux_CodDevTransf  = ""
            aux_VlrLanc       = ""
+           aux_IdentcDep     = ""
            aux_DtMovto       = ""
            aux_SitLanc       = ""
            aux_dadosdeb      = ""
@@ -652,6 +657,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
          "STR0018,STR0019," +  /* Exclusao/Inclusao IF */  
         
          "STR0005R2,STR0007R2,STR0008R2,PAG0107R2," +
+         "STR0025R2,PAG0121R2," + /* Transferencia Judicial - Andrino */
          "PAG0108R2,PAG0143R2," +     /* TED */
 
          "STR0037R2,PAG0137R2," +     /* TEC */
@@ -697,6 +703,17 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
              NEXT.         
          END.
 
+    /* Transferencia Judicial - Andrino */
+    IF  CAN-DO("STR0025R2,PAG0121R2",aux_CodMsg) THEN
+         DO:
+            /* enviar mensagem STR0010 e PAG0111 */
+            ASSIGN aux_codierro = 4
+                   aux_dsdehist = "IF nao autorizada a receber esse tipo de operacao".
+            RUN gera_erro_xml (INPUT aux_dsdehist).
+            RUN salva_arquivo.
+            RUN deleta_objetos.
+         END.
+		 
     /* VR Boleto */
     IF  CAN-DO("STR0026R2",aux_CodMsg) THEN
          DO:
@@ -1562,7 +1579,7 @@ PROCEDURE gera_erro_xml:
          aux_textoxml[8] = "</SEGCAB>".
                                                 
   
-  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,PAG0142R2",aux_CodMsg) THEN
+  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,PAG0142R2,STR0025R2",aux_CodMsg) THEN
        ASSIGN aux_textoxml[9]  = "<STR0010>"
               aux_textoxml[10] = "<CodMsg>STR0010</CodMsg>"
               aux_textoxml[11] = "<NumCtrlIF>" + aux_NumCtrlIF + "</NumCtrlIF>"
@@ -1580,7 +1597,7 @@ PROCEDURE gera_erro_xml:
               aux_textoxml[18] = "<DtMovto>" + aux_DtMovto + "</DtMovto>"
               aux_textoxml[19] = "</STR0010>".
   ELSE
-  IF   CAN-DO("PAG0107R2,PAG0108R2,PAG0137R2,PAG0143R2",
+  IF   CAN-DO("PAG0107R2,PAG0108R2,PAG0137R2,PAG0143R2,PAG0121R2",
               aux_CodMsg)  THEN 
        ASSIGN aux_textoxml[9]  = "<PAG0111>"
               aux_textoxml[10] = "<CodMsg>PAG0111</CodMsg>"
@@ -1830,6 +1847,9 @@ PROCEDURE trata_portabilidade.
         IF  hSubNode:NAME = "VlrLanc" THEN 
             ASSIGN aux_VlrLanc = hSubNode2:NODE-VALUE
                    aux_VlrLanc = REPLACE(aux_VlrLanc,".",",").        
+
+        IF  hSubNode:NAME = "IdentcDep" THEN 
+            ASSIGN aux_IdentcDep = hSubNode2:NODE-VALUE.        
 
         IF  hSubNode:NAME = "Grupo_STR0047R2_AgtFinancDebtd" THEN
             DO:
@@ -3120,6 +3140,9 @@ PROCEDURE trata_dados_transferencia.
            ASSIGN aux_VlrLanc = aux_descrica
                   aux_VlrLanc = REPLACE(aux_VlrLanc,".",",").
        ELSE
+       IF  hNameTag:NAME = "IdentcDep" THEN 
+            ASSIGN aux_IdentcDep = aux_descrica.
+       ELSE
        IF  hNameTag:NAME = "NumCodBarras" THEN
            DO:
                IF aux_CodMsg = "STR0026R2" THEN
@@ -3918,6 +3941,97 @@ PROCEDURE trata_lancamentos.
                 NEXT.
             END.
 
+            /* Caso seja estorno de TED de BACENJUD entao despreza*/
+            IF CAN-DO("STR0025,PAG0121",aux_CodMsg) THEN
+            DO:
+                    DO aux_contlock = 1 TO 10:
+
+                       /* Busca numero da conta a CREDITAR */
+                       FIND craptvl WHERE 
+                            craptvl.cdcooper = crabcop.cdcooper  AND
+                            craptvl.tpdoctrf = 3                 AND
+                            craptvl.idopetrf = aux_NumCtrlIF
+                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                         
+                       IF   NOT AVAIL craptvl    THEN
+                            IF   LOCKED craptvl   THEN
+                                 DO:
+                                     ASSIGN aux_dscritic = 
+                                         "Registro craptvl sendo alterado".
+                                     PAUSE 1 NO-MESSAGE.
+                                     NEXT.
+                                 END.
+                            ELSE
+                                 DO:
+                                     ASSIGN aux_dscritic =
+                                         "Numero de Controle invalido".
+                                     LEAVE.
+                                 END.
+
+                       ASSIGN aux_dscritic = "".
+                       LEAVE.
+
+                    END.
+
+                    IF  LOCKED craptvl   THEN
+                        NEXT.
+
+                    IF  NOT AVAIL craptvl  THEN
+                        DO:
+                            IF  aux_tagCABInf  THEN
+                                DO:
+                                    RUN gera_logspb 
+                                        (INPUT "REJEITADA NAO OK",
+                                         INPUT aux_dscritic,
+                                         INPUT TIME).
+                                         
+                                    ASSIGN aux_CodMsg = "ERROREJ".
+                                END.
+                            ELSE
+                                RUN gera_logspb 
+                                       (INPUT "RETORNO SPB",
+                                        INPUT aux_dscritic,
+                                        INPUT TIME).
+                                 
+                            /* Cria registro das movimentacoes no SPB */
+                            RUN cria_gnmvcen (INPUT crabcop.cdagectl,
+                                              INPUT aux_dtmvtolt,
+                                              INPUT aux_CodMsg,
+                                              INPUT "C",
+                                              INPUT DEC(aux_VlrLanc)).
+                    
+                            RUN salva_arquivo.
+                            RUN deleta_objetos.
+                            NEXT.
+                        END.
+               
+                /* Gera log de estorno na cobine */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+                /* Efetuar a chamada a rotina Oracle */
+                RUN STORED-PROCEDURE pc_gera_inconsistencia
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabcop.cdcooper  /* Cooperativa */
+                                                          ,INPUT 2  /* Grupo de inconsistencia */
+                                                          ,INPUT 2  /* Erro */
+                                                          ,INPUT "Cooperativa: " + crabcop.nmrescop +
+                                                                 "   Conta Origem: " + STRING(craptvl.nrdconta) +
+                                                                 "   Valor: " + STRING(craptvl.vldocrcb,"zz,zzz,zz9.99") +
+                                                                 "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
+
+                                                          ,INPUT "TED BacenJud: Rejeitada pela cabine"
+                                                          ,OUTPUT ?               /* Status do erro */
+                                                          ,OUTPUT ?).             /* Retorno do Erro */
+
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_gera_inconsistencia
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
+
+                RUN salva_arquivo.
+                RUN deleta_objetos.
+                NEXT.
+            END.
+			
             IF  CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg) OR aux_tagCABInf  THEN
                 DO:
                     DO aux_contlock = 1 TO 10:
@@ -4025,7 +4139,47 @@ PROCEDURE trata_lancamentos.
                  ASSIGN aux_nrctacre = INT(aux_CtCredtd).
             
             ASSIGN aux_flgcriti = FALSE.
-           
+
+            /* Se for bloqueio Judicial deve-se gerar email e encerrar o processo
+               Nao deve creditar a conta */
+            IF  avail craptvl and craptvl.tpdctacr = 9 THEN
+                DO:
+                    /* Gera log de estorno na cobine */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+                    /* Efetuar a chamada a rotina Oracle */
+                    RUN STORED-PROCEDURE pc_gera_inconsistencia
+                          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabcop.cdcooper  /* Cooperativa */
+                                                              ,INPUT 2  /* Grupo de inconsistencia */
+                                                              ,INPUT 2  /* Erro */
+                                                              ,INPUT "Cooperativa: " + crabcop.nmrescop +
+                                                                     "   Conta Origem: " + STRING(aux_nrctacre) +
+                                                                     "   Valor: " + STRING(aux_VlrLanc) +
+                                                                     "   Identificacao Dep.: " + STRING(craptvl.nrcctrcb)
+                                                              ,INPUT "TED BacenJud: Devolvida"
+                                                              ,OUTPUT ?               /* Status do erro */
+                                                              ,OUTPUT ?).             /* Retorno do Erro */
+
+                    /* Fechar o procedimento para buscarmos o resultado */ 
+                    CLOSE STORED-PROC pc_gera_inconsistencia
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }.
+
+                    /* Cria registro das movimentacoes no SPB */
+                    RUN cria_gnmvcen (INPUT crabcop.cdagectl,
+                                      INPUT aux_dtmvtolt,
+                                      INPUT aux_CodMsg,
+                                      INPUT "C",
+                                      INPUT DEC(aux_VlrLanc)).
+                          
+                    RUN gera_logspb (INPUT "ENVIADA NAO OK",
+                                     INPUT "DEVOLUCAO BACENJUD",
+                                     INPUT TIME).
+                    RUN salva_arquivo.  
+                    RUN deleta_objetos.
+                    NEXT.
+                END.
+			
 		    /* Se existir craptco eh uma conta incorporada ou migrada,
 			   conforme validacao efetuada na procedure verifica_conta. */ 
             IF   AVAIL craptco  THEN
@@ -4827,6 +4981,7 @@ PROCEDURE verifica_processo_crise:
     IF  aux_flestcri > 0 AND
         NOT(CAN-DO
         ("STR0005R2,STR0007R2,STR0008R2,PAG0107R2," +
+         "STR0025R2,PAG0121R2," + /* Transferencia Judicial - Andrino */
          "PAG0108R2,PAG0143R2," +     /* TED */
          "STR0037R2,PAG0137R2," +     /* TEC */
          "STR0026R2," +               /* VR Boleto */

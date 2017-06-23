@@ -721,7 +721,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           /* Vencida e Bloqueada faz o resgate */
           IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtopr  THEN
             vr_cdcritic := 828;
-          ELSE   
+          ELSIF pr_nrdconta = 0 THEN -- Somente validar abaixo se for do processo noturno   
             /* caso contrario critica, esta bloqueada e nao venceu */
             vr_cdcritic := 640;
           END IF;

@@ -303,6 +303,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
 				    08/03/2017 - Alteracao na regra de porte cliente juridico (Daniel - Chamado: 626161) 
 
+                    13/04/2016 - Ajustes PRJ343 - Cessao de Credito (Odirlei-AMcom)
+
 				    11/05/2017 - Incluso tratativa para caracteristica especial 17 (Daniel - Chamado: 639510) 
 .............................................................................................................................*/
 
@@ -659,6 +661,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapbpr.tpctrpro = pr_tpctrpro             
              AND crapbpr.flgalien = 1;
 
+      --> Verificar se é emprestimo de cessao de credito
+      CURSOR cr_cessao (pr_cdcooper crapepr.cdcooper%TYPE,
+                        pr_nrdconta crapepr.nrdconta%TYPE,
+                        pr_nrctremp crapepr.nrctremp%TYPE)  IS
+        SELECT 1 flcessao
+          FROM tbcrd_cessao_credito ces
+         WHERE ces.cdcooper = pr_cdcooper 
+           AND ces.nrdconta = pr_nrdconta
+           AND ces.nrctremp = pr_nrctremp;
+      rw_cessao cr_cessao%ROWTYPE;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
@@ -743,7 +755,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               vlprxpar crapris.vlprxpar%TYPE,
               qtparcel crapris.qtparcel%TYPE,
               nrdgrupo crapris.nrdgrupo%TYPE,
-              dtvencop crapris.dtvencop%TYPE);
+              dtvencop crapris.dtvencop%TYPE,
+              flcessao INTEGER);
       TYPE typ_tab_individ IS
         TABLE OF typ_reg_individ
           INDEX BY VARCHAR2(34); --> CPF/CNPJ(14) + Contrato(10) + Sequencial(10)
@@ -1232,7 +1245,48 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       PROCEDURE pc_carrega_base_risco(pr_dtrefere DATE) IS
         -- Busca informacoes da central de risco
         CURSOR cr_crapris_geral(pr_dtrefere DATE) IS
-          SELECT *
+          SELECT crapris.nrdconta,
+                 crapris.dtrefere,
+                 crapris.innivris,
+                 crapris.qtdiaatr,
+                 crapris.vldivida,
+                 crapris.vlvec180,
+                 crapris.vlvec360,
+                 crapris.vlvec999,
+                 crapris.vldiv060,
+                 crapris.vldiv180,
+                 crapris.vldiv360,
+                 crapris.vldiv999,
+                 crapris.vlprjano,
+                 crapris.vlprjaan,
+                 crapris.inpessoa,
+                 crapris.nrcpfcgc,
+                 crapris.vlprjant,
+                 crapris.inddocto,
+                 crapris.cdmodali,
+                 crapris.nrctremp,
+                 crapris.nrseqctr,
+                 crapris.dtinictr,
+                 crapris.cdorigem,
+                 crapris.cdagenci,
+                 crapris.innivori,
+                 crapris.cdcooper,
+                 crapris.vlprjm60,
+                 crapris.dtdrisco,
+                 crapris.qtdriclq,
+                 crapris.nrdgrupo,
+                 crapris.vljura60,
+                 crapris.inindris,
+                 crapris.cdinfadi,
+                 crapris.nrctrnov,
+                 crapris.flgindiv,
+                 crapris.progress_recid,
+                 crapris.dsinfaux,
+                 crapris.dtprxpar,
+                 crapris.vlprxpar,
+                 crapris.qtparcel,
+                 crapris.dtvencop,
+                 0 flcessao
             FROM crapris
            WHERE crapris.cdcooper = pr_cdcooper
              AND crapris.dtrefere = pr_dtrefere
@@ -1255,9 +1309,55 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapris.cdorigem IN(4,5) -- 4 - Desconto Titulos
              AND crapris.inpessoa IN (1,2)        -- Deve ser CPF ou CNPJ
              AND vldivida <> 0;
+        
+        --> temptable dos dados dados da tabela de risco
+        TYPE typ_rec_ris IS RECORD
+            (nrdconta   crapris.nrdconta%TYPE, 
+             dtrefere   crapris.dtrefere%TYPE, 
+             innivris   crapris.innivris%TYPE, 
+             qtdiaatr   crapris.qtdiaatr%TYPE, 
+             vldivida   crapris.vldivida%TYPE, 
+             vlvec180   crapris.vlvec180%TYPE, 
+             vlvec360   crapris.vlvec360%TYPE, 
+             vlvec999   crapris.vlvec999%TYPE, 
+             vldiv060   crapris.vldiv060%TYPE, 
+             vldiv180   crapris.vldiv180%TYPE, 
+             vldiv360   crapris.vldiv360%TYPE, 
+             vldiv999   crapris.vldiv999%TYPE, 
+             vlprjano   crapris.vlprjano%TYPE, 
+             vlprjaan   crapris.vlprjaan%TYPE, 
+             inpessoa   crapris.inpessoa%TYPE, 
+             nrcpfcgc   crapris.nrcpfcgc%TYPE, 
+             vlprjant   crapris.vlprjant%TYPE, 
+             inddocto   crapris.inddocto%TYPE, 
+             cdmodali   crapris.cdmodali%TYPE, 
+             nrctremp   crapris.nrctremp%TYPE, 
+             nrseqctr   crapris.nrseqctr%TYPE, 
+             dtinictr   crapris.dtinictr%TYPE, 
+             cdorigem   crapris.cdorigem%TYPE, 
+             cdagenci   crapris.cdagenci%TYPE, 
+             innivori   crapris.innivori%TYPE, 
+             cdcooper   crapris.cdcooper%TYPE, 
+             vlprjm60   crapris.vlprjm60%TYPE, 
+             dtdrisco   crapris.dtdrisco%TYPE, 
+             qtdriclq   crapris.qtdriclq%TYPE, 
+             nrdgrupo   crapris.nrdgrupo%TYPE, 
+             vljura60   crapris.vljura60%TYPE, 
+             inindris   crapris.inindris%TYPE, 
+             cdinfadi   crapris.cdinfadi%TYPE, 
+             nrctrnov   crapris.nrctrnov%TYPE, 
+             flgindiv   crapris.flgindiv%TYPE, 
+             progress_recid crapris.progress_recid%TYPE, 
+             dsinfaux   crapris.dsinfaux%TYPE, 
+             dtprxpar   crapris.dtprxpar%TYPE, 
+             vlprxpar   crapris.vlprxpar%TYPE, 
+             qtparcel   crapris.qtparcel%TYPE,              
+             dtvencop   crapris.dtvencop%TYPE,
+             flcessao   INTEGER);
+        
         -- Definicao do tipo da tabela de central de risco
         TYPE typ_tab_ris IS
-          TABLE OF crapris%ROWTYPE
+          TABLE OF typ_rec_ris
             INDEX BY VARCHAR2(24); -- CPF/CNPJ(14) || Sequencial (10)
         -- Vetor para armazenar os dados da central de risco
         vr_tab_ris typ_tab_ris;
@@ -1302,11 +1402,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               continue; -- Volta para o inicio do for
             END IF;
           END IF;
+          
           -- Incrementar contador
           vr_vlcont_ris := vr_vlcont_ris + 1;
           vr_indice_ris := lpad(rw_crapris.nrcpfcgc,14,'0')||lpad(vr_vlcont_ris,10,'0');
           -- Adicionar a tabela
           vr_tab_ris(vr_indice_ris) := rw_crapris;        
+          
+          IF rw_crapris.inddocto = 1 AND 
+             rw_crapris.cdmodali IN(0299,0499) THEN -- Contratos de Emprestimo/Financiamento
+          
+            rw_cessao := NULL;
+            --> Verificar se é emprestimo de cessao de credito
+            OPEN cr_cessao (pr_cdcooper => pr_cdcooper,
+                            pr_nrdconta => rw_crapris.nrdconta,
+                            pr_nrctremp => rw_crapris.nrctremp);
+            FETCH cr_cessao INTO rw_cessao;
+            CLOSE cr_cessao;
+            
+            vr_tab_ris(vr_indice_ris).flcessao := rw_cessao.flcessao;
+            
+          END IF;
           
         END LOOP; -- Fim do loop sobre a tabela crapris
         
@@ -1446,6 +1562,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           vr_tab_individ_copy(vr_indice_copy).qtparcel := vr_tab_ris(vr_indice_ris).qtparcel;
           vr_tab_individ_copy(vr_indice_copy).nrdgrupo := vr_tab_ris(vr_indice_ris).nrdgrupo;
           vr_tab_individ_copy(vr_indice_copy).dtvencop := vr_tab_ris(vr_indice_ris).dtvencop;
+          vr_tab_individ_copy(vr_indice_copy).flcessao := vr_tab_ris(vr_indice_ris).flcessao;
           
           -- Verifica se eh o ultimo registro ou se o proximo registro possui o CNPJ / CPF do registro atual
           IF vr_tab_ris.next(vr_indice_ris) IS NULL OR
@@ -1501,6 +1618,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   END IF;
                   CLOSE cr_craptco;
                 END IF;
+                
+                --> Verificar se é cessao de credito
+                IF vr_tab_crapris_temp(vr_indice_temp).flcessao = 1 THEN
+                  vr_cdnatuop := '02';
+                END IF;                        
+                
                 -- Encontrar a faixa de valor conforme tabela
                 --   Anexo 14: Faixa de valor da operação - FaixaVlr	
                 --   Domínio   Descrição
@@ -2525,6 +2648,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         ELSIF pr_cdmodali = 1901 AND pr_inpessoa = 2 THEN
           -- PJ
           RETURN '3098610';
+        -- Cessao de credito  
+        ELSIF pr_cdmodali = 1301 THEN
+          RETURN '1811000';
         ELSE
           RETURN '';
         END IF;
@@ -3669,6 +3795,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   END IF;
                   CLOSE cr_craptco_b;
                 END IF;
+                
+                --> Verificar se é cessao de credito
+                IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
+                  vr_cdnatuop := '02';
+                  vr_vlrdivid := vr_tab_crapepr(vr_ind_epr).vlemprst;
+                END IF;
+                
               END IF; -- Crapebn%notfound
             END IF; -- modalidade
             
@@ -4073,12 +4206,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             CLOSE cr_crapcop;
             vr_idcpfcgc := substr(lpad(rw_crapcop_2.nrdocnpj,14,'0'),1,8);
           END IF;
+          
+          IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
+            -- Enviar informação adicional da operação
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="'|| to_char(vr_tab_individ(vr_idx_individ).dtinictr,'RRRR-MM-DD')
+                                                      || '" Ident="02038232" '
+                                                      || 'Valor="' || replace(to_char(vr_tab_crapepr(vr_ind_epr).vlemprst,'fm99999999999999990D00'),',','.')
+                                                      || '"/>' || chr(10));
+          ELSE          
           -- Enviar informação adicional da operação
           gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                  ,pr_texto_completo => vr_xml_3040_temp
                                  ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
                                                     || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
                                                     || '"/>' || chr(10));
+          
+          END IF;
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta

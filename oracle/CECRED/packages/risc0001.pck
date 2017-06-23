@@ -371,14 +371,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                 ,par_dtrefere IN crapris.dtrefere%TYPE
                                 ,par_cdmodali IN crapris.cdmodali%TYPE
                                 ,par_dtinicio IN crapris.dtinictr%TYPE
-                                ,pr_tabvljur1 IN OUT typ_arr_decimal_pfpj
-                                ,pr_tabvljur2 IN OUT typ_arr_decimal_pfpj
-                                ,pr_tabvljur3 IN OUT typ_arr_decimal_pfpj
-                                ,pr_tabvljur4 IN OUT typ_arr_decimal_pfpj
-                                ,pr_vlrjuros  OUT typ_decimal_pfpj
-                                ,pr_finjuros  OUT typ_decimal_pfpj
-                                ,pr_vlrjuros2 OUT typ_decimal_pfpj
-                                ,pr_finjuros2 OUT typ_decimal_pfpj
+                                ,pr_tabvljur1 IN OUT typ_arr_decimal_pfpj    --> TR - Modalidade 299 - Por PA.
+                                ,pr_tabvljur2 IN OUT typ_arr_decimal_pfpj    --> TR - Modalidade 499 - Por PA.
+                                ,pr_tabvljur3 IN OUT typ_arr_decimal_pfpj    --> PP - Modalidade 299 - Por PA.
+                                ,pr_tabvljur4 IN OUT typ_arr_decimal_pfpj    --> PP - Modalidade 499 - Por PA.
+                                ,pr_tabvljur5 IN OUT typ_arr_decimal_pfpj    --> PP – Cessao - Por PA.
+                                ,pr_vlrjuros  OUT typ_decimal_pfpj           --> TR - Modalidade 299 - Por Tipo pessoa.
+                                ,pr_finjuros  OUT typ_decimal_pfpj           --> TR - Modalidade 499 - Por Tipo pessoa.
+                                ,pr_vlrjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 299 - Por Tipo pessoa.
+                                ,pr_finjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 499 - Por Tipo pessoa.
+                                ,pr_vlrjuros3 OUT typ_decimal_pfpj           --> PP – Cessao - Por Tipo pessoa.
                                 ) IS
   -- ..........................................................................
   --
@@ -387,11 +389,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas genericas para RISCO
   --  Sigla    : RISC
   --  Autor    : ?????
-  --  Data     : ?????                         Ultima atualizacao: ??/??/????
+  --  Data     : ?????                         Ultima atualizacao: 23/03/2017
   --
   --  Dados referentes ao programa:
   --
-  --   Objetivo  :
+  --   Objetivo  : 23/03/2017 - Ajustado para retornar valores da Cessao do cartao de credito.
+  --                            PRJ343 - Cessao de credito (Odirlei-AMcom)   
   --
   -- .............................................................................
 
@@ -463,11 +466,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
        ORDER BY ris.cdagenci,
                 ris.nrdconta;
 
+    --> Verificar se é um emprestimo de cessao de credito
+    CURSOR cr_cessao (pr_cdcooper crapepr.cdcooper%TYPE,
+                      pr_nrdconta crapepr.nrdconta%TYPE,
+                      pr_nrctremp crapepr.nrctremp%TYPE) IS
+      SELECT 1
+        FROM tbcrd_cessao_credito ces
+       WHERE ces.cdcooper = pr_cdcooper
+         AND ces.nrdconta = pr_nrdconta
+         AND ces.nrctremp = pr_nrctremp;
 
     vr_vljurctr          NUMBER;
     vr_crapvri_jur_found BOOLEAN := FALSE;
     vr_diascalc          INTEGER := 0;
     contador             INTEGER := 0;
+    vr_fleprces          INTEGER := 0;
 
   BEGIN
 
@@ -598,9 +611,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         END IF;
 
-      ELSE  -- Pre-Fixado
+      ELSIF rw_crapris_jur.tpemprst = 1 THEN  -- Pre-Fixado
+        
+        vr_fleprces := 0; 
+        --> Verificar se é um emprestimo de cessao de credito
+        OPEN cr_cessao (pr_cdcooper => rw_crapris_jur.cdcooper,
+                        pr_nrdconta => rw_crapris_jur.nrdconta,
+                        pr_nrctremp => rw_crapris_jur.nrctremp); 
+        FETCH cr_cessao INTO vr_fleprces;
+        CLOSE cr_cessao;  
+       
+        IF vr_fleprces = 1 THEN
+          
+          -- Por tipo de pessoa
+          IF rw_crapris_jur.inpessoa = 1 THEN -- PF
 
-        IF par_cdmodali = 299 THEN
+            pr_vlrjuros3.valorpf := pr_vlrjuros3.valorpf + NVL(rw_crapris_jur.vljura60,0);
+          
+            -- Por PA
+            IF pr_tabvljur5.exists(rw_crapris_jur.cdagenci) THEN
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf := NVL(pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf,0) + rw_crapris_jur.vljura60;
+            ELSE
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpf := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
+          ELSE -- PJ
+            pr_vlrjuros3.valorpj := pr_vlrjuros3.valorpj + NVL(rw_crapris_jur.vljura60,0);
+            
+            -- Por PA
+            IF pr_tabvljur5.exists(rw_crapris_jur.cdagenci) THEN
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj := NVL(pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj,0) + rw_crapris_jur.vljura60;
+            ELSE
+              pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj := NVL(rw_crapris_jur.vljura60,0);
+            END IF;
+          END IF;
+
+        ELSIF par_cdmodali = 299 THEN
 
           IF rw_crapris_jur.inpessoa = 1 THEN -- PF
 
@@ -894,6 +939,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
          AND crapebn.nrctremp = pr_nrctremp;
     rw_crapebn cr_crapebn%ROWTYPE;                           
     
+    --> Verificar se é um emprestimo de cessao de credito
+    CURSOR cr_cessao (pr_cdcooper crapepr.cdcooper%TYPE,
+                      pr_nrdconta crapepr.nrdconta%TYPE,
+                      pr_nrctremp crapepr.nrctremp%TYPE) IS
+      SELECT 1
+        FROM tbcrd_cessao_credito ces
+       WHERE ces.cdcooper = pr_cdcooper
+         AND ces.nrdconta = pr_nrdconta
+         AND ces.nrctremp = pr_nrctremp;
+    
     /*****************************  VARIAVEIS  ****************************/
     vr_exc_erro          EXCEPTION;
     vr_file_erro         EXCEPTION;
@@ -943,17 +998,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_pacvljur_2        typ_arr_decimal_pfpj;
     vr_pacvljur_3        typ_arr_decimal_pfpj;
     vr_pacvljur_4        typ_arr_decimal_pfpj;
+    vr_pacvljur_5        typ_arr_decimal_pfpj;
 
     -- Calculo de Juros - Variáveis acumuladoras para geração do arquivo
     vr_vldjuros          typ_decimal_pfpj;
     vr_finjuros          typ_decimal_pfpj;
     vr_vldjuros2         typ_decimal_pfpj;
     vr_finjuros2         typ_decimal_pfpj;
+    vr_vldjuros3         typ_decimal_pfpj;
     -- Calculo de Juros / Variáveis de retorno da pc_calcula_juros_60k
     vr_vldjur_calc       typ_decimal_pfpj;
     vr_finjur_calc       typ_decimal_pfpj;
     vr_vldjur_calc2      typ_decimal_pfpj;
     vr_finjur_calc2      typ_decimal_pfpj;
+    vr_vldjur_calc3      typ_decimal_pfpj;
 
     vr_rel_dsdrisco      typ_arr_decimal;
     vr_rel_percentu      typ_arr_decimal;
@@ -994,6 +1052,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_rel1723           NUMBER := 0;
     vr_rel1731_1         NUMBER := 0;
     vr_rel1731_2         NUMBER := 0;
+
+    --CESSAO
+    vr_rel1760_pre       NUMBER := 0;
+    vr_rel1761_pre       NUMBER := 0;
+    vr_rel1760_v_pre     NUMBER := 0;
+    vr_rel1761_v_pre     NUMBER := 0;
+    vr_vlag1760_pre      typ_arr_decimal;
+    vr_vlag1761_pre      typ_arr_decimal;
+    
 
     vr_rel1724           typ_decimal_pfpj;
     vr_rel1722_0101      typ_decimal_pfpj;
@@ -1062,6 +1129,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_ttlanmto          NUMBER := 0;
     vr_ttlanmto_risco    NUMBER := 0;
     vr_ttlanmto_divida   NUMBER := 0;
+
+    vr_fleprces          INTEGER := 0;
 
     -- Variaveis para tratamento de erros
     vr_cdprogra          CONSTANT crapprg.cdprogra%TYPE := 'RISCO';
@@ -1441,6 +1510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         vr_rel_vldabase(vr_contador).valor := vr_vldivida;
       END IF;
 
+      vr_fleprces := 0;
       -- Emprestimos sem Crapepr devem ser desconsiderados
       IF rw_crapris.cdorigem = 3 THEN
 
@@ -1473,7 +1543,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         -- Fecha o curso para continuar
         CLOSE cr_crapepr;
 
+      --> Verificar se é um emprestimo de cessao de credito
+      OPEN cr_cessao (pr_cdcooper => rw_crapris.cdcooper,
+                      pr_nrdconta => rw_crapris.nrdconta,
+                      pr_nrctremp => rw_crapris.nrctremp); 
+      FETCH cr_cessao INTO vr_fleprces;
+      CLOSE cr_cessao;  
+
       END IF;
+
+      -- CESSAO
+      IF  vr_fleprces = 1 THEN
+        -- Se pessoa Física
+        IF rw_crapris.inpessoa = 1 THEN
+          
+          -- Verifica o tipo do empréstimo - PP
+          IF rw_crapepr.tpemprst = 1 THEN
+
+            vr_rel1760_pre   := vr_rel1760_pre   + vr_vlpreatr;
+            vr_rel1760_v_pre := vr_rel1760_v_pre + vr_vldivida;
+
+            IF vr_vlag1760_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1760_pre(rw_crapris.cdagenci).valor := vr_vlag1760_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1760_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
+            END IF;
+
+          END IF;
+
+        ELSE -- Se pessoa Juridica
+          -- Verifica o tipo do empréstimo - PP
+          IF rw_crapepr.tpemprst = 1 THEN
+
+            vr_rel1761_pre   := vr_rel1761_pre + vr_vlpreatr;
+            vr_rel1761_v_pre := vr_rel1761_v_pre + vr_vldivida;
+
+            IF vr_vlag1761_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1761_pre(rw_crapris.cdagenci).valor := vr_vlag1761_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1761_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
+      END IF;
+          END IF;
+        END IF;
+
+      ELSE  -- FIM - CESSAO
 
       -- EMPRESTIMOS
       IF  rw_crapris.cdorigem = 3 AND rw_crapris.cdmodali = 0299 THEN
@@ -1663,6 +1776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         END IF; -- FIM - Pessoa Juridica
       END IF;  -- FIM - FINANCIAMENTOS
 
+      END IF; -- FIM - CESSAO
       -- DESCONTOS
       --      2 = Desconto de Cheques
       --      4 = Desconto de Titulos - cob. sem reg.
@@ -1861,18 +1975,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros2.valorpf := 0;
     vr_finjuros2.valorpj := 0;
 
-    pc_calcula_juros_60k(pr_cdcooper,
-                         vr_dtrefere,
-                         299,
-                         vr_dtinicio,
-                         vr_pacvljur_1,
-                         vr_pacvljur_2,
-                         vr_pacvljur_3,
-                         vr_pacvljur_4,
-                         vr_vldjur_calc,
-                         vr_finjur_calc,
-                         vr_vldjur_calc2,
-                         vr_finjur_calc2);
+    pc_calcula_juros_60k ( par_cdcooper => pr_cdcooper
+                          ,par_dtrefere => vr_dtrefere
+                          ,par_cdmodali => 299
+                          ,par_dtinicio => vr_dtinicio                         
+                          ,pr_tabvljur1 => vr_pacvljur_1     --> TR - Modalidade 299 - Por PA.
+                          ,pr_tabvljur2 => vr_pacvljur_2     --> TR - Modalidade 499 - Por PA.
+                          ,pr_tabvljur3 => vr_pacvljur_3     --> PP - Modalidade 299 - Por PA.
+                          ,pr_tabvljur4 => vr_pacvljur_4     --> PP - Modalidade 499 - Por PA.
+                          ,pr_tabvljur5 => vr_pacvljur_5     --> PP – Cessao - Por PA.
+                          ,pr_vlrjuros  => vr_vldjur_calc    --> TR - Modalidade 299 - Por Tipo pessoa.
+                          ,pr_finjuros  => vr_finjur_calc    --> TR - Modalidade 499 - Por Tipo pessoa.
+                          ,pr_vlrjuros2 => vr_vldjur_calc2   --> PP - Modalidade 299 - Por Tipo pessoa.
+                          ,pr_finjuros2 => vr_finjur_calc2   --> PP - Modalidade 499 - Por Tipo pessoa.
+                          ,pr_vlrjuros3 => vr_vldjur_calc3); --> PP – Cessao - Por Tipo pessoa.
+                         
+                         
 
     -- Acumula retornos da pc_calcula_juros_60k
     vr_vldjuros.valorpf  := vr_vldjuros.valorpf  + vr_vldjur_calc.valorpf;
@@ -1884,18 +2002,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros2.valorpf := vr_finjuros2.valorpf + vr_finjur_calc2.valorpf;
     vr_finjuros2.valorpj := vr_finjuros2.valorpj + vr_finjur_calc2.valorpj;
 
-    pc_calcula_juros_60k(pr_cdcooper,
-                         vr_dtrefere,
-                         499,
-                         vr_dtinicio,
-                         vr_pacvljur_1,
-                         vr_pacvljur_2,
-                         vr_pacvljur_3,
-                         vr_pacvljur_4,
-                         vr_vldjur_calc,
-                         vr_finjur_calc,
-                         vr_vldjur_calc2,
-                         vr_finjur_calc2);
+    --Cessao credito
+    vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
+    vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
+
+    pc_calcula_juros_60k( par_cdcooper => pr_cdcooper
+                         ,par_dtrefere => vr_dtrefere
+                         ,par_cdmodali => 499
+                         ,par_dtinicio => vr_dtinicio
+                         ,pr_tabvljur1 => vr_pacvljur_1       --> TR - Modalidade 299 - Por PA.
+                         ,pr_tabvljur2 => vr_pacvljur_2       --> TR - Modalidade 499 - Por PA.
+                         ,pr_tabvljur3 => vr_pacvljur_3       --> PP - Modalidade 299 - Por PA.
+                         ,pr_tabvljur4 => vr_pacvljur_4       --> PP - Modalidade 499 - Por PA.
+                         ,pr_tabvljur5 => vr_pacvljur_5       --> PP – Cessao - Por PA.
+                         ,pr_vlrjuros  => vr_vldjur_calc      --> TR - Modalidade 299 - Por Tipo pessoa.
+                         ,pr_finjuros  => vr_finjur_calc      --> TR - Modalidade 499 - Por Tipo pessoa.
+                         ,pr_vlrjuros2 => vr_vldjur_calc2     --> PP - Modalidade 299 - Por Tipo pessoa.
+                         ,pr_finjuros2 => vr_finjur_calc2     --> PP - Modalidade 499 - Por Tipo pessoa.
+                         ,pr_vlrjuros3 => vr_vldjur_calc3);   --> PP – Cessao - Por Tipo pessoa.
+                         
     -- Acumula retornos da pc_calcula_juros_60k
     vr_vldjuros.valorpf  := vr_vldjuros.valorpf  + vr_vldjur_calc.valorpf;
     vr_vldjuros.valorpj  := vr_vldjuros.valorpj  + vr_vldjur_calc.valorpj;
@@ -1905,6 +2030,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros.valorpj  := vr_finjuros.valorpj  + vr_finjur_calc.valorpj;
     vr_finjuros2.valorpf := vr_finjuros2.valorpf + vr_finjur_calc2.valorpf;
     vr_finjuros2.valorpj := vr_finjuros2.valorpj + vr_finjur_calc2.valorpj;
+
+    --Cessao credito
+    vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
+    vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
+    
 
     vr_contador := 1;
     WHILE vr_contador <= 16 LOOP
@@ -1964,6 +2094,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldevedo(31) := vr_rel1731_2_v_pre;
     vr_vldespes(31) := vr_rel1731_2_pre;
     vr_vldespes(32) := vr_vlempatr_bndes_2;
+
+    --Cessao
+    vr_vldevedo(33) := vr_rel1760_v_pre;
+    vr_vldespes(33) := vr_rel1760_pre;
+    vr_vldevedo(34) := vr_rel1761_v_pre;
+    vr_vldespes(34) := vr_rel1761_pre;
+    
 
     -- Buscar o próximo dia útil
     vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
@@ -2567,7 +2704,256 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END LOOP;
 
     END IF;
+    
+    -- CESSAO EMPRESTIMO EM ATRASO - PESSOA FISICA
+    IF vr_vldjuros3.valorpf <> 0 THEN
 
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5532,1756,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) RENDAS A APROPRIAR CESSÃO CARTAO PESSOA FISICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1756,5532,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+    -- CESSAO EMPRESTIMO EM ATRASO - PESSOA JURIDICA
+    IF vr_vldjuros3.valorpj <> 0 THEN
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5533,1757,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1757,5533,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+    
+    -- AJUSTE CESSAO EMPRESTIMO EM ATRASO - PESSOA FISICA
+    IF vr_vldjuros3.valorpf <> 0 THEN
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,7537,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',7537,7016,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) REVERSAO AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpf <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+    -- AJUSTE CESSAO EMPRESTIMO EM ATRASO - PESSOA JURIDICA
+    IF vr_vldjuros3.valorpj <> 0 THEN
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,7538,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- Reversão
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',7538,7017,' ||
+                     TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) REVERSAO AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
+      -- Gravar Linha
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_pacvljur_5.exists(vr_contador)
+        AND vr_pacvljur_5(vr_contador).valorpj <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_pacvljur_5(vr_contador).valorpj, '99999999999990.00'));
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+    END IF;
+      END LOOP;
+
+    END IF; 
+    --> FIM CESSAO
+        
 
     -- TOTAL CHEQUE ESPECIAL UTILIZADO - PESSOA FISICA
     IF vr_rel1722_0201_v.valorpf <> 0 THEN
@@ -3792,6 +4178,125 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         AND vr_vlag1721_pre(vr_contador).valor <> 0 THEN
           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
                          TRIM(to_char(vr_vlag1721_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+
+    -- PROVISAO DE CESSAO CARTAO - PESSOA FISICA
+    IF vr_vldespes(33) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(33);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5586,1760,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) PROVISAO DE CESSAO CARTAO PESSOA FISICA."';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1760_pre.exists(vr_contador)
+        AND vr_vlag1760_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1760_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1760_pre.exists(vr_contador)
+        AND vr_vlag1760_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1760_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1760,5586,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) REVERSAO PROVISAO DE CESSAO CARTAO PESSOA FISICA."';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF vr_vlag1760_pre.exists(vr_contador)
+        AND vr_vlag1760_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1760_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1760_pre.exists(vr_contador)
+        AND vr_vlag1760_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1760_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+    END IF;
+
+    -- PROVISAO DE CESSAO CARTAO - PESSOA JURIDICA
+    IF vr_vldespes(34) <> 0 THEN
+
+      vr_vllanmto := vr_vldespes(34);
+      vr_ttlanmto := vr_ttlanmto + vr_vllanmto;
+
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5587,1761,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) PROVISAO DE CESSAO CARTAO PESSOA JURIDICA."';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1761_pre.exists(vr_contador)
+        AND vr_vlag1761_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1761_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1761_pre.exists(vr_contador)
+        AND vr_vlag1761_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1761_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      -- REVERSÃO
+      vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1761,5587,' ||
+                     TRIM(to_char(vr_vllanmto, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"(Cessao) REVERSAO PROVISAO DE CESSAO CARTAO PESSOA JURIDICA."';
+      pc_gravar_linha(vr_linhadet);
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF vr_vlag1761_pre.exists(vr_contador)
+        AND vr_vlag1761_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1761_pre(vr_contador).valor, '99999999999990.00'));
+          pc_gravar_linha(vr_linhadet);
+        END IF;
+      END LOOP;
+
+      FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+        IF  vr_vlag1761_pre.exists(vr_contador)
+        AND vr_vlag1761_pre(vr_contador).valor <> 0 THEN
+          vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
+                         TRIM(to_char(vr_vlag1761_pre(vr_contador).valor, '99999999999990.00'));
           pc_gravar_linha(vr_linhadet);
         END IF;
       END LOOP;

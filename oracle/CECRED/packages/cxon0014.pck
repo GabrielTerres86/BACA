@@ -517,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -583,7 +583,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   --
-  --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
+  --              22/05/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
+  --                           e FMS TROMBUDO CENTRAL (Tiago/Fabricio #653830)
+  --
+  --              26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
+  --                           (Tiago/Fabricio #647174)   
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -7462,7 +7466,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7474,8 +7478,12 @@ END pc_gera_titulos_iptu_prog;
   --
   --             20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                          MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
-  --
-  --             12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
+  --            
+  --             22/05/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
+  --                          e FMS TROMBUDO CENTRAL (Tiago/Fabricio #653830)
+  
+  --             26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
+  --                          (Tiago/Fabricio #647174) 
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7798,10 +7806,13 @@ END pc_gera_titulos_iptu_prog;
           (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
           (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. GUARAMIRIM */
           (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TIMBO */
+          (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TROMBUDO CENTRAL */
           (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. AGROLANDIA */
           (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
           (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
-          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)) THEN /* TRANSITO DE TIMBO */
+          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR   /* TRANSITO DE TIMBO */
+          (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)       /* F.M.S TROMBUDO CENTRAL */
+         ) THEN 
         --Data movimento anterior
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN

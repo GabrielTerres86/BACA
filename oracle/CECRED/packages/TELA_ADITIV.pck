@@ -11,8 +11,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
-  -- Objetivo  : Centralizar rotinas relacionadas a Tela ADITIV
   --
+  -- Objetivo  : Centralizar rotinas relacionadas a Tela ADITIV
   -- Alteracoes:
   --
   ---------------------------------------------------------------------------
@@ -1708,6 +1708,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         Observacao: -----
     
         Alteracoes:
+
+		22/05/2017 - Ateração na chamada da procedure pc_trata_dados_assinatura
+                     o parametro pr_tpdconsu de 1 para 2 com o objetivo de buscar 
+                     o conjuge do avalista(663707 - Mateus Zimmermann - Mouts)	
     ..............................................................................*/
     
     ---------->>> CURSORES <<<--------
@@ -1766,7 +1770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                   pr_nrctaava    => pr_nrctaava,
                                   pr_nmdavali    => NULL,
                                   pr_iddoaval    => pr_iddoaval,
-                                  pr_tpdconsu    => 1,
+                                  pr_tpdconsu    => 2,
                                   pr_linhatra    => pr_linhatra_cje,
                                   pr_nmdevsol    => pr_nmdevsol_cje,
                                   pr_dscpfcgc    => pr_dscpfcgc_cje,

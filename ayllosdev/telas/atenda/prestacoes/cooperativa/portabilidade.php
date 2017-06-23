@@ -4,7 +4,7 @@
  * CRIAÇÃO      : Jaison (CECRED)
  * DATA CRIAÇÃO : 28/05/2015
  * OBJETIVO     : Mostra a tela com opções
- * ALTERACOES   : 
+ * ALTERACOES   : 27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)							   
  */	
 	
 session_start();
@@ -39,6 +39,7 @@ require_once('../../../../class/xmlfile.php');
                                         <div id="divBotoes">
                                             <a href="#" class="botao" id="btPortAprovar" onClick="controlaOperacao('PORTAB_APRV');">Aprovar Portabilidade</a>
                                             <a href="#" class="botao" id="btPortExtrato" onClick="controlaOperacao('PORTAB_EXTR');">Imprimir Extrato</a>
+                                            <a href="#" class="botao" id="btndossie" onClick="dossieDigdoc(6);return false;">Dossi&ecirc; DigiDOC</a>
                                         </div>
 										
 									</div>

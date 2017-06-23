@@ -16,6 +16,7 @@
  * 007: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 008: [23/07/2015] Gabriel        (RKAM): Reformulacao Cadastral 
  * 009: [25/10/2016] Tiago                : Inclusao da data de validade da licensa (M310).
+ * 010: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
  */
 ?>
 
@@ -108,7 +109,7 @@
 	<? if ( in_array($operacao,array('FA','')) ) { ?>
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"   onClick="fechaRotina(divRotina);" />
 		<input type="image" id="btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif"  onClick="controlaOperacao('CA');" />
-		<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="window.open('http://<?php echo $GEDServidor; ?>/smartshare/Clientes/ViewerExterno.aspx?pkey=iSQlN&conta=<? echo str_replace("-",".",formataContaDV($_POST['nrdconta'])); ?>&cooperativa=<? echo $glbvars['cdcooper']; ?>','_blank');"/>
+		<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="dossieDigdoc(8);return false;"/>
 	<? } else if ($flgcadas != 'M')  { ?>
 		<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/cancelar.gif" onClick="controlaOperacao('AC');" />
 		<input type="image" id="btSalvar"  src="<? echo $UrlImagens; ?>botoes/concluir.gif" onClick="controlaOperacao('AV')"  />

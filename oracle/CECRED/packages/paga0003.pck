@@ -213,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 22/02/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 08/05/2017
   
    Dados referentes ao programa: 
   
@@ -223,6 +223,8 @@ END paga0003;
 	             
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
 					  - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+							 								   
+       08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
 							 								   
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
@@ -284,6 +286,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHERE crapcon.cdcooper = pr_cdcooper
     AND   crapcon.cdempcon = pr_cdempcon
     AND   crapcon.cdsegmto = pr_cdsegmto;
+  
+    --Selecionar Cadastro Convenios Sicredi
+    CURSOR cr_crapstb (pr_cdtribut IN crapstb.cdtribut%type) IS
+      SELECT crapstb.cdtribut
+      FROM crapstb
+      WHERE crapstb.cdtribut = pr_cdtribut;
+    rw_crapstb cr_crapstb%ROWTYPE;
   
   PROCEDURE pc_monitoracao_pagamento(pr_cdcooper crapcop.cdcooper%TYPE -- pr_cdcooper
                                     ,pr_nrdconta crapass.nrdconta%TYPE -- pr_nrdconta
@@ -993,11 +1002,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_verifica_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+     Data    : Julho/2016.                    Ultima atualizacao: 08/05/2017
 
      Objetivo  : Procedure para validação de pagamento de DARF/DAS
 
-     Alteracoes: 
+     Alteracoes: 08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1350,6 +1359,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
       END IF;
       
+      /* DARF PRETO EUROPA */
+      IF rw_crapcon.cdempcon IN (64,153) AND rw_crapcon.cdsegmto = 5 THEN /* DARFC0064  ou DARFC0153*/
+        /* Validacao Cd. Tributo */
+        --Selecionar Cadastro Convenios Sicredi
+        OPEN cr_crapstb (pr_cdtribut => TO_NUMBER(SUBSTR(pr_cdbarras,37,4)));
+        --Posicionar no proximo registro
+        FETCH cr_crapstb INTO rw_crapstb;
+        --Se nao encontrar
+        IF cr_crapstb%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_crapstb;
+          --Mensagem erro
+          vr_dscritic:= 'Tributo nao cadastrado.';          
+          RAISE vr_exc_erro;
+        END IF;
+        --Fechar Cursor
+        CLOSE cr_crapstb;
+      END IF;
       -- Validação referente aos dias de tolerancia
       cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
                                            ,pr_cdagenci      => vr_cdagenci
@@ -1898,7 +1925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-   
+    
     -- tipo de guia
 		IF pr_tpdaguia = 1 THEN
 			
@@ -2338,7 +2365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         CLOSE lote0001.cr_craplot_rowid;
         vr_dscritic := NULL;
         EXIT;
-  EXCEPTION
+      EXCEPTION
         WHEN OTHERS THEN
            IF lote0001.cr_craplot_rowid%ISOPEN THEN
              CLOSE lote0001.cr_craplot_rowid;

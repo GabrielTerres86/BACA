@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 09/03/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 05/06/2017
            
     Dados referentes ao programa:
                 
@@ -483,6 +483,8 @@
 			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
 					       (Adriano - SD 603451).
 
+               05/06/2017 - Verificacao de titulo baixado para gravar restricao
+                            (Tiago/Ademir #678289)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -15425,6 +15427,28 @@ PROCEDURE analisar-titulo-bordero:
                     ASSIGN aux_dsrestri = "Titulo ja foi pago."
                            aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 55
                                           ELSE 5.
+
+                    /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
+                    RUN grava-restricao-bordero (INPUT par_cdcooper,
+                                                 INPUT par_cdoperad,
+                                                 INPUT par_nrborder,
+                                                 INPUT aux_nrseqdig,
+                                                 INPUT aux_dsrestri,
+                                                 INPUT " ",   /* dsdetres */
+                                                 INPUT FALSE, /* flaprcoo */
+                                                 OUTPUT TABLE tt-erro).
+
+                    IF  RETURN-VALUE = "NOK" THEN
+                        RETURN "NOK".
+
+                END.
+
+            /* Verifica se o titulo está baixado */
+            IF  crapcob.incobran = 3 THEN
+                DO:
+                    ASSIGN aux_dsrestri = "Titulo baixado."
+                           aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 53
+                                          ELSE 3.
 
                     /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
                     RUN grava-restricao-bordero (INPUT par_cdcooper,

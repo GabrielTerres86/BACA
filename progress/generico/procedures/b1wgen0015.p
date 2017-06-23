@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 31/01/2017
+    Data    : Abril/2006                      Ultima Atualizacao: 12/05/2017
     
     Dados referentes ao programa:
 
@@ -396,9 +396,9 @@
               
               31/01/2017 - Alteraçao dos termos na rotina gera-termo-responsabilidade.
                            Alteracao na rotina executa-envio-ted, incluido param de ip e dstransa
-                           PRJ335 - Analise de fraude. (Odirlei-AMcom)
+                           PRJ335 - Analise de fraude. (Odirlei-AMcom).
               
-
+               12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -2828,6 +2828,12 @@ PROCEDURE executa_transferencia:
     DEF VAR aux_nrcartao          AS DECIMAL                        NO-UNDO.
     DEF VAR aux_nrctacar          AS INTE                           NO-UNDO.
     DEF VAR aux_contador          AS INTE                           NO-UNDO.
+	DEF VAR aux_cdhistor 		  AS INTE             			    NO-UNDO.
+	DEF VAR aux_cdhisest 		  AS INTE             			    NO-UNDO.
+	DEF VAR aux_vltarifa 		  AS DECI             			    NO-UNDO.
+	DEF VAR aux_dtdivulg 		  AS DATE             			    NO-UNDO.
+	DEF VAR aux_dtvigenc 		  AS DATE             			    NO-UNDO.
+	DEF VAR aux_cdfvlcop 		  AS INTE             			    NO-UNDO.
     DEF VAR aux_cdcritic          AS INTE                           NO-UNDO.
     DEF VAR aux_dscritic          AS CHAR                           NO-UNDO.
     
@@ -2838,6 +2844,7 @@ PROCEDURE executa_transferencia:
     DEF VAR h-b1crap00            AS HANDLE                         NO-UNDO.
     DEF VAR h-bo_algoritmo_seguranca AS HANDLE                      NO-UNDO.
     DEF VAR h-b1wgen0025          AS HANDLE                         NO-UNDO.
+	DEF VAR h-b1wgen0153          AS HANDLE              			NO-UNDO.
 
     DEFINE VARIABLE aux_nmprepos AS CHARACTER   NO-UNDO.
     DEFINE VARIABLE aux_nrcpfpre AS DECIMAL     NO-UNDO.
@@ -3733,6 +3740,94 @@ PROCEDURE executa_transferencia:
                                     END. /* If avail crapsnh */
                         END. /* Fim for each crappod */        
                     END.
+					
+				FIND FIRST crapprm WHERE crapprm.cdcooper = par_cdcooper AND 
+										 crapprm.nmsistem = 'CRED' 		 AND 
+										 crapprm.cdacesso = 'FOLHAIB_TARI_TRF_TPSAL'
+										 NO-LOCK NO-ERROR.
+										 
+				IF  crapprm.dsvlrprm = "1" AND /*Credito Salario*/
+					par_cdhisdeb     = 771 THEN /*Tarifa = Sim*/
+					DO:						
+						FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+						
+						RUN sistema/generico/procedures/b1wgen0153.p PERSISTENT SET h-b1wgen0153.
+						
+						IF  NOT VALID-HANDLE(h-b1wgen0153)  THEN
+							DO: 						
+								ASSIGN par_dscritic = "Nao foi possivel carregar a tarifa.".
+								RETURN "NOK".
+							END.
+						
+						RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
+														(INPUT par_cdcooper,
+														 INPUT 'TRANSTPSAL',
+														 INPUT par_vllanmto,
+														 INPUT "b1wgen0015", /* cdprogra */
+														OUTPUT aux_cdhistor,
+														OUTPUT aux_cdhisest,
+														OUTPUT aux_vltarifa,
+														OUTPUT aux_dtdivulg,
+														OUTPUT aux_dtvigenc,
+														OUTPUT aux_cdfvlcop,
+														OUTPUT TABLE tt-erro).
+						
+						IF  RETURN-VALUE <> "OK"  THEN
+							DO:
+								DELETE PROCEDURE h-b1wgen0153.
+								
+								FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+								IF  AVAIL tt-erro  THEN
+									ASSIGN par_dscritic = tt-erro.dscritic.
+								ELSE
+									ASSIGN par_dscritic = "Nao foi possivel carregar a tarifa.".
+
+								RETURN "NOK".
+							END.
+						
+						RUN cria_lan_auto_tarifa IN h-b1wgen0153
+											    (INPUT par_cdcooper,
+												 INPUT par_nrdconta,           
+												 INPUT par_dtmvtocd,
+												 INPUT aux_cdhistor, 
+												 INPUT aux_vltarifa,
+												 INPUT '1',			                                      /* cdoperad */
+												 INPUT 1,                                                 /* cdagenci */
+												 INPUT 100,                                               /* cdbccxlt */         
+												 INPUT 10299,                              				  /* nrdolote */        
+												 INPUT 18,                                                /* tpdolote */         
+												 INPUT aux_nrseqdig,                                      /* nrdocmto */
+												 INPUT par_nrdconta,                                  	  /* nrdconta */
+												 INPUT STRING(par_nrdconta,"99999999"),                   /* nrdctitg */
+												 INPUT "Fato gerador tarifa:" + STRING(aux_nrseqdig),     /* cdpesqbb */
+												 INPUT 0,                                                 /* cdbanchq */
+												 INPUT 0,                                                 /* cdagechq */
+												 INPUT 0,                                                 /* nrctachq */
+												 INPUT FALSE,                                             /* flgaviso */
+												 INPUT 0,                                                 /* tpdaviso */
+												 INPUT aux_cdfvlcop,                                      /* cdfvlcop */
+												 INPUT crapdat.inproces,                                  /* inproces */
+												OUTPUT TABLE tt-erro).
+						
+						IF  RETURN-VALUE <> "OK"  THEN
+							DO:
+								DELETE PROCEDURE h-b1wgen0153.
+								
+								FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+								IF  AVAIL tt-erro  THEN
+									ASSIGN par_dscritic = tt-erro.dscritic.
+								ELSE
+									ASSIGN par_dscritic = "Nao foi possivel lancar a tarifa.".
+
+								RETURN "NOK".
+							END.
+						
+						DELETE PROCEDURE h-b1wgen0153.
+						
+					END.
+										
             END. /* Fim IF origem = 3 */
             
     END. /* Fim do DO TRANSACTION */

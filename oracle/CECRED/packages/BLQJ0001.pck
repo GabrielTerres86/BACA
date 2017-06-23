@@ -163,6 +163,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              [2] - Campo PR_COOPERAD virá com um CPF/CNPJ
                              [3] - Campo PR_COOPERAD virá com a raiz de um CNPJ
 
+                30/05/2017 - Remocao de caracteres especiais e espacos em branco ao gravar
+                             o numero do oficio.
+                             Rafael (Mouts) - Chamado 662865
+
   .............................................................................*/
   
   -- Buscar o lote para lançamentos
@@ -1370,7 +1374,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              ,pr_dsjuizem                       -- dsjuizem
                              ,pr_dsresord                       -- dsresord
                              ,pr_dtenvres                       -- dtenvres
-                             ,pr_nroficio                       -- nroficio
+                             ,trim(replace(gene0007.fn_caract_acento(pr_nroficio,1,
+                                                             '@#$&%¹²³ªº°*!?<>/\|.,:-_"{}[]',
+                                                             '                             '),' ')) -- nroficio
                              ,pr_nrproces                       -- nrproces
                              ,pr_dsinfadc                       -- dsinfadc
                              ,vr_vlresblq);                     -- vlresblq
@@ -1574,7 +1580,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,pr_dsjuizem                       -- dsjuizem
                                ,pr_dsresord                       -- dsresord
                                ,pr_dtenvres                       -- dtenvres
-                               ,pr_nroficio                       -- nroficio
+                               ,trim(replace(gene0007.fn_caract_acento(pr_nroficio,1,
+                                                             '@#$&%¹²³ªº°*!?<>/\|.,:-_"{}[]',
+                                                             '                             '),' ')) -- nroficio
                                ,pr_nrproces                       -- nrproces
                                ,pr_dsinfadc                       -- dsinfadc
                                ,pr_vlrsaldo);                     -- vlresblq

@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0004 AS
   --  Sistema  : Rotinas referentes a tela INDICE
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Maio - 2014.                   Ultima atualizacao: 08/05/2014
+  --  Data     : Maio - 2014.                   Ultima atualizacao: 16/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -17,6 +17,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0004 AS
   --                          de cadastro para tipo de taxa mensal sendo o IPCA,
   --                          agora pode-se cadastrar esta taxa em outro mes.
   --
+  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em
+  --                          varias procedures desta package.(Carlos Rafael Tanholi).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -167,7 +169,6 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0004 AS
                                  ,pr_des_erro OUT VARCHAR2);
 END APLI0004;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
   ---------------------------------------------------------------------------------------------------------------
@@ -176,7 +177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
   --  Sistema  : Rotinas referentes a tela INDICE
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Maio - 2014.                   Ultima atualizacao: 08/05/2014
+  --  Data     : Maio - 2014.                   Ultima atualizacao: 16/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -186,6 +187,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
   -- Alteracoes: 25/05/2015 - Inclusao do tratamento na procedure pc_manter taxa
   --                          de cadastro para tipo de taxa mensal sendo o IPCA,
   --                          agora pode-se cadastrar esta taxa em outro mes.
+  --
+  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em
+  --                          varias procedures desta package.(Carlos Rafael Tanholi).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1218,9 +1222,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
          craptab tab
        WHERE
              tab.cdcooper = pr_cdcooper
-         AND tab.nmsistem = 'CRED'
-         AND tab.tptabela = 'CONFIG'
-         AND tab.cdacesso = 'TXADIAPLIC';
+         AND UPPER(tab.nmsistem) = 'CRED'
+         AND UPPER(tab.tptabela) = 'CONFIG'
+         AND UPPER(tab.cdacesso) = 'TXADIAPLIC';
 
        rw_craptab cr_craptab%ROWTYPE;
 
@@ -1546,37 +1550,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
       vr_dscritic VARCHAR2(1000);
       vr_cdcritic INTEGER := 0;
 
-      -- Cursores
-      CURSOR cr_craptab(pr_cdcooper IN crapcop.cdcooper%TYPE) IS --> Codigo da cooperativa
-      SELECT
-        tab.dstextab
-      FROM
-        craptab tab
-      WHERE
-            tab.cdcooper = pr_cdcooper
-        AND tab.cdempres = 0
-        AND tab.tpregist = 0
-        AND tab.nmsistem = 'CRED'
-        AND tab.tptabela = 'CONFIG'
-        AND tab.cdacesso = 'PERCIRRDCA';
-
-       rw_craptab cr_craptab%ROWTYPE;
+      -- Guardar registro dstextab
+      vr_dstextab craptab.dstextab%TYPE;
 
     BEGIN
 
-      OPEN cr_craptab(pr_cdcooper);
-         FETCH cr_craptab
-         INTO rw_craptab;
+      -- Buscar configuração na tabela
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'CONFIG'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'PERCIRRDCA'
+                                               ,pr_tpregist => 0);      
 
-      -- Se não encontrar insere novo registro
-      IF cr_craptab%NOTFOUND THEN
-        -- Fechar o cursor
-        CLOSE cr_craptab;
-      ELSE
-        -- Fechar o cursor
-        CLOSE cr_craptab;
+      IF vr_dstextab <> '' AND NOT vr_dstextab IS NULL THEN  
 
-        pr_txmespop := ROUND(pr_vlmoefix / (1 - (gene0002.fn_char_para_number(gene0002.fn_busca_entrada(2, gene0002.fn_busca_entrada(1, rw_craptab.dstextab, ';'), '#')) / 100)),6);
+        pr_txmespop := ROUND(pr_vlmoefix / (1 - (gene0002.fn_char_para_number(gene0002.fn_busca_entrada(2, gene0002.fn_busca_entrada(1, vr_dstextab, ';'), '#')) / 100)),6);
         pr_txdiapop := ROUND(((POWER(1 + (pr_txmespop / 100), 1 / pr_qtddiaut) - 1) * 100),6);
 
       END IF;
@@ -1879,7 +1868,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Jean Michel
-    Data    : 25/06/2014                        Ultima atualizacao: 25/05/2015
+    Data    : 25/06/2014                        Ultima atualizacao: 29/05/2017
 
     Dados referentes ao programa:
 
@@ -1889,6 +1878,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
     Alteracoes: 25/05/2015 - Inclusao do tratamento de cadastro para tipo de taxa
                              mensal sendo o IPCA, agora pode-se cadastrar esta taxa
                              em outro mes.
+                
+                29/05/2017 - Realizado ajuste para que ao alterar ou cadastrar tarifas
+								             do tipo "TR" seja possível atribuir o valor 0(ZERO), conforme
+								             solicitado no chamado 615474 (Kelvin)
     ............................................................................. */
     DECLARE
       vr_exc_saida EXCEPTION;
@@ -2004,10 +1997,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         CLOSE cr_crapdat;
       END IF;
 
+      --TR (Caso for TR deixar passar valor zerado SD 615474)
+      IF pr_cddindex = 2 THEN
+        -- Valida valor de taxa
+        IF pr_vlrdtaxa IS NULL THEN
+          vr_dscritic := 'Valor da taxa que nao pode ser menor ou igual a zero.';
+          RAISE vr_exc_saida;          
+        END IF;
+      ELSE
       -- Valida valor de taxa
-      IF pr_vlrdtaxa <= 0 THEN
+        IF pr_vlrdtaxa <= 0 OR
+           pr_vlrdtaxa IS NULL THEN
         vr_dscritic := 'Valor da taxa que nao pode ser menor ou igual a zero.';
         RAISE vr_exc_saida;
+      END IF;
       END IF;
 
       -- Consulta de taxas de indexadores
@@ -3621,11 +3624,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
        ,tab.tpregist
       FROM
         craptab tab
-      WHERE
-            tab.cdcooper = pr_cdcooper
-        AND tab.nmsistem = pr_nmsistem
-        AND tab.tptabela = pr_tptabela
-        AND tab.cdacesso = pr_cdacesso;
+      WHERE tab.cdcooper = pr_cdcooper
+        AND UPPER(tab.nmsistem) = pr_nmsistem
+        AND UPPER(tab.tptabela) = pr_tptabela
+        AND UPPER(tab.cdacesso) = pr_cdacesso;
       
       rw_craptab cr_craptab%ROWTYPE;
 
@@ -4237,10 +4239,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         craptab tab
       WHERE
             tab.cdcooper = pr_cdcooper
-        AND tab.nmsistem = pr_nmsistem
-        AND tab.tptabela = pr_tptabela
+        AND UPPER(tab.nmsistem) = pr_nmsistem
+        AND UPPER(tab.tptabela) = pr_tptabela
         AND tab.cdempres = pr_cdempres
-        AND tab.cdacesso = pr_cdacesso
+        AND UPPER(tab.cdacesso) = pr_cdacesso
         AND tab.tpregist = pr_tpregist;
 
        rw_craptab cr_craptab%ROWTYPE;
@@ -4413,10 +4415,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         craptab tab
       WHERE
             tab.cdcooper = pr_cdcooper
-        AND tab.nmsistem = pr_nmsistem
-        AND tab.tptabela = pr_tptabela
+        AND UPPER(tab.nmsistem) = pr_nmsistem
+        AND UPPER(tab.tptabela) = pr_tptabela
         AND tab.cdempres = pr_cdempres
-        AND tab.cdacesso = pr_cdacesso
+        AND UPPER(tab.cdacesso) = pr_cdacesso
         AND tab.tpregist = pr_tpregist;
 
        rw_craptab cr_craptab%ROWTYPE;
@@ -4937,4 +4939,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
 
 END APLI0004;
 /
-

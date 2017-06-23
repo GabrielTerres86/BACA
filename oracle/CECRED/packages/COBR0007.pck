@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 19/05/2016
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 12/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -254,6 +254,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --                          Heitor (Mouts) - Chamado 527557
   --
   --              06/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
+  --
+  --              12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
   ---------------------------------------------------------------------------------------------------------------
   
   ------------------------------- CURSORES ---------------------------------    
@@ -492,6 +494,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                    ,pr_cdagenci => 90 -- internetbanking  --Agencia do Associado
                                    ,pr_tpoperac => 3               --Tipo de Operacao (0=todos)
                                    ,pr_inpessoa => 0               --Tipo de Pessoa
+                                   ,pr_idagenda   => 0             --Tipo de agendamento
+                                   ,pr_cdtiptra   => 0             --Tipo de transferencia
                                    ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                    ,pr_cdcritic => vr_cdcritic     --Codigo do erro
                                    ,pr_dscritic => vr_dscritic);   --Descricao do erro

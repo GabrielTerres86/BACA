@@ -2,7 +2,7 @@
 	/*********************************************************************
 	 Fonte: buscar_rotina.php                                                 
 	 Autor: Renato Darosci                                                   
-	 Data : Mai/2015                Última Alteração: 19/01/2017 
+	 Data : Mai/2015                Última Alteração: 12/05/2017
 	                                                                  
 	 Objetivo  : Tratar as requisicoes da tela PARFOL                                 
 	                                                                  
@@ -11,6 +11,8 @@
 	 
 				 19/01/2017 - Adicionado novo limite de horario para pagamento no dia
 							  para contas da cooperativa. (M342 - Kelvin)
+			     
+				 12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
 	**********************************************************************/
 	
 	session_start();
@@ -78,5 +80,14 @@
 	echo 'Cdsvlrprm20.val("'.$xmlObjeto->roottag->tags[19]->cdata.'");';
 	echo 'Cdsvlrprm21.val("'.$xmlObjeto->roottag->tags[20]->cdata.'");';
 	echo 'Cdsvlrprm22.val("'.$xmlObjeto->roottag->tags[21]->cdata.'");';
+	echo 'Cdsvlrprm23.val("'.$xmlObjeto->roottag->tags[22]->cdata.'");';
+	echo 'Cdsvlrprm24.val("'.$xmlObjeto->roottag->tags[23]->cdata.'");';
+	echo 'Cdsvlrprm25.val("'.$xmlObjeto->roottag->tags[24]->cdata.'");';
+	
+	//Se habilita transferencia retornar falso desabilitar a tarifa
+	if ($xmlObjeto->roottag->tags[22]->cdata == "0"){
+		echo "Cdsvlrprm25.prop('disabled', true);";
+		echo "Cdsvlrprm24.prop('disabled', true);";
+	}
 	echo 'Cdsvlrprm1.focus();';
 ?>

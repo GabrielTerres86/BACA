@@ -358,6 +358,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
     -- VARIÁVEIS
     vr_vlbloqueio crapblj.vlbloque%TYPE; -- Valor que sera bloqueado
+    vr_fldestrf   BOOLEAN; -- Indicador de desbloqueio para transferencia
+    vr_dsinfdes   crapblj.dsinfdes%TYPE; -- Informacao de desbloqueio
 
     -- Variaveis de erro
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
@@ -424,7 +426,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       END IF;
 
     ELSE -- Se o valor solicitado eh o mesmo valor que esta bloqueado
-      
+            
+      IF pr_fldestrf = 0 THEN
+        vr_fldestrf := FALSE;
+        vr_dsinfdes := 'Desbloqueio BACENJUD';
+      ELSE
+        vr_fldestrf := TRUE;
+        vr_dsinfdes := 'Desbloqueio/Transferência BACENJUD';
+      END IF;
+
       -- Efetua o desbloqueio judicial
       blqj0001.pc_efetua_desbloqueio_jud(pr_cdcooper  => pr_cdcooper
                                         ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
@@ -434,8 +444,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                         ,pr_nrctacon  => pr_nrdconta
                                         ,pr_nrofides  => rw_crapblj.nroficio
                                         ,pr_dtenvdes  => rw_crapdat.dtmvtolt
-                                        ,pr_dsinfdes  => 'Desbloqueio BACENJUD'
-                                        ,pr_fldestrf  => FALSE -- Desbloqueio nao eh para transferencia
+                                        ,pr_dsinfdes  => vr_dsinfdes
+                                        ,pr_fldestrf  => vr_fldestrf
                                         ,pr_tpcooperad=> 1 -- Efetuar a busca por conta
                                         ,pr_tab_erro  => vr_tab_erro);
       -- Verifica se ocorreu erro na rotina
@@ -1414,12 +1424,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          decode(pr_tpproduto,'C',1, -- Conta Corrente
                              'A',2, -- Aplicacao
                                  3),-- Poupanca Programada
-         pr_dsoficio,
+         substr(pr_dsoficio,1,25),
          pr_nrdconta,
          pr_cdagenci,
          pr_vlordem,
-         pr_dsprocesso,
-         pr_nmjuiz);
+         substr(pr_dsprocesso,1,25),
+         substr(pr_nmjuiz,1,70));
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao inserir na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
@@ -1612,7 +1622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          pr_indbloqueio_saldo,
          pr_nrcnpj_if_destino,
          pr_nragencia_if_destino,
-         pr_nmfavorecido,
+         substr(pr_nmfavorecido,70),
          pr_nrcpfcnpj_favorecido,
          pr_tpdeposito,
          pr_cddeposito,
@@ -2170,7 +2180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              b.nrispbif
         FROM crapban b,
              crapagb a
-       WHERE a.nrcnpjag = pr_nrcnpjag
+       WHERE substr(lpad(a.nrcnpjag,14,'0'),1,8) = substr(lpad(pr_nrcnpjag,14,'0'),1,8)
          AND a.cdageban = pr_cdageban
          AND b.cdbccxlt = a.cddbanco;
     rw_crapagb cr_crapagb%ROWTYPE;
@@ -2430,7 +2440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                 ,pr_nmtitula => rw_ted.nmfavorecido --> nome do titular destino
                                 ,pr_nrcpfcgc => nvl(rw_ted.nrcpfcnpj_favorecido,0)  --> CPF do titular destino
                                 ,pr_inpessoa => vr_inpessoa --> Tipo de pessoa
-                                ,pr_intipcta => 3 -- Deposito judicial --> Tipo de conta
+                                ,pr_intipcta => 9 -- Deposito judicial --> Tipo de conta
                                 ,pr_vllanmto => rw_ted.vllanmto --> Valor do lançamento
                                 ,pr_dstransf => 'Transferencia Judicial' --> Identificacao Transf.
                                 ,pr_cdfinali => 100 -- Deposito Judicial --> Finalidade TED

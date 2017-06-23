@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 03/08/2016
+ * FONTE        : emprestimos.js                            Última alteração: 29/03/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -104,6 +104,7 @@
  * 083: [18/08/2016] Alteração da função controlaFoco - (Evandro - RKAM)
  * 084: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
  * 085: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
+ * 086: [29/03/2017] Ajustado para nao permitir selecionar finalidade de tipo 2 - cessao de credito( PRJ343 - Cessao de credito - Odirlei-AMcom)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -7869,7 +7870,7 @@ function controlaPesquisas() {
 
                 } else if (campoAnterior == 'cdfinemp') {
 
-                    filtros = 'Finalidade do Empr.;cdfinemp;30px;S;0|Descri&ccedil&atildeo;dsfinemp;200px;S;|;flgstfin;;;1;N';
+                    filtros = 'Finalidade do Empr.;cdfinemp;30px;S;0|Descri&ccedil&atildeo;dsfinemp;200px;S;|;flgstfin;;;1;N|;lstipfin;50px;S;0,2;N';
                     colunas = 'C&oacutedigo;cdfinemp;20%;right|Finalidade;dsfinemp;80%;left|Flag;flgstfin;0%;left;;N';
                     var vFuncao = (nomeForm == 'frmSimulacao') ? 'habilitaModalidade("")' : '';
                     
@@ -7975,7 +7976,7 @@ function controlaPesquisas() {
         bo = 'zoom0001';
         procedure = 'BUSCAFINEMPR';
         titulo = 'Finalidade do Empr&eacute;stimo';
-        filtrosDesc = 'flgstfin|1;nriniseq|1;nrregist|30';
+        filtrosDesc = 'flgstfin|1;lstipfin|0,2;nriniseq|1;nrregist|30';
         buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsfinemp', $(this).val(), 'dsfinemp', filtrosDesc, nomeForm);
 
         if (nomeForm != 'frmSimulacao') {

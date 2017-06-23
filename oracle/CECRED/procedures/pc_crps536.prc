@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2009                     Ultima atualizacao: 10/10/2016.
+   Data    : Novembro/2009                     Ultima atualizacao: 27/03/2017.
 
    Dados referentes ao programa:
 
@@ -68,8 +68,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares). 
 
-			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
-							da rotina padrão. (Rodrigo)
+			         13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
+							              da rotina padrão. (Rodrigo)
+              
+               27/03/2017 - Alterar a geração do arquivo AAMMDD_CRITICAS.txt para considerar valores 
+                            de devolução de recebimento de cobrança que já foram lançados na conta do associado
+                            P307 (Jonatas - Supero).               
 .............................................................................*/
 
   -- CURSORES
@@ -200,7 +204,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
   vr_diretori      VARCHAR2(200);
   vr_dircop_rlnsv  VARCHAR2(200);
   vr_nom_direto    VARCHAR2(200);
-  vr_nom_dirmic    VARCHAR2(200);
   -- Validação de erros
   vr_typ_saida     VARCHAR2(100);
   vr_des_saida     VARCHAR2(2000);
@@ -232,10 +235,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
   --variaveis para controle de arquivos
   vr_dircon VARCHAR2(200);
   vr_arqcon VARCHAR2(200);
-  vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
-  vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
-  vc_cdtodascooperativas INTEGER := 0;  
-  vr_dscomand       VARCHAR2(1000);   
   
   vr_dstextab craptab.dstextab%TYPE;   
 
@@ -954,11 +953,11 @@ BEGIN
                                  ||'</titulo>');
         
         -- Se NAO foi lancado corretamente
-        IF vr_relato(ind).flglanca = 'NAO' THEN
-          pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
-                                     ',1455,4894,' || TO_CHAR(vr_relato(ind).vltitulo,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
-                                     ',157,"DEVOLUCAO RECEBIMENTO COBRANCA (CONFORME CRITICA RELATORIO 521)"' || chr(10));
-        END IF;
+        --IF vr_relato(ind).flglanca = 'NAO' THEN
+        pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
+                                   ',1455,4894,' || TO_CHAR(vr_relato(ind).vltitulo,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                   ',157,"DEVOLUCAO RECEBIMENTO COBRANCA (CONFORME CRITICA RELATORIO 521)"' || chr(10));
+        --END IF;
 
       END LOOP;
 
@@ -1002,8 +1001,9 @@ BEGIN
         vr_nmarquiv := TO_CHAR(vr_dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
 
     -- Busca o diretório para contabilidade
-        vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-        vr_dircon := vr_dircon || vc_dircon;
+        vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => 0
+                                              ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
         vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
 
         -- Chama a geracao do TXT
@@ -1091,4 +1091,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS536;
 /
-
