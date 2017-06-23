@@ -240,7 +240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 19/05/2016
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 23/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -254,6 +254,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --                          Heitor (Mouts) - Chamado 527557
   --
   --              06/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
+  --
+  --              23/06/2017 - Na rotina pc_inst_alt_dados_arq_rem_085 foi alterado para fechar o cursor correto
+  --                           pois estava ocasionando erro (Tiago/Rodrigo #698180)
   ---------------------------------------------------------------------------------------------------------------
   
   ------------------------------- CURSORES ---------------------------------    
@@ -8972,7 +8975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 25/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 23/06/2017
     --
     --  Dados referentes ao programa:
     --
@@ -8981,6 +8984,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --   Alteracao : 25/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
     --
+    --               23/06/2017 - Alterado para fechar o cursor cr_crapcre ao inves do cr_crapcco
+    --                            pois ocasionava erro no programa porque fechava um cursor que nao
+    --                            estava aberto no momento (Tiago/Rodrigo #698180)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -9274,7 +9280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     ELSE 
       -- Fechar cursor
-      CLOSE cr_crapcco;
+      CLOSE cr_crapcre;
     END IF;
     ------ FIM - VALIDACOES PARA RECUSAR ------
 
