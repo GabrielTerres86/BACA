@@ -571,7 +571,7 @@ BEGIN
                                ,pr_nrparepr IN crappep.nrparepr%TYPE ) IS  --> numero da parcela
 
       -- Variaveis para gravação da craplot
-      vr_cdagenci CONSTANT PLS_INTEGER := 1;
+      vr_cdagenci INTEGER := pr_cdagenci;
       vr_cdbccxlt CONSTANT PLS_INTEGER := 100;
       
       ------------------------------- CURSORES ---------------------------------
@@ -1196,7 +1196,7 @@ BEGIN
                                  ,rw_craplot_8457.dtmvtolt
                                  ,0
                                  ,rw_crapepr.nrdconta
-                                 ,rw_craplot_8457.nrseqdig + 1--rw_crapepr.nrctremp
+                                 ,to_number(to_char(sysdate,'hh24miss')||to_char(pr_nrparepr))--rw_crapepr.nrctremp
                                  ,rw_craplot_8457.nrseqdig + 1
                                  ,2
                                  ,0
