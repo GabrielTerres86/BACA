@@ -1158,14 +1158,14 @@ create or replace package body cecred.INSS0001 as
                09/03/2016 - feita a troca na geração do log que gerava no batch para o message conforme 
                             solicitado no chamado 396313. (Kelvin)                      
                              
-			   10/03/2016 - Ajuste para pegar o código da agencia corretamente
+		      	   10/03/2016 - Ajuste para pegar o código da agencia corretamente
                            (Adriano).				            
 
                12/05/2016 - Ajustado fn_verifica_renovacao_vida para remover o OR do numero da conta
                             do cursor cr_verifica. Todas as chamadas para essa procedure passam o
                             numero da conta (Douglas - Chamado 451221)
                
-			   07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)             
+			         07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)             
                             
                21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                            (Adriano - SD 473539).             
@@ -1191,6 +1191,10 @@ create or replace package body cecred.INSS0001 as
                             
                16/06/2017 - No retorno das procedures pc_efetua_requisicao_soap e pc_elimina_arquivos_requis
                             Codigo 1 onde na rotina final faz de para gerar 4 alerta - (Belli Envolti) Ch 664301
+
+               23/06/2017 - Retirada da rotina pc_set_module da rotina pc_retorna_linha_log, pois para esta pck,
+                            deve registrar a rotina que gerou o erro (a que chamou a pc_retorna_linha_log)
+                            (Ana - Envolti - Chamado 664301)
                                                                 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -1255,8 +1259,7 @@ create or replace package body cecred.INSS0001 as
 
     rw_craplot cr_craplot%rowtype;
   BEGIN
-	  -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_gera_credito_em_conta');
       
     -- Buscar Lancamento de credito de beneficios do INSS
@@ -1519,8 +1522,7 @@ create or replace package body cecred.INSS0001 as
 
     rw_craphis cr_craphis%rowtype;
   BEGIN
-	  -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 	  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_transfere_beneficio');
       
     -- Buscar Lancamento de credito de beneficios do INSS
@@ -1802,8 +1804,7 @@ create or replace package body cecred.INSS0001 as
   vr_chave_result varchar2(6);
             
   BEGIN
-	  -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 	  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_beneficios_inss');
       
     -- Lista os lancamentos de creditos de beneficios
@@ -1876,8 +1877,7 @@ create or replace package body cecred.INSS0001 as
                  
   ---------------------------------------------------------------------------------------------------------------*/
     BEGIN
-	    -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_gera_cabecalho_xml');      
       
       pr_dstexto := '<?xml version="1.0" ?>';
@@ -1991,8 +1991,7 @@ create or replace package body cecred.INSS0001 as
     vr_cdprogra  VARCHAR2(1000);
     
     BEGIN
-	    -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_criptografa_move_arquiv');
       
       --Limpar variavel retorno                                         
@@ -2130,8 +2129,7 @@ create or replace package body cecred.INSS0001 as
         -- Retorno não OK
         pr_dscritic:= 'Erro na rotina pc_criptografa_move_arquiv. '||SQLERRM;
         
-	      -- Incluir nome do módulo logado
-        -- Belli 09/06/2017
+    	  -- Incluir nome do módulo logado - Chamado 664301
 			  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'Saiu de INSS0001.pc_criptografa_move_arquiv');
       
         
@@ -2184,8 +2182,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;  
                                          
     BEGIN
-	    -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_submete_requis_mq_batch'); 
 
       --Diretorio Envio arquivo
@@ -2364,8 +2361,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;  
                                          
     BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_benef_inss_envia_req_mq');      
 
       --limpar tabela erros
@@ -2515,8 +2511,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;                                       
     
     BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_benef_inss_xml_div_pgto');
       
       --limpar tabela erros
@@ -2742,8 +2737,7 @@ create or replace package body cecred.INSS0001 as
       vr_cdmsgarq:= 0;
       
       BEGIN
-        -- Incluir nome do módulo logado
-        -- Belli 09/06/2017
+    	  -- Incluir nome do módulo logado - Chamado 664301
 		  	GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_benef_inss_ret_webservc');
       
         -- Verifica se a cooperativa esta cadastrada
@@ -3126,8 +3120,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_orgao EXCEPTION;     
                                        
     BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_benef_inss_solic_cred');      
       
       --Inicializar Variaveis
@@ -3424,8 +3417,7 @@ create or replace package body cecred.INSS0001 as
       vr_exc_erro EXCEPTION;    
                                          
     BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_benef_inss_confir_pagto');      
       
       --Inicializar saida erro
@@ -3551,8 +3543,7 @@ create or replace package body cecred.INSS0001 as
       --Variaveis de Excecoes
       vr_exc_erro EXCEPTION;                                       
     BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_benef_inss_gera_credito');
       
       --limpar tabela erros
@@ -3879,8 +3870,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;  
                                          
     BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_gera_relatorio_rejeic');                  
       
       --limpar tabela erros
@@ -4166,10 +4156,8 @@ create or replace package body cecred.INSS0001 as
                
   .............................................................................*/  
   BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
-		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_substitui_caracter');    
+	  -- Incluir nome do módulo logado - Chamado 664301
+    GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_substitui_caracter');    
       
     DECLARE
       vr_string VARCHAR2(32767):= pr_string;
@@ -4194,11 +4182,8 @@ create or replace package body cecred.INSS0001 as
     v_line_nr     NUMBER;
     
   BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
-		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_base64DecodeClobAsBlob');    
-      
+ 	  -- Incluir nome do módulo logado - Chamado 664301
+    GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_base64DecodeClobAsBlob');    
     
     --Inicializa CLOB
     dbms_lob.createTemporary (v_out_bl, TRUE, dbms_lob.call);
@@ -4275,7 +4260,6 @@ create or replace package body cecred.INSS0001 as
     
     BEGIN
       -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_elimina_arquivos_requis');                  	  
       
       --Inicializar Mensagem erro
@@ -4494,8 +4478,7 @@ create or replace package body cecred.INSS0001 as
       vr_exc_diverg  EXCEPTION;
       vr_exc_erro    EXCEPTION; 
     BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_proces_pagto_benef_inss');
       
       --Inicializar variaveis
@@ -5185,8 +5168,7 @@ create or replace package body cecred.INSS0001 as
     END pc_limpa_tabela;
                                          
   BEGIN
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_benef_inss_proces_pagto');
     
     --limpar tabela erros
@@ -5767,8 +5749,7 @@ create or replace package body cecred.INSS0001 as
                  
   -----------------------------------------------------------------------------------------*/
   BEGIN
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_gera_cabecalho_soap');
     
     DECLARE
@@ -5917,8 +5898,7 @@ create or replace package body cecred.INSS0001 as
                 
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_efetua_requisicao_soap');    
       
     DECLARE
@@ -6015,9 +5995,6 @@ create or replace package body cecred.INSS0001 as
       BEGIN
                 
         /** Valida SOAP retornado pelo WebService **/
-        
-        -- Teste Belli 29/05 e 16/06 gene0002_belli
-        
         gene0002.pc_arquivo_para_xml (pr_nmarquiv => pr_msgreceb    --> Nome do caminho completo) 
                                      ,pr_xmltype  => vr_XML         --> Saida para o XML
                                      ,pr_des_reto => vr_des_reto    --> Descrição OK/NOK
@@ -6064,7 +6041,7 @@ create or replace package body cecred.INSS0001 as
         WHEN vr_exc_saida THEN
           NULL;
       END;
-      
+
       --Se ocorreu erro
       IF vr_dsderror IS NOT NULL THEN
         --Eliminar Arquivos Requisicoes
@@ -6136,8 +6113,7 @@ create or replace package body cecred.INSS0001 as
     
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_obtem_fault_packet');    
       
     DECLARE
@@ -6300,15 +6276,14 @@ create or replace package body cecred.INSS0001 as
     
                  10/04/2015 - Alterado o formato da vr_nrcpfcgc (Adriano).
                  
-                 19/05/2017 Belli incluido tipo de falha variavel.
+                 19/05/2017 - Belli incluido tipo de falha variavel.
     
-                
+                 23/06/2017 - Retirada da rotina pc_set_module, pois para esta pck, deve
+                              registrar a rotina que gerou o erro (a que chamou a pc_retorna_linha_log)
+                              (Ana - Envolti - Chamado 664301)
+                                                                
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
-		GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_retorna_linha_log'); 
-    
     DECLARE
     
     --Selecionar cadastro titulares
@@ -6330,7 +6305,7 @@ create or replace package body cecred.INSS0001 as
     vr_nrcpfcgc VARCHAR2(100);
     vr_dscritic VARCHAR2(4000);
     
-    -- 19/05/2017 Belli chamado 660327 
+    --Chamado 660327 
     vr_cdtipofalha NUMBER (2); 
     vr_dstipofalha VARCHAR2 (10); 
      
@@ -6363,7 +6338,6 @@ create or replace package body cecred.INSS0001 as
                     rpad(pr_nmmetodo,40,' ')|| ' | '||
                     rpad(pr_cdderror,30,' ')|| ' | '||pr_dsderror;
       
-      -- 19/05/2017 Belli
       IF pr_cdtipofalha IS NULL THEN
           vr_cdtipofalha := 3; -- Erro tratato
           vr_dstipofalha := 'ERRO: ';
@@ -6377,11 +6351,10 @@ create or replace package body cecred.INSS0001 as
               vr_dstipofalha := 'ERRO: ';
             end if;
       END IF;
-      -- 19/05/2017 Belli - End
                       
       --Escrever No LOG
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => vr_cdtipofalha  -- 19/05/2017 Belli
+                                ,pr_ind_tipo_log => vr_cdtipofalha
                                 ,pr_nmarqlog     => pr_nmarqlog
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') ||
                                                         ' - ' || pr_cdprogra || ' --> ' || 
@@ -6497,8 +6470,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF; 
       
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_rel_benef_web');      
        
       --Determinar o relatorio
@@ -6835,6 +6807,8 @@ create or replace package body cecred.INSS0001 as
                 
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
+
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
     
     -- Busca dos dados da cooperativa
@@ -6913,8 +6887,7 @@ create or replace package body cecred.INSS0001 as
     vr_teste_clob clob;
     
     BEGIN
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_rel_benef_pagar');
       
       --limpar tabela erros
@@ -7257,9 +7230,10 @@ create or replace package body cecred.INSS0001 as
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF; 
-      
-      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
-      ---vr_retornvl := 'NOK';
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_rel_benef_pagar');            
       
       IF vr_retornvl = 'NOK' THEN
         
@@ -7279,7 +7253,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG                                     
-                                     ,pr_cdtipofalha => 1          --tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 1          --tipo 4 não abre chamado
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2  --Descricao erro
                                      );
@@ -7367,6 +7341,7 @@ create or replace package body cecred.INSS0001 as
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
                                          
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -7443,8 +7418,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_saida EXCEPTION; 
     
     BEGIN
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_rel_benef_pagos');
       
       --limpar tabela erros
@@ -7799,8 +7773,9 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;  
       
-      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
-      ---vr_retornvl := 'NOK';   
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_rel_benef_pagos');            
       
       IF vr_retornvl = 'NOK' THEN
         
@@ -7820,7 +7795,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 1          --tipo 4 não abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 1          --tipo 4 não abre chamado
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -7889,6 +7864,7 @@ create or replace package body cecred.INSS0001 as
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
                 
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -7997,8 +7973,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
       
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_rel_hist_cadastral');
               
       -- Verifica se a cooperativa esta cadastrada
@@ -8326,10 +8301,11 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
         
       END IF;   
-            
-      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
-      --vr_retornvl := 'NOK';         
-      
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_rel_hist_cadastral');
+
       IF vr_retornvl = 'NOK' THEN
         
         --Se nao tem a descricao do erro
@@ -8349,7 +8325,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 1          --Tipo 4 gera alerta -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 1          --Tipo 4 gera alerta
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro 
                                      
@@ -8484,8 +8460,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_busca_crapdbi'); 
     
 
@@ -8678,8 +8653,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_busca_cdorgins');     
       
       -- Verifica se a cooperativa esta cadastrada
@@ -8963,8 +8937,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF; 
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_busca_crapttl');      
       
       --Inicializar Variavel
@@ -9357,9 +9330,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;
      
     BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_gera_termo_troca_domic');      
       
       --Limpar tabelas auxiliares
@@ -9745,9 +9716,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;
          
     BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_gera_termo_troca_conta');      
       
       --Limpar tabelas auxiliares
@@ -10119,9 +10088,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;
          
     BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_gera_termo_cpvcao_vida');      
       
       --Limpar tabelas auxiliares
@@ -10426,8 +10393,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;
      
     BEGIN
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_gera_arq_demonstrativo');
       
       --Limpar tabelas auxiliares
@@ -10570,9 +10536,6 @@ create or replace package body cecred.INSS0001 as
       gene0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</rubricas></raiz>',TRUE); 
 
       -- Gera relatório
-      
-      -- Ana//Belli 24/05/2017 gene0002_belli
-      
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                   --> Cooperativa conectada
                                  ,pr_cdprogra  => pr_nmdatela                   --> Programa chamador
                                  ,pr_dtmvtolt  => pr_dtmvtolt                   --> Data do movimento atual
@@ -10754,6 +10717,7 @@ create or replace package body cecred.INSS0001 as
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
                                                        
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -10856,8 +10820,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF; 
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_domicilio');      
             
       --Inicializar Variaveis
@@ -11307,13 +11270,16 @@ create or replace package body cecred.INSS0001 as
                                           ,pr_dscritic => vr_dscritic2);    --Descricao Erro
       --Se ocorreu erro
       IF vr_des_reto = 'NOK' THEN
-        
         --Monta a mensagem de erro
         vr_dscritic := vr_dscritic2;
         
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;     
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_domicilio');
       
       --Se for para gerar log
       IF pr_flgerlog = 1 THEN
@@ -11416,7 +11382,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
         
@@ -11519,7 +11485,8 @@ create or replace package body cecred.INSS0001 as
                  
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
-                              
+
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -11587,8 +11554,9 @@ create or replace package body cecred.INSS0001 as
     --Variaveis de Excecoes
     vr_exc_erro EXCEPTION;                                       
     vr_exc_saida EXCEPTION; 
-    
+
     BEGIN
+
       --limpar tabela erros
       vr_tab_erro.DELETE;
       --Limpar tabela Demonstrativos
@@ -11621,8 +11589,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF; 
       
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solicita_demonstrativo');            
       
       BEGIN                                                  
@@ -11854,7 +11821,7 @@ create or replace package body cecred.INSS0001 as
         IF dbms_xmldom.getlength(vr_lista_nodo) = 0 THEN
           
           --Monta mensagem de critica
-          vr_dscritic:= 'Demonstrativo nao encontrado.';
+          vr_dscritic:= 'Dados do Demonstrativo nao encontrados.';
           
           --Levantar Excecao
           RAISE vr_exc_saida;
@@ -12132,7 +12099,7 @@ create or replace package body cecred.INSS0001 as
         WHEN vr_exc_saida THEN 
           vr_retornvl:= 'NOK';
       END;  
-      
+
       --Eliminar arquivos requisicao
       inss0001.pc_elimina_arquivos_requis (pr_cdcooper => vr_cdcooper      --Codigo Cooperativa
                                           ,pr_cdprogra => vr_nmdatela      --Nome do Programa
@@ -12142,6 +12109,7 @@ create or replace package body cecred.INSS0001 as
                                           ,pr_nmarqlog => vr_nmarqlog      --Nome Arquivo LOG
                                           ,pr_des_reto => vr_des_reto      --Retorno OK/NOK 
                                           ,pr_dscritic => vr_dscritic2);    --Descricao Erro
+
       --Se ocorreu erro
       IF vr_des_reto = 'NOK' THEN
         --Atribuir mensagem erro
@@ -12150,6 +12118,10 @@ create or replace package body cecred.INSS0001 as
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;     
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solicita_demonstrativo');            
       
       --Se saiu com erro
       IF vr_retornvl = 'NOK' THEN
@@ -12175,7 +12147,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 1          --Tipo 4 gera mensagem -- 14/06/2017 Belli
+                                     ,pr_cdtipofalha => 1          --Tipo 4 gera mensagem
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -12216,7 +12188,6 @@ create or replace package body cecred.INSS0001 as
         -- Existe para satisfazer exigência da interface. 
       	pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
-
 
   END pc_solicita_demonstrativo;
 
@@ -12276,6 +12247,7 @@ create or replace package body cecred.INSS0001 as
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
                               
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -12361,10 +12333,8 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF; 
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_comprovacao_vida');    
-      
       
       BEGIN                                                  
         --Pega a data de movimento e converte para "DATE"
@@ -12721,13 +12691,15 @@ create or replace package body cecred.INSS0001 as
                                           ,pr_dscritic => vr_dscritic2);    --Descricao Erro
       --Se ocorreu erro
       IF vr_des_reto = 'NOK' THEN
-        
         vr_dscritic:= vr_dscritic2;
         
         --Levantar Excecao
         RAISE vr_exc_erro;
-        
       END IF;     
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_comprovacao_vida');
 
       BEGIN
         UPDATE tbinss_dcb
@@ -12770,9 +12742,6 @@ create or replace package body cecred.INSS0001 as
                                    
       END IF;  
       
-      -- Teste Belli 13/06/2017 chamado 660327 forçado um erro  
-      ----vr_retornvl := 'NOK';   
-      
       --Se saiu com erro
       IF vr_retornvl = 'NOK' THEN
         
@@ -12797,7 +12766,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
         
@@ -12951,8 +12920,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF; 
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_relat_benef_rejeitados');    
              
       -- Verifica se a cooperativa esta cadastrada
@@ -13261,8 +13229,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF; 
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_op_cc_coop');                
         
       BEGIN                                                  
@@ -13641,6 +13608,10 @@ create or replace package body cecred.INSS0001 as
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;     
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_op_cc_coopcomprovacao_vida');
       
       --Se for para gerar log
       IF nvl(pr_flgerlog,0) = 1 THEN
@@ -13759,7 +13730,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado -- 19/05/2017 Belli
+                                     ,pr_cdtipofalha => 3          --Tipo 2 abre chamado
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -13899,6 +13870,7 @@ create or replace package body cecred.INSS0001 as
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
                               
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -13944,13 +13916,11 @@ create or replace package body cecred.INSS0001 as
     vr_exc_saida  EXCEPTION; 
     vr_exc_status EXCEPTION; 
     
-    -- variavel que vai indicar se a mensagem é erro ou alerta - Belli 14/06/2017 ch 660327    
+    -- variavel que vai indicar se a mensagem é erro ou alerta - ch 660327    
     vr_cd_tipo_mensagem number (5):= 3; -- Codigo 3 onde na rotina final faz de para gerar 2 erro    
     
     BEGIN 
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_op_cc');                
         
       --limpar tabela erros
@@ -14317,7 +14287,7 @@ create or replace package body cecred.INSS0001 as
               vr_dscritic LIKE ('%0008%') THEN
             
               if vr_dscritic LIKE ('%0008%') THEN
-                  -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 14/06/2017 ch 660327
+                  -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - ch 660327
                   vr_cd_tipo_mensagem := 1; 
               end if;
               
@@ -14398,7 +14368,11 @@ create or replace package body cecred.INSS0001 as
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;     
-      
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_op_cc');            
+     
       --Se não ocorreu erro                                              
       IF vr_retornvl = 'OK' THEN
         
@@ -14486,7 +14460,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271 9/05/2017 Belli
+                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -14595,9 +14569,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro EXCEPTION;                                       
         
     BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_op_cc_car');    
       
       --Inicializar Variaveis
@@ -14781,11 +14753,8 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_troca_op_cc_web');          
-
-      
       
       --Solicitar Troca OP Conta Corrente
       inss0001.pc_solic_troca_op_cc (pr_cdcooper => vr_cdcooper    --Codigo Cooperativa 
@@ -14943,6 +14912,7 @@ create or replace package body cecred.INSS0001 as
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
                               
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -14999,7 +14969,7 @@ create or replace package body cecred.INSS0001 as
     vr_nmarqpdf VARCHAR2(100);
     vr_auxconta PLS_INTEGER:= 0;
     
-    -- variavel que vai indicar se a mensagem é erro ou alerta - Belli 14/06/2017 ch 660327    
+    -- variavel que vai indicar se a mensagem é erro ou alerta - ch 660327    
     vr_cd_tipo_mensagem number (5):= 3; -- Codigo 3 onde na rotina final faz de para gerar 2 erro
         
     BEGIN
@@ -15031,8 +15001,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_alt_cad_benef');                      
               
       BEGIN                                                  
@@ -15354,7 +15323,7 @@ create or replace package body cecred.INSS0001 as
         IF vr_des_reto <> 'OK' THEN
             
           if vr_dscritic LIKE ('%0008%') THEN
-                  -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 14/06/2017 ch 660327
+                  -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - ch 660327
                   vr_cd_tipo_mensagem := 1; 
           end if;
               
@@ -15385,6 +15354,10 @@ create or replace package body cecred.INSS0001 as
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;     
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_alt_cad_benef');
       
       --Se for para gerar log
       IF nvl(pr_flgerlog,0) = 1 THEN
@@ -15439,7 +15412,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic   --Codigo Erro
                                      ,pr_dsderror => vr_dscritic   --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog   --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271 9/05/2017 Belli
+                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271
                                      ,pr_des_reto => vr_des_reto   --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2); --Descricao erro
                                      
@@ -15563,7 +15536,8 @@ create or replace package body cecred.INSS0001 as
                               PRJ342 (Odirlei-AMcom) 
                                                
                  16/06/2017 - Codigo 1 onde na rotina final faz de para gerar 4 alerta - (Belli Envolti) Ch 664301
-                 
+
+                 23/06/2016 - Incluir nome do módulo logado - (Ana - Envolti - Chamado 664301)
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -15745,12 +15719,11 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro  EXCEPTION;                                       
     vr_exc_saida EXCEPTION;
         
-    -- variavel que vai indicar se a mensagem é erro ou alerta - Belli 14/06/2017 ch 660327    
+    -- variavel que vai indicar se a mensagem é erro ou alerta - ch 660327    
     vr_cd_tipo_mensagem number (5):= 3; -- Codigo 3 onde na rotina final faz de para gerar 2 erro
     
     BEGIN
 		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
 			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_consulta_benef');      
       
       --limpar tabela erros
@@ -15896,7 +15869,7 @@ create or replace package body cecred.INSS0001 as
         IF vr_des_reto = 'NOK' THEN
           --Levantar Excecao
             
-          -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 16/06/2017 ch 664301
+          -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - ch 664301
           vr_cd_tipo_mensagem := 1; 
             
           RAISE vr_exc_saida;
@@ -15966,7 +15939,7 @@ create or replace package body cecred.INSS0001 as
             --Monta mensagem de critica
             vr_dscritic:= 'Beneficiario nao encontrado.';
             
-            -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 14/06/2017 ch 660327
+            -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - ch 660327
             vr_cd_tipo_mensagem := 1; 
             
             --Levantar Excecao
@@ -16734,11 +16707,15 @@ create or replace package body cecred.INSS0001 as
         vr_dscritic:= vr_dscritic2;
         --Levantar Excecao
             
-          -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - Belli 16/06/2017 ch 664301
+          -- Codigo 1 onde na rotina final faz de para gerar 4 alerta - ch 664301
           vr_cd_tipo_mensagem := 1; 
           
         RAISE vr_exc_erro;
       END IF;     
+
+		  --Incluir nome do módulo logado - Chamado 664301
+      --Seta novamente esta rotina porque foi alterado dentro da pc_elimina_arquivos_requis
+			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_consulta_benef');      
       
       --Se ocorreu erro                                              
       IF vr_retornvl <> 'OK' THEN
@@ -16764,7 +16741,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdderror => vr_cdcritic     --Codigo Erro
                                      ,pr_dsderror => vr_dscritic     --Descricao Erro
                                      ,pr_nmarqlog => vr_nmarqlog     --Nome Arquivo LOG
-                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271 9/05/2017 Belli
+                                     ,pr_cdtipofalha => vr_cd_tipo_mensagem  -- erro ou alerta - ch 6603271
                                      ,pr_des_reto => vr_des_reto     --Saida OK/NOK
                                      ,pr_dscritic => vr_dscritic2);  --Descricao erro
                      
@@ -16869,8 +16846,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_erro  EXCEPTION;                                       
         
     BEGIN
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'INSS0001.pc_solic_consulta_benef_car');      
       
       --limpar tabela erros
@@ -17129,8 +17105,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
       
-		  -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 			GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_solic_consulta_benef_web');      
       
       BEGIN                                                  
@@ -17420,8 +17395,7 @@ create or replace package body cecred.INSS0001 as
         RAISE vr_exc_erro;
       END IF;
       
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_busca_rel_solicitados');                
       
       /* Define Nome do Novo Arquivo */
@@ -17662,11 +17636,8 @@ create or replace package body cecred.INSS0001 as
       rw_craplcm_inss cr_craplcm_inss%ROWTYPE;
 
 		BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_verifica_renovacao_vida');    
-      
       
       -- Busca última data de vencimento mais próxima do beneficiário
 		  OPEN cr_verifica(pr_cdcooper => pr_cdcooper,
@@ -17693,15 +17664,13 @@ create or replace package body cecred.INSS0001 as
 
           IF cr_craplcm_inss%FOUND THEN
             
-            -- Incluir nome do módulo logado
-            -- Belli 09/06/2017
+        	  -- Incluir nome do módulo logado - Chamado 664301
 		        GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'Saiu INSS0001.fn_verifica_renovacao_vida');    
       
             RETURN 1; -- Tem LCM nos ultimos 3 meses / Notificar
         ELSE
             
-            -- Incluir nome do módulo logado
-            -- Belli 09/06/2017
+        	  -- Incluir nome do módulo logado - Chamado 664301
 		        GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'Saiu INSS0001.fn_verifica_renovacao_vida');    
       
             RETURN 0; -- Apesar de Vencido, nao tem LCM nos ultimos 3 meses / Não Notificar
@@ -17709,16 +17678,14 @@ create or replace package body cecred.INSS0001 as
         
       ELSE
             
-            -- Incluir nome do módulo logado
-            -- Belli 09/06/2017
+        	  -- Incluir nome do módulo logado - Chamado 664301
 		        GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'Saiu INSS0001.fn_verifica_renovacao_vida');    
       
           RETURN 0;  -- Em dia
       END IF;
       ELSE
             
-            -- Incluir nome do módulo logado
-            -- Belli 09/06/2017
+        	  -- Incluir nome do módulo logado - Chamado 664301
 		        GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'Saiu INSS0001.fn_verifica_renovacao_vida');    
       
         RETURN 0;  -- Em dia
@@ -17858,9 +17825,7 @@ create or replace package body cecred.INSS0001 as
     END pc_limpa_tabela;
                                          
   BEGIN
-      
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 	  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'INSS0001.pc_exec_pagto_benef_plani');                
       
     --limpar tabela erros
@@ -18262,8 +18227,7 @@ create or replace package body cecred.INSS0001 as
     vr_przexpir NUMBER;
     
   BEGIN
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_bloqueio_inss');
       
     vr_przexpir := 0; --FALSE
@@ -18404,11 +18368,8 @@ create or replace package body cecred.INSS0001 as
     vr_bloqueio NUMBER := 0;
     
   BEGIN
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
-		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_verifica_bloqueio_inss');    
-      
+	  -- Incluir nome do módulo logado - Chamado 664301
+    GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_verifica_bloqueio_inss');    
   
     vr_tpbloque := 0;
     vr_bloqueio := 0;
@@ -18542,8 +18503,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdoperad => vr_cdoperad
                                      ,pr_dscritic => vr_dscritic);
                                      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_verifica_situacao_senha');    
   
       vr_situacao := CADA0004.fn_situacao_senha(pr_cdcooper => vr_cdcooper
@@ -18660,8 +18620,7 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_cdoperad => vr_cdoperad
                                      ,pr_dscritic => vr_dscritic);
                                      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
       
       -- Pega o diretorio do log
@@ -18879,9 +18838,7 @@ create or replace package body cecred.INSS0001 as
     vr_exc_saida EXCEPTION;
     
     BEGIN
-                                     
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_envia_msg_venc_pv');      
     
     FOR rw_crapcop IN cr_crapcop LOOP
@@ -18975,9 +18932,8 @@ create or replace package body cecred.INSS0001 as
                             
   .............................................................................*/  
   BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
-		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_senha_sicredi');    
+	  -- Incluir nome do módulo logado - Chamado 664301
+    GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.fn_senha_sicredi');    
       
     RETURN gene0001.fn_param_sistema('CRED',0,'PWD_SICREDI_GPS');
   EXCEPTION
@@ -18986,7 +18942,7 @@ create or replace package body cecred.INSS0001 as
   END fn_senha_sicredi;  
 	
 	-- Procedure para alimentar a tabela de beneficiarios do inss
-  -- Belli 12/06/2017 Chamado 660327 eliminada a rotina pc_popula_dcb_inss
+  -- Chamado 660327 eliminada a rotina pc_popula_dcb_inss
 
   PROCEDURE pc_busca_demonst_sicredi (pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_nrdconta IN crapcop.nrdconta%TYPE
@@ -19096,12 +19052,8 @@ create or replace package body cecred.INSS0001 as
        WHERE ldcb.id_dcb = pr_iddcb;
     rw_tbinss_landcb cr_tbinss_landcb%ROWTYPE;
  
-   
-
   BEGIN
-    
-    -- Incluir nome do módulo logado
-    -- Belli 09/06/2017
+	  -- Incluir nome do módulo logado - Chamado 664301
 		GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_busca_demonst_sicredi');    
 
     -- Leitura do calendário da cooperativa
@@ -19288,7 +19240,7 @@ create or replace package body cecred.INSS0001 as
       IF dbms_xmldom.getlength(vr_lista_nodo) = 0 THEN
 
         --Monta mensagem de critica
-        vr_dscritic:= 'Demonstrativo nao encontrado.1';
+        vr_dscritic:= 'Dados do Demonstrativo nao encontrados.1';
 
         -- Gerar critica no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
@@ -19740,8 +19692,7 @@ create or replace package body cecred.INSS0001 as
 				AND (trunc(dcb.dtcompet, 'MM') = trunc(to_date(pr_dtmescom, 'DD/MM/RRRR'), 'MM') OR pr_dtmescom = ' ');
 	
 		BEGIN
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_carrega_dados_beneficio');    
       
 			-- Percorre dados do beneficiario
@@ -19838,8 +19789,7 @@ create or replace package body cecred.INSS0001 as
 		vr_xml_temp VARCHAR2(32767);
 																					 
     BEGIN			
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_carrega_dados_beneficio_car');
       
 			-- Busca dados do beneficiario
@@ -19946,9 +19896,7 @@ create or replace package body cecred.INSS0001 as
 
 	
 		BEGIN		
-      
-      -- Incluir nome do módulo logado
-      -- Belli 09/06/2017
+  	  -- Incluir nome do módulo logado - Chamado 664301
 		  GENE0001.pc_set_modulo(pr_module => 'INSS0001', pr_action => 'INSS0001.pc_carrega_demonst_benef');      
 		  
 			-- Criar documento XML
