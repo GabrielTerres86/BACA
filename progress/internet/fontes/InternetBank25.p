@@ -35,6 +35,10 @@
                21/07/2015 - Aumentando a formatacao do campo nrdocmto para
                             realizar o ajustes do erro relatado no chamado
                             304892. (Kelvin)
+
+               09/09/2016 - Ajustar tamanho da formatacao do campo nrdocmto,
+                            pois nao esta sendo formatado corretamente quando
+                            o numero possuir muitas casas (Anderson).
 .............................................................................*/
  
 create widget-pool.
@@ -113,7 +117,7 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                               TRIM(STRING(cratpro.vldocmto,"zzz,zzz,zz9.99")) +
                                              "</vldocmto>"
                    xml_operacao25.nrdocmto = "<nrdocmto>" +
-                                    TRIM(STRING(cratpro.nrdocmto,"zzzzzzzzzzz9")) +
+                                    TRIM(STRING(cratpro.nrdocmto,"zzzzzzzzzzzzzzzzzzzzzzzz9")) +
                                              "</nrdocmto>"
                    xml_operacao25.nrseqaut = "<nrseqaut>" +
                                     TRIM(STRING(cratpro.nrseqaut,"zzzzzzz9")) +
@@ -162,6 +166,10 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                                              STRING(cratpro.cdagectl, "9999") +
                                              "</cdagectl>"
                                              WHEN cratpro.cdagectl <> 0
+                   xml_operacao25.cdagesic = "<cdagesic>" +
+                                             STRING(cratpro.cdagesic, "9999") +
+                                             "</cdagesic>"
+                                             WHEN cratpro.cdagesic <> 0
                    xml_operacao25.dscabfim = "</DADOS>".
         
         END. /** Fim do FOR EACH cratpro **/
