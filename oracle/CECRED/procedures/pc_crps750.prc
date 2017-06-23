@@ -520,7 +520,7 @@ BEGIN
                    
            end if;
            
-                    
+         
       /***************************************/
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
