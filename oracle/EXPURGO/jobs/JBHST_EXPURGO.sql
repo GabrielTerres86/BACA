@@ -8,11 +8,11 @@ BEGIN
   vr_dsplsql := 'declare '||
                 'vr_cdcritic integer; '||
                 'vr_dscritic varchar2(4000); '||
-                'begin CECREDDBA.EXPU0001.pc_processar_expurgo (pr_cdcritic  => vr_cdcritic,
+                'begin EXPURGO.EXPU0001.pc_processar_expurgo (pr_cdcritic  => vr_cdcritic,
                                                                 pr_dscritic  => vr_dscritic ); end;';
                    
   -- Montar o prefixo do código do programa para o jobname
-  vr_jobname := 'CECREDDBA.JBHST_EXPURGO';
+  vr_jobname := 'EXPURGO.JBHST_EXPURGO';
   -- Faz a chamada ao programa paralelo atraves de JOB
   gene0001.pc_submit_job(pr_cdcooper  => 3 /*CECRED*/         --> Código da cooperativa
                         ,pr_cdprogra  => 'JBHST_EXPURGO'      --> Código do programa
