@@ -5678,8 +5678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            AND ris.cdcooper = pr_cdcooper
            AND ris.dtrefere = pr_dtrefere
            AND ris.inddocto = 5                -- Registros lançados em tela
-           AND ris.innivris > 1                -- Contratos com risco = AA não ter provisão
-           AND nvl(ris.cdinfadi,' ') != '0301' -- Remover as saídas
+           AND ris.innivris > 1                -- Contratos com risco = AA não tem provisão
       ORDER BY prd.dsproduto
               ,risc0003.fn_valor_opcao_dominio(mvt.idgarantia)
               ,ris.cdagenci;
@@ -5699,7 +5698,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            AND ris.cdcooper = pr_cdcooper
            AND ris.dtrefere = pr_dtrefere
            AND ris.inddocto = 5                -- Registros lançados em tela
-           AND nvl(ris.cdinfadi,' ') != '0301' -- Remover as saídas
         GROUP BY prd.dsproduto
                 ,risc0003.fn_valor_opcao_dominio(mvt.idgarantia)
       ORDER BY prd.dsproduto
@@ -5784,7 +5782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       
       -- Verificar se foi encerrada a digitação pelo Financeiro
       IF gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIGIT_RISCO_FINAN_LIBERA') = 1 THEN
-        vr_dscritic := 'Periodo para digitacao nao encerrado pelo Financeiro!';
+        vr_dscritic := 'Periodo para digitacao nao encerrado pela area responsavel!';
         RAISE vr_exc_erro;
       END IF;
       
@@ -5800,8 +5798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       
       -- Buscar o proximo dia útil
       vr_dtmvtopr_arq := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
-                                                    ,pr_dtmvtolt  => vr_dtrefere -- último dia util
-                                                    ,pr_tipo      => 'P');       -- Próximo ou anterior
+                                                    ,pr_dtmvtolt  => vr_dtrefere+1 -- último dia util
+                                                    ,pr_tipo      => 'P');         -- Próximo ou anterior
       
                                                      
       -- Define o diretório do arquivo
@@ -5915,12 +5913,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             -- Percorre todas as agencias de pessoa fisica e grava no arquivo
             vr_indice := vr_tab_pessoa_fisica.first;
             WHILE vr_indice IS NOT NULL LOOP
-              vr_linhadet := TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).cdagenci, '009')) || ',' ||
-                             TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).valor, '99999999999990.00'));
-                            
-              -- Grava a linha no arquivo
-              GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
-                                            ,vr_linhadet);
+              -- Se houver valor
+              IF vr_tab_pessoa_fisica(vr_indice).valor > 0 THEN
+                vr_linhadet := TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).cdagenci, '009')) || ',' ||
+                               TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).valor, '99999999999990.00'));
+                -- Grava a linha no arquivo
+                GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
+                                              ,vr_linhadet);
+              END IF;
               -- Proximo registro               
               vr_indice := vr_tab_pessoa_fisica.next(vr_indice);
             END LOOP;
@@ -5939,13 +5939,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             -- Percorre todas as agencias de pessoa fisica e grava no arquivo
             vr_indice := vr_tab_pessoa_fisica.first;
             WHILE vr_indice IS NOT NULL LOOP
-             vr_linhadet := TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).cdagenci, '009')) || ',' ||
-                            TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).valor, '99999999999990.00'));
-             -- Grava a linha no arquivo
-             GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
-                                           ,vr_linhadet);
-             -- Proximo registro               
-             vr_indice := vr_tab_pessoa_fisica.next(vr_indice);               
+              -- Se houver valor
+              IF vr_tab_pessoa_fisica(vr_indice).valor > 0 THEN
+                vr_linhadet := TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).cdagenci, '009')) || ',' ||
+                               TRIM(to_char(vr_tab_pessoa_fisica(vr_indice).valor, '99999999999990.00'));
+                -- Grava a linha no arquivo
+                GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
+                                              ,vr_linhadet);
+              END IF;                                
+              -- Proximo registro               
+              vr_indice := vr_tab_pessoa_fisica.next(vr_indice);               
             END LOOP;
           END IF; -- FIM PF 
            
@@ -5964,11 +5967,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             -- Percorre todas as agencias de pessoa juridica e grava no arquivo
             vr_indice := vr_tab_pessoa_juridica.first;
             WHILE vr_indice IS NOT NULL LOOP
-              vr_linhadet := TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).cdagenci, '009')) || ',' ||
-                             TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).valor, '99999999999990.00'));
-              -- Grava a linha no arquivo
-              GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
-                                            ,vr_linhadet);
+              -- Se houver valor
+              IF vr_tab_pessoa_juridica(vr_indice).valor > 0 THEN
+                vr_linhadet := TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).cdagenci, '009')) || ',' ||
+                               TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).valor, '99999999999990.00'));
+                -- Grava a linha no arquivo
+                GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
+                                              ,vr_linhadet);
+              END IF;                                
               -- Proximo registro               
               vr_indice := vr_tab_pessoa_juridica.next(vr_indice);
             END LOOP;
@@ -5987,11 +5993,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             -- Percorre todas as agencias de pessoa juridica e grava no arquivo
             vr_indice := vr_tab_pessoa_juridica.first;
             WHILE vr_indice IS NOT NULL LOOP
-              vr_linhadet := TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).cdagenci, '009')) || ',' ||
-                             TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).valor, '99999999999990.00'));                       
-              -- Grava a linha no arquivo
-              GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
-                                            ,vr_linhadet);                       
+              -- Se houver valor
+              IF vr_tab_pessoa_juridica(vr_indice).valor > 0 THEN 
+                vr_linhadet := TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).cdagenci, '009')) || ',' ||
+                               TRIM(to_char(vr_tab_pessoa_juridica(vr_indice).valor, '99999999999990.00'));                       
+                -- Grava a linha no arquivo
+                GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo
+                                              ,vr_linhadet);                       
+              END IF;
               -- Proximo registro               
               vr_indice := vr_tab_pessoa_juridica.next(vr_indice);               
             END LOOP;

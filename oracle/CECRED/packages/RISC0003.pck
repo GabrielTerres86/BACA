@@ -53,7 +53,7 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
     -- Definição de um tipo de tabela com o registro acima
     TYPE typ_tab_risco IS
       TABLE OF typ_risco
-        INDEX BY VARCHAR2(50);
+        INDEX BY VARCHAR2(60);
         
     -- Registro dos riscos 
     TYPE typ_risco_venc IS
@@ -70,7 +70,7 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
     -- Definição de um tipo de tabela com o registro acima
     TYPE typ_tab_risco_venc IS
       TABLE OF typ_risco_venc
-        INDEX BY VARCHAR2(50);      
+        INDEX BY VARCHAR2(70);      
       
       TYPE typ_tab_risco_temp IS
         TABLE OF typ_risco
@@ -92,6 +92,14 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
   FUNCTION fn_periodo_habilitado(pr_cdcooper  IN NUMBER
                                 ,pr_dtbase    IN DATE
                                 ,pr_prmfinan IN BOOLEAN DEFAULT TRUE) RETURN NUMBER;
+  -- Calculo do nivel de risco
+  FUNCTION fn_calcula_nivel_risco(pr_dsnivris IN VARCHAR2) RETURN NUMBER;   
+  
+  -- Calculo do nivel de risco
+  FUNCTION fn_nivel_risco(pr_aux_nivel IN NUMBER) RETURN VARCHAR2;
+
+  -- Trazer o tamanho do valor do domínio
+  FUNCTION fn_tamanho_dominio(pr_idtipo_dominio IN NUMBER) RETURN NUMBER;
 
   -- Trazer o valor a ser visualizado da opção de domínio repassada
   FUNCTION fn_valor_opcao_dominio(pr_iddominio NUMBER) RETURN VARCHAR2;
@@ -110,10 +118,8 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
                                       ,pr_dscritic OUT varchar2);
 
   -- Criar novo procedimento que irá gerar as informações do movimento para CSV
-  PROCEDURE pc_exporta_dados_csv(pr_cdcooper  IN NUMBER
-                                ,pr_idproduto IN NUMBER
-                                ,pr_dtbase    IN DATE
-                                ,pr_dsarquiv OUT VARCHAR2
+  PROCEDURE pc_exporta_dados_csv(pr_dtbase    IN DATE
+                                ,pr_dsarquiv OUT CLOB
                                 ,pr_dscritic OUT varchar2);
 
   -- Gerar as importar as informações de movimento conforme arquivo passado
@@ -122,6 +128,12 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
                               ,pr_dtbase    IN DATE
                               ,pr_dsinform OUT VARCHAR2
                               ,pr_dscritic OUT VARCHAR2);
+                              
+  /* Arrastar o risco dos contratos após integração inddocto=5 */
+  PROCEDURE pc_efetua_arrasto_docto5(pr_cdcooper IN crapcop.cdcooper%TYPE  --> codigo da cooperativa
+                                    ,pr_dtrefere IN DATE                   --> Data de Referencia
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da critica
+                                    ,pr_dscritic OUT VARCHAR2);          --> Descricao da critica                              
   
   -- Gerar riscos da tabela de movimento para a tabela de risco
   PROCEDURE pc_fecham_risco_garantia_prest(pr_cdcooper   IN crapcop.cdcooper%TYPE        --> codigo da cooperativa
@@ -168,6 +180,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
      WHERE opc.idtipo_dominio       = tab.idtipo_dominio
        AND opc.iddominio            = pr_iddominio;
   rw_dominio cr_dominio%ROWTYPE;
+
+  -- Cursor Generico para busca das informações dos domínios
+  CURSOR cr_dominio_tipo(pr_idtipo_dominio IN NUMBER) IS
+    SELECT tab.cdtamanho_dominio
+          ,tab.flpossui_subdominio
+          ,tab.cdtamanho_subdominio
+      FROM tbrisco_dominio_tipo tab
+     WHERE tab.idtipo_dominio = pr_idtipo_dominio;
+  rw_dominio_tipo cr_dominio_tipo%ROWTYPE;
+  
+  -- Buscar todos os contratos criados
+  CURSOR cr_crapris (pr_cdcooper  IN crapris.cdcooper%TYPE
+                    ,pr_dtrefere  IN crapris.dtrefere%TYPE
+                    ,pr_vlarrasto IN NUMBER) IS
+    SELECT cdcooper
+          ,nrdconta
+          ,nrctremp
+          ,cdmodali
+          ,dtrefere
+          ,innivori
+          ,nrseqctr
+          ,qtdiaatr
+          ,innivris
+          ,rowid
+          ,ROW_NUMBER () OVER (PARTITION BY nrdconta
+                                   ORDER BY nrdconta,innivris DESC) sequencia
+      FROM crapris
+     WHERE cdcooper = pr_cdcooper
+       AND dtrefere = pr_dtrefere
+       AND inddocto IN(1,5)
+       AND vldivida > pr_vlarrasto --> Valor dos parâmetros        
+  ORDER BY nrdconta
+          ,innivris DESC;
+              
+  -- Buscar o pior risco para a conta 
+  CURSOR cr_crapris_last(pr_cdcooper IN crapris.cdcooper%TYPE
+                        ,pr_nrdconta IN crapris.nrdconta%TYPE
+                        ,pr_dtrefere IN crapris.dtrefere%TYPE
+                        ,pr_vlarrast IN crapris.vldivida%TYPE) IS
+    SELECT /*+index_desc (crapris CRAPRIS##CRAPRIS1)*/
+           innivris
+      FROM crapris
+     WHERE crapris.cdcooper = pr_cdcooper
+       AND crapris.nrdconta = pr_nrdconta
+       AND crapris.dtrefere = pr_dtrefere           
+       AND crapris.inddocto IN(1,5)
+       AND (crapris.vldivida > pr_vlarrast OR pr_vlarrast = 0);
+  rw_crapris_last cr_crapris_last%ROWTYPE;
+      
+  -- Buscar risco de grupo econônomico
+  CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
+                   ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
+    SELECT crapgrp.innivrge,
+           crapgrp.nrdgrupo
+      FROM crapgrp
+     WHERE crapgrp.cdcooper = pr_cdcooper
+       AND crapgrp.nrctasoc = pr_nrctasoc;
+  rw_crapgrp cr_crapgrp%ROWTYPE; 
+  
   
   -- Função que irá retornar se o operador poderá fazer alterações no período informado
   FUNCTION fn_periodo_habilitado(pr_cdcooper IN NUMBER
@@ -220,6 +291,107 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       END IF;
     END;  
   END fn_periodo_habilitado;
+  
+  -- Calculo do nivel de risco
+  FUNCTION fn_calcula_nivel_risco(pr_dsnivris IN VARCHAR2) RETURN NUMBER IS
+    vr_aux_nivel INTEGER;
+  BEGIN
+    -- Vamos verificar qual nivel de risco esta na proposto do emprestimo
+    CASE
+      WHEN pr_dsnivris = ' '  THEN
+        vr_aux_nivel := 2;
+      WHEN pr_dsnivris = 'AA' THEN
+        vr_aux_nivel := 1;
+      WHEN pr_dsnivris = 'A'  THEN
+        vr_aux_nivel := 2;
+      WHEN pr_dsnivris = 'B'  THEN
+        vr_aux_nivel := 3;
+      WHEN pr_dsnivris = 'C'  THEN
+        vr_aux_nivel := 4;
+      WHEN pr_dsnivris = 'D'  THEN
+        vr_aux_nivel := 5;
+      WHEN pr_dsnivris = 'E'  THEN
+        vr_aux_nivel := 6;
+      WHEN pr_dsnivris = 'F'  THEN
+        vr_aux_nivel := 7;
+      WHEN pr_dsnivris = 'G'  THEN
+        vr_aux_nivel := 8;  
+      ELSE
+        vr_aux_nivel := 9;
+    END CASE;
+        
+    RETURN vr_aux_nivel;       
+  END;  
+  
+  -- Calculo do nivel de risco
+  FUNCTION fn_nivel_risco(pr_aux_nivel IN NUMBER) RETURN VARCHAR2 IS
+  BEGIN
+    -- Vamos verificar qual nivel de risco esta na proposto do emprestimo
+    CASE
+      WHEN nvl(pr_aux_nivel,0) IN(0,2) THEN
+        RETURN 'A';
+      WHEN pr_aux_nivel = 1 THEN
+        RETURN 'AA';
+      WHEN pr_aux_nivel = 3  THEN
+        RETURN 'B';
+      WHEN pr_aux_nivel = 4 THEN
+        RETURN 'C';
+      WHEN pr_aux_nivel = 5  THEN
+        RETURN 'D';
+      WHEN pr_aux_nivel = 6 THEN
+        RETURN 'E';
+      WHEN pr_aux_nivel = 7 THEN
+        RETURN 'F';
+      WHEN pr_aux_nivel = 8 THEN
+        RETURN 'G';  
+      ELSE
+        RETURN 'H';
+    END CASE;
+        
+    RETURN 'A';       
+  END;  
+
+  -- Trazer o tamanho do valor do domínio
+  FUNCTION fn_tamanho_dominio(pr_idtipo_dominio IN NUMBER) RETURN NUMBER IS
+    ---------------------------------------------------------------------------------------------------------------
+    --  Programa : fn_tamanho_dominio
+    --  Sistema  : Ayllos
+    --  Sigla    : CRED
+    --  Autor    : Andrei Vieira - Mouts
+    --  Data     : Junho/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Trazer o tamanho do valor do domínio
+    --
+    -- Alterações
+    ---------------------------------------------------------------------------------------------------------------
+  BEGIN
+    DECLARE
+      vr_qtvalorop NUMBER;
+    BEGIN
+      -- Buscar as informações do domínio
+      OPEN cr_dominio_tipo(pr_idtipo_dominio);
+      FETCH cr_dominio_tipo
+       INTO rw_dominio_tipo;
+      -- Se por ventura a consulta não retornar nenhum registro então sairemos retornando 0;
+      IF cr_dominio_tipo%NOTFOUND THEN
+        CLOSE cr_dominio_tipo;
+        RETURN 0;
+      ELSE
+        CLOSE cr_dominio_tipo;
+        -- Começar a conta pelo domínio:
+        vr_qtvalorop := rw_dominio_tipo.cdtamanho_dominio;
+        -- Se tabela possui subdomínio, então adicionamos seu tamanho
+        IF rw_dominio_tipo.flpossui_subdominio = 1 THEN
+          vr_qtvalorop := vr_qtvalorop + rw_dominio_tipo.cdtamanho_subdominio;
+        END IF;
+        -- Ao final, retornar a string montada:
+        RETURN vr_qtvalorop;
+      END IF;
+    END;
+  END fn_tamanho_dominio;
 
 
   -- Trazer o valor a ser visualizado da opção de domínio repassada
@@ -249,7 +421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       -- Se por ventura a consulta não retornar nenhum registro então sairemos retornando 0;
       IF cr_dominio%NOTFOUND THEN
         CLOSE cr_dominio;
-        RETURN '00';
+        RETURN ' ';
       ELSE
         CLOSE cr_dominio;
         -- Começar a montagem do valor pelo domínio:
@@ -341,7 +513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       FETCH cr_vlrdom
        INTO vr_iddominio;
       CLOSE cr_vlrdom;
-      -- Retornar o valor encontrado ou 0 caso não tenha achado nada
+      -- Retornar o valor encontrado ou null caso não tenha achado nada
       RETURN vr_iddominio;
     END;
   END fn_busca_iddominio;
@@ -379,6 +551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
               ,mvt.idindexador
               ,mvt.perindexador
               ,mvt.vltaxa_juros
+              ,mvt.idgarantia
               ,mvt.dtlib_operacao
               ,mvt.idnat_operacao
               ,mvt.dtvenc_operacao
@@ -387,6 +560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
               ,mvt.vlparcela
               ,mvt.dtproxima_parcela
               ,mvt.flsaida_operacao
+              ,mvt.vloperacao
               ,ass.inpessoa
           FROM tbrisco_provisgarant_movto mvt
               ,crapass                    ass
@@ -442,7 +616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
              INTO rw_movto;
             EXIT WHEN cr_movto%NOTFOUND;
             -- Somente se o movto não for de saída
-            IF rw_movto.flsaida_operacao = 1 THEN
+            IF rw_movto.flsaida_operacao = 0 THEN
               -- PAra cada registro, vamos criar o mesmo no mês atual com saldo e valor zerado
               BEGIN
                 INSERT INTO tbrisco_provisgarant_movto(cdcooper
@@ -457,13 +631,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                       ,vltaxa_juros
                                                       ,dtlib_operacao
                                                       ,idnat_operacao
+                                                      ,idgarantia
                                                       ,dtvenc_operacao
                                                       ,cdclassifica_operacao
                                                       ,qtdparcelas
                                                       ,vlparcela
                                                       ,dtproxima_parcela
                                                       ,vloperacao
-                                                      ,vlsaldo_pendente)
+                                                      ,vlsaldo_pendente
+                                                      ,flsaida_operacao)
                                                 VALUES(pr_cdcooper
                                                       ,pr_idproduto
                                                       ,pr_dtbase
@@ -476,13 +652,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                       ,rw_movto.vltaxa_juros
                                                       ,rw_movto.dtlib_operacao
                                                       ,rw_movto.idnat_operacao
+                                                      ,rw_movto.idgarantia
                                                       ,rw_movto.dtvenc_operacao
                                                       ,rw_movto.cdclassifica_operacao
                                                       ,rw_movto.qtdparcelas
                                                       ,rw_movto.vlparcela
                                                       ,rw_movto.dtproxima_parcela
+                                                      ,rw_movto.vloperacao
                                                       ,0
-                                                      ,1);
+                                                      ,0);
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro na copia do Movto > '||sqlerrm;
@@ -513,6 +691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                             ', Qtd. Parcelas: ' || to_char(rw_movto.qtdparcelas,'999G999G990','NLS_NUMERIC_CHARACTERS='',.''') ||
                                                             ', Vlr. Parcelas: ' || to_char(rw_movto.vlparcela,'999G999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''') ||
                                                             ', Dt. Prox. Parcela: ' || to_char(rw_movto.dtproxima_parcela,'dd/mm/rrrr') ||
+                                                            ', Valor Operacao: ' || to_char(rw_movto.vloperacao,'999G999G999G999G990D00','NLS_NUMERIC_CHARACTERS='',.''') ||
                                                             ', Saldo Pendente: ' || to_char(0.00,'990D00','NLS_NUMERIC_CHARACTERS='',.''') || '.');
             END IF;
           END LOOP;
@@ -537,10 +716,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   END pc_cria_contratos_novo_mes;
 
   -- Criar novo procedimento que irá gerar as informações do movimento para CSV
-  PROCEDURE pc_exporta_dados_csv(pr_cdcooper  IN NUMBER
-                                ,pr_idproduto IN NUMBER
-                                ,pr_dtbase    IN DATE
-                                ,pr_dsarquiv OUT VARCHAR2
+  PROCEDURE pc_exporta_dados_csv(pr_dtbase    IN DATE
+                                ,pr_dsarquiv OUT CLOB
                                 ,pr_dscritic OUT VARCHAR2) IS
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
@@ -564,10 +741,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       
       -- Busca os movimentos para os parâmetros enviados
       CURSOR cr_movto(pr_dtbusca DATE) IS
-        SELECT to_char(mvt.dtbase,'dd/mm/rrrr') dtbase
+        SELECT mvt.cdcooper
+              ,to_char(mvt.dtbase,'dd/mm/rrrr') dtbase
               ,mvt.idproduto
               ,prd.dsproduto
-              ,gene0002.fn_mask_conta(mvt.nrdconta) nrdconta
+              ,mvt.nrdconta
+              ,gene0002.fn_mask_conta(mvt.nrdconta) nrdconta_mask
+              ,decode(ass.inpessoa,1,'PF','PJ') inpessoa
               ,ass.nmprimtl
               ,mvt.nrctremp
               ,gene0002.fn_mask_cpf_cnpj(mvt.nrcpfcgc,ass.inpessoa) nrcpfcgc
@@ -581,29 +761,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
               ,risc0003.fn_valor_opcao_dominio(mvt.idnat_operacao) idnat_operacao
               ,to_char(mvt.dtvenc_operacao,'dd/mm/rrrr') dtvenc_operacao
               ,mvt.cdclassifica_operacao
+              ,fn_calcula_nivel_risco(mvt.cdclassifica_operacao) innivris
               ,to_char(mvt.qtdparcelas,'fm999g999g990') qtdparcelas
               ,to_char(mvt.vlparcela,'fm999g999g999g999g990d00') vlparcela
               ,to_char(mvt.dtproxima_parcela,'dd/mm/rrrr') dtproxima_parcela
-              ,to_char(mvt.vlsaldo_pendente,'fm999g999g999g999g990d00') vlsaldo_pendente
+              ,to_char(mvt.vlsaldo_pendente,'fm999g999g999g999g990d00') dssaldo_pendente
+              ,mvt.vlsaldo_pendente
               ,decode(mvt.flsaida_operacao,0,'Não','Sim') flsaida_operacao
+              ,ROW_NUMBER () OVER (PARTITION BY mvt.cdcooper,mvt.nrdconta
+                                       ORDER BY mvt.cdcooper,mvt.nrdconta,risc0003.fn_calcula_nivel_risco(mvt.cdclassifica_operacao) desc) sequencia
           FROM tbrisco_provisgarant_movto mvt
               ,crapass                    ass
               ,tbrisco_provisgarant_prodt     prd
          WHERE mvt.idproduto = prd.idproduto
            AND mvt.cdcooper  = ass.cdcooper
            AND mvt.nrdconta  = ass.nrdconta
-           AND mvt.cdcooper  = pr_cdcooper
-           AND mvt.idproduto = pr_idproduto
            AND mvt.dtbase    = pr_dtbusca
-         ORDER BY mvt.nrdconta, mvt.nrctremp;
+         ORDER BY mvt.cdcooper, mvt.nrdconta, risc0003.fn_calcula_nivel_risco(mvt.cdclassifica_operacao) desc;
       -- Variaveis para gravação no arquivo
       vr_clobarqu     CLOB;
       vr_txtoarqu     varchar2(32767);
       -- Calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
+      -- Tabela temporaria para os percentuais de risco
+      TYPE typ_reg_percentual IS
+       RECORD(percentual NUMBER(7,2));
+      
+      TYPE typ_tab_percentual IS
+        TABLE OF typ_reg_percentual
+          INDEX BY PLS_INTEGER;
+      vr_tab_percentual       typ_tab_percentual;
+      
+      -- Buscar todos os percentual de cada nivel de risco
+      CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+        SELECT craptab.dstextab
+          FROM craptab
+         WHERE craptab.cdcooper = pr_cdcooper
+           AND UPPER(craptab.nmsistem) = 'CRED'
+           AND UPPER(craptab.tptabela) = 'GENERI'
+           AND craptab.cdempres = 00
+           AND UPPER(craptab.cdacesso) = 'PROVISAOCL';
+      -- Calculo provisão
+      vr_cdcooper NUMBER := 0;
+      vr_vlpercen NUMBER;
+      vr_vlpreatr NUMBER;
+      
+      -- Auxiliares para arrasto      
+      vr_dstextab     craptab.dstextab%TYPE;        
+      vr_innivris     crapris.innivris%TYPE;
+      vr_innivris_csv crapris.innivris%TYPE;
+      vr_nrdgrupo     crapgrp.nrdgrupo%TYPE;
+      vr_vlarrasto    NUMBER;      
+      vr_fcrapris     BOOLEAN;
+      
+      -- Buscar o pior risco para a conta nas tabelas temporárias
+      CURSOR cr_movto_last(pr_cdcooper IN crapris.cdcooper%TYPE
+                          ,pr_nrdconta IN crapris.nrdconta%TYPE
+                          ,pr_dtrefere IN crapris.dtrefere%TYPE
+                          ,pr_vlarrast IN crapris.vldivida%TYPE) IS
+        SELECT cdclassifica_operacao
+          FROM tbrisco_provisgarant_movto
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND dtbase = pr_dtrefere
+           AND (vlsaldo_pendente > pr_vlarrast OR pr_vlarrast = 0)
+         ORDER BY cdclassifica_operacao DESC;
+      vr_cdclassifica_operacao tbrisco_provisgarant_movto.cdclassifica_operacao%TYPE;
+      
     BEGIN
       -- Busca da data atual
-      OPEN btch0001.cr_crapdat(pr_cdcooper);
+      OPEN btch0001.cr_crapdat(3);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
@@ -614,31 +842,168 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       -- Escrever o header do arquivo
       gene0002.pc_escreve_xml(vr_clobarqu
                              ,vr_txtoarqu
-                             ,'Dt.Ref.;Produto;Conta;Contrato;CPF/CGC;Origem Recurso;Indexador;Perc.Indexador;Garantia;Taxa de Juros a.a;Dt. Lib. Op;Valor Op;Natureza Operacação;Dt. Venc. OP;ClassOp;Qtd. Parcelas;Vlr. Parcelas;Dt. Prox. Parcela;Saldo Pendente;É saida?;'||CHR(10));
+                             ,'Cooper.;Dt.Ref.;Produto;Conta;Contrato;CPF/CGC;Tp.Pessoa;Origem Recurso;Indexador;Perc.Indexador;Garantia;Taxa de Juros a.a;Dt. Lib. Op;Valor Op;Natureza Operacação;Dt. Venc. OP;Qtd. Parcelas;Vlr. Parcelas;Dt. Prox. Parcela;Saldo Pendente;ClassOp(Tela);ClassOp(Arrast);Percent. Provisão;Provisão;É saida?;'||CHR(10));
       -- Buscar os movimentos conforme filtragem
       FOR rw_movto IN cr_movto(pr_dtbase) LOOP
+        
+        -- Se mudou a Coop
+        IF rw_movto.cdcooper <> vr_cdcooper THEN
+          -- CRAPTAB -> 'PROVISAOCL'
+          vr_tab_percentual.delete();
+          FOR rw_craptab IN cr_craptab(pr_cdcooper => rw_movto.cdcooper) LOOP
+            vr_tab_percentual(substr(rw_craptab.dstextab,12,2)).percentual := SUBSTR(rw_craptab.dstextab,1,6);
+          END LOOP;        
+          -- Gravar a coop
+          vr_cdcooper := rw_movto.cdcooper;
+          
+          -- Chamar função que busca o dstextab para retornar o valor de arrasto
+          -- no parâmetro de sistema RISCOBACEN
+          vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => rw_movto.cdcooper
+                                                   ,pr_nmsistem => 'CRED'
+                                                   ,pr_tptabela => 'USUARI'
+                                                   ,pr_cdempres => 11
+                                                   ,pr_cdacesso => 'RISCOBACEN'
+                                                   ,pr_tpregist => 000);
+          -- Se a variavel voltou vazia
+          IF vr_dstextab IS NULL THEN
+            vr_vlarrasto := 100;
+          ELSE
+            -- Por fim, tenta converter o valor de arrasto presente na posição 3 até 12
+            vr_vlarrasto := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,3,9));
+          END IF;
+        END IF;
+        
+        -- No primeiro registro da conta
+        -- Para o primeiro registro da conta
+        IF rw_movto.sequencia = 1 THEN
+          vr_nrdgrupo := 0;
+          -- Risco calculado do cartao de credito
+          vr_innivris := rw_movto.innivris;          
+          -- Vamos verificar se possui operacao na mensal acima do valor de arrasto
+          OPEN cr_crapris_last(pr_cdcooper => rw_movto.cdcooper
+                              ,pr_nrdconta => rw_movto.nrdconta
+                              ,pr_dtrefere => pr_dtbase
+                              ,pr_vlarrast => vr_vlarrasto);
+          FETCH cr_crapris_last INTO rw_crapris_last;
+          vr_fcrapris := cr_crapris_last%FOUND;
+          CLOSE cr_crapris_last;
+          -- Condicao para verificar se existe registro          
+          IF vr_fcrapris THEN
+            vr_innivris := rw_crapris_last.innivris;
+          ELSE
+            -- Vamos verificar se possui operacao na mensal abaixo de 100,00
+            OPEN cr_crapris_last(pr_cdcooper => rw_movto.cdcooper
+                                ,pr_nrdconta => rw_movto.nrdconta
+                                ,pr_dtrefere => pr_dtbase
+                                ,pr_vlarrast => 0);
+            FETCH cr_crapris_last INTO rw_crapris_last;
+            vr_fcrapris := cr_crapris_last%FOUND;
+            CLOSE cr_crapris_last;
+            -- Condicao para verificar se existe registro
+            IF vr_fcrapris THEN
+              vr_innivris := rw_crapris_last.innivris;
+            END IF;            
+          END IF;
+          
+          -- As operações de tbmovto ainda não estão na CRAPRIS, portanto temos
+          -- que verificar se o risco delas não é superior ao calculado acima
+          
+          -- Vamos verificar se possui grupo economico
+          OPEN cr_crapgrp(pr_cdcooper => rw_movto.cdcooper
+                         ,pr_nrctasoc => rw_movto.nrdconta);
+          FETCH cr_crapgrp INTO rw_crapgrp;          
+          IF cr_crapgrp%FOUND THEN
+            CLOSE cr_crapgrp;            
+            vr_nrdgrupo := rw_crapgrp.nrdgrupo;
+            -- Caso nao possuir nenhuma operacao na mensal, vamos assumir o risco do grupo economico
+            IF NOT vr_fcrapris THEN
+              vr_innivris := rw_crapgrp.innivrge;
+            END IF;
+          ELSE
+            CLOSE cr_crapgrp;
+          END IF;
+          
+          
+          -- Buscar o pior risco para a conta nas tabelas temporárias
+          OPEN cr_movto_last(pr_cdcooper => rw_movto.cdcooper
+                            ,pr_nrdconta => rw_movto.nrdconta
+                            ,pr_dtrefere => pr_dtbase
+                            ,pr_vlarrast => vr_vlarrasto);
+          FETCH cr_movto_last
+           INTO vr_cdclassifica_operacao;
+          -- se não encontrou
+          IF cr_movto_last%NOTFOUND THEN
+            CLOSE cr_movto_last;
+            -- Buscar sem valor minimo
+            OPEN cr_movto_last(pr_cdcooper => rw_movto.cdcooper
+                              ,pr_nrdconta => rw_movto.nrdconta
+                              ,pr_dtrefere => pr_dtbase
+                              ,pr_vlarrast => 0);
+            FETCH cr_movto_last
+             INTO vr_cdclassifica_operacao;
+            CLOSE cr_movto_last;
+          ELSE
+            CLOSE cr_movto_last;
+          END IF;
+          
+          -- Se o risco da nossa tabela é superior ao da CRAPRIS
+          -- Significa que quando arrastar, este será o usado
+          IF fn_calcula_nivel_risco(vr_cdclassifica_operacao) > vr_innivris THEN
+            vr_innivris := fn_calcula_nivel_risco(vr_cdclassifica_operacao);
+          END IF;
+          
+          -- Prejuizo não arrastará o HH
+          IF vr_innivris = 10 THEN
+            vr_innivris := 9;
+          END IF;
+          
+        END IF; /* END IF rw_crapris.sequencia = 1 THEN */
+        
+        -- Somente arrastar as operações que não estão enquadradas no risco AA
+        -- Ou que não estejam em Prejuizo, pois estas devem permanecer HH
+        IF rw_movto.innivris > 1 AND rw_movto.innivris < 10 THEN 
+          rw_movto.innivris := vr_innivris;
+          vr_innivris_csv   := vr_innivris;
+        ELSE
+          vr_innivris_csv   := rw_movto.innivris;
+        END IF;
+        
+        -- Calculo do % de provisao do Risco
+        IF vr_tab_percentual.exists(rw_movto.innivris) THEN
+          vr_vlpercen := vr_tab_percentual(rw_movto.innivris).percentual / 100;
+        ELSE
+          vr_vlpercen := 0;
+        END IF;
+        
+        vr_vlpreatr := ROUND((rw_movto.vlsaldo_pendente *  vr_vlpercen), 2);
+      
         -- Enviar cada registro para o arquivo
         gene0002.pc_escreve_xml(vr_clobarqu
                                ,vr_txtoarqu
-                               ,rw_movto.dtbase||';'||
+                               ,rw_movto.cdcooper||';'||
+                                rw_movto.dtbase||';'||
                                 rw_movto.idproduto||'-'||rw_movto.dsproduto||';'||
-                                rw_movto.nrdconta||'-'||rw_movto.nmprimtl||';'||
+                                rw_movto.nrdconta_mask||'-'||rw_movto.nmprimtl||';'||
                                 rw_movto.nrctremp||';'||
                                 rw_movto.nrcpfcgc||';'||
-                                ''''||rw_movto.idorigem_recurso||';'||
-                                ''''||rw_movto.idindexador||';'||
+                                rw_movto.inpessoa||';'||
+                                rw_movto.idorigem_recurso||';'||
+                                rw_movto.idindexador||';'||
                                 rw_movto.perindexador||';'||
                                 rw_movto.desgarantia||';'||
                                 rw_movto.vltaxa_juros||';'||
                                 rw_movto.dtlib_operacao||';'||
                                 rw_movto.vloperacao||';'||
-                                ''''||rw_movto.idnat_operacao||';'||
+                                rw_movto.idnat_operacao||';'||
                                 rw_movto.dtvenc_operacao||';'||
-                                ''''||rw_movto.cdclassifica_operacao||';'||
                                 rw_movto.qtdparcelas||';'||
                                 rw_movto.vlparcela||';'||
                                 rw_movto.dtproxima_parcela||';'||
-                                rw_movto.vlsaldo_pendente||';'||
+                                rw_movto.dssaldo_pendente||';'||
+                                rw_movto.cdclassifica_operacao||';'||
+                                fn_nivel_risco(vr_innivris_csv)||';'||
+                                to_char(vr_vlpercen,'fm990d00')||';'||
+                                to_char(vr_vlpreatr,'fm999g999g999g999g990d00')||';'||
                                 rw_movto.flsaida_operacao||';'||
                                 CHR(10));
       END LOOP;
@@ -649,8 +1014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                              ,' '
                              ,true);
                              
-      -- Ao final, converter o CLOB para Varchar2 e devolver para o solicitante
-      pr_dsarquiv := substr(vr_clobarqu,1,32767);
+      -- Ao final, devolver o CLOB
+      pr_dsarquiv := vr_clobarqu;
 
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_clobarqu);
@@ -743,7 +1108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       CURSOR cr_crapass(pr_cdcooper crapass.nrcpfcgc%TYPE
                        ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
         SELECT nvl(MIN(ass.nrdconta),0) nrdconta
-              ,nvl(MAX(ass.dsnivris),'A') dsnivris
+              ,nvl(TRIM(MAX(ass.dsnivris)),'A') dsnivris
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrcpfcgc = pr_nrcpfcgc;
@@ -753,7 +1118,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       
       -- Variaveis tratamento de erro
       vr_excsaida           EXCEPTION;
-      vr_dscritic           VARCHAR2(4000);      
+      vr_dscritic           VARCHAR2(4000); 
+      vr_dscribas           VARCHAR2(4000); 
     BEGIN
       
       -- Buscaremos os arquivos do mês anterior a referência
@@ -857,18 +1223,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
             vr_setlinha := rtrim(ltrim(vr_setlinha,'"'),'"');
               
             -- Separar os campos da linha em um vetor
-            vr_vet_campos := gene0002.fn_quebra_string(vr_setlinha,';');
-            
+            vr_vet_campos := gene0002.fn_quebra_string(vr_setlinha,';');            
             
             BEGIN 
               -- Montar inicio de mensagem de erro padrão
-              vr_dscritic := 'Erro na leitura da linha '||vr_nrcontad||' campo';
+              vr_dscribas := 'Erro na leitura da linha '||vr_nrcontad||' campo ';
               
               -- Cooperativa
-              vr_dscritic := vr_dscritic || ' Cooperativa = '||vr_vet_campos(6);
+              vr_dscritic := vr_dscribas || ' Cooperativa = '||vr_vet_campos(6);
               vr_cdctabnd := vr_vet_campos(6);
               -- CPF/CNPJ do Cooperado, primeiro retornando CPF/CNPJ
-              vr_dscritic := vr_dscritic || ' CPF/CNPJ = '||vr_vet_campos(3);            
+              vr_dscritic := vr_dscribas || ' CPF/CNPJ = '||vr_vet_campos(3);            
               vr_nrcpfcgc := vr_vet_campos(3);
               -- Buscar a conta
               vr_nrdconta := 0;
@@ -883,59 +1248,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                 vr_qtsemcta := vr_qtsemcta + 1;
               END IF;
               -- Contrato
-              vr_dscritic := vr_dscritic || ' Contratro = '||vr_vet_campos(1);
+              vr_dscritic := vr_dscribas || ' Contratro = '||vr_vet_campos(1);
               vr_nrctremp := vr_vet_campos(1);
               -- Indexador
-              vr_dscritic := vr_dscritic || ' Indexador = '||vr_vet_campos(20);
-              vr_dsindexa := vr_vet_campos(20);
+              vr_dscritic := vr_dscribas || ' Indexador = '||vr_vet_campos(20);
+              vr_dsindexa := lpad(vr_vet_campos(20),fn_tamanho_dominio(4),'0');
               -- Busca o ID conforme descrição Indexador encontrado
               vr_idindexa := fn_busca_iddominio(4,vr_dsindexa);
+              IF nvl(vr_idindexa,0) = 0 AND nvl(pr_rw_prod.idindexador,0) = 0 THEN
+                RAISE vr_excsaida;
+              END IF;              
               -- Percentual indexador
-              vr_dscritic := vr_dscritic || ' Indexador = '||vr_vet_campos(21);
+              vr_dscritic := vr_dscribas || ' Indexador = '||vr_vet_campos(21);
               vr_perindex := vr_vet_campos(21);
               -- Taxa de Juros
-              vr_dscritic := vr_dscritic || ' Taxa de Juros = '||vr_vet_campos(9);
+              vr_dscritic := vr_dscribas || ' Taxa de Juros = '||vr_vet_campos(9);
               vr_txdjuros := vr_vet_campos(9);
               -- DAta Contratação
-              vr_dscritic := vr_dscritic || ' Data Contratação = '||vr_vet_campos(17);
+              vr_dscritic := vr_dscribas || ' Data Contratação = '||vr_vet_campos(17);
               vr_dtinictr := TO_date(vr_vet_campos(17),'YYYYMMDD');
               -- Valor Contratado
-              vr_dscritic := vr_dscritic || ' Valor Contratação = '||vr_vet_campos(18);
+              vr_dscritic := vr_dscribas || ' Valor Contratação = '||vr_vet_campos(18);
               vr_vlcontra := gene0002.fn_char_para_number(vr_vet_campos(18));
               -- Saldo
-              vr_dscritic := vr_dscritic || ' Valor Saldo = '||vr_vet_campos(16);
+              vr_dscritic := vr_dscribas || ' Valor Saldo = '||vr_vet_campos(16);
               vr_vldsaldo := gene0002.fn_char_para_number(replace(replace(vr_vet_campos(16),'+',''),'-',''));
               -- Busca o ID conforme descrição Natureza Operação
-              vr_dscritic := vr_dscritic || ' Nat.Op = '||vr_vet_campos(24);
-              vr_dsnatope:= lpad(vr_vet_campos(24),2,'0');              
+              vr_dscritic := vr_dscribas || ' Nat.Op = '||vr_vet_campos(24);
+              vr_dsnatope:= lpad(vr_vet_campos(24),fn_tamanho_dominio(6),'0');              
               vr_idnatope := fn_busca_iddominio(6,vr_dsnatope);
+              IF nvl(vr_idnatope,0) = 0 AND nvl(pr_rw_prod.idnat_operacao,0) = 0 THEN
+                RAISE vr_excsaida;
+              END IF;              
               -- DAta Fim Contrato
-              vr_dscritic := vr_dscritic || ' Data Fim Contrato = '||vr_vet_campos(14);
+              vr_dscritic := vr_dscribas || ' Data Fim Contrato = '||vr_vet_campos(14);
               vr_dtfimctr := TO_date(vr_vet_campos(14),'YYMMDD');
               -- Busca o ID conforme descrição Origem Recurso
-              vr_dscritic := vr_dscritic || ' Origem Recurso = '||vr_vet_campos(25);
-              vr_dsorigem:= lpad(vr_vet_campos(25),2,'0');              
+              vr_dscritic := vr_dscribas || ' Origem Recurso = '||vr_vet_campos(25);
+              vr_dsorigem:= lpad(vr_vet_campos(25),fn_tamanho_dominio(3),'0');              
               vr_idorigem := fn_busca_iddominio(3,vr_dsorigem);
-              
+              IF nvl(vr_idorigem,0) = 0 AND nvl(pr_rw_prod.idorigem_recurso,0) = 0 THEN
+                RAISE vr_excsaida;
+              END IF;  
               
               -- Campos fluxo financeiro somente se produto permite
               IF pr_rw_prod.flpermite_fluxo_financeiro = 1 THEN 
                 -- DAta Proxima Parcela
-                vr_dscritic := vr_dscritic || ' Data Proxima Parcela = '||vr_vet_campos(26);
-                vr_dtprxpar := TO_date(vr_vet_campos(26),'YYYYMMDD');
+                vr_dscritic := vr_dscribas || ' Data Proxima Parcela = '||vr_vet_campos(26);
+                vr_dtprxpar := NULL;
+                IF vr_vet_campos(26) <> 0 THEN
+                  vr_dtprxpar := TO_date(vr_vet_campos(26),'YYYYMMDD');
+                END IF;  
                 -- Valor Proxima Parcela
-                vr_dscritic := vr_dscritic || ' Valor Proxima Parcela = '||vr_vet_campos(27);
+                vr_dscritic := vr_dscribas || ' Valor Proxima Parcela = '||vr_vet_campos(27);
                 vr_vlprxpar := gene0002.fn_char_para_number(vr_vet_campos(27));
                 -- Quantidade Parcela
-                vr_dscritic := vr_dscritic || ' Quantidade Parcela = '||vr_vet_campos(28);
+                vr_dscritic := vr_dscribas || ' Quantidade Parcela = '||vr_vet_campos(28);
                 vr_qtdparce := gene0002.fn_char_para_number(vr_vet_campos(28));
               END IF;  
               
-              -- Origem Recurso
             EXCEPTION
+              WHEN vr_excsaida THEN
+                -- propagar
+                RAISE vr_excsaida;
               WHEN OTHERS THEN
                 -- incrementar o erro e propagar
-                vr_dscritic := vr_dscritic || '. Erro --> '||SQLERRM;
+                vr_dscritic := vr_dscribas || ' indefinido -> Erro --> '||SQLERRM;
                 RAISE vr_excsaida;
             END;  
             
@@ -946,7 +1324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                     ,idproduto
                                                     ,dtbase
                                                     ,nrdconta
-                                                    ,nrctremp
+                                                  ,nrctremp
                                                     ,nrcpfcgc
                                                     ,idorigem_recurso
                                                     ,idindexador 
@@ -969,14 +1347,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                     ,vr_nrdconta
                                                     ,vr_nrctremp
                                                     ,vr_nrcpfcgc
-                                                    ,pr_rw_prod.idorigem_recurso
-                                                    ,decode(vr_idindexa,0,pr_rw_prod.idindexador,vr_idindexa)
+                                                    ,decode(nvl(vr_idorigem,0),0,pr_rw_prod.idorigem_recurso,vr_idorigem)
+                                                    ,decode(nvl(vr_idindexa,0),0,pr_rw_prod.idindexador,vr_idindexa)
                                                     ,nvl(vr_perindex,pr_rw_prod.perindexador)
                                                     ,pr_rw_prod.idgarantia
                                                     ,nvl(vr_txdjuros,pr_rw_prod.vltaxa_juros)
                                                     ,vr_dtinictr
                                                     ,vr_vlcontra
-                                                    ,decode(vr_idnatope,0,pr_rw_prod.idnat_operacao,vr_idnatope)
+                                                    ,decode(nvl(vr_idnatope,0),0,pr_rw_prod.idnat_operacao,vr_idnatope)
                                                     ,vr_dtfimctr
                                                     ,decode(pr_rw_prod.cdclassifica_operacao,'RS',vr_dsnivris,pr_rw_prod.cdclassifica_operacao)
                                                     ,vr_qtdparce
@@ -986,7 +1364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                     ,decode(pr_rw_prod.flpermite_saida_operacao,1,decode(nvl(vr_vldsaldo,0),0,1,0),0));
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao criar contratos na tabela TBRISCO_PROVISGARANT_MOVTO -->'||SQLERRM;
+                vr_dscritic := 'Erro ao criar contratos na tabela TBRISCO_PROVISGARANT_MOVTO linha '||vr_nrcontad||'-->'||SQLERRM;
                 RAISE vr_excsaida;
             END;
             
@@ -999,13 +1377,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
             WHEN vr_excsaida THEN
               RAISE vr_excsaida;
             WHEN OTHERS THEN
-              vr_dscritic := 'Erro na leitura '||SQLERRM;
+              vr_dscritic := 'Erro na leitura da linha '||vr_nrcontad||SQLERRM;
               RAISE vr_excsaida;    
           END; 
         END LOOP; /* END LOOP */  
         
         -- Incrementar LOG
-        pr_dsinform := pr_dsinform || 'Registros integrados: '||(vr_contador-1)||'<br>';
+        pr_dsinform := pr_dsinform || 'Registros integrados: '||(vr_contador)||'<br>';
         
         -- Verificar se existem linhas sem conta
         IF vr_qtsemcta = 1 THEN
@@ -1022,7 +1400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       pr_dsinform := pr_dsinform || 'Importacao efetuada com sucesso!';
     EXCEPTION
       WHEN vr_excsaida THEN
-        pr_dscritic := 'RISC0003.pc_importa_arq_layout_brde --> Erro tratado: '||vr_dscritic;      
+        pr_dscritic := vr_dscritic;      
       WHEN OTHERS THEN
         pr_dscritic := 'RISC0003.pc_importa_arq_layout_brde --> Erro nao tratado: '||SQLERRM;      
     END;
@@ -1208,7 +1586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       
     EXCEPTION
       WHEN vr_excsaida THEN
-        pr_dscritic := 'RISC0003.pc_leitura_registros_bancoob --> Erro tratado: '||vr_dscritic;      
+        pr_dscritic := vr_dscritic;      
       WHEN OTHERS THEN
         pr_dscritic := 'RISC0003.pc_leitura_registros_bancoob --> Erro nao tratado: '||SQLERRM;      
     END;
@@ -1249,18 +1627,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
         SELECT cop.cdcooper
               ,cop.nrctactl
               ,cop.nrdocnpj
-              ,NVL(TRIM(ass.dsnivris),'A') dsnivris
           FROM crapcop cop
-              ,crapass ass
-         WHERE ass.cdcooper = 3   -- Na central
-           AND ass.nrdconta = cop.nrctactl
-           AND cop.flgativo = 1   -- Somente ativas
+         WHERE cop.flgativo = 1   -- Somente ativas
            AND cop.cdcooper <> 3; -- Fora da Central
       -- Saldos e Limites e Data
       vr_vlrsaldo NUMBER;
       vr_vlrlimit NUMBER;
       vr_dtmaxvct DATE;
       vr_drminctr DATE;
+      
+      -- Buscar nivel ASS 
+      CURSOR cr_crapass(pr_nrctactl crapcop.nrctactl%TYPE) IS
+        SELECT NVL(TRIM(ass.dsnivris),'A') dsnivris
+          FROM crapass ass
+         WHERE ass.cdcooper = 3   -- Na central
+           AND ass.nrdconta = pr_nrctactl;
+      vr_dsnivris crapass.dsnivris%TYPE;
       
       -- Verificar existencia de integração de arquivos VIP na singular
       CURSOR cr_riscar(pr_cdcooper NUMBER) IS
@@ -1339,12 +1721,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           -- Como não houve vamos solicitar
           risc0002.pc_gera_risco_cartao_vip_proc(pr_cdcooper => rw_cop.cdcooper
                                                 ,pr_cdprogra => 'MOVRGP'
-                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                ,pr_dtrefere => pr_dtbase);
+                                                ,pr_dtmvtolt => to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')
+                                                ,pr_dtrefere => to_char(pr_dtbase,'dd/mm/rrrr'));
         ELSE
           CLOSE cr_riscar;
         END IF;
-      
+        
+        -- Buscar nivel ASS 
+        OPEN cr_crapass(rw_cop.nrctactl);
+        FETCH cr_crapass
+          INTO vr_dsnivris;
+        CLOSE cr_crapass; 
+        
         -- Buscar Limites
         vr_vlrlimit := 0;
         OPEN cr_limite(rw_cop.cdcooper);
@@ -1402,7 +1790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                 ,nvl(vr_vlrlimit,0)
                                                 ,pr_rw_prod.idnat_operacao
                                                 ,vr_dtmaxvct
-                                                ,decode(pr_rw_prod.cdclassifica_operacao,'RS',rw_cop.dsnivris,pr_rw_prod.cdclassifica_operacao)
+                                                ,decode(pr_rw_prod.cdclassifica_operacao,'RS',vr_dsnivris,pr_rw_prod.cdclassifica_operacao)
                                                 ,NULL
                                                 ,NULL
                                                 ,NULL
@@ -1429,7 +1817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       END IF;
     EXCEPTION
       WHEN vr_excsaida THEN
-        pr_dscritic := 'RISC0003.pc_leitura_registros_bb --> Erro tratado: '||vr_dscritic;      
+        pr_dscritic := vr_dscritic;      
       WHEN OTHERS THEN
         pr_dscritic := 'RISC0003.pc_leitura_registros_bb --> Erro nao tratado: '||SQLERRM;      
     END;
@@ -1536,41 +1924,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   
   END pc_importa_arquivo;
   
-  -- Calculo do nivel de risco
-  FUNCTION fn_calcula_nivel_risco(pr_dsnivris IN VARCHAR2) RETURN NUMBER IS
-    vr_aux_nivel INTEGER;
-  BEGIN
-    -- Vamos verificar qual nivel de risco esta na proposto do emprestimo
-    CASE
-      WHEN pr_dsnivris = ' '  THEN
-        vr_aux_nivel := 2;
-      WHEN pr_dsnivris = 'AA' THEN
-        vr_aux_nivel := 1;
-      WHEN pr_dsnivris = 'A'  THEN
-        vr_aux_nivel := 2;
-      WHEN pr_dsnivris = 'B'  THEN
-        vr_aux_nivel := 3;
-      WHEN pr_dsnivris = 'C'  THEN
-        vr_aux_nivel := 4;
-      WHEN pr_dsnivris = 'D'  THEN
-        vr_aux_nivel := 5;
-      WHEN pr_dsnivris = 'E'  THEN
-        vr_aux_nivel := 6;
-      WHEN pr_dsnivris = 'F'  THEN
-        vr_aux_nivel := 7;
-      WHEN pr_dsnivris = 'G'  THEN
-        vr_aux_nivel := 8;  
-      ELSE
-        vr_aux_nivel := 9;
-    END CASE;
-        
-    RETURN vr_aux_nivel;       
-  END;
   
   PROCEDURE pc_grava_crapris_temporaria(pr_cdcooper          IN tbcrd_risco.cdcooper%TYPE         -- Codigo da cooperativa
                                        ,pr_nrdconta          IN tbcrd_risco.nrdconta%TYPE         -- Numero da conta
                                        ,pr_inpessoa          IN crapris.inpessoa%TYPE             -- Tipo de pessoa
                                        ,pr_nrcontrato        IN tbcrd_risco.nrcontrato%TYPE       -- Numero do contrato
+                                       ,pr_nrseqctr          IN crapris.nrseqctr%TYPE             -- Sequencia contrato
                                        ,pr_cdagencia         IN crapris.cdagenci%TYPE             -- Numero da agencia
                                        ,pr_nrcpfcnpj         IN tbcrd_risco.nrcpfcnpj%TYPE        -- CPF/CNPJ
                                        ,pr_nrmodalidade      IN tbcrd_risco.nrmodalidade%TYPE     -- Codigo da modalidade
@@ -1604,7 +1963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
     -- Alterações
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
-      vr_ind_risco          VARCHAR2(50);
+      vr_ind_risco          VARCHAR2(60);
       
       -- Variaveis tratamento de erro
       vr_exc_erro           EXCEPTION;
@@ -1791,11 +2150,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       
       
     BEGIN
-      vr_ind_risco := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || LPAD(pr_nrmodalidade,10,'0');
+      vr_ind_risco := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || LPAD(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0');
       IF NOT pr_tab_risco.EXISTS(vr_ind_risco) THEN
         pr_tab_risco(vr_ind_risco).cdcooper     := pr_cdcooper;
         pr_tab_risco(vr_ind_risco).nrdconta     := pr_nrdconta;
         pr_tab_risco(vr_ind_risco).nrcontrato   := pr_nrcontrato;
+        pr_tab_risco(vr_ind_risco).nrseqctr     := pr_nrseqctr;
         pr_tab_risco(vr_ind_risco).nrmodalidade := pr_nrmodalidade;
         pr_tab_risco(vr_ind_risco).dtcadastro   := pr_dtcadastro;
         pr_tab_risco(vr_ind_risco).inpessoa     := pr_inpessoa;
@@ -1885,6 +2245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
   PROCEDURE pc_grava_crapvri_temporaria(pr_cdcooper              IN tbcrd_risco.cdcooper%TYPE         -- Codigo da cooperativa
                                        ,pr_nrdconta              IN tbcrd_risco.nrdconta%TYPE         -- Numero da conta
                                        ,pr_nrcontrato            IN tbcrd_risco.nrcontrato%TYPE       -- Numero do contrato
+                                       ,pr_nrseqctr              IN crapris.nrseqctr%TYPE             -- Sequencia contrato
                                        ,pr_nrmodalidade          IN tbcrd_risco.nrmodalidade%TYPE     -- Codigo da modalidade
                                        ,pr_dtrefere              IN tbcrd_risco.dtrefere%TYPE         -- Data de referencia
                                        ,pr_vlsaldo_devedor       IN tbcrd_risco.vlsaldo_devedor%TYPE  -- Saldo Devedor
@@ -1909,8 +2270,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
     -- Alterações
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
-      vr_ind_risco          VARCHAR2(50);
-      vr_indice             VARCHAR2(50);
+      vr_ind_risco          VARCHAR2(60);
+      vr_indice             VARCHAR2(70);
       
       -- Variaveis tratamento de erro
       vr_exc_erro           EXCEPTION;
@@ -1920,21 +2281,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
     BEGIN
       
       -- Indice da temp-table
-      vr_ind_risco := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || lpad(pr_nrmodalidade,10,'0');
+      vr_ind_risco := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || lpad(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0');
       -- Indice da temp-table
-      vr_indice := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || LPAD(pr_cdvencto,10,'0');
+      vr_indice    := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || lpad(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0') || LPAD(pr_cdvencto,10,'0');
       IF NOT pr_tab_risco_venc.EXISTS(vr_indice) THEN
         pr_tab_risco_venc(vr_indice).cdcooper     := pr_cdcooper;
         pr_tab_risco_venc(vr_indice).nrdconta     := pr_nrdconta;
         pr_tab_risco_venc(vr_indice).nrcontrato   := pr_nrcontrato;        
-        pr_tab_risco_venc(vr_indice).innivris      := pr_tab_risco(vr_ind_risco).innivris;
+        pr_tab_risco_venc(vr_indice).nrseqctr     := pr_nrseqctr;        
+        pr_tab_risco_venc(vr_indice).innivris     := pr_tab_risco(vr_ind_risco).innivris;
         pr_tab_risco_venc(vr_indice).dtrefere     := pr_dtrefere;
         pr_tab_risco_venc(vr_indice).nrmodalidade := pr_nrmodalidade;
         pr_tab_risco_venc(vr_indice).cdvencto     := pr_cdvencto;
         pr_tab_risco_venc(vr_indice).vldivida     := 0;
       END IF;
-      
-        pr_tab_risco_venc(vr_indice).vldivida := pr_tab_risco_venc(vr_indice).vldivida + NVL(pr_vlsaldo_devedor,0);
+      pr_tab_risco_venc(vr_indice).vldivida := pr_tab_risco_venc(vr_indice).vldivida + NVL(pr_vlsaldo_devedor,0);
               
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -1973,56 +2334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
     -- Alterações
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
-      -- Buscar todos os contratos criados
-      CURSOR cr_crapris (pr_cdcooper  IN crapris.cdcooper%TYPE
-                        ,pr_dtrefere  IN crapris.dtrefere%TYPE
-                        ,pr_vlarrasto IN NUMBER) IS
-        SELECT cdcooper
-              ,nrdconta
-              ,nrctremp
-              ,cdmodali
-              ,dtrefere
-              ,innivori
-              ,nrseqctr
-              ,qtdiaatr
-              ,innivris
-              ,rowid
-              ,ROW_NUMBER () OVER (PARTITION BY nrdconta
-                                       ORDER BY nrdconta,innivris DESC) sequencia
-          FROM crapris
-         WHERE cdcooper = pr_cdcooper
-           AND dtrefere = pr_dtrefere
-           AND inddocto IN(1,5)
-           AND vldivida > pr_vlarrasto --> Valor dos parâmetros        
-      ORDER BY nrdconta
-              ,innivris DESC;
-              
-      -- Buscar o pior risco para a conta 
-      CURSOR cr_crapris_last(pr_cdcooper IN crapris.cdcooper%TYPE
-                            ,pr_nrdconta IN crapris.nrdconta%TYPE
-                            ,pr_dtrefere IN crapris.dtrefere%TYPE
-                            ,pr_vlarrast IN crapris.vldivida%TYPE) IS
-        SELECT /*+index_desc (crapris CRAPRIS##CRAPRIS1)*/
-               innivris
-          FROM crapris
-         WHERE crapris.cdcooper = pr_cdcooper
-           AND crapris.nrdconta = pr_nrdconta
-           AND crapris.dtrefere = pr_dtrefere           
-           AND crapris.inddocto IN(1,5)
-           AND (crapris.vldivida > pr_vlarrast OR pr_vlarrast = 0);
-      rw_crapris_last cr_crapris_last%ROWTYPE;
-      
-      -- Buscar risco de grupo econônomico
-      CURSOR cr_crapgrp(pr_cdcooper IN crapgrp.cdcooper%TYPE
-                       ,pr_nrctasoc IN crapgrp.nrctasoc%TYPE) IS
-        SELECT crapgrp.innivrge,
-               crapgrp.nrdgrupo
-          FROM crapgrp
-         WHERE crapgrp.cdcooper = pr_cdcooper
-           AND crapgrp.nrctasoc = pr_nrctasoc;
-      rw_crapgrp cr_crapgrp%ROWTYPE;        
-              
-              
+      -- Auxiliares        
       vr_dstextab     craptab.dstextab%TYPE;        
       vr_innivris     crapris.innivris%TYPE;
       vr_nrdgrupo     crapgrp.nrdgrupo%TYPE;
@@ -2108,9 +2420,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           vr_innivris := 9;
         END IF;
         
-        -- Somente arrastar as operações que não estão enquadradas
-        -- no risco AA, a não ser que elas tenham prejuízo
-        IF rw_crapris.innivris > 1 OR nvl(rw_crapris.qtdiaatr,0) > 0 THEN 
+        -- Somente arrastar as operações que não estão enquadradas no risco AA
+        -- OU que não estejam em Prejuizo (HH), pois este deverá permanecer HH
+        IF rw_crapris.innivris > 1 AND rw_crapris.innivris < 10 THEN 
 
           -- Atualizar o risco no contrato
           BEGIN
@@ -2240,11 +2552,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
               ,mvto.qtdparcelas
               ,mvto.dtlib_operacao
               ,decode(mvto.flsaida_operacao,1,'0301',' ') cdinfadi
+              ,ROW_NUMBER ()
+                 OVER (PARTITION BY mvto.nrdconta/*,mvto.nrctremp,prod.idmodalidade*/
+                           ORDER BY mvto.nrdconta/*,mvto.nrctremp,prod.idmodalidade*/) nrseqctr
           FROM tbrisco_provisgarant_prodt prod
               ,tbrisco_provisgarant_movto mvto
          WHERE mvto.idproduto = prod.idproduto
            AND mvto.cdcooper  = pr_cdcooper
-           AND mvto.dtbase    = pr_dtrefere;
+           AND mvto.dtbase    = pr_dtrefere
+         ORDER BY mvto.nrdconta/*
+                 ,mvto.nrctremp
+                 ,risc0003.fn_valor_opcao_dominio(prod.idmodalidade)*/;
       
     ----------------- TIPOS E REGISTROS -------------------  
       
@@ -2267,11 +2585,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       
       -------------------------- Variaveis ----------------------------------------
       vr_cdvencto             crapvri.cdvencto%TYPE;
-      vr_indice               VARCHAR2(50);
-      vr_ind_crapvri          VARCHAR2(50);
-      vr_ind_crapris          VARCHAR2(50);
+      vr_indice               VARCHAR2(70);
+      vr_ind_crapvri          VARCHAR2(70);
       vr_dtultdma_util        DATE;                             -- Data do ultimo dia util do mes anterior
-      vr_contador             NUMBER;
       -- Variaveis de Erro
       vr_cdcritic             crapcri.cdcritic%TYPE;
       vr_dscritic             VARCHAR2(4000);
@@ -2362,6 +2678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                    ,pr_nrdconta          => rw_movto.nrdconta
                                    ,pr_inpessoa          => vr_tab_crapass(rw_movto.nrdconta).inpessoa
                                    ,pr_nrcontrato        => rw_movto.nrctremp
+                                   ,pr_nrseqctr          => rw_movto.nrseqctr
                                    ,pr_cdagencia         => vr_tab_crapass(rw_movto.nrdconta).cdagenci
                                    ,pr_nrcpfcnpj         => rw_movto.nrcpfcgc
                                    ,pr_nrmodalidade      => rw_movto.nrmodalidade
@@ -2390,6 +2707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
         pc_grava_crapvri_temporaria(pr_cdcooper        => rw_movto.cdcooper
                                    ,pr_nrdconta        => rw_movto.nrdconta
                                    ,pr_nrcontrato      => rw_movto.nrctremp
+                                   ,pr_nrseqctr        => rw_movto.nrseqctr
                                    ,pr_nrmodalidade    => rw_movto.nrmodalidade
                                    ,pr_dtrefere        => pr_dtrefere
                                    ,pr_vlsaldo_devedor => rw_movto.vlsaldo_pendente
@@ -2410,19 +2728,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       -----------------------------------------------------------------------------------------------------------
       vr_indice := vr_tab_risco.first;
       WHILE vr_indice IS NOT NULL LOOP
-        -- Se for o primeiro registro ou mudou a conta
-        IF vr_indice = vr_tab_risco.first 
-        OR vr_tab_risco(vr_indice).nrdconta <> vr_tab_risco(vr_tab_risco.prior(vr_indice)).nrdconta THEN
-          -- Iniciar contador 
-          vr_contador := 1;
-        ELSE
-          -- Incrementar
-          vr_contador := vr_contador + 1;
-        END IF;
-        -- Gravar contador antes de reposicionar na tabela
-        vr_tab_risco(vr_indice).nrseqctr := vr_contador;
-        vr_tab_risco_temp(vr_tab_risco_temp.count + 1) := vr_tab_risco(vr_indice);        
-        -- prox idx
+        -- Reposicionar na tabela
+        vr_tab_risco_temp(vr_tab_risco_temp.count + 1) := vr_tab_risco(vr_indice); 
+        -- Proximo idx
         vr_indice := vr_tab_risco.next(vr_indice);
       END LOOP;
                   
@@ -2511,18 +2819,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       WHILE vr_indice IS NOT NULL LOOP
         -- Indice da tabela de memoria crapvri
         vr_ind_crapvri := vr_tab_risco_venc_temp.count + 1;        
-        -- Indice da tabela de memoria crapris
-        vr_ind_crapris := LPAD(vr_tab_risco_venc(vr_indice).nrdconta,20,'0') || 
-                          LPAD(vr_tab_risco_venc(vr_indice).nrcontrato,20,'0') ||
-                          LPAD(vr_tab_risco_venc(vr_indice).nrmodalidade,10,'0');
+        -- Reposicionar a tabela
         vr_tab_risco_venc_temp(vr_ind_crapvri)          := vr_tab_risco_venc(vr_indice);
-        vr_tab_risco_venc_temp(vr_ind_crapvri).innivris := vr_tab_risco(vr_ind_crapris).innivris;
-        vr_tab_risco_venc_temp(vr_ind_crapvri).nrseqctr := vr_tab_risco(vr_ind_crapris).nrseqctr;
+        -- Proximo indice
         vr_indice := vr_tab_risco_venc.next(vr_indice);
       END LOOP;
 
       BEGIN
-        FORALL idx IN 1..vr_tab_risco_venc_temp.count SAVE EXCEPTIONS
+        FOR idx IN 1..vr_tab_risco_venc_temp.count LOOP
+          
           INSERT INTO crapvri(cdcooper
                              ,nrdconta
                              ,dtrefere
@@ -2541,9 +2846,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                              ,vr_tab_risco_venc_temp(idx).nrcontrato
                              ,vr_tab_risco_venc_temp(idx).nrseqctr
                              ,nvl(vr_tab_risco_venc_temp(idx).vldivida,0)); 
+                             
+        END LOOP;                             
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar CRAPVRI. ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          vr_dscritic := 'Erro ao atualizar CRAPVRI. ' || SQLERRM;
           RAISE vr_exc_erro;
       END;    
       

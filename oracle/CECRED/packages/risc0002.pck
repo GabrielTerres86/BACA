@@ -110,8 +110,8 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0002 is
   /* Rotina para processamento de Arquivos VIP - Durante processo Batch */
   PROCEDURE pc_gera_risco_cartao_vip_proc(pr_cdcooper IN NUMBER
                                          ,pr_cdprogra IN VARCHAR2
-                                         ,pr_dtmvtolt IN DATE
-                                         ,pr_dtrefere IN DATE);
+                                         ,pr_dtmvtolt IN VARCHAR2
+                                         ,pr_dtrefere IN VARCHAR2);
    
 END RISC0002;
 /
@@ -2255,7 +2255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
       CURSOR cr_crawcrd(pr_cdcooper IN crawcrd.cdcooper%TYPE) IS
         SELECT lpad(to_char(nrcrcard),25,'0') nrcrcard
               ,nrdconta
-              ,dtsolici
+              ,nvl(dtpropos,dtsolici) dtsolici
           from crawcrd
          WHERE cdcooper  = pr_cdcooper;
          
@@ -2449,8 +2449,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
               vr_dscritic := 'Erro ao inserir na tabela de tbcrd_arq_risco. ' || sqlerrm;
               RAISE vr_exc_proximo_arq;
           END;
-          -- Vamos gravar o arquivo que estah sendo importado
-          COMMIT; 
                       
           -----------------------------------------------------------------------------------------------------------
           --  INICIO PARA GRAVAR OS REGISTROS tbcrd_risco
@@ -2529,7 +2527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
                                          ,pr_nrcpfcnpj         => vr_tab_crapass(vr_ind_tab_crapass).nrcpfcgc
                                          ,pr_nrmodalidade      => vr_tab_linhas_arquivo(vr_indice).nrmodalidade
                                          ,pr_dtultdma_util     => vr_dtultdma_util
-                                         ,pr_dtcadastro        => vr_tab_linhas_arquivo(vr_indice).dtcadastro
+                                         ,pr_dtcadastro        => vr_tab_crd_nrcrcard(vr_txdconta_cartao).dtsolici
                                          ,pr_cdtipo_saldo      => vr_tab_linhas_arquivo(vr_indice).cdtipo_saldo
                                          ,pr_dtvencimento      => vr_tab_linhas_arquivo(vr_indice).dtvencimento
                                          ,pr_vlsaldo_devedor   => vr_tab_linhas_arquivo(vr_indice).vlsaldo_devedor
@@ -2681,7 +2679,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
               RAISE vr_exc_proximo_arq;
           END;
           
-          COMMIT;
         EXCEPTION
           WHEN vr_exc_proximo_arq THEN
             ROLLBACK;
@@ -2715,8 +2712,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
         vr_ind_linha_arquivo := vr_vet_arquivos.next(vr_ind_linha_arquivo);        
       END LOOP;
       
-      COMMIT;
-         
     EXCEPTION
       WHEN vr_exc_erro THEN
         ROLLBACK;
@@ -2738,8 +2733,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
   /* Rotina para processamento de Arquivo VIP - Durante processo Batch */
   PROCEDURE pc_gera_risco_cartao_vip_proc(pr_cdcooper IN NUMBER
                                          ,pr_cdprogra IN VARCHAR2
-                                         ,pr_dtmvtolt IN DATE
-                                         ,pr_dtrefere IN DATE) IS
+                                         ,pr_dtmvtolt IN VARCHAR2
+                                         ,pr_dtrefere IN VARCHAR2) IS
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
     --  Programa : pc_gera_risco_cartao_vip_proc
@@ -2764,7 +2759,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
       -- Variaveis de Erro
       vr_cdcritic    crapcri.cdcritic%TYPE;
       vr_dscritic    VARCHAR2(4000);
-
+      
+      -- Datas de processo
+      vr_dtmvtolt DATE;
+      vr_dtrefere DATE;
+      
       -- Variaveis Excecao
       vr_excsaida EXCEPTION;
       
@@ -2777,13 +2776,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
                  ,pr_cdprogra => pr_cdprogra
                  ,pr_cdorigem => vr_cdorigem
                  ,pr_cdcritic => 0
-                 ,pr_dscritic => 'Inicio da integracao para Central Risco do Arquivos VIP');
+                 ,pr_dscritic => 'Inicio da integracao para Central Risco do Arquivos VIP - Coop '||pr_cdcooper);
+      
+      -- Transformar as datas recebidas em varchar2 em date
+      vr_dtmvtolt := to_date(pr_dtmvtolt,'dd/mm/rrrr');
+      vr_dtrefere := to_date(pr_dtrefere,'dd/mm/rrrr');
       
       -- Procedure responsavel pela importacao do arquivo de risco do cartao
       pc_gera_risco_cartao_vip(pr_cdcooper => pr_cdcooper    --> Codigo da Cooperativa
                               ,pr_cdprogra => pr_cdprogra    --> Codigo do programa
-                              ,pr_dtmvtolt => pr_dtmvtolt    --> Data do Movimento
-                              ,pr_dtrefere => pr_dtrefere    --> Data de Referencia
+                              ,pr_dtmvtolt => vr_dtmvtolt    --> Data do Movimento
+                              ,pr_dtrefere => vr_dtrefere    --> Data de Referencia
                               ,pr_cdorigem => vr_cdorigem    --> Codigo de Origem
                               ,pr_cdcritic => vr_cdcritic    --> Codigo da critica
                               ,pr_dscritic => vr_dscritic);  --> Descricao da critica
@@ -2791,28 +2794,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
       -- Condicao para verificar se houve erro
       IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_excsaida;
-      END IF;
+      END IF;      
       
-      
-      -- Somente efetuar o Arrasto se o programa chamador não for crps310
-      IF UPPER(pr_cdprogra) != 'CRPS310' THEN 
-        -- INICIO PARA EFETUAR O ARRASTO após incorporar novos contratos de Risco
-        pc_efetua_arrasto(pr_cdcooper => pr_cdcooper
-                         ,pr_dtrefere => pr_dtrefere
-                         ,pr_cdcritic => vr_cdcritic
-                         ,pr_dscritic => vr_dscritic);
+      -- INICIO PARA EFETUAR O ARRASTO após incorporar novos contratos de Risco
+      pc_efetua_arrasto(pr_cdcooper => pr_cdcooper
+                       ,pr_dtrefere => vr_dtrefere
+                       ,pr_cdcritic => vr_cdcritic
+                       ,pr_dscritic => vr_dscritic);
                          
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_excsaida;
-        END IF;
-      END IF;  
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_excsaida;
+      END IF;
       
       -- Inicio da geracao de LOG no arquivo
       pc_gera_log(pr_cdcooper => pr_cdcooper
                  ,pr_cdprogra => pr_cdprogra
                  ,pr_cdorigem => vr_cdorigem
                  ,pr_cdcritic => 0
-                 ,pr_dscritic => 'Execucao ok');
+                 ,pr_dscritic => 'Execucao ok - Coop '||pr_cdcooper);
                  
 
     EXCEPTION
