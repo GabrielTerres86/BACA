@@ -1,11 +1,13 @@
 /*****************************************************************************************
  Fonte: movrgp.js                                                   
  Autor: Jonata - RKAM                                                 
- Data : Maio/2017           					   Última Alteração: 19/06/2017       
+ Data : Maio/2017           					   Última Alteração: 22/06/2017      
                                                                   
  Objetivo  : Biblioteca de funções da tela MOVRGP                 
                                                                   
  Alterações: 19/06/2017 - Ajuste para realizar a exportação de todas as cooperativas (Jonata - RKAM). 
+
+             22/06/2017 - Ajuste posicionamento de colunas da tabela de movimentos (Jonata - RKAM).
 						  
 ******************************************************************************************/
 
@@ -787,11 +789,11 @@ function formataTabelaProdutos(){
 	var ordemInicial = new Array();
 					
 	var arrayLargura = new Array(); 
-		arrayLargura[0] = '30%';
-		arrayLargura[1] = '10%';
-		arrayLargura[2] = '15%';
-		arrayLargura[3] = '20%';
-		arrayLargura[4] = '30%';
+	    arrayLargura[0] = '25%';
+	    arrayLargura[1] = '10%';
+	    arrayLargura[2] = '15%';
+	    arrayLargura[3] = '15%';
+	    arrayLargura[4] = '15%';
 							
 	var arrayAlinha = new Array();
 		arrayAlinha[0] = 'left';
@@ -1124,7 +1126,7 @@ function formataDetalhes(){
 		
 		if($('#flpermite_saida_operacao','#frmDetalhes').val() == '1'){
 			
-		(vlsaldoPendente > 0 ) ? $('#flsaida_operacao','#fsetDetalhes').prop("checked",false) : $('#flsaida_operacao','#fsetDetalhes').prop("checked",true); 
+			(vlsaldoPendente > 0 ) ? $('#flsaida_operacao','#fsetDetalhes').prop("checked",false) : $('#flsaida_operacao','#fsetDetalhes').prop("checked",true); 
 			
 		}
 		
@@ -1138,7 +1140,25 @@ function formataDetalhes(){
 		
 		if($('#flpermite_saida_operacao','#frmDetalhes').val() == '1'){
 		
-		(vlsaldoPendente > 0 ) ? $('#flsaida_operacao','#fsetDetalhes').prop("checked",false) : $('#flsaida_operacao','#fsetDetalhes').prop("checked",true); 
+			(vlsaldoPendente > 0 ) ? $('#flsaida_operacao','#fsetDetalhes').prop("checked",false) : $('#flsaida_operacao','#fsetDetalhes').prop("checked",true); 
+		
+		}
+		
+		return false;		
+		
+	});	
+	
+	cFlsaida_operacao.unbind('focusout').bind('focusout',function() {
+
+		if($('#flpermite_saida_operacao','#frmDetalhes').val() == '1'){
+		
+			if($(this).prop("checked")){
+			
+				cVlsaldo_pendente.val('');
+			
+			}else{
+				cVlsaldo_pendente.val('0,01');
+			}
 		
 		}
 		
@@ -1293,50 +1313,77 @@ function controlaPesquisas() {
 
 	//Conta
     $('#nrdconta', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		
+		if( $('#divRotina').css('visibility') == 'visible'){
+			
 		filtrosDesc = 'cdcooper|' + $('#cdcopsel', '#frmFiltroCoop').val();
 		buscaDescricao("ZOOM0001", "BUSCADESCASSOCIADO", "Pesquisa Associados", $(this).attr('name'), 'nmprimtl',normalizaNumero($(this).val()), 'nmprimtl', filtrosDesc, 'frmDetalhes');
+		}
         
 		return false;
     });
 	
     //Garantia
     $('#idgarantia', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		
+		if( $('#divRotina').css('visibility') == 'visible'){
+			
 		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
 		$('#iddominio_idgarantia','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|8';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsgarantia', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
+		}
+		
 		return false;
     });
 	
 	// Origem recurso
     $('#idorigem_recurso', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		
+		if( $('#divRotina').css('visibility') == 'visible'){
+		
 		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
 		$('#iddominio_idorigem_recurso','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|3';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsorigem_recurso', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
+		}
+		
 		return false;
+		
     });
 	
 	// Indexador
     $('#idindexador', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		
+		if( $('#divRotina').css('visibility') == 'visible'){
+			
 		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
 		$('#iddominio_idindexador','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|4';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsindexador', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
+		}
+		
 		return false;
+		
     });
 	
 	// Natureza Operação
     $('#idnat_operacao', '#' + nomeForm).unbind('blur').bind('blur', function () {
+		
+		if( $('#divRotina').css('visibility') == 'visible'){
+			
 		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
 		$('#iddominio_idnat_operacao','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|6';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsnat_operacao', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
+		}
+		
 		return false;
+		
     });
 	
 }

@@ -1,12 +1,14 @@
 <?php
 /*!
- * FONTE        : alterar_movimento.php                    Última alteração: 01/06/2017
+ * FONTE        : alterar_movimento.php                    Última alteração: 25/06/2017
  * CRIAÇÃO      : Jonata (RKAM)
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Rotina para alteração de movimentos da tela MOVRGP
  * --------------
  * ALTERAÇÕES   :  01/06/2017 - Ajuste para retirar validação do valor pencentual, poderá ser enviado valor zerado
                                 (Jonata - RKAM).
+								
+				   25/06/2017 - Ajuste para retirar a validação do saldo pendente ( Jonata - RKAM).
  *
  */
 ?>
@@ -188,13 +190,7 @@
         if (  $GLOBALS["cdclassifica_operacao"] == '' ){
             exibirErro('error','Classifica&ccedil;&atilde;o da opera&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'cdclassifica_operacao\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
         }		
-		
-		//Valor do saldo pendente
-        if (  $GLOBALS["flsaida_operacao"] == 0 && $GLOBALS["vlsaldo_pendente"] == 0 ){
-            exibirErro('error','Valor do saldo pendente inv&aacute;lido.','Alerta - Ayllos','$(\'input, select\',\'#frmDetalhes\').removeClass(\'campoErro\');focaCampoErro(\'vlsaldo_pendente\',\'frmDetalhes\');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
-        }
-		
-		
+			
 	}
 
  ?>

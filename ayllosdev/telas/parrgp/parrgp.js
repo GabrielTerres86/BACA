@@ -529,7 +529,7 @@ function controlaPesquisas() {
                 if (campoAnterior == 'idgarantia') {
                     filtrosPesq = "Cód. do Domínio;idtipo_dominio;30px;N;8;N|Descrição do Domínio;dstipo_dominio;200px;N;;N";
 					colunas 	= 'Valor;dsdvalor;10%;left|Domínio;cddominio;20%;center|Descrição;dsdominio;80%;left#Valor;dsdvalor;10%;left|Domínio;cddominio;10%;center|Descrição;dsdominio;30%;left|Subdomínio;cdsubdominio;20%;left|Descrição;dssubdominio;80%;left';
-					camposRetorno = 'nrctacosif|idconta_cosif;dsctacosif|dsconta_cosif;iddominioctacosif|iddominio_idconta_cosif;iddominio|iddominio_idgarantia;dsdvalor|idgarantia;dstipo_dominio|dsgarantia';
+					camposRetorno = 'dsdvalor|idgarantia;iddominio|iddominio_idgarantia;dstipo_dominio|dsgarantia;nrctacosif|idconta_cosif;dsctacosif|dsconta_cosif;iddominioctacosif|iddominio_idconta_cosif';
 					mostraPesquisaDominios("ZOOM0001", "BUSCADOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", "30", filtrosPesq, camposRetorno, colunas, '','','frmDetalhes');                        
 					return false;
 

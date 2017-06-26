@@ -178,7 +178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
    Sigla   : CRED
 
    Autor   : Jonata - RKAM
-   Data    : Maio/2017                       Ultima atualizacao: 15/06/2017
+   Data    : Maio/2017                       Ultima atualizacao: 22/06/2017
 
    Dados referentes ao programa:
 
@@ -189,6 +189,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                             (Jonata - RKAM).
 
                15/06/2017 - Ajustes decorrente a homologação do projeto P408 (Jonata - RKAM).
+
+			   22/06/2017 - Incluido novas regras para validação das informações recebidas (Joanta - RKAM).
 			              
   ---------------------------------------------------------------------------------------------------------------*/
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE)IS
@@ -894,7 +896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     vr_arquivo_txt UTL_FILE.file_type;
     vr_nmdireto VARCHAR2(100);      
     vr_nmarquiv VARCHAR2(100);
-    vr_dsarquiv varchar2(32767);
+    vr_dsarquiv CLOB;
     vr_des_reto  VARCHAR2(3);      
     
     --Variaveis de Criticas
@@ -984,15 +986,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                   vr_cdoperad                           ||
                   Trunc(DBMS_RANDOM.Value(50000,99999)) || '.csv';
         
-    -- Criar o arquivo a partir do CLOB
-    gene0002.pc_clob_para_arquivo(pr_clob => vr_dsarquiv
-                                 ,pr_caminho => vr_nmdireto
-                                 ,pr_arquivo => vr_nmarquiv
-                                 ,pr_des_erro => vr_dscritic);
-    -- Se retornou erro
-    IF  vr_dscritic IS NOT NULL  THEN
-      RAISE vr_exc_saida;
-    END IF;
+    
+    
+    DBMS_XSLPROCESSOR.CLOB2FILE(vr_dsarquiv, vr_nmdireto, vr_nmarquiv, 0);
 
     -- Envia-lo ao servidor web.           
     gene0002.pc_efetua_copia_pdf(pr_cdcooper => vr_cdcooper
@@ -1503,7 +1499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
+    Data     : Maio/2017                           Ultima atualizacao: 22/06/2017
     
     Dados referentes ao programa:
     
@@ -1514,7 +1510,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                             (Jonata - RKAM).
 
 				 19/06/2017 - Retirado validação da classificação de operação (Jonata - RKAM).
-                            
+
+				 22/06/2017 - Incluido novas regras para validação das informações recebidas (Joanta - RKAM).
+				                             
     -------------------------------------------------------------------------------------------------------------*/                                
       
     CURSOR cr_movto_1(pr_cdcooper  IN tbrisco_provisgarant_movto.cdcooper%TYPE
@@ -1538,6 +1536,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
       FROM tbrisco_provisgarant_movto
      WHERE idmovto_risco = pr_idmovto_risco;
     rw_movto_2 cr_movto_2%ROWTYPE;
+    
+    CURSOR cr_movto_3(pr_cdcooper  IN tbrisco_provisgarant_movto.cdcooper%TYPE
+                     ,pr_dtbase    IN tbrisco_provisgarant_movto.dtbase%TYPE
+                     ,pr_idorigem_recurso IN tbrisco_provisgarant_movto.idorigem_recurso%TYPE
+                     ,pr_nrdconta  IN tbrisco_provisgarant_movto.nrdconta%TYPE
+                     ,pr_nrctremp  IN tbrisco_provisgarant_movto.nrctremp%TYPE
+                     ,pr_idmovto_risco IN tbrisco_provisgarant_movto.idmovto_risco%TYPE) IS       
+    SELECT 1
+      FROM tbrisco_provisgarant_movto
+     WHERE cdcooper  = pr_cdcooper
+       AND nrdconta  = pr_nrdconta
+       AND nrctremp  = pr_nrctremp
+       AND idorigem_recurso = pr_idorigem_recurso
+       AND dtbase    = pr_dtbase
+       AND idmovto_risco <> pr_idmovto_risco;
+    rw_movto_3 cr_movto_3%ROWTYPE;
     
     CURSOR cr_risco_prodt(pr_idproduto IN tbrisco_provisgarant_prodt.idproduto%TYPE)IS
     SELECT ppg.idorigem_recurso,
@@ -1811,6 +1825,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END;
     
+    IF vr_dtvenc_operacao < vr_dtlib_operacao THEN
+      
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'dtvenc_operacao';
+      vr_dscritic := 'Data de vencimento da operação menor que a data de liberação da operação.';
+      RAISE vr_exc_erro;
+        
+    END IF; 
+    
+    IF vr_dtlib_operacao > vr_dtrefere THEN
+      
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'dtlib_operacao';
+      vr_dscritic := 'Data de liberação da operação maior que a data de referência.';
+      RAISE vr_exc_erro;
+        
+    END IF;
+    
     IF NVL(TRIM(pr_cdclassifica_operacao), ' ') NOT IN ('AA','A','B','C','D','E','F','G','H','HH') THEN 
         
       -- Montar mensagem de critica
@@ -1819,8 +1851,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
       RAISE vr_exc_erro;
         
     END IF;  
-    
-         
                        
     IF rw_risco_prodt.flpermite_fluxo_financeiro = 1 AND
        NVL(pr_qtdparcelas,0) = 0                     THEN
@@ -1842,14 +1872,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;
     
-    IF rw_risco_prodt.flpermite_fluxo_financeiro = 1 AND
-       TRIM(pr_dtproxima_parcela) IS NULL            THEN
-      
+    IF rw_risco_prodt.flpermite_saida_operacao = 1 AND 
+       NVL(pr_vlparcela,0) = 0                       THEN
+        
       -- Montar mensagem de critica
-      pr_nmdcampo := 'dtproxima_parcela';
-      vr_dscritic := 'Data da próxima parcela não informada.';
+      pr_nmdcampo := 'vlparcela';
+      vr_dscritic := 'Valor da parcela inválida.';
       RAISE vr_exc_erro;
-      
+        
     END IF;
 
     BEGIN
@@ -1883,14 +1913,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;
     
-    IF pr_flsaida_operacao = 0        AND 
-       NVL(pr_vlsaldo_pendente,0) = 0 THEN
-        
+    IF rw_risco_prodt.flpermite_saida_operacao = 1 AND
+       pr_flsaida_operacao = 1                     AND
+       nvl(pr_vlsaldo_pendente,0) <> 0             THEN
+      
       -- Montar mensagem de critica
       pr_nmdcampo := 'vlsaldo_pendente';
-      vr_dscritic := 'Valor do saldo pendente inválido.';
+      vr_dscritic := 'O valor do saldo pendente deve ser zerado.';
       RAISE vr_exc_erro;
-        
+      
+    END IF;
+    
+    IF rw_risco_prodt.flpermite_saida_operacao = 1 AND
+       pr_flsaida_operacao = 0                     AND
+       nvl(pr_vlsaldo_pendente,0) = 0              THEN
+      
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'vlsaldo_pendente';
+      vr_dscritic := 'Favor selecionar Saída ou informar um Saldo para a Operação!';
+      RAISE vr_exc_erro;
+      
     END IF;
       
     OPEN cr_movto_1(pr_cdcooper  => pr_cdcopsel
@@ -1932,6 +1974,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     
     --Fecha o cursor
     CLOSE cr_movto_2;
+    
+    OPEN cr_movto_3(pr_cdcooper  => pr_cdcopsel
+                   ,pr_dtbase    => vr_dtrefere
+                   ,pr_idorigem_recurso => pr_idorigem_recurso
+                   ,pr_nrdconta  => pr_nrdconta
+                   ,pr_nrctremp  => pr_nrctremp
+                   ,pr_idmovto_risco => pr_idmovto_risco); 
+                                        
+    FETCH cr_movto_3 INTO rw_movto_3;
+        
+    IF cr_movto_3%FOUND THEN
+          
+      CLOSE cr_movto_3;
+        
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'nrctremp';
+      vr_dscritic := 'Não é permitido o mesmo número de contrato para a mesma conta e modalidade!';
+      RAISE vr_exc_erro; 
+              
+    END IF;
+      
+    CLOSE cr_movto_3; 
     
     BEGIN
       
@@ -2352,7 +2416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonata - RKAM
-    Data     : Maio/2017                           Ultima atualizacao: 19/06/2017
+    Data     : Maio/2017                           Ultima atualizacao: 22/06/2017
     
     Dados referentes ao programa:
     
@@ -2364,6 +2428,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
 
 				 19/06/2017 - Retirado validação da classificação de operação (Jonata - RKAM).
                             
+				 22/06/2017 - 22/06/2017 - Incluido novas regras para validação das informações recebidas (Joanta - RKAM).
+
     -------------------------------------------------------------------------------------------------------------*/                                
       
     CURSOR cr_movto_1(pr_cdcooper  IN tbrisco_provisgarant_movto.cdcooper%TYPE
@@ -2373,12 +2439,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
                      ,pr_nrctremp  IN tbrisco_provisgarant_movto.nrctremp%TYPE) IS       
     SELECT 1
       FROM tbrisco_provisgarant_movto 
-     WHERE cdcooper = pr_cdcooper
-       AND dtbase   = pr_dtbase
+     WHERE cdcooper  = pr_cdcooper
+       AND dtbase    = pr_dtbase
        AND idproduto = pr_idproduto
-       AND nrdconta = pr_nrdconta
-       AND nrctremp = pr_nrctremp;
+       AND nrdconta  = pr_nrdconta
+       AND nrctremp  = pr_nrctremp;
     rw_movto_1 cr_movto_1%ROWTYPE;
+    
+    CURSOR cr_movto_2(pr_cdcooper  IN tbrisco_provisgarant_movto.cdcooper%TYPE
+                     ,pr_dtbase    IN tbrisco_provisgarant_movto.dtbase%TYPE
+                     ,pr_idorigem_recurso IN tbrisco_provisgarant_movto.idorigem_recurso%TYPE
+                     ,pr_nrdconta  IN tbrisco_provisgarant_movto.nrdconta%TYPE
+                     ,pr_nrctremp  IN tbrisco_provisgarant_movto.nrctremp%TYPE) IS       
+    SELECT 1
+      FROM tbrisco_provisgarant_movto
+     WHERE cdcooper  = pr_cdcooper
+       AND nrdconta  = pr_nrdconta
+       AND nrctremp  = pr_nrctremp
+       AND idorigem_recurso = pr_idorigem_recurso
+       AND dtbase    = pr_dtbase;
+    rw_movto_2 cr_movto_2%ROWTYPE;
     
     CURSOR cr_risco_prodt(pr_idproduto IN tbrisco_provisgarant_prodt.idproduto%TYPE)IS
     SELECT ppg.idorigem_recurso,
@@ -2643,6 +2723,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END;
     
+    IF vr_dtvenc_operacao < vr_dtlib_operacao THEN
+      
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'dtvenc_operacao';
+      vr_dscritic := 'Data de vencimento da operação menor que a data de liberação da operação.';
+      RAISE vr_exc_erro;
+        
+    END IF; 
+    
+    IF vr_dtlib_operacao > vr_dtrefere THEN
+      
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'dtlib_operacao';
+      vr_dscritic := 'Data de liberação da operação maior que a data de referência.';
+      RAISE vr_exc_erro;
+        
+    END IF;
+    
     IF NVL(TRIM(pr_cdclassifica_operacao), ' ') NOT IN ('AA','A','B','C','D','E','F','G','H','HH') THEN 
         
       -- Montar mensagem de critica
@@ -2651,8 +2749,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
       RAISE vr_exc_erro;
         
     END IF;     
-    
-    
                        
     IF rw_risco_prodt.flpermite_fluxo_financeiro = 1 AND
        NVL(pr_qtdparcelas,0) = 0                     THEN
@@ -2715,14 +2811,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
         
     END IF;
     
-    IF pr_flsaida_operacao = 0        AND
-       NVL(pr_vlsaldo_pendente,0) = 0 THEN
-        
+    IF rw_risco_prodt.flpermite_saida_operacao = 1 AND
+       pr_flsaida_operacao = 1                     AND
+       nvl(pr_vlsaldo_pendente,0) <> 0             THEN
+      
       -- Montar mensagem de critica
       pr_nmdcampo := 'vlsaldo_pendente';
-      vr_dscritic := 'Valor do saldo pendente inválido.';
+      vr_dscritic := 'O valor do saldo pendente deve ser zerado.';
       RAISE vr_exc_erro;
-        
+      
+    END IF;
+    
+    IF rw_risco_prodt.flpermite_saida_operacao = 1 AND
+       pr_flsaida_operacao = 0                     AND
+       nvl(pr_vlsaldo_pendente,0) = 0              THEN
+      
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'vlsaldo_pendente';
+      vr_dscritic := 'Favor selecionar Saída ou informar um Saldo para a Operação!';
+      RAISE vr_exc_erro;
+      
     END IF;
     
     OPEN cr_crapcop(pr_cdcooper => pr_cdcopsel);
@@ -2761,6 +2869,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVRGP AS
     END IF;
       
     CLOSE cr_movto_1; 
+    
+    OPEN cr_movto_2(pr_cdcooper  => pr_cdcopsel
+                   ,pr_dtbase    => vr_dtrefere
+                   ,pr_idorigem_recurso => pr_idorigem_recurso
+                   ,pr_nrdconta  => pr_nrdconta
+                   ,pr_nrctremp  => pr_nrctremp); 
+                                        
+    FETCH cr_movto_2 INTO rw_movto_2;
+        
+    IF cr_movto_2%FOUND THEN
+          
+      CLOSE cr_movto_2;
+        
+      -- Montar mensagem de critica
+      pr_nmdcampo := 'nrctremp';
+      vr_dscritic := 'Não é permitido o mesmo número de contrato para a mesma conta e modalidade!';
+      RAISE vr_exc_erro; 
+              
+    END IF;
+      
+    CLOSE cr_movto_2; 
     
     BEGIN
       

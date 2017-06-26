@@ -147,11 +147,12 @@
 	echo '$("input[name=\''.$campoCodigo.'\']").removeClass("campoErro");';
 	// Atribui descrição ao respectivo campo
 	echo '$("input[name=\''.$campoDescricao.'\']").val("'.getByTagName($descricao,$campoRetorno).'");';
-    	
+	    	
 	if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
 		echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("'.getByTagName($descricao,"iddominio").'");';
 		echo '$("#idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrctacosif").'");';
 		echo '$("#dsconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"dsctacosif").'");';
+		echo '$("#iddominio_idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"iddominioctacosif").'");';
 	}
 	
 	if( $nomeProcedure == 'BUSCADESCASSOCIADO' ){

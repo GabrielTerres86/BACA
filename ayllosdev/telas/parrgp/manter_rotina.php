@@ -1,11 +1,13 @@
 <?php
 /*!
- * FONTE        : manter_rotina.php                    Última alteração: 15/06/2017
+ * FONTE        : manter_rotina.php                    Última alteração: 23/06/2017
  * CRIAÇÃO      : Jonata (RKAM)
  * DATA CRIAÇÃO : Maio/2017
  * OBJETIVO     : Rotina para alterar/incluir/excluir informações da tela PARRGP
  * --------------
  * ALTERAÇÕES   : 15/06/2017 - Retirado/incluido a validação de campos para verificar se são obrigatórios o envio (Jonata - RKAM).
+ *
+ *                23/06/2017 - Ajuste para retirar a obrigatoriedade do campo IDCARACT_ESPECIAL (Jonata - RKAM).
  *
  */
 ?>
@@ -176,11 +178,6 @@
         if ( $GLOBALS["idorigem_cep"] == ''){
 			exibirErro('error','Informe o telefone do respons&aacute;vel.','Alerta - Ayllos','focaCampoErro(\'idorigem_cep\', \'divTabela\');',false);
 		}
-			
-		//ID da caracteristica especial
-        if ( $GLOBALS["idcaract_especial"] == 0){
-            exibirErro('error','Caracter&iacute;stica inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'idcaract_especial\', \'frmDetalhes\');',false);
-        }
 			
 		//Saida de operação
         if ( $GLOBALS["flpermite_saida_operacao"] == ''){

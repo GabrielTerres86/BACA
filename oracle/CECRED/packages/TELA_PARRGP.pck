@@ -116,8 +116,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
                                                      ' -->  Operador '|| pr_cdoperad || ' - ' ||
                                                      'Efetuou a alteracao do produto ' ||
                                                      'Codigo: ' || gene0002.fn_mask(pr_idproduto,'z.zzz.zz9') ||
-                                                     ', ' || pr_dsdcampo || ' de ' || pr_vlrcampo ||
-                                                     ' para ' || pr_vlcampo2 || '.');
+                                                     ', ' || pr_dsdcampo || ' de ' || nvl(trim(pr_vlrcampo),'""') ||
+                                                     ' para ' || nvl(trim(pr_vlcampo2),'""') || '.');
 
      END IF;
 
@@ -621,7 +621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
           
       END IF;
       
-      IF NVL(pr_idcaract_especial,0) = 0                           OR
+      IF NVL(pr_idcaract_especial,0) <> 0                          AND
          RISC0003.fn_valor_opcao_dominio(pr_idcaract_especial) = 0 THEN
         
         -- Montar mensagem de critica
@@ -756,6 +756,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARRGP AS
       END IF;
       
       CLOSE cr_tbrisco_prodt_2;
+      
+      OPEN cr_tbrisco_prodt_3(pr_idproduto => pr_idproduto);
+                                        
+      FETCH cr_tbrisco_prodt_3 INTO rw_tbrisco_prodt_3;
+        
+      IF cr_tbrisco_prodt_3%NOTFOUND THEN
+          
+        CLOSE cr_tbrisco_prodt_3;
+        
+        -- Montar mensagem de critica
+        vr_dscritic := 'Produto não encontrado!';
+        RAISE vr_exc_erro; 
+              
+      END IF;
+      
+      CLOSE cr_tbrisco_prodt_3; 
       
       BEGIN
         

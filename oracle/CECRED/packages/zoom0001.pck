@@ -5264,6 +5264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     CURSOR cr_dominio(pr_dsdominio IN tbrisco_dominio.dsdominio%TYPE)IS                    
     SELECT tbrisco_dominio.cddominio
           ,tbrisco_dominio.dsdominio
+		  ,tbrisco_dominio.iddominio
       FROM tbrisco_dominio
      WHERE tbrisco_dominio.idtipo_dominio = 2
        AND tbrisco_dominio.dsdominio = pr_dsdominio;
@@ -5383,6 +5384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'nrctacosif', pr_tag_cont => rw_dominio.cddominio, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'dsctacosif', pr_tag_cont => rw_dominio.dsdominio, pr_des_erro => vr_dscritic);
+		gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'iddominioctacosif', pr_tag_cont => rw_dominio.iddominio, pr_des_erro => vr_dscritic);
 
       END IF;
        

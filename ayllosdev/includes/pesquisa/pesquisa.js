@@ -61,6 +61,12 @@ function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodi
 	// Ação utilizada para arrumar a pesquisa utilizando o evento change
 	if ( $('#'+campoCodigo).attr('aux') == $('#'+campoCodigo, '#'+nomeFormulario).val() ) { return false; }
 	
+	if (nomeProcedure == 'BUSCADESCDOMINIOS') {
+
+	    $('#iddominio_' + campoCodigo).val('');
+
+	}
+
 	showMsgAguardo("Aguarde, pesquisando "+tituloPesquisa+" ...");
 	
 	// Se o código estiver vazio, então limpa o campo de descrição
