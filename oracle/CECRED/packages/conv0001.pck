@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 07/06/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 15/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -459,10 +459,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             31/03/2017 - Incluir PREVISC para fazer como faz a SULAMERICA (Lucas Ranghetti #637882)
   --
   --             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-  --			                   (Jonata - RKAM M311).
+  --			             (Jonata - RKAM M311).
+  --             15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes na procedure pc_gerandb
+  --                          (Lucas Ranghetti #622377)
   --
-  --             07/06/2017 - Adicionar UNIFIQUE POMERODE para completar com 22 zeros a esquerda
-  --                          conforme faz para Sulamerica (Lucas Ranghetti #663781)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1611,7 +1611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 07/06/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 29/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1711,9 +1711,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             29/05/2017 - Incluir nova procedure pc_gerandb_car para chamar a pc_gerandb
   --                          (Lucas Ranghetti #681579)
+  --             15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes
+  --                          (Lucas Ranghetti #622377)
   --
-  --             07/06/2017 - Adicionar UNIFIQUE POMERODE para completar com 22 zeros a esquerda
-  --                          conforme faz para Sulamerica (Lucas Ranghetti #663781)
+  --             26/05/2017 - Adicionar tratamento para o convenio AGUAS DE GUARAMIRIM 8 posicoes
+  --                          (Tiago/Fabricio #640336)  
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1838,7 +1840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           -- APENAS FECHAR O CURSOR
           CLOSE cr_tbconv_det_agendamento;
       END IF;
-        
+
       END IF;
 
       vr_auxcdcri := vr_cdcritic;
@@ -1877,9 +1879,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         -- VERIFICAÇÃO DE HISTÓRICOS
         IF pr_cdhistor IN(31,690)  THEN -- BRASIL TELECOM DB. AUTOMATICO/SAMAE SAO BENTO
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999') || RPAD(' ',15,' ');
-        ELSIF pr_cdhistor = 48 THEN -- RECEBIMENTO CASAN AUTOMATICO
+        ELSIF pr_cdhistor IN (48,2284) THEN -- RECEBIMENTO CASAN AUTOMATICO | AGUAS GUARAMIRIM
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999') || RPAD(' ',17,' ');
-        ELSIF pr_cdhistor IN(2039,1517,2025) THEN -- PREVISC, SULAMERICA,UNIFIQUE POMERODE
+        ELSIF pr_cdhistor IN(2039 ,1517) THEN -- PREVISC, SULAMERICA
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999999999999999') ||
                                         RPAD(' ',3,' ');
         ELSIF pr_cdhistor IN(834,901,993,1061,1723) THEN -- TIM Celular,HDI,LIBERTY SEGUROS,PORTO SEGURO,PREVISUL
@@ -1892,6 +1894,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999999') || RPAD(' ',14,' ');
         ELSIF pr_cdhistor = 900 THEN -- Samae Rio Negrinho
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999') || RPAD(' ',19,' ');
+        ELSIF pr_cdhistor = 2291 THEN -- CERSAD
+          vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999999') || RPAD(' ',16,' ');
         ELSIF vr_flgsicre = 0 THEN -- RECEBIMENTO SAMAE BLUMENAU AUTOMATICO
           vr_dstexarq := vr_dstexarq || pr_cdrefere || RPAD(' ',25 - LENGTH(pr_cdrefere),' ');
         END IF;
@@ -1903,7 +1907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_auxcdcri := '05';
         ELSIF vr_cdcritic = '64' THEN -- Cooperado demitido
           vr_auxcdcri := '15'; -- Conta corrente invalida
-		    ELSIF vr_cdcritic = '964' THEN -- Lançamento bloqueado
+		ELSIF vr_cdcritic = '964' THEN -- Lançamento bloqueado
           vr_auxcdcri := '04'; -- Outros
         ELSIF rw_tbconv_det_agendamento.cdlayout = 5 AND (vr_cdcritic = '1001' OR vr_cdcritic = '1002' OR vr_cdcritic = '1003') THEN 
           vr_auxcdcri := '19'; -- Outros
