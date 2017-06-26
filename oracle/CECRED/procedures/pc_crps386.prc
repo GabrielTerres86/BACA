@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 08/12/2016
+   Data    : Abril/2004                    Ultima atualizacao: 26/05/2017
 
    Dados referentes ao programa:
 
@@ -172,6 +172,19 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             
                08/12/2016 - Tratamento para enviar agencia no formato antigo ou novo 
                             dependendo da data da autorizacao (Lucas Ranghetti #549795)  
+                            
+               07/03/2017 - Tratamento para evitar que cancelamentos de convênios antigos
+                            nao desloquem as linhas do arquivo, conforme problema relatado
+                            no chamado 619304. (Kelvin)  
+                            
+               02/05/2017 - Incluir mesmo tratamento que é efetuado para convenios não casan
+                            para a verificacao de autorizacoes antigas e novas 
+                            (Lucas Ranghetti #647814)
+                            
+               26/05/2017 - Incluir tratamento para aguas de guaramirim qto a identificaçao
+                            do cliente no arquivo (Tiago/Fabricio #640336)             
+                            
+               25/05/2017 - Ajuste na geração de mensagens no log (Rodrigo)
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -389,14 +402,6 @@ begin
   vr_concvuni := 0;
   -- Leitura dos convênios ativos para a cooperativa
   for rw_gnconve in cr_gnconve (pr_cdcooper) loop
-    -- Inclui mensagem no log
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratato
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra || ' --> '
-                                               || 'Executando Integracao Arq. Convenio - '
-                                               || to_char(rw_gnconve.cdconven) || '  - '
-                                               || rw_gnconve.nmempres );
     -- Verifica se o convênio possui movimento
     -- Se não tem movimento, não precisa gerar os arquivos
     open cr_crapatr (pr_cdcooper,
@@ -407,11 +412,12 @@ begin
       if cr_crapatr%notfound then
         -- Inclui mensagem no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratato
+                                   pr_ind_tipo_log => 1, -- Mensagem
                                    pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                    || vr_cdprogra || ' --> '
                                                    || 'Sem movtos Convenio - '
-                                                   || to_char(rw_gnconve.cdconven));
+                                                   || to_char(rw_gnconve.cdconven) ||' - '
+                                                   || rw_gnconve.nmempres);
         -- Fecha o cursor e passa para o próximo convênio
         close cr_crapatr;
         continue;
@@ -567,7 +573,14 @@ begin
       IF rw_gnconve.cdconven = 4 AND 
          (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
           vr_nragenci := 1294;
+        -- Para validacao da forma antiga e nova(cooperativa) para a CASAN, vamos
+        -- continuar fazendo da forma antiga. conforme o comentario abaixo no ELSE da CASAN
+        IF (pr_cdcooper = 1 AND rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy') OR
+          pr_cdcooper <> 1 AND rw_crapatr.dtiniatr < to_date('26/07/2016','dd/mm/yyyy')) THEN
         vr_cdcooperativa := '9'||to_char(pr_cdcooper,'fm000');
+      ELSE             
+          vr_cdcooperativa := ' ';
+        END IF;
       ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
@@ -603,7 +616,7 @@ begin
       --
       if rw_gnconve.cdconven in (8, 16, 19, 20, 25, 26, 11, 49) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000')||lpad(' ', 19, ' ');
-      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54) then
+      elsif rw_gnconve.cdconven in (4, 24, 31, 33, 53, 54, 108) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm00000000')||lpad(' ', 17, ' ');
       elsif rw_gnconve.cdconven in (2, 10, 5, 30, 14, 45, 51) then
         vr_cdidenti := to_char(rw_crapatr.cdrefere, 'fm000000000')||lpad(' ', 16, ' ');
@@ -633,7 +646,7 @@ begin
       elsif vr_cdcooperativa <> ' ' then
         vr_dslinreg := 'B'||
                        vr_cdidenti||
-                       to_char(vr_nragenci, 'fm0000')||
+                       to_char(nvl(trim(vr_nragenci),'0000'), 'fm0000')||
                        rpad(vr_cdcooperativa, 4, ' ')||
                        to_char(rw_crapatr.nrdconta, 'fm0000000000')||
                        vr_dtautori||
@@ -844,19 +857,15 @@ begin
       END IF;
       
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
-                                 pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra );
       --
       if rw_gnconve.tpdenvio <> 1 then -- Internet
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_ind_tipo_log => 1, -- Mensagem
                                  pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic || ' '
                                                  || vr_nmarqdat || ' - Debito Automatico - '
-                                                 || rw_gnconve.nmempres || ': _________');
+                                                 || rw_gnconve.nmempres);
       else
         -- Carregar a lista de destinatários na pl/table
         vr_destinatarios := gene0002.fn_quebra_string(pr_string => rw_gnconve.dsenddeb); 
@@ -895,17 +904,14 @@ begin
       end if;
     else -- gnconve.flgcvuni = 1
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- Erro tratato
+                                 pr_ind_tipo_log => 1, -- Mensagem
                                  pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra 
                                                  || ' --> Geracao de arquivo para unificacao - '
                                                  || vr_nmarqdat );
     end if;
     --
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, -- Erro tratato
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra );
+    
     -- Atualizar Arquivo de Controle
     begin
       update gncontr
