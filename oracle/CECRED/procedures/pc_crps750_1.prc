@@ -1196,7 +1196,7 @@ BEGIN
                                  ,rw_craplot_8457.dtmvtolt
                                  ,0
                                  ,rw_crapepr.nrdconta
-                                 ,to_number(to_char(sysdate,'hh24missmi')||to_char(pr_nrparepr))
+                                 ,to_number(to_char(systimestamp,'hh24missFF4')||to_char(pr_nrparepr))
                                  ,rw_craplot_8457.nrseqdig + 1
                                  ,2
                                  ,0
