@@ -26,6 +26,11 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
   --                          desta package.(Carlos Rafael Tanholi).  
   --
+  --             24/08/2016 - (Projeto 343)
+  --                        - Adicionada varíavel para verificação de  versão para 
+  --                          impressão de novos parágros nos contratos de forma condicional; 
+  --                          (Ricardo Linhares)    
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Verifica da TAB016 se o interveniente esta habilitado
@@ -130,7 +135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --
   --             20/01/2016 - Adicionei o parametro pr_idorigem na chamada da procedure pc_imprime_emprestimos_cet
   --                          dentro da procedure pc_imprime_contrato_xml.
-  --                          (Carlos Rafael Tanholi - Projeto 261 Pré-aprovado fase 2)  
+  --                          (Carlos Rafael Tanholi - Projeto 261 Pré-aprovado fase 2)                          
   --
   --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
   --                          desta package.(Carlos Rafael Tanholi).
@@ -246,7 +251,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
                    parte do contrato sendo CONTRATANTE OU INTERVENIENTE ANUENTE,
                    retorna os dados do interveniente e conjuge
 
-       Alteracoes:
+       Alteracoes: 08/05/2017 - Case When para buscar CPF e CNPJ atraves do tamanho da
+								string (Andrey - Mouts).
 
     ............................................................................. */
 
@@ -325,11 +331,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     -- busca nome do avalista
     CURSOR cr_crapavt IS
        SELECT 'Nome Proprietário (interveniente garantidor): '||crapavt.nmdavali nmdavali,
-              DECODE(NVL(crapass.inpessoa,1),1,
+              CASE WHEN crapavt.inpessoa <> 0 THEN /* Se estiver preenchido o inpessoa (1 ou 2) do avalista */
+                  DECODE(NVL(crapavt.inpessoa,1),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
                       ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl)),
-                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2)) dados_pessoais,
+                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2))
+              WHEN LENGTH(crapavt.nrcpfcgc) <= 11 THEN /* se não estiver preenchido (0) e for CPF length <= 11 */
+                  'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
+                      ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+                                  ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+              ELSE /* Se não estiver preenchido e for CNPJ */
+                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2) 
+              END dados_pessoais,
               'Endereço: '||crapavt.dsendres##1||', bairro '||crapavt.dsendres##2||
               ', da cidade de '||crapavt.nmcidade||'/'||crapavt.cdufresd||', CEP '||gene0002.fn_mask_cep(crapavt.nrcepend) dsendere,
               DECODE(TRIM(crapavt.nmconjug),NULL,NULL,'Cônjuge: '||crapavt.nmconjug) ||
@@ -755,6 +769,12 @@ BEGIN
                    26/11/2015 - Adicionado nova validacao de origem 
                                 "MICROCREDITO PNMPO BNDES CECRED" conforme solicitado
                                 no chamado 360165 (Kelvin)             
+                                no chamado 360165 (Kelvin)
+                                
+                    24/08/2016 - (Projeto 343)
+                               - Adicionada varíavel para verificação de  versão para 
+                                 impressão de novos parágros nos contratos de forma condicional; 
+                                 (Ricardo Linhares)             
 
     ............................................................................. */
 
@@ -774,6 +794,7 @@ BEGIN
                crapass.nrcpfcgc,
                crapass.nrdocptl,
                crapass.cdagenci,
+               crawepr.cdagenci cdageepr,
                crapass.nmprimtl,
                crawepr.tpemprst,
                crawepr.flgpagto,
@@ -950,6 +971,9 @@ BEGIN
       vr_dtlibera       DATE;                      --> Data de liberacao do contrato
       vr_cdc            crapprm.dsvlrprm%TYPE;     --> String com valores de linha CDC
       vr_negociavel     VARCHAR2(1);               --> Identificados para impressao dos textos "Para uso da digitalizacao" e "nao negociavel"
+      vr_qrcode         VARCHAR2(100);             --> QR Code para uso da digitalizacao
+      vr_cdtipdoc       INTEGER;                   --> Codigo do tipo de documento
+      vr_dstextab       craptab.dstextab%TYPE;     --> Descritivo da tab
 
       -- Variáveis de portabilidade
       nrcnpjbase_if_origem VARCHAR2(100);
@@ -972,6 +996,9 @@ BEGIN
       vr_nrfonres2      crapavt.nrfonres%TYPE;
       vr_nmconjug2      crapavt.nmconjug%TYPE;
       vr_nrcpfcjg2      VARCHAR2(50);
+
+      -- controle versão
+      vr_nrversao       NUMBER;
 
       -- variaveis de críticas
       vr_tab_erro       GENE0001.typ_tab_erro;
@@ -1000,6 +1027,13 @@ BEGIN
         RAISE vr_exc_saida; -- encerra programa e retorna critica
       END IF;
       CLOSE cr_crawepr;
+
+      -- Verifica a versão do contrato
+      IF rw_crawepr.dtmvtolt < TO_DATE('26/10/2016','DD/MM/RRRR') THEN
+        vr_nrversao := 0;
+      ELSE
+        vr_nrversao := 1;
+      END IF;
 
       -- Abre o cursor com as informacoes do emprestimo
       OPEN cr_crapepr;
@@ -1354,6 +1388,32 @@ BEGIN
         vr_dscritic := 'Conta/Contrato fora do padrao de layout';--monta critica
         RAISE vr_exc_saida; -- encerra programa e retorna critica
       ELSE
+          --> Buscar identificador para digitalização
+          vr_dstextab :=  TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper, 
+                                                     pr_nmsistem => 'CRED'      , 
+                                                     pr_tptabela => 'GENERI'    , 
+                                                     pr_cdempres => 00          , 
+                                                     pr_cdacesso => 'DIGITALIZA', 
+                                                     pr_tpregist => 5);
+
+          IF TRIM(vr_dstextab) IS NULL THEN
+            vr_dscritic := 'Falta registro na Tabela "DIGITALIZA".';
+            RAISE vr_exc_saida;
+          END IF;
+
+          vr_cdtipdoc :=  gene0002.fn_busca_entrada(pr_postext => 3, 
+                                                    pr_dstext  => vr_dstextab, 
+                                                    pr_delimitador => ';');
+
+          -- Gera o QR Code para uso da digitalizacao
+          vr_qrcode   := pr_cdcooper ||'_'||
+                         rw_crawepr.cdageepr ||'_'||
+                         TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
+                         0           ||'_'||
+                         TRIM(gene0002.fn_mask_contrato(pr_nrctremp)) ||'_'||
+                         0           ||'_'||
+                         vr_cdtipdoc;
+
           -- Busca a descricao do titulo e gera o arquivo XML ----------
           vr_digitalizacao := 'Conta: '   ||gene0002.fn_mask_conta(pr_nrdconta)  ||
                               '     Contrato: '||gene0002.fn_mask(pr_nrctremp,'99.999.999')||
@@ -1443,7 +1503,9 @@ BEGIN
           END IF;
           -- gera corpo do xml
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                                 '<versao>'        ||vr_nrversao                             ||'</versao>' ||
                                  '<digitalizacao>' ||vr_digitalizacao                        ||'</digitalizacao>'||
+                                 '<dsqrcode>'      || vr_qrcode                              ||'</dsqrcode>'||
                                  '<titulo>'        ||vr_dstitulo                             || '</titulo>'||
                                  '<nmemitente>'    ||rw_crawepr.nmprimtl                     ||'</nmemitente>'||
                                  '<campo_01>'      ||vr_campo_01                             ||'</campo_01>'||
@@ -1592,6 +1654,8 @@ BEGIN
                                  , pr_flg_impri => 'S'
                                  , pr_nmformul  => ' '
                                  , pr_nrcopias  => 1
+                                 , pr_nrvergrl  => 1
+                                 , pr_parser    => 'R'           --> Seleciona o tipo do parser. "D" para VTD e "R" para Jasper padrão
                                  , pr_des_erro  => vr_dscritic);
 
 
