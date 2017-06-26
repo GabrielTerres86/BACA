@@ -3075,6 +3075,7 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vliofepr AS DECI                                      NO-UNDO.
     DEF VAR aux_dsoperac AS CHAR                                      NO-UNDO.
     DEF VAR aux_flgportb AS LOGI INIT FALSE                           NO-UNDO.
+    DEF VAR aux_flcescrd AS LOGI INIT FALSE                           NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                      NO-UNDO.
     DEF VAR aux_flgativo AS INTE                                      NO-UNDO.
 
@@ -3133,6 +3134,16 @@ PROCEDURE grava_efetivacao_proposta:
 
     IF RETURN-VALUE <> "OK"   THEN
        RETURN "NOK".
+
+    FOR FIRST crapfin FIELDS(tpfinali)
+        WHERE crapfin.cdcooper = par_cdcooper AND
+              crapfin.cdfinemp = crawepr.cdfinemp
+              NO-LOCK: END.
+              
+    IF AVAILABLE crapfin THEN     
+       /* cessao de credito */
+       IF crapfin.tpfinali = 1 THEN
+          ASSIGN aux_flcescrd = TRUE.
 
     EFETIVACAO:
     DO TRANSACTION ON ERROR UNDO, LEAVE:
@@ -3454,7 +3465,9 @@ PROCEDURE grava_efetivacao_proposta:
 
        ASSIGN par_mensagem = ''.
 
-       IF crawepr.dsnivris <> aux_dsnivris THEN
+       IF crawepr.dsnivris <> aux_dsnivris AND           
+          /* nao atualizar o risco no caso de cessao */
+          aux_flcescrd = FALSE THEN 
           DO:
                FIND CURRENT crawepr EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                IF AVAIL crawepr THEN DO:
