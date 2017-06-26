@@ -73,16 +73,7 @@ BEGIN
          AND crappep.cdcooper = pr_cdcooper
          AND crappep.dtvencto <= pr_dtmvtolt
          AND crappep.inprejuz = 0
-        -- and crappep.nrdconta = 13137
-         
          AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan))
-/*         and not exists (select 1 from crapcyc 
-             where crapcyc.cdcooper = crappep.cdcooper
-             and   crapcyc.nrdconta = crappep.nrdconta
-             and   crapcyc.nrctremp = crappep.nrctremp
-             and   crapcyc.cdorigem = 3
-             and   crapcyc.flgehvip = 1
-             and   crapcyc.cdmotcin = 1)*/
        UNION 
        
        SELECT 'TR' idtpprd             
@@ -119,7 +110,6 @@ BEGIN
            AND epr.flgpagto = 0                    --> Débito em conta
            AND epr.tpemprst = 0                    --> Price
            AND epr.dtdpagto <= pr_dtmvtolt --> data corrente
-          -- and epr.nrdconta = 13137
            and prc.flgacordo <> 1
            and prc.flgprocessa = 1
        ORDER
@@ -221,7 +211,7 @@ BEGIN
     vr_fimexc2 date;
     vr_tpott1 number;
     vr_tpott2 number;
-    
+    vr_rowid  rowid;
     --Verificar a data do ultimo processamento
     PROCEDURE pc_verifica_processo IS
 
@@ -520,7 +510,16 @@ BEGIN
                    
            end if;
            
-         
+           if vr_dscritic is not null then
+               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                          ' - '||vr_cdprogra ||' --> '|| vr_dscritic,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
+          
+     
+
+           end if;
       /***************************************/
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
