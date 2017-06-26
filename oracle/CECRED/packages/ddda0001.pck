@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
+CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
 
   /*..............................................................................
   
@@ -83,6 +83,7 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
     ,tppesori VARCHAR2(100)
     ,nrdocori INTEGER
     ,nmdoorig VARCHAR2(100)
+    ,nmfansia VARCHAR2(80)
     ,tppessac VARCHAR2(100)
     ,nrdocsac INTEGER
     ,nmdosaca VARCHAR2(100)
@@ -141,10 +142,13 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
     ,nrdident crapcob.nrdident%TYPE
     ,nratutit crapcob.nratutit%TYPE
     ,nrispbrc crapcob.nrispbrc%TYPE
+    ,cdpartrc crapcob.cdbandoc%TYPE
     ,dhdbaixa VARCHAR2(20)
     ,dtdbaixa VARCHAR2(20)
     ,cdCanPgt INTEGER
-    ,cdmeiopg INTEGER    
+    ,cdmeiopg INTEGER  
+    ,cdcooper crapcop.cdcooper%TYPE  
+    ,vldpagto crapcob.vldpagto%TYPE  
     );
 
   /* Tipo de tabela de Remessa DDA */
@@ -160,7 +164,9 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
   TYPE typ_reg_retorno_dda IS RECORD(
      idtitleg VARCHAR2(100)
     ,idopeleg INTEGER
-    ,insitpro INTEGER);
+    ,insitpro INTEGER
+    ,nrdident NUMBER(19)
+    ,nratutit NUMBER(19));
   /* Tipo de Tabela de retorno DDA */
   TYPE typ_tab_retorno_dda IS TABLE OF typ_reg_retorno_dda INDEX BY PLS_INTEGER;
 
@@ -183,22 +189,78 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
     ,vltitulo crapcob.vltitulo%TYPE);
   /* Tipo de Tabela de titulos a pagar */
   TYPE typ_tab_tt_pagar IS TABLE OF typ_reg_tt_pagar INDEX BY PLS_INTEGER;
+  
+  vr_datetimeformat  CONSTANT VARCHAR2(30) := 'YYYY-MM-DD"T"HH24:MI:SS';
+  vr_dateformat      CONSTANT VARCHAR2(10) := 'YYYY-MM-DD';
+  
+  --> Ler as baixas operacionais
+  CURSOR cr_baixaoperacional( pr_dsxml CLOB) IS
+    WITH DATA AS (SELECT pr_dsxml xml FROM dual)
+    SELECT ROWNUM  idregist
+         , NPCB0001.fn_convert_number(NumIdentcBaixaOperac)  NumIdentcBaixaOperac    
+         , NPCB0001.fn_convert_number(NumRefAtlBaixaOperac)  NumRefAtlBaixaOperac   
+         , NPCB0001.fn_convert_number(NumSeqAtlzBaixaOperac) NumSeqAtlzBaixaOperac 
+         , SitBaixaOperacional                               SitBaixaOperacional 
+         , TO_DATE(DtProcBaixaOperac,vr_dateformat)          DtProcBaixaOperac      
+         , TO_DATE(DtHrProcBaixaOperac,vr_datetimeformat)    DtHrProcBaixaOperac    
+         , TO_DATE(DtHrSitBaixaOperac,vr_datetimeformat)     DtHrSitBaixaOperac     
+         , NPCB0001.fn_convert_number(VlrBaixaOperacTit)     VlrBaixaOperacTit      
+         , NumCodBarrasBaixaOperac                           NumCodBarrasBaixaOperac
+         , TpOpBaixaOperac                                   TpOpBaixaOperac
+      FROM DATA
+         , XMLTABLE(XMLNAMESPACES('http://schemas.xmlsoap.org/soap/envelope/' AS "SOAP-ENV"
+                                 ,'urn:JDNPCWS_RecebimentoPgtoTitIntf-IJDNPCWS_RecebimentoPgtoTit' AS "NS1")
+                                 ,'/SOAP-ENV:Envelope/SOAP-ENV:Body/NS1:ConsultarRetornoBaixaOperacionalResponse/return/RetornoBxOperac/BxOperac'
+                    PASSING XMLTYPE(xml)
+                    COLUMNS NumIdentcBaixaOperac    NUMBER       PATH 'NumIdentcBaixaOperac'
+                          , NumRefAtlBaixaOperac    NUMBER       PATH 'NumRefAtlBaixaOperac'
+                          , NumSeqAtlzBaixaOperac   NUMBER       PATH 'NumSeqAtlzBaixaOperac'
+                          , SitBaixaOperacional     NUMBER       PATH 'SitBaixaOperacional'
+                          , DtProcBaixaOperac       VARCHAR2(10) PATH 'DtProcBaixaOperac'
+                          , DtHrProcBaixaOperac     VARCHAR2(30) PATH 'DtHrProcBaixaOperac'
+                          , DtHrSitBaixaOperac      VARCHAR2(30) PATH 'DtHrSitBaixaOperac'
+                          , VlrBaixaOperacTit       VARCHAR2(20) PATH 'VlrBaixaOperacTit'
+                          , NumCodBarrasBaixaOperac VARCHAR2(44) PATH 'NumCodBarrasBaixaOperac'
+                          , TpOpBaixaOperac         VARCHAR2(1) PATH 'TpOpBaixaOperac');    
 
+  /* Procedure para Atualizar Situacao */
+  PROCEDURE pc_requis_atualizar_situacao(pr_cdlegado IN VARCHAR2 --> Codigo Legado
+                                        ,pr_nrispbif IN VARCHAR2 --> Numero ISPB IF
+                                        ,pr_idtitdda IN VARCHAR2 --> Identificador Titulo DDA
+                                        ,pr_cdsittit IN INTEGER  --> Codigo Situacao Titulo
+                                        ,pr_xml_frag OUT NOCOPY xmltype --> Fragmento do XML de retorno
+                                        ,pr_des_erro OUT VARCHAR2 --> Indicador erro OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2); --> Descricao erro
+                                        
   /* Procedure para atualizar situacao do titulo do sacado eletronico */
-  PROCEDURE pc_atualz_situac_titulo_sacado(pr_cdcooper IN INTEGER --Codigo da Cooperativa
-                                          ,pr_cdagecxa IN INTEGER --Codigo da Agencia
-                                          ,pr_nrdcaixa IN INTEGER --Numero do Caixa
+  PROCEDURE pc_atualz_situac_titulo_sacado(pr_cdcooper IN INTEGER  --Codigo da Cooperativa
+                                          ,pr_cdagecxa IN INTEGER  --Codigo da Agencia
+                                          ,pr_nrdcaixa IN INTEGER  --Numero do Caixa
                                           ,pr_cdopecxa IN VARCHAR2 --Codigo Operador Caixa
                                           ,pr_nmdatela IN VARCHAR2 --Nome da tela
-                                          ,pr_idorigem IN INTEGER --Indicador Origem
-                                          ,pr_nrdconta IN INTEGER --Numero da Conta
-                                          ,pr_idseqttl IN INTEGER --Sequencial do titular
-                                          ,pr_idtitdda IN NUMBER --Indicador Titulo DDA
-                                          ,pr_cdsittit IN INTEGER --Situacao Titulo
-                                          ,pr_flgerlog IN BOOLEAN --Gerar Log
-                                          ,pr_rowidtit IN ROWID DEFAULT NULL   --> Rowid da craptit para gerar a baixa operacional
-                                          ,pr_des_erro OUT VARCHAR2 --Indicador erro OK/NOK
-                                          ,pr_tab_erro OUT GENE0001.typ_tab_erro); --Tabela de memoria de erro
+                                          ,pr_idorigem IN INTEGER  --Indicador Origem
+                                          ,pr_nrdconta IN INTEGER  --Numero da Conta
+                                          ,pr_idseqttl IN INTEGER  --Sequencial do titular
+                                          ,pr_idtitdda IN VARCHAR2   --Indicador Titulo DDA
+                                          ,pr_cdsittit IN INTEGER  --Situacao Titulo
+                                          ,pr_flgerlog IN INTEGER  --Gerar Log(1-Sim 0-Nao)
+                                          ,pr_dtmvtolt IN DATE DEFAULT NULL     --> data de movimento
+                                          ,pr_dscodbar IN VARCHAR2 DEFAULT NULL --> Codigo de barra
+                                          ,pr_cdctrlcs IN VARCHAR2 DEFAULT NULL --> Identificador da consulta
+                                          ,pr_cdcritic OUT INTEGER              --> Codigo da critica
+                                          ,pr_dscritic OUT VARCHAR2);           --> Descrição da critica
+
+  /* Procedure para criar remessa DDA */
+  PROCEDURE pc_cria_remessa_dda(pr_rowid_cob       IN ROWID --ROWID da Cobranca
+                               ,pr_tpoperad        IN VARCHAR2 --Tipo operador   /* (B)aixa (I)nclusao (A)lteracao   */
+                               ,pr_tpdbaixa        IN VARCHAR2 --Tipo de baixa
+                               ,pr_dtvencto        IN DATE --Data vencimento
+                               ,pr_vldescto        IN NUMBER --Valor Desconto
+                               ,pr_vlabatim        IN NUMBER --Valor Abatimento
+                               ,pr_flgdprot        IN BOOLEAN --Flag protecao
+                               ,pr_tab_remessa_dda IN OUT DDDA0001.typ_tab_remessa_dda --Tabela remessa
+                               ,pr_cdcritic        OUT crapcri.cdcritic%TYPE --Codigo de Erro
+                               ,pr_dscritic        OUT VARCHAR2); --Descricao de Erro                                          
 
   /* Procedure para realizar a liquidacao intrabancaria do DDA */
   PROCEDURE pc_liquid_intrabancaria_dda(pr_rowid_cob IN ROWID --ROWID da Cobranca
@@ -212,16 +274,22 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE --Codigo de Erro
                                 ,pr_dscritic OUT VARCHAR2); --Descricao de Erro
 
+  /* Procedure para verificar se foi sacado do DDA via WEB */
+  PROCEDURE pc_verifica_sacado_DDA(pr_tppessoa IN VARCHAR2               -- Tipo de pessoa
+                                  ,pr_nrcpfcgc IN NUMBER                 -- Cpf ou CNPJ
+                                  ,pr_flgsacad OUT INTEGER               -- Indicador se foi sacado
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE -- Codigo de Erro
+                                  ,pr_dscritic OUT VARCHAR2);            -- Descricao de Erro
+  
   /* Procedure para verificar se foi sacado do DDA */
-  PROCEDURE pc_verifica_sacado_DDA(pr_tppessoa IN VARCHAR2
-                                  , -- Tipo de pessoa
-                                   pr_nrcpfcgc IN NUMBER
-                                  , -- Cpf ou CNPJ
-                                   pr_flgsacad OUT INTEGER
-                                  , -- Indicador se foi sacado
-                                   pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                  , -- Codigo de Erro
-                                   pr_dscritic OUT VARCHAR2); -- Descricao de Erro
+  PROCEDURE pc_verifica_sacado_web(pr_tppessoa IN VARCHAR2               -- Tipo de pessoa
+                                  ,pr_nrcpfcgc IN NUMBER                 -- Cpf ou CNPJ
+                                  ,pr_xmllog   IN VARCHAR2              -- XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER          -- Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2             -- Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType    -- Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2             -- Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2);           -- Erros do processo
 
   /* Envio de mensagens atraves do site de chegada de novos titulos DDA */
   PROCEDURE pc_chegada_titulos_DDA(pr_cdcooper IN INTEGER -- Codigo cooperativa
@@ -260,8 +328,10 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
 
   /* Procedure para chamar a rotina pc_retorno_operacao_tit_dda
   em PLSQL através da rotina Progress via DataServer */
-  PROCEDURE pc_retorno_operacao_tit_DDA(pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                       ,pr_dscritic OUT VARCHAR2);
+ PROCEDURE pc_retorno_operacao_tit_DDA(pr_tab_remessa_dda IN DDDA0001.typ_tab_remessa_dda --Remessa dda
+                                      ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda --Retorno dda
+                                      ,pr_cdcritic        OUT crapcri.cdcritic%type --Codigo de Erro
+                                      ,pr_dscritic        OUT VARCHAR2); --Descricao de Erro
 
   /* Procedure para chamar a rotina pc_remessa_titulos_dda
   em PLSQL através da rotina Progress via DataServer */
@@ -327,16 +397,32 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
   /* Procedure para Executar retorno operacao Titulos NPC */
   PROCEDURE pc_retorno_operacao_tit_NPC(pr_cdcritic        OUT crapcri.cdcritic%type --> Codigo de Erro
                                        ,pr_dscritic        OUT VARCHAR2);            --> Descricao de Erro
+
+  /* Procedure para requisitar a consulta de retorno de dados da baixa operacional */
+  PROCEDURE pc_ConsultarBaixaOperacional(pr_cdctrbxo IN VARCHAR2 --> Numero controle participante da baixa operacional
+                                        ,pr_cdcodbar IN VARCHAR2 --> Codigo de barras do titulo
+                                        ,pr_baixaope OUT cr_baixaoperacional%ROWTYPE --> retornar dados da baixa operacional
+                                        ,pr_des_erro OUT VARCHAR2                    --> Indicador erro OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2);                  --> Descricao erro
+
+  /* Procedure para Cancelar Baixa Operacional  - Demetrius Wolff - Mouts */
+  PROCEDURE pc_cancelar_baixa_operac (pr_cdlegado IN VARCHAR2    --> Codigo Legado
+                                     ,pr_idtitdda IN VARCHAR2    --> Identificador Titulo DDA
+                                     ,pr_cdctrlcs IN VARCHAR2    --> Numero controle consulta NPC
+                                     ,pr_cdcodbar IN VARCHAR2    --> Codigo de barras do titulo
+                                     ,pr_des_erro OUT VARCHAR2   --> Indicador erro OK/NOK
+                                     ,pr_dscritic OUT VARCHAR2); --> Descricao erro
+
 END ddda0001;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
+CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : ddda0001
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0079.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 22/02/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 22/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -360,7 +446,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
   --                          como públicas. (Renato Darosci - Supero)
   --
   ---------------------------------------------------------------------------------------------------------------
-
+  
+  
+  
   /* Busca dos dados da cooperativa */
   CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
     SELECT crapcop.cdcooper
@@ -419,6 +507,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
            AND crapmni.cditemmn = nvl(pr_cditemmn, cditemmn);
   rw_crapmni cr_crapmni%ROWTYPE;
 
+  --Selecionar convenio de cobranca
+  CURSOR cr_crapcco(pr_cdcooper IN crapcco.cdcooper%TYPE,
+                    pr_nrconven IN crapcco.nrconven%TYPE) IS
+    SELECT cco.dsorgarq
+      FROM crapcco cco
+     WHERE cco.cdcooper = pr_cdcooper
+       AND cco.nrconven = pr_nrconven;
+  rw_crapcco cr_crapcco%ROWTYPE;
+  
   --Selecionar registro cobranca
   CURSOR cr_crapcob(pr_rowid IN ROWID) IS
     SELECT crapcob.cdcooper
@@ -460,10 +557,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
           ,crapcob.nrispbrc
           ,crapcob.dtdpagto
           ,crapcob.indpagto
-          
+          ,crapcob.inregcip 
+          ,crapcob.cdmensag
+          ,crapcob.dtvctori
+          ,crapcob.incobran
+          ,crapcob.vldpagto
       FROM crapcob
      WHERE crapcob.ROWID = pr_rowid;
   rw_crapcob cr_crapcob%ROWTYPE;
+  
+  --Selecionar registro convenio do cooperado
+  CURSOR cr_crapceb(pr_cdcooper IN crapceb.cdcooper%TYPE,
+                    pr_nrdconta IN crapceb.nrdconta%TYPE,
+                    pr_nrconven IN crapceb.nrconven%TYPE) IS
+    SELECT ceb.qtdecprz 
+      FROM crapceb ceb
+     WHERE ceb.cdcooper = pr_cdcooper
+       AND ceb.nrdconta = pr_nrdconta
+       AND ceb.nrconven = pr_nrconven;
+  rw_crapceb cr_crapceb%ROWTYPE;  
 
   /* Procedure para buscar dados legado */
   PROCEDURE pc_obtem_dados_legado(pr_cdcooper IN INTEGER --Codigo Cooperativa
@@ -752,56 +864,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     END;
   END pc_obtem_fault_packet;
 
-  /* Function para montar a URL do Webservice DDA cfme tipo de Serviço */
-  FUNCTION fn_url_SendSoapDDA(pr_idservic IN PLS_INTEGER) RETURN VARCHAR2 IS --> ID Do serviço
-    ---------------------------------------------------------------------------------------------------------------
-    --
-    --  Programa : fn_url_SendSoapDDA     (Antigo trecho: /usr/local/bin/SendSoapDDA.pl)
-    --  Sistema  : CRED
-    --  Sigla    : CRED
-    --  Autor    : Marcos Martini - Supero Tecnologia
-    --  Data     : Abril/2014.                   Ultima atualizacao: 26/05/2014
-    --
-    -- Dados referentes ao programa:
-    --
-    -- Frequencia: -----
-    -- Objetivo  : Função para Retornar a URL do Werbservice da JD-DDA
-    --
-    -- Alteracoes: 
-    -- 26/05/2014 - Remoção de trecho de montagem de nome de parâmetro conforme base
-    --              pois agora os parâmetros foram unificados (Marcos-Supero)
-    ---------------------------------------------------------------------------------------------------------------
-  BEGIN
-    DECLARE
-      vr_dssrdom VARCHAR2(1000); -- Var para retorno do Service Domain
-      vr_nmservi VARCHAR2(1000); -- Var para armazenagem do serviço
-    BEGIN
-      -- Busca o service domain conforme parâmetro DDA_SERVICE_DOMAIN
-      vr_dssrdom := gene0001.fn_param_sistema('CRED'
-                                             ,0
-                                             ,'DDA_SERVICE_DOMAIN');
-      -- Montagem do serviço conforme passagem
-      IF pr_idservic = 1 THEN
-        vr_nmservi := gene0001.fn_param_sistema('CRED'
-                                               ,0
-                                               ,'IJDDDA_SACAD_ELETR');
-      ELSIF pr_idservic = 2 THEN
-        vr_nmservi := gene0001.fn_param_sistema('CRED'
-                                               ,0
-                                               ,'IJDDDA_SACAD_ELETR_AGREG');
-      ELSIF pr_idservic = 3 THEN
-        vr_nmservi := gene0001.fn_param_sistema('CRED'
-                                               ,0
-                                               ,'IJDDDA_TITULO_SACAD_ELET');
-      END IF;
-      -- Por fim, retorna a URL completa, com o service domaind + nome do serviço
-      return 'http://' || vr_dssrdom || vr_nmservi;
-    EXCEPTION
-      WHEN OTHERS THEN
-        RETURN NULL;
-    END;
-  END fn_url_SendSoapDDA;
-
   --> Rotina para geracao do numero de controle participante 
   FUNCTION fn_gera_ctrlpart (pr_idacao IN VARCHAR2) RETURN VARCHAR2 IS
     vr_ctrlpart VARCHAR2(20);
@@ -816,233 +878,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       RETURN  to_char(SYSTIMESTAMP,'DDMMRRRRHH24MISS') || 'DDA'||pr_idacao; 
   END;
 
-  /* Procedure para Executar Baixa Operacional */
-  PROCEDURE pc_exec_baixa_operacional(pr_cdlegado IN VARCHAR2 --> Codigo Legado
-                                     ,pr_nrispbif IN VARCHAR2 --> Numero ISPB IF
-                                     ,pr_idtitdda IN NUMBER --> Identificador Titulo DDA
-                                     ,pr_rowidtit IN ROWID DEFAULT NULL   --> Rowid da craptit para gerar a baixa operacional
-                                     ,pr_xml_frag OUT NOCOPY xmltype --> Fragmento do XML de retorno
-                                     ,pr_des_erro OUT VARCHAR2 --> Indicador erro OK/NOK
-                                     ,pr_dscritic OUT VARCHAR2) IS --> Descricao erro
-    ---------------------------------------------------------------------------------------------------------------
-    --
-    --  Programa : pc_exec_baixa_operacional     (Antigo: procedures/b1wgen0079.p/baixa-operacional)
-    --  Sistema  : Procedure para Executar Baixa Operacional
-    --  Sigla    : CRED
-    --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Agosto/2013.                   Ultima atualizacao: --/--/----
-    --
-    -- Dados referentes ao programa:
-    --
-    -- Frequencia: -----
-    -- Objetivo  : Procedure para Executar Baixa Operacional
-    --
-    -- Alteracoes: 01/08/2013 - conversão Progress >> PL/SQL (Oracle). Petter - Supero.
-    --
-    ---------------------------------------------------------------------------------------------------------------
-  BEGIN
-    DECLARE
-      vr_xml     XMLType; --> XML de requisição
-      vr_exc_erro EXCEPTION; --> Controle de exceção
-      vr_xml_res XMLType; --> XML de resposta
-      vr_tab_xml gene0007.typ_tab_tagxml; --> PL Table para armazenar conteúdo XML
-      vr_cdcanal_npc INTEGER;                           
-      
-      --> Buscar dados do titulo pago
-      CURSOR cr_craptit IS
-        SELECT tit.nrispbds,
-               tit.cdagenci, 
-               decode(tit.inpessoa,1,'F','J') dsinpess,
-               tit.nrdident,
-               tit.nrcpfcgc,
-               tit.tpbxoper,
-               tit.dscodbar,
-               tit.vldpagto,
-               decode(tit.flgconti,1,'S','N') flgconti,
-               tit.nrdconta,
-               tit.flgpgdda
-          FROM craptit tit
-         WHERE tit.nrdident = pr_idtitdda
-           AND tit.rowid    = pr_rowidtit; 
-      rw_craptit cr_craptit%ROWTYPE;
-    
-      vr_tbcampos      NPCB0003.typ_tab_campos_soap;
-      vr_cdCanPgt      INTEGER;
-      vr_cdmeiopg      INTEGER;
-      
-    
-    BEGIN
-    
-      -- Limpa a tab de campos
-      vr_tbcampos.DELETE();
-      
-      -- Chama rotina para fazer a inclusão das TAGS comuns
-      NPCB0003.pc_xmlsoap_tag_padrao(pr_tbcampos => vr_tbcampos
-                            ,pr_des_erro => pr_des_erro
-                            ,pr_dscritic => pr_dscritic);
-    
-    
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumIdentcTit';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_idtitdda;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'TpBaixaOperac';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.tpbxoper;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'ISPBPartRecbdrBaixaOperac';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_nrispbif;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'TpPessoaPort';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.dsinpess;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'CPFCNPJPort';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.nrcpfcgc;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';          
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'VlrBaixaOperacTit';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.vldpagto;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'float';      
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtHrProcBaixaOperac';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,'RRRRMMDDHH24MISS'); --> AAAAMMDDhhmmss
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';      
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtProcBaixaOperac';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,'RRRRMMDD');
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';      
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCodBarrasBaixaOperac';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.dscodbar;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';      
-      --
-      --> Rotina para retornar o codigo do canal de pagamento do NPC
-      vr_cdcanal_npc := NPCB0001.fn_canal_pag_NPC( pr_cdagenci  => rw_craptit.cdagenci    --> Codigo da agencia
-                                                  ,pr_idtitdda  => rw_craptit.nrdident ); --> Indicador se foi pago pelo sistema de DDDA
-                            
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'CanPgto';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_cdcanal_npc;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';            
-    
-      IF rw_craptit.flgpgdda = 1 THEN
-        vr_cdCanPgt := 8; --> DDA
-      ELSE
-        CASE rw_craptit.cdagenci 
-          WHEN 90 THEN
-            vr_cdCanPgt := 3; --> Internet            
-          WHEN 91 THEN
-            vr_cdCanPgt := 2; --> Terminal de Auto-Atendimento
-          ELSE
-            vr_cdCanPgt := 1; --> Agências- Postos Tradicionai            
-        END CASE;       
-      END IF;
-        
-      IF nvl(rw_craptit.nrdconta,0) > 0 THEN
-        vr_cdmeiopg := 2; --> Débito em conta;
-      ELSE
-        vr_cdmeiopg := 1; --> Espécie
-      END IF;
-    
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'CanPgto';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_cdCanPgt;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';    
-      
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'MeioPgto';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_cdmeiopg;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';    
-    
-      --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'IndrOpContg';
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.flgconti;
-      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';      
-      
-      -- Monta a estrutura principal do SOAP
-      NPCB0003.pc_xmlsoap_monta_requisicao(pr_cdservic => 4 --> RecebimentoPgtoTit
-                                          ,pr_cdmetodo => 4 --> RequisitarBaixa
-                                          ,pr_tbcampos => vr_tbcampos
-                            ,pr_xml      => vr_xml
-                            ,pr_des_erro => pr_des_erro
-                            ,pr_dscritic => pr_dscritic);
-    
-      -- Verifica se ocorreu erro
-      IF pr_des_erro != 'OK' THEN
-        RAISE vr_exc_erro;
-      END IF;
-    
-      -- Enviar requisição para webservice
-      soap0001.pc_cliente_webservice(pr_endpoint    => fn_url_SendSoapDDA(pr_idservic => 3)
-                                    ,pr_acao        => NULL
-                                    ,pr_wallet_path => NULL
-                                    ,pr_wallet_pass => NULL
-                                    ,pr_xml_req     => vr_xml
-                                    ,pr_xml_res     => vr_xml_res
-                                    ,pr_erro        => pr_dscritic);
-    
-      -- Verifica se ocorreu erro
-      IF trim(pr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-    
-      -- Verifica se ocorreu retorno com erro no XML
-      pc_obtem_fault_packet(pr_xml      => vr_xml_res
-                           ,pr_dsderror => ''
-                           ,pr_des_erro => pr_des_erro
-                           ,pr_dscritic => pr_dscritic);
-    
-      -- Verifica o retorno de erro
-      IF pr_des_erro = 'NOK' THEN
-        -- Envio centralizado de log de erro 
-        RAISE vr_exc_erro;
-      ELSE
-        -- Busca valor do nodo dado o xPath
-        gene0007.pc_itera_nodos(pr_xpath      => '//return'
-                               ,pr_xml        => vr_xml_res
-                               ,pr_list_nodos => vr_tab_xml
-                               ,pr_des_erro   => pr_des_erro);
-      
-        -- Verifica se a TAG existe
-        IF vr_tab_xml.count = 0 THEN
-          pr_dscritic := 'Resposta SOAP invalida (Return).';
-          pr_des_erro := 'NOK';
-        
-          RAISE vr_exc_erro;
-        END IF;
-      
-        -- Verifica se retorno conteúdo na TAG
-        IF nvl(vr_tab_xml(0).tag, ' ') = ' ' THEN
-          pr_dscritic := 'Falha na atualizacao da situacao.';
-          pr_des_erro := 'NOK';
-        
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-    
-      -- Retornar fragmento XML como novo documento XML
-      --Valor não utilizado
-      --pr_xml_frag := gene0007.fn_gera_xml_frag(vr_tab_xml(0).tag); 
-    
-      --Retornar OK
-      pr_des_erro := 'OK';
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_des_erro := 'NOK';
-        pr_dscritic := 'Erro na rotina DDDA0001.pc_exec_baixa_operacional. ' ||
-                       pr_dscritic;
-      WHEN OTHERS THEN
-        pr_des_erro := 'NOK';
-        pr_dscritic := 'Erro na rotina DDDA0001.pc_exec_baixa_operacional. ' ||
-                       SQLERRM;
-    END;
-  END pc_exec_baixa_operacional;
-
   /* Procedure para Atualizar Situacao */
   PROCEDURE pc_requis_atualizar_situacao(pr_cdlegado IN VARCHAR2 --> Codigo Legado
                                         ,pr_nrispbif IN VARCHAR2 --> Numero ISPB IF
-                                        ,pr_idtitdda IN NUMBER --> Identificador Titulo DDA
+                                        ,pr_idtitdda IN VARCHAR2 --> Identificador Titulo DDA
                                         ,pr_cdsittit IN INTEGER --> Codigo Situacao Titulo
                                         ,pr_xml_frag OUT NOCOPY xmltype --> Fragmento do XML de retorno
                                         ,pr_des_erro OUT VARCHAR2 --> Indicador erro OK/NOK
@@ -1073,7 +912,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       vr_ctrlpart VARCHAR2(20);
       
       vr_tbcampos      NPCB0003.typ_tab_campos_soap;
-      
     
     BEGIN
     
@@ -1093,13 +931,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_ctrlpart;
       vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
       --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumIdentcNPC';
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumIdentcTit';
       vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_idtitdda;
       vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
       --
-      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'JDNPCSitManutTitSac';
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'JDNPCSitTitIF';
       vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_cdsittit;
       vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
+      
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'JDNPCInfTitIF';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := '';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';      
      
     
       NPCB0003.pc_xmlsoap_monta_requisicao( pr_cdservic => 3  --> TituloPagadorEletronico
@@ -1112,10 +954,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       -- Verifica se ocorreu erro
       IF pr_des_erro = 'NOK' THEN
         RAISE vr_exc_erro;
-      END IF;
+      END IF; 
+    
+      dbms_output.put_line(vr_xml.getclobval());
     
       -- Enviar requisição para webservice
-      soap0001.pc_cliente_webservice(pr_endpoint    => fn_url_SendSoapDDA(pr_idservic => 3)
+      soap0001.pc_cliente_webservice(pr_endpoint    => NPCB0003.fn_url_SendSoapNPC(pr_idservic => 3)
                                     ,pr_acao        => NULL
                                     ,pr_wallet_path => NULL
                                     ,pr_wallet_pass => NULL
@@ -1127,6 +971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      
+      dbms_output.put_line(vr_xml_res.getclobval());
     
       -- Verifica se ocorreu retorno com erro no XML
       pc_obtem_fault_packet(pr_xml      => vr_xml_res
@@ -1290,20 +1136,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
   END pc_grava_linha_log;
 
   /* Procedure para atualizar situacao do titulo do sacado eletronico */
-  PROCEDURE pc_atualz_situac_titulo_sacado(pr_cdcooper IN INTEGER --Codigo da Cooperativa
-                                          ,pr_cdagecxa IN INTEGER --Codigo da Agencia
-                                          ,pr_nrdcaixa IN INTEGER --Numero do Caixa
+  PROCEDURE pc_atualz_situac_titulo_sacado(pr_cdcooper IN INTEGER  --Codigo da Cooperativa
+                                          ,pr_cdagecxa IN INTEGER  --Codigo da Agencia
+                                          ,pr_nrdcaixa IN INTEGER  --Numero do Caixa
                                           ,pr_cdopecxa IN VARCHAR2 --Codigo Operador Caixa
                                           ,pr_nmdatela IN VARCHAR2 --Nome da tela
-                                          ,pr_idorigem IN INTEGER --Indicador Origem
-                                          ,pr_nrdconta IN INTEGER --Numero da Conta
-                                          ,pr_idseqttl IN INTEGER --Sequencial do titular
-                                          ,pr_idtitdda IN NUMBER --Indicador Titulo DDA
-                                          ,pr_cdsittit IN INTEGER --Situacao Titulo
-                                          ,pr_flgerlog IN BOOLEAN --Gerar Log
-                                          ,pr_rowidtit IN ROWID DEFAULT NULL   --> Rowid da craptit para gerar a baixa operacional
-                                          ,pr_des_erro OUT VARCHAR2 --Indicador erro OK/NOK
-                                          ,pr_tab_erro OUT GENE0001.typ_tab_erro) IS --Tabela de memoria de erro
+                                          ,pr_idorigem IN INTEGER  --Indicador Origem
+                                          ,pr_nrdconta IN INTEGER  --Numero da Conta
+                                          ,pr_idseqttl IN INTEGER  --Sequencial do titular
+                                          ,pr_idtitdda IN VARCHAR2 --Indicador Titulo DDA
+                                          ,pr_cdsittit IN INTEGER  --Situacao Titulo
+                                          ,pr_flgerlog IN INTEGER  --Gerar Log(1-Sim 0-Nao)
+                                          ,pr_dtmvtolt IN DATE DEFAULT NULL     --> data de movimento
+                                          ,pr_dscodbar IN VARCHAR2 DEFAULT NULL --> Codigo de barra
+                                          ,pr_cdctrlcs IN VARCHAR2 DEFAULT NULL --> Identificador da consulta
+                                          ,pr_cdcritic OUT INTEGER              --> Codigo da critica
+                                          ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da critica
     ---------------------------------------------------------------------------------------------------------------
     --
     --  Programa : pc_atualz_situac_titulo_sacado    Antigo: procedures/b1wgen0079.p/atualizar-situacao-titulo-sacado
@@ -1332,6 +1180,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
+    
+      --> Buscar dados da consulta
+      CURSOR cr_cons_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE ) IS
+        SELECT con.dsxml
+          FROM tbcobran_consulta_titulo con
+         WHERE con.cdctrlcs = pr_cdctrlcs;
+         
+      rw_cons_titulo cr_cons_titulo%ROWTYPE;
+      vr_tituloCIP   NPCB0001.typ_reg_TituloCIP;
+      
       --Variaveis Locais
       vr_indtrans INTEGER;
       vr_nrdrowid ROWID;
@@ -1355,154 +1213,189 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       vr_dscritic VARCHAR2(4000);
       vr_cderrlog crapcri.cdcritic%TYPE;
       vr_dserrlog VARCHAR2(4000);
+      
+      vr_idtitdda NUMBER;
     
-      --Tabela de memoria de erro
-      vr_tab_erro GENE0001.typ_tab_erro;
       --Variaveis Excecao
       vr_exc_saida EXCEPTION;
       vr_exc_erro  EXCEPTION;
+      
     BEGIN
-      --Inicializar variaveis retorno
-      pr_tab_erro.DELETE;
+      
+      vr_idtitdda := TRIM(pr_idtitdda);      
+      
       --Gerar log erro
-      IF pr_flgerlog THEN
+      IF nvl(pr_flgerlog,0) = 1 THEN
         --Descricao Origem
         vr_dsorigem := GENE0001.vr_vet_des_origens(pr_idorigem);
         --Descricao transacao
         vr_dstransa := 'DDA - Atualizar Situacao do Titulo do Pagador';
       END IF;
+      
       --Inicializar variaveis
       vr_cdcritic := 0;
       vr_dscritic := '';
       vr_cdderror := NULL;
       vr_dsderror := NULL;
-      BEGIN
-        --Obter dados legado
-        DDDA0001.pc_obtem_dados_legado(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                                      ,pr_nrdconta => pr_nrdconta --Numero da Conta
-                                      ,pr_idseqttl => pr_idseqttl --Identificador sequencial titular
-                                      ,pr_cdagecxa => pr_cdagecxa --Codigo Agencia Caixa
-                                      ,pr_nrdcaixa => pr_nrdcaixa --Numero do Caixa
-                                       --Parametros saida
-                                      ,pr_nmrescop => rw_crapcop.nmrescop --Nome resumido cooperativa
-                                      ,pr_cdlegado => vr_cdlegado --Codigo Legado
-                                      ,pr_nmarqlog => vr_nmarqlog --Nome Arquivo Log
-                                      ,pr_nmdirlog => vr_nmdirlog --Nome Diretorio Log
-                                      ,pr_msgenvio => vr_msgenvio --Mensagem envio
-                                      ,pr_msgreceb => vr_msgreceb --Mensagem Recebimento
-                                      ,pr_nrispbif => vr_nrispbif --Numero ispb IF
-                                      ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
-                                      ,pr_dscritic => vr_des_erro); --Descricao erro
-        --Situacao titulo invalida
-        IF pr_cdsittit < 1
-           OR pr_cdsittit > 4 THEN
-          --Descricao da Critica
-          vr_dscritic := 'Situacao do titulo invalida.';
-          --Sair
-          RAISE vr_exc_saida;
-        END IF;
       
-        --Atualizar Situação
-        DDDA0001.pc_requis_atualizar_situacao(pr_cdlegado => vr_cdlegado --Codigo Legado
-                                             ,pr_nrispbif => vr_nrispbif --Numero ISPB IF
-                                             ,pr_idtitdda => pr_idtitdda --Identificador Titulo DDA
-                                             ,pr_cdsittit => pr_cdsittit --Codigo Situacao Titulo
-                                             ,pr_xml_frag => vr_xml --Documento XML do fragmento do retorno SOAP
-                                             ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
-                                             ,pr_dscritic => vr_des_erro); --Descricao erro
+      --Situacao titulo invalida
+      IF pr_cdsittit < 1
+         OR pr_cdsittit > 4 THEN
+        --Descricao da Critica
+        vr_dscritic := 'Situacao do titulo invalida.';
+        --Sair
+        RAISE vr_exc_saida;
+      END IF;
       
-      EXCEPTION
-        WHEN vr_exc_saida THEN
-          NULL;
-      END;
-    
-      --Se ocorreu eror
-      IF vr_dsreturn = 'NOK' THEN
-        IF vr_cdcritic = 0
-           AND vr_dscritic IS NULL THEN
-          vr_dscritic := 'Falha DDA: ' || substr(vr_des_erro, 1, 900);
-          -- Verificar a mensagem de erro que retornou
-          IF vr_des_erro NOT LIKE
-             'Falha na execucao do metodo DDA SOAP-ENV:-722%' THEN
-            --Se não for a crítica 722, geramos a informação no log
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => to_char(sysdate
-                                                                 ,'hh24:mi:ss') ||
-                                                          ' - ' ||
-                                                          'DDDA0001' ||
-                                                          ' --> ' ||
-                                                          vr_des_erro);
-          END IF;
-        END IF;
-      
-        --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagecxa
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_nrsequen => 1
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => vr_tab_erro);
-      
-        --verificar qual mensagem sera logada
-        IF vr_cdderror IS NOT NULL THEN
-          vr_cderrlog := vr_cdderror;
-          vr_dserrlog := vr_dsderror;
+      IF TRIM(pr_cdctrlcs) IS NOT NULL THEN
+            
+        --> Buscar dados da consulta
+        OPEN cr_cons_titulo (pr_cdctrlcs => pr_cdctrlcs);
+        FETCH cr_cons_titulo INTO rw_cons_titulo;
+            
+        IF cr_cons_titulo%NOTFOUND THEN
+          CLOSE cr_cons_titulo;
+          vr_dscritic := 'Não foi possivel localizar consulta NPC '||pr_cdctrlcs;    
+          RAISE vr_exc_saida;  
         ELSE
-          vr_cderrlog := vr_cdcritic;
-          vr_dserrlog := vr_dscritic;
+          CLOSE cr_cons_titulo;
         END IF;
+          
+        --> Rotina para retornar dados do XML para temptable
+        NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
+                                          ,pr_tbtitulo => vr_tituloCIP
+                                          ,pr_des_erro => vr_des_erro
+                                          ,pr_dscritic => vr_dscritic);
+            
+        -- Se houve retorno de erro
+        IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
+          RAISE vr_exc_saida;       
+        END IF; 
+            
+        vr_idtitdda := vr_tituloCIP.NumIdentcTit;
+       
+      END IF;
       
-        --Limpar variaveis erro
-        vr_cdcritic := NULL;
-        vr_dscritic := NULL;
+      --> Apenas atualizar situação para titulos DDAs submetidas pela tela DDA
+      --> pois se tratam de titulo definido como o cooperado como pagador eletronico
+      --> os demais não econtrara o titulo para o ISPB da coop
+      IF nvl(TRIM(pr_idtitdda),0) <> 0 THEN
+      
+        BEGIN
+          --Obter dados legado
+          DDDA0001.pc_obtem_dados_legado(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+                                        ,pr_nrdconta => pr_nrdconta --Numero da Conta
+                                        ,pr_idseqttl => pr_idseqttl --Identificador sequencial titular
+                                        ,pr_cdagecxa => pr_cdagecxa --Codigo Agencia Caixa
+                                        ,pr_nrdcaixa => pr_nrdcaixa --Numero do Caixa
+                                         --Parametros saida
+                                        ,pr_nmrescop => rw_crapcop.nmrescop --Nome resumido cooperativa
+                                        ,pr_cdlegado => vr_cdlegado --Codigo Legado
+                                        ,pr_nmarqlog => vr_nmarqlog --Nome Arquivo Log
+                                        ,pr_nmdirlog => vr_nmdirlog --Nome Diretorio Log
+                                        ,pr_msgenvio => vr_msgenvio --Mensagem envio
+                                        ,pr_msgreceb => vr_msgreceb --Mensagem Recebimento
+                                        ,pr_nrispbif => vr_nrispbif --Numero ispb IF
+                                        ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
+                                        ,pr_dscritic => vr_des_erro); --Descricao erro          
         
-        --Adicionar o idtitdda na mensagem do log
-        vr_dserrlog := vr_dserrlog || ' - ID Titulo DDA: ' || to_char(pr_idtitdda);
+          --Atualizar Situação
+          DDDA0001.pc_requis_atualizar_situacao(pr_cdlegado => vr_cdlegado --Codigo Legado
+                                               ,pr_nrispbif => vr_nrispbif --Numero ISPB IF
+                                               ,pr_idtitdda => vr_idtitdda --Identificador Titulo DDA
+                                               ,pr_cdsittit => pr_cdsittit --Codigo Situacao Titulo
+                                               ,pr_xml_frag => vr_xml --Documento XML do fragmento do retorno SOAP
+                                               ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
+                                               ,pr_dscritic => vr_des_erro); --Descricao erro
         
-        --Gravar Linha Log
-        DDDA0001.pc_grava_linha_log(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                                   ,pr_nrdconta => pr_nrdconta --Numero da Conta
-                                   ,pr_nmmetodo => 'AtualizarSituacao' --Nome metodo
-                                   ,pr_cdderror => vr_cderrlog --Codigo erro
-                                   ,pr_dsderror => vr_dserrlog --Descricao erro
-                                   ,pr_nmarqlog => vr_nmarqlog --Nome arquivo log
-                                   ,pr_nmdirlog => vr_nmdirlog --Diretorio do log
-                                   ,pr_cdcritic => vr_cdcritic --Codigo do erro
-                                   ,pr_dscritic => vr_dscritic); --Mensagem de erro
-        --Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL
-           OR vr_dscritic IS NOT NULL THEN
-          --Retornar erro
+        EXCEPTION
+          WHEN vr_exc_saida THEN
+            NULL;
+        END;
+      
+        --Se ocorreu eror
+        IF vr_dsreturn = 'NOK' THEN
+          IF vr_cdcritic = 0
+             AND vr_dscritic IS NULL THEN
+            vr_dscritic := 'Falha DDA: ' || substr(vr_des_erro, 1, 900);
+            -- Verificar a mensagem de erro que retornou
+            IF vr_des_erro NOT LIKE
+               'Falha na execucao do metodo DDA SOAP-ENV:-722%' THEN
+              --Se não for a crítica 722, geramos a informação no log
+              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratato
+                                        ,pr_des_log      => to_char(sysdate
+                                                                   ,'hh24:mi:ss') ||
+                                                            ' - ' ||
+                                                            'DDDA0001' ||
+                                                            ' --> ' ||
+                                                            vr_des_erro);
+            END IF;
+          ELSIF nvl(vr_cdcritic,0) <> 0 AND 
+                vr_dscritic IS NULL THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                
+          END IF;
+          
+        
+          --verificar qual mensagem sera logada
+          IF vr_cdderror IS NOT NULL THEN
+            vr_cderrlog := vr_cdderror;
+            vr_dserrlog := vr_dsderror;
+          ELSE
+            vr_cderrlog := vr_cdcritic;
+            vr_dserrlog := vr_dscritic;
+          END IF;
+        
+          --Limpar variaveis erro
+          vr_cdcritic := NULL;
+          vr_dscritic := NULL;
+          
+          --Adicionar o idtitdda na mensagem do log
+          vr_dserrlog := vr_dserrlog || ' - ID Titulo DDA: ' || to_char(vr_idtitdda);
+          
+          --Gravar Linha Log
+          DDDA0001.pc_grava_linha_log(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+                                     ,pr_nrdconta => pr_nrdconta --Numero da Conta
+                                     ,pr_nmmetodo => 'AtualizarSituacao' --Nome metodo
+                                     ,pr_cdderror => vr_cderrlog --Codigo erro
+                                     ,pr_dsderror => vr_dserrlog --Descricao erro
+                                     ,pr_nmarqlog => vr_nmarqlog --Nome arquivo log
+                                     ,pr_nmdirlog => vr_nmdirlog --Diretorio do log
+                                     ,pr_cdcritic => vr_cdcritic --Codigo do erro
+                                     ,pr_dscritic => vr_dscritic); --Mensagem de erro
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL
+             OR vr_dscritic IS NOT NULL THEN
+            --Retornar erro
+            RAISE vr_exc_erro;
+          END IF;
+        
           RAISE vr_exc_erro;
         END IF;
-      
-        RAISE vr_exc_erro;
-      END IF;
-      --Se for para gerar log erro
-      IF pr_flgerlog THEN
-        --Transformar boolean em number
-        IF vr_dsreturn = 'OK' THEN
-          vr_indtrans := 1;
-        ELSE
-          vr_indtrans := 0;
+        --Se for para gerar log erro
+        IF nvl(pr_flgerlog,0) = 1 THEN
+          --Transformar boolean em number
+          IF vr_dsreturn = 'OK' THEN
+            vr_indtrans := 1;
+          ELSE
+            vr_indtrans := 0;
+          END IF;
+          -- Chamar geração de LOG
+          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdopecxa
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => vr_dsorigem
+                              ,pr_dstransa => vr_dstransa
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => vr_indtrans
+                              ,pr_hrtransa => GENE0002.fn_busca_time
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
         END IF;
-        -- Chamar geração de LOG
-        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => pr_cdopecxa
-                            ,pr_dscritic => vr_dscritic
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => vr_dstransa
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => vr_indtrans
-                            ,pr_hrtransa => GENE0002.fn_busca_time
-                            ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => pr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
       END IF;
-    
       --Inicializar variaveis
       vr_cdcritic := 0;
       vr_dscritic := '';
@@ -1512,6 +1405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       /* se título pago, realizar baixa operacional */
       IF pr_cdsittit IN (3, 4) THEN
         BEGIN
+          
           --Dado retorno
           vr_dsreturn := 'NOK';
           --Obter dados legado
@@ -1544,11 +1438,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             RAISE vr_exc_saida;
           END IF;
           --Executar Baixa Operacional
-          DDDA0001.pc_exec_baixa_operacional(pr_cdlegado => vr_cdlegado --Codigo Legado
-                                            ,pr_nrispbif => vr_nrispbif --Numero ISPB IF
-                                            ,pr_idtitdda => pr_idtitdda --Identificador Titulo DDA
-                                            ,pr_rowidtit => pr_rowidtit --> Rowid do titulo para baixa operacional
-                                            ,pr_xml_frag => vr_xml --Documento XML referente ao fragmento do XML de resposta do SOAP
+          NPCB0003.pc_wscip_requisitar_baixa(pr_cdcooper => pr_cdcooper  --> Codigo da cooperativa
+                                            ,pr_dtmvtolt => pr_dtmvtolt  --> Data de movimento
+                                            ,pr_dscodbar => pr_dscodbar  --> Codigo de barra
+                                            ,pr_cdctrlcs => pr_cdctrlcs  --> Identificador da consulta
+                                            ,pr_idtitdda => vr_idtitdda  --> Identificador Titulo DDA
+                                            ,pr_tituloCIP => vr_tituloCIP 
+                                            ,pr_flmobile => 0
+                                            --,pr_xml_frag => vr_xml --Documento XML referente ao fragmento do XML de resposta do SOAP
                                             ,pr_des_erro => vr_dsreturn --Indicador erro OK/NOK
                                             ,pr_dscritic => vr_des_erro); --Descricao erro
         
@@ -1556,21 +1453,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
           WHEN vr_exc_saida THEN
             NULL;
         END;
+
         --Se ocorreu erro na baixa
         IF vr_dsreturn = 'NOK' THEN
           --Se nao ocorreu critica
           IF vr_cdcritic = 0
              AND vr_dscritic IS NULL THEN
             vr_dscritic := 'Falha DDA: ' || substr(vr_des_erro, 1, 900);
-          END IF;
-          --Gerar erro
-          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagecxa
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_nrsequen => 1
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => vr_tab_erro);
+          ELSIF nvl(vr_cdcritic,0) <> 0 AND 
+                vr_dscritic IS NULL THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          END IF;          
         
           --verificar qual mensagem sera logada
           IF vr_cdderror IS NOT NULL THEN
@@ -1601,7 +1494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
           END IF;
         END IF;
         --Se for para gerar log erro
-        IF pr_flgerlog THEN
+        IF nvl(pr_flgerlog,0) = 1 THEN
           --Transformar boolean em number
           IF vr_dsreturn = 'OK' THEN
             vr_indtrans := 1;
@@ -1623,22 +1516,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;
       END IF;
-      --Retornar OK/NOK
-      pr_des_erro := vr_dsreturn;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_des_erro := 'NOK';
-      
-        pr_tab_erro := vr_tab_erro;
-      
-        IF vr_dscritic is not null THEN
-          pr_tab_erro(pr_tab_erro.count + 1).cdcritic := 0;
-          pr_tab_erro(pr_tab_erro.count).dscritic := vr_dscritic;
-        END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
       WHEN OTHERS THEN
-        pr_tab_erro(pr_tab_erro.count + 1).cdcritic := 0;
-        pr_tab_erro(pr_tab_erro.count).dscritic := 'Erro na rotina DDDA0001.pc_atualz_situac_titulo_sacado. ' ||
-                                                   SQLERRM;
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina DDDA0001.pc_atualz_situac_titulo_sacado. ' ||SQLERRM;
+      
     END;
   END pc_atualz_situac_titulo_sacado;
 
@@ -1714,7 +1601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                                ,pr_vldescto        IN NUMBER --Valor Desconto
                                ,pr_vlabatim        IN NUMBER --Valor Abatimento
                                ,pr_flgdprot        IN BOOLEAN --Flag protecao
-                               ,pr_tab_remessa_dda OUT DDDA0001.typ_tab_remessa_dda --Tabela remessa
+                               ,pr_tab_remessa_dda IN OUT DDDA0001.typ_tab_remessa_dda --Tabela remessa
                                ,pr_cdcritic        OUT crapcri.cdcritic%TYPE --Codigo de Erro
                                ,pr_dscritic        OUT VARCHAR2) IS --Descricao de Erro
     ---------------------------------------------------------------------------------------------------------------
@@ -1768,19 +1655,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                AND crapttl.idseqttl = decode(pr_idseqttl,0,1,pr_idseqttl);
       rw_crapttl cr_crapttl%ROWTYPE;
       
+      --> buscar dados pessoa juridica
+      CURSOR cr_crapjur(pr_cdcooper IN crapjur.cdcooper%TYPE
+                       ,pr_nrdconta IN crapjur.nrdconta%TYPE) IS
+        SELECT jur.nmfansia 
+          FROM crapjur jur
+         WHERE jur.cdcooper = pr_cdcooper
+           AND jur.nrdconta = pr_nrdconta;
+      rw_crapjur cr_crapjur%ROWTYPE;
+      
       --> buscar titulo
       CURSOR cr_craptit (pr_cdcooper  craptit.cdcooper%TYPE,
                          pr_dtmvtolt  craptit.dtmvtolt%TYPE,
                          pr_dscodbar  craptit.dscodbar%TYPE ) IS
         SELECT tit.cdagenci,
                tit.nrdconta,
-               tit.flgpgdda
+               tit.flgpgdda,
+               tit.vldpagto
           FROM craptit tit
          WHERE tit.cdcooper = pr_cdcooper
            AND tit.dtmvtolt = pr_dtmvtolt
            AND tit.dscodbar = pr_dscodbar;
       rw_craptit cr_craptit%ROWTYPE;
       
+      -- Buscar praça não executante de protesto
+      CURSOR cr_crappnp(pr_nmextcid  crappnp.nmextcid%TYPE
+                       ,pr_cduflogr  crappnp.cduflogr%TYPE) IS
+        SELECT 1
+          FROM crappnp  pnp
+         WHERE pnp.nmextcid = pr_nmextcid  
+           AND pnp.cduflogr = pr_cduflogr;
+                       
+      --Selecionar informacoes dos bancos
+      CURSOR cr_crapban_ispb (pr_nrispbif IN crapban.nrispbif%type) IS
+        SELECT crapban.cdbccxlt
+          FROM crapban
+         WHERE crapban.nrispbif = pr_nrispbif;
+      rw_crapban_ispb cr_crapban_ispb%ROWTYPE;           
+                       
       
       --Variaveis Locais
       vr_index    INTEGER;
@@ -1788,9 +1700,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       vr_dsdjuros VARCHAR2(100);
       vr_cddespec VARCHAR2(100);
       vr_nmprimtl crapass.nmprimtl%type;
+      vr_nmfansia crapjur.nmfansia%TYPE;
       vr_dsdinstr VARCHAR2(100);
       vr_cdCanPgt INTEGER;
       vr_cdmeiopg INTEGER;
+      vr_vlrbaixa crapcob.vldpagto%TYPE;
+      vr_flgdprot   crapcob.flgdprot%TYPE;
+      vr_qtdiaprt   crapcob.qtdiaprt%TYPE;
+      vr_indiaprt   crapcob.indiaprt%TYPE;
+      vr_inauxreg   NUMBER;
+      vr_dsmsglog   crapcol.dslogtit%TYPE;
       
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1801,9 +1720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       --Inicializar variaveis retorno
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
-      --Limpar tabela memoria
-      pr_tab_remessa_dda.DELETE;
-    
+      
       --Selecionar registro cobranca
       OPEN cr_crapcob(pr_rowid => pr_rowid_cob);
       --Posicionar no proximo registro
@@ -1818,6 +1735,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapcob;
+      
+      --Selecionar registro cobranca
+      OPEN cr_crapcco(pr_cdcooper => rw_crapcob.cdcooper,
+                      pr_nrconven => rw_crapcob.nrcnvcob);
+                      
+      --Posicionar no proximo registro
+      FETCH cr_crapcco
+       INTO rw_crapcco;
+      --Se nao encontrar
+      IF cr_crapcco%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcco;
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcco;                  
+      
+      --Selecionar registro convenio de cobranca do cooperado
+      OPEN cr_crapceb(pr_cdcooper => rw_crapcob.cdcooper,
+                      pr_nrdconta => rw_crapcob.nrdconta,
+                      pr_nrconven => rw_crapcob.nrcnvcob);                      
+      --Posicionar no proximo registro
+      FETCH cr_crapceb
+       INTO rw_crapceb;
+      --Se nao encontrar
+      IF cr_crapceb%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapceb;
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapceb;                              
     
       --Verificar se a cooperativa existe
       OPEN cr_crapcop(pr_cdcooper => rw_crapcob.cdcooper);
@@ -1854,6 +1805,115 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       --Fechar Cursor
       CLOSE cr_crapsab;
     
+      IF pr_tpoperad = 'I' THEN    
+      
+        CASE nvl(rw_crapcob.inpagdiv,0)
+          WHEN 0 THEN vr_dsmsglog := 'Nao autoriza pagto divergente';
+          WHEN 1 THEN vr_dsmsglog := 'Autoriza pagto divergente - Minimo R$ ' || trim(to_char(rw_crapcob.vlminimo,'fm999g999g999d90'));
+          WHEN 2 THEN vr_dsmsglog := 'Autoriza pagto divergente - Qualquer valor';
+        END CASE;
+         
+        -- Registro autorizacao de pagto divergente no log do boleto
+        BEGIN
+                      
+          INSERT INTO crapcol(cdcooper
+                             ,nrdconta
+                             ,nrdocmto
+                             ,nrcnvcob
+                             ,dslogtit
+                             ,cdoperad
+                             ,dtaltera
+                             ,hrtransa)
+                       VALUES(rw_crapcob.cdcooper     -- cdcooper
+                             ,rw_crapcob.nrdconta     -- nrdconta
+                             ,rw_crapcob.nrdocmto     -- nrdocmto
+                             ,rw_crapcob.nrcnvcob     -- nrcnvcob
+                             ,vr_dsmsglog
+                             ,'1'                        -- cdoperad
+                             ,TRUNC(SYSDATE)             -- dtaltera
+                             ,GENE0002.fn_busca_time()); -- hrtransa
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := 'PC_CRIA_REMESSA_DDA: Erro ao inserir CRAPCOL: '||SQLERRM;
+            RETURN;
+        END;
+      
+        -- Inicializa
+        vr_flgdprot := NULL;
+        vr_qtdiaprt := NULL;
+        vr_indiaprt := NULL;
+        
+      
+        -- Buscar praça não executante de protesto
+        OPEN  cr_crappnp(rw_crapsab.nmcidsac
+                        ,rw_crapsab.cdufsaca);
+        FETCH cr_crappnp INTO vr_inauxreg;
+
+        -- Se encontrar registro    
+        IF cr_crappnp%FOUND THEN
+          -- Atribuir o valor as variáveis para atualizar os campos no update
+          vr_flgdprot := 0; -- FALSE
+          vr_qtdiaprt := 0;
+          vr_indiaprt := 3;
+        
+          -- Inserir o cadastro de log do boleto
+          BEGIN
+            INSERT INTO crapcol(cdcooper
+                               ,nrdconta
+                               ,nrdocmto
+                               ,nrcnvcob
+                               ,dslogtit
+                               ,cdoperad
+                               ,dtaltera
+                               ,hrtransa)
+                         VALUES(rw_crapcob.cdcooper     -- cdcooper
+                               ,rw_crapcob.nrdconta     -- nrdconta
+                               ,rw_crapcob.nrdocmto     -- nrdocmto
+                               ,rw_crapcob.nrcnvcob     -- nrcnvcob
+                               ,'Obs.: Praca nao executante de protesto' -- dslogtit
+                               ,'1'                        -- cdoperad
+                               ,TRUNC(SYSDATE)             -- dtaltera
+                               ,GENE0002.fn_busca_time()); -- hrtransa
+          EXCEPTION
+            WHEN OTHERS THEN
+              pr_dscritic := 'PC_CRIA_TITULO: Erro ao inserir CRAPCOL: '||SQLERRM;
+              RETURN;
+          END;
+        END IF;
+        
+        -- Atualizar informações de cobrança
+        BEGIN
+          UPDATE crapcob cob
+             SET cob.flgdprot = NVL(vr_flgdprot,cob.flgdprot)
+               , cob.qtdiaprt = NVL(vr_qtdiaprt,cob.qtdiaprt)
+               , cob.indiaprt = NVL(vr_indiaprt,cob.indiaprt)
+               , cob.idtitleg = seqcob_idtitleg.NEXTVAL
+           WHERE ROWID = pr_rowid_cob
+           RETURNING cob.idtitleg 
+                INTO rw_crapcob.idtitleg;
+               
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := 'PC_CRIA_REMESSA_DDA: Erro ao atualizar CRAPCOB: '||SQLERRM;
+            RETURN;
+        END;
+      ELSIF pr_tpoperad IN ('A','B') THEN        
+        -- Atualizar informações de cobrança
+        BEGIN
+          UPDATE crapcob cob
+             SET cob.ininscip = 1
+               , cob.dhinscip = SYSDATE
+           WHERE ROWID = pr_rowid_cob
+           RETURNING cob.idtitleg 
+                INTO rw_crapcob.idtitleg;               
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := 'PC_CRIA_REMESSA_DDA: Erro ao atualizar CRAPCOB: '||SQLERRM;
+            RETURN;
+        END;
+      
+      END IF;       
+    
       --Selecionar associado
       OPEN cr_crapass(pr_cdcooper => rw_crapcob.cdcooper
                      ,pr_nrdconta => rw_crapcob.nrdconta);
@@ -1875,6 +1935,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       IF rw_crapass.inpessoa > 1 THEN
         --Nome titular
         vr_nmprimtl := REPLACE(rw_crapass.nmprimtl, Chr(38), '%26');
+        
+        OPEN cr_crapjur(pr_cdcooper => rw_crapcob.cdcooper
+                       ,pr_nrdconta => rw_crapcob.nrdconta);
+        FETCH cr_crapjur
+         INTO rw_crapjur;        
+        
+        IF cr_crapjur%NOTFOUND THEN
+           vr_nmfansia := substr(vr_nmprimtl,1,80);
+        ELSE
+           vr_nmfansia := nvl(trim(rw_crapjur.nmfansia),vr_nmprimtl);
+        END IF;
+        
+        CLOSE cr_crapjur;
+        
       ELSIF rw_crapass.inpessoa = 1 THEN
         --Selecionar titular
         OPEN cr_crapttl(pr_cdcooper => rw_crapcob.cdcooper
@@ -1905,7 +1979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                                     ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenvio Cobranca
                                     ,pr_nrnosnum => rw_crapcob.nrnosnum --Nosso Numero
                                     ,pr_cdcartei => rw_crapcob.cdcartei --Codigo Carteira
-                                    ,pr_dtvencto => pr_dtvencto
+                                    ,pr_dtvencto => nvl(rw_crapcob.dtvctori, rw_crapcob.dtvencto) 
                                     ,pr_cdbarras => vr_cdbarras);
       --Tipo Juros Mora
       CASE rw_crapcob.tpjurmor
@@ -1962,18 +2036,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       vr_dsdinstr := substr(rw_crapcob.dsdinstr, 1, 100);
     
       IF NOT pr_flgdprot THEN
-        vr_dsdinstr := REPLACE(vr_dsdinstr
-                              ,'** Servico de protesto sera efetuado pelo Banco do Brasil **'
+        vr_dsdinstr := REPLACE(upper(vr_dsdinstr)
+                              ,upper('** Servico de protesto sera efetuado pelo Banco do Brasil **')
                               ,'');
       END IF;
       
       vr_cdCanPgt := NULL;
       vr_cdmeiopg := NULL;
+      vr_vlrbaixa := NULL;
       
       --> Se for operacao de baixa
       IF pr_tpoperad = 'B' AND 
          --> e foi pago na cooperativa(baixa intrabancaria)
-         rw_crapcob.indpagto <> 0 THEN
+         rw_crapcob.indpagto <> 0 AND 
+         rw_crapcob.incobran = 5 THEN 
          
         rw_craptit := NULL;
         --> buscar titulo
@@ -2004,6 +2080,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             vr_cdmeiopg := 1; --> Espécie
           END IF;
         
+          vr_vlrbaixa := rw_craptit.vldpagto;
+        
         END IF;
         CLOSE cr_craptit;
         
@@ -2013,6 +2091,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       --Pegar proximo indice remessa
       vr_index := pr_tab_remessa_dda.Count + 1;
       --Criar remessa
+      pr_tab_remessa_dda(vr_index).cdcooper := rw_crapcob.cdcooper;
+      pr_tab_remessa_dda(vr_index).rowidcob := pr_rowid_cob;
       pr_tab_remessa_dda(vr_index).cdlegado := 'LEG';
       pr_tab_remessa_dda(vr_index).nrispbif := rw_crapban.nrispbif;
       pr_tab_remessa_dda(vr_index).idopeleg := seqcob_idopeleg.NEXTVAL;
@@ -2033,6 +2113,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       pr_tab_remessa_dda(vr_index).nrctaced := rw_crapcob.nrdconta;
       pr_tab_remessa_dda(vr_index).nrdocori := rw_crapass.nrcpfcgc;
       pr_tab_remessa_dda(vr_index).nmdoorig := vr_nmprimtl;
+      pr_tab_remessa_dda(vr_index).nmfansia := vr_nmfansia; -- nome fantasia
+      
       IF rw_crapsab.cdtpinsc = 1 THEN
         pr_tab_remessa_dda(vr_index).tppessac := 'F';
       ELSE
@@ -2086,9 +2168,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
         pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto +
                                                                    rw_crapcob.qtdiaprt
                                                                   ,'YYYYMMDD'));
+      ELSIF rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
+        pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto,'YYYYMMDD'));
       ELSE
-        pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto + 15
-                                                                  ,'YYYYMMDD'));
+        pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto + rw_crapceb.qtdecprz,'YYYYMMDD'));        
       END IF;
       pr_tab_remessa_dda(vr_index).indnegoc := 'N';
       pr_tab_remessa_dda(vr_index).vlrabati := pr_vlabatim;
@@ -2126,8 +2209,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
         pr_tab_remessa_dda(vr_index).flgaceit := 'N';
       END IF;
       IF pr_vldescto > 0 THEN
-        pr_tab_remessa_dda(vr_index).dtddesct := TO_NUMBER(To_Char(pr_dtvencto
+        IF rw_crapcob.cdmensag = 1 THEN 
+          pr_tab_remessa_dda(vr_index).dtddesct := NULL;
+        ELSE
+          pr_tab_remessa_dda(vr_index).dtddesct := TO_NUMBER(To_Char(pr_dtvencto + 52
                                                                   ,'YYYYMMDD'));
+        END IF;                                                                  
       ELSE
         pr_tab_remessa_dda(vr_index).dtddesct := NULL;
       END IF;
@@ -2156,10 +2243,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       pr_tab_remessa_dda(vr_index).inpagdiv := rw_crapcob.inpagdiv;             
       pr_tab_remessa_dda(vr_index).vlminimo := rw_crapcob.vlminimo; 
       pr_tab_remessa_dda(vr_index).dtbloque := rw_crapcob.dtbloque;   
-      pr_tab_remessa_dda(vr_index).nrispbrc := rw_crapcob.nrispbrc;
       pr_tab_remessa_dda(vr_index).cdCanPgt := vr_cdCanPgt;
       pr_tab_remessa_dda(vr_index).cdmeiopg := vr_cdmeiopg;
+      pr_tab_remessa_dda(vr_index).vldpagto := vr_vlrbaixa;
       
+      IF pr_tpoperad IN ('I') THEN
+        IF nvl(rw_crapcob.inregcip,0) = 1 THEN
+          pr_tab_remessa_dda(vr_index).flonline := 'S';
+        ELSE
+          pr_tab_remessa_dda(vr_index).flonline := 'N';
+        END IF;
+      END IF;
+      
+      IF pr_tpoperad = 'B' OR 
+         pr_tpoperad = 'A' THEN
+        -- se o tipo de operacao for baixa ou alteracao
+        -- deverá ser passado o nr de identificacao NPC e 
+        -- o numero de atualizacao NPC do titulo;         
+        pr_tab_remessa_dda(vr_index).nrdident := rw_crapcob.nrdident;
+        pr_tab_remessa_dda(vr_index).nratutit := rw_crapcob.nratutit;
+        
+        IF pr_tpoperad = 'B' AND 
+           pr_tpdbaixa IN (2,3,4) THEN 
+           -- 2 = Bx por solicitacao
+           -- 3 = Bx por protesto
+           -- 4 = Bx por decurso de prazo 
+           pr_tab_remessa_dda(vr_index).nrispbrc := NULL;
+           pr_tab_remessa_dda(vr_index).cdpartrc := NULL;
+        ELSIF pr_tpoperad = 'B' AND 
+              pr_tpdbaixa IN (0,1) THEN 
+           -- 0 -- Bx por liquidacao intrabancaria
+           -- 1 -- Bx por solicitacao
+           pr_tab_remessa_dda(vr_index).nrispbrc := rw_crapcob.nrispbrc;
+           
+           --Selecionar Banco
+           rw_crapban_ispb := NULL;
+           OPEN cr_crapban_ispb (pr_nrispbif => rw_crapcob.nrispbrc);
+           --Posicionar no proximo registro
+           FETCH cr_crapban_ispb INTO rw_crapban_ispb;
+           CLOSE cr_crapban_ispb;
+           
+           pr_tab_remessa_dda(vr_index).cdpartrc := nvl(rw_crapban_ispb.cdbccxlt,0);
+        ELSE
+           pr_tab_remessa_dda(vr_index).nrispbrc := NULL;
+        END IF;  
+       
+      END IF;
       
       
     EXCEPTION
@@ -2344,6 +2473,116 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       pr_dscritic := 'Erro gerar DDDA0001.pc_verifica_sacado_DDA: ' ||
                      SQLERRM;
   END pc_verifica_sacado_DDA;
+
+  /* Procedure para verificar se foi sacado do DDA */
+  PROCEDURE pc_verifica_sacado_web(pr_tppessoa IN VARCHAR2              -- Tipo de pessoa
+                                  ,pr_nrcpfcgc IN NUMBER                -- Cpf ou CNPJ
+                                  ,pr_xmllog   IN VARCHAR2              -- XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER          -- Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2             -- Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType    -- Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2             -- Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS         -- Erros do processo
+
+   BEGIN															 
+	 /* .............................................................................
+
+     Programa: pc_verifica_sacado_web
+     Sistema : Cobrança
+     Sigla   : COBR
+     Autor   : Jean Michel
+     Data    : Junho/17.                    Ultima atualizacao: --/--/----
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina referente as consultas de sacado DDA.
+
+     Observacao: -----
+
+     Alteracoes: -----
+    ..............................................................................*/												
+		
+		DECLARE
+	
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+	
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+      vr_flgsacad INTEGER := 0;
+	  BEGIN
+            
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+         
+      DDDA0001.pc_verifica_sacado_DDA(pr_tppessoa => pr_tppessoa
+                                     ,pr_nrcpfcgc => pr_nrcpfcgc
+                                     ,pr_flgsacad => vr_flgsacad
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><flgsacad>' || TO_CHAR(vr_flgsacad) || '</flgsacad></Root>');
+
+                
+		EXCEPTION
+			WHEN vr_exc_saida THEN
+				
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+
+			  pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+        
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em DDA0001.pc_verifica_sacado_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+		END;
+
+	END pc_verifica_sacado_web;
 
   /* Envio de mensagens atraves do site de chegada de novos titulos DDA */
   PROCEDURE pc_chegada_titulos_DDA(pr_cdcooper IN INTEGER -- Codigo cooperativa
@@ -2853,6 +3092,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
               ,TBJ."DtHrOpJD" DtHrOpJD
               ,TBJ."SitOpJD"  SitOpJD
               ,TBJ."IdTituloLeg" IdTituloLeg
+              ,TBJ."NumIdentcTit" NumIdentcTit
+              ,TBJ."NumRefAtlCadTit" NumRefAtlCadTit
           FROM tbjdnpcdstleg_jd2lg_optit@jdnpcbisql TBJ
          WHERE TBJ."CdLeg"            = pr_cdlegado
            AND TBJ."ISPBAdministrado" = pr_nrispbif
@@ -2912,7 +3153,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                                                        .idtitleg;
           pr_tab_retorno_dda(vr_index_ret).idopeleg := pr_tab_remessa_dda(vr_index)
                                                        .idopeleg;
-        
+          pr_tab_retorno_dda(vr_index_ret).nrdident := rw_craptit.NumIdentcTit;
+          pr_tab_retorno_dda(vr_index_ret).nratutit := rw_craptit.NumRefAtlCadTit;
           CASE rw_craptit.SitOpJD
             WHEN 'PJ' THEN
               /* Recebido JD */
@@ -3062,6 +3304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
              ,cob.nrdconta
              ,cob.nrcnvcob
              ,cob.nrdocmto            
+             ,cob.inregcip            
         FROM crapcob cob
        WHERE cob.idtitleg = pr_idtitleg;
     rw_crapcob cr_crapcob%ROWTYPE;   
@@ -3077,6 +3320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     vr_flgcbdda   crapcob.flgcbdda%TYPE;
     vr_dhenvcip   crapcob.dhenvcip%TYPE;
     vr_dsmensag   crapcol.dslogtit%TYPE;
+    vr_inregcip   crapcob.inregcip%TYPE;
     
     
   BEGIN
@@ -3102,6 +3346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     vr_flgcbdda := NULL;
     vr_dhenvcip := NULL;
     vr_dsmensag := NULL;
+    vr_inregcip := NULL;
     
     IF pr_cdstiope = 'PJ' THEN
       vr_insitpro := 2; --> 2-RecebidoJD
@@ -3117,17 +3362,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       vr_flgcbdda := 0;
       vr_dhenvcip := NULL;
       vr_dsmensag := 'Titulo Rejeitado na CIP';
-      
+      vr_inregcip := 0; -- sem registro na CIP;
     END IF;
     
     --> Atualizar informações do boleto
     BEGIN
       UPDATE crapcob cob
          SET cob.insitpro =  nvl(vr_insitpro,cob.insitpro)
-           , cob.flgcbdda =  nvl(vr_inenvcip,cob.flgcbdda)
-           , cob.inenvcip =  nvl(vr_flgcbdda,cob.inenvcip)
+           , cob.flgcbdda =  nvl(vr_flgcbdda,cob.flgcbdda)
+           , cob.inenvcip =  nvl(vr_inenvcip,cob.inenvcip)
            , cob.dhenvcip =  nvl(vr_dhenvcip,cob.dhenvcip)
-           , cob.idtitleg =  nvl(pr_idtitnpc,cob.idtitleg)
+           , cob.inregcip =  nvl(vr_inregcip,cob.inregcip)
+           , cob.nrdident =  nvl(pr_idtitnpc,cob.nrdident)           
            , cob.nratutit =  nvl(pr_nratutit,cob.nratutit)
        WHERE cob.rowid    = rw_crapcob.rowidcob;
     EXCEPTION
@@ -3137,10 +3383,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     END;
         
     --> Se conter mensagem deve gerar log
-    IF vr_dsmensag <> NULL THEN        
+    IF trim(vr_dsmensag) IS NOT NULL THEN        
       -- Cria o log da cobrança
       PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowidcob
-                                   ,pr_cdoperad => ' '
+                                   ,pr_cdoperad => '1'
                                    ,pr_dtmvtolt => SYSDATE
                                    ,pr_dsmensag => vr_dsmensag
                                    ,pr_des_erro => vr_des_erro
@@ -3152,26 +3398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       END IF;
     
     END IF;  
-    
-    --> Se for registrado CIP
-    IF vr_insitpro = 3 THEN  
-      -- Atualizar a CRAPRET
-      BEGIN
-        UPDATE crapret ret
-           SET ret.cdmotivo = 'A4'
-         WHERE ret.cdcooper = rw_crapcob.cdcooper 
-           AND ret.nrdconta = rw_crapcob.nrdconta 
-           AND ret.nrcnvcob = rw_crapcob.nrcnvcob 
-           AND ret.nrdocmto = rw_crapcob.nrdocmto 
-           AND ret.cdocorre = 2
-           AND TRIM(ret.cdmotivo) IS NULL;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'PC_VERIFICA_TITULOS_DDA: Erro ao atualizar CRAPRET: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
-    END IF;
-    
+        
     --> Gerar log de rejeicao
     IF pr_cdstiope IN ('EJ','EC') THEN
       pc_trata_retorno_erro ( pr_cdcooper   => rw_crapcob.cdcooper  --> Codigo da cooperativa 
@@ -3271,6 +3498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       BEGIN
         UPDATE crapcob cob
            SET cob.nratutit = nvl(pr_nratutit,cob.nratutit)
+              ,cob.ininscip = 2
          WHERE cob.rowid    = rw_crapcob.rowidcob;
       EXCEPTION
         WHEN OTHERS THEN
@@ -3282,10 +3510,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     END IF;       
         
     --> Se conter mensagem deve gerar log
-    IF vr_dsmensag <> NULL THEN        
+    IF trim(vr_dsmensag) IS NOT NULL THEN        
       -- Cria o log da cobrança
       PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowidcob
-                                   ,pr_cdoperad => ' '
+                                   ,pr_cdoperad => '1'
                                    ,pr_dtmvtolt => SYSDATE
                                    ,pr_dsmensag => vr_dsmensag
                                    ,pr_des_erro => vr_des_erro
@@ -3385,22 +3613,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       CLOSE cr_crapcob;
       RAISE vr_exc_erro;
     END IF;
-    CLOSE cr_crapcob;
-    
+    CLOSE cr_crapcob;    
     
     IF pr_cdstiope = 'PJ' THEN
       NULL;
-    ELSIF pr_cdstiope = 'RC' THEN --Registrado com sucesso      
+    ELSIF pr_cdstiope = 'RC' THEN --Registrado com sucesso 
+      
+      --> Atualizar informações do boleto
+      BEGIN
+        UPDATE crapcob cob
+           SET cob.nratutit = nvl(pr_nratutit,cob.nratutit)
+              ,cob.ininscip = 2
+         WHERE cob.rowid    = rw_crapcob.rowidcob;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar CRAPCOB: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;            
+         
       vr_dsmensag := 'Baixa de Titulo Registrado - CIP';                   
     ELSIF pr_cdstiope IN ('EJ','EC') THEN
       vr_dsmensag := 'Baixa de Titulo Rejeitado na CIP';      
     END IF;       
         
     --> Se conter mensagem deve gerar log
-    IF vr_dsmensag <> NULL THEN        
+    IF trim(vr_dsmensag) IS NOT NULL THEN        
       -- Cria o log da cobrança
       PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowidcob
-                                   ,pr_cdoperad => ' '
+                                   ,pr_cdoperad => '1'
                                    ,pr_dtmvtolt => SYSDATE
                                    ,pr_dsmensag => vr_dsmensag
                                    ,pr_des_erro => vr_des_erro
@@ -3451,8 +3691,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     -- Alteracoes: 
     ---------------------------------------------------------------------------------------------------------------
     --> Buscar retornos 
-    CURSOR cr_retnpc (pr_cdlegado IN TBJDDDALEG_JD2LG_OPTITULO.CdLegado@jdddasql%type
-                     ,pr_nrispbif IN TBJDDDALEG_JD2LG_OPTITULO.ISPBIF@jdddasql%TYPE) IS
+    CURSOR cr_retnpc (pr_cdlegado IN tbjdnpcdstleg_jd2lg_optit."CdLeg"@jdnpcbisql%type
+                     ,pr_nrispbif IN tbjdnpcdstleg_jd2lg_optit."ISPBAdministrado"@jdnpcbisql%TYPE) IS
       SELECT tit."ISPBAdministrado" AS nrispbif
             ,tit."TpOpJD"           AS tpoperac
             ,tit."IdOpJD"           AS idoperac
@@ -3470,6 +3710,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
          AND ctl."IdTituloLeg"      = tit."IdTituloLeg"
          AND tit."CdLeg"            = pr_cdlegado
          AND tit."ISPBAdministrado" = pr_nrispbif
+         AND tit."TpOpJD"           IN ('RI','RA','RB')
        ORDER BY tit."DtHrOpJD" DESC;
     rw_retnpc cr_retnpc%ROWTYPE;
       
@@ -3494,6 +3735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                               ,pr_nrispbif => '5463212' ) LOOP
                   
       CASE rw_retnpc.tpoperac
+        
         WHEN 'RI' THEN --> Retorno Inclusao          
           --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
           pc_ret_inclusao_tit_npc ( pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
@@ -3506,7 +3748,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                                    ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
                                    
         WHEN 'RA' THEN --> Retorno Alteração
-
           pc_ret_alteracao_tit_npc (pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
                                    ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
                                    ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
@@ -3542,7 +3783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       --> verificar se transacao apresentou erro
       IF nvl(vr_cdcritic,0) > 0 OR
          vr_dscritic IS NOT NULL THEN         
-        ROLLBACK;
+        --ROLLBACK;
         
         vr_dscritic := 'Erro ao processar retorno idtitleg: '||rw_retnpc.idtitleg||' -> '||
                        vr_dscritic;
@@ -3553,17 +3794,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                                                   ' - DDDA0001 -> ' || vr_dscritic,
                                    pr_nmarqlog     => vr_dslogmes);
          
-         continue;
+         --continue;
       END IF; 
       
       
       -- deletar registro de controle
-     /* BEGIN
+      BEGIN
               
         DELETE tbjdnpcdstleg_jd2lg_optit_ctrl@jdnpcbisql
          WHERE "ISPBAdministrado"  = rw_retnpc.nrispbif
            AND "IdOpJD"            = rw_retnpc.iddopeJD
            AND "IdTituloLeg"       = rw_retnpc.idtitleg;
+           
       EXCEPTION
         WHEN Others THEN
           vr_cdcritic := 0;
@@ -3575,15 +3817,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                                                   ' - DDDA0001 -> ' || vr_dscritic,
                                    pr_nmarqlog     => vr_dslogmes);
          
-         ROLLBACK;
-         continue;
-      END;*/
+          RAISE vr_exc_erro;       
+	      END;
       
       -- Commitar registro processado
      -- COMMIT;    
       
     END LOOP;              
     
+  EXCEPTION
+    
+    WHEN vr_exc_erro THEN     
+      pr_cdcritic := vr_cdcritic;
+      vr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN     
+      pr_cdcritic := vr_cdcritic;
+      vr_dscritic := vr_dscritic;      
   
   END pc_retorno_operacao_tit_NPC;
 
@@ -3615,28 +3865,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
   BEGIN
     DECLARE
     
-      CURSOR cr_abertura IS
+      /*CURSOR cr_abertura IS
         SELECT MAX("DataMov") datamov
           FROM TBJDDDA_CTRL_ABERTURA@jdddasql
          WHERE "ISPBCliente" = 5463212;
     
-      rw_abertura cr_abertura%ROWTYPE;
+         VER RAFAEL
+         */
+    
+     -- rw_abertura cr_abertura%ROWTYPE;
     
       --Variaveis Locais
       vr_index INTEGER;
       vr_data  VARCHAR2(20) := To_Char(SYSDATE, 'YYYYMMDDHH24MISS');      
+      vr_nmfansia_pag VARCHAR2(80);
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
+      vr_des_erro VARCHAR2(100);
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
-      vr_flg_erro BOOLEAN := FALSE;
+      vr_flg_erro BOOLEAN;
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
     
-      OPEN cr_abertura;
+      /*OPEN cr_abertura;
       FETCH cr_abertura
         INTO rw_abertura;
     
@@ -3650,7 +3907,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       
       ELSE
         CLOSE cr_abertura;
-      END IF;
+      END IF;*/
+      
     
       --Percorrer as remessas
       vr_index := pr_tab_remessa_dda.FIRST;
@@ -3658,6 +3916,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
         
         vr_cdcritic := NULL;
         vr_dscritic := NULL;
+        vr_flg_erro := FALSE;
+        vr_cdcooper := pr_tab_remessa_dda(vr_index).cdcooper;
                 
         pr_tab_remessa_dda(vr_index).nrispbif := substr(pr_tab_remessa_dda(vr_index).nrispbif,1,8);
         pr_tab_remessa_dda(vr_index).cdlegado := substr(pr_tab_remessa_dda(vr_index).cdlegado,1,5);
@@ -3675,9 +3935,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
         pr_tab_remessa_dda(vr_index).tppesori := substr(pr_tab_remessa_dda(vr_index).tppesori,1,1);
         pr_tab_remessa_dda(vr_index).nrdocori := substr(pr_tab_remessa_dda(vr_index).nrdocori,1,14);
         pr_tab_remessa_dda(vr_index).nmdoorig := substr(pr_tab_remessa_dda(vr_index).nmdoorig,1,80);
+        pr_tab_remessa_dda(vr_index).nmfansia := substr(pr_tab_remessa_dda(vr_index).nmfansia,1,40);
         pr_tab_remessa_dda(vr_index).tppessac := substr(pr_tab_remessa_dda(vr_index).tppessac,1,1);
+        
+        -- Quando pagador é PJ, necessario informar nome fantasia 
+        -- É uma novidade pois essa informacao nunca precisou no DDA (Rafael)
+        IF pr_tab_remessa_dda(vr_index).tppessac = 'J' THEN
+          vr_nmfansia_pag := substr(pr_tab_remessa_dda(vr_index).nmdosaca,1,50);
+        ELSE
+          vr_nmfansia_pag := NULL;
+        END IF;
+        
         pr_tab_remessa_dda(vr_index).nrdocsac := substr(pr_tab_remessa_dda(vr_index).nrdocsac,1,14);
-        pr_tab_remessa_dda(vr_index).nmdosaca := substr(pr_tab_remessa_dda(vr_index).nmdosaca,1,80);
+        pr_tab_remessa_dda(vr_index).nmdosaca := substr(pr_tab_remessa_dda(vr_index).nmdosaca,1,50);
         pr_tab_remessa_dda(vr_index).dsendsac := substr(pr_tab_remessa_dda(vr_index).dsendsac,1,40);
         pr_tab_remessa_dda(vr_index).dscidsac := substr(pr_tab_remessa_dda(vr_index).dscidsac,1,50);
         pr_tab_remessa_dda(vr_index).dsufsaca := substr(pr_tab_remessa_dda(vr_index).dsufsaca,1,2);
@@ -3710,9 +3980,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
         pr_tab_remessa_dda(vr_index).vlrdesct := pr_tab_remessa_dda(vr_index).vlrdesct;
         pr_tab_remessa_dda(vr_index).dsinstru := pr_tab_remessa_dda(vr_index).dsinstru;
         pr_tab_remessa_dda(vr_index).dtlipgto := pr_tab_remessa_dda(vr_index).dtlipgto;
-        pr_tab_remessa_dda(vr_index).tpdBaixa := substr(pr_tab_remessa_dda(vr_index).tpdBaixa,1,1);
+        pr_tab_remessa_dda(vr_index).tpdBaixa := trim(pr_tab_remessa_dda(vr_index).tpdBaixa);
         pr_tab_remessa_dda(vr_index).tpmodcal := substr(pr_tab_remessa_dda(vr_index).tpmodcal,1,2);
         pr_tab_remessa_dda(vr_index).flavvenc := substr(pr_tab_remessa_dda(vr_index).flavvenc,1,1) ;  
+        
+        IF nvl(trim(substr(pr_tab_remessa_dda(vr_index).flonline,1,1)),'N') = 'N' THEN
+          pr_tab_remessa_dda(vr_index).flonline := 'N';
+        ELSE
+          pr_tab_remessa_dda(vr_index).flonline := 'S'; 
+        END IF;
         
         --> Indicador de pagto divergente
         CASE pr_tab_remessa_dda(vr_index).inpagdiv
@@ -3765,7 +4041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."TpPessoaBenfcrioOr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."CNPJCPFBenfcrioOr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."NomRzSocBenfcrioOr"
-            --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."NomFantsBenefcrioOr"
+            ,TBJDNPCDSTLEG_LG2JD_OPTIT."NomFantsBenefcrioOr"
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."LogradBenefcrioOr"
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."CidBenefcrioOr"
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."UFBenefcrioOr"
@@ -3778,7 +4054,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."TpPessoaPagdr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."CNPJCPFPagdr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."NomRzSocPagdr"
-            --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."NomFantsPagdr"
+            ,TBJDNPCDSTLEG_LG2JD_OPTIT."NomFantsPagdr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."LogradPagdr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."CidPagdr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."UFPagdr"
@@ -3797,7 +4073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."CodEspecie"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."DtEmissao"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."QtdDiasProtesto"
-            --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."DtLimPgto"
+            ,TBJDNPCDSTLEG_LG2JD_OPTIT."DtLimPgto"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."TpPgto"
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."NumParcl"
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."QtdTotParcl"
@@ -3835,12 +4111,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."NumSeqAtlzCadTit"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."TpBaixaEft"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."ISPBPartRecbdr"
-            --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."CodPartRecbdr"
+            ,TBJDNPCDSTLEG_LG2JD_OPTIT."CodPartRecbdr"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."DtHrProcBaixaEft"
             ,TBJDNPCDSTLEG_LG2JD_OPTIT."DtProcBaixaEft"
-            --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."VlrBaixaEft"
-            --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."CanPgto"
-            --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."MeioPagto"
+            ,TBJDNPCDSTLEG_LG2JD_OPTIT."VlrBaixaEft"
+            ,TBJDNPCDSTLEG_LG2JD_OPTIT."CanPgto"
+            ,TBJDNPCDSTLEG_LG2JD_OPTIT."MeioPagto"
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."NumIdentBOpr"
             --> ,TBJDNPCDSTLEG_LG2JD_OPTIT."NumRefAtlBaixaEft"
             )
@@ -3857,7 +4133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             ,pr_tab_remessa_dda(vr_index).tppesced               --> TpPessoaBenfcrioOr
             ,pr_tab_remessa_dda(vr_index).nrdocced               --> CNPJCPFBenfcrioOr
             ,pr_tab_remessa_dda(vr_index).nmdocede               --> NomRzSocBenfcrioOr
-            --> ,pr_tab_remessa_dda(vr_index).               --> NomFantsBenefcrioOr
+            ,pr_tab_remessa_dda(vr_index).nmfansia               --> NomFantsBenefcrioOr
             --> ,pr_tab_remessa_dda(vr_index).               --> LogradBenefcrioOr
             --> ,pr_tab_remessa_dda(vr_index).               --> CidBenefcrioOr
             --> ,pr_tab_remessa_dda(vr_index).               --> UFBenefcrioOr
@@ -3870,7 +4146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             ,pr_tab_remessa_dda(vr_index).tppessac               --> TpPessoaPagdr
             ,pr_tab_remessa_dda(vr_index).nrdocsac               --> CNPJCPFPagdr
             ,pr_tab_remessa_dda(vr_index).nmdosaca               --> NomRzSocPagdr
-            --> ,pr_tab_remessa_dda(vr_index).               --> NomFantsPagdr
+            ,vr_nmfansia_pag                                     --> NomFantsPagdr (obs.: obrigatorio para PJ)
             ,pr_tab_remessa_dda(vr_index).dsendsac               --> LogradPagdr
             ,pr_tab_remessa_dda(vr_index).dscidsac               --> CidPagdr
             ,pr_tab_remessa_dda(vr_index).dsufsaca               --> UFPagdr
@@ -3889,7 +4165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             ,pr_tab_remessa_dda(vr_index).cdespeci               --> CodEspecie
             ,pr_tab_remessa_dda(vr_index).dtemissa               --> DtEmissao
             ,pr_tab_remessa_dda(vr_index).nrdiapro               --> QtdDiasProtesto
-            --> ,pr_tab_remessa_dda(vr_index).               --> DtLimPgto
+            ,pr_tab_remessa_dda(vr_index).dtlipgto                   --> DtLimPgto
             ,pr_tab_remessa_dda(vr_index).tpdepgto               --> TpPgto
             --> ,pr_tab_remessa_dda(vr_index).               --> NumParcl
             --> ,pr_tab_remessa_dda(vr_index).               --> QtdTotParcl
@@ -3927,12 +4203,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             --> ,pr_tab_remessa_dda(vr_index).   --> NumSeqAtlzCadTit
             ,pr_tab_remessa_dda(vr_index).tpdBaixa               --> TpBaixaEft
             ,pr_tab_remessa_dda(vr_index).nrispbrc               --> ISPBPartRecbdr
-            --> ,pr_tab_remessa_dda(vr_index).   --> CodPartRecbdr
+            ,pr_tab_remessa_dda(vr_index).cdpartrc   --> CodPartRecbdr
             ,pr_tab_remessa_dda(vr_index).dhdbaixa               --> DtHrProcBaixaEft
             ,pr_tab_remessa_dda(vr_index).dtdbaixa               --> DtProcBaixaEft
-            --> ,pr_tab_remessa_dda(vr_index).   --> VlrBaixaEft
-            --> ,pr_tab_remessa_dda(vr_index).   --> CanPgto
-            --> ,pr_tab_remessa_dda(vr_index).   --> MeioPagto
+            ,pr_tab_remessa_dda(vr_index).vldpagto   --> VlrBaixaEft
+            ,pr_tab_remessa_dda(vr_index).cdCanpgt   --> CanPgto
+            ,pr_tab_remessa_dda(vr_index).cdmeiopg   --> MeioPagto
             --> ,pr_tab_remessa_dda(vr_index).   --> NumIdentBOpr
             --> ,pr_tab_remessa_dda(vr_index).   --> NumRefAtlBaixaEft
             );
@@ -3943,7 +4219,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
             vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT. ' ||
                            sqlerrm;
             pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
-            pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;                           
+            pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;
+            
+            PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_tab_remessa_dda(vr_index).rowidcob
+                                         ,pr_cdoperad => '1'
+                                         ,pr_dtmvtolt => SYSDATE
+                                         ,pr_dsmensag => 'Erro ao gerar titulo na cabine JDNPC (OPTIT)'
+                                         ,pr_des_erro => vr_des_erro
+                                         ,pr_dscritic => vr_dscritic);
+            
             
             --Levantar Excecao
             vr_flg_erro := TRUE;
@@ -3951,51 +4235,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
         
         
         IF vr_flg_erro = FALSE THEN
-        -- Inserir na tabela de controle
-        BEGIN
-          INSERT INTO TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL@jdnpcbisql
-                 ( TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."CdLeg"
-                  ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."IdTituloLeg"
-                  ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."IdOpLeg"
-                  ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."ISPBAdministrado"
-                  ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."EnvioImediato")
-           VALUES( pr_tab_remessa_dda(vr_index).cdlegado        --> CdLeg
-                  ,pr_tab_remessa_dda(vr_index).idtitleg        --> IdTituloLeg
-                  ,pr_tab_remessa_dda(vr_index).idopeleg        --> IdOpLeg
-                  ,pr_tab_remessa_dda(vr_index).nrispbif        --> ISPBAdministrado
-                  ,pr_tab_remessa_dda(vr_index).flonline);      --> EnvioImediato
-        
-        EXCEPTION
-          WHEN Others THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL. '||SQLERRM;
+          -- Inserir na tabela de controle
+          BEGIN
+            INSERT INTO TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL@jdnpcbisql
+                   ( TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."CdLeg"
+                    ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."IdTituloLeg"
+                    ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."IdOpLeg"
+                    ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."ISPBAdministrado"
+                    ,TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL."EnvioImediato")
+             VALUES( pr_tab_remessa_dda(vr_index).cdlegado        --> CdLeg
+                    ,pr_tab_remessa_dda(vr_index).idtitleg        --> IdTituloLeg
+                    ,pr_tab_remessa_dda(vr_index).idopeleg        --> IdOpLeg
+                    ,pr_tab_remessa_dda(vr_index).nrispbif        --> ISPBAdministrado
+                    ,pr_tab_remessa_dda(vr_index).flonline);      --> EnvioImediato
+          
+          EXCEPTION
+            WHEN Others THEN
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao inserir na tabela TBJDNPCDSTLEG_LG2JD_OPTIT_CTRL. '||SQLERRM;
 
-            pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
-            pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;                           
-            
-            --Levantar Excecao
-            vr_flg_erro := TRUE;
-        END;
+              pr_tab_remessa_dda(vr_index).cdcritic := vr_cdcritic;
+              pr_tab_remessa_dda(vr_index).dscritic := vr_dscritic;                           
+              
+              PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_tab_remessa_dda(vr_index).rowidcob
+                                           ,pr_cdoperad => '1'
+                                           ,pr_dtmvtolt => SYSDATE
+                                           ,pr_dsmensag => 'Erro ao gerar titulo na cabine JDNPC (CTRL)'
+                                           ,pr_des_erro => vr_des_erro
+                                           ,pr_dscritic => vr_dscritic);                        
+              --Levantar Excecao
+              vr_flg_erro := TRUE;
+          END;
         END IF;
         
         --Encontrar proximo registro
         vr_index := pr_tab_remessa_dda.NEXT(vr_index);
       END LOOP;
-    
-      IF vr_flg_erro THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao inserir na tabela TBJDDDALEG_LG2JD_OPTITULO.';
-          RAISE vr_exc_erro;
-      END IF;
-    
-      /* Nao ha mais necessidade de buscar a confirmacao do registro
-       logo apos o momento da inclusao, pois o processamento da Cabine da JD
-       eh lento
-      --Executar retorno operacao Titulos DDA
-      DDDA0001.pc_retorno_operacao_tit_DDA (pr_tab_remessa_dda => pr_tab_remessa_dda --Remessa dda
-                                           ,pr_tab_retorno_dda => pr_tab_retorno_dda --Retorno dda
-                                           ,pr_cdcritic        => vr_cdcritic        --Codigo de Erro
-                                           ,pr_dscritic        => vr_dscritic);      --Descricao de Erro */
+        
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic := vr_cdcritic;
@@ -4005,6 +4281,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
         pr_cdcritic := 0;
         pr_dscritic := 'Erro na rotina DDDA0001.pc_remessa_titulos_dda. ' ||
                        SQLERRM;
+
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
+                                   pr_ind_tipo_log => 2, 
+                                   pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                      ' - DDDA0001 -> ' || pr_dscritic,
+                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                                              , pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
+                       
     END;
   END pc_remessa_titulos_dda;
   
@@ -4384,7 +4668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
 
   /* Procedure para chamar a rotina pc_retorno_operacao_tit_dda
   em PLSQL através da rotina Progress via DataServer */
-  PROCEDURE pc_retorno_operacao_tit_DDA(pr_cdcritic OUT crapcri.cdcritic%TYPE
+  /*PROCEDURE pc_retorno_operacao_tit_DDA(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                        ,pr_dscritic OUT VARCHAR2) IS
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
@@ -4478,7 +4762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                        sqlerrm;
     END;
   END;
-
+*/
   /* Procedure para chamar a rotina pc_remessa_titulos_dda
   em PLSQL através da rotina Progress via DataServer */
   PROCEDURE pc_remessa_titulos_dda(pr_cdcritic OUT crapcri.cdcritic%TYPE
@@ -4952,9 +5236,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     --> Cursor para buscar situacao do benificiario na cip
     CURSOR cr_DDA_Sit_Ben (pr_dspessoa VARCHAR2,
                            pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
-      SELECT 1 SITIF, --b."SITIF", --> Ver Rafael
-             1 SITCIP --b."SITCIP" --> Ver rafael
-        FROM VWJDDDABNF_Sit_Beneficiario@Jdnpcsql b
+      SELECT b."SITIF",
+             b."SITCIP"
+        FROM cecredleg.VWJDDDABNF_Sit_Beneficiario@Jdnpcsql b
        WHERE b."TpPessoaBenfcrio" = pr_dspessoa
          AND b."CNPJ_CPFBenfcrio" = pr_nrcpfcgc;
     rw_DDA_Sit_Ben cr_DDA_Sit_Ben%ROWTYPE; 
@@ -5129,7 +5413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     CURSOR cr_DDA_Benef (pr_dspessoa VARCHAR2,
                          pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS      
       SELECT 1
-        FROM TBJDDDABNF_BeneficiarioIF@jdbnfsql b
+        FROM cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql b
        WHERE b.ISPB_IF = '5463212'
          AND "TpPessoaBenfcrio" = pr_dspessoa
          AND "CNPJ_CPFBenfcrio" = pr_nrcpfcgc;
@@ -5140,7 +5424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                           pr_nrcpfcgc crapass.nrcpfcgc%TYPE,
                           pr_nrconven VARCHAR2) IS      
       SELECT 1
-        FROM TBJDDDABNF_Convenio@jdbnfsql b
+        FROM cecredleg.TBJDDDABNF_Convenio@jdnpcsql b
        WHERE b."ISPB_IF" = '5463212'
          AND b."TpPessoaBenfcrio" = pr_dspessoa
          AND b."CNPJ_CPFBenfcrio" = pr_nrcpfcgc
@@ -5232,7 +5516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       END IF;  
                     
       BEGIN
-        INSERT INTO TBJDDDABNF_BeneficiarioIF@jdbnfsql
+        INSERT INTO cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql
               ( "ISPB_IF",
                 "TpPessoaBenfcrio",
                 "CNPJ_CPFBenfcrio",
@@ -5240,7 +5524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                 "Nom_FantsBenfcrio", 
                 "DtInicRelctPart",    
                 "DtFimRelctPart")
-        VALUES ('5463212'            -- ISPB_IF
+        VALUES ('05463212'            -- ISPB_IF
                ,rw_crapass.dspessoa  -- TpPessoaBenfcrio
                ,rw_crapass.dscpfcgc  -- CNPJ_CPFBenfcrio
                ,rw_crapass.nmprimtl  -- Nom_RzSocBenfcrio 
@@ -5259,16 +5543,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       -- Atualizar convenio na CIP  
       BEGIN      
         vr_nrconven := to_char(pr_nrconven);
-        UPDATE TBJDDDABNF_Convenio@jdbnfsql
-           SET TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'A',
-               TBJDDDABNF_Convenio."DtInicRelctConv"    = vr_dtativac,
-               TBJDDDABNF_Convenio."DtFimRelctConv"     = vr_dtfimrel
-         WHERE TBJDDDABNF_Convenio."ISPB_IF" = '5463212'
-           AND TBJDDDABNF_Convenio."TpPessoaBenfcrio" = rw_crapass.dspessoa
-           AND TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio" = rw_crapass.dscpfcgc
-           AND TBJDDDABNF_Convenio."CodCli_Conv"      = vr_nrconven
-           AND TBJDDDABNF_Convenio."AgDest"           = rw_crapass.cdagectl
-           AND TBJDDDABNF_Convenio."CtDest"           = rw_crapass.nrdconta;
+        UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql
+           SET cecredleg.TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'A',
+               cecredleg.TBJDDDABNF_Convenio."DtInicRelctConv"    = vr_dtativac,
+               cecredleg.TBJDDDABNF_Convenio."DtFimRelctConv"     = vr_dtfimrel
+         WHERE cecredleg.TBJDDDABNF_Convenio."ISPB_IF" = '05463212'
+           AND cecredleg.TBJDDDABNF_Convenio."TpPessoaBenfcrio" = rw_crapass.dspessoa
+           AND cecredleg.TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio" = rw_crapass.dscpfcgc
+           AND cecredleg.TBJDDDABNF_Convenio."CodCli_Conv"      = vr_nrconven
+           AND cecredleg.TBJDDDABNF_Convenio."AgDest"           = rw_crapass.cdagectl
+           AND cecredleg.TBJDDDABNF_Convenio."CtDest"           = rw_crapass.nrdconta;
         
       EXCEPTION 
         WHEN OTHERS THEN
@@ -5288,7 +5572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     IF cr_DDA_Conven%NOTFOUND THEN
       --> Gerar informação de adesão de convênio ao JDBNF                            
       BEGIN
-        INSERT INTO TBJDDDABNF_Convenio@jdbnfsql 
+        INSERT INTO cecredleg.TBJDDDABNF_Convenio@jdnpcsql
                    ("ISPB_IF",
                     "ISPBPartIncorpd",
                     "TpPessoaBenfcrio",
@@ -5303,7 +5587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                     "CtDest",
                     "TpProdtConv",
                     "TpCartConvCobr" )
-             VALUES(5463212,                                -- ISPB_IF
+             VALUES('05463212',                             -- ISPB_IF
                     NULL,                                   -- ISPBPartIncorpd
                     rw_crapass.dspessoa,                    -- TpPessoaBenfcrio
                     rw_crapass.dscpfcgc,                    -- CNPJ_CPFBenfcrio
@@ -5324,11 +5608,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       END;
     ELSE
       BEGIN
-        UPDATE TBJDDDABNF_Convenio@jdbnfsql a
+        UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql a
            SET a."SitConvBenfcrioPar" = vr_sitifcnv
               ,a."DtInicRelctConv"    = vr_dtativac
               ,a."DtFimRelctConv"     = vr_dtfimrel
-         WHERE a."ISPB_IF"            = '5463212'
+         WHERE a."ISPB_IF"            = '05463212'
            AND a."TpPessoaBenfcrio"   = rw_crapass.dspessoa
            AND a."CNPJ_CPFBenfcrio"   = rw_crapass.dscpfcgc
            AND a."CodCli_Conv"        = vr_nrconven;
@@ -5353,6 +5637,310 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
       pr_dscritic := 'Nao foi possivel atualizar situacao beneficiario: '||SQLERRM;
   
   END pc_atualiza_sit_JDBNF;
+
+  /* Procedure para requisitar a consulta de retorno de dados da baixa operacional */
+  PROCEDURE pc_ConsultarBaixaOperacional(pr_cdctrbxo IN VARCHAR2                     --> Numero controle participante da baixa operacional
+                                        ,pr_cdcodbar IN VARCHAR2                     --> Codigo de barras do titulo
+                                        ,pr_baixaope OUT cr_baixaoperacional%ROWTYPE --> retornar dados da baixa operacional
+                                        ,pr_des_erro OUT VARCHAR2                    --> Indicador erro OK/NOK
+                                        ,pr_dscritic OUT VARCHAR2) IS                --> Descricao erro
+    /*---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_ConsultarBaixaOperacional     
+    --  Sistema  : CECRED
+    --  Sigla    : CRED
+    --  Autor    : Odirlei Busana - AMcom
+    --  Data     : Maio/2017.                   Ultima atualizacao: --/--/----
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedure para requisitar a consulta de retorno de dados da baixa operacional
+    --
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------*/
+  BEGIN
+    DECLARE
+      
+      
+      --------> CURSOR <-----------      
+      rw_baixaoperacional cr_baixaoperacional%ROWTYPE;
+      
+      vr_xml XMLType; --> XML de requisição
+      vr_exc_erro EXCEPTION; --> Controle de exceção
+      
+      vr_xml_res XMLType; --> XML de resposta
+      vr_tab_xml gene0007.typ_tab_tagxml; --> PL Table para armazenar conteúdo XML
+      vr_ctrlpart VARCHAR2(20);
+      
+      vr_tbcampos      NPCB0003.typ_tab_campos_soap;
+      vr_dsxmlbxo      CLOB;
+    
+    BEGIN
+    
+      -- Limpa a tab de campos
+      vr_tbcampos.DELETE();
+      
+      -- Chama rotina para fazer a inclusão das TAGS comuns
+      NPCB0003.pc_xmlsoap_tag_padrao(pr_tbcampos => vr_tbcampos
+                                    ,pr_des_erro => pr_des_erro
+                                    ,pr_dscritic => pr_dscritic );
+      --
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCtrlPart';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_cdctrbxo;
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
+      --
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCodBarras';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_cdcodbar;
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+     
+      NPCB0003.pc_xmlsoap_monta_requisicao( pr_cdservic => 4  --> RecebimentoPgtoTit
+                                           ,pr_cdmetodo => 6  --> ConsultarRetornoBaixaOperacional
+                                           ,pr_tbcampos => vr_tbcampos
+                                           ,pr_xml      => vr_xml
+                                           ,pr_des_erro => pr_des_erro
+                                           ,pr_dscritic => pr_dscritic);
+    
+      -- Verifica se ocorreu erro
+      IF pr_des_erro = 'NOK' THEN
+        RAISE vr_exc_erro;
+      END IF; 
+    
+      dbms_output.put_line(vr_xml.getclobval());
+    
+      -- Enviar requisição para webservice
+      soap0001.pc_cliente_webservice(pr_endpoint    => NPCB0003.fn_url_SendSoapNPC(pr_idservic => 4)
+                                    ,pr_acao        => NULL
+                                    ,pr_wallet_path => NULL
+                                    ,pr_wallet_pass => NULL
+                                    ,pr_xml_req     => vr_xml
+                                    ,pr_xml_res     => vr_xml_res
+                                    ,pr_erro        => pr_dscritic);
+    
+      -- Verifica se ocorreu erro
+      IF pr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      dbms_output.put_line(vr_xml_res.getclobval());
+    
+      -- Verifica se ocorreu retorno com erro no XML
+      pc_obtem_fault_packet(pr_xml      => vr_xml_res
+                           ,pr_dsderror => ''
+                           ,pr_des_erro => pr_des_erro
+                           ,pr_dscritic => pr_dscritic);
+    
+      -- Verifica o retorno de erro
+      IF pr_des_erro = 'NOK' THEN
+        RAISE vr_exc_erro;
+      ELSE
+        -- Busca valor do nodo dado o xPath
+        gene0007.pc_itera_nodos(pr_xpath      => '//return'
+                               ,pr_xml        => vr_xml_res
+                               ,pr_list_nodos => vr_tab_xml
+                               ,pr_des_erro   => pr_des_erro);
+      
+        -- Verifica se a TAG existe
+        IF vr_tab_xml.count = 0 THEN
+          pr_dscritic := 'Resposta SOAP invalida (Return).';
+          pr_des_erro := 'NOK';
+        
+          RAISE vr_exc_erro;
+        END IF;
+      
+        -- Verifica se retorno conteúdo na TAG
+        IF nvl(vr_tab_xml(0).tag, ' ') = ' ' THEN
+          pr_dscritic := 'Falha na atualizacao da situacao.';
+          pr_des_erro := 'NOK';
+        
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+      
+      -- Se passou pela validação de erros sem encontrar retorno do Fault Packet, deve retornar o XML
+      vr_dsxmlbxo := REPLACE( REPLACE(vr_xml_res.getClobVal(),'&lt;','<') ,'&gt;','>');
+      
+      --> Ler as baixas operacionais
+      OPEN cr_baixaoperacional( pr_dsxml => vr_dsxmlbxo);
+      FETCH cr_baixaoperacional INTO rw_baixaoperacional;
+      
+      IF cr_baixaoperacional%NOTFOUND THEN
+        CLOSE cr_baixaoperacional;        
+        pr_dscritic := 'Dados da baixa operacional nao localizados.';
+        RAISE vr_exc_erro;        
+      END IF;
+      CLOSE cr_baixaoperacional;
+      
+      pr_baixaope := rw_baixaoperacional;
+      
+      IF rw_baixaoperacional.SitBaixaOperacional <> 3 THEN
+        pr_dscritic := 'Baixa operacional pendente de processamento, favor aguarde.';
+        RAISE vr_exc_erro;   
+      END IF;
+      
+      
+      pr_des_erro := 'OK';
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := pr_dscritic;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := 'Erro na rotina DDDA0001.pc_ConsultarBaixaOperacional. ' ||
+                       SQLERRM;
+    END;
+  END pc_ConsultarBaixaOperacional;
+
+
+  /* Procedure para Cancelar Baixa Operacional  - Demetrius Wolff - Mouts */
+  PROCEDURE pc_cancelar_baixa_operac (pr_cdlegado IN VARCHAR2   --> Codigo Legado
+                                     ,pr_idtitdda IN VARCHAR2   --> Identificador Titulo DDA
+                                     ,pr_cdctrlcs IN VARCHAR2   --> Numero controle consulta NPC
+                                     ,pr_cdcodbar IN VARCHAR2   --> Codigo de barras do titulo
+                                     ,pr_des_erro OUT VARCHAR2  --> Indicador erro OK/NOK
+                                     ,pr_dscritic OUT VARCHAR2) IS --> Descricao erro
+  BEGIN
+    DECLARE
+    
+      vr_xml         XMLType; --> XML de requisição      
+      vr_exc_erro    EXCEPTION; --> Controle de exceção
+      vr_xml_res     XMLType; --> XML de resposta
+      vr_tab_xml     gene0007.typ_tab_tagxml; --> PL Table para armazenar conteúdo XML
+      vr_cdcanal_npc INTEGER;                           
+      vr_ctrlpart    VARCHAR2(20);
+      
+      vr_tbcampos      NPCB0003.typ_tab_campos_soap;
+      vr_cdCanPgt      INTEGER;
+      vr_cdmeiopg      INTEGER;
+      vr_baixaope      cr_baixaoperacional%ROWTYPE;
+      vr_cdctrbxo      VARCHAR2(100);
+      
+      
+            
+    BEGIN
+    
+      --> Consulta de retorno de dados da baixa operacional 
+      pc_ConsultarBaixaOperacional(pr_cdctrbxo => pr_cdctrlcs   --> Numero controle participante da baixa operacional
+                                  ,pr_cdcodbar => pr_cdcodbar   --> Codigo de barras do titulo
+                                  ,pr_baixaope => vr_baixaope   --> retornar dados da baixa operacional
+                                  ,pr_des_erro => pr_des_erro   --> Indicador erro OK/NOK
+                                  ,pr_dscritic => pr_dscritic); --> Descricao erro
+    
+      -- Verifica se ocorreu erro
+      IF pr_des_erro != 'OK' THEN
+        RAISE vr_exc_erro;
+      END IF;
+    
+      --> NumCtrlPart
+      vr_ctrlpart := fn_gera_ctrlpart('C');
+
+      -- Limpa a tab de campos
+      vr_tbcampos.DELETE();
+      
+      -- Chama rotina para fazer a inclusão das TAGS comuns
+      NPCB0003.pc_xmlsoap_tag_padrao(pr_tbcampos => vr_tbcampos
+                                    ,pr_des_erro => pr_des_erro
+                                    ,pr_dscritic => pr_dscritic );
+        
+      --
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'EnvioImediato';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 'S';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+      --
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCtrlPart';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag :=  vr_ctrlpart;
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+      --
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumIdentcBaixaOperac';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag :=  vr_baixaope.NumIdentcBaixaOperac;
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+      --
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtHrCanceltBaixaOperac';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,'RRRRMMDDHH24MISS'); --> AAAAMMDDhhmmss
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+      --
+      vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtProcCanceltBaixaOperac';
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,'RRRRMMDD');
+      vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
+      --
+      -- Monta a estrutura principal do SOAP
+      NPCB0003.pc_xmlsoap_monta_requisicao(pr_cdservic => 4 --> RecebimentoPgtoTit
+                                          ,pr_cdmetodo => 5 --> CancelarBaixa
+                                          ,pr_tbcampos => vr_tbcampos
+                                          ,pr_xml      => vr_xml     
+                                          ,pr_des_erro => pr_des_erro
+                                          ,pr_dscritic => pr_dscritic);      
+    
+      -- Verifica se ocorreu erro
+      IF pr_des_erro != 'OK' THEN
+        RAISE vr_exc_erro;
+      END IF;      
+    
+      -- Enviar requisição para webservice
+      soap0001.pc_cliente_webservice(pr_endpoint    => NPCB0003.fn_url_SendSoapNPC(pr_idservic => 4)
+                                    ,pr_acao        => NULL
+                                    ,pr_wallet_path => NULL
+                                    ,pr_wallet_pass => NULL
+                                    ,pr_xml_req     => vr_xml
+                                    ,pr_xml_res     => vr_xml_res
+                                    ,pr_erro        => pr_dscritic);
+    
+      -- Verifica se ocorreu erro
+      IF trim(pr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    
+      -- Verifica se ocorreu retorno com erro no XML
+      pc_obtem_fault_packet(pr_xml      => vr_xml_res
+                           ,pr_dsderror => ''
+                           ,pr_des_erro => pr_des_erro
+                           ,pr_dscritic => pr_dscritic);
+    
+      -- Verifica o retorno de erro
+      IF pr_des_erro = 'NOK' THEN
+        -- Envio centralizado de log de erro 
+        RAISE vr_exc_erro;
+      ELSE
+        -- Busca valor do nodo dado o xPath
+        gene0007.pc_itera_nodos(pr_xpath      => '//return'
+                               ,pr_xml        => vr_xml_res
+                               ,pr_list_nodos => vr_tab_xml
+                               ,pr_des_erro   => pr_des_erro);
+      
+        -- Verifica se a TAG existe
+        IF vr_tab_xml.count = 0 THEN
+          pr_dscritic := 'Resposta SOAP invalida (Return).';
+          pr_des_erro := 'NOK';
+        
+          RAISE vr_exc_erro;
+        END IF;
+      
+        -- Verifica se retorno conteúdo na TAG
+        IF nvl(vr_tab_xml(0).tag, ' ') = ' ' THEN
+          pr_dscritic := 'Falha na atualizacao da situacao.';
+          pr_des_erro := 'NOK';
+        
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+    
+      -- Retornar fragmento XML como novo documento XML
+      --Valor não utilizado
+      --pr_xml_frag := gene0007.fn_gera_xml_frag(vr_tab_xml(0).tag); 
+    
+      --Retornar OK
+      pr_des_erro := 'OK';
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := pr_dscritic;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := 'Erro na rotina DDDA0001.pc_cancelar_baixa_operac. ' ||
+                       SQLERRM;
+    END;
+  END pc_cancelar_baixa_operac;
 
 END ddda0001;
 /
