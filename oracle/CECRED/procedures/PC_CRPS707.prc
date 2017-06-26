@@ -31,21 +31,30 @@ BEGIN
 
                12/01/2017 - Ajuste para verificar se cooperado é migrado 
                             (Adriano - SD 592406).
+
+               17/05/2017 - Ajuste para não incluir a validação "3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ"
+                            no proc_message
+                            (Ana - SD 660364 / 663299).
+
+               25/05/2017 - Ajuste para incluir a validação "3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ"
+                            no proc_message, porém, substituir o tempo "ERRO" por "ALERTA".
+                            Alteradas mais algumas mensagens para considerar Alerta e não Erro
+                            (Ana - SD 660364 / 663299).
    ............................................................................. */
 
    DECLARE
 
      -- Selecionar os dados da Cooperativa
      CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
-     SELECT cop.cdcooper
-           ,cop.nmrescop
-           ,cop.nrtelura
-           ,cop.cdbcoctl
-           ,cop.cdagectl
-           ,cop.dsdircop
-           ,cop.nrctactl
-     FROM crapcop cop
-     WHERE cop.cdcooper = pr_cdcooper;
+       SELECT cop.cdcooper
+             ,cop.nmrescop
+             ,cop.nrtelura
+             ,cop.cdbcoctl
+             ,cop.cdagectl
+             ,cop.dsdircop
+             ,cop.nrctactl
+       FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
 
      --Registro do tipo calendario
@@ -53,89 +62,89 @@ BEGIN
 
      -- Verificar se o arquivo já não foi processado (existe na tabela)
      CURSOR cr_nmarquiv(pr_nmarquiv VARCHAR2) IS
-     SELECT 1
-       FROM tbted_control_arq arq
-      WHERE lower(arq.nmarquiv) = lower(pr_nmarquiv);
+       SELECT 1
+         FROM tbted_control_arq arq
+        WHERE lower(arq.nmarquiv) = lower(pr_nmarquiv);
      vr_flgexis NUMBER;
 
      -- Verificar ultima sequencia processada
      CURSOR cr_sqarquiv(pr_dtrefere DATE
                        ,pr_nrseqarq NUMBER) IS
-     SELECT 1
-       FROM tbted_control_arq arq
-      WHERE arq.dtrefere = pr_dtrefere
-        AND arq.nrseqarq = pr_nrseqarq;
+       SELECT 1
+         FROM tbted_control_arq arq
+        WHERE arq.dtrefere = pr_dtrefere
+          AND arq.nrseqarq = pr_nrseqarq;
 
      -- Busca do Cooperado pelo CPF
      CURSOR cr_crapass(pr_nrcpfcgc NUMBER) IS
-     SELECT cdcooper
-           ,nrdconta
-           ,dtdemiss
-           ,nmprimtl
-       FROM crapass
-      WHERE nrcpfcgc = pr_nrcpfcgc;
-     rw_crapass cr_crapass%ROWTYPE; 
+       SELECT cdcooper
+             ,nrdconta
+             ,dtdemiss
+             ,nmprimtl
+         FROM crapass
+        WHERE nrcpfcgc = pr_nrcpfcgc;
+    rw_crapass cr_crapass%ROWTYPE; 
     
-     -- Busca do Cooperado pelo CPF
-     CURSOR cr_crapass2(pr_nrdconta crapass.nrdconta%TYPE
-                       ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
-     SELECT cdcooper
-           ,nrdconta
-           ,dtdemiss
-           ,nmprimtl
-       FROM crapass
-      WHERE nrdconta = pr_nrdconta
-        AND nrcpfcgc = pr_nrcpfcgc;
-     rw_crapass2 cr_crapass2%ROWTYPE; 
+    -- Busca do Cooperado pelo CPF
+    CURSOR cr_crapass2(pr_nrdconta crapass.nrdconta%TYPE
+                      ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
+       SELECT cdcooper
+             ,nrdconta
+             ,dtdemiss
+             ,nmprimtl
+         FROM crapass
+        WHERE nrdconta = pr_nrdconta
+          AND nrcpfcgc = pr_nrcpfcgc;
+    rw_crapass2 cr_crapass2%ROWTYPE; 
    
-     -- Busca do Cooperado por cooperativa e conta
-     CURSOR cr_crapass3(pr_cdcooper crapass.cdcooper%TYPE
-                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
-     SELECT cdcooper
-           ,nrdconta             
-           ,dtdemiss
-           ,nmprimtl
-     FROM crapass
+    -- Busca do Cooperado por cooperativa e conta
+    CURSOR cr_crapass3(pr_cdcooper crapass.cdcooper%TYPE
+                      ,pr_nrdconta crapass.nrdconta%TYPE) IS
+       SELECT cdcooper
+             ,nrdconta             
+          ,dtdemiss
+          ,nmprimtl
+      FROM crapass
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta;
-     rw_crapass3 cr_crapass3%ROWTYPE; 
+    rw_crapass3 cr_crapass3%ROWTYPE; 
    
-     -- Busca do Cooperado pelo CPF e que não seja primeiro titular
-     CURSOR cr_crapttl(pr_nrcpfcgc NUMBER) IS
-     SELECT ttl.cdcooper
-           ,ttl.nrdconta 
-       FROM crapttl ttl
-      WHERE ttl.nrcpfcgc = pr_nrcpfcgc
-        AND ttl.idseqttl > 1;
-     rw_crapttl cr_crapttl%ROWTYPE; 
-     
-     -- Busca do Cooperado pelo CPF e que não seja primeiro titular
-     CURSOR cr_crapttl2(pr_nrcpfcgc crapttl.nrcpfcgc%TYPE
-                       ,pr_nrdconta crapttl.nrdconta%TYPE) IS
-     SELECT ttl.cdcooper
-           ,ttl.nrdconta 
-       FROM crapttl ttl
-      WHERE ttl.nrcpfcgc = pr_nrcpfcgc
-        AND ttl.nrdconta = pr_nrdconta;
-     rw_crapttl2 cr_crapttl2%ROWTYPE; 
-        
-     -- Buscar Lote
-     CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
-                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                       ,pr_nrdolote IN craptab.dstextab%TYPE) IS
-     SELECT nrseqdig,
-            qtinfoln,
-            qtcompln,
-            vlinfodb,
-            vlcompdb,
-            ROWID
-        FROM craplot
-       WHERE craplot.cdcooper = pr_cdcooper
-         AND craplot.dtmvtolt = pr_dtmvtolt
-         AND craplot.cdagenci = 1
-         AND craplot.cdbccxlt = 100
-         AND craplot.nrdolote = pr_nrdolote;
-     rw_craplot cr_craplot%ROWTYPE;
+    -- Busca do Cooperado pelo CPF e que não seja primeiro titular
+    CURSOR cr_crapttl(pr_nrcpfcgc NUMBER) IS
+    SELECT ttl.cdcooper
+          ,ttl.nrdconta 
+      FROM crapttl ttl
+     WHERE ttl.nrcpfcgc = pr_nrcpfcgc
+       AND ttl.idseqttl > 1;
+    rw_crapttl cr_crapttl%ROWTYPE; 
+   
+    -- Busca do Cooperado pelo CPF e que não seja primeiro titular
+    CURSOR cr_crapttl2(pr_nrcpfcgc crapttl.nrcpfcgc%TYPE
+                      ,pr_nrdconta crapttl.nrdconta%TYPE) IS
+    SELECT ttl.cdcooper
+          ,ttl.nrdconta 
+      FROM crapttl ttl
+     WHERE ttl.nrcpfcgc = pr_nrcpfcgc
+       AND ttl.nrdconta = pr_nrdconta;
+    rw_crapttl2 cr_crapttl2%ROWTYPE; 
+       
+    -- Buscar Lote
+    CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                      ,pr_nrdolote IN craptab.dstextab%TYPE) IS
+      SELECT nrseqdig,
+             qtinfoln,
+             qtcompln,
+             vlinfodb,
+             vlcompdb,
+             ROWID
+         FROM craplot
+        WHERE craplot.cdcooper = pr_cdcooper
+          AND craplot.dtmvtolt = pr_dtmvtolt
+          AND craplot.cdagenci = 1
+          AND craplot.cdbccxlt = 100
+          AND craplot.nrdolote = pr_nrdolote;
+    rw_craplot cr_craplot%ROWTYPE;
 
      CURSOR cr_craptco(pr_cdcopant IN craptco.cdcopant%TYPE
                       ,pr_nrctaant IN craptco.nrctaant%TYPE)IS
@@ -147,15 +156,15 @@ BEGIN
      rw_craptco cr_craptco%ROWTYPE;                     
 
      --Variaveis Locais
-     vr_cdcritic INTEGER;
-     vr_cdprogra VARCHAR2(10);
-     vr_dscritic VARCHAR2(4000);
-     vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
+    vr_cdcritic INTEGER;
+    vr_cdprogra VARCHAR2(10);
+    vr_dscritic VARCHAR2(4000);
+    vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
       
      --Variaveis de Excecao
-     vr_exc_saida  EXCEPTION;
-     vr_exc_email  EXCEPTION;
-     vr_exc_fimprg EXCEPTION;
+    vr_exc_saida  EXCEPTION;
+    vr_exc_email  EXCEPTION;
+    vr_exc_fimprg EXCEPTION;
 
      -- Diretorio e arquivos para processamento
      vr_datatual         DATE;
@@ -314,7 +323,6 @@ BEGIN
    -- Inicio Bloco Principal pc_crps707
    ---------------------------------------
    BEGIN
-
      --Atribuir o nome do programa que está executando
      vr_cdprogra:= 'CRPS707';
 
@@ -341,15 +349,15 @@ BEGIN
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
-                                                     
+
        --Sair do programa
        RAISE vr_exc_saida;
        
      END IF;
-     
+
      --> Gerar log
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                pr_ind_tipo_log => 2, --> erro tratado
+                                pr_ind_tipo_log => 1, --> Mensagem
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Iniciando processo de TEDs Sicredi',
                                 pr_nmarqlog     => vr_nmarqlog);                                
@@ -359,18 +367,18 @@ BEGIN
      
      -- Busca remetente de email
      vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
-     
+   
      -- Data para processamento
      vr_datatual := trunc(SYSDATE);
 
      -- Efetuar leitura dos arquivos do diretorio
-     gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds
+     gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds  
                                ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
+
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
-       
        -- Envio centralizado de log de erro
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -379,12 +387,11 @@ BEGIN
                                                      || vr_dscritic );
                                                      
        RAISE vr_exc_saida;
-       
      END IF;
-
+       
      -- Se possuir arquivos para serem processados
      IF vr_listaarq IS NOT NULL THEN
-       
+
        -- Carregar a lista de arquivos txt na pl/table
        vr_tbarqlst := gene0002.fn_quebra_string(pr_string => vr_listaarq);
        
@@ -408,20 +415,20 @@ BEGIN
          BEGIN
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                      pr_ind_tipo_log => 2, --> erro tratado
+                                      pr_ind_tipo_log => 1, --> Mensagem
                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                          ' - '|| vr_cdprogra ||' --> Iniciando integracao do arquivo '||vr_idxtexto,
                                       pr_nmarqlog     => vr_nmarqlog); 
 
            -- Verificar se o arquivo já não foi processado (existe na tabela mesmo nome)
            vr_flgexis := 0;
-           
+
            OPEN cr_nmarquiv(pr_nmarquiv => vr_idxtexto);
            
            FETCH cr_nmarquiv INTO vr_flgexis;
            
            CLOSE cr_nmarquiv;
-           
+
            -- Se o arquivo já foi processado
            IF vr_flgexis = 1 THEN
              
@@ -519,7 +526,7 @@ BEGIN
                RAISE vr_exc_email;
                
            END;
-
+           
            --Verifica se o sequencial no header corresponde ao informado no nome do arquivo
            IF substr(vr_idxtexto,7,2) <> vr_nrseqhead THEN
              
@@ -796,11 +803,11 @@ BEGIN
                CLOSE cr_crapass2;
                
                END IF;
-                              
+                        
                -- Se não achou nenhuma conta ativa
                IF vr_cdcooper = 0 THEN
                  -- Gerar critica
-                 vr_cdmotivo := '1 - Conta Destinataria  do Credito Encerrada.';
+                 vr_cdmotivo := '1 - Conta Destinataria do Credito Encerrada.';
                  RAISE vr_exc_saida;
                END IF;
 
@@ -893,7 +900,7 @@ BEGIN
                                        ,1
                                        ,1
                                        ,1
-	                                     ,vr_vloperac
+                                       ,vr_vloperac
                                        ,vr_vloperac
                                        ,1)
                               RETURNING nrseqdig
@@ -906,7 +913,7 @@ BEGIN
                  
                ELSE -- Se Existir
                  BEGIN
-				           -- Atualiza Lote
+                   -- Atualiza Lote
                    UPDATE craplot
                       SET qtcompln = nvl(craplot.qtcompln,0) + 1
                         , qtinfoln = nvl(craplot.qtinfoln,0) + 1
@@ -958,7 +965,7 @@ BEGIN
                                     ,to_char(SYSDATE,'sssss'));
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_cdmotivo := 'Erro ao criar Trasnferencia em C/C: '||SQLERRM;
+                   vr_cdmotivo := 'Erro ao criar Transferencia em C/C: '||SQLERRM;
                    RAISE vr_exc_saida;
                END;
 
@@ -1036,7 +1043,7 @@ BEGIN
                
                --> Gerar log
                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                          pr_ind_tipo_log => 2, --> erro tratado
+                                          pr_ind_tipo_log => 1, --> Mensagem -- não é erro tratado
                                           pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                              ' - '|| vr_cdprogra ||' --> TED para Conta '||vr_nrdconta_new||' no valor de '
                                                              || to_char(vr_vloperac,'fm999g999g990d00') || ' efetuada com sucesso.',
@@ -1165,12 +1172,16 @@ BEGIN
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
                                           
-                 --> Gerar log
-                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                            pr_ind_tipo_log => 2, --> erro tratado
-                                            pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                               ' - '|| vr_cdprogra ||' --> TED para conta '||vr_nrdconta||' com erro --> '||vr_cdmotivo,
-                                            pr_nmarqlog     => vr_nmarqlog);                                
+                   --> Gerar log
+                   --Indica que é mensagem e não erro
+                   --Chamado 660364 / 663299
+                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                              pr_ind_tipo_log => 1, --> Mensagem
+                                              pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                                 ' - '|| vr_cdprogra ||' --> '||
+                                                                 'ALERTA: TED para conta '||vr_nrdconta||' com crítica --> '||vr_cdmotivo,
+                                              pr_nmarqlog     => vr_nmarqlog);                                
+
                                           
                  IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                        ,pr_dtarquiv => vr_dtarquiv
@@ -1275,7 +1286,7 @@ BEGIN
              
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                      pr_ind_tipo_log => 2, --> erro tratado
+                                      pr_ind_tipo_log => 1, --> Mensagem
                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                          ' - '|| vr_cdprogra ||' --> Encerramento do processo do arquivo '||vr_idxtexto,
                                       pr_nmarqlog     => vr_nmarqlog);                                 
@@ -1419,7 +1430,7 @@ BEGIN
 
      --> Gerar log
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                pr_ind_tipo_log => 2, --> erro tratado
+                                pr_ind_tipo_log => 1, --> Mensagem
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Encerramento do processo de TEDs Sicredi',
                                 pr_nmarqlog     => vr_nmarqlog);                                
