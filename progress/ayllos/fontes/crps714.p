@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odirlei Busana - AMcom
-   Data    : Março/2017.                    Ultima atualizacao: 18/03/2016
+   Data    : Março/2017.                    Ultima atualizacao: 22/06/2017
 
    Dados referentes ao programa:
 
@@ -12,10 +12,9 @@
    Objetivo  : Chamado atraves do shell crps714.sh para criaçao 
                de emprestimo de cessao.
                
-   Alteracoes :
-   
-   
-   
+   Alteracoes : 22/06/2017 - Ajuste para envio da data original de vcto
+                             da cessao para a b1wgen0196. (Anderson)
+
 .............................................................................*/   
 
 DEF VAR aux_lsdparam AS CHAR NO-UNDO. 
@@ -116,6 +115,7 @@ DO TRANSACTION ON ERROR  UNDO trans_714, LEAVE trans_714
                          ,INPUT  aux_dtdpagto /* par_dtdpagto DATE */
                          ,INPUT  aux_cdlcremp /* par_cdlcremp INTE */
                          ,INPUT  aux_cdfinemp /* par_cdfinemp INTE */
+                         ,INPUT  aux_dtvencto_ori /* par_dtvencto_ori DATE */
                         
                         ,OUTPUT  aux_nrctremp
                         ,OUTPUT  TABLE tt-erro).

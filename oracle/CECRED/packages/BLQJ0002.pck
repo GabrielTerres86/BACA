@@ -10,7 +10,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
    
     Objetivo  : Efetuar a comunicacao do Ayllos com o Webjud
                  
-    Alteracoes: 
+    Alteracoes: 26/06/2017 - Ajustes no nome do favorecido da TED e no select de busca
+                             de TEDs pendentes (Andrino - Mouts)
 
   .............................................................................*/
 
@@ -1622,7 +1623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          pr_indbloqueio_saldo,
          pr_nrcnpj_if_destino,
          pr_nragencia_if_destino,
-         substr(pr_nmfavorecido,70),
+         substr(pr_nmfavorecido,1,70),
          pr_nrcpfcnpj_favorecido,
          pr_tpdeposito,
          pr_cddeposito,
@@ -2140,9 +2141,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                          b.dsoficio) qtreg,
              ROW_NUMBER() OVER (PARTITION BY a.cdcooper,
                                              a.nrcpfcnpj,
+                                             b.nrdconta, 
                                              b.dsoficio
                                     ORDER BY a.cdcooper,
                                              a.nrcpfcnpj,
+                                             b.nrdconta, 
                                              b.dsoficio) nrreg
                                              
         FROM tbblqj_ordem_transf b,

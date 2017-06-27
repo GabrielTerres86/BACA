@@ -228,7 +228,11 @@
 
               21/03/2017 - Alterado rotina obtem_emprestimo_risco, para definir menor
                            risco como Risco E aux_innivris = 6.
-                           PRJ443 - Cessao de cartao de credito(Odirlei-AMcom)
+                           PRJ343 - Cessao de cartao de credito(Odirlei-AMcom)
+
+              22/06/2017 - Alterado rotina obtem-emprestimo-risco, para retornar menor
+                           risco como Risco D aux_innivris = 5.
+                           PRJ343 - Cessao de cartao de credito (Anderson)
 .............................................................................*/
   
   
@@ -4230,10 +4234,9 @@ PROCEDURE obtem_emprestimo_risco:
         
           IF AVAIL b1-crapfin AND b1-crapfin.tpfinali = 1 THEN
              DO:
-             
-                 /* Risco E */
-                 IF aux_innivris < 6 THEN
-                    ASSIGN aux_innivris = 6.                 
+                 /* Risco D */
+                 IF aux_innivris < 5 THEN
+                    ASSIGN aux_innivris = 5.
 
              END. /* END IF AVAIL crapfin THEN */
 
