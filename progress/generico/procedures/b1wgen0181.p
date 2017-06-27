@@ -17,6 +17,11 @@
 							
                 06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+                             
+                27/06/2016 - Removida validacao de seguranca por departamentos 14 e 20.
+                             Serao respeitadas apenas as liberacoes efetuadas na PERMIS.
+                             Heitor (Mouts) - Chamado 697382
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -65,16 +70,6 @@ PROCEDURE Retorna_seguradoras:
             RETURN 'NOK'.
         END.
 
-    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrdcaixa,
-                       INPUT 1,
-                       INPUT 36,
-                       INPUT-OUTPUT aux_dscritic).
-        RETURN 'NOK'.
-    END.
-    
     IF par_cdsegura > 0 THEN
     DO:
         FIND FIRST crapcsg WHERE crapcsg.cdcooper = par_cdcooper
@@ -169,16 +164,6 @@ PROCEDURE Grava_dados_seguradora:
                            INPUT-OUTPUT aux_dscritic).
             RETURN 'NOK'.
         END.
-
-    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrdcaixa,
-                       INPUT 1,
-                       INPUT 36,
-                       INPUT-OUTPUT aux_dscritic).
-        RETURN 'NOK'.
-    END.
 
     Grava: DO TRANSACTION
            ON ERROR  UNDO Grava, LEAVE Grava
@@ -305,16 +290,6 @@ PROCEDURE Valida_inclusao_seguradora:
             RETURN 'NOK'.
         END.
 
-    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrdcaixa,
-                       INPUT 1,
-                       INPUT 36,
-                       INPUT-OUTPUT aux_dscritic).
-        RETURN 'NOK'.
-    END.
-
     IF  par_cdsegura = 0 THEN
         DO:
             ASSIGN aux_dscritic = "Informe o codigo da seguradora"
@@ -410,16 +385,6 @@ PROCEDURE Elimina_seguradora:
                            INPUT-OUTPUT aux_dscritic).
             RETURN 'NOK'.
         END.
-
-    IF  NOT CAN-DO ("20,14",STRING(crapope.cddepart))  THEN  DO:
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrdcaixa,
-                       INPUT 1,
-                       INPUT 36,
-                       INPUT-OUTPUT aux_dscritic).
-        RETURN 'NOK'.
-    END.
 
     Elimina: DO TRANSACTION
              ON ERROR  UNDO Elimina, LEAVE Elimina
