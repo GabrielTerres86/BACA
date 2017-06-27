@@ -2,13 +2,14 @@
 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 12/05/2017
+   Data    : 21/03/2017                        Ultima atualizacao: 22/06/2017
 
    Dados referentes ao programa:
 
    Objetivo  : BO - Rotinas para geraçao de Cessao de Cartao de credito
 
-   Alteracoes:
+   Alteracoes: 22/06/2017 - Ajuste para calcular o risco da operacao de acordo
+                            com a quantidade de dias em atraso. (Anderson)
 
  ..............................................................................*/
 
@@ -71,6 +72,7 @@ PROCEDURE grava_dados:
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtvencto_ori AS DATE                       NO-UNDO.
     
     DEF OUTPUT PARAM nov_nrctremp AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -119,6 +121,8 @@ PROCEDURE grava_dados:
     DEF VAR aux_vlpreemp AS DECI                                    NO-UNDO.
     DEF VAR aux_percetop AS DECI                                    NO-UNDO.
     DEF VAR aux_txcetmes AS DECI                                    NO-UNDO.
+    DEF VAR aux_qtdiaatr AS INTE                                    NO-UNDO.
+    DEF VAR aux_inrisdia AS CHAR                                    NO-UNDO.
 
 
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
@@ -222,6 +226,35 @@ PROCEDURE grava_dados:
                    aux_vlrpreju = tt-dados-analise.vlrpreju
                    aux_vlsfnout = tt-dados-analise.vlsfnout.
         END.
+  
+     /* Calcular o Risco de acordo com a quantidade de dias em atraso */
+     ASSIGN aux_qtdiaatr = par_dtmvtolt - par_dtvencto_ori
+            aux_inrisdia = IF aux_qtdiaatr < 15 THEN
+                              "A"
+                           ELSE
+                           IF aux_qtdiaatr <= 30 THEN
+                              "B"
+                           ELSE 
+                           IF aux_qtdiaatr <= 60 THEN
+                              "C"
+                           ELSE
+                           IF aux_qtdiaatr <= 90 THEN
+                              "D"
+                           ELSE
+                           IF aux_qtdiaatr <= 120 THEN
+                              "E"
+                           ELSE
+                           IF aux_qtdiaatr <= 150 THEN
+                              "F"
+                           ELSE
+                           IF aux_qtdiaatr <= 180 THEN
+                              "G"
+                           ELSE
+                              "H".
+     
+     /* Assume o pior risco */
+     IF aux_inrisdia > tt-proposta-epr.nivrisco THEN
+        ASSIGN tt-proposta-epr.nivrisco = aux_inrisdia.
   
      RUN valida-dados-gerais IN h-b1wgen0002(INPUT par_cdcooper,
                                              INPUT par_cdagenci,

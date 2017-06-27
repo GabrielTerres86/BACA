@@ -681,6 +681,9 @@
               06/06/2017 - Alteraçao na rotina proc_qualif_operacao, pois nao estava considerando as prestacoes 
                            calculadas nos meses anteriores, apenas do mes atual.
 
+              22/06/2017 - Ajuste na procedure obtem-dados-proposta-emprestimo para nao validar o tempo
+                           minimo para revisao cadastral, nos casos de cessao de cartao de credito. (Anderson)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -2260,6 +2263,9 @@ PROCEDURE obtem-dados-proposta-emprestimo:
     
                 IF  AVAIL crapttl THEN
                     DO:
+                        /* nao validar revisao cadastral para cessao de credito */
+                        IF  par_nmdatela <> "CRPS714" THEN
+                            DO:
                         IF  NOT VALID-HANDLE(h-b1wgen0001) THEN
                             RUN sistema/generico/procedures/b1wgen0001.p 
                                 PERSISTENT SET h-b1wgen0001.
@@ -2276,6 +2282,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                         
                         IF  RETURN-VALUE = "NOK"  THEN
                             RETURN "NOK".
+                            END.
     
                         IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
                             RUN sistema/generico/procedures/b1wgen9999.p
