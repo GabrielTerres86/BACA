@@ -63,7 +63,6 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0003 is
             ,nrseqctr       crapris.nrseqctr%TYPE
             ,nrmodalidade   tbcrd_risco.nrmodalidade%TYPE
             ,cdvencto       crapvri.cdvencto%TYPE
-            ,dtrefere       crapvri.dtrefere%TYPE
             ,innivris       crapvri.innivris%TYPE
             ,vldivida       crapvri.vldivida%TYPE);
                 
@@ -1231,7 +1230,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
               
               -- Cooperativa
               vr_dscritic := vr_dscribas || ' Cooperativa = '||vr_vet_campos(6);
-              vr_cdctabnd := vr_vet_campos(6);
+              vr_cdctabnd := vr_vet_campos(6);              
+              -- Verificar se a Cooperativa do registro não está com o período fechado
+              IF fn_periodo_habilitado(pr_cdcooper => vr_tab_crapcop(vr_cdctabnd)
+                                      ,pr_dtbase => pr_dtbase) = 0 THEN 
+                -- Gerar critica período fechado
+                vr_dscritic := vr_dscribas || ' Cooperativa = '||vr_tab_crapcop(vr_cdctabnd)||' com periodo fechado, favor reabrir para proceder com a importacao!';
+                RAISE vr_excsaida;
+              END IF;
               -- CPF/CNPJ do Cooperado, primeiro retornando CPF/CNPJ
               vr_dscritic := vr_dscribas || ' CPF/CNPJ = '||vr_vet_campos(3);            
               vr_nrcpfcgc := vr_vet_campos(3);
@@ -1644,14 +1650,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
            AND ass.nrdconta = pr_nrctactl;
       vr_dsnivris crapass.dsnivris%TYPE;
       
-      -- Verificar existencia de integração de arquivos VIP na singular
+      /*-- Verificar existencia de integração de arquivos VIP na singular
       CURSOR cr_riscar(pr_cdcooper NUMBER) IS
         SELECT 1
           FROM tbcrd_risco riscar
          WHERE riscar.cdcooper = pr_cdcooper
            AND riscar.cdtipo_cartao = 2 -- BB
            AND riscar.dtrefere = pr_dtbase;
-      vr_indregis NUMBER;
+      vr_indregis NUMBER;*/
       
       -- Busca dos limites sempre dois meses atrás
       CURSOR cr_limite(pr_cdcooper NUMBER) IS
@@ -1709,9 +1715,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       
       -- Buscar todas as Cooperativas
       FOR rw_cop IN cr_crapcop LOOP
-
+        
         -- Verificar se por algum motivo não houve ainda
         -- a integração dos arquivos VIP nesta Singular
+        /* REMOVIDO POR QUESTAO DE PERFORMANCE, SE POR ALGUM MOTIVO NÃO OCORRER,
+           DEVE SER SUBMETIDO JOB OU ACIONADO POR BACA 
         OPEN cr_riscar(pr_cdcooper => rw_cop.cdcooper);
         FETCH cr_riscar
          INTO vr_indregis;
@@ -1725,7 +1733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                 ,pr_dtrefere => to_char(pr_dtbase,'dd/mm/rrrr'));
         ELSE
           CLOSE cr_riscar;
-        END IF;
+        END IF;*/
         
         -- Buscar nivel ASS 
         OPEN cr_crapass(rw_cop.nrctactl);
@@ -1943,8 +1951,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                        ,pr_qtparcel          IN crapris.qtparcel%TYPE             -- Quantidade de parcelas
                                        ,pr_cdinfadi          IN crapris.cdinfadi%TYPE             -- Saida de operação
                                        ,pr_dsinfaux          IN crapris.dsinfaux%TYPE             -- Informação auxiliar
-                                       ,pr_tab_risco  IN OUT NOCOPY risc0003.typ_tab_risco       --> Temp-Table do risco do cartao de credito
-                                       ,pr_cdvencto          OUT PLS_INTEGER                     --> Codigo do vencimento posicionado conforme os dias de atraso
+                                       ,pr_calcparc          IN BOOLEAN                           -- Inidica se calcularemos as parcelas ou não
+                                       ,pr_tab_risco      IN OUT NOCOPY risc0003.typ_tab_risco      --> Temp-Table dos Riscos
+                                       ,pr_tab_risco_venc IN OUT NOCOPY risc0003.typ_tab_risco_venc --> Risco de vencimentos
                                        ,pr_cdcritic          OUT PLS_INTEGER                     --> Código da critica
   				    				        	       ,pr_dscritic          OUT VARCHAR2) IS                    --> Descricao da critica IS
   BEGIN
@@ -1964,22 +1973,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       vr_ind_risco          VARCHAR2(60);
+      vr_indice             VARCHAR2(70);
+      vr_cdvencto           NUMBER;
+      vr_vlparcel           NUMBER := 0;
+      vr_vlsdeved           NUMBER := 0;
+      vr_diasvenc           NUMBER := 0;
+      vr_dtparcel           date;
       
       -- Variaveis tratamento de erro
       vr_exc_erro           EXCEPTION;
       vr_cdcritic           crapcri.cdcritic%TYPE;
       vr_dscritic           VARCHAR2(4000);
       
-      vr_vldiv060     crapris.vldiv060%TYPE; --> Valor do atraso quando prazo inferior a 60
-      vr_vldiv180     crapris.vldiv180%TYPE; --> Valor do atraso quando prazo inferior a 180
-      vr_vldiv360     crapris.vldiv360%TYPE; --> Valor do atraso quando prazo inferior a 360
-      vr_vldiv999     crapris.vldiv999%TYPE; --> Valor do atraso para outros casos
-      vr_vlvec180     crapris.vlvec180%TYPE; --> Valor a vencer nos próximos 180 dias
-      vr_vlvec360     crapris.vlvec360%TYPE; --> Valor a vencer nos próximos 360 dias
-      vr_vlvec999     crapris.vlvec999%TYPE; --> Valor a vencer para outros casos
-      vr_vlprjano     crapris.vlprjano%TYPE; --> Valor prejuizo no ano corrente
-      vr_vlprjaan     crapris.vlprjaan%TYPE; --> Valor prejuizo no ano anterior
-      vr_vlprjant     crapris.vlprjant%TYPE; --> Valor prejuizo anterior
+      
+      vr_vldiv060     crapris.vldiv060%TYPE := 0; --> Valor do atraso quando prazo inferior a 60
+      vr_vldiv180     crapris.vldiv180%TYPE := 0; --> Valor do atraso quando prazo inferior a 180
+      vr_vldiv360     crapris.vldiv360%TYPE := 0; --> Valor do atraso quando prazo inferior a 360
+      vr_vldiv999     crapris.vldiv999%TYPE := 0; --> Valor do atraso para outros casos
+      vr_vlvec180     crapris.vlvec180%TYPE := 0; --> Valor a vencer nos próximos 180 dias
+      vr_vlvec360     crapris.vlvec360%TYPE := 0; --> Valor a vencer nos próximos 360 dias
+      vr_vlvec999     crapris.vlvec999%TYPE := 0; --> Valor a vencer para outros casos
+      vr_vlprjano     crapris.vlprjano%TYPE := 0; --> Valor prejuizo no ano corrente
+      vr_vlprjaan     crapris.vlprjaan%TYPE := 0; --> Valor prejuizo no ano anterior
+      vr_vlprjant     crapris.vlprjant%TYPE := 0; --> Valor prejuizo anterior
+      
+      -- Vetor para armazenar parcelas
+      TYPE typ_reg_parcel IS
+        RECORD(dtvencto DATE
+              ,cdvencto NUMBER
+              ,vlvencto NUMBER);
+      TYPE typ_tab_parcel IS
+        TABLE OF typ_reg_parcel
+          INDEX BY BINARY_INTEGER; --> Id
+      vr_tab_parcel typ_tab_parcel;
       
       -- Calcula os dias de atraso do cartao de credito
       FUNCTION fn_calcula_dias_atraso(pr_dtvencimento  IN DATE
@@ -2091,63 +2117,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
         END IF;
       END;
       
-      -- SubRotina para posicionar o valor da divida no campo 
-      -- correspondente conforme o código do vencimento enviado
-      -- Subrotina para criação da crapris específica para o dcto 3010
-      PROCEDURE pc_posici_divida_vcto(pr_cdvencto  IN crapvri.cdvencto%TYPE  --> Codigo do vencimento
-                                     ,pr_vldivida  IN crapvri.vldivida%TYPE  --> Valor do risco a lançar
-                                     ,pr_rsvec180 OUT crapris.vlvec180%TYPE
-                                     ,pr_rsvec360 OUT crapris.vlvec360%TYPE
-                                     ,pr_rsvec999 OUT crapris.vlvec999%TYPE
-                                     ,pr_rsdiv060 OUT crapris.vldiv060%TYPE
-                                     ,pr_rsdiv180 OUT crapris.vldiv180%TYPE
-                                     ,pr_rsdiv360 OUT crapris.vldiv360%TYPE
-                                     ,pr_rsdiv999 OUT crapris.vldiv999%TYPE
-                                     ,pr_rsprjano OUT crapris.vlprjano%TYPE
-                                     ,pr_rsprjaan OUT crapris.vlprjaan%TYPE
-                                     ,pr_rsprjant OUT crapris.vlprjant%TYPE) IS
-      BEGIN
-        -- Inicializar variaveis específica para gravação da dívida
-        pr_rsvec180 := 0;
-        pr_rsvec360 := 0;
-        pr_rsvec999 := 0;
-        pr_rsdiv060 := 0;
-        pr_rsdiv180 := 0;
-        pr_rsdiv360 := 0;
-        pr_rsdiv999 := 0;
-        pr_rsprjano := 0;
-        pr_rsprjaan := 0;
-        pr_rsprjant := 0;  
-        -- Gravar o valor da dívida nos campos específicos
-        -- de acordo com o código do vencimento encontrado
-        IF pr_cdvencto >= 110 AND pr_cdvencto <= 140 THEN
-          pr_rsvec180 := pr_vldivida;
-        ELSIF pr_cdvencto = 150 THEN
-          pr_rsvec360 := pr_vldivida;
-        ELSIF pr_cdvencto > 150 AND pr_cdvencto <= 199 THEN
-          pr_rsvec999 := pr_vldivida;
-        ELSIF pr_cdvencto >= 205 AND pr_cdvencto <= 220 THEN
-          pr_rsdiv060 := pr_vldivida;
-        ELSIF pr_cdvencto >= 230 AND pr_cdvencto  <= 250 THEN
-          pr_rsdiv180 := pr_vldivida;
-        ELSIF pr_cdvencto >= 255 AND pr_cdvencto  <= 270 THEN
-          pr_rsdiv360 := pr_vldivida;
-        ELSIF pr_cdvencto >= 280 AND pr_cdvencto  <= 290 THEN
-          pr_rsdiv999 := pr_vldivida;
-        ELSIF pr_cdvencto = 310 THEN
-          pr_rsprjano := pr_vldivida;
-        ELSIF pr_cdvencto = 320 THEN
-          pr_rsprjaan := pr_vldivida;
-        ELSE
-          pr_rsprjant := pr_vldivida;
-        END IF;
-      EXCEPTION
-        WHEN OTHERS THEN
-          cecred.pc_internal_exception;
-          -- Ignorar qualquer problema 
-          Null;
-      END;
-      
       
     BEGIN
       vr_ind_risco := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || LPAD(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0');
@@ -2191,27 +2160,118 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                                                    ,pr_dtultdma_util => pr_dtultdma_util);
         
       -- Calculo do nivel de risco
-      pr_tab_risco(vr_ind_risco).innivris := fn_calcula_nivel_risco(pr_dsnivel_risco);     
+      pr_tab_risco(vr_ind_risco).innivris := fn_calcula_nivel_risco(pr_dsnivel_risco); 
       
-      -- Calcular o código do vencimento conforme dias de atraso
-      -- Buscar o código do vencimento a lançar
-      pr_cdvencto := fn_calc_codigo_vcto(pr_diasvenc => pr_tab_risco(vr_ind_risco).qtdiaatr);              
-                
-      -- SubRotina para posicionar o valor da divida no campo 
-      -- correspondente conforme o código do vencimento enviado
-      -- Subrotina para criação da crapris específica para o dcto 3010
-      pc_posici_divida_vcto(pr_cdvencto => pr_cdvencto                          --> Codigo do vencimento
-                           ,pr_vldivida => pr_tab_risco(vr_ind_risco).vldivida  --> Valor do risco a lançar
-                           ,pr_rsvec180 => vr_vlvec180
-                           ,pr_rsvec360 => vr_vlvec360
-                           ,pr_rsvec999 => vr_vlvec999
-                           ,pr_rsdiv060 => vr_vldiv060
-                           ,pr_rsdiv180 => vr_vldiv180
-                           ,pr_rsdiv360 => vr_vldiv360
-                           ,pr_rsdiv999 => vr_vldiv999
-                           ,pr_rsprjano => vr_vlprjano
-                           ,pr_rsprjaan => vr_vlprjaan
-                           ,pr_rsprjant => vr_vlprjant);
+      -- Saída não necessita VRI
+      IF pr_cdinfadi != '0301' THEN 
+      
+        -- Se operação vencida ou Para cartões ou Remessas sem Fluxo Financeiro
+        IF pr_tab_risco(vr_ind_risco).qtdiaatr > 0 OR NOT pr_calcparc THEN 
+          -- Sem atraso
+          IF pr_tab_risco(vr_ind_risco).qtdiaatr > 0 THEN
+            -- Multiplicar por -1 para significar atraso
+            pr_tab_risco(vr_ind_risco).qtdiaatr := pr_tab_risco(vr_ind_risco).qtdiaatr *-1;
+          ELSE
+            -- Para cartões ou sem Fluxo Financeiro, não há atraso
+            pr_tab_risco(vr_ind_risco).qtdiaatr := 0;
+          END IF;
+          
+          -- Calcular o código do vencimento conforme dias de atraso 
+          vr_cdvencto := fn_calc_codigo_vcto(pr_diasvenc => pr_tab_risco(vr_ind_risco).qtdiaatr); 
+          
+          -- Posicionar 
+          IF pr_tab_risco(vr_ind_risco).qtdiaatr = 0 THEN
+            vr_vlvec180 := vr_vlvec180 + pr_tab_risco(vr_ind_risco).vldivida;
+          ELSIF pr_tab_risco(vr_ind_risco).qtdiaatr <= 60 THEN
+            vr_vldiv060 := vr_vldiv060 + pr_tab_risco(vr_ind_risco).vldivida;
+          ELSIF pr_tab_risco(vr_ind_risco).qtdiaatr <= 180 THEN
+            vr_vldiv180 := vr_vldiv180 + pr_tab_risco(vr_ind_risco).vldivida;
+          ELSIF pr_tab_risco(vr_ind_risco).qtdiaatr <= 360 THEN
+            vr_vldiv360 := vr_vldiv360 + pr_tab_risco(vr_ind_risco).vldivida;
+          ELSE
+            vr_vldiv999 := vr_vldiv999 + pr_tab_risco(vr_ind_risco).vldivida;
+          END IF;
+          
+          -- Criar o único registro na VRI lançando todo o saldo vencido
+          vr_indice    := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || lpad(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0') || LPAD(vr_cdvencto,10,'0');
+          IF NOT pr_tab_risco_venc.EXISTS(vr_indice) THEN
+            pr_tab_risco_venc(vr_indice).cdcooper     := pr_cdcooper;
+            pr_tab_risco_venc(vr_indice).nrdconta     := pr_nrdconta;
+            pr_tab_risco_venc(vr_indice).nrcontrato   := pr_nrcontrato;        
+            pr_tab_risco_venc(vr_indice).nrseqctr     := pr_nrseqctr;        
+            pr_tab_risco_venc(vr_indice).innivris     := pr_tab_risco(vr_ind_risco).innivris;
+            pr_tab_risco_venc(vr_indice).nrmodalidade := pr_nrmodalidade;
+            pr_tab_risco_venc(vr_indice).cdvencto     := vr_cdvencto;
+            pr_tab_risco_venc(vr_indice).vldivida     := 0;
+          END IF;
+          pr_tab_risco_venc(vr_indice).vldivida := pr_tab_risco_venc(vr_indice).vldivida + NVL(pr_vlsaldo_devedor,0);
+          
+        ELSE
+          -- Calcular quantas parcelas serão necessárias para a quitação
+          vr_vlsdeved := pr_tab_risco(vr_ind_risco).vldivida;
+          vr_tab_parcel.delete();
+          vr_dtparcel := nvl(pr_tab_risco(vr_ind_risco).dtprxpar,pr_dtultdma_util+1);
+          -- Adicionar primeira parcela
+          vr_tab_parcel(0).dtvencto := vr_dtparcel;        
+          LOOP
+            -- Próxima data
+            vr_dtparcel := add_months(vr_dtparcel,1);  
+            -- Sair quando próxima ultrapassar o vencimento
+            EXIT WHEN vr_dtparcel > pr_tab_risco(vr_ind_risco).dtvencimento;
+            -- Adicionar ao vetor 
+            vr_tab_parcel(vr_tab_parcel.count()).dtvencto := vr_dtparcel;   
+          END LOOP;
+          -- Calcular o valor da parcela
+          IF vr_tab_parcel.count() = 1 THEN
+            -- Valor da parcela é o saldo devedor
+            vr_vlparcel := pr_tab_risco(vr_ind_risco).vldivida;
+          ELSE
+            -- Dividir valor da divida pela quantidade parcelas
+            vr_vlparcel := round(pr_tab_risco(vr_ind_risco).vldivida / vr_tab_parcel.count(),2);
+          END IF;
+          -- Para cada parcela
+          FOR vr_idx IN 0..vr_tab_parcel.count()-1 LOOP
+            -- Calcular o código do vencimento conforme dias até próxima parcela
+            vr_diasvenc := vr_tab_parcel(vr_idx).dtvencto-(pr_dtultdma_util+1);
+            vr_tab_parcel(vr_idx).cdvencto := fn_calc_codigo_vcto(pr_diasvenc => vr_diasvenc); 
+            
+            -- Na ultima parcela 
+            IF vr_idx = vr_tab_parcel.count()-1 THEN 
+              -- Utilizar o resto 
+              vr_tab_parcel(vr_idx).vlvencto := vr_vlsdeved;
+            ELSE
+              -- Utilizar valor da parcela
+              vr_tab_parcel(vr_idx).vlvencto := vr_vlparcel;
+              -- Decrementar
+              vr_vlsdeved := vr_vlsdeved - vr_vlparcel;
+            END IF;
+            -- Acumular na variavel correspondente de acordo com a quantidade de dias
+            IF vr_diasvenc <= 180 THEN
+              vr_vlvec180 := vr_vlvec180 + vr_tab_parcel(vr_idx).vlvencto;
+            ELSIF vr_diasvenc <= 360 THEN
+              vr_vlvec360 := vr_vlvec360 + vr_tab_parcel(vr_idx).vlvencto;
+            ELSE
+              vr_vlvec999 := vr_vlvec999 + vr_tab_parcel(vr_idx).vlvencto;
+            END IF;
+          END LOOP;
+          
+          -- Iterar novamente para criação da VRI
+          FOR vr_idx IN 0..vr_tab_parcel.count()-1 LOOP
+            vr_indice    := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || lpad(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0') || LPAD(vr_tab_parcel(vr_idx).cdvencto,10,'0');
+            IF NOT pr_tab_risco_venc.EXISTS(vr_indice) THEN
+              pr_tab_risco_venc(vr_indice).cdcooper     := pr_cdcooper;
+              pr_tab_risco_venc(vr_indice).nrdconta     := pr_nrdconta;
+              pr_tab_risco_venc(vr_indice).nrcontrato   := pr_nrcontrato;        
+              pr_tab_risco_venc(vr_indice).nrseqctr     := pr_nrseqctr;        
+              pr_tab_risco_venc(vr_indice).innivris     := pr_tab_risco(vr_ind_risco).innivris;
+              pr_tab_risco_venc(vr_indice).nrmodalidade := pr_nrmodalidade;
+              pr_tab_risco_venc(vr_indice).cdvencto     := vr_tab_parcel(vr_idx).cdvencto;
+              pr_tab_risco_venc(vr_indice).vldivida     := 0;
+            END IF;
+            pr_tab_risco_venc(vr_indice).vldivida := pr_tab_risco_venc(vr_indice).vldivida + NVL(vr_tab_parcel(vr_idx).vlvencto,0);
+          END LOOP;
+        END IF;
+      END IF;  
       
       -- Gravar nos campos de vencimentos, a vencer, e projeções
       pr_tab_risco(vr_ind_risco).vlvec180 := nvl(vr_vlvec180,0);
@@ -2224,7 +2284,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       pr_tab_risco(vr_ind_risco).vlprjano := nvl(vr_vlprjano,0);
       pr_tab_risco(vr_ind_risco).vlprjaan := nvl(vr_vlprjaan,0);
       pr_tab_risco(vr_ind_risco).vlprjant := nvl(vr_vlprjant,0);
-      
       
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -2241,77 +2300,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
     END;
     
   END pc_grava_crapris_temporaria;
-  
-  PROCEDURE pc_grava_crapvri_temporaria(pr_cdcooper              IN tbcrd_risco.cdcooper%TYPE         -- Codigo da cooperativa
-                                       ,pr_nrdconta              IN tbcrd_risco.nrdconta%TYPE         -- Numero da conta
-                                       ,pr_nrcontrato            IN tbcrd_risco.nrcontrato%TYPE       -- Numero do contrato
-                                       ,pr_nrseqctr              IN crapris.nrseqctr%TYPE             -- Sequencia contrato
-                                       ,pr_nrmodalidade          IN tbcrd_risco.nrmodalidade%TYPE     -- Codigo da modalidade
-                                       ,pr_dtrefere              IN tbcrd_risco.dtrefere%TYPE         -- Data de referencia
-                                       ,pr_vlsaldo_devedor       IN tbcrd_risco.vlsaldo_devedor%TYPE  -- Saldo Devedor
-                                       ,pr_cdvencto              IN crapvri.cdvencto%TYPE
-                                       ,pr_tab_risco      IN risc0003.typ_tab_risco     -- Risco de vencimento cartao de credito
-                                       ,pr_tab_risco_venc IN OUT NOCOPY risc0003.typ_tab_risco_venc -- Risco de vencimento cartao de credito
-                                       ,pr_cdcritic              OUT PLS_INTEGER                      -- Código da critica
-  				    				        	       ,pr_dscritic              OUT VARCHAR2) IS                     -- Descricao da critica IS
-  BEGIN
-    ---------------------------------------------------------------------------------------------------------------
-    --  Programa : pc_grava_crapvri_temporaria
-    --  Sistema  : Ayllos
-    --  Sigla    : CRED
-    --  Autor    : James Prust Junior
-    --  Data     : Fevereiro/2016.                   Ultima atualizacao:
-    --
-    -- Dados referentes ao programa:
-    --
-    -- Frequencia: -----
-    -- Objetivo  : Procedure para gravar os dados na crapris temporaria
-    --
-    -- Alterações
-    ---------------------------------------------------------------------------------------------------------------
-    DECLARE
-      vr_ind_risco          VARCHAR2(60);
-      vr_indice             VARCHAR2(70);
-      
-      -- Variaveis tratamento de erro
-      vr_exc_erro           EXCEPTION;
-      vr_cdcritic           crapcri.cdcritic%TYPE;
-      vr_dscritic           VARCHAR2(4000);      
-      
-    BEGIN
-      
-      -- Indice da temp-table
-      vr_ind_risco := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || lpad(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0');
-      -- Indice da temp-table
-      vr_indice    := LPAD(pr_nrdconta,20,'0') || LPAD(pr_nrcontrato,20,'0') || lpad(pr_nrmodalidade,10,'0') ||lpad(pr_nrseqctr,10,'0') || LPAD(pr_cdvencto,10,'0');
-      IF NOT pr_tab_risco_venc.EXISTS(vr_indice) THEN
-        pr_tab_risco_venc(vr_indice).cdcooper     := pr_cdcooper;
-        pr_tab_risco_venc(vr_indice).nrdconta     := pr_nrdconta;
-        pr_tab_risco_venc(vr_indice).nrcontrato   := pr_nrcontrato;        
-        pr_tab_risco_venc(vr_indice).nrseqctr     := pr_nrseqctr;        
-        pr_tab_risco_venc(vr_indice).innivris     := pr_tab_risco(vr_ind_risco).innivris;
-        pr_tab_risco_venc(vr_indice).dtrefere     := pr_dtrefere;
-        pr_tab_risco_venc(vr_indice).nrmodalidade := pr_nrmodalidade;
-        pr_tab_risco_venc(vr_indice).cdvencto     := pr_cdvencto;
-        pr_tab_risco_venc(vr_indice).vldivida     := 0;
-      END IF;
-      pr_tab_risco_venc(vr_indice).vldivida := pr_tab_risco_venc(vr_indice).vldivida + NVL(pr_vlsaldo_devedor,0);
-              
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        --Variavel de erro recebe erro ocorrido
-        IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-      WHEN OTHERS THEN
-        -- Descricao do erro
-        pr_dscritic := 'Erro nao tratado na risc0003.pc_grava_crapvri_temporaria ' || SQLERRM;
-    END;
-    
-  END pc_grava_crapvri_temporaria;  
   
   /* Arrastar o risco dos contratos após integração inddocto=5 */
   PROCEDURE pc_efetua_arrasto_docto5(pr_cdcooper IN crapcop.cdcooper%TYPE  --> codigo da cooperativa
@@ -2551,6 +2539,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
               ,mvto.vlparcela
               ,mvto.qtdparcelas
               ,mvto.dtlib_operacao
+              ,upper(prod.tparquivo) tparquivo
+              ,prod.flpermite_fluxo_financeiro
               ,decode(mvto.flsaida_operacao,1,'0301',' ') cdinfadi
               ,ROW_NUMBER ()
                  OVER (PARTITION BY mvto.nrdconta/*,mvto.nrctremp,prod.idmodalidade*/
@@ -2584,10 +2574,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       vr_tab_crapass         typ_tab_crapass;      
       
       -------------------------- Variaveis ----------------------------------------
-      vr_cdvencto             crapvri.cdvencto%TYPE;
       vr_indice               VARCHAR2(70);
       vr_ind_crapvri          VARCHAR2(70);
       vr_dtultdma_util        DATE;                             -- Data do ultimo dia util do mes anterior
+      vr_calcparc             BOOLEAN;
       -- Variaveis de Erro
       vr_cdcritic             crapcri.cdcritic%TYPE;
       vr_dscritic             VARCHAR2(4000);
@@ -2671,6 +2661,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       -- Busca os registros da tabela de Movimento     
       FOR rw_movto IN cr_movto LOOP   
         
+        -- Se cartão ou remessa sem fluxo financeiro
+        IF rw_movto.tparquivo LIKE '%CARTAO%' OR rw_movto.flpermite_fluxo_financeiro = 0 OR rw_movto.dtproxima_parcela IS NULL THEN 
+          vr_calcparc := FALSE;
+        ELSE
+          vr_calcparc := TRUE;
+        END IF;
+             
         -----------------------------------------------------------------------------------------------------------
         --  INICIO PARA MONTAR OS REGISTROS PARA A CENTRAL DE RISCO
         -----------------------------------------------------------------------------------------------------------              
@@ -2692,30 +2689,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                    ,pr_qtparcel          => rw_movto.qtdparcelas
                                    ,pr_cdinfadi          => rw_movto.cdinfadi
                                    ,pr_dsinfaux          => rw_movto.idmovto_risco
+                                   ,pr_calcparc          => vr_calcparc
                                    ,pr_tab_risco         => vr_tab_risco
-                                   ,pr_cdvencto          => vr_cdvencto
+                                   ,pr_tab_risco_venc    => vr_tab_risco_venc
                                    ,pr_cdcritic          => vr_cdcritic
                                    ,pr_dscritic          => vr_dscritic);
-                                           
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-                
-        -----------------------------------------------------------------------------------------------------------
-        --  INICIO PARA MONTAR OS REGISTROS DE VENCIMENTO PARA A CENTRAL DE RISCO
-        -----------------------------------------------------------------------------------------------------------
-        pc_grava_crapvri_temporaria(pr_cdcooper        => rw_movto.cdcooper
-                                   ,pr_nrdconta        => rw_movto.nrdconta
-                                   ,pr_nrcontrato      => rw_movto.nrctremp
-                                   ,pr_nrseqctr        => rw_movto.nrseqctr
-                                   ,pr_nrmodalidade    => rw_movto.nrmodalidade
-                                   ,pr_dtrefere        => pr_dtrefere
-                                   ,pr_vlsaldo_devedor => rw_movto.vlsaldo_pendente
-                                   ,pr_cdvencto        => vr_cdvencto
-                                   ,pr_tab_risco       => vr_tab_risco
-                                   ,pr_tab_risco_venc  => vr_tab_risco_venc
-                                   ,pr_cdcritic        => vr_cdcritic
-                                   ,pr_dscritic        => vr_dscritic);
                                            
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
@@ -2839,7 +2817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                              ,vldivida)
                       VALUES (vr_tab_risco_venc_temp(idx).cdcooper
                              ,vr_tab_risco_venc_temp(idx).nrdconta
-                             ,vr_tab_risco_venc_temp(idx).dtrefere
+                             ,pr_dtrefere
                              ,vr_tab_risco_venc_temp(idx).innivris
                              ,vr_tab_risco_venc_temp(idx).nrmodalidade
                              ,vr_tab_risco_venc_temp(idx).cdvencto

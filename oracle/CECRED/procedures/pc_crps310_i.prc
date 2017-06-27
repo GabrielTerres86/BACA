@@ -964,6 +964,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_idx_ass           VARCHAR2(10);
       vr_idx               VARCHAR2(10);
       vr_index_crapepr VARCHAR2(20);
+
+      -- variaveis para criação de rotina paralela
+      vr_dsplsql VARCHAR2(4000);
+      vr_jobname VARCHAR2(4000);
       
       -- Subrotina para escrever texto na variável CLOB do XML
       PROCEDURE pc_escreve_xml(pr_desdados IN VARCHAR2) IS
@@ -5184,11 +5188,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Somente no processo mensal
       IF to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
         -- Acionar rotina para integração dos contratos oriundos de Cartões Crédito BB
-        risc0002.pc_gera_risco_cartao_vip_proc(pr_cdcooper => pr_cdcooper
-                                              ,pr_cdprogra => pr_cdprogra
-                                              ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
-                                              ,pr_dtrefere => vr_dtrefere);
-      END IF;
+        vr_dsplsql := 'BEGIN'||chr(13)
+                   || '  risc0002.pc_gera_risco_cartao_vip_proc('||pr_cdcooper
+                                                              ||','''||pr_cdprogra||''''
+                                                              ||','''||to_char(pr_rw_crapdat.dtmvtolt,'dd/mm/rrrr')||''''
+                                                              ||','''||to_char(vr_dtrefere,'dd/mm/rrrr')||''');'||chr(13)
+                   || 'END;';
+        -- Montar o prefixo do código do programa para o jobname
+        vr_jobname := 'crps310_carga_vip_$';
+        -- Faz a chamada ao programa paralelo atraves de JOB
+        gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Código da cooperativa
+                              ,pr_cdprogra  => pr_cdprogra  --> Código do programa
+                              ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
+                              ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
+                              ,pr_interva   => NULL          --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                              ,pr_jobname   => vr_jobname   --> Nome randomico criado
+                              ,pr_des_erro  => vr_des_erro);
+      END IF;  
       
       -- Inicialização do XML para o relatorio 349
       dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
