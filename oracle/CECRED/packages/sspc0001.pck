@@ -482,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.SSPC0001 AS
   --
   --  Programa: SSPC0001                        
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Julho/2014                     Ultima Atualizacao: - 17/03/2016
+  --  Data    : Julho/2014                     Ultima Atualizacao: - 26/06/2017
   --
   --  Dados referentes ao programa:
   --
@@ -493,6 +493,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.SSPC0001 AS
   --              17/03/2016 - Incluido parametro e tratamento Esteira na pc_solicita_consulta_biro    
   --                           PRJ207 - Esteira  (Odirlei-AMcom)
   --
+  --              26/06/2017 - Incluido o campo nrconbir nas pesquisas da crapcbd, melhoria de performance
+  --                           (Tiago/Rodrigo #700127).
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -8191,7 +8193,8 @@ PROCEDURE pc_consulta_socios(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da 
              crapcbd.dtatusoc,
              crapcbd.inpessoa
         FROM crapcbd
-       WHERE crapcbd.nrcbrsoc = pr_nrconbir
+       WHERE crapcbd.nrconbir = pr_nrconbir
+         AND crapcbd.nrcbrsoc = pr_nrconbir
          AND crapcbd.nrsdtsoc = pr_nrseqdet
          AND crapcbd.intippes IN (4,5)
 --         AND (nvl(crapcbd.percapvt,0) > 0 OR nvl(crapcbd.pertotal,0) >0 ) -- Colocado para nao mostrar quando eh
@@ -8310,7 +8313,8 @@ PROCEDURE pc_consulta_administrador(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
              crapcbd.dtatuadm,
              crapcbd.inpessoa
         FROM crapcbd
-       WHERE crapcbd.nrcbrsoc = pr_nrconbir
+       WHERE crapcbd.nrconbir = pr_nrconbir
+         AND crapcbd.nrcbrsoc = pr_nrconbir
          AND crapcbd.nrsdtsoc = pr_nrseqdet
          AND crapcbd.intippes = 5; -- Somente administrador
     
@@ -8391,7 +8395,8 @@ PROCEDURE pc_consulta_participacao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Nume
              crappsa.nmvincul
         FROM crappsa,
              crapcbd
-       WHERE crapcbd.nrcbrsoc = pr_nrconbir
+       WHERE crapcbd.nrconbir = pr_nrconbir
+         AND crapcbd.nrcbrsoc = pr_nrconbir
          AND crapcbd.nrsdtsoc = pr_nrseqdet
          AND crapcbd.intippes IN (4,5) -- Socio e socio/administrador
          AND crappsa.nrconbir = crapcbd.nrconbir
