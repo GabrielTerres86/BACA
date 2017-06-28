@@ -2,13 +2,18 @@
 /******************************************************************************
                            ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
-  +-------------------------------------+--------------------------------------+
+  +-------------------------------------+----------------------------------------+
   | Rotina Progress                     | Rotina Oracle PLSQL                  |
-  +-------------------------------------+--------------------------------------+
+  +-------------------------------------+----------------------------------------+
   | busca-crapope			            | ZOOM0001.pc_busca_operadores         |
   | busca-crapban					    | ZOOM0001.pc_busca_bancos             |
   | busca-historico                     | ZOOM0001.pc_busca_historico          |
-  +-------------------------------------+--------------------------------------+
+  | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
+  | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
+  | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
+  | busca-gncdnto                       | ZOOM0001.pc_busca_gncdnto              |
+  | busca-gncdocp                       | ZOOM0001.pc_busca_gncdocp              |
+  +-------------------------------------+----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
@@ -167,9 +172,27 @@
                  23/03/2016 - Adicionar validacao para nao exibir os historicos
                               817,821, e 825 na tela de custodia
                               (Douglas - Melhoria 100 - Alineas)
-                              
+
+				 15/07/2016 - Realizado a conversao da rotina busca-craplrt 
+							  (Andrei - RKAM).
+
+                20/07/2016 - Realizado a conversao das rotinas busca-craplcr,
+				             busca-crapfin 
+							  (Andrei - RKAM).
+
+                17/08/2016 - Incluido campo txmensal na table tt-craplcr
+                             busca-craplcr. (Lombardi)				             
+
+				06/10/2016 - Inclusao de tratamento de origem "ACORDO" na
+							 procedure busca-crapcco, prj. 302 (Jean Michel).
+							 				
+			    22/02/2017 - Removido as rotinas busca_nat_ocupacao, busca_ocupacao devido a conversao 
+				             da busca_gncdnto e da busca-gncdocp
+							 (Adriano - SD 614408).
+							 				
                  07/06/2016 - Adicionar validacao para nao exibir o historico 
                               1019 na tela autori (Lucas Ranghetti #464211)
+
 .............................................................................*/
 
 
@@ -1967,7 +1990,7 @@ PROCEDURE zoom-associados:
                                   crapttl.nmextttl MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,    
                        EACH crapass FIELDS(cdagenci nrdctitg dtdemiss
-                                           nmprimtl)
+                                           nmprimtl dsnivris)
                             WHERE crapass.cdcooper = crapttl.cdcooper AND
                                   crapass.nrdconta = crapttl.nrdconta AND
                                   (IF par_cdagpesq <> 0 THEN 
@@ -1998,6 +2021,10 @@ PROCEDURE zoom-associados:
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl
                            tt-titular.nmprimtl = tt-titular.nmextttl
+						   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                  "A"
+										  		  ELSE
+													  crapass.dsnivris)
                            tt-titular.nrdocttl = STRING(STRING
                                                         (crapttl.nrcpfcgc,
                                                         "99999999999"),
@@ -2021,7 +2048,7 @@ PROCEDURE zoom-associados:
                                            idseqttl nrcpfcgc cdempres
                                            dtnasttl nmdsecao)
                                     WHERE crapttl.cdcooper = par_cdcooper NO-LOCK,                       
-                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss)
+                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss dsnivris)
                             WHERE crapass.cdcooper = crapttl.cdcooper AND
                                   crapass.nrdconta = crapttl.nrdconta AND
                                   (IF par_cdagpesq <> 0 THEN 
@@ -2053,6 +2080,10 @@ PROCEDURE zoom-associados:
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(Conj)"
                            tt-titular.nmprimtl = tt-titular.nmextttl
+						   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                 "A"
+												  ELSE
+												     crapass.dsnivris)
                            tt-titular.nrdocttl = STRING(STRING
                                                         (crapttl.nrcpfcgc, 
                                                         "99999999999"),
@@ -2073,7 +2104,7 @@ PROCEDURE zoom-associados:
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmpaittl MATCHES ("*" + par_nmdbusca + "*")
                        NO-LOCK,
-                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss)
+                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss dsnivris)
                             WHERE crapass.cdcooper = crapttl.cdcooper AND
                                   crapass.nrdconta = crapttl.nrdconta AND
                                   (IF par_cdagpesq <> 0 THEN 
@@ -2104,6 +2135,10 @@ PROCEDURE zoom-associados:
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(PAI)"
                            tt-titular.nmprimtl = tt-titular.nmextttl
+						   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                  "A"
+											   	  ELSE
+													  crapass.dsnivris)
                            tt-titular.nrdocttl = STRING(STRING
                                                         (crapttl.nrcpfcgc,
                                                         "99999999999"),
@@ -2124,7 +2159,7 @@ PROCEDURE zoom-associados:
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmmaettl MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,
-                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss)
+                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss dsnivris)
                             WHERE crapass.cdcooper = crapttl.cdcooper AND
                                   crapass.nrdconta = crapttl.nrdconta AND
                                   (IF par_cdagpesq <> 0 THEN 
@@ -2155,6 +2190,10 @@ PROCEDURE zoom-associados:
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(MAE)"
                            tt-titular.nmprimtl = tt-titular.nmextttl
+						   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                 "A"
+											 	  ELSE
+													 crapass.dsnivris)
                            tt-titular.nrdocttl = STRING(STRING
                                                         (crapttl.nrcpfcgc, 
                                                         "99999999999"),
@@ -2173,7 +2212,7 @@ PROCEDURE zoom-associados:
                             WHERE crapjur.cdcooper = par_cdcooper AND
                                   crapjur.nmextttl MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,
-                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss nrcpfcgc)
+                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss nrcpfcgc dsnivris)
                             WHERE crapass.cdcooper = crapjur.cdcooper AND
                                   crapass.nrdconta = crapjur.nrdconta AND
                                   (IF par_cdagpesq <> 0 THEN 
@@ -2201,6 +2240,10 @@ PROCEDURE zoom-associados:
                            tt-titular.cdempres = crapjur.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl
                            tt-titular.nmprimtl = tt-titular.nmextttl
+						   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                 "A"
+												  ELSE
+													 crapass.dsnivris)
                            tt-titular.nrdocttl = STRING(STRING
                                                         (crapass.nrcpfcgc,
                                                          "99999999999999"),
@@ -2220,7 +2263,7 @@ PROCEDURE zoom-associados:
                             WHERE crapjur.cdcooper = par_cdcooper AND
                                   crapjur.nmfansia MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,
-                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss nrcpfcgc inpessoa)
+                       EACH crapass FIELDS(cdagenci nrdctitg dtdemiss nrcpfcgc inpessoa dsnivris)
                             WHERE crapass.cdcooper = crapjur.cdcooper AND
                                   crapass.nrdconta = crapjur.nrdconta AND
                                   (IF par_cdagpesq <> 0 THEN 
@@ -2259,6 +2302,10 @@ PROCEDURE zoom-associados:
                            tt-titular.cdempres = crapjur.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl
                            tt-titular.nmprimtl = tt-titular.nmextttl
+						   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                 "A"
+												  ELSE
+													 crapass.dsnivris)
                            tt-titular.nrdocttl = STRING(STRING
                                                         (crapass.nrcpfcgc,
                                                          "99999999999999"),
@@ -2298,7 +2345,7 @@ PROCEDURE zoom-associados:
                IF  par_nrdctitg = "00000000"   THEN
                    DO:
                       FOR EACH crapass FIELDS(cdcooper nrdconta cdagenci dtdemiss 
-                                              inpessoa nrdctitg inpessoa nrcpfcgc)
+                                              inpessoa nrdctitg inpessoa nrcpfcgc dsnivris)
                                        WHERE crapass.cdcooper = par_cdcooper AND
                                              crapass.nrdctitg = ""
                                              NO-LOCK: /*
@@ -2341,6 +2388,10 @@ PROCEDURE zoom-associados:
                                          tt-titular.cdempres = crapttl.cdempres
                                          tt-titular.nmpesttl = tt-titular.nmextttl
                                          tt-titular.nmprimtl = tt-titular.nmextttl
+										 tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                               "A"
+														     	ELSE
+															       crapass.dsnivris)
                                          tt-titular.nrdocttl = STRING(STRING
                                                                 (crapttl.nrcpfcgc, 
                                                                  "99999999999"),
@@ -2382,6 +2433,10 @@ PROCEDURE zoom-associados:
                                          tt-titular.cdempres = crapjur.cdempres
                                          tt-titular.nmpesttl = tt-titular.nmextttl
                                          tt-titular.nmprimtl = tt-titular.nmextttl
+										 tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                               "A"
+															    ELSE
+															       crapass.dsnivris)
                                          tt-titular.nrdocttl = STRING(STRING
                                                                 (crapass.nrcpfcgc,
                                                                  "99999999999999"),
@@ -2402,7 +2457,7 @@ PROCEDURE zoom-associados:
                    END. /* Fim da Cta.ITG = "00000000" */
                ELSE 
                    FOR EACH crapass FIELDS(cdcooper cdagenci nrdctitg inpessoa
-                                           dtdemiss nrdconta nrcpfcgc)
+                                           dtdemiss nrdconta nrcpfcgc dsnivris)
                                     WHERE crapass.cdcooper = par_cdcooper AND
                                           crapass.nrdctitg = par_nrdctitg
                                           NO-LOCK USE-INDEX crapass7:
@@ -2443,6 +2498,10 @@ PROCEDURE zoom-associados:
                                        tt-titular.cdempres = crapttl.cdempres
                                        tt-titular.nmpesttl = tt-titular.nmextttl
                                        tt-titular.nmprimtl = tt-titular.nmextttl
+									   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                             "A"
+															  ELSE
+															     crapass.dsnivris)
                                        tt-titular.nrdocttl = STRING(STRING
                                                              (crapttl.nrcpfcgc,
                                                               "99999999999"),
@@ -2485,6 +2544,10 @@ PROCEDURE zoom-associados:
                                        tt-titular.cdempres = crapjur.cdempres
                                        tt-titular.nmpesttl = tt-titular.nmextttl
                                        tt-titular.nmprimtl = tt-titular.nmextttl
+									   tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                             "A"
+															  ELSE
+															     crapass.dsnivris)
                                        tt-titular.nrdocttl =  STRING(STRING
                                                              (crapass.nrcpfcgc,
                                                               "99999999999999"),
@@ -2548,6 +2611,10 @@ PROCEDURE zoom-associados:
                                   tt-titular.cdempres = crapjur.cdempres
                                   tt-titular.nmpesttl = tt-titular.nmextttl
                                   tt-titular.nmprimtl = tt-titular.nmextttl
+								  tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                        "A"
+													     ELSE
+														    crapass.dsnivris)
                                   tt-titular.nrdocttl = STRING(STRING
                                                                (crapass.nrcpfcgc,
                                                                 "99999999999999"),
@@ -2603,6 +2670,10 @@ PROCEDURE zoom-associados:
                                       tt-titular.cdempres = crapttl.cdempres
                                       tt-titular.nmpesttl = tt-titular.nmextttl
                                       tt-titular.nmprimtl = tt-titular.nmextttl
+									  tt-titular.dsnivris = (IF TRIM(crapass.dsnivris) = "" THEN
+									                            "A"
+															ELSE
+															    crapass.dsnivris)
                                       tt-titular.nrdocttl = STRING(STRING
                                                                    (crapttl.nrcpfcgc,
                                                                    "99999999999"),
@@ -3102,7 +3173,8 @@ PROCEDURE busca-crapcco:
     FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper AND 
                            crapcco.flgativo = TRUE         AND /* ATIVOS */
                            crapcco.dsorgarq <> "MIGRACAO"  AND 
-                           crapcco.dsorgarq <> "EMPRESTIMO" NO-LOCK
+                           crapcco.dsorgarq <> "EMPRESTIMO" AND
+						   crapcco.dsorgarq <> "ACORDO" NO-LOCK
                            BY crapcco.nmdbanco:
 
         IF   par_nrconven <> 0   THEN
@@ -3201,6 +3273,7 @@ PROCEDURE busca-craplcr:
                                        tt-craplcr.flgstlcr = craplcr.flgstlcr
                                        tt-craplcr.tpctrato = craplcr.tpctrato
                                        tt-craplcr.txbaspre = craplcr.txbaspre
+                                       tt-craplcr.txmensal = craplcr.txmensal
                                        tt-craplcr.nrfimpre = craplcr.nrfimpre
                                        tt-craplcr.tpgarant = craplcr.tpctrato.
 
@@ -3254,6 +3327,7 @@ PROCEDURE busca-craplcr:
                                        tt-craplcr.flgstlcr = craplcr.flgstlcr
                                        tt-craplcr.tpctrato = craplcr.tpctrato
                                        tt-craplcr.txbaspre = craplcr.txbaspre
+                                       tt-craplcr.txmensal = craplcr.txmensal
                                        tt-craplcr.nrfimpre = craplcr.nrfimpre
                                        tt-craplcr.tpgarant = craplcr.tpctrato.
 
@@ -3429,7 +3503,7 @@ PROCEDURE busca-historico:
                      IF  craphis.inautori = 1 AND 
                          craphis.cdhistor = 1019 THEN
                          NEXT.
-                 END.            
+                 END.
 
             ASSIGN par_qtregist = par_qtregist + 1.
 

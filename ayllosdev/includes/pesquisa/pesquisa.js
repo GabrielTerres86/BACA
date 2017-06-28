@@ -32,10 +32,14 @@
  * 036: [05/08/2014] Jaison			  (CECRED): Ajuste na função selecionaPesquisa, verificando se o campo cdlcremp veio da tela de parametros do credito pre-aprovado.
  * 037: [30/03/2015] Jorge            (CECRED): Ajuste em funcao mostraPesquisa, adicionado quinto parametro da variavel "coluna", campo opcional para coluna visivel ou nao. (SD - 229250)
  * 038: [02/06/2015] Jorge 			  (CECRED): Ajuste de tratamento de parametro em funcao mostraPesquisa.
+ * 039: [11/07/2016] Evandro            (RKAM): Adicionado função controlafoco.
+ * 040: [06/02/2017] Lucas Ranghetti  (CECRED): Alterado funcao buscaCEP apra keydown e adicionado a funcao do tab.  #562253
+ * 041: [06/06/2017] Jonata            (Mouts): Ajuste para inclusão da busca de dominios - P408.
+ 
  */
 
 var vg_formRetorno  = '';
-var vg_campoRetorno = '';
+var vg_campoRetorno = new Array();
 var contadorSelect  = 0; // contador dos select
 var mtSelecaoEndereco;
  
@@ -57,6 +61,12 @@ function buscaDescricao(businessObject, nomeProcedure, tituloPesquisa, campoCodi
 	// Ação utilizada para arrumar a pesquisa utilizando o evento change
 	if ( $('#'+campoCodigo).attr('aux') == $('#'+campoCodigo, '#'+nomeFormulario).val() ) { return false; }
 	
+	if (nomeProcedure == 'BUSCADESCDOMINIOS') {
+
+	    $('#iddominio_' + campoCodigo).val('');
+
+	}
+
 	showMsgAguardo("Aguarde, pesquisando "+tituloPesquisa+" ...");
 	
 	// Se o código estiver vazio, então limpa o campo de descrição
@@ -403,12 +413,328 @@ function mostraPesquisa(businessObject, nomeProcedure, tituloPesquisa, quantReg,
 	
 	hideMsgAguardo();	
 	exibeRotina($('#divPesquisa'));	
+    controlaFoco();
 	
-	$('input[type=\'text\']:first','#formPesquisa').focus();
-	
-	$('#btPesquisar','#formPesquisa').trigger('click');			
+    $('#btPesquisar', '#formPesquisa').trigger('click');
 	
 }
+
+
+/*!
+ * ALTERAÇÃO  : 000
+ * OBJETIVO   : Função genérica que monta dinâmicamente o formulário de pesquisa "formPesquisa"
+ *              Esta função é responsável por inserir neste formulário os filtros de pesquisa e o cabeçalho da tabela que irá exibir o resultado da pesquisa
+ * PARÂMETROS : businessObject -> 
+ *              nomeProcedure  -> 
+ *              quantReg   	   -> 
+ *              filtros	       -> 
+ *    		    campoRetorno   ->
+ *    		    colunas        ->
+ *              divBloqueia    -> [Opcional]
+ *              fncOnClose     -> [Opcional]
+ */
+function mostraPesquisaDominios(businessObject, nomeProcedure, tituloPesquisa, quantReg, filtros, camposRetorno, colunas, divBloqueia, fncOnClose,nomeRotina, cdCooper) {	    
+
+	if (cdCooper == '' || cdCooper == null || cdCooper == "undefined"){
+		cdCooper = 0;
+	}else if(cdCooper == 0){
+		cdCooper = 3;
+	}
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando Pesquisa "+tituloPesquisa+"...");
+	
+	// Inserindos os campos ocultos que serão passados via POST ao arquivo "realiza_pesquisa", que
+	// é o responsável por montar o XML de pesquisa dinâmicamente
+	$("#formPesquisa").html('<input type="hidden" name="nriniseq" id="nriniseq" />');
+	$("#formPesquisa").append('<input type="hidden" name="nrregist" id="nrregist" />');
+	$("#formPesquisa").append('<input type="hidden" name="businessObject" id="businessObject" />');
+	$("#formPesquisa").append('<input type="hidden" name="nomeProcedure" id="nomeProcedure" />');
+	$("#formPesquisa").append('<input type="hidden" name="tituloPesquisa" id="tituloPesquisa" />');
+	
+	// Passando os parâmetros para os INPUT do tipo HIDDEN acima, ou seja, colocando valores nestes INPUTs
+	$("input[name='nriniseq'      ]").val( 1 );
+	$("input[name='nrregist'      ]").val( quantReg );
+	$("input[name='businessObject']").val( businessObject );
+	$("input[name='nomeProcedure' ]").val( nomeProcedure  );
+	$("input[name='tituloPesquisa']").val( tituloPesquisa );	
+	
+	//*****************************************// 
+	//***       MONTAGEM DOS FILTROS        ***//
+	//*****************************************// 	
+	// LAYOUT DO PARAMETRO "filtros":
+	// Cada filtro que e inserido e separado pelo pipe (|)
+	// Suas opcoes de montagem sao separadas por ponto e virgula (;)
+	// Abaixo as opcoes disponiveis:
+		// O 1º parametro -> Rótulo
+		// O 2º parametro -> Nome do campo
+		// O 3º parametro -> Largura do campo
+		// O 4º parametro -> Valores possíveis: "S" para habilitado OU "N" para desabilitado
+		// O 5º parametro -> Valor inicial do filtro
+		// O 6º parametro -> Campo Visível: "S" para visível ou "N" para não visível
+		// O 7º parametro -> Campo expecifico para type radio 
+	// Definicao das variaveis
+	var arrayFiltros	= new Array();
+	var opcoesFiltro 	= new Array();	
+	var filtroParametro = "";
+	// Explodo o parametro filtro pelo pipe (|) para saber quantos filtros teremos no formulario
+	arrayFiltros = filtros.split("|");		
+	for( var i in arrayFiltros ) {
+		
+		// Explodo cada filtro em suas opções de montagem
+		opcoesFiltro = arrayFiltros[i].split(";");		
+		
+		// Atribuo as opções em variáveis
+		var campoRotulo		= opcoesFiltro[0];
+		var campoNome		= opcoesFiltro[1];
+		var campoLargura	= opcoesFiltro[2];
+		var habilitado		= opcoesFiltro[3];
+		var valorInicial	= opcoesFiltro[4];		
+		var campoVisivel	= opcoesFiltro[5];		
+		var campoTipo   	= opcoesFiltro[6];
+		var campoType   	= opcoesFiltro[7];		
+		
+		// Monto uma String de filtros que será passada como parâmetro para a função "realizaPesquisa"
+		// LAYOUT filtroParam: "filtroNome;filtroNome;filtroNome"
+		if (filtroParametro.length > 0) filtroParametro += ";";
+		filtroParametro += campoNome;
+		
+		// Caso o valor inicial do campo não foi passado, jogo vazio
+		valorInicial = (typeof valorInicial == 'undefined' || valorInicial == 'undefined') ? '' : valorInicial;
+		
+		// Insirindo o label e o input
+		// Para que o sistema nao confunda este campo de pesquisa com o do formulario principal,
+		// por padrao, o nome do campo no formulario de pesquisa sera o nome do campo original
+		// concatenado com a palavra "Pesquisa"
+		if ( campoVisivel == 'N' ) {
+			$("#formPesquisa").append('<input type="hidden" name="'+campoNome+'Pesquisa" id="'+campoNome+'Pesquisa" value="'+valorInicial+'" />');		
+		} else {
+		
+			if(campoType != "radio"){
+				$("#formPesquisa").append('<label for="'+campoNome+'Pesquisa">'+campoRotulo+'</label>');
+				$("#formPesquisa").append('<input type="text" name="'+campoNome+'Pesquisa" id="'+campoNome+'Pesquisa" style="width:'+campoLargura+';color:#222;" value="'+valorInicial+'" class="alphanum" />');		
+				
+				//Alteração: Retira caracteres não permitidos e adiciona atributo maxlength. 
+				//Para funcionar passar o setimo paramentro do filtro como "codigo" ou  "descricao"
+				if( typeof campoTipo != 'undefined' ){
+					
+					var caracAcentuacao 	= 'áàäâãÁÀÄÂÃéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛçÇ';
+					var caracEspeciais  	= '!@#$%&*()-_+=§:<>;/?[]{}°ºª¬¢£³²¹\\|\',.´`¨^~';
+					var caracSuperEspeciais	= '¨¹²³£¢¬§ªº°´&\'';
+					
+					if ( campoTipo == 'codigo' ){
+						$('#'+campoNome+'Pesquisa','#formPesquisa').numeric({ichars: caracAcentuacao+caracEspeciais+'.,\"'});
+						$('#'+campoNome+'Pesquisa','#formPesquisa').attr('maxlength','4');
+					}else if ( campoTipo == 'descricao' ){
+						$('#'+campoNome+'Pesquisa','#formPesquisa').alphanumeric({ichars: caracSuperEspeciais+caracAcentuacao+'\"'});
+						$('#'+campoNome+'Pesquisa','#formPesquisa').attr('maxlength','40');
+						$('#'+campoNome+'Pesquisa','#formPesquisa').css({'text-transform':'uppercase'});
+					}
+				}
+				
+				// Desabilitar os devidos campos de acordo com a opcao habilitada e coloca os valores baseados no formulário principal
+				// Adicionar a classe "campo" para o habilitado e a classe "campoTelaSemBorda" para o desabilitado
+				if ( habilitado == "N" ) {
+					$("#"+campoNome+"Pesquisa").prop("disabled",true);
+					$("#"+campoNome+"Pesquisa").addClass("campoTelaSemBorda");
+					
+					// Deixa o label mais fraco quando o campo é desabilitado
+					$("label[for='"+campoNome+"Pesquisa']").css("color","#444");
+					
+					// Caso o campo não for habilitado, buscar seu valor do formulário principal, MAS
+					// como pode ser um valor que está em um INPUT, um SELECT ou outro tipo de elemento
+					// então temos que tratar a busca para cada tipo. 
+					// Atualmente está tratado para INPUT e SELECT			
+					if ( $("#"+campoNome).is("input") ) {
+						var valorCampo = $("input[name='"+campoNome+"']").val();
+						$("#"+campoNome+"Pesquisa").val( valorCampo );
+					} else if ( $("#"+campoNome).is("select") ) {
+						var valorCampo = $("#"+campoNome+" option:selected").val();				
+						$("#"+campoNome+"Pesquisa").val( valorCampo );
+					}
+				} else {
+					$("#"+campoNome+"Pesquisa").addClass("campo");
+				}	
+				$("#formPesquisa").append('<br />');
+			}else{
+				// input radio
+				$("#formPesquisa").append('<label for="'+campoNome+'Pesquisa">'+campoRotulo+'</label>');
+				$("#formPesquisa").append('<div style="width:50px;float:left;margin-left:10px;margin-top:5px"><input type="radio" name="'+campoNome+'Pesquisa" id="'+campoNome+'Pesquisa" style="width:'+campoLargura+';height:10px;color:#222;" value="yes" checked="checked" />Sim</div>');
+				$("#formPesquisa").append('<div style="width:50px;float:left;margin-left:10px;margin-top:5px"><input type="radio" name="'+campoNome+'Pesquisa" id="'+campoNome+'PesquisaN" style="width:'+campoLargura+';height:10px;color:#222;" value="no" />N&atilde;o</div>');
+				
+				// Desabilitar os devidos campos de acordo com a opcao habilitada e coloca os valores baseados no formulário principal
+				// Adicionar a classe "campo" para o habilitado e a classe "campoTelaSemBorda" para o desabilitado
+				if ( habilitado == "N" ) {
+					$("#"+campoNome+"Pesquisa").prop("disabled",true);
+					$("#"+campoNome+"Pesquisa").addClass("campoTelaSemBorda");
+					
+					// Deixa o label mais fraco quando o campo é desabilitado
+					$("label[for='"+campoNome+"Pesquisa']").css("color","#444");
+					
+					// Caso o campo não for habilitado, buscar seu valor do formulário principal, MAS
+					// como pode ser um valor que está em um RADIO, um SELECT ou outro tipo de elemento
+					// então temos que tratar a busca para cada tipo. 
+					// Atualmente está tratado para RADIO e SELECT			
+					if ( $("#"+campoNome).is("radio") ) {
+						var valorCampo = $("radio[name='"+campoNome+"']").val();
+						$("#"+campoNome+"Pesquisa").val( valorCampo );
+					} else if ( $("#"+campoNome).is("select") ) {
+						var valorCampo = $("#"+campoNome+" option:selected").val();				
+						$("#"+campoNome+"Pesquisa").val( valorCampo );
+					}
+				} else {
+					$("#"+campoNome+"Pesquisa").addClass("campo");
+				}	
+				$("#formPesquisa").append('<br />');
+			}
+		}		
+	}	
+	
+	//Se digitar F8 limpa o campo
+	$('input[type=\'text\']','#formPesquisa').keydown( function(e) {
+		if ( e.keyCode == 119 ) {
+			$(this).val(''); 
+			return false;
+		/*
+		 *Alteração: Verifica se a tecla pressionada é o enter,
+		 *se for esecuto a mesma função que é executada no click do btPesquisa
+		 */
+		}else if( e.keyCode == 13 ){
+			realizaPesquisaDominios( this.form.nriniseq.value, this.form.nrregist.value, this.form.businessObject.value, this.form.nomeProcedure.value, this.form.tituloPesquisa.value,filtroParametro,camposRetorno,colunas,nomeRotina,cdCooper);
+			return false;
+		}
+	});
+	
+	// Agora insiro o botaoo que realiza a chamada da funcao pesquisar
+	$("#formPesquisa").append('<label for="botao"></label>');
+	$("#formPesquisa").append('<input type="image" id="btPesquisar" src="'+UrlImagens+'botoes/iniciar_pesquisa.gif" onClick="realizaPesquisaDominios( this.form.nriniseq.value, this.form.nrregist.value, this.form.businessObject.value, this.form.nomeProcedure.value, this.form.tituloPesquisa.value,\''+filtroParametro+'\',\''+camposRetorno+'\',\''+colunas+'\',\''+nomeRotina+'\',\''+cdCooper+'\'); return false;" />');
+	$("#formPesquisa").append('<br clear="both" />');	
+	
+    // Remove os elementos anteriores
+	$("#divCabecalhoPesquisa").remove();
+	$("#divPesquisaItens").remove();
+	$("#divPesquisaRodape").remove();		
+	
+	$('.fecharPesquisa','#divPesquisa').unbind('click').bind('click', function() {		
+		// Executa função no momento em que a pesquisa for encerrada. Definida na rotina que executou a função de pesquisa		
+		if (typeof fncOnClose != 'undefined' && $.trim(fncOnClose) != "") {			
+			eval(fncOnClose);			
+		}
+		
+		if ( typeof divBloqueia == 'object' ) {			
+			fechaRotina($('#divPesquisa'),divBloqueia);			
+		} else {
+			fechaRotina($('#divPesquisa'));			
+		}
+				
+		return false;
+	});		
+	
+	hideMsgAguardo();	
+	exibeRotina($('#divPesquisa'));	
+    controlaFoco();
+	
+    $('#btPesquisar', '#formPesquisa').trigger('click');
+	
+}
+
+/*!
+  ALTERAÇÃO  : 000
+  OBJETIVO   : Função chamada a partir do botão "Iniciar Pesquisa" da tela "pesquisa.php"
+               Esta função passa a requisição via POST da pesquisa para o arquivo "realiza_pesquisa_dominios.php"
+  PARÂMETROS : nriniseq       -> Nr. inicial da paginação
+               quantReg       -> Quantidade de registros que serão exibidos a cada paginação
+               businessObject -> Nome da B.0. para ser montado o XML de pesquisa
+               nomeProcedure  -> Nome da Procedure para ser montado o XML de pesquisa
+               tituloPesquisa -> Título que irá aparecer no topo da janela de pesquisa
+               filtros	      -> String para montar os campos do formulário de pesquisa
+               colunas        -> String com os campos que deverão ser buscados no xml de retorno da pesquisa e para qual campo essas inforamações serão enviadas na tabela
+               camposRetorno  -> String com os campos que deverão ser buscados no xml de retorno da pesquisa e para qual campo essas inforamações serão enviadas
+ 								// LAYOUT DO PARAMETRO "camposRetorno":
+								// Separando a informaão contida em campoRetorno por pipe (|), serão os campos a serem tratados
+								// Separando por (;) teremos o nome da tag a ser buscado no xml de retorno da pesquisa e qual será o campo da tela que deverá
+								// receber o valor
+								// Abaixo as opcoes disponiveis:
+								   Exemplo: Neste exemplo temos o controle de 3 campos, separados por pipe (|)
+									iddominio|iddominio_idgarantia;dsdvalor|idgarantia;dstipo_dominio|dsgarantia';
+									// O 1º parametro (iddomino)             -> Nome da tag a ser buscada no xml de retorno da pesquisa
+									// O 2º parametro (iddominio_idgarantia) -> Nome do campo que receberá o valor encontrado no parâmetro anterior
+									
+ */
+function realizaPesquisaDominios(nriniseq, quantReg, businessObject, nomeProcedure, tituloPesquisa, filtros, camposRetorno, colunas, nomeRotina, cdCooper) {
+	
+	// Mostra mensagem de aguardo	
+	showMsgAguardo(" Aguarde, pesquisando "+tituloPesquisa+"...");
+	
+	// Agora monto uma variável, que será passada como parâmetro para o arquivo "realiza_pesquisa.php"
+	// contendo o nome e valor de todos os filtros passado pelo parâmetro "filtros".	
+	// Esta variável, denominada "filtrosPesquisa" terá o seguinte layout:	
+	// LAYOUT: "filtroNome;filtroValor|filtroNome;filtroValor"
+	var filtrosPesquisa	= "";
+	var arrayFiltros	= new Array();
+	var opcoesFiltro 	= new Array();
+	
+	// Explodo as filtros que é no mesmo parametro filtros da função mostraPesquisa
+	arrayFiltros = filtros.split(";");
+	
+	for( var i in arrayFiltros ) {	
+	
+		// Caso já inseriu um um filtro na variável, então separa os dados por pipe(|)
+		if (filtrosPesquisa.length > 0) filtrosPesquisa += "|";		
+		
+		// Atribuo a opção "campo" do filtro na variável abaixo
+		var filtroNome = arrayFiltros[i];		
+		
+		// Agora busco o valor nos campos do formulário de pesquisa
+		if ($("#"+filtroNome+"Pesquisa").attr("type") == "radio"){
+			if ($("#"+filtroNome+"Pesquisa").prop("checked") == true){
+				var filtroValor = "yes";
+			}else if ($("#"+filtroNome+"PesquisaN").prop("checked") == true){
+				var filtroValor = "no";
+			}else{
+				var filtroValor = "yes";
+			}
+		}else{
+			var filtroValor = $("#"+filtroNome+"Pesquisa").val();
+		}
+		
+		// Agora concateno este valor no final da variável "filtrosPesquisa", que será passada 
+		// como parâmetro para o arquivo "realiza_pesquisa.php" que monta o XML dinâmico e realiza a pesquisa
+		filtrosPesquisa += filtroNome+";"+filtroValor;
+	}	
+	
+	// Remove os elementos anteriores
+	$("#divCabecalhoPesquisa").remove();
+	
+	// Carrega dados da conta através de ajax
+	$.ajax({		
+		type: "POST",  
+		url: UrlSite + "includes/pesquisa/realiza_pesquisa_dominios.php", 
+		data: {
+			businessObject 	: businessObject,
+			nomeProcedure  	: nomeProcedure,
+			tituloPesquisa 	: tituloPesquisa,
+			filtros			: filtrosPesquisa,
+			camposRetorno   : camposRetorno,
+			colunas         : colunas,
+			nriniseq       	: nriniseq,
+			quantReg		: quantReg,
+			cdcooper		: cdCooper,
+			rotina			: nomeRotina,
+			redirect       	: "html_ajax" // Tipo de retorno do ajax
+		},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#frmConsulta').css('z-index')))");
+		},
+		success: function(response) {
+		    $("#divResultadoPesquisa").html(response);
+			zebradoLinhaTabela($('#divPesquisaItens > table > tbody > tr'));
+			$('#divPesquisaRodape').formataRodapePesquisa();
+		}			
+	});	
+}
+
 
 /*!
  * ALTERAÇÃO  : 000
@@ -456,7 +782,7 @@ function realizaPesquisa(nriniseq, quantReg, businessObject, nomeProcedure, titu
 				var filtroValor = "yes";
 			}
 		}else{
-		    var filtroValor = $("#" + filtroNome + "Pesquisa").val();
+			var filtroValor = $("#"+filtroNome+"Pesquisa").val();
 		}
 		
 		// Agora concateno este valor no final da variável "filtrosPesquisa", que será passada 
@@ -508,6 +834,7 @@ function selecionaPesquisa(resultado, idForm) {
 	var arrayResultado = new Array();
 	
 	arrayCampos = resultado.split("|");
+	
 	for( var i in arrayCampos ) {		
 		arrayResultado 	= arrayCampos[i].split(";");
 		var campoNome 	= arrayResultado[0];
@@ -520,6 +847,7 @@ function selecionaPesquisa(resultado, idForm) {
 			if (campoValor == "yes") { $("input[name='"+campoNome+"'],select[name='"+campoNome+"']").prop("checked",true); }
 			else { $("input[name='"+campoNome+"'],select[name='"+campoNome+"']").prop("checked",false); }
 		} else {
+			
 			$("input[name='"+campoNome+"'],select[name='"+campoNome+"']",'#'+idForm).val(campoValor);
 			if (campoValor == "yes") { $("input[name='"+campoNome+"'],select[name='"+campoNome+"']",'#'+idForm).prop("checked",true); }
 			else { $("input[name='"+campoNome+"'],select[name='"+campoNome+"']",'#'+idForm).prop("checked",true); }
@@ -538,7 +866,7 @@ function selecionaPesquisa(resultado, idForm) {
 		$('input[name="'+campoNome+'"]','#'+idForm).focus();
 	}else if(idForm == "frmAgenci"){
 		$('input[name="cdageban"]','#'+idForm).focus();
-	}else if(campoNome == "cdlcremp" && tipoPessoaRegra != 'undefined'){
+	}else if(campoNome == "cdlcremp" && typeof tipoPessoaRegra != 'undefined'){
 		var arrayResultado2 = arrayCampos[1].split(";");
         var campoValor2     = arrayResultado2[1];
         if (tipoPessoaRegra == 'PF') {
@@ -659,17 +987,24 @@ function montaSelect(businessObject, nomeProcedure, campoTela, valorRetorno, des
  *              fncFechar    -> (Opcional) String que será executada como script ao fechar o formulário de Pesquisa Associado. Na maioria 
  *                               das vezes será uma instrução de foco para algum campo.
  */	 
-function mostraPesquisaAssociado(campoRetorno, formRetorno, divBloqueia, fncFechar) {
+function mostraPesquisaAssociado(campoRetorno, formRetorno, divBloqueia, fncFechar,cdCooper) {
+
+	if (cdCooper == '' || cdCooper == null || cdCooper == "undefined"){
+		cdCooper = 0;
+	}else if(cdCooper == 0){
+		cdCooper = 3;
+	}
 
 	// Mostra mensagem de aguardo	
 	showMsgAguardo('Aguarde, carregando Pesquisa de Associados ...');	
 	
 	// Guardo o campoRetorno e o formRetorno em variáveis globais para serem utilizados na seleção do associado
-	vg_campoRetorno = campoRetorno;
+	vg_campoRetorno = campoRetorno.split("|");
 	vg_formRetorno  = formRetorno;	
 	
 	$('#tpdapesq','#frmPesquisaAssociado').empty();	
 	
+	$('#frmPesquisaAssociado').append('<input type="hidden" name="cdcooper" id="cdcooper" value="'+cdCooper+'"/>');	
 	$('#tpdapesq','#frmPesquisaAssociado').append('<option value="0">Titulares');	
 	$('#tpdapesq','#frmPesquisaAssociado').append('<option value="1">C&ocirc;njuge');	
 	$('#tpdapesq','#frmPesquisaAssociado').append('<option value="2">Pai');	
@@ -743,7 +1078,7 @@ function mostraPesquisaAssociado(campoRetorno, formRetorno, divBloqueia, fncFech
 	
 	hideMsgAguardo();	
 	exibeRotina($('#divPesquisaAssociado'));
-	$('#nmdbusca','#frmPesquisaAssociado').focus();	
+    controlaFoco();
 }
 
 /*!
@@ -755,33 +1090,121 @@ function pesquisaAssociado(nriniseq) {
 	
 	showMsgAguardo('Aguarde, pesquisando associados ...');
 	
-	var cdpesqui = $('input[type="radio"]:checked','#frmPesquisaAssociado').val();
-	var nmdbusca = $('#nmdbusca','#frmPesquisaAssociado').val();
-	var tpdapesq = $('#tpdapesq','#frmPesquisaAssociado').val();
-	var cdagpesq = $('#cdagpesq','#frmPesquisaAssociado').val();
-	var tpdorgan = $('#tpdorgan','#frmPesquisaAssociado').val();
-	var nrcpfcgc = $('#nrcpfcgc','#frmPesquisaAssociado').val();
-	var nrdctitg = retiraCaracteres($('#nrdctitg','#frmPesquisaAssociado').val(),'0123456789X',true);
+    var cdpesqui = $('input[type="radio"]:checked', '#frmPesquisaAssociado').val();
+    var nmdbusca = $('#nmdbusca', '#frmPesquisaAssociado').val();
+    var tpdapesq = $('#tpdapesq', '#frmPesquisaAssociado').val();
+    var cdagpesq = $('#cdagpesq', '#frmPesquisaAssociado').val();
+    var tpdorgan = $('#tpdorgan', '#frmPesquisaAssociado').val();
+    var nrcpfcgc = $('#nrcpfcgc', '#frmPesquisaAssociado').val();
+    var nrdctitg = retiraCaracteres($('#nrdctitg', '#frmPesquisaAssociado').val(), '0123456789X', true);
+    var cdcooper = $('#cdcooper', '#frmPesquisaAssociado').val();
+
+
+    // Verifica código do PAC
+    if ((cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq, true, 0, 999))) {
+        hideMsgAguardo();
+        showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        return false;
+    }
+
+    // Verifica código do PAC
+    if (cdpesqui == '2' && nrdctitg == '') {
+        hideMsgAguardo();
+        showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Ayllos', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        return false;
+    }
+
+    // Verifica código do PAC
+    if (cdpesqui == '3' && nrcpfcgc == '') {
+        hideMsgAguardo();
+        showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+        return false;
+    }
+
+    // Carrega dados da conta através de ajax
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'includes/pesquisa/realiza_pesquisa_associados.php',
+        data: {
+            cdpesqui: cdpesqui,
+            nmdbusca: nmdbusca,
+            tpdapesq: tpdapesq,
+            cdagpesq: cdagpesq,
+            nrdctitg: nrdctitg,
+            nriniseq: nriniseq,
+            tpdorgan: tpdorgan,
+            nrcpfcgc: nrcpfcgc,
+            cdcooper: cdcooper,
+            redirect: 'html_ajax' // Tipo de retorno do ajax
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaAssociado'));");
+        },
+        success: function (response) {
+            $('#divResultadoPesquisaAssociado').html(response);
+            zebradoLinhaTabela($('#divPesquisaAssociadoItens > table > tbody > tr'));
+            $('#divPesquisaAssociadoRodape').formataRodapePesquisa();
+            controlaFoco();
+        }
+    });
+}
+
+//Função para controle de navegação
+function controlaFoco() {
+    $('#divPesquisaAssociado').each(function () {
+        $(this).find("#frmPesquisaAssociado > :input[type=radio]").addClass("FluxoNavega");
+        $(this).find("#frmPesquisaAssociado > :input[type=radio]").first().addClass("FirstInputModal").focus();
+        $(this).find("#frmPesquisaAssociado > :input[type=image]").last().addClass("LastInputModal");
+
+        //Se estiver com foco na classe FluxoNavega
+        $(".FluxoNavega").focus(function () {
+            $(this).bind('keydown', function (e) {
+                if (e.keyCode == 13) {
+                    $(this).click();
+                }
+            });
+        });
+    });
+    $(".FirstInputModal").focus();
+}
+
+
+function pesquisaAssociado_2_OnKeyDown(nriniseq) {
+
+    $('#integra').bind('keydown', function (e) {
+        if (e.keyCode == 13) {
+
+	showMsgAguardo('Aguarde, pesquisando associados ...');
+	
+            var cdpesqui = $('input[type="radio"]:checked', '#frmPesquisaAssociado').val();
+            var nmdbusca = $('#nmdbusca', '#frmPesquisaAssociado').val();
+            var tpdapesq = $('#tpdapesq', '#frmPesquisaAssociado').val();
+            var cdagpesq = $('#cdagpesq', '#frmPesquisaAssociado').val();
+            var tpdorgan = $('#tpdorgan', '#frmPesquisaAssociado').val();
+            var nrcpfcgc = $('#nrcpfcgc', '#frmPesquisaAssociado').val();
+            var nrdctitg = retiraCaracteres($('#nrdctitg', '#frmPesquisaAssociado').val(), '0123456789X', true);
 
 	
 	// Verifica código do PAC
-	if ( (cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq,true,0,999))) {
+            if ((cdpesqui == '1') && (cdagpesq == '' || !validaNumero(cdagpesq, true, 0, 999))) {
 		hideMsgAguardo();
-		showError('error','Informe o PA a ser pesquisado ou 0 para TODOS.','Alerta - Ayllos',"$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o PA a ser pesquisado ou 0 para TODOS.', 'Alerta - Ayllos', "$('#cdagpesq','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
 		return false;
 	}	
 	
 	// Verifica código do PAC
 	if (cdpesqui == '2' && nrdctitg == '') {
 		hideMsgAguardo();
-		showError('error','Informe o n&uacute;mero da Conta/ITG.','Alerta - Ayllos',"$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o n&uacute;mero da Conta/ITG.', 'Alerta - Ayllos', "$('#nrdctitg','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                $('#btnError').click();
 		return false;
 	}	
 
 	// Verifica código do PAC
 	if (cdpesqui == '3' && nrcpfcgc == '') {
 		hideMsgAguardo();
-		showError('error','Informe o CPF/CNPJ a ser pesquisado.','Alerta - Ayllos',"$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
+                showError('error', 'Informe o CPF/CNPJ a ser pesquisado.', 'Alerta - Ayllos', "$('#nrcpfcgc','#frmPesquisaAssociado').focus();bloqueiaFundo($('#divPesquisaAssociado'));");
 		return false;
 	}	
 
@@ -800,16 +1223,22 @@ function pesquisaAssociado(nriniseq) {
 			nrcpfcgc: nrcpfcgc,
 			redirect: 'html_ajax' // Tipo de retorno do ajax
 		},
-		error: function(objAjax,responseError,objExcept) {
+                error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"bloqueiaFundo($('#divPesquisaAssociado'));");
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "bloqueiaFundo($('#divPesquisaAssociado'));");
 		},			
-		success: function(response) {
+                success: function (response) {
 			$('#divResultadoPesquisaAssociado').html(response);			
 			zebradoLinhaTabela($('#divPesquisaAssociadoItens > table > tbody > tr'));
 			$('#divPesquisaAssociadoRodape').formataRodapePesquisa();
+                    controlaFoco();
 		}				
 	});	
+
+        }
+    })
+
+
 }
 
 /*!
@@ -818,12 +1247,15 @@ function pesquisaAssociado(nriniseq) {
  *              pelas variáveis globais "vg_campoRetorno" e "vg_formRetorno". O valor que esta campo assumirá é passado por parâmetro
  * PARÂMETROS : conta -> Nr. conta retornado pela consulta
  */	
-function selecionaAssociado(conta) {	
+function selecionaAssociado(conta,nmprimtl,dsnivris,nrcpfcgc) {	
 	// Chama o evento click do botão fechar, que foi previamente configurado na função "mostraPesquisaAssociado"
 	$('.fecharPesquisa','#divPesquisaAssociado').click();
 	
 	// Atribui conta consultada para campo e formulários contidos nas respectivas variáveis globais 
-	$('#'+vg_campoRetorno,'#'+vg_formRetorno).val(conta).formataDado('INTEGER','zzzz.zzz-z','',false);
+	$('#'+vg_campoRetorno[0],'#'+vg_formRetorno).val(conta).formataDado('INTEGER','zzzz.zzz-z','',false);
+	$('#'+vg_campoRetorno[1],'#'+vg_formRetorno).val(nmprimtl);
+	if ($('#cdclassificacao_produto', '#' + vg_formRetorno).val() != "AA") { $('#' + vg_campoRetorno[2], '#' + vg_formRetorno).prop('selected', true).val(dsnivris); }
+	$('#'+vg_campoRetorno[3],'#'+vg_formRetorno).val(nrcpfcgc);
 					
 	// Chamar função obtemCabecalho somente quando estivermos na tela CONTAS e não existir alguma rotina da tela aberta
 	if ( $('#divRotina').css('visibility') == 'hidden' 
@@ -833,11 +1265,11 @@ function selecionaAssociado(conta) {
 		$('#idseqttl','#frmCabContas').val('1');
 		obtemCabecalho();		
 	} else {
-		$('#'+vg_campoRetorno,'#'+vg_formRetorno).trigger('change');
+		$('#'+vg_campoRetorno[0],'#'+vg_formRetorno).trigger('change');
 	}
 			
 	// Da foco no campo
-	$('#'+vg_campoRetorno,'#'+vg_formRetorno).focus();	
+	$('#'+vg_campoRetorno[0],'#'+vg_formRetorno).focus();	
 	
 }
 
@@ -1147,9 +1579,11 @@ $.fn.extend({
 	buscaCEP: function(nomeForm, camposOrigem, divRotina) { 
 		
 		var cCEP = $(this); 
-		cCEP.unbind('keypress').bind('keypress', function(e) {			
-			if ( divError.css('display') == 'block' ) { return false; }		
-			if ( e.keyCode == 13 ) {
+		cCEP.unbind('keydown').bind('keydown', function(e) { 
+			if(divError.css('display') == 'block') { return false; }
+            
+			if (e.keyCode == 13 || e.keyCode == 9) {
+			
 				mostraPesquisaEndereco(nomeForm, camposOrigem, divRotina, $(this).val());
 				return false;
 			}
@@ -1239,3 +1673,6 @@ $.fn.extend({
 	}
 	
 });
+
+
+
