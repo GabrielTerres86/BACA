@@ -525,18 +525,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                  qtparctr
             FROM crapebn
            WHERE crapebn.cdcooper = pr_cdcooper;
-
+        
+        -- Busca taxa de Juros Cartao BB e Bancoob
+        CURSOR cr_tbrisco_prod IS
+          SELECT tparquivo
+                ,vltaxa_juros
+            FROM tbrisco_provisgarant_prodt
+           WHERE tparquivo IN('Cartao_Bancoob','Cartao_BB');
+        vr_vltxabb NUMBER(6,2);
+        vr_vltxban NUMBER(6,2);
+        
         -- Cursor para buscar os dados do cartao de credito
         CURSOR cr_tbcrd_risco (pr_cdcooper IN tbcrd_risco.cdcooper%TYPE
                               ,pr_dtrefere IN tbcrd_risco.dtrefere%TYPE) IS
           SELECT tbcrd_risco.nrdconta,
                  tbcrd_risco.nrcontrato,
+                 tbcrd_risco.cdtipo_cartao,
                  SUM(tbcrd_risco.vlsaldo_devedor) vlropcrd
             FROM tbcrd_risco
            WHERE tbcrd_risco.cdcooper = pr_cdcooper
              AND tbcrd_risco.dtrefere = pr_dtrefere
         GROUP BY tbcrd_risco.nrdconta,
-                 tbcrd_risco.nrcontrato;
+                 tbcrd_risco.nrcontrato,
+                 tbcrd_risco.cdtipo_cartao;
 
         -- Busca de linhas de credito
         CURSOR cr_craplcr IS
@@ -931,7 +942,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
       -- Definicao do tipo da tabela de risco do cartao de credito
       TYPE typ_reg_tbcrd_risco IS
-       RECORD(vlropcrd tbcrd_risco.vlsaldo_devedor%TYPE);
+       RECORD(vlropcrd tbcrd_risco.vlsaldo_devedor%TYPE
+             ,cdtipcar tbcrd_risco.cdtipo_cartao%TYPE);
        
       TYPE typ_tab_tbcrd_risco IS
         TABLE OF typ_reg_tbcrd_risco
@@ -2205,6 +2217,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           IF vr_tab_mvto_garant_prest.exists(pr_dsinfaux) THEN 
             vr_txeanual := vr_tab_mvto_garant_prest(pr_dsinfaux).vltaxajr;
           END IF;
+        -- Para cartões BB e Bancoob
+        ELSIF pr_inddocto = 4 THEN
+          -- Buscar taxa conforme cartão
+          vr_ind_crd  := LPAD(pr_nrdconta,10,'0') || LPAD(pr_nrctremp,10,'0');
+          IF vr_tab_tbcrd_risco.exists(vr_ind_crd) THEN 
+            IF vr_tab_tbcrd_risco(vr_ind_crd).cdtipcar = 1 THEN
+              vr_txeanual := vr_vltxban;
+            ELSIF vr_tab_tbcrd_risco(vr_ind_crd).cdtipcar = 2 THEN 
+              vr_txeanual := vr_vltxabb;
+            ELSE 
+              vr_txeanual := 0;
+            END IF;
+          ELSE 
+            vr_txeanual := 0;
+          END IF;
         -- Para Cheque especial e Limite não utilizado 
         ELSIF pr_cdmodali IN(0201,1901,0302,0301) THEN
           -- PAra Cheq Esp e Limite não Utilizado, já temos o contrato
@@ -2297,13 +2324,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               vr_txeanual := 0;
             END IF;
           END IF;
-        -- 1513 - Coobrigacao  
-        ELSIF pr_cdmodali = 1513 THEN          
-          -- busca a taxa rotativa
-          vr_txeanual := TO_NUMBER(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                            ,pr_cdcooper => pr_cdcooper
-                                                            ,pr_cdacesso => 'TAXA_ROTATIVA_MENSAL'));
-          vr_txeanual := ROUND((POWER(1 + (NVL(vr_txeanual,0) /100),12) - 1) * 100,2);
         ELSE
           vr_txeanual := 0;
         END IF;
@@ -3518,7 +3538,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                            ,pr_dsxml     => vr_xml_rel_parte
                                            ,pr_dsarqsaid => pr_nom_direto ||'/'|| vr_nmarqsai
                                            ,pr_cdrelato  => null
-,pr_flg_gerar => 'S'              --> Apenas submeter
+                                           ,pr_flg_gerar => 'N'              --> Apenas submeter
                                            ,pr_dspathcop => pr_nom_dirmic    --> Copiar para a Micros
                                            ,pr_fldoscop  => 'S'              --> Efetuar cópia com Ux2Dos
                                            ,pr_dscmaxcop => '| tr -d "\032"'
@@ -3619,8 +3639,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         WHEN others THEN  
           vr_dscritic := 'Problema ao retornar a data da solicitacao (CRAPSOL).';
           RAISE vr_exc_saida;
-      END; 
-
+      END;
+      
       --Verificar se o programa deve ser executado
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                ,pr_nmsistem => 'CRED'
@@ -3709,6 +3729,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                           ,pr_dtrefere => vr_dtrefere) LOOP
         vr_ind_crd := LPAD(rw_tbcrd_risco.nrdconta,10,'0') || LPAD(rw_tbcrd_risco.nrcontrato,10,'0');
         vr_tab_tbcrd_risco(vr_ind_crd).vlropcrd := rw_tbcrd_risco.vlropcrd;
+        vr_tab_tbcrd_risco(vr_ind_crd).cdtipcar := rw_tbcrd_risco.cdtipo_cartao;
+      END LOOP;
+      
+      -- Busca taxa de Juros Cartao BB e Bancoob
+      FOR rw_car IN cr_tbrisco_prod LOOP
+        IF rw_car.tparquivo = 'Cartao_BB' THEN
+          vr_vltxabb := rw_car.vltaxa_juros;
+        ELSE
+          vr_vltxban := rw_car.vltaxa_juros;
+        END IF;  
       END LOOP;
       
       -- Carrega a tabela temporaria de emprestimos
@@ -3911,8 +3941,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Para Limite não Utilizado, Cheque Especial, Desconto de Titulos e Desconto de Cheques
             ELSIF vr_tab_individ(vr_idx_individ).cdmodali IN(1901,0201,0301,0302) THEN
               vr_dtfimctr := vr_tab_individ(vr_idx_individ).dtvencop;
-            -- 1513 - Coobrigacao - beneficiários de outras coobrigações
-            ELSIF vr_tab_individ(vr_idx_individ).cdmodali = 1513 THEN
+            -- Cartões BB e Bancoob
+            ELSIF vr_tab_individ(vr_idx_individ).inddocto = 4 THEN
               vr_dtfimctr := vr_tab_individ(vr_idx_individ).dtvencop;
               -- Valor contratado
               vr_ind_crd  := LPAD(vr_tab_individ(vr_idx_individ).nrdconta,10,'0') || LPAD(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');

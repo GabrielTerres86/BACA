@@ -5698,6 +5698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            AND ris.cdcooper = pr_cdcooper
            AND ris.dtrefere = pr_dtrefere
            AND ris.inddocto = 5                -- Registros lançados em tela
+           AND ris.vldivida > 0                -- Com saldo 
         GROUP BY prd.dsproduto
                 ,risc0003.fn_valor_opcao_dominio(mvt.idgarantia)
       ORDER BY prd.dsproduto

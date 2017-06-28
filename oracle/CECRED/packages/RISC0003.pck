@@ -2155,15 +2155,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       
       pr_tab_risco(vr_ind_risco).vldivida := pr_tab_risco(vr_ind_risco).vldivida + NVL(pr_vlsaldo_devedor,0);
         
-      -- Calculo da quantidade de dias em atraso
-      pr_tab_risco(vr_ind_risco).qtdiaatr := fn_calcula_dias_atraso(pr_dtvencimento  => pr_tab_risco(vr_ind_risco).dtvencimento
-                                                                   ,pr_dtultdma_util => pr_dtultdma_util);
-        
+      -- Calculo da quantidade de dias em atraso somente quando há saldo
+      IF pr_tab_risco(vr_ind_risco).vldivida > 0 THEN 
+        pr_tab_risco(vr_ind_risco).qtdiaatr := fn_calcula_dias_atraso(pr_dtvencimento  => pr_tab_risco(vr_ind_risco).dtvencimento
+                                                                     ,pr_dtultdma_util => pr_dtultdma_util);
+      END IF;
+          
       -- Calculo do nivel de risco
       pr_tab_risco(vr_ind_risco).innivris := fn_calcula_nivel_risco(pr_dsnivel_risco); 
       
-      -- Saída não necessita VRI
-      IF pr_cdinfadi != '0301' THEN 
+      -- Saída ou Operação sem Saldo não necessita VRI
+      IF pr_cdinfadi != '0301' AND pr_tab_risco(vr_ind_risco).vldivida > 0 THEN 
       
         -- Se operação vencida ou Para cartões ou Remessas sem Fluxo Financeiro
         IF pr_tab_risco(vr_ind_risco).qtdiaatr > 0 OR NOT pr_calcparc THEN 
