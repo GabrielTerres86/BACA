@@ -358,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 14/06/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 27/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -385,6 +385,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --           08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   --
   --           14/06/2017 - Criando a opcao M conforme solicitado no chamado 660583. (Kelvin)
+  --
+  --           27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
+  --                        estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. ORA-01722: invalid number),
+  --                        dentro da pc_gera_xml (Oscar).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -436,72 +441,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
   vr_idprglog NUMBER;
   
-  /* Procedure para gravar log da TED */
-  PROCEDURE pc_grava_log_ted (pr_cdcooper IN INTEGER  --Codigo cooperativa
-                             ,pr_dttransa IN DATE     --Data transacao
-                             ,pr_hrtransa IN INTEGER  --Hora transacao
-                             ,pr_idorigem IN INTEGER  --Identificador origem
-                             ,pr_cdprogra IN VARCHAR2 --Nome programa
-                             ,pr_idsitmsg IN INTEGER  --Situacao mensagem
-                             ,pr_nmarqmsg IN VARCHAR2 --Nome arquivo mensagem
-                             ,pr_nmevento IN VARCHAR2 --Nome evento
-                             ,pr_nrctrlif IN VARCHAR2 --Numero Contrato
-                             ,pr_vldocmto IN NUMBER   --Valor Documento
-                             ,pr_cdbanctl IN INTEGER  --Codigo banco centralizador
-                             ,pr_cdagectl IN INTEGER  --Codigo Agencia Centralizadora
-                             ,pr_nrdconta IN VARCHAR2 --Numero da Conta
-                             ,pr_nmcopcta IN VARCHAR2 --Nome Cooperativa Conta
-                             ,pr_nrcpfcop IN NUMBER   --Numero CPF Cooperativa
-                             ,pr_cdbandif IN INTEGER  --Banco IF
-                             ,pr_cdagedif IN INTEGER  --Agencia IF
-                             ,pr_nrctadif IN VARCHAR2 --Numero Conta IF
-                             ,pr_nmtitdif IN VARCHAR2 --Nome titular IF
-                             ,pr_nrcpfdif IN NUMBER   --Numero CPF IF
-                             ,pr_cdidenti IN VARCHAR2 --Codigo Identificador
-                             ,pr_dsmotivo IN VARCHAR2 --Descricao Motivo
-                             ,pr_cdagenci IN INTEGER  --Codigo Agencia
-                             ,pr_nrdcaixa IN INTEGER  --Numero do Caixa
-                             ,pr_cdoperad IN VARCHAR2 --Codigo Operador
-                             ,pr_cdcritic OUT INTEGER --Codigo erro
-                             ,pr_dscritic OUT VARCHAR2) IS --Descricao erro
-    -- .........................................................................
-    --
-    --  Programa : pc_grava_log_ted           Antigo: b1wgen0050.p/grava-log-ted
-    --  Sistema  : Cred
-    --  Sigla    : SSPB0001
-    --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Procedure para gravar log da TED
-  BEGIN
-    DECLARE
-      --Variaveis de erro
-      vr_des_erro     VARCHAR2(4000);
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(4000);
-      --Tabela de memoria de erros
-      vr_tab_erro GENE0001.typ_tab_erro;
-      --Registro do tipo data
-      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
-      --Variaveis de Excecao
-      vr_exc_erro EXCEPTION;
-    BEGIN
-      NULL;
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
-      WHEN OTHERS THEN
-        -- Erro
-        pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro na rotina SSPB0001.pc_grava_log_ted. '||sqlerrm;
-    END;
-  END pc_grava_log_ted;
-
-
   /* Procedure para gerar xml boleto */
   PROCEDURE pc_gera_xml_vr_boleto (pr_cdcooper   IN INTEGER   --Codigo Cooperativa
                                   ,pr_cdorigem   IN INTEGER   --Identificador Origem
@@ -2566,7 +2505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_dspesrec   IN VARCHAR2        --> Tp. Pessoa Destino
                         ,pr_cpfcgrcb   IN VARCHAR2        --> CPF Pessoa Destino
                         ,pr_nmpesrcb   IN VARCHAR2        --> Nome Pessoa Destino
-                        ,pr_vldocmto   IN VARCHAR2        --> Valor do Docmto
+                        ,pr_vldocmto   IN NUMBER          --> Valor do Docmto
                         ,pr_cdfinrcb   IN VARCHAR2        --> Finalidade
                         ,pr_dtmvtolt   IN VARCHAR2        --> Data atual
                         ,pr_dtmvtopr   IN VARCHAR2        --> Data proximo dia
@@ -2591,7 +2530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 27/06/2017
 
       Dados referentes ao programa:
 
@@ -2609,7 +2548,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
                                catalogo 4.07 (Lucas Ranghetti #537580)
                            
-                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)                  
+                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)      
+
+                  27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
+                               estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. ORA-01722: invalid number),
+                               dentro da pc_gera_xml (Oscar).
+                              
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
     ------------> ESTRUTURAS DE REGISTRO <-----------
@@ -2639,6 +2583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_comando         VARCHAR2(4000);
     vr_des_log         VARCHAR2(4000);
     vr_typ_saida       VARCHAR2(3);
+    vr_vldocmto        VARCHAR2(100);
 
     -----------------> SubRotinas <------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -2650,6 +2595,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_dsarqenv := vr_dsarqenv||pr_des_dados;
     END;
   BEGIN
+    
+    -- Separador decimal de centavos deve ser "."
+    vr_vldocmto := REPLACE(to_char(pr_vldocmto),',','.');
 
     /* Arquivo gerado para o envio */
     vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C',
@@ -2711,7 +2659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <TpPessoaDestinatario>'|| pr_dspesrec ||'</TpPessoaDestinatario>
                         <CNPJ_CPFDestinatario>'|| pr_cpfcgrcb ||'</CNPJ_CPFDestinatario>
                         <NomDestinatario>'||      pr_nmpesrcb ||'</NomDestinatario>
-                        <VlrLanc>'||              pr_vldocmto ||'</VlrLanc>
+                        <VlrLanc>'||              vr_vldocmto ||'</VlrLanc>
                         <FinlddCli>'||            pr_cdfinrcb ||'</FinlddCli>
                         <Hist>'||                 pr_dshistor ||'</Hist>
                         <DtMovto>'||              pr_dtmvtolt ||'</DtMovto>
@@ -2733,7 +2681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <CNPJ_CPFCliCredtd>'|| pr_cpfcgrcb ||'</CNPJ_CPFCliCredtd>
                         <NomCliCredtd>'||      pr_nmpesrcb ||'</NomCliCredtd>                        
                         <NumContrtoOpCred></NumContrtoOpCred>
-                        <VlrLanc>'||         pr_vldocmto ||'</VlrLanc>
+                        <VlrLanc>'||         vr_vldocmto ||'</VlrLanc>
                         <FinlddIF>'||        pr_cdfinrcb ||'</FinlddIF>
                         <CodIdentdTransf>'|| pr_cdidtran ||'</CodIdentdTransf>
                         <Hist></Hist>
@@ -2774,7 +2722,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '<TpPessoaCredtd>'||   pr_dspesrec ||'</TpPessoaCredtd>'||
                          '<CNPJ_CPFCliCredtd>'||pr_cpfcgrcb ||'</CNPJ_CPFCliCredtd>'||
                          '<NomCliCredtd>'||     pr_nmpesrcb ||'</NomCliCredtd>'||
-                         '<VlrLanc>'||          pr_vldocmto ||'</VlrLanc>'||
+                         '<VlrLanc>'||          vr_vldocmto ||'</VlrLanc>'||
                          '<FinlddCli>'||        pr_cdfinrcb ||'</FinlddCli>'||
                          '<CodIdentdTransf>'||  pr_cdidtran ||'</CodIdentdTransf>'||
                          '<Hist>'||             pr_dshistor ||'</Hist>'||
@@ -2795,11 +2743,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <TpReceita>9</TpReceita>
                         <TpRecolht>N</TpRecolht>
                         <DtArrec>'||     pr_dtmvtolt ||'</DtArrec>
-                        <VlrLanc>'||     pr_vldocmto ||'</VlrLanc>
+                        <VlrLanc>'||     vr_vldocmto ||'</VlrLanc>
                         <NivelPref></NivelPref>
                         <Grupo_STR0020_VlrInf>
                           <TpVlrInf>25</TpVlrInf>
-                          <VlrInf>'|| pr_vldocmto ||'</VlrInf>
+                          <VlrInf>'|| vr_vldocmto ||'</VlrInf>
                         </Grupo_STR0020_VlrInf>
                         <Hist>'||     pr_nrseqarq ||'</Hist>
                         <DtAgendt>'|| pr_dtagendt ||'</DtAgendt>
@@ -2824,7 +2772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <AgCredtd>'||    vr_cdagenbc ||'</AgCredtd>
                         <TpCtCredtd>'||  pr_dsdctacr ||'</TpCtCredtd>
                         <CtCredtd>'||    pr_nrcctrcb ||'</CtCredtd>
-                        <VlrLanc>'||     pr_vldocmto ||'</VlrLanc>
+                        <VlrLanc>'||     vr_vldocmto ||'</VlrLanc>
                         <DtMovto>'||     pr_dtmvtolt ||'</DtMovto>
                       </'||vr_nmmsgenv ||'>
                       </SISMSG>');
@@ -2853,7 +2801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         ,pr_crapdat.dtmvtocd
         ,vr_nmmsgenv
         ,'D' /*Debito em Conta*/
-        ,TO_NUMBER(nvl(replace(trim(pr_vldocmto),'.',','),0)));
+        ,nvl(pr_vldocmto,0));
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic:= 0;
@@ -2872,7 +2820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                       ,pr_nmarqmsg => vr_nmarquiv   --> Nome do arquivo da mensagem.
                       ,pr_nmevento => pr_nmmsgenv   --> Descricao do evento da mensagem.
                       ,pr_nrctrlif => pr_nrctrlif   --> Numero de controle da mensagem.
-                      ,pr_vldocmto => to_number(REPLACE(pr_vldocmto,'.',','))   --> Valor do documento.
+                      ,pr_vldocmto => pr_vldocmto   --> Valor do documento.
                       ,pr_cdbanctl => pr_cdbcoctl   --> Codigo de banco da central.
                       ,pr_cdagectl => pr_cdagectl   --> Codigo de agencia na central.
                       ,pr_nrdconta => pr_nrdconta   --> Numero da conta cooperado
@@ -2934,7 +2882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                    '. Evento: '        || SUBSTR(vr_nmmsgenv,1,9)||
                    ', Numero Controle: '||SUBSTR(pr_nrctrlif,1,20)||
                    ', Hora: '          || TO_CHAR(SYSDATE,'HH24:MI:SS')||
-                   ', Valor: '         || To_Char(TO_NUMBER(REPLACE(pr_vldocmto,'.',',')),'fm999g999g990d00')||
+                   ', Valor: '         || To_Char(pr_vldocmto,'fm999g999g990d00')||
                    ', Banco Remet.: '  || gene0002.fn_mask(pr_cdbcoctl, 'zz9') ||
                    ', Agencia Remet.: '|| gene0002.fn_mask(pr_cdagectl,'zzzz9')||
                    ', Conta Remet.: '  || gene0002.fn_mask(pr_nrdconta, 'zzzzzzzz9')||
@@ -3009,7 +2957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 27/06/2017
 
       Dados referentes ao programa:
 
@@ -3026,6 +2974,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                PRJ335 - OFSSA (Odirlei-AMcom)                 
                                
                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
+                  
+                  27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
+                               estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. ORA-01722: invalid number),
+                               dentro da pc_gera_xml (Oscar).
+                  
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -3199,7 +3152,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_dsdctadb VARCHAR2(100);
     vr_dsdctacr VARCHAR2(100);
     vr_dtmvtolt VARCHAR2(100);
-    vr_vldocmto VARCHAR2(100);
     vr_nrcpfemi VARCHAR2(100);
     vr_cpfcgrcb VARCHAR2(100);
     vr_cpfcgde1 VARCHAR2(100);
@@ -3459,9 +3411,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     -- Format da data deve ser AAAA-MM-DD
     vr_dtmvtopr := to_char(rw_crapdat.dtmvtopr,'RRRR-MM-DD');
 
-    -- Separador decimal de centavos deve ser "."
-    vr_vldocmto := REPLACE(to_char(pr_vldocmto),',','.');
-
     -- Alimenta as variaveis do HEADER
     vr_cdlegado := to_char(rw_crapcop.cdagectl);
     vr_tpmanut  := 'I';   -- Inclusao
@@ -3533,7 +3482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_dspesrec => NULL                 --> Tp. Pessoa Destino
                   ,pr_cpfcgrcb => NULL                 --> CPF Pessoa Destino
                   ,pr_nmpesrcb => NULL                 --> Nome Pessoa Destino
-                  ,pr_vldocmto => vr_vldocmto          --> Valor do Docmto
+                  ,pr_vldocmto => pr_vldocmto          --> Valor do Docmto
                   ,pr_cdfinrcb => NULL                 --> Finalidade
                   ,pr_dtmvtolt => vr_dtmvtolt          --> Data atual
                   ,pr_dtmvtopr => vr_dtmvtopr          --> Data proximo dia
@@ -3609,7 +3558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_dspesrec   => vr_dspesrec        --> Tp. Pessoa Destino
                   ,pr_cpfcgrcb   => vr_cpfcgrcb        --> CPF Pessoa Destino
                   ,pr_nmpesrcb   => pr_nmpesrcb        --> Nome Pessoa Destino
-                  ,pr_vldocmto   => vr_vldocmto        --> Valor do Docmto
+                  ,pr_vldocmto   => pr_vldocmto        --> Valor do Docmto
                   ,pr_cdfinrcb   => pr_cdfinrcb        --> Finalidade
                   ,pr_dtmvtolt   => vr_dtmvtolt        --> Data atual
                   ,pr_dtmvtopr   => vr_dtmvtopr        --> Data proximo dia
@@ -3677,7 +3626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_dspesrec   => vr_dspesrec        --> Tp. Pessoa Destino
                   ,pr_cpfcgrcb   => vr_cpfcgrcb        --> CPF Pessoa Destino
                   ,pr_nmpesrcb   => pr_nmpesrcb        --> Nome Pessoa Destino
-                  ,pr_vldocmto   => vr_vldocmto        --> Valor do Docmto
+                  ,pr_vldocmto   => pr_vldocmto        --> Valor do Docmto
                   ,pr_cdfinrcb   => pr_cdfinrcb        --> Finalidade
                   ,pr_dtmvtolt   => vr_dtmvtolt        --> Data atual
                   ,pr_dtmvtopr   => vr_dtmvtopr        --> Data proximo dia
@@ -3738,7 +3687,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_dspesrec   => vr_dspesrec        --> Tp. Pessoa Destino
                   ,pr_cpfcgrcb   => vr_cpfcgrcb        --> CPF Pessoa Destino
                   ,pr_nmpesrcb   => pr_nmpesrcb        --> Nome Pessoa Destino
-                  ,pr_vldocmto   => vr_vldocmto        --> Valor do Docmto
+                  ,pr_vldocmto   => pr_vldocmto        --> Valor do Docmto
                   ,pr_cdfinrcb   => pr_cdfinrcb        --> Finalidade
                   ,pr_dtmvtolt   => vr_dtmvtolt        --> Data atual
                   ,pr_dtmvtopr   => vr_dtmvtopr        --> Data proximo dia
