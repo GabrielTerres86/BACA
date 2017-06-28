@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 19/05/2017
+   Data    : Abril/2004                        Ultima atualizacao: 27/06/2017
 
    Dados referentes ao programa:
 
@@ -421,6 +421,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                             
                19/05/2017 - Tratamento para cooperado demitido (Lucas Ranghetti #656251)
+               
+               27/06/2017 - Ajuste para verificacao do trailer do arquivo (Tiago/Fabricio #701374)
 ............................................................................ */
 
 
@@ -2054,8 +2056,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
                       
            --Verificar se a ultima linha é o Trailer
-           IF SUBSTR(vr_setlinha2,01,01) <> 'Z' AND -- Antigo 
-              SUBSTR(vr_setlinha2,152,01) <> 'Z' THEN  -- Servidor "_AIX"             
+           IF SUBSTR(vr_setlinha2,01,01)  <> 'Z' AND -- Antigo 
+              SUBSTR(vr_setlinha2,152,01) <> 'Z' AND -- Servidor "_AIX"             
+              SUBSTR(vr_setlinha2,303,01) <> 'Z' THEN  
              vr_cdcritic:= 999;
              vr_dscritic:= 'Arquivo incompleto.';             
            END IF;
