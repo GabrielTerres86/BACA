@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: logspb.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Novembro/2009                Última Alteração: 11/04/2017 ***//
+//*** Data : Novembro/2009                Última Alteração: 05/12/2016 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela LOGSPB                 ***//
 //***                                                                  ***//
@@ -39,11 +39,12 @@
 //***                                                                  ***//
 //***             05/12/2016 - Incorporação Transulcred                ***//
 //***                          (Guilherme/SUPERO)                      ***//
-//***																   ***//	
-//***             11/04/2017 - Permitir acessar o Ayllos mesmo vindo   ***//
-//***                          do CRM. (Jaison/Andrino)				   ***//
 //***                                                                  ***//
-//************************************************************************//
+//***			  31/11/2017 - Ajustes para exibir TEDs estornadas		 ***//
+//***			               devido a analise de fraude                ***//
+//***			               PRJ335 - Analise de fraude(Odirlei-AMcom) ***//
+//***                                                                    ***//
+//**************************************************************************//
 
 var contWin = 0;
 var detalhes = new Array();
@@ -59,11 +60,6 @@ $(document).ready(function () {
 
     if (!carregouOpcoes)
         carregaOpcoes();
-
-    // Seta os valores caso tenha vindo do CRM
-    if ($("#crm_inacesso","#frmLogSPB").val() == 1) {
-        $("#nrdconta","#frmLogSPB").val($("#crm_nrdconta","#frmLogSPB").val());
-    }
 
     highlightObjFocus($('#frmLogSPB'));
 
@@ -244,8 +240,13 @@ $(document).ready(function () {
 
                     if ($(this).val() == "1") {
                         $("#cdsitlog > #optRejeitada", "#frmLogSPB").prop("disabled", false);
+                        $("#cdsitlog > #optEstornada","#frmLogSPB").prop("disabled",false);
+					// se for opcao todos habilita o estornadas
+                    }else if ($(this).val() == "4") {
+                        $("#cdsitlog > #optEstornada","#frmLogSPB").prop("disabled",false);
                     } else {
                         $("#cdsitlog > #optRejeitada", "#frmLogSPB").prop("disabled", true);
+                        $("#cdsitlog > #optEstornada","#frmLogSPB").prop("disabled",true);
                         $("#btImpCsv", "#frmLogSPB").hide();
                         $("#btImpPsv", "#frmLogSPB").hide();
                     }
