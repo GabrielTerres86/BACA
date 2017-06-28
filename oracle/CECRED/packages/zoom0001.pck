@@ -283,6 +283,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
   PROCEDURE pc_busca_finalidades_empr_web(pr_cdfinemp  IN crapfin.cdfinemp%TYPE -- Código da finalidade
                                          ,pr_dsfinemp  IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                          ,pr_flgstfin  IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
+                                         ,pr_lstipfin  IN VARCHAR2 DEFAULT NULL -- lista com os tipo de finalidade ou nulo para todas
                                          ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
                                          ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
                                          ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
