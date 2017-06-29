@@ -4661,7 +4661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 02/05/2016 - Adicionado validacao na solicitacao de UPGRADE/DOWNGRADE para nao gerar
                              solicitacao de cartao adicional nessa situacao (Douglas - Chamado 441407)             
                 
-                20/06/2017 - Alterar a ordem que as informações são enviadas no arquivo CCR3.
+                20/06/2017 - Alterar a ordem que as informações são enviadas no arquivo CCB3.
                              Primeiro vamos enviar as linhas de Alteração Cadastral e depois as linhas
                              de UPGRADE/DOWNGRADE (Douglas - Chamado 662595)
      ..............................................................................*/
@@ -6443,7 +6443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 06/02/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 19/06/2017
 
        Dados referentes ao programa:
 
@@ -6524,7 +6524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
                                 (Chamado 532712) - (Fabrício)
 
-				           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+                           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
                                 (Chamado 532712) - (Fabricio)
                                 
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
@@ -6550,6 +6550,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                    17/04/2017 - Tratamento para abrir chamado e enviar email caso ocorra
                                 algum erro na importacao do arquivo ccr3 (Lucas Ranghetti #630298)
+
+                   19/06/2017 - Tratamento para validar se o arquivo foi recebido completo.
+                                Caso o arquivo CCR3 tenha sido recebido incompleto, enviamos
+                                e-mail e abrimos chamado (Douglas - Chamado 647872)
     ............................................................................ */
 
     DECLARE
@@ -6603,6 +6607,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_linha      NUMBER          := 0;                              --> Linha do arquivo
       vr_idprglog   tbgen_prglog.idprglog%TYPE;                         
       vr_destinatario_email VARCHAR2(500);                             --> Destinatario E-mail 
+      vr_saida_tail VARCHAR2(1000);                                    --> Retorno do tail -2
     
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -6869,7 +6874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            -- Se o parametro vir nulo, deve considerar as situações 3 e 4
            AND (pcr.insitcrd = pr_insitcrd OR (pr_insitcrd IS NULL AND pcr.insitcrd IN (3,4)))
            AND (pcr.flgprcrd = pr_flgprcrd OR pr_flgprcrd IS NULL);
-      
+
       CURSOR cr_crawcrd_cdgrafin_conta(pr_cdcooper IN crawcrd.cdcooper%TYPE
                                       ,pr_nrdconta IN crawcrd.nrdconta%TYPE
                                       ,pr_nrcctitg IN crawcrd.nrcctitg%TYPE
@@ -7389,29 +7394,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
         
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-				                     pr_cdoperad => '1',
-													   pr_dscritic => '',
-													   pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
-													   pr_dstransa => 'Alterar Situacao Cartao de Credito',
-													   pr_dttransa => TRUNC(SYSDATE),
-													   pr_flgtrans => 1,
-													   pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
-													   pr_idseqttl => 0,
-													   pr_nmdatela => 'PC_CRPS672',
-													   pr_nrdconta => pr_nrdconta,
-													   pr_nrdrowid => vr_nrdrowid);
+                                     pr_cdoperad => '1',
+                                                       pr_dscritic => '',
+                                                       pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
+                                                       pr_dstransa => 'Alterar Situacao Cartao de Credito',
+                                                       pr_dttransa => TRUNC(SYSDATE),
+                                                       pr_flgtrans => 1,
+                                                       pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+                                                       pr_idseqttl => 0,
+                                                       pr_nmdatela => 'PC_CRPS672',
+                                                       pr_nrdconta => pr_nrdconta,
+                                                       pr_nrdrowid => vr_nrdrowid);
 
         -- Numero do Cartao
-			  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-				  												pr_nmdcampo => 'Cartao',
-					  											pr_dsdadant => '',
-						  										pr_dsdadatu => pr_nrcrcard);
+              gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                                                  pr_nmdcampo => 'Cartao',
+                                                                  pr_dsdadant => '',
+                                                                  pr_dsdadatu => pr_nrcrcard);
                                   
         -- Situacao do Cartao
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-				  												pr_nmdcampo => 'Situacao',
-					  											pr_dsdadant => rw_crawcrd.insitcrd,
-						  										pr_dsdadatu => vr_insitcrd);
+                                                                  pr_nmdcampo => 'Situacao',
+                                                                  pr_dsdadant => rw_crawcrd.insitcrd,
+                                                                  pr_dsdadatu => vr_insitcrd);
         
         -- Data de Cancelamento
         IF rw_crawcrd.dtcancel <> vr_dtcancel THEN
@@ -7522,6 +7527,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         
       END pc_log_dados_arquivo;
 
+      PROCEDURE pc_log_arq_invalido(pr_nmdarqui IN VARCHAR2) IS
+        vr_dstpdreg VARCHAR2(50);
+        vr_dstexto VARCHAR2(2000);
+        vr_titulo VARCHAR2(1000);
+      BEGIN
+        -- Texto para utilizar na abertura do chamado e no email enviado
+        vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
+                     'Arquivo ' || pr_nmdarqui || ' foi recebido incompleto.';
+
+        -- Parte inicial do texto do chamado e do email        
+        vr_titulo:= '<b>O arquivo de retorno da Solicitacao de Cartao Bancoob CABAL foi recebido incompleto.</b><br>';
+                  
+        -- Buscar e-mails dos destinatarios do produto cartoes
+        vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
+                 
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                              ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                              ,pr_cdmensagem    => 0             --> pr_cdmensagem
+                              ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+                              ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                              ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+                              ,pr_texto_chamado => vr_titulo
+                              ,pr_destinatario_email => vr_destinatario_email
+                              ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+                              ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
+        
+        
+      END pc_log_arq_invalido;
+
     BEGIN
     
       -- extrai dados do XML 
@@ -7570,7 +7614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-      			
+                  
       -- buscar informações do arquivo a ser processado
       OPEN cr_crapscb;
       FETCH cr_crapscb INTO rw_crapscb;
@@ -7745,6 +7789,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           CONTINUE;
         END IF;
 
+        /* Verificar se o arquivo esta completo - Ultima linha */
+        vr_comando:= 'tail -2 '||vr_direto_connect||'/'||vr_vet_nmarquiv(i);
+
+        --Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_saida_tail);
+                             
+        --Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+          pc_log_message;
+          CONTINUE;
+        END IF;
+                              
+        --Verificar se a ultima linha é o Trailer
+        IF SUBSTR(vr_saida_tail,001,06) <> 'CCR309' AND   -- Antigo 
+           SUBSTR(vr_saida_tail,351,06) <> 'CCR309' THEN  -- Servidor "_AIX"             
+          vr_cdcritic:= 999;
+          vr_dscritic:= 'Arquivo incompleto.';  
+          -- gerar o log
+          pc_log_arq_invalido(pr_nmdarqui => vr_vet_nmarquiv(i));
+          -- levantar excecao
+          CONTINUE;
+        END IF;
+
         -- Guardar a maior sequencia processada
         vr_nrseqarq_max := greatest(vr_nrseqarq_max,vr_nrseqarq);
 
@@ -7783,7 +7854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF substr(vr_des_text,5,2) = '01'  THEN
 
                  BEGIN 
-  	               vr_tipooper := to_number(substr(vr_des_text,7,2));
+                     vr_tipooper := to_number(substr(vr_des_text,7,2));
                  EXCEPTION 
                    WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
@@ -8051,7 +8122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 IF substr(vr_des_text,275,3) <> '000' THEN
                   
                   -- Somente os registros d Inclusao sera gravado na tabela craprej
-                  IF vr_tipooper = '01' THEN
+                  IF substr(vr_des_text,7,2) = '01' THEN
                   
                      BEGIN
                         INSERT INTO craprej
@@ -8568,7 +8639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Se não encontrar registros
                   IF cr_crawcrd_cdgrafin%NOTFOUND THEN
                     -- Fechar o cursor
-                    CLOSE cr_crawcrd_cdgrafin;                    
+                    CLOSE cr_crawcrd_cdgrafin;          
                     
                     -- Buscar registro de solicitacao
                     OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
@@ -9702,8 +9773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     END;
 
   END pc_crps672;
-
-
+  
   /*.......................................................................................
 
    Programa: CCDR0003
