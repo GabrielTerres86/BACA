@@ -3706,23 +3706,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         vr_produto   := pr_produto;
         vr_dtrecarga := pr_dtrecarga;
         vr_qtmesagd  := pr_qtmesagd;
-      END IF;
+        
+        -- Valida requisição duplicada (Mobile)
+        OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
+                                 ,pr_nrdconta  => pr_nrdconta
+                                 ,pr_dtrecarga => vr_dtrecarga
+                                 ,pr_nrddd     => vr_nrddd
+                                 ,pr_nrcelular => vr_nrcelular
+                                 ,pr_vlrecarga => vr_vlrecarga);
+        FETCH cr_operacao_repetida
+        INTO vr_operacao_repetida;
+        CLOSE cr_operacao_repetida;
+        
+        IF vr_operacao_repetida > 0 THEN
+           vr_cdcritic := 0;
+           vr_dscritic := 'Recarga de mesmo valor já efetuada. Consulte extrato ou tente novamente em 10 min.';
+           RAISE vr_exc_erro;    
+        END IF;
       
-      -- Valida requisição duplicada (Mobile)
-      OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
-                               ,pr_nrdconta  => pr_nrdconta
-                               ,pr_dtrecarga => vr_dtrecarga
-                               ,pr_nrddd     => vr_nrddd
-                               ,pr_nrcelular => vr_nrcelular
-                               ,pr_vlrecarga => vr_vlrecarga);
-      FETCH cr_operacao_repetida
-      INTO vr_operacao_repetida;
-      CLOSE cr_operacao_repetida;
-      
-      IF vr_operacao_repetida > 0 THEN
-         vr_cdcritic := 0;
-         vr_dscritic := 'Recarga de mesmo valor já efetuada. Consulte extrato ou tente novamente em 10 min.';
-         RAISE vr_exc_erro;    
       END IF;
       
       -- Validar recarga
