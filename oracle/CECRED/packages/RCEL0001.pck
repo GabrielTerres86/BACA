@@ -73,8 +73,9 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 		                         ,pr_nrdconta  IN crapass.nrdconta%TYPE              -- Nr. da conta
 														 ,pr_idseqttl  IN crapsnh.idseqttl%TYPE              -- Id do titular
 														 ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE              -- CPF do operador juridico
-														 ,pr_nrdddtel  IN tbrecarga_favorito.nrddd%TYPE      -- Nr. DDD
-														 ,pr_nrtelefo  IN tbrecarga_favorito.nrcelular%TYPE  -- Nr. telefone celular
+														 ,pr_nrdddtel  IN tbrecarga_favorito.nrddd%TYPE      -- DDD
+														 ,pr_nrtelefo  IN tbrecarga_favorito.nrcelular%TYPE  -- Telefone
+                             ,pr_vlrecarga IN tbrecarga_valor.vlrecarga%TYPE     -- Valor de recarga
 														 ,pr_dtrecarga IN tbrecarga_operacao.dtrecarga%TYPE  -- Data para recarga
 														 ,pr_qtmesagd  IN INTEGER                            -- Qtd. meses agendamento
 														 ,pr_cddopcao  IN INTEGER                            -- Opção: 1 - Data atual / 2 - Data futura / 3 - Agendamento
@@ -904,8 +905,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 		                         ,pr_nrdconta  IN crapass.nrdconta%TYPE              -- Nr. da conta
 														 ,pr_idseqttl  IN crapsnh.idseqttl%TYPE              -- Id do titular
 														 ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE              -- CPF do operador juridico
-														 ,pr_nrdddtel  IN tbrecarga_favorito.nrddd%TYPE      -- Nr. DDD
-														 ,pr_nrtelefo  IN tbrecarga_favorito.nrcelular%TYPE  -- Nr. telefone celular
+														 ,pr_nrdddtel  IN tbrecarga_favorito.nrddd%TYPE      -- DDD
+														 ,pr_nrtelefo  IN tbrecarga_favorito.nrcelular%TYPE  -- Telefone
+                             ,pr_vlrecarga IN tbrecarga_valor.vlrecarga%TYPE     -- Valor de recarga
 														 ,pr_dtrecarga IN tbrecarga_operacao.dtrecarga%TYPE  -- Data para recarga
 														 ,pr_qtmesagd  IN INTEGER                            -- Qtd. meses agendamento
 														 ,pr_cddopcao  IN INTEGER                            -- Opção: 1 - Data atual / 2 - Data futura / 3 - Agendamento
@@ -942,8 +944,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 		  vr_des_corpo   VARCHAR2(1000);
 			
 			-- Variáveis auxiliares
+			vr_tab_saldo EXTR0001.typ_tab_saldos;
+			vr_tab_erro GENE0001.typ_tab_erro;
 			vr_dtrecarga DATE;
 			
+      -- Buscar dados da conta
+			CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
+			                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+				SELECT ass.inpessoa
+              ,ass.idastcjt
+				      ,ass.vllimcre
+				  FROM crapass ass
+				 WHERE ass.cdcooper = pr_cdcooper
+				   AND ass.nrdconta = pr_nrdconta;
+			rw_crapass cr_crapass%ROWTYPE;
+      
 		  -- Verificar se número do celular é fraudulento
 		  CURSOR cr_crapcbf(pr_dsfraude IN crapcbf.dsfraude%TYPE) IS
 			  SELECT 1
@@ -1018,8 +1033,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					-- Levanta exceção
 					RAISE vr_exc_erro;
 				END IF;
-      END IF;		
-			
+      END IF;
+      
+      -- Valida se possui saldo em conta
+      OPEN cr_crapass(pr_cdcooper, pr_nrdconta);
+      FETCH cr_crapass
+      INTO rw_crapass;
+      CLOSE cr_crapass;
+      
+      IF   pr_cddopcao < 2   AND  	/* Recarga DATA ATUAL */
+           pr_nrcpfope = 0   AND  	/* NÃO É OPERADOR */
+           rw_crapass.idastcjt = 0   THEN 	/* NÃO É CONTA ASSIN. CONJUNTA */ 
+        
+        -- Obtem saldo do cooperado
+        EXTR0001.pc_obtem_saldo_dia(pr_cdcooper => pr_cdcooper
+			                             ,pr_rw_crapdat => rw_crapdat
+				 		                       ,pr_cdagenci => CASE 
+                                                   WHEN pr_idorigem = 5 THEN 1
+							                                     WHEN pr_idorigem = 3 THEN 90
+						 	                                     ELSE 91 END
+					                         ,pr_nrdcaixa => CASE 
+						                                       WHEN pr_idorigem = 5 THEN 0
+						 	                                     ELSE 900 END
+					                         ,pr_cdoperad => CASE 
+						                                       WHEN pr_idorigem = 5 THEN 1
+						 	                                     ELSE 996 END
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_vllimcre => rw_crapass.vllimcre
+                                   ,pr_dtrefere => rw_crapdat.dtmvtolt
+                                   ,pr_flgcrass => FALSE
+                                   ,pr_tipo_busca => 'A'
+                                   ,pr_des_reto => vr_dscritic
+                                   ,pr_tab_sald => vr_tab_saldo
+                                   ,pr_tab_erro => vr_tab_erro);
+
+        -- Se o valor do saldo disponível + valor limite cheque especial for menor que o valor de recarga
+        IF (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + 
+            nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) < pr_vlrecarga THEN
+           -- Gerar crítica
+           vr_cdcritic := 0;
+           vr_dscritic := 'Não há saldo suficiente para a operação.';
+            -- Levantar exceção
+            RAISE vr_exc_erro;
+        END IF;
+      END IF;
+       
 			-- Se for agendamento para data futura (2) ou recorrente (3)
 			IF pr_cddopcao IN (2,3) THEN
 				 -- Verificar se a quantidade de meses é maior que 24
@@ -1560,6 +1618,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
 				SELECT ass.inpessoa
 				      ,ass.vllimcre
+              ,(SELECT ttl.nmextttl
+                  FROM crapttl ttl
+                 WHERE ttl.cdcooper = pr_cdcooper
+                   AND ttl.nrdconta = pr_nrdconta
+                   AND ttl.idseqttl = pr_idseqttl) nmextttl
 				  FROM crapass ass
 				 WHERE ass.cdcooper = pr_cdcooper
 				   AND ass.nrdconta = pr_nrdconta;
@@ -2095,7 +2158,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				IF pr_idorigem IN (3,4)	THEN
 				  -- Atribuir informações do protocolo
 					vr_dsinfor1 := 'Recarga de celular';
-					vr_dsinfor2 := rw_inf_rec.nmoperadora || '#' ||
+					vr_dsinfor2 := rw_crapass.nmextttl || '#' ||
+                         rw_inf_rec.nmoperadora || '#' ||
 					               '('||to_char(pr_nrdddtel, 'fm00')||') ' ||
                          to_char(pr_nrtelefo,'fm00000g0000','nls_numeric_characters=.-') || '#' ||
 												 to_char(pr_vlrecarga, 'fm9g999g990d00') || '#' ||
@@ -3566,6 +3630,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
          WHERE ope.idoperacao = pr_idoperacao;
       rw_tbrecarga_operacao cr_tbrecarga_operacao%ROWTYPE;
       
+      CURSOR cr_operacao_repetida(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                 ,pr_nrdconta   IN crapass.nrdconta%TYPE
+                                 ,pr_dtrecarga  IN tbrecarga_operacao.dtrecarga%TYPE
+                                 ,pr_nrddd      IN tbrecarga_favorito.nrddd%TYPE
+                                 ,pr_nrcelular  IN tbrecarga_favorito.nrcelular%TYPE
+                                 ,pr_vlrecarga  IN tbrecarga_valor.vlrecarga%TYPE) IS
+      SELECT 1
+        FROM tbrecarga_operacao req
+       WHERE req.cdcooper = pr_cdcooper
+         AND req.nrdconta = pr_nrdconta
+         AND req.dtrecarga = pr_dtrecarga
+         AND req.nrddd = pr_nrddd
+         AND req.nrcelular = pr_nrcelular
+         AND req.vlrecarga = pr_vlrecarga
+         AND ((SYSDATE - dttransa) * 24 * 60) < 10; -- Menos de 10 minutos atrás
+      vr_operacao_repetida NUMBER := 0;
+      
 		BEGIN
       
       vr_idastcjt := 0;
@@ -3607,13 +3688,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         vr_qtmesagd  := pr_qtmesagd;
       END IF;
       
+      -- Valida requisição duplicada (Mobile)
+      OPEN cr_operacao_repetida(pr_cdcooper  => pr_cdcooper
+                               ,pr_nrdconta  => pr_nrdconta
+                               ,pr_dtrecarga => vr_dtrecarga
+                               ,pr_nrddd     => vr_nrddd
+                               ,pr_nrcelular => vr_nrcelular
+                               ,pr_vlrecarga => vr_vlrecarga);
+      FETCH cr_operacao_repetida
+      INTO vr_operacao_repetida;
+      CLOSE cr_operacao_repetida;
+      
+      IF vr_operacao_repetida > 0 THEN
+         vr_cdcritic := 0;
+         vr_dscritic := 'Recarga de mesmo valor já efetuada. Consulte extrato ou tente novamente em 10 min.';
+         RAISE vr_exc_erro;    
+      END IF;
+      
       -- Validar recarga
       RCEL0001.pc_valida_recarga(pr_cdcooper  => pr_cdcooper
                                 ,pr_nrdconta  => pr_nrdconta
                                 ,pr_idseqttl  => pr_idseqttl
                                 ,pr_nrcpfope  => pr_nrcpfope
-                                ,pr_nrdddtel  => vr_nrddd
-                                ,pr_nrtelefo  => vr_nrcelular
+                                ,pr_vlrecarga => pr_vlrecarga
+                                ,pr_nrdddtel  => pr_nrddd 
+                                ,pr_nrtelefo  => pr_nrcelular
                                 ,pr_dtrecarga => nvl(vr_dtrecarga,trunc(SYSDATE))
                                 ,pr_qtmesagd  => vr_qtmesagd
                                 ,pr_cddopcao  => pr_cddopcao
@@ -3687,6 +3786,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         ELSE
           pr_msg_retor := 'Agendamento de recarga de celular registrada com sucesso. Aguardando aprovação dos demais responsáveis.';
         END IF;
+      END IF;
+      
+      --Gera o XML de RETORNO
+      pr_msg_retor := '<msgretor>' || pr_msg_retor || '</msgretor>';
+      IF (vr_dsprotoc IS NOT NULL) THEN -- Verifica se possui protocolo
+        pr_msg_retor := pr_msg_retor || '<dsprotoc>' || vr_dsprotoc || '</dsprotoc>';
+      ELSE
+        pr_msg_retor := pr_msg_retor || '<dsprotoc></dsprotoc>';
       END IF;
       
     EXCEPTION
