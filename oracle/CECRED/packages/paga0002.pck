@@ -160,8 +160,8 @@ create or replace package cecred.PAGA0002 is
        06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                           (Adriano - SD509480).    
                                         
-							 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
-                                        
+             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+             
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD
@@ -249,7 +249,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_cddbanco IN crapcti.cddbanco%TYPE   --> Codigo do banco
                                ,pr_cdispbif IN crapcti.nrispbif%TYPE   --> Numero inscrição SPB 
                                ,pr_cdageban IN crapcti.cdageban%TYPE   --> codigo da agencia bancaria. 
-                               ,pr_nrctatrf IN crapcti.nrctatrf%TYPE   --> conta que recebe a transferencia. 
+                               ,pr_nrctatrf IN VARCHAR2                --> conta que recebe a transferencia. 
                                ,pr_nmtitula IN crapcti.nmtitula%TYPE   --> nome do titular da conta. 
                                ,pr_nrcpfcgc IN crapcti.nrcpfcgc%TYPE   --> cpf/cnpj do titular da conta.  
                                ,pr_inpessoa IN crapcti.inpessoa%TYPE   --> tipo de pessoa da conta. 
@@ -510,18 +510,18 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_nrcpfope IN craplau.nrcpfope%TYPE  --> Numero do cpf do operador juridico
                                       ,pr_idtitdda IN VARCHAR2               --> Contem o identificador do titulo dda. 
                                       ,pr_cdtrapen IN INTEGER                --> Codigo da transacao Pendente
-                    ,pr_flmobile IN INTEGER                --> Indicador Mobile
-                    ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
-                    ,pr_nrcartao IN NUMBER                 --> Numero Cartao                                      
+                                      ,pr_flmobile IN INTEGER                --> Indicador Mobile
+                                      ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
+                                      ,pr_nrcartao IN NUMBER                 --> Numero Cartao                                      
                                       ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
                                       ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
                                       ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade  
                                       ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                                       /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
-                    ,pr_msgofatr OUT VARCHAR2
+                                      ,pr_msgofatr OUT VARCHAR2
                                       ,pr_cdempcon OUT NUMBER
-                    ,pr_cdsegmto OUT VARCHAR2
+                                      ,pr_cdsegmto OUT VARCHAR2
                                       ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
                                       
   /* Procedure para validar agendamento recorrente */
@@ -685,7 +685,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Março/2014.                   Ultima atualizacao: 12/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -768,9 +768,11 @@ create or replace package body cecred.PAGA0002 is
   --             07/02/2017 - #604294 Log de exception others na rotina pc_proc_agendamento_recorrente e
   --                          aumento do tamanho das variáveis vr_dslinxml_desaprov e vr_dslinxml_aprov
   --                          para evitar possível repetição do problema relatado no chamado (Carlos)
-  --
-  --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
-  --
+	--
+	--             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+	--
+  --             12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
+  --                          referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -819,7 +821,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_cddbanco IN crapcti.cddbanco%TYPE   --> Codigo do banco
                                ,pr_cdispbif IN crapcti.nrispbif%TYPE   --> Numero inscrição SPB 
                                ,pr_cdageban IN crapcti.cdageban%TYPE   --> codigo da agencia bancaria. 
-                               ,pr_nrctatrf IN crapcti.nrctatrf%TYPE   --> conta que recebe a transferencia. 
+                               ,pr_nrctatrf IN VARCHAR2                --> conta que recebe a transferencia.
                                ,pr_nmtitula IN crapcti.nmtitula%TYPE   --> nome do titular da conta. 
                                ,pr_nrcpfcgc IN crapcti.nrcpfcgc%TYPE   --> cpf/cnpj do titular da conta.  
                                ,pr_inpessoa IN crapcti.inpessoa%TYPE   --> tipo de pessoa da conta. 
@@ -848,7 +850,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 18/01/2016
+      Data    : Abril/2007.                       Ultima atualizacao: 12/06/2016
    
       Dados referentes ao programa:
        
@@ -947,6 +949,8 @@ create or replace package body cecred.PAGA0002 is
                   18/01/2016 - Ajustes mensagens de sucesso para TED. 
                                PRJ335 - Analise de fraude (Odirlei-AMcom)
                                        
+                  12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
+                               referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
    
@@ -1071,7 +1075,7 @@ create or replace package body cecred.PAGA0002 is
                       ,pr_dsdadatu => to_char(pr_cdageban,'fm0000'));
         
         IF pr_tpoperac = 4 THEN
-          vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzz.9'));
+          vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzzzzzzz.9'));
         ELSE
           vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzz.zzz.9'));
         END IF;
@@ -1774,21 +1778,21 @@ create or replace package body cecred.PAGA0002 is
       IF pr_cdtiptra = 4 THEN
         vr_dscritic := 'Transação(ões) registrada(s) com sucesso. Aguardando aprovação do(s) preposto(s).';
       ELSE      
-        IF vr_idastcjt = 1 THEN
+      IF vr_idastcjt = 1 THEN
             vr_dscritic := (CASE WHEN pr_cdtiptra = 3 THEN 'Credito de salario registrado' 
                                  ELSE 'Transferencia registrada' END) ||
-                       ' com sucesso. ' || 
-                       'Aguardando aprovacao do registro pelos demais responsaveis.';
-        ELSE
+                     ' com sucesso. ' || 
+                     'Aguardando aprovacao do registro pelos demais responsaveis.';
+      ELSE
             vr_dscritic := (CASE WHEN pr_cdtiptra = 3 THEN 'Credito de salario registrado' 
                                  ELSE 'Transferencia registrada' END) ||
-                       ' com sucesso. ' || 
-                       'Aguardando efetivacao do registro pelo preposto.';
-        END IF;
-        
-        IF pr_idagenda > 1 THEN
-          vr_dscritic := 'Agendamento de ' || vr_dscritic;
-        END IF;
+                     ' com sucesso. ' || 
+                     'Aguardando efetivacao do registro pelo preposto.';
+      END IF;
+      
+      IF pr_idagenda > 1 THEN
+        vr_dscritic := 'Agendamento de ' || vr_dscritic;
+      END IF;
       
       END IF;
       
@@ -2053,9 +2057,9 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_iptransa => pr_iptransa  --> IP da transacao no IBank/mobile
                                 /* parametros de saida */                               
                                 ,pr_dstransa => vr_dstrans1  --> Descrição de transação
-                ,pr_msgofatr => vr_msgofatr
+                                ,pr_msgofatr => vr_msgofatr
                                 ,pr_cdempcon => vr_cdempcon
-                ,pr_cdsegmto => vr_cdsegmto
+                                ,pr_cdsegmto => vr_cdsegmto
                                 ,pr_dscritic => vr_dscritic);--> Descricao critica
       
       -- Se não localizar critica
@@ -2063,22 +2067,22 @@ create or replace package body cecred.PAGA0002 is
         IF pr_cdtiptra = 4 THEN
           vr_dscritic := 'Transação(ões) registrada(s) com sucesso.';
         ELSE
-          -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
-          vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper, 
-                                                     pr_dtmvtolt  => pr_dtmvtopg, 
-                                                     pr_tipo      => 'P', 
-                                                     pr_feriado   => TRUE);
+        -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
+        vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper, 
+                                                   pr_dtmvtolt  => pr_dtmvtopg, 
+                                                   pr_tipo      => 'P', 
+                                                   pr_feriado   => TRUE);
                                                      
-          vr_dscritic := (CASE 
-                           WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
-                           ELSE 'Credito de salario agendado'
-                          END)
-                          ||
-                          ' com sucesso para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||                         
-                          ', mediante saldo disponivel em conta corrente ate as '        || 
+        vr_dscritic := (CASE 
+                         WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
+                         ELSE 'Credito de salario agendado'
+                        END)
+                        ||
+                        ' com sucesso para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||                         
+                        ', mediante saldo disponivel em conta corrente ate as '        || 
                           vr_tab_limite(vr_tab_limite.first).hrfimpag || '.';
         END IF;
-                        
+                       
                        
       -- Se retornou critica
       ELSE
@@ -2156,13 +2160,13 @@ create or replace package body cecred.PAGA0002 is
         IF pr_cdtiptra = 4 THEN
           vr_dscritic := 'Transação(ões) registrada(s) com sucesso.';
         ELSE
-          vr_dscritic := (CASE 
-                           WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
-                           ELSE ' Credito de salario agendado'
-                          END)||
-                         ' com sucesso.';
+        vr_dscritic := (CASE 
+                         WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
+                         ELSE ' Credito de salario agendado'
+                        END)||
+                       ' com sucesso.';
         END IF;
-                        
+                       
       -- Se retornou critica
       ELSE
         -- Se retornou critica , deve abortar
@@ -2501,7 +2505,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
-								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
+                                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -3329,7 +3333,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_dtagenda => vr_dtmvtopg           --> Data agendamento
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
-								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
+                                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -7733,7 +7737,7 @@ create or replace package body cecred.PAGA0002 is
           RAISE vr_exc_erro; 
         END IF; 
        
-       
+        
         BEGIN
             UPDATE craplot
                -- se o numero for maior que o ja existente atualiza
@@ -9262,7 +9266,7 @@ create or replace package body cecred.PAGA0002 is
       ROLLBACK;
 
   END pc_obtem_agendamentos_car;
-  
+
   /* Procedimento para cancelar agendamento */
   PROCEDURE pc_cancelar_agendamento (  pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
                                       ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia

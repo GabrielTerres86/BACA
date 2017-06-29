@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 15/02/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 02/06/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -162,29 +162,37 @@
                30/05/2016 - Adicionar tipo de pessoa juridica na pesquisa de contas
                             da verifica_conta (Douglas - Chamado 406267)
                
-			   05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
-							juridicas (Adriano - SD 480514).
-               
+               05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
+                            juridicas (Adriano - SD 480514).
 
-			   14/09/2016 - Ajuste para utilizar uma sequence na geracao do numero
-			                de controle, garantindo sua unicidade
-						   (Adriano - SD 518645).
+               14/09/2016 - Ajuste para utilizar uma sequence na geracao do numero
+                            de controle, garantindo sua unicidade
+                            (Adriano - SD 518645).
 
-	           01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
+               01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
 
                06/12/2016 - Incluido mensagens STR0025 E PAG0121 referente ao
                             Bacenjud (Prj 341 - Andrino - Mouts)
 
-			   05/01/2017 - Ajuste para retirada de caracterer especiais
-							(Adriano - SD 556053)
+               05/01/2017 - Ajuste para retirada de caracterer especiais
+                            (Adriano - SD 556053)
 
-			   17/01/2017 - Ajuste para retirada de caracterer especiais
-							(Adriano - SD 594482)
+               17/01/2017 - Ajuste para retirada de caracterer especiais
+                            (Adriano - SD 594482)
 			   
-			   15/02/2017 - Ajuste para devolver mensagem STR00010 para mensagens
-							STR0006R2, PAG0142R2
-							(Adriano - SD 553778).
+               15/02/2017 - Ajuste para devolver mensagem STR00010 para mensagens
+                            STR0006R2, PAG0142R2 (Adriano - SD 553778).
 							
+               11/05/2017 - Ajuste para que as mensagens de TED que recebemos sejam
+                            gravadas na nova estrutura, e gravar as mensagens de 
+                            devoluçao (Douglas - Chamado 524133)
+         
+               23/05/2017 - Ajuste para devolver as mensagens PAG0142R2 como
+			                PAG0111 (Douglas - Chamado 524133)
+               
+               02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
+                        - Enviar e-mail interbancario para a mensagem STR0003R2 (Lucas Ranghetti #654769)              
+              
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -272,6 +280,13 @@ DEF VAR aux_NomCliCredtd  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCodBarras  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NUPortdd      AS CHAR                                   NO-UNDO.
 DEF VAR aux_CodProdt      AS CHAR                                   NO-UNDO.  
+DEF VAR aux_TpCtCredtd    AS CHAR                                   NO-UNDO.
+DEF VAR aux_CtPgtoCredtd  AS CHAR                                   NO-UNDO.
+DEF VAR aux_DtHRBC        AS CHAR                                   NO-UNDO.
+DEF VAR aux_CodMunicOrigem AS CHAR                                  NO-UNDO.
+DEF VAR aux_CodMunicDest  AS CHAR                                   NO-UNDO.
+DEF VAR aux_CtPgtoDebtd   AS CHAR                                   NO-UNDO.
+DEF VAR aux_TpCtDebtd    AS CHAR                                    NO-UNDO.
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -320,7 +335,15 @@ DEF VAR aux_nrridlfp    LIKE craplcs.nrridlfp                       NO-UNDO.
 DEF VAR aux_ponteiro    AS INT                                      NO-UNDO.
 DEF VAR aux_dsmensag    AS CHAR                                     NO-UNDO.
 DEF VAR aux_emaildes    AS CHAR                                     NO-UNDO.
-DEF VAR b1wgen0011      AS HANDLE                                   NO-UNDO.
+
+/* Variavel para armazenar/remover as mensagens de TED processadas */
+DEF VAR aux_msgspb_mover      AS INTE                               NO-UNDO.
+/* Variavel para armazenar as mensagens de TED que nao serao copiadas */
+DEF VAR aux_msgspb_nao_copiar AS CHAR                               NO-UNDO.
+/* Texto para armazenar o XML, ou  a mensagem caso o XML seja muito grande */
+DEF VAR aux_msgspb_xml        AS CHAR                               NO-UNDO.
+/* Identifica se devemos manter o arquivo fisico do XML da TED  */
+DEF VAR aux_manter_fisico     AS LOGICAL                            NO-UNDO.
 
 /* Variáveis utilizadas para receber clob da rotina no oracle */
 DEF VAR xDoc          AS HANDLE   NO-UNDO.   
@@ -372,6 +395,11 @@ DEF TEMP-TABLE tt-estado-crise                                      NO-UNDO
     FIELD cdcooper AS INTE
     FIELD dtintegr AS DATE
     FIELD inestcri AS INTE.
+
+DEF TEMP-TABLE tt-numerario
+    FIELD cdcatego AS  INTEGER
+    FIELD vlrdenom AS  DECIMAL
+    FIELD qtddenom AS  INTEGER.
 
 ASSIGN glb_cdprogra = "crps531"
        glb_cdcooper = 3.  /*CECRED*/
@@ -494,7 +522,44 @@ ASSIGN aux_contador = 0
 
 /* Reseta as variaveis */
 ASSIGN aux_dtintegr = glb_dtmvtolt
-       aux_inestcri = 0.
+       aux_inestcri = 0
+       aux_manter_fisico = TRUE.
+
+
+/* Carregar o parametro que identifica se a mensagem sera movida */ 
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
+   (INPUT "CRED",         /* pr_nmsistem */
+    INPUT 0,              /* pr_cdcooper */
+    INPUT "MSGSPB_MOVER", /* pr_cdacesso */
+    OUTPUT "").           /* pr_dsvlrprm */
+
+CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_msgspb_mover = 1
+       aux_msgspb_mover = INTE(pc_param_sistema.pr_dsvlrprm )
+                                  WHEN pc_param_sistema.pr_dsvlrprm <> ?.
+
+/* Carregar o parametro que identifica as mensagem que 
+   nao serao gravadas na nova estrutura */ 
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
+   (INPUT "CRED",              /* pr_nmsistem */
+    INPUT 0,                   /* pr_cdcooper */
+    INPUT "MSGSPB_NAO_COPIAR", /* pr_cdacesso */
+    OUTPUT "").                /* pr_dsvlrprm */
+
+CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_msgspb_nao_copiar = ""
+       aux_msgspb_nao_copiar = pc_param_sistema.pr_dsvlrprm
+                                   WHEN pc_param_sistema.pr_dsvlrprm <> ?.
+
+
 
 INPUT STREAM str_1 THROUGH VALUE( "ls " + aux_nmarquiv + " 2> /dev/null") NO-ECHO.
                    
@@ -543,6 +608,13 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_NomCliCredtd  = ""
            aux_TpPessoaCred  = ""
            aux_CodDevTransf  = ""
+           aux_TpCtCredtd    = ""
+           aux_CtPgtoCredtd  = ""
+           aux_DtHRBC        = ""
+           aux_CtPgtoDebtd   = ""
+           aux_TpCtDebtd     = ""
+           aux_CodMunicOrigem = ""
+           aux_CodMunicDest  = ""    
            aux_VlrLanc       = ""
            aux_IdentcDep     = ""
            aux_DtMovto       = ""
@@ -590,7 +662,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
              FIND crabcop WHERE 
                   crabcop.cdagectl = INT(SUBSTRING(aux_NumCtrlIF,8,4)) 
                   NO-LOCK NO-ERROR.
-
+                  
              IF   AVAIL crabcop   THEN
                   DO:
                       IF  aux_flestcri > 0  THEN
@@ -603,6 +675,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                         aux_inestcri = tt-estado-crise.inestcri.
                               END.
                       END.
+                      
                       /* Se nao estiver em estado de crise verifica processo */
                       RUN verifica_processo_crise.
                       IF   RETURN-VALUE <> "OK"   THEN
@@ -663,7 +736,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
          "STR0037R2,PAG0137R2," +     /* TEC */
          
          "STR0010R2,PAG0111R2," +     /* Devolucao TED/TEC enviado com erro */
-                   
+         "STR0003R2," +        /* Liquidacao de transferencia de numerarios */
          "STR0004R1,STR0005R1,STR0008R1,STR0037R1," + 
          "PAG0107R1,PAG0108R1,PAG0137R1," + /* Confirma envio */
          "STR0010R1,PAG0111R1," + /*Confirma devolucao enviada*/
@@ -678,7 +751,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
 			 /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
 			   STR0010 como resposta. SD 553778 */	  
-			 IF CAN-DO("STR0006R2,PAG0142R2",aux_CodMsg) THEN
+			 IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
 			    DO:
 					/* Busca cooperativa de destino */ 
                     FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
@@ -686,7 +759,8 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
 					/* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/  
                     ASSIGN aux_codierro = 4
-                           aux_dsdehist = "Mensagem Invalida para o Tipo de Transacao ou Finalidade.".
+                           aux_dsdehist = "Mensagem Invalida para o Tipo de Transacao ou Finalidade."
+                           log_msgderro = aux_dsdehist.
 
                     RUN gera_erro_xml (INPUT aux_dsdehist).
 				    RUN salva_arquivo.                   
@@ -1086,6 +1160,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                   DO:
                     IF CAPS(aux_CodProdt) = "TED" THEN
                       DO:
+                      
                           RUN proc_pag0101 IN b1wgen0046 (INPUT glb_cdprogra,
                                                           INPUT aux_nmarqxml,
                                                           INPUT aux_nmarqlog,
@@ -1518,7 +1593,7 @@ PROCEDURE gera_erro_xml:
 
   DEF VAR aux_cdagectl LIKE crapcop.cdagectl                        NO-UNDO.
   DEF VAR aux_cdcooper LIKE crapcop.cdcooper                        NO-UNDO.
-
+  DEF VAR aux_cdMsg_dev AS CHAR                                     NO-UNDO.
 
   ASSIGN aux_cdcooper = IF   AVAIL crabcop   THEN
                              crabcop.cdcooper 
@@ -1579,7 +1654,7 @@ PROCEDURE gera_erro_xml:
          aux_textoxml[8] = "</SEGCAB>".
                                                 
   
-  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,PAG0142R2,STR0025R2",aux_CodMsg) THEN
+  IF   CAN-DO("STR0005R2,STR0007R2,STR0008R2,STR0026R2,STR0037R2,STR0006R2,STR0025R2,STR0034R2",aux_CodMsg) THEN
        ASSIGN aux_textoxml[9]  = "<STR0010>"
               aux_textoxml[10] = "<CodMsg>STR0010</CodMsg>"
               aux_textoxml[11] = "<NumCtrlIF>" + aux_NumCtrlIF + "</NumCtrlIF>"
@@ -1595,9 +1670,10 @@ PROCEDURE gera_erro_xml:
               /* Descricao Critica */   
               aux_textoxml[17] = "<Hist>" + par_dsdehist + "</Hist>" 
               aux_textoxml[18] = "<DtMovto>" + aux_DtMovto + "</DtMovto>"
-              aux_textoxml[19] = "</STR0010>".
+              aux_textoxml[19] = "</STR0010>"
+              aux_cdMsg_dev = "STR0010".
   ELSE
-  IF   CAN-DO("PAG0107R2,PAG0108R2,PAG0137R2,PAG0143R2,PAG0121R2",
+  IF   CAN-DO("PAG0107R2,PAG0108R2,PAG0137R2,PAG0143R2,PAG0121R2,PAG0142R2,PAG0134R2",
               aux_CodMsg)  THEN 
        ASSIGN aux_textoxml[9]  = "<PAG0111>"
               aux_textoxml[10] = "<CodMsg>PAG0111</CodMsg>"
@@ -1614,7 +1690,8 @@ PROCEDURE gera_erro_xml:
               /* Descricao Critica */
               aux_textoxml[17] = "<Hist>" + par_dsdehist + "</Hist>"  
               aux_textoxml[18] = "<DtMovto>" + aux_DtMovto + "</DtMovto>"
-              aux_textoxml[19] = "</PAG0111>".              
+              aux_textoxml[19] = "</PAG0111>"
+              aux_cdMsg_dev = "PAG0111".
   ELSE
   IF (aux_CodMsg = "STR0047R2") THEN
       ASSIGN aux_textoxml[9]  = "<STR0048>"
@@ -1633,7 +1710,8 @@ PROCEDURE gera_erro_xml:
               /* Descricao Critica */
               aux_textoxml[17] = "<Hist>" + par_dsdehist + "</Hist>"  
               aux_textoxml[18] = "<DtMovto>" + aux_DtMovto + "</DtMovto>"
-              aux_textoxml[19] = "</STR0048>".              
+              aux_textoxml[19] = "</STR0048>"
+              aux_cdMsg_dev = "STR0048".
 
   ASSIGN aux_textoxml[20] = "</SISMSG>".
 
@@ -1677,7 +1755,41 @@ PROCEDURE gera_erro_xml:
                     INPUT SUBSTRING(aux_textoxml[10],9,7), /*CodMsg*/
                     INPUT "C",
                     INPUT DEC(aux_VlrLanc)).
-  
+
+   /* Gravar a mensagem de TED devolvida */ 
+   RUN grava_mensagem_ted (INPUT aux_cdcooper,  /* Codigo da Cooperativa */
+                           INPUT aux_NumCtrlIF, /* Numero de controle */ 
+                           INPUT DATE(ENTRY(3, aux_DtMovto, "-") + 
+                                      ENTRY(2, aux_DtMovto, "-") +
+                                      ENTRY(1, aux_DtMovto, "-")),   /* Data da mensagem */ 
+                           INPUT aux_cdMsg_dev, /* Evento */ 
+                           INPUT aux_dsarqenv). /* XML da mensagem */    
+
+   /* Gravar a mensagem de TED devolvida como rejeitada */ 
+   RUN grava_ted_rejeitada(INPUT aux_cdcooper,           /* Cooperativa */ 
+                           INPUT DECI(aux_CtCredtd),     /* Conta */
+                           INPUT aux_cdagenci,           /* Agencia */
+                           INPUT 0,                      /* Numero do Caixa */
+                           INPUT "1",                    /* Operador */ 
+                           INPUT glb_cdprogra,           /* Programa que chamou */
+                           INPUT aux_cdMsg_dev,          /* Evento */
+                           INPUT aux_NumCtrlIF,          /* Numero de controle */
+                           INPUT DEC(aux_VlrLanc),       /* Valor */
+                           /*  Dados de Origem da TED (Informacoes da conta na CENTAL)*/ 
+                           INPUT aux_BancoCre,           /* Banco*/
+                           INPUT aux_AgCredtd,           /* Agencia */
+                           INPUT aux_NomCliCredtd,       /* Nome do Titular */
+                           INPUT aux_CNPJ_CPFCred,       /* CPF do Titular*/
+                           /*  Dados de Destino da TED (Informacoes da conta em outra IF)*/
+                           INPUT aux_BancoDeb,           /* Banco */
+                           INPUT aux_AgDebtd,            /* Agencia*/
+                           INPUT DECI(aux_CtDebtd),      /* Conta*/
+                           INPUT aux_NomCliDebtd,        /* Nome do Titular */
+                           INPUT aux_CNPJ_CPFDeb,        /* CPF do Titular*/
+                           /*  Rejeiçao */ 
+                           INPUT par_dsdehist,           /* Motivo da Rejeiçao */
+                           INPUT aux_ISPBIFDebtd).       /* ISPB */ 
+                           
 END PROCEDURE.
     
 
@@ -1699,6 +1811,9 @@ PROCEDURE importa_xml.
      
    DEF VAR aux_setlinha AS CHAR                                     NO-UNDO.
    DEF VAR aux_setlinh2 AS CHAR                                     NO-UNDO.
+
+   DEF VAR aux_cdagectl_pesq AS INTE                                NO-UNDO.
+   DEF VAR aux_nro_controle  AS CHAR                                NO-UNDO.
 
    ASSIGN aux_nmarqori = aux_nmarquiv
           aux_nmarquiv = "".
@@ -1797,15 +1912,98 @@ PROCEDURE importa_xml.
       ELSE
       IF  hNode:NAME = "STR0047R2" THEN
           RUN trata_portabilidade.
+      ELSE      
+      IF  hNode:NAME = "STR0003R2" THEN
+          RUN trata_numerario.
       ELSE
           RUN trata_dados_transferencia.
             
    END. /** Fim do DO ... TO **/    
-                   
-   /* remove arquivo temporario descriptografado */ 
-   UNIX SILENT VALUE ("rm " + aux_nmarquiv).  
+   
+   
+    /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
+    IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN  
+    DO:
+   
+        IF   aux_NumCtrlRem <> ""  THEN
+             ASSIGN aux_nro_controle = aux_NumCtrlRem.
+        ELSE
+             ASSIGN aux_nro_controle = aux_NumCtrlIF.          
 
-   RETURN "OK".
+        IF  aux_tagCABInf THEN  
+            ASSIGN aux_cdagectl_pesq = INT(SUBSTRING(aux_NumCtrlIF,8,4)).
+        ELSE 
+            ASSIGN aux_cdagectl_pesq = INT(aux_AgCredtd).
+        
+        FIND FIRST crabcop 
+            WHERE crabcop.cdagectl =  aux_cdagectl_pesq
+        NO-LOCK NO-ERROR.
+        
+        /* Verificar se recebemos data na mensagem XML */    
+        IF aux_DtMovto <> "" THEN
+        DO:
+            
+            IF LENGTH(aux_setlinh2) > 4000 THEN
+                ASSIGN aux_msgspb_xml = "XML muito grande. Verifique arquivo fisico: " + aux_nmarqxml
+                       aux_manter_fisico = TRUE. 
+            ELSE 
+                ASSIGN aux_msgspb_xml = aux_setlinh2
+                       aux_manter_fisico = FALSE. 
+                
+            /* gravar a mensagem de TED que descriptografamos */
+            RUN grava_mensagem_ted (INPUT (IF AVAILABLE crabcop THEN 
+                                               crabcop.cdcooper
+                                           ELSE
+                                               glb_cdcooper),                  /* Codigo da Cooperativa */
+                                    INPUT aux_nro_controle,                  /* Numero de controle */ 
+                                    INPUT DATE(ENTRY(3, aux_DtMovto, "-") + 
+                                               ENTRY(2, aux_DtMovto, "-") +
+                                               ENTRY(1, aux_DtMovto, "-")), /* Data da mensagem */ 
+                                    INPUT aux_CodMsg,                       /* Evento */ 
+                                    INPUT aux_msgspb_xml).                    /* XML da mensagem */ 
+        END.
+        ELSE
+            DO:
+                
+                ASSIGN aux_manter_fisico = TRUE
+                       aux_msgspb_xml = STRING(TODAY,"99/99/9999") + " - " +
+                                        STRING(TIME,"HH:MM:SS") +
+                                        " - " + glb_cdprogra + " -->"  + 
+                                        "  PID: " + STRING(aux_idparale) + 
+                                        " Seq.: " + STRING(aux_idprogra) + 
+                                        " - Mensagem de TED nao possui data. " + 
+                                        "Verifique arquivo fisico: " + aux_nmarqxml.
+                
+                /* Gravar a mensagem que deu erro */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                RUN STORED-PROCEDURE pc_gera_log_batch
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT glb_cdcooper,   /* Cooperativa */ 
+                                      INPUT 2,              /* Nivel criticidade do log "Erro tratato" */
+                                      INPUT aux_msgspb_xml,   /* Descriçao do log em si */
+                                      INPUT "crps531_" + 
+                                            STRING(crapdat.dtmvtolt,"99999999") + 
+                                            ".log",         /* Nome para gravaçao de log em arquivo específico */
+                                      
+                                      INPUT "N",            /* Flag S/N para criar um arquivo novo */ 
+                                      INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
+                                      INPUT ?,              /* Diretorio onde será gerado o log */
+                                      INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
+                                      INPUT glb_cdprogra).  /* Programa/job */
+                                                               
+                CLOSE STORED-PROC pc_gera_log_batch
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            END.
+    END.
+   
+    /* remove arquivo temporario descriptografado */ 
+    UNIX SILENT VALUE ("rm " + aux_nmarquiv).  
+
+    RETURN "OK".
    
 END PROCEDURE.
 
@@ -1908,6 +2106,8 @@ PROCEDURE verifica_conta.
    DEF VAR val_nrdconta AS DECI                                 NO-UNDO.
    DEF VAR val_tppessoa AS CHAR                                 NO-UNDO.
    DEF VAR val_nrcpfcgc AS DECI                                 NO-UNDO.
+   DEF VAR val_tpdconta AS CHAR                                 NO-UNDO.
+   DEF VAR val_nrdctapg AS CHAR                                 NO-UNDO.
 
    DEFINE BUFFER b-crapcop FOR crapcop.
    DEFINE BUFFER b-crapdat FOR crapdat. 
@@ -1919,7 +2119,13 @@ PROCEDURE verifica_conta.
           val_tppessoa = IF   aux_CodMsg = "STR0047R2"  THEN
                               "J" /* Conta das filiadas na CECRED */ 
                          ELSE aux_TpPessoaCred
-          val_nrcpfcgc = DEC(aux_CNPJ_CPFCred).
+          val_nrcpfcgc = DEC(aux_CNPJ_CPFCred)
+          val_tpdconta = aux_TpCtCredtd
+          val_nrdctapg = aux_CtPgtoCredtd.
+
+   /* Nao recebemos conta e nem cpf para esta mensagem */
+   IF  aux_CodMsg = "STR0003R2" THEN    
+       RETURN "OK".
 
    IF   LENGTH(STRING(DEC(val_nrdconta))) > 9  THEN
         ASSIGN aux_codierro = 2  /*Conta invalida*/
@@ -1949,6 +2155,15 @@ PROCEDURE verifica_conta.
                        
                END.
            *************************************************************/
+
+       IF  val_tpdconta = "PG" OR            
+           val_nrdctapg <> ""  THEN 
+          DO:
+             ASSIGN aux_codierro = 2 /* Conta invalida */
+                    aux_dsdehist = "Tipo de Conta Incorreto."
+                    aux_CtCredtd = val_nrdctapg.
+             RETURN "NOK".
+          END.
 
 		   /* Incorporada Transulcred */ 
 		   IF   aux_cdageinc > 0  THEN
@@ -2194,12 +2409,47 @@ PROCEDURE trata_cecred.
         END.
    ELSE     
         DO:
+        
+            IF  aux_TpCtCredtd = "PG"  OR
+                aux_CtPgtoCredtd  <> " "      THEN
+            DO:
 
-            ASSIGN log_msgderro = "Mensagem nao prevista".
+                FIND craptab WHERE craptab.cdcooper = 0            AND
+                                   craptab.nmsistem = "CRED"       AND
+                                   craptab.tptabela = "GENERI"     AND
+                                   craptab.cdempres = 0            AND
+                                   craptab.cdacesso = "CDERROSSPB" AND
+                                   craptab.tpregist = 2 /*Agencia invalida*/
+                                   NO-LOCK NO-ERROR.
+
+                IF   AVAIL craptab THEN
+                    ASSIGN log_msgderro = craptab.dstextab.                                   
             
-            RUN gera_logspb (INPUT "RECEBIDA",
-                             INPUT log_msgderro,
-                             INPUT TIME).
+                /* Nao criar gnmvcen para CABInf */
+                IF   aux_tagCABInf = FALSE  THEN
+                    RUN cria_gnmvcen (INPUT crapcop.cdagectl,
+                                      INPUT crapdat.dtmvtolt,
+                                      INPUT aux_CodMsg,
+                                      INPUT "C",
+                                      INPUT DEC(aux_VlrLanc)).
+
+                IF   aux_CodMsg MATCHES "*R2"  THEN
+                DO:
+                    /* Agencia invalida */  
+                    ASSIGN aux_codierro = 2
+                           aux_dsdehist =      "Tipo de conta incorreto.".
+                    
+                    RUN gera_erro_xml (INPUT aux_dsdehist).
+                END.
+            END.
+            ELSE 
+                DO:
+                    ASSIGN log_msgderro = "Mensagem nao prevista".
+                    
+                    RUN gera_logspb (INPUT "RECEBIDA",
+                                     INPUT log_msgderro,
+                                     INPUT TIME).
+                END.
         END.
    
 END.
@@ -2257,7 +2507,7 @@ PROCEDURE gera_logspb_transferida.
                      ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                      ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                      ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                                 "xxxxxxxxxxxxxx") +
+                                                 "xxxxxxxxxxxxxxxxxxxx") +
                      ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                      ", CPF/CNPJ Remet.: " + 
                      STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") + 
@@ -2319,7 +2569,7 @@ PROCEDURE gera_logspb_transferida.
                     ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                     ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                     ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                                "xxxxxxxxxxxxxx") +
+                                                "xxxxxxxxxxxxxxxxxxxx") +
                     ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                     ", CPF/CNPJ Remet.: " + 
                      STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") +  
@@ -2750,7 +3000,7 @@ PROCEDURE gera_logspb.
                     ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                     ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                     ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                                "xxxxxxxxxxxxxx") +
+                                                "xxxxxxxxxxxxxxxxxxxx") +
                     ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                     ", CPF/CNPJ Remet.: " + 
                     STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") + 
@@ -2812,7 +3062,7 @@ PROCEDURE gera_logspb.
                    ", Banco Remet.: " + STRING(aux_BancoDeb,"zz9") +
                    ", Agencia Remet.: " + STRING(aux_AgDebtd,"x(4)") + 
                    ", Conta Remet.: " + STRING(aux_CtDebtd,
-                                               "xxxxxxxxxxxxxx") +
+                                               "xxxxxxxxxxxxxxxxxxxx") +
                    ", Nome Remet.: " + STRING(aux_NomCliDebtd,"x(40)") + 
                    ", CPF/CNPJ Remet.: " + 
                     STRING(DEC(aux_CNPJ_CPFDeb),"zzzzzzzzzzzzz9") +  
@@ -2989,6 +3239,7 @@ PROCEDURE trata_IFs.
                                               INT(hTextTag:NODE-VALUE).
                                                                                                                                            
                 END.            
+                
             END.
        ELSE
             DO:
@@ -3020,6 +3271,87 @@ PROCEDURE trata_IFs.
 
 END PROCEDURE.
 
+PROCEDURE trata_numerario.
+       
+   DO  aux_contado1 = 1 TO hNode:NUM-CHILDREN:
+    
+       /** Obtem a TAG **/
+       hNode:GET-CHILD(hSubNode,aux_contado1).
+                                             
+       IF   hSubNode:SUBTYPE <> 'ELEMENT' THEN
+            NEXT.                     
+                             
+       
+       IF   hSubNode:NAME = "Grupo_STR0003R2_Den"  THEN    
+            DO:
+                ASSIGN aux_CodMsg = "STR0003R2".
+                                                                                                          
+                CREATE tt-numerario.
+                        
+                /** Busca os dados da IF Ativa **/
+                DO aux_contado2 = 1 TO hSubNode:NUM-CHILDREN:
+                         
+                   hSubNode:GET-CHILD(hNameTag,aux_contado2).
+                                         
+                   IF  hNameTag:SUBTYPE <> 'ELEMENT' THEN
+                       NEXT.         
+                               
+                   hNameTag:GET-CHILD(hTextTag,1).
+                        
+                   IF  hNameTag:NAME = "Catg" THEN
+                       ASSIGN tt-numerario.cdcatego = INT(hTextTag:NODE-VALUE).
+                   ELSE
+                   IF  hNameTag:Name = "VlrDen" THEN
+                       ASSIGN tt-numerario.vlrdenom = DEC(hTextTag:NODE-VALUE).
+                   ELSE
+                       ASSIGN tt-numerario.qtddenom = INT(hTextTag:NODE-VALUE).
+                                                                                                                                           
+                END.            
+            END.
+       ELSE
+            DO:
+                 /** Obtem conteudo da Tag **/
+                 hSubNode:GET-CHILD(hSubNode2,1) NO-ERROR.
+
+                 ASSIGN aux_descrica = hSubNode2:NODE-VALUE.
+                 
+                 IF hSubNode:NAME = "CodMsg" THEN
+                    ASSIGN aux_CodMsg = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "NumCtrlSTR" THEN
+                    ASSIGN aux_NumCtrlRem = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "DtHrBC" THEN
+                    ASSIGN aux_DtHRBC = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "ISPBIFDebtd" THEN
+                    ASSIGN aux_ISPBIFDebtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "AgDebtd" THEN
+                    ASSIGN aux_AgDebtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "ISPBIFCredtd" THEN
+                    ASSIGN aux_ISPBIFCredtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "AgCredtd" THEN
+                    ASSIGN aux_AgCredtd = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "VlrLanc" THEN
+                    ASSIGN aux_VlrLanc = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "CodMunicOrigem" THEN
+                    ASSIGN aux_CodMunicOrigem = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "CodMunicDest" THEN
+                    ASSIGN aux_CodMunicDest = aux_descrica.
+                 ELSE
+                 IF hSubNode:NAME = "DtMovto" THEN
+                    ASSIGN aux_DtMovto = aux_descrica.
+
+            END.
+   END.
+
+END PROCEDURE.
 
 PROCEDURE trata_dados_transferencia.
 
@@ -3096,6 +3428,12 @@ PROCEDURE trata_dados_transferencia.
                                            aux_descrica.
             END.
        ELSE
+       IF  hNameTag:NAME = "TpCtDebtd"  THEN
+           ASSIGN aux_TpCtDebtd = aux_descrica.
+       ELSE 
+       IF  hNameTag:NAME = "CtPgtoDebtd"  THEN
+           ASSIGN aux_CtPgtoDebtd = aux_descrica.
+       ELSE
        IF   hNameTag:NAME = "NomCliDebtd"  OR
             hNameTag:NAME = "NomCliDebtdTitlar1"  OR
             hNameTag:NAME = "NomRemet"  THEN
@@ -3123,6 +3461,12 @@ PROCEDURE trata_dados_transferencia.
        ELSE
        IF   hNameTag:NAME = "AgCredtd"  THEN                            
             ASSIGN aux_AgCredtd = aux_descrica.
+       ELSE
+       IF  hNameTag:NAME = "TpCtCredtd" THEN
+           ASSIGN aux_TpCtCredtd = aux_descrica.
+       ELSE
+       IF  hNameTag:NAME = "CtPgtoCredtd" THEN
+           ASSIGN aux_CtPgtoCredtd = aux_descrica. 
        ELSE
        IF   hNameTag:NAME = "TpPessoaCredtd"  OR
             hNameTag:NAME = "TpPessoaDestinatario"  THEN  
@@ -3160,6 +3504,14 @@ PROCEDURE trata_dados_transferencia.
            ASSIGN aux_DtMovto = aux_descrica.
                    
    END.
+   
+   /* Se conta debitada for Conta de Pagamento */
+   IF  aux_TpCtDebtd = "PG" THEN
+       ASSIGN aux_CtDebtd = aux_CtPgtoDebtd.
+
+   /* Se conta creditada for Conta de Pagamento */
+   IF  aux_TpCtCredtd = "PG" THEN
+       ASSIGN aux_CtCredtd = aux_CtPgtoCredtd.
 
 END PROCEDURE.
 
@@ -3474,9 +3826,9 @@ PROCEDURE trata_lancamentos.
                                                         
                   /* Enviar e-mail informando para a empresa a falta de saldo. */
                   RUN sistema/generico/procedures/b1wgen0011.p
-                     PERSISTENT SET b1wgen0011.
+                     PERSISTENT SET h-b1wgen0011.
                   
-                  RUN solicita_email_oracle IN b1wgen0011
+                  RUN solicita_email_oracle IN h-b1wgen0011
                                  ( INPUT  crabcop.cdcooper    /* par_cdcooper         */
                                   ,INPUT  "FOLH0001"          /* par_cdprogra         */
                                   ,INPUT  TRIM(aux_emaildes)  /* par_des_destino      */
@@ -3492,7 +3844,7 @@ PROCEDURE trata_lancamentos.
                                   ,OUTPUT aux_dscritic        /* par_des_erro         */
                                    ).
                   
-                  DELETE PROCEDURE b1wgen0011. 
+                  DELETE PROCEDURE h-b1wgen0011. 
                 
                   IF aux_dscritic <> "" THEN
                   DO:
@@ -3940,6 +4292,61 @@ PROCEDURE trata_lancamentos.
                 RUN deleta_objetos.
                 NEXT.
             END.
+            
+            IF   CAN-DO("STR0003R2",aux_CodMsg) THEN
+                 DO:
+                     ASSIGN aux_dsmensag = "Codigo Mensagem: " + aux_CodMsg + " <br>" +
+                                           "Numero controle STR: " + aux_NumCtrlRem + " <br>" +
+                                           "Data Hora Bacen: " + aux_DtHrBC + " <br>" +
+                                           "ISPB IF Debitada: " + aux_ISPBIFDebtd + " <br>" +
+                                           "Agencia Debitada: " + aux_AgDebtd + " <br>" +
+                                           "ISPB IF Credidata: " + aux_ISPBIFCredtd + " <br>" +
+                                           "Agencia Creditada: " + aux_AgCredtd + " <br>" +
+                                           "Valor Lançamento: " + aux_VlrLanc + " <br>" +
+                                           "Codigo Municipio Origem: " + aux_CodMunicOrigem + " <br>" +
+                                           "Codigo Municipio Destino: " + aux_codMunicDest + " <br>" +
+                                           "Data Movimento: " + aux_DtMovto + " <br><br>".
+                                           
+                     FOR EACH tt-numerario NO-LOCK:
+                         aux_dsmensag = aux_dsmensag + "Categoria: " + STRING(tt-numerario.cdcatego) + " <br>" +
+                                                       "Valor Denominacao: " +  STRING(tt-numerario.vlrdenom) + " <br>" +
+                                                       "Quantidade Denominacao: " + STRING(tt-numerario.qtddenom) + " <br>".
+                         
+                     END.
+                    
+                     RUN sistema/generico/procedures/b1wgen0011.p
+                         PERSISTENT SET h-b1wgen0011.
+
+                     RUN solicita_email_oracle IN h-b1wgen0011
+                                             ( INPUT crabcop.cdcooper /* par_cdcooper */
+                                              ,INPUT "CRPS531" /* par_cdprogra */
+                                              ,INPUT "carroforte@cecred.coop.br" 
+                                              ,INPUT "Troca de numerarios - CECRED" /* par_des_assunto */
+                                              ,INPUT aux_dsmensag /* par_des_corpo */
+                                              ,INPUT "" /* par_des_anexo */
+                                              ,INPUT "N" /* par_flg_remove_anex */
+                                              ,INPUT "N" /* par_flg_remete_coop */
+                                              ,INPUT "" /* par_des_nome_reply */
+                                              ,INPUT "" /* par_des_email_reply */
+                                              ,INPUT "N" /* par_flg_log_batch */
+                                              ,INPUT "S" /* par_flg_enviar */
+                                              ,OUTPUT aux_dscritic). /* par_des_erro */
+
+                     DELETE PROCEDURE h-b1wgen0011.
+
+                     IF  aux_dscritic <> "" THEN
+                         DO:
+                             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                             " - CRPS531 ' --> '" +
+                             "Erro ao rodar: " +
+                             "'" + aux_dscritic + "'" +  " >> log/proc_batch.log").
+                             aux_dscritic = "".
+                         END.
+                    
+                    RUN salva_arquivo.
+                    RUN deleta_objetos.
+                    NEXT.
+                END.
 
             /* Caso seja estorno de TED de BACENJUD entao despreza*/
             IF CAN-DO("STR0025,PAG0121",aux_CodMsg) THEN
@@ -4669,9 +5076,31 @@ PROCEDURE processa_conta_transferida:
                                                  INPUT log_msgderro,
                                                  INPUT aux_hrtransa).
                      
-                     UNIX SILENT VALUE 
-                          ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-                           + "/salvar/" + aux_nmarqxml). 
+                     
+                     /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
+                     IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
+                     DO: 
+                         /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
+                         UNIX SILENT VALUE 
+                              ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
+                               + "/salvar/" + aux_nmarqxml). 
+                     END.
+                     ELSE
+                         DO: 
+                             /* Verificar se o parametro está para MOVER o arquivo */
+                             IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
+                             DO:
+                                 /* Movemos o arquivo para o salvar */ 
+                                 UNIX SILENT VALUE 
+                                      ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
+                                       + "/salvar/" + aux_nmarqxml). 
+                             END.
+                                 ELSE
+                                 DO:
+                                     /* Se nao esta movendo, remove o arquivo */
+                                     UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
+                                 END.
+                         END.
                      
                      RETURN "NOK".
                  END.
@@ -4743,9 +5172,30 @@ PROCEDURE processa_conta_transferida:
                                         INPUT log_msgderro,
                                         INPUT aux_hrtransa).
             
-            UNIX SILENT VALUE 
-                 ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-                  + "/salvar/" + aux_nmarqxml). 
+            /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
+            IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
+            DO: 
+                /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
+                UNIX SILENT VALUE 
+                     ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
+                      + "/salvar/" + aux_nmarqxml). 
+            END.
+            ELSE
+                DO: 
+                    /* Verificar se o parametro está para MOVER o arquivo */
+                    IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
+                    DO:
+                        /* Movemos o arquivo para o salvar */ 
+                        UNIX SILENT VALUE 
+                             ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
+                              + "/salvar/" + aux_nmarqxml). 
+                    END.
+                        ELSE
+                        DO:
+                            /* Se nao esta movendo, remove o arquivo */
+                            UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
+                        END.
+                END.
             
             RETURN "OK".
         END.
@@ -4858,9 +5308,30 @@ PROCEDURE processa_conta_transferida:
         END.
     END.
 
-    UNIX SILENT VALUE
-         ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-          + "/salvar/" + aux_nmarqxml). 
+    /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
+    IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
+    DO: 
+        /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
+        UNIX SILENT VALUE 
+             ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
+              + "/salvar/" + aux_nmarqxml). 
+    END.
+    ELSE
+        DO: 
+            /* Verificar se o parametro está para MOVER o arquivo */
+            IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
+            DO:
+                /* Movemos o arquivo para o salvar */ 
+                UNIX SILENT VALUE 
+                     ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
+                      + "/salvar/" + aux_nmarqxml). 
+            END.
+                ELSE
+                DO:
+                    /* Se nao esta movendo, remove o arquivo */
+                    UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
+                END.
+        END.
 
     RETURN "OK".
 END.
@@ -4937,8 +5408,30 @@ PROCEDURE salva_arquivo:
                           ELSE
                                crapcop.dsdircop.
 
-    UNIX SILENT VALUE ("mv " + crawarq.nmarquiv + " /usr/coop/" + aux_dsdircop +
-                       "/salvar/" + aux_nmarqxml). 
+    
+    /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
+    IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
+    DO: 
+        /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
+        UNIX SILENT VALUE 
+             ("mv " + crawarq.nmarquiv + " /usr/coop/" + aux_dsdircop
+              + "/salvar/" + aux_nmarqxml). 
+    END.
+    ELSE
+        DO: 
+            /* Verificar se o parametro está para MOVER o arquivo */
+            IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
+            DO:
+                /* Movemos o arquivo para o salvar */ 
+                UNIX SILENT VALUE ("mv " + crawarq.nmarquiv + " /usr/coop/" + aux_dsdircop +
+                                   "/salvar/" + aux_nmarqxml). 
+            END.
+                ELSE
+                DO:
+                    /* Se nao esta movendo, remove o arquivo */
+                    UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
+                END.
+        END.
 
 END PROCEDURE.
 
@@ -5548,5 +6041,114 @@ PROCEDURE cancela_portabilidade.
     
 END PROCEDURE.
 
+PROCEDURE grava_mensagem_ted.
 
+    DEF  INPUT PARAM par_cdcooper     AS INTE                     NO-UNDO.
+    DEF  INPUT PARAM par_nro_controle AS CHAR                     NO-UNDO.
+    DEF  INPUT PARAM par_dtmensagem   AS DATE                     NO-UNDO.
+    DEF  INPUT PARAM par_cdmensagem   AS CHAR                     NO-UNDO.
+    DEF  INPUT PARAM par_dsconteudo   AS CHAR                     NO-UNDO.
+     
+   DEF VAR aux_cderro AS INTE                                     NO-UNDO.
+   DEF VAR aux_dserro AS CHAR                                     NO-UNDO.
+   
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+    RUN STORED-PROCEDURE pc_grava_mensagem_ted
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,     /* Cooperativa */ 
+                          INPUT par_nro_controle, /* Numero de controle */ 
+                          INPUT par_dtmensagem,   /* Data da mensagem */ 
+                          INPUT par_cdmensagem,   /* Evento */ 
+                          INPUT par_dsconteudo,   /* XML da mensagem */ 
+                          INPUT glb_cdprogra,     /* Programa que chamou */ 
+                         OUTPUT 0,                /* Codigo do erro */ 
+                         OUTPUT "").              /* Descricao do erro */
+    
+    CLOSE STORED-PROC pc_grava_mensagem_ted
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cderro = pc_grava_mensagem_ted.pr_cdcritic
+                            WHEN pc_grava_mensagem_ted.pr_cdcritic <> ?
+           aux_dserro = pc_grava_mensagem_ted.pr_dscritic
+                            WHEN pc_grava_mensagem_ted.pr_dscritic <> ?.
+   
+   RETURN "OK".
+   
+END PROCEDURE.
+
+PROCEDURE grava_ted_rejeitada.
+
+    DEF  INPUT PARAM par_cdcooper            AS INTE      NO-UNDO. /* Cooperativa */ 
+    DEF  INPUT PARAM par_nrdconta            AS DECI      NO-UNDO. /* Conta */
+    DEF  INPUT PARAM par_cdagenci            AS INTE      NO-UNDO. /* Agencia */
+    DEF  INPUT PARAM par_nrdcaixa            AS INTE      NO-UNDO. /* Numero do Caixa */
+    DEF  INPUT PARAM par_cdoperad            AS CHAR      NO-UNDO. /* Operador */ 
+    DEF  INPUT PARAM par_cdprogra            AS CHAR      NO-UNDO. /* Programa que chamou */
+    DEF  INPUT PARAM par_nmevento            AS CHAR      NO-UNDO. /* Evento */
+    DEF  INPUT PARAM par_nrctrlif            AS CHAR      NO-UNDO. /* Numero de controle */
+    DEF  INPUT PARAM par_vldocmto            AS DECIMAL   NO-UNDO. /* Valor */
+    /*  Dados de Origem da TED (Informacoes da conta na CENTAL) */ 
+    DEF  INPUT PARAM par_cdbanco_origem      AS INTE      NO-UNDO. /* Banco*/
+    DEF  INPUT PARAM par_cdagencia_origem    AS INTE      NO-UNDO. /* Agencia */
+    DEF  INPUT PARAM par_nmtitular_origem    AS CHAR      NO-UNDO. /* Nome do Titular */
+    DEF  INPUT PARAM par_nrcpf_origem        AS DECIMAL   NO-UNDO. /* CPF do Titular*/
+    /*  Dados de Destino da TED (Informacoes da conta em outra IF) */
+    DEF  INPUT PARAM par_cdbanco_destino     AS INTE      NO-UNDO. /* Banco */
+    DEF  INPUT PARAM par_cdagencia_destino   AS DECI      NO-UNDO. /* Agencia*/
+    DEF  INPUT PARAM par_nrconta_destino     AS CHAR      NO-UNDO. /* Conta*/
+    DEF  INPUT PARAM par_nmtitular_destino   AS CHAR      NO-UNDO. /* Nome do Titular */
+    DEF  INPUT PARAM par_nrcpf_destino       AS DECIMAL   NO-UNDO. /* CPF do Titular*/
+    /*  Rejeiçao */
+    DEF  INPUT PARAM par_dsmotivo_rejeicao   AS CHAR      NO-UNDO. /* Motivo da Rejeiçao */
+    DEF  INPUT PARAM par_nrispbif            AS INTE      NO-UNDO. /* ISPB */ 
+
+    DEF VAR aux_cderro                AS INTE                     NO-UNDO.
+    DEF VAR aux_dserro                AS CHAR                     NO-UNDO.
+       
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_grava_msg_ted_rejeita
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,                 /* Cooperativa */ 
+                          INPUT STRING(par_nrdconta),         /* Conta */
+                          INPUT par_cdagenci,                 /* Agencia */
+                          INPUT par_nrdcaixa,                 /* Numero do Caixa */
+                          INPUT par_cdoperad,                 /* Operador */ 
+                          INPUT par_cdprogra,                 /* Programa que chamou */
+                          INPUT par_nmevento,                 /* Evento */
+                          INPUT par_nrctrlif,                 /* Numero de controle */
+                          INPUT par_vldocmto,                 /* Valor */
+                          /*  Dados de Origem da TED */ 
+                          INPUT par_cdbanco_origem,           /* Banco*/
+                          INPUT par_cdagencia_origem,         /* Agencia */
+                          INPUT par_nmtitular_origem,         /* Nome do Titular */
+                          INPUT par_nrcpf_origem,             /* CPF do Titular*/
+                          /*  Dados de Destino da TED */
+                          INPUT par_cdbanco_destino,          /* Banco */
+                          INPUT par_cdagencia_destino,        /* Agencia*/
+                          INPUT STRING(par_nrconta_destino),  /* Conta*/
+                          INPUT par_nmtitular_destino,        /* Nome do Titular */
+                          INPUT par_nrcpf_destino,            /* CPF do Titular*/
+                          /*  Rejeiçao */
+                          INPUT par_dsmotivo_rejeicao,        /* Motivo da Rejeiçao */
+                          INPUT par_nrispbif,                 /* ISPB */ 
+                          /*  Erro */ 
+                          OUTPUT 0,                           /* Codigo do Erro */ 
+                          OUTPUT "").                         /* Descricao do Erro */
+    
+    CLOSE STORED-PROC pc_grava_msg_ted_rejeita
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cderro = pc_grava_msg_ted_rejeita.pr_cdcritic
+                          WHEN pc_grava_msg_ted_rejeita.pr_cdcritic <> ?
+           aux_dserro = pc_grava_msg_ted_rejeita.pr_dscritic
+                          WHEN pc_grava_msg_ted_rejeita.pr_dscritic <> ?.
+   
+   RETURN "OK".
+    
+END PROCEDURE.

@@ -32,7 +32,7 @@
 
     Programa: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 25/08/2016
+    Data    : Outubro/2009                    Ultima Atualizacao: 02/06/2017
            
     Dados referentes ao programa:
                 
@@ -144,6 +144,8 @@
                              
                 29/08/2016 - #456682 Inclusao de validacao de fraude de TED na
                              rotina proc_envia_tec_ted (Carlos)
+                             
+                02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 ..............................................................................*/                                                                             
 { sistema/generico/includes/b1wgen0046tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -502,7 +504,9 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
            /* Tp. conta - Destinatario */
            aux_dsdctacr      = IF   par_tpdctacr = 2   THEN
                                     "PP"
-                               ELSE "CC"
+                               ELSE IF par_tpdctacr = 1 THEN 
+                                    "CC"
+                               ELSE "PG"
 
            /* CPF Remetente - Primeiro titular */
            aux_nrcpfemi = IF   par_tppesemi = 1   THEN
@@ -1089,6 +1093,9 @@ DEFINE VARIABLE aux_nmarqxml          AS CHARACTER                   NO-UNDO.
 DEFINE VARIABLE aux_nmarqenv          AS CHARACTER                   NO-UNDO.
 DEFINE VARIABLE aux_dsarqenv          AS CHARACTER                   NO-UNDO.
 DEFINE VARIABLE aux_contctnr          AS INTEGER                     NO-UNDO.
+DEFINE VARIABLE aux_nrcctrcb1         AS CHARACTER                   NO-UNDO.
+DEFINE VARIABLE aux_nrcctrcb2         AS CHARACTER                   NO-UNDO.
+DEFINE VARIABLE aux_cdagenbc          AS CHARACTER                   NO-UNDO.
 
 DEFINE VARIABLE h-b1wgen0050          AS HANDLE                      NO-UNDO.
 DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
@@ -1104,6 +1111,15 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
                         STRING(crapdat.dtmvtocd,"999999") + ".log"
          aux_nmarquiv = SUBSTRING(TRIM(aux_nmarqxml),
                                        R-INDEX(aux_nmarqxml,"/") + 1).
+                                       
+  IF  par_dsdctacr = "CC" OR    /* Conta Corrente */
+      par_dsdctacr = "PP" THEN /* Conta Poupanca */ 
+      ASSIGN aux_nrcctrcb1 = STRING(par_nrcctrcb)
+             aux_cdagenbc  = STRING(par_cdagenbc).
+  ELSE  /* Conta de Pagamento */
+      ASSIGN aux_nrcctrcb2 = STRING(par_nrcctrcb)
+             aux_cdagenbc = "".                                       
+                                       
                       /* HEADER - mensagens STR e PAG */
   ASSIGN aux_textoxml[1] = "<SISMSG>"
          aux_textoxml[2] = "<SEGCAB>" 
@@ -1121,6 +1137,7 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
        Descriçao: destinado a IF requisitar transferencia de recursos por 
                   conta de nao correntistas. */
     IF  par_nmmsgenv = "STR0005" OR par_nmmsgenv = "PAG0107"  THEN
+    DO:
         ASSIGN aux_textoxml[9]  = "<" + par_nmmsgenv + ">"
                aux_textoxml[10] = " <CodMsg>" + par_nmmsgenv + "</CodMsg>"      
                aux_textoxml[11] = "<NumCtrlIF>" + par_nrctrlif +
@@ -1136,12 +1153,20 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
                aux_textoxml[18] = "<NomRemet>" + par_nmpesemi +
                                   "</NomRemet>"
                aux_textoxml[19] = "<ISPBIFCredtd>" + par_ispbcred + 
-                                  "</ISPBIFCredtd>"
-               aux_textoxml[20] = "<AgCredtd>" + par_cdagenbc + 
-                                  "</AgCredtd>"
-               aux_textoxml[21] = "<CtCredtd>" + par_nrcctrcb +
-                                  "</CtCredtd>"
-               aux_textoxml[22] = "<TpCtCredtd>" + par_dsdctacr +
+                                  "</ISPBIFCredtd>".
+               
+        IF par_dsdctacr = "CC" OR par_dsdctacr = "PP" THEN
+            ASSIGN aux_textoxml[20] = "<AgCredtd>" + aux_cdagenbc + 
+                                      "</AgCredtd>"
+                   aux_textoxml[21] = "<CtCredtd>" + aux_nrcctrcb1 +
+                                      "</CtCredtd>".
+        ELSE 
+            ASSIGN aux_textoxml[20] = ""
+                   aux_textoxml[21] = "<CtPgtoCredtd>" + aux_nrcctrcb2 +
+                                      "</CtPgtoCredtd>".
+               
+               
+        ASSIGN aux_textoxml[22] = "<TpCtCredtd>" + par_dsdctacr +
                                   "</TpCtCredtd>"
                aux_textoxml[23] = "<TpPessoaDestinatario>" + par_dspesrec +
                                   "</TpPessoaDestinatario>"
@@ -1159,6 +1184,7 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
                                   "</DtMovto>"
                aux_textoxml[30] = "</" + par_nmmsgenv + ">"
                aux_textoxml[31] = "</SISMSG>".
+  END.
   ELSE
   /* Descricao: IF requisita Transferencia de IF para conta de cliente */
   IF  par_nmmsgenv = "STR0007" THEN
@@ -1169,14 +1195,23 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
                  aux_textoxml[12] = "<ISPBIFDebtd>" + par_ispbdebt +
                                     "</ISPBIFDebtd>"
                  aux_textoxml[13] = "<ISPBIFCredtd>" + par_ispbcred + 
-                                    "</ISPBIFCredtd>"
-                 aux_textoxml[14] = "<AgCredtd>" + par_cdagenbc + 
-                                    "</AgCredtd>"
-                 aux_textoxml[15] = "<TpCtCredtd>" + par_dsdctacr +
-                                    "</TpCtCredtd>"
-                 aux_textoxml[16] = "<CtCredtd>" + par_nrcctrcb +
-                                    "</CtCredtd>"
-                 aux_textoxml[17] = "<TpPessoaCredtd>" + par_dspesrec + 
+                                    "</ISPBIFCredtd>".
+          
+          IF par_dsdctacr = "CC" OR par_dsdctacr = "PP" THEN
+              ASSIGN aux_textoxml[14] = "<AgCredtd>" + aux_cdagenbc + 
+                                        "</AgCredtd>"
+                     aux_textoxml[15] = "<TpCtCredtd>" + par_dsdctacr +
+                                        "</TpCtCredtd>"
+                     aux_textoxml[16] = "<CtCredtd>" + aux_nrcctrcb1 +
+                                        "</CtCredtd>".
+          ELSE
+              ASSIGN aux_textoxml[14] = ""
+                     aux_textoxml[15] = "<TpCtCredtd>" + par_dsdctacr +
+                                        "</TpCtCredtd>"
+                     aux_textoxml[16] = "<CtPgtoCredtd>" + aux_nrcctrcb2 +
+                                        "</CtPgtoCredtd>".
+                                        
+          ASSIGN aux_textoxml[17] = "<TpPessoaCredtd>" + par_dspesrec + 
                                     "</TpPessoaCredtd>"
                  aux_textoxml[18] = "<CNPJ_CPFCliCredtd>" + par_cpfcgrcb +
                                     "</CNPJ_CPFCliCredtd>"
@@ -1228,14 +1263,23 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
                  aux_textoxml[18] = "<NomCliDebtd>" +  par_nmpesemi +
                                     "</NomCliDebtd>"
                  aux_textoxml[19] = "<ISPBIFCredtd>" + par_ispbcred + 
-                                    "</ISPBIFCredtd>"
-                 aux_textoxml[20] = "<AgCredtd>" + par_cdagenbc + 
-                                    "</AgCredtd>"
-                 aux_textoxml[21] = "<TpCtCredtd>" + par_dsdctacr +
-                                    "</TpCtCredtd>"
-                 aux_textoxml[22] = "<CtCredtd>" + par_nrcctrcb +
-                                    "</CtCredtd>"
-                 aux_textoxml[23] = "<TpPessoaCredtd>" + par_dspesrec +
+                                    "</ISPBIFCredtd>".
+                                    
+          IF par_dsdctacr = "CC" OR par_dsdctacr = "PP" THEN
+              ASSIGN aux_textoxml[20] = "<AgCredtd>" + aux_cdagenbc + 
+                                        "</AgCredtd>"
+                     aux_textoxml[21] = "<TpCtCredtd>" + par_dsdctacr +
+                                        "</TpCtCredtd>"
+                     aux_textoxml[22] = "<CtCredtd>" + aux_nrcctrcb1 +
+                                        "</CtCredtd>".
+          ELSE
+              ASSIGN aux_textoxml[20] = ""
+                     aux_textoxml[21] = "<TpCtCredtd>" + par_dsdctacr +
+                                        "</TpCtCredtd>"
+                     aux_textoxml[22] = "<CtPgtoCredtd>" + aux_nrcctrcb2 +
+                                        "</CtPgtoCredtd>".
+                                        
+          ASSIGN aux_textoxml[23] = "<TpPessoaCredtd>" + par_dspesrec +
                                     "</TpPessoaCredtd>"
                  aux_textoxml[24] = "<CNPJ_CPFCliCredtd>" + par_cpfcgrcb +
                                     "</CNPJ_CPFCliCredtd>"
@@ -1265,7 +1309,7 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
                                   "</ISPBIFDebtd>"
              aux_textoxml[13] = "<ISPBIFCredtd>" + par_ispbcred + 
                                 "</ISPBIFCredtd>"
-             aux_textoxml[14] = "<AgCredtd>" + par_cdagenbc + 
+             aux_textoxml[14] = "<AgCredtd>" + aux_cdagenbc + 
                                 "</AgCredtd>"
              aux_textoxml[15] = "<CtCredtd>" + par_nrcctrcb +
                                 "</CtCredtd>"
@@ -1308,7 +1352,7 @@ DEFINE VARIABLE h-b1wgen0016          AS HANDLE                      NO-UNDO.
                                 "</NomCliDebtd>"
              aux_textoxml[17] = "<ISPBIFCredtd>" + par_ispbcred + 
                                 "</ISPBIFCredtd>"  
-             aux_textoxml[18] = "<AgCredtd>" + par_cdagenbc + 
+             aux_textoxml[18] = "<AgCredtd>" + aux_cdagenbc + 
                                 "</AgCredtd>"              
              aux_textoxml[19] = "<TpCtCredtd>" + par_dsdctacr +
                                 "</TpCtCredtd>"
