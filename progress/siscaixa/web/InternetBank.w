@@ -1614,6 +1614,10 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for pagamento de DARF e DAS **/
                   CAN-DO("188",STRING(aux_operacao)) AND aux_idefetiv = 1
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for confirmação de recarga de celular **/
+                  CAN-DO("181",STRING(aux_operacao)) AND INT(GET-VALUE("aux_operacao")) = 6
                )
            )
              THEN 

@@ -6397,9 +6397,9 @@ PROCEDURE verifica_comprovantes:
 
           IF   tt-cratpro.cdtippro = 20  THEN /* Recarga de celular */
                DO:
-                  ASSIGN aux_nmopetel = ENTRY(1,tt-cratpro.dsinform[2],"#")
-                         aux_dstelefo = ENTRY(2,tt-cratpro.dsinform[2],"#")
-                         aux_dsnsuope = ENTRY(4,tt-cratpro.dsinform[2],"#").
+                  ASSIGN aux_nmopetel = ENTRY(2,tt-cratpro.dsinform[2],"#")
+                         aux_dstelefo = ENTRY(3,tt-cratpro.dsinform[2],"#")
+                         aux_dsnsuope = ENTRY(5,tt-cratpro.dsinform[2],"#").
                          
                   /* Nome operadora */
                   xDoc:CREATE-NODE(xField,"NMOPETEL","ELEMENT").
@@ -9865,14 +9865,15 @@ PROCEDURE verifica_recarga:
 	RUN STORED-PROCEDURE pc_valida_recarga
 	  aux_handproc = PROC-HANDLE NO-ERROR
 						 (INPUT aux_cdcooper,  /* Cooperativa*/
-              INPUT aux_nrdconta,  /* Nr. da conta */
-              INPUT 1,             /* Titular da conta */
-              INPUT 0,             /* CPF Operador da conta */
-              INPUT aux_nrdddtel,  /* DDD */
-              INPUT aux_nrcelular, /* Nr. do celular */
-              INPUT DATE(aux_dtrecarga), /* Data de recarga */
-              INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
-              INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
+						  INPUT aux_nrdconta,  /* Nr. da conta */
+						  INPUT 0,             /* CPF Operador da conta */
+						  INPUT 1,             /* Titular da conta */
+						  INPUT aux_nrdddtel,  /* DDD */
+						  INPUT aux_nrcelular, /* Nr. do celular */
+						  INPUT 0,             /* Valor de recarga */
+						  INPUT DATE(aux_dtrecarga), /* Data de recarga */
+						  INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
+						  INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
 						  INPUT 4,             /* Id origem (4-TAA)*/
 						  OUTPUT "",           /* Lista de datas para agendamento recorrente */
 						  OUTPUT 0,            /* Código da crítica.*/

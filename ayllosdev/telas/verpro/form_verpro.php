@@ -124,12 +124,12 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 	}
 }else if($cdtippro == 20){ // Recarga de celular
 	$vlrecarga 	 = formataMoeda($vldocmto);
-	$nmoperadora = $aux_dslinha2[0];
-	$nrtelefo	 = $aux_dslinha2[1];
+	$nmoperadora = $aux_dslinha2[1];
+	$nrtelefo	 = $aux_dslinha2[2];
 	$dtrecarga	 = $dttransa;
 	$hrrecarga	 = $hrautenx;	
 	$dtdebito	 = $dtmvtolt;
-	$nsuopera	 = $aux_dslinha2[3];
+	$nsuopera	 = $aux_dslinha2[4];
 }
 
 ?>

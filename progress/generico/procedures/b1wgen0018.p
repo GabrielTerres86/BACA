@@ -4543,5 +4543,40 @@ PROCEDURE detalhe_desconto_titulos:
 
 END PROCEDURE. /* detalhe_desconto_titulos */
 
+PROCEDURE pc_situacao_canal_recarga:
+    /************************************************************************
+    Objetivo: Consulta a situação da recarga de celular em cada canal
+    ************************************************************************/
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  OUTPUT PARAM par_flgsitrc AS LOGI                          NO-UNDO.
+    
+    RUN STORED-PROCEDURE pc_situacao_canal_recarga
+	  aux_handproc = PROC-HANDLE NO-ERROR
+						 (INPUT par_cdcooper, /* Cooperativa*/
+						  INPUT par_idorigem, /* Id origem*/
+						  OUTPUT 0,           /* Flag situacao recarga (0-INATIVO/1-ATIVO) */
+						  OUTPUT 0,           /* Código da crítica.*/
+						  OUTPUT "").         /* Desc. da crítica */
+	
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_situacao_canal_recarga
+         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    /* Busca parametros retornados */ 
+    ASSIGN par_flgsitrc = FALSE
+           aux_dscritic = ""
+           par_flgsitrc = TRUE
+                          WHEN pc_situacao_canal_recarga.pr_flgsitrc = 1
+           aux_dscritic = pc_situacao_canal_recarga.pr_dscritic
+                          WHEN pc_situacao_canal_recarga.pr_dscritic <> ?.
+    
+    IF aux_dscritic <> "" THEN
+      RETURN "NOK".
+    
+
+END PROCEDURE. 
+
 /************************************************************************/
 
