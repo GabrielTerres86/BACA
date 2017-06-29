@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: logspb.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Novembro/2009                Última Alteração: 05/12/2016 ***//
+//*** Data : Novembro/2009                Última Alteração: 11/05/2017 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela LOGSPB                 ***//
 //***                                                                  ***//
@@ -44,6 +44,8 @@
 //***			               devido a analise de fraude                ***//
 //***			               PRJ335 - Analise de fraude(Odirlei-AMcom) ***//
 //***                                                                    ***//
+//***             11/05/2017 - Ajustes para a opção "Devoluções" do      ***//
+//***                          campo "TIPO" (Douglas - Chamado 541233)   ***//
 //**************************************************************************//
 
 var contWin = 0;
@@ -164,8 +166,9 @@ $(document).ready(function () {
 
             textSelect[0] = "Enviadas";
             textSelect[1] = "Recebidas";
-            textSelect[2] = "Log";
-            textSelect[3] = "Todos";
+            textSelect[2] = "Devoluções";
+            textSelect[3] = "Log";
+            textSelect[4] = "Todos";
         }
 
         $("#numedlog option", "#frmLogSPB").each(function () {
@@ -177,6 +180,12 @@ $(document).ready(function () {
         $("#numedlog", "#frmLogSPB").trigger("change");
     });
 
+	$("#cdsitlog > #optProcessada", "#frmLogSPB").prop("disabled", false);
+	$("#cdsitlog > #optDevolvida", "#frmLogSPB").prop("disabled", false);
+	$("#cdsitlog > #optRejeitada", "#frmLogSPB").prop("disabled", false);
+	$("#cdsitlog > #optEstornada", "#frmLogSPB").prop("disabled", false);
+	$("#cdsitlog > #optTodas", "#frmLogSPB").prop("disabled", false);
+	
     $("#numedlog", "#frmLogSPB").bind("change", function (e) {
         if ($("#cddopcao", "#frmLogSPB").val() == "R") {
             $("#cdsitlog", "#frmLogSPB").prop("disabled", true);
@@ -244,6 +253,14 @@ $(document).ready(function () {
 					// se for opcao todos habilita o estornadas
                     }else if ($(this).val() == "4") {
                         $("#cdsitlog > #optEstornada","#frmLogSPB").prop("disabled",false);
+					//  se a opcao eh "devolucoes" 
+					}else if ($(this).val() == "5") {
+						$("#cdsitlog > #optProcessada", "#frmLogSPB").prop("disabled", true);
+						$("#cdsitlog > #optDevolvida", "#frmLogSPB").prop("disabled", true);
+						$("#cdsitlog > #optRejeitada", "#frmLogSPB").prop("disabled", true);
+						$("#cdsitlog > #optEstornada", "#frmLogSPB").prop("disabled", true);
+						
+						$("#cdsitlog", "#frmLogSPB").val("T");
                     } else {
                         $("#cdsitlog > #optRejeitada", "#frmLogSPB").prop("disabled", true);
                         $("#cdsitlog > #optEstornada","#frmLogSPB").prop("disabled",true);

@@ -23,7 +23,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2007.                       Ultima atualizacao: 28/03/2016
+   Data    : Abril/2007.                       Ultima atualizacao: 12/07/2017
    
    Dados referentes ao programa:
    
@@ -93,6 +93,7 @@
                28/03/2016 - Inclusao do parametro par_iptransa
 			                PRJ118 (Odirlei-AMcom)
                                          
+               12/06/2017 - Tratamento para Novo Catalgo do SPB (Lucas Ranghetti #668207)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -183,7 +184,7 @@ ASSIGN aux_dstransa = (IF par_flgexecu     THEN "" ELSE "Valida ")           +
         ,INPUT  par_cddbanco           /* --> Codigo do banco               */
         ,INPUT  par_cdispbif           /* --> Numero inscriçao SPB          */
         ,INPUT  par_cdageban           /* --> codigo da agencia bancaria.   */
-        ,INPUT  par_nrctatrf           /* --> conta que recebe a transferenc*/
+        ,INPUT  STRING(par_nrctatrf)   /* --> conta que recebe a transferenc*/
         ,INPUT  par_nmtitula           /* --> nome do titular da conta.     */
         ,INPUT  par_nrcpfcgc           /* --> cpf/cnpj do titular da conta. */ 
         ,INPUT  par_inpessoa           /* --> tipo de pessoa da conta.      */
