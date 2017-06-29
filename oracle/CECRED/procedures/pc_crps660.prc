@@ -11,7 +11,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 06/01/2017
+     Data    : Outubro/9999                     Ultima atualizacao: 16/05/2017
 
      Dados referentes ao programa:
 
@@ -69,6 +69,9 @@ BEGIN
                               
                  06/01/2016 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
                               PRJ342 - Incorporação Transulcred (Odirlei-AMcom)                          
+                              
+                 16/05/2017 - P408 - Considerar riscos com inddocto = 5 - Garantias Prestadas
+                              (Andrei-Mouts)                                                                
                               
   ............................................................................ */
 
@@ -212,13 +215,14 @@ BEGIN
             ,decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc) nrcpfcgc
             ,ci.nrdconta
             ,ci.inddocto
+            ,ci.cdinfadi
             ,ROW_NUMBER () OVER (PARTITION BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc)
                                      ORDER BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc)) nrseqctr
             ,COUNT(1)      OVER (PARTITION BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc)) qtdcontr
       FROM crapris ci
       WHERE ci.cdcooper = pr_cdcooper
         AND ci.dtrefere = pr_dtrefere
-        AND ci.inddocto IN(1,3,4)
+        AND ci.inddocto IN(1,3,4,5)
       ORDER BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc);
     vr_vldivida crapris.vldivida%TYPE;
 
@@ -426,7 +430,7 @@ BEGIN
             END IF;
           END IF;
         END IF;
-        -- Valida desconto de cheque e de titulo
+        -- Valida desconto de cheque, de titulo
         IF pr_cdmodali IN(0302,0301) THEN
           pr_cdinfadi := '0301';          
           -- Encerrar processo
@@ -464,7 +468,7 @@ BEGIN
         vr_idxcrapris_n  PLS_INTEGER := 0;       --> Indice da pl/table vr_tab_crapris_n
 
         /* Buscar dados do risco */
-        CURSOR cr_crapris_pnc(pr_cdcooper IN crapris.cdcooper%TYPE      --> Código da cooperativa
+        CURSOR cr_crapris_mes_anterior(pr_cdcooper IN crapris.cdcooper%TYPE      --> Código da cooperativa
                              ,pr_dtultdma IN crapris.dtrefere%TYPE) IS  --> Data de referencia
           SELECT cr.nrdconta
                 ,cr.dtrefere
@@ -510,16 +514,15 @@ BEGIN
           FROM crapris cr
           WHERE cr.cdcooper = pr_cdcooper
             AND cr.dtrefere = pr_dtultdma
-            AND cr.inddocto = 1
+            AND cr.inddocto IN(1)
             AND cr.flgindiv = 1
-            AND cr.cdmodali <> 101
-            AND cr.cdmodali <> 201
+            AND cr.cdmodali NOT IN(101,201)
           ORDER BY cr.nrdconta
                   ,cr.nrctremp
                   ,cr.nrseqctr;
 
         /* Buscar dados de risco para a PL Table */
-        CURSOR cr_craprispl(pr_dtrefere IN crapris.dtrefere%TYPE) IS
+        CURSOR cr_crapris_mes_atual(pr_dtrefere IN crapris.dtrefere%TYPE) IS
           SELECT nrdconta
                 ,dtrefere
                 ,innivris
@@ -563,7 +566,7 @@ BEGIN
           FROM crapris ris
           WHERE ris.cdcooper = pr_cdcooper
             AND ris.dtrefere = pr_dtrefere
-            AND ris.inddocto = 1;
+            AND ris.inddocto IN(1);
             
         /* Busca dados do cadastro de emprestimo BNDES */
         CURSOR cr_crapebn IS
@@ -575,6 +578,15 @@ BEGIN
                 ,cn.nrctremp
           FROM crapebn cn;
 
+        /* Busca cadastro de Produtos de Risco Lançados Manualmente e que permitem saída de operação */
+        CURSOR cr_prod IS
+          SELECT prd.idproduto
+            FROM tbrisco_provisgarant_prodt prd
+           WHERE prd.flpermite_saida_operacao = 1;
+        TYPE typ_reg_prod_com_saida IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;
+        vr_tab_prod_com_saida typ_reg_prod_com_saida;    
+           
+           
       BEGIN
         -- Inicializar variáveis
         vr_dtultdma := pr_dtrefere - TO_NUMBER(TO_CHAR(pr_dtrefere, 'DD'));
@@ -589,8 +601,14 @@ BEGIN
           vr_tab_crapebn(LPAD(regs.cdcooper, 3, '0') || LPAD(regs.nrdconta, 15, '0') || LPAD(regs.nrctremp, 15, '0')).dtvctpro := regs.dtvctpro;
         END LOOP;        
 
+        -- Carregar pltables com produtos de Risco lançados manualmente e que permite saída de operação
+        FOR rw_prod IN cr_prod LOOP
+          vr_tab_prod_com_saida(rw_prod.idproduto) := 1;
+        END LOOP;
+        
+        
         -- Carrega a pl/table de riscos
-        FOR rw_craprispl IN cr_craprispl(pr_dtrefere) LOOP
+        FOR rw_craprispl IN cr_crapris_mes_atual(pr_dtrefere) LOOP
           vr_indcrapris := lpad(rw_craprispl.nrdconta,10,'0')||
                            lpad(rw_craprispl.innivris,5,'0') ||
                            lpad(rw_craprispl.nrctremp,10,'0')||
@@ -599,7 +617,7 @@ BEGIN
         END LOOP;
 
         -- Executar consulta de riscos
-        FOR rw_crapris IN cr_crapris_pnc(pr_cdcooper => pr_cdcooper, pr_dtultdma => vr_dtultdma) LOOP
+        FOR rw_crapris IN cr_crapris_mes_anterior(pr_cdcooper => pr_cdcooper, pr_dtultdma => vr_dtultdma) LOOP
           -- Verifica migração/incorporação
           IF NOT fn_verifica_conta_migracao(pr_nrdconta  => rw_crapris.nrdconta) THEN
             CONTINUE;
@@ -740,7 +758,7 @@ BEGIN
         END LOOP;
 
         -- Executar consulta de riscos
-        FOR rw_crapris IN cr_crapris_pnc(pr_cdcooper => pr_cdcooper, pr_dtultdma => vr_dtultdma) LOOP
+        FOR rw_crapris IN cr_crapris_mes_anterior(pr_cdcooper => pr_cdcooper, pr_dtultdma => vr_dtultdma) LOOP
           -- Verifica migração/incorporação
           IF NOT fn_verifica_conta_migracao(pr_nrdconta  => rw_crapris.nrdconta) THEN
             CONTINUE;
@@ -1134,8 +1152,8 @@ BEGIN
         vr_vldivida := 0;
         vr_tab_rowid.delete;
       END IF;  
-      -- Acumular o valor da dívida (Somente para inddocto = 1 e 4)
-      IF rw_crapris.inddocto IN (1,4) THEN
+      -- Acumular o valor da dívida (Somente para inddocto = 1, 4 e 5[desde que não tenha cdinfadi])
+      IF rw_crapris.inddocto IN (1,4,5) AND nvl(rw_crapris.cdinfadi,' ') <> '0301'  THEN
         vr_vldivida := vr_vldivida + (rw_crapris.vldivida - rw_crapris.vljura60);
       END IF;
       -- Adicionar este rowid a pltable

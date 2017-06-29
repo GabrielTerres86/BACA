@@ -11,6 +11,7 @@
  * 002: [05/11/2010] Gabriel     (CECRED)   : Incluir novo parametro para a organização da pesquisa.	
  * 003: [24/10/2011] Rogerius Militão (Db1) : Adicionado a opção de pesquisar o associado pelo CPF/CNPJ
  * 004: [09/08/2013] Carlos (CECRED)        : Alteração da sigla PAC para PA.
+ * 005: [22/05/2017] Jonata (RKAM)          : Ajuste para realizar pesquisa com base em cooperativa enviada via post.
  */ 
 ?>
 
@@ -38,7 +39,11 @@
 	$nrdctitg = $_POST["nrdctitg"];
 	$tpdorgan = $_POST["tpdorgan"];
 	$nrcpfcgc = $_POST["nrcpfcgc"];
+	$cdcooper = $_POST["cdcooper"];
 	
+	if ($cdcooper == null || $cdcooper == 0 || $cdcooper == ''){
+		$cdcooper = $glbvars["cdcooper"];
+	}
 	
 	// Dados para paginação dos cooperados
 	$nriniseq = isset($_POST["nriniseq"]) ? $_POST["nriniseq"] : 1;
@@ -66,7 +71,7 @@
 	$xmlSetPesquisa .= "        <Proc>zoom-associados</Proc>";
 	$xmlSetPesquisa .= "  </Cabecalho>";
 	$xmlSetPesquisa .= "  <Dados>";
-	$xmlSetPesquisa .= "        <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xmlSetPesquisa .= "        <cdcooper>".$cdcooper."</cdcooper>";
 	$xmlSetPesquisa .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
 	$xmlSetPesquisa .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 	$xmlSetPesquisa .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
@@ -111,7 +116,7 @@
 			} else {  
 				// Realiza um loop nos registros retornados e desenha cada um em uma linha da tabela
 				for($i = 0; $i < count($pesquisa); $i++) { ?>				 
-					<tr onClick="selecionaAssociado(<? echo "'".getByTagName($pesquisa[$i]->tags,'nrdconta')."'"; ?>); return false;">
+					<tr onClick="selecionaAssociado(<? echo "'".getByTagName($pesquisa[$i]->tags,'nrdconta')."'"; ?>,<? echo "'".getByTagName($pesquisa[$i]->tags,'nmprimtl')."'"; ?>,<? echo "'".getByTagName($pesquisa[$i]->tags,'dsnivris')."'"; ?>),<? echo "'".getByTagName($pesquisa[$i]->tags,'nrcpfcgc')."'"; ?>; return false;">
 						
 					
 						<td style="width:35px; font-size:11px ;text-align:right;">

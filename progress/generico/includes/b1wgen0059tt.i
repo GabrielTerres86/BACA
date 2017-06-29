@@ -2,7 +2,7 @@
 
     Programa: b1wgen0059tt.i
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 23/09/2016
+    Data    : Marco/2010                   Ultima atualizacao: 22/05/2017
 
     Objetivo  : Definicao das Temp-Tables para telas de PESQUISA/ZOOM
                 
@@ -77,7 +77,7 @@
                              
                 17/08/2015 - Projeto Reformulacao cadastral
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
-                             
+
                 23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-gncmapr (Oscar).                
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-craplcr (Oscar).                
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-crapfin (Oscar).                
@@ -235,7 +235,8 @@ DEFINE TEMP-TABLE tt-titular NO-UNDO
     FIELD cdempres LIKE crapttl.cdempres
     FIELD dtdemiss LIKE crapass.dtdemiss
     FIELD nrdocttl AS CHAR
-    FIELD dsagenci AS CHAR.
+    FIELD dsagenci AS CHAR
+	FIELD dsnivris LIKE crapass.dsnivris.
     
 DEFINE TEMP-TABLE tt-oper-tel NO-UNDO
     FIELD cdopetfn AS INTE

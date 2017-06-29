@@ -1,6 +1,5 @@
-<? 
-/*!
- * FONTE        : busca_descricao.php
+<?php
+   /* FONTE        : busca_descricao.php
  * CRIAÇÃO      : Rodolpho Telmo ( DB1 )
  * DATA CRIAÇÃO : Fevereiro/2010 
  * OBJETIVO     : Efetuar a busca da descrição de algum código passado como parâmetro. 
@@ -8,14 +7,14 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
- * 001: [25/03/2010] Rodolpho Telmo  (DB1): Alterada função "buscaDescricao" acrescentando os parâmetros "campoRetorno" e "filtros"
- * 002: [31/03/2010] Rodolpho Telmo  (DB1): Alterada função "buscaDescricao" acrescentando o parâmetro "nomeFormulario"
- * 003: [22/10/2020] David       (CECRED) : Incluir novo parametro para a funcao getDataXML (David).
- * 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
+	* 001: [25/03/2010] Rodolpho Telmo (DB1): Alterada função "buscaDescricao" acrescentando os parâmetros "campoRetorno" e "filtros"
+	* 002: [31/03/2010] Rodolpho Telmo (DB1): Alterada função "buscaDescricao" acrescentando o parâmetro "nomeFormulario"
+	* 003: [22/10/2020] David			(CECRED) : Incluir novo parametro para a funcao getDataXML (David).
+    * 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
+	* 005: [27/07/2016] Carlos R.	    (CECRED): Corrigi o tratamento para o retorno de erro do XML. SD 479874.
+    * 006: [06/06/2017] Jonata        (Mouts): Ajuste para inclusão da busca de dominios - P408.
  */	
-?>
 
-<? 		
 	session_start();
 	require_once("../config.php");
 	require_once("../funcoes.php");
@@ -24,7 +23,7 @@
 	isPostMethod();		
 	
 	// Verifica se os par&acirc;metros de desenvolvimento necess&aacute;rios 
-	if ( !isset($_POST["businessObject"]) || 
+	if (!isset($_POST["businessObject"]) || 
 	     !isset($_POST["nomeProcedure" ]) || 
 		 !isset($_POST["tituloPesquisa"]) ||
 		 !isset($_POST["campoCodigo"   ]) || 
@@ -119,15 +118,19 @@
 	$xmlObjdescricao = getObjectXML($xmlResult);
 		
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjdescricao->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjdescricao->roottag->tags[0]->name) && strtoupper($xmlObjdescricao->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjdescricao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	}
 	
-	$descricao = $xmlObjdescricao->roottag->tags[0]->tags[0]->tags;
+	$descricao = ( isset($xmlObjdescricao->roottag->tags[0]->tags[0]->tags) ) ? $xmlObjdescricao->roottag->tags[0]->tags[0]->tags : array();
 	
 	if (count($descricao) == 0) {		
 		// Atribui descrição ao respectivo campo
 		echo '$("input[name=\''.$campoDescricao.'\']").val("");';
+
+		if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
+			echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("");';
+		}
 			
 		if ( $nomeFormulario != '' ) {				
 			echo '$("#'.$campoCodigo.'","#'.$nomeFormulario.'").addClass("campoErro");';
@@ -142,16 +145,28 @@
 	echo '$("input[name=\''.$campoCodigo.'\']").removeClass("campoErro");';
 	// Atribui descrição ao respectivo campo
 	echo '$("input[name=\''.$campoDescricao.'\']").val("'.getByTagName($descricao,$campoRetorno).'");';
-       
-        
-        if ( $campoCodigo == 'cdfinemp' ) {
-            echo '$(\'input[name="tpfinali"]\').val("'.getByTagName($descricao,'tpfinali').'");';
-        }
-        
-        if ( $nomeFormulario == 'frmSimulacao' ) {            
-            echo 'habilitaModalidade("'.getByTagName($descricao,'tpfinali').'");';
-        }
-        
+    	
+	if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
+		echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("'.getByTagName($descricao,"iddominio").'");';
+		echo '$("#idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrctacosif").'");';
+		echo '$("#dsconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"dsctacosif").'");';
+		echo '$("#iddominio_idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"iddominioctacosif").'");';
+	}
+	
+	if( $nomeProcedure == 'BUSCADESCASSOCIADO' ){
+		echo 'if($("input[id=\'cdclassificacao_produto\']","#'.$nomeFormulario.'").val() != "AA"){ $("select[id=\'cdclassifica_operacao\']","#'.$nomeFormulario.'").prop(\'selected\',true).val("'.getByTagName($descricao,"dsnivris").'");}';
+		echo '$("#nrcpfcgc","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrcpfcgc").'");';
+		
+	}
+	
+	if ( $campoCodigo == 'cdfinemp' ) {
+		echo '$(\'input[name="tpfinali"]\').val("'.getByTagName($descricao,'tpfinali').'");';
+	}
+	
+	if ( $nomeFormulario == 'frmSimulacao' ) {            
+		echo 'habilitaModalidade("'.getByTagName($descricao,'tpfinali').'");';
+	}
+	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	echo 'bloqueiaFundo(divRotina);';
