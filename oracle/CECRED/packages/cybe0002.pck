@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 27/04/2017
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 23/06/2017
   --
   --  Dados referentes ao programa:
   --
@@ -320,6 +320,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --  
   --              27/04/2017 - #654523 Retirada do vr_cdprogra pois o procedimento do job não é 
   --                           um programa da crapprg, utilizada para crps (Carlos)
+  --
+  --              23/06/2017 - #674963 Retirado o log do proc_message e inserido apenas na tabela 
+  --                           tbgen_prglog_ocorrencia concatenando os parâmetros idtpreme, dtmvtolt
+  --                           e nrseqarq (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -6121,6 +6125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_lstarqre gene0002.typ_split;    --> Split de arquivos encontrados
       vr_nrseqarq craparb.nrseqarq%TYPE; --> Sequencia de gravação do arquivo
       vr_flchkret VARCHAR2(1);           --> Retorno S/N de validação do retorno atual X arquivo enviado
+      vr_idprglog PLS_INTEGER := 0;
     BEGIN
       -- Inicializar quantidade de retornos
       pr_qtretorn := 0;
@@ -6177,13 +6182,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_lstarqre := fn_quebra_string(pr_string => vr_dslstarq, pr_delimit => ',');
         -- Se não encontrou nenhum arquivo
         IF vr_lstarqre.count() = 0 THEN
-          -- Gravar no proc_message e retornar para o programa
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
-                                     pr_ind_tipo_log => 2, -- erro tratado 
-                                     pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+          -- Gravar na tabela tbgen_prglog_ocorrencia e retornar para o programa
+          CECRED.pc_log_programa(PR_DSTIPLOG      => 'O', 
+                                 PR_CDPROGRAMA    => 'jbcyb_controle_remessas', 
+                                 pr_cdcooper      => 3, 
+                                 pr_tpexecucao    => 2, --job
+                                 pr_tpocorrencia  => 4, --mensagem
+                                 pr_cdcriticidade => 0, --baixa
+                                 pr_dsmensagem    => to_char(sysdate,'hh24:mi:ss')||' - '
                                                         || 'CYBE0002.pc_retorno_arquivo_ftp --> '
-                                                        || 'Retorno ainda nao encontrado no FTP.', 
-                                     pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                                     || 'Retorno ainda nao encontrado no FTP.'
+                                                     || ' pr_idtpreme: ' || pr_idtpreme 
+                                                     || ' pr_dtmvtolt: ' || pr_dtmvtolt
+                                                     || ' pr_nrseqarq: ' || pr_nrseqarq, 
+                                 PR_IDPRGLOG => vr_idprglog);
           RETURN;
         END IF;
         -- Para cada arquivo encontrado no ZIP
@@ -7195,7 +7207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
-      vr_nomdojob    VARCHAR2(40) := 'JBCYBER_CONTROLE_REMESSAS';
+      vr_nomdojob    VARCHAR2(40) := 'JBCYB_CONTROLE_REMESSAS';
       vr_flgerlog    BOOLEAN := FALSE;
 
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação

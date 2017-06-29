@@ -136,7 +136,7 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                            ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                            ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro    
-                          
+                           
   --> Rotina de envio de email de eventos sem local de realização
   PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                        
   
@@ -150,11 +150,11 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                         ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                         ,pr_nmdcampo OUT VARCHAR2    --> Nome do campo com erro
                         ,pr_des_erro OUT VARCHAR2);  --> Descricao do Erro
-                   
+   
   --> Informação do modulo em execução na sessão do Progrid
   PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
                                      ,pr_action IN VARCHAR2 DEFAULT NULL);                             
-      
+                         
   --> Validacao de data
   PROCEDURE pc_valida_data(pr_idevento IN crapidp.idevento%TYPE --> Indicador do Evento(1-Progrid/2-Assembleia)
                           ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
@@ -177,7 +177,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web PROGRID
   --  Sigla    : PRGD0001
   --  Autor    : Jean Michel
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 06/03/2017
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/06/2017
   --
   --  Dados referentes ao programa:
   --
@@ -210,6 +210,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   --                                 descrição (Renato Darosci - Supero)
   --
   --                    06/03/2017 - Inclusao da procedure pc_lista_pa_ead (Jean Michel)
+  --
+  --                    14/06/2017 - #551231 Padronização do nome do job e inclusão dos logs
+  --                                 de controle de início, erro e fim de execução na rotina 
+  --                                 pc_envia_email_evento_local. Ajuste do ALTER SESSION
+  --                                 para setar os 2 parâmetros na mesma execução (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para validar ID do cookie da sessao
@@ -480,8 +485,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
         SELECT ce.nmdatela
           FROM crapace ce
          WHERE ce.cdcooper = pr_cdcooper
-           AND upper(ce.cdoperad) = upper(pr_cdoperad)
-           AND upper(ce.nmdatela) = upper(pr_nmdatela)
+           AND UPPER(ce.cdoperad) = UPPER(pr_cdoperad)
+           AND UPPER(ce.nmdatela) = UPPER(pr_nmdatela)
            AND UPPER(ce.cddopcao) = UPPER(pr_cddopcao)
            AND UPPER(ce.nmrotina) IN('PROGRID','ASSEMBLEIA')
            AND ce.idambace = 3;
@@ -1581,7 +1586,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
 
   END pc_lista_evento;
-    
+  
   --> Rotina de envio de email de eventos sem local de realização
   PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2)  IS
     -- ..........................................................................
@@ -1649,14 +1654,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     -- Variável de críticas
     vr_dscritic      VARCHAR2(10000);
 
-    -- Tratamento de erros
-    vr_exc_saida     EXCEPTION;
-    
     -- Variaveis gerais
     vr_dstexto  VARCHAR2(5000); --> Texto que sera enviado no email
     vr_emaildst VARCHAR2(400);  --> Endereco do e-mail de destino
     vr_assunto  VARCHAR2(200);  --> Assunto do email
     vr_dscorpo  VARCHAR2(5000); --> Corpo que sera enviado no email  
+  
+    vr_nomdojob CONSTANT VARCHAR2(50) := 'jbpgd_email_evento_local';
+    vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
   
     -- Gerar log
     PROCEDURE pc_gera_log (pr_dscritic IN VARCHAR2) IS
@@ -1665,10 +1670,17 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
                                  pr_ind_tipo_log => 2, --> erro tratado
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' - PRGD0001.pc_envia_email_evento_local --> ' || pr_dscritic,
-                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_dstiplog     => 'E',
+                                 pr_cdprograma   => vr_nomdojob);
     END pc_gera_log;
   
   BEGIN
+
+    -- Início de execução do programa
+    cecred.pc_log_programa(PR_DSTIPLOG   => 'I',
+                           PR_CDPROGRAMA => vr_nomdojob,
+                           PR_IDPRGLOG   => vr_idprglog);
 
     -------------------------------------------------------------
     -- Esta Rotina deverá ser executada a 01:00 horas da manha --
@@ -1730,6 +1742,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
           END IF;  
         EXCEPTION
           WHEN OTHERS THEN
+            
+            cecred.pc_internal_exception;
+          
             vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
             pc_gera_log (pr_dscritic => vr_dscritic);
             vr_dscritic := NULL;
@@ -1799,6 +1814,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
           END IF;
         EXCEPTION
           WHEN OTHERS THEN
+
+            cecred.pc_internal_exception;
+
             vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
             pc_gera_log (pr_dscritic => vr_dscritic);
             vr_dscritic := NULL;
@@ -1867,6 +1885,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
           END IF;  
         EXCEPTION
           WHEN OTHERS THEN
+
+            cecred.pc_internal_exception;
+
             vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
             pc_gera_log (pr_dscritic => vr_dscritic);
             vr_dscritic := NULL;
@@ -1878,15 +1899,32 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     
     COMMIT;
       
+    -- Log de final de execução do job
+    cecred.pc_log_programa(PR_DSTIPLOG   => 'F',
+                           PR_CDPROGRAMA => vr_nomdojob,
+                           PR_IDPRGLOG   => vr_idprglog);
+    
   EXCEPTION
-    WHEN vr_exc_saida THEN
-      -- Atualiza variavel de retorno
-      pr_dscritic := vr_dscritic;
-      pc_gera_log (pr_dscritic => vr_dscritic);
     WHEN OTHERS THEN
+      
+      cecred.pc_internal_exception;
+
       -- Efetuar retorno do erro não tratado
       pr_dscritic := sqlerrm;
       pc_gera_log (pr_dscritic => vr_dscritic);    
+      
+      cecred.pc_log_programa(PR_DSTIPLOG      => 'E',
+                             PR_CDPROGRAMA    => vr_nomdojob,
+                             pr_cdcriticidade => 2, -- alta
+                             pr_dsmensagem    => vr_dscritic,
+                             pr_tpexecucao    => 1,   -- job
+                             pr_tpocorrencia  => 2, --  erro não tratado
+                             PR_IDPRGLOG      => vr_idprglog);
+      
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F',
+                             PR_CDPROGRAMA => vr_nomdojob,
+                             pr_flgsucesso => 0,
+                             PR_IDPRGLOG   => vr_idprglog);
   END pc_envia_email_evento_local;
 
   /* Procedure para retornar data base da agenda da cooperativa */
@@ -1969,17 +2007,17 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
   END pc_retanoage;
 
-	/* Informação do modulo em execução na sessão */
-	PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
-																		 ,pr_action IN VARCHAR2 DEFAULT NULL) IS
-	BEGIN
-		CECRED.GENE0001.pc_informa_acesso(pr_module => pr_module
-																		 ,pr_action => pr_action);
+  /* Informação do modulo em execução na sessão */
+  PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
+                                     ,pr_action IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+    CECRED.GENE0001.pc_informa_acesso(pr_module => pr_module
+                                     ,pr_action => pr_action);
 
-		EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
-		EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ''.,''';
+		EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''
+                                         NLS_NUMERIC_CHARACTERS = ''.,''';
 
-	END pc_informa_acesso_progrid;
+  END pc_informa_acesso_progrid;
 
   /* Procedure para validar data informada */
   PROCEDURE pc_valida_data(pr_idevento IN crapidp.idevento%TYPE --> Indicador do Evento(1-Progrid/2-Assembleia)

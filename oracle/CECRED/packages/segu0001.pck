@@ -612,7 +612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: 22/08/2016
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 19/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -621,6 +621,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --
   -- Alteracao : 22/08/2016 - Criada procedure pc_buscar_plaseg_web que buscar o valor do plano
   --                          de acordo com os parametros (Tiago/Thiago #462910)
+  --
+  --             19/06/2017 - #642644 Alterado o nome do arquivo gerado em pc_importa_seg_auto_sicr e
+  --                          enviado como anexo no e-mail, de ERRO_ARQ_SEG% para RESUMO_ARQ_SEG% (Carlos)
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -4895,7 +4899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'SEGU0001';
-      vr_nomdojob CONSTANT VARCHAR2(100) := 'JB_IMP_SEGURO_AUTO_SICR';
+      vr_nomdojob CONSTANT VARCHAR2(100) := 'JBSEG_AUTO_SICR_IMP';
 
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
@@ -4907,7 +4911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_flgerlog   BOOLEAN := FALSE;
       vr_temarquiv  BOOLEAN;
       vr_nmarqlog   VARCHAR2(100);
-      vr_nmarqerr   VARCHAR2(80):='';
+      vr_nmarqerr   VARCHAR2(80) := '';
       vr_raizcoop   VARCHAR2(50);
       vr_nmdirlog   VARCHAR2(100);
       vr_indierro   NUMBER;
@@ -5142,7 +5146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             vr_nmarqdat := gene0002.fn_quebra_string(pr_string =>vr_vet_arqv(idx), pr_delimit => '.' );
           END LOOP;
 
-          vr_nmarqlog := 'ERRO_ARQ_SEG_' || vr_nmarqdat(1) || '_' ||to_char(SYSDATE,'hh24');
+          vr_nmarqlog := 'RESUMO_ARQ_SEG_' || vr_nmarqdat(1) || '_' ||to_char(SYSDATE,'hh24');
           vr_flfinmsg := 'N';
           vr_dscriti2 := pr_cdprogra || ' -> ' ||
                          to_char(sysdate,'dd/mm/rrrr hh24:mi:ss')||' - ' || vr_dscriti2;
