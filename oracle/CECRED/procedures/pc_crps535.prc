@@ -11,7 +11,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Dezembro/2009                   Ultima atualizacao: 02/12/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 07/04/2017
 
    Dados referentes ao programa:
 
@@ -125,6 +125,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
 
                02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
+               07/04/2017 - #642531 Tratamento do tail para pegar/validar os dados da última linha
+                            do arquivo corretamente (Carlos)
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -837,7 +839,8 @@ BEGIN
     END IF;
 
     -- Se o comeco da linha nao for 9, criticar
-    IF  substr(vr_des_saida,1,10) <> '9999999999' THEN
+    IF SUBSTR(vr_des_saida,1,10) <> '9999999999' AND
+       SUBSTR(vr_des_saida,162,10) <> '9999999999' THEN
       -- Gerar critica de identificacao invalida
       vr_cdcritic := 258;
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);

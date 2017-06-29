@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andr? Santos - Supero
-   Data    : JULHO/2011                      Ultima atualizacao: 22/11/2013
+   Data    : JULHO/2011                      Ultima atualizacao: 07/04/2017
 
    Dados referentes ao programa:
 
@@ -33,6 +33,9 @@ BEGIN
                25/11/2013 - Ajustes na passagem dos parâmetros para restart (Marcos-Supero)
 
                27/06/2014 - Correcao da nomenclatura do arquivo de LOG (.err) 169763 - (Carlos Rafael Tanholi)
+
+               07/04/2017 - #642531 Inclusão de trim no retorno do comando
+                            "ls vr_nom_direto /bradesco/ vr_nmarqdeb  | wc -l" (Carlos)
 
 ............................................................................. */
   DECLARE
@@ -212,7 +215,7 @@ BEGIN
         RAISE vr_exc_erro;
       ELSE
         --Se retornou zero arquivos entao sai do programa
-        IF SUBSTR(pr_dscritic,1,1) = '0' OR
+        IF SUBSTR(TRIM(pr_dscritic),1,1) = '0' OR
           pr_dscritic IS NULL THEN
           pr_dscritic := NULL;
           pr_contaarq := 0;
@@ -1656,4 +1659,3 @@ BEGIN
   END;
 END;
 /
-
