@@ -249,9 +249,9 @@ ASSIGN aux_dstransa = (IF par_flgexecu     THEN "" ELSE "Valida ")           +
    
   /* Atribuir xml de retorno a temptable*/ 
   IF aux_xml_operacao22 <> "" THEN
-  DO:    
+  DO:
     CREATE xml_operacao.
-      ASSIGN xml_operacao.dslinxml = aux_xml_operacao22.
+      ASSIGN xml_operacao.dslinxml = aux_xml_operacao22. 
   END.  
   
   RETURN "OK".

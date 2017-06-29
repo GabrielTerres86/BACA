@@ -1,9 +1,9 @@
-CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
+ÔªøCREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
 /*
     Programa: sspb0001                        Antigo: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 12/08/2015
+    Data    : Outubro/2009                    Ultima Atualizacao: 30/11/2016
 
     Dados referentes ao programa:
 
@@ -33,7 +33,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                 27/02/2012 - Tratamento novo catalogo de mensagens V. 3.05,
                              eliminando mensagens STR0009/PAG0109 (Gabriel).
 
-                04/04/2012 - Alteraøøo do campo cdfinmsg para dsfinmsg
+                04/04/2012 - Altera¬ø¬øo do campo cdfinmsg para dsfinmsg
                              (David Kruger).
 
                 11/04/2012 - Chamada da procedure grava-log-ted na procedure
@@ -44,11 +44,11 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                 14/05/2012 - Projeto TED Internet (David).
 
                 20/06/2012 - Alterado procedure proc_opera_str para quando for
-                             mensagem STR0019 e jø existir registro na crapban,
+                             mensagem STR0019 e j¬ø existir registro na crapban,
                              alterar nome e nome resumido do registro
                              (Guilherme Maba).
 
-                30/07/2012 - Inclusøo de novos parametros na procedure gera_xml
+                30/07/2012 - Inclus¬øo de novos parametros na procedure gera_xml
                              campos: cdagenci, nrdcaixa, cdoperad.(Lucas R).
 
                 22/11/2012 - Ajuste para utilizar campo crapdat.dtmvtocd no
@@ -66,15 +66,24 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 				19/08/2016 - Incluido rotinas convertidas para o oracle: pc_proc_pag0101
 							 e pc_proc_opera_str. PRJ-312. (Reinert)
 
+                19/09/2016 - Removida a validacao de horario cadastrado na TAB085
+                             para a geracao de TED dos convenios. SD 519980.
+                             (Carlos Rafael Tanholi)
+                             
+                18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
+                             catalogo 4.07 na procedure pc_gera_xml (Lucas Ranghetti #537580)
+
+    	          30/11/2016 - Incluido STR0025 e PAG0121 para processos de transferencias 
+                             judiciais (Andrino-Mouts / Projeto 341-Bacenjud)
 ..............................................................................*/
 
-  --criaÁ„o TempTable
+  --cria√ß√£o TempTable
 
   /* Type de registros para armazenar mensagens de log do SPB*/
   TYPE typ_reg_logspb IS
       RECORD (nrseqlog PLS_INTEGER,
               dslinlog VARCHAR2(4000));
-  TYPE typ_tab_logspb IS
+   TYPE typ_tab_logspb IS
     TABLE OF typ_reg_logspb
     INDEX BY PLS_INTEGER;
 
@@ -98,13 +107,21 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
               dsorigem Varchar2(15),
               cdagenci craplmt.cdagenci%type,
               nrdcaixa craplmt.nrdcaixa%type,
-              cdoperad craplmt.cdoperad%type);
+              cdoperad craplmt.cdoperad%type,
+              dttransa craplmt.dttransa%TYPE,
+              nrsequen PLS_INTEGER,
+              cdisprem PLS_INTEGER,
+              cdispdst PLS_INTEGER,
+              cdtiptra PLS_INTEGER,
+              dstiptra VARCHAR2(100), 
+              nmevento craplmt.nmevento%TYPE,
+              nrctrlif craplmt.nrctrlif%TYPE);
 
   TYPE typ_tab_logspb_detalhe IS
     TABLE OF typ_reg_logspb_detalhe
-    INDEX BY varchar2(20); --hrtransa(10)+ nrseqlog(10).
+    INDEX BY varchar2(30); --hrtransa(5)+ progress_recid(25).
 
-  /* Type de registros para armazenar os totais por situaÁ„o de log do SPB*/
+  /* Type de registros para armazenar os totais por situa√ß√£o de log do SPB*/
   TYPE typ_reg_logspb_totais IS
       RECORD (qtsitlog NUMBER,
               vlsitlog NUMBER);
@@ -145,19 +162,84 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                                  ,pr_cdoperad  IN VARCHAR2  -- Operador
                                  ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
                                  ,pr_cdorigem  IN INTEGER   -- Identificador Origem
-                                 ,pr_dtmvtlog  IN DATE      -- Data de movimento de log
+                                 ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                 ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
                                  ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
-                                 ,pr_cdsitlog  IN varchar2  -- Codigo de situaÁ„o de log
+                                 ,pr_cdsitlog  IN varchar2  -- Codigo de situa√ß√£o de log
                                  ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                 ,pr_nrsequen  IN NUMBER    -- Numero sequencial
                                  ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
                                  ,pr_nrregist  IN VARCHAR2  -- numero de registros
                                  ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
+                                 ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                 ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                  ,pr_dscritic           OUT varchar2
                                  ,pr_tab_logspb         OUT nocopy SSPB0001.typ_tab_logspb         --> TempTable para armazenar o valor
                                  ,pr_tab_logspb_detalhe OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
-                                 ,pr_tab_logspb_totais  OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situaÁ„o de log
+                                 ,pr_tab_logspb_totais  OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situa√ß√£o de log
                                  ,pr_tab_erro           OUT GENE0001.typ_tab_erro                  --> Tabela contendo os erros
                                 );
+
+  /** Procedimento para obter log do SPB da Cecred sendo chamada via Progress */
+  PROCEDURE pc_obtem_log_cecred_car ( pr_cdcooper  IN INTEGER   -- Codigo Cooperativa
+                                     ,pr_cdagenci  IN INTEGER   -- Cod. Agencia
+                                     ,pr_nrdcaixa  IN INTEGER   -- Numero  Caixa
+                                     ,pr_cdoperad  IN VARCHAR2  -- Operador
+                                     ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
+                                     ,pr_cdorigem  IN INTEGER   -- Identificador Origem
+                                     ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                     ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
+                                     ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
+                                     ,pr_cdsitlog  IN varchar2  -- Codigo de situa√ß√£o de log
+                                     ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                     ,pr_nrsequen  IN NUMBER    -- Numero sequencial
+                                     ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
+                                     ,pr_nrregist  IN VARCHAR2  -- numero de registros
+                                     ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
+                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                     ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                                     ,pr_clob_logspb         OUT CLOB
+                                     ,pr_cdcritic            OUT NUMBER
+                                     ,pr_dscritic            OUT VARCHAR2
+                                    );
+
+  /******************************************************************************/
+  /**                       Gera log de envio TED                              **/
+  /******************************************************************************/
+  PROCEDURE pc_grava_log_ted
+                        (pr_cdcooper IN INTEGER  --> Codigo cooperativo
+                        ,pr_dttransa IN DATE     --> Data transa√ß√£o
+                        ,pr_hrtransa IN INTEGER  --> Hora Transa√ß√£o
+                        ,pr_idorigem IN INTEGER  --> Id de origem
+                        ,pr_cdprogra IN VARCHAR2 --> Codigo do programa
+                        ,pr_idsitmsg IN INTEGER  --> Situa√ß√£o da mensagem.
+                        ,pr_nmarqmsg IN VARCHAR2 --> Nome do arquivo da mensagem.
+                        ,pr_nmevento IN VARCHAR2 --> Descricao do evento da mensagem.
+                        ,pr_nrctrlif IN VARCHAR2 --> Numero de controle da mensagem.
+                        ,pr_vldocmto IN NUMBER   --> Valor do documento.
+                        ,pr_cdbanctl IN INTEGER  --> Codigo de banco da central.
+                        ,pr_cdagectl IN INTEGER  --> Codigo de agencia na central.
+                        ,pr_nrdconta IN VARCHAR2 --> Numero da conta cooperado
+                        ,pr_nmcopcta IN VARCHAR2 --> Nome do cooperado.
+                        ,pr_nrcpfcop IN NUMBER   --> Cpf/cnpj do cooperado.
+                        ,pr_cdbandif IN INTEGER  --> Codigo do banco da if.
+                        ,pr_cdagedif IN INTEGER  --> Codigo da agencia na if.
+                        ,pr_nrctadif IN VARCHAR2 --> Numero da conta na if.
+                        ,pr_nmtitdif IN VARCHAR2 --> Nome do titular da conta na if.
+                        ,pr_nrcpfdif IN NUMBER   --> Cpf/cnpj do titular da conta na if.
+                        ,pr_cdidenti IN VARCHAR2 --> Codigo identificador da transacao.
+                        ,pr_dsmotivo IN VARCHAR2 --> Descricao do motivo de erro na mensagem.
+                        ,pr_cdagenci IN INTEGER  --> Numero do pa.
+                        ,pr_nrdcaixa IN INTEGER  --> Numero do caixa.
+                        ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
+                        ,pr_nrispbif IN INTEGER  --> Numero de inscri√ß√£o SPB
+                        ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
+                        ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
+                        
+                        --------- SAIDA --------
+                        ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
+                        ,pr_dscritic  OUT VARCHAR2);    --> Descricao do erro
+
 
   /******************************************************************************/
   /**                         Envia TED/TEC  - SPB                             **/
@@ -196,6 +278,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                           ,pr_dshistor IN VARCHAR2  --> Dsc do Hist.  
                           ,pr_hrtransa IN INTEGER   --> Hora transacao 
                           ,pr_cdispbif IN INTEGER   --> ISPB Banco
+                          ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED
                           --------- SAIDA --------
                           ,pr_cdcritic OUT INTEGER   --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2);--> Descricao do erro 
@@ -220,24 +303,42 @@ PROCEDURE pc_trfsal_opcao_x(pr_cdcooper IN INTEGER    --> Cooperativa
 
 PROCEDURE pc_estado_crise (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
                           ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
-                          ,pr_clobxmlc OUT CLOB); -- XML com informaÁıes de LOG
+                          ,pr_clobxmlc OUT CLOB); -- XML com informa√ß√µes de LOG
 
-PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2   -- CÛdigo do programa
+PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2   -- C√≥digo do programa
 												 ,pr_nmarqxml IN  VARCHAR2   -- Nome do arquivo xml
 												 ,pr_nmarqlog IN  VARCHAR2   -- Nome do arquivo de log
 												 ,pr_clobxml  IN  CLOB       -- CLOB com os dados das IF
 												 ,pr_des_erro OUT VARCHAR2); -- Retorno OK/NOK
 												 
-PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- CÛdigo do programa
+PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- C√≥digo do programa
 													 ,pr_nmarqxml IN VARCHAR2 -- Nome do arquivo xml
 													 ,pr_nmarqlog IN VARCHAR2 -- Nome do arquivo de log
-													 ,pr_cdmensag IN VARCHAR2 -- CÛdigo da mensagem
-													 ,pr_nrispbif IN INTEGER  -- N˙mero do ISPB
-													 ,pr_cddbanco IN INTEGER  -- CÛdigo do banco
+													 ,pr_cdmensag IN VARCHAR2 -- C√≥digo da mensagem
+													 ,pr_nrispbif IN INTEGER  -- N√∫mero do ISPB
+													 ,pr_cddbanco IN INTEGER  -- C√≥digo do banco
 													 ,pr_nmdbanco IN VARCHAR2 -- Nome do banco
-													 ,pr_dtinispb IN VARCHAR2 -- Data inÌcio ISPB
+													 ,pr_dtinispb IN VARCHAR2 -- Data in√≠cio ISPB
 													 ,pr_des_erro OUT VARCHAR2); -- Retorno OK/NOK
 
+
+  /** Procedimento para listar TEDs estornadas e gerar TempTable **/
+  PROCEDURE pc_busca_log_TED_estorn ( pr_cdcooper  IN INTEGER  -- Codigo cooperativa
+                                     ,pr_nrdconta  IN VARCHAR2 -- Numero da Conta
+                                     ,pr_nrsequen  IN NUMBER   -- Numero da sequencia
+                                     ,pr_cdorigem  IN INTEGER  -- Codigo de origem
+                                     ,pr_dtmvtini  IN DATE     -- Data de movimento do log inicial
+                                     ,pr_dtmvtfim  IN DATE     -- Data de movimento do log final
+                                     ,pr_nriniseq  IN INTEGER  -- numero inicial da sequencia
+                                     ,pr_nrregist  IN INTEGER  -- Numero de registros
+                                     ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
+                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
+                                     ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                                     ,pr_nrispbif  IN crapban.nrispbif%TYPE -- ISPB da Cecred
+                                     ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
+                                     ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
+                                     ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
+                              ); 
 
 END sspb0001;
 /
@@ -249,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 22/09/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 30/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -258,12 +359,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --
   -- Alteracoes: 12/08/2015 - Inclusao da procedure pc_trfsal_opcao_x (Jean Michel).
   --
-  --             09/11/2015 - Ajustar a atualizaÁ„o do lote para gravar vr_qtinfoln
+  --             09/11/2015 - Ajustar a atualiza√ß√£o do lote para gravar vr_qtinfoln
   --                          na qtinfoln nas procedures pc_trfsal_opcao_b e 
   --                          pc_trfsal_opcao_x (Douglas - Chamado 356338)
   --
   --             22/09/2016 - Arrumar validacao para horario limite de envio de ted na 
   --                          procedure pc_trfsal_opcao_b (Lucas Ranghetti #500917)
+  --
+  --             18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
+  --                          catalogo 4.07 na procedure pc_gera_xml (Lucas Ranghetti #537580)
+  --
+  --	         09/11/2016 - Ajuste para colocar altera√ß√µes perdidas em merge efetuado
+  --                          (Adriano)
+  --
+  --           02/03/2017 - Ajustes PRJ335 - OFSSA (Odirlei-AMcom)   
+  --
+  --	         30/11/2016 - Incluido STR0025 e PAG0121 para processos de transferencias 
+  --                          judiciais (Andrino-Mouts / Projeto 341-Bacenjud)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -283,7 +395,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           ,crapcop.cdagebcb
           ,crapcop.dssigaut
           ,crapcop.cdagesic
-					,crapcop.vlmaxpag
+		  ,crapcop.vlmaxpag
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
@@ -426,7 +538,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --   13/11/2014 - Realizado ajustes na chamado do script mqcecred_envia conforme
     --                solicitado pelo Tiago Wagner/Infra TI. (Rafael)
     --
-    --   17/11/2014 - Ajustado tag XML <CanPagto> igual a vers„o Progress. (Rafael)
+    --   17/11/2014 - Ajustado tag XML <CanPagto> igual a vers√£o Progress. (Rafael)
     --
   BEGIN
     DECLARE
@@ -483,9 +595,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-      -- Se nøo encontrar
+      -- Se n¬øo encontrar
       IF BTCH0001.cr_crapdat%NOTFOUND THEN
-        -- Fechar o cursor pois haverø raise
+        -- Fechar o cursor pois haver¬ø raise
         CLOSE BTCH0001.cr_crapdat;
         -- Montar mensagem de critica
         vr_cdcritic:= 1;
@@ -549,7 +661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       -- Inicializar o CLOB
       dbms_lob.createtemporary(vr_des_xml, TRUE);
       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-      -- Inicilizar as informaøøes do XML
+      -- Inicilizar as informa¬ø¬øes do XML
 --      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>');
       pc_escreve_xml('<SISMSG>');
       pc_escreve_xml('<SEGCAB>');
@@ -560,7 +672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pc_escreve_xml('<FL_DEB_CRED>'|| pr_fldebcred ||'</FL_DEB_CRED>');
       pc_escreve_xml('</SEGCAB>');
 
-      /* BODY  - mensagem STR STR0026 Descriøøo: destinado ao pagamento de VR Boletos */
+      /* BODY  - mensagem STR STR0026 Descri¬ø¬øo: destinado ao pagamento de VR Boletos */
       pc_escreve_xml('<'|| pr_nmmsgenv || '>');
       pc_escreve_xml('<CodMsg>'|| pr_nmmsgenv || '</CodMsg>');
       pc_escreve_xml('<NumCtrlIF>' || pr_nrctrlif || '</NumCtrlIF>');
@@ -588,15 +700,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       --Gera arquivo XML no diretorio salvar
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,vr_nom_direto,vr_nmarqxml, 0);
 
-      /* Com o comando SUDO pois para conecta no MQ atravøs do script o usuørio precisa ser ROOT
+      /* Com o comando SUDO pois para conecta no MQ atrav¬øs do script o usu¬ørio precisa ser ROOT
       '/usr/bin/sudo /usr/local/cecred/bin/mqcecred_envia.pl' */
 
       vr_dsparam:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'MQ_SUDO_ENVIA');
       --Se nao encontrou sai com erro
       IF vr_dsparam IS NULL THEN
         --Montar mensagem de erro
-        vr_des_erro:= 'N„o foi encontrado diretÛrio para execuÁ„o MQ.';
-        --Levantar ExceÁ„o
+        vr_des_erro:= 'N√£o foi encontrado diret√≥rio para execu√ß√£o MQ.';
+        --Levantar Exce√ß√£o
         RAISE vr_exc_erro;
       END IF;
 
@@ -618,7 +730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         RAISE vr_exc_erro;
       END IF;
 
-      -- Liberando a memøria alocada pro CLOB
+      -- Liberando a mem¬øria alocada pro CLOB
       dbms_lob.close(vr_des_xml);
       dbms_lob.freetemporary(vr_des_xml);
 
@@ -672,7 +784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       --Gera arquivo XML no diretorio salvar
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml,vr_nom_direto_log,vr_nmarqlog, 0);
 
-      -- Liberando a memøria alocada pro CLOB
+      -- Liberando a mem¬øria alocada pro CLOB
       dbms_lob.close(vr_des_xml);
       dbms_lob.freetemporary(vr_des_xml);
 
@@ -716,12 +828,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Julho/2013.                   Ultima atualizacao: 19/09/2016
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar mensagem STR0026 para a cabine SPB
+    --
+    --   Alteracoes: 	19/09/2016 - Removida a validacao de horario cadastrado na TAB085
+		--					                   para a geracao de TED dos convenios. SD 519980.
+		--					                   (Carlos Rafael Tanholi)
+    --
   BEGIN
     DECLARE
       --Variaveis Locais
@@ -787,9 +904,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       /* Busca data do sistema */
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-      -- Se nøo encontrar
+      -- Se n¬øo encontrar
       IF BTCH0001.cr_crapdat%NOTFOUND THEN
-        -- Fechar o cursor pois haverø raise
+        -- Fechar o cursor pois haver¬ø raise
         CLOSE BTCH0001.cr_crapdat;
         -- Montar mensagem de critica
         vr_cdcritic:= 1;
@@ -859,6 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapban;
+      
       /*-- Operando com mensagens STR --*/
       IF rw_crapcop.flgopstr = 1 THEN
         --Verificar horario inicio e fim operacao
@@ -871,7 +989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       IF vr_flgutstr = FALSE THEN
         --Mensagem erro
         vr_cdcritic:= 0;
-        vr_dscritic:= 'Horørio de envio dos TEDs encerrado.';
+        vr_dscritic:= 'Hor¬ørio de envio dos TEDs encerrado.';
         --Gerar erro
         GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -962,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   /** Procedimento para gravar a mensagem de log SPB na TempTbale **/
   PROCEDURE pc_grava_msg_log (pr_tab_logspb IN OUT nocopy SSPB0001.typ_tab_logspb, --> TempTable para armazenar o valor
                               pr_dslinlog   IN VARCHAR2,                            --> Mensagem a ser armazenada
-                              pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situaÁ„o de log
+                              pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situa√ß√£o de log
                               ) IS
     /*.........................................................................
     --
@@ -970,12 +1088,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : novembro/2013.                   Ultima atualizacao: 22/11/2013
+    --  Data     : novembro/2013.                   Ultima atualizacao: 27/09/2016
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Grava a mensagem de log SPB na TempTbale
+    --
+    --   Alteracoes 
+    --               27/09/2016 - M211 - Ajustes em problemas encontrados na homologa√ß√£o (JOnata-RKAM)
       ..............................................................................*/
 
     vr_nrseqlog PLS_INTEGER;
@@ -983,6 +1104,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   BEGIN
 
     -- Contar os registros rejeitados
+    IF NOT pr_tab_logspb_totais.exists('R') THEN
+      pr_tab_logspb_totais('R').qtsitlog := 0;
+    END IF;
+    
     pr_tab_logspb_totais('R').qtsitlog := NVL(pr_tab_logspb_totais('R').qtsitlog,0) + 1;
 
     vr_nrseqlog := nvl(pr_tab_logspb.last,0) + 1;
@@ -996,12 +1121,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   /** Procedimento para ler mensagem de log SPB e gerar TempTable **/
   PROCEDURE pc_busca_log_SPB (pr_cdcooper  IN INTEGER  -- Codigo cooperativa
                              ,pr_nrdconta  IN VARCHAR2 -- Numero da Conta
+                             ,pr_nrsequen  IN NUMBER   -- Numero da sequencia
                              ,pr_cdorigem  IN INTEGER  -- Codigo de origem
-                             ,pr_dtmvtlog  IN DATE     -- Data de movimento do log
+                             ,pr_dtmvtini  IN DATE     -- Data de movimento do log inicial
+                             ,pr_dtmvtfim  IN DATE     -- Data de movimento do log final
                              ,pr_nriniseq  IN INTEGER  -- numero inicial da sequencia
                              ,pr_nrregist  IN INTEGER  -- Numero de registros
                              ,pr_idsitmsg  IN INTEGER  -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                              ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
+                             ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
+                             ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                             ,pr_nrispbif  IN crapban.nrispbif%TYPE -- ISPB da Cecred
                              ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
                              ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
                              ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
@@ -1017,7 +1147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : novembro/2013.                   Ultima atualizacao: 10/11/2015
+    --  Data     : novembro/2013.                   Ultima atualizacao: 26/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1026,6 +1156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --   Alteracoes:
     --               10/11/2015 - Adicionado parametro de entrada pr_inestcri.
     --                            (Jorge/Andrino)
+    --
+    --               26/09/2016 - M211 - Adicionado busca das TEDs Sicredi e correcao
+    --                            de parametros faltantes (Jonata-RKAM)
       ..............................................................................*/
 
     vr_nrseqlog PLS_INTEGER;
@@ -1033,15 +1166,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_qtregist NUMBER := 0;
     vr_qtsitlog NUMBER := 0;
     vr_vlsitlog NUMBER := 0;
-    vr_idx      VARCHAR2(20);
+    vr_idx      VARCHAR2(30);
 
-    --Ler Log de mensagens para transaÁıes ao SPB
+    --Ler Log de mensagens para transa√ß√µes ao SPB
     CURSOR cr_craplmt IS
       SELECT vldocmto,
              nrsequen,
              cdbandif,
              cdagedif,
-             nrctadif,
+             decode(greatest(LENGTH(nrctadif),14),14,nrctadif,0) nrctadif,
              nmtitdif,
              nrcpfdif,
              cdbanctl,
@@ -1054,14 +1187,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              cdagenci,
              nrdcaixa,
              cdoperad,
-             idorigem
+             idorigem,
+             nrctrlif,
+             nmevento,
+             dttransa,
+             nrispbif,
+             progress_recid
         FROM craplmt
        WHERE craplmt.cdcooper = pr_cdcooper
          AND ((craplmt.nrdconta = pr_nrdconta AND pr_nrdconta <> 0) OR
                pr_nrdconta = 0)
+         AND ((craplmt.nrsequen = pr_nrsequen AND pr_nrsequen <> 0) OR
+               pr_nrsequen = 0)   
          AND ((craplmt.idorigem = pr_cdorigem AND pr_cdorigem <> 0) OR
                pr_cdorigem = 0)
-         AND craplmt.dttransa = pr_dtmvtlog
+         AND craplmt.dttransa BETWEEN pr_dtmvtini AND pr_dtmvtfim
+         AND ((craplmt.vldocmto = pr_vlrdated AND pr_vlrdated <> 0) OR
+               pr_vlrdated = 0)
          AND ((pr_inestcri = 1           AND
                craplmt.inestcri IN (1,2) AND
                craplmt.nmevento IN ('STR0005R2','STR0007R2','STR0008R2', -- TED
@@ -1069,6 +1211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                     'STR0037R2','PAG0137R2')) -- TEC
               OR
               pr_inestcri = 0)
+         AND (pr_cdifconv = 3 OR (pr_cdifconv IN(0,1) AND cdifconv = pr_cdifconv))     
          AND craplmt.idsitmsg = pr_idsitmsg -- (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
        ORDER BY craplmt.hrtransa, craplmt.nrsequen;
 
@@ -1079,7 +1222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_qtsitlog := 0;
     vr_vlsitlog := 0;
 
-    --Ler Log de mensagens para transaÁıes ao SPB
+    --Ler Log de mensagens para transa√ß√µes ao SPB
     FOR rw_craplmt IN cr_craplmt LOOP
 
       vr_qtregist := vr_qtregist + 1;
@@ -1089,15 +1232,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                                         + 1;
         pr_tab_logspb_totais(pr_idsitmsg).vlsitlog := nvl(pr_tab_logspb_totais(pr_idsitmsg).vlsitlog,0)
                                                         + rw_craplmt.vldocmto;
-      ELSE --Se n„o existe, somente inicializar
+      ELSE --Se n√£o existe, somente inicializar
         pr_tab_logspb_totais(pr_idsitmsg).qtsitlog := 1;
         pr_tab_logspb_totais(pr_idsitmsg).vlsitlog := rw_craplmt.vldocmto;
       END IF;
-
+      
+      /* controles da pagina√ß√£o */
+      IF (vr_qtregist < pr_nriniseq) OR (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+        -- Pular o registro
+        CONTINUE;
+      END IF;
+      
       IF  vr_nrregist > 0 THEN
-        vr_idx := lpad(rw_craplmt.hrtransa,10,'0')||lpad(rw_craplmt.nrsequen,10,'0');
-
-         pr_tab_logspb_detalhe(vr_idx).nrseqlog := rw_craplmt.nrsequen;
+        vr_idx := lpad(rw_craplmt.hrtransa,5,'0')||lpad(rw_craplmt.progress_recid,25,'0');
 
          IF pr_idsitmsg IN (1,2,5) THEN -- ENVIADA-OK OU ENVIADA-NOK OU REJEITADA-OK
            pr_tab_logspb_detalhe(vr_idx).cdbanrem := rw_craplmt.cdbanctl;
@@ -1110,6 +1257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).nrctadst := rw_craplmt.nrctadif;
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmtitdif;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfdif;
+           pr_tab_logspb_detalhe(vr_idx).cdisprem := pr_nrispbif;
+           pr_tab_logspb_detalhe(vr_idx).cdispdst := rw_craplmt.nrispbif;
 
          ELSIF pr_idsitmsg IN (3,4) THEN -- RECEBIDA-OK OU RECEBIDA-NOK
            pr_tab_logspb_detalhe(vr_idx).cdbanrem := rw_craplmt.cdbandif;
@@ -1122,9 +1271,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).nrctadst := rw_craplmt.nrdconta;
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmcopcta;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfcop;
+           pr_tab_logspb_detalhe(vr_idx).cdisprem := rw_craplmt.nrispbif;
+           pr_tab_logspb_detalhe(vr_idx).cdispdst := pr_nrispbif;
 
-         END IF;
-
+         END IF;         
+         
+         pr_tab_logspb_detalhe(vr_idx).nrsequen := rw_craplmt.nrsequen;
+         pr_tab_logspb_detalhe(vr_idx).nrseqlog := rw_craplmt.nrsequen;
+         
+         pr_tab_logspb_detalhe(vr_idx).dttransa := rw_craplmt.dttransa;
+         
+         pr_tab_logspb_detalhe(vr_idx).nmevento := rw_craplmt.nmevento;
+         pr_tab_logspb_detalhe(vr_idx).nrctrlif := rw_craplmt.nrctrlif;
          pr_tab_logspb_detalhe(vr_idx).hrtransa := rw_craplmt.hrtransa;
          pr_tab_logspb_detalhe(vr_idx).vltransa := rw_craplmt.vldocmto;
          pr_tab_logspb_detalhe(vr_idx).dsmotivo := rw_craplmt.dsmotivo;
@@ -1145,7 +1303,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                                      WHEN 4 THEN 'TAA'
                                                      ELSE NULL
                                                    END);
-
+         -- Somente para 'RECEBIDA OK'
+         IF pr_idsitmsg = 3 THEN 
+           IF rw_craplmt.nmevento IN('STR0037R2','PAG0137R2') THEN
+             pr_tab_logspb_detalhe(vr_idx).cdtiptra := 3;  
+             pr_tab_logspb_detalhe(vr_idx).dstiptra := 'TEC';           
+           ELSE 
+             pr_tab_logspb_detalhe(vr_idx).cdtiptra := 4;
+             pr_tab_logspb_detalhe(vr_idx).dstiptra := 'TED';           
+           END IF;
+        END IF;
       END IF;
 
       vr_nrregist := vr_nrregist - 1;
@@ -1164,12 +1331,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
   END pc_busca_log_SPB;
 
-  /** Procedimento para gravar as informaÁıes da mensagem de log SPB na TempTable **/
+  /** Procedimento para gravar as informa√ß√µes da mensagem de log SPB na TempTable **/
   PROCEDURE pc_grava_detalhe (pr_idsitmsg IN INTEGER  -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                             ,pr_dslinlog IN varchar2 -- descriÁ„o da linha do log
+                             ,pr_dslinlog IN varchar2 -- descri√ß√£o da linha do log
                              ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
-                             ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situaÁ„o de log
-                             ,pr_dscritic OUT VARCHAR2 -- DEscriÁ„o da critica
+                             ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situa√ß√£o de log
+                             ,pr_dscritic OUT VARCHAR2 -- DEscri√ß√£o da critica
                               ) IS
     /*.........................................................................
     --
@@ -1187,12 +1354,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Gravar as informaÁıes da mensagem de log SPB na TempTable
+    --   Objetivo  : Gravar as informa√ß√µes da mensagem de log SPB na TempTable
       ..............................................................................*/
 
     vr_dslinlog VARCHAR2(4000);
     vr_nrseqlog INTEGER;
-    vr_idx      VARCHAR2(20);
+    vr_idx      VARCHAR2(30);
 
   BEGIN
 
@@ -1200,7 +1367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrseqlog := pr_tab_logspb_detalhe.count + 1;
 
     IF pr_idsitmsg IN (1) THEN --Enviada OK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,162,3));
@@ -1225,7 +1392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
    ELSIF pr_idsitmsg IN (3) THEN  --Recebida OK
 
-      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,162,3));
@@ -1243,7 +1410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_tab_logspb_detalhe(vr_idx).vltransa := to_number(SUBSTR(vr_dslinlog,132,14));
 
     ELSIF pr_idsitmsg IN (2,5) THEN   -- Enviada NOK, Rejeitada OK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,267,3));
@@ -1261,7 +1428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_tab_logspb_detalhe(vr_idx).vltransa := to_number(SUBSTR(vr_dslinlog,237,14));
 
     ELSIF pr_idsitmsg IN (4) THEN   -- Recebida NOK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,267,3));
@@ -1310,12 +1477,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
 
   /** Procedimento para ler o arquivo de log do SPB*/
-  PROCEDURE pc_le_arquivo_log (pr_nmarqlog IN INTEGER  -- Nomer do arquivo de log
+  PROCEDURE pc_le_arquivo_log (pr_nmarqlog IN VARCHAR2  -- Nomer do arquivo de log
                               ,pr_numedlog IN varchar2 -- Indicador de log a carregar
-                              ,pr_cdsitlog IN varchar2 -- Codigo de situaÁ„o de log
+                              ,pr_cdsitlog IN varchar2 -- Codigo de situa√ß√£o de log
                               ,pr_dscritic OUT varchar2
                               ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
-                              ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situaÁ„o de log
+                              ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situa√ß√£o de log
                               ,pr_tab_logspb         IN OUT nocopy SSPB0001.typ_tab_logspb         --> TempTable para armazenar o valor
                               ) IS
     /*.........................................................................
@@ -1326,12 +1493,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : novembro/2013.                   Ultima atualizacao: 25/11/2013
+    --  Data     : novembro/2013.                   Ultima atualizacao: 27/09/2016
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Ler o arquivo de log do SPB
+    --   Alteracoes
+    --               27/09/2016 - Ajuste na rotina devido problemas nos testes do M211
+    --                            Jonata - RKAM
       ..............................................................................*/
 
     vr_exc_erro EXCEPTION;
@@ -1340,7 +1510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nmdireto    varchar2(100);
     vr_nmarquiv    varchar2(100);
     vr_input_file  UTL_FILE.file_type;
-    vr_dslinlog    varchar2(500);
+    vr_dslinlog    varchar2(750);
 
   BEGIN
 
@@ -1366,7 +1536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
          gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                      ,pr_des_text => vr_dslinlog); --> Texto lido
        EXCEPTION
-         -- Sair se n„o achar mais linhas
+         -- Sair se n√£o achar mais linhas
          WHEN NO_DATA_FOUND THEN
            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
            EXIT;
@@ -1377,45 +1547,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            --grava-enviada-ok.
            SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 1  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                         );
          ELSIF vr_dslinlog like '%ENVIADA NAO OK%'  THEN
            --grava-enviada-nok.
            SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 2  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                        );
          ELSIF  vr_dslinlog like '%RECEBIDA OK%'  THEN
            --grava-recebida-ok.
            SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 3  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                        );
          ELSIF  vr_dslinlog like '%RECEBIDA NAO OK%'  THEN
            -- grava-recebida-nok.
            SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 4  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                        );
          ELSIF vr_dslinlog like '%REJEITADA OK%' THEN
            -- grava-rejeitada-ok.
            SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 5  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                        );
          ELSIF vr_dslinlog like '%RETORNO JD OK%'    OR
@@ -1427,7 +1597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            --RUN grava-msg-log.
            SSPB0001.pc_grava_msg_log (pr_tab_logspb => pr_tab_logspb, --> TempTable para armazenar o valor
                                       pr_dslinlog   => vr_dslinlog,   --> Mensagem a ser armazenada
-                                      pr_tab_logspb_totais  => pr_tab_logspb_totais); --> Variavel para armazenar os totais por situaÁ„o de log
+                                      pr_tab_logspb_totais  => pr_tab_logspb_totais); --> Variavel para armazenar os totais por situa√ß√£o de log
          END IF;
 
       ELSIF pr_numedlog = 1  THEN  -- Enviado
@@ -1435,9 +1605,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           -- grava-enviada-ok.
           SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 1  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                         );
         ELSIF pr_cdsitlog = 'D'                  AND -- Devolvidas
@@ -1445,9 +1615,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           -- grava-enviada-nok.
           SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 2  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                         );
         ELSIF pr_cdsitlog = 'R'                  AND  -- rejeitadas
@@ -1455,9 +1625,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           --  grava-rejeitada-ok.
           SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 5  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                         );
         END IF;
@@ -1468,9 +1638,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           --  grava-rejeitada-ok.
           SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 3  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                         );
         ELSIF pr_cdsitlog = 'D'                    AND -- Devolvidas
@@ -1478,14 +1648,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           -- grava-recebida-nok.
           SSPB0001.pc_grava_detalhe
                       (pr_idsitmsg => 4  -- Tipo de msg (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
-                      ,pr_dslinlog => vr_dslinlog -- descriÁ„o da linha do log
+                      ,pr_dslinlog => vr_dslinlog -- descri√ß√£o da linha do log
                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe--> TempTable para armazenar o valor
-                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situaÁ„o de log
+                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais --> Variavel para armazenar os totais por situa√ß√£o de log
                       ,pr_dscritic => pr_dscritic
                         );
         END IF;
 
-      ELSIF pr_numedlog = 3                       AND -- Demais operaÁıes
+      ELSIF pr_numedlog = 3                       AND -- Demais opera√ß√µes
            (vr_dslinlog like '%RETORNO JD OK%'    OR
             vr_dslinlog like '%RETORNO SPB%'      OR
             vr_dslinlog like '%REJEITADA NAO OK%' OR
@@ -1496,7 +1666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         -- grava-msg-log.
         SSPB0001.pc_grava_msg_log (pr_tab_logspb => pr_tab_logspb, --> TempTable para armazenar o valor
                                    pr_dslinlog   => vr_dslinlog,   --> Mensagem a ser armazenada
-                                   pr_tab_logspb_totais  => pr_tab_logspb_totais); --> Variavel para armazenar os totais por situaÁ„o de log
+                                   pr_tab_logspb_totais  => pr_tab_logspb_totais); --> Variavel para armazenar os totais por situa√ß√£o de log
       END IF;
 
 
@@ -1516,17 +1686,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                  ,pr_cdoperad  IN VARCHAR2  -- Operador
                                  ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
                                  ,pr_cdorigem  IN INTEGER   -- Identificador Origem
-                                 ,pr_dtmvtlog  IN DATE      -- Data de movimento de log
+                                 ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                 ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
                                  ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
-                                 ,pr_cdsitlog  IN varchar2  -- Codigo de situaÁ„o de log
+                                 ,pr_cdsitlog  IN varchar2  -- Codigo de situa√ß√£o de log
                                  ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                 ,pr_nrsequen  IN NUMBER    -- Numero sequencial
                                  ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
                                  ,pr_nrregist  IN VARCHAR2  -- numero de registros
                                  ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
+                                 ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                 ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                  ,pr_dscritic           OUT varchar2
                                  ,pr_tab_logspb         OUT nocopy SSPB0001.typ_tab_logspb         --> TempTable para armazenar o valor
                                  ,pr_tab_logspb_detalhe OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
-                                 ,pr_tab_logspb_totais  OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situaÁ„o de log
+                                 ,pr_tab_logspb_totais  OUT nocopy SSPB0001.typ_tab_logspb_totais  --> Variavel para armazenar os totais por situa√ß√£o de log
                                  ,pr_tab_erro           OUT GENE0001.typ_tab_erro                  --> Tabela contendo os erros
                                 ) IS
     /*.........................................................................
@@ -1537,7 +1711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : novembro/2013.                   Ultima atualizacao: 10/11/2015
+    --  Data     : novembro/2013.                   Ultima atualizacao: 26/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1546,6 +1720,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --   Alteracoes:
     --               10/11/2015 - Adicionado parametro de entrada pr_inestcri. 
     --                            (Jorge/Andrino)
+    --
+    --               26/09/2016 - M211 - Adicionado busca das TEDs Sicredi (Jonata-RKAM)              
       ..............................................................................*/
 
     vr_exc_erro EXCEPTION;
@@ -1571,12 +1747,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
-
+   
+    /* BUSCA O ISPB DA CECRED PARA ALIMENTAR A TELA DE DETALHES*/
+    CURSOR cr_crapban IS
+      SELECT nrispbif
+        FROM crapban
+       WHERE cdbccxlt = 85;
+    rw_crapban cr_crapban%ROWTYPE;   
+  
   BEGIN
-    /*********************************************************************
-     * pr_numedlog => 1 - ENVIADAS / 2 - RECEBIDAS / 3 - DEMAIS MSG'S   *
-     * pr_cdsitlog => "P" - MSG'S PROCESSADAS / "D" - MSG'S DEVOLVIDAS  *
-     *                "R" - MSG'S REJEITADAS                            *
+    /**********************************************************************
+     * pr_numedlog => 1-ENVIADAS / 2-RECEBIDAS / 3-DEMAIS MSG'S / 4-TODOS *
+     * pr_cdsitlog => "P" - MSG'S PROCESSADAS / "D" - MSG'S DEVOLVIDAS    *
+     *                "R" - MSG'S REJEITADAS / "T" - TODOS                * 
+     *                "E" - ESTORNADAS ANALISE DE FRAUDE                  * 
     /*********************************************************************/
 
     -- Verifica se a cooperativa esta cadastrada
@@ -1607,6 +1791,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     -- Limpar temptable de total
     pr_tab_logspb_totais.delete;
+    -- Iniciar todas as op√ß√µes
+    FOR vr_idx IN 1..5 LOOP 
+      pr_tab_logspb_totais(vr_idx).qtsitlog := 0;
+      pr_tab_logspb_totais(vr_idx).vlsitlog := 0;
+    END LOOP;
+    pr_tab_logspb_totais('R').qtsitlog := 0;
+    pr_tab_logspb_totais('R').vlsitlog := 0;
 
     -- Inicializar variaveis
     IF NVL(pr_nriniseq,0) = 0  THEN
@@ -1620,20 +1811,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     ELSE
       vr_nrregist := pr_nrregist;
     END IF;
+    
+    -- Abrir cursor da CRAPBAN
+    OPEN cr_crapban;
+    FETCH cr_crapban
+     INTO rw_crapban;
+    CLOSE cr_crapban;
 
     -- BUSCAR LOGS
-    IF pr_numedlog = 0    OR
-      (pr_numedlog = 1    AND   /** ENVIADAS    **/
-       pr_cdsitlog = 'P') THEN  /** PROCESSADAS **/
+    
+    IF pr_numedlog = 0 OR
+      -- Enviadas ou Todas          E  Processadas ou Todas 
+      (pr_numedlog IN(1,4) AND pr_cdsitlog IN('P','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 1           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
+                                ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic-- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1641,17 +1844,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     IF pr_numedlog = 0    OR
-       (pr_numedlog = 1    AND  /** ENVIADAS   **/
-        pr_cdsitlog = 'D') THEN /** DEVOLVIDAS **/
+        -- Enviadas ou Todas          E  Devolvidas ou Todas 
+       (pr_numedlog IN(1,4) AND pr_cdsitlog IN ('D','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 2           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
+                                ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1660,59 +1868,100 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     IF pr_numedlog = 0     OR
-       (pr_numedlog = 1     AND  /** ENVIADAS   **/
-        pr_cdsitlog = 'R')  THEN /** ENVIADAS REJEITADAS **/
+       -- Enviadas ou Todas          E  Retornadas ou Todas 
+       (pr_numedlog IN(1,4) AND pr_cdsitlog IN('R','T')) THEN
+       
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 5           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
+                                ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
                                 );
 
     END IF;
-
+    
     IF  pr_numedlog = 0     OR
-        (pr_numedlog  = 2   AND  /** RECEBIDAS   **/
-         pr_cdsitlog = 'P') THEN /** PROCESSADAS **/
+         -- Recebidas ou Todas          E  Processadas ou Todas 
+        (pr_numedlog  IN(2,4)  AND pr_cdsitlog IN('P','T'))  THEN 
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 3           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
+                                ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
                                 );
     END IF;
 
-    IF pr_numedlog = 0      OR
-       (pr_numedlog = 2     AND    /** RECEBIDAS   **/
-        pr_cdsitlog = 'D')  THEN  /** RECEBIDAS DEVOLVIDAS  **/
+    IF pr_numedlog = 0   OR
+         -- Recebidas ou Todas          E  Devolvidas ou Todas 
+       (pr_numedlog IN(2,4) AND pr_cdsitlog IN('D','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 4           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
+                                ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
                                 );
 
     END IF;
+
+    -->> BUSCAR TEDs ESTORNADAS PELA ANALISE DE FRAUDE <<--    
+    IF pr_numedlog IN (0,1,4 )  AND
+       pr_cdsitlog IN ('T','E') THEN --> opcao ENVIADAS ou TODAS
+
+      SSPB0001.pc_busca_log_TED_estorn 
+                                (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
+                                ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
+                                ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
+                                ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
+                                ,pr_nrregist  => vr_nrregist -- Numero de registros
+                                ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
+                                ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
+                                ,pr_dscritic  => pr_dscritic -- Descricao do erro
+                                ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
+                                ,pr_tab_logspb_totais  => pr_tab_logspb_totais
+                                );
+
+    END IF;
+    
 
     IF pr_numedlog = 0  OR /** Todos **/
        pr_numedlog = 3  THEN /** DEMAIS MSG'S **/
@@ -1723,7 +1972,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                            ,pr_nmsubdir => '/log');
 
       vr_nmarqlog := vr_nmdireto||'/mqcecred_processa_'||
-                     to_char(pr_dtmvtlog,'DDMMRR')||'.log';
+                     to_char(pr_dtmvtini,'DDMMRR')||'.log';
 
 
       -- Verificar se o arquivo existe
@@ -1737,7 +1986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       IF vr_typ_saida = 'ERR' THEN
         RAISE vr_exc_erro;
       ELSE
-        --Se retornou zero , n„o existe o arquivo
+        --Se retornou zero , n√£o existe o arquivo
         IF pr_numedlog = 3 AND
            SUBSTR(vr_dscritic,1,1) = '0' AND
            vr_dscritic IS NULL THEN
@@ -1761,10 +2010,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
           SSPB0001.pc_le_arquivo_log ( pr_nmarqlog => vr_nmarqlog -- Nomer do arquivo de log
                                       ,pr_numedlog => 3-- Indicador de log a carregar
-                                      ,pr_cdsitlog => null-- Codigo de situaÁ„o de log
+                                      ,pr_cdsitlog => null-- Codigo de situa√ß√£o de log
                                       ,pr_dscritic => vr_dscritic
                                       ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
-                                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais  --> Variavel para armazenar os totais por situaÁ„o de log
+                                      ,pr_tab_logspb_totais  => pr_tab_logspb_totais  --> Variavel para armazenar os totais por situa√ß√£o de log
                                       ,pr_tab_logspb         => pr_tab_logspb         --> TempTable para armazenar o valor
                                       );
 
@@ -1785,7 +2034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       END IF;
 
-      -- Se n„o localizou nenhuma mensagem, gerar critica
+      -- Se n√£o localizou nenhuma mensagem, gerar critica
       IF pr_numedlog = 3 AND /** DEMAIS MSG'S **/
          NVL(pr_tab_logspb.COUNT,0) = 0 THEN
         --Gerar Critica e sair do programa
@@ -1809,7 +2058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     IF pr_numedlog = 1  OR   /** ENVIADAS **/
        pr_numedlog = 2  THEN /** RECEBIDAS **/
 
-      -- Se n„o localizou nenhuma mensagem, gerar critica
+      -- Se n√£o localizou nenhuma mensagem, gerar critica
       IF NVL(pr_tab_logspb_detalhe.COUNT,0) = 0 THEN
         --Gerar Critica e sair do programa
         vr_cdcritic:= 0;
@@ -1833,7 +2082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
 
     END IF;
-
+    
     pr_dscritic := 'OK';
 
   EXCEPTION
@@ -1852,16 +2101,276 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
   END pc_obtem_log_cecred;
 
+  /** Procedimento para obter log do SPB da Cecred sendo chamada via Progress */
+  PROCEDURE pc_obtem_log_cecred_car ( pr_cdcooper  IN INTEGER   -- Codigo Cooperativa
+                                     ,pr_cdagenci  IN INTEGER   -- Cod. Agencia
+                                     ,pr_nrdcaixa  IN INTEGER   -- Numero  Caixa
+                                     ,pr_cdoperad  IN VARCHAR2  -- Operador
+                                     ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
+                                     ,pr_cdorigem  IN INTEGER   -- Identificador Origem
+                                     ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                     ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
+                                     ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
+                                     ,pr_cdsitlog  IN varchar2  -- Codigo de situa√ß√£o de log
+                                     ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                     ,pr_nrsequen  IN NUMBER    -- Numero sequencial
+                                     ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
+                                     ,pr_nrregist  IN VARCHAR2  -- numero de registros
+                                     ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
+                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                     ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                                     ,pr_clob_logspb         OUT CLOB
+                                     ,pr_cdcritic            OUT NUMBER
+                                     ,pr_dscritic            OUT VARCHAR2
+                                    ) IS
+    /*.........................................................................
+    --
+    --  Programa : pc_obtem_log_cecred_car           Antigo: N√£o h√°
+    --
+    --
+    --  Sistema  : Cred
+    --  Sigla    : SSPB0001
+    --  Autor    : Evandro - RKAM
+    --  Data     : Setembro/2016.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Obter log do SPB da Cecred chamada via PRogress
+    --   Alteracoes:
+    --               
+      ..............................................................................*/
+    -- Retornos da procedure em pltable
+    vr_tab_logspb         SSPB0001.typ_tab_logspb;   
+    vr_idx_logspb         INTEGER;       
+    vr_tab_logspb_detalhe SSPB0001.typ_tab_logspb_detalhe;
+    vr_idx_logspb_detalhe varchar2(30);
+    vr_tab_logspb_totais  SSPB0001.typ_tab_logspb_totais;  
+    vr_idx_logspb_totais  VARCHAR2(1);
+    vr_tab_erro           GENE0001.typ_tab_erro;
+    -- Auxiliar texto para gravacao no CLOB
+    vr_dstextaux VARCHAR2(32767);
+    vr_dsregistr VARCHAR2(32767);
+    vr_dstagqtde VARCHAR2(1000);
+    vr_dstagvalo VARCHAR2(1000);
+  BEGIN
+    pc_obtem_log_cecred ( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
+                         ,pr_cdagenci  => pr_cdagenci   -- Cod. Agencia
+                         ,pr_nrdcaixa  => pr_nrdcaixa   -- Numero  Caixa
+                         ,pr_cdoperad  => pr_cdoperad   -- Operador
+                         ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
+                         ,pr_cdorigem  => pr_cdorigem   -- Identificador Origem
+                         ,pr_dtmvtini  => pr_dtmvtini   -- Data de movimento de log inicial
+                         ,pr_dtmvtfim  => pr_dtmvtfim   -- Data de movimento de log final
+                         ,pr_numedlog  => pr_numedlog   -- Indicador de log a carregar
+                         ,pr_cdsitlog  => pr_cdsitlog   -- Codigo de situa√ß√£o de log
+                         ,pr_nrdconta  => pr_nrdconta   -- Numero da Conta
+                         ,pr_nrsequen  => pr_nrsequen   -- Numero sequencial
+                         ,pr_nriniseq  => pr_nriniseq   -- numero inicial da sequencia
+                         ,pr_nrregist  => pr_nrregist   -- numero de registros
+                         ,pr_inestcri  => pr_inestcri   -- Estado Crise
+                         ,pr_cdifconv  => pr_cdifconv   -- IF Da TED
+                         ,pr_vlrdated  => pr_vlrdated   -- Valor da TED
+                         ,pr_dscritic           => pr_dscritic
+                         ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
+                         ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
+                         ,pr_tab_logspb_totais  => vr_tab_logspb_totais  --> Variavel para armazenar os totais por situa√ß√£o de log
+                         ,pr_tab_erro           => vr_tab_erro           --> Tabela contendo os erros
+                        );
+    -- Se houve erro na chamada
+    IF pr_dscritic = 'NOK' THEN                    
+      -- Se houver erro na tab erro
+      IF vr_tab_erro.count > 0 THEN
+        pr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+        pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;        
+      END IF;    
+    ELSE
+      -- Criar documento XML
+        dbms_lob.createtemporary(pr_clob_logspb, TRUE);
+        dbms_lob.open(pr_clob_logspb, dbms_lob.lob_readwrite);
+        
+        -- Insere o cabe√ßalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><root>');
+                               
+        
+        
+      -- Efetuaremos leitura das pltables e converteremos as mesmas para XML
+      IF vr_tab_logspb.count > 0 THEN
+        
+
+        -- Insere o cabe√ßalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '<linhas_logspb>');
+
+        --Buscar Primeiro registro
+        vr_idx_logspb := vr_tab_logspb.FIRST;
+
+        --Percorrer todos as regionais
+        WHILE vr_idx_logspb IS NOT NULL LOOP
+          vr_dsregistr:= '<linhas>'||
+                         '  <nrseqlog>' || nvl(vr_tab_logspb(vr_idx_logspb).nrseqlog,0)||'</nrseqlog>'||
+                         '  <dslinlog>' || nvl(vr_tab_logspb(vr_idx_logspb).dslinlog,' ')||'</dslinlog>'||
+                         '</linhas>';
+
+           -- Escrever no XML
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                                 ,pr_texto_completo => vr_dstextaux
+                                 ,pr_texto_novo     => vr_dsregistr
+                                 ,pr_fecha_xml      => FALSE);
+
+          --Proximo Registro
+          vr_idx_logspb := vr_tab_logspb.NEXT(vr_idx_logspb);
+
+        END LOOP;
+
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '</linhas_logspb>');
+      END IF;
+      
+      IF vr_tab_logspb_detalhe.count > 0 THEN
+         
+
+        -- Insere o cabe√ßalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '<linhas_logspb_detalhe>');
+
+        --Buscar Primeiro registro
+        vr_idx_logspb_detalhe := vr_tab_logspb_detalhe.FIRST;
+
+        --Percorrer todos as regionais
+        WHILE vr_idx_logspb_detalhe IS NOT NULL LOOP
+          vr_dsregistr:= '<linhas>'||
+                         '  <nrseqlog>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrseqlog,0)||'</nrseqlog>'||
+                         '  <cdbandst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdbandst,0)||'</cdbandst>'||
+                         '  <cdagedst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagedst,0)||'</cdagedst>'||
+                         '  <nrctadst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrctadst,' ')||'</nrctadst>'||
+                         '  <dsnomdst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsnomdst,' ')||'</dsnomdst>'||
+                         '  <dscpfdst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dscpfdst,0)||'</dscpfdst>'||
+                         '  <cdbanrem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdbanrem,0)||'</cdbanrem>'||
+                         '  <cdagerem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagerem,0)||'</cdagerem>'||
+                         '  <nrctarem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrctarem,' ')||'</nrctarem>'||
+                         '  <dsnomrem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsnomrem,' ')||'</dsnomrem>'||
+                         '  <dscpfrem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dscpfrem,0)||'</dscpfrem>'||                                                                                                                                                                                                                                 
+                         '  <hrtransa>' || to_char(to_date(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).hrtransa,'sssss'),'hh24:mi:ss') ||'</hrtransa>'||  
+                         '  <vltransa>' || nvl(to_char(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).vltransa,'fm999g999g9990d00'),'0')||'</vltransa>'||  
+                         '  <dsmotivo>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsmotivo,' ')||'</dsmotivo>'||  
+                         '  <dstransa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dstransa,' ')||'</dstransa>'||  
+                         '  <dsorigem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsorigem,' ')||'</dsorigem>'||  
+                         '  <cdagenci>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagenci,0)||'</cdagenci>'||  
+                         '  <nrdcaixa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrdcaixa,0)||'</nrdcaixa>'||  
+                         '  <cdoperad>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdoperad,' ')||'</cdoperad>'||                                                                                                                                                                                                          
+                         '  <dttransa>' || to_char(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dttransa,'DD/MM/RRRR') ||'</dttransa>'||  
+                         '  <nrsequen>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrsequen,0)||'</nrsequen>'||
+                         '  <cdisprem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdisprem,0)||'</cdisprem>'||
+                         '  <cdispdst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdispdst,0)||'</cdispdst>'||
+                         '  <cdtiptra>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdtiptra,0)||'</cdtiptra>'||
+                         '  <dstiptra>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dstiptra,' ')||'</dstiptra>'||
+                         '  <nmevento>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nmevento,' ')||'</nmevento>'||
+                         '  <nrctrlif>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrctrlif,' ')||'</nrctrlif>'||
+                         '</linhas>';
+           -- Escrever no XML
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                                 ,pr_texto_completo => vr_dstextaux
+                                 ,pr_texto_novo     => vr_dsregistr
+                                 ,pr_fecha_xml      => FALSE);
+
+          --Proximo Registro
+          vr_idx_logspb_detalhe := vr_tab_logspb_detalhe.NEXT(vr_idx_logspb_detalhe);
+
+        END LOOP;
+
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '</linhas_logspb_detalhe>');
+      END IF;
+      
+      IF vr_tab_logspb_totais.count > 0 THEN
+        
+
+        -- Insere o cabe√ßalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '<linhas_logspb_totais>');
+
+        --Buscar Primeiro registro
+        vr_idx_logspb_totais := vr_tab_logspb_totais.FIRST;
+
+        --Percorrer todos as regionais
+        WHILE vr_idx_logspb_totais IS NOT NULL LOOP
+          -- Nome das tags de acordo com o registro de total
+          IF vr_idx_logspb_totais = '1' THEN 
+            vr_dstagqtde := 'qtdenvok';
+            vr_dstagvalo := 'vlrenvok';
+          ELSIF vr_idx_logspb_totais = '2' THEN 
+            vr_dstagqtde := 'qtenvnok';
+            vr_dstagvalo := 'vlenvnok';
+          ELSIF vr_idx_logspb_totais = '3' THEN 
+            vr_dstagqtde := 'qtdrecok';
+            vr_dstagvalo := 'vlrrecok';  
+          ELSIF vr_idx_logspb_totais = '4' THEN 
+            vr_dstagqtde := 'qtrecnok';
+            vr_dstagvalo := 'vlrecnok';  
+          ELSIF vr_idx_logspb_totais = '5' THEN 
+            vr_dstagqtde := 'qtdrejok';
+            vr_dstagvalo := 'vlrrejok';
+          ELSE 
+            vr_dstagqtde := 'qtrejeit';
+            vr_dstagvalo := NULL;
+          END IF;
+          
+          vr_dsregistr:= '<linhas>'||
+                         '  <'||vr_dstagqtde||'>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).qtsitlog,'fm999g999g9990'),'0')||'</'||vr_dstagqtde||'>';
+          -- Se houver tag de valor
+          IF vr_dstagvalo IS NOT NULL THEN 
+            vr_dsregistr := vr_dsregistr || 
+                         '  <'||vr_dstagvalo||'>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).vlsitlog,'fm999g999g9990d00'),'0')||'</'||vr_dstagvalo||'>';
+          END IF;       
+          -- encerrar tag
+          vr_dsregistr := vr_dsregistr || '</linhas>';
+                  
+          -- Escrever no XML
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                                 ,pr_texto_completo => vr_dstextaux
+                                 ,pr_texto_novo     => vr_dsregistr
+                                 ,pr_fecha_xml      => FALSE);
+
+          --Proximo Registro
+          vr_idx_logspb_totais := vr_tab_logspb_totais.NEXT(vr_idx_logspb_totais);
+
+        END LOOP;
+
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '</linhas_logspb_totais></root>'
+                               ,pr_fecha_xml      => TRUE);
+      END IF;
+      
+    END IF;                    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro ao obter log (pc_obtem_log_cecred): '||SQLerrm;
+  END pc_obtem_log_cecred_car;
+
+
   /******************************************************************************/
   /**                       Gera log de envio TED                              **/
   /******************************************************************************/
   PROCEDURE pc_grava_log_ted
                         (pr_cdcooper IN INTEGER  --> Codigo cooperativo
-                        ,pr_dttransa IN DATE     --> Data transaÁ„o
-                        ,pr_hrtransa IN INTEGER  --> Hora TransaÁ„o
+                        ,pr_dttransa IN DATE     --> Data transa√ß√£o
+                        ,pr_hrtransa IN INTEGER  --> Hora Transa√ß√£o
                         ,pr_idorigem IN INTEGER  --> Id de origem
                         ,pr_cdprogra IN VARCHAR2 --> Codigo do programa
-                        ,pr_idsitmsg IN INTEGER  --> SituaÁ„o da mensagem.
+                        ,pr_idsitmsg IN INTEGER  --> Situa√ß√£o da mensagem.
                         ,pr_nmarqmsg IN VARCHAR2 --> Nome do arquivo da mensagem.
                         ,pr_nmevento IN VARCHAR2 --> Descricao do evento da mensagem.
                         ,pr_nrctrlif IN VARCHAR2 --> Numero de controle da mensagem.
@@ -1881,9 +2390,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_cdagenci IN INTEGER  --> Numero do pa.
                         ,pr_nrdcaixa IN INTEGER  --> Numero do caixa.
                         ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
-                        ,pr_nrispbif IN INTEGER  --> Numero de inscriÁ„o SPB
+                        ,pr_nrispbif IN INTEGER  --> Numero de inscri√ß√£o SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
-
+                        ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro
@@ -1891,7 +2401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   /*---------------------------------------------------------------------------------------------------------------
 
       Programa : pc_grava_log_ted             Antigo: b1wgen0050/grava-log-ted
-      Sistema  : ComunicaÁ„o com SPB
+      Sistema  : Comunica√ß√£o com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
       Data     : Junho/2015.                   Ultima atualizacao: 29/10/2015
@@ -1901,7 +2411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Frequencia: Sempre que for chamado
       Objetivo  : Procedimento para gera log de envio TED
 
-      AlteraÁ„o : 10/06/2015 - Convers„o Progress -> Oracle (Odirlei-Amcom)
+      Altera√ß√£o : 10/06/2015 - Convers√£o Progress -> Oracle (Odirlei-Amcom)
 
                   29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
 
@@ -1915,22 +2425,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrsequen   NUMBER;
 
   BEGIN
-    -- verificar se È somente numerico
+    -- verificar se √© somente numerico
     BEGIN
       vr_nrdconta := to_number(pr_nrdconta);
     EXCEPTION
-      -- se apresentou erro, retirar os caracteris n„o numericos
+      -- se apresentou erro, retirar os caracteris n√£o numericos
       WHEN OTHERS THEN
-        -- remover os caracteres n„o numericos e substituir por zero
+        -- remover os caracteres n√£o numericos e substituir por zero
         vr_nrdconta := REGEXP_REPLACE(pr_nrdconta,'([^1234567890])','0');
     END;
 
     BEGIN
       vr_nrctadif := to_number(pr_nrctadif);
     EXCEPTION
-      -- se apresentou erro, retirar os caracteris n„o numericos
+      -- se apresentou erro, retirar os caracteris n√£o numericos
       WHEN OTHERS THEN
-        -- remover os caracteres n„o numericos e substituir por zero
+        -- remover os caracteres n√£o numericos e substituir por zero
         vr_nrctadif := REGEXP_REPLACE(pr_nrctadif,'([^1234567890])','0');
     END;
 
@@ -1971,7 +2481,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 ,craplmt.nrdcaixa
                 ,craplmt.cdoperad
                 ,craplmt.nrispbif
-                ,craplmt.inestcri)
+                ,craplmt.inestcri
+                ,craplmt.cdifconv)
         VALUES ( nvl(pr_cdcooper,0)     --> craplmt.cdcooper
                 ,pr_dttransa            --> craplmt.dttransa
                 ,nvl(pr_hrtransa,0)     --> craplmt.hrtransa
@@ -1999,15 +2510,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 ,nvl(pr_nrdcaixa,0)     --> craplmt.nrdcaixa
                 ,nvl(pr_cdoperad,' ')   --> craplmt.cdoperad
                 ,nvl(pr_nrispbif,0)     --> craplmt.nrispbif
-                ,nvl(pr_inestcri,0) );  --> craplmt.inestcri
+                ,nvl(pr_inestcri,0)     --> craplmt.inestcri
+                ,nvl(pr_cdifconv,0));   --> craplmt.cdifconv
 
     EXCEPTION
       WHEN OTHERS THEN
-        pr_dscritic := 'N„o foi possivel gravar crplmt: '||SQLERRM;
+        pr_dscritic := 'N√£o foi possivel gravar crplmt: '||SQLERRM;
     END;
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'N„o foi possivel gerar log TED: '||SQLERRM;
+      pr_dscritic := 'N√£o foi possivel gerar log TED: '||SQLERRM;
   END pc_grava_log_ted;
 
   /******************************************************************************/
@@ -2047,7 +2559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_cdfinrcb   IN VARCHAR2        --> Finalidade
                         ,pr_dtmvtolt   IN VARCHAR2        --> Data atual
                         ,pr_dtmvtopr   IN VARCHAR2        --> Data proximo dia
-                        ,pr_cdidtran   IN VARCHAR2        --> Id transaÁ„o
+                        ,pr_cdidtran   IN VARCHAR2        --> Id transa√ß√£o
                         ,pr_dshistor   IN VARCHAR2        --> Historico
 
                         ,pr_cdagenci   IN INTEGER         --> agencia/pac
@@ -2065,24 +2577,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   /*---------------------------------------------------------------------------------------------------------------
 
       Programa : pc_gera_xml             Antigo: b1wgen0046/gera_xml
-      Sistema  : ComunicaÁ„o com SPB
+      Sistema  : Comunica√ß√£o com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 18/10/2016
 
       Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
       Objetivo  : Procedimento para Gerar arquivo XML para SPB
 
-      AlteraÁ„o : 09/06/2015 - Convers„o Progress -> Oracle (Odirlei-Amcom)
+      Altera√ß√£o : 09/06/2015 - Convers√£o Progress -> Oracle (Odirlei-Amcom)
 
                   06/07/2015 - Alterado a procedure gera_xml, movendo a chamada do script
                              mqcecred_envia.pl e do log do arquivo aux_nmarqlog para o
-                             final da procedure. Adicionado validaÁ„o de erro na procedure
+                             final da procedure. Adicionado valida√ß√£o de erro na procedure
                              grava-log-ted e tratamento de erro na chamada do gera_xml
                              quando aux_nmmsgenv = "STR0008" (Douglas - Chamado 294944).
 
+                  18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
+                               catalogo 4.07 (Lucas Ranghetti #537580)
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
     ------------> ESTRUTURAS DE REGISTRO <-----------
@@ -2094,9 +2608,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
 
-    -- Vari·veis para armazenar as informaÁıes em XML
+    -- Vari√°veis para armazenar as informa√ß√µes em XML
     vr_des_xml         CLOB;
-    -- Vari·vel para armazenar os dados do XML antes de incluir no CLOB
+    -- Vari√°vel para armazenar os dados do XML antes de incluir no CLOB
     vr_texto_completo  VARCHAR2(32600);
     -- diretorio de geracao do relatorio
     vr_dsdircop        VARCHAR2(500);
@@ -2110,7 +2624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_typ_saida       VARCHAR2(3);
 
     -----------------> SubRotinas <------------------
-    -- Subrotina para escrever texto na vari·vel CLOB do XML
+    -- Subrotina para escrever texto na vari√°vel CLOB do XML
     PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
                              pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
     BEGIN
@@ -2137,7 +2651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_des_xml := NULL;
     dbms_lob.createtemporary(vr_des_xml, TRUE);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-    -- Inicilizar as informaÁıes do XML
+    -- Inicilizar as informa√ß√µes do XML
     vr_texto_completo := NULL;
 
 
@@ -2153,7 +2667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     /* BODY  - mensagens STR e PAG
        STR0005 e PAG0107
-       DescriÁao: destinado a IF requisitar transferencia de recursos por
+       Descri√ßao: destinado a IF requisitar transferencia de recursos por
                   conta de nao correntistas. */
     IF vr_nmmsgenv IN ('STR0005','PAG0107') THEN
        pc_escreve_xml('<'|| vr_nmmsgenv ||'>
@@ -2189,10 +2703,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <TpCtCredtd>'||  pr_dsdctacr ||'</TpCtCredtd>
                         <CtCredtd>'||    pr_nrcctrcb ||'</CtCredtd>
                         <TpPessoaCredtd>'||           pr_dspesrec||'</TpPessoaCredtd>
-                        <CNPJ_CPFCliCredtdTitlar1>'|| pr_cpfcgrcb ||'</CNPJ_CPFCliCredtdTitlar1>
-                        <NomCliCredtdTitlar1>'||      pr_nmpesrcb ||'</NomCliCredtdTitlar1>
-                        <CNPJ_CPFCliCredtdTitlar2></CNPJ_CPFCliCredtdTitlar2>
-                        <NomCliCredtdTitlar2></NomCliCredtdTitlar2>
+                        <CNPJ_CPFCliCredtd>'|| pr_cpfcgrcb ||'</CNPJ_CPFCliCredtd>
+                        <NomCliCredtd>'||      pr_nmpesrcb ||'</NomCliCredtd>                        
                         <NumContrtoOpCred></NumContrtoOpCred>
                         <VlrLanc>'||         pr_vldocmto ||'</VlrLanc>
                         <FinlddIF>'||        pr_cdfinrcb ||'</FinlddIF>
@@ -2205,9 +2717,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                       </'|| vr_nmmsgenv ||'>
                       </SISMSG>');
 
+    /* Descricao: IF requisita Transferencia de IF para conta de deposito identificado (Bacenjud) */
+    ELSIF vr_nmmsgenv = 'STR0025' THEN
+      pc_escreve_xml('<STR0025>
+                        <CodMsg>'||          vr_nmmsgenv ||'</CodMsg>
+                        <NumCtrlIF>'||       pr_nrctrlif ||'</NumCtrlIF>
+                        <ISPBIFDebtd>'||     pr_ispbdebt ||'</ISPBIFDebtd>
+                        <AgDebtd>'||         pr_cdagectl ||'</AgDebtd>
+                        <CtDebtd>'||         pr_nrdconta ||'</CtDebtd>
+                        <NomCliDebtd>'||     pr_nmpesemi ||'</NomCliDebtd>
+                        <TpPessoaDebtd>'||   pr_dspesemi ||'</TpPessoaDebtd>
+                        <CNPJ_CPFCliDebtd>'||pr_cpfcgemi ||'</CNPJ_CPFCliDebtd>
+                        <ISPBIFCredtd>'||    pr_ispbcred ||'</ISPBIFCredtd>
+                        <VlrLanc>'||         pr_vldocmto ||'</VlrLanc>
+                        <NivelPref></NivelPref>
+                        <IdentcDep>'||       lpad(pr_nrcctrcb,18,'0')||'</IdentcDep>
+                        <DtAgendt>'||        pr_dtagendt ||'</DtAgendt>
+                        <HrAgendt></HrAgendt>
+                        <DtMovto>'||         pr_dtmvtolt ||'</DtMovto>
+                      </STR0025>
+                      </SISMSG>');
+
+    /* Descricao: IF requisita Transferencia de IF para conta de deposito identificado (Bacenjud) */
+    ELSIF vr_nmmsgenv = 'PAG0121' THEN
+      pc_escreve_xml('<PAG0121>
+                        <CodMsg>'||          vr_nmmsgenv ||'</CodMsg>
+                        <NumCtrlIF>'||       pr_nrctrlif ||'</NumCtrlIF>
+                        <ISPBIFDebtd>'||     pr_ispbdebt ||'</ISPBIFDebtd>
+                        <AgDebtd>'||         pr_cdagectl ||'</AgDebtd>
+                        <CtDebtd>'||         pr_nrdconta ||'</CtDebtd>
+                        <NomCliDebtd>'||     pr_nmpesemi ||'</NomCliDebtd>
+                        <TpPessoaDebtd>'||   pr_dspesemi ||'</TpPessoaDebtd>
+                        <CNPJ_CPFCliDebtd>'||pr_cpfcgemi ||'</CNPJ_CPFCliDebtd>
+                        <ISPBIFCredtd>'||    pr_ispbcred ||'</ISPBIFCredtd>
+                        <VlrLanc>'||         pr_vldocmto ||'</VlrLanc>
+                        <NivelPrefPAG></NivelPrefPAG>
+                        <IdentcDep>'||       lpad(pr_nrcctrcb,18,'0')  ||'</IdentcDep>
+                        <DtMovto>'||         pr_dtmvtolt ||'</DtMovto>
+                        <DtAgendt>'||        pr_dtagendt ||'</DtAgendt>
+                      </PAG0121>
+                      </SISMSG>');
+
     /* STR0008 ,  PAG0108 , STR 0009 e PAG 0109
-       - DescriÁao: destinado a IF requisitar transferencia de recursos
-                    entre pessoas fÌsicas ou jurÌdicas em IFs distintas. */
+       - Descri√ßao: destinado a IF requisitar transferencia de recursos
+                    entre pessoas f√≠sicas ou jur√≠dicas em IFs distintas. */
     ELSIF  vr_nmmsgenv IN ('STR0008','PAG0108','STR0009','PAG0109')  THEN
       /* Enquanto nao for alterada tela da rotina 20 Cx.Online */
       IF pr_nmmsgenv = 'STR0009' THEN
@@ -2268,8 +2821,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         </SISMSG>');
 
     /* STR0037 e PAG0137
-    DescriÁao: destinado a IF requisitar transferencia de recursos
-               com dÈbito em conta-sal·rio. (TEC) */
+    Descri√ßao: destinado a IF requisitar transferencia de recursos
+               com d√©bito em conta-sal√°rio. (TEC) */
     ELSIF vr_nmmsgenv IN ('STR0037', 'PAG0137') THEN
       pc_escreve_xml('<'|| vr_nmmsgenv ||'>
                         <CodMsg>'||      vr_nmmsgenv ||'</CodMsg>
@@ -2323,11 +2876,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     -- gravar log craplmt
     pc_grava_log_ted ( pr_cdcooper => pr_cdcooper    --> Codigo cooperativo
-                      ,pr_dttransa => trunc(SYSDATE) --> Data transaÁ„o
-                      ,pr_hrtransa => pr_hrtransa    --> Hora TransaÁ„o
+                      ,pr_dttransa => trunc(SYSDATE) --> Data transa√ß√£o
+                      ,pr_hrtransa => pr_hrtransa    --> Hora Transa√ß√£o
                       ,pr_idorigem => pr_cdorigem    --> Id de origem
                       ,pr_cdprogra => 'B1WGEN0046'   --> Codigo do programa
-                      ,pr_idsitmsg => 1              --> SituaÁ„o da mensagem.
+                      ,pr_idsitmsg => 1              --> Situa√ß√£o da mensagem.
                       ,pr_nmarqmsg => vr_nmarquiv   --> Nome do arquivo da mensagem.
                       ,pr_nmevento => pr_nmmsgenv   --> Descricao do evento da mensagem.
                       ,pr_nrctrlif => pr_nrctrlif   --> Numero de controle da mensagem.
@@ -2347,12 +2900,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                       ,pr_cdagenci => pr_cdagenci   --> Numero do pa.
                       ,pr_nrdcaixa => pr_nrdcaixa   --> Numero do caixa.
                       ,pr_cdoperad => pr_cdoperad   --> Codigo do operador.
-                      ,pr_nrispbif => pr_ispbcred   --> Numero de inscriÁ„o SPB
+                      ,pr_nrispbif => pr_ispbcred   --> Numero de inscri√ß√£o SPB
 
                       --------- SAIDA --------
                       ,pr_cdcritic => vr_cdcritic   --> Codigo do erro
                       ,pr_dscritic => vr_dscritic); --> Descricao do erro
-    /* vers„o progress nao trata saida de erro
+    /* vers√£o progress nao trata saida de erro
     IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL
       raise vr_exc_erro;
     END IF;*/
@@ -2373,7 +2926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_dscritic := 'Nao foi possivel executar comando unix. Erro '|| vr_dscritic;
       RAISE vr_exc_erro;
     END IF;
-    -- Uma vez executado o script n„o pode mais abortar o envio
+    -- Uma vez executado o script n√£o pode mais abortar o envio
     -- por isso realizado o commit;
     COMMIT;
 
@@ -2416,7 +2969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'N„o foi possivel gerar xml para o SPB: '||SQLERRM;
+      pr_dscritic := 'N√£o foi possivel gerar xml para o SPB: '||SQLERRM;
   END pc_gera_xml;
 
 
@@ -2457,6 +3010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                           ,pr_dshistor IN VARCHAR2  --> Dsc do Hist.
                           ,pr_hrtransa IN INTEGER   --> Hora transacao
                           ,pr_cdispbif IN INTEGER   --> ISPB Banco
+                          ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED(1-valida,0-nao valida)
                           --------- SAIDA --------
                           ,pr_cdcritic OUT INTEGER      --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2) IS --> Descricao do erro
@@ -2464,18 +3018,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   /*---------------------------------------------------------------------------------------------------------------
 
       Programa : proc_envia_tec_ted             Antigo: b1wgen0046/proc_envia_tec_ted
-      Sistema  : ComunicaÁ„o com SPB
+      Sistema  : Comunica√ß√£o com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 02/03/2017
 
       Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
       Objetivo  : Procedure para enviar TED/TEC  - SPB
 
-      AlteraÁ„o : 09/06/2015 - Convers„o Progress -> Oracle (Odirlei-Amcom)
-
+      Altera√ß√£o : 09/06/2015 - Convers√£o Progress -> Oracle (Odirlei-Amcom)
+      
+                  19/09/2016 - Removida a validacao de horario cadastrado na TAB085
+                               para a geracao de TED dos convenios. SD 519980.
+                               (Carlos Rafael Tanholi)      
+                  
+                  02/03/2017 - Incluir parametro para permitir n√£o validar o horario de limite de TED.
+                               PRJ335 - OFSSA (Odirlei-AMcom)                 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -2694,7 +3254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     /* Busca data do sistema */
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    -- Se nøo encontrar
+    -- Se n¬øo encontrar
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
       CLOSE BTCH0001.cr_crapdat;
       -- Montar mensagem de critica
@@ -2815,11 +3375,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			END IF;
     END IF;
 		
-    IF vr_flgutstr = FALSE AND vr_flgutpag = FALSE THEN
+    IF vr_flpagmax AND vr_flgutpag = FALSE AND vr_flgutstr = FALSE THEN
       vr_cdcritic := 0;
-      vr_dscritic := CASE WHEN vr_flpagmax THEN 
-			                         'Limite m·ximo por operaÁ„o: R$ ' || to_char(rw_crapcop.vlmaxpag, '99g999g990d00')
-                     			ELSE 'Hor·rio de envio de TEDs encerrado.' END;
+      vr_dscritic := 'Limite m√°ximo por opera√ß√£o: R$ ' || to_char(rw_crapcop.vlmaxpag, '99g999g990d00');
       --Gerar erro
       GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
@@ -2830,6 +3388,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                            ,pr_tab_erro => vr_tab_erro);
       --Levantar Excecao
       RAISE vr_exc_erro;
+      
+    END IF; 
+    
+    --> Verificar se deve validar horario
+    IF pr_flvldhor = 1 OR 
+       --> ou caso o servi√ßo pag e STR estejam desativados
+      (rw_crapcop.flgoppag = 0 AND rw_crapcop.flgopstr = 0) THEN
+      
+    IF vr_flgutstr = FALSE AND vr_flgutpag = FALSE THEN
+      vr_cdcritic := 0;
+        vr_dscritic :=  'Hor√°rio de envio de TEDs encerrado.';
+      --Gerar erro
+      GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => vr_tab_erro);
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --> caso nao precise validar e ambos os periodos ja foram excedidos      
+    ELSIF pr_flvldhor = 0 AND 
+          vr_flgutstr = FALSE AND vr_flgutpag = FALSE THEN 
+      --> Deve enviar como STR    
+      vr_flgutstr := TRUE; 
     END IF;
 
     --> Alimenta variaveis default
@@ -2898,7 +3483,79 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     /*** MONTA O BODY ***/
-    IF pr_flgctsal THEN
+    IF pr_tpdctacr = 9 THEN
+      -- Deposito Judicial. Enviar com STR0025 e PAG0121
+
+      -- Se PAG Disponivel e se o Banco de destino estiver operando  com PAG
+      IF vr_flgutpag AND vr_flgbcpag = 1 THEN
+        vr_nmmsgenv := 'PAG0121';
+      ELSIF vr_flgutstr THEN /* Se STR Disponivel */        
+        vr_nmmsgenv := 'STR0025';
+		  ELSE
+        vr_dscritic := 0;
+        vr_dscritic := 'Opera√ß√£o indispon√≠vel para o banco favorecido.';
+					
+        --Gerar erro
+        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+        --Levantar Excecao
+        RAISE vr_exc_erro;					
+      END IF;
+
+      pc_gera_xml (pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
+                  ,pr_cdorigem => pr_cdorigem          --> Id de origem
+                  ,pr_crapdat  => rw_crapdat           --> rowtype da crapdat
+                   /* HEADER */
+                  ,pr_nmmsgenv   => vr_nmmsgenv        --> Cod. da Mensagem
+                  ,pr_cdlegago   => vr_cdlegado        --> Cod. Legado
+                  ,pr_tpmanut    => vr_tpmanut         --> Inclusao
+                  ,pr_cdstatus   => vr_cdstatus        --> Mensagem do tipo definitiva
+                  ,pr_nroperacao => vr_nroperacao      --> Numero de operacao
+                  ,pr_fldebcred  => vr_fldebcred       --> Debito
+                   /* BODY */
+                  ,pr_nrctrlif => pr_nrctrlif          --> Nr. controle da IF
+                  ,pr_ispbdebt => SUBSTR(to_char(vr_ispbdebt,'fm00000000000000'),1,8) --> Inscricao SPB
+                  ,pr_cdbcoctl => rw_crapcop.cdbcoctl  --> Banco da Coop.
+                  ,pr_cdagectl => rw_crapcop.cdagectl  --> Agencia da Coop.
+                  ,pr_dsdctadb => NULL                 --> Tp. Conta de Debito
+                  ,pr_nrdconta => pr_nrdconta          --> Nr.da Conta remeternte
+                  ,pr_dspesemi => vr_dspesemi          --> Tp. Pessoa Remetente
+                  ,pr_cpfcgemi => pr_cpfcgemi          --> CPF Remet
+                  ,pr_cpfcgdel => NULL                 --> CPF Remetente - Segundo ttl
+                  ,pr_nmpesemi => pr_nmpesemi          --> Nome Remetente - Primeiro ttl
+                  ,pr_nmpesde1 => NULL                 --> Nome Remetente - Segundo ttl
+                  ,pr_ispbcred => vr_ispbcred          --> IF de Credito
+                  ,pr_cdbccxlt => pr_cdbccxlt          --> Cd. Banco Destino
+                  ,pr_cdagenbc => pr_cdagenbc          --> Agencia IF de credito
+                  ,pr_nrcctrcb => pr_nrcctrcb          --> Conta de credito
+                  ,pr_dsdctacr => vr_dsdctacr          --> Tp. Conta de Debito
+                  ,pr_dspesrec => NULL                 --> Tp. Pessoa Destino
+                  ,pr_cpfcgrcb => pr_cpfcgrcb          --> CPF Pessoa Destino
+                  ,pr_nmpesrcb => pr_nmpesrcb          --> Nome Pessoa Destino
+                  ,pr_vldocmto => vr_vldocmto          --> Valor do Docmto
+                  ,pr_cdfinrcb => NULL                 --> Finalidade
+                  ,pr_dtmvtolt => vr_dtmvtolt          --> Data atual
+                  ,pr_dtmvtopr => vr_dtmvtopr          --> Data proximo dia
+                  ,pr_cdidtran => pr_cdidtran          --> Id transa√ß√£o
+                  ,pr_dshistor => NULL                 --> Historico
+
+                  ,pr_cdagenci => pr_cdagenci          --> agencia/pac
+                  ,pr_nrdcaixa => pr_nrdcaixa          --> nr. do caixa
+                  ,pr_cdoperad => pr_cdoperad          --> operador
+                  ,pr_dtagendt => NULL                 --> Data de agendamento
+                  ,pr_nrseqarq => 0                    --> Sequencial arq
+                  ,pr_cdconven => 0                    --> convenio
+                  ,pr_hrtransa => pr_hrtransa          --> Hora transacao
+                  --------- SAIDA ---------
+                  ,pr_cdcritic => vr_cdcritic
+                  ,pr_dscritic => vr_dscritic );
+      
+    ELSIF pr_flgctsal THEN
       -- Enviar com STR0037 ou PAG0137
 
       -- Se PAG Disponivel e se o Banco de destino estiver operando  com PAG
@@ -2909,7 +3566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         vr_nmmsgenv := 'STR0037';
 				ELSE
 					vr_dscritic := 0;
-					vr_dscritic := 'OperaÁ„o indisponÌvel para o banco favorecido.';
+					vr_dscritic := 'Opera√ß√£o indispon√≠vel para o banco favorecido.';
 					
 					--Gerar erro
 					GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -2958,7 +3615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_cdfinrcb => NULL                 --> Finalidade
                   ,pr_dtmvtolt => vr_dtmvtolt          --> Data atual
                   ,pr_dtmvtopr => vr_dtmvtopr          --> Data proximo dia
-                  ,pr_cdidtran => pr_cdidtran          --> Id transaÁ„o
+                  ,pr_cdidtran => pr_cdidtran          --> Id transa√ß√£o
                   ,pr_dshistor => NULL                 --> Historico
 
                   ,pr_cdagenci => pr_cdagenci          --> agencia/pac
@@ -2985,7 +3642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         vr_nmmsgenv := 'STR0005';
 				ELSE
 					vr_dscritic := 0;
-					vr_dscritic := 'OperaÁ„o indisponÌvel para o banco favorecido.';
+					vr_dscritic := 'Opera√ß√£o indispon√≠vel para o banco favorecido.';
 					
 					--Gerar erro
 					GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -3034,7 +3691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_cdfinrcb   => pr_cdfinrcb        --> Finalidade
                   ,pr_dtmvtolt   => vr_dtmvtolt        --> Data atual
                   ,pr_dtmvtopr   => vr_dtmvtopr        --> Data proximo dia
-                  ,pr_cdidtran   => pr_cdidtran        --> Id transaÁ„o
+                  ,pr_cdidtran   => pr_cdidtran        --> Id transa√ß√£o
                   ,pr_dshistor   => pr_dshistor        --> Historico
 
                   ,pr_cdagenci   => pr_cdagenci        --> agencia/pac
@@ -3060,7 +3717,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
 
       /* Format da data deve ser AAAA-MM-DD */
+      IF  pr_nmpesemi = 'CECRED-RECARGA' THEN
+        vr_dtmvtopr := to_char(rw_crapdat.dtmvtocd,'RRRR-MM-DD');
+      END IF;
+      
       vr_dtmvtolt := to_char(rw_crapdat.dtmvtolt,'RRRR-MM-DD');
+      
       vr_dtagendt := to_char(pr_dtagendt,'RRRR-MM-DD');
 
       pc_gera_xml (pr_cdcooper   => pr_cdcooper        --> Codigo da cooperativa
@@ -3097,7 +3759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_cdfinrcb   => pr_cdfinrcb        --> Finalidade
                   ,pr_dtmvtolt   => vr_dtmvtolt        --> Data atual
                   ,pr_dtmvtopr   => vr_dtmvtopr        --> Data proximo dia
-                  ,pr_cdidtran   => pr_cdidtran        --> Id transaÁ„o
+                  ,pr_cdidtran   => pr_cdidtran        --> Id transa√ß√£o
                   ,pr_dshistor   => pr_dshistor        --> Historico
 
                   ,pr_cdagenci   => pr_cdagenci        --> agencia/pac
@@ -3121,21 +3783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       ELSE 
 				IF vr_flgutstr THEN /* Se STR Disponivel */
         vr_nmmsgenv := 'STR0008';
-				ELSE
-					vr_dscritic := 0;
-					vr_dscritic := 'OperaÁ„o indisponÌvel para o banco favorecido.';
-					
-					--Gerar erro
-					GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-															 ,pr_cdagenci => pr_cdagenci
-															 ,pr_nrdcaixa => pr_nrdcaixa
-															 ,pr_nrsequen => 1
-															 ,pr_cdcritic => vr_cdcritic
-															 ,pr_dscritic => vr_dscritic
-															 ,pr_tab_erro => vr_tab_erro);
-					--Levantar Excecao
-					RAISE vr_exc_erro;					
-				END IF;
+      END IF;
       END IF;
 
       pc_gera_xml (pr_cdcooper   => pr_cdcooper        --> Codigo da cooperativa
@@ -3172,7 +3820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   ,pr_cdfinrcb   => pr_cdfinrcb        --> Finalidade
                   ,pr_dtmvtolt   => vr_dtmvtolt        --> Data atual
                   ,pr_dtmvtopr   => vr_dtmvtopr        --> Data proximo dia
-                  ,pr_cdidtran   => pr_cdidtran        --> Id transaÁ„o
+                  ,pr_cdidtran   => pr_cdidtran        --> Id transa√ß√£o
                   ,pr_dshistor   => pr_dshistor        --> Historico
 
                   ,pr_cdagenci   => pr_cdagenci        --> agencia/pac
@@ -3201,11 +3849,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     WHEN OTHERS THEN
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'N„o foi possivel enviar TEC/TED para o SPB. '|| sqlerrm;
+      pr_dscritic:= 'N√£o foi possivel enviar TEC/TED para o SPB. '|| sqlerrm;
   END pc_proc_envia_tec_ted;
 
   /******************************************************************************/
-  /**                         Tela TRFSAL OpÁ„o B                              **/
+  /**                         Tela TRFSAL Op√ß√£o B                              **/
   /******************************************************************************/
   PROCEDURE pc_trfsal_opcao_b(pr_cdcooper IN INTEGER              --> Cooperativa
                              ,pr_cdagenci IN INTEGER             --> Cod. Agencia
@@ -3230,18 +3878,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Objetivo  : Gerar Arquivo TED para transmissao ao Banco Brasil referente as
                   contas salario.
 
-      AlteraÁ„o : 22/07/2015 - Convers„o Progress -> Oracle (Vanessa)
+      Altera√ß√£o : 22/07/2015 - Convers√£o Progress -> Oracle (Vanessa)
 
                   26/10/2015 - Inclusao de verificacao indicador estado de crise. (Jaison/Andrino)
 
-                  09/11/2015 - Ajustar a atualizaÁ„o do lote para gravar vr_qtinfoln
+                  09/11/2015 - Ajustar a atualiza√ß√£o do lote para gravar vr_qtinfoln
                                na qtinfoln (Douglas - Chamado 356338)
                                
                   22/09/2016 - Arrumar validacao para horario limite de envio de ted (Lucas Ranghetti #500917)
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
-    --Verifica se j· existe o lote criado
+    --Verifica se j√° existe o lote criado
     CURSOR cr_craplot(pr_cdcooper crapemp.cdcooper%TYPE,
                       pr_dtmvtolt crapdat.dtmvtolt%TYPE,
                       pr_nrdolote craplot.nrdolote%TYPE) IS
@@ -3297,12 +3945,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                             AND lcs.cdcooper = lfp.cdcooper
                             AND lcs.nrdconta = lfp.nrdconta
                             AND lcs.nrridlfp = lfp.progress_recid
-                            AND lfp.idsitlct = 'L' -- LanÁado
+                            AND lfp.idsitlct = 'L' -- Lan√ßado
                         )
              );
     rw_crapccs cr_crapccs%ROWTYPE;
     
-    /* Verificar existÍncia dos registros de debito */
+    /* Verificar exist√™ncia dos registros de debito */
     CURSOR cr_craplcs(pr_cdcooper crapemp.cdcooper%TYPE,
                       pr_dtmvtolt crapdat.dtmvtolt%TYPE,
                       pr_nrdconta craplcs.nrdconta%TYPE,
@@ -3436,7 +4084,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     IF  vr_flgutstr = FALSE AND vr_flgutpag = FALSE  THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Hor·rio de envio de TED/DOC encerrado.';
+        vr_dscritic := 'Hor√°rio de envio de TED/DOC encerrado.';
         --Levantar Excecao
         RAISE vr_exc_erro;
     END IF;
@@ -3460,7 +4108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                    pr_nrdolote => 10200);
     FETCH cr_craplot INTO rw_craplot;
 
-    --Se n„o achou o lote cria o mesmo
+    --Se n√£o achou o lote cria o mesmo
     IF cr_craplot%NOTFOUND THEN
        BEGIN
            INSERT INTO craplot
@@ -3495,7 +4143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
              -- fecha cursor de lote e da tab
              CLOSE cr_craplot;
-            -- Executa a exceÁ„o
+            -- Executa a exce√ß√£o
             RAISE vr_exc_erro;
        END;
 
@@ -3530,7 +4178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            WHEN OTHERS THEN
               vr_cdcritic := 9999;
               vr_dscritic := 'Erro ao atualizar o registro na CRAPLCS: '||SQLERRM;
-              -- Executa a exceÁ„o
+              -- Executa a exce√ß√£o
               RAISE vr_exc_erro;
         END;
 
@@ -3543,7 +4191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                         ,pr_nrdcaixa => 0                      --> Numero do caixa
                                         ,pr_cdoperad => pr_cdoperad            --> Codigo do operador
                                         ,pr_nmdatela => 'TRFSAL'               --> Nome da tela
-                                        ,pr_idorigem => 1                      --> DescriÁ„o de origem do registro
+                                        ,pr_idorigem => 1                      --> Descri√ß√£o de origem do registro
                                         ,pr_nrdconta => rw_crapccs.nrdconta    --> Numero da conta do cooperado
                                         ,pr_rowidlcs => rw_crapccs.rowidlcs
                                         ,pr_cdagetrf => rw_crapccs.cdagetrf    --> Numero do PA.
@@ -3567,7 +4215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         WHEN OTHERS THEN
                           vr_cdcritic := 9999;
                           vr_dscritic := 'Erro ao atualizar o registro na CRAPLFP: '||SQLERRM;
-                          -- Executa a exceÁ„o
+                          -- Executa a exce√ß√£o
                           RAISE vr_exc_erro;
                   END;
 
@@ -3582,7 +4230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         WHEN OTHERS THEN
                           vr_cdcritic := 9999;
                           vr_dscritic := 'Erro ao atualizar o registro na CRAPLFP: '||SQLERRM;
-                          -- Executa a exceÁ„o
+                          -- Executa a exce√ß√£o
                           RAISE vr_exc_erro;
                    END;
 
@@ -3590,7 +4238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
            ELSE
                IF vr_cdcritic IS NOT NULL THEN
-                  -- Executa a exceÁ„o
+                  -- Executa a exce√ß√£o
                   RAISE vr_exc_erro;
                END IF;
            END IF;
@@ -3679,7 +4327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 WHEN OTHERS THEN
                   vr_cdcritic := 9999;
                   vr_dscritic := 'Erro ao inserir craplcs: ' || rw_crapccs.rowidlcs || SQLERRM;
-                  -- Executa a exceÁ„o
+                  -- Executa a exce√ß√£o
                   RAISE vr_exc_erro;
            END;
            IF rw_crapccs.cdbantrf = 1 THEN
@@ -3732,7 +4380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            WHEN OTHERS THEN
              vr_cdcritic := 9999;
              vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-             -- Executa a exceÁ„o
+             -- Executa a exce√ß√£o
              RAISE vr_exc_erro;
         END;
     END LOOP; /* Fim do loop rw_craplcs */
@@ -3831,7 +4479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     WHEN OTHERS THEN
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro n„o tratado. '|| SQLERRM;
+      pr_dscritic:= 'Erro n√£o tratado. '|| SQLERRM;
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_nmarqlog     => 'TRFSAL',
@@ -3843,7 +4491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   END pc_trfsal_opcao_b;
 
   /******************************************************************************/
-  /**                         Tela TRFSAL OpÁ„o X                              **/
+  /**                         Tela TRFSAL Op√ß√£o X                              **/
   /******************************************************************************/
   PROCEDURE pc_trfsal_opcao_x(pr_cdcooper IN INTEGER              --> Cooperativa
                              ,pr_cdagenci IN INTEGER             --> Cod. Agencia
@@ -3868,7 +4516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Objetivo  : Gerar Arquivo TED para transmissao ao Banco Brasil referente as
                   contas salario.
 
-      AlteraÁ„o : 09/11/2015 - Ajustar a atualizaÁ„o do lote para gravar vr_qtinfoln
+      Altera√ß√£o : 09/11/2015 - Ajustar a atualiza√ß√£o do lote para gravar vr_qtinfoln
                                na qtinfoln (Douglas - Chamado 356338)
 
                   26/10/2015 - Inclusao de verificacao indicador estado de crise. (Jaison/Andrino)
@@ -3876,7 +4524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
-    --Verifica se j· existe o lote criado
+    --Verifica se j√° existe o lote criado
     CURSOR cr_craplot(pr_cdcooper crapemp.cdcooper%TYPE,
                       pr_dtmvtolt crapdat.dtmvtolt%TYPE,
                       pr_nrdolote craplot.nrdolote%TYPE) IS
@@ -3952,7 +4600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                    AND lcs.cdcooper = lfp.cdcooper
                    AND lcs.nrdconta = lfp.nrdconta
                    AND lcs.nrridlfp = lfp.progress_recid
-                   AND lfp.idsitlct = 'L' -- LanÁado
+                   AND lfp.idsitlct = 'L' -- Lan√ßado
                )
              );
     rw_crapccs cr_crapccs%ROWTYPE;
@@ -4059,7 +4707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                    pr_nrdolote => 10200);
     FETCH cr_craplot INTO rw_craplot;
 
-    --Se n„o achou o lote cria o mesmo
+    --Se n√£o achou o lote cria o mesmo
     IF cr_craplot%NOTFOUND THEN
        BEGIN
            INSERT INTO craplot
@@ -4094,7 +4742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
              -- fecha cursor de lote e da tab
              CLOSE cr_craplot;
-            -- Executa a exceÁ„o
+            -- Executa a exce√ß√£o
             RAISE vr_exc_erro;
        END;
 
@@ -4130,7 +4778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            WHEN OTHERS THEN
               vr_cdcritic := 9999;
               vr_dscritic := 'Erro ao atualizar o registro na CRAPLCS: '||SQLERRM;
-              -- Executa a exceÁ„o
+              -- Executa a exce√ß√£o
               RAISE vr_exc_erro;
         END;
 
@@ -4217,7 +4865,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             WHEN OTHERS THEN
               vr_cdcritic := 9999;
               vr_dscritic := 'Erro ao inserir craplcs: ' || rw_crapccs.rowidlcs || SQLERRM;
-              -- Executa a exceÁ„o
+              -- Executa a exce√ß√£o
               RAISE vr_exc_erro;
        END;
        IF rw_crapccs.cdbantrf = 1 THEN
@@ -4268,12 +4916,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             WHEN OTHERS THEN
               vr_cdcritic := 9999;
               vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
-              -- Executa a exceÁ„o
+              -- Executa a exce√ß√£o
               RAISE vr_exc_erro;
          END;
 
-         /* Atualizar o registro do lanÁamento do pagamento eliminado possÌveis erros
-            anteriores e retornando a situaÁ„o do registro para a situaÁ„o inicial */
+         /* Atualizar o registro do lan√ßamento do pagamento eliminado poss√≠veis erros
+            anteriores e retornando a situa√ß√£o do registro para a situa√ß√£o inicial */
          UPDATE craplfp lfp
             SET lfp.idsitlct = 'L'
                ,lfp.dsobslct = NULL
@@ -4377,7 +5025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     WHEN OTHERS THEN
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro n„o tratado. '|| SQLERRM;
+      pr_dscritic:= 'Erro n√£o tratado. '|| SQLERRM;
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_nmarqlog     => 'TRFSAL',
@@ -4391,7 +5039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   /* Procedure para retornar o estado de crise */
   PROCEDURE pc_estado_crise (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
                             ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
-                            ,pr_clobxmlc OUT CLOB) IS -- XML com informaÁıes de LOG
+                            ,pr_clobxmlc OUT CLOB) IS -- XML com informa√ß√µes de LOG
     -- .........................................................................
     --
     --  Programa  : pc_estado_crise
@@ -4461,7 +5109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         dbms_lob.createtemporary(vr_clobxmlc, TRUE);
         dbms_lob.open(vr_clobxmlc, dbms_lob.lob_readwrite);
 
-        -- Insere o cabeÁalho do XML 
+        -- Insere o cabe√ßalho do XML 
         GENE0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
@@ -4548,7 +5196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END;
   END pc_estado_crise;
   
-	PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2 -- CÛdigo do programa
+  PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2 -- C√≥digo do programa
                            ,pr_nmarqxml IN  VARCHAR2 -- Nome do arquivo xml
                            ,pr_nmarqlog IN  VARCHAR2 -- Nome do arquivo de log
 													 ,pr_clobxml  IN  CLOB     -- CLOB com os dados das IF
@@ -4577,7 +5225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 																														 ,pr_dstext => pr_nmarqlog
 																														 ,pr_delimitador => '/');
 																
-			-- Verificar se banco est· ativo no ispb
+			-- Verificar se banco est√° ativo no ispb
       CURSOR cr_crapban (pr_nrispbif IN crapban.nrispbif%TYPE) IS
 			  SELECT 1
 				  FROM crapban ban
@@ -4585,7 +5233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				   AND ban.flgdispb = 1;
 			rw_crapban cr_crapban%ROWTYPE;
 																														 
-			-- Verificar se banco est· ativo no ispb
+			-- Verificar se banco est√° ativo no ispb
       CURSOR cr_crapban_bb (pr_nrispbif IN crapban.nrispbif%TYPE) IS
 			  SELECT 1
 				  FROM crapban ban
@@ -4603,16 +5251,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 		BEGIN					
 		  -- Percorre IFs
       FOR rw_situacao_if IN cr_situacao_if LOOP
-				-- Se for uma das duas situaÁıes
+				-- Se for uma das duas situa√ß√µes
 				IF rw_situacao_if.cdsitope IN(4,5) THEN
-					-- Quando for BB precisamos filtrar por CÛdigo do banco e n˙mero do ISPB
+					-- Quando for BB precisamos filtrar por C√≥digo do banco e n√∫mero do ISPB
 					IF rw_situacao_if.nrispbif = 0 THEN			
-						-- Verifica se situaÁ„o atuel È operante
+						-- Verifica se situa√ß√£o atuel √© operante
 						IF rw_situacao_if.cdsitope = 4 THEN
-							-- Verificar se È operante no ispb
+							-- Verificar se √© operante no ispb
 							OPEN cr_crapban_bb(pr_nrispbif => rw_situacao_if.nrispbif);
 							FETCH cr_crapban_bb INTO rw_crapban_bb;
-							-- Se n„o encontrou banco 
+							-- Se n√£o encontrou banco 
 							IF cr_crapban_bb%FOUND THEN
 								-- Banco do Brasil				
 								UPDATE crapban ban
@@ -4633,12 +5281,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 								 AND ban.cdbccxlt = 1;						 
 						END IF;
 				  ELSE
-					  -- Verifica se situaÁ„o atuel È operante
+					  -- Verifica se situa√ß√£o atuel √© operante
 						IF rw_situacao_if.cdsitope = 4 THEN
-              -- Verificar se È operante no ispb
+              -- Verificar se √© operante no ispb
 							OPEN cr_crapban(pr_nrispbif => rw_situacao_if.nrispbif);
 							FETCH cr_crapban INTO rw_crapban;
-							-- Se n„o encontrou banco 
+							-- Se n√£o encontrou banco 
 							IF cr_crapban%FOUND THEN
 								UPDATE crapban ban
 									 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
@@ -4655,7 +5303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 							 WHERE ban.nrispbif = rw_situacao_if.nrispbif;
 						END IF;
 				  END IF;					
-					-- Se n„o atualizou nenhum registro
+					-- Se n√£o atualizou nenhum registro
 /*					IF SQL%ROWCOUNT = 0 THEN
 						vr_lista_ispb := vr_lista_ispb || 'ISPB: ' || 
 						                 to_char(rw_situacao_if.nrispbif, '00000000') || '<br/>';
@@ -4665,15 +5313,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			
 /*		BEGIN
 			IF trim(vr_lista_ispb) IS NOT NULL THEN
-				vr_dsdemail := 'N„o foi possÌvel atualizar a situaÁ„o operacional da IF na camara' ||
-											' PAG: InstituiÁ„o Financeira n„o encontrada ou n„o operante no STR.<br/><br/>' ||
+				vr_dsdemail := 'N√£o foi poss√≠vel atualizar a situa√ß√£o operacional da IF na camara' ||
+											' PAG: Institui√ß√£o Financeira n√£o encontrada ou n√£o operante no STR.<br/><br/>' ||
 											vr_lista_ispb;
 															
 				-- Envia email para o spb
 				gene0003.pc_solicita_email(pr_cdcooper        => 3
 																	,pr_cdprogra        => pr_cdprogra
 																	,pr_des_destino     => 'spb@cecred.coop.br'
-																	,pr_des_assunto     => 'PAG0101 - Erro na atualizaÁ„o da situaÁ„o operacional da IF'
+																	,pr_des_assunto     => 'PAG0101 - Erro na atualiza√ß√£o da situa√ß√£o operacional da IF'
 																	,pr_des_corpo       => vr_dsdemail
 																	,pr_des_anexo       => ''
 																	,pr_flg_log_batch   => 'N' --> Incluir inf. no log
@@ -4696,7 +5344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 																											'. Codigo Erro: Erro ao enviar email ' || vr_dscritic);
 		END;				 	
 	*/		
-		-- ExecuÁ„o OK
+		-- Execu√ß√£o OK
 		pr_des_erro := 'OK';
 		-- Efetuar commit
 		COMMIT;
@@ -4717,14 +5365,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 	  END;
 	END pc_proc_pag0101;
   
-	PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- CÛdigo do programa
+	PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- C√≥digo do programa
 														 ,pr_nmarqxml IN VARCHAR2 -- Nome do arquivo xml
                              ,pr_nmarqlog IN VARCHAR2 -- Nome do arquivo de log
-														 ,pr_cdmensag IN VARCHAR2 -- CÛdigo da mensagem
-														 ,pr_nrispbif IN INTEGER  -- N˙mero do ISPB
-														 ,pr_cddbanco IN INTEGER  -- CÛdigo do banco
+														 ,pr_cdmensag IN VARCHAR2 -- C√≥digo da mensagem
+														 ,pr_nrispbif IN INTEGER  -- N√∫mero do ISPB
+														 ,pr_cddbanco IN INTEGER  -- C√≥digo do banco
 														 ,pr_nmdbanco IN VARCHAR2 -- Nome do banco
-														 ,pr_dtinispb IN VARCHAR2 -- Data inÌcio ISPB
+														 ,pr_dtinispb IN VARCHAR2 -- Data in√≠cio ISPB
 														 ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
     BEGIN																						 
     ------------------------------------------------------------------------------
@@ -4750,7 +5398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			vr_dscritic VARCHAR2(4000);
 			vr_exc_erro EXCEPTION;
 		
-		  -- Busca o banco pelo cÛdigo e n˙mero ispb
+		  -- Busca o banco pelo c√≥digo e n√∫mero ispb
 		  CURSOR cr_crapban IS
 				SELECT CASE WHEN pr_cddbanco > 0 THEN 
 								 (SELECT ROWID
@@ -4765,9 +5413,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			rw_crapban cr_crapban%ROWTYPE;
 		
     BEGIN
-			-- Tratar mensagem STR0019 - Inclus„o IF STR
+			-- Tratar mensagem STR0019 - Inclus√£o IF STR
 		  IF (pr_cdmensag = 'STR0019') THEN
-				 -- Busca banco pelo cÛdigo do banco e n˙mero ispb
+				 -- Busca banco pelo c√≥digo do banco e n√∫mero ispb
 				 OPEN cr_crapban;
 				 FETCH cr_crapban 
 					INTO rw_crapban;
@@ -4807,8 +5455,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 										,to_date(pr_dtinispb, 'DD/MM/RRRR')
 										,trunc(SYSDATE));
 					END IF;
-			ELSE -- Tratar mensagem STR0018 - Exclus„o IF STR
-				 -- Busca banco pelo cÛdigo do banco e n˙mero ispb
+			ELSE -- Tratar mensagem STR0018 - Exclus√£o IF STR
+				 -- Busca banco pelo c√≥digo do banco e n√∫mero ispb
 				 OPEN cr_crapban;
 				 FETCH cr_crapban 
 				 INTO rw_crapban;
@@ -4823,15 +5471,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 								,ban.flgdispb = 0
 					 WHERE ban.rowid = rw_crapban.rowid_ban;							
 				ELSE
-					vr_dsdemail := 'N„o foi possÌvel excluir registro de participante no STR: ' ||
-												 'InstituiÁ„o Financeira n„o encontrada: ISPB: ' ||
+					vr_dsdemail := 'NƒÉo foi poss√≠vel excluir registro de participante no STR: ' ||
+												 'Institui√ßƒÉo Financeira nƒÉo encontrada: ISPB: ' ||
 												 to_char(pr_nrispbif, '00000000');
 													
 					-- Envia email para o spb
 					gene0003.pc_solicita_email(pr_cdcooper        => 3
 																		,pr_cdprogra        => pr_cdprogra
 																		,pr_des_destino     => 'spb@cecred.coop.br'
-																		,pr_des_assunto     => 'STR0018 - Erro na exclus„o de participante no STR'
+																		,pr_des_assunto     => 'STR0018 - Erro na exclusƒÉo de participante no STR'
 																		,pr_des_corpo       => vr_dsdemail
 																		,pr_des_anexo       => ''
 																		,pr_flg_log_batch   => 'N' --> Incluir inf. no log
@@ -4879,7 +5527,171 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				ROLLBACK;
 	  END;
 	END pc_proc_opera_str;
-	
+  
+  /** Procedimento para listar TEDs estornadas e gerar TempTable **/
+  PROCEDURE pc_busca_log_TED_estorn ( pr_cdcooper  IN INTEGER  -- Codigo cooperativa
+                                     ,pr_nrdconta  IN VARCHAR2 -- Numero da Conta
+                                     ,pr_nrsequen  IN NUMBER   -- Numero da sequencia
+                                     ,pr_cdorigem  IN INTEGER  -- Codigo de origem
+                                     ,pr_dtmvtini  IN DATE     -- Data de movimento do log inicial
+                                     ,pr_dtmvtfim  IN DATE     -- Data de movimento do log final
+                                     ,pr_nriniseq  IN INTEGER  -- numero inicial da sequencia
+                                     ,pr_nrregist  IN INTEGER  -- Numero de registros                                     
+                                     ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
+                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
+                                     ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                                     ,pr_nrispbif  IN crapban.nrispbif%TYPE -- ISPB da Cecred
+                                     ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
+                                     ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
+                                     ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
+                              ) IS
+    /*.........................................................................
+    --
+    --  Programa : pc_busca_log_TED_estorn           
+    --
+    --  Sistema  : Cred
+    --  Sigla    : SSPB0001
+    --  Autor    : Odirlei Busana - AMcom
+    --  Data     : Janeiro/2017.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedimento para listar TEDs estornadas e gerar TempTable
+    --   Alteracoes:
+    --               
+      ..............................................................................*/
+
+    vr_nrseqlog PLS_INTEGER;
+    vr_nrregist INTEGER;
+    vr_qtregist NUMBER := 0;
+    vr_qtsitlog NUMBER := 0;
+    vr_vlsitlog NUMBER := 0;
+    vr_idx      VARCHAR2(30);
+
+    --Ler Log de mensagens para transa√ß√µes ao SPB
+    CURSOR cr_craptvl IS
+      SELECT tvl.vldocrcb,
+             tvl.cdbccrcb,
+             tvl.cdagercb,
+             tvl.nrcctrcb,
+             tvl.nmpesrcb,
+             tvl.cpfcgrcb,
+             tvl.cdbcoenv,
+             cop.cdagectl,
+             tvl.nrdconta,
+             tvl.nmpesemi,
+             tvl.cpfcgemi,
+             tvl.hrtransa,           
+             (CASE
+               WHEN cop.flgoppag = 1 AND cop.inioppag <= tvl.hrtransa AND
+                    cop.fimoppag >= tvl.hrtransa AND ban.FLGOPPAG = 1 THEN
+                'PAG0108'
+               ELSE
+                'STR0008'
+              END) nmevento,
+             tvl.cdoperad,
+             afr.cdcanal_operacao idorigem,
+             tvl.idopetrf,
+             tvl.dtmvtolt,
+             tvl.nrispbif,
+             tvl.progress_recid
+        FROM craptvl tvl,
+             tbgen_analise_fraude afr,
+             crapcop cop,
+             crapban ban
+       WHERE cop.cdcooper = afr.cdcooper 
+         AND tvl.cdbccrcb = ban.cdbccxlt
+         AND afr.idanalise_fraude = tvl.idanafrd
+         AND afr.cdproduto   = 30      -- 30 - TED
+         AND afr.tptransacao = 1       --  1 - Online       
+         AND afr.cdparecer_analise = 2 --  2 - Reprovado
+         AND afr.cdcooper = pr_cdcooper
+         AND afr.nrdconta = decode(pr_nrdconta,0,afr.nrdconta,pr_nrdconta)
+         AND tvl.idorigem = decode(pr_cdorigem,0,tvl.idorigem,pr_cdorigem)
+         AND afr.dtmvtolt BETWEEN pr_dtmvtini AND pr_dtmvtfim
+         AND tvl.vldocrcb = decode(pr_vlrdated,0,tvl.vldocrcb,pr_vlrdated)
+       ORDER BY tvl.hrtransa;       
+       
+
+  BEGIN
+
+    vr_nrregist := pr_nrregist;
+    vr_qtregist := 0;
+    vr_qtsitlog := 0;
+    vr_vlsitlog := 0;
+
+    --Ler Log de mensagens para transa√ß√µes ao SPB
+    FOR rw_craptvl IN cr_craptvl LOOP
+
+      vr_qtregist := vr_qtregist + 1;
+      -- Acumular totais
+      IF pr_tab_logspb_totais.EXISTS(5) THEN
+        pr_tab_logspb_totais(5).qtsitlog := nvl(pr_tab_logspb_totais(5).qtsitlog,0)
+                                                        + 1;
+        pr_tab_logspb_totais(5).vlsitlog := nvl(pr_tab_logspb_totais(5).vlsitlog,0)
+                                                        + rw_craptvl.vldocrcb;
+      ELSE --Se n√£o existe, somente inicializar
+        pr_tab_logspb_totais(5).qtsitlog := 1;
+        pr_tab_logspb_totais(5).vlsitlog := rw_craptvl.vldocrcb;
+      END IF;
+      
+      /* controles da pagina√ß√£o */
+      IF (vr_qtregist < pr_nriniseq) OR (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+        -- Pular o registro
+        CONTINUE;
+      END IF;
+      
+      IF  vr_nrregist > 0 THEN
+        vr_idx := lpad(rw_craptvl.hrtransa,5,'0')||lpad(rw_craptvl.progress_recid,25,'0');
+
+         pr_tab_logspb_detalhe(vr_idx).cdbanrem := rw_craptvl.cdbcoenv;
+         pr_tab_logspb_detalhe(vr_idx).cdagerem := rw_craptvl.cdagectl;
+         pr_tab_logspb_detalhe(vr_idx).nrctarem := rw_craptvl.nrdconta;
+         pr_tab_logspb_detalhe(vr_idx).dsnomrem := rw_craptvl.nmpesemi;
+         pr_tab_logspb_detalhe(vr_idx).dscpfrem := rw_craptvl.cpfcgemi;
+         pr_tab_logspb_detalhe(vr_idx).cdbandst := rw_craptvl.cdbccrcb;
+         pr_tab_logspb_detalhe(vr_idx).cdagedst := rw_craptvl.cdagercb;
+         pr_tab_logspb_detalhe(vr_idx).nrctadst := rw_craptvl.nrcctrcb;
+         pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craptvl.nmpesrcb;
+         pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craptvl.cpfcgrcb;
+         pr_tab_logspb_detalhe(vr_idx).cdisprem := pr_nrispbif;
+         pr_tab_logspb_detalhe(vr_idx).cdispdst := rw_craptvl.nrispbif;
+                
+         
+         pr_tab_logspb_detalhe(vr_idx).nrsequen := 1;-->rw_craptvl.nrsequen;
+         pr_tab_logspb_detalhe(vr_idx).nrseqlog := 1;-->rw_craptvl.nrsequen;
+         
+         pr_tab_logspb_detalhe(vr_idx).dttransa := rw_craptvl.dtmvtolt;
+         
+         pr_tab_logspb_detalhe(vr_idx).nmevento := rw_craptvl.nmevento;
+         pr_tab_logspb_detalhe(vr_idx).nrctrlif := rw_craptvl.idopetrf;
+         pr_tab_logspb_detalhe(vr_idx).hrtransa := rw_craptvl.hrtransa;
+         pr_tab_logspb_detalhe(vr_idx).vltransa := rw_craptvl.vldocrcb;
+         pr_tab_logspb_detalhe(vr_idx).dsmotivo := 'TED estornada por suspeita e/ou fraude comprovada.';
+         pr_tab_logspb_detalhe(vr_idx).dstransa := 'ESTORNADA';
+         pr_tab_logspb_detalhe(vr_idx).cdagenci := rw_craptvl.cdagectl ;
+--         pr_tab_logspb_detalhe(vr_idx).nrdcaixa := rw_craptvl.nrdcaixa ;
+         pr_tab_logspb_detalhe(vr_idx).cdoperad := rw_craptvl.cdoperad ;
+         pr_tab_logspb_detalhe(vr_idx).dsorigem := gene0001.vr_vet_des_origens(rw_craptvl.idorigem);
+                
+      END IF;
+
+      vr_nrregist := vr_nrregist - 1;
+
+      /* Variaveis CHAR
+       Como pode haver digito X nas contas - adicionar 0 a frente
+       PS: mesmo a conta do remetente pode ter, pois pode ser o
+       remetente de outra instituicao financeira. */
+      pr_tab_logspb_detalhe(vr_idx).nrctarem := lpad(pr_tab_logspb_detalhe(vr_idx).nrctarem,14,'0');
+      pr_tab_logspb_detalhe(vr_idx).nrctadst := lpad(pr_tab_logspb_detalhe(vr_idx).nrctadst,14,'0');
+
+    END LOOP;
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro ao buscar log SPB (pc_busca_log_TED_estorn): '||SQLerrm;
+
+  END pc_busca_log_TED_estorn;
+  
 END sspb0001;
 /
-
