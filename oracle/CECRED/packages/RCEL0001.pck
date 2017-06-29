@@ -484,6 +484,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			CURSOR cr_recparam(pr_cdcooper IN tbrecarga_param.cdcooper%TYPE)IS
 			  SELECT tpar.flgsituacao_sac
 				      ,tpar.flgsituacao_taa
+				      ,tpar.flgsituacao_ib
 				  FROM tbrecarga_param tpar
 				 WHERE tpar.cdcooper = pr_cdcooper;
 			rw_recparam cr_recparam%ROWTYPE;
@@ -494,7 +495,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			FETCH cr_recparam INTO rw_recparam;
 			CLOSE cr_recparam;
 			
-			IF pr_idorigem = 4 THEN --> TAA
+			IF pr_idorigem = 3 THEN --> IBANK / MOBILE
+				pr_flgsitrc := nvl(rw_recparam.flgsituacao_ib,0);
+			ELSIF pr_idorigem = 4 THEN --> TAA
 				pr_flgsitrc := nvl(rw_recparam.flgsituacao_taa,0);
 			ELSIF pr_idorigem = 5 THEN --> AYLLOS WEB
 				pr_flgsitrc := nvl(rw_recparam.flgsituacao_sac,0);
@@ -3499,6 +3502,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           FROM tbrecarga_favorito fav
          WHERE fav.cdcooper = pr_cdcooper
            AND fav.nrdconta = pr_nrdconta;
+           
+      -- Verificar se número do celular é fraudulento
+		  CURSOR cr_crapcbf(pr_dsfraude IN crapcbf.dsfraude%TYPE) IS
+			  SELECT 1
+				  FROM crapcbf cbf
+				 WHERE cbf.cdcooper = 3
+				   AND cbf.tpfraude = 4
+					 AND cbf.dsfraude = pr_dsfraude;
+			rw_crapcbf cr_crapcbf%ROWTYPE;
+			cr_crapcbf_found BOOLEAN := FALSE;
       
 		BEGIN
       
@@ -3514,6 +3527,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       CLOSE cr_favorito;
       
       IF NOT vr_flgfound THEN
+        
+        -- Verificar se número de celular é fraudulento
+			  OPEN cr_crapcbf(pr_dsfraude => to_char(pr_nrddd) || TO_CHAR(pr_nrcelular, '00000g0000','nls_numeric_characters=.-'));
+			  FETCH cr_crapcbf INTO rw_crapcbf;
+        cr_crapcbf_found := cr_crapcbf%FOUND;
+				CLOSE cr_crapcbf;
+        
+        --Se encontrou o número como fraudulento, então retorna exception
+        IF cr_crapcbf_found THEN
+          vr_dscritic := 'Número de telefone inválido.';
+          RAISE vr_exc_erro;
+        END IF;
         
         -- Verifica se o favorito existe
         OPEN cr_sequenci(pr_cdcooper  => pr_cdcooper 

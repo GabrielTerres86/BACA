@@ -269,9 +269,9 @@ ELSE IF par_operacao = 7 THEN
 						 ,INPUT par_nrdconta
 						 ,INPUT par_idseqttl
 						 ,INPUT par_nrcpfope
-						 ,INPUT par_vlrecarga
 						 ,INPUT par_nrddd
 						 ,INPUT par_nrcelular
+						 ,INPUT par_vlrecarga
 						 ,INPUT par_dtrecarga
 						 ,INPUT par_qtmesagd 
 						 ,INPUT aux_cdopcaodt 
