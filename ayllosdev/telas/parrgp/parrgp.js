@@ -603,8 +603,6 @@ function controlaPesquisas() {
 
     //Garantia
     $('#idgarantia', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idgarantia','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|8';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsgarantia', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -613,8 +611,6 @@ function controlaPesquisas() {
 	
 	// Modalidade
     $('#idmodalidade', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idmodalidade','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|1';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsmodalidade', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -623,8 +619,6 @@ function controlaPesquisas() {
 	
 	// Conta COSIF
     $('#idconta_cosif', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idconta_cosif','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|2';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsconta_cosif', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -633,8 +627,6 @@ function controlaPesquisas() {
 	
 	// Origem recurso
     $('#idorigem_recurso', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idorigem_recurso','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|3';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsorigem_recurso', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -643,8 +635,6 @@ function controlaPesquisas() {
 	
 	// Indexador
     $('#idindexador', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idindexador','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|4';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsindexador', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -653,8 +643,6 @@ function controlaPesquisas() {
 	
 	// Variação Cambial
     $('#idvariacao_cambial', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idvariacao_cambial','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|5';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsvariacao_cambial', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -663,8 +651,6 @@ function controlaPesquisas() {
 	
 	// Natureza Operação
     $('#idnat_operacao', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idnat_operacao','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|6';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dsnat_operacao', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
@@ -673,8 +659,6 @@ function controlaPesquisas() {
 	
 	// Caracteristica especial
     $('#idcaract_especial', '#' + nomeForm).unbind('change').bind('change', function () {
-		//Deve limpar o campo auxiliar, pois é sempre o valor dele que será utilizado nas operações
-		$('#iddominio_idcaract_especial','#frmDetalhes').val('');
 		filtrosDesc = 'idtipo_dominio|7';
         buscaDescricao("ZOOM0001", "BUSCADESCDOMINIOS", "Sele&ccedil;&atilde;o de Dom&iacute;nio", $(this).attr('name'), 'dscaract_especial', $(this).val(), 'descricao', filtrosDesc, 'frmDetalhes');
         
