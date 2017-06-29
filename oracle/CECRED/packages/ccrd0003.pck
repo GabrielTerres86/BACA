@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 24/05/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -63,6 +63,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             24/05/2017 - Ajustar para o tipo de operacao '02' validar os tipos
   --                          aceitos antes de buscar as demais informacoes (Lucas Ranghetti #678334)
+  --
+  --             26/05/2017 - ajustes na pc_debita_fatura pra pegar corretamente a data de referencia para 
+  --                          buscar as faturas (Tiago/Fabricio #677702)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -217,6 +220,13 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
                                     ,pr_retxml   IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);
+
+  /* Insere conta cartao na tabela de relacionamento conta x conta cartao */
+  PROCEDURE pc_insere_conta_cartao(pr_cdcooper       IN  crapcop.cdcooper%TYPE                 --> Cooperativa                                    
+                                  ,pr_nrdconta       IN  crapass.nrdconta%TYPE                 --> Numero da conta
+                                  ,pr_nrconta_cartao IN tbcrd_conta_cartao.nrconta_cartao%TYPE --> Conta cartao
+                                  ,pr_cdcritic OUT PLS_INTEGER                                 --> Codigo da crítica
+                                  ,pr_dscritic OUT VARCHAR2);                                  --> Erros do processo
 
 END CCRD0003;
 /
@@ -6543,6 +6553,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    06/02/2017 - Ajuste para nao atualizar a wcrd em cima de um cartao ja existente
                                 quando se trata de reposicao/2a via. (Fabricio)
                                 
+                   12/04/2017 - Ajustes para gravar tabela tbcrd_conta_cartao.
+                                PRJ343-Cessao de Credito (Odirlei-AMcom)
+                                
                    17/04/2017 - Tratamento para abrir chamado e enviar email caso ocorra
                                 algum erro na importacao do arquivo ccr3 (Lucas Ranghetti #630298)
     ............................................................................ */
@@ -8240,8 +8253,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    RAISE vr_exc_saida;
                 END;
 
+                BEGIN 
+                  vr_tpdocmto := TO_NUMBER(substr(vr_des_text,93,02));     
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
+                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
+                                        ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1023
+                                        ,pr_dscritic => SQLERRM);
+                   --Levantar Excecao
+                   RAISE vr_exc_saida;
+                END;
                
-                
                 BEGIN 
                   vr_codrejei := TO_NUMBER(substr(vr_des_text,211,3));
                 EXCEPTION 
@@ -8281,7 +8305,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    RAISE vr_exc_saida;
                 END;                            
 
-
+                BEGIN 
+                  vr_dtdonasc := TO_DATE(substr(vr_des_text,80,8), 'DDMMYYYY');
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
+                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
+                                        ,pr_nrdlinha => vr_linha
+                                        ,pr_cdmensagem => 1026
+                                        ,pr_dscritic => SQLERRM);
+                   --Levantar Excecao
+                   RAISE vr_exc_saida;
+                END;  
                 
                
                 
@@ -8365,7 +8400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 CLOSE cr_crapass;
                 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
-                IF substr(vr_des_text,93,02) = '03' THEN                  
+                IF vr_tpdocmto = '03' THEN                  
                   /* nao deve solicitar cartao novamente caso retorne critica 080
                      (pessoa ja tem cartao nesta conta) */
                   IF substr(vr_des_text, 211, 3) = '080' THEN
@@ -8488,19 +8523,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   CONTINUE;
                 END IF;                                
                 
-                BEGIN 
-                  vr_tpdocmto := TO_NUMBER(substr(vr_des_text,93,02));     
-                EXCEPTION 
-                  WHEN OTHERS THEN
-                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
-                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo                   
-                                        ,pr_nrdlinha => vr_linha
-                                        ,pr_cdmensagem => 1023
-                                        ,pr_dscritic => SQLERRM);
-                   --Levantar Excecao
-                   RAISE vr_exc_saida;
-                END;
-                
                 -- Validar se CPF está valido
                 BEGIN 
                   vr_nrcpfcgc:= TO_NUMBER(substr(vr_des_text,95,15));
@@ -8514,21 +8536,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    --Levantar Excecao
                    RAISE vr_exc_saida;
                 END;   
-                
-                BEGIN 
-                  vr_dtdonasc := TO_DATE(substr(vr_des_text,80,8), 'DDMMYYYY');
-                EXCEPTION 
-                  WHEN OTHERS THEN
-                   pc_log_dados_arquivo( pr_tipodreg => 2 -- Dados do cartao
-                                        ,pr_nmdarqui => vr_vet_nmarquiv(i) -- Arquivo
-                                        ,pr_nrdlinha => vr_linha
-                                        ,pr_cdmensagem => 1026
-                                        ,pr_dscritic => SQLERRM);
-                   --Levantar Excecao
-                   RAISE vr_exc_saida;
-                END;  
-                
-
                 
                 -- Verifica se a operação é de inclusão de adicional, ou seja,
                 -- verifica se a linha anterior processada refere-se a linha atual
@@ -9421,6 +9428,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     RAISE vr_exc_saida;
                 END;
 
+                --> Gravar registro de conta cartão
+                CCRD0003.pc_insere_conta_cartao(rw_crawcrd.cdcooper,                  --> cdcooper
+                                                rw_crawcrd.nrdconta,                  --> nrdconta
+                                                TO_NUMBER(substr(vr_des_text,25,13)), --> nrcctitg
+                                                vr_cdcritic,
+                                                vr_dscritic);
+                IF (nvl(vr_cdcritic,0) > 0) or
+                   (nvl(vr_dscritic,' ') <> ' ') THEN
+                   -- LOGA NO PROC_MESSAGE
+                   btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper_ori
+                                             ,pr_ind_tipo_log => 2 -- Erro tratato
+                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                              || vr_cdprogra || ' --> '
+                                                              || 'Nao foi possivel gravar tabela relac. conta e conta cartao. '||' - '
+                                                              || 'COOP.: '   || rw_crawcrd.cdcooper || ' - '
+                                                              || 'CONTA: '   || rw_crawcrd.nrdconta || ' - '
+                                                              || 'Critica: ' || vr_dscritic || ' - '
+                                                              || ' ARQ.: '   || vr_nmarquiv
+                                             ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                   CONTINUE;
+                END IF;
+
               END IF;
             EXCEPTION
               WHEN no_data_found THEN -- não encontrar mais linhas
@@ -9704,7 +9733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    Programa: CCDR0003
    Sigla   : APLI
    Autor   : Tiago
-   Data    : Junho/2015                          Ultima atualizacao: 15/05/2017
+   Data    : Junho/2015                          Ultima atualizacao: 26/05/2017
 
    Dados referentes ao programa:
 
@@ -9730,6 +9759,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    
    15/05/2017 - Correções para repique contando 1 dia util para repique ao inves de dias corridos
                 (Tiago/Fabricio).
+                
+   26/05/2017 - Tratado para pegar uma data de referencia que sirva para todas as situações de
+                vencimento de fatura contando que os dias de repique agora são dias uteis
+                (Tiago/Fabricio #677702)
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -10005,13 +10038,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END IF;
 
       -- Pegar a data de referencia do periodo    
-      vr_dtmvante:= pr_dtmvtolt - vr_qtddiapg;
-      
-      IF (vr_dtmvante - 1) = gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') THEN
-          vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante, pr_tipo => 'A');
-      ELSE
-          vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A') + 1;
-      END IF;
+      vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt - vr_qtddiapg, pr_tipo => 'A');
+      vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A');
 
       -- Leitura do calendario da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -10372,13 +10400,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                      tbcrd_fatura.dtref_pagodia = decode(vr_flmuddia,1,vr_dtultsld,tbcrd_fatura.dtref_pagodia),
                      tbcrd_fatura.vlpagodia = decode(vr_flmuddia,1,vr_vlsomsld,tbcrd_fatura.vlpagodia + vr_vlsomsld)
                WHERE tbcrd_fatura.idfatura    = rw_tbcrd_fatura.idfatura;
-               
-               IF pr_cdprogra = 'CRPS674' AND
-                  vr_dtmvante = rw_tbcrd_fatura.dtvencimento THEN
-                 UPDATE tbcrd_fatura
-                   SET  tbcrd_fatura.insituacao = 4
-                 WHERE  tbcrd_fatura.idfatura    = rw_tbcrd_fatura.idfatura;
-               END IF;
                
             EXCEPTION
               WHEN OTHERS THEN
@@ -11132,6 +11153,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     END;
 
   END pc_busca_fatura_pend_web;
+
+  PROCEDURE pc_insere_conta_cartao(pr_cdcooper       IN  crapcop.cdcooper%TYPE                 --> Cooperativa                                    
+                                  ,pr_nrdconta       IN  crapass.nrdconta%TYPE                 --> Numero da conta
+                                  ,pr_nrconta_cartao IN tbcrd_conta_cartao.nrconta_cartao%TYPE --> Conta cartao
+                                  ,pr_cdcritic OUT PLS_INTEGER                                 --> Codigo da critica
+                                  ,pr_dscritic OUT VARCHAR2) IS                                --> Erros do processo
+  BEGIN
+
+    -- ........................................................................
+    --
+    --  Programa : pc_insere_conta_cartao
+    --  Sistema  : Cred
+    --  Sigla    : CCRD0003
+    --  Autor    : Anderson Fossa
+    --  Data     : 31/05/2017.                      Ultima atualizacao: -
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Insere o registro da conta cartao, na tabela de relacionamento
+    --               de conta x conta cartao (tbcrd_conta_cartao).                 
+    --
+    --.............................................................................*/
+    DECLARE
+      -- Variável de críticas
+      vr_cdcritic  crapcri.cdcritic%TYPE := 0;
+      vr_dscritic  VARCHAR2(10000)       := '';
+      vr_exc_saida EXCEPTION;
+    BEGIN
+      
+      BEGIN  
+        INSERT INTO tbcrd_conta_cartao
+                    (cdcooper, 
+                     nrdconta, 
+                     nrconta_cartao)
+             VALUES (pr_cdcooper,        --> cdcooper
+                     pr_nrdconta,        --> nrdconta
+                     pr_nrconta_cartao); --> nrconta_cartao
+      EXCEPTION
+        WHEN dup_val_on_index THEN
+          NULL; --> Caso ja exista nao deve apresentar critica
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir tbcrd_conta_cartao em CCRD0003.pc_insere_conta_cartao: '||SQLERRM;
+          RAISE vr_exc_saida;
+       END;
+       
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := vr_dscritic;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CCRD0003.pc_insere_conta_cartao: ' || SQLERRM;
+    END;
+  END pc_insere_conta_cartao;
 
 END CCRD0003;
 /
