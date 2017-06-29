@@ -2683,15 +2683,18 @@ PROCEDURE permissoes-menu-mobile:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-itens-menu-mobile.
     
-    
+    DEF VAR aux_flgsittp AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgaprov AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgsitrc AS LOGI                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0018 AS HANDLE                                  NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-itens-menu.
     
     RUN sistema/generico/procedures/b1wgen0188.p PERSISTENT SET h-b1wgen0188.
-            
+    RUN sistema/generico/procedures/b1wgen0018.p PERSISTENT SET h-b1wgen0018.
+    
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
 
@@ -2710,10 +2713,16 @@ PROCEDURE permissoes-menu-mobile:
             RETURN "NOK".                
         END.
     
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 700. /*PRÉ-APROVADO*/
-           tt-itens-menu-mobile.flcreate = FALSE.
-            
+    /* TRANSACOES PENDENTES */
+    FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
+							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
+    
+    IF crapass.idastcjt = 1 OR AVAILABLE crapopi THEN
+      DO:
+          ASSIGN aux_flgsittp = TRUE.
+    END.
+      
+    /*CRÉDITO PRE-APROVADO*/
     IF  VALID-HANDLE(h-b1wgen0188)  THEN
         DO:
             /** Verifica se possui credito pre-aprovado **/
@@ -2736,9 +2745,37 @@ PROCEDURE permissoes-menu-mobile:
 
             FIND FIRST tt-dados-cpa NO-LOCK NO-ERROR.
             IF AVAIL tt-dados-cpa AND tt-dados-cpa.vldiscrd > 0 THEN DO:
-              tt-itens-menu-mobile.flcreate = TRUE.
+              ASSIGN aux_flgaprov = TRUE.
             END.
-        END.
+    END.
+    
+    /*RECARGA DE CELULAR*/
+    IF  VALID-HANDLE(h-b1wgen0018)  THEN
+        DO:
+            /** Verifica se o item de Recarga de Celular deve ser habilitado no Menu do Mobile **/
+            RUN pc_situacao_canal_recarga IN h-b1wgen0018 (INPUT par_cdcooper,
+                                                           INPUT par_idorigem,
+                                                           OUTPUT aux_flgsitrc).
+            
+            DELETE PROCEDURE h-b1wgen0018.
+    END.
+    
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇOES PENDENTES*/
+           tt-itens-menu-mobile.flcreate = aux_flgsittp.
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 700. /*PRÉ-APROVADO*/
+           tt-itens-menu-mobile.flcreate = aux_flgaprov. 
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 900. /*CONVENIÊNCIA*/
+           tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
+           
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 901. /*RECARGA DE CELULAR*/
+           tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
     
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇÕES PENDENTES*/
