@@ -2778,16 +2778,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                       </SISMSG>');
     END IF;
 
-    -- descarregar buffer
-    pc_escreve_xml(' ',TRUE);
-    gene0002.pc_XML_para_arquivo(pr_XML     => vr_des_xml,
-                                 pr_caminho => vr_dsdircop||'/salvar/',
-                                 pr_arquivo => vr_nmarquiv,
-                                 pr_des_erro=> vr_dscritic);
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-
     /* Cria registro de Debito */
     BEGIN
       INSERT INTO gnmvcen
@@ -2802,6 +2792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         ,vr_nmmsgenv
         ,'D' /*Debito em Conta*/
         ,nvl(pr_vldocmto,0));
+        
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic:= 0;
@@ -2809,6 +2800,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
     END;
+    
+    -- descarregar buffer
+    pc_escreve_xml(' ',TRUE);
+    gene0002.pc_XML_para_arquivo(pr_XML     => vr_des_xml,
+                                 pr_caminho => vr_dsdircop||'/salvar/',
+                                 pr_arquivo => vr_nmarquiv,
+                                 pr_des_erro=> vr_dscritic);
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
 
     -- gravar log craplmt
     pc_grava_log_ted ( pr_cdcooper => pr_cdcooper    --> Codigo cooperativo
