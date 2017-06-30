@@ -27,10 +27,15 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
   -----------------------------------------------------------------------------------------------------
   -- Registros de calculos do título
   TYPE typ_reg_CalcTit IS RECORD 
-                 (VlrCalcdJuros           NUMBER(19,2)     -- Valor Calculado Juros
+                 (CdMunicipio             NUMBER(20)       -- Codigo do municipio do calculo
+                 ,DtCalcdVencTit          DATE             -- Data de vencimento do calculo
+                 ,VlrCalcdAbatt           NUMBER(19,2)     -- Valor Calculado do abatimento
+                 ,VlrCalcdJuros           NUMBER(19,2)     -- Valor Calculado Juros
                  ,VlrCalcdMulta           NUMBER(19,2)     -- Valor Calculado Multa
                  ,VlrCalcdDesct           NUMBER(19,2)     -- Valor Calculado Desconto
                  ,VlrTotCobrar            NUMBER(19,2)     -- Valor Total a Cobrar
+                 ,VlrCalcdMin             NUMBER(19,2)     -- Valor Calculado para minimo
+                 ,VlrCalcdMax             NUMBER(19,2)     -- Valor Calculado para maximo
                  ,DtValiddCalc            DATE);           -- Data Validade Cálculo
   -- Tabela de registros de calculos do título - CADA TÍTULO CIP PODE TER VÁRIOS 
   -- CALCULOS DE VALORES, SENDO QUE CADA UM DELES POSSUI UMA DATA DE VALIDADE
@@ -215,6 +220,8 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                    ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                    ,pr_dtagenda     IN craptit.dtdpagto%TYPE --> Data de agendamento
                                    ,pr_vldpagto     IN craptit.vldpagto%TYPE --> Valor a ser pago
+                                   ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
+                                   ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
                                    ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
                                    ,pr_dscritic    OUT VARCHAR2);            --> Descrição da critica
@@ -223,7 +230,11 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
   FUNCTION fn_canal_pag_NPC( pr_cdagenci     IN crapage.cdagenci%TYPE --> Codigo da agencia
                             ,pr_idtitdda     IN INTEGER               --> Indicador se foi pago pelo sistema de DDDA
                             ) RETURN INTEGER ; --> Retornar codigo do canal de pagamento no NPC
-                                                                     
+  
+  --> Rotina para retornar se NPC esta em contigencia
+  FUNCTION fn_contigencia_NPC ( pr_cdcooper   IN INTEGER, --> Codigo da cooperativa
+                                pr_idorigem   IN INTEGER  --> Origem da transacao
+                              ) RETURN VARCHAR2; --> Retornar S-Em contigencia, N-Não esta em contigencia                                                                   
 END NPCB0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
@@ -736,12 +747,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
   
     vr_vlmaxpgt := pr_vlmaxpgt;
     IF pr_tpmaxpgt = 'P' THEN
-      vr_vlmaxpgt := pr_vltitulo * ((100+pr_vlmaxpgt)/100);
+      vr_vlmaxpgt := pr_vltitulo /100*pr_vlmaxpgt;      
     END IF;
     
     vr_vlminpgt := pr_vlminpgt;
     IF pr_tpminpgt = 'P' THEN
-      vr_vlminpgt := pr_vltitulo * ((100-pr_vlminpgt)/100);
+      vr_vlminpgt := pr_vltitulo /100*pr_vlminpgt;      
     END IF;
   
     IF pr_vldpagto BETWEEN vr_vlminpgt AND  vr_vlmaxpgt THEN
@@ -823,7 +834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_VlrCalcdJuros NUMBER;
     vr_VlrCalcdMulta NUMBER;
     vr_VlrCalcdDesct NUMBER;
-    vr_dtValiddCalc  DATE := to_date('01/01/2950','DD/MM/RRRR');
+    vr_dtValiddCalc  DATE := to_date('25/04/2049','DD/MM/RRRR'); -- RC7
     vr_data DATE;
   BEGIN    
     
@@ -848,7 +859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     END IF;
     
     -- Retornar os valores encontrados
-    pr_vlrtitulo := vr_VlrTotCobrar;
+    pr_vlrtitulo := nvl(vr_VlrTotCobrar,pr_tbtitulo.VlrTit); -- RC7
     pr_vlrjuros  := vr_VlrCalcdJuros;
     pr_vlrmulta  := vr_VlrCalcdMulta;
     pr_vlrdescto := vr_VlrCalcdDesct;
@@ -861,6 +872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                    ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                    ,pr_dtagenda     IN craptit.dtdpagto%TYPE --> Data de agendamento
                                    ,pr_vldpagto     IN craptit.vldpagto%TYPE --> Valor a ser pago
+                                   ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
+                                   ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
                                    ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
                                    ,pr_dscritic    OUT VARCHAR2              --> Descrição da critica
@@ -896,6 +909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     
     vr_vltitcal       craptit.vltitulo%TYPE;
     vr_tituloCIP      typ_reg_TituloCIP;
+    vr_dtvencto       DATE;
     
   BEGIN     
   
@@ -937,6 +951,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       RAISE vr_exc_erro;       
     END IF;  
     
+    pr_nridenti := vr_tituloCIP.NumIdentcTit;
+    pr_vltitulo := vr_tituloCIP.VlrTit;
+    
     --FOR idx IN vr_tab_TituloCIP.first..vr_tab_TituloCIP.last LOOP
     
     --> Verificar se o valor para pagamento está de acordo com as regras NPC:
@@ -968,17 +985,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                  ( pr_dtmvtolt  => pr_dtmvtolt    --> Data de movimento                                                                   
                                   ,pr_tbtitulo  => vr_tituloCIP); --> Regras de calculo de juros                                 
                                     
-        --> Se valor estiver diferente retornar critica
-        IF nvl(vr_vltitcal,0) = 0 THEN
+        --> Se valor estiver diferente retornar critica		
+        IF vr_vltitcal IS NULL THEN
           vr_dscritic := 'Problemas ao buscar valor do titulo.';
           RAISE vr_exc_erro;
-        ELSIF vr_vltitcal <> pr_vldpagto THEN
+        ELSIF pr_vldpagto < vr_vltitcal THEN
           vr_dscritic := 'Cob. Reg. - Valor informado '||
                          to_char(pr_vldpagto, 'fm999g999g990d00')||
                          ' menor que valor doc. '|| to_char(vr_vltitcal,'fm999g999g990D00');
           RAISE vr_exc_erro;               
           
         END IF;
+		
+		
           
       WHEN 4 THEN --> 2 - Somente valor mínimo
         --> Validar se valor esta entre maximo e minimo
@@ -995,8 +1014,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         END IF;  
     END CASE;   
       
+    vr_dtvencto := gene0005.fn_valida_dia_util( pr_cdcooper  => pr_cdcooper, 
+                                                pr_dtmvtolt  => vr_tituloCIP.DtVencTit, 
+                                                pr_tipo      => 'P');
+    
     --> verificar se for agendamento, se a data está dentro do prazo de vencimento
-    IF pr_dtagenda IS NOT NULL AND pr_dtagenda > vr_tituloCIP.DtVencTit THEN
+    IF pr_dtagenda IS NOT NULL AND pr_dtagenda > vr_dtvencto THEN
       vr_dscritic := 'Agendamento posterior ao vencimento não permitido.';
       RAISE vr_exc_erro;
     END IF;
@@ -1007,20 +1030,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     IF vr_tituloCIP.VlrSldTotAtlPgtoTit > 0 THEN
  
       IF pr_vldpagto >= vr_tituloCIP.VlrSldTotAtlPgtoTit THEN
-        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> 85 THEN
+        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
           pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
         ELSE
           pr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
         END IF;
         
       ELSE
-        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> 85 THEN
+        IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
           pr_tpdbaixa := 2; -- Baixa Operacional Parcial Interbancária
         ELSE
           pr_tpdbaixa := 3; -- Baixa Operacional Parcial Intrabancária
         END IF;        
       END IF;   
            
+    ELSE
+      IF substr(vr_tituloCIP.NumCodBarras,1,3) <> '085' THEN
+        pr_tpdbaixa := 0; -- Baixa Operacional Integral Interbancária
+      ELSE
+        pr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
+      END IF;      
     END IF;
      
     --END LOOP;
@@ -1092,6 +1121,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       raise_application_error(-20500,'Erro ao identificar canal NPC: '||SQLERRM);
   END fn_canal_pag_NPC;    
   
+  --> Rotina para retornar se NPC esta em contigencia
+  FUNCTION fn_contigencia_NPC ( pr_cdcooper   IN INTEGER, --> Codigo da cooperativa
+                                pr_idorigem   IN INTEGER  --> Origem da transacao
+                              ) RETURN VARCHAR2 IS --> Retornar S-Em contigencia, N-Não esta em contigencia
+  
+  
+  /* ..........................................................................
+    
+      Programa : fn_contigencia_NPC        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Maio/2017.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para retornar se NPC esta em contigencia
+      Alteração : 
+        
+    ..........................................................................*/
+    vr_exc_erro  EXCEPTION;
+    vr_dscritic  VARCHAR2(1000);
+    vr_cdacesso  VARCHAR2(100);
+    
+  BEGIN    
+  
+    SELECT CASE pr_idorigem
+             WHEN 3  THEN 'FLGPAGCONT_IB'
+             WHEN 4  THEN 'FLGPAGCONT_TAA'
+             WHEN 2  THEN 'FLGPAGCONT_CX'
+             WHEN 10 THEN 'FLGPAGCONT_MOB'
+             ELSE
+               NULL
+           END  
+      INTO vr_cdacesso
+      FROM dual;
+      
+    IF TRIM(vr_cdacesso) IS NULL THEN
+      vr_dscritic := 'Origem da transação invalido';
+    END IF;
+   
+    RETURN tabe0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper
+                                      ,pr_nmsistem => 'CRED'
+                                      ,pr_tptabela => 'GENERI'
+                                      ,pr_cdempres => 0
+                                      ,pr_cdacesso => vr_cdacesso
+                                      ,pr_tpregist => 0);
+  
+  
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      raise_application_error(-20500,'Erro ao verificar contigencia NPC: '||vr_dscritic);
+    WHEN OTHERS THEN
+      raise_application_error(-20500,'Erro ao verificar contigencia NPC: '||SQLERRM);
+  END fn_contigencia_NPC;  
+  
   
 BEGIN
 
@@ -1120,17 +1206,17 @@ BEGIN
       
     --> 05 Boleto encontrado na base centralizada e Cliente Beneficiário em análise na Instituição emissora do título
     vr_tab_SitTitPgto_NPC(05).dssituac := 'Boleto encontrado na base centralizada e Cliente Beneficiário em análise na Instituição emissora do título';
-    vr_tab_SitTitPgto_NPC(05).dscritic := 'Boleto não permitido para pagamento';
-    vr_tab_SitTitPgto_NPC(05).flgpagto := 0;
+    vr_tab_SitTitPgto_NPC(05).dscritic := NULL;
+    vr_tab_SitTitPgto_NPC(05).flgpagto := 1;
 			
     --> 06	Boleto excedeu o limite de pagamentos parciais
     vr_tab_SitTitPgto_NPC(06).dssituac := 'Boleto excedeu o limite de pagamentos parciais';
-    vr_tab_SitTitPgto_NPC(06).dscritic := NULL;
-    vr_tab_SitTitPgto_NPC(06).flgpagto := 1;
+    vr_tab_SitTitPgto_NPC(06).dscritic := 'Boleto excedeu o limite de pagamentos parciais';
+    vr_tab_SitTitPgto_NPC(06).flgpagto := 0;
 			
     --> 07	Baixa operacional em duplicidade para título que não permite pagamento parcial
-    vr_tab_SitTitPgto_NPC(07).dssituac := 'Baixa operacional em duplicidade para título que não permite pagamento parcial';
-    vr_tab_SitTitPgto_NPC(07).dscritic := 'Boleto pago em duplicidade';
+    vr_tab_SitTitPgto_NPC(07).dssituac := 'Baixa operacional integral já registrada';
+    vr_tab_SitTitPgto_NPC(07).dscritic := 'Pagamento já registrado';
     vr_tab_SitTitPgto_NPC(07).flgpagto := 0;
       
     --> 08	Baixa operacional já registrada para título que não permite pagamento parcial
@@ -1150,8 +1236,8 @@ BEGIN
       
     --> 11	Boleto encontrado na base centralizada e Cliente Beneficiário em análise em Instituição diferente da emissora.
     vr_tab_SitTitPgto_NPC(11).dssituac := 'Boleto encontrado na base centralizada e Cliente Beneficiário em análise em Instituição diferente da emissora.';
-    vr_tab_SitTitPgto_NPC(11).dscritic := 'Boleto não permitido para pagamento';
-    vr_tab_SitTitPgto_NPC(11).flgpagto := 0;
+    vr_tab_SitTitPgto_NPC(11).dscritic := NULL;
+    vr_tab_SitTitPgto_NPC(11).flgpagto := 1;
 		
     --> 12	Boleto encontrado na base centralizada e Cliente Beneficiário apto.
     vr_tab_SitTitPgto_NPC(12).dssituac := 'Boleto encontrado na base centralizada e Cliente Beneficiário apto.';

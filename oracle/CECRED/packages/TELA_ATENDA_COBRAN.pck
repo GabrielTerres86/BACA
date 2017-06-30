@@ -583,10 +583,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       BEGIN      
         vr_dtfimrel := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
         vr_nrconven := to_char(pr_nrconven);
-        UPDATE TBJDDDABNF_Convenio@jdbnfsql
+        UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql
            SET TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'E',
                TBJDDDABNF_Convenio."DtFimRelctConv"     = vr_dtfimrel
-         WHERE TBJDDDABNF_Convenio."ISPB_IF"            = '5463212'
+         WHERE TBJDDDABNF_Convenio."ISPB_IF"            = '05463212'
            AND TBJDDDABNF_Convenio."TpPessoaBenfcrio" = rw_crapass.dspessoa
            AND TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio" = rw_crapass.dscpfcgc
            AND TBJDDDABNF_Convenio."CodCli_Conv"      = vr_nrconven
@@ -1266,8 +1266,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       CURSOR cr_DDA_Benef (pr_dspessoa VARCHAR2,
                            pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS      
         SELECT 1
-          FROM TBJDDDABNF_BeneficiarioIF@jdbnfsql b
-         WHERE b.ISPB_IF = '5463212'
+          FROM cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql b
+         WHERE b.ISPB_IF = '05463212'
            AND "TpPessoaBenfcrio" = pr_dspessoa
            AND "CNPJ_CPFBenfcrio" = pr_nrcpfcgc;
       rw_DDA_Benef cr_DDA_Benef%ROWTYPE;
@@ -1277,8 +1277,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             pr_nrcpfcgc crapass.nrcpfcgc%TYPE,
                             pr_nrconven VARCHAR2) IS      
         SELECT 1
-          FROM TBJDDDABNF_Convenio@jdbnfsql b
-         WHERE b."ISPB_IF" = '5463212'
+          FROM cecredleg.TBJDDDABNF_Convenio@jdnpcsql b
+         WHERE b."ISPB_IF" = '05463212'
            AND b."TpPessoaBenfcrio" = pr_dspessoa
            AND b."CNPJ_CPFBenfcrio" = pr_nrcpfcgc
            AND b."CodCli_Conv"      = pr_nrconven;
@@ -1636,7 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           END IF;              
                     
       BEGIN
-            INSERT INTO TBJDDDABNF_BeneficiarioIF@jdbnfsql
+            INSERT INTO cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql
                   ( "ISPB_IF",
                     "TpPessoaBenfcrio",
                     "CNPJ_CPFBenfcrio",
@@ -1644,7 +1644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                     "Nom_FantsBenfcrio", 
                     "DtInicRelctPart",    
                     "DtFimRelctPart")
-            VALUES ('5463212'            -- ISPB_IF
+            VALUES ('05463212'           -- ISPB_IF
                    ,rw_crapass.dspessoa  -- TpPessoaBenfcrio
                    ,rw_crapass.dscpfcgc  -- CNPJ_CPFBenfcrio
                    ,rw_crapass.nmprimtl  -- Nom_RzSocBenfcrio 
@@ -1653,6 +1653,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                    ,NULL);               -- DtFimRelctPart    
             
           EXCEPTION 
+            WHEN dup_val_on_index THEN
+              vr_dscritic := 'CPF/CNPJ do Beneficiario ja cadastrado na CIP, favor verificar.';
+              RAISE vr_exc_saida;              
             WHEN OTHERS THEN
               vr_dscritic := 'Nao foi possivel cadastrar Beneficiario na CIP: ' || SQLERRM;
               RAISE vr_exc_saida;              
@@ -1732,7 +1735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           vr_dtfimrel := NULL;
           vr_flgimpri := 0;
         ELSE
-          vr_dscritic := 'Situacao invalida do Beneficiario na JDBNF.';
+          vr_dscritic := 'Situacao invalida do Beneficiario na JDBNF1.';
           RAISE vr_exc_saida;  
         END IF;   
         
@@ -1745,7 +1748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         IF cr_DDA_Conven%NOTFOUND THEN
           --> Gerar informação de adesão de convênio ao JDBNF                            
           BEGIN
-            INSERT INTO TBJDDDABNF_Convenio@jdbnfsql 
+            INSERT INTO cecredleg.TBJDDDABNF_Convenio@jdnpcsql 
                        ("ISPB_IF",
                         "ISPBPartIncorpd",
                         "TpPessoaBenfcrio",
@@ -1760,7 +1763,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                         "CtDest",
                         "TpProdtConv",
                         "TpCartConvCobr" )
-                 VALUES(5463212,                                -- ISPB_IF
+                 VALUES('05463212',                             -- ISPB_IF
                         NULL,                                   -- ISPBPartIncorpd
                         rw_crapass.dspessoa,                    -- TpPessoaBenfcrio
                         rw_crapass.dscpfcgc,                    -- CNPJ_CPFBenfcrio
@@ -1783,11 +1786,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         BEGIN
           vr_nrconven := to_char(pr_nrconven);
           vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');          
-          UPDATE TBJDDDABNF_Convenio@jdbnfsql a
+          UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql a
              SET a."SitConvBenfcrioPar" = vr_sitifcnv
                 ,a."DtInicRelctConv"    = vr_dsdtmvto
                 ,a."DtFimRelctConv"     = vr_dtfimrel
-           WHERE a."ISPB_IF"            = '5463212'
+           WHERE a."ISPB_IF"            = '05463212'
              AND a."TpPessoaBenfcrio"   = rw_crapass.dspessoa
              AND a."CNPJ_CPFBenfcrio"   = rw_crapass.dscpfcgc
              AND a."CodCli_Conv"        = vr_nrconven;
@@ -1864,7 +1867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           vr_flgimpri := 0; -- nao imprimir o termo de adesao
           
         ELSE
-          vr_dscritic := 'Situacao invalida do Beneficiario na JDBNF.';
+          vr_dscritic := 'Situacao invalida do Beneficiario na JDBNF2.';
           RAISE vr_exc_saida;        
         END IF;
       
@@ -3230,8 +3233,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     CURSOR cr_DDA_Benef (pr_dspessoa VARCHAR2,
                          pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS      
       SELECT 1
-        FROM TBJDDDABNF_BeneficiarioIF@jdbnfsql b
-       WHERE b.ISPB_IF = '5463212'
+        FROM cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql b
+       WHERE b.ISPB_IF = '05463212'
          AND "TpPessoaBenfcrio" = pr_dspessoa
          AND "CNPJ_CPFBenfcrio" = pr_nrcpfcgc;
     rw_DDA_Benef cr_DDA_Benef%ROWTYPE;    
@@ -3241,8 +3244,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                           pr_nrcpfcgc crapass.nrcpfcgc%TYPE,
                           pr_nrconven VARCHAR2) IS      
       SELECT 1
-        FROM TBJDDDABNF_Convenio@jdbnfsql b
-       WHERE b."ISPB_IF" = '5463212'
+        FROM cecredleg.TBJDDDABNF_Convenio@jdnpcsql b
+       WHERE b."ISPB_IF" = '05463212'
          AND b."TpPessoaBenfcrio" = pr_dspessoa
          AND b."CNPJ_CPFBenfcrio" = pr_nrcpfcgc
          AND b."CodCli_Conv"      = pr_nrconven;
@@ -3376,7 +3379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
                     
       BEGIN
-        INSERT INTO TBJDDDABNF_BeneficiarioIF@jdbnfsql
+        INSERT INTO cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql
               ( "ISPB_IF",
                 "TpPessoaBenfcrio",
                 "CNPJ_CPFBenfcrio",
@@ -3384,7 +3387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                 "Nom_FantsBenfcrio", 
                 "DtInicRelctPart",    
                 "DtFimRelctPart")
-        VALUES ('5463212'            -- ISPB_IF
+        VALUES ('05463212'           -- ISPB_IF
                ,rw_crapass.dspessoa  -- TpPessoaBenfcrio
                ,rw_crapass.dscpfcgc  -- CNPJ_CPFBenfcrio
                ,rw_crapass.nmprimtl  -- Nom_RzSocBenfcrio 
@@ -3404,10 +3407,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       BEGIN      
         vr_dtativac := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
         vr_nrconven := to_char(pr_nrconven);
-        UPDATE TBJDDDABNF_Convenio@jdbnfsql
+        UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql
            SET TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'A',
                TBJDDDABNF_Convenio."DtInicRelctConv"    = vr_dtativac
-         WHERE TBJDDDABNF_Convenio."ISPB_IF" = '5463212'
+         WHERE TBJDDDABNF_Convenio."ISPB_IF" = '05463212'
            AND TBJDDDABNF_Convenio."TpPessoaBenfcrio" = rw_crapass.dspessoa
            AND TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio" = rw_crapass.dscpfcgc
            AND TBJDDDABNF_Convenio."CodCli_Conv"      = vr_nrconven
@@ -3432,7 +3435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     IF cr_DDA_Conven%NOTFOUND THEN
       --> Gerar informação de adesão de convênio ao JDBNF                            
       BEGIN
-        INSERT INTO TBJDDDABNF_Convenio@jdbnfsql 
+        INSERT INTO cecredleg.TBJDDDABNF_Convenio@jdnpcsql 
                    ("ISPB_IF",
                     "ISPBPartIncorpd",
                     "TpPessoaBenfcrio",
@@ -3447,7 +3450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                     "CtDest",
                     "TpProdtConv",
                     "TpCartConvCobr" )
-             VALUES(5463212,                                -- ISPB_IF
+             VALUES('05463212',                             -- ISPB_IF
                     NULL,                                   -- ISPBPartIncorpd
                     rw_crapass.dspessoa,                    -- TpPessoaBenfcrio
                     rw_crapass.dscpfcgc,                    -- CNPJ_CPFBenfcrio
@@ -3470,11 +3473,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       BEGIN
         vr_nrconven := to_char(pr_nrconven);
         vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');          
-        UPDATE TBJDDDABNF_Convenio@jdbnfsql a
+        UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql a
            SET a."SitConvBenfcrioPar" = vr_sitifcnv
               ,a."DtInicRelctConv"    = vr_dsdtmvto
               ,a."DtFimRelctConv"     = vr_dtfimrel
-         WHERE a."ISPB_IF"            = '5463212'
+         WHERE a."ISPB_IF"            = '05463212'
            AND a."TpPessoaBenfcrio"   = rw_crapass.dspessoa
            AND a."CNPJ_CPFBenfcrio"   = rw_crapass.dscpfcgc
            AND a."CodCli_Conv"        = vr_nrconven;

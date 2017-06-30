@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
+  CREATE OR REPLACE PACKAGE "CECRED"."DDDA0001" AS
 
   /*..............................................................................
   
@@ -415,7 +415,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
 
 END ddda0001;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
+CREATE OR REPLACE PACKAGE BODY "CECRED"."DDDA0001" AS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : ddda0001
@@ -3398,7 +3398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       END IF;
     
     END IF;  
-        
+    
     --> Gerar log de rejeicao
     IF pr_cdstiope IN ('EJ','EC') THEN
       pc_trata_retorno_erro ( pr_cdcooper   => rw_crapcob.cdcooper  --> Codigo da cooperativa 

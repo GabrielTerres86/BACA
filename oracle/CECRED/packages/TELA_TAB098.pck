@@ -449,7 +449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
         
         IF(NVL(vr_rollout_cip_pag_data, ' ') <> pr_rollout_cip_pag_data) OR (NVL(vr_rollout_cip_pag_valor, ' ') <> pr_rollout_cip_pag_valor) THEN
           vr_rollout_cip_pag := pr_rollout_cip_pag_data ||';'|| pr_rollout_cip_pag_valor;
-          pc_atualizar_param(pr_cdcooper, 'ROLLOUT_CIP_PAG', vr_rollout_cip_reg, pr_cdcritic, pr_dscritic);
+          pc_atualizar_param(pr_cdcooper, 'ROLLOUT_CIP_PAG', vr_rollout_cip_pag, pr_cdcritic, pr_dscritic);
           pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'ROLLOUT_CIP_PAG', vr_rollout_cip_pag_data||';'||vr_rollout_cip_pag_valor, vr_rollout_cip_pag);                    
         END IF;
         

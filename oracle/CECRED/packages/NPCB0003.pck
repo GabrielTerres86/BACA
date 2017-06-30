@@ -13,6 +13,9 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0003 is
       Objetivo  : Rotinas referentes ao WebService da Nova Plataforma de Cobrança de Boletos
   ---------------------------------------------------------------------------------------------------------------*/
 
+  FUNCTION fn_url_SendSoapNPC (pr_idservic IN INTEGER ) 
+                               RETURN VARCHAR2;
+                              
   PROCEDURE  PC_TESTA_CONEXAO;
   -- Configurar a collection que conterá os campos que serão inclusos no SOAP
   TYPE typ_reg_campos_soap IS RECORD (dsNomTag   VARCHAR2(30)   --> Nome da TAG enviado no SOAP
@@ -77,10 +80,12 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0003 is
 
   --> Rotina para consultar os titulos CIP
   PROCEDURE pc_wscip_requisitar_baixa(pr_cdcooper  IN NUMBER             --> Código da cooperativa
-                                     --,pr_cdctrlcs  IN VARCHAR2           --> Identificador da consulta
-                                     --,pr_nrispbif  IN VARCHAR2           --> ISPB recebedor baixa operacional
+                                     ,pr_dtmvtolt  IN DATE               --> data de movimento
+                                     ,pr_dscodbar  IN VARCHAR2           --> Codigo de barra
+                                     ,pr_cdctrlcs  IN VARCHAR2           --> Identificador da consulta
                                      ,pr_idtitdda  IN NUMBER             --> Identificador Titulo DDA
-                                     ,pr_rowidtit  IN ROWID DEFAULT NULL --> Rowid da craptit para gerar a baixa operacional
+                                     ,pr_tituloCIP IN npcb0001.typ_reg_TituloCIP --> Dados do titulo na CIP
+                                     ,pr_flmobile  IN NUMBER             --> Indicador do Mobile
                                      --,pr_xml_frag OUT NOCOPY xmltype     --> Fragmento do XML de retorno
                                      ,pr_des_erro OUT VARCHAR2           --> Indicador erro OK/NOK
                                      ,pr_dscritic OUT VARCHAR2);         --> Descricao erro
@@ -117,11 +122,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0003 is
   /* COLECTION DESTINADA A CONTER OS SERVIÇOS DO WEBSERVICE */
   TYPE typ_tab_metodos IS TABLE OF VARCHAR2(50) INDEX BY BINARY_INTEGER;
   TYPE typ_rec_servico IS RECORD (dsservico  VARCHAR2(50)
+                                 ,dsinterfa  VARCHAR2(50)
                                  ,tbmetodos  typ_tab_metodos);
   TYPE typ_tab_wscip   IS TABLE OF typ_rec_servico INDEX BY BINARY_INTEGER;
   vr_wscip_services    typ_tab_wscip;
   /**********************************************************/
   
+
+  FUNCTION fn_url_SendSoapNPC (pr_idservic IN INTEGER ) 
+                              RETURN VARCHAR2 IS
+  
+    vr_dssrdom VARCHAR2(4000);
+  BEGIN
+  
+    /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
+    -- Busca o service domain conforme parâmetro NPC_SERVICE_DOMAIN
+    vr_dssrdom := 'http://'||gene0001.fn_param_sistema('CRED'
+                                                      ,0
+                                                      ,'NPC_SERVICE_DOMAIN');
+    vr_dssrdom := vr_dssrdom
+               || '/JDNPC_WEB/JDNPCWS_'
+               || NPCB0003.vr_wscip_services(pr_idservic).dsservico
+               || '.dll/soap/'||NPCB0003.vr_wscip_services(pr_idservic).dsinterfa; -- wsdl
+    /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
+    RETURN vr_dssrdom;
+  EXCEPTION  
+    WHEN OTHERS THEN
+      RETURN NULL;
+  END;
+
+
 PROCEDURE  PC_TESTA_CONEXAO IS
    
   pr_requisicao   UTL_HTTP.REQ;     --> Objeto HTTP para requisição
@@ -290,6 +320,7 @@ END;
            , ISPBPartRecbdrPrincipal
            , ISPBPartRecebdrAdmtd
            , NumIdentcTit
+           , NumRefAtlCadTit
            , TO_DATE(DtHrSitTit, vr_datetimeformat) DtHrSitTit 
            , ISPBPartDestinatario
            , CodPartDestinatario
@@ -321,12 +352,8 @@ END;
            , IndrPgtoParcl      
            , QtdPgtoParcl      
            , NPCB0001.fn_convert_number(VlrAbattTit) VlrAbattTit
-           , TO_DATE(DtJurosTit, vr_dateformat) DtJurosTit      
-           , CodJurosTit   
-           , NPCB0001.fn_convert_number(Vlr_PercJurosTit)  Vlr_PercJurosTit
-           , TO_DATE(DtMultaTit, vr_dateformat) DtMultaTit      
-           , CodMultaTit     
-           , NPCB0001.fn_convert_number(Vlr_PercMultaTit)  Vlr_PercMultaTit
+           
+           
            , IndrVlr_PercMinTit  
            , NPCB0001.fn_convert_number(Vlr_PercMinTit)    Vlr_PercMinTit
            , IndrVlr_PercMaxTit  
@@ -353,6 +380,7 @@ END;
                             , ISPBPartRecbdrPrincipal NUMBER       PATH 'ISPBPartRecbdrPrincipal'
                             , ISPBPartRecebdrAdmtd    NUMBER       PATH 'ISPBPartRecebdrAdmtd'
                             , NumIdentcTit            NUMBER       PATH 'NumIdentcTit'
+                            , NumRefAtlCadTit         NUMBER       PATH 'NumRefAtlCadTit'
                             , DtHrSitTit              VARCHAR2(20) PATH 'DtHrSitTit'
                             , ISPBPartDestinatario    NUMBER       PATH 'ISPBPartDestinatario'
                             , CodPartDestinatario     VARCHAR2(3)  PATH 'CodPartDestinatario'
@@ -400,14 +428,34 @@ END;
                             , VlrCalcdJDDesct         VARCHAR2(20) PATH 'VlrCalcdJDDesct'
                             , VlrCalcdJDTotCobrar     VARCHAR2(20) PATH 'VlrCalcdJDTotCobrar'
                             , VlrCalcdJDMin           VARCHAR2(20) PATH 'VlrCalcdJDMin'
-                            , VlrCalcdJDMax           VARCHAR2(20) PATH 'VlrCalcdJDMax')
+                            , VlrCalcdJDMax           VARCHAR2(20) PATH 'VlrCalcdJDMax') ;
+    rw_dadostitulo    cr_dadostitulo%ROWTYPE;
+    
+    -- Cursor para ler os juros do título
+    CURSOR cr_jurostit IS
+      WITH DATA AS (SELECT pr_dsxmltit xml FROM dual)
+      SELECT ROWNUM   idregist
+           , TO_DATE(DtJurosTit, vr_dateformat) DtJurosTit      
+           , CodJurosTit   
+           , NPCB0001.fn_convert_number(Vlr_PercJurosTit)  Vlr_PercJurosTit
+        FROM DATA
            , XMLTABLE(XMLNAMESPACES('http://schemas.xmlsoap.org/soap/envelope/' AS "SOAP-ENV"
                                    ,'urn:JDNPCWS_RecebimentoPgtoTitIntf-IJDNPCWS_RecebimentoPgtoTit' AS "NS1")
                                    ,'/SOAP-ENV:Envelope/SOAP-ENV:Body/NS1:*/return/*/JurosTit'
                       PASSING XMLTYPE(xml)
                       COLUMNS DtJurosTit              VARCHAR2(10) PATH 'DtJurosTit'
                             , CodJurosTit             VARCHAR2(1)  PATH 'CodJurosTit'
-                            , Vlr_PercJurosTit        VARCHAR2(20) PATH 'Vlr_PercJurosTit')
+                            , Vlr_PercJurosTit        VARCHAR2(20) PATH 'Vlr_PercJurosTit');
+    rw_jurostit cr_jurostit%ROWTYPE;
+    
+    -- Cursor para ler os juros do título
+    CURSOR cr_multatit IS
+      WITH DATA AS (SELECT pr_dsxmltit xml FROM dual)
+      SELECT ROWNUM   idregist
+           , TO_DATE(DtMultaTit, vr_dateformat) DtMultaTit      
+           , CodMultaTit     
+           , NPCB0001.fn_convert_number(Vlr_PercMultaTit)  Vlr_PercMultaTit
+        FROM DATA
            , XMLTABLE(XMLNAMESPACES('http://schemas.xmlsoap.org/soap/envelope/' AS "SOAP-ENV"
                                    ,'urn:JDNPCWS_RecebimentoPgtoTitIntf-IJDNPCWS_RecebimentoPgtoTit' AS "NS1")
                                    ,'/SOAP-ENV:Envelope/SOAP-ENV:Body/NS1:*/return/*/MultaTit'
@@ -415,7 +463,8 @@ END;
                       COLUMNS DtMultaTit              VARCHAR2(10) PATH 'DtMultaTit'
                             , CodMultaTit             VARCHAR2(1)  PATH 'CodMultaTit'
                             , Vlr_PercMultaTit        VARCHAR2(20) PATH 'Vlr_PercMultaTit');
-    rw_dadostitulo    cr_dadostitulo%ROWTYPE;
+    rw_multatit cr_multatit%ROWTYPE;
+    
     
     -- Cursor para ler os descontos do título
     CURSOR cr_desctitulo IS
@@ -437,21 +486,35 @@ END;
     CURSOR cr_valorestitulo IS
       WITH DATA AS (SELECT pr_dsxmltit xml FROM dual)
       SELECT ROWNUM  idregist
+           , TO_DATE(DtValiddCalc,vr_dateformat)            DtValiddCalc  
+           , CdMunicipio                                    CdMunicipio
+           , TO_DATE(DtCalcdVencTit,vr_dateformat)          DtCalcdVencTit
+           , NPCB0001.fn_convert_number(VlrCalcdAbatt)      VlrCalcdAbatt
            , NPCB0001.fn_convert_number(VlrCalcdJuros)            VlrCalcdJuros
            , NPCB0001.fn_convert_number(VlrCalcdMulta)            VlrCalcdMulta
            , NPCB0001.fn_convert_number(VlrCalcdDesct)            VlrCalcdDesct
            , NPCB0001.fn_convert_number(VlrTotCobrar )            VlrTotCobrar 
-           , TO_DATE(DtValiddCalc,vr_dateformat) DtValiddCalc 
+           , NPCB0001.fn_convert_number(VlrCalcdMin  )      VlrCalcdMin
+           , NPCB0001.fn_convert_number(VlrCalcdMax  )      VlrCalcdMax
+           
         FROM DATA
            , XMLTABLE(XMLNAMESPACES('http://schemas.xmlsoap.org/soap/envelope/' AS "SOAP-ENV"
                                    ,'urn:JDNPCWS_RecebimentoPgtoTitIntf-IJDNPCWS_RecebimentoPgtoTit' AS "NS1")
-                                   ,'/SOAP-ENV:Envelope/SOAP-ENV:Body/NS1:*/return/*/RepetCalcTit/*'
+                                   ,'/SOAP-ENV:Envelope/SOAP-ENV:Body/NS1:*/return/*/JDCalcTit'
                       PASSING XMLTYPE(xml)
-                      COLUMNS VlrCalcdJuros VARCHAR2(20) PATH 'VlrCalcdJuros'
-                            , VlrCalcdMulta VARCHAR2(20) PATH 'VlrCalcdMulta'
-                            , VlrCalcdDesct VARCHAR2(20) PATH 'VlrCalcdDesct'
-                            , VlrTotCobrar  VARCHAR2(20) PATH 'VlrTotCobrar'
-                            , DtValiddCalc  VARCHAR2(10) PATH 'DtValiddCalc');
+                      COLUMNS   DtValiddCalc  VARCHAR2(10) PATH 'DtValiddCalcJD'
+                              , CdMunicipio   VARCHAR2(20) PATH 'CdMunicipio'
+                              , DtCalcdVencTit VARCHAR2(20) PATH 'DtCalcdJDVencTit'
+                              , VlrCalcdAbatt VARCHAR2(20) PATH 'VlrCalcdJDAbatt'    
+                              , VlrCalcdJuros VARCHAR2(20) PATH 'VlrCalcdJDJuros'
+                              , VlrCalcdMulta VARCHAR2(20) PATH 'VlrCalcdJDMulta'
+                              , VlrCalcdDesct VARCHAR2(20) PATH 'VlrCalcdJDDesct'    
+                              , VlrTotCobrar  VARCHAR2(20) PATH 'VlrCalcdJDTotCobrar'
+                              , VlrCalcdMin   VARCHAR2(20) PATH 'VlrCalcdJDMin'
+                              , VlrCalcdMax   VARCHAR2(20) PATH 'VlrCalcdJDMax');
+                            
+    
+    
     
     -- Cursor para ler as baixas operacionais
     CURSOR cr_baixaoperacional IS
@@ -536,6 +599,7 @@ END;
     pr_tbtitulo.ISPBPartRecbdrPrincipal := rw_dadostitulo.ISPBPartRecbdrPrincipal;
     pr_tbtitulo.ISPBPartRecebdrAdmtd    := rw_dadostitulo.ISPBPartRecebdrAdmtd;
     pr_tbtitulo.NumIdentcTit            := rw_dadostitulo.NumIdentcTit;
+    pr_tbtitulo.NumRefAtlCadTit         := rw_dadostitulo.NumRefAtlCadTit;
     pr_tbtitulo.DtHrSitTit              := rw_dadostitulo.DtHrSitTit;
     pr_tbtitulo.ISPBPartDestinatario    := rw_dadostitulo.ISPBPartDestinatario;
     pr_tbtitulo.CodPartDestinatario     := rw_dadostitulo.CodPartDestinatario;
@@ -567,12 +631,8 @@ END;
     pr_tbtitulo.IndrPgtoParcl           := rw_dadostitulo.IndrPgtoParcl;
     pr_tbtitulo.QtdPgtoParcl            := rw_dadostitulo.QtdPgtoParcl;
     pr_tbtitulo.VlrAbattTit             := rw_dadostitulo.VlrAbattTit;
-    pr_tbtitulo.DtJurosTit              := rw_dadostitulo.DtJurosTit;
-    pr_tbtitulo.CodJurosTit             := rw_dadostitulo.CodJurosTit;
-    pr_tbtitulo.Vlr_PercJurosTit        := rw_dadostitulo.Vlr_PercJurosTit;
-    pr_tbtitulo.DtMultaTit              := rw_dadostitulo.DtMultaTit;
-    pr_tbtitulo.CodMultaTit             := rw_dadostitulo.CodMultaTit;
-    pr_tbtitulo.Vlr_PercMultaTit        := rw_dadostitulo.Vlr_PercMultaTit;
+    
+    
     pr_tbtitulo.IndrVlr_PercMinTit      := rw_dadostitulo.IndrVlr_PercMinTit;
     pr_tbtitulo.Vlr_PercMinTit          := rw_dadostitulo.Vlr_PercMinTit;
     pr_tbtitulo.IndrVlr_PercMaxTit      := rw_dadostitulo.IndrVlr_PercMaxTit;
@@ -585,6 +645,23 @@ END;
    
     -- Limpar e carregar as informações de descontos de títulos
     pr_tbtitulo.TabDesctTit.DELETE();
+    
+    OPEN cr_jurostit;
+    FETCH cr_jurostit INTO rw_jurostit;
+    CLOSE cr_jurostit; 
+    
+    pr_tbtitulo.DtJurosTit              := rw_jurostit.DtJurosTit;
+    pr_tbtitulo.CodJurosTit             := rw_jurostit.CodJurosTit;
+    pr_tbtitulo.Vlr_PercJurosTit        := rw_jurostit.Vlr_PercJurosTit;
+    
+    OPEN cr_multatit;
+    FETCH cr_multatit INTO rw_multatit;
+    CLOSE cr_multatit; 
+    
+    pr_tbtitulo.DtMultaTit              := rw_multatit.DtMultaTit;
+    pr_tbtitulo.CodMultaTit             := rw_multatit.CodMultaTit;
+    pr_tbtitulo.Vlr_PercMultaTit        := rw_multatit.Vlr_PercMultaTit;
+    
     
     -- Percorrer os descontos do título
     FOR rw_desctitulo IN cr_desctitulo LOOP
@@ -600,11 +677,25 @@ END;
     -- Percorrer os valores calculados do título
     FOR rw_valorestitulo IN cr_valorestitulo LOOP
       -- Popular os dados
+      
+      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).DtValiddCalc  := rw_valorestitulo.DtValiddCalc;
+      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).CdMunicipio   := rw_valorestitulo.CdMunicipio;   
+      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).DtCalcdVencTit:= rw_valorestitulo.DtCalcdVencTit;
+      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdAbatt := rw_valorestitulo.VlrCalcdAbatt; 
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdJuros := rw_valorestitulo.VlrCalcdJuros;    
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMulta := rw_valorestitulo.VlrCalcdMulta;
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdDesct := rw_valorestitulo.VlrCalcdDesct;
+      
+      -- IF necessário quando a CIP não retorna grupo de cálculo DDA110_Calc (Rafael)
+      IF nvl(rw_valorestitulo.VlrTotCobrar,0) = 0 THEN 
+        pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar := nvl(pr_tbtitulo.VlrTit,0);
+      ELSE       
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar  := rw_valorestitulo.VlrTotCobrar;
-      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).DtValiddCalc  := rw_valorestitulo.DtValiddCalc;
+      END IF;
+      
+      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMin   := rw_valorestitulo.VlrCalcdMin;
+      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMax   := rw_valorestitulo.VlrCalcdMax;
+
     END LOOP;
     
     -- Limpar e carregar as informações de baixas operacionais
@@ -1054,14 +1145,9 @@ END;
     pr_tpconcip := 1; 
     
     /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
-    -- Busca o service domain conforme parâmetro NPC_SERVICE_DOMAIN
-    vr_dssrdom := 'http://'||gene0001.fn_param_sistema('CRED'
-                                                      ,0
-                                                      ,'NPC_SERVICE_DOMAIN');
-    vr_dssrdom := vr_dssrdom
-               || '/JDNPC_WEB/JDNPCWS_'
-               || NPCB0003.vr_wscip_services(4).dsservico
-               || '.dll/soap/IJDNPCWS_'||NPCB0003.vr_wscip_services(4).dsservico; -- wsdl
+    
+    vr_dssrdom := fn_url_SendSoapNPC (pr_idservic => 4);
+    
     /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
 
     -- Enviar requisição para webservice
@@ -1263,14 +1349,9 @@ END;
     --dbms_output.put_line('--------------------------------------------'); -- ver renato
     
     /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
-    -- Busca o service domain conforme parâmetro NPC_SERVICE_DOMAIN
-    vr_dssrdom := 'http://'||gene0001.fn_param_sistema('CRED'
-                                                      ,0
-                                                      ,'NPC_SERVICE_DOMAIN');
-    vr_dssrdom := vr_dssrdom
-               || '/JDNPC_WEB/JDNPCWS_'
-               || NPCB0003.vr_wscip_services(3).dsservico
-               || '.dll/soap/IJDNPC_'||NPCB0003.vr_wscip_services(3).dsservico; -- wsdl
+    
+    vr_dssrdom := fn_url_SendSoapNPC (pr_idservic => 4);
+    
     /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
 
     -- Enviar requisição para webservice
@@ -1327,10 +1408,13 @@ END;
 
   --> Rotina para consultar os titulos CIP
   PROCEDURE pc_wscip_requisitar_baixa(pr_cdcooper  IN NUMBER             --> Código da cooperativa
-                                     --,pr_cdctrlcs  IN VARCHAR2           --> Identificador da consulta
+                                     ,pr_dtmvtolt  IN DATE               --> data de movimento
+                                     ,pr_dscodbar  IN VARCHAR2           --> Codigo de barra
+                                     ,pr_cdctrlcs  IN VARCHAR2           --> Identificador da consulta
                                     -- ,pr_nrispbif  IN VARCHAR2           --> ISPB recebedor baixa operacional
                                      ,pr_idtitdda  IN NUMBER             --> Identificador Titulo DDA
-                                     ,pr_rowidtit  IN ROWID DEFAULT NULL --> Rowid da craptit para gerar a baixa operacional
+                                     ,pr_tituloCIP IN npcb0001.typ_reg_TituloCIP --> Dados do titulo na CIP
+                                     ,pr_flmobile  IN NUMBER             --> Indicador do Mobile
                                      --,pr_xml_frag OUT NOCOPY xmltype     --> Fragmento do XML de retorno
                                      ,pr_des_erro OUT VARCHAR2           --> Indicador erro OK/NOK
                                      ,pr_dscritic OUT VARCHAR2) IS       --> Descricao erro
@@ -1370,13 +1454,17 @@ END;
              tit.vldpagto,
              decode(tit.flgconti,1,'S','N') flgconti,
              tit.nrdconta,
-             tit.flgpgdda
+             tit.flgpgdda,
+             tit.rowid
         FROM craptit tit
-       WHERE tit.nrdident = pr_idtitdda
-         AND tit.rowid    = pr_rowidtit; 
+       WHERE tit.cdcooper        = pr_cdcooper
+         AND tit.dtmvtolt        = pr_dtmvtolt
+         AND UPPER(tit.dscodbar) = UPPER(pr_dscodbar)
+         AND UPPER(tit.cdctrlcs) = UPPER(pr_cdctrlcs);
     rw_craptit cr_craptit%ROWTYPE;
     
     vr_tbcampos      NPCB0003.typ_tab_campos_soap;
+    vr_cdctrbxo      VARCHAR2(100);
     vr_cdCanPgt      INTEGER;
     vr_cdmeiopg      INTEGER;
     vr_dssrdom       VARCHAR2(1000); -- Var para retorno do Service Domain
@@ -1407,9 +1495,26 @@ END;
                                   ,pr_des_erro => pr_des_erro
                                   ,pr_dscritic => vr_dscritic);
     
+    -- Montar o número de controle da baixa operacional
+    vr_cdctrbxo := NPCB0001.fn_montar_NumCtrlPart(pr_cdbarras => rw_craptit.dscodbar
+                                                 ,pr_cdagenci => rw_craptit.cdagenci
+                                                 ,pr_flmobile => pr_flmobile);
+    
+
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'EnvioImediato';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 'N'; 
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';    
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCtrlPart';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_cdctrbxo;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';    
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumIdentcTit';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_idtitdda;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.nrdident;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumRefCadTitBaixaOperac';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_tituloCIP.NumRefAtlCadTit;
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'TpBaixaOperac';
@@ -1417,7 +1522,11 @@ END;
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'ISPBPartRecbdrBaixaOperac';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.nrispbds;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 5463212;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';    
+    --
+    vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'CodPartRecbdrBaixaOperac';
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 85;
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'TpPessoaPort';
@@ -1429,15 +1538,15 @@ END;
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';          
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'VlrBaixaOperacTit';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := rw_craptit.vldpagto;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(rw_craptit.vldpagto,'FM9999999999999999D99','NLS_NUMERIC_CHARACTERS=''.,''');
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'float';      
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtHrProcBaixaOperac';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,vr_datetimeformat /* 'RRRRMMDDHH24MISS'*/); --> AAAAMMDDhhmmss
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE, 'RRRRMMDDHH24MISS'); --> AAAAMMDDhhmmss
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';      
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'DtProcBaixaOperac';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,vr_dateformat/*'RRRRMMDD'*/);
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := to_char(SYSDATE,'RRRRMMDD');
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';      
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCodBarrasBaixaOperac';
@@ -1498,14 +1607,14 @@ END;
     
     /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
     -- Busca o service domain conforme parâmetro NPC_SERVICE_DOMAIN
-    vr_dssrdom := 'http://'||gene0001.fn_param_sistema('CRED'
-                                                      ,0
-                                                      ,'NPC_SERVICE_DOMAIN');
-    vr_dssrdom := vr_dssrdom
-               || '/JDNPC_WEB/JDNPCWS_'
-               || NPCB0003.vr_wscip_services(4).dsservico
-               || '.dll/soap/IJDNPCWS_'||NPCB0003.vr_wscip_services(4).dsservico; -- wsdl
-    /************* MONTAR O LINK DE ACESSO AO SERVIÇO DO WEBSERVICE *************/
+    vr_dssrdom := fn_url_SendSoapNPC (pr_idservic => 4);
+    
+    
+    dbms_output.PUT_LINE('#### REQUISIÇÃO ####################################');
+    dbms_output.put_line(vr_xml.getClobVal());
+    --DBMS_XSLPROCESSOR.CLOB2FILE(vr_xml.getclobval(), '/micros/cecred/odirlei/arq', 'req.xml', NLS_CHARSET_ID('UTF8'));
+    dbms_output.PUT_LINE('####################################################');
+    
     
     -- Enviar requisição para webservice
     soap0001.pc_cliente_webservice(pr_endpoint    => vr_dssrdom
@@ -1521,6 +1630,12 @@ END;
       RAISE vr_exc_erro;
     END IF;
     
+    
+    dbms_output.PUT_LINE('#### RETORNO #######################################');
+    dbms_output.put_line(vr_xml_res.getClobVal());
+    dbms_output.PUT_LINE('####################################################');
+    
+    
     -- Verifica se ocorreu retorno com erro no XML
     pc_xmlsoap_fault_packet(pr_cdcooper => pr_cdcooper
                            --,pr_cdctrlcs => pr_cdctrlcs
@@ -1533,45 +1648,25 @@ END;
     IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;      
     END IF;
-    /*
-    -- Verifica o retorno de erro
-    IF pr_des_erro = 'NOK' THEN
-      -- Envio centralizado de log de erro 
-      RAISE vr_exc_erro;
-    ELSE
-      -- Busca valor do nodo dado o xPath
-      gene0007.pc_itera_nodos(pr_xpath      => '//return'
-                             ,pr_xml        => vr_xml_res
-                             ,pr_list_nodos => vr_tab_xml
-                             ,pr_des_erro   => pr_des_erro);
     
-      -- Verifica se a TAG existe
-      IF vr_tab_xml.count = 0 THEN
-        pr_dscritic := 'Resposta SOAP invalida (Return).';
-        pr_des_erro := 'NOK';
-      
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Verifica se retorno conteúdo na TAG
-      IF nvl(vr_tab_xml(0).tag, ' ') = ' ' THEN
-        pr_dscritic := 'Falha na atualizacao da situacao.';
-        pr_des_erro := 'NOK';
-      
-        RAISE vr_exc_erro;
-      END IF;
-    END IF;
-    */
-    -- Retornar fragmento XML como novo documento XML
-    --Valor não utilizado
-    --pr_xml_frag := gene0007.fn_gera_xml_frag(vr_tab_xml(0).tag); 
+    --> Atualizar codigo de controle participante da baixa operacional
+    --> utilizado caso necessario estornar o titulo
+    BEGIN
+        UPDATE craptit tit
+           SET tit.cdctrbxo = vr_cdctrbxo
+         WHERE tit.rowid = rw_craptit.rowid;           
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel atualizar titulo(cdctrbxo): '||SQLERRM;
+      RAISE vr_exc_erro;
+    END;
     
     --Retornar OK
     pr_des_erro := 'OK';
   EXCEPTION
     WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
       pr_des_erro := 'NOK';
-      pr_dscritic := 'Erro na rotina NPCB0003.pc_wscip_requisitar_baixa. ' ||vr_dscritic;
     WHEN OTHERS THEN
       pr_des_erro := 'NOK';
       pr_dscritic := 'Erro na rotina NPCB0003.pc_wscip_requisitar_baixa. ' ||SQLERRM;
@@ -1584,6 +1679,7 @@ BEGIN --> Corpo da package
   IF vr_wscip_services.count() = 0 THEN 
     --> SERVIÇO: PAGADOR ELETRONICO
     vr_wscip_services(1).dsservico := 'PagadorEletronico';
+    vr_wscip_services(1).dsinterfa := 'IJDNPC_PagadorEletronico';
     -- Métodos
     vr_wscip_services(1).tbmetodos(1)  := 'ConsultarTermo';
     vr_wscip_services(1).tbmetodos(2)  := 'Incluir';
@@ -1598,6 +1694,7 @@ BEGIN --> Corpo da package
     
     --> SERVIÇO: AGREGADO
     vr_wscip_services(2).dsservico := 'PagadorEletronicoAgregado';
+    vr_wscip_services(2).dsinterfa := 'IJDNPC_PagadorEletronicoAgregado';
     -- Métodos
     vr_wscip_services(2).tbmetodos(1)  := 'Incluir';
     vr_wscip_services(2).tbmetodos(2)  := 'Excluir';
@@ -1607,6 +1704,7 @@ BEGIN --> Corpo da package
     
     --> SERVIÇO: TÍTULO DO PAGADOR
     vr_wscip_services(3).dsservico := 'TituloPagadorEletronico';
+    vr_wscip_services(3).dsinterfa := 'IJDNPC_TituloPagadorEletronico';
     -- Métodos
     vr_wscip_services(3).tbmetodos(1)  := 'ListarTitulosResumo';
     vr_wscip_services(3).tbmetodos(2)  := 'PaginarListaTitulosResumo';
@@ -1626,6 +1724,7 @@ BEGIN --> Corpo da package
     
     --> SERVIÇO: RECEBIMENTO PAGAMENTO TITULO
     vr_wscip_services(4).dsservico := 'RecebimentoPgtoTit';
+    vr_wscip_services(4).dsinterfa := 'IJDNPCWS_RecebimentoPgtoTit';
     -- Métodos
     vr_wscip_services(4).tbmetodos(1) := 'RequisitarTituloCip';
     vr_wscip_services(4).tbmetodos(2) := 'RequisitarTituloCIPCalcVlr';

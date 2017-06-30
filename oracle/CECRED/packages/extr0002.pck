@@ -3583,7 +3583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 01/03/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 21/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3651,6 +3651,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
   --                           (Lucas Ranghetti M338.1)
+  --
+  --              21/06/2017 - Mostrar lancamento futuro de cred de cobranca NPC pagos fora do sistema
+  --                           Cecred por baixa operacional (Projeto 340 - Rafael)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4221,6 +4224,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             and crapass.nrdconta = deb.nrdconta(+);
 
            rw_valoresTAA cr_valoresTAA%ROWTYPE;
+
+      -- buscar credito futuro de pagto de boletos NPC
+      -- pagos fora do sistema CECRED (Projeto 340)
+      -- Registros alimentados pelo pc_crps711;
+      CURSOR cr_cred_npc (pr_cdcooper IN crapass.cdcooper%TYPE,
+                          pr_nrdconta IN crapass.nrdconta%TYPE,
+                          pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS     
+        SELECT t.dtcredito
+              ,t.dtmvtolt
+              ,SUM(decode(t.tpoperac_jd,'BO',t.vlbaixa,-t.vlbaixa)) vlcredito
+              ,COUNT(*) qtcredito
+          FROM tbcobran_baixa_operac t
+        WHERE t.cdcooper = pr_cdcooper
+          AND t.nrdconta = pr_nrdconta
+          AND t.dtcredito >= pr_dtmvtolt
+          AND t.tpoperac_jd IN ('BO','CB') -- BO=é um crédito futuro, CB=é um débito futuro
+          GROUP BY t.dtcredito, t.dtmvtolt;
+      rw_cred_npc cr_cred_npc%ROWTYPE;          
+           
       --Variaveis Locais
       vr_cdhistaa INTEGER;
       vr_cdhsetaa INTEGER;
@@ -5845,7 +5867,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Criar Lancamento Futuro na tabela
           pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapret.dtcredit;
           pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapret.dtcredit,'DD/MM/YYYY');
+          
+          IF rw_crapret.dtcredit = rw_crapdat.dtmvtolt THEN
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - '||to_char(rw_crapret.nrconven,'fm999g999g990') || ' - PREVISAO';
+          ELSE
           pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - '||to_char(rw_crapret.nrconven,'fm999g999g990');
+          END IF;
+          
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_qtdpagto,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'C';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_vldpagto; 
@@ -5855,6 +5883,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_vllaucre:= nvl(vr_vllaucre,0) + vr_vldpagto;
         END IF;                                                 
         END IF;
+      END LOOP;
+                                                                                        
+      -- mostrar lancto futuro de creditos de cobranca NPC
+      -- pagos fora do sistema Cecred
+      FOR rw_cred_npc IN cr_cred_npc (pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+
+          --Incrementar contador lancamentos na tabela
+          vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+          --Criar Lancamento Futuro na tabela
+          pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_cred_npc.dtcredito;
+          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_cred_npc.dtcredito,'DD/MM/YYYY');
+          
+          IF rw_cred_npc.dtmvtolt = rw_crapdat.dtmvtolt THEN
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - PREVISAO';
+          ELSE
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA';
+          END IF;
+          
+          pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_cred_npc.qtcredito,'fm999g999g990');
+          pr_tab_lancamento_futuro(vr_index).indebcre:= 'C';
+          pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_cred_npc.vlcredito; 
+          --Acumular valor automatico 
+          vr_vllautom:= nvl(vr_vllautom,0) + rw_cred_npc.vlcredito;
+          --Acumular valor Credito 
+          vr_vllaucre:= nvl(vr_vllaucre,0) + rw_cred_npc.vlcredito;
+                                               
       END LOOP;
                                                                                         
       --Selecionar Historico de débito de titulo vencido
@@ -11807,7 +11863,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 08/10/2015
+  --  Data     : Julho/2014                           Ultima atualizacao: 11/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -11825,6 +11881,9 @@ END pc_consulta_ir_pj_trim;
   --                           (Jaison/Diego - SD: 290027)
   --
   --              08/10/2015 - Tratar os históricos de estorno do produto PP (Oscar)                     
+  --
+  --              11/04/2016 - Exibir numero de conta cartão para o emprestimos de cessao de credito.
+  --                           PRJ-343 - Cessao de Credito(Odirlei-AMcom)                   
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -11929,6 +11988,19 @@ END pc_consulta_ir_pj_trim;
            WHERE gnsbmod.cdmodali = pr_cdmodali
              AND gnsbmod.cdsubmod = pr_cdsubmod;
         rw_gnsbmod cr_gnsbmod%ROWTYPE;
+        
+        --> Verificar se é emprestimo de cessao de credito
+        CURSOR cr_tbcessao (pr_cdcooper IN craplem.cdcooper%type
+                           ,pr_nrdconta IN craplem.nrdconta%type
+                           ,pr_nrctremp IN craplem.nrctremp%type) IS
+          SELECT ces.nrconta_cartao
+            FROM tbcrd_cessao_credito ces
+           WHERE ces.cdcooper = pr_cdcooper
+             AND ces.nrdconta = pr_nrdconta
+             AND ces.nrctremp = pr_nrctremp; 
+        rw_tbcessao cr_tbcessao%ROWTYPE;
+        
+        
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);
         vr_tab_extrato_epr_novo typ_tab_extrato_epr_novo;
@@ -12231,6 +12303,15 @@ END pc_consulta_ir_pj_trim;
           --Fechar Cursor
           CLOSE cr_gnsbmod;
 
+          --> Verificar se é emprestimo de cessao de credito
+          rw_tbcessao := NULL;
+          OPEN cr_tbcessao (pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrctremp => rw_crapepr.nrctremp);
+          FETCH cr_tbcessao INTO rw_tbcessao;
+          CLOSE cr_tbcessao;
+          
+
           --Gravar Informacoes do cabecalho no XML
           vr_dstexto:= '<conta tpemprst="1" flgmensag="N" dscmensag=""'                             ||
                        '  nrdconta="' || to_char(pr_nrdconta,'fm9999g999g0')                        ||
@@ -12250,6 +12331,7 @@ END pc_consulta_ir_pj_trim;
                        '" dsmodali="' || rw_gnmodal.dsmodali                                        ||
                        '" cdsubmod="' || rw_gnsbmod.cdsubmod                                        ||
                        '" dssubmod="' || rw_gnsbmod.dssubmod                                        ||
+                       '" nrconta_cartao="' || rw_tbcessao.nrconta_cartao                           ||
                        '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                 ||
                        '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                ||
                        '" qtpreapg="' || to_char(pr_qtpreapg,'fm990d0000')                          ||

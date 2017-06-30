@@ -56,6 +56,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
                                    ,pr_codigo_barras  IN VARCHAR2    -- Codigo de Barras
                                    ,pr_cdoperad       IN VARCHAR2    -- Código do operador
                                    ,pr_idorigem       IN NUMBER       -- Origem da requisição
+                                   ,pr_flgpgdda       IN INTEGER DEFAULT 0 -- Indicador pagto DDA
                                    ,pr_nrdocbenf     OUT NUMBER      -- Documento do beneficiário emitente
                                    ,pr_tppesbenf     OUT VARCHAR2    -- Tipo de pessoa beneficiaria
 						                       ,pr_dsbenefic     OUT VARCHAR2    -- Descrição do beneficiário emitente
@@ -129,24 +130,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
 	  				                         ,pr_des_erro      OUT VARCHAR2     -- Indicador erro OK/NOK
                                      ,pr_cdcritic      OUT NUMBER       -- Código do erro 
 			  		                         ,pr_dscritic      OUT VARCHAR2) IS -- Descricao do erro 
+                                     
+   --Selecionar informacoes cobranca
+  CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%TYPE
+                    ,pr_nrdconta IN crapcob.nrdconta%TYPE   
+                    ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE 
+                    ,pr_nrdocmto IN crapcob.nrdocmto%TYPE) IS
+    SELECT cob.cdcooper,
+           cob.nrdconta,
+           cob.vltitulo,
+           cob.cdmensag,
+           cob.vldescto,
+           cob.vlabatim,
+           cob.tpdmulta,
+           cob.vlrmulta,
+           cob.vljurdia,
+           cob.tpjurmor,
+           cob.dtvencto,
+           cob.dsinform,
+           cob.inpagdiv,
+           decode(ass.inpessoa,1,ass.nmprimtl,jur.nmfansia) dsbenefic,
+           ass.nrcpfcgc nrdocbenf,
+           decode(ass.inpessoa,1,'F','J') tppesbenf           
+      FROM crapcob cob
+         , crapceb ceb
+         , crapcco cco
+         , crapass ass
+         , crapjur jur
+     WHERE ceb.cdcooper = pr_cdcooper
+       AND ceb.nrconven = pr_nrcnvcob
+       AND ceb.nrdconta = pr_nrdconta
+       AND cco.cdcooper = ceb.cdcooper + 0
+       AND cco.nrconven = ceb.nrconven + 0
+       AND cob.cdcooper = ceb.cdcooper + 0
+       AND cob.nrcnvcob = ceb.nrconven + 0
+       AND cob.nrdconta = ceb.nrdconta + 0
+       AND cob.nrdocmto = pr_nrdocmto
+       AND cob.nrdctabb = cco.nrdctabb + 0
+       AND ass.cdcooper = cob.cdcooper
+       AND ass.nrdconta = cob.nrdconta
+       AND jur.cdcooper (+) = ass.cdcooper
+       AND jur.nrdconta (+) = ass.nrdconta;
+   rw_crapcob cr_crapcob%ROWTYPE;                                     
                                     
     -- Variáveis
-    rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;       
-    vr_cdcritic    NUMBER;
-    vr_dscritic    VARCHAR2(1000);  
-    vr_des_erro    VARCHAR2(3);
-    vr_tbtitulocip NPCB0001.typ_reg_titulocip;        
-    vr_nrdocbenf   NUMBER;
-    vr_tppesbenf   VARCHAR2(1);
-    vr_dsbenefic   VARCHAR2(100);
-    vr_vlrtitulo   NUMBER;
-    vr_vlrjuros    NUMBER;
-    vr_vlrmulta    NUMBER;
-    vr_vlrdescto   NUMBER;
-    vr_flgtitven   NUMBER;
-    vr_cdctrlcs    VARCHAR2(50);   
-    vr_flblq_valor NUMBER;
-            
+    rw_crapdat         BTCH0001.cr_crapdat%ROWTYPE;       
+    vr_cdcritic        NUMBER;
+    vr_dscritic        VARCHAR2(1000);  
+    vr_des_erro        VARCHAR2(3);
+    vr_tbtitulocip     NPCB0001.typ_reg_titulocip;        
+    vr_nrdocbenf       NUMBER;
+    vr_tppesbenf       VARCHAR2(1);
+    vr_dsbenefic       VARCHAR2(100);
+    vr_vlrtitulo       NUMBER;
+    vr_vlrjuros        NUMBER;
+    vr_vlrmulta        NUMBER;
+    vr_vlrdescto       NUMBER;
+    vr_vlrabatim        NUMBER;     
+    vr_flgtitven       NUMBER;
+    vr_cdctrlcs        VARCHAR2(50);   
+    vr_flblq_valor     NUMBER;
+    
+    vr_nrdconta_cob    crapcob.nrdconta%TYPE := 0;
+    vr_insittit        craptit.insittit%TYPE := 0;
+    vr_intitcop        craptit.intitcop%TYPE := 0;
+    vr_convenio        crapcob.nrcnvcob%TYPE := 0;
+    vr_bloqueto        crapcob.nrdocmto%TYPE := 0;
+    vr_contaconve      INTEGER := 0;
+
+    vr_titulo1         NUMBER  := pr_titulo1; 
+    vr_titulo2         NUMBER  := pr_titulo2; 
+    vr_titulo3         NUMBER  := pr_titulo3; 
+    vr_titulo4         NUMBER  := pr_titulo4; 
+    vr_titulo5         NUMBER  := pr_titulo5;
+    vr_codbarras       VARCHAR2(44) := pr_codigo_barras;       
+    vr_tab_erro        GENE0001.typ_tab_erro;
+    vr_critica_data    BOOLEAN:= FALSE;
   BEGIN
                
     pr_des_erro := 'NOK';
@@ -165,124 +224,280 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
-rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
-    -- Chamar a rotina de consulta dos dados      
-    NPCB0002.pc_consultar_titulo_cip(pr_cdcooper      => pr_cdcooper 
-                                    ,pr_nrdconta      => pr_nrdconta      
-                                    ,pr_cdagenci      => pr_cdagenci       
-                                    ,pr_flmobile      => pr_flmobile  
-                                    ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
-                                    ,pr_titulo1       => pr_titulo1        
-                                    ,pr_titulo2       => pr_titulo2        
-                                    ,pr_titulo3       => pr_titulo3        
-                                    ,pr_titulo4       => pr_titulo4        
-                                    ,pr_titulo5       => pr_titulo5        
-                                    ,pr_codigo_barras => pr_codigo_barras  
-                                    ,pr_cdoperad      => pr_cdoperad  
-                                    ,pr_idorigem      => pr_idorigem     
-                                    ,pr_nrdocbenf     => vr_nrdocbenf
-                                    ,pr_tppesbenf     => vr_tppesbenf
-                                    ,pr_dsbenefic     => vr_dsbenefic      
-                                    ,pr_vlrtitulo     => vr_vlrtitulo      
-                                    ,pr_vlrjuros      => vr_vlrjuros       
-                                    ,pr_vlrmulta      => vr_vlrmulta       
-                                    ,pr_vlrdescto     => vr_vlrdescto      
-                                    ,pr_cdctrlcs      => vr_cdctrlcs       
-                                    ,pr_tbtitulocip   => vr_tbtitulocip    
-                                    ,pr_flblq_valor   => vr_flblq_valor    
-                                    ,pr_fltitven      => vr_flgtitven
-                                    ,pr_des_erro      => vr_des_erro       
-                                    ,pr_cdcritic      => vr_cdcritic       
-                                    ,pr_dscritic      => vr_dscritic);     
-                                         
-    -- Se der erro não retorna informações   
-    IF vr_des_erro = 'NOK' THEN
-      -- Não retornar as informações do título  
-      -- Retornar os valores consultados na CIP
-      pr_nrdocbenf   := NULL;
-      pr_tppesbenf   := NULL;
-      pr_dsbenefic   := NULL;
-      pr_vlrtitulo   := NULL;
-      pr_vlrjuros    := NULL;
-      pr_vlrmulta    := NULL;
-      pr_fltitven    := NULL; 
-      pr_vlrdescto   := NULL; 
-      pr_cdctrlcs    := vr_cdctrlcs;
-      pr_flblq_valor := NULL;
-      
-      -- Retornar erro 
-      pr_des_erro := 'NOK';
-      RAISE vr_exc_erro;
     
-    -- Se não encontrou titulo na CIP e não ocorreu erro (normalmente por estar fora do rollout)
-    ELSIF vr_tbtitulocip.NumCtrlPart IS NULL THEN
+    -- rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
+    -- rw_crapdat.dtmvtolt := to_date('18/05/2017','DD/MM/RRRR');
 
-      -- Busca o valor do titulo de vencimento
-      CXON0014.pc_retorna_vlr_tit_vencto(pr_cdcooper      => pr_cdcooper
-                                        ,pr_nrdconta      => pr_nrdcaixa
-                                        ,pr_idseqttl      => pr_idseqttl
-                                        ,pr_cdagenci      => pr_cdagenci
-                                        ,pr_nrdcaixa      => pr_nrdcaixa
-                                        ,pr_titulo1       => pr_titulo1
-                                        ,pr_titulo2       => pr_titulo2
-                                        ,pr_titulo3       => pr_titulo3
-                                        ,pr_titulo4       => pr_titulo4
-                                        ,pr_titulo5       => pr_titulo5
-                                        ,pr_codigo_barras => pr_codigo_barras
-                                        ,pr_vlfatura      => vr_vlrtitulo
-                                        ,pr_vlrjuros      => vr_vlrjuros
-                                        ,pr_vlrmulta      => vr_vlrmulta
-                                        ,pr_fltitven      => vr_flgtitven
-                                        ,pr_des_erro      => vr_des_erro
-                                        ,pr_dscritic      => vr_dscritic);
-      
-      -- Se ocorreu erro 
-      IF vr_des_erro = 'NOK' OR vr_dscritic IS NOT NULL THEN
-        pr_des_erro := 'NOK';
-        RAISE vr_exc_erro;
-      END IF;
-      
-      -- Retornar as variáveis
-      pr_nrdocbenf   := NULL;
-      pr_tppesbenf   := NULL;
-      pr_dsbenefic   := NULL;
-      pr_vlrtitulo   := vr_vlrtitulo;
-      pr_vlrjuros    := vr_vlrjuros;
-      pr_vlrmulta    := vr_vlrmulta;
-      pr_fltitven    := vr_flgtitven;
-      pr_vlrdescto   := NULL;
-      pr_cdctrlcs    := NULL;
-      pr_flblq_valor := 0;
-      
-    ELSE -- Se efetuou a busca na CIP com sucesso e encontrou registro
-      -- Retornar os valores consultados na CIP
-      pr_nrdocbenf   := vr_nrdocbenf;
-      pr_tppesbenf   := vr_tppesbenf;
-      pr_dsbenefic   := vr_dsbenefic;
-      pr_vlrtitulo   := vr_vlrtitulo;
-      pr_vlrjuros    := vr_vlrjuros;
-      pr_vlrmulta    := vr_vlrmulta;
-      pr_vlrdescto   := vr_vlrdescto;
-      pr_cdctrlcs    := vr_cdctrlcs;
-      pr_flblq_valor := vr_flblq_valor;
-      -- Títulos CIP poderão ser pagos vencidos, mas iremos retornar o flag para bloquear agendamento
-      pr_fltitven    := vr_flgtitven; 
-      
-      -- Realizar as pré-validações do título
-      NPCB0001.pc_valid_titulo_npc(pr_cdcooper    => pr_cdcooper
-                                  ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
-                                  ,pr_cdctrlcs    => vr_cdctrlcs
-                                  ,pr_tbtitulocip => vr_tbtitulocip
-                                  ,pr_cdcritic    => vr_cdcritic
-                                  ,pr_dscritic    => vr_dscritic);
-      
-      -- Se ocorreu erro 
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        pr_des_erro := 'NOK';
-        RAISE vr_exc_erro;
-      END IF;
-      
+    -- Ajustar o código de barras ou a linha digitável
+    NPCB0001.pc_linha_codigo_barras(pr_titulo1  => vr_titulo1  
+                                   ,pr_titulo2  => vr_titulo2  
+                                   ,pr_titulo3  => vr_titulo3  
+                                   ,pr_titulo4  => vr_titulo4  
+                                   ,pr_titulo5  => vr_titulo5  
+                                   ,pr_codbarra => vr_codbarras
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+     
+    -- Se ocorreu erro ao configurar a linha digitável / código de barras
+    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
     END IF;
+
+    --Identificar titulo Cooperativa
+    CXON0014.pc_identifica_titulo_coop2 (pr_cooper      => pr_cdcooper        --Codigo Cooperativa
+                                        ,pr_nro_conta   => pr_nrdconta      --Numero Conta
+                                        ,pr_idseqttl    => pr_idseqttl      --Sequencial do Titular
+                                        ,pr_cod_agencia => pr_cdagenci      --Codigo da Agencia
+                                        ,pr_nro_caixa   => pr_nrdcaixa     --Numero Caixa
+                                        ,pr_codbarras   => vr_codbarras --Codigo Barras
+                                        ,pr_flgcritica  => TRUE             --Flag Critica
+                                        ,pr_nrdconta    => vr_nrdconta_cob  --Numero da Conta OUT
+                                        ,pr_insittit    => vr_insittit      --Situacao Titulo
+                                        ,pr_intitcop    => vr_intitcop      --Indicador titulo cooperativa
+                                        ,pr_convenio    => vr_convenio      --Numero Convenio
+                                        ,pr_bloqueto    => vr_bloqueto      --Numero Boleto
+                                        ,pr_contaconve  => vr_contaconve    --Conta do Convenio
+                                        ,pr_cdcritic    => vr_cdcritic      --Codigo do erro
+                                        ,pr_dscritic    => vr_dscritic);    --Descricao erro
+    --Se Ocorreu erro
+    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_intitcop = 1 THEN /* Se for titulo da cooperativa */
+    
+      -- buscar o titulo para calcular valores
+      OPEN cr_crapcob(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => vr_nrdconta_cob
+                     ,pr_nrcnvcob => vr_convenio
+                     ,pr_nrdocmto => vr_bloqueto);
+      FETCH cr_crapcob INTO rw_crapcob;
+      CLOSE cr_crapcob;  
+    
+      /* Parametros de saida da cobranca registrada */
+      vr_vlrjuros  := 0;
+      vr_vlrmulta  := 0;
+      vr_vlrdescto := 0;
+      vr_vlrabatim := 0;
+      vr_vlrtitulo := rw_crapcob.vltitulo; 
+
+      /* trata o desconto */
+      /* se concede apos o vencimento */
+      IF rw_crapcob.cdmensag = 2 THEN
+        --Valor Desconto
+        vr_vlrdescto:= rw_crapcob.vldescto;
+        --Diminuir valor desconto do Valor do titulo
+        vr_vlrtitulo:= Nvl(vr_vlrtitulo,0) - vr_vlrdescto;
+      END IF;
+      /* utilizar o abatimento antes do calculo de juros/multa */
+      IF rw_crapcob.vlabatim > 0 THEN
+        --Valor Abatimento
+        vr_vlrabatim:= rw_crapcob.vlabatim;
+        --Diminuir valor abatimento do Valor do titulo
+        vr_vlrtitulo:= Nvl(vr_vlrtitulo,0) - vr_vlrabatim;
+      END IF;
+
+      -- Limpar a tabela de erros
+      vr_tab_erro.DELETE;
+
+      --Verificar vencimento do titulo
+      CXON0014.pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper          --Codigo Cooperativa
+                                             ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
+                                             ,pr_dt_agendamento  => NULL                 --Data Agendamento
+                                             ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento
+                                             ,pr_critica_data    => vr_critica_data      --Critica na validacao
+                                             ,pr_cdcritic        => vr_cdcritic          --Codigo da Critica
+                                             ,pr_dscritic        => vr_dscritic          --Descricao da Critica
+                                             ,pr_tab_erro        => vr_tab_erro);        --Tabela retorno erro
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        
+        IF vr_tab_erro.Count > 0 THEN
+          vr_dscritic:= vr_dscritic || ' ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSIF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        vr_dscritic:= 'Nao foi possivel verificar o vencimento do boleto. Erro: ' || vr_dscritic;              
+        
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+        
+      --Retorna se está vencido ou não        
+      IF vr_critica_data = TRUE THEN
+        pr_fltitven := 1;   
+      ELSE
+        pr_fltitven := 0;        
+      END IF;
+
+      /* verifica se o titulo esta vencido */
+      IF vr_critica_data THEN
+
+        CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo => vr_vlrtitulo
+                                              ,pr_tpdmulta => rw_crapcob.tpdmulta
+                                              ,pr_vlrmulta => rw_crapcob.vlrmulta
+                                              ,pr_tpjurmor => rw_crapcob.tpjurmor
+                                              ,pr_vljurdia => rw_crapcob.vljurdia
+                                              ,pr_qtdiavenc => (rw_crapdat.dtmvtocd - rw_crapcob.dtvencto)
+                                              ,pr_vlfatura => vr_vlrtitulo
+                                              ,pr_vlrmulta_calc => vr_vlrmulta
+                                              ,pr_vlrjuros_calc => vr_vlrjuros
+                                              ,pr_dscritic =>  vr_dscritic);
+
+            
+      ELSE
+        -- se concede apos vencto, ja calculou 
+        IF rw_crapcob.cdmensag <> 2  THEN
+          --Valor Desconto
+          vr_vlrdescto:= rw_crapcob.vldescto;
+          --Retirar o desconto do valor do titulo
+          vr_vlrtitulo:= Nvl(vr_vlrtitulo,0) - vr_vlrdescto;
+        END IF;
+      END IF;
+      
+      -- verificar se autoriza pagto divergente
+      IF rw_crapcob.inpagdiv = 0 THEN
+        pr_flblq_valor := 1; -- não autorizar pagto divergente
+      ELSE
+        pr_flblq_valor := 0; -- permite alterar o valor a pagar do boleto
+      END IF;
+      
+      pr_vlrjuros  := nvl(vr_vlrjuros,0);
+      pr_vlrmulta  := nvl(vr_vlrmulta,0);
+      pr_vlrdescto := nvl(vr_vlrdescto,0);      
+      pr_vlrtitulo := nvl(vr_vlrtitulo,0);
+      pr_nrdocbenf := rw_crapcob.nrdocbenf;
+      pr_tppesbenf := rw_crapcob.tppesbenf;
+      pr_dsbenefic := rw_crapcob.dsbenefic;           
+          
+    ELSE  -- titulo de fora, consultar CIP      
+      
+      -- Chamar a rotina de consulta dos dados      
+      NPCB0002.pc_consultar_titulo_cip(pr_cdcooper      => pr_cdcooper 
+                                      ,pr_nrdconta      => pr_nrdconta      
+                                      ,pr_cdagenci      => pr_cdagenci       
+                                      ,pr_flmobile      => pr_flmobile  
+                                      ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
+                                      ,pr_titulo1       => pr_titulo1        
+                                      ,pr_titulo2       => pr_titulo2        
+                                      ,pr_titulo3       => pr_titulo3        
+                                      ,pr_titulo4       => pr_titulo4        
+                                      ,pr_titulo5       => pr_titulo5        
+                                      ,pr_codigo_barras => pr_codigo_barras  
+                                      ,pr_cdoperad      => pr_cdoperad  
+                                      ,pr_idorigem      => pr_idorigem     
+                                      ,pr_nrdocbenf     => vr_nrdocbenf
+                                      ,pr_tppesbenf     => vr_tppesbenf
+                                      ,pr_dsbenefic     => vr_dsbenefic      
+                                      ,pr_vlrtitulo     => vr_vlrtitulo      
+                                      ,pr_vlrjuros      => vr_vlrjuros       
+                                      ,pr_vlrmulta      => vr_vlrmulta       
+                                      ,pr_vlrdescto     => vr_vlrdescto      
+                                      ,pr_cdctrlcs      => vr_cdctrlcs       
+                                      ,pr_tbtitulocip   => vr_tbtitulocip    
+                                      ,pr_flblq_valor   => vr_flblq_valor    
+                                      ,pr_fltitven      => vr_flgtitven
+                                      ,pr_des_erro      => vr_des_erro       
+                                      ,pr_cdcritic      => vr_cdcritic       
+                                      ,pr_dscritic      => vr_dscritic);     
+                                           
+      -- Se der erro não retorna informações   
+      IF vr_des_erro = 'NOK' THEN
+        -- Não retornar as informações do título  
+        -- Retornar os valores consultados na CIP
+        pr_nrdocbenf   := NULL;
+        pr_tppesbenf   := NULL;
+        pr_dsbenefic   := NULL;
+        pr_vlrtitulo   := NULL;
+        pr_vlrjuros    := NULL;
+        pr_vlrmulta    := NULL;
+        pr_fltitven    := NULL; 
+        pr_vlrdescto   := NULL; 
+        pr_cdctrlcs    := vr_cdctrlcs;
+        pr_flblq_valor := NULL;
+
+        -- sobrescrever a mensagem de critica de boleto nao encontrado da JDNPC        
+        IF vr_cdcritic = 950 THEN
+          vr_dscritic := 'Boleto nao registrado. Favor entrar em contato com o beneficiario.';
+        END IF;
+        
+        -- Retornar erro 
+        pr_des_erro := 'NOK';
+        RAISE vr_exc_erro;
+      
+      -- Se não encontrou titulo na CIP e não ocorreu erro (normalmente por estar fora do rollout)
+      ELSIF vr_tbtitulocip.NumCtrlPart IS NULL THEN
+
+        -- Busca o valor do titulo de vencimento
+        CXON0014.pc_retorna_vlr_tit_vencto(pr_cdcooper      => pr_cdcooper
+                                          ,pr_nrdconta      => pr_nrdcaixa
+                                          ,pr_idseqttl      => pr_idseqttl
+                                          ,pr_cdagenci      => pr_cdagenci
+                                          ,pr_nrdcaixa      => pr_nrdcaixa
+                                          ,pr_titulo1       => pr_titulo1
+                                          ,pr_titulo2       => pr_titulo2
+                                          ,pr_titulo3       => pr_titulo3
+                                          ,pr_titulo4       => pr_titulo4
+                                          ,pr_titulo5       => pr_titulo5
+                                          ,pr_codigo_barras => pr_codigo_barras
+                                          ,pr_vlfatura      => vr_vlrtitulo
+                                          ,pr_vlrjuros      => vr_vlrjuros
+                                          ,pr_vlrmulta      => vr_vlrmulta
+                                          ,pr_fltitven      => vr_flgtitven
+                                          ,pr_des_erro      => vr_des_erro
+                                          ,pr_dscritic      => vr_dscritic);
+        
+        -- Se ocorreu erro 
+        IF vr_des_erro = 'NOK' OR vr_dscritic IS NOT NULL THEN
+          pr_des_erro := 'NOK';
+          RAISE vr_exc_erro;
+        END IF;
+        
+        -- Retornar as variáveis
+        pr_nrdocbenf   := NULL;
+        pr_tppesbenf   := NULL;
+        pr_dsbenefic   := NULL;
+        pr_vlrtitulo   := vr_vlrtitulo;
+        pr_vlrjuros    := vr_vlrjuros;
+        pr_vlrmulta    := vr_vlrmulta;
+        pr_fltitven    := vr_flgtitven;
+        pr_vlrdescto   := NULL;
+        pr_cdctrlcs    := NULL;
+        pr_flblq_valor := 0;
+        
+      ELSE -- Se efetuou a busca na CIP com sucesso e encontrou registro
+        -- Retornar os valores consultados na CIP
+        pr_nrdocbenf   := vr_nrdocbenf;
+        pr_tppesbenf   := vr_tppesbenf;
+        pr_dsbenefic   := vr_dsbenefic;
+        pr_vlrtitulo   := vr_vlrtitulo;
+        pr_vlrjuros    := vr_vlrjuros;
+        pr_vlrmulta    := vr_vlrmulta;
+        pr_vlrdescto   := vr_vlrdescto;
+        pr_cdctrlcs    := vr_cdctrlcs;
+        pr_flblq_valor := vr_flblq_valor;
+        -- Títulos CIP poderão ser pagos vencidos, mas iremos retornar o flag para bloquear agendamento
+        pr_fltitven    := vr_flgtitven; 
+        
+        -- Realizar as pré-validações do título
+        NPCB0001.pc_valid_titulo_npc(pr_cdcooper    => pr_cdcooper
+                                    ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                    ,pr_cdctrlcs    => vr_cdctrlcs
+                                    ,pr_tbtitulocip => vr_tbtitulocip
+                                    ,pr_cdcritic    => vr_cdcritic
+                                    ,pr_dscritic    => vr_dscritic);
+        
+        -- Se ocorreu erro 
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          pr_des_erro := 'NOK';
+          RAISE vr_exc_erro;
+        END IF;
+        
+      END IF;
+      
+    END IF; -- vr_intitcop = 1
     
     -- Retornar o ok, informando sucesso na execução 
     pr_des_erro := 'OK';
@@ -324,6 +539,7 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
                                    ,pr_codigo_barras  IN VARCHAR2     -- Codigo de Barras
 						                       ,pr_cdoperad       IN VARCHAR2     -- Código do operador
                                    ,pr_idorigem       IN NUMBER       -- Origem da requisição
+                                   ,pr_flgpgdda       IN INTEGER DEFAULT 0 -- Indicador pagto DDA
                                    ,pr_nrdocbenf     OUT NUMBER       -- Documento do beneficiário emitente
                                    ,pr_tppesbenf     OUT VARCHAR2     -- Tipo de pessoa beneficiaria
 						                       ,pr_dsbenefic	   OUT VARCHAR2     -- Descrição do beneficiário emitente
@@ -383,6 +599,14 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
          AND t.nrdconta = pr_nrdconta
          AND t.cdcooper = pr_cdcooper
        ORDER BY t.tpendass DESC;
+    
+    --> Buscar codigo do municipio
+    CURSOR cr_crapcop IS 
+      SELECT a.cdcidade
+        FROM crapcaf a
+            ,crapcop t
+       WHERE TRIM(a.nmcidade) = TRIM(t.nmcidade)
+         AND t.cdcooper = pr_cdcooper;
     
     ----------> VARIAVEIS <-----------   
     vr_idrollout       INTEGER;
@@ -455,7 +679,7 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
      --vr_flbltcip := TRUE;
      
      -- Se não é um titulo CIP... não realiza a consulta via WS das informações
-     IF NOT vr_flbltcip THEN
+     IF NOT vr_flbltcip AND pr_flgpgdda = 0 THEN
        -- Retornar os valores em branco indicando que está fora da faixa de rollaut
        pr_nrdocbenf   := NULL;
        pr_tppesbenf   := NULL;
@@ -487,18 +711,18 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
        
        /* BUSCAR O CÓDIGO DO MUNICIPIO DE PAGAMENTO */
        -- Se o pagamento foi via Internet Banking ou Mobile
-       IF pr_cdagenci = 90 OR pr_flmobile = 1 THEN
+       IF pr_cdagenci IN (90,91) OR pr_flmobile = 1 THEN
          -- Deve buscar o municipio de residencia do cooperado
-         OPEN  cr_crapenc;
-         FETCH cr_crapenc INTO vr_cdcidade;
+         OPEN  cr_crapcop;
+         FETCH cr_crapcop INTO vr_cdcidade;
          
          -- Se não for encontrado registro
-         IF cr_crapenc%NOTFOUND THEN
+         IF cr_crapcop%NOTFOUND THEN
            vr_cdcidade := NULL;
          END IF;
          
          -- Fechar o cursor
-         CLOSE cr_crapenc;
+         CLOSE cr_crapcop;
        ELSE
          -- Deve buscar a cidade da agencia
          OPEN  cr_crapage;
@@ -630,11 +854,10 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
        pr_tppesbenf := TRIM(pr_tbTituloCIP.TpPessoaBenfcrioOr);   -- Tipo Pessoa do Beneficiário Original
        
        -- Retornar o nome do beneficiário
-       pr_dsbenefic := NVL(TRIM(pr_tbTituloCIP.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
-                          ,TRIM(pr_tbTituloCIP.Nom_RzSocBenfcrioOr));-- Razão Social do Beneficiário Original
+       pr_dsbenefic := gene0007.fn_caract_acento( NVL(TRIM(pr_tbTituloCIP.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
+                          ,TRIM(pr_tbTituloCIP.Nom_RzSocBenfcrioOr)));-- Razão Social do Beneficiário Original
               
-       -- Se não permitir pagamento parcial e não permitir valor divergente (3-Não aceitar pagamento com o valor divergente)
-       IF pr_tbTituloCIP.IndrPgtoParcl = 'N' AND pr_tbTituloCIP.TpAutcRecbtVlrDivgte = '3' THEN
+       
          -- Definir os valores do título
          NPCB0001.pc_valor_calc_titulo_npc(pr_dtmvtolt  => pr_dtmvtolt
                                           ,pr_tbtitulo  => pr_tbTituloCIP
@@ -644,16 +867,30 @@ rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
                                           ,pr_vlrdescto => pr_vlrdescto); -- Retornar valor de desconto
          
          --> Se valor estiver diferente retornar critica
-        IF nvl(pr_vlrtitulo,0) = 0 THEN
+       IF pr_vlrtitulo IS NULL THEN
+          -- Se encontrou critica na validação deve gravar a consulta da mesma 
+          -- forma, sendo assim, é realizado o commit para que o rollback não 
+          -- limpe as informações
+          COMMIT;
+          
           vr_dscritic := 'Problemas ao buscar valor do titulo.';
           RAISE vr_exc_erro;
         END IF;
          
+       -- Se não permitir pagamento parcial e não permitir valor divergente (3-Não aceitar pagamento com o valor divergente)
+       IF pr_tbTituloCIP.IndrPgtoParcl = 'N' AND pr_tbTituloCIP.TpAutcRecbtVlrDivgte = '3' THEN         
+         IF pr_vlrtitulo = 0 THEN
+           vr_dscritic := 'Valor do titulo não está de acordo com o autorização de pagamento divergente, favor entrar em contato com o Beneficiario.';
+           -- Se encontrou critica na validação deve gravar a consulta da mesma 
+           -- forma, sendo assim, é realizado o commit para que o rollback não 
+           -- limpe as informações
+           COMMIT;
+           RAISE vr_exc_erro;         
+         END IF;
+       
          -- Indicar que não deve permitir alteração do valor do pagamento
          pr_flblq_valor := 1;
        ELSE 
-         -- Define o valor do titulo como zero, pois o valor deve ser informado em tela pelo usuário
-         pr_vlrtitulo := 0;       
          -- Indicar que deve permitir alteração do valor do pagamento para que o mesmo possa ser informado
          pr_flblq_valor := 0;
        END IF;
