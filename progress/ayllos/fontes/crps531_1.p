@@ -193,6 +193,8 @@
                02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
                         - Enviar e-mail interbancario para a mensagem STR0003R2 (Lucas Ranghetti #654769)              
               
+               30/06/2017 - Ajustado os parametros passados na chamada da 
+                            pc_gera_log_batch (Douglas - Chamado 524133)
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -1990,7 +1992,10 @@ PROCEDURE importa_xml.
                                       INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
                                       INPUT ?,              /* Diretorio onde será gerado o log */
                                       INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
-                                      INPUT glb_cdprogra).  /* Programa/job */
+                                      INPUT glb_cdprogra    /* Programa/job */
+                                      INPUT 3,              /* Execucao via BATCH */
+                                      INPUT 0,              /* Criticidade BAIXA */ 
+                                      INPUT 1).             /* Processo executado com sucesso */
                                                                
                 CLOSE STORED-PROC pc_gera_log_batch
                       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
