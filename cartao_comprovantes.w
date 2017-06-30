@@ -30,6 +30,9 @@
   23/03/2017 - Adicionado recarga de celular nos comprovantes e 
 			   visualização de impressão. (PRJ321 - Reinert)
 
+  21/06/2017 - Ajustes PRJ340 - NPC(Odirlei AMcom).
+                             
+
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
@@ -53,6 +56,33 @@ DEF INPUT PARAM par_dtinipro AS DATE                            NO-UNDO.
 DEF INPUT PARAM par_dtfimpro AS DATE                            NO-UNDO.
 
 DEFINE TEMP-TABLE tt-comprovantes NO-UNDO                     
+       FIELD dtmvtolt AS DATE  /* Data do comprovantes       */
+       FIELD dscedent AS CHAR  /* Descricao do comprovante   */
+       FIELD vldocmto AS DECI  /* Valor do documento         */
+       FIELD dsinform AS CHAR  /* Tipo de pagamento          */
+       FIELD lndigita AS CHAR  /* Linha digitavel            */
+       FIELD nrtransf AS INTE  /* Conta transferencia        */
+       FIELD nmtransf AS CHAR EXTENT 2  /* Nome conta acima  */
+       FIELD tpdpagto AS CHAR
+       FIELD dsprotoc AS CHAR
+       FIELD cdbcoctl AS INTE  /* Banco 085 */
+       FIELD cdagectl AS INTE  /* Agencia da cooperativa */
+       FIELD dsagectl AS CHAR
+	   FIELD nrtelefo AS CHAR  /* Nr telefone */
+       FIELD nmopetel AS CHAR  /* Nome operadora */
+       FIELD dsnsuope AS CHAR /* NSU operadora */
+       FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
+       FIELD nrcpfcgc_pagad AS CHAR  /* NRCPFCGC_PAGAD */
+       FIELD dtvenctit      AS CHAR  /* vencimento do titulo */
+       FIELD vlrtitulo      AS CHAR  /* valor do titulo */
+       FIELD vlrjurmul      AS CHAR  /* valor de juros + multa */
+       FIELD vlrdscaba      AS CHAR  /* valor de desconto + abatimento */
+       FIELD nrcpfcgc_benef AS CHAR. /* CPF/CNPJ do beneficiario  */  
+
+DEF TEMP-TABLE tt-bcomprovantes NO-UNDO LIKE tt-comprovantes.
+
+/*
+DEFINE TEMP-TABLE tt-comprovantes NO-UNDO                     
        FIELD dtmvtolt AS DATE   /* Data do comprovantes       */
        FIELD dscedent AS CHAR   /* Descricao do comprovante   */
        FIELD vldocmto AS DECI   /* Valor do documento         */
@@ -65,10 +95,14 @@ DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
        FIELD cdbcoctl AS INTE
        FIELD cdagectl AS INTE
        FIELD dsagectl AS CHAR
-       FIELD nrtelefo AS CHAR  /* Nr telefone */
-       FIELD nmopetel AS CHAR  /* Nome operadora */
-       FIELD dsnsuope AS CHAR. /* NSU operadora */
-
+       FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
+       FIELD nrcpfcgc_pagad AS CHAR  /* NRCPFCGC_PAGAD */
+       FIELD dtvenctit      AS CHAR  /* vencimento do titulo */
+       FIELD vlrtitulo      AS CHAR  /* valor do titulo */
+       FIELD vlrjurmul      AS CHAR  /* valor de juros + multa */
+       FIELD vlrdscaba      AS CHAR  /* valor de desconto + abatimento */
+       FIELD nrcpfcgc_benef AS CHAR. /* CPF/CNPJ do beneficiario  */  
+*/
 EMPTY TEMP-TABLE tt-comprovantes.
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
@@ -829,8 +863,18 @@ DEFINE VARIABLE    aux_nrtelsac     AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE    aux_nrtelouv     AS CHARACTER                NO-UNDO.
 
 
-/* São 48 caracteres */
+EMPTY TEMP-TABLE tt-bcomprovantes.
+CREATE tt-bcomprovantes.
+BUFFER-COPY tt-comprovantes TO tt-bcomprovantes.
 
+
+RUN procedures/imprime_comprov_pag_titulo.p (INPUT "",
+                                             INPUT TABLE tt-bcomprovantes,
+                                             OUTPUT aux_flgderro).
+
+
+/* São 48 caracteres */
+/*
 RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
                                                 OUTPUT aux_nrtelouv,
                                                 OUTPUT aux_flgderro).
@@ -928,6 +972,7 @@ IF  xfs_impressora       AND
                                INPUT  tmp_tximpres,
                                INPUT 0, /*Comprovante*/
                                INPUT "").
+*/
 
 END PROCEDURE.
 
@@ -1001,12 +1046,12 @@ ASSIGN tmp_tximpres = TRIM(glb_nmrescop) + " AUTOATENDIMENTO"
                       "                                                " +
                       "                   OUVIDORIA                    " +
                       FILL(" ", 14) + STRING(aux_nrtelouv, "x(20)") + FILL(" ", 14) +               
-                       "    Atendimento nos dias uteis das 8h as 17h    " +
-                       "                                                " +
-                       "            **  FIM DA IMPRESSAO  **            " +
-                       "                                                " +
-                       "                                                ".
-
+               "    Atendimento nos dias uteis das 8h as 17h    " +
+               "                                                " +
+               "            **  FIM DA IMPRESSAO  **            " +
+               "                                                " +
+               "                                                ".
+                                                                                 
 /* se a impressora estiver habilitada e com papel */
 IF  xfs_impressora       AND
     NOT xfs_impsempapel  THEN

@@ -39,9 +39,11 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   24/12/2015 - Adicionado tratamento para contas com assinatura 
                                conjunta. (Reinert)
 
-				  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
+                                  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
                                Futuros. Lenilson (Mouts)
 
+                  20/01/2017 - Ajustes Nova Plataforma de cobrança.
+                               PRJ340 - NPC (Odirlei-AMcom)   
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -70,6 +72,7 @@ DEFINE INPUT PARAM par_datpagto     AS DATE         NO-UNDO.
 DEFINE INPUT PARAM par_flagenda     AS LOGI         NO-UNDO.
 DEFINE INPUT PARAM par_idtpdpag     AS INTE         NO-UNDO. /* 1- convenio 2-titulo */
 DEFINE INPUT PARAM par_tpcptdoc     AS INTE         NO-UNDO. /* 1- Codigo de barras 2-Linha digitavel*/
+DEFINE INPUT PARAM par_nrctlnpc     AS CHAR         NO-UNDO. /* Numero de controle de consulta do NPC */
 
 
 /* Local Variable Definitions ---                                       */
@@ -87,6 +90,27 @@ DEFINE VARIABLE aux_vlsdchsl        AS DECIMAL      NO-UNDO.
 DEFINE VARIABLE aux_vllimcre        AS DECIMAL      NO-UNDO.
 DEFINE VARIABLE aux_datavenc        AS DATE         NO-UNDO. /* Daniel */
 DEFINE VARIABLE aux_idastcjt        AS INTEGER      NO-UNDO.
+
+DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
+       FIELD dtmvtolt AS DATE  /* Data do comprovantes       */
+       FIELD dscedent AS CHAR  /* Descricao do comprovante   */
+       FIELD vldocmto AS DECI  /* Valor do documento         */
+       FIELD dsinform AS CHAR  /* Tipo de pagamento          */
+       FIELD lndigita AS CHAR  /* Linha digitavel            */
+       FIELD nrtransf AS INTE  /* Conta transferencia        */
+       FIELD nmtransf AS CHAR EXTENT 2  /* Nome conta acima  */
+       FIELD tpdpagto AS CHAR
+       FIELD dsprotoc AS CHAR
+       FIELD cdbcoctl AS INTE  /* Banco 085 */
+       FIELD cdagectl AS INTE  /* Agencia da cooperativa */
+       FIELD dsagectl AS CHAR
+       FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
+       FIELD nrcpfcgc_pagad AS CHAR  /* NRCPFCGC_PAGAD */
+       FIELD dtvenctit      AS CHAR  /* vencimento do titulo */
+       FIELD vlrtitulo      AS CHAR  /* valor do titulo */
+       FIELD vlrjurmul      AS CHAR  /* valor de juros + multa */
+       FIELD vlrdscaba      AS CHAR  /* valor de desconto + abatimento */
+       FIELD nrcpfcgc_benef AS CHAR. /* CPF/CNPJ do beneficiario  */
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -270,8 +294,8 @@ DEFINE FRAME f_cartao_pagamento_titulo_dados
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 246 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.38 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 248 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.38 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
-     "Valor do Pagamento:" VIEW-AS TEXT
-          SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
+     "Banco:" VIEW-AS TEXT
+          SIZE 13 BY .95 AT ROW 10.29 COL 33 WIDGET-ID 184
           FONT 14
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 140
@@ -285,12 +309,12 @@ DEFINE FRAME f_cartao_pagamento_titulo_dados
      "Linha Digitável:" VIEW-AS TEXT
           SIZE 26 BY .95 AT ROW 12.19 COL 20 WIDGET-ID 156
           FONT 14
+     "Valor do Pagamento:" VIEW-AS TEXT
+          SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
+          FONT 14
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
           FONT 8
-     "Banco:" VIEW-AS TEXT
-          SIZE 13 BY .95 AT ROW 10.29 COL 33 WIDGET-ID 184
-          FONT 14
      RECT-132 AT ROW 9.81 COL 46 WIDGET-ID 198
      RECT-134 AT ROW 11.71 COL 46 WIDGET-ID 152
      RECT-135 AT ROW 13.62 COL 46 WIDGET-ID 154
@@ -573,6 +597,7 @@ DO:
                                                INPUT par_flagenda,
                                                INPUT par_idtpdpag,
                                                INPUT par_tpcptdoc,
+                                               INPUT par_nrctlnpc,
                                               OUTPUT aux_dsprotoc,
                                               OUTPUT aux_cdbcoctl,
                                               OUTPUT aux_cdagectl,
@@ -711,6 +736,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                        INPUT par_vldpagto,
                                        INPUT par_datpagto,
                                        INPUT par_flagenda,
+                                       INPUT par_nrctlnpc,
                                       OUTPUT ed_nmdbanco ,
                                       OUTPUT ed_dslindig ,
                                       OUTPUT ed_vlrdocum ,
@@ -880,142 +906,115 @@ DEFINE INPUT PARAM par_cdagectl     AS CHARACTER                NO-UNDO.
 
 DEFINE VARIABLE    tmp_tximpres     AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE    aux_nrtelsac     AS CHARACTER                NO-UNDO.
-DEFINE VARIABLE    aux_nrtelouv     AS CHARACTER                NO-UNDO.
-
-/* São 48 caracteres */
-
-RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
-                                                OUTPUT aux_nrtelouv,
-                                                OUTPUT aux_flgderro).
-/* centraliza o cabeçalho */
-                      /* Coop do Associado */
-ASSIGN tmp_tximpres = TRIM(glb_nmrescop) + " AUTOATENDIMENTO"
-       tmp_tximpres = FILL(" ",INT((48 - LENGTH(tmp_tximpres)) / 2)) + tmp_tximpres
-       tmp_tximpres = tmp_tximpres + FILL(" ",48 - length(tmp_tximpres))
-       tmp_tximpres = tmp_tximpres +
-                      "                                                "   +
-                      "EMISSAO: " + STRING(TODAY,"99/99/9999") + "      "  +
-                              "               " + STRING(TIME,'HH:MM:SS')  +
-                      "                                                "   +
-                      /* dados do TAA */             /* agencia na central, sem digito */
-                      "COOPERATIVA/PA/TERMINAL: " + STRING(glb_agctltfn,"9999") + "/" +
-                                                     STRING(glb_cdagetfn,"9999") + "/" +
-                                                     STRING(glb_nrterfin,"9999") +
-                                                             "         ".
-IF par_flagenda THEN
-DO:
-tmp_tximpres = tmp_tximpres +
-                      "                                                " +
-                      "           COMPROVANTE DE AGENDAMENTO           ".
-    
-END.
-ELSE
-DO:
-tmp_tximpres = tmp_tximpres +
-                      "                                                " +
-                      "            COMPROVANTE DE PAGAMENTO            " +
-                      "                                                ".
-
-END.
-
-IF NOT par_flagenda THEN
-    ASSIGN tmp_tximpres = tmp_tximpres +
-                     "                                                " +
-                     "  BANCO: " + STRING(par_cdbcoctl, "999")
-           tmp_tximpres = tmp_tximpres +
-                     "                                    "             +
-                     "AGENCIA: " + STRING(par_cdagectl, "9999")
-       
-           tmp_tximpres = tmp_tximpres +
-                     "                                   ".
-ELSE
-    ASSIGN tmp_tximpres = tmp_tximpres +
-                     "                                                ".
-
-    ASSIGN tmp_tximpres = tmp_tximpres +
-                     "  CONTA: " + STRING(glb_nrdconta,"zzzz,zzz,9")    +
-                     " - " + STRING(glb_nmtitula[1],"x(26)").
-
-/* Segundo titular */
-IF  glb_nmtitula[2] <> ""  THEN
-    tmp_tximpres = tmp_tximpres +
-                   "                    " + STRING(glb_nmtitula[2],"x(28)").
+DEFINE VARIABLE    aux_nrtelouv     AS CHARACTER                NO-UNDO. 
 
 
-tmp_tximpres = tmp_tximpres +
-               "                                                " +
-               "                                                " +
-               "BANCO: " + STRING(ed_nmdbanco,"x(41)") +
-               "                                                ".
-IF  par_flagenda THEN
+
+IF par_flagenda = FALSE THEN
     DO:
+      /* COMPROVANTE DE PAGAMENTO */
+      RUN procedures/imprime_comprov_pag_titulo.p (INPUT par_dsprotoc,
+                                                   INPUT TABLE tt-comprovantes,
+                                                   OUTPUT aux_flgderro).
+    
+    END.
+ELSE
+    DO:
+        /* COMPROVANTE DE AGENDAMENTO */
+        /* São 48 caracteres */
+
+        RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
+                                                        OUTPUT aux_nrtelouv,
+                                                        OUTPUT aux_flgderro).
+        /* centraliza o cabeçalho */
+        /* Coop do Associado */
+        ASSIGN tmp_tximpres = TRIM(glb_nmrescop) + " AUTOATENDIMENTO"
+               tmp_tximpres = FILL(" ",INT((48 - LENGTH(tmp_tximpres)) / 2)) + tmp_tximpres
+               tmp_tximpres = tmp_tximpres + FILL(" ",48 - length(tmp_tximpres))
+               tmp_tximpres = tmp_tximpres +
+                              "                                                "   +
+                              "EMISSAO: " + STRING(TODAY,"99/99/9999") + "      "  +
+                                      "               " + STRING(TIME,'HH:MM:SS')  +
+                              "                                                "   +
+                              /* dados do TAA */             /* agencia na central, sem digito */
+                              "COOPERATIVA/PA/TERMINAL: " + STRING(glb_agctltfn,"9999") + "/" +
+                                                             STRING(glb_cdagetfn,"9999") + "/" +
+                                                             STRING(glb_nrterfin,"9999") +
+                                                                     "         ".        
+        tmp_tximpres = tmp_tximpres +
+                              "                                                " +
+                              "           COMPROVANTE DE AGENDAMENTO           ".
+                                
+        ASSIGN tmp_tximpres = tmp_tximpres +
+                         "                                                " .
+        
+        ASSIGN tmp_tximpres = tmp_tximpres +
+                         "  CONTA: " + STRING(glb_nrdconta,"zzzz,zzz,9")    +
+                         " - " + STRING(glb_nmtitula[1],"x(26)").
+        
+        /* Segundo titular */
+        IF  glb_nmtitula[2] <> ""  THEN
+            tmp_tximpres = tmp_tximpres +
+                           "                    " + STRING(glb_nmtitula[2],"x(28)").
+        
+        
+        tmp_tximpres = tmp_tximpres +
+                       "                                                " +
+                       "                                                " +
+                       "BANCO: " + STRING(ed_nmdbanco,"x(41)") +
+                       "                                                ".
+        
         tmp_tximpres = tmp_tximpres +
                        "DATA DO AGENDAMENTO: " + STRING(ed_dtdpagto,"99/99/9999") +
-                                                        "                 ".
-    END.
-ELSE
-    DO:
+                                                                "                 ".
+                                   
+        IF  ed_dtvencto <> ? THEN
+            tmp_tximpres = tmp_tximpres + 
+                           "                                                " +
+                           " DATA DO VENCIMENTO: " + STRING(ed_dtvencto,"99/99/9999") +
+                                                           "                 ".
+        
+        tmp_tximpres = tmp_tximpres +               
+                       "                                                " +
+                       " VALOR DO PAGAMENTO: " + STRING(ed_vldpagto,"zz,zzz,zz9.99")  +
+                                                         "              " +
+                       "                                                " +
+                       "LINHA DIGITAVEL: " + SUBSTRING(ed_dslindig,1,24)  + "       " +
+                       "                 " + SUBSTRING(ed_dslindig,26,29) + "  " +
+                       "                                                ".
+        
+        
         tmp_tximpres = tmp_tximpres +
-                       "  DATA DO PAGAMENTO: " + STRING(ed_dtdpagto,"99/99/9999") +
-                                                     "                 ".
-    END.
-               
-IF  ed_dtvencto <> ? THEN
-    tmp_tximpres = tmp_tximpres + 
-                   "                                                " +
-                   " DATA DO VENCIMENTO: " + STRING(ed_dtvencto,"99/99/9999") +
-                                                   "                 ".
-
-tmp_tximpres = tmp_tximpres +               
-               "                                                " +
-               " VALOR DO PAGAMENTO: " + STRING(ed_vldpagto,"zz,zzz,zz9.99")  +
-                                                 "              " +
-               "                                                " +
-               "LINHA DIGITAVEL: " + SUBSTRING(ed_dslindig,1,24)  + "       " +
-               "                 " + SUBSTRING(ed_dslindig,26,29) + "  " +
-               "                                                ".
-
-IF  NOT par_flagenda THEN 
-    DO:
+                       " A QUITACAO EFETIVA DESTE AGENDAMENTO DEPENDERA " +
+                       "DA EXISTENCIA DE SALDO NA SUA CONTA CORRENTE NA " +
+                       "          DATA ESCOLHIDA PARA DEBITO.           " +
+                       "                                                ".
+                
+        
         tmp_tximpres = tmp_tximpres +
-                   "   PROTOCOLO: " + STRING(par_dsprotoc,"x(29)") + "     ".
+                       "    SAC - Servico de Atendimento ao Cooperado   " +
+        
+                     FILL(" ", 14) + STRING(aux_nrtelsac, "x(20)") + FILL(" ", 14) +
+        
+                       "     Atendimento todos os dias das 6h as 22h    " +
+                       "                                                " +
+                       "                   OUVIDORIA                    " +
+        
+                     FILL(" ", 14) + STRING(aux_nrtelouv, "x(20)") + FILL(" ", 14) +               
+            
+                       "    Atendimento nos dias uteis das 8h as 17h    " +
+                       "                                                " +
+                       "            **  FIM DA IMPRESSAO  **            " +
+                       "                                                " +
+                       "                                                ".
+                                                                                         
+        RUN impressao_visualiza.w (INPUT "Comprovante...",
+                                   INPUT  tmp_tximpres,
+                                   INPUT 0, /*Comprovante*/
+                                   INPUT "").
 
-        IF   glb_dtmvtocd > TODAY   THEN
-             ASSIGN tmp_tximpres = tmp_tximpres + 
-                   "ESTE PAGAMENTO SERA PROCESSADO NO PROXIMO DIA   " +
-                   "UTIL.                                           ".  
-
-        ASSIGN tmp_tximpres = tmp_tximpres +
-                   "                                                ".
     END.
-ELSE
-    tmp_tximpres = tmp_tximpres +
-                   " A QUITACAO EFETIVA DESTE AGENDAMENTO DEPENDERA " +
-                   "DA EXISTENCIA DE SALDO NA SUA CONTA CORRENTE NA " +
-                   "          DATA ESCOLHIDA PARA DEBITO.           " +
-                   "                                                ".
 
-tmp_tximpres = tmp_tximpres +
-               "    SAC - Servico de Atendimento ao Cooperado   " +
-
-             FILL(" ", 14) + STRING(aux_nrtelsac, "x(20)") + FILL(" ", 14) +
-
-               "     Atendimento todos os dias das 6h as 22h    " +
-               "                                                " +
-               "                   OUVIDORIA                    " +
-
-             FILL(" ", 14) + STRING(aux_nrtelouv, "x(20)") + FILL(" ", 14) +               
-    
-               "    Atendimento nos dias uteis das 8h as 17h    " +
-               "                                                " +
-               "            **  FIM DA IMPRESSAO  **            " +
-               "                                                " +
-               "                                                ".
-                                                                                 
-RUN impressao_visualiza.w (INPUT "Comprovante...",
-                           INPUT  tmp_tximpres,
-                           INPUT 0, /*Comprovante*/
-                           INPUT "").
 
 RETURN "OK".
 
