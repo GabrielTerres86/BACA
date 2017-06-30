@@ -191,7 +191,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                           ,pr_nmdcampo OUT VARCHAR2                    -- Nome do campo com erro
                                           ,pr_des_erro OUT VARCHAR2);                  -- Erros do processo	
 						
-
+  PROCEDURE pc_solicita_retorno_analise;
 									
 END ESTE0001;
 /
@@ -443,7 +443,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       RAISE vr_exc_erro;      
     END IF; 
     
-    IF nvl(pr_tpenvest,' ') IN ('I','A') THEN    
+    -- Para inclusão, alteração ou derivação
+    IF nvl(pr_tpenvest,' ') IN ('I','A','D') THEN    
+      
       --> Buscar dados da proposta
       OPEN cr_crawepr (pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta,
@@ -452,26 +454,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       IF cr_crawepr%NOTFOUND THEN
         CLOSE cr_crawepr;
         vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
-        RAISE vr_exc_erro;  
-      
+        RAISE vr_exc_erro;
       END IF;
       
-      -- Se situação não for "Não enviada"
-      IF rw_crawepr.insitest <> 0 
-         -- Ou se for Analise Finalizada, mas não é a de Reprovação pelo Motor
-         OR (rw_crawepr.insitest = 3 
-         AND NOT (rw_crawepr.cdopeapr = 'MOTOR' AND rw_crawepr.insitapr = 2)) THEN
-        -- Não será possível enviar/reenviar para a Esteira
-        vr_dscritic := 'A proposta não pode ser ';
-        IF pr_tpenvest != 'M' THEN 
-          -- Incluir 're' para que a mensagem fique "reenviada"
-          vr_dscritic := vr_dscritic||'re';
-        END IF;
-        -- Finalizar a mensagem
-        vr_dscritic := vr_dscritic||'enviada para esteira de crédito, verifique 
-                       a situação da proposta.';
-        RAISE vr_exc_erro;      
+      -- Somente permitirá se ainda não enviada 
+      -- OU se foi Reprovada pelo Motor
+      -- OU se foi enviada e recebemos a Derivação 
+      IF rw_crawepr.insitest = 0 
+      OR (rw_crawepr.insitest = 3 AND rw_crawepr.cdopeapr = 'MOTOR' AND rw_crawepr.insitapr = 2) 
+      OR (rw_crawepr.insitest = 1 AND pr_tpenvest = 'D') THEN
+        -- Sair pois pode ser enviada
+        RETURN;
       END IF;
+      -- Não será possível enviar/reenviar para a Esteira
+      vr_dscritic := 'A proposta não pode ser ';
+      IF pr_tpenvest != 'M' THEN 
+        -- Incluir 're' para que a mensagem fique "reenviada"
+        vr_dscritic := vr_dscritic||'re';
+      END IF;
+      -- Finalizar a mensagem
+      vr_dscritic := vr_dscritic||'enviada para esteira de crédito, verifique a situação da proposta!';
+      RAISE vr_exc_erro;      
     END IF;
     
   EXCEPTION
@@ -773,7 +776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                   pr_nrctrprp,        -- nrctrprp
                   pr_nrdconta,        -- nrdconta
                   pr_tpacionamento,   -- tpacionamento 
-                  CURRENT_TIMESTAMP,            -- dhacionamento
+                  SYSTIMESTAMP,       -- dhacionamento
                   pr_dsoperacao,      -- dsoperacao
                   pr_dsuriservico,    -- dsuriservico
                   pr_dtmvtolt,        -- dtmvtolt
@@ -832,7 +835,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
   --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado
    -- via JSON  
   PROCEDURE pc_arq_para_clob_base64(pr_nmarquiv     IN VARCHAR2,
-                                    pr_clob_arquiv OUT CLOB,
                                     pr_json_value_arq OUT json_value, 
                                     pr_dscritic    OUT VARCHAR2  )IS
   
@@ -886,16 +888,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     /* Codifica o arquivo binário da memória em Base64 */
     vr_json_valor := json_ext.encode(vr_arquivo);
     pr_json_value_arq := vr_json_valor;
-    /* Converte o arquivo binário da memória em Base 64 para Texto */
-    pr_clob_arquiv := vr_json_valor.to_char();
-    
     
   EXCEPTION
     WHEN vr_exec_erro THEN
       pr_dscritic := vr_dscritic;    
     WHEN OTHERS THEN
       pr_dscritic := 'Nao foi posssivel converter arquivo para CLOB: '|| SQLERRM;
-      pr_clob_arquiv := NULL;
   END pc_arq_para_clob_base64;
   
   -- Rotina responsavel em enviar dos dados para a esteira
@@ -931,10 +929,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     vr_idacionamento  tbepr_acionamento.idacionamento%TYPE;
 		
-    vr_obj_content   json := json();
-    vr_obj_retorno   json := json();
-    
-    vr_location      VARCHAR2(1000);
+    vr_tab_split     gene0002.typ_split;
+    vr_idx_split     VARCHAR2(1000);
     
   BEGIN
     
@@ -942,7 +938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     pc_carrega_param_ibra(pr_cdcooper      => pr_cdcooper,                   -- Codigo da cooperativa
                           pr_nrdconta      => pr_nrdconta,                   -- Numero da conta do cooperado
                           pr_nrctremp      => pr_nrctremp,                   -- Numero da proposta de emprestimo
-                          pr_tpenvest      => pr_tpenvest,
+                          pr_tpenvest      => pr_tpenvest,                   -- Tipo do Envio 
                           pr_host_esteira  => vr_host_esteira,               -- Host da esteira
                           pr_recurso_este  => vr_recurso_este,               -- URI da esteira
                           pr_contige_este  => vr_contige_este,               -- Verificar se esta em contigencia
@@ -958,8 +954,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Atribuir valores necessarios para comunicacao
     vr_request.service_uri := vr_host_esteira;
     vr_request.api_route := vr_recurso_este||pr_comprecu;
-    vr_request.method := pr_dsmetodo;
-    vr_request.timeout := 1000;
+    vr_request.method    := pr_dsmetodo;
+    vr_request.timeout   := gene0001.fn_param_sistema('CRED',0,'TIMEOUT_CONEXAO_IBRA');
     
     vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
     vr_request.headers('Authorization') := vr_autori_este;
@@ -968,6 +964,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     IF vr_chave_aplica IS NOT NULL THEN 
       vr_request.headers('ApplicationKey') := vr_chave_aplica;
     END IF;
+    
+    -- Para envio do Motor
+    IF pr_tpenvest = 'M' THEN
+      -- Incluiremos o Reply-To para devolução da Análise
+      vr_request.headers('Reply-To') := gene0001.fn_param_sistema('CRED',pr_cdcooper,'URI_WEBSRV_MOTOR_DEVOLUC');
+    END IF;
+    
         
     vr_request.content := pr_conteudo;
     
@@ -995,8 +998,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                          pr_dtmvtolt              => pr_dtmvtolt,       
                          pr_cdstatus_http         => vr_response.status_code,
                          pr_dsconteudo_requisicao => pr_conteudo,
-                         pr_dsresposta_requisicao => '{"Content":'||vr_response.content||
-                                                     ',"StatusMessage":"'||vr_response.status_message||'"}',
+                         pr_dsresposta_requisicao => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
+                                                     ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
+                                                     ',"Content":'||vr_response.content||'}',
                          pr_idacionamento         => vr_idacionamento,
                          pr_dscritic              => vr_dscritic);
                          
@@ -1041,22 +1045,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 		IF pr_tpenvest = 'M' AND pr_dsmetodo = 'POST' THEN
 	    --> Transformar texto em objeto json
 			BEGIN
-				vr_obj_retorno := json(vr_response.content);
-				--> buscar content
-				IF vr_obj_retorno.exist('Content') THEN
-					-- converter content em objeto
-					vr_obj_content := json(vr_obj_retorno.get('Content').to_char());
-					--> Extrair o atributo Location
-          vr_location := trim(replace(vr_obj_content.get('Location').to_char(),'"'));
-					--> Extrair o final do atributo
-					pr_dsprotocolo := gene0002.fn_busca_entrada(pr_postext => 2
-					                                           ,pr_dstext => vr_location
-																										 ,pr_delimitador => '#');
-		      -- Atualizar acionamento																										 
-					UPDATE tbepr_acionamento
-						 SET dsprotocolo = pr_dsprotocolo
-					 WHERE idacionamento = vr_idacionamento;
-																										 
+        
+        -- Transformar os Headers em uma lista (\n é o separador)
+        vr_tab_split := gene0002.fn_quebra_string(vr_response.headers,'\n');
+        vr_idx_split  := vr_tab_split.FIRST;
+        -- Iterar sobre todos os headers até encontrar o protocolo
+        WHILE vr_idx_split IS NOT NULL AND pr_dsprotocolo IS NULL LOOP
+          -- Testar se é o Location
+          IF lower(vr_tab_split(vr_idx_split)) LIKE 'location%' THEN
+            -- Extrair o final do atributo, ou seja, o conteúdo após a ultima barra
+            pr_dsprotocolo := SUBSTR(vr_tab_split(vr_idx_split),INSTR(vr_tab_split(vr_idx_split),'/',-1)+1);
+          END IF;        
+          -- Buscar proximo header        
+          vr_idx_split := vr_tab_split.NEXT(vr_idx_split);    
+        END LOOP;
+        
+        -- Se conseguiu encontrar Protocolo
+        IF pr_dsprotocolo IS NOT NULL THEN 
+  				-- Atualizar acionamento																										 
+	  			UPDATE tbepr_acionamento
+		  			 SET dsprotocolo = pr_dsprotocolo
+			  	 WHERE idacionamento = vr_idacionamento;
+        ELSE    
+				  -- Gerar erro 
+          vr_dscritic := 'Nao foi possivel retornar Protocolo de Analise Automatica!';
+					RAISE vr_exc_erro;																						 
 				END IF;
 			EXCEPTION
 				WHEN OTHERS THEN   
@@ -1252,10 +1265,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_nrctremp     crawepr.nrctremp%TYPE;
     vr_inusatab     BOOLEAN;
     vr_vlutiliz     NUMBER;
-    vr_clob_arquiv  CLOB;
     vr_vlprapne     NUMBER;
     vr_vllimdis     NUMBER;
-    
+    vr_nmarquiv     varchar2(1000);
+    vr_dsiduser     varchar2(100);
+    vr_dscomand     VARCHAR2(4000); --> Comando para baixa do arquivo
+    vr_des_reto     VARCHAR2(3);    --> tipo saida
+    vr_dsparame     VARCHAR2(4000); 
       
   BEGIN
     
@@ -1310,7 +1326,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
     vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);    
     vr_obj_proposta.put('cooperadoContaPA' ,vr_obj_agencia);
-    vr_obj_agencia := json();
     
     -- Nr. conta sem o digito
     vr_obj_proposta.put('cooperadoContaNum',to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
@@ -1339,7 +1354,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                            to_char(to_date(rw_crawepr.hrinclus,'SSSSS'),'HH24:MI:SS'),
                            'DD/MM/RRRR HH24:MI:SS');    
     vr_obj_proposta.put('dataHora'           , fn_DataTempo_ibra(vr_data_aux));    
-    vr_data_aux := NULL;
     
     
     /* 0 – CDC Diversos
@@ -1376,7 +1390,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_crawepr.tpctrato );
     
     --> Buscar descição do tipo de garantia
-    vr_dstpgara := NULL;
     vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
                                                pr_tptabela => 'GENERI', 
@@ -1478,27 +1491,96 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_obj_proposta.put('propostasPendentesValor'     ,fn_decimal_ibra(vr_vlprapne) );
       vr_obj_proposta.put('limiteCooperadoValor'        ,fn_decimal_ibra(nvl(vr_vllimdis,0)) );
       
+      -- Copiar parâmetro
+      vr_nmarquiv := pr_nmarquiv;
       
-      IF pr_nmarquiv IS NOT NULL THEN
-        --> converter arquivo PDF para clob em base64 para enviar via json
-        pc_arq_para_clob_base64(pr_nmarquiv    => pr_nmarquiv,
-                                pr_clob_arquiv => vr_clob_arquiv, 
-                                pr_json_value_arq =>  vr_json_valor, 
-                                pr_dscritic    => vr_dscritic);
-                                
-        IF TRIM(vr_dscritic) IS NOT NULL THEN                        
+      -- Caso não tenhamos recebido o PDF
+      IF vr_nmarquiv IS NULL THEN 
+        -- Acionaremos a geração do PDF da Proposta
+        -- via Schell Script pois esta funcionalidade
+        -- esta no Progress e não há previsão de conversão
+        
+        -- Gerar ID aleatório
+        vr_dsiduser := pr_cdoperad||to_char(DBMS_RANDOM.VALUE(1,999999999),'fm000000000');
+        
+        -- Nome do PDF para gerar
+        vr_nmarquiv := gene0001.fn_diretorio(pr_tpdireto => 'C',
+                                             pr_cdcooper => pr_cdcooper,
+                                             pr_nmsubdir => '/rl')
+                    || '/prop_empr_'||pr_cdcooper
+                    || '_'||pr_nrdconta||'_'||pr_nrctremp
+                    || '_'||vr_dsiduser||'.pdf';
+        
+        -- Comando para Execucao
+        vr_dscomand := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_GERA_PROP_EMPR');
+    
+        -- Montar os parâmetros:
+        --  aux_cdcooper
+        --  aux_cdagenci
+        --  aux_nrdcaixa
+        --  aux_nmdatela
+        --  aux_cdoperad     
+        --  aux_idorigem
+        --  aux_nrdconta
+        --  aux_dtmvtolt
+        --  aux_dtmvtopr
+        --  aux_nrctremp
+        --  aux_dsiduser
+        --  aux_nmarqpdf
+        vr_dsparame := pr_cdcooper||';'
+                    || pr_cdagenci||';'
+                    || '1;'
+                    || 'ATENDA;'
+                    || pr_cdoperad||';'
+                    || pr_cdorigem||';'
+                    || pr_nrdconta||';'
+                    || to_char(rw_crapdat.dtmvtolt,'mmddrrrr')||';'
+                    || to_char(rw_crapdat.dtmvtopr,'mmddrrrr')||';'
+                    || pr_nrctremp||';'
+                    || vr_dsiduser||';'
+|| replace(vr_nmarquiv,'/cooph/','/coop/');
+        -- Incluir os parametros    
+        vr_dscomand := REPLACE(vr_dscomand,'[params]',vr_dsparame);
+
+        -- Executar comando para Download
+        GENE0001.pc_OScommand(pr_typ_comando => 'SR'
+                             ,pr_des_comando => vr_dscomand
+                             ,pr_typ_saida   => vr_des_reto
+                             ,pr_des_saida   => vr_dscritic);
+        -- Se ocorreu erro
+        IF vr_des_reto = 'ERR' THEN
           RAISE vr_exc_erro;
         END IF;
         
---        vr_json_valor := json_ext.to_json_value(,vr_clob_arquiv);
+        -- Se o arquivo não existir
+        IF NOT gene0001.fn_exis_arquivo(vr_nmarquiv) THEN 
+          -- Remover o conteudo do nome do arquivo para não enviar
+          vr_nmarquiv := null;
+        END IF;
         
+      END IF;
+      
+      IF vr_nmarquiv IS NOT NULL THEN
+        -- Converter arquivo PDF para clob em base64 para enviar via json
+        pc_arq_para_clob_base64(pr_nmarquiv       => vr_nmarquiv
+                               ,pr_json_value_arq => vr_json_valor
+                               ,pr_dscritic       => vr_dscritic);
+        IF TRIM(vr_dscritic) IS NOT NULL THEN                        
+          RAISE vr_exc_erro;
+        END IF;
         -- Gerar objeto json para a imagem 
-        vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
-        vr_obj_imagem.put('imagem'      , vr_json_valor);--to_char(vr_clob_arquiv));
-        vr_obj_imagem.put('emissaoData' , fn_Data_ibra(SYSDATE));
-        vr_obj_imagem.put('validadeData', '');
+        vr_obj_imagem.put('codigo'      ,'PROPOSTA_PDF');
+        vr_obj_imagem.put('imagem'      ,vr_json_valor);
+        vr_obj_imagem.put('emissaoData' ,fn_Data_ibra(SYSDATE));
+        vr_obj_imagem.put('validadeData','');
         -- incluir objeto imagem na proposta
         vr_obj_proposta.put('imagem'    ,vr_obj_imagem);
+        
+        -- Caso o PDF tenha sido gerado nesta rotina
+        IF vr_nmarquiv <> pr_nmarquiv THEN 
+          -- Temos de apagá-lo... Em outros casos o PDF é apagado na rotina chamadora
+          GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_nmarquiv);
+        END IF;
       END IF;
                  
     ELSE -- caso for CDC, enviar vazio
@@ -1508,6 +1590,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     END IF;            
     
     vr_obj_proposta.put('contratoNumero'     ,rw_crawepr.nrctremp);
+
+
+vr_obj_proposta.put('ambienteTemp',TRUE);    
+    
+    
     
     pr_proposta := vr_obj_proposta;
   
@@ -1530,17 +1617,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
   END pc_gera_json_proposta;
   
   --> Rotina responsavel por gerar a inclusao da proposta para a esteira
-  PROCEDURE pc_incluir_proposta_est (pr_cdcooper  IN crawepr.cdcooper%TYPE,
-                                      pr_cdagenci  IN crapage.cdagenci%TYPE,
-                                      pr_cdoperad  IN crapope.cdoperad%TYPE,
-                                      pr_cdorigem  IN INTEGER,
-                                      pr_nrdconta  IN crawepr.nrdconta%TYPE,
-                                      pr_nrctremp  IN crawepr.nrctremp%TYPE,
-                                      pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,
-                                      pr_nmarquiv  IN VARCHAR2,
-                                      ---- OUT ----
-                                      pr_cdcritic OUT NUMBER,
-                                      pr_dscritic OUT VARCHAR2) IS
+  PROCEDURE pc_incluir_proposta_est(pr_cdcooper  IN crawepr.cdcooper%TYPE
+                                   ,pr_cdagenci  IN crapage.cdagenci%TYPE
+                                   ,pr_cdoperad  IN crapope.cdoperad%TYPE
+                                   ,pr_cdorigem  IN INTEGER
+                                   ,pr_nrdconta  IN crawepr.nrdconta%TYPE
+                                   ,pr_nrctremp  IN crawepr.nrctremp%TYPE
+                                   ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                                   ,pr_nmarquiv  IN VARCHAR2
+                                    ---- OUT ----
+                                   ,pr_cdcritic OUT NUMBER
+                                   ,pr_dscritic OUT VARCHAR2) IS
     /* ..........................................................................
     
       Programa : pc_incluir_proposta_est        
@@ -1563,10 +1650,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_dscritic VARCHAR2(4000);
     vr_exc_erro EXCEPTION;
     
-    vr_obj_proposta  json := json();
+    vr_obj_proposta      json := json();
+    vr_obj_proposta_clob clob;
     
-    vr_idacionamento  tbepr_acionamento.idacionamento%TYPE;
-		vr_dsprotoc VARCHAR2(1000);
+    vr_dsprotoc VARCHAR2(1000);
 		vr_comprecu VARCHAR2(1000);
 		
     -- Buscar informações da Proposta
@@ -1587,6 +1674,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 				 AND wpr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%ROWTYPE;
 		
+    -- Tipo Envio Esteira
+    vr_tpenvest varchar2(1);
+    
   BEGIN    
 		
 	  -- Buscar informações da proposta
@@ -1594,7 +1684,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 		FETCH cr_crawepr INTO rw_crawepr;
 		CLOSE cr_crawepr;
     
-    IF rw_crawepr.insitest = 1 THEN			
+    -- Se a situação for diferente de Não enviada
+    -- ou 
+    -- Se cooperativa não obriga a passagem pelo Motor 
+    IF rw_crawepr.insitest <> 0
+    OR GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'ANALISE_OBRIG_MOTOR_CRED') = 0 THEN			
 	
       --> Gerar informações no padrao JSON da proposta de emprestimo
       pc_gera_json_proposta(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
@@ -1614,6 +1708,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         RAISE vr_exc_erro;        
       END IF;  
   
+      --> Se origem veio do Motor/Esteira
+      IF pr_cdorigem = 9 THEN 
+        -- É uma derivação
+        vr_tpenvest := 'D';
+      ELSE 
+        vr_tpenvest := 'I';
+      END IF;
+  
+      -- Criar o CLOB para converter JSON para CLOB
+      dbms_lob.createtemporary(vr_obj_proposta_clob, TRUE, dbms_lob.CALL);
+      dbms_lob.open(vr_obj_proposta_clob, dbms_lob.lob_readwrite);
+			json.to_clob(vr_obj_proposta,vr_obj_proposta_clob);  
+  
   		--> Enviar dados para Esteira
 			pc_enviar_esteira ( pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
 													pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
@@ -1624,11 +1731,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 													pr_dtmvtolt    => pr_dtmvtolt,          --> Data do movimento                                      
 													pr_comprecu    => NULL,                 --> Complemento do recuros da URI
 													pr_dsmetodo    => 'POST',               --> Descricao do metodo
-													pr_conteudo    => vr_obj_proposta.to_char(), --> Conteudo no Json para comunicacao
+													pr_conteudo    => vr_obj_proposta_clob, --> Conteudo no Json para comunicacao
 													pr_dsoperacao  => 'ENVIO DA PROPOSTA PARA A ESTEIRA DE CREDITO',   --> Operacao realizada
-													pr_tpenvest    => 'I',                  --> Tipo de envio
+													pr_tpenvest    => vr_tpenvest,          --> Tipo de envio
 													pr_dsprotocolo => vr_dsprotoc,
 													pr_dscritic    => vr_dscritic);            
+
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_obj_proposta_clob);
+      dbms_lob.freetemporary(vr_obj_proposta_clob);    
 	    
 			-- verificar se retornou critica
 			IF vr_dscritic IS NOT NULL THEN
@@ -1642,7 +1753,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 							 epr.dtenvest = trunc(SYSDATE), 
 							 epr.hrenvest = to_char(SYSDATE,'sssss'),
 							 epr.cdopeste = pr_cdoperad,
-							 epr.dsprotoc = vr_dsprotoc
+							 epr.dsprotoc = nvl(vr_dsprotoc,' '),
+               epr.insitapr = 0,
+               epr.cdopeapr = NULL,
+               epr.dtaprova = NULL,
+               epr.hraprova = 0
 				 WHERE epr.cdcooper = pr_cdcooper
 					 AND epr.nrdconta = pr_nrdconta
 					 AND epr.nrctremp = pr_nrctremp;      
@@ -1652,6 +1767,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 					RAISE vr_exc_erro;
 			END;
 		ELSE
+      
       --> Gerar informações no padrao JSON da proposta de emprestimo
 			ESTE0002.pc_gera_json_analise(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
 													          pr_cdagenci  => rw_crawepr.cdagenci, --> Agência da Proposta
@@ -1678,9 +1794,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       	vr_comprecu := '/definition/'|| gene0001.fn_param_sistema('CRED'
 	  																															,pr_cdcooper
 		  																														,'REGRA_ANL_MOTOR_IBRA_PJ')||'/start';            
-      END IF;                                                            
-			--> Enviar dados para Esteira
-			pc_enviar_esteira(pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
+      END IF;    
+          
+                                                          
+      -- Criar o CLOB para converter JSON para CLOB
+      dbms_lob.createtemporary(vr_obj_proposta_clob, TRUE, dbms_lob.CALL);
+      dbms_lob.open(vr_obj_proposta_clob, dbms_lob.lob_readwrite);
+			json.to_clob(vr_obj_proposta,vr_obj_proposta_clob);
+      
+			--> Enviar dados para Análise Automática Esteira (Motor)
+      pc_enviar_esteira(pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
 											  pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
 											  pr_cdoperad    => pr_cdoperad,          --> codigo do operador
 											  pr_cdorigem    => pr_cdorigem,          --> Origem da operacao
@@ -1689,23 +1812,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 											  pr_dtmvtolt    => pr_dtmvtolt,          --> Data do movimento                                      
 											  pr_comprecu    => vr_comprecu,          --> Complemento do recuros da URI
 											  pr_dsmetodo    => 'POST',               --> Descricao do metodo
-											  pr_conteudo    => vr_obj_proposta.to_char(), --> Conteudo no Json para comunicacao
+											  pr_conteudo    => vr_obj_proposta_clob,  --> Conteudo no Json para comunicacao
 											  pr_dsoperacao  => 'ENVIO DA PROPOSTA PARA ANALISE AUTOMATICA DA ESTEIRA DE CREDITO',  --> Operação efetuada
 											  pr_tpenvest    => 'M',                  --> Tipo de envio (Motor)
 											  pr_dsprotocolo => vr_dsprotoc,           --> Protocolo gerado
 											  pr_dscritic    => vr_dscritic);            
+
+      -- Liberando a memória alocada pro CLOB
+      dbms_lob.close(vr_obj_proposta_clob);
+      dbms_lob.freetemporary(vr_obj_proposta_clob);                        
+                        
 			-- verificar se retornou critica
 			IF vr_dscritic IS NOT NULL THEN
 				RAISE vr_exc_erro;
 			END IF; 
 			
+      -- Atualizar a proposta
 	    BEGIN
 				UPDATE crawepr epr 
 					 SET epr.insitest = 1, -->  1 – Enviada para Analise 
 							 epr.dtenvest = trunc(SYSDATE), 
 							 epr.hrenvest = to_char(SYSDATE,'sssss'),
 							 epr.cdopeste = pr_cdoperad,
-							 epr.dsprotoc = vr_dsprotoc 
+							 epr.dsprotoc = nvl(vr_dsprotoc,' '),
+               epr.insitapr = 0,
+               epr.cdopeapr = NULL,
+               epr.dtaprova = NULL,
+               epr.hraprova = 0
 				 WHERE epr.cdcooper = pr_cdcooper
 					 AND epr.nrdconta = pr_nrdconta
 					 AND epr.nrctremp = pr_nrctremp;      
@@ -1832,7 +1965,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('cooperativaCodigo'   , pr_cdcooper);
     vr_obj_agencia.put('PACodigo'            , pr_cdagenci);    
     vr_obj_alter.put('operadorAlteracaoPA'      , vr_obj_agencia);
-    vr_obj_agencia := json();    
     
     --> Enviar dados para Esteira
     pc_enviar_esteira ( pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
@@ -2043,7 +2175,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('cooperativaCodigo'   , pr_cdcooper);
     vr_obj_agencia.put('PACodigo'            , pr_cdagenci);    
     vr_obj_alter.put('operadorAlteracaoPA'   , vr_obj_agencia);
-    vr_obj_agencia := json();   
     vr_obj_alter.put('dataHora'              ,fn_DataTempo_ibra(SYSDATE)) ;        
     
     
@@ -2241,7 +2372,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('cooperativaCodigo'   , pr_cdcooper);
     vr_obj_agencia.put('PACodigo'            , pr_cdagenci);    
     vr_obj_cancelar.put('operadorCancelamentoPA'   , vr_obj_agencia);    
-    vr_obj_agencia := json();   
     vr_obj_cancelar.put('dataHora'              ,fn_DataTempo_ibra(SYSDATE)) ;        
    
     --> Enviar dados para Esteira
@@ -2403,8 +2533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Auxiliares
     vr_json_valor   json_value;
-    vr_clob_arquiv  CLOB;
-		vr_dsprotocolo  VARCHAR2(1000);
+    vr_dsprotocolo  VARCHAR2(1000);
     
     
   BEGIN
@@ -2491,7 +2620,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('cooperativaCodigo'       , pr_cdcooper);
     vr_obj_agencia.put('PACodigo'                , rw_crawepr.cdagenci_efet);    
     vr_obj_efetivar.put('operadorEfetivacaoPA'   , vr_obj_agencia);    
-    vr_obj_agencia := json();   
     vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(COALESCE(rw_craplem.dthrtran, SYSDATE))) ; 
     vr_obj_efetivar.put('contratoNumero'         , pr_nrctremp);
     vr_obj_efetivar.put('valor'                  , rw_crawepr.vlemprst);
@@ -2504,7 +2632,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       IF pr_nmarquiv IS NOT NULL THEN
         --> converter arquivo PDF para clob em base64 para enviar via json
         pc_arq_para_clob_base64(pr_nmarquiv       => pr_nmarquiv,
-                                pr_clob_arquiv    => vr_clob_arquiv, 
                                 pr_json_value_arq => vr_json_valor, 
                                 pr_dscritic       => vr_dscritic);
                                 
@@ -2514,7 +2641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         
         -- Gerar objeto json para a imagem 
         vr_obj_imagem.put('codigo'      , 'PROPOSTA_PDF');
-        vr_obj_imagem.put('imagem'      , vr_json_valor);--to_char(vr_clob_arquiv));
+        vr_obj_imagem.put('imagem'      , vr_json_valor);
         vr_obj_imagem.put('emissaoData' , fn_Data_ibra(SYSDATE));
         vr_obj_imagem.put('validadeData', '');
         -- incluir objeto imagem na proposta
@@ -2693,8 +2820,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         
     vr_request.service_uri := vr_host_esteira;
     vr_request.api_route := vr_recurso_este;
-    vr_request.method := 'GET';
-    vr_request.timeout := 1000;
+    vr_request.method    := 'GET';
+    vr_request.timeout   := gene0001.fn_param_sistema('CRED',0,'TIMEOUT_CONEXAO_IBRA');
     
     vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
     vr_request.headers('Authorization') := vr_autori_este;
@@ -2703,7 +2830,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     IF vr_chave_aplica IS NOT NULL THEN 
       vr_request.headers('ApplicationKey') := vr_chave_aplica;
     END IF;
-   
     
     vr_request.parameters('numero') := pr_nrctremp; 
     -- Nr. conta sem o digito
@@ -2738,8 +2864,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                          pr_dtmvtolt              => pr_dtmvtolt,       
                          pr_cdstatus_http         => vr_response.status_code,
                          pr_dsconteudo_requisicao => vr_obj_proposta.to_char,
-                         pr_dsresposta_requisicao => '"Content":'||vr_response.content||
-                                                     ' "StatusMessage":'||vr_response.status_message,
+                         pr_dsresposta_requisicao => '{"StatusMessage":"'||vr_response.status_message||'"'||CHR(13)||
+                                                     ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||
+                                                     ',"Content":'||vr_response.content||'}',
                          pr_idacionamento         => vr_idacionamento,
                          pr_dscritic              => vr_dscritic);
                          
@@ -2860,8 +2987,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			FETCH cr_craplcr INTO vr_flgdisap;
 		  CLOSE cr_craplcr;
 			
-			-- Se dispensa aprovação ou esteira está em contingência
-		  IF vr_flgdisap = 1 OR GENE0001.FN_PARAM_SISTEMA('CRED',1,'CONTIGENCIA_ESTEIRA_IBRA') = 1 THEN
+			-- Se dispensa aprovação 
+      -- ou Esteira está em contingência 
+      -- Ou a Cooperativa não Obriga Análise Automática
+		  IF vr_flgdisap = 1 
+      OR GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'CONTIGENCIA_ESTEIRA_IBRA') = 1 
+      OR GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'ANALISE_OBRIG_MOTOR_CRED') = 0 THEN
 				pr_inobriga := 'N';
 			ELSE 
 			  pr_inobriga := 'S';
@@ -2991,6 +3122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 		vr_idacionamento tbepr_acionamento.idacionamento%TYPE;
 	  vr_nrdrowid ROWID;
 		vr_dsresana VARCHAR2(100);
+    vr_dssitret VARCHAR2(100);
 		vr_indrisco VARCHAR2(100);
 		vr_nrnotrat VARCHAR2(100);
 		vr_nrinfcad VARCHAR2(100);
@@ -3007,230 +3139,277 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Objeto json da proposta
     vr_obj_proposta json := json();
 		vr_obj_retorno json := json();
+    vr_obj_indicadores json := json();
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
 	
 	  -- Cursores
 	  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-		
-		CURSOR cr_crawepr IS
-			SELECT epr.cdcooper
-						,epr.nrdconta
-						,epr.nrctremp 
-						,epr.dsprotoc
-						,epr.hrenvest
-						,epr.insitest
-						,epr.cdagenci
-				FROM crawepr epr
-			 WHERE insitest = 1         -- Enviadas para Analise Automática
-				 AND dsprotoc IS NOT NULL -- Com Protocolo da IBRATAN
-			ORDER BY dtenvest DESC;     -- Mais antigas primeiro
-			
-	BEGIN
-    --Verificar se a data existe
-    OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
-    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    -- Se não encontrar
-    IF BTCH0001.cr_crapdat%NOTFOUND THEN
-      -- Montar mensagem de critica
-      vr_dscritic:= gene0001.fn_busca_critica(1);
-      CLOSE BTCH0001.cr_crapdat;
-      RAISE vr_exc_erro;
-    ELSE
-      -- Apenas fechar o cursor
-      CLOSE BTCH0001.cr_crapdat;
-    END IF;
     
-		-- Buscar o tempo máximo de espera em segundos pela analise do motor		
-		vr_qtsegund := gene0001.fn_param_sistema('CRED',3,'TIME_RESP_MOTOR_IBRA');
-		
-		-- Buscar todas as propostas enviadas para o motor e que ainda não tenham retorno
-		FOR rw_crawepr IN cr_crawepr LOOP
-			-- Capturar o protocolo do contrato para apresentar na crítica caso ocorra algum erro
-			vr_dsprotoc := rw_crawepr.dsprotoc;
-			-- Carregar parametros para a comunicacao com a esteira
-			pc_carrega_param_ibra(pr_cdcooper      => rw_crawepr.cdcooper, -- Codigo da cooperativa
-														pr_nrdconta      => rw_crawepr.nrdconta, -- Numero da conta do cooperado
-														pr_nrctremp      => rw_crawepr.nrctremp, -- Numero da proposta de emprestimo
-														pr_tpenvest      => 'M',         -- Tipo de envio M - Motor
-														pr_host_esteira  => vr_host_esteira, -- Host da esteira
-														pr_recurso_este  => vr_recurso_este, -- URI da esteira
-														pr_contige_este  => vr_contige_este, -- Verificar se esta em contigencia
-														pr_dsdirlog      => vr_dsdirlog    , -- Diretorio de log dos arquivos 
-														pr_autori_este   => vr_autori_este  ,              -- Authorization 
-                            pr_chave_aplica  => vr_chave_aplica ,              -- Chave de acesso
-                            pr_dscritic      => vr_dscritic    );
-	    
-			-- Se retornou crítica
-			IF trim(vr_dscritic)  IS NOT NULL THEN
-				-- Levantar exceção
-				RAISE vr_exc_erro;
-			END IF; 
-			
-			vr_recurso_este := vr_recurso_este||'/instance/'||rw_crawepr.dsprotoc||'#';
+    -- Cooperativas com análise automática obrigatória
+    CURSOR cr_crapcop IS
+      SELECT cdcooper
+        FROM crapcop
+       WHERE flgativo = 1
+         AND GENE0001.FN_PARAM_SISTEMA('CRED',cdcooper,'ANALISE_OBRIG_MOTOR_CRED') = 1;
+    
+		-- Proposta sem retorno
+		CURSOR cr_crawepr(pr_cdcooper crapcop.cdcooper%TYPE) IS
+			SELECT wpr.cdcooper
+            ,wpr.nrdconta
+            ,wpr.nrctremp 
+            ,wpr.dsprotoc
+            ,wpr.dtenvest
+            ,wpr.hrenvest
+            ,wpr.insitest
+            ,wpr.cdagenci
+        FROM crawepr wpr
+            ,tbepr_acionamento aci
+       WHERE wpr.cdcooper = pr_cdcooper 
+         AND wpr.cdcooper = aci.cdcooper
+         AND wpr.nrdconta = aci.nrdconta
+         AND wpr.nrctremp = aci.nrctrprp
+         AND wpr.dsprotoc = aci.dsprotocolo
+         AND aci.tpacionamento = 1        -- SOmente de Envio para evitar duplicidade
+         AND wpr.insitest = 1             -- Enviadas para Analise Automática
+         AND nvl(aci.dsprotocolo,' ') != ' '  -- Com Protocolo da IBRATAN
+      ORDER BY wpr.cdcooper
+              ,wpr.dtenvest
+              ,wpr.hrenvest;         -- Mais antigas primeiro  	
+              
+	BEGIN
+    
+		-- Buscar todas as Coops com obrigatoriedade de Análise Automática    
+    FOR rw_crapcop IN cr_crapcop LOOP
+      
+      -- Buscar o tempo máximo de espera em segundos pela analise do motor		
+		  vr_qtsegund := gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'TIME_RESP_MOTOR_IBRA');
+    
+      --Verificar se a data existe
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Montar mensagem de critica
+        vr_dscritic:= gene0001.fn_busca_critica(1);
+        CLOSE BTCH0001.cr_crapdat;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;        
+    
+      -- Buscar todas as propostas enviadas para o motor e que ainda não tenham retorno
+      FOR rw_crawepr IN cr_crawepr(rw_crapcop.cdcooper) LOOP
+        
+        -- Capturar o protocolo do contrato para apresentar na crítica caso ocorra algum erro
+        vr_dsprotoc := rw_crawepr.dsprotoc;
+        -- Carregar parametros para a comunicacao com a esteira
+        pc_carrega_param_ibra(pr_cdcooper      => rw_crawepr.cdcooper, -- Codigo da cooperativa
+                              pr_nrdconta      => rw_crawepr.nrdconta, -- Numero da conta do cooperado
+                              pr_nrctremp      => rw_crawepr.nrctremp, -- Numero da proposta de emprestimo
+                              pr_tpenvest      => 'M',             -- Tipo de envio M - Motor
+                              pr_host_esteira  => vr_host_esteira, -- Host da esteira
+                              pr_recurso_este  => vr_recurso_este, -- URI da esteira
+                              pr_contige_este  => vr_contige_este, -- Verificar se esta em contigencia
+                              pr_dsdirlog      => vr_dsdirlog    , -- Diretorio de log dos arquivos 
+                              pr_autori_este   => vr_autori_este  ,              -- Authorization 
+                              pr_chave_aplica  => vr_chave_aplica ,              -- Chave de acesso
+                              pr_dscritic      => vr_dscritic    );	    
+        -- Se retornou crítica
+        IF trim(vr_dscritic)  IS NOT NULL THEN
+          -- Levantar exceção
+          RAISE vr_exc_erro;
+        END IF; 
+  			
+        vr_recurso_este := vr_recurso_este||'/instance/'||rw_crawepr.dsprotoc;
 
-			vr_request.service_uri := vr_host_esteira;
-			vr_request.api_route   := vr_recurso_este;
-			vr_request.method      := 'GET';
-			vr_request.timeout     := 1000;
-	    
-			vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
-			vr_request.headers('Authorization') := vr_autori_este;
-			
-      -- Se houver ApplicationKey
-      IF vr_chave_aplica IS NOT NULL THEN 
-        vr_request.headers('ApplicationKey') := vr_chave_aplica;
-      END IF;
-      
-      
-	    -- Disparo do REQUEST
-			json0001.pc_executa_ws_json(pr_request           => vr_request
-																 ,pr_response          => vr_response
-																 ,pr_diretorio_log     => vr_dsdirlog
-																 ,pr_formato_nmarquivo => 'YYYYMMDDHH24MISSFF3".[api].[method]"'
-																 ,pr_dscritic          => vr_dscritic); 
-			IF TRIM(vr_dscritic) IS NOT NULL THEN
-				RAISE vr_exc_erro;
-			END IF;
+        vr_request.service_uri := vr_host_esteira;
+        vr_request.api_route   := vr_recurso_este;
+        vr_request.method      := 'GET';
+        vr_request.timeout     := gene0001.fn_param_sistema('CRED',0,'TIMEOUT_CONEXAO_IBRA');
+  	    
+        vr_request.headers('Content-Type') := 'application/json; charset=UTF-8';
+        vr_request.headers('Authorization') := vr_autori_este;
+  			
+        -- Se houver ApplicationKey
+        IF vr_chave_aplica IS NOT NULL THEN 
+          vr_request.headers('ApplicationKey') := vr_chave_aplica;
+        END IF;
+       
+        -- Disparo do REQUEST
+        json0001.pc_executa_ws_json(pr_request           => vr_request
+                                   ,pr_response          => vr_response
+                                   ,pr_diretorio_log     => vr_dsdirlog
+                                   ,pr_formato_nmarquivo => 'YYYYMMDDHH24MISSFF3".[api].[method]"'
+                                   ,pr_dscritic          => vr_dscritic); 
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;	
+        
+        -- Iniciar status
+        vr_dssitret := 'EM PROCESSAMENTO';
+        
+        -- HTTP 204 não tem conteúdo
+        IF vr_response.status_code != 204 THEN
+          -- Extrair dados de retorno
+          vr_obj_retorno := json(vr_response.content);
+          -- Resultado Analise Regra
+          IF vr_obj_retorno.exist('resultadoAnaliseRegra') THEN
+            vr_dsresana := ltrim(rtrim(vr_obj_retorno.get('resultadoAnaliseRegra').to_char(),'"'),'"');
+            -- Montar a mensagem que será gravada no acionamento
+            CASE lower(vr_dsresana)
+              WHEN 'aprovar'  THEN vr_dssitret := 'APROVADO AUTOM.';
+              WHEN 'reprovar' THEN vr_dssitret := 'REPROVADO AUTOM.';
+              WHEN 'derivar'  THEN vr_dssitret := 'ANALISAR MANUAL';
+              WHEN 'erro'     THEN vr_dssitret := 'ERRO CONSULTAS';
+              ELSE vr_dssitret := 'DESCONHECIDA';
+            END CASE;         
+          END IF;  
+        END IF; 
+
+        --> Gravar dados log acionamento
+        pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+                             pr_cdagenci              => rw_crawepr.cdagenci,          
+                             pr_cdoperad              => 'MOTOR',
+                             pr_cdorigem              => 5, /*Ayllos*/
+                             pr_nrctrprp              => rw_crawepr.nrctremp,          
+                             pr_nrdconta              => rw_crawepr.nrdconta,          
+                             pr_tpacionamento         => 2,  /* 1 - Envio, 2 – Retorno */      
+                             pr_dsoperacao            => 'RETORNO ANALISE AUTOMATICA - '||vr_dssitret,
+                             pr_dsuriservico          => vr_host_esteira||vr_recurso_este,       
+                             pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
+                             pr_cdstatus_http         => vr_response.status_code,
+                             pr_dsconteudo_requisicao => vr_obj_proposta.to_char,
+                             pr_dsresposta_requisicao => '"Content":'||vr_response.content||CHR(13)||
+                                                         ',"Headers":"'||RTRIM(LTRIM(vr_response.headers,'""'),'""')||'"'||CHR(13)||                           
+                                                         ',"StatusMessage":'||vr_response.status_message,
+                             pr_dsprotocolo           => rw_crawepr.dsprotoc,
+                             pr_idacionamento         => vr_idacionamento,
+                             pr_dscritic              => vr_dscritic);
+  			                     
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        --> Commit para garantir que guarde as informações do log de acionamento
+        COMMIT;
+  			
+        IF vr_response.status_code NOT IN(200,204,429) THEN
+          vr_dscritic := 'Não foi possivel consultar informações na Esteira, '||
+                         'favor entrar em contato com a equipe responsavel.  '|| 
+                         '(Cod:'||vr_response.status_code||')';    
+          RAISE vr_exc_erro;
+        END IF;
+  			
+        -- Se recebemos o código diferente de 200 
+        IF vr_response.status_code != 200 THEN
+          -- Checar expiração
+          IF trunc(SYSDATE) > rw_crawepr.dtenvest 
+          OR (to_char(SYSDATE, 'sssss') - vr_qtsegund) > rw_crawepr.hrenvest THEN
+            BEGIN
+              UPDATE crawepr epr
+                 SET epr.insitest = 4 --> Expirado
+               WHERE epr.cdcooper = rw_crawepr.cdcooper
+                 AND epr.nrdconta = rw_crawepr.nrdconta
+                 AND epr.nrctremp = rw_crawepr.nrctremp;
+            EXCEPTION
+              WHEN OTHERS THEN 
+                vr_dscritic := 'Erro na expiracao da analise automatica: '||sqlerrm;
+                RAISE vr_exc_erro;	
+            END;
+  					
+            -- Gerar informações do log
+            GENE0001.pc_gera_log(pr_cdcooper => rw_crawepr.cdcooper
+                                ,pr_cdoperad => 'MOTOR'
+                                ,pr_dscritic => ' '
+                                ,pr_dsorigem => 'AYLLOS'
+                                ,pr_dstransa => 'Expiracao da Analise Automatica'
+                                ,pr_dttransa => TRUNC(SYSDATE)
+                                ,pr_flgtrans => 1 --> FALSE
+                                ,pr_hrtransa => gene0002.fn_busca_time
+                                ,pr_idseqttl => 1
+                                ,pr_nmdatela => 'ESTEIRA'
+                                ,pr_nrdconta => rw_crawepr.nrdconta
+                                ,pr_nrdrowid => vr_nrdrowid);                         
+  		      
+            -- Log de item
+            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'insitest'
+                                     ,pr_dsdadant => rw_crawepr.insitest
+                                     ,pr_dsdadatu => 4);
+          END IF;
+        ELSE
           
-			--> Gravar dados log acionamento
-			pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
-					                 pr_cdagenci              => rw_crawepr.cdagenci,          
-					                 pr_cdoperad              => '1',
-					                 pr_cdorigem              => 5, /*Ayllos*/
-                           pr_nrctrprp              => rw_crawepr.nrctremp,          
-					                 pr_nrdconta              => rw_crawepr.nrdconta,          
-					                 pr_tpacionamento         => 2,  /* 1 - Envio, 2 – Retorno */      
-					                 pr_dsoperacao            => 'RETORNO ANALISE AUTOMATICA',
-					                 pr_dsuriservico          => vr_host_esteira||'/'||vr_recurso_este,       
-					                 pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
-					                 pr_cdstatus_http         => vr_response.status_code,
-					                 pr_dsconteudo_requisicao => vr_obj_proposta.to_char,
-					                 pr_dsresposta_requisicao => '"Content":'||vr_response.content||
-																				               ' "StatusMessage":'||vr_response.status_message,
-													 pr_idacionamento         => vr_idacionamento,
-													 pr_dscritic              => vr_dscritic);
-			                     
-			IF TRIM(vr_dscritic) IS NOT NULL THEN
-				RAISE vr_exc_erro;
-			END IF;
+          -- Buscar IndicadoresCliente
+          IF vr_obj_retorno.exist('indicadoresGeradosRegra') THEN
+            
+            vr_obj_indicadores := json(vr_obj_retorno.get('indicadoresGeradosRegra'));
+          
+            -- Nivel Risco Calculado -- 
+            IF vr_obj_indicadores.exist('nivelRisco') THEN
+              vr_indrisco := ltrim(rtrim(vr_obj_indicadores.get('nivelRisco').to_char(),'"'),'"');
+            END IF;
 
-			--> Commit para garantir que guarde as informações do log de acionamento
-			COMMIT;			
-			
-			IF vr_response.status_code NOT IN(200,204,429) THEN
-				vr_dscritic := 'Não foi possivel consultar informações na Esteira, '||
-											 'favor entrar em contato com a equipe responsavel.  '|| 
-											 '(Cod:'||vr_response.status_code||')';    
-				RAISE vr_exc_erro;
-      END IF;
-			
-			-- Se recebemos o código diferente de 200 
-			IF vr_response.status_code != 200 THEN
-				-- Checar expiração
-				IF (to_char(SYSDATE, 'sssss') - vr_qtsegund) > rw_crawepr.hrenvest THEN
-					BEGIN
-						UPDATE crawepr epr
-							 SET epr.insitest = 4 --> Expirado
-						 WHERE epr.cdcooper = rw_crawepr.cdcooper
-							 AND epr.nrdconta = rw_crawepr.nrdconta
-							 AND epr.nrctremp = rw_crawepr.nrctremp;
-					EXCEPTION
-						WHEN OTHERS THEN 
-							vr_dscritic := 'Erro na expiracao da analise automatica: '||sqlerrm;
-							RAISE vr_exc_erro;	
-					END;
-					
-					-- Gerar informações do log
-					GENE0001.pc_gera_log(pr_cdcooper => rw_crawepr.cdcooper
-															,pr_cdoperad => 'MOTOR'
-															,pr_dscritic => ' '
-															,pr_dsorigem => 'AYLLOS'
-															,pr_dstransa => 'Expiracao da Analise Automatica'
-															,pr_dttransa => TRUNC(SYSDATE)
-															,pr_flgtrans => 1 --> FALSE
-															,pr_hrtransa => gene0002.fn_busca_time
-															,pr_idseqttl => 1
-															,pr_nmdatela => 'ESTEIRA'
-															,pr_nrdconta => rw_crawepr.nrdconta
-															,pr_nrdrowid => vr_nrdrowid);                         
-		      
-					-- Log de item
-					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-																	 ,pr_nmdcampo => 'insitest'
-																	 ,pr_dsdadant => rw_crawepr.insitest
-																	 ,pr_dsdadatu => 4);
-				END IF;
-			ELSE
-				-- Extrair dados de retorno
-				vr_obj_retorno := json(vr_response.content);
-				
-				-- Resultado Analise Regra
-				IF vr_obj_retorno.exist('resultadoAnaliseRegra') THEN
-					vr_dsresana := vr_obj_retorno.get('resultadoAnaliseRegra').to_char();
-				END IF;
+            -- Rating Calculado -- 
+            IF vr_obj_indicadores.exist('notaRating') THEN
+              vr_nrnotrat := ltrim(rtrim(vr_obj_indicadores.get('notaRating').to_char(),'"'),'"');
+            END IF;
+    				
+            -- Informação Cadastral -- 
+            IF vr_obj_indicadores.exist('informacaoCadastral') THEN
+              vr_nrinfcad := ltrim(rtrim(vr_obj_indicadores.get('informacaoCadastral').to_char(),'"'),'"');
+            END IF;
 
-				-- Nivel Risco Calculado -- 
-				IF vr_obj_retorno.exist('nivelRisco') THEN
-					vr_indrisco := vr_obj_retorno.get('nivelRisco').to_char();
-				END IF;
+            -- Liquidez -- 
+            IF vr_obj_indicadores.exist('liquidez') THEN
+              vr_nrliquid := ltrim(rtrim(vr_obj_indicadores.get('liquidez').to_char(),'"'),'"');
+            END IF;
 
-				-- Rating Calculado -- 
-				IF vr_obj_retorno.exist('notaRating') THEN
-					vr_nrnotrat := vr_obj_retorno.get('notaRating').to_char();
-				END IF;
-				
-				-- Informação Cadastral -- 
-				IF vr_obj_retorno.exist('informacaoCadastral') THEN
-					vr_nrinfcad := vr_obj_retorno.get('informacaoCadastral').to_char();
-				END IF;
+            -- Garantia -- 
+            IF vr_obj_indicadores.exist('garantia') THEN
+              vr_nrgarope := ltrim(rtrim(vr_obj_indicadores.get('garantia').to_char(),'"'),'"');
+            END IF;
+    		    
+            -- Patrimônio Pessoal Livre -- 
+            IF vr_obj_indicadores.exist('patrimonioPessoalLivre') THEN
+              vr_nrparlvr := ltrim(rtrim(vr_obj_indicadores.get('patrimonioPessoalLivre').to_char(),'"'),'"');
+            END IF;
 
-				-- Liquidez -- 
-				IF vr_obj_retorno.exist('liquidez') THEN
-					vr_nrliquid := vr_obj_retorno.get('liquidez').to_char();
-				END IF;
-
-				-- Garantia -- 
-				IF vr_obj_retorno.exist('garantia') THEN
-					vr_nrgarope := vr_obj_retorno.get('garantia').to_char();
-				END IF;
-		    
-				-- Patrimônio Pessoal Livre -- 
-				IF vr_obj_retorno.exist('patrimonioPessoalLivre') THEN
-					vr_nrparlvr := vr_obj_retorno.get('patrimonioPessoalLivre').to_char();
-				END IF;
-
-				-- Percepção Geral Empresa -- 
-				IF vr_obj_retorno.exist('percepcaoGeralEmpresa') THEN
-					vr_nrperger := vr_obj_retorno.get('percepcaoGeralEmpresa').to_char();
-				END IF;
-				
-				-- Gravar o retorno e proceder com o restante do processo pós análise automática
-				WEBS0001.pc_retorno_analise_proposta(pr_cdorigem => 5 /*Ayllos*/
-				                                    ,pr_dsprotocolo => rw_crawepr.dsprotoc
-																						,pr_dsresana => vr_dsresana
-																						,pr_indrisco => vr_indrisco
-																						,pr_nrnotrat => vr_nrnotrat
-																						,pr_nrinfcad => vr_nrinfcad
-																						,pr_nrliquid => vr_nrliquid
-																						,pr_nrgarope => vr_nrgarope
-																						,pr_nrparlvr => vr_nrparlvr
-																						,pr_nrperger => vr_nrperger
-																						,pr_dsrequis => vr_obj_proposta.to_char
-																						,pr_namehost => vr_host_esteira||'/'||vr_recurso_este
-																						-- OUT (Não trataremos retorno de erro pois é tudo efetuado na rotina chamada)
-																						,pr_xmllog   => vr_xmllog 
-																						,pr_cdcritic => vr_cdcritic 
-																						,pr_dscritic => vr_dscritic 
-																						,pr_retxml   => vr_retxml   
-																						,pr_nmdcampo => vr_nmdcampo 
-																						,pr_des_erro => vr_des_erro );
-		  END IF;
-			-- Efetuar commit
-			COMMIT;
-			-- Aguardar 2 segundos para evitar que tenhamos retorno 429 - Too Many Requests
-      sys.dbms_lock.sleep(10);
-		END LOOP;
+            -- Percepção Geral Empresa -- 
+            IF vr_obj_indicadores.exist('percepcaoGeralEmpresa') THEN
+              vr_nrperger := ltrim(rtrim(vr_obj_indicadores.get('percepcaoGeralEmpresa').to_char(),'"'),'"');
+            END IF;
+          END IF;  
+  				
+          -- Gravar o retorno e proceder com o restante do processo pós análise automática
+          WEBS0001.pc_retorno_analise_proposta(pr_cdorigem => 5 /*Ayllos*/
+                                              ,pr_dsprotoc => rw_crawepr.dsprotoc
+                                              ,pr_nrtransa => vr_idacionamento
+                                              ,pr_dsresana => vr_dsresana
+                                              ,pr_indrisco => vr_indrisco
+                                              ,pr_nrnotrat => vr_nrnotrat
+                                              ,pr_nrinfcad => vr_nrinfcad
+                                              ,pr_nrliquid => vr_nrliquid
+                                              ,pr_nrgarope => vr_nrgarope
+                                              ,pr_nrparlvr => vr_nrparlvr
+                                              ,pr_nrperger => vr_nrperger
+                                              ,pr_dsrequis => vr_obj_proposta.to_char
+                                              ,pr_namehost => vr_host_esteira||'/'||vr_recurso_este
+                                              -- OUT (Não trataremos retorno de erro pois é tudo efetuado na rotina chamada)
+                                              ,pr_xmllog   => vr_xmllog 
+                                              ,pr_cdcritic => vr_cdcritic 
+                                              ,pr_dscritic => vr_dscritic 
+                                              ,pr_retxml   => vr_retxml   
+                                              ,pr_nmdcampo => vr_nmdcampo 
+                                              ,pr_des_erro => vr_des_erro );
+        END IF;
+        -- Efetuar commit
+        COMMIT;
+        -- Aguardar 2 segundos para evitar que tenhamos retorno 429 - Too Many Requests
+        sys.dbms_lock.sleep(2);
+      END LOOP;
+    END LOOP;  
 	EXCEPTION
 		WHEN vr_exc_erro THEN
 			btch0001.pc_gera_log_batch(pr_cdcooper     => 3,

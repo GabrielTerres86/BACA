@@ -1979,8 +1979,8 @@ PROCEDURE obtem-propostas-emprestimo:
                            
 				CASE crawepr.insitest:
 					WHEN 0 THEN ASSIGN tt-proposta-epr.dssitest = "Nao Enviada".
-					WHEN 1 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada para Analise".
-					WHEN 2 THEN ASSIGN tt-proposta-epr.dssitest = "Reenviada para Analise".
+					WHEN 1 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada p/ Analise Aut.".
+					WHEN 2 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada p/ Analise Man.".
 					WHEN 3 THEN ASSIGN tt-proposta-epr.dssitest = "Analise Finalizada".
 					WHEN 4 THEN ASSIGN tt-proposta-epr.dssitest = "Expirado".
 					OTHERWISE tt-proposta-epr.dssitest = "-".
@@ -6861,7 +6861,8 @@ PROCEDURE altera-valor-proposta:
                                                            crawepr.cdopeapr = ""
                                                            crawepr.dtaprova = ?
                                                            crawepr.hraprova = 0
-                                                           crawepr.insitest = 0.
+                                                           crawepr.insitest = 0
+                                                           crawepr.dsprotoc = "".
                                                 END.
                                         END.                        
                                     ELSE
@@ -6894,7 +6895,8 @@ PROCEDURE altera-valor-proposta:
                                           crawepr.cdopeapr = ""
                                           crawepr.dtaprova = ?
                                           crawepr.hraprova = 0
-                                          crawepr.insitest = 0.
+                                          crawepr.insitest = 0
+                                          crawepr.dsprotoc = "".
                                END.                
                        END. /* IF AVAIL crapfin AND crapfin.tpfinali = 2 THEN */
         ELSE            
@@ -6907,8 +6909,9 @@ PROCEDURE altera-valor-proposta:
                       ASSIGN crawepr.insitapr = 0
                              crawepr.cdopeapr = ""
                              crawepr.dtaprova = ?
-                                                  crawepr.hraprova = 0
-                                                  crawepr.insitest = 0.
+                             crawepr.hraprova = 0
+                             crawepr.insitest = 0
+                             crawepr.dsprotoc = "".
 
                                    CREATE tt-msg-confirma.
                                    ASSIGN tt-msg-confirma.inconfir = 1
@@ -6931,8 +6934,9 @@ PROCEDURE altera-valor-proposta:
                  ASSIGN crawepr.insitapr = 0
                         crawepr.cdopeapr = ""
                         crawepr.dtaprova = ?
-                                                      crawepr.hraprova = 0
-                                                      crawepr.insitest = 0.
+                        crawepr.hraprova = 0
+                        crawepr.insitest = 0
+                        crawepr.dsprotoc = "".
 
                                    CREATE tt-msg-confirma.
                                    ASSIGN tt-msg-confirma.inconfir = 1
@@ -6955,7 +6959,8 @@ PROCEDURE altera-valor-proposta:
                                           crawepr.cdopeapr = ""
                                           crawepr.dtaprova = ?
                                           crawepr.hraprova = 0
-                                          crawepr.insitest = 0.
+                                          crawepr.insitest = 0
+                                          crawepr.dsprotoc = "".
 
                                    CREATE tt-msg-confirma.
                                    ASSIGN tt-msg-confirma.inconfir = 1
@@ -11756,7 +11761,7 @@ PROCEDURE atualiza_risco_proposta:
            aux_dscritic = pc_atualiza_risco_proposta.pr_dscritic
                              WHEN pc_atualiza_risco_proposta.pr_dscritic <> ?.
 
-    IF par_cdcritic > 0 OR par_dscritic <> '' THEN
+    IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
        DO:
            RUN gera_erro (INPUT par_cdcooper,
                           INPUT par_cdagenci,
@@ -12557,7 +12562,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                   crawepr.cdopeapr = ""
                                   crawepr.dtaprova = ?
                                   crawepr.hraprova = 0
-                                  crawepr.insitest = 0.
+                                  crawepr.insitest = 0
+                                  crawepr.dsprotoc = "".
 
                            CREATE tt-msg-confirma.
                            ASSIGN tt-msg-confirma.inconfir = 1

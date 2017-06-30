@@ -65,6 +65,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
   ---------------------------------------------------------------------------------------------------------------*/
   
+  --> Funcao para CPF/CNPJ
+  FUNCTION fn_mask_cpf_cnpj(pr_nrcpfcgc IN NUMBER, pr_inpessoa IN NUMBER) return VARCHAR2 IS
+  BEGIN
+    IF pr_inpessoa = 1 THEN
+      RETURN gene0002.fn_mask(pr_nrcpfcgc,'99999999999');
+    ELSE
+      RETURN gene0002.fn_mask(pr_nrcpfcgc,'99999999999999');                                                 
+    END IF;
+  END;
+  
+  --> Funcao para formatar data hora conforme padrao da IBRATAN
+  FUNCTION fn_Data_ibra_motor (pr_data IN DATE) RETURN VARCHAR2 IS
+  BEGIN
+    RETURN to_char(pr_data,'RRRRMMDD');
+  END fn_Data_ibra_motor;
+  
   --> Rotina para retornar descrição do grau escolar
   FUNCTION fn_des_grescola (pr_grescola  IN NUMBER) 
                             RETURN VARCHAR2 IS 
@@ -757,8 +773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Declarar objetos Json necessários:
       vr_obj_generico  json := json();
       vr_obj_generic2  json := json();
-      vr_obj_generic3  json := json();			
-      vr_obj_responsav json := json();
+      vr_obj_generic3  json := json();	
       vr_lst_generic2  json_list := json_list();
 			vr_lst_generic3  json_list := json_list();
 			
@@ -794,6 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			vr_qtpreemp INTEGER;
 			vr_qtprecal NUMBER(10);
 			vr_tot_vlsdeved NUMBER(25, 10) := 0;
+      vr_ava_vlsdeved NUMBER(25, 10) := 0;
 			vr_tot_qtprecal NUMBER := 0;
 			vr_nratrmai NUMBER(25,10);
       vr_vltotatr NUMBER(25,10);
@@ -851,7 +867,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           FROM crapenc enc
          WHERE enc.cdcooper = pr_cdcooper
            AND enc.nrdconta = pr_nrdconta
-           AND enc.tpendass = pr_tpendass;
+           AND enc.tpendass = pr_tpendass
+           AND enc.idseqttl = 1;
       rw_crapenc cr_crapenc%ROWTYPE;
     
       -- Cursor para telefones:
@@ -862,6 +879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           FROM craptfc tfc
          WHERE tfc.cdcooper = pr_cdcooper
            AND tfc.nrdconta = pr_nrdconta
+           AND tfc.idseqttl = 1
            AND tfc.tptelefo IN (1, 2, 3); /* Residencial, Celular e Comercial */
     
       -- Busca no cadastro do associado:
@@ -1065,42 +1083,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Buscar informações de faturamento 
       CURSOR cr_crapjfn IS
         SELECT jfn.perfatcl
-              ,to_date('01' || to_char(jfn.mesftbru##1, 'fm00') ||
-                       jfn.anoftbru##1
-                      ,'ddmmrrrr') dtfatme1
-              ,to_date('01' || to_char(jfn.mesftbru##2, 'fm00') ||
-                       jfn.anoftbru##2
-                      ,'ddmmrrrr') dtfatme2
-              ,to_date('01' || to_char(jfn.mesftbru##3, 'fm00') ||
-                       jfn.anoftbru##3
-                      ,'ddmmrrrr') dtfatme3
-              ,to_date('01' || to_char(jfn.mesftbru##4, 'fm00') ||
-                       jfn.anoftbru##4
-                      ,'ddmmrrrr') dtfatme4
-              ,to_date('01' || to_char(jfn.mesftbru##5, 'fm00') ||
-                       jfn.anoftbru##5
-                      ,'ddmmrrrr') dtfatme5
-              ,to_date('01' || to_char(jfn.mesftbru##6, 'fm00') ||
-                       jfn.anoftbru##6
-                      ,'ddmmrrrr') dtfatme6
-              ,to_date('01' || to_char(jfn.mesftbru##7, 'fm00') ||
-                       jfn.anoftbru##7
-                      ,'ddmmrrrr') dtfatme7
-              ,to_date('01' || to_char(jfn.mesftbru##8, 'fm00') ||
-                       jfn.anoftbru##8
-                      ,'ddmmrrrr') dtfatme8
-              ,to_date('01' || to_char(jfn.mesftbru##9, 'fm00') ||
-                       jfn.anoftbru##9
-                      ,'ddmmrrrr') dtfatme9
-              ,to_date('01' || to_char(jfn.mesftbru##10, 'fm00') ||
-                       jfn.anoftbru##10
-                      ,'ddmmrrrr') dtfatme10
-              ,to_date('01' || to_char(jfn.mesftbru##11, 'fm00') ||
-                       jfn.anoftbru##11
-                      ,'ddmmrrrr') dtfatme11
-              ,to_date('01' || to_char(jfn.mesftbru##12, 'fm00') ||
-                       jfn.anoftbru##12
-                      ,'ddmmrrrr') dtfatme12
+              ,'01' || to_char(jfn.mesftbru##1, 'fm00') || to_char(jfn.anoftbru##1, 'fm0000') dtfatme1
+              ,'01' || to_char(jfn.mesftbru##2, 'fm00') || to_char(jfn.anoftbru##2, 'fm0000') dtfatme2
+              ,'01' || to_char(jfn.mesftbru##3, 'fm00') || to_char(jfn.anoftbru##3, 'fm0000') dtfatme3
+              ,'01' || to_char(jfn.mesftbru##4, 'fm00') || to_char(jfn.anoftbru##4, 'fm0000') dtfatme4
+              ,'01' || to_char(jfn.mesftbru##5, 'fm00') || to_char(jfn.anoftbru##5, 'fm0000') dtfatme5
+              ,'01' || to_char(jfn.mesftbru##6, 'fm00') || to_char(jfn.anoftbru##6, 'fm0000') dtfatme6
+              ,'01' || to_char(jfn.mesftbru##7, 'fm00') || to_char(jfn.anoftbru##7, 'fm0000') dtfatme7
+              ,'01' || to_char(jfn.mesftbru##8, 'fm00') || to_char(jfn.anoftbru##8, 'fm0000') dtfatme8
+              ,'01' || to_char(jfn.mesftbru##9, 'fm00') || to_char(jfn.anoftbru##9, 'fm0000') dtfatme9
+              ,'01' || to_char(jfn.mesftbru##10, 'fm00') || to_char( jfn.anoftbru##10, 'fm0000') dtfatme10
+              ,'01' || to_char(jfn.mesftbru##11, 'fm00') || to_char( jfn.anoftbru##11, 'fm0000') dtfatme11
+              ,'01' || to_char(jfn.mesftbru##12, 'fm00') || to_char( jfn.anoftbru##12, 'fm0000') dtfatme12
               ,jfn.vlrftbru##1
               ,jfn.vlrftbru##2
               ,jfn.vlrftbru##3
@@ -1571,7 +1565,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
       
       -- Enviaremos os dados básicos encontrados na tabela 
-      vr_obj_generico.put('documento', rw_crapass.nrcpfcgc);
+      vr_obj_generico.put('documento', fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa));
     
       -- Para Pessoas Fisicas 
       IF rw_crapass.inpessoa = 1 THEN
@@ -1584,14 +1578,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       
         vr_obj_generico.put('nome', rw_crapttl.nmextttl);
         vr_obj_generico.put('dataNascimento'
-                           ,este0001.fn_data_ibra(rw_crapass.dtnasctl));													 
+                           ,fn_Data_ibra_motor(rw_crapass.dtnasctl));													 
         -- Se o Documento for RG
         IF rw_crapttl.tpdocttl = 'CI' THEN
           vr_obj_generico.put('rg', rw_crapttl.nrdocttl);
           vr_obj_generico.put('ufRg', rw_crapttl.cdoedttl);
         END IF;
         vr_obj_generico.put('nomeMae', rw_crapttl.nmmaettl);
-			  vr_obj_generico.put('tipoNacionalidade',rw_crapttl.tpnacion);
+			  /*vr_obj_generico.put('tipoNacionalidade',rw_crapttl.tpnacion);*/
         vr_obj_generico.put('nacionalidade'  ,rw_crapttl.dsnacion);
       
         -- Montar objeto profissao       
@@ -1617,7 +1611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       
         vr_obj_generico.put('razaoSocial', rw_crapjur.nmextttl);
         vr_obj_generico.put('dataFundacao'
-                           ,este0001.fn_data_ibra(rw_crapass.dtnasctl));
+                           ,fn_Data_ibra_motor(rw_crapass.dtnasctl));
       
         -- Buscar endereço comercial
         OPEN cr_crapenc(9);
@@ -1674,8 +1668,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic2.put('cidade', rw_crapenc.nmcidade);
         vr_obj_generic2.put('uf', rw_crapenc.cdufende);
         vr_obj_generic2.put('cep', rw_crapenc.nrcepend);
-      
-        vr_obj_responsav.put('endereco', vr_obj_generic2);
+        -- Adicionar o array endereco no objeto
+        vr_obj_generico.put('endereco', vr_obj_generic2);
       END IF;
     
       -- Montar informações Adicionais
@@ -1699,7 +1693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
 		  -- Data Admissão Coop
 			IF rw_crapass.dtadmiss IS NOT NULL THEN 
-				 vr_obj_generic2.put('dataAdmissaoCoop', ESTE0001.fn_Data_ibra(rw_crapass.dtadmiss));
+				 vr_obj_generic2.put('dataAdmissaoCoop', fn_Data_ibra_motor(rw_crapass.dtadmiss));
 			END IF;
 		
       -- Matricula
@@ -1742,13 +1736,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Data de Inicio de Residência
       IF rw_crapenc.dtinires IS NOT NULL THEN
         vr_obj_generic2.put('inicioResidImovel'
-                           ,este0001.fn_data_ibra(rw_crapenc.dtinires));
+                           ,fn_Data_ibra_motor(rw_crapenc.dtinires));
       END IF;
     
       -- Data de demissão na Cooperativa
       IF rw_crapass.dtelimin IS NOT NULL THEN
         vr_obj_generic2.put('dataDemissao'
-                           ,este0001.fn_data_ibra(rw_crapass.dtelimin));
+                           ,fn_Data_ibra_motor(rw_crapass.dtelimin));
       END IF;
 			
 			-- Somente para preponente
@@ -1791,13 +1785,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			-- Data da consulta no SPC 
 			IF rw_crapass.dtcnsspc IS NOT NULL THEN
 				vr_obj_generic2.put('dataConsultaSPC'
-													 ,este0001.fn_data_ibra(rw_crapass.dtcnsspc));
+													 ,fn_Data_ibra_motor(rw_crapass.dtcnsspc));
 			END IF;
 		    
 			-- Data da inclusão no SPC pela cooperativa
 			IF rw_crapass.dtdsdspc IS NOT NULL THEN
         vr_obj_generic2.put('dataInclusaoSPCpelaCoop'
-                           ,este0001.fn_data_ibra(rw_crapass.dtdsdspc));
+                           ,fn_Data_ibra_motor(rw_crapass.dtdsdspc));
       END IF;
     
       -- Está no SPC(cooperativa)
@@ -1818,7 +1812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Data Consulta SCR
       IF rw_crapass.dtcnsscr IS NOT NULL THEN
         vr_obj_generic2.put('dataConsultaSCR'
-                           ,este0001.fn_data_ibra(rw_crapass.dtcnsscr));
+                           ,fn_Data_ibra_motor(rw_crapass.dtcnsscr));
       END IF;
     
       -- Libera Pré Aprovado
@@ -1837,7 +1831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       CLOSE cr_revisa;
     
       IF vr_dtaltera IS NOT NULL THEN
-        vr_obj_generic2.put('liberaPreAprovad', este0001.fn_data_ibra(vr_dtaltera));
+        vr_obj_generic2.put('liberaPreAprovad', fn_Data_ibra_motor(vr_dtaltera));
       END IF;
     
       vr_indexis := 0;
@@ -1882,7 +1876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Data Emancipação
         IF rw_crapttl.dthabmen IS NOT NULL THEN
           vr_obj_generic2.put('dataEmancipa'
-                             ,este0001.fn_data_ibra(rw_crapttl.dthabmen));
+                             ,fn_Data_ibra_motor(rw_crapttl.dthabmen));
         END IF;
       
         -- Valor Rendimento
@@ -1900,7 +1894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Data Consulta CPF
         IF rw_crapttl.dtcnscpf IS NOT NULL THEN
           vr_obj_generic2.put('dataConsultaCPF'
-                             ,este0001.fn_data_ibra(rw_crapttl.dtcnscpf));
+                             ,fn_Data_ibra_motor(rw_crapttl.dtcnscpf));
         END IF;
       
         -- Situação CPF
@@ -1957,7 +1951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Data Admissão
         IF rw_crapttl.dtadmemp IS NOT NULL THEN
           vr_obj_generic2.put('dataAdmissao'
-                             ,este0001.fn_data_ibra(rw_crapttl.dtadmemp));
+                             ,fn_Data_ibra_motor(rw_crapttl.dtadmemp));
         END IF;
       
         -- CNPJ Empresa
@@ -2066,7 +2060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Data Consulta CNPJ
         IF rw_crapass.dtcnscpf IS NOT NULL THEN
           vr_obj_generic2.put('dataConsultaCNPJ'
-                             ,este0001.fn_data_ibra(rw_crapass.dtcnscpf));
+                             ,fn_Data_ibra_motor(rw_crapass.dtcnscpf));
         END IF;
       
         -- Situação CNPJ
@@ -2163,7 +2157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Data de registro da empresa
         IF rw_crapjur.dtregemp IS NOT NULL THEN
           vr_obj_generic2.put('dataRegistroEmpresa'
-                             ,este0001.fn_data_ibra(rw_crapjur.dtregemp));
+                             ,fn_Data_ibra_motor(rw_crapjur.dtregemp));
         END IF;
       
         -- Orgao de Registro da Empresa
@@ -2179,7 +2173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Data Inscrição Municipal
         IF rw_crapjur.dtinsnum IS NOT NULL THEN
           vr_obj_generic2.put('dataInscricMunicipal'
-                             ,este0001.fn_data_ibra(rw_crapjur.dtinsnum));
+                             ,fn_Data_ibra_motor(rw_crapjur.dtinsnum));
         END IF;
       
         -- Numero Inscrição Municipal
@@ -2343,7 +2337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Enviar as informações do limite de crédito (somente se houver limite de crédito)
       IF rw_craplim_chqesp.vllimite > 0 THEN
         vr_obj_generic2.put('dataContratoLimiteCred'
-                           ,este0001.fn_data_ibra(rw_craplim_chqesp.dtinivig));
+                           ,fn_Data_ibra_motor(rw_craplim_chqesp.dtinivig));
         vr_obj_generic2.put('limiteCredito'
                            ,este0001.fn_decimal_ibra(rw_craplim_chqesp.vllimite));
       
@@ -2666,7 +2660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Enviar informações do contrato de Cheque
       vr_obj_generic2.put('dataContrDescCheq'
-                         ,este0001.fn_data_ibra(rw_craplim_chq.dtinivig));
+                         ,fn_Data_ibra_motor(rw_craplim_chq.dtinivig));
       vr_obj_generic2.put('limiteDescCheq'
                          ,este0001.fn_decimal_ibra(nvl(rw_craplim_chq.vllimite,0)));
       vr_obj_generic2.put('saldoUtilizDescCheq'
@@ -2686,7 +2680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Enviar informações do contrato de Cheque
       vr_obj_generic2.put('dataContrDescTitul'
-                         ,este0001.fn_data_ibra(rw_craplim_tit.dtinivig));
+                         ,fn_Data_ibra_motor(rw_craplim_tit.dtinivig));
       vr_obj_generic2.put('limiteDescTitul'
                          ,este0001.fn_decimal_ibra(nvl(rw_craplim_tit.vllimite,0)));
       vr_obj_generic2.put('saldoUtilizDescTitul'
@@ -2784,16 +2778,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                        .qtprecal;
         vr_qtpreemp := vr_tab_co_responsavel_ord(vr_ind_coresp2).qtpreemp - vr_tab_co_responsavel_ord(vr_ind_coresp2)
                        .qtprecal;
-      
-        IF vr_qtmesdec > vr_qtpreemp THEN
-          vr_qtprecal := vr_qtpreemp;
-        ELSE
-          vr_qtprecal := vr_qtmesdec;
+
+        -- Se pagamento em atraso
+        IF vr_qtmesdec < vr_qtpreemp THEN
+          vr_tot_qtprecal := vr_tot_qtprecal + 1;
+          vr_ava_vlsdeved := vr_ava_vlsdeved + vr_tab_co_responsavel_ord(vr_ind_coresp2).vlsdeved;
         END IF;
         /* Somar totais */
-        vr_tot_vlsdeved := vr_tot_vlsdeved + vr_tab_co_responsavel_ord(vr_ind_coresp2)
-                          .vlsdeved;
-        vr_tot_qtprecal := vr_tot_qtprecal + vr_qtprecal;
+        vr_tot_vlsdeved := vr_tot_vlsdeved + vr_tab_co_responsavel_ord(vr_ind_coresp2).vlsdeved;
       
         -- Buscar próximo registro
         vr_ind_coresp2 := vr_tab_co_responsavel_ord.next(vr_ind_coresp2);
@@ -2807,7 +2799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('coopAvalistaAtraso'
                          ,(vr_tot_qtprecal > 0));
       vr_obj_generic2.put('valorAvalistaAtraso'
-                         ,este0001.fn_decimal_ibra(vr_tot_qtprecal));
+                         ,este0001.fn_decimal_ibra(vr_ava_vlsdeved));
 												 
 			--Verificar se usa tabela juros
 			vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
@@ -3004,7 +2996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Criar objeto para a operação e enviar suas informações 
         vr_obj_generic3 := json();
         vr_obj_generic3.put('dataCheqDevol'
-                           ,este0001.fn_data_ibra(rw_negchq.dtiniest));
+                           ,fn_Data_ibra_motor(rw_negchq.dtiniest));
         vr_obj_generic3.put('valorCheqDevol'
                            ,este0001.fn_decimal_ibra(rw_negchq.vlestour));
         vr_obj_generic3.put('alineaCheqDevol', rw_negchq.cdobserv);
@@ -3033,7 +3025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 				
 				vr_obj_generic3.put('quantDiaEstouro', rw_crapneg_chqesp.qtdiaest);
 				vr_obj_generic3.put('dataEstouro'
-													 ,este0001.fn_data_ibra(rw_crapneg_chqesp.dtiniest));
+													 ,fn_Data_ibra_motor(rw_crapneg_chqesp.dtiniest));
 				vr_obj_generic3.put('valorEstouro'
 													 ,este0001.fn_decimal_ibra(rw_crapneg_chqesp.vlestour));
 													 
@@ -3099,7 +3091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic3 := json();
         vr_obj_generic3.put('contratOpCred'
                            ,gene0002.fn_mask_contrato(rw_crapepr.nrctremp));
-        vr_obj_generic3.put('dataContratOpCred', este0001.fn_data_ibra(rw_crapepr.dtmvtolt));													 
+        vr_obj_generic3.put('dataContratOpCred', fn_Data_ibra_motor(rw_crapepr.dtmvtolt));													 
         vr_obj_generic3.put('valorOpCred'
                            ,este0001.fn_decimal_ibra(rw_crapepr.vlemprst));
         vr_obj_generic3.put('valorPrestOpCred'
@@ -3110,7 +3102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic3.put('finalidadeOpCredDescricao', rw_crapepr.dsfinemp);				
         vr_obj_generic3.put('linhaOpCredCodigo', rw_crapepr.cdlcremp);
         vr_obj_generic3.put('linhaOpCredDescricao', rw_crapepr.dslcremp);				
-        vr_obj_generic3.put('liquidacaoOpCred', este0001.fn_data_ibra(vr_dtliquid));
+        vr_obj_generic3.put('liquidacaoOpCred', fn_Data_ibra_motor(vr_dtliquid));
         vr_obj_generic3.put('pontualidadeOpCred'
                            ,fn_des_pontualidade(vr_qtdiaatr));
         vr_obj_generic3.put('atrasoOpCred'
@@ -3132,112 +3124,136 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_lst_generic3 := json_list();
       
         -- Criar objeto para mês 01
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme1));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##1));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 02
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme2));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##2));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 03
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme3));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##3));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 04
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme4));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##4));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 05
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme5));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##5));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 06
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme6));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##6));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 07
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme7));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##7));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 08
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme8));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##8));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 09
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme9));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##9));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 10
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme10));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##10));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 11
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme11));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##11));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
-      
-        -- Criar objeto para mês 12
-        vr_obj_generic3 := json();
-        vr_obj_generic3.put('dataFaturamentoMes'
-                           ,este0001.fn_data_ibra(rw_crapjfn.dtfatme12));
-        vr_obj_generic3.put('valorFaturamentoMes'
-                           ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##12));
-        -- Adicionar Mês na lista
-        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        if rw_crapjfn.dtfatme1 <> '01000000' then
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme1,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##1));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+
+        if rw_crapjfn.dtfatme2 <> '01000000' then
+          -- Criar objeto para mês 02
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme2,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##2));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme3 <> '01000000' then        
+          -- Criar objeto para mês 03
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme3,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##3));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme4 <> '01000000' then
+          -- Criar objeto para mês 04
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme4,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##4));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme5 <> '01000000' then
+          -- Criar objeto para mês 05
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme5,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##5));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme6 <> '01000000' then
+          -- Criar objeto para mês 06
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme6,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##6));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;        
+        
+        if rw_crapjfn.dtfatme7 <> '01000000' then
+          -- Criar objeto para mês 07
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme7,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##7));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme8 <> '01000000' then
+          -- Criar objeto para mês 08
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme8,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##8));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme9 <> '01000000' then
+          -- Criar objeto para mês 09
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme9,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##9));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme10 <> '01000000' then        
+          -- Criar objeto para mês 10
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme10,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##10));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme11 <> '01000000' then
+          -- Criar objeto para mês 11
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme11,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##11));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;
+        
+        if rw_crapjfn.dtfatme12 <> '01000000' then
+          -- Criar objeto para mês 12
+          vr_obj_generic3 := json();
+          vr_obj_generic3.put('dataFaturamentoMes'
+                             ,fn_Data_ibra_motor(to_date(rw_crapjfn.dtfatme12,'ddmmrrrr')));
+          vr_obj_generic3.put('valorFaturamentoMes'
+                             ,este0001.fn_decimal_ibra(rw_crapjfn.vlrftbru##12));
+          -- Adicionar Mês na lista
+          vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+        end if;  
       
         -- Adicionar o array de faturamentos no objeto informações adicionais
         vr_obj_generic2.put('faturamentoMes', vr_lst_generic3);
@@ -3294,20 +3310,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     -- Objeto json
     vr_obj_generico json := json();
     vr_obj_generic2 json := json();
-    vr_lst_generic2 json_list := json_list();
-
+    vr_lst_generic2 json_list := json_list(); 
+    vr_inpessoa     crapass.inpessoa%TYPE;
+    vr_stsnrcal     BOOLEAN;
       
   BEGIN
-  
-    -- Enviaremos os dados básicos encontrados na tabela 
-    vr_obj_generico.put('documento'      ,pr_rw_crapavt.nrcpfcgc);
+    
+    -- Validar o CPF/CNPJ para definir se é fisica ou jurídica 
+    gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_rw_crapavt.nrcpfcgc
+                               ,pr_stsnrcal => vr_stsnrcal
+                               ,pr_inpessoa => vr_inpessoa);
 
+    -- Enviaremos os dados básicos encontrados na tabela 
+    vr_obj_generico.put('documento'      ,fn_mask_cpf_cnpj(pr_rw_crapavt.nrcpfcgc,vr_inpessoa));    
+    
     -- Para Pessoas Fisicas 
-    IF pr_rw_crapavt.inpessoa = 1 THEN 
+    IF vr_inpessoa = 1 THEN 
     
       vr_obj_generico.put('tipoPessoa','FISICA');
       vr_obj_generico.put('nome'           ,pr_rw_crapavt.nmdavali);
-      vr_obj_generico.put('dataNascimento' ,este0001.fn_Data_ibra(pr_rw_crapavt.dtnascto));
+      vr_obj_generico.put('dataNascimento' ,fn_Data_ibra_motor(pr_rw_crapavt.dtnascto));
       
       -- Se o Documento for RG
       IF pr_rw_crapavt.tpdocava = 'CI' THEN
@@ -3315,9 +3337,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generico.put('ufRg', pr_rw_crapavt.cdufddoc);
       END IF;
       
-      vr_obj_generico.put('nomeMae'      ,pr_rw_crapavt.nmmaecto);
+      IF TRIM(replace(pr_rw_crapavt.nmmaecto,'.','')) IS NOT NULL THEN
+        vr_obj_generico.put('nomeMae'      ,pr_rw_crapavt.nmmaecto);
+      END IF;  
+      
       vr_obj_generico.put('nacionalidade',pr_rw_crapavt.dsnacion);
-      vr_obj_generico.put('sexo' ,pr_rw_crapavt.cdsexcto);
       
       -- Montar objeto profissao       
       IF pr_rw_crapavt.dsproftl <> ' ' THEN 
@@ -3329,7 +3353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     ELSE
       vr_obj_generico.put('tipoPessoa'  ,'JURIDICA');
       vr_obj_generico.put('razaoSocial' ,pr_rw_crapavt.nmdavali);
-      vr_obj_generico.put('dataFundacao',ESTE0001.fn_Data_ibra(pr_rw_crapavt.dtnascto));
+      vr_obj_generico.put('dataFundacao',fn_Data_ibra_motor(pr_rw_crapavt.dtnascto));
     END IF;
     
     -- Montar objeto Telefone para Telefone Residencial/Comercial      
@@ -3338,7 +3362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Criar objeto só para este telefone
       vr_obj_generic2 := json();
       -- Montar Especie conforme tipo de Pessoa
-      IF pr_rw_crapavt.inpessoa = 1 THEN
+      IF vr_inpessoa = 1 THEN
         vr_obj_generic2.put('especie', 'DOMICILIO'); 
       ELSE 
         vr_obj_generic2.put('especie', 'COMERCIAL'); 
@@ -3375,25 +3399,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
      -- Caixa Postal
      IF pr_rw_crapavt.nrcxapst <> 0 THEN 
-       vr_obj_generico.put('caixaPostal', pr_rw_crapavt.nrcxapst);
+       vr_obj_generic2.put('caixaPostal', pr_rw_crapavt.nrcxapst);
      END IF;
      
      -- Somente para Pessoa Fisica
-     IF pr_rw_crapavt.inpessoa = 1 THEN 
-
+     IF vr_inpessoa = 1 THEN 
+       
+       -- Sexo
+       vr_obj_generic2.put('sexo' ,pr_rw_crapavt.cdsexcto);
+     
        -- Nome Pai
-       IF pr_rw_crapavt.nmpaicto <> ' ' THEN 
-         vr_obj_generico.put('nomePai', pr_rw_crapavt.nmpaicto);
+       IF pr_rw_crapavt.nmpaicto NOT IN(' ','.') THEN 
+         vr_obj_generic2.put('nomePai', pr_rw_crapavt.nmpaicto);
        END IF;
        
        -- Estado Civil
        IF pr_rw_crapavt.cdestcvl <> 0 THEN 
-         vr_obj_generico.put('estadoCivil', fn_des_cdestciv(pr_rw_crapavt.cdestcvl));
+         vr_obj_generic2.put('estadoCivil', fn_des_cdestciv(pr_rw_crapavt.cdestcvl));
        END IF;
        
        -- Naturalidade
        IF pr_rw_crapavt.dsnatura <> ' ' THEN 
-         vr_obj_generico.put('naturalidade', pr_rw_crapavt.dsnatura);
+         vr_obj_generic2.put('naturalidade', pr_rw_crapavt.dsnatura);
        END IF;
 
        -- Salario
@@ -3413,17 +3440,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
        -- Data Emancipação
        IF pr_rw_crapavt.dthabmen IS NOT NULL THEN 
-         vr_obj_generico.put('dataEmancipa' ,ESTE0001.fn_Data_ibra(pr_rw_crapavt.dthabmen));
+         vr_obj_generic2.put('dataEmancipa' ,fn_Data_ibra_motor(pr_rw_crapavt.dthabmen));
        END IF;
        
        -- Data de Vigência Procuração
        IF pr_rw_crapavt.dtvalida IS NOT NULL THEN 
-         vr_obj_generico.put('datVigenciaProcuracao' ,ESTE0001.fn_Data_ibra(pr_rw_crapavt.dtvalida));
+         vr_obj_generic2.put('dataVigenciaProcuracao' ,fn_Data_ibra_motor(pr_rw_crapavt.dtvalida));
        END IF;  
 
        -- Data de Admissão Procuração
        IF pr_rw_crapavt.dtadmsoc IS NOT NULL THEN 
-         vr_obj_generico.put('datAdmissaoProcuracao' ,ESTE0001.fn_Data_ibra(pr_rw_crapavt.dtadmsoc));
+         vr_obj_generic2.put('dataAdmissaoProcuracao' ,fn_Data_ibra_motor(pr_rw_crapavt.dtadmsoc));
        END IF;  
 
 
@@ -3508,13 +3535,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 		
 		-- Buscar última data de consulta ao bacen
 		CURSOR cr_crapopf IS
-	    SELECT opf.dtrefere
+	    SELECT max(opf.dtrefere) dtrefere
 			  FROM crapopf opf
 				    ,crapass ass
 			 WHERE ass.cdcooper = pr_cdcooper
 			   AND ass.nrdconta = pr_nrdconta
-				 AND opf.nrcpfcgc = ass.nrcpfcgc
-			 ORDER BY dtrefere DESC;
+				 AND opf.nrcpfcgc = ass.nrcpfcgc;
 		rw_crapopf cr_crapopf%ROWTYPE;
 		
     --> Buscar dados da proposta
@@ -3758,6 +3784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_flsocios      BOOLEAN := FALSE;
     vr_flpartic      BOOLEAN := FALSE;
     vr_flprocura     BOOLEAN := FALSE;
+    vr_flgbens       BOOLEAN := FALSE;
     vr_nrdeanos      INTEGER;
     vr_nrdmeses      INTEGER;
     vr_dsdidade      VARCHAR2(100);
@@ -3805,14 +3832,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 		-- Buscar PA do operador
 		OPEN cr_crapope;
 		FETCH cr_crapope INTO vr_cdpactra;
+    CLOSE cr_crapope;
 		
 		OPEN cr_crapopf;
 		FETCH cr_crapopf INTO rw_crapopf;
+    CLOSE cr_crapopf;
 		
 		-- Montar os atributos de 'configuracoes'
 		vr_obj_generico := json();
 		vr_obj_generico.put('centroCusto', vr_cdpactra);
-		vr_obj_generico.put('dataBaseBacen', este0001.fn_Data_ibra(nvl(rw_crapopf.dtrefere, rw_crapdat.dtmvtolt)));
+		vr_obj_generico.put('dataBaseBacen', to_char(nvl(rw_crapopf.dtrefere, rw_crapdat.dtmvtolt),'RRRRMM'));
 		vr_obj_generico.put('horasReaproveitamento', vr_qtdiarpv);
 		
     -- Adicionar o array configuracoes
@@ -3869,7 +3898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
     vr_obj_generico.put('valorEmprest'  , ESTE0001.fn_decimal_ibra(rw_crawepr.vlemprst));
     vr_obj_generico.put('quantParcela'  , rw_crawepr.qtpreemp);
-    vr_obj_generico.put('primeiroVencto', ESTE0001.fn_Data_ibra(rw_crawepr.dtvencto));
+    vr_obj_generico.put('primeiroVencto', fn_Data_ibra_motor(rw_crawepr.dtvencto));
     vr_obj_generico.put('valorParcela'  , ESTE0001.fn_decimal_ibra(rw_crawepr.vlpreemp));
 
     vr_obj_generico.put('renegociacao', rw_crawepr.flgreneg = 1);
@@ -3913,6 +3942,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                  pr_nrdconta => pr_nrdconta,
                                  pr_nrctremp => pr_nrctremp )  LOOP 
 
+      -- Indicar que encontrou
+      vr_flgbens := TRUE;
       -- Para cada registro de Bem, criar objeto para a operação e enviar suas informações 
 			vr_lst_generic2 := json_list();
       vr_obj_generic2 := json();
@@ -3921,14 +3952,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('valorGarantia',    ESTE0001.fn_decimal_ibra(rw_crapbpr.vlmerbem));
       vr_obj_generic2.put('bemInterveniente', rw_crapbpr.nrcpfbem <> 0);
 
-
       -- Adicionar Bem na lista
       vr_lst_generic2.append(vr_obj_generic2.to_json_value());
   
     END LOOP; -- Final da leitura dos Bens
 
     -- Adicionar o array bemEmGarantia
-    vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
+    IF vr_flgbens THEN
+      vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
+    END IF;  
 
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
@@ -4001,10 +4033,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de conjugue
-          vr_obj_conjuge.put('documento'      ,rw_crapcje.nrcpfcjg);
+          vr_obj_conjuge.put('documento'      ,fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg,1));
           vr_obj_conjuge.put('tipoPessoa'     ,'FISICA');
           vr_obj_conjuge.put('nome'           ,rw_crapcje.nmconjug);
-          vr_obj_conjuge.put('dataNascimento' ,ESTE0001.fn_Data_ibra(rw_crapcje.dtnasccj));
+          vr_obj_conjuge.put('dataNascimento' ,fn_Data_ibra_motor(rw_crapcje.dtnasccj));
           
           -- Se o Documento for RG
           IF rw_crapcje.tpdoccje = 'CI' THEN
@@ -4071,7 +4103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           END IF;
           -- Data Admissão
           IF rw_crapcje.dtadmemp IS NOT NULL THEN 
-            vr_obj_generico.put('dataAdmissao', ESTE0001.fn_Data_ibra(rw_crapcje.dtadmemp));
+            vr_obj_generico.put('dataAdmissao', fn_Data_ibra_motor(rw_crapcje.dtadmemp));
           END IF;
           -- Salario
           IF rw_crapcje.vlsalari <> 0 THEN 
@@ -4223,12 +4255,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
          ELSE
            -- Enviaremos os dados básicos encontrados na tabela de responsável legal
-           vr_obj_responsav.put('documento'      ,rw_crapcrl.nrcpfcgc);
+           vr_obj_responsav.put('documento'      , fn_mask_cpf_cnpj(rw_crapcrl.nrcpfcgc,1));
            vr_obj_responsav.put('tipoPessoa'     ,'FISICA');
            vr_obj_responsav.put('nome'           ,rw_crapcrl.nmrespon);
            
            IF rw_crapcrl.dtnascin IS NOT NULL THEN 
-             vr_obj_responsav.put('dataNascimento' ,ESTE0001.fn_Data_ibra(rw_crapcrl.dtnascin));
+             vr_obj_responsav.put('dataNascimento' ,fn_Data_ibra_motor(rw_crapcrl.dtnascin));
            END IF;
            
            IF rw_crapcrl.nmmaersp IS NOT NULL THEN 
@@ -4387,12 +4419,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de Participações    
-          vr_obj_particip.put('documento'      ,rw_crapepa.nrdocsoc);
+          vr_obj_particip.put('documento'      ,fn_mask_cpf_cnpj(rw_crapepa.nrdocsoc,2));
           vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
           vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
           
           IF rw_crapepa.dtiniatv IS NOT NULL THEN 
-            vr_obj_particip.put('dataFundacao' ,ESTE0001.fn_Data_ibra(rw_crapepa.dtiniatv));
+            vr_obj_particip.put('dataFundacao' ,fn_Data_ibra_motor(rw_crapepa.dtiniatv));
           END IF;
           
           -- Montar informações Adicionais

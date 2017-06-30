@@ -1564,52 +1564,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                A.NRDCONTA nrdconta,
                A.Nrctrprp nrctrprp,
                INITCAP(TO_CHAR(A.CDAGENCI_ACIONAMENTO) || ' - ' || P.NMRESAGE) nmagenci,
+               upper(a.cdoperad) cdoperad,
                INITCAP(TO_CHAR(A.CDOPERAD) || ' - ' ||
                        INITCAP((SUBSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '), '-', ' ')),
                                        1,
                                        INSTR(TRIM(REPLACE(REPLACE(O.NMOPERAD, 'CECRED', ' '),
                                                           '-',
                                                           ' ')),
-                                             ' ') - 1)))) cdoperad,
+                                             ' ') - 1)))) nmoperad,
                INITCAP(A.DSOPERACAO) operacao,
                A.DHACIONAMENTO dtmvtolt,
-               A.DSRESPOSTA_REQUISICAO,
-               A.CDSTATUS_HTTP,
-               
-               nvl(ESTE0001.fn_retorna_critica(a.DSRESPOSTA_REQUISICAO),
-							 CASE
-							 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'cancelar') > 0) THEN   
-								'Cancelamento da proposta enviado com sucesso para esteira.' 
-							 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'efetivar') > 0) THEN   
-								'Proposta efetivada foi enviada para esteira com sucesso.' 
-							 WHEN (A.CDSTATUS_HTTP = 200)  AND (INSTR(a.dsuriservico, 'numeroProposta') > 0) THEN   
-							 'Numero da proposta foi enviado para esteira com sucesso.'
-							 WHEN (A.CDSTATUS_HTTP = 200) AND (INSTR(a.dsuriservico, 'ibracred-workflow') > 0) THEN   
-								'Proposta analisada automaticamente pela esteira com sucesso.'
-							 WHEN (A.CDSTATUS_HTTP = 200) THEN
-								'Proposta reenviada para esteira com sucesso.'
-							 WHEN (A.CDSTATUS_HTTP = 201) THEN
-								'Proposta enviada para esteira com sucesso.'
-							 WHEN (A.CDSTATUS_HTTP = 202) THEN
-								'Proposta enviada para analise automatica da esteira com sucesso.'
-							 WHEN (A.CDSTATUS_HTTP = 204) THEN
-								'Proposta ainda em processo de analise automatica da esteira.'
-							 WHEN (A.CDSTATUS_HTTP = 401) THEN
-								'Credencias de acesso ao WebService Ibratan invalidas.'
-							 WHEN (A.CDSTATUS_HTTP = 403) THEN
-								'Sem permissao de acesso ao Webservice Ibratan.'
-							 WHEN (A.CDSTATUS_HTTP = 404) THEN
-								'Recurso nao encontrado no WebService Ibratan nao existe.'
-							 WHEN (A.CDSTATUS_HTTP = 412) THEN
-								'Parametros do WebService Ibratan invalidos.'
-							 WHEN (A.CDSTATUS_HTTP = 429) THEN
-								'Muitas requisicoes de retorno da Analise Automatica da esteira.'
-							 WHEN (A.CDSTATUS_HTTP BETWEEN 400 AND 499) THEN
-								'Valor do(s) parametro(s) WebService invalidos.'
-							 WHEN (A.CDSTATUS_HTTP BETWEEN 500 AND 599) THEN
-								'Falha na comunicacao com servico Ibratan.'
-							END) retorno,
-							a.dsprotocolo
+               a.dsuriservico,               
+               a.dsresposta_requisicao,
+							 a.cdstatus_http,
+               a.tpacionamento,
+               decode(a.tpacionamento,2,a.dsprotocolo,NULL) dsprotocolo
         
           FROM tbepr_acionamento a
         
@@ -1628,11 +1597,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
          WHERE a.cdcooper = pr_cdcooper
            AND a.nrdconta = pr_nrdconta
            AND ( a.nrctrprp = pr_nrctremp OR pr_nrctremp = 0)
-           AND a.dtmvtolt >= pr_dtinicio
-           AND a.dtmvtolt <= pr_dtafinal
+           AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
+           AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
 		 ORDER BY a.idacionamento;
       rw_crawepr cr_cratbepr%ROWTYPE;
-    
+      
+     -- Descritivo Retorno
+     vr_dsretorno VARCHAR2(1000); 
+      
     BEGIN
     
       ---------------------------------- VALIDACOES INICIAIS --------------------------
@@ -1668,22 +1640,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
         -- Incrementa contador para utilizar como indice da PL/Table
         vr_ind_crawepr := vr_ind_crawepr + 1;
       
-        --    pr_tab_cde(vr_ind_cde).cdcooper := rw_crapcob.cdcooper;
+        -- pr_tab_cde(vr_ind_cde).cdcooper := rw_crapcob.cdcooper;
         pr_tab_crawepr(vr_ind_crawepr).acionamento := rw_crawepr.acionamento;
         pr_tab_crawepr(vr_ind_crawepr).nmagenci := substr(rw_crawepr.nmagenci,1,100);
-        pr_tab_crawepr(vr_ind_crawepr).cdoperad := rw_crawepr.cdoperad;
+        pr_tab_crawepr(vr_ind_crawepr).cdoperad := rw_crawepr.nmoperad;
         pr_tab_crawepr(vr_ind_crawepr).operacao := substr(rw_crawepr.operacao,1,100);
         pr_tab_crawepr(vr_ind_crawepr).dtmvtolt := to_char(rw_crawepr.dtmvtolt,
                                                            'DD/MM/YYYY hh24:mi:ss');
       
+        vr_dscritic := NULL;
         IF rw_crawepr.CDSTATUS_HTTP = 400 THEN
           vr_dscritic := substr(ESTE0001.fn_retorna_critica(rw_crawepr.DSRESPOSTA_REQUISICAO),1,150);
-          pr_tab_crawepr(vr_ind_crawepr).retorno := nvl(vr_dscritic, rw_crawepr.retorno);
-          vr_dscritic := NULL;
+        END IF;
+        -- Se encontramos critica
+        IF vr_dscritic IS NOT NULL THEN
+          -- Retornaremos a mesma
+          vr_dsretorno := vr_dscritic;
         ELSE
-          pr_tab_crawepr(vr_ind_crawepr).retorno := substr(rw_crawepr.retorno,1,150);
+          -- Erros HTTP
+          IF rw_crawepr.CDSTATUS_HTTP = 401 THEN
+            vr_dsretorno := 'Credencias de acesso ao WebService Ibratan invalidas.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 403 THEN
+            vr_dsretorno := 'Sem permissao de acesso ao Webservice Ibratan.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 404 THEN
+            vr_dsretorno := 'Recurso nao encontrado no WebService Ibratan nao existe.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 412 THEN
+            vr_dsretorno := 'Parametros do WebService Ibratan invalidos.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP = 429 THEN
+            vr_dsretorno := 'Muitas requisicoes de retorno da Analise Automatica da esteira.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP BETWEEN 400 AND 499 THEN
+            vr_dsretorno := 'Valor do(s) parametro(s) WebService invalidos.';
+          ELSIF rw_crawepr.CDSTATUS_HTTP BETWEEN 500 AND 599 THEN
+            vr_dsretorno := 'Falha na comunicacao com servico Ibratan.';
+          ELSE 
+            -- Tratar envios e retornos 
+            IF rw_crawepr.CDSTATUS_HTTP = 200 THEN 
+              IF INSTR(rw_crawepr.dsuriservico, 'cancelar') > 0 THEN   
+                vr_dsretorno := 'Cancelamento da proposta enviado com sucesso para esteira.';
+              ELSIF INSTR(rw_crawepr.dsuriservico, 'efetivar') > 0 THEN   
+                vr_dsretorno := 'Proposta efetivada foi enviada para esteira com sucesso.';
+              ELSIF INSTR(rw_crawepr.dsuriservico, 'numeroProposta') > 0 THEN   
+                vr_dsretorno := 'Numero da proposta foi enviado para esteira com sucesso.';
+              ELSIF rw_crawepr.cdoperad = 'MOTOR' THEN
+                vr_dsretorno := 'Retorno da analise automatica da esteira recebido com sucesso.';
+              ELSIF rw_crawepr.tpacionamento = 1 THEN
+                vr_dsretorno := 'Proposta reenviada para esteira com sucesso.';  
+              END IF;  
+            ELSIF rw_crawepr.CDSTATUS_HTTP = 201 THEN
+              vr_dsretorno := 'Proposta enviada para analise manual da esteira com sucesso.';
+            ELSIF rw_crawepr.CDSTATUS_HTTP = 202 THEN
+              -- Se foi no envio
+              IF rw_crawepr.tpacionamento = 1 THEN  
+                vr_dsretorno := 'Proposta enviada para analise automatica da esteira com sucesso.';
+              ELSE
+                vr_dsretorno := 'Retorno da analise automatica da esteira recebido com sucesso.';
+              END IF;  
+            ELSIF rw_crawepr.CDSTATUS_HTTP = 204 THEN
+              vr_dsretorno := 'Proposta em processo de analise automatica da esteira.';
+            END IF;
+          END IF;	
         END IF;
         
+        pr_tab_crawepr(vr_ind_crawepr).retorno := substr(vr_dsretorno,1,150);        
         pr_tab_crawepr(vr_ind_crawepr).nrctrprp := rw_crawepr.nrctrprp;
         pr_tab_crawepr(vr_ind_crawepr).dsprotocolo := rw_crawepr.dsprotocolo;
         
@@ -1780,14 +1798,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       -- Comando para download
       vr_dscomando := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
 
-      -- Concatenar o caminho do arquivo a ser baixado
-      vr_dscomando := vr_dscomando || ' ' || vr_dsdirarq || '/' || vr_nmarquiv;
+      -- Substituir o caminho do arquivo a ser baixado
+      vr_dscomando := replace(vr_dscomando
+                             ,'[local-name]'
+                             ,vr_dsdirarq || '/' || vr_nmarquiv);
 
-      -- Concatenar a URL para Download
-      vr_dscomando := vr_dscomando || ' '
-                   || GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
-                   || GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
-                   || '_result/' || pr_dsprotocolo || '/pdf';
+      -- Substiruir a URL para Download
+      vr_dscomando := REPLACE(vr_dscomando
+                             ,'[remote-name]'
+                             ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
+                             ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
+                             || '_result/' || pr_dsprotocolo || '/pdf');
 
       -- Executar comando para Download
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -1801,7 +1822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 
       -- Se NAO encontrou o arquivo
       IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN
-        vr_dscritic := 'Arquivo nao encontrado.';
+        vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
         RAISE vr_exc_saida;
       END IF;
 

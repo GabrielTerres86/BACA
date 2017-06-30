@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE cecred.SSPC0001 AS
+CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -489,7 +489,6 @@ PROCEDURE pc_retorna_conaut_esteira(pr_cdcooper IN NUMBER        -- Código da Co
 																	 ,pr_dsprotoc IN VARCHAR2      -- Descrição do Protocolo da Análise automática na Ibratan
 																	 ,pr_cdcritic OUT NUMBER       -- Retornará um possível código de critica
 																	 ,pr_dscritic OUT VARCHAR2);   -- Retornará uma possível descrição da crítica
-
 
 END SSPC0001;
 /
@@ -2932,11 +2931,9 @@ FUNCTION fn_separa_cidade_uf(pr_nmcidade IN VARCHAR2,     --> Nome da cidade com
     END IF;
   END;
 
-
 -- Envia a requisicao para o biro de consultas
 PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Código da cooperativa
                                   pr_nrprotoc IN VARCHAR2,  --> Numero do protocolo gerado
-																	pr_tpconaut IN VARCHAR2,               --> Tipo de consulta automatizada (A - Ayllos, M - Motor)
                                   pr_retxml   IN OUT NOCOPY XMLType,     --> XML de retorno da operadora
                                   pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
                                   pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
@@ -2946,8 +2943,6 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
     l_http_response  UTL_HTTP.resp; --> Resposta do XML
     l_text           VARCHAR2(32000); --> Texto de resposta do Biro
     v_ds_url         VARCHAR2(500); --> URL da Ibratan
-    vr_nmdecamp      VARCHAR2(100); --> Campo de retorno do cabecalho
-    vr_result        VARCHAR2(100); --> Resultado do campo do cabecalho
     vr_ds_xml        CLOB;
     
     -- Variaveis gerais
@@ -2967,10 +2962,9 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
                                          pr_cdcooper => pr_cdcooper,
                                          pr_nmsubdir => 'salvar');  
   
-    -- Busca a url de comunicacao 
+    -- Montar URL consulta
     v_ds_url := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                          pr_cdacesso => CASE WHEN pr_tpconaut = 'M' THEN 'URI_WEBSRV_MOTOR_IBRA' ELSE 'URL_IBRATAN' END);
-  
+                                            pr_cdacesso => 'URL_IBRATAN');
     -- Grava a data de inicio do processo
     vr_dtinicio := SYSDATE;
     
@@ -2987,23 +2981,15 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
       -- Define o tempo de timeout do biro
       UTL_HTTP.set_transfer_timeout(500);
 
-      -- Se for pelo motor
-      IF pr_tpconaut = 'M' THEN
-				-- Configura o HTTP request
-				l_http_request  := UTL_HTTP.begin_request(v_ds_url||'/process_result/'||pr_nrprotoc||'/xml/complete_file'
-                                                 ,'GET'
-                                                 ,utl_http.http_version_1_1);
-			ELSE				
-				-- Configura o HTTP request
-				l_http_request  := UTL_HTTP.begin_request(v_ds_url||'/'||pr_nrprotoc
-				                                         ,'GET'
-																								 ,utl_http.http_version_1_1);
-	      -- Atualiza o cabecalho da requisicao
-        UTL_HTTP.set_header(l_http_request
-				                   ,'Application-Token'
-													 ,pc_encode_base64('ChaveDeAcessoAoSistemaIbracred'));
+			-- Configura o HTTP request
+      l_http_request  := UTL_HTTP.begin_request(v_ds_url||'/'||pr_nrprotoc
+		                                           ,'GET'
+				  																		 ,utl_http.http_version_1_1);
+      -- Atualiza o cabecalho da requisicao
+      UTL_HTTP.set_header(l_http_request
+                         ,'Application-Token'
+                         ,pc_encode_base64('ChaveDeAcessoAoSistemaIbracred'));
 
-      END IF;
       -- Escreve o conteúdo
       utl_http.write_text(l_http_request, NULL );
 
@@ -3304,8 +3290,27 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
       FETCH cr_crapbir INTO rw_crapbir;
       IF cr_crapbir%NOTFOUND THEN
         CLOSE cr_crapbir;
-        vr_dscritic := 'Nao foi encontrado o biro de consulta retornado: TAGS: '||vr_nmtagbir||'-'||vr_nmtagmod;
-        RAISE vr_exc_saida;
+        -- Para requisições do Motor, apenas enviamos ao LOG
+        IF pr_tpconaut = 'M' THEN 
+          -- Gerar LOG
+          btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
+                                                     || 'Nrconbir: ' || ' --> ' ||pr_nrconbir
+                                                     || ' Protocolo: '|| ' --> ' ||pr_nrprotoc
+                                                     || ' CPF: '|| ' --> ' ||vr_crapcbd.nrcpfcgc
+                                                     || ' Erro: --> Resposta Ignorada pois nao foi encontrado'
+                                                     || ' o biro de consulta retornado na resposta #'
+                                                     || vr_contador||': TAGS: '||vr_nmtagbir||'-'||vr_nmtagmod
+                                    ,pr_nmarqlog => 'CONAUT');
+          -- Incrementar contador e ir ao próximo
+          vr_contador := vr_contador + 1;
+          CONTINUE;            
+        ELSE   
+          -- PAra requisições de Consulta Automatizada, seguimos o processo anterior, de gerar erro
+          vr_dscritic := 'Nao foi encontrado o biro de consulta retornado: TAGS: '||vr_nmtagbir||'-'||vr_nmtagmod;
+          RAISE vr_exc_saida;
+        END IF;  
       END IF;
       CLOSE cr_crapbir;
 			
@@ -5202,6 +5207,12 @@ PROCEDURE pc_monta_cpf_cnpj_envio(pr_xml  IN OUT XmlType,               --> XML 
     -- Envia o PA e a quantidade de horas de reaproveitamento
     gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'CENTRO_CUSTO',pr_tag_cont => pr_cdpactra, pr_des_erro => pr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'HORA_REAPROVEITAMENTO',pr_tag_cont => pr_qthrsrpv, pr_des_erro => pr_dscritic);
+    
+gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'FLG_REAPROVEITA    ',pr_tag_cont => 'S', pr_des_erro => pr_dscritic);
+    
+    
+
+    
   END;
 
 -- Efetua a consulta ao biro da Ibratan para os emprestimos
@@ -6347,8 +6358,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       -- ou quando encerrar o tempo de requisicao
       pc_solicita_retorno_req(pr_cdcooper => pr_cdcooper,
                               pr_nrprotoc => vr_nrprotoc,
-															pr_tpconaut => 'A',
-                              pr_retxml   => vr_xmlret,
+															pr_retxml   => vr_xmlret,
                               pr_cdcritic => vr_cdcritic,
                               pr_dscritic => vr_dscritic);
 
@@ -7019,6 +7029,9 @@ PROCEDURE pc_obrigacao_consulta(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codig
     vr_inpessoa crapass.inpessoa%TYPE; --> Indicador do tipo de pessoa (1-Fisica, 2-Juridica)
     vr_cdbircon crapcbd.cdbircon%TYPE; --> Codigo do biro de consulta
     vr_cdmodbir crapcbd.cdmodbir%TYPE; --> Modalidade do biro de consulta
+    
+    vr_inobriga_esteira_auto VARCHAR2(1);   --> Obrigação de passagem pela Analise Auto Esteira Sim/Não
+    
   BEGIN
     
     -- Efetua a verificacao de linha de credito habilitada para consulta
@@ -7039,9 +7052,16 @@ PROCEDURE pc_obrigacao_consulta(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codig
 			-- Somente retornar a obrigação caso a esteira não for efetuar a consulta
       este0001.pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
 			                                       ,pr_cdlcremp => pr_cdlcremp
-																						 ,pr_inobriga => pr_inobriga
+																						 ,pr_inobriga => vr_inobriga_esteira_auto
 																						 ,pr_cdcritic => vr_cdcritic
 																						 ,pr_dscritic => vr_dscritic);
+      -- Se é obrigatório passagem pela análise automática esteira
+      IF vr_inobriga_esteira_auto = 'S' THEN
+        -- Remover obrigatoriedade consulta
+        pr_inobriga := 'N';
+        RETURN;
+      END IF;
+                                             
     END IF;
     
     -- Se for pessoa fisica e juridica, comeca processando pela psssoa fisica
@@ -9451,6 +9471,106 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 		END;
 	END pc_busca_intippes;
 
+-- Solicitar o retorno de consulta gerada pelo Motor de Crédito
+PROCEDURE pc_solicita_retorno_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Código da cooperativa
+                                      pr_nrprotoc IN VARCHAR2,  --> Numero do protocolo gerado
+                                      pr_retxml   IN OUT NOCOPY XMLType,     --> XML de retorno da operadora
+                                      pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
+                                      pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+
+    -- Variaveis de comunicacao
+    l_http_request   UTL_HTTP.req;  --> Request do XML
+    l_http_response  UTL_HTTP.resp; --> Resposta do XML
+    l_text           VARCHAR2(32000); --> Texto de resposta do Biro
+    v_ds_url         VARCHAR2(500); --> URL da Ibratan
+    vr_nmdecamp      VARCHAR2(100); --> Campo de retorno do cabecalho
+    vr_result        VARCHAR2(100); --> Resultado do campo do cabecalho
+    vr_ds_xml        CLOB;
+    
+    -- Variaveis gerais
+    vr_dscomand VARCHAR2(4000); --> Comando para baixa do arquivo
+    vr_qttmpret NUMBER;          --> Tempo maximo possivel para retorno da operadora
+    vr_dtinicio DATE;            --> Data/hora do inicio do processo
+    vr_nmdirarq VARCHAR2(200);   --> Diretorio de gravacao dos arquivos XML
+    vr_cdstatus PLS_INTEGER;     --> Status de retorno da consulta no Biro
+
+    -- Variaveis de erro
+    vr_cdcritic   PLS_INTEGER;    --> codigo retorno de erro
+    vr_des_reto   VARCHAR2(3);    --> tipo saida
+    vr_dscritic   VARCHAR2(4000); --> descricao do erro
+    vr_exc_saida  EXCEPTION;      --> Excecao prevista
+  BEGIN
+    
+    -- Busca o diretorio onde sera gravado o XML
+    vr_nmdirarq := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'salvar');  
+                                                                                     
+    -- Comando para download
+    vr_dscomand := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_DOWNLOAD_PDF_ANL');
+    
+    -- Substituir o caminho do arquivo a ser baixado
+    vr_dscomand := replace(vr_dscomand
+                          ,'[local-name]'
+                          ,vr_nmdirarq || '/' || to_char(pr_nrprotoc)||'.xml');
+
+    -- Substiruir a URL para Download
+    vr_dscomand := REPLACE(vr_dscomand
+                          ,'[remote-name]'
+                          ,GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA')
+                          ||GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA')
+                          || '_result/' || pr_nrprotoc || '/xml/complete_file');
+
+    -- Executar comando para Download
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_des_reto
+                         ,pr_des_saida   => vr_dscritic);
+    -- Se ocorreu erro
+    IF vr_des_reto = 'ERR' THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Se NAO encontrou o arquivo
+    IF NOT GENE0001.fn_exis_arquivo(vr_nmdirarq || '/' || to_char(pr_nrprotoc)||'.xml') THEN
+      vr_dscritic := 'Problema na recepcao do Arquivo - Tente novamente mais tarde!';
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Converter o arquivo para XML
+    gene0002.pc_arquivo_para_XML(pr_nmarquiv => vr_nmdirarq || '/' || to_char(pr_nrprotoc)||'.xml'
+                                ,pr_tipmodo  => 2
+                                ,pr_xmltype  => pr_retxml
+                                ,pr_des_reto => vr_des_reto
+                                ,pr_dscritic => vr_dscritic);
+    -- Se houve erro
+    IF vr_des_reto <> 'OK' THEN 
+      -- Renomear o arquivo 
+      gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmdirarq || '/' || to_char(pr_nrprotoc)||'.xml '||vr_nmdirarq || '/erro_xml_' || to_char(pr_nrprotoc)||'.xml'
+                                 ,pr_flg_aguard  => 'S'
+                                 ,pr_typ_saida   => vr_des_reto
+                                 ,pr_des_saida   => vr_dscritic);
+      
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+  END;
+
+
+  -- Solicitar e processar o retorno das consultas geradas pelo Motor de Crédito
   PROCEDURE pc_retorna_conaut_esteira(pr_cdcooper IN NUMBER        -- Código da Cooperativa da Proposta
                                      ,pr_nrdconta IN NUMBER        -- Número da Conta da Proposta
                                      ,pr_nrctremp IN NUMBER        -- Número da Proposta
@@ -9510,6 +9630,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 					FROM crapopf; 
 			
 		BEGIN
+      -- Requisição poderá vir do AyllosWeb, garantir o formato decimal para evitar InvalidNumbers
+      gene0001.pc_informa_acesso(pr_module => 'sspc0001', pr_action => 'pc_retorna_conaut_esteira');  
+    
 			-- Busca a proxima numeracao para consulta do biro
 			vr_nrconbir := fn_sequence(pr_nmtabela => 'CRAPCBC'
 																,pr_nmdcampo => 'NRCONBIR'
@@ -9610,12 +9733,11 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 			END;			
 			
       -- Solicita o retorno do biro de consultas
-      pc_solicita_retorno_req(pr_cdcooper => pr_cdcooper,
-                              pr_nrprotoc => pr_dsprotoc,
-                              pr_tpconaut => 'M', --Motor de Credito
-                              pr_retxml   => vr_xmlret,
-                              pr_cdcritic => vr_cdcritic,
-                              pr_dscritic => vr_dscritic);
+      pc_solicita_retorno_esteira(pr_cdcooper => pr_cdcooper,
+                                  pr_nrprotoc => pr_dsprotoc,
+                                  pr_retxml   => vr_xmlret,
+                                  pr_cdcritic => vr_cdcritic,
+                                  pr_dscritic => vr_dscritic);
 
       -- Se ocorreu erro na requisicao
       IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN

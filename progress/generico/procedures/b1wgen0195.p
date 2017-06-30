@@ -33,14 +33,15 @@ PROCEDURE verifica_regras_esteira:
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO. 
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_tpenvest AS CHAR							NO-UNDO.
+    DEF  INPUT PARAM par_tpenvest AS CHAR                                                        NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
     
     
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-    RUN STORED-PROCEDURE pc_verifica_regras_esteira aux_handproc = PROC-HANDLE
+    RUN STORED-PROCEDURE pc_verifica_regras_esteira
+    aux_handproc = PROC-HANDLE
        (INPUT par_cdcooper,   /* pr_cdcooper */
         INPUT par_nrdconta,   /* pr_nrdconta */
         INPUT par_nrctremp,   /* pr_nrctremp*/
@@ -207,30 +208,33 @@ PROCEDURE Enviar_proposta_esteira:
     DEF VAR aux_nmarqpdf          AS CHAR                           NO-UNDO.   
     DEF VAR aux_flcontes          AS CHAR                           NO-UNDO.   
     
-    /* Caso a proposta já tenha sido enviada para
-      a Esteira iremos considerar uma Alteracao */
-	IF par_tpenvest = "I" THEN
-	DO:
-		FIND FIRST crawepr 
-		     WHERE crawepr.cdcooper = par_cdcooper
-			     AND crawepr.nrdconta = par_nrdconta
-			     AND crawepr.nrctremp = par_nrctremp
+    /* Caso a proposta já tenha sido enviada para 
+       a Esteira iremos considerar uma Alteracao. 
+       Caso a proposta tenho sido reprovada pelo 
+       Motor, iremos considerar envio pois ela
+       ainda nao foi a Esteira                     */
+        IF par_tpenvest = "I" THEN
+        DO:
+                FIND FIRST crawepr 
+                     WHERE crawepr.cdcooper = par_cdcooper
+                             AND crawepr.nrdconta = par_nrdconta
+                             AND crawepr.nrctremp = par_nrctremp
            AND crawepr.insitest >= 2 
            AND crawepr.cdopeapr <> "MOTOR"
-			 NO-LOCK NO-ERROR.
+                         NO-LOCK NO-ERROR.
     
-		IF AVAIL crawepr and 
-		   crawepr.dtenvest <> ? then
-			ASSIGN par_tpenvest = "A".
+                IF AVAIL crawepr and 
+                   crawepr.dtenvest <> ? then
+                        ASSIGN par_tpenvest = "A".
     END.
-	
-	/***** Verificar se a Esteira esta em contigencia *****/
+        
+        /***** Verificar se a Esteira esta em contigencia *****/
     RUN verifica_regras_esteira
              ( INPUT par_cdcooper,
                INPUT par_nrdconta,
                INPUT par_nrctremp,
-			         INPUT par_tpenvest,
-              OUTPUT par_dscritic,
+                                 INPUT par_tpenvest,
+              OUTPUT par_cdcritic,
               OUTPUT par_dscritic).
    
     IF par_cdcritic > 0 OR 

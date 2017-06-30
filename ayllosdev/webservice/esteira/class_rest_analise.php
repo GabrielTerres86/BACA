@@ -5,12 +5,13 @@
  * @autor: Lucas Reinert
  */
 require_once('../class/class_rest_server_json.php');
-class RestProposta extends RestServerJson{
+class RestAnalise extends RestServerJson{
     
     private $aParamsRequired;
     
     public function __construct(){
         $this->aParamsRequired = array('protocolo','resultadoAnaliseRegra');
+        $this->setRequisicaoAutenticada(false);
     }
     
     public function __destruct(){
@@ -35,8 +36,8 @@ class RestProposta extends RestServerJson{
         $aRetorno['msg_detalhe'] = $mensagemDetalhe;
         // Setando o codigo do status no Header da resposta
         header("Cache-Control: no-cache, must-revalidate");
-		header("Expires: 0");
-		header('Content-Type: ' . RestFormat::$aRestFormat[$this->getTypeFormato()]);
+		    header("Expires: 0");
+		    header('Content-Type: ' . RestFormat::$aRestFormat[$this->getTypeFormato()]);
         header('Status-Code: '.$status, true, $status);
         // Enviando a resposta para o servico
         return $this->processaRetornoFormato($aRetorno);
@@ -82,14 +83,14 @@ class RestProposta extends RestServerJson{
     private function validaParametrosRecebidos($oDados){
         // Condicao para verificar se eh um objeto
         if (!is_object($oDados)){
-            $this->processaRetornoErro(412,'Resultado da Analise Automatica nao foi atualizado, parametros incorretos.');
+            $this->processaRetornoErro(412,'Resultado da Analise Automatica nao foi atualizado, parametros incorretos[o].');
             return false;
         }
 		
         // Verifica se todos os parametros foram recebidos
         foreach ($this->aParamsRequired as $sPametro){
-			if (!array_key_exists($sPametro,get_object_vars($oDados))){
-                $this->processaRetornoErro(412,'Resultado da Analise Automatica nao foi atualizado, parametros incorretos.');
+			  if (!array_key_exists($sPametro,get_object_vars($oDados))){
+                $this->processaRetornoErro(412,'Resultado da Analise Automatica nao foi atualizado, parametros incorretos[r].');
                 return false;
             }
         }
@@ -116,24 +117,25 @@ class RestProposta extends RestServerJson{
                 return false;            
             }
             
-			// Processa a informacao do banco de dados        
-			$xml  = "<Root>";
-			$xml .= " <Dados>";
-			$xml .= "   <cdorigem>9</cdorigem>";
-			$xml .= "   <dsprotoc>".$oDados->protocolo."</dsprotoc>";
-			$xml .= "   <dsresana>".$oDados->resultadoAnaliseRegra."</dsresana>";
-			$xml .= "   <indrisco>".$oDados->nivelRisco."</indrisco>";
-			$xml .= "   <nrnotrat>".$oDados->notaRating."</nrnotrat>";
-			$xml .= "   <nrinfcad>".$oDados->informacaoCadastral."</nrinfcad>";
-			$xml .= "   <nrliquid>".$oDados->liquidez."</nrliquid>";
-			$xml .= "   <nrgarope>".$oDados->garantia."</nrgarope>";
-			$xml .= "   <nrparlvr>".$oDados->patrimonioPessoalLivre."</nrparlvr>";
-			$xml .= "   <nrperger>".$oDados->percepcaoGeralEmpresa."</nrperger>";
-			$xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
-			$xml .= "   <namehost>".$this->getNameHost()."</namehost>";
-			$xml .= " </Dados>";
-			$xml .= "</Root>";
-			$sXmlResult = mensageria($xml, "WEBS0001", "WEBS0001_ANALISE_MOTOR", 0, 0, 0, 5, 0, "</Root>");
+			      // Processa a informacao do banco de dados        
+			      $xml  = "<Root>";
+			      $xml .= " <Dados>";
+			      $xml .= "   <cdorigem>9</cdorigem>";
+			      $xml .= "   <dsprotoc>".$oDados->protocolo."</dsprotoc>";
+            $xml .= "   <nrtransa>0</nrtransa>";
+			      $xml .= "   <dsresana>".$oDados->resultadoAnaliseRegra."</dsresana>";
+			      $xml .= "   <indrisco>".$oDados->indicadoresGeradosRegra->nivelRisco."</indrisco>";
+			      $xml .= "   <nrnotrat>".$oDados->indicadoresGeradosRegra->notaRating."</nrnotrat>";
+			      $xml .= "   <nrinfcad>".$oDados->indicadoresGeradosRegra->informacaoCadastral."</nrinfcad>";
+			      $xml .= "   <nrliquid>".$oDados->indicadoresGeradosRegra->liquidez."</nrliquid>";
+			      $xml .= "   <nrgarope>".$oDados->indicadoresGeradosRegra->garantia."</nrgarope>";
+			      $xml .= "   <nrparlvr>".$oDados->indicadoresGeradosRegra->patrimonioPessoalLivre."</nrparlvr>";
+			      $xml .= "   <nrperger>".$oDados->indicadoresGeradosRegra->percepcaoGeralEmpresa."</nrperger>";
+			      $xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
+			      $xml .= "   <namehost>".$this->getNameHost()."</namehost>";
+			      $xml .= " </Dados>";
+			      $xml .= "</Root>";
+			      $sXmlResult = mensageria($xml, "WEBS0001", "WEBS0001_ANALISE_MOTOR", 0, 0, 0, 5, 0, "</Root>");
             $oRetorno   = simplexml_load_string($sXmlResult);
             
             // Vamos verificar se veio retorno 

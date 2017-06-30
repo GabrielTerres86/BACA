@@ -1184,15 +1184,10 @@ function controlaOperacao(operacao) {
         case 'ENV_ESTEIRA':
 			insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
 			dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
+      mensagem = 'Enviando Proposta para An&aacute;lise da Esteira...';
 			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
-				mensagem = 'Enviando Proposta para An&aacute;lise da Esteira...';
-				showConfirmacao('Confirma re-envio da Proposta para Esteira de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma j&aacute; foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+				showConfirmacao('Confirma envio da Proposta para Esteira de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma j&aacute; foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 			}else{
-				if (dssitest == 'Nao Enviada'){
-					mensagem = 'Enviando Proposta para Análise Automática da Esteira...';
-				}else{
-					mensagem = 'Enviando Proposta para Esteira...';
-				}
 				showConfirmacao('Confirma envio da Proposta para Esteira de Credito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'ENV_ESTEIRA\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 			}
             return false;
@@ -1358,13 +1353,7 @@ function manterRotina(operacao) {
             mensagem = 'excluindo';
             break;
         case 'ENV_ESTEIRA':
-			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
-				mensagem = 'Reenviando Proposta para Esteira...';
-			}else if (dssitest == 'Nao Enviada'){
-				mensagem = 'Enviando Proposta para An&aacute;lise Autom&aacute;tica da Esteira...';
-			} else{
-				mensagem = 'Enviando Proposta para Esteira...';
-			}
+            mensagem = 'Enviando Proposta para An&aacute;lise da Esteira...';
             break;
         default:
             controlaOperacao();
