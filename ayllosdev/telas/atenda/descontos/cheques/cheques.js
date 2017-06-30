@@ -2879,6 +2879,7 @@ function confirmaRejeitaBordero() {
     hideMsgAguardo();
     showError("error","Border&ocirc; j&aacute; rejeitado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
     return false;
+  }
 
   
   if (flcusthj == 1){
