@@ -1992,7 +1992,7 @@ PROCEDURE importa_xml.
                                       INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
                                       INPUT ?,              /* Diretorio onde será gerado o log */
                                       INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
-                                      INPUT glb_cdprogra    /* Programa/job */
+                                      INPUT glb_cdprogra,   /* Programa/job */
                                       INPUT 3,              /* Execucao via BATCH */
                                       INPUT 0,              /* Criticidade BAIXA */ 
                                       INPUT 1).             /* Processo executado com sucesso */
