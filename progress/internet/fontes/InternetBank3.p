@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 14/12/2016
+   Data    : Marco/2007                        Ultima atualizacao: 16/12/2016
 
    Dados referentes ao programa:
 
@@ -42,11 +42,18 @@
 
                16/02/2016 - Criacao do campo flprotes no XML. (Jaison/Marcos)
 
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança(Odirlei-AMcom)
+
 			   14/12/2016 Retirado limitacao de resultados aqui
                           pois qdo atinigia o limite nao mostrava nada na tela
 						  mas mesmo assim levava todo o tempo como se tivesse 
 						  carregado, validacao agora esta dentro da b1wnet0001.seleciona-sacados
 						  (Tiago/Ademir SD566906)
+
+               16/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -311,6 +318,11 @@ IF  AVAILABLE tt-dados-blt  THEN
                                        "<valormin>" + STRING(tt-dados-blt.valormin) + "</valormin>" +
                                        "<textodia>" + STRING(tt-dados-blt.textodia) + "</textodia>" +
                                        "<flprotes>" + STRING(tt-dados-blt.flprotes) + "</flprotes>" +
+                                       "<flpersms>" + STRING(tt-dados-blt.flpersms) + "</flpersms>" +
+                                       "<fllindig>" + STRING(tt-dados-blt.fllindig) + "</fllindig>" +
+                                       "<cddbanco>" + STRING(tt-dados-blt.cddbanco) + "</cddbanco>" +
+                                       "<flgregon>" + STRING(tt-dados-blt.flgregon) + "</flgregon>" +
+                                       "<flgpgdiv>" + STRING(tt-dados-blt.flgpgdiv) + "</flgpgdiv>" +
                                        "</BOLETO>".
 
     END.
@@ -375,7 +387,7 @@ ASSIGN xml_operacao.dslinxml = "<SACADOS qttotsac='" +
                                            "0") +
                                        "</flgemail></DADOS>".
                                          
-END.
+    END.         
          
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "</SACADOS>".

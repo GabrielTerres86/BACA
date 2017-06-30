@@ -4349,82 +4349,37 @@ PROCEDURE liquidacao-intrabancaria-dda:
     
     /* formato da data AAAAMMDD */
 
-    DEFINE INPUT  PARAMETER par_rowid    AS ROWID       NO-UNDO.
+    DEFINE INPUT  PARAMETER par_cdcooper AS INT         NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtmvtolt AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_recid    AS INT64       NO-UNDO.
     DEFINE OUTPUT PARAMETER ret_dsinserr AS CHARACTER   NO-UNDO.
         
-    FIND FIRST bcrapcob WHERE ROWID(bcrapcob) = par_rowid 
-         NO-LOCK NO-ERROR NO-WAIT.
+    DEFINE VAR aux_dscritic AS CHAR                     NO-UNDO.
+    
+        
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-    FIND FIRST crapcop WHERE crapcop.cdcooper = bcrapcob.cdcooper 
-         NO-LOCK NO-ERROR NO-WAIT.
+     RUN STORED-PROCEDURE pc_solicita_crapdda_prog
+         aux_handproc = PROC-HANDLE NO-ERROR
+            (  INPUT par_cdcooper 
+              ,INPUT par_dtmvtolt 
+              ,INPUT DECI(par_recid)  /* pr_cobrecid */
+              ,OUTPUT "" ).           /* pr_dscritic */ 
+           
+
+     CLOSE STORED-PROC pc_solicita_crapdda_prog
+           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
      
-    /* se titulo DDA e pago fora da compe, 
-    entao realizar liq intrabancaria na JD/CIP */
-    IF   bcrapcob.flgregis AND
-         bcrapcob.flgcbdda AND
-         bcrapcob.cdbandoc = crapcop.cdbcoctl THEN
-         DO:
-            /* Cria Temp-Table do DDA - JD */
-            RUN cria-tt-dda (INPUT  "B", 
-                             INPUT  "1", 
-                             INPUT  bcrapcob.dtvencto, 
-                             INPUT  bcrapcob.vldescto,
-                             INPUT  bcrapcob.vlabatim, 
-                             INPUT  bcrapcob.flgdprot,
-                            OUTPUT ret_dsinserr).
-        
-            IF  RETURN-VALUE = "NOK" THEN
-                RETURN RETURN-VALUE.   
-        
-            /* Atualiza COB */
-            FIND FIRST tt-remessa-dda NO-LOCK NO-ERROR.
-        
-            /* Conexao com a JD */
-            RUN sistema/generico/procedures/b1wgen9999.p
-                PERSISTENT SET h-b1wgen9999.
-        
-            IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
-                DO:
-                    ret_dsinserr = "Handle invalido para BO b1wgen9999.".
-                    RETURN "NOK".
-                END.
-        
-            RUN p-conectajddda IN h-b1wgen9999 NO-ERROR.
-        
-            IF  ERROR-STATUS:ERROR  OR 
-                RETURN-VALUE <> "OK" THEN
-                DO:
-                    DELETE PROCEDURE h-b1wgen9999.
-                    ret_dsinserr = "Erro de conexao DDA.".
-                    RETURN "NOK".
-                END.
-        
-            RUN sistema/generico/procedures/b1wgen0087.p PERSISTENT SET h-b1wgen0087.
-        
-            IF NOT VALID-HANDLE(h-b1wgen0087) THEN
-                DO:
-                    RUN p-desconectajddda IN h-b1wgen9999 NO-ERROR.
-                    DELETE PROCEDURE h-b1wgen9999.
-                    ASSIGN ret_dsinserr = "Handle invalido para b1wgen0087".
-                    RETURN "NOK".
-                END.
-            
-            RUN remessa-titulos-dda  IN h-b1wgen0087
-                              (INPUT-OUTPUT TABLE tt-remessa-dda,
-                                     OUTPUT TABLE tt-retorno-dda).
-        
-            DELETE PROCEDURE h-b1wgen0087.
-        
-            /* Desconecta JD */
-            IF  VALID-HANDLE(h-b1wgen9999) THEN
-                DO:
-                    RUN p-desconectajddda IN h-b1wgen9999 NO-ERROR.
-                    DELETE PROCEDURE h-b1wgen9999.
-                END.
-            
-            IF  RETURN-VALUE <> "OK" THEN 
-                RETURN "NOK".
+     ASSIGN  aux_dscritic = ""             
+             aux_dscritic = pc_solicita_crapdda_prog.pr_dscritic 
+                            WHEN pc_solicita_crapdda_prog.pr_dscritic <> ?.
 
+     IF aux_dscritic <> "" THEN
+         DO:
+       ASSIGN ret_dsinserr = aux_dscritic.
+                    RETURN "NOK".
          END. 
 
     RETURN "OK".

@@ -3,7 +3,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : 
-   Data    :                             Ultima atualizacao: 28/06/2016
+   Data    :                             Ultima atualizacao: 24/05/2017
 
    Dados referentes ao programa:
 
@@ -76,6 +76,9 @@
                28/06/2016 - Ajustado para que as ocorrencias 76 e 77 tambem
                             sejam deletadas da crapret, da mesma forma que 
                             as ocorrencias 6 e 17 (Douglas - Chamado 461531)
+							
+			   24/05/2017 - Procedure estora-titulo-iptu convertida para
+                            Oracle (Projeto 340 - Demetrius/Odirlei)			   
 ---------------------------------------------------------------------------*/
  
 {dbo/bo-erro1.i}
@@ -132,6 +135,7 @@ PROCEDURE retorna-valores-titulo-iptu.
     DEF INPUT   PARAM p-cadastro-conf   AS DEC.
     DEF OUTPUT  PARAM p-valor-pago      AS DEC.
     DEF OUTPUT  PARAM p-valordoc        AS DEC.
+    DEF OUTPUT  PARAM pr_cdctrbxo       AS CHAR. 
     
     ASSIGN p-valor-pago    = 0.
                  
@@ -492,7 +496,7 @@ PROCEDURE retorna-valores-titulo-iptu.
         RETURN "NOK".
     END. 
     
-    FIND craptit NO-LOCK WHERE
+    FIND LAST craptit NO-LOCK WHERE
          craptit.cdcooper = crapcop.cdcooper AND 
          craptit.dtmvtolt = crapdat.dtmvtocd AND
          craptit.cdagenci = p-cod-agencia    AND
@@ -524,6 +528,7 @@ PROCEDURE retorna-valores-titulo-iptu.
     END.
         
     ASSIGN p-valor-pago  =  craptit.vldpagto.
+    ASSIGN pr_cdctrbxo   =  craptit.cdctrbxo.
     
     RETURN "OK".
         
@@ -563,167 +568,62 @@ PROCEDURE estorna-titulos-iptu.
     DEFINE VARIABLE aux_contador         AS INTEGER                 NO-UNDO.
     DEFINE VARIABLE aux_rowidcob         AS ROWID                   NO-UNDO.
     
-    FIND crapcop NO-LOCK WHERE
+    DEF    VAR      aux_cdcritic         AS DECI                    NO-UNDO.
+    DEF    VAR      aux_dscritic         AS CHAR                    NO-UNDO.
+    DEF    VAR      aux_iptu             AS DECI                    NO-UNDO.
+    DEF    VAR      aux_pg               AS DECI                    NO-UNDO.
+    DEF    VAR      aux_histor           AS DECI                    NO-UNDO.
+    
+    IF p-iptu THEN 
+      aux_iptu = 1.
+    ELSE
+      aux_iptu = 0.
+
+    FIND FIRST crapcop NO-LOCK WHERE
          crapcop.nmrescop = p-cooper  NO-ERROR.
  
-    FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper 
-                       NO-LOCK NO-ERROR.
-
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
                       INPUT p-nro-caixa).
            
-    IF  p-iptu = YES  THEN   
-        ASSIGN i-nro-lote = 17000 + p-nro-caixa.
-    ELSE
-        ASSIGN i-nro-lote = 16000 + p-nro-caixa.
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        
 
-    ASSIGN in99 = 0
-           aux_flgepr = FALSE. /* Variavel para ver se eo bol. esta em epr */
-    DO  WHILE TRUE:
-       
-        ASSIGN in99 = in99 + 1.
-        FIND craplot EXCLUSIVE-LOCK  WHERE
-             craplot.cdcooper = crapcop.cdcooper AND
-             craplot.dtmvtolt = crapdat.dtmvtocd AND
-             craplot.cdagenci = p-cod-agencia    AND
-             craplot.cdbccxlt = 11               AND  /* Fixo */
-             craplot.nrdolote = i-nro-lote NO-ERROR NO-WAIT.
-      
-        IF   NOT AVAILABLE craplot   THEN  DO:
-             IF   LOCKED craplot     THEN DO:
-                  IF  in99 <  100  THEN DO:
-                      PAUSE 1 NO-MESSAGE.
-                      NEXT.
-                  END.
-                  ELSE DO:
-                      ASSIGN i-cod-erro  = 0
-                             c-desc-erro = "Tabela CRAPLOT em uso ".           
-                      RUN cria-erro (INPUT p-cooper,
+RUN STORED-PROCEDURE pc_estorna_titulos_iptu
+    aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT crapcop.cdcooper,
+                             INPUT p-cod-operador,
                                      INPUT p-cod-agencia,
                                      INPUT p-nro-caixa,
-                                     INPUT i-cod-erro,
-                                     INPUT c-desc-erro,
-                                    INPUT YES).
-                      RETURN "NOK".
-                  END.
-             END.
-             ELSE DO:
-                  ASSIGN i-cod-erro  = 60
-                         c-desc-erro = " ".
-                   
-                  RUN cria-erro (INPUT p-cooper,
-                                 INPUT p-cod-agencia,
-                                 INPUT p-nro-caixa,
-                                 INPUT i-cod-erro,
-                                 INPUT c-desc-erro,
-                                 INPUT YES).
-                  RETURN "NOK".
-             END.
-        END.
-        LEAVE.
-    END.  /*  DO WHILE */
-
-    ASSIGN in99 = 0.
-    DO WHILE TRUE:
-
-        FIND craptit EXCLUSIVE-LOCK  WHERE
-             craptit.cdcooper = crapcop.cdcooper   AND
-             craptit.dtmvtolt = crapdat.dtmvtocd   AND
-             craptit.cdagenci = craplot.cdagenci   AND
-             craptit.cdbccxlt = craplot.cdbccxlt   AND
-             craptit.nrdolote = craplot.nrdolote   AND
-             craptit.dscodbar = p-codigo-barras NO-ERROR NO-WAIT.
-
-        ASSIGN in99 = in99 + 1.
-        IF    NOT AVAILABLE craptit THEN DO:
-              IF   LOCKED craptit   THEN DO:
-                   IF  in99 <  100  THEN DO:
-                      PAUSE 1 NO-MESSAGE.
-                      NEXT.
-                  END.
-                  ELSE DO:
-                      ASSIGN i-cod-erro  = 0
-                             c-desc-erro = "Tabela CRAPTIT em uso ".           
-                      RUN cria-erro (INPUT p-cooper,
-                                     INPUT p-cod-agencia,
-                                     INPUT p-nro-caixa,
-                                     INPUT i-cod-erro,
-                                     INPUT c-desc-erro,
-                                    INPUT YES).
-                      RETURN "NOK".
-                  END.
-              END.
-              ELSE  DO:
-                  ASSIGN i-cod-erro  = 90
-                         c-desc-erro = " ".           
-                  RUN cria-erro (INPUT p-cooper,
-                                 INPUT p-cod-agencia,
-                                 INPUT p-nro-caixa,
-                                 INPUT i-cod-erro,
-                                 INPUT c-desc-erro,
-                                 INPUT YES).
-                  RETURN "NOK".
-              END.
-       END.
-   
-       LEAVE.
-    END.  /*  DO WHILE */
-
-    IF  craptit.flgpgdda  THEN DO:
-        ASSIGN i-cod-erro  = 0           
-               c-desc-erro = "Titulo DDA. Estorno nao permitido.".
-        RUN cria-erro (INPUT p-cooper,
-                       INPUT p-cod-agencia,
-                       INPUT p-nro-caixa,
-                       INPUT i-cod-erro,
-                       INPUT c-desc-erro,
-                       INPUT YES).
-        RETURN "NOK".
-    END.
-
-    ASSIGN craplot.vlcompcr = craplot.vlcompcr - craptit.vldpagto
-           craplot.qtcompln = craplot.qtcompln - 1
-
-           craplot.vlinfocr = craplot.vlinfocr - craptit.vldpagto 
-           craplot.qtinfoln = craplot.qtinfoln - 1.
-
-    ASSIGN p-pg     = NO
-           p-docto  = craptit.nrdocmto
-           p-histor = craplot.cdhistor.
-  
-
-    RUN dbo/b2crap14.p PERSISTENT SET h-b2crap14.
-    RUN identifica-titulo-coop IN h-b2crap14
-                             (INPUT  p-cooper,
-                              INPUT  0,  /* Conta   */
-                              INPUT  0,  /* Titular */
-                              INPUT  p-cod-agencia,
-                              INPUT  INT(p-nro-caixa),
+                             INPUT aux_iptu,
                               INPUT  p-codigo-barras,
-                              INPUT  FALSE,
-                              OUTPUT aux-nrdconta-cob,
-                              OUTPUT aux-insittit,
-                              OUTPUT aux-intitcop,
-                              OUTPUT aux-convenio,
-                              OUTPUT aux-bloqueto,
-                              OUTPUT aux-contaconve).
+                             OUTPUT 0,
+                             OUTPUT 0,
+                             OUTPUT 0,
+                             OUTPUT 0,   /* pr_cdcritic */
+                             OUTPUT " "). /* pr_dscritic */
 
-   DELETE PROCEDURE h-b2crap14.   
+CLOSE STORED-PROC pc_estorna_titulos_iptu
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = pc_estorna_titulos_iptu.pr_cdcritic
+           aux_dscritic = pc_estorna_titulos_iptu.pr_dscritic
+           aux_pg       = pc_estorna_titulos_iptu.pr_pg
+           p-docto      = pc_estorna_titulos_iptu.pr_docto
+           aux_histor   = pc_estorna_titulos_iptu.pr_histor
+           p-histor     = aux_histor.
    
-   IF aux-intitcop = 1 THEN /* Se for título da cooperativa */
+    IF aux_pg = 1 THEN
+       p-pg = TRUE.
+    ELSE
+       p-pg = FALSE.    
+           
+    IF TRIM(aux_dscritic) <> ? THEN
       DO:
-
-         /* Pega o codigo do banco (cddbanco) */
-         FIND crapcco WHERE crapcco.cdcooper = crapcop.cdcooper AND
-                            crapcco.nrconven = INTEGER(aux-convenio)
-                            NO-LOCK NO-ERROR.
-
-         IF  NOT AVAILABLE crapcco   THEN
-             DO:
-                ASSIGN i-cod-erro  = 563
-                       c-desc-erro = "".
-
+       ASSIGN i-cod-erro  = aux_cdcritic
+              c-desc-erro = aux_dscritic.           
                 RUN cria-erro (INPUT p-cooper,
                                INPUT p-cod-agencia,
                                INPUT p-nro-caixa,
@@ -733,758 +633,8 @@ PROCEDURE estorna-titulos-iptu.
                 RETURN "NOK".             
              END.         
 
-         /* buscar ceb apenas para os convenios de 7 digitos 
-            SD 218160 */
-         IF LENGTH(STRING(aux-convenio)) >= 7 THEN
-         DO:
-             FIND crapceb WHERE  crapceb.cdcooper = crapcop.cdcooper     AND
-                                 crapceb.nrconven = INT(aux-convenio)    AND
-                                 crapceb.nrcnvceb =                            
-                                         INTEGER(SUBSTR(p-codigo-barras, 33, 4))
-                                 NO-LOCK NO-ERROR.
-    
-             IF  NOT AVAIL crapceb           AND
-                 crapcop.cdcooper = 1        AND
-                 INT(aux-convenio) = 1343313 AND
-                 SUBSTR(p-codigo-barras, 33, 3) = "100" THEN
-                 DO:
-                     FOR EACH crapceb WHERE 
-                              crapceb.cdcooper = crapcop.cdcooper  AND
-                              crapceb.nrconven = INT(aux-convenio) AND
-                              SUBSTR(TRIM(STRING(crapceb.nrcnvceb,"zzzz9")),1,4) = 
-                                 TRIM(STRING(aux-convenio,"zzz9"))
-                              NO-LOCK
-                        ,EACH crapcob WHERE
-                              crapcob.cdcooper = crapceb.cdcooper AND
-                              crapcob.cdbandoc = crapcco.cddbanco AND
-                              crapcob.nrdctabb = crapcco.nrdctabb AND
-                              crapcob.nrcnvcob = crapceb.nrconven AND
-                              crapcob.nrdconta = crapceb.nrdconta AND
-                              crapcob.nrdocmto = aux-bloqueto     AND
-                              crapcob.vldpagto = craptit.vldpagto
-                              NO-LOCK:
-                         aux_rowidcob = ROWID(crapcob).
-                     END.
-        
-                     FIND crapcob WHERE ROWID(crapcob) = aux_rowidcob
-                         NO-LOCK NO-ERROR.
-        
-                     IF  AVAIL crapcob THEN
-                         DO:
-                             FIND crapceb WHERE
-                                  crapceb.cdcooper = crapcob.cdcooper AND
-                                  crapceb.nrconven = crapcob.nrcnvcob AND
-                                  crapceb.nrdconta = crapcob.nrdconta
-                                  NO-LOCK NO-ERROR.
-                         END.
-        
-                 END.
-         END.
-                             
-         /*Quando for boleto da cooperativa, retira o codigo CEB do documento*/
-         IF  AVAILABLE crapceb   THEN
-             ASSIGN aux-bloqueto = DEC(STRING(crapceb.nrcnvceb,"99999") + 
-                                        STRING(aux-bloqueto, "999999999"))
-                    aux-bloqueto2 = DEC(SUBSTR(STRING(aux-bloqueto),
-                                        LENGTH(STRING(aux-bloqueto)) - 5 , 6)).
-         ELSE
-             aux-bloqueto2 = aux-bloqueto.
-              
-
-         FIND craptdb WHERE  craptdb.cdcooper = crapcop.cdcooper   AND
-                             craptdb.cdbandoc = crapcco.cddbanco   AND
-                             craptdb.nrdconta = aux-nrdconta-cob   AND
-                             craptdb.insittit = 2 /* Pago */       AND
-                             craptdb.nrdctabb = aux-contaconve     AND
-                             craptdb.nrcnvcob = INTE(aux-convenio) AND
-                             craptdb.nrdocmto = aux-bloqueto2
-                             NO-LOCK NO-ERROR.
-                                                       
-         IF NOT AVAIL craptdb AND 
-             crapcco.flgregis = FALSE THEN 
-            DO:
-               ASSIGN in99 = 0.
-               DO WHILE TRUE:
-
-                  ASSIGN in99 = in99 + 1.
-
-                  FIND b-craplot WHERE
-                       b-craplot.cdcooper = crapcop.cdcooper AND
-                       b-craplot.dtmvtolt = crapdat.dtmvtocd AND
-                       b-craplot.cdagenci = p-cod-agencia    AND
-                       b-craplot.cdbccxlt = 100              AND  /* Fixo */
-                       b-craplot.nrdolote = 10800 + p-nro-caixa 
-                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                  IF NOT AVAILABLE b-craplot THEN  
-                     DO:
-                       IF LOCKED b-craplot THEN 
-                          DO:
-                            IF  in99 <  100  THEN 
-                                DO:
-                                   PAUSE 1 NO-MESSAGE.
-                                   NEXT.
-                                END.
-                            ELSE 
-                                DO:
-                                   ASSIGN i-cod-erro  = 0
-                                          c-desc-erro = 
-                                                 "Tabela CRAPLOT em uso ".    
-                                   RUN cria-erro (INPUT p-cooper,
-                                                  INPUT p-cod-agencia,
-                                                  INPUT p-nro-caixa,
-                                                  INPUT i-cod-erro,
-                                                  INPUT c-desc-erro,
-                                                  INPUT YES).
-                                   RETURN "NOK".
-                                END.
-                          END.
-                       ELSE 
-                          DO:
-                             ASSIGN i-cod-erro  = 60
-                                    c-desc-erro = " ".           
-                             RUN cria-erro (INPUT p-cooper,
-                                            INPUT p-cod-agencia,
-                                            INPUT p-nro-caixa,
-                                            INPUT i-cod-erro,
-                                            INPUT c-desc-erro,
-                                            INPUT YES).
-                             RETURN "NOK".
-                          END.
-                     END.
-                  LEAVE.                    
-               END.  /*  DO WHILE b-craplot */
-
-               ASSIGN in99 = 0.
-               DO WHILE TRUE:
-
-                  ASSIGN in99 = in99 + 1.
-                  FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper   AND
-                                     craplcm.dtmvtolt = b-craplot.dtmvtolt AND
-                                     craplcm.cdagenci = b-craplot.cdagenci AND
-                                     craplcm.cdbccxlt = b-craplot.cdbccxlt AND
-                                     craplcm.nrdolote = b-craplot.nrdolote AND
-                                     (craplcm.nrdocmto = aux-bloqueto      OR
-                                      craplcm.nrdocmto = aux-bloqueto2)    AND
-                                     craplcm.nrdctabb = aux-contaconve     AND
-                                     craplcm.nrdconta = aux-nrdconta-cob
-                                     USE-INDEX craplcm1
-                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                  IF NOT AVAILABLE craplcm   THEN  
-                     DO:
-                         IF LOCKED craplcm  THEN 
-                            DO:
-                               IF in99 <  100  THEN 
-                                  DO:
-                                      PAUSE 1 NO-MESSAGE.
-                                      NEXT.
-                                  END.
-                               ELSE 
-                                  DO:
-                                     ASSIGN i-cod-erro  = 0
-                                            c-desc-erro = 
-                                                   "Tabela CRAPLCM em uso ".
-                                                    
-                                     RUN cria-erro (INPUT p-cooper,
-                                                    INPUT p-cod-agencia,
-                                                    INPUT p-nro-caixa,
-                                                    INPUT i-cod-erro,
-                                                    INPUT c-desc-erro,
-                                                    INPUT YES).
-                                     RETURN "NOK".
-                                  END.        
-                            END.
-                         ELSE 
-                            DO:           
-                                FIND   craplcm WHERE   craplcm.cdcooper = crapcop.cdcooper   AND
-                                                       craplcm.dtmvtolt = b-craplot.dtmvtolt AND
-                                                       craplcm.cdagenci = b-craplot.cdagenci AND
-                                                       craplcm.cdbccxlt = b-craplot.cdbccxlt AND
-                                                       craplcm.nrdolote = b-craplot.nrdolote AND
-                                                    (  craplcm.nrdocmto = aux-bloqueto       OR
-                                                       craplcm.nrdocmto = aux-bloqueto2)     AND
-                                                       craplcm.nrdctabb = aux-nrdconta-cob   AND
-                                                       craplcm.nrdconta = aux-nrdconta-cob
-                                                       USE-INDEX craplcm1
-                                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                                IF  NOT AVAIL craplcm THEN 
-                                    DO:                                       
-
-                                        ASSIGN i-cod-erro  = 11
-                                               c-desc-erro = " ".           
-        
-                                        RUN cria-erro (INPUT p-cooper,
-                                                       INPUT p-cod-agencia,
-                                                       INPUT p-nro-caixa,
-                                                       INPUT i-cod-erro,
-                                                       INPUT c-desc-erro,
-                                                       INPUT YES).
-                                        RETURN "NOK".
-    
-                                    END.
-                            END.
-                     END.
-                  LEAVE.
- 
-               END. /* while craplcm */
-            END. 
-
-         ASSIGN in99 = 0.
-         DO WHILE TRUE:
-
-            ASSIGN in99 = in99 + 1.
-
-            FIND crapcob WHERE crapcob.cdcooper = crapcop.cdcooper   AND
-                               crapcob.cdbandoc = crapcco.cddbanco   AND 
-                               crapcob.nrcnvcob = INTE(aux-convenio) AND
-                               crapcob.nrdconta = aux-nrdconta-cob   AND
-                               crapcob.nrdocmto = aux-bloqueto2      AND
-                               crapcob.nrdctabb = aux-contaconve
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-            IF NOT AVAILABLE crapcob   THEN  
-               DO:
-                  IF LOCKED crapcob  THEN 
-                     DO:
-                        IF in99 <  100  THEN 
-                           DO:
-                              PAUSE 1 NO-MESSAGE.
-                              NEXT.
-                           END.
-                        ELSE 
-                           DO:
-                             ASSIGN i-cod-erro  = 0
-                                    c-desc-erro = "Tabela CRAPCOB em uso ".
-                             RUN cria-erro (INPUT p-cooper,
-                                            INPUT p-cod-agencia,
-                                            INPUT p-nro-caixa,
-                                            INPUT i-cod-erro,
-                                            INPUT c-desc-erro,
-                                            INPUT YES).
-                             RETURN "NOK".
-                           END.
-                     END.
-                  ELSE 
-                     DO:        
-                        ASSIGN i-cod-erro  = 11
-                               c-desc-erro = " ".           
-
-                        RUN cria-erro (INPUT p-cooper,
-                                       INPUT p-cod-agencia,
-                                       INPUT p-nro-caixa,
-                                       INPUT i-cod-erro,
-                                       INPUT c-desc-erro,
-                                       INPUT YES).
-                        RETURN "NOK".
-                     END.
-               END.
-            ELSE
-               DO:    
-                   ASSIGN crapcob.incobran = 0
-                          crapcob.indpagto = 0
-                          crapcob.dtdpagto = ?
-                          crapcob.vldpagto = 0
-                          crapcob.vltarifa = 0
-                          crapcob.cdbanpag = 0
-                          crapcob.cdagepag = 0
-                          aux_nrcnvbol     =  crapcob.nrcnvcob  
-                          aux_nrctabol     =  crapcob.nrdconta
-                          aux_nrboleto     =  crapcob.nrdocmto.
-
-
-                   IF  crapcob.nrctremp <> 0  THEN
-                       aux_flgepr = TRUE.
-                   ELSE
-                       aux_flgepr = FALSE.
-
-                   RUN estorna-tarifa-titulo (INPUT  crapcop.cdcooper,
-                                              INPUT  aux-nrdconta-cob,
-                                              INPUT  p-cod-agencia,
-                                              INPUT  p-nro-caixa,
-                                              INPUT  aux-convenio,
-                                              INPUT  aux-bloqueto2,
-                                              INPUT  aux_flgepr,
-                                              OUTPUT c-desc-erro).
-
-                   IF   RETURN-VALUE = "NOK"   THEN
-                        DO:
-                            RUN cria-erro (INPUT p-cooper,
-                                           INPUT p-cod-agencia,
-                                           INPUT p-nro-caixa,
-                                           INPUT 0,
-                                           INPUT c-desc-erro,
-                                           INPUT YES).
-
-                            RETURN "NOK".
-                        END.
-
-                   /* Verificar se é uma cobrança com regisrtro*/     
-                   IF crapcob.flgregis THEN
-                   DO:
-                     /* Caso for é necessario deletar o registro 
-                        na crapret cdocorre = 6 */
-                        DO  aux_contador = 1 TO 10:
-                            
-                          FIND crapret
-                             WHERE crapret.cdcooper = crapcob.cdcooper
-                               AND crapret.nrdconta = crapcob.nrdconta
-                               AND crapret.nrcnvcob = crapcob.nrcnvcob
-                               AND crapret.nrdocmto = crapcob.nrdocmto
-                               AND crapret.dtocorre = crapdat.dtmvtocd
-                               AND crapret.cdocorre = 6
-                               EXCLUSIVE-LOCK NO-ERROR.
-                          
-                            IF  NOT AVAILABLE crapret   THEN
-                            DO:
-                                IF  LOCKED crapret   THEN
-                                    DO:                           
-                                        PAUSE 1 NO-MESSAGE.
-                                        ASSIGN i-cod-erro  = 0
-                                               c-desc-erro = "Tabela CRAPRET em uso ".
-                                        NEXT.
-                                    END.
-                            END.  
-                            
-                            ASSIGN i-cod-erro  = 0
-                                   c-desc-erro = "".
-                            LEAVE.
-                        END. /*Fim loop de controle*/
-                        
-                        /* se encontrou critica, gerar registro de erro*/
-                        IF i-cod-erro > 0 OR 
-                           c-desc-erro  <> "" THEN
-                        DO:
-                                           
-                          RUN cria-erro (INPUT p-cooper,
-                                         INPUT p-cod-agencia,
-                                         INPUT p-nro-caixa,
-                                         INPUT i-cod-erro,
-                                         INPUT c-desc-erro,
-                                         INPUT YES).
-                          RETURN "NOK".
-                        END.
-                        
-                        /*se localizou crapret com cdocorre = 6,
-                           deve eliminar*/
-                        IF AVAILABLE crapret THEN
-                          DELETE crapret.
-                        
-                        /* Buscar  registro de retorno para o cooperado
-                           na crapret com cdocorre = 17 */
-                        DO  aux_contador = 1 TO 10:
-                            
-                          FIND crapret
-                             WHERE crapret.cdcooper = crapcob.cdcooper
-                               AND crapret.nrdconta = crapcob.nrdconta
-                               AND crapret.nrcnvcob = crapcob.nrcnvcob
-                               AND crapret.nrdocmto = crapcob.nrdocmto
-                               AND crapret.dtocorre = crapdat.dtmvtocd
-                               AND crapret.cdocorre = 17
-                               EXCLUSIVE-LOCK NO-ERROR.
-                          
-                            IF  NOT AVAILABLE crapret   THEN
-                            DO:
-                                IF  LOCKED crapret   THEN
-                                    DO:                           
-                                        PAUSE 1 NO-MESSAGE.
-                                        ASSIGN i-cod-erro  = 0
-                                               c-desc-erro = "Tabela CRAPRET em uso ".
-                                        NEXT.
-                                    END.
-                            END.  
-                            
-                            ASSIGN i-cod-erro  = 0
-                                   c-desc-erro = "".
-                            LEAVE.
-                        END. /*Fim loop de controle*/
-                        
-                        /* se encontrou critica, gerar registro de erro*/
-                        IF i-cod-erro > 0 OR 
-                           c-desc-erro  <> "" THEN
-                        DO:
-                                           
-                          RUN cria-erro (INPUT p-cooper,
-                                         INPUT p-cod-agencia,
-                                         INPUT p-nro-caixa,
-                                         INPUT i-cod-erro,
-                                         INPUT c-desc-erro,
-                                         INPUT YES).
-                          RETURN "NOK".
-                        END.
-                        
-                        /*se localizou crapret com cdocorre = 17,
-                           deve eliminar*/
-                        IF AVAILABLE crapret THEN
-                          DELETE crapret.
-
-						  
-                     /* Caso for é necessario deletar o registro 
-                        na crapret cdocorre = 76 */
-                        DO  aux_contador = 1 TO 10:
-                            
-                          FIND crapret
-                             WHERE crapret.cdcooper = crapcob.cdcooper
-                               AND crapret.nrdconta = crapcob.nrdconta
-                               AND crapret.nrcnvcob = crapcob.nrcnvcob
-                               AND crapret.nrdocmto = crapcob.nrdocmto
-                               AND crapret.dtocorre = crapdat.dtmvtocd
-                               AND crapret.cdocorre = 76
-                               EXCLUSIVE-LOCK NO-ERROR.
-                          
-                            IF  NOT AVAILABLE crapret   THEN
-                            DO:
-                                IF  LOCKED crapret   THEN
-                                    DO:                           
-                                        PAUSE 1 NO-MESSAGE.
-                                        ASSIGN i-cod-erro  = 0
-                                               c-desc-erro = "Tabela CRAPRET em uso ".
-                                        NEXT.
-                                    END.
-                            END.  
-                            
-                            ASSIGN i-cod-erro  = 0
-                                   c-desc-erro = "".
-                            LEAVE.
-                        END. /*Fim loop de controle*/
-                        
-                        /* se encontrou critica, gerar registro de erro*/
-                        IF i-cod-erro > 0 OR 
-                           c-desc-erro  <> "" THEN
-                        DO:
-                                           
-                          RUN cria-erro (INPUT p-cooper,
-                                         INPUT p-cod-agencia,
-                                         INPUT p-nro-caixa,
-                                         INPUT i-cod-erro,
-                                         INPUT c-desc-erro,
-                                         INPUT YES).
-                          RETURN "NOK".
-                        END.
-                        
-                        /*se localizou crapret com cdocorre = 76,
-                           deve eliminar*/
-                        IF AVAILABLE crapret THEN
-                          DELETE crapret.
-						  
-						  
-                     /* Caso for é necessario deletar o registro 
-                        na crapret cdocorre = 77 */
-                        DO  aux_contador = 1 TO 10:
-                            
-                          FIND crapret
-                             WHERE crapret.cdcooper = crapcob.cdcooper
-                               AND crapret.nrdconta = crapcob.nrdconta
-                               AND crapret.nrcnvcob = crapcob.nrcnvcob
-                               AND crapret.nrdocmto = crapcob.nrdocmto
-                               AND crapret.dtocorre = crapdat.dtmvtocd
-                               AND crapret.cdocorre = 77
-                               EXCLUSIVE-LOCK NO-ERROR.
-                          
-                            IF  NOT AVAILABLE crapret   THEN
-                            DO:
-                                IF  LOCKED crapret   THEN
-                                    DO:                           
-                                        PAUSE 1 NO-MESSAGE.
-                                        ASSIGN i-cod-erro  = 0
-                                               c-desc-erro = "Tabela CRAPRET em uso ".
-                                        NEXT.
-                                    END.
-                            END.  
-                            
-                            ASSIGN i-cod-erro  = 0
-                                   c-desc-erro = "".
-                            LEAVE.
-                        END. /*Fim loop de controle*/
-                        
-                        /* se encontrou critica, gerar registro de erro*/
-                        IF i-cod-erro > 0 OR 
-                           c-desc-erro  <> "" THEN
-                        DO:
-                                           
-                          RUN cria-erro (INPUT p-cooper,
-                                         INPUT p-cod-agencia,
-                                         INPUT p-nro-caixa,
-                                         INPUT i-cod-erro,
-                                         INPUT c-desc-erro,
-                                         INPUT YES).
-                          RETURN "NOK".
-                        END.
-                        
-                        /*se localizou crapret com cdocorre = 77,
-                           deve eliminar*/
-                        IF AVAILABLE crapret THEN
-                          DELETE crapret.
-						  
-
-                        /* criar log de cobranca */
-                        RUN sistema/generico/procedures/b1wgen0089.p
-                           PERSISTENT SET h-b1wgen0089.
-                           
-                        IF  RETURN-VALUE = "NOK"  THEN
-                        DO:
-                           ASSIGN i-cod-erro  = 0
-                                  c-desc-erro = "Handle invalido para " +
-                                                "h-b1wgen0089.".
-                            
-                           RUN cria-erro (INPUT p-cooper,
-                                          INPUT p-cod-agencia,
-                                          INPUT p-nro-caixa,
-                                          INPUT 0,
-                                          INPUT c-desc-erro,
-                                          INPUT YES).
-
-                           RETURN "NOK".
-                        END.
-                        
-                        RUN cria-log-cobranca IN h-b1wgen0089                        
-                                  (INPUT ROWID(crapcob),
-                                   INPUT p-cod-operador,
-                                   INPUT crapdat.dtmvtocd,
-                                   INPUT "Cobrança estornada.").
-
-                       DELETE PROCEDURE h-b1wgen0089.
-
-                   END. /* Fim IF crapcob.flgregis */
-
-
-                   IF  crapcob.nrctremp <> 0  AND 
-                       crapcob.nrctasac <> 0  THEN
-                   DO:
-                   /* Fazer estorno de lancamentos de baixa de emprestimo */
-                   RUN sistema/generico/procedures/b1wgen0023.p
-                       PERSISTENT SET h-b1wgen0023.
-                       
-                   IF  RETURN-VALUE = "NOK"  THEN
-                       DO:
-                           ASSIGN i-cod-erro  = 0
-                                  c-desc-erro = "Handle invalido para " +
-                                                "h-b1wgen0023.".
-                            
-                           RUN cria-erro (INPUT p-cooper,
-                                          INPUT p-cod-agencia,
-                                          INPUT p-nro-caixa,
-                                          INPUT 0,
-                                          INPUT c-desc-erro,
-                                          INPUT YES).
-
-                           RETURN "NOK".
-                       END.
-
-                   /* Faz os lancamentos necessarios */
-                   RUN estorna_baixa_epr_titulo IN h-b1wgen0023
-                                             (INPUT crapcop.cdcooper,
-                                              INPUT 0,   /* agencia */
-                                              INPUT 0,   /* nro-caixa */  
-                                              INPUT 0,   /* operador */
-                                              INPUT crapcob.nrdconta,
-                                              INPUT 1,   /* idseqttl */
-                                              INPUT 1,   /* Ayllos */
-                                              INPUT "b2crap15.p",
-                                              INPUT crapdat.dtmvtolt,
-                                              INPUT crapcob.nrctasac,
-                                              INPUT crapcob.nrctremp,
-                                              INPUT crapcob.nrdocmto,
-                                              INPUT crapcob.dtvencto,
-                                              INPUT TRUE,
-                                              OUTPUT TABLE tt-erro).
-                   
-                   DELETE PROCEDURE h-b1wgen0023.
-                  
-                   IF  RETURN-VALUE = "NOK"  THEN
-                       DO:
-                           /* Caso ocorra erros, joga pro log */
-                           FIND FIRST tt-erro NO-LOCK NO-ERROR.
-                  
-                           IF  AVAILABLE tt-erro  THEN
-                               DO:
-                                   ASSIGN i-cod-erro  = 0
-                                          c-desc-erro = tt-erro.dscritic.
-                            
-                                   RUN cria-erro (INPUT p-cooper,
-                                                  INPUT p-cod-agencia,
-                                                  INPUT p-nro-caixa,
-                                                  INPUT 0,
-                                                  INPUT c-desc-erro,
-                                                  INPUT YES).
-
-                               END.
-                           ELSE
-                               DO:
-                                   ASSIGN i-cod-erro  = 0
-                                          c-desc-erro = 
-                                          "Emprestimo nao estornado. Conta " + 
-                                           STRING(crapcob.nrdconta) +
-                                          " Ctr. " + 
-                                           STRING(crapcob.nrctremp) +
-                                          " Cta.Sac. " +
-                                           STRING(crapcob.nrctasac) +
-                                          " Bol. " +
-                                           STRING(crapcob.nrdocmto).
-                            
-                                   RUN cria-erro (INPUT p-cooper,
-                                                  INPUT p-cod-agencia,
-                                                  INPUT p-nro-caixa,
-                                                  INPUT 0,
-                                                  INPUT c-desc-erro,
-                                                  INPUT YES).
-                               END.
-                               
-                           RETURN "NOK".
-                               
-                       END.     
-                   END. /* final do estorno de titulos em emprestimo */   
-               END.
-
-            LEAVE.
-         END. /* while crapcob */
-
-         IF NOT AVAIL craptdb AND 
-            crapcco.flgregis = FALSE THEN 
-            DO:
-               ASSIGN b-craplot.vlcompcr = b-craplot.vlcompcr - craplcm.vllanmto
-                      b-craplot.qtcompln = b-craplot.qtcompln - 1               
-                      b-craplot.vlinfocr = b-craplot.vlinfocr - craplcm.vllanmto
-                      b-craplot.qtinfoln = b-craplot.qtinfoln - 1.
-
-               IF  b-craplot.vlcompdb = 0 AND
-                   b-craplot.vlinfodb = 0 AND
-                   b-craplot.vlcompcr = 0 AND
-                   b-craplot.vlinfocr = 0 THEN
-                   DELETE b-craplot.
-               ELSE
-                   RELEASE b-craplot.
-   
-               RELEASE crapcob.
-               DELETE craplcm.
-            END.
-      
-         ASSIGN in99 = 0.
-         DO WHILE TRUE:
-            
-            FIND crapchd EXCLUSIVE-LOCK  WHERE
-                 crapchd.cdcooper = crapcop.cdcooper    AND
-                 crapchd.dtmvtolt = crapdat.dtmvtocd    AND
-                 crapchd.cdagenci = p-cod-agencia       AND 
-                 crapchd.cdbccxlt = 500                 AND
-                 crapchd.nrdolote = 28000 + p-nro-caixa AND
-                 crapchd.nrboleto = aux_nrboleto        AND
-                 crapchd.nrctabol = aux_nrctabol        AND
-                 crapchd.nrcnvbol = aux_nrcnvbol        NO-ERROR NO-WAIT.
-    
-            ASSIGN in99 = in99 + 1.
-            IF    NOT AVAILABLE crapchd THEN DO:
-                  IF   LOCKED crapchd   THEN DO:
-                       IF  in99 <  100  THEN DO:
-                          PAUSE 1 NO-MESSAGE.
-                          NEXT.
-                      END.
-                      ELSE DO:
-                          ASSIGN i-cod-erro  = 0
-                                 c-desc-erro = "Tabela CRAPCHD em uso ".           
-                          RUN cria-erro (INPUT p-cooper,
-                                         INPUT p-cod-agencia,
-                                         INPUT p-nro-caixa,
-                                         INPUT i-cod-erro,
-                                         INPUT c-desc-erro,
-                                         INPUT YES).
-                          RETURN "NOK".
-                      END.
-                  END.      
-            END.
-       
-            LEAVE.
-         END.  /*  DO WHILE */
-         
-         IF  AVAIL crapchd THEN 
-             DO:
-                 ASSIGN in99 = 0.
-                 DO WHILE TRUE:
-                   
-                    ASSIGN in99 = in99 + 1.
-                    FIND crablot EXCLUSIVE-LOCK  WHERE
-                         crablot.cdcooper = crapcop.cdcooper AND
-                         crablot.dtmvtolt = crapdat.dtmvtocd AND 
-                         crablot.cdagenci = crapchd.cdagenci AND
-                         crablot.cdbccxlt = crapchd.cdbccxlt AND
-                         crablot.nrdolote = crapchd.nrdolote NO-ERROR NO-WAIT.
-                  
-                    IF   NOT AVAILABLE crablot   THEN  DO:
-                         IF   LOCKED crablot     THEN DO:
-                              IF  in99 <  100  THEN DO:
-                                  PAUSE 1 NO-MESSAGE.
-                                  NEXT.
-                              END.
-                              ELSE DO:
-                                  ASSIGN i-cod-erro  = 0
-                                         c-desc-erro = "Tabela CRAPLOT em uso ".           
-                                  RUN cria-erro (INPUT p-cooper,
-                                                 INPUT p-cod-agencia,
-                                                 INPUT p-nro-caixa,
-                                                 INPUT i-cod-erro,
-                                                 INPUT c-desc-erro,
-                                                 INPUT YES).
-                                  RETURN "NOK".
-                              END.
-                         END.
-                         ELSE DO:
-                              ASSIGN i-cod-erro  = 60
-                                     c-desc-erro = " ".
-            
-                              RUN cria-erro (INPUT p-cooper,
-                                             INPUT p-cod-agencia,
-                                             INPUT p-nro-caixa,
-                                             INPUT i-cod-erro,
-                                             INPUT c-desc-erro,
-                                             INPUT YES).
-                              RETURN "NOK".
-                         END.
-                    END.
-                    LEAVE.
-                 END.  /*  DO WHILE */
-
-                 ASSIGN crablot.vlcompdb = crablot.vlcompdb - crapchd.vlcheque
-                        crablot.vlcompcr = crablot.vlcompcr - crapchd.vlcheque
-                        crablot.vlinfodb = crablot.vlinfodb - crapchd.vlcheque
-                        crablot.vlinfocr = crablot.vlinfocr - crapchd.vlcheque
-                        crablot.qtinfoln = crablot.qtinfoln - 1
-                        crablot.qtcompln = crablot.qtcompln - 1.                                                    
-            
-                 /*** Lote de cheque ***/
-                 IF crablot.vlcompdb = 0 AND
-                    crablot.vlinfodb = 0 AND
-                    crablot.vlcompcr = 0 AND
-                    crablot.vlinfocr = 0 THEN
-                    DELETE crablot.
-                 ELSE
-                    RELEASE crablot.
-            
-                 DELETE crapchd.
-
-                 RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00. 
-                 RUN atualiza-previa-caixa IN h-b1crap00 (INPUT crapcop.nmrescop,
-                                                          INPUT p-cod-agencia,
-                                                          INPUT p-nro-caixa,
-                                                          INPUT p-cod-operador,
-                                                          INPUT crapdat.dtmvtolt,
-                                                          INPUT 2).  /*Estorno*/
-                 DELETE PROCEDURE h-b1crap00.
-
-             END. /**IF AVAIL crapchd **/
-      END.
-   
-   IF craplot.vlcompdb = 0 AND
-      craplot.vlinfodb = 0 AND
-      craplot.vlcompcr = 0 AND
-      craplot.vlinfocr = 0 THEN
-      DELETE craplot.
-   ELSE
-      RELEASE craplot.
-      
-   DELETE craptit.
-
    RETURN "OK".
+
 
 END PROCEDURE.
 

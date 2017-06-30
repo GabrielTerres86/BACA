@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 08/01/2016
+   Data    : Marco/2007                        Ultima atualizacao: 02/01/2017
 
    Dados referentes ao programa:
 
@@ -47,12 +47,26 @@
                             do envio por e-mail (Projeto Boleto Formato Carnê - Douglas)
                             
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
+               
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
+                            
+               
+               28/10/2016 - Ajustes realizados referente a melhoria 271. (Kelvin)
+
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
+
+               22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
+                            
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
     
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i   }
 { sistema/internet/includes/b1wnet0001tt.i }
 { sistema/generico/includes/b1wgen0010tt.i }
 { sistema/generico/includes/b1wgen0015tt.i }
@@ -101,6 +115,16 @@ DEF  INPUT PARAM par_nrdiavct AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_flserasa AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_qtdianeg AS INTE                                  NO-UNDO.
 
+/* Aviso SMS */
+DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
+
+DEF  INPUT PARAM par_flgregon AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_inpagdiv AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_vlminimo AS DECI                                  NO-UNDO.
+
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
@@ -115,6 +139,9 @@ DEF VAR aux_nmprimtl_ben LIKE crapass.nmprimtl                         NO-UNDO.
 DEF VAR aux_nrcpfcgc_ben LIKE crapass.nrcpfcgc                         NO-UNDO.
 DEF VAR aux_inpessoa_ben LIKE crapass.inpessoa                         NO-UNDO.
 DEF VAR aux_dsdemail_ben LIKE crapcem.dsdemail                         NO-UNDO.
+
+DEF VAR aux_ctdemail AS INTE                                           NO-UNDO.
+DEF VAR aux_qtdemail AS INTE                                           NO-UNDO.
 
 /* sistema deve atribuir data do dia vindo da crapdat
    Rafael Cechet - 06/04/2011 */
@@ -188,6 +215,7 @@ DO:
     RETURN "NOK".
 END.
 
+
 RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    INPUT 90,             /** PAC      **/
                                    INPUT 900,            /** Caixa    **/
@@ -237,6 +265,17 @@ RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    /* Serasa */
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
+
+                                   /*Aviso SMS*/
+                                   INPUT par_inavisms,
+                                   INPUT par_insmsant,
+                                   INPUT par_insmsvct,
+                                   INPUT par_insmspos,         
+        
+                                   /* NPC */
+                                   INPUT par_flgregon,
+                                   INPUT par_inpagdiv,
+                                   INPUT par_vlminimo,
 
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-consulta-blt,
@@ -414,6 +453,31 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    (IF tt-consulta-blt.flserasa = TRUE 
                                    THEN "S" ELSE "N") + "</flserasa>" +
                                    "<qtdianeg>" +  STRING(tt-consulta-blt.qtdianeg) + "</qtdianeg>" +
+                                   
+                                   /* Aviso SMS*/
+                                   "<inavisms>" + 
+                                   STRING(tt-consulta-blt.inavisms) + 
+                                   "</inavisms>" +
+                                   "<insmsant>" + 
+                                   STRING(tt-consulta-blt.insmsant) + 
+                                   "</insmsant>" +
+                                   "<insmsvct>" + 
+                                   STRING(tt-consulta-blt.insmsvct) + 
+                                   "</insmsvct>" +
+                                   "<insmspos>" + 
+                                   STRING(tt-consulta-blt.insmspos) + 
+                                   "</insmspos>" +
+                                   
+                                   "<inenvcip>" + 
+                                   STRING(tt-consulta-blt.inenvcip) + 
+                                   "</inenvcip>" +
+                                   "<inpagdiv>" + 
+                                   STRING(tt-consulta-blt.inpagdiv) + 
+                                   "</inpagdiv>" +
+                                   "<vlminimo>" + 
+                                   STRING(tt-consulta-blt.vlminimo) + 
+                                   "</vlminimo>" +
+                                   
                                    "</boleto>".
 
 
@@ -449,12 +513,17 @@ FOR EACH tt-consulta-blt NO-LOCK:
                 DO:
                     IF VALID-HANDLE(h-b1wgen0088) THEN
                     DO:
+                    
+                        ASSIGN aux_qtdemail = NUM-ENTRIES(tt-dados-sacado-blt.dsdemail,";").
+                        
+                        DO aux_ctdemail = 1 TO aux_qtdemail:
                         /* Cria o log da cobrança informando que o boleto foi enviado por e-mail */
                         RUN cria-log-cobranca IN h-b1wgen0088
                               (INPUT ROWID(crapcob),
                                INPUT "996", /* cdoperad */
                                INPUT TODAY,
-                               INPUT "ENVIADO EMAIL: " + TRIM(tt-dados-sacado-blt.dsdemail) ).
+                               INPUT "ENVIADO EMAIL: " + TRIM(ENTRY(aux_ctdemail,tt-dados-sacado-blt.dsdemail,";"))).  
+                        END.		   
                     END.
                 END.
             END.
@@ -527,6 +596,8 @@ ASSIGN xml_operacao.dslinxml = "<dados_beneficiario><nmprimtl>" +
                                "</inpessoa><dsdemail>" + 
                                aux_dsdemail_ben + 
                                "</dsdemail></dados_beneficiario>".
+                               
+ 
 
 RETURN "OK".
 

@@ -49,6 +49,9 @@
                             
                28/07/2015 - Adição de parâmetro flmobile para indicar que a origem
                             da chamada é do mobile (Dionathan)
+
+			   07/02/2017 - Incluir código de controle de consulta CIP como 
+			                parametro. (Odirlei)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -103,6 +106,7 @@ DEF  INPUT PARAM par_dtmvtopg AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_dscedent AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope LIKE crapopi.nrcpfope                    NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
+DEF  INPUT PARAM par_cdctrlcs AS CHAR                                  NO-UNDO. 
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -143,7 +147,6 @@ ASSIGN aux_dstransa = "Valida " +
                            "agendamento de ") +
                       "pagamento".
 
-
   /* Procedimento do internetbank operaçao 26 - Validar pagamento */
   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
   RUN STORED-PROCEDURE pc_InternetBank26
@@ -166,6 +169,7 @@ ASSIGN aux_dstransa = "Valida " +
       ,INPUT par_dscedent    /* --> Descriçao do cedente */
       ,INPUT par_nrcpfope    /* --> CPF do operador juridico      */
       ,INPUT INTE(par_flmobile) /* Indicador que origem é Mobile */
+      ,INPUT par_cdctrlcs    /* --> Numero de controle da consulta no NPC */
       ,OUTPUT ""             /* --> Retorno XML de critica        */
       ,OUTPUT ""             /* --> Retorno XML da operaçao 26    */
       ,OUTPUT ""       ).    /* --> Retorno de critica (OK ou NOK)*/ 

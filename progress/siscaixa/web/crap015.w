@@ -78,6 +78,7 @@ DEFINE VARIABLE p_sequencia AS DECIMAL    NO-UNDO.
 DEFINE VARIABLE p_digito    AS INTEGER    NO-UNDO.
 DEFINE VARIABLE p_iptu      AS LOGICAL    NO-UNDO.
 DEFINE VARIABLE c_codbarras AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE p_cdctrbxo  AS CHARACTER  NO-UNDO.
 
 DEFINE VARIABLE de_tit1     AS DECIMAL    NO-UNDO.
 DEFINE VARIABLE de_tit2     AS DECIMAL    NO-UNDO.
@@ -504,7 +505,8 @@ PROCEDURE process-web-request :
                                            INPUT 0,
                                            INPUT 0,
                                            OUTPUT p_valor,
-                                           OUTPUT p_valordoc).
+                                           OUTPUT p_valordoc,
+                                           OUTPUT p_cdctrbxo).
                             IF VALID-HANDLE(h_b2crap15) THEN
                                 DELETE PROCEDURE h_b2crap15.
                             IF RETURN-VALUE = "NOK" THEN
@@ -519,7 +521,7 @@ PROCEDURE process-web-request :
                                     '<script>window.location = "crap015b.html?v_pradio=" + "'get-value("radio")'" + 
                                      "&v_pvalordoc=" + "' p_valordoc '" + "&v_pvalor=" + "' p_valor '" + "&v_pbarras=" + "' c_codbarras '" +
                                      "&v_ptit1=" + "' de_tit1 '" + "&v_ptit2=" + "' de_tit2 '" + "&v_ptit3=" + "' de_tit3 '" +
-                                     "&v_ptit4=" + "' de_tit4 '" + "&v_ptit5=" + "' de_tit5 '"
+                                     "&v_ptit4=" + "' de_tit4 '" + "&v_ptit5=" + "' de_tit5 '" + "&v_pcdctrbxo=" + "' p_cdctrbxo '"
                                     </script>'.   
                             END.                  
                            
@@ -602,7 +604,8 @@ PROCEDURE process-web-request :
                                                    INPUT 0,
                                                    INPUT 0,
                                                    OUTPUT p_valor,
-                                                   OUTPUT p_valordoc).
+                                                   OUTPUT p_valordoc,
+                                                   OUTPUT p_cdctrbxo).
                                     IF VALID-HANDLE(h_b2crap15) THEN
                                         DELETE PROCEDURE h_b2crap15.
                                     IF RETURN-VALUE = "NOK" THEN
@@ -617,7 +620,7 @@ PROCEDURE process-web-request :
                                             '<script>window.location = "crap015b.html?v_pradio=" + "'get-value("radio")'" + 
                                              "&v_pvalordoc=" + "' p_valordoc '" + "&v_pvalor=" + "' p_valor '" + "&v_pbarras=" + "'get-value("v_codbarras")'" +
                                              "&v_ptit1=" + "' de_tit1 '" + "&v_ptit2=" + "' de_tit2 '" + "&v_ptit3=" + "' de_tit3 '" +
-                                             "&v_ptit4=" + "' de_tit4 '" + "&v_ptit5=" + "' de_tit5 '"
+                                             "&v_ptit4=" + "' de_tit4 '" + "&v_ptit5=" + "' de_tit5 '" + "&v_pcdctrbxo=" + "' p_cdctrbxo '"
                                             </script>'.   
                                     END.                  
                                 END.

@@ -48,6 +48,9 @@
 
                 04/02/2016 - Ajuste Projeto Negativação Serasa (Daniel)   
                                  
+                13/10/2016 - Inclusao opcao 95 e 96, para Enviar e cancelar
+                             SMS de vencimento. PRJ319 - SMS Cobranca (Odirlei-AMcom)
+                                 
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -70,6 +73,7 @@ DEF  INPUT PARAM par_dtvencto AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_vlabatim AS DECI                                  NO-UNDO.
 DEF  INPUT PARAM par_cdtpinsc AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_vldescto AS DECI                                  NO-UNDO.
+DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
@@ -86,244 +90,44 @@ FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
 IF  AVAILABLE crapdat  THEN
     ASSIGN par_dtmvtolt = crapdat.dtmvtocd.
+    
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
 
-RUN sistema/generico/procedures/b1wgen0088.p PERSISTENT SET h-b1wgen0088.
+RUN STORED-PROCEDURE pc_InternetBank66
+    aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT par_cdcooper,
+                             INPUT par_nrdconta,
+                             INPUT par_nrcnvcob,
+                             INPUT par_nrdocmto,
+                             INPUT par_cdocorre,
+                             INPUT par_dtmvtolt,
+                             INPUT par_cdoperad,
+                             INPUT 0,    /* par_nrremass */
+                             INPUT par_vlabatim,
+                             INPUT par_dtvencto,
+                             INPUT par_vldescto,
+                             INPUT par_cdtpinsc,
+                             OUTPUT xml_dsmsgerr,
+                             OUTPUT 0,   /* pr_cdcritic */
+                             OUTPUT ""). /* pr_dscritic */
 
-IF  NOT VALID-HANDLE(h-b1wgen0088)  THEN
-DO:
+CLOSE STORED-PROC pc_InternetBank66
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-    ASSIGN aux_dscritic = "Handle invalido para BO b1wgen0088.".
-           xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
-            
-    RETURN "NOK".
-END.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
-IF par_cdocorre = 2 THEN
-DO: /* Baixar */
-    RUN inst-pedido-baixa IN h-b1wgen0088 (INPUT par_cdcooper,
-                                           INPUT par_nrdconta,
-                                           INPUT par_nrcnvcob,
-                                           INPUT par_nrdocmto,
-                                           INPUT par_cdocorre,
-                                           INPUT par_dtmvtolt,
-                                           INPUT par_cdoperad,
-                                           INPUT 0,
-                                          OUTPUT xml_dsmsgerr,
-                                          INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Pedido de Baixa").
-END.
-ELSE IF par_cdocorre = 4 THEN
-DO: /* Conceder Abatimento */
-    RUN inst-conc-abatimento IN h-b1wgen0088 (INPUT par_cdcooper,
-                                              INPUT par_nrdconta,
-                                              INPUT par_nrcnvcob,
-                                              INPUT par_nrdocmto,
-                                              INPUT par_cdocorre,
-                                              INPUT par_dtmvtolt,
-                                              INPUT par_cdoperad,
-                                              INPUT par_vlabatim,
-                                              INPUT 0,
-                                             OUTPUT xml_dsmsgerr,
-                                             INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Conceder Abatimento").
-END.
-ELSE IF par_cdocorre = 5 THEN
-DO: /* Cancelar Abatimento */
-    RUN inst-canc-abatimento IN h-b1wgen0088 (INPUT par_cdcooper,
-                                              INPUT par_nrdconta,
-                                              INPUT par_nrcnvcob,
-                                              INPUT par_nrdocmto,
-                                              INPUT par_cdocorre,
-                                              INPUT par_dtmvtolt,
-                                              INPUT par_cdoperad,
-                                              INPUT 0,
-                                             OUTPUT xml_dsmsgerr,
-                                             INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Cancelar Abatimento").
-END.
-ELSE IF par_cdocorre = 6 THEN
-DO: /* Alterar Vencimento */
-    RUN inst-alt-vencto IN h-b1wgen0088 (INPUT par_cdcooper,
-                                         INPUT par_nrdconta,
-                                         INPUT par_nrcnvcob,
-                                         INPUT par_nrdocmto,
-                                         INPUT par_cdocorre,
-                                         INPUT par_dtmvtolt,
-                                         INPUT par_cdoperad,
-                                         INPUT par_dtvencto,
-                                         INPUT 0,
-                                        OUTPUT xml_dsmsgerr,
-                                        INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Alterar Vencimento").
-END.
-ELSE IF par_cdocorre = 7 THEN
-DO: /* Conceder Desconto */
-    RUN inst-conc-desconto IN h-b1wgen0088 (INPUT par_cdcooper,
-                                            INPUT par_nrdconta,
-                                            INPUT par_nrcnvcob,
-                                            INPUT par_nrdocmto,
-                                            INPUT par_cdocorre,
-                                            INPUT par_dtmvtolt,
-                                            INPUT par_cdoperad,
-                                            INPUT par_vldescto,
-                                            INPUT 0,
-                                           OUTPUT xml_dsmsgerr,
-                                           INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Conceder Desconto").
-END.
-ELSE IF par_cdocorre = 8 THEN
-DO: /* Cancelar Desconto */
-    RUN inst-canc-desconto IN h-b1wgen0088 (INPUT par_cdcooper,
-                                            INPUT par_nrdconta,
-                                            INPUT par_nrcnvcob,
-                                            INPUT par_nrdocmto,
-                                            INPUT par_cdocorre,
-                                            INPUT par_dtmvtolt,
-                                            INPUT par_cdoperad,
-                                            INPUT 0,
-                                           OUTPUT xml_dsmsgerr,
-                                           INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Cancelar Desconto").
-END.
-ELSE IF par_cdocorre = 9 THEN
-DO: /* Protestar */
-    RUN inst-protestar IN h-b1wgen0088 (INPUT par_cdcooper,
-                                        INPUT par_nrdconta,
-                                        INPUT par_nrcnvcob,
-                                        INPUT par_nrdocmto,
-                                        INPUT par_cdocorre,
-                                        INPUT par_cdtpinsc,
-                                        INPUT par_dtmvtolt,
-                                        INPUT par_cdoperad,
-                                        INPUT 0,
-                                       OUTPUT xml_dsmsgerr,
-                                       INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Protestar").
-END.
-ELSE IF par_cdocorre = 11 THEN
-DO: /* Sustar Protesto */
-    RUN inst-sustar-manter IN h-b1wgen0088 (INPUT par_cdcooper,
-                                            INPUT par_nrdconta,
-                                            INPUT par_nrcnvcob,
-                                            INPUT par_nrdocmto,
-                                            INPUT par_cdocorre,
-                                            INPUT par_dtmvtolt,
-                                            INPUT par_cdoperad,
-                                            INPUT 0,
-                                           OUTPUT xml_dsmsgerr,
-                                           INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Sustar Protesto").
-END.
-ELSE IF par_cdocorre = 41 THEN
-DO: /* Cancelar Protesto */
-    RUN inst-cancel-protesto IN h-b1wgen0088 (INPUT par_cdcooper,
-                                              INPUT par_nrdconta,
-                                              INPUT par_nrcnvcob,
-                                              INPUT par_nrdocmto,
-                                              INPUT par_cdocorre,
-                                              INPUT par_dtmvtolt,
-                                              INPUT par_cdoperad,
-                                              INPUT 0,
-                                             OUTPUT xml_dsmsgerr,
-                                             INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Cancelar Protesto").
-END.
-ELSE IF par_cdocorre = 90 THEN  
-DO: /* Alt Tipo Emissao CEE */
-    RUN inst-alt-tipo-emissao-cee IN h-b1wgen0088 (INPUT par_cdcooper,
-                                                   INPUT par_nrdconta,
-                                                   INPUT par_nrcnvcob,
-                                                   INPUT par_nrdocmto,
-                                                   INPUT par_cdocorre,
-                                                   INPUT par_dtmvtolt,
-                                                   INPUT par_cdoperad,
-                                                   INPUT 0,
-                                                  OUTPUT xml_dsmsgerr,
-                                                  INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-    RUN pi_gera_log (INPUT "Alterar Tipo Emissao CEE").
-END.
-ELSE IF par_cdocorre = 93 THEN  
-DO: /* Negativar Serasa */
-
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
-
-    RUN STORED-PROCEDURE pc_negativa_serasa
-        aux_handproc = PROC-HANDLE NO-ERROR
-                                (INPUT par_cdcooper,
-                                 INPUT par_nrcnvcob,
-                                 INPUT par_nrdconta,
-                                 INPUT par_nrdocmto,
-                                 INPUT 0,    /* par_nrremass */
-                                 INPUT "996",   /* par_cdoperad */
-                                 OUTPUT 0,   /* pr_cdcritic */
-                                 OUTPUT ""). /* pr_dscritic */
-
-    CLOSE STORED-PROC pc_negativa_serasa
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = ""
-
-           aux_cdcritic = pc_negativa_serasa.pr_cdcritic 
-                              WHEN pc_negativa_serasa.pr_cdcritic <> ?
-           aux_dscritic = pc_negativa_serasa.pr_dscritic
-                              WHEN pc_negativa_serasa.pr_dscritic <> ?. 
-
+ASSIGN aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_cdcritic = pc_InternetBank66.pr_cdcritic 
+                          WHEN pc_InternetBank66.pr_cdcritic <> ?
+       aux_dscritic = pc_InternetBank66.pr_dscritic
+                          WHEN pc_InternetBank66.pr_dscritic <> ?. 
 
     IF aux_dscritic <> "" THEN
       ASSIGN xml_dsmsgerr = aux_dscritic.  
 
-    RUN pi_gera_log (INPUT "Negativar Serasa").
-END.
-ELSE IF par_cdocorre = 94 THEN  
-DO: /* Cancelar Negativação */
+    RUN pi_gera_log (INPUT "InternetBank66").
 
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
-
-    RUN STORED-PROCEDURE pc_cancelar_neg_serasa
-        aux_handproc = PROC-HANDLE NO-ERROR
-                                (INPUT par_cdcooper,
-                                 INPUT par_nrcnvcob,
-                                 INPUT par_nrdconta,
-                                 INPUT par_nrdocmto,
-                                 INPUT 0,    /* par_nrremass */
-                                 INPUT "996",   /* par_cdoperad */
-                                 OUTPUT 0,   /* pr_cdcritic */
-                                 OUTPUT ""). /* pr_dscritic */
-
-    CLOSE STORED-PROC pc_cancelar_neg_serasa
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = ""
-
-           aux_cdcritic = pc_cancelar_neg_serasa.pr_cdcritic 
-                              WHEN pc_cancelar_neg_serasa.pr_cdcritic <> ?
-           aux_dscritic = pc_cancelar_neg_serasa.pr_dscritic
-                              WHEN pc_cancelar_neg_serasa.pr_dscritic <> ?. 
-
-
-    IF aux_dscritic <> "" THEN
-      ASSIGN xml_dsmsgerr = aux_dscritic.  
-
-    RUN pi_gera_log (INPUT "Cancelar Negativacao").
-END.
-
-DELETE PROCEDURE h-b1wgen0088.
 
 IF  xml_dsmsgerr <> ""  THEN
     DO:                                                             
@@ -333,19 +137,6 @@ IF  xml_dsmsgerr <> ""  THEN
         RETURN "NOK".
     END.
 
-/* Inicio - Rotina para cobranca tarifa */
-
-IF  NOT VALID-HANDLE(h-b1wgen0090) THEN
-    RUN sistema/generico/procedures/b1wgen0090.p PERSISTENT SET h-b1wgen0090.
-
-RUN efetua-lancamento-tarifas-lat IN h-b1wgen0090(INPUT par_cdcooper,
-                                                  INPUT par_dtmvtolt,
-                                                  INPUT-OUTPUT TABLE tt-lat-consolidada ).
-IF  VALID-HANDLE(h-b1wgen0090) THEN
-    DELETE PROCEDURE h-b1wgen0090.
-
-/* Fim - Rotina para cobranca tarifa */
-           
 RETURN "OK".
 
 PROCEDURE pi_gera_log:
