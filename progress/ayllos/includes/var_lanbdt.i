@@ -41,7 +41,9 @@
 							e removido uma da coluna de pagador para resolver o problema
 							pois a quantidade atual ainda não atendia a necessidade. 
 							(Chamado 433565 - Gisele RKAM).
-                           
+  
+               18/05/2017 - Exibir campo "Valor Divergente". 
+                            PRJ340 - NPC (Odirlei-AMcom)                                
 ............................................................................. */
 
 DEF {1} SHARED VAR tel_dtmvtolt AS DATE    FORMAT "99/99/9999"          NO-UNDO.
@@ -94,6 +96,7 @@ DEF BROWSE b_browse QUERY q_browse
             tt-titulos.vltitulo COLUMN-LABEL "Vlr.Titulo" FORMAT "zzz,zz9.99"
             tt-titulos.nrinssac COLUMN-LABEL "CPF/CNPJ"   
             tt-titulos.dssittit COLUMN-LABEL "Situacao"
+            tt-titulos.dspagdiv COLUMN-LABEL "Valor Divergente"
             WITH 5 DOWN NO-BOX WITH WIDTH 76.      
 
 FORM glb_cddopcao AT  2 LABEL "Opcao" AUTO-RETURN

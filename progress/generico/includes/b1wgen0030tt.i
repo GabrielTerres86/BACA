@@ -2,7 +2,7 @@
 
    Programa: b1wgen0030tt.i
    Autor   : Guilherme
-   Data    : Julho/2008                  Ultima atualizacao: 23/09/2016
+   Data    : Julho/2008                  Ultima atualizacao: 18/05/2017
    Dados referentes ao programa:
 
    Objetivo  : Temp-tables utlizadas na BO b1wgen0030.p - Desconto de Titulos
@@ -67,6 +67,8 @@
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_cecred_dsctit (Oscar).
                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_dsctit_cr (Oscar).
                
+               18/05/2017 - Incluir campo dspagdiv na tt-titulos.
+                            PRJ340 - NPC (Odirlei-AMcom) 
 
 ..............................................................................*/
     
@@ -268,6 +270,7 @@ DEF TEMP-TABLE tt-titulos NO-UNDO
     FIELD dssittit AS CHAR 
     FIELD flgregis AS LOGICAL
     FIELD tpcobran AS CHAR FORMAT "X(11)"
+    FIELD dspagdiv AS CHAR FORMAT "X(16)"
     INDEX tt-titulos1 flgstats.
     
 DEF TEMP-TABLE tt-dados_validacao NO-UNDO
