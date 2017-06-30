@@ -6,6 +6,8 @@
 	 * OBJETIVO     : Rotina para aprovar/reprovar cheques do borderô
 	 * --------------
 	 * ALTERAÇÕES   : 
+     *
+     * 001: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero - PRJ300 - Desconto de cheque
 	 * -------------- 
 	 */		
 
@@ -55,6 +57,9 @@
 		exit();
 	}else{
 		$msgErro = 'Border&ocirc; analisado com sucesso';
-		exibirErro('inform',$msgErro,'Alerta - Ayllos','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); carregaBorderosCheques();',false);
+		exibirErro('inform',$msgErro,'Alerta - Ayllos','voltaDiv(3,2,4,\'DESCONTO DE CHEQUES - BORDERÔS\'); gerarImpressao(10,2,\'no\',\'\',0);',false);
+        
+       
+        
 	}	
 ?>

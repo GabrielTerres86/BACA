@@ -16,9 +16,11 @@
 	require_once('../../../../includes/funcoes.php');
 	require_once('../../../../class/xmlfile.php');
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R")) <> "") {
+	/*
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"D")) <> "") {
 		exibirErro('error',htmlentities($msgError),'Alerta - Ayllos',"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",false);
 	}
+	*/
 	
 	isPostMethod();		
 	  

@@ -25,6 +25,7 @@
 											 zero. SD 325240 (Kelvin).
  * 011: [20/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 011: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
+ * 012: [26/05/2017] Odirlei Busana (AMcom)  : Desabilitar campo de numero do contrato, será gerado automaticamente. PRJ300 - desconto de cheque
  */
 ?>
 
@@ -37,13 +38,13 @@
 			<legend>Dados do Limite</legend>
 			
 			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
-			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo">
+			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campoTelaSemBorda" disabled>
 			<br />
 			
 			<label></label>
 			<br />
 			
-			<label for="vllimite"><? echo utf8ToHtml('Valor do LImite:') ?></label>
+			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
 			<input type="text" name="vllimite" id="vllimite" value="0,00" class="campo">
 			
 			<label for="qtdiavig"><? echo utf8ToHtml('Vigência:') ?></label>
@@ -130,16 +131,7 @@
 			// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
 		?>	
-		<div id="divDscChq_Confirma">		
-		
-			<fieldset>
-				<legend>Contrato</legend>
-				<label for="antnrctr" class="rotulo" style="width:250px;">Confirme o n&uacute;mero do contrato:</label>
-				<input type="text" name="antnrctr" id="antnrctr" value="" style="width: 80px; text-align: right;" class="campo">
-			</fieldset>
-			
-		</div>									
-		
+
 	</div>
 	
 </form>
@@ -203,9 +195,7 @@
 	
 	operacao = '<? echo $cddopcao; ?>';
 	
-	dscShowHideDiv("divOpcoesDaOpcao3;divDscChq_Limite;divBotoesLimite","divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscChq_Renda;divDscChq_Observacao;divDscChq_Avalistas;divDscChq_Confirma");
-    
-	$("#divDscChq_Confirma").css("display","<? if ($cddopcao == "I") { echo "block"; } else { echo "none"; } ?>");
+	dscShowHideDiv("divOpcoesDaOpcao3;divDscChq_Limite;divBotoesLimite","divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscChq_Renda;divDscChq_Observacao;divDscChq_Avalistas");
 		
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE CHEQUES - LIMITE - <? if ($cddopcao == "A") { echo "ALTERAR"; } elseif ($cddopcao == "C") { echo "CONSULTAR"; } else { echo "INCLUIR"; } ?>");
