@@ -6543,7 +6543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 19/06/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 29/06/2017
 
        Dados referentes ao programa:
 
@@ -6624,7 +6624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
                                 (Chamado 532712) - (Fabrício)
 
-				           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+                           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
                                 (Chamado 532712) - (Fabricio)
                                 
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
@@ -6654,6 +6654,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    19/06/2017 - Tratamento para validar se o arquivo foi recebido completo.
                                 Caso o arquivo CCR3 tenha sido recebido incompleto, enviamos
                                 e-mail e abrimos chamado (Douglas - Chamado 647872)
+
+                   29/06/2017 - Alterado o cursor do primeiro grupo de afinidade, para buscar um cartao
+                                em uso/liberado, e que a conta ainda nao tenha uma solicitacao de cartao
+                                (Douglas - Chamado 637487)
     ............................................................................ */
 
     DECLARE
@@ -6974,7 +6978,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            -- Se o parametro vir nulo, deve considerar as situações 3 e 4
            AND (pcr.insitcrd = pr_insitcrd OR (pr_insitcrd IS NULL AND pcr.insitcrd IN (3,4)))
            AND (pcr.flgprcrd = pr_flgprcrd OR pr_flgprcrd IS NULL);
-      
+
+      -- Buscar o código do grupo de afinidade, ignorando os parametros
+      -- que estejam sendo passados como null
+      CURSOR cr_crawcrd_em_uso(pr_cdcooper IN crawcrd.cdcooper%TYPE
+                              ,pr_nrdconta IN crawcrd.nrdconta%TYPE
+                              ,pr_nrcctitg IN crawcrd.nrcctitg%TYPE
+                              ,pr_nrcpftit IN crawcrd.nrcpftit%TYPE
+                              ,pr_flgprcrd IN crawcrd.flgprcrd%TYPE) IS 
+        SELECT pcr.cdadmcrd
+             , pcr.dddebito
+             , pcr.vllimcrd
+             , pcr.tpdpagto
+             , pcr.flgdebcc
+          FROM crawcrd pcr
+         WHERE pcr.cdcooper = pr_cdcooper  
+           AND pcr.nrdconta = pr_nrdconta  
+           AND (pcr.nrcctitg = pr_nrcctitg OR pr_nrcctitg IS NULL)
+           AND (pcr.nrcpftit = pr_nrcpftit OR pr_nrcpftit IS NULL)
+           AND pcr.dtcancel IS NULL
+           AND pcr.cdadmcrd BETWEEN 10 AND 80 -- Apenas bancoob
+           -- Se o parametro vir nulo, deve considerar as situações 3 e 4
+           AND pcr.insitcrd IN (3,4)
+           AND (pcr.flgprcrd = pr_flgprcrd OR pr_flgprcrd IS NULL)
+           -- Para o cartao em uso, não pode existir um cartão solicitado
+           AND NOT EXISTS (SELECT 1
+                         FROM crawcrd t
+                        WHERE t.cdcooper = pcr.cdcooper
+                          AND t.nrdconta = pcr.nrdconta
+                          AND t.nrcctitg = pcr.nrcctitg
+                          AND t.nrcpftit = pcr.nrcpftit
+                          AND t.insitcrd = 2 -- Solicitado
+                          AND t.cdadmcrd BETWEEN 10 AND 80 -- Apenas bancoob
+                          );
+
       CURSOR cr_crawcrd_cdgrafin_conta(pr_cdcooper IN crawcrd.cdcooper%TYPE
                                       ,pr_nrdconta IN crawcrd.nrdconta%TYPE
                                       ,pr_nrcctitg IN crawcrd.nrcctitg%TYPE
@@ -7494,29 +7531,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
         
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-				                     pr_cdoperad => '1',
-													   pr_dscritic => '',
-													   pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
-													   pr_dstransa => 'Alterar Situacao Cartao de Credito',
-													   pr_dttransa => TRUNC(SYSDATE),
-													   pr_flgtrans => 1,
-													   pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
-													   pr_idseqttl => 0,
-													   pr_nmdatela => 'PC_CRPS672',
-													   pr_nrdconta => pr_nrdconta,
-													   pr_nrdrowid => vr_nrdrowid);
+                                     pr_cdoperad => '1',
+                                                       pr_dscritic => '',
+                                                       pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
+                                                       pr_dstransa => 'Alterar Situacao Cartao de Credito',
+                                                       pr_dttransa => TRUNC(SYSDATE),
+                                                       pr_flgtrans => 1,
+                                                       pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+                                                       pr_idseqttl => 0,
+                                                       pr_nmdatela => 'PC_CRPS672',
+                                                       pr_nrdconta => pr_nrdconta,
+                                                       pr_nrdrowid => vr_nrdrowid);
 
         -- Numero do Cartao
-			  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-				  												pr_nmdcampo => 'Cartao',
-					  											pr_dsdadant => '',
-						  										pr_dsdadatu => pr_nrcrcard);
+              gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                                                  pr_nmdcampo => 'Cartao',
+                                                                  pr_dsdadant => '',
+                                                                  pr_dsdadatu => pr_nrcrcard);
                                   
         -- Situacao do Cartao
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-				  												pr_nmdcampo => 'Situacao',
-					  											pr_dsdadant => rw_crawcrd.insitcrd,
-						  										pr_dsdadatu => vr_insitcrd);
+                                                                  pr_nmdcampo => 'Situacao',
+                                                                  pr_dsdadant => rw_crawcrd.insitcrd,
+                                                                  pr_dsdadatu => vr_insitcrd);
         
         -- Data de Cancelamento
         IF rw_crawcrd.dtcancel <> vr_dtcancel THEN
@@ -7714,7 +7751,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-      			
+                  
       -- buscar informações do arquivo a ser processado
       OPEN cr_crapscb;
       FETCH cr_crapscb INTO rw_crapscb;
@@ -7954,7 +7991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF substr(vr_des_text,5,2) = '01'  THEN
 
                  BEGIN 
-  	               vr_tipooper := to_number(substr(vr_des_text,7,2));
+                     vr_tipooper := to_number(substr(vr_des_text,7,2));
                  EXCEPTION 
                    WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
@@ -8724,22 +8761,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   FETCH cr_crapass INTO rw_crapass;
                   CLOSE cr_crapass;
                   
+                  -- Verificar se o cursor está aberto
+                  IF cr_crawcrd_em_uso%ISOPEN THEN
+                    CLOSE cr_crawcrd_em_uso;
+                  END IF;
+                  
                   -- Buscar o contrato que esteja em uso
-                  OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
-                                           ,vr_nrdconta                 -- pr_nrdconta
-                                           ,vr_nrdctitg                 -- pr_nrcctitg
-                                           ,vr_nrcpfcgc                 -- pr_nrcpftit
-                                           ,NULL                        -- pr_insitcrd -- EM USO
-                                           ,1 );                        -- pr_flgprcrd
-                  FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
-                                               , vr_dddebito
-                                               , vr_vllimcrd
-                                               , vr_tpdpagto
-                                               , vr_flgdebcc;
+                  OPEN cr_crawcrd_em_uso(pr_cdcooper => vr_cdcooper -- pr_cdcooper
+                                        ,pr_nrdconta => vr_nrdconta -- pr_nrdconta
+                                        ,pr_nrcctitg => vr_nrdctitg -- pr_nrcctitg
+                                        ,pr_nrcpftit => vr_nrcpfcgc -- pr_nrcpftit
+                                        ,pr_flgprcrd => 1 );        -- pr_flgprcrd
+                  
+                  FETCH cr_crawcrd_em_uso INTO rw_crapacb.cdadmcrd
+                                              ,vr_dddebito
+                                              ,vr_vllimcrd
+                                              ,vr_tpdpagto
+                                              ,vr_flgdebcc;
                   -- Se não encontrar registros
-                  IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                  IF cr_crawcrd_em_uso%NOTFOUND THEN
                     -- Fechar o cursor
-                    CLOSE cr_crawcrd_cdgrafin;                    
+                    CLOSE cr_crawcrd_em_uso;                    
                     
                     -- Buscar registro de solicitacao
                     OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
@@ -8849,8 +8891,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     END IF;
                   END IF;
                   
+                  
+                  -- Verificar se o cursor está aberto
+                  IF cr_crawcrd_em_uso%ISOPEN THEN
+                    CLOSE cr_crawcrd_em_uso;
+                  END IF;
+                  
                   -- Fecha o cursor
+                  IF cr_crawcrd_cdgrafin%ISOPEN THEN
                   CLOSE cr_crawcrd_cdgrafin;
+                  END IF;
                 
                 ELSE
                   -- busca Codigo da Adminstradora com base no Cod. do Grupo de Afinidade
@@ -9873,7 +9923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     END;
 
   END pc_crps672;
-
+  
   /*.......................................................................................
 
    Programa: CCDR0003
