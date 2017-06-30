@@ -11,7 +11,7 @@ BEGIN
     Sistema : Cobrança - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Daniel Zimmermann
-    Data    : Maio/2015                      Ultima atualizacao: 23/07/2015
+    Data    : Maio/2015                      Ultima atualizacao: 24/06/2017
 
     Dados referentes ao programa:
 
@@ -33,6 +33,11 @@ BEGIN
 
 				17/11/2016 - Melhorar mensagem de erro retornada no e-mail referente ao UPLOAD de 
                              arquivos para a PG. Heitor (Mouts) - Chamado 546884
+
+               24/06/2017 - Retirado rotina de geracao de retorno ao cooperado pois agora
+                            está centralizado na rotina de geraçao de boletos na
+                            package COBR0006 e b1wnet0001.p (P340 - Rafael).
+                            
 
   .......................................................................... */
 
@@ -460,71 +465,6 @@ BEGIN
         FOR rw_crapcob IN cr_crapcob(pr_cdcooper => rw_crapcop.cdcooper
                                     ,pr_dtmvtoan => rw_crabdat.dtmvtoan
                                     ,pr_dtmvtolt => rw_crabdat.dtmvtolt) LOOP                                      
-
-          vr_ret_nrremret := 0;
-
-          /* Preparar Lote de Retorno Cooperado */
-          PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid     --ROWID da cobranca
-                                             ,pr_cdocorre => 2               --Codigo Ocorrencia
-                                             ,pr_dsmotivo => 'P1'            --Descricao Motivo
-                                             ,pr_dtmvtolt => rw_crabdat.dtmvtolt     --Data Movimento
-                                             ,pr_cdoperad => '1'     --Codigo Operador
-                                             ,pr_nrremret => vr_ret_nrremret --Numero Remessa
-                                             ,pr_cdcritic => vr_cdcritic     --Codigo Critica
-                                             ,pr_dscritic => vr_dscritic);   --Descricao Critica
-          --Se Ocorreu erro
-          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_saida;
-          END IF;
-
-
-          -- Se banco cobranca igual cooperativa
-          -- Comparar a data da emissao com a data do dia para nao cobrar
-          -- tarifa de alteracao de modalidade de emissao 23/06/15
-          IF rw_crapcob.cdbandoc = rw_crapcop.cdbcoctl AND 
-             rw_crapcob.dtmvtolt = rw_crabdat.dtmvtolt THEN
-            /* Preparar Lote de Retorno Cooperativa */
-            PAGA0001.pc_prepara_retorno_cooperativa (pr_idtabcob => rw_crapcob.rowid   --ROWID da cobranca
-                                                    ,pr_dtmvtolt => rw_crabdat.dtmvtolt   --Data Movimento
-                                                    ,pr_dtocorre => rw_crabdat.dtmvtolt   --Data Ocorrencia
-                                                    ,pr_cdoperad => '1'   --Codigo Operador
-                                                    ,pr_vlabatim => 0   --Valor Abatimento
-                                                    ,pr_vldescto => 0   --Valor Desconto
-                                                    ,pr_vljurmul => 0   --Valor juros multa
-                                                    ,pr_vlrpagto => 0   --Valor pagamento
-                                                    ,pr_flgdesct => FALSE   --Flag para titulo descontado
-                                                    ,pr_flcredit => FALSE   --Flag Credito
-                                                    ,pr_nrretcoo => vr_ret_nrremret --Numero Retorno Cooperativa
-                                                    ,pr_cdmotivo => 'P1'   --Codigo Motivo
-                                                    ,pr_cdocorre => 2   --Codigo Ocorrencia
-                                                    ,pr_cdbanpag => rw_crapcop.cdbcoctl   --Codigo banco pagamento
-                                                    ,pr_cdagepag => rw_crapcop.cdagectl   --Codigo Agencia pagamento
-                                                    ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                                    ,pr_dscritic => vr_dscritic); --Descricao Critica
-            --Se Ocorreu erro
-            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_saida;
-            END IF;
-            
-            /* Gerar dados para tt-lcm-consolidada */
-            PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
-                                                ,pr_cdocorre => 02          --Codigo Ocorrencia
-                                                ,pr_tplancto => 'T'         --Tipo Lancamento
-                                                ,pr_vltarifa => 0           --Valor Tarifa
-                                                ,pr_cdhistor => 0           --Codigo Historico
-                                                ,pr_cdmotivo => 'P1'        --Codigo motivo
-                                                ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela de Lancamentos
-                                                ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                                ,pr_dscritic => vr_dscritic); --Descricao Critica
-            --Se ocorreu erro
-            IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              --Levantar Excecao
-              RAISE vr_exc_saida;
-            END IF;
-            
-          END IF;
            
           -- Gera Registro Header Apenas se Possui Titulos e Apenas uma Vez.  
           IF vr_flg_gera_arq = FALSE THEN
