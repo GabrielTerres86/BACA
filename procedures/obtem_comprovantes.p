@@ -32,8 +32,7 @@ DEFINE TEMP-TABLE tt-lista_comprovantes NO-UNDO
        FIELD dsagectl AS CHAR
        FIELD nrtelefo AS CHAR  /* Nr telefone */
        FIELD nmopetel AS CHAR  /* Nome operadora */
-       FIELD dsnsuope AS CHAR. /* NSU operadora */
-       
+       FIELD dsnsuope AS CHAR  /* NSU operadora */      
        FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
        FIELD nrcpfcgc_pagad AS CHAR  /* NRCPFCGC_PAGAD */
        FIELD dtvenctit      AS CHAR  /* vencimento do titulo */
