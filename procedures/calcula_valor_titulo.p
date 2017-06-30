@@ -6,7 +6,8 @@ Autor    : Kelvin Souza Ott
 Data     : Setembro 2016
 
 
-Ultima alteração: 
+Ultima alteração: 19/06/2017 - Ajustes NPC.
+                               PRJ340 - NPC (Odirlei-AMcom) 
 
 ............................................................................... */
 DEFINE INPUT  PARAMETER pr_cdcooper        AS INTE         NO-UNDO.
@@ -25,6 +26,7 @@ DEFINE OUTPUT  PARAMETER pr_vlfatura       AS DECI         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_vlrjuros       AS DECI         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_vlrmulta       AS DECI         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_fltitven       AS INTE         NO-UNDO.
+DEFINE OUTPUT  PARAMETER pr_flblqval       AS INTE         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_inpesbnf       AS INTE         NO-UNDO.
 DEFINE OUTPUT  PARAMETER pr_nrdocbnf       AS DECI         NO-UNDO. 
 DEFINE OUTPUT  PARAMETER pr_nmbenefi       AS CHAR         NO-UNDO. 
@@ -39,8 +41,29 @@ DEFINE         VARIABLE xDoc            AS HANDLE               NO-UNDO.
 DEFINE         VARIABLE xRoot           AS HANDLE               NO-UNDO. 
 DEFINE         VARIABLE xField          AS HANDLE               NO-UNDO.
 DEFINE         VARIABLE xText           AS HANDLE               NO-UNDO.
+DEFINE         VARIABLE aux_hrtransa    AS INT                  NO-UNDO.
+DEFINE         VARIABLE aux_flgerro     AS LOG                  NO-UNDO.
 		
 RUN procedures/grava_log.p (INPUT "Consultar Valor Titulo...").
+aux_hrtransa = TIME.
+aux_flgerro = FALSE.
+                     
+
+
+/* processo que pode demorar bastante devido aos produtos que o
+   associado possui */
+RUN mensagem.w (INPUT NO,
+                INPUT "  AGUARDE...",
+                INPUT "",
+                INPUT "",
+                INPUT "Consultando Valor Titulo...",
+                INPUT "",
+                INPUT "").
+
+/* para garantir a mensagem mesmo que a operacao seja rapida */
+PAUSE 1 NO-MESSAGE.
+
+
 
 REQUISICAO:
 DO: 
@@ -202,6 +225,8 @@ DO:
     CREATE X-NODEREF  xField.
     CREATE X-NODEREF  xText.
 	
+    
+
     DO  WHILE TRUE:
 	
         xDoc:LOAD("FILE","http://" + glb_nmserver + ".cecred.coop.br/" +
@@ -214,7 +239,10 @@ DO:
             xRoot:NAME <> "TAA"    THEN
             DO:
                 RUN procedures/grava_log.p (INPUT "Valor Titulo Vencido - Sem comunicação com o servidor.").
-                
+
+                /* Limpa mensagem de aguarde */
+                h_mensagem:HIDDEN = YES.
+                aux_flgerro = TRUE.
                 RUN mensagem.w (INPUT YES,
                                 INPUT "      ERRO!",
                                 INPUT "",
@@ -239,7 +267,12 @@ DO:
 
             IF  xField:NAME = "DSCRITIC"  THEN
                 DO:
-                    RUN procedures/grava_log.p (INPUT "Valor Titulo Vencido - " + xText:NODE-VALUE).
+                    pr_dscritic = STRING(xText:NODE-VALUE).
+                    RUN procedures/grava_log.p (INPUT "Calcula valor titulo - " + xText:NODE-VALUE).
+
+                    /* Limpa mensagem de aguarde */
+                    h_mensagem:HIDDEN = YES. 
+                    aux_flgerro = TRUE.
 
                     RUN mensagem.w (INPUT YES,
                                     INPUT "      ERRO!",
@@ -254,36 +287,41 @@ DO:
 
                 END.
             ELSE
-            
-			IF  xField:NAME = "VLFATURA"  THEN 			
-                pr_vlfatura = DECIMAL(xText:NODE-VALUE).		
-			ELSE
-			IF  xField:NAME = "VLRJUROS"  THEN 
-				pr_vlrjuros = DECIMAL(xText:NODE-VALUE). 
-			ELSE
-			IF  xField:NAME = "VLRMULTA"  THEN 
-				pr_vlrmulta = DECIMAL(xText:NODE-VALUE). 
-			ELSE
-			IF  xField:NAME = "FLTITVEN"  THEN 
-				pr_fltitven = INTEGER(xText:NODE-VALUE). 
-			ELSE
-            IF  xField:NAME = "INPESBNF"  THEN 
-				pr_inpesbnf = INTEGER(xText:NODE-VALUE). 
-			ELSE
-            IF  xField:NAME = "NRDOCBNF"  THEN 
-				pr_nrdocbnf = INTEGER(xText:NODE-VALUE). 
-			ELSE
-            IF  xField:NAME = "NMBENEFI"  THEN 
-				pr_nmbenefi = STRING(xText:NODE-VALUE). 
-			ELSE
-            IF  xField:NAME = "NRCRLNPC"  THEN 
-				pr_nrctlnpc = STRING(xText:NODE-VALUE). 
-			ELSE
-			IF  xField:NAME = "DSCRITIC"  THEN 
-				pr_dscritic = STRING(xText:NODE-VALUE).
-			ELSE
-			IF  xField:NAME = "DES_ERRO"  THEN 
-				pr_des_erro = STRING(xText:NODE-VALUE).
+            DO:
+                IF  xField:NAME = "VLFATURA"  THEN 			
+                    pr_vlfatura = DECIMAL(xText:NODE-VALUE).		
+    			ELSE
+    			IF  xField:NAME = "VLRJUROS"  THEN 
+    				pr_vlrjuros = DECIMAL(xText:NODE-VALUE). 
+    			ELSE
+    			IF  xField:NAME = "VLRMULTA"  THEN 
+    				pr_vlrmulta = DECIMAL(xText:NODE-VALUE). 
+    			ELSE
+    			IF  xField:NAME = "FLTITVEN"  THEN 
+    				pr_fltitven = INTEGER(xText:NODE-VALUE). 
+    			ELSE
+                IF  xField:NAME = "FLBLQVAL"  THEN 
+    				pr_flblqval = INTEGER(xText:NODE-VALUE). 
+    			ELSE
+                IF  xField:NAME = "INPESBNF"  THEN 
+    				pr_inpesbnf = INTEGER(xText:NODE-VALUE). 
+    			ELSE
+                IF  xField:NAME = "NRDOCBNF"  THEN 
+    				pr_nrdocbnf = DECI(xText:NODE-VALUE). 
+    			ELSE
+                IF  xField:NAME = "NMBENEFI"  THEN 
+    				pr_nmbenefi = STRING(xText:NODE-VALUE). 
+    			ELSE
+                IF  xField:NAME = "NRCRLNPC"  THEN 
+    				pr_nrctlnpc = STRING(xText:NODE-VALUE). 
+    			ELSE
+    			IF  xField:NAME = "DSCRITIC"  THEN 
+    				pr_dscritic = STRING(xText:NODE-VALUE).
+    			ELSE
+    			IF  xField:NAME = "DES_ERRO"  THEN 
+    				pr_des_erro = STRING(xText:NODE-VALUE).
+            END.
+			
 				
         END. /* Fim DO..TO.. */
 
@@ -295,8 +333,18 @@ DO:
     DELETE OBJECT xField.
     DELETE OBJECT xText.
 
+    IF aux_flgerro = FALSE THEN
+    DO:
+        /* Limpa mensagem de aguarde */
+        h_mensagem:HIDDEN = YES.
+    END.
+    
+
+
+
 END. /* Fim RESPOSTA */
 
 RUN procedures/grava_log.p (INPUT "Valor Titulo obtido com sucesso").
+                
 
 RETURN "OK".

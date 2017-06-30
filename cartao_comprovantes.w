@@ -28,6 +28,9 @@
   20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
                e visualização de impressão
               (Lucas Lunelli - Melhoria 83 [SD 279180])
+              
+  21/06/2017 - Ajustes PRJ340 - NPC(Odirlei AMcom).
+                             
 
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -51,6 +54,30 @@ CREATE WIDGET-POOL.
 DEF INPUT PARAM par_dtinipro AS DATE                            NO-UNDO.
 DEF INPUT PARAM par_dtfimpro AS DATE                            NO-UNDO.
 
+DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
+       FIELD dtmvtolt AS DATE  /* Data do comprovantes       */
+       FIELD dscedent AS CHAR  /* Descricao do comprovante   */
+       FIELD vldocmto AS DECI  /* Valor do documento         */
+       FIELD dsinform AS CHAR  /* Tipo de pagamento          */
+       FIELD lndigita AS CHAR  /* Linha digitavel            */
+       FIELD nrtransf AS INTE  /* Conta transferencia        */
+       FIELD nmtransf AS CHAR EXTENT 2  /* Nome conta acima  */
+       FIELD tpdpagto AS CHAR
+       FIELD dsprotoc AS CHAR
+       FIELD cdbcoctl AS INTE  /* Banco 085 */
+       FIELD cdagectl AS INTE  /* Agencia da cooperativa */
+       FIELD dsagectl AS CHAR
+       FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
+       FIELD nrcpfcgc_pagad AS CHAR  /* NRCPFCGC_PAGAD */
+       FIELD dtvenctit      AS CHAR  /* vencimento do titulo */
+       FIELD vlrtitulo      AS CHAR  /* valor do titulo */
+       FIELD vlrjurmul      AS CHAR  /* valor de juros + multa */
+       FIELD vlrdscaba      AS CHAR  /* valor de desconto + abatimento */
+       FIELD nrcpfcgc_benef AS CHAR. /* CPF/CNPJ do beneficiario  */  
+
+DEF TEMP-TABLE tt-bcomprovantes NO-UNDO LIKE tt-comprovantes.
+
+/*
 DEFINE TEMP-TABLE tt-comprovantes NO-UNDO                     
        FIELD dtmvtolt AS DATE   /* Data do comprovantes       */
        FIELD dscedent AS CHAR   /* Descricao do comprovante   */
@@ -63,8 +90,15 @@ DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
        FIELD dsprotoc AS CHAR
        FIELD cdbcoctl AS INTE
        FIELD cdagectl AS INTE
-       FIELD dsagectl AS CHAR.
-
+       FIELD dsagectl AS CHAR
+       FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
+       FIELD nrcpfcgc_pagad AS CHAR  /* NRCPFCGC_PAGAD */
+       FIELD dtvenctit      AS CHAR  /* vencimento do titulo */
+       FIELD vlrtitulo      AS CHAR  /* valor do titulo */
+       FIELD vlrjurmul      AS CHAR  /* valor de juros + multa */
+       FIELD vlrdscaba      AS CHAR  /* valor de desconto + abatimento */
+       FIELD nrcpfcgc_benef AS CHAR. /* CPF/CNPJ do beneficiario  */  
+*/
 EMPTY TEMP-TABLE tt-comprovantes.
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
@@ -101,8 +135,8 @@ DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
     ~{&OPEN-QUERY-b_comprovantes}
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS Btn_E Btn_F IMAGE-37 IMAGE-40 IMAGE-38 ~
-IMAGE-39 RECT-149 b_comprovantes Btn_D Btn_H ed_lndigita 
+&Scoped-Define ENABLED-OBJECTS Btn_E IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 ~
+RECT-149 b_comprovantes Btn_D Btn_H Btn_F ed_lndigita 
 &Scoped-Define DISPLAYED-OBJECTS ed_lndigita 
 
 /* Custom List Definitions                                              */
@@ -209,10 +243,10 @@ tt-comprovantes.dsinform  COLUMN-LABEL "Tipo"      FORMAT "x(15)"
 
 DEFINE FRAME f_comprovantes_lista
      Btn_E AT ROW 9.62 COL 142 WIDGET-ID 68
-     Btn_F AT ROW 14.67 COL 142 WIDGET-ID 220
      b_comprovantes AT ROW 6.29 COL 6 WIDGET-ID 200
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.14 COL 94.4 WIDGET-ID 74
+     Btn_F AT ROW 14.67 COL 142 WIDGET-ID 220
      ed_lndigita AT ROW 20.71 COL 3 COLON-ALIGNED NO-LABEL WIDGET-ID 216 NO-TAB-STOP 
      "COMPROVANTES" VIEW-AS TEXT
           SIZE 82 BY 2.14 AT ROW 1.95 COL 43 WIDGET-ID 226
@@ -548,12 +582,12 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                        YEAR(glb_dtmvtolt))
                    par_dtfimpro = glb_dtmvtolt.
         END.
-     
+     MESSAGE "Odirlei Obtem antes" VIEW-AS ALERT-BOX.
     RUN procedures/obtem_comprovantes.p (INPUT par_dtinipro,
                                          INPUT par_dtfimpro,
                                         OUTPUT aux_flgderro,
                                         OUTPUT TABLE tt-comprovantes).
-
+     MESSAGE "Odirlei Obtem depois" VIEW-AS ALERT-BOX.
     IF  NOT aux_flgderro THEN
         IF  CAN-FIND(FIRST tt-comprovantes) THEN
             DO:
@@ -675,8 +709,8 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_lndigita 
       WITH FRAME f_comprovantes_lista.
-  ENABLE Btn_E Btn_F IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 RECT-149 
-         b_comprovantes Btn_D Btn_H ed_lndigita 
+  ENABLE Btn_E IMAGE-37 IMAGE-40 IMAGE-38 IMAGE-39 RECT-149 b_comprovantes 
+         Btn_D Btn_H Btn_F ed_lndigita 
       WITH FRAME f_comprovantes_lista.
   {&OPEN-BROWSERS-IN-QUERY-f_comprovantes_lista}
   VIEW w_cartao_agendamento_lista.
@@ -822,8 +856,18 @@ DEFINE VARIABLE    aux_nrtelsac     AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE    aux_nrtelouv     AS CHARACTER                NO-UNDO.
 
 
-/* São 48 caracteres */
+EMPTY TEMP-TABLE tt-bcomprovantes.
+CREATE tt-bcomprovantes.
+BUFFER-COPY tt-comprovantes TO tt-bcomprovantes.
 
+
+RUN procedures/imprime_comprov_pag_titulo.p (INPUT "",
+                                             INPUT TABLE tt-bcomprovantes,
+                                             OUTPUT aux_flgderro).
+
+
+/* São 48 caracteres */
+/*
 RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
                                                 OUTPUT aux_nrtelouv,
                                                 OUTPUT aux_flgderro).
@@ -921,7 +965,7 @@ IF  xfs_impressora       AND
                                INPUT  tmp_tximpres,
                                INPUT 0, /*Comprovante*/
                                INPUT "").
-
+*/
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */

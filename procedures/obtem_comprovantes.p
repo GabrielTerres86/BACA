@@ -7,11 +7,13 @@ Data     : Agosto 2011
 
 
 Ultima alteração:   09/03/2012 - Adicionado os campos cdbcoctl e cdagectl
-                                 na temp-table tt-comprovantes. (Fabricio)
+                                 na temp-table tt-lista_comprovantes. (Fabricio)
 
+                    21/06/2017 - Ajusts NPC.
+                                 PRJ340 - NPC (Odirlei-AMcom)
 ............................................................................ */
 
-DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
+DEFINE TEMP-TABLE tt-lista_comprovantes NO-UNDO
        FIELD dtmvtolt AS DATE  /* Data do comprovantes       */
        FIELD dscedent AS CHAR  /* Descricao do comprovante   */
        FIELD vldocmto AS DECI  /* Valor do documento         */
@@ -23,15 +25,22 @@ DEFINE TEMP-TABLE tt-comprovantes NO-UNDO
        FIELD dsprotoc AS CHAR
        FIELD cdbcoctl AS INTE  /* Banco 085 */
        FIELD cdagectl AS INTE  /* Agencia da cooperativa */
-       FIELD dsagectl AS CHAR.
+       FIELD dsagectl AS CHAR
+       FIELD dspagador      AS CHAR  /* nome do pagador do boleto */
+       FIELD nrcpfcgc_pagad AS CHAR  /* NRCPFCGC_PAGAD */
+       FIELD dtvenctit      AS CHAR  /* vencimento do titulo */
+       FIELD vlrtitulo      AS CHAR  /* valor do titulo */
+       FIELD vlrjurmul      AS CHAR  /* valor de juros + multa */
+       FIELD vlrdscaba      AS CHAR  /* valor de desconto + abatimento */
+       FIELD nrcpfcgc_benef AS CHAR. /* CPF/CNPJ do beneficiario  */   
 
 
-EMPTY TEMP-TABLE tt-comprovantes.
+EMPTY TEMP-TABLE tt-lista_comprovantes.
 
 DEFINE INPUT  PARAMETER par_dtinipro AS DATE                        NO-UNDO.
 DEFINE INPUT  PARAMETER par_dtfimpro AS DATE                        NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro AS LOGICAL.
-DEFINE OUTPUT PARAMETER TABLE FOR tt-comprovantes.
+DEFINE OUTPUT PARAMETER TABLE FOR tt-lista_comprovantes.
 
 { includes/var_taa.i }
 
@@ -310,7 +319,7 @@ DO:
                 par_flgderro = YES.
                 LEAVE.
             END.
-    
+
         DO  aux_qtcompro = 1 TO xRoot:NUM-CHILDREN:
             
             xRoot:GET-CHILD(xRoot2,aux_qtcompro).
@@ -336,7 +345,7 @@ DO:
                     par_flgderro = YES.
                 END.
 
-           CREATE tt-comprovantes. 
+           CREATE tt-lista_comprovantes. 
 
            DO  aux_ifcompro = 1 TO xRoot2:NUM-CHILDREN:
 
@@ -348,45 +357,65 @@ DO:
                 xField:GET-CHILD(xText,1).
            
                 IF   xField:NAME = "DTMVTOLT"   THEN
-                     ASSIGN tt-comprovantes.dtmvtolt = DATE(xText:NODE-VALUE).
+                     ASSIGN tt-lista_comprovantes.dtmvtolt = DATE(xText:NODE-VALUE).
                 ELSE                
                 IF   xField:NAME = "DSCEDENT"   THEN
-                     ASSIGN tt-comprovantes.dscedent = xText:NODE-VALUE.
+                     ASSIGN tt-lista_comprovantes.dscedent = xText:NODE-VALUE.
                 ELSE
                 IF   xField:NAME = "VLDOCMTO"   THEN
-                     ASSIGN tt-comprovantes.vldocmto = DECI(xText:NODE-VALUE).
+                     ASSIGN tt-lista_comprovantes.vldocmto = DECI(xText:NODE-VALUE).
                 ELSE
                 IF   xField:NAME = "DSINFORM"   THEN
-                     ASSIGN tt-comprovantes.dsinform = xText:NODE-VALUE.
+                     ASSIGN tt-lista_comprovantes.dsinform = xText:NODE-VALUE.
                 ELSE
                 IF   xField:NAME = "LNDIGITA"   AND 
                      xText:NODE-VALUE <> ""     THEN
-                     ASSIGN tt-comprovantes.lndigita = xText:NODE-VALUE.
+                     ASSIGN tt-lista_comprovantes.lndigita = xText:NODE-VALUE.
                 ELSE
                 IF   xField:NAME = "NRTRANSF"   THEN
-                     ASSIGN tt-comprovantes.nrtransf = INTE(xText:NODE-VALUE).
+                     ASSIGN tt-lista_comprovantes.nrtransf = INTE(xText:NODE-VALUE).
                 ELSE
                 IF   xField:NAME = "NMTRANS1"   THEN
-                     ASSIGN tt-comprovantes.nmtransf[1] = xText:NODE-VALUE. 
+                     ASSIGN tt-lista_comprovantes.nmtransf[1] = xText:NODE-VALUE. 
                 ELSE                                                    
                 IF   xField:NAME = "NMTRANS2"   THEN
-                     ASSIGN tt-comprovantes.nmtransf[2] = xText:NODE-VALUE.  
+                     ASSIGN tt-lista_comprovantes.nmtransf[2] = xText:NODE-VALUE.  
                 ELSE
                 IF   xField:NAME = "TPDPAGTO"   THEN
-                     ASSIGN tt-comprovantes.tpdpagto = xText:NODE-VALUE. 
+                     ASSIGN tt-lista_comprovantes.tpdpagto = xText:NODE-VALUE. 
                 ELSE
                 IF   xField:NAME = "DSPROTOC"   THEN
-                ASSIGN tt-comprovantes.dsprotoc = xText:NODE-VALUE.
+                ASSIGN tt-lista_comprovantes.dsprotoc = xText:NODE-VALUE.
                 ELSE
                 IF   xField:NAME = "CDBCOCTL"   THEN
-                ASSIGN tt-comprovantes.cdbcoctl = INTE(xText:NODE-VALUE).
+                ASSIGN tt-lista_comprovantes.cdbcoctl = INTE(xText:NODE-VALUE).
                 ELSE
                 IF   xField:NAME = "CDAGECTL"   THEN
-                ASSIGN tt-comprovantes.cdagectl = INTE(xText:NODE-VALUE).
+                ASSIGN tt-lista_comprovantes.cdagectl = INTE(xText:NODE-VALUE).
                 ELSE
                 IF   xField:NAME = "DSAGECTL"   THEN
-                ASSIGN tt-comprovantes.dsagectl = xText:NODE-VALUE.
-
+                ASSIGN tt-lista_comprovantes.dsagectl = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "DSPAGADOR"   THEN
+                ASSIGN tt-lista_comprovantes.dspagador = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "NRCPFCGC_PAGAD"   THEN
+                ASSIGN tt-lista_comprovantes.nrcpfcgc_pagad = xText:NODE-VALUE.
+                ELSE                                 
+                IF   xField:NAME = "DTVENCTIT"   THEN
+                ASSIGN tt-lista_comprovantes.dtvenctit = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "VLRTITULO"   THEN
+                ASSIGN tt-lista_comprovantes.vlrtitulo = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "VLRJURMUL"   THEN
+                ASSIGN tt-lista_comprovantes.vlrjurmul = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "VLRDSCABA"   THEN
+                ASSIGN tt-lista_comprovantes.vlrdscaba = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "NRCPFCGC_BENEF"   THEN
+                ASSIGN tt-lista_comprovantes.nrcpfcgc_benef = xText:NODE-VALUE.
            END.
 
         END. /* Fim DO..TO.. */

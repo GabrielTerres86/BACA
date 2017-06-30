@@ -30,8 +30,8 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                                   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
-		          23/11/2016 - Ajustar validação do valor para carregar corretamente na tela
-				               (Douglas - Melhoria 271)
+                          23/11/2016 - Ajustar validação do valor para carregar corretamente na tela
+                                               (Douglas - Melhoria 271)
                                
                   20/01/2017 - Exibir nome do beneficiario e ajustes NPC.
                                PRJ340 - NPC (Odirlei-AMcom)             
@@ -72,6 +72,7 @@ DEFINE VARIABLE aux_nmbenefi        AS CHAR         NO-UNDO.
 DEFINE VARIABLE aux_nrctlnpc        AS CHAR         NO-UNDO.
 DEFINE VARIABLE aux_dscritic        AS CHAR         NO-UNDO.                                                  
 DEFINE VARIABLE aux_des_erro        AS CHAR         NO-UNDO.
+DEFINE VARIABLE aux_flblqval        AS INTE         NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -837,7 +838,7 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_dscodbar w_cartao_pagamento
 ON ENTRY OF ed_dscodbar IN FRAME f_cartao_pagamento
 DO:
-    
+  
     /* durante a criação do frame chama o ENTRY, desconsiderar */
     IF  FRAME-NAME <> "f_cartao_pagamento"  THEN
         RETURN.
@@ -903,7 +904,9 @@ DO:
         RETURN NO-APPLY.
 
     /* se for titulo sempre vai para o campo de valor*/
-    IF  ed_idtpdpag:SCREEN-VALUE = "2"    THEN
+    IF  ed_idtpdpag:SCREEN-VALUE = "2" AND 
+        /* E o campo não estiver bloqueado */
+        aux_flblqval <> 1 THEN
         DO:      
             APPLY "ENTRY" TO ed_vldpagto.
         END.        
@@ -1539,27 +1542,49 @@ DEF OUTPUT  PARAM pr_nrctlnpc       AS CHAR         NO-UNDO.
 DEF OUTPUT  PARAM pr_des_erro       AS CHAR         NO-UNDO.
 DEF OUTPUT  PARAM pr_dscritic       AS CHAR         NO-UNDO.
 
-RUN procedures/calcula_valor_titulo.p (INPUT pr_cdcooper,
-                                               INPUT pr_nrdconta, 
-                                               INPUT pr_idseqttl,
-                                               INPUT pr_cdagenci,
-                                               INPUT pr_nrdcaixa,
-                                               INPUT pr_titulo1,
-                                               INPUT pr_titulo2,
-                                               INPUT pr_titulo3,
-                                               INPUT pr_titulo4,
-                                               INPUT pr_titulo5,
-                                               INPUT pr_codigo_barras,
-                                              OUTPUT pr_vlfatura,
-                                              OUTPUT pr_vlrjuros,
-                                              OUTPUT pr_vlrmulta,
-                                              OUTPUT pr_fltitven,
-                                      OUTPUT pr_inpesbnf,
-                                      OUTPUT pr_nrdocbnf,
-                                      OUTPUT pr_nmbenefi,
-                                      OUTPUT pr_nrctlnpc,                                      
-                                              OUTPUT pr_des_erro,
-                                              OUTPUT pr_dscritic).
+
+DO  WITH FRAME f_cartao_pagamento:
+    RUN procedures/calcula_valor_titulo.p (INPUT pr_cdcooper,
+                                                   INPUT pr_nrdconta, 
+                                                   INPUT pr_idseqttl,
+                                                   INPUT pr_cdagenci,
+                                                   INPUT pr_nrdcaixa,
+                                                   INPUT pr_titulo1,
+                                                   INPUT pr_titulo2,
+                                                   INPUT pr_titulo3,
+                                                   INPUT pr_titulo4,
+                                                   INPUT pr_titulo5,
+                                                   INPUT pr_codigo_barras,
+                                                  OUTPUT pr_vlfatura,
+                                                  OUTPUT pr_vlrjuros,
+                                                  OUTPUT pr_vlrmulta,
+                                                  OUTPUT pr_fltitven,
+                                                  OUTPUT aux_flblqval,
+                                                  OUTPUT pr_inpesbnf,
+                                                  OUTPUT pr_nrdocbnf,
+                                                  OUTPUT pr_nmbenefi,
+                                                  OUTPUT pr_nrctlnpc,                                      
+                                                  OUTPUT pr_des_erro,
+                                                  OUTPUT pr_dscritic).
+     
+    IF pr_dscritic <> ""  THEN
+    DO:
+         APPLY "CHOOSE" TO Btn_C.         
+         ASSIGN aux_flgderro = TRUE.
+         RETURN NO-APPLY.
+    END.
+
+    IF aux_flblqval = 1 THEN
+    DO:
+
+        ed_vldpagto:READ-ONLY    = YES.
+        ed_vldpagto:BGCOLOR      = 8.
+    END.
+
+    chtemporizador:t_cartao_pagamento:INTERVAL = glb_nrtempor.
+
+   
+END.
 
 END PROCEDURE.
 
@@ -1696,12 +1721,17 @@ PROCEDURE extrai_valor_codbar :
                                               OUTPUT aux_vlrjuros,
                                               OUTPUT aux_vlrmulta,
                                               OUTPUT aux_fltitven,
-                                      OUTPUT aux_inpesbnf,
-                                      OUTPUT aux_nrdocbnf,
-                                      OUTPUT aux_nmbenefi,
-                                      OUTPUT aux_nrctlnpc,
+                                              OUTPUT aux_inpesbnf,
+                                              OUTPUT aux_nrdocbnf,
+                                              OUTPUT aux_nmbenefi,
+                                              OUTPUT aux_nrctlnpc,
                                               OUTPUT aux_des_erro,
                                               OUTPUT aux_dscritic).
+              IF aux_dscritic <> "" THEN
+              DO:
+                APPLY "ENTRY" TO ed_dscodbar.               
+                RETURN NO-APPLY.               
+              END.
 
               ASSIGN aux_valor = STRING(aux_vlfatura,"zz,zzz,z99.99").
           
@@ -1750,14 +1780,20 @@ PROCEDURE extrai_valor_codbar :
                                                   OUTPUT aux_vlrjuros,
                                                   OUTPUT aux_vlrmulta,
                                                   OUTPUT aux_fltitven,
-                                            OUTPUT aux_inpesbnf,
-                                            OUTPUT aux_nrdocbnf,
-                                            OUTPUT aux_nmbenefi,
-                                            OUTPUT aux_nrctlnpc,
+                                                  OUTPUT aux_inpesbnf,
+                                                  OUTPUT aux_nrdocbnf,
+                                                  OUTPUT aux_nmbenefi,
+                                                  OUTPUT aux_nrctlnpc,
                                                   OUTPUT aux_des_erro,
                                                   OUTPUT aux_dscritic). 
                   
                  
+                  IF aux_dscritic <> "" THEN
+                  DO:
+                    APPLY "ENTRY" TO ed_dscodbar.
+                    RETURN NO-APPLY. 
+                  END.
+
                   ASSIGN aux_valor = STRING(aux_vlfatura,"zzz,zzz,z99.99").
 
                END.
