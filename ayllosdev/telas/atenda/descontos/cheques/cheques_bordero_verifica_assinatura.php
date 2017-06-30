@@ -3,13 +3,11 @@
 	/************************************************************************
 	 Fonte: cheques_bordero_verifica_assinatura.php
 	 Autor: Lucas Reinert
-	 Data : Novembro/2016                Última Alteração: 31/05/2017
+	 Data : Novembro/2016                Última Alteração: 
 	                                                                  
 	 Objetivo  : Verificar se bordero exige assinatura do cooperado para efetuar liberação
 	                                                                  	 
-	 Alterações: 31/05/2017 - Ajuste para verificar se possui cheque custodiado
-                              no dia de hoje. 
-                              PRJ300- Desconto de cheque. (Odirlei-AMcom)
+	 Alterações: 
 	************************************************************************/
 	
 	session_start();
@@ -49,26 +47,14 @@
 		}
 		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
 		exit();
-    }
-
-    // Verificar se possui cheques nao aprovados custodiados no dia de hj  
-    $flcusthj = $xmlObj->roottag->tags[1]->cdata;
-    if ($flcusthj == 1){
-        $aux_acao = 'confirmaResgateCustodiahj(\'efetivaBordero();\',\'L\');';
-        
-    }else {
-        $aux_acao = 'efetivaBordero();';
-    }
-            
-    
-	if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'FLGASSIN')){
+	}elseif(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name == 'FLGASSIN')){
 		$flgassin = $xmlObj->roottag->tags[0]->cdata;
 		
 		if ($flgassin == '1'){
 			$msgErro = 'Esta opera&ccedil;&atilde;o n&atilde;o ser&aacute; liberada enquanto o cooperado n&atilde;o assinar o border&ocirc;.';
-			echo 'showConfirmacao("Esta opera&ccedil;&atilde;o depende da assinatura do cooperado. Confirmar assinatura?","Confirma&ccedil;&atilde;o - Ayllos","'.$aux_acao.'","showError(\'error\',\''.$msgErro.'\',\'Alerta - Ayllos\',\'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));\');","sim.gif","nao.gif");';
+			echo 'showConfirmacao("Esta opera&ccedil;&atilde;o depende da assinatura do cooperado. Confirmar assinatura?","Confirma&ccedil;&atilde;o - Ayllos","efetivaBordero();","showError(\'error\',\''.$msgErro.'\',\'Alerta - Ayllos\',\'blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));\');","sim.gif","nao.gif");';
 		}
 	}else{
-		echo aux_acao;
+		echo 'efetivaBordero();';
 	}	
 ?>

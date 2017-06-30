@@ -14,9 +14,6 @@
 				 12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
 
 				 12/09/2016 - Removido o botao Completa. (Jaison/Daniel)
-                 
-                 30/05/2017 - Incluir idimpres 10 para impressão bordero cooperado.
-                              PRJ300 - Desconto de Cheque(Odirlei-AMcom)
 	************************************************************************/
 	
 	session_start();
@@ -54,7 +51,7 @@
 		<legend style="font-size: 11px; color: #333; margin-left: 5px; padding: 0px 2px;"><? echo utf8ToHtml('Impressão') ?></legend>
 			
 			<a href="#" class="botao" id="btVoltar" onClick="carregaBorderosCheques();return false;">Voltar</a>
-		<a href="#" class="botao" id="btCheques" onClick="gerarImpressao(10,2,'no','',0);return false;">Border&ocirc; Cooperado</a>
+			<a href="#" class="botao" id="btCheques" onClick="gerarImpressao(7,2,'no','',0);return false;">Border&ocirc; Cooperado</a>
 			<a href="#" class="botao" id="btCheques" onClick="gerarImpressao(7,2,'no','',1);return false;">Border&ocirc; Cooperativa</a>
 			<a href="#" class="botao" id="btProposta" onClick="gerarImpressao(6,2,'no');return false;">Proposta</a>
 			

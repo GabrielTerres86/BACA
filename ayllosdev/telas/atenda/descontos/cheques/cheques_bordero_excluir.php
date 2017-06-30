@@ -7,10 +7,7 @@
 	                                                                  
 	 Objetivo  : Excluir um bordero de desconto de cheques            
 	                                                                  	 
-	 Alterações: 31/05/2017 - Ajuste para verificar se possui cheque custodiado
-                              no dia de hoje. 
-                              PRJ300- Desconto de cheque. (Odirlei-AMcom)
-                              
+	 Alterações:                                                      
 	************************************************************************/
 	
 	session_start();
@@ -37,8 +34,6 @@
 
 	$nrdconta = $_POST["nrdconta"];
 	$nrborder = $_POST["nrborder"];
-    // flag se deve resgatar cheques custodiados no dia de hj
-    $flresghj = $_POST["flresghj"];    
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -66,7 +61,6 @@
 	$xmlExcluir .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
 	$xmlExcluir .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlExcluir .= "		<nrborder>".$nrborder."</nrborder>";
-    $xmlExcluir .= "		<flresghj>".$flresghj."</flresghj>";
 	$xmlExcluir .= "		<flgelote>1</flgelote>";
 	$xmlExcluir .= "	</Dados>";
 	$xmlExcluir .= "</Root>";	

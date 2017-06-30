@@ -64,7 +64,7 @@
 	$xmlRenovaLimite .= "</Root>";
   
 	// Executa script para envio do XML	
-	$xmlResult = mensageria($xmlRenovaLimite, "TELA_ATENDA_DESCTO", "CONFIRMA_NOVO_LIMITE", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xmlRenovaLimite, "TELA_ATENDA_DESCTO", "CONFIRMA_NOVO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	
 	$xmlObjRenovaLimite = getObjectXML($xmlResult);
 	

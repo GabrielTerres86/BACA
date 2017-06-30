@@ -11,13 +11,12 @@
  * 001: [06/05/2011] Rogerius Militao      (DB1) : Adaptação no formulário de avalista genérico
  * 002: [12/09/2011] Adriano		    (CECRED) : Incluido chama da procedure alerta_fraude 
  * 003: [28/03/2013] Adriano			(CECRED) : Retirado a chamada da procedure alerta_fraude
- * 004: [20/08/2015] Kelvin 			(CECRED) : Ajuste feito para não inserir caracters 
+ * 002: [20/08/2015] Kelvin 			(CECRED) : Ajuste feito para não inserir caracters 
  *  											   especiais na observação, conforme solicitado
  *												   no chamado 315453.
          17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
- *006: [26/05/2017] Odirlei Busana       (AMcom) : Incluido retorno do nrctrlim que será gerado na inclusao
- *                                                 do ctr de limite. PRJ300 - Descto cheque.  
+
  */
 ?>
 
@@ -309,8 +308,6 @@
 	if ($cddopcao == "A"){
 		$opermail = "Alterado Limite de Desconto de Cheques.";
 	}else{  if ($cddopcao == "I"){
-                // Buscar numer do contrato gerado 
-                $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];
 				$opermail = "Novo Limite de Desconto de Cheques.";
 			}
 	}
