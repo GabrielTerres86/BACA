@@ -1,7 +1,7 @@
 <?php
 /*************************************************************************
 	Fonte: principal.php
-	Autor: Gabriel						Ultima atualizacao: 13/12/2016
+	Autor: Gabriel						Ultima atualizacao: 27/03/2017
 	Data : Dezembro/2010
 	
 	Objetivo: Listar os convenios de cobranca.
@@ -33,7 +33,9 @@
 
 				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
 
-				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)  
+
+                27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
 
 *************************************************************************/
 
@@ -112,6 +114,9 @@ $emails = $xmlObjDadosCobranca->roottag->tags[2]->tags;
 $dsdmesag = $xmlObjDadosCobranca->roottag->tags[2]->attributes["DSDMESAG"];
 // Contem a quantidade de titulares a atualizar emissao de boleto
 $qtTitulares = count($titulares);
+// Inicializar variavel de controle
+$aux_insitceb = 0;
+
 
 // Concatena os titulares e seus valores de emissao de boleto
 foreach ($titulares as $titular) {		
@@ -126,6 +131,29 @@ foreach($emails as $email) {
    $emails_titular  = ($emails_titular == '') ? '' : $emails_titular . '|';
    $emails_titular .= $email->tags[0]->cdata . ',' . $email->tags[1]->cdata;
 }
+
+// Montar o xml de Requisicao de verificacao do serviço de SMS
+$xml = new XmlMensageria();
+$xml->add('nrdconta',$nrdconta);
+$xmlResult = mensageria($xml, "ATENDA",'VERIF_SERV_SMS_COBRAN', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObject = getObjectXML($xmlResult);
+$xmlDados  = $xmlObject->roottag->tags[0];
+
+if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+
+   $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+    if ($msgErro == "") {
+        $msgErro = $xmlObject->roottag->tags[0]->cdata;
+    }
+
+    exibeErro($msgErro);
+    exit();
+        
+}
+
+$flsitsms   = getByTagName($xmlDados->tags,"flsitsms");
+$dsalerta   = getByTagName($xmlDados->tags,"dsalerta");
+    
 
 // Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 function exibeErro($msgErro) {
@@ -180,6 +208,10 @@ function exibeErro($msgErro) {
   					   $idrecipr =  getByTagName($convenios[$i]->tags,'idrecipr');
   					   $inenvcob =  getByTagName($convenios[$i]->tags,'inenvcob');
 						
+                       // Verificar se existe algum convenio ativo(insitceb == 1)
+                       if ($insitceb == 1 && $aux_insitceb == 0 ){
+                           $aux_insitceb = $insitceb;
+                       } 
                        $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flgregon."','".$flgpgdiv."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtdecprz."','".$idrecipr."','".$inenvcob."');";
 					?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
@@ -264,13 +296,22 @@ function exibeErro($msgErro) {
 	<input type="hidden" id= "idrecipr"    name="idrecipr">
 	<input type="hidden" id= "inenvcob"    name="inenvcob">
 
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelamento.gif"   <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> />
-    <input type="image" src="<?php echo $UrlImagens; ?>botoes/incluir.gif" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('S','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> />
-    <input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/impressao.gif" onClick="confirmaImpressao('','1');return false;" />
-    <input type="image" src="<?php echo $UrlImagens; ?>botoes/log.gif" onClick="carregaLogCeb();return false;" />
-    <input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;" />
+    <?php //Habilitar botão apenas se possuir cobrança ativa
+          // e se o serviço estiver ativo ou com algum tipo de alerta
+          // que significa que serviço esta ativo para coop porém possui algum alerta para o cooperado          
+          if ($aux_insitceb == 1 && 
+              ($flsitsms == 1 || $dsalerta != "")) { ?>
+        		<a href="#" class="botao" onclick="consultaServicoSMS('C'); return false;">Servi&ccedil;o SMS</a>
+    		<?php  } ?>
+    
+    <a href="#" class="botao" <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?>>Cancelamento</a>
+    <a href="#" class="botao" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Consultar</a>
+    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('S','','','true','','');return false;" <? } else { ?> style="cursor: default;" <? }  ?> >Incluir</a>
+    <a href="#" class="botao" <? if (in_array("H",$glbvars["opcoesTela"])) { ?> onClick="consulta('A','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> >Alterar</a>
+    <a href="#" class="botao" onclick="confirmaImpressao('','1'); return false;">Impress&atilde;o</a>
+    <a href="#" class="botao" onclick="carregaLogCeb(); return false;">Log</a>
+    <a href="#" class="botao" onclick="dossieDigdoc(2);return false;">Dossi&ecirc; DigiDOC</a>
+	<a href="#" class="botao" onclick="encerraRotina(true); return false;">Voltar</a>
 	
 	<input type="hidden" id= "flsercco"    name="flsercco">
 	

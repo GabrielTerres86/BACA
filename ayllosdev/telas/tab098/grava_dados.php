@@ -36,7 +36,7 @@
 	$rollout_cip_pag_data	= $_POST['rollout_cip_pag_data'];
 	$rollout_cip_pag_valor 	= $_POST['rollout_cip_pag_valor'];
 
-    $dsmensag = 'Parametros alterados com sucesso!';
+    $dsmensag = 'Parâmetros alterados com sucesso!';
 
 	// Montar o xml de Requisicao
 	$xmlCarregaDados  = "";

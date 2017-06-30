@@ -176,7 +176,7 @@ function carregarDados() {
 }
 
 function alterarDados() {
-    showConfirmacao('Confirma a atualiza&ccedil;&atilde;o dos parametros?', 'Tab098', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
+    showConfirmacao('Confirma a atualiza&ccedil;&atilde;o dos par&acirc;metros?', 'Tab098', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
 }
 
 function abreTelAlteracao(dsvalor) {
