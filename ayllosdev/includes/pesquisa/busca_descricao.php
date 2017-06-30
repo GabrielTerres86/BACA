@@ -13,6 +13,7 @@
  * 003: [22/10/2020] David       (CECRED) : Incluir novo parametro para a funcao getDataXML (David).
  * 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
  * 005: [06/06/2017] Jonata        (Mouts): Ajuste para inclusão da busca de dominios - P408.
+ * 006: [30/06/2017] Jonata        (Mouts): Ajsute para limpara corretamente campos auxiliares - P408.
  */	
 ?>
 
@@ -150,9 +151,14 @@
 	    	
 	if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
 		echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("'.getByTagName($descricao,"iddominio").'");';
-		echo '$("#idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrctacosif").'");';
-		echo '$("#dsconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"dsctacosif").'");';
-		echo '$("#iddominio_idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"iddominioctacosif").'");';
+		
+		if($campoCodigo == 'idgarantia' || $campoCodigo == 'idconta_cosif'){
+			
+			echo '$("#idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrctacosif").'");';
+			echo '$("#dsconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"dsctacosif").'");';
+			echo '$("#iddominio_idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"iddominioctacosif").'");';
+			
+		}
 	}
 	
 	if( $nomeProcedure == 'BUSCADESCASSOCIADO' ){
