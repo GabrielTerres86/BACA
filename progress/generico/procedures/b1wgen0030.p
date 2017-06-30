@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 18/05/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 09/03/2017
            
     Dados referentes ao programa:
                 
@@ -483,8 +483,6 @@
 			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
 					       (Adriano - SD 603451).
 
-               18/05/2017 - Incluir campo dspagdiv na tt-titulos.
-                            PRJ340 - NPC (Odirlei-AMcom) 
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -7235,14 +7233,6 @@ PROCEDURE busca_titulos:
                                      IF  tt-titulos.flgregis = FALSE THEN 
                                          "S/registro"
                                      ELSE
-                                         " "
-                tt-titulos.dspagdiv = IF crapcob.inpagdiv = 0 THEN
-                                         "Nao autoriza"
-                                     ELSE IF crapcob.inpagdiv = 1 THEN 
-                                        "Com valor minimo"
-                                     ELSE IF crapcob.inpagdiv = 2 THEN 
-                                         "Qualquer valor"
-                                     ELSE
                                          " ".
     END. /* Final do FOR EACH */
     
@@ -7431,14 +7421,6 @@ PROCEDURE busca_titulos_bordero_lote:
                                      ELSE
                                      IF  tt-titulos.flgregis = FALSE THEN 
                                          "S/registro"
-                                     ELSE
-                                         " "
-               tt-titulos.dspagdiv = IF crapcob.inpagdiv = 0 THEN
-                                         "Nao autoriza"
-                                     ELSE IF crapcob.inpagdiv = 1 THEN 
-                                        "Com valor minimo"
-                                     ELSE IF crapcob.inpagdiv = 2 THEN 
-                                         "Qualquer valor"
                                      ELSE
                                          " ".
                

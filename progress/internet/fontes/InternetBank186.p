@@ -149,13 +149,13 @@ END.
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<cabecalho> 
                                   <vlfatura>"  + TRIM(STRING(aux_vlfatura,'zzz,zzz,zzz,zzz,zzz,zz9.99')) + "</vlfatura>
-                                  <vlrjuros>" + STRING(aux_vlrjuros) + "</vlrjuros>
-                                  <vlrmulta>" + STRING(aux_vlrmulta) + "</vlrmulta>
+                                  <vlrjuros>"  + TRIM(STRING(aux_vlrjuros,'zzz,zzz,zzz,zzz,zzz,zz9.99')) + "</vlrjuros>
+                                  <vlrmulta>"  + TRIM(STRING(aux_vlrmulta,'zzz,zzz,zzz,zzz,zzz,zz9.99')) + "</vlrmulta>
                                   <fltitven>" + STRING(aux_fltitven) + "</fltitven>
                                   <nrdocbenf>" + STRING(aux_nrdocbenf) + "</nrdocbenf>
                                   <tppesbenf>" + aux_tppesbenf         + "</tppesbenf>
                                   <dsbenefic>" + aux_dsbenefic         + "</dsbenefic>
-                                  <vlrdescto>" + STRING(aux_vlrdescto) + "</vlrdescto>
+                                  <vlrdescto>" + TRIM(STRING(aux_vlrdescto,'zzz,zzz,zzz,zzz,zzz,zz9.99')) + "</vlrdescto>
                                   <cdctrlcs>"  + aux_cdctrlcs          + "</cdctrlcs>
                                   <flblq_vlr>" + STRING(aux_flblq_vlr) + "</flblq_vlr>
                                 </cabecalho>".

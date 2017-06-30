@@ -28,6 +28,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
     
             01/12/2016 - Ajuste na navegacao dos campos (correcao M271) 
                         (Douglas - Chamado 563281)
+                        
+                        
+            29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                 
 -->
 
 <html>
@@ -64,6 +67,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
     var btnCancela = "#btnCancela";
     var btnOk = "#btnOk";
     var cValor     = "#v_valor";
+    var flblqval   = "#v_flblqval";
 
     function resetaCampo(){
     	running = false;
@@ -80,6 +84,18 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 
         $(cValor).prop("disabled", false);
     }	
+
+    
+    // Submit do formulario
+    function submitFormulario() {
+       document.forms[0].submit();
+               
+       for(var i=0;i<document.forms[0].length;i++){
+          document.forms[0].elements[i].disabled=true;
+       }
+       
+    }
+    
 
     $( document ).ready(function(){         
 
@@ -118,6 +134,10 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             }
         }
 
+        // Caso marcado para bloquear campo de valor 
+        if (flblqval == 1 ) {        
+          $(cValor).prop("disabled", true);
+        }
         
   		var end_counter = function() {
 			if (running) {
@@ -146,7 +166,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                 flmask  = false;
                 leitora = true;
 
+                if (flblqval != 1 ) {  
                 $(cValor).prop("disabled", false);
+                }
 
                 $(cCodBarras).unmask();
                 $(cCodBarras).mask('00000000000000000000000000000000000000000000');
@@ -217,7 +239,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                 flmask  = false;
                 leitora = true;
 
+                if (flblqval != 1 ) {  
                 $(cValor).prop("disabled", false);
+                }
 
                 $(cCodBarras).unmask();
                 $(cCodBarras).mask('00000000000000000000000000000000000000000000');
@@ -289,7 +313,8 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 
                              
                         if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
-                            document.forms[0].submit();
+                            //document.forms[0].submit();
+                            submitFormulario();
                         }    
                     },300); 
     
@@ -312,7 +337,8 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                             $("#manual").val("manual");
                              
                             if ($(cCodBarras).cleanVal() == $(cHcodBarra).val()) {
-                               document.forms[0].submit();
+                               //document.forms[0].submit();
+                               submitFormulario();
                             } 
                         },300);
                     
@@ -386,7 +412,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                 } 
                 flmask  = true;
 
-                setTimeout(function(){document.forms[0].submit();},100);
+                //setTimeout(function(){document.forms[0].submit();},100);
+                setTimeout(function(){submitFormulario();},100);
+                
                 //document.forms[0].submit(); 
             });
             
@@ -401,7 +429,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 		    if ($(cTipDocto).val() == "2") {
 		        $(cValor).val("");
 		        $(cValor).prop("disabled", true);
-		    } else {
+		    } else if (flblqval != 1 ) {
 		        $(cValor).prop("disabled", false);
 		    }
 
@@ -498,6 +526,8 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                      <input type="hidden" id="v_codbarras" name="v_codbarras" size="52" class="input" style="text-align: Right" />
                      <input type="hidden" name="v_tpproces" id="v_tpproces" class="input" />
                      <input type="hidden" name="v_tipdocto" id="v_tipdocto" class="input" />
+                     <input type="hidden" name="v_flblqval" id="v_flblqval" class="input" />
+                     
              <!-- inicio do comentario
                      <input type="text" name="v_codbarras" size="52" class="input" maxlength="44" OnKeyDown="JavaScript:validaInteiro(event)" OnKeyUp="Javascript:preenchimento(event,0,this,44,'submit')" style="text-align: Right">
                      <input type="submit" value="Manual" name="Manual" class="button"> 

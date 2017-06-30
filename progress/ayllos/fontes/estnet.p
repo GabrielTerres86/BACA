@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2008                        Ultima atualizacao: 30/06/2017
+   Data    : Abril/2008                        Ultima atualizacao: 07/11/2016
 
    Dados referentes ao programa:
 
@@ -32,16 +32,14 @@
                           
                05/12/2013 - Inclusao de VALIDATE craptab (Carlos) 
                          
-			         09/03/2016 - Alterado para validar o campo Cancelamento de 
-							              Pagamentos e não mais validar o campo 
-							              Pagamentos Titulos/Faturas. 
-							              (RKAM Gisele Campos Neves - Chamado 408875)
+			   09/03/2016 - Alterado para validar o campo Cancelamento de 
+							Pagamentos e não mais validar o campo 
+							Pagamentos Titulos/Faturas. 
+							(RKAM Gisele Campos Neves - Chamado 408875)
 							
-			         07/11/2016 - Desconsiderar Guias DARF/DAS pois não podem ser
-			                      estornadas - Projeto 338 (David)
-						
-               30/06/2017 - Validar saida de critica para as procedures
-                            (Lucas Ranghetti #674894)
+			   07/11/2016 - Desconsiderar Guias DARF/DAS pois não podem ser
+			                estornadas - Projeto 338 (David)
+							
 ............................................................................. */
 
 { includes/var_online.i }
@@ -81,7 +79,10 @@ DEF TEMP-TABLE w_doctos                                             NO-UNDO
     FIELD cdseqdoc  LIKE craplft.cdseqfat
     FIELD dsbarras  LIKE craplft.cdbarras
     FIELD vllanmto  LIKE craplft.vllanmto
-    FIELD tpdocmto  AS LOGICAL  FORMAT "FAT/TIT".
+    FIELD tpdocmto  AS LOGICAL  FORMAT "FAT/TIT"
+    FIELD cdagenci  LIKE craptit.cdagenci
+    FIELD dtmvtolt  LIKE craptit.dtmvtolt
+    FIELD cdctrbxo  LIKE craptit.cdctrbxo.
     
 DEF QUERY q_doctos FOR w_doctos.
     
@@ -175,6 +176,8 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
                   DO:
                       RUN estorna_titulo IN h-b1wgen0016
                                             (INPUT  glb_cdcooper,
+                                             INPUT  w_doctos.cdagenci,
+                                             INPUT  w_doctos.dtmvtolt,
                                              INPUT  tel_nrdconta,
                                              INPUT  1, /* Titularidade */
                                              INPUT  w_doctos.cdbarras,
@@ -182,6 +185,7 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
                                              INPUT  w_doctos.vllanmto,
                                              INPUT  glb_cdoperad,
                                              INPUT  aux_idorigem,
+                                             INPUT  w_doctos.cdctrbxo,
                                              OUTPUT aux_dstransa,
                                              OUTPUT aux_dscritic,
                                              OUTPUT aux_dsprotoc).
@@ -191,15 +195,9 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
          END.
          
     /* Status da transacao */
-    IF  RETURN-VALUE <> "OK" THEN
-        DO:
-            ASSIGN aux_fltransa = NO.
-            
-            IF  aux_dscritic = "" OR aux_dscritic = ? THEN
-                ASSIGN aux_dscritic = "Nao foi possivel estonar o pagamento. Tente novamente.".
-        END.
-    ELSE
-        aux_fltransa = YES.
+    aux_fltransa = IF   RETURN-VALUE = "OK"   THEN
+                        YES
+                   ELSE NO.
 
     /* Log da operacao realizada */         
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
@@ -498,7 +496,10 @@ DO  WHILE TRUE:
         ASSIGN w_doctos.cdbarras = craptit.dscodbar
                w_doctos.cdseqdoc = craptit.nrdocmto
                w_doctos.vllanmto = craptit.vldpagto
+               w_doctos.cdagenci = craptit.cdagenci
+               w_doctos.dtmvtolt = craptit.dtmvtolt
                w_doctos.tpdocmto = NO
+               w_doctos.cdctrbxo = craptit.cdctrbxo
                w_doctos.dsbarras = SUBSTRING(craptit.dscodbar,01,04) + 
                                    SUBSTRING(craptit.dscodbar,20,01) + "." +
                                    SUBSTRING(craptit.dscodbar,21,04) + "0" +

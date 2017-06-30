@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 02/01/2017
+   Data    : Marco/2007                        Ultima atualizacao: 20/04/2017
 
    Dados referentes ao programa:
 
@@ -54,7 +54,11 @@
 
                02/01/2017 - Melhorias referentes a performance no IB na parte 
 			                de cobrança, incluido flprotes no xml de retorno
-							(Tiago/Ademir SD573538).  			   
+							(Tiago/Ademir SD573538).  		
+
+               20/04/2017 - Adicionado vencimento original (dtvctori) e 
+                            flag de boleto dda (flgcbdda) no xml de retorno
+                            (P340 - Rafael)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -409,7 +413,17 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
                                     "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
 									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
-                                    
+                                    /* Aviso SMS */
+                                    "<inavisms>" + STRING(tt-consulta-blt.inavisms) + "</inavisms>" +
+                                    "<insmsant>" + STRING(tt-consulta-blt.insmsant) + "</insmsant>" +
+                                    "<insmsvct>" + STRING(tt-consulta-blt.insmsvct) + "</insmsvct>" +
+                                    "<insmspos>" + STRING(tt-consulta-blt.insmspos) + "</insmspos>" +
+                                    "<dtvctori>" + STRING(
+                                      IF tt-consulta-blt.dtvctori = ? THEN 
+                                        tt-consulta-blt.dtvencto 
+                                      ELSE 
+                                        tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
+                                   "<flgcbdda>" + tt-consulta-blt.flgcbdda + "</flgcbdda>" +
                                    "</BOLETO>".
 
 END.

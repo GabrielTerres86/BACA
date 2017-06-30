@@ -48,7 +48,14 @@
                             
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
                
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
+                            
+               
                28/10/2016 - Ajustes realizados referente a melhoria 271. (Kelvin)
+
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança (Odirlei-AMcom)
 
                22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
                             (Jaison/Cechet)
@@ -59,6 +66,7 @@ CREATE WIDGET-POOL.
     
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i   }
 { sistema/internet/includes/b1wnet0001tt.i }
 { sistema/generico/includes/b1wgen0010tt.i }
 { sistema/generico/includes/b1wgen0015tt.i }
@@ -107,7 +115,13 @@ DEF  INPUT PARAM par_nrdiavct AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_flserasa AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_qtdianeg AS INTE                                  NO-UNDO.
 
-DEF  INPUT PARAM par_inenvcip AS INTE                                  NO-UNDO.
+/* Aviso SMS */
+DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
+
+DEF  INPUT PARAM par_flgregon AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_inpagdiv AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_vlminimo AS DECI                                  NO-UNDO.
 
@@ -201,6 +215,7 @@ DO:
     RETURN "NOK".
 END.
 
+
 RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    INPUT 90,             /** PAC      **/
                                    INPUT 900,            /** Caixa    **/
@@ -251,7 +266,14 @@ RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
 
-                                   INPUT par_inenvcip,
+                                   /*Aviso SMS*/
+                                   INPUT par_inavisms,
+                                   INPUT par_insmsant,
+                                   INPUT par_insmsvct,
+                                   INPUT par_insmspos,         
+        
+                                   /* NPC */
+                                   INPUT par_flgregon,
                                    INPUT par_inpagdiv,
                                    INPUT par_vlminimo,
 
@@ -574,6 +596,8 @@ ASSIGN xml_operacao.dslinxml = "<dados_beneficiario><nmprimtl>" +
                                "</inpessoa><dsdemail>" + 
                                aux_dsdemail_ben + 
                                "</dsdemail></dados_beneficiario>".
+                               
+ 
 
 RETURN "OK".
 

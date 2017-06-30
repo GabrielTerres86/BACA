@@ -7,7 +7,7 @@
 
      Autor: Evandro
 
-      Data: Janeiro/2010                        Ultima alteracao: 20/01/2017 
+      Data: Janeiro/2010                        Ultima alteracao: 19/05/2017
 
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -282,9 +282,21 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
                          Lenilson (Mouts)
                          
-            20/01/2017 - Alterado nome da procedure calcula_valor_titulo_vencido para calcula_valor_titulo
-                         e incluido retorno de novas informaçoes.
-                         PRJ340 - NPC (Odirlei-AMcom)
+            22/11/2016 - Inclusao do parametro pr_iptransa na chamada da rotina 
+                         pc_cadastrar_agendamento.
+                         PRJ335 - Analise de Fraude (Odirlei-AMcom ) 
+
+            19/01/2017 - Ajuste na validação de agendamentos/pagamentos no último
+                         dia do ano (Rodrigo - SD 587328)
+            02/02/2017 - #566765 Mudanca do tipo da variavel xml_resp de char para 
+                         longchar (Carlos)
+                         
+            03/03/2017 - Alterado para tratar Projeto 321 - Recarga de celular.
+                         (Reinert)
+								  
+			19/05/2017 - Necessaria inclusao de novo parametro na chamada da
+			             procedure lista_protocolos para Recarga de Celular
+						 (Diego).
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -408,7 +420,8 @@ DEFINE VARIABLE aux_nrtelefo AS DECI   INIT 0               NO-UNDO.
 DEFINE VARIABLE aux_tptelefo AS INT                         NO-UNDO.
 DEFINE VARIABLE aux_flgacsms AS INTE                        NO-UNDO.
 DEFINE VARIABLE aux_dsmsgsms AS CHAR                        NO-UNDO.
-DEFINE VARIABLE aux_nrctlnpc AS CHAR                        NO-UNDO.
+DEFINE VARIABLE aux_cdctrlcs AS CHAR                        NO-UNDO.
+DEFINE VARIABLE aux_flgsitrc AS INTEGER                     NO-UNDO.
 
 /* para exclusao de agendamentos */
 DEFINE VARIABLE aux_dtmvtopg AS DATE                        NO-UNDO.
@@ -440,6 +453,35 @@ DEFINE TEMP-TABLE tt-demonst-ldcb NO-UNDO
        FIELD cdrubric AS INTE /* Codigo da rubrica */
        FIELD dsrubric AS CHAR /* Descricao da rubrica */
        FIELD vlrubric AS DECI. /* Valor da rubrica */
+
+/* Usada para exibir os telefones favoritos para recarga */
+DEFINE TEMP-TABLE tt-favoritos-recarga NO-UNDO
+       FIELD nrddd     AS INTE  /* DDD */
+       FIELD nrcelular AS DECI  /* Nr. Celular */
+       FIELD nmcontato AS CHAR  /* Nome contato */
+       FIELD cdseqfav  AS DECI. /* Cód. sequencia favoritos */       
+
+/* Usada para exibir as operadoras para recarga */
+DEFINE TEMP-TABLE tt-operadoras-recarga NO-UNDO
+       FIELD cdoperadora AS INTE  /* Cod. operadora */
+       FIELD nmoperadora AS CHAR  /* Nome operadora */
+       FIELD cdproduto   AS INTE  /* Cod. produto   */
+       FIELD nmproduto   AS CHAR. /* Nome produto */
+       
+/* Usada para exibir os valores pre-fixados para recarga */
+DEFINE TEMP-TABLE tt-valores-recarga NO-UNDO
+       FIELD vlrecarga AS DECIMAL.  /* Valor de recarga */
+       
+/* Recarga de celular */
+DEFINE VARIABLE aux_cdoperadora AS INTE                     NO-UNDO.
+DEFINE VARIABLE aux_cdproduto   AS INTE                     NO-UNDO.
+DEFINE VARIABLE aux_vlrecarga   AS DECI                     NO-UNDO.
+DEFINE VARIABLE aux_nrdddtel    AS INTE                     NO-UNDO.
+DEFINE VARIABLE aux_nrcelular   AS INTE                     NO-UNDO.
+DEFINE VARIABLE aux_dtrecarga   AS CHAR                     NO-UNDO.
+DEFINE VARIABLE aux_qtmesagd    AS INTE                     NO-UNDO.
+DEFINE VARIABLE aux_cddopcao    AS INTE                     NO-UNDO.
+DEFINE VARIABLE aux_lsdatagd    AS CHAR                     NO-UNDO.
 
 /* Operacao 63 */
 DEFINE VARIABLE aux_titulo1 AS DECI                         NO-UNDO.
@@ -934,7 +976,38 @@ DO:
              aux_codigo_barras = STRING(xText:NODE-VALUE).
     ELSE
 		IF   xField:NAME = "NRCTLNPC" THEN
-             aux_nrctlnpc = STRING(xText:NODE-VALUE). 
+             aux_cdctrlcs = STRING(xText:NODE-VALUE). 
+		ELSE
+        IF   xField:NAME = "FLGSITRC" THEN
+             aux_flgsitrc = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "CDOPERADORA" THEN
+             aux_cdoperadora = INTE(xText:NODE-VALUE).             
+        ELSE
+        IF   xField:NAME = "CDPRODUTO" THEN
+             aux_cdproduto = INTE(xText:NODE-VALUE).             
+        ELSE
+        IF   xField:NAME = "VLRECARGA" THEN
+             aux_vlrecarga = DECI(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "NRDDDTEL" THEN
+             aux_nrdddtel = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "NRCELULAR" THEN
+             aux_nrcelular = DECI(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "DTRECARGA" THEN
+             aux_dtrecarga = xText:NODE-VALUE.
+        ELSE
+        IF   xField:NAME = "QTMESAGD" THEN
+             aux_qtmesagd = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "CDDOPCAO" THEN
+             aux_cddopcao = INTE(xText:NODE-VALUE).
+        ELSE
+        IF   xField:NAME = "LSDATAGD" THEN
+             aux_lsdatagd = xText:NODE-VALUE.
+
     END.
 
     IF   aux_operacao = 0   THEN
@@ -957,7 +1030,8 @@ DELETE OBJECT xText.
 /* Gera a resposta */
 RESPOSTA:
 DO:
-    DEFINE VARIABLE xml_resp     AS CHARACTER   NO-UNDO.
+/*  Usada apenas para o log (desabilitado) */
+/*  DEFINE VARIABLE xml_resp     AS LONGCHAR   NO-UNDO. */
 
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
@@ -1544,6 +1618,62 @@ DO:
         END.
 
 
+		ELSE
+        IF   aux_operacao = 68   THEN
+             DO:               
+                 RUN verifica_opcao_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE
+        IF   aux_operacao = 69   THEN
+             DO:               
+                 RUN obtem_favoritos_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE
+        IF   aux_operacao = 70   THEN
+             DO:               
+                 RUN obtem_operadoras_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.             
+        ELSE
+        IF   aux_operacao = 71   THEN
+             DO:               
+                 RUN obtem_valores_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.             
+        ELSE
+        IF   aux_operacao = 72   THEN
+             DO:               
+                 RUN verifica_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE
+        IF   aux_operacao = 73   THEN
+             DO:               
+                 RUN efetua_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE
+        IF   aux_operacao = 74   THEN
+             DO:               
+                 RUN exclui_agendamentos_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
 
         LEAVE.
     END.
@@ -1551,16 +1681,17 @@ DO:
 
     /* log -> nao usa quebra de linha */
     xDoc:SAVE("MEMPTR",ponteiro_xml).
-
-    xml_resp = GET-STRING(ponteiro_xml,1) NO-ERROR.
+/*  Usada apenas para o log (desabilitado) */
+/*  xml_resp = GET-STRING(ponteiro_xml,1) NO-ERROR. */
+/*  COPY-LOB FROM ponteiro_xml TO xml_resp CONVERT SOURCE CODEPAGE "UTF-8" NO-ERROR. */
 
     /* verifica se o XML é muito extenso, e importa somente 32K */
-    IF  ERROR-STATUS:ERROR  THEN
+/*  IF  ERROR-STATUS:ERROR  THEN
         xml_resp = GET-STRING(ponteiro_xml,32000).
 
     ASSIGN xml_resp = REPLACE(xml_resp,CHR(10),"")
            xml_resp = REPLACE(xml_resp,CHR(13),"").
-
+*/
     SET-SIZE(ponteiro_xml) = 0.
 
     /* log desabilitado
@@ -3744,6 +3875,8 @@ PROCEDURE efetua_transferencia:
                                  INPUT 0,   /* cdfinali */
                                  INPUT ' ', /* dstransf */
                                  INPUT ' ', /* dshistor */
+                                 INPUT "",  /* pr_iptransa */
+                                 INPUT "",  /* Numero controle consulta npc */   
                                 OUTPUT "",  /* pr_dstransa */
                                 OUTPUT "",
                                 OUTPUT 0,
@@ -4278,15 +4411,9 @@ PROCEDURE verifica_titulo:
     DELETE PROCEDURE h-b1wgen0015.
 
     /* valida se eh ultimo dia util do ano e nao deixa efetuar pagto */
-    IF  crapdat.dtmvtocd = aux_dtultdia  THEN
-        DO:
-            aux_dscritic = "Impossível pagar nesta data".
-            RETURN "NOK".
-        END.
-    ELSE
     IF  aux_datpagto = aux_dtultdia THEN
         DO:
-            aux_dscritic = "Impossível marcar agendamento para essa data.".
+            aux_dscritic = "Pagamento não permitido para essa data.".
             RETURN "NOK".
         END.
 
@@ -4316,7 +4443,7 @@ PROCEDURE verifica_titulo:
                                  INPUT        aux_datpagto,  /* data agendamento */
                                  INPUT        4,             /* origem TAA */
                                  INPUT        1, /* nao validar */
-                                 INPUT aux_nrctlnpc, /* Numero controle consulta npc */   
+                                 INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                        OUTPUT aux_nmconban,
                                        OUTPUT aux_vlrdocum,  /* valor do titulo */
                                        OUTPUT aux_dtdifere,
@@ -4476,7 +4603,7 @@ PROCEDURE paga_titulo:
                                  INPUT        aux_datpagto,  /* data agendamento */
                                  INPUT        4,             /* origem TAA */
                                  INPUT        1, /* nao validar */
-                                 INPUT aux_nrctlnpc, /* Numero controle consulta npc */   
+                                 INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                        OUTPUT aux_nmconban,
                                        OUTPUT aux_vlrdocum,  /* valor do titulo */
                                        OUTPUT aux_dtdifere,
@@ -4584,7 +4711,7 @@ PROCEDURE paga_titulo:
                                                      INPUT par_vloutcre,
                                                      INPUT 0,
                                                      INPUT aux_tpcptdoc,
-                                                     INPUT aux_nrctlnpc, /* Numero controle consulta npc */   
+                                                     INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                     OUTPUT aux_dstrans1,
                                                     OUTPUT aux_dscritic,
                                                     OUTPUT aux_dsprotoc,
@@ -4634,6 +4761,8 @@ PROCEDURE paga_titulo:
                                                    INPUT 0,   /* cdfinali */
                                                    INPUT ' ', /* dstransf */
                                                    INPUT ' ', /* dshistor */
+                                                   INPUT "",   /* pr_iptransa */
+                                                   INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                    OUTPUT "",  /* pr_dstransa */
                                                    OUTPUT "",
                                                    OUTPUT 0,
@@ -4695,6 +4824,7 @@ PROCEDURE paga_titulo:
                                                       INPUT aux_tpcptdoc, /* Tipo de captura do documento */
                                                       INPUT 0,            /* Identificador do titulo no DDA */
                                                       INPUT aux_idastcjt, /* Indicador de assinatura conjunta */
+                                                      INPUT aux_cdctrlcs, /* Numero controle consulta npc */   
                                                       OUTPUT 0,  /* Codigo do erro */
                                                       OUTPUT ""). /* Descricao do erro */
 
@@ -4901,15 +5031,9 @@ PROCEDURE verifica_convenio:
     DELETE PROCEDURE h-b1wgen0015.
 
     /* valida se eh ultimo dia util do ano e nao deixa efetuar pagto */
-    IF  crapdat.dtmvtocd = aux_dtultdia  THEN
-        DO:
-            aux_dscritic = "Impossível pagar nesta data".
-            RETURN "NOK".
-        END.
-    ELSE
     IF  aux_datpagto = aux_dtultdia THEN
         DO:
-            aux_dscritic = "Impossível marcar agendamento para essa data.".
+            aux_dscritic = "Pagamento não permitido para essa data.".
             RETURN "NOK".
         END.
 
@@ -5168,6 +5292,8 @@ PROCEDURE paga_convenio:
                                                   INPUT 0,   /* cdfinali */
                                                   INPUT ' ', /* dstransf */
                                                   INPUT ' ', /* dshistor */
+                                                  INPUT '',  /* pr_iptransa */
+                                                  INPUT '',  /* Numero controle consulta npc */   
                                                  OUTPUT "",  /* pr_dstransa */
                                                  OUTPUT "",
                                                  OUTPUT 0,
@@ -5228,6 +5354,7 @@ PROCEDURE paga_convenio:
                                                        INPUT aux_tpcptdoc, /* Tipo de captura do documento */
                                                        INPUT 0,            /* Identificador do titulo no DDA */
                                                        INPUT aux_idastcjt, /* Indicador de assinatura conjunta */
+                                                       INPUT "",           /* Numero controle consulta npc */   
                                                        OUTPUT 0,  /* Codigo do erro */
                                                        OUTPUT ""). /* Descricao do erro */
 
@@ -5658,6 +5785,7 @@ PROCEDURE efetua_agendamento_mensal:
                                     INPUT 0,   /* cdfinali */
                                     INPUT ' ', /* dstransf */
                                     INPUT ' ', /* dshistor */
+                                    INPUT '',  /* iptransa */
                                     OUTPUT "",  /* pr_dstransa */
                                     OUTPUT "",  /* pr_cdcritic */
                                     OUTPUT ""). /* pr_dscritic */
@@ -5706,6 +5834,17 @@ PROCEDURE obtem_agendamentos:
     DEFINE VARIABLE aux_cdagetfn AS INTEGER                         NO-UNDO.
     DEFINE VARIABLE aux_nrterfin AS INTEGER                         NO-UNDO.
 
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot_ora           AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot_ora2          AS HANDLE   NO-UNDO.  
+    DEF VAR xField_ora          AS HANDLE   NO-UNDO. 
+    DEF VAR xText_ora           AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz             AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont                  AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml_ora    AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req_ora         AS LONGCHAR NO-UNDO.
+    
     ASSIGN aux_cdcoptfn = crapcop.cdcooper
            aux_cdagetfn = crapage.cdagenci
            aux_nrterfin = craptfn.nrterfin.
@@ -5733,6 +5872,98 @@ PROCEDURE obtem_agendamentos:
 
     IF  aux_dscritic <> "" OR RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_obtem_agendamentos_recarga aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT aux_cdcooper 
+                         ,INPUT aux_nrdconta 
+                         ,INPUT 4   /* TAA */
+                         ,INPUT 1   /* Agendamento */
+                         ,INPUT ?
+                         ,INPUT ?
+                         ,OUTPUT "" 
+                         ,OUTPUT 0
+                         ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_obtem_agendamentos_recarga aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_dscritic = pc_obtem_agendamentos_recarga.pr_dscritic 
+                          WHEN pc_obtem_agendamentos_recarga.pr_dscritic <> ?
+           xml_req_ora  = pc_obtem_agendamentos_recarga.pr_clobxml. 
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_dscritic <> "" THEN 
+        RETURN "NOK".
+    
+    CREATE X-DOCUMENT xDoc_ora.
+    CREATE X-NODEREF  xRoot_ora.
+    CREATE X-NODEREF  xRoot_ora2.
+    CREATE X-NODEREF  xField_ora.
+    CREATE X-NODEREF  xText_ora.
+    
+    SET-SIZE(ponteiro_xml_ora) = LENGTH(xml_req_ora) + 1.
+    PUT-STRING(ponteiro_xml_ora,1) = xml_req_ora.
+
+    xDoc_ora:LOAD("MEMPTR",ponteiro_xml_ora,FALSE).
+    xDoc_ora:GET-DOCUMENT-ELEMENT(xRoot_ora).
+    
+    DO aux_cont_raiz = 1 TO xRoot_ora:NUM-CHILDREN: 
+
+      xRoot_ora:GET-CHILD(xRoot_ora2,aux_cont_raiz) NO-ERROR.
+                
+      IF xRoot_ora2:SUBTYPE <> "ELEMENT" THEN 
+        NEXT. 
+                    
+      IF xRoot_ora2:NUM-CHILDREN > 0 THEN
+        CREATE tt-dados-agendamento.
+
+      DO aux_cont = 1 TO xRoot_ora2:NUM-CHILDREN:
+                                      
+        xRoot_ora2:GET-CHILD(xField_ora,aux_cont) NO-ERROR. 
+
+        IF xField_ora:SUBTYPE <> "ELEMENT" THEN 
+           NEXT.
+
+        xField_ora:GET-CHILD(xText_ora,1) NO-ERROR. 
+
+        /* Se nao vier conteudo na TAG */ 
+        IF ERROR-STATUS:ERROR             OR  
+           ERROR-STATUS:NUM-MESSAGES > 0  THEN
+           NEXT.
+        
+        ASSIGN tt-dados-agendamento.dtmvtopg    = DATE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "dtrecarga".
+        ASSIGN tt-dados-agendamento.nrdocmto    = INTE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "idoperacao".
+        ASSIGN tt-dados-agendamento.dtmvtage    = DATE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "dttransa".
+        ASSIGN tt-dados-agendamento.dttransa    = DATE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "dttransa".
+        ASSIGN tt-dados-agendamento.hrtransa    = INTE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "hrtransa".
+        ASSIGN tt-dados-agendamento.vllanaut    = DECI(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "vlrecarga".
+        ASSIGN tt-dados-agendamento.nrddd       = INTE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "nrddd".
+        ASSIGN tt-dados-agendamento.nrcelular   =      xText_ora:NODE-VALUE  WHEN xField_ora:NAME = "nrcelular".
+        ASSIGN tt-dados-agendamento.nmoperadora =      xText_ora:NODE-VALUE  WHEN xField_ora:NAME = "nmoperadora".
+        ASSIGN tt-dados-agendamento.dssitlau    =      xText_ora:NODE-VALUE  WHEN xField_ora:NAME = "dssit_operacao".
+        ASSIGN tt-dados-agendamento.incancel    = INTE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "incancel".
+        
+      END.
+      
+      ASSIGN tt-dados-agendamento.cdtiptra = 11.
+      ASSIGN tt-dados-agendamento.dstiptra = "Recarga de celular".
+      
+      aux_qttotage = aux_qttotage + 1.
+      
+    END.  
+    
+    SET-SIZE(ponteiro_xml_ora) = 0.
+
+    DELETE OBJECT xDoc_ora.
+    DELETE OBJECT xRoot_ora.
+    DELETE OBJECT xRoot_ora2.
+    DELETE OBJECT xField_ora.
+    DELETE OBJECT xText_ora.
 
     IF aux_qttotage > 0 THEN
         DO:
@@ -5823,6 +6054,36 @@ PROCEDURE obtem_agendamentos:
                                 xText:NODE-VALUE = tt-dados-agendamento.dsageban.
                                 xField:APPEND-CHILD(xText).
                             END.
+                    END.
+                ELSE IF tt-dados-agendamento.cdtiptra = 11 THEN
+                    DO:
+                        /* ---------- */
+                        xDoc:CREATE-NODE(xField ,"DSAGENDA","ELEMENT").
+                        xRoot2:APPEND-CHILD(xField).
+                        
+                        xDoc:CREATE-NODE(xText,"","TEXT").
+                        xText:NODE-VALUE = "(" + STRING(tt-dados-agendamento.nrddd) + ") " 
+                                         +  tt-dados-agendamento.nrcelular + " - "
+                                         +  tt-dados-agendamento.nmoperadora.
+                        xField:APPEND-CHILD(xText). 
+                        
+                        /* ---------- */
+                        xDoc:CREATE-NODE(xField ,"NMOPERADORA","ELEMENT").
+                        xRoot2:APPEND-CHILD(xField).
+                        
+                        xDoc:CREATE-NODE(xText,"","TEXT").
+                        xText:NODE-VALUE = tt-dados-agendamento.nmoperadora.
+                        xField:APPEND-CHILD(xText).
+                        
+                        /* ---------- */
+                        xDoc:CREATE-NODE(xField ,"DSTELEFO","ELEMENT").
+                        xRoot2:APPEND-CHILD(xField).
+                        
+                        xDoc:CREATE-NODE(xText,"","TEXT").
+                        xText:NODE-VALUE = "(" + STRING(tt-dados-agendamento.nrddd) + ") " 
+                                           +  tt-dados-agendamento.nrcelular.
+                        xField:APPEND-CHILD(xText).                        
+                        
                     END.
                 ELSE
                     DO:
@@ -5916,6 +6177,18 @@ PROCEDURE verifica_comprovantes:
     DEFINE VAR aux_qttotreg AS INTE                                    NO-UNDO.
     DEFINE VAR aux_dstransf AS CHAR                                    NO-UNDO.
 
+    DEFINE VAR aux_nmopetel AS CHAR                                    NO-UNDO.
+    DEFINE VAR aux_dstelefo AS CHAR                                    NO-UNDO.
+    DEFINE VAR aux_dsnsuope AS CHAR                                    NO-UNDO.
+    DEFINE VAR aux_dspagador AS CHAR                                   NO-UNDO.    
+    DEFINE VAR aux_dtvenctit AS CHAR                                   NO-UNDO.    
+    DEFINE VAR aux_vlrtitulo AS CHAR                                   NO-UNDO.    
+    DEFINE VAR aux_vlrjurmul AS CHAR                                   NO-UNDO.    
+    DEFINE VAR aux_vlrdscaba AS CHAR                                   NO-UNDO.    
+    DEFINE VAR aux_nrcpfcgc_benef AS CHAR                              NO-UNDO.
+    DEFINE VAR aux_nrcpfcgc_pagad AS CHAR                              NO-UNDO.    
+
+
     EMPTY TEMP-TABLE tt-cratpro.
 
 
@@ -5928,6 +6201,7 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
+                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 1,  /* Tipo Transferencia*/
@@ -5950,6 +6224,7 @@ PROCEDURE verifica_comprovantes:
                                       INPUT aux_nrdconta,
                                       INPUT aux_dtinipro,
                                       INPUT aux_dtfimpro,
+                                      INPUT "",
                                       INPUT 0,
                                       INPUT 50, /* Ate 50 registros */
                                       INPUT 6,  /* Tipo Pagamento */
@@ -5964,6 +6239,30 @@ PROCEDURE verifica_comprovantes:
     /* Copiar para a tt-cratpro */
     TEMP-TABLE tt-cratpro:COPY-TEMP-TABLE (TEMP-TABLE cratpro:HANDLE,TRUE).
 
+    RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
+        PERSISTENT SET h-bo_algoritmo_seguranca.
+
+    /* Trazer os Tipos 'Recarga de celular' */
+    RUN lista_protocolos IN h-bo_algoritmo_seguranca
+                                     (INPUT aux_cdcooper,
+                                      INPUT aux_nrdconta,
+                                      INPUT aux_dtinipro,
+                                      INPUT aux_dtfimpro,
+									  INPUT "",
+                                      INPUT 0,
+                                      INPUT 50, /* Ate 50 registros */
+                                      INPUT 20, /* Recarga de celular*/
+                                      INPUT 4,  /* TAA */
+                                     OUTPUT aux_dstransa,
+                                     OUTPUT aux_dscritic,
+                                     OUTPUT aux_qttotreg,
+                                     OUTPUT TABLE cratpro).
+
+    DELETE PROCEDURE h-bo_algoritmo_seguranca.
+
+    /* Copiar para a tt-cratpro */
+    TEMP-TABLE tt-cratpro:COPY-TEMP-TABLE (TEMP-TABLE cratpro:HANDLE,TRUE).
+                      
     FOR EACH tt-cratpro NO-LOCK:
 
         /* CHAVE DO COMPROVANTE */
@@ -6097,7 +6396,77 @@ PROCEDURE verifica_comprovantes:
 
                   xField:APPEND-CHILD(xText).
 
+                IF TRIM(ENTRY(3,tt-cratpro.dsinform[3],"#")) <> "" THEN 
+                DO:
+                  ASSIGN aux_dspagador      = TRIM(ENTRY(4,tt-cratpro.dsinform[3],"#")). /* nome do pagador do boleto */
+                  ASSIGN aux_nrcpfcgc_pagad = TRIM(ENTRY(5,tt-cratpro.dsinform[3],"#")). /* nome do pagador do boleto */
+                  ASSIGN aux_dtvenctit      = TRIM(ENTRY(6,tt-cratpro.dsinform[3],"#")). /* vencimento do titulo */
+                  ASSIGN aux_vlrtitulo      = TRIM(ENTRY(7,tt-cratpro.dsinform[3],"#")). /* valor do titulo */
+                  ASSIGN aux_vlrjurmul      = TRIM(ENTRY(8,tt-cratpro.dsinform[3],"#")). /* valor de juros + multa */
+                  ASSIGN aux_vlrdscaba      = TRIM(ENTRY(9,tt-cratpro.dsinform[3],"#")). /* valor de desconto + abatimento */
+                  ASSIGN aux_nrcpfcgc_benef = TRIM(ENTRY(10,tt-cratpro.dsinform[3],"#")). /* CPF/CNPJ do beneficiario	*/
+                  
+                  
+                  
+                  xDoc:CREATE-NODE(xField,"DSPAGADOR","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_dspagador.
+                               
+                  xField:APPEND-CHILD(xText).
+                  
+                  xDoc:CREATE-NODE(xField,"NRCPFCGC_PAGAD","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_nrcpfcgc_pagad.
+                               
+                  xField:APPEND-CHILD(xText).                  
+                  
+                  xDoc:CREATE-NODE(xField,"DTVENCTIT","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_dtvenctit.
+                               
+                  xField:APPEND-CHILD(xText).
+                  
+                  xDoc:CREATE-NODE(xField,"VLRTITULO","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_vlrtitulo.
+                               
+                  xField:APPEND-CHILD(xText).
+                  
+                  xDoc:CREATE-NODE(xField,"VLRJURMUL","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_vlrjurmul.
+                               
+                  xField:APPEND-CHILD(xText).
+                  
+                  xDoc:CREATE-NODE(xField,"VLRDSCABA","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_vlrdscaba.
+                               
+                  xField:APPEND-CHILD(xText).
+                  
+                  xDoc:CREATE-NODE(xField,"NRCPFCGC_BENEF","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_nrcpfcgc_benef.
+                               
+                  xField:APPEND-CHILD(xText).
+                
               END.
+                
+              END.         
 
           /* Banco 085 */
           xDoc:CREATE-NODE(xField,"CDBCOCTL","ELEMENT").
@@ -6115,6 +6484,36 @@ PROCEDURE verifica_comprovantes:
           xText:NODE-VALUE = STRING(tt-cratpro.cdagectl).
           xField:APPEND-CHILD(xText).
 
+          IF   tt-cratpro.cdtippro = 20  THEN /* Recarga de celular */
+               DO:
+                  ASSIGN aux_nmopetel = ENTRY(1,tt-cratpro.dsinform[2],"#")
+                         aux_dstelefo = ENTRY(2,tt-cratpro.dsinform[2],"#")
+                         aux_dsnsuope = ENTRY(4,tt-cratpro.dsinform[2],"#").
+                         
+                  /* Nome operadora */
+                  xDoc:CREATE-NODE(xField,"NMOPETEL","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_nmopetel.
+                  xField:APPEND-CHILD(xText).                         
+                  
+                  /* Telefone */
+                  xDoc:CREATE-NODE(xField,"NRTELEFO","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_dstelefo.
+                  xField:APPEND-CHILD(xText).                         
+                  
+                  /* Telefone */
+                  xDoc:CREATE-NODE(xField,"DSNSUOPE","ELEMENT").
+                  xRoot2:APPEND-CHILD(xField).
+
+                  xDoc:CREATE-NODE(xText,"","TEXT").
+                  xText:NODE-VALUE = aux_dsnsuope.
+                  xField:APPEND-CHILD(xText).                         
+    END.
     END.
 
     RETURN "OK".
@@ -8640,13 +9039,13 @@ PROCEDURE calcula_valor_titulo:
 	DEF VAR aux_vlrjuros                AS DECI         NO-UNDO.
 	DEF VAR aux_vlrmulta                AS DECI         NO-UNDO.
 	DEF VAR aux_fltitven                AS INTE         NO-UNDO.
+    DEF VAR aux_flblqval                AS INTE         NO-UNDO.
 
-  DEF VAR aux_tppesbenf               AS CHAR         NO-UNDO.
-  DEF VAR aux_inpesbnf                AS INTE         NO-UNDO.
-  DEF VAR aux_nrdocbnf                AS DECI         NO-UNDO.
-  DEF VAR aux_nmbenefi                AS CHAR         NO-UNDO.
-  DEF VAR aux_nrctlnpc                AS CHAR         NO-UNDO.
-  
+    DEF VAR aux_tppesbenf               AS CHAR         NO-UNDO.
+    DEF VAR aux_inpesbnf                AS INTE         NO-UNDO.
+    DEF VAR aux_nrdocbnf                AS DECI         NO-UNDO.
+    DEF VAR aux_nmbenefi                AS CHAR         NO-UNDO.
+    DEF VAR aux_cdctrlcs                AS CHAR         NO-UNDO.
 	DEF VAR aux_des_erro                AS CHAR         NO-UNDO.
 	DEF VAR aux_dscritic                AS CHAR         NO-UNDO.
 
@@ -8688,6 +9087,7 @@ PROCEDURE calcula_valor_titulo:
                          ,INPUT aux_titulo5
                          ,INPUT aux_codigo_barras /* Codigo de Barras */
                          ,INPUT "996"      /* Código do operador */
+                         ,INPUT 4                 /* idorigem */ 
                          /* OUTPUT */
                          ,OUTPUT 0       /* pr_nrdocbenf    -- Documento do beneficiário emitente */
                          ,OUTPUT ""      /* pr_tppesbenf    -- Tipo de pessoa beneficiaria */
@@ -8739,11 +9139,12 @@ PROCEDURE calcula_valor_titulo:
            aux_vlfatura = 0
            aux_vlrjuros = 0
            aux_vlrmulta = 0
-         aux_fltitven = 0.
+           aux_fltitven = 0
+           aux_flblqval = 0.
   ASSIGN aux_tppesbenf = ""
          aux_nrdocbnf = 0
          aux_nmbenefi = ""
-         aux_nrctlnpc = "".
+         aux_cdctrlcs = "".
   ASSIGN aux_vlfatura = pc_consultar_valor_titulo.pr_vlrtitulo
                         WHEN pc_consultar_valor_titulo.pr_vlrtitulo <> ?        
          aux_vlrjuros = pc_consultar_valor_titulo.pr_vlrjuros
@@ -8751,15 +9152,17 @@ PROCEDURE calcula_valor_titulo:
          aux_vlrmulta = pc_consultar_valor_titulo.pr_vlrmulta
                         WHEN pc_consultar_valor_titulo.pr_vlrmulta <> ?
          aux_fltitven = pc_consultar_valor_titulo.pr_fltitven
-                        WHEN pc_consultar_valor_titulo.pr_fltitven <> ?.
+                        WHEN pc_consultar_valor_titulo.pr_fltitven <> ?
+         aux_flblqval = pc_consultar_valor_titulo.pr_flblq_valor
+                        WHEN pc_consultar_valor_titulo.pr_flblq_valor <> ?.
   ASSIGN aux_tppesbenf = pc_consultar_valor_titulo.pr_tppesbenf
                         WHEN pc_consultar_valor_titulo.pr_tppesbenf <> ?
          aux_nrdocbnf = pc_consultar_valor_titulo.pr_nrdocbenf
                         WHEN pc_consultar_valor_titulo.pr_nrdocbenf <> ?
          aux_nmbenefi = pc_consultar_valor_titulo.pr_dsbenefic
                         WHEN pc_consultar_valor_titulo.pr_dsbenefic <> ?
-         aux_nrctlnpc = pc_consultar_valor_titulo.pr_nrctrlcs
-                        WHEN pc_consultar_valor_titulo.pr_nrctrlcs <> ?               
+         aux_cdctrlcs = pc_consultar_valor_titulo.pr_cdctrlcs
+                        WHEN pc_consultar_valor_titulo.pr_cdctrlcs <> ?               
          aux_des_erro = pc_consultar_valor_titulo.pr_des_erro
                         WHEN pc_consultar_valor_titulo.pr_des_erro <> ?
          aux_dscritic = pc_consultar_valor_titulo.pr_dscritic
@@ -8818,6 +9221,14 @@ PROCEDURE calcula_valor_titulo:
     xField:APPEND-CHILD(xText).
 
     /*---------------*/
+    xDoc:CREATE-NODE(xField,"FLBLQVAL","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_flblqval).
+    xField:APPEND-CHILD(xText).
+
+    /*---------------*/
     IF aux_tppesbenf = 'F' THEN
       aux_inpesbnf = 1.  
     ELSE
@@ -8852,14 +9263,14 @@ PROCEDURE calcula_valor_titulo:
     END.
 
     /*---------------*/             
-    IF aux_nrctlnpc <> ?  AND 
-       aux_nrctlnpc <> "" THEN
+    IF aux_cdctrlcs <> ?  AND 
+       aux_cdctrlcs <> "" THEN
     DO: 
       xDoc:CREATE-NODE(xField,"NRCRLNPC","ELEMENT").
       xRoot:APPEND-CHILD(xField).
 
       xDoc:CREATE-NODE(xText,"","TEXT").
-      xText:NODE-VALUE = STRING(aux_nrctlnpc).
+      xText:NODE-VALUE = STRING(aux_cdctrlcs).
       xField:APPEND-CHILD(xText).
     END.
 
@@ -9061,10 +9472,10 @@ PROCEDURE atualizacao-telefone:
                            INPUT "",             /** Setor        **/
                            INPUT "",             /** Contato      **/
                            INPUT 0,              /** Operadora Cel**/
-                           INPUT "I",            /** Sis.Alteracao**/
+                           INPUT "T",            /** Sis.Alteracao (A=Ayllos, I=Internet, P=Progrid, T=TAA, C=Caixa Online) **/
                            INPUT TRUE,           /** Logar        **/
                            INPUT 1,              /** Situacao     **/
-                           INPUT 4,              /** Origem       **/
+                           INPUT 1,              /** Origem  (1-Cooperado/2-Cooperativa/3-Terceiros) **/
                           OUTPUT aux_tpatlcad,
                           OUTPUT aux_msgatcad,
                           OUTPUT aux_chavealt,
@@ -9223,4 +9634,668 @@ PROCEDURE atualizacao-data-telefone:
 END PROCEDURE.
 /* Fim 67 - atualizacao-data-telefone */
 
+/*Operacao 68 - verifica_opcao_recarga*/
+PROCEDURE verifica_opcao_recarga:
+
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_situacao_canal_recarga
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT aux_cdcooper, /* Cooperativa*/
+                                                  INPUT 4,            /* Id origem (4-TAA)*/
+                                                  OUTPUT 0,           /* Flag situacao recarga (0-INATIVO/1-ATIVO) */
+                                                  OUTPUT 0,           /* Código da crítica.*/
+                                                  OUTPUT "").         /* Desc. da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_situacao_canal_recarga
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        
+        /* Busca parametros retornados */ 
+        ASSIGN aux_flgsitrc = 0
+           aux_dscritic = ""
+           aux_flgsitrc = pc_situacao_canal_recarga.pr_flgsitrc
+                          WHEN pc_situacao_canal_recarga.pr_flgsitrc <> ?
+           aux_dscritic = pc_situacao_canal_recarga.pr_dscritic
+                          WHEN pc_situacao_canal_recarga.pr_dscritic <> ?.
+        
+  IF aux_dscritic <> "" THEN
+    RETURN "NOK".
+    
+  /* ---------- */
+  xDoc:CREATE-NODE(xField,"FLGSITRC","ELEMENT").
+  xRoot:APPEND-CHILD(xField).
+  
+  xDoc:CREATE-NODE(xText,"","TEXT").
+  xText:NODE-VALUE = STRING(aux_flgsitrc).
+  xField:APPEND-CHILD(xText).
+  
+END PROCEDURE.
+/* Fim 68 - verifica_opcao_recarga*/
+
+PROCEDURE obtem_favoritos_recarga:
+
+  DEF VAR aux_dsxmlout        AS CHAR     NO-UNDO.
+
+  /* Variaveis para o XML */ 
+  DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
+  DEF VAR xRoot_ora           AS HANDLE   NO-UNDO.  
+  DEF VAR xRoot_ora2          AS HANDLE   NO-UNDO.  
+  DEF VAR xField_ora          AS HANDLE   NO-UNDO. 
+  DEF VAR xText_ora           AS HANDLE   NO-UNDO. 
+  DEF VAR aux_cont_raiz             AS INTEGER  NO-UNDO. 
+  DEF VAR aux_cont                  AS INTEGER  NO-UNDO. 
+  DEF VAR ponteiro_xml_ora    AS MEMPTR   NO-UNDO. 
+  DEF VAR xml_req_ora         AS LONGCHAR NO-UNDO.
+
+  /* Inicializando objetos para leitura do XML */ 
+  CREATE X-DOCUMENT xDoc_ora.    /* Vai conter o XML completo */ 
+  CREATE X-NODEREF  xRoot_ora.   /* Vai conter a tag raiz em diante */ 
+  CREATE X-NODEREF  xRoot_ora2.  /* Vai conter a tag favorito em diante */ 
+  CREATE X-NODEREF  xField_ora.  /* Vai conter os campos dentro da tag INF */ 
+  CREATE X-NODEREF  xText_ora.   /* Vai conter o texto que existe dentro da tag xField_ora */ 
+
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_obtem_favoritos_recarga
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT aux_cdcooper, /* Cooperativa*/
+                                                  INPUT aux_nrdconta, /* Nr. da conta*/
+                                                  OUTPUT ?,           /* CLOB com os favoritos */
+                                                  OUTPUT 0,           /* Código da crítica.*/
+                                                  OUTPUT "").         /* Desc. da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_obtem_favoritos_recarga
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        
+  ASSIGN aux_dsxmlout = ""
+         aux_dscritic = ""
+         aux_dscritic = pc_obtem_favoritos_recarga.pr_dscritic
+                        WHEN pc_obtem_favoritos_recarga.pr_dscritic <> ?
+         aux_dsxmlout = pc_obtem_favoritos_recarga.pr_telfavor
+                        WHEN pc_obtem_favoritos_recarga.pr_telfavor <> ?.
+  
+  /* Buscar o XML na tabela de retorno da procedure Progress */ 
+  ASSIGN xml_req_ora = aux_dsxmlout.
+
+  /* Efetuar a leitura do XML*/ 
+  SET-SIZE(ponteiro_xml_ora) = LENGTH(xml_req_ora) + 1. 
+  PUT-STRING(ponteiro_xml_ora,1) = xml_req_ora. 
+   
+  xDoc_ora:LOAD("MEMPTR",ponteiro_xml_ora,FALSE). 
+  xDoc_ora:GET-DOCUMENT-ELEMENT(xRoot_ora).
+  
+  DO  aux_cont_raiz = 1 TO xRoot_ora:NUM-CHILDREN: 
+  
+      xRoot_ora:GET-CHILD(xRoot_ora2,aux_cont_raiz).
+  
+      IF xRoot_ora2:SUBTYPE <> "ELEMENT"   THEN 
+       NEXT.                    
+
+      IF  xRoot_ora2:NAME = "FAVORITO" THEN
+          DO:
+              CREATE tt-favoritos-recarga.
+
+              DO aux_cont = 1 TO xRoot_ora2:NUM-CHILDREN:
+              
+                  xRoot_ora2:GET-CHILD(xField_ora,aux_cont).
+                      
+                  IF xField_ora:SUBTYPE <> "ELEMENT" THEN 
+                      NEXT. 
+                  
+                  xField_ora:GET-CHILD(xText_ora,1).            
+      
+                  ASSIGN tt-favoritos-recarga.nrddd     = INTE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "nrddd"
+                         tt-favoritos-recarga.nrcelular = DECI(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "nrcelular"
+                         tt-favoritos-recarga.nmcontato =      xText_ora:NODE-VALUE  WHEN xField_ora:NAME = "nmcontato"
+                         tt-favoritos-recarga.cdseqfav  = DECI(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "cdseq_favorito".
+              END.            
+          END.
+  END.                
+
+  SET-SIZE(ponteiro_xml_ora) = 0. 
+
+  DELETE OBJECT xDoc_ora. 
+  DELETE OBJECT xRoot_ora. 
+  DELETE OBJECT xRoot_ora2. 
+  DELETE OBJECT xField_ora. 
+  DELETE OBJECT xText_ora.
+              
+  /* Se retornou crítica */
+  IF  aux_dscritic <> ""   THEN
+      DO:
+           xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+           xRoot:APPEND-CHILD(xField).
+      
+           xDoc:CREATE-NODE(xText,"","TEXT").
+           xText:NODE-VALUE = aux_dscritic.
+           xField:APPEND-CHILD(xText).
+      END.
+
+  FOR EACH tt-favoritos-recarga:    
+          
+      xDoc:CREATE-NODE(xRoot2,"FAVORITO","ELEMENT").
+      xRoot:APPEND-CHILD(xRoot2).
+
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"NRDDD","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(tt-favoritos-recarga.nrddd).
+      xField:APPEND-CHILD(xText).
+      
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"NRCELULAR","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(tt-favoritos-recarga.nrcelular).
+      xField:APPEND-CHILD(xText).        
+
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"NMCONTATO","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = tt-favoritos-recarga.nmcontato.
+      xField:APPEND-CHILD(xText).
+      
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"CDSEQFAV","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(tt-favoritos-recarga.cdseqfav).
+      xField:APPEND-CHILD(xText).        
+      
+  END.
+
+END PROCEDURE.
+
+PROCEDURE obtem_operadoras_recarga:
+
+  DEF VAR aux_dsxmlout        AS CHAR     NO-UNDO.
+
+  /* Variaveis para o XML */ 
+  DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
+  DEF VAR xRoot_ora           AS HANDLE   NO-UNDO.  
+  DEF VAR xRoot_ora2          AS HANDLE   NO-UNDO.  
+  DEF VAR xField_ora          AS HANDLE   NO-UNDO. 
+  DEF VAR xText_ora           AS HANDLE   NO-UNDO. 
+  DEF VAR aux_cont_raiz             AS INTEGER  NO-UNDO. 
+  DEF VAR aux_cont                  AS INTEGER  NO-UNDO. 
+  DEF VAR ponteiro_xml_ora    AS MEMPTR   NO-UNDO. 
+  DEF VAR xml_req_ora         AS LONGCHAR NO-UNDO.
+
+  /* Inicializando objetos para leitura do XML */ 
+  CREATE X-DOCUMENT xDoc_ora.    /* Vai conter o XML completo */ 
+  CREATE X-NODEREF  xRoot_ora.   /* Vai conter a tag raiz em diante */ 
+  CREATE X-NODEREF  xRoot_ora2.  /* Vai conter a tag favorito em diante */ 
+  CREATE X-NODEREF  xField_ora.  /* Vai conter os campos dentro da tag INF */ 
+  CREATE X-NODEREF  xText_ora.   /* Vai conter o texto que existe dentro da tag xField_ora */ 
+
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_obtem_operadoras_recarga
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (OUTPUT ?,           /* CLOB com os favoritos */
+                                                  OUTPUT 0,           /* Código da crítica.*/
+                                                  OUTPUT "").         /* Desc. da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_obtem_operadoras_recarga
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        
+  ASSIGN aux_dsxmlout = ""
+         aux_dscritic = ""
+         aux_dscritic = pc_obtem_operadoras_recarga.pr_dscritic
+                        WHEN pc_obtem_operadoras_recarga.pr_dscritic <> ?
+         aux_dsxmlout = pc_obtem_operadoras_recarga.pr_clobxml
+                        WHEN pc_obtem_operadoras_recarga.pr_clobxml <> ?.
+  
+  /* Buscar o XML na tabela de retorno da procedure Progress */ 
+  ASSIGN xml_req_ora = aux_dsxmlout.
+
+  /* Efetuar a leitura do XML*/ 
+  SET-SIZE(ponteiro_xml_ora) = LENGTH(xml_req_ora) + 1. 
+  PUT-STRING(ponteiro_xml_ora,1) = xml_req_ora. 
+   
+  xDoc_ora:LOAD("MEMPTR",ponteiro_xml_ora,FALSE). 
+  xDoc_ora:GET-DOCUMENT-ELEMENT(xRoot_ora).
+  
+  DO  aux_cont_raiz = 1 TO xRoot_ora:NUM-CHILDREN: 
+  
+      xRoot_ora:GET-CHILD(xRoot_ora2,aux_cont_raiz).
+  
+      IF xRoot_ora2:SUBTYPE <> "ELEMENT"   THEN 
+       NEXT.                    
+
+      IF  xRoot_ora2:NAME = "PRODUTO" THEN
+          DO:
+              CREATE tt-operadoras-recarga.
+
+              DO aux_cont = 1 TO xRoot_ora2:NUM-CHILDREN:
+              
+                  xRoot_ora2:GET-CHILD(xField_ora,aux_cont).
+                      
+                  IF xField_ora:SUBTYPE <> "ELEMENT" THEN 
+                      NEXT. 
+                  
+                  xField_ora:GET-CHILD(xText_ora,1).            
+      
+                  ASSIGN tt-operadoras-recarga.cdoperadora = INTE(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "cdoperadora"
+                         tt-operadoras-recarga.nmoperadora = xText_ora:NODE-VALUE  WHEN xField_ora:NAME = "nmoperadora"
+                         tt-operadoras-recarga.cdproduto = DECI(xText_ora:NODE-VALUE) WHEN xField_ora:NAME = "cdproduto"
+                         tt-operadoras-recarga.nmproduto = xText_ora:NODE-VALUE  WHEN xField_ora:NAME = "nmproduto".
+              END.            
+          END.
+  END.                
+
+  SET-SIZE(ponteiro_xml_ora) = 0. 
+
+  DELETE OBJECT xDoc_ora. 
+  DELETE OBJECT xRoot_ora. 
+  DELETE OBJECT xRoot_ora2. 
+  DELETE OBJECT xField_ora. 
+  DELETE OBJECT xText_ora.
+              
+  /* Se retornou crítica */
+  IF  aux_dscritic <> ""   THEN
+      DO:
+           xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+           xRoot:APPEND-CHILD(xField).
+      
+           xDoc:CREATE-NODE(xText,"","TEXT").
+           xText:NODE-VALUE = aux_dscritic.
+           xField:APPEND-CHILD(xText).
+      END.
+
+  FOR EACH tt-operadoras-recarga:    
+          
+      xDoc:CREATE-NODE(xRoot2,"PRODUTO","ELEMENT").
+      xRoot:APPEND-CHILD(xRoot2).
+
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"CDOPERADORA","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(tt-operadoras-recarga.cdoperadora).
+      xField:APPEND-CHILD(xText).
+
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"NMOPERADORA","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = tt-operadoras-recarga.nmoperadora.
+      xField:APPEND-CHILD(xText).
+      
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"CDPRODUTO","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(tt-operadoras-recarga.cdproduto).
+      xField:APPEND-CHILD(xText).        
+
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"NMPRODUTO","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = tt-operadoras-recarga.nmproduto.
+      xField:APPEND-CHILD(xText).
+            
+  END.
+
+END PROCEDURE.
+
+PROCEDURE obtem_valores_recarga:
+
+  DEF VAR aux_dsxmlout        AS CHAR     NO-UNDO.
+
+  /* Variaveis para o XML */ 
+  DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
+  DEF VAR xRoot_ora           AS HANDLE   NO-UNDO.  
+  DEF VAR xRoot_ora2          AS HANDLE   NO-UNDO.  
+  DEF VAR xField_ora          AS HANDLE   NO-UNDO. 
+  DEF VAR xText_ora           AS HANDLE   NO-UNDO. 
+  DEF VAR aux_cont_raiz             AS INTEGER  NO-UNDO. 
+  DEF VAR aux_cont                  AS INTEGER  NO-UNDO. 
+  DEF VAR ponteiro_xml_ora    AS MEMPTR   NO-UNDO. 
+  DEF VAR xml_req_ora         AS LONGCHAR NO-UNDO.
+
+  /* Inicializando objetos para leitura do XML */ 
+  CREATE X-DOCUMENT xDoc_ora.    /* Vai conter o XML completo */ 
+  CREATE X-NODEREF  xRoot_ora.   /* Vai conter a tag raiz em diante */ 
+  CREATE X-NODEREF  xRoot_ora2.  /* Vai conter a tag favorito em diante */ 
+  CREATE X-NODEREF  xField_ora.  /* Vai conter os campos dentro da tag INF */ 
+  CREATE X-NODEREF  xText_ora.   /* Vai conter o texto que existe dentro da tag xField_ora */ 
+
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_obtem_valores_recarga
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT aux_cdoperadora, /* Cod. operadora */
+              INPUT aux_cdproduto,   /* Cod. produto */
+              OUTPUT ?,           /* CLOB com os favoritos */
+                                                  OUTPUT 0,           /* Código da crítica.*/
+                                                  OUTPUT "").         /* Desc. da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_obtem_valores_recarga
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        
+  ASSIGN aux_dsxmlout = ""
+         aux_dscritic = ""
+         aux_dscritic = pc_obtem_valores_recarga.pr_dscritic
+                        WHEN pc_obtem_valores_recarga.pr_dscritic <> ?
+         aux_dsxmlout = pc_obtem_valores_recarga.pr_clobxml
+                        WHEN pc_obtem_valores_recarga.pr_clobxml <> ?.
+  
+  /* Buscar o XML na tabela de retorno da procedure Progress */ 
+  ASSIGN xml_req_ora = aux_dsxmlout.
+
+  /* Efetuar a leitura do XML*/ 
+  SET-SIZE(ponteiro_xml_ora) = LENGTH(xml_req_ora) + 1. 
+  PUT-STRING(ponteiro_xml_ora,1) = xml_req_ora. 
+   
+  xDoc_ora:LOAD("MEMPTR",ponteiro_xml_ora,FALSE). 
+  xDoc_ora:GET-DOCUMENT-ELEMENT(xRoot_ora).
+  
+  DO  aux_cont_raiz = 1 TO xRoot_ora:NUM-CHILDREN: 
+  
+      xRoot_ora:GET-CHILD(xRoot_ora2,aux_cont_raiz).
+  
+      IF xRoot_ora2:SUBTYPE <> "ELEMENT"   THEN 
+       NEXT.                    
+
+      IF  xRoot_ora2:NAME = "VALORES" THEN
+          DO:              
+
+              DO aux_cont = 1 TO xRoot_ora2:NUM-CHILDREN:
+              
+                  xRoot_ora2:GET-CHILD(xField_ora,aux_cont).
+                      
+                  IF xField_ora:SUBTYPE <> "ELEMENT" THEN 
+                      NEXT. 
+             
+                  xField_ora:GET-CHILD(xText_ora,1).            
+                  
+                  CREATE tt-valores-recarga.
+                  ASSIGN tt-valores-recarga.vlrecarga = DECIMAL(xText_ora:NODE-VALUE).
+
+              END.            
+          END.
+  END.                
+
+  SET-SIZE(ponteiro_xml_ora) = 0. 
+
+  DELETE OBJECT xDoc_ora. 
+  DELETE OBJECT xRoot_ora. 
+  DELETE OBJECT xRoot_ora2. 
+  DELETE OBJECT xField_ora. 
+  DELETE OBJECT xText_ora.
+              
+  /* Se retornou crítica */
+  IF  aux_dscritic <> ""   THEN
+      DO:
+           xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+           xRoot:APPEND-CHILD(xField).
+      
+           xDoc:CREATE-NODE(xText,"","TEXT").
+           xText:NODE-VALUE = aux_dscritic.
+           xField:APPEND-CHILD(xText).
+      END.
+
+  FOR EACH tt-valores-recarga:    
+          
+      xDoc:CREATE-NODE(xRoot2,"VALOR","ELEMENT").
+      xRoot:APPEND-CHILD(xRoot2).
+
+      /* ---------- */
+      xDoc:CREATE-NODE(xField,"VLRECARGA","ELEMENT").
+      xRoot2:APPEND-CHILD(xField).
+
+      xDoc:CREATE-NODE(xText,"","TEXT").
+      xText:NODE-VALUE = STRING(tt-valores-recarga.vlrecarga).
+      xField:APPEND-CHILD(xText).
+            
+  END.
+
+END PROCEDURE.
+
+PROCEDURE verifica_recarga:
+
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_valida_recarga
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT aux_cdcooper,  /* Cooperativa*/
+              INPUT aux_nrdconta,  /* Nr. da conta */
+              INPUT 1,             /* Titular da conta */
+              INPUT 0,             /* CPF Operador da conta */
+              INPUT aux_nrdddtel,  /* DDD */
+              INPUT aux_nrcelular, /* Nr. do celular */
+              INPUT DATE(aux_dtrecarga), /* Data de recarga */
+              INPUT aux_qtmesagd,  /* Quantidade de mes agendamento (Somente opcao 3)*/
+              INPUT aux_cddopcao,  /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */              
+                                                  INPUT 4,             /* Id origem (4-TAA)*/
+                                                  OUTPUT "",           /* Lista de datas para agendamento recorrente */
+                                                  OUTPUT 0,            /* Código da crítica.*/
+                                                  OUTPUT "").          /* Desc. da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_valida_recarga
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        
+        /* Busca parametros retornados */ 
+        ASSIGN aux_lsdatagd = ""
+         aux_dscritic = ""
+         aux_lsdatagd = pc_valida_recarga.pr_lsdatagd
+                        WHEN pc_valida_recarga.pr_lsdatagd <> ?
+         aux_dscritic = pc_valida_recarga.pr_dscritic
+                        WHEN pc_valida_recarga.pr_dscritic <> ?.
+        
+  /* Se retornou crítica */
+  IF  aux_dscritic <> ""   THEN
+      DO:
+           xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+           xRoot:APPEND-CHILD(xField).
+      
+           xDoc:CREATE-NODE(xText,"","TEXT").
+           xText:NODE-VALUE = aux_dscritic.
+           xField:APPEND-CHILD(xText).
+      END.
+      
+  IF  aux_lsdatagd <> "" THEN
+      DO:
+        /* ---------- */
+        xDoc:CREATE-NODE(xField,"LSDATAGD","ELEMENT").
+        xRoot:APPEND-CHILD(xField).
+        
+        xDoc:CREATE-NODE(xText,"","TEXT").
+        xText:NODE-VALUE = STRING(aux_lsdatagd).
+        xField:APPEND-CHILD(xText).
+      END.
+
+END PROCEDURE.
+    
+PROCEDURE efetua_recarga:
+
+  DEFINE VARIABLE aux_cdcoptfn    AS INTE                         NO-UNDO.
+  DEFINE VARIABLE aux_cdagetfn    AS INTE                         NO-UNDO.
+  DEFINE VARIABLE aux_nrterfin    AS INTE                         NO-UNDO.
+  DEFINE VARIABLE aux_idastcjt    AS INTE                         NO-UNDO.
+  DEFINE VARIABLE aux_dsprotoc    AS CHAR                         NO-UNDO.
+  DEFINE VARIABLE aux_dsnsuope    AS CHAR                         NO-UNDO.
+
+  ASSIGN aux_cdcoptfn = crapcop.cdcooper
+         aux_cdagetfn = crapage.cdagenci
+         aux_nrterfin = craptfn.nrterfin.
+  
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_manter_recarga
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                                 (INPUT aux_cdcooper,        /* Cooperativa*/
+              INPUT aux_nrdconta,        /* Nr. da conta */
+              INPUT 1,                   /* Titular da conta */
+              INPUT 0,                   /* CPF Operador da conta */
+              INPUT aux_vlrecarga,       /* Valor da recarga */
+              INPUT DATE(aux_dtrecarga), /* Data de recarga */              
+              INPUT aux_lsdatagd,        /* Lista de datas para agendamento de recarga */
+              INPUT aux_cddopcao,        /* Opcao: 1-Data atual / 2-Data futura / 3-Agendamento mensal */                            
+              INPUT aux_nrdddtel,        /* DDD */
+              INPUT aux_nrcelular,       /* Nr. do celular */
+              INPUT aux_cdoperadora,     /* Cod. operadora */
+              INPUT aux_cdproduto,       /* Cod. produto */
+              INPUT aux_cdcoptfn,        /* Cooperativa terminal financeiro */
+              INPUT aux_cdagetfn,        /* Agencia terminal financeiro */
+              INPUT aux_nrterfin,        /* Nr. terminal financeiro */
+              INPUT aux_nrcartao,        /* Nr. cartao */
+              INPUT aux_nrsequni,        /* Nr. sequencial unico */
+                                                  INPUT 4,             /* Id origem (4-TAA)*/
+              INPUT 0,             /* Indicador de aprovacao de transacao pendente */
+						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
+                                                  OUTPUT 0,            /* Indicador de assinatura conjunta */
+              OUTPUT "",           /* Protocolo */
+              OUTPUT "",           /* NSU Operadora */
+                                                  OUTPUT 0,            /* Código da crítica.*/
+                                                  OUTPUT "").          /* Desc. da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_manter_recarga
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+        
+        /* Busca parametros retornados */ 
+        ASSIGN aux_idastcjt = 0
+         aux_dscritic = ""
+         aux_dsprotoc = ""
+         aux_dsnsuope = ""
+         aux_idastcjt = pc_manter_recarga.pr_idastcjt
+                        WHEN pc_manter_recarga.pr_idastcjt <> ?
+         aux_dsprotoc = pc_manter_recarga.pr_dsprotoc
+                        WHEN pc_manter_recarga.pr_dsprotoc <> ?
+         aux_dsnsuope = pc_manter_recarga.pr_dsnsuope
+                        WHEN pc_manter_recarga.pr_dsnsuope <> ?
+         aux_dscritic = pc_manter_recarga.pr_dscritic
+                        WHEN pc_manter_recarga.pr_dscritic <> ?.
+        
+  /* Se retornou crítica */
+  IF  aux_dscritic <> ""   THEN
+      DO:
+           xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+           xRoot:APPEND-CHILD(xField).
+      
+           xDoc:CREATE-NODE(xText,"","TEXT").
+           xText:NODE-VALUE = aux_dscritic.
+           xField:APPEND-CHILD(xText).
+      END.
+      
+  /* ---------- */
+  xDoc:CREATE-NODE(xField,"IDASTCJT","ELEMENT").
+  xRoot:APPEND-CHILD(xField).
+  
+  xDoc:CREATE-NODE(xText,"","TEXT").
+  xText:NODE-VALUE = STRING(aux_idastcjt).
+  xField:APPEND-CHILD(xText).
+  
+  IF  aux_dsprotoc <> ""   THEN
+      DO:
+          xDoc:CREATE-NODE(xField,"PROTOCOLO","ELEMENT").
+          xRoot:APPEND-CHILD(xField).
+          
+          xDoc:CREATE-NODE(xText,"","TEXT").
+          xText:NODE-VALUE = aux_dsprotoc.
+          xField:APPEND-CHILD(xText).
+      END.
+      
+  IF  aux_dsnsuope <> ""   THEN
+      DO:
+          xDoc:CREATE-NODE(xField,"DSNSUOPE","ELEMENT").
+          xRoot:APPEND-CHILD(xField).
+          
+          xDoc:CREATE-NODE(xText,"","TEXT").
+          xText:NODE-VALUE = aux_dsnsuope.
+          xField:APPEND-CHILD(xText).
+      END.      
+
+END PROCEDURE.
+
+PROCEDURE exclui_agendamentos_recarga:
+
+    DEFINE VARIABLE aux_cdcoptfn AS INTEGER                         NO-UNDO.
+    DEFINE VARIABLE aux_cdagetfn AS INTEGER                         NO-UNDO.
+    DEFINE VARIABLE aux_nrterfin AS INTEGER                         NO-UNDO.
+    
+    ASSIGN aux_cdcoptfn = crapcop.cdcooper
+           aux_cdagetfn = crapage.cdagenci
+           aux_nrterfin = craptfn.nrterfin.
+
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_cancela_agendamento_recarga aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT aux_cdcooper 
+                         ,INPUT aux_nrdconta 
+                         ,INPUT 1
+                         ,INPUT 4   /* TAA */
+                         ,INPUT aux_nrdocmto
+                         ,OUTPUT 0
+                         ,OUTPUT "").
+                         
+
+    CLOSE STORED-PROC pc_cancela_agendamento_recarga aux_statproc = PROC-STATUS 
+         WHERE PROC-HANDLE = aux_handproc.
+    
+    ASSIGN aux_dscritic = ""
+           aux_dscritic = pc_cancela_agendamento_recarga.pr_dscritic 
+                          WHEN pc_cancela_agendamento_recarga.pr_dscritic <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_dscritic = "" THEN
+        DO:
+            /* Cria registro na crapext */
+            RUN sistema/generico/procedures/b1wgen0025.p PERSISTENT SET h-b1wgen0025.
+
+            RUN gera_estatistico IN h-b1wgen0025 (INPUT aux_cdcoptfn, /* Coop do TAA */
+                                                  INPUT aux_nrterfin, /* Nro do TAA */
+                                                  INPUT "",           /* Prefixo TAA versao 1 */
+                                                  INPUT aux_cdcooper, /* Coop do Associado */
+                                                  INPUT aux_nrdconta, /* Conta do Associado */
+                                                  INPUT 14).          /* Exclusão de Agendamento */
+            DELETE PROCEDURE h-b1wgen0025.
+        END.
+     ELSE
+         RETURN "NOK".
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"EXCLUSAO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = "OK".
+    xField:APPEND-CHILD(xText).
+
+    RETURN "OK".
+
+END PROCEDURE.
 /* .......................................................................... */
+
