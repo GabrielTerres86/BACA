@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps680(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Marco/2014.                  Ultima atualizacao: 23/09/2014
+   Data    : Marco/2014.                  Ultima atualizacao: 30/06/2017
    Dados referentes ao programa:
 
    Frequencia: Diario.
@@ -30,6 +30,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps680(pr_cdcooper IN crapcop.cdcooper%TY
                             cecred e criava linha no arquivo com o campo  crapcop.cdagectl
                             fixo conforme relatado no chamado 335857 (Kelvin).             
                             
+               30/06/2017 - Adicionar order by no cursor da crapddc, para que a 
+                            ordenacao dos registros seja a mesma do partition
+                            (Douglas - Chamado 703575)
   ............................................................................ */
 
 
@@ -73,7 +76,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps680(pr_cdcooper IN crapcop.cdcooper%TY
      WHERE ddc.cdcooper = pr_cdcooper
        AND ddc.dtmvtolt = pr_dtmvtoan
        AND ddc.flgdevol = 1  --> Checados a devolver
-       AND ddc.flgpcctl = 0; --> Não processados na Central
+       AND ddc.flgpcctl = 0  --> Não processados na Central
+     ORDER BY  DECODE(pr_cdcooper,3,0,ddc.cdagenci);
   
   ------------------------------- VARIAVEIS -------------------------------
   -- Código do programa
@@ -434,4 +438,3 @@ EXCEPTION
     ROLLBACK;  
 END pc_crps680;
 /
-
