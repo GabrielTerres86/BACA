@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades de Pagamento de Titulos Lote
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao:  22/02/2016
+--  Data     : Abril/2014.                   Ultima atualizacao:  21/03/2017
 --
 -- Dados referentes ao programa:
 --
@@ -24,6 +24,8 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --                          varias procedures desta package.(Carlos Rafael Tanholi). 
 --
 --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+--
+--             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
 --
 ---------------------------------------------------------------------------------------------------------------
 
@@ -123,6 +125,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                                     ,pr_nrterfin      IN craplau.nrterfin%TYPE
                                     ,pr_nrcpfope      IN craplau.nrcpfope%TYPE
                                     ,pr_idtitdda      IN craplau.idtitdda%TYPE
+                                    ,pr_cdctrlcs      IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                     ,pr_dstransa      OUT VARCHAR2
                                     ,pr_cdcritic      OUT INTEGER                -- Código do erro
                                     ,pr_dscritic      OUT VARCHAR2);
@@ -211,7 +214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 22/02/2016
+--  Data     : Maio/2014.                   Ultima atualizacao: 18/05/2017
 --
 -- Dados referentes ao programa:
 --
@@ -234,12 +237,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 --
+--             18/05/2017 - Ajustado rotina pc_processar_arq_pgto para realizar consulta NPC.
+--                     
+--   
 ---------------------------------------------------------------------------------------------------------------
 
 
   -- Descricao e codigo da critica
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(4000);
+  vr_des_erro VARCHAR2(4000);
   
   --Tipo de Dados para cursor data
   rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -1115,7 +1122,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
      SELECT crapass.nrdconta
            ,crapass.cdagenci
            ,crapass.nrcpfcgc
-           ,crapass.inpessoa
+          -- ,crapass.inpessoa
+		   ,DECODE(crapass.inpessoa,1,1,2,2,2) inpessoa
        FROM crapass crapass
       WHERE crapass.cdcooper = pr_cdcooper
         AND crapass.nrdconta = pr_nrdconta;
@@ -1333,8 +1341,688 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   END;
 
   END pc_efetua_aceite_cancel;
+  
+  -- Procedure para identificar se o titulo eh da cooperativa, ou se eh de outra IF
+  PROCEDURE pc_identifica_interbancario(pr_cdcooper  IN INTEGER      --Codigo Cooperativa
+                                       ,pr_codbarra  IN VARCHAR2     --Codigo Barras
+                                       ,pr_intitcop OUT INTEGER      --Indicador titulo cooperativa (1-Cooperativa / 0-Outra IF)
+                                       ,pr_cdcritic OUT INTEGER      --Codigo do erro
+                                       ,pr_dscritic OUT VARCHAR2) IS --Descricao do erro
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_identifica_interbancario
+  --  Sistema  : Procedure para identificar titulo cooperativa
+  --  Sigla    : PGTA
+  --  Autor    : Douglas Quisinski
+  --  Data     : Março/2017                     Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Nova Procedure para identificar titulo cooperativa
+  --
+  -- Alteracoes:      
+  ---------------------------------------------------------------------------------------------------------------
+  BEGIN
+    DECLARE
+      --Cursores Locais
+      CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+        SELECT crapcop.cdcooper
+              ,crapcop.nmrescop
+              ,crapcop.cdbcoctl
+              ,crapcop.cdagectl
+              ,crapcop.cdagebcb
+          FROM crapcop
+         WHERE crapcop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+      
+      --Selecionar informacoes convenio cobranca
+      CURSOR cr_crapcco (pr_cdcooper  IN crapcco.cdcooper%type
+                        ,pr_nrconven  IN crapcco.nrconven%TYPE) IS
+        SELECT crapcco.cddbanco
+              ,crapcco.dsorgarq
+              ,crapcco.flgutceb
+              ,crapcco.nrconven
+              ,crapcco.nrdctabb
+              ,crapcco.flgregis
+        FROM crapcco
+        WHERE crapcco.cdcooper = pr_cdcooper
+          AND crapcco.nrconven = pr_nrconven;
+      rw_crapcco cr_crapcco%ROWTYPE;
+
+      --Selecionar de qual cooperativa o convenio pertencia
+      CURSOR cr_ceb_ant (pr_cdcooper IN crapcco.cdcooper%TYPE
+                        ,pr_nrdconta IN crapceb.nrdconta%TYPE
+                        ,pr_nrconven IN crapcco.nrconven%TYPE) IS
+        SELECT cco.cdcooper cco_cdcopant
+              ,cco.dsorgarq
+              ,tco.cdcooper tco_cdcooper
+              ,tco.nrdconta tco_nrdconta
+          FROM crapcco cco, crapceb ceb, craptco tco
+         WHERE cco.cdcooper <> pr_cdcooper
+           AND cco.nrconven = pr_nrconven
+           AND ceb.cdcooper = cco.cdcooper
+           AND ceb.nrdconta = pr_nrdconta
+           AND ceb.nrconven = cco.nrconven
+           AND tco.cdcopant = cco.cdcooper
+           AND tco.nrctaant = ceb.nrdconta;
+      rw_ceb_ant cr_ceb_ant%ROWTYPE;
+
+      --Selecionar informacoes convenio 'IMPRESSO PELO SOFTWARE'
+      CURSOR cr_cco_impresso (pr_nrconven IN crapcco.nrconven%TYPE) IS
+        SELECT crapcco.cddbanco
+              ,crapcco.dsorgarq
+              ,crapcco.nrconven
+              ,crapcco.nrdctabb
+        FROM crapcco
+        WHERE crapcco.cdcooper > 0
+          AND crapcco.nrconven = pr_nrconven
+          AND crapcco.dsorgarq = 'IMPRESSO PELO SOFTWARE';
+      rw_cco_impresso cr_cco_impresso%ROWTYPE;
+
+      --Selecionar cadastro emissao bloquetos - conv 6 digitos
+      CURSOR cr_crapceb1 (pr_cdcooper IN crapceb.cdcooper%type
+                         ,pr_nrconven IN crapceb.nrconven%type
+                         ,pr_nrdconta IN crapceb.nrdconta%TYPE) IS
+        SELECT crapceb.cdcooper
+              ,crapceb.nrconven
+              ,crapceb.nrcnvceb
+              ,crapceb.nrdconta
+              ,crapceb.flgcebhm
+              ,crapceb.insitceb
+        FROM crapceb
+        WHERE  crapceb.cdcooper = pr_cdcooper
+          AND  crapceb.nrconven = pr_nrconven
+          AND  crapceb.nrdconta = pr_nrdconta;
+      rw_crapceb1 cr_crapceb1%ROWTYPE;
+
+      --Selecionar cadastro emissao bloquetos - conv 7 digitos
+      CURSOR cr_crapceb2 (pr_cdcooper IN crapceb.cdcooper%type
+                         ,pr_nrconven IN crapceb.nrconven%type
+                         ,pr_nrcnvceb IN varchar2) IS
+        SELECT crapceb.cdcooper
+              ,crapceb.nrconven
+              ,crapceb.nrcnvceb
+              ,crapceb.nrdconta
+        FROM crapceb
+        WHERE  crapceb.cdcooper = pr_cdcooper
+        AND    crapceb.nrconven = pr_nrconven
+        AND    crapceb.nrcnvceb = pr_nrcnvceb;
+      rw_crapceb2 cr_crapceb2%ROWTYPE;
+
+      -- Verificar se cooperado entrou na cooperativa pela conta anterior
+      CURSOR cr_craptco (pr_cdcooper IN craptco.cdcooper%type
+                        ,pr_nrctaant IN craptco.nrctaant%TYPE
+                        ,pr_flgativo IN craptco.flgativo%TYPE
+                        ,pr_tpctatrf IN craptco.tpctatrf%type) IS
+        SELECT craptco.nrdconta
+        FROM craptco
+        WHERE craptco.cdcooper = pr_cdcooper
+        AND   craptco.nrctaant = pr_nrctaant
+        AND   craptco.flgativo = pr_flgativo
+        AND   craptco.tpctatrf <> pr_tpctatrf;
+      rw_craptco cr_craptco%ROWTYPE;
+
+      -- Verificar se cooperado saiu da cooperativa pela conta anterior
+      CURSOR cr_craptco2(pr_cdcopant IN craptco.cdcopant%type
+                        ,pr_nrctaant IN craptco.nrctaant%TYPE
+                        ,pr_flgativo IN craptco.flgativo%TYPE
+                        ,pr_tpctatrf IN craptco.tpctatrf%type) IS
+        SELECT craptco.nrdconta
+        FROM craptco
+        WHERE craptco.cdcopant = pr_cdcopant
+        AND   craptco.nrctaant = pr_nrctaant
+        AND   craptco.flgativo = pr_flgativo
+        AND   craptco.tpctatrf <> pr_tpctatrf;
+      rw_craptco2 cr_craptco2%ROWTYPE;
+
+      -- Verificar se cooperado entrou na cooperativa pela conta nova
+      CURSOR cr_craptco3 (pr_cdcooper IN craptco.cdcooper%type
+                        ,pr_nrdconta IN craptco.nrctaant%TYPE
+                        ,pr_flgativo IN craptco.flgativo%TYPE
+                        ,pr_tpctatrf IN craptco.tpctatrf%type) IS
+        SELECT craptco.nrdconta
+        FROM craptco
+        WHERE craptco.cdcooper = pr_cdcooper
+        AND   craptco.nrdconta = pr_nrdconta
+        AND   craptco.flgativo = pr_flgativo
+        AND   craptco.tpctatrf <> pr_tpctatrf;
+      rw_craptco3 cr_craptco3%ROWTYPE;
 
 
+      --Selecionar informacoes cobranca
+      CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%type
+                        ,pr_cdbandoc IN crapcob.cdbandoc%type
+                        ,pr_nrcnvcob IN crapcob.nrcnvcob%type
+                        ,pr_nrdctabb IN crapcob.nrdctabb%type
+                        ,pr_nrdocmto IN crapcob.nrdocmto%type
+                        ,pr_nrdconta IN crapcob.nrdconta%type) IS
+        SELECT crapcob.cdbandoc
+              ,crapcob.cdcooper
+              ,crapcob.nrcnvcob
+              ,crapcob.nrdconta
+              ,crapcob.nrdocmto
+              ,crapcob.incobran
+              ,crapcob.dtretcob
+              ,crapcob.nrdctabb
+        FROM crapcob
+        WHERE crapcob.cdcooper = pr_cdcooper
+        AND   crapcob.cdbandoc = pr_cdbandoc
+        AND   crapcob.nrcnvcob = pr_nrcnvcob
+        AND   crapcob.nrdctabb = pr_nrdctabb
+        AND   crapcob.nrdocmto = pr_nrdocmto
+        AND   crapcob.nrdconta = pr_nrdconta;
+      rw_crapcob cr_crapcob%ROWTYPE;
+
+      --Variaveis Locais
+      vr_banco        INTEGER;
+      vr_convenio     INTEGER;
+      vr_convenio1    NUMBER;
+      vr_convenio2    NUMBER;
+      vr_bloqueto     NUMBER;
+      vr_bloqueto1    NUMBER;
+      vr_bloqueto2    NUMBER;
+      vr_nrdconta     INTEGER;
+      vr_nrdconta1    INTEGER;
+      vr_nrconvceb    INTEGER;
+      --Variaveis Excecao
+      vr_exc_saida EXCEPTION;
+
+    BEGIN
+      --Inicializar variaveis erro
+      pr_cdcritic:= NULL;
+      pr_dscritic:= NULL;
+      
+      -- Inicializar variavel com 0 - "Outra Cooperativa / Outra IF"
+      pr_intitcop:= 0; 
+      
+      --Verificar se a cooperativa existe
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      --Se nao encontrou
+      IF cr_crapcop%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcop;
+        --Levantar Excecao
+        RAISE vr_exc_saida;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+      
+      --Quebrar o codigo de barras
+      vr_banco:= TO_NUMBER(SUBSTR(pr_codbarra, 1, 3));
+      vr_convenio1:= TO_NUMBER(SUBSTR(pr_codbarra, 20, 6));  -- Conv 6 digitos
+      vr_convenio2:= TO_NUMBER(SUBSTR(pr_codbarra, 26, 7));  -- Conv 7 digitos
+      vr_nrconvceb:= TO_NUMBER(SUBSTR(pr_codbarra, 33, 4));  -- CEB
+      vr_nrdconta1:= TO_NUMBER(SUBSTR(pr_codbarra, 26, 8));  -- Conta 6 digitos
+      vr_bloqueto1:= TO_NUMBER(SUBSTR(pr_codbarra, 34, 9));  -- Boleto 6 digitos
+      vr_bloqueto2:= TO_NUMBER(SUBSTR(pr_codbarra, 37, 6));  -- Boleto 7 digitos
+
+      --Se for banco brasil
+      IF vr_banco = 1 THEN
+        --Selecionar convenio 6 digitos
+        OPEN cr_crapcco (pr_cdcooper  => rw_crapcop.cdcooper
+                        ,pr_nrconven  => vr_convenio1);
+        --Posicionar no primeiro registro
+        FETCH cr_crapcco INTO rw_crapcco;
+        --Se encontrou convenio 6 digitos
+        IF cr_crapcco%FOUND THEN
+          CLOSE cr_crapcco;
+          -- se convenio BB com registro, entao Liq Interbancaria
+          IF rw_crapcco.flgregis = 1 THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+          --Selecionar cadastro emissao bloquetos - conv 6 digitos
+          OPEN cr_crapceb1 (pr_cdcooper => rw_crapcop.cdcooper
+                           ,pr_nrconven => rw_crapcco.nrconven
+                           ,pr_nrdconta => vr_nrdconta1);
+          --Posicionar no proximo registro
+          FETCH cr_crapceb1 INTO rw_crapceb1;
+          --Se Encontrou
+          IF cr_crapceb1%FOUND THEN
+            CLOSE cr_crapceb1;
+            -- verificar se cooperado saiu da cooperativa
+            OPEN cr_craptco2(pr_cdcopant => rw_crapcop.cdcooper
+                            ,pr_nrctaant => vr_nrdconta1
+                            ,pr_flgativo => 1
+                            ,pr_tpctatrf => 3);
+            FETCH cr_craptco2 INTO rw_craptco2;
+            -- se encontrou, entao cooperado saiu e eh Liq Interbancaria
+            IF cr_craptco2%FOUND THEN
+              CLOSE cr_craptco2;
+              RAISE vr_exc_saida;
+            ELSE
+              vr_nrdconta := vr_nrdconta1;
+              vr_bloqueto := vr_bloqueto1;
+              IF cr_craptco2%ISOPEN THEN
+                CLOSE cr_craptco2;
+              END IF;
+            END IF;
+          ELSE
+            IF cr_crapceb1%ISOPEN THEN
+              CLOSE cr_crapceb1;
+            END IF;
+
+            --Selecionar de qual cooperativa o convenio pertencia
+            OPEN cr_ceb_ant(pr_cdcooper => rw_crapcop.cdcooper
+                           ,pr_nrdconta => vr_nrdconta1
+                           ,pr_nrconven => vr_convenio1);
+            FETCH cr_ceb_ant INTO rw_ceb_ant;
+
+            IF cr_ceb_ant%FOUND THEN
+              CLOSE cr_ceb_ant;
+              -- verificar se cooperado entrou na cooperativa 
+              IF rw_ceb_ant.tco_cdcooper = rw_crapcop.cdcooper THEN
+                -- Selecionar cadastro emissao bloquetos - conv 6 digitos
+                OPEN cr_crapceb1 (pr_cdcooper => rw_crapcop.cdcooper
+                                 ,pr_nrconven => rw_crapcco.nrconven
+                                 ,pr_nrdconta => rw_ceb_ant.tco_nrdconta);
+                --Posicionar no proximo registro
+                FETCH cr_crapceb1 INTO rw_crapceb1;
+                IF cr_crapceb1%FOUND THEN
+                  CLOSE cr_crapceb1;
+                  vr_nrdconta := rw_ceb_ant.tco_nrdconta;
+                  vr_bloqueto := vr_bloqueto1;
+                ELSE
+                  IF cr_crapceb1%ISOPEN THEN
+                    CLOSE cr_crapceb1;
+                  END IF;
+                  -- eh cooperado migrado e nao tem CEB, Liq Interbancaria
+                  RAISE vr_exc_saida;
+                END IF;
+              ELSE
+                -- não eh cooperado migrado e nao tem CEB, Liq Interbancaria
+                RAISE vr_exc_saida;
+              END IF;
+            ELSE
+              CLOSE cr_ceb_ant;
+            END IF;
+          END IF;
+        ELSE
+          -- verificar se eh convenio de 7 digitos
+          IF cr_crapcco%ISOPEN THEN
+            CLOSE cr_crapcco;
+          END IF;
+
+          --Selecionar convenio 7 digitos
+          OPEN cr_crapcco (pr_cdcooper  => rw_crapcop.cdcooper
+                          ,pr_nrconven  => vr_convenio2);
+          --Posicionar no primeiro registro
+          FETCH cr_crapcco INTO rw_crapcco;
+          --Se encontrou convenio 7 digitos
+          IF cr_crapcco%FOUND THEN
+            CLOSE cr_crapcco;
+
+            -- se convenio BB com registro, entao Liq Interbancaria
+            IF rw_crapcco.flgregis = 1 THEN
+              RAISE vr_exc_saida;
+            END IF;
+
+            --Selecionar cadastro emissao bloquetos - conv 7 digitos
+            OPEN cr_crapceb2 (pr_cdcooper => rw_crapcop.cdcooper
+                             ,pr_nrconven => rw_crapcco.nrconven
+                             ,pr_nrcnvceb => vr_nrconvceb);
+            --Posicionar no proximo registro
+            FETCH cr_crapceb2 INTO rw_crapceb2;
+            --Se Encontrou
+            IF cr_crapceb2%FOUND THEN
+              CLOSE cr_crapceb2;
+              -- verificar se cooperado saiu da cooperativa
+              OPEN cr_craptco2(pr_cdcopant => rw_crapcop.cdcooper
+                              ,pr_nrctaant => rw_crapceb2.nrdconta
+                              ,pr_flgativo => 1
+                              ,pr_tpctatrf => 3);
+              FETCH cr_craptco2 INTO rw_craptco2;
+              -- se encontrou, entao cooperado saiu e eh Liq Interbancaria 
+              IF cr_craptco2%FOUND THEN
+                CLOSE cr_craptco2;
+                RAISE vr_exc_saida;
+              ELSE
+                 vr_nrdconta := rw_crapceb2.nrdconta;
+                 vr_bloqueto := vr_bloqueto2;
+                 IF cr_craptco2%ISOPEN THEN
+                   CLOSE cr_craptco2;
+                 END IF;
+              END IF;
+            ELSE
+              IF cr_crapceb2%ISOPEN THEN
+                CLOSE cr_crapceb2;
+              END IF;
+
+              -- verificar se cooperado entrou na cooperativa pela conta nova
+              OPEN cr_craptco3(pr_cdcooper => rw_crapcop.cdcooper
+                              ,pr_nrdconta => rw_crapceb2.nrdconta
+                              ,pr_flgativo => 1
+                              ,pr_tpctatrf => 3);
+              FETCH cr_craptco3 INTO rw_craptco3;
+              -- se encontrou, entao cooperado saiu e eh Liq Interbancaria 
+              IF cr_craptco3%FOUND THEN
+                vr_nrdconta := rw_craptco3.nrdconta;
+                vr_bloqueto := vr_bloqueto2;
+                IF cr_craptco3%ISOPEN THEN
+                  CLOSE cr_craptco3;
+                END IF;
+              ELSE
+                IF cr_craptco3%ISOPEN THEN
+                  CLOSE cr_craptco3;
+                END IF;
+                -- nao tem CEB, entao eh Liq Interbancaria
+                RAISE vr_exc_saida;
+              END IF;
+            END IF;
+          ELSE
+            -- convenio nao encontrado
+            --Fechar Cursores
+            IF cr_crapcco%ISOPEN THEN
+              CLOSE cr_crapcco;
+            END IF;
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
+
+        --se nao encontrou bloqueto ou conta, sair
+        IF nvl(vr_bloqueto,0) = 0 OR
+           nvl(vr_nrdconta,0) = 0 THEN
+          RAISE vr_exc_saida;
+        END IF;
+
+        --Selecionar informacoes cobranca
+        OPEN cr_crapcob (pr_cdcooper => rw_crapcop.cdcooper
+                        ,pr_cdbandoc => rw_crapcco.cddbanco
+                        ,pr_nrcnvcob => rw_crapcco.nrconven
+                        ,pr_nrdctabb => rw_crapcco.nrdctabb
+                        ,pr_nrdocmto => vr_bloqueto
+                        ,pr_nrdconta => vr_nrdconta);
+        --Posicionar no proximo registro
+        FETCH cr_crapcob INTO rw_crapcob;
+        --Se nao encontrar
+        IF cr_crapcob%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_crapcob;
+
+          IF rw_crapcco.dsorgarq = 'IMPRESSO PELO SOFTWARE' THEN
+            -- Realizava o INSERT do boleto
+            pr_intitcop:= 1;
+          ELSE
+            IF rw_crapcco.dsorgarq IN ('MIGRACAO','INCORPORACAO') THEN
+              -- verificar se o convenio migrado eh 'IMPRESSO PELO SOFTWARE'
+              OPEN cr_cco_impresso( pr_nrconven => rw_crapcco.nrconven );
+              FETCH cr_cco_impresso INTO rw_cco_impresso;
+              -- se o convenio existir, entao criar boleto crapcob
+              IF cr_cco_impresso%FOUND THEN
+                -- Realizava o INSERT do boleto
+                pr_intitcop:= 1;
+              ELSE
+                IF cr_cco_impresso%ISOPEN THEN
+                  CLOSE cr_cco_impresso;
+                END IF;
+                RAISE vr_exc_saida;
+              END IF; -- cco_impresso%found
+            END IF; -- 'MIGRACAO,INCORPORACAO'
+          END IF; -- 'IMPRESSO PELO SOFTWARE'
+        END IF; -- cr_crapcob%NOTFOUND
+
+        --Valores de retorno
+        pr_intitcop:= 1;
+
+        --Fechar Cursor
+        IF cr_crapcco%ISOPEN THEN
+          CLOSE cr_crapcco;
+        END IF;
+
+        --Fechar Cursor
+        IF cr_crapcob%ISOPEN THEN
+          CLOSE cr_crapcob;
+        END IF;
+
+      ELSIF vr_banco = rw_crapcop.cdbcoctl  THEN /* CECRED */
+
+        vr_nrdconta := vr_nrdconta1;
+        vr_bloqueto := vr_bloqueto1;
+        vr_convenio := vr_convenio1;
+
+        --Selecionar informacoes cadastro cobranca
+        OPEN cr_crapcco (pr_cdcooper  => rw_crapcop.cdcooper
+                        ,pr_nrconven  => vr_convenio);
+        --Posicionar no primeiro registro
+        FETCH cr_crapcco INTO rw_crapcco;
+        --Se encontrou
+        IF cr_crapcco%FOUND THEN
+          IF rw_crapcco.dsorgarq IN ('MIGRACAO','INCORPORACAO') THEN
+            OPEN cr_ceb_ant(pr_cdcooper => rw_crapcop.cdcooper
+                           ,pr_nrdconta => vr_nrdconta
+                           ,pr_nrconven => vr_convenio);
+            FETCH cr_ceb_ant INTO rw_ceb_ant;
+
+            IF cr_ceb_ant%FOUND THEN
+              CLOSE cr_ceb_ant;
+              IF rw_ceb_ant.tco_cdcooper = rw_crapcop.cdcooper THEN
+                vr_nrdconta := rw_ceb_ant.tco_nrdconta;
+              ELSE
+                -- não eh cooperado migrado, Liq Interbancaria
+                --Fechar Cursores
+                RAISE vr_exc_saida;
+              END IF;
+            ELSE
+              CLOSE cr_ceb_ant;
+            END IF;
+          END IF;
+
+          --Selecionar cadastro emissao bloquetos
+          OPEN cr_crapceb1 (pr_cdcooper => rw_crapcop.cdcooper
+                           ,pr_nrconven => rw_crapcco.nrconven
+                           ,pr_nrdconta => vr_nrdconta);
+          --Posicionar no proximo registro
+          FETCH cr_crapceb1 INTO rw_crapceb1;
+          IF cr_crapceb1%FOUND THEN
+            CLOSE cr_crapceb1;
+
+            -- verificar se cooperado saiu da cooperativa 
+            OPEN cr_craptco2( pr_cdcopant => rw_crapcop.cdcooper
+                             ,pr_nrctaant => vr_nrdconta
+                             ,pr_flgativo => 1
+                             ,pr_tpctatrf => 3);
+            FETCH cr_craptco2 INTO rw_craptco2;
+            -- se encontrou, entao cooperado saiu e eh Liq Interbancaria 
+            IF cr_craptco2%FOUND THEN
+              CLOSE cr_craptco2;
+              RAISE vr_exc_saida;
+            ELSE
+              vr_nrdconta := rw_crapceb1.nrdconta;
+            END IF;
+          ELSE
+            
+            IF cr_crapceb1%ISOPEN THEN
+              CLOSE cr_crapceb1;
+            END IF;
+
+            -- verificar se cooperado migrado entrou na cooperativa pela conta anterior 
+            OPEN cr_craptco (pr_cdcooper => rw_crapcop.cdcooper
+                            ,pr_nrctaant => vr_nrdconta
+                            ,pr_flgativo => 1
+                            ,pr_tpctatrf => 3);
+            --Posicionar no proximo registro
+            FETCH cr_craptco INTO rw_craptco;
+            --Se nao encontrar
+            IF cr_craptco%FOUND THEN
+              CLOSE cr_craptco;
+              --Selecionar cadastro emissao bloquetos - conv 6 digitos
+              OPEN cr_crapceb1 (pr_cdcooper => rw_crapcop.cdcooper
+                               ,pr_nrconven => rw_crapcco.nrconven
+                               ,pr_nrdconta => rw_craptco.nrdconta);
+              --Posicionar no proximo registro
+              FETCH cr_crapceb1 INTO rw_crapceb1;
+              IF cr_crapceb1%FOUND THEN
+                CLOSE cr_crapceb1;
+                vr_nrdconta := rw_craptco.nrdconta;
+              ELSE
+                IF cr_crapceb1%ISOPEN THEN
+                  CLOSE cr_crapceb1;
+                END IF;
+                -- eh cooperado migrado e nao tem CEB, Liq Interbancaria
+                RAISE vr_exc_saida;
+              END IF;
+            ELSE
+              IF cr_craptco%ISOPEN THEN
+                CLOSE cr_craptco;
+              END IF;
+
+              IF cr_crapceb1%ISOPEN THEN
+                CLOSE cr_crapceb1;
+              END IF;
+
+              -- liq interbancaria (nesse caso, de outra cooperativa)
+              RAISE vr_exc_saida;
+
+            END IF; -- craptco%FOUND
+          END IF; -- cr_crapceb1%FOUND
+
+          --Selecionar informacoes cobranca
+          OPEN cr_crapcob (pr_cdcooper => rw_crapcop.cdcooper
+                          ,pr_cdbandoc => rw_crapcco.cddbanco
+                          ,pr_nrcnvcob => rw_crapcco.nrconven
+                          ,pr_nrdctabb => rw_crapcco.nrdctabb
+                          ,pr_nrdocmto => vr_bloqueto
+                          ,pr_nrdconta => vr_nrdconta);
+          --Posicionar no proximo registro
+          FETCH cr_crapcob INTO rw_crapcob;
+
+          --Se nao encontrar
+          IF cr_crapcob%NOTFOUND THEN
+             --Fechar Cursor
+             CLOSE cr_crapcob;
+
+             IF rw_crapcco.dsorgarq = 'IMPRESSO PELO SOFTWARE' THEN
+               -- Realizava o INSERT do boleto
+               pr_intitcop:= 1;
+               
+             ELSE -- 'IMPRESSO PELO SOFTWARE'
+
+               IF rw_crapcco.dsorgarq IN ('MIGRACAO','INCORPORACAO') THEN
+
+                 OPEN cr_cco_impresso( pr_nrconven => rw_crapcco.nrconven );
+                 FETCH cr_cco_impresso INTO rw_cco_impresso;
+
+                 IF cr_cco_impresso%FOUND THEN
+                   -- criar boleto
+                   CLOSE cr_cco_impresso;
+
+                   --Retornar valores
+                   pr_intitcop:= 1;
+                 ELSE
+                   IF cr_cco_impresso%ISOPEN THEN
+                     CLOSE cr_cco_impresso;
+                   END IF;
+                   -- convenio eh migrado mas nao eh 'IMPRESSO PELO SOFTWARE', entao Liq interbancaria
+                   RAISE vr_exc_saida;
+                 END IF;
+               END IF; -- 'MIGRACAO,INCORPORACAO'
+
+             END IF; -- 'IMPRESSO PELO SOFTWARE'
+
+          ELSE -- cr_crapcob%NOTFOUND
+
+            CLOSE cr_crapcob;
+            --Retornar valores
+            pr_intitcop:= 1;
+          END IF; -- cr_crapcob%NOTFOUND
+          --Fechar Cursor
+          IF cr_crapcob%ISOPEN THEN
+            CLOSE cr_crapcob;
+          END IF;
+        ELSE
+          -- convenio 085 nao encontrado na cooperativa, Liq Interbancaria
+          RAISE vr_exc_saida;
+        END IF; -- crapcco%FOUND
+      ELSE
+        -- Liq Interbancaria
+        RAISE vr_exc_saida;
+      END IF; -- vr_banco = 1
+
+    EXCEPTION
+       WHEN vr_exc_saida THEN
+         IF cr_crapcco%ISOPEN THEN CLOSE cr_crapcco; END IF;
+         IF cr_crapceb1%ISOPEN THEN CLOSE cr_crapceb1; END IF;
+         IF cr_crapceb2%ISOPEN THEN CLOSE cr_crapceb2; END IF;
+         IF cr_craptco%ISOPEN THEN CLOSE cr_craptco; END IF;
+         IF cr_craptco2%ISOPEN THEN CLOSE cr_craptco2; END IF;
+         IF cr_craptco3%ISOPEN THEN CLOSE cr_craptco3; END IF;
+         IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
+         IF cr_ceb_ant%ISOPEN THEN CLOSE cr_ceb_ant; END IF;
+       WHEN OTHERS THEN
+         IF cr_crapcco%ISOPEN THEN CLOSE cr_crapcco; END IF;
+         IF cr_crapceb1%ISOPEN THEN CLOSE cr_crapceb1; END IF;
+         IF cr_crapceb2%ISOPEN THEN CLOSE cr_crapceb2; END IF;
+         IF cr_craptco%ISOPEN THEN CLOSE cr_craptco; END IF;
+         IF cr_craptco2%ISOPEN THEN CLOSE cr_craptco2; END IF;
+         IF cr_craptco3%ISOPEN THEN CLOSE cr_craptco3; END IF;
+         IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
+         IF cr_ceb_ant%ISOPEN THEN CLOSE cr_ceb_ant; END IF;
+         pr_cdcritic:= 0;
+         pr_dscritic:= 'Erro na rotina PGTA0001.pc_identifica_interbancario. '||SQLERRM;
+    END;
+  END pc_identifica_interbancario;
+
+  /*Procedure copiada do CRPS594 10/03/2017*/
+  PROCEDURE pc_verifica_vencimento_titulo (pr_cdcooper IN crapcob.cdcooper%TYPE        --Código da cooperativa
+                                          ,pr_dtvencto IN crapcob.dtvencto%TYPE        --Data Vencimento
+                                          ,pr_flgvenci OUT BOOLEAN                     --Vencido = true
+                                          ,pr_cdcritic OUT INTEGER                     --Codigo da Critica
+                                          ,pr_dscritic OUT VARCHAR2) IS                --Descricao do erro     
+  BEGIN
+    DECLARE
+      vr_dtdiautil DATE;
+      rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
+    BEGIN
+      --Inicializar Variaveis Erro
+      pr_cdcritic:= NULL;
+      pr_dscritic:= NULL;
+
+      -- Busca a data do movimento
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+          
+      --Inicializar Retorno
+      pr_flgvenci:= FALSE;
+          
+      /** Pagamento no dia **/
+      IF pr_dtvencto > rw_crapdat.dtmvtocd  OR  rw_crapdat.dtmvtoan < pr_dtvencto THEN
+        RETURN;
+      END IF;
+          
+      --Inicializar Retorno
+      pr_flgvenci:= TRUE;
+            
+      /** Tratamento para permitir pagamento no primeiro dia util do **/
+      /** ano de titulos vencidos no ultimo dia util do ano anterior **/
+          
+      IF to_number(to_char(rw_crapdat.dtmvtoan,'YYYY')) <> to_number(to_char(rw_crapdat.dtmvtocd,'YYYY')) THEN
+        --Dia Util
+        vr_dtdiautil:= to_date('3112'||to_char(rw_crapdat.dtmvtoan,'YYYY'),'DDMMYYYY');
+        /** Se dia 31/12 for segunda-feira obtem data do sabado **/
+        /** para aceitar vencidos do ultimo final de semana     **/
+        IF to_number(to_char(vr_dtdiautil,'D')) IN (1,2) THEN
+          --Dia Util
+          vr_dtdiautil:= to_date('2912'||to_char(rw_crapdat.dtmvtoan,'YYYY'),'DDMMYYYY');
+        ELSIF to_number(to_char(vr_dtdiautil,'D')) = 7 THEN  
+          --Dia Util
+          vr_dtdiautil:= to_date('3012'||to_char(rw_crapdat.dtmvtoan,'YYYY'),'DDMMYYYY');
+        END IF;
+        /** Verifica se pode aceitar o titulo vencido **/
+        IF  pr_dtvencto >= vr_dtdiautil THEN 
+           --Nao Criticar
+           pr_flgvenci:= FALSE; 
+        END IF;  
+      END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na rotina pc_verifica_vencimento_titulo. '||sqlerrm;
+    END;    
+  END pc_verifica_vencimento_titulo;
 
   -- Procedure para validar arquivo de pagamentos
   PROCEDURE pc_validar_arq_pgto  (pr_cdcooper      IN crapcop.cdcooper%TYPE  -- Código da cooperativa
@@ -1349,7 +2037,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                  ,pr_dscritic     OUT VARCHAR2) IS           -- Descricao do erro
 
   BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --  Programa : PGTA0001
+    --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
+    --  Sigla    : PGTA
+    --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
+    --  Data     : Desconhecido                     Ultima atualizacao: 21/03/2017
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: Sempre que Chamado
+    -- Objetivo  : Validar arquivo de pagamentos
 
+    -- Alteracoes: 16/03/2017 - Ajustado a validacao para aceitar apenas o agendamento de titulos vencidos
+    --                          que são emitidos e pagos na mesma cooperativa. Titulos vencidos de outros 
+    --                          bancos ou outra cooperativa (liquidacao interbancaria) devem ser rejeitados
+    --                        - Ajustado para quando a data de pagamento do titulo for anterior a data de 
+    --                          movimento, assumir que a data de pagamento será a data de movimento    
+    --                       (Douglas - Chamado 629635)
+	--           
+	--             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
+    ---------------------------------------------------------------------------------------------------------------
   DECLARE
 
      -- CURSORES
@@ -1360,7 +2068,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        SELECT crapass.nrdconta
              ,crapass.cdagenci
              ,crapass.nrcpfcgc
-             ,crapass.inpessoa
+             --,crapass.inpessoa
+			 ,DECODE(crapass.inpessoa,1,1,2,2,2) inpessoa
         FROM crapass crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -1449,6 +2158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
      vr_dscodbar VARCHAR2(100);
      vr_nmcedent VARCHAR2(100);
      vr_dtvencto DATE;
+     vr_flgvenci BOOLEAN;
      vr_vltitulo NUMBER;
      vr_vldescto NUMBER;
      vr_vlacresc NUMBER;
@@ -1459,8 +2169,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
      vr_dtmvtopg DATE;
      vr_dtmvtolt DATE;
 
-     -- PAGADOR VIP
-     vr_dstextab_pagador_vip craptab.dstextab%TYPE;
+     -- Identificador do titulo da cooperativa 
+     vr_intitcop INTEGER;
 
   BEGIN
      vr_nmarquiv := pr_nmarquiv;
@@ -1506,15 +2216,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        RAISE vr_exc_saida;
      END IF;
 
-     -- Identificar se a Conta que fez UPLOAD do arquivo, eh um PAGADOR VIP
-     vr_dstextab_pagador_vip := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper 
-                                                          ,pr_nmsistem => 'CRED'
-                                                          ,pr_tptabela => 'GENERI'
-                                                          ,pr_cdempres => 0
-                                                          ,pr_cdacesso => 'PAGADORVIP'
-                                                          ,pr_tpregist => pr_nrdconta);
-     
-
      -- Se o arquivo estiver aberto
      IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
 
@@ -1549,7 +2250,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                -- Apenas fechar o cursor
                CLOSE cr_crapass;
             END IF;
-
 
             -- Verifica se a cooperativa esta cadastrada
              OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -1772,8 +2472,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
              RAISE vr_exc_saida;
            END IF;
 
-
-
            -- LINHA REGISTRO DETALHE
            -- EM CASO DE ERRO, DEVE GRAVAR LOG E CONTINUAR... NAO FAZ RAISE
 
@@ -1909,18 +2607,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                 --vr_cdtipmvt := nvl(vr_cdtipmvt,0);     -- G060
                 vr_cdocorre := nvl(vr_cdocorre,'AP');  -- G059 - 'AP' = Data Lançamento Inválido
              ELSE
-               IF ( to_date(SUBSTR(vr_des_linha,92,08),'DD/MM/RRRR') < vr_dtmvtolt ) THEN
+
+               -- Verificar se o titulo está vencido
+               vr_dtvencto := to_date(SUBSTR(vr_des_linha,92,08),'DD/MM/RRRR');
+               pc_verifica_vencimento_titulo (pr_cdcooper => pr_cdcooper
+                                             ,pr_dtvencto => vr_dtvencto
+                                             ,pr_flgvenci => vr_flgvenci
+                                             ,pr_cdcritic => pr_cdcritic
+                                             ,pr_dscritic => pr_dscritic);
+
+               --se o título estiver vencido
+               IF vr_flgvenci THEN
                  -- (21,13) Data do Vencimento Invalida
                  --vr_cdtipmvt := nvl(vr_cdtipmvt,0);     -- G060
-                 vr_dtvencto := to_date(SUBSTR(vr_des_linha,92,08),'DD/MM/RRRR');
                  
-                 -- Se for pagador VIP nao criticar
-                 IF TRIM(vr_dstextab_pagador_vip) IS NULL THEN
-                 vr_cdocorre := nvl(vr_cdocorre,'AP');  -- G059 - 'AP' = Data Lançamento Inválido
+                 -- Identificar se o boleto em questao eh da cooperativa, ou eh interbancario
+                 pc_identifica_interbancario(pr_cdcooper => pr_cdcooper -- Cooperativa
+                                            ,pr_codbarra => vr_dscodbar -- Codigo Barras
+                                            ,pr_intitcop => vr_intitcop -- Indicador titulo (1-Cooperativa / 0-Outra IF)
+                                            ,pr_cdcritic => pr_cdcritic -- Codigo do erro
+                                            ,pr_dscritic => pr_dscritic); -- Descricao do Erro
+                 -- Verificar se o titulo eh da cooperativa
+                 IF vr_intitcop <> 1 THEN
+                   -- TITULO interbancario ou titulo de outra cooperativa singular
+                   vr_cdocorre := nvl(vr_cdocorre,'AP');  -- G059 - 'AP' = Data Lançamento Inválido
                  END IF;
                  
-               ELSE
-                 vr_dtvencto := to_date(SUBSTR(vr_des_linha,92,08),'DD/MM/RRRR');
                END IF;
 
              END IF;
@@ -1967,15 +2679,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                             -- gravar numa variavel/tabela DPT - Tipos incompativeis
                 vr_cdocorre := nvl(vr_cdocorre,'AP');  -- G059 - 'AP' = Data Lançamento Inválido
              ELSE
-               IF ( to_date(SUBSTR(vr_des_linha,145,08),'DD/MM/RRRR') < vr_dtmvtolt ) THEN
-                 -- (21,13) Data do Pagamento Invalida
-                 --vr_cdtipmvt := nvl(vr_cdtipmvt,0);     -- G060
-                 vr_dtdpagto := to_date(SUBSTR(vr_des_linha,145,08),'DD/MM/RRRR');
-                 vr_cdocorre := nvl(vr_cdocorre,'AP');  -- G059 - 'AP' = Data Lançamento Inválido
-               ELSE
-                 vr_dtdpagto := to_date(SUBSTR(vr_des_linha,145,08),'DD/MM/RRRR');
-               END IF;
 
+               -- Se a data de pagamento do titulo for anterior a data de movimento,
+               -- deve-se assumir que a data de pagamento será a data de movimento
+               vr_dtdpagto := to_date(SUBSTR(vr_des_linha,145,08),'DD/MM/RRRR');
+               IF ( to_date(SUBSTR(vr_des_linha,145,08),'DD/MM/RRRR') < vr_dtmvtolt ) THEN
+                 vr_dtdpagto := vr_dtmvtolt;
+               END IF;
              END IF;
 
              -- 15.3J Valor do Pagamento
@@ -2297,6 +3007,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        vr_cdocorre VARCHAR2(5);
        vr_dtmvtolt DATE;
 
+       -- variaveis NCP
+       vr_nrdocbenf NUMBER;  
+       vr_tppesbenf VARCHAR2(100); 
+       vr_dsbenefic VARCHAR2(100); 
+       vr_vlrtitulo NUMBER;       
+       vr_cdctrlcs  VARCHAR2(100);  
+       vr_tbtitulocip NPCB0001.typ_reg_titulocip;        
+       vr_flblq_valor INTEGER;
+       vr_flgtitven   INTEGER;
+       
 
        vr_exc_critico EXCEPTION;
        vr_tab_erro GENE0001.typ_tab_erro;
@@ -2466,6 +3186,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               vr_lindigi4 := 0;
               vr_lindigi5 := 0;
 
+              
+              -- Chamar a rotina de consulta dos dados      
+              NPCB0002.pc_consultar_titulo_cip(pr_cdcooper      => pr_cdcooper 
+                                              ,pr_nrdconta      => rw_crapdpt.nrdconta      
+                                              ,pr_cdagenci      => 90
+                                              ,pr_flmobile      => 0
+                                              ,pr_dtmvtolt      => trunc(SYSDATE)
+                                              ,pr_titulo1       => vr_lindigi1  
+                                              ,pr_titulo2       => vr_lindigi2  
+                                              ,pr_titulo3       => vr_lindigi3  
+                                              ,pr_titulo4       => vr_lindigi4  
+                                              ,pr_titulo5       => vr_lindigi5  
+                                              ,pr_codigo_barras => vr_dscodbar  
+                                              ,pr_cdoperad      => 996  
+                                              ,pr_idorigem      => pr_idorigem     
+                                              ,pr_nrdocbenf     => vr_nrdocbenf
+                                              ,pr_tppesbenf     => vr_tppesbenf
+                                              ,pr_dsbenefic     => vr_dsbenefic      
+                                              ,pr_vlrtitulo     => vr_vlrtitulo      
+                                              ,pr_vlrjuros      => vr_vlrjuros       
+                                              ,pr_vlrmulta      => vr_vlrmulta       
+                                              ,pr_vlrdescto     => vr_vldescto      
+                                              ,pr_cdctrlcs      => vr_cdctrlcs       
+                                              ,pr_tbtitulocip   => vr_tbtitulocip    
+                                              ,pr_flblq_valor   => vr_flblq_valor    
+                                              ,pr_fltitven      => vr_flgtitven
+                                              ,pr_des_erro      => vr_des_erro       
+                                              ,pr_cdcritic      => vr_cdcritic       
+                                              ,pr_dscritic      => vr_dscritic);     
+                                                   
+              -- Se der erro não retorna informações   
+              IF vr_des_erro = 'NOK' THEN
+                IF vr_cdcritic IN (940,950) THEN 
+                  
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
+                END IF;
+              END IF;
+              
+              --> Validar apenas se nao encontrou erro
+              IF nvl(vr_cdcritic,0) = 0 AND 
+                 TRIM(vr_dscritic) IS NULL THEN
+                 
               PAGA0001.pc_verifica_titulo (pr_cdcooper => pr_cdcooper           --Codigo da cooperativa
                                           ,pr_nrdconta => rw_crapdpt.nrdconta   --Numero da conta
                                           ,pr_idseqttl => 1                     --FIXO ---> Sequencial titular
@@ -2480,7 +3243,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                           ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
                                           ,pr_idorigem => pr_idorigem           --Indicador de origem
                                           ,pr_indvalid => 1                     --nao validar
-										                      ,pr_flmobile => 0                     --Indicador mobile
+										  ,pr_flmobile => 0                     --Indicador mobile
+                                          ,pr_cdctrlcs => vr_cdctrlcs           --Numero de controle de connsulta NPC
                                           -- Abaixo, todas OUT...
                                           ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
                                           ,pr_vlfatura => vr_vlfatura           --Valor fatura
@@ -2503,6 +3267,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                           ,pr_vloutcre => vr_vloutcre           --Valor saida credito
                                           ,pr_cdcritic => vr_cdcritic           --C-odigo da critica
                                           ,pr_dscritic => vr_dscritic);         --Descricao critica
+              
+              END IF;
               --Se nao ocorreu erro
               IF NVL(vr_cdcritic,0) = 0 AND TRIM(vr_dscritic) IS NULL THEN
                  IF gene0002.fn_existe_valor(pr_base => 'BD' -- Situacoes de SUCESSO
@@ -2538,6 +3304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                  ,pr_nrterfin => 0
                                                  ,pr_nrcpfope => 0
                                                  ,pr_idtitdda => 0
+                                                 ,pr_cdctrlcs => vr_cdctrlcs
                                                  ,pr_dstransa => vr_dstransa
                                                  ,pr_cdcritic => vr_cdcritic           --Código da critica
                                                  ,pr_dscritic => vr_dscritic);         --Descricao critica
@@ -2743,11 +3510,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                     ,pr_nrterfin      IN craplau.nrterfin%TYPE
                                     ,pr_nrcpfope      IN craplau.nrcpfope%TYPE
                                     ,pr_idtitdda      IN craplau.idtitdda%TYPE
+                                    ,pr_cdctrlcs      IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                     ,pr_dstransa      OUT VARCHAR2
                                     ,pr_cdcritic      OUT INTEGER                -- Código do erro
                                     ,pr_dscritic      OUT VARCHAR2) IS
     BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --  Programa : PGTA0001
+    --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
+    --  Sigla    : PGTA
+    --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
+    --  Data     : Desconhecido                     Ultima atualizacao: 16/03/2017
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: Sempre que Chamado
+    -- Objetivo  : Cadastrar o agendamento do Pagamento do Titulo
 
+    -- Alteracoes: 16/03/2017 - Ajustado a criacao do lote para gravar o codigo do PA (Douglas)
+    ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
       -- CURSORES
@@ -2908,6 +3689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
             BEGIN
                INSERT INTO craplot
                   (cdcooper,
+                   cdagenci,
                    dtmvtolt,
                    cdbccxlt,
                    nrdolote,
@@ -2917,6 +3699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                    tplotmov)
                    VALUES
                   (pr_cdcooper,
+                   pr_cdagenci,
                    pr_dtmvtolt,
                    100,          --cdbccxlt
                    vr_nrdolote,
@@ -2994,7 +3777,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                ,nrcpfpre
                ,nmprepos
                ,idtitdda
-               ,tpdvalor)
+               ,tpdvalor
+               ,cdctrlcs)
              VALUES
                (pr_cdcooper
                ,pr_nrdconta
@@ -3027,7 +3811,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                ,vr_nrcpfpre
                ,vr_nmprepos
                ,pr_idtitdda
-               ,vr_tpdvalor);
+               ,vr_tpdvalor
+               ,pr_cdctrlcs);
          EXCEPTION
             WHEN OTHERS THEN
                vr_dscritic := 'Nao foi possivel agendar o pagamento. ';
@@ -3077,8 +3862,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          END;
 
          -- DDA
-         IF pr_idtitdda > 0 THEN
-
+         IF pr_idtitdda > 0 OR 
+            TRIM(pr_cdctrlcs) IS NOT NULL THEN
+           --> Rotina não atualiza como agendado, pois titulo pode ser de outra instituição
+            -- fazendo com que não encontre o titulo para atualizar
+            NULL;
+            /*
             DDDA0001.pc_atualz_situac_titulo_sacado(pr_cdcooper => pr_cdcooper
                                                    ,pr_cdagecxa => pr_cdagenci
                                                    ,pr_nrdcaixa => 900
@@ -3089,25 +3878,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                    ,pr_idseqttl => pr_idseqttl
                                                    ,pr_idtitdda => pr_idtitdda
                                                    ,pr_cdsittit => 2 -- Agendado
-                                                   ,pr_flgerlog => FALSE
-                                                   ,pr_des_erro => vr_dscritic
-                                                   ,pr_tab_erro => vr_tab_erro);
+                                                   ,pr_flgerlog => 0                -- Gerar Log
+                                                   ,pr_cdctrlcs => pr_cdctrlcs      -- Codigo de controle de consulta NPC
+                                                   ,pr_cdcritic => vr_cdcritic      -- Codigo de critica
+                                                   ,pr_dscritic => vr_dscritic);    -- Descrição de critica
 
-            IF TRIM(vr_dscritic) IS NOT NULL OR
-               vr_tab_erro.COUNT > 0 THEN
-
-               -- Tenta buscar o erro no vetor de erro
-               IF vr_tab_erro.COUNT > 0 THEN
-                  vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-                  vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-               ELSE
-                  vr_cdcritic:= 0;
-                  vr_dscritic:= 'Falha na requisicao ao DDA..';
-               END IF;
-
+            --Se ocorreu erro
+            IF nvl(vr_cdcritic,0) > 0 OR 
+               TRIM(vr_dscritic) IS NOT NULL THEN        
+              --Levantar Excecao
                RAISE vr_exc_saida;
+            END IF;*/
 
-            END IF;
          END IF;
 
 
@@ -3148,6 +3930,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               craplau.cdcooper
              ,craplau.dtmvtopg
              ,craplau.nrdconta
+             ,craplau.idtitdda
+             ,craplau.cdctrlcs
              ,craplau.ROWID
         FROM craplau craplau
        WHERE craplau.cdcooper = pr_cdcooper
@@ -3242,6 +4026,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                  -- Levantar excecao
                  RAISE vr_exc_saida;
            END;
+        
+           IF rw_craplau_sit_1.idtitdda > 0 OR 
+              TRIM(rw_craplau_sit_1.cdctrlcs) IS NOT NULL THEN 
+    
+              --Atualizar situacao titulo
+              DDDA0001.pc_atualz_situac_titulo_sacado (pr_cdcooper => pr_cdcooper   --Codigo da Cooperativa
+                                                      ,pr_cdagecxa => pr_cdagenci   --Codigo da Agencia
+                                                      ,pr_nrdcaixa => 900           --Numero do Caixa
+                                                      ,pr_cdopecxa => '996'         --Codigo Operador Caixa
+                                                      ,pr_nmdatela => 'INTERNETBANK'--Nome da tela
+                                                      ,pr_idorigem => 3             --Indicador Origem
+                                                      ,pr_nrdconta => pr_nrdconta   --Numero da Conta
+                                                      ,pr_idseqttl => 1             --Sequencial do titular
+                                                      ,pr_idtitdda => rw_craplau_sit_1.idtitdda   --Indicador Titulo DDA
+                                                      ,pr_cdctrlcs => rw_craplau_sit_1.cdctrlcs   --Identificador da consulta
+                                                      ,pr_cdsittit => 1                --Situacao Titulo
+                                                      ,pr_flgerlog => 0                --Gerar Log
+                                                      ,pr_cdcritic => vr_cdcritic      --Codigo de critica
+                                                      ,pr_dscritic => vr_dscritic);    --Descrição de critica
+              --Se ocorreu erro
+              IF nvl(vr_cdcritic,0) > 0 OR 
+                 TRIM(vr_dscritic) IS NOT NULL THEN        
+                --Levantar Excecao
+                RAISE vr_exc_saida;
+              END IF;
+            
+            END IF; 
+        
         ELSE
            IF  pr_dscritic IS NULL THEN -- Se nao for NULO é pq caiu no cursor LAU_2
                vr_dscritic := 'Nao foi possivel localizar agendamento do pagamento.';

@@ -39,6 +39,19 @@
                                  ,pr_cdcritic  OUT INTEGER                --> Codigo da Critica
                                  ,pr_dscritic  OUT VARCHAR2);             --> Descricao da critica
 
+  -- Procedure para baixar o titulo progress -- Demetrius
+  PROCEDURE pc_inst_pedido_baixa_prg (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
+                                     ,pr_nrdconta  IN crapcob.nrdconta%TYPE   --> Numero da Conta
+                                     ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE   --> Numero Convenio
+                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE   --> Numero Documento
+                                     ,pr_cdocorre  IN NUMBER                  --> Codigo Ocorrencia
+                                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE   --> Data pagamento
+                                     ,pr_cdoperad  IN crapope.cdoperad%TYPE   --> Operador
+                                     ,pr_nrremass  IN INTEGER                 --> Numero da Remessa
+                                     ,pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada
+                                     ,pr_cdcritic  OUT INTEGER                --> Codigo da Critica
+                                     ,pr_dscritic  OUT VARCHAR2);             --> Descricao da critica
+
   -- Procedure para gerar o protesto do titulo
   PROCEDURE pc_inst_pedido_baixa_decurso (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                          ,pr_nrdconta IN crapcob.nrdconta%TYPE   --> Numero da Conta
@@ -206,6 +219,30 @@
                                           ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
                                           ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
 
+  -- Procedure para Cancelar o envio de SMS
+  PROCEDURE pc_inst_canc_sms (pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                             ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
+                             ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE --> Numero do Convenio
+                             ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE --> Numero do documento
+                             ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data de Movimentacao
+                             ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do Operador
+                             ,pr_nrremass  IN crapcob.nrremass%TYPE --> Numero da Remessa
+                             ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
+                             ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
+
+  -- Procedure para o envio de SMS
+  PROCEDURE pc_inst_envio_sms (pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                              ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
+                              ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE --> Numero do Convenio
+                              ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE --> Numero do documento
+                              ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data de Movimentacao
+                              ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do Operador
+                              ,pr_inavisms  IN PLS_INTEGER           --> Tipo de SMS 1 dia antes do vencimento
+                              ,pr_nrcelsac  IN crapsab.nrcelsac%TYPE --> Celular do sacado
+                              ,pr_nrremass  IN crapcob.nrremass%TYPE --> Numero da Remessa
+                              ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
+                              ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
+
 END COBR0007;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
@@ -228,6 +265,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --              08/11/2016 - Considerar periodo de carencia parametrizado na regra de bloqueio de baixa
   --                          de titulos descontados
   --                          Heitor (Mouts) - Chamado 527557
+  --
+  --              06/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
+  --
+  --              12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
   ---------------------------------------------------------------------------------------------------------------
   
   ------------------------------- CURSORES ---------------------------------    
@@ -281,6 +322,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           ,cob.inemiten
           ,cob.inemiexp
           ,cob.inserasa
+          ,cob.inavisms
+          ,cob.insmsant
+          ,cob.insmsvct
+          ,cob.insmspos
+          ,cob.vlminimo
+          ,cob.inpagdiv
           ,cob.rowid
      FROM crapcob cob
     WHERE cob.cdcooper = pr_cdcooper
@@ -462,6 +509,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                    ,pr_cdagenci => 90 -- internetbanking  --Agencia do Associado
                                    ,pr_tpoperac => 3               --Tipo de Operacao (0=todos)
                                    ,pr_inpessoa => 0               --Tipo de Pessoa
+                                   ,pr_idagenda   => 0             --Tipo de agendamento
+                                   ,pr_cdtiptra   => 0             --Tipo de transferencia
                                    ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                    ,pr_cdcritic => vr_cdcritic     --Codigo do erro
                                    ,pr_dscritic => vr_dscritic);   --Descricao do erro
@@ -3458,6 +3507,136 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
   END pc_inst_pedido_baixa;
 
+  PROCEDURE pc_inst_pedido_baixa_prg (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
+                                     ,pr_nrdconta  IN crapcob.nrdconta%TYPE   --> Numero da Conta
+                                     ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE   --> Numero Convenio
+                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE   --> Numero Documento
+                                     ,pr_cdocorre  IN NUMBER                  --> Codigo Ocorrencia
+                                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE   --> Data pagamento
+                                     ,pr_cdoperad  IN crapope.cdoperad%TYPE   --> Operador
+                                     ,pr_nrremass  IN INTEGER                 --> Numero da Remessa
+                                     ,pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada
+                                     ,pr_cdcritic  OUT INTEGER                --> Codigo da Critica
+                                     ,pr_dscritic  OUT VARCHAR2)IS             --> Descricao da critica
+
+  BEGIN
+     DECLARE
+      --Selecionar informacoes Cobranca
+      CURSOR cr_crapcob  (pr_cdcooper IN crapcob.cdcooper%TYPE
+                         ,pr_cdbandoc IN crapcob.cdbandoc%TYPE
+                         ,pr_nrdctabb IN crapcob.nrdctabb%TYPE
+                         ,pr_nrdconta IN crapcob.nrdconta%type
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%type
+                         ,pr_nrdocmto IN crapcob.nrdocmto%type) IS
+        SELECT cob.rowid
+              ,cob.cdbandoc
+              ,cob.nrdctabb
+          FROM crapcob cob
+         WHERE cob.cdcooper = pr_cdcooper
+           AND cob.cdbandoc = pr_cdbandoc
+           AND cob.nrdctabb = pr_nrdctabb
+           AND cob.nrdconta = pr_nrdconta
+           AND cob.nrcnvcob = pr_nrcnvcob
+           AND cob.nrdocmto = pr_nrdocmto
+         ORDER BY cob.progress_recid ASC;
+
+      rw_crapcob cr_crapcob%ROWTYPE;
+
+      --Registro de Cadastro de Cobranca
+      rw_crapcco COBR0007.cr_crapcco%ROWTYPE;
+
+      --Tabelas de Memoria de Remessa
+      rw_crapcop         COBR0007.cr_crapcop%ROWTYPE;
+
+      --Variaveis de erro
+      vr_des_erro VARCHAR2(4000);
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION;
+
+   BEGIN
+      --Inicializar variaveis retorno
+      pr_cdcritic:= NULL;
+      pr_dscritic:= NULL;
+
+      --Verificar cooperativa
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      --Se nao encontrou
+      IF cr_crapcop%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcop;
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Registro de cooperativa nao encontrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+
+      -- Buscar parâmetros do cadastro de cobrança
+      OPEN  cr_crapcco(pr_cdcooper => pr_cdcooper
+                      ,pr_nrconven => pr_nrcnvcob);
+      FETCH cr_crapcco INTO rw_crapcco;
+      -- Se não encontrar registro
+      IF cr_crapcco%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcco;
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Registro de cobranca nao encontrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcco;
+
+      OPEN cr_crapcob (pr_cdcooper => pr_cdcooper
+                      ,pr_cdbandoc => rw_crapcco.cddbanco
+                      ,pr_nrdctabb => rw_crapcco.nrdctabb
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_nrcnvcob => pr_nrcnvcob
+                      ,pr_nrdocmto => pr_nrdocmto);
+      --Posicionar no proximo registro
+      FETCH cr_crapcob INTO rw_crapcob;
+      --Se nao encontrar
+      IF cr_crapcob%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcob;
+        --Mensagem Critica
+        vr_dscritic:= 'Registro de cobranca nao encontrado';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcob;
+
+      COBR0007.pc_inst_pedido_baixa (pr_idregcob => rw_crapcob.rowid
+                                    ,pr_cdocorre => 1
+                                    ,pr_dtmvtolt => pr_dtmvtolt
+                                    ,pr_cdoperad => pr_cdoperad
+                                    ,pr_nrremass => pr_nrremass
+                                    ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+                                    ,pr_cdcritic => pr_cdcritic
+                                    ,pr_dscritic => pr_dscritic);
+        --Se ocorreu erro
+        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+      WHEN OTHERS THEN
+        -- Erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na rotina COBR0007.pc_inst_pedido_baixa_prg. '||sqlerrm;
+    END;
+
+  END pc_inst_pedido_baixa_prg;
+ 
   -- Procedure para gerar protesto do titulo por decurso
   PROCEDURE pc_inst_pedido_baixa_decurso (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                          ,pr_nrdconta IN crapcob.nrdconta%TYPE   --Numero da Conta
@@ -4241,6 +4420,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       
       -- Recusar a instrucao
       vr_dscritic := 'Valor de Abatimento superior ao Valor do Boleto - ' ||
+                     'Abatimento nao efetuado!';
+      RAISE vr_exc_erro;
+    END IF;
+
+    vr_vltitabr := rw_crapcob.vltitulo - rw_crapcob.vldescto - pr_vlabatim;
+    --> Verificar se valor do titulo ficará menor que o valor minimo
+    IF rw_crapcob.inpagdiv = 1 AND 
+       rw_crapcob.vlminimo > vr_vltitabr THEN
+      -- Gerar o retorno para o cooperado 
+      COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                         ,pr_cdocorre => 26   -- Instrucao Rejeitada
+                                         ,pr_cdmotivo => '34' -- Motivo
+                                         ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                         ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                         ,pr_cdagectl => rw_crapcop.cdagectl
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_nrremass => pr_nrremass
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+      -- Verifica se ocorreu erro durante a execucao
+      IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Recusar a instrucao
+      vr_dscritic := 'Valor de Abatimento maior que o permitido devido ao Valor minimo boleto - ' ||
                      'Abatimento nao efetuado!';
       RAISE vr_exc_erro;
     END IF;
@@ -5972,6 +6178,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       
       -- Recusar a instrucao
       vr_dscritic := 'Valor de Desconto superior ao Valor do Boleto - Desconto nao efetuado!';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    vr_vltitabr := rw_crapcob.vltitulo - pr_vldescto - rw_crapcob.vlabatim;
+    --> Verificar se valor do titulo ficará menor que o valor minimo
+    IF rw_crapcob.inpagdiv = 1 AND 
+       rw_crapcob.vlminimo > vr_vltitabr THEN
+      -- Gerar o retorno para o cooperado 
+      COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                         ,pr_cdocorre => 26   -- Instrucao Rejeitada
+                                         ,pr_cdmotivo => '29' -- Motivo
+                                         ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                         ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                         ,pr_cdagectl => rw_crapcop.cdagectl
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_nrremass => pr_nrremass
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+      -- Verifica se ocorreu erro durante a execucao
+      IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Recusar a instrucao
+      vr_dscritic := 'Valor de Desconto maior que o permitido devido ao Valor minimo boleto - ' ||
+                     'Desconto nao efetuado!';
       RAISE vr_exc_erro;
     END IF;
     
@@ -7914,7 +8147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 25/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 20/05/2017
     --
     --  Dados referentes ao programa:
     --
@@ -7922,6 +8155,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Objetivo  : Procedure para Alterar o vencimento
     --
     --   Alteracao : 25/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
+    --
+    --               20/05/2017 - Ajustado parametro flgdprot para 0 quando enviar informacao a CIP
+    --                            de um titulo DDA ao cancelar protesto (P340 - NPC - Rafael)
     --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -8350,7 +8586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                        ,pr_dtvencto  => rw_crapcob.dtvencto      --Data Vencimento
                                        ,pr_vldescto  => rw_crapcob.vldescto      --Valor Desconto
                                        ,pr_vlabatim  => rw_crapcob.vlabatim      --Valor Abatimento
-                                       ,pr_flgdprot  => rw_crapcob.flgdprot      --Flag Protesto
+                                       ,pr_flgdprot  => 0                        --Flag Protesto
                                        ,pr_tab_remessa_dda => vr_tab_remessa_dda --tabela remessa
                                        ,pr_tab_retorno_dda => vr_tab_retorno_dda --Tabela memoria retorno DDA
                                        ,pr_cdcritic  => vr_cdcritic2             --Codigo Critica
@@ -8685,7 +8921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;
     END IF;
 
-    -- Verificar se boleto já está na situaçăo pretendida
+    -- Verificar se boleto já está na situaçao pretendida
     IF rw_crapcob.inemiten = 3  THEN
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
@@ -9458,6 +9694,468 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro na rotina COBR0007.pc_inst_alt_dados_arq_rem_085. '||sqlerrm;
   END pc_inst_alt_dados_arq_rem_085;
+
+  -- Procedure para Cancelar o envio de SMS
+  PROCEDURE pc_inst_canc_sms (pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                             ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
+                             ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE --> Numero do Convenio
+                             ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE --> Numero do documento
+                             ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data de Movimentacao
+                             ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do Operador
+                             ,pr_nrremass  IN crapcob.nrremass%TYPE --> Numero da Remessa
+                             ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
+                             ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
+    -- ...........................................................................................
+    --
+    --  Programa : pc_inst_canc_sms          Antigo: 
+    --  Sistema  : Cred
+    --  Sigla    : COBR0007
+    --  Autor    : Andrino Carlos de Souza Junior
+    --  Data     : Setembro/2016                     Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para cancelar envio de SMS
+    --
+    --   Alteracao : 
+    --
+    -- ...........................................................................................
+    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
+    -- Tratamento de erros
+    vr_exc_erro   EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);
+
+    ------------------------------- CURSORES ---------------------------------    
+    CURSOR cr_sms IS
+      SELECT 1
+        FROM tbcobran_sms
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrcnvcob = pr_nrcnvcob
+         AND nrdocmto = pr_nrdocmto;
+     rw_sms cr_sms%ROWTYPE;
+
+    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
+    
+    ------------------------------- VARIAVEIS -------------------------------
+    -- Registro de Cobrança
+    rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
+    rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
+
+  BEGIN
+    --Inicializa variaveis erro
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;   
+          
+    -- Processo de Validacao Recusas Padrao
+    COBR0007.pc_efetua_val_recusa_padrao(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
+                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
+                                        ,pr_nrcnvcob => pr_nrcnvcob   --> Numero Convenio
+                                        ,pr_nrdocmto => pr_nrdocmto   --> Numero Documento
+                                        ,pr_dtmvtolt => pr_dtmvtolt   --> Data Movimento
+                                        ,pr_cdoperad => pr_cdoperad   --> Operador
+                                        ,pr_cdinstru => '95'          --> Codigo Instrucao
+                                        ,pr_nrremass => pr_nrremass   --> Numero da Remessa
+                                        ,pr_rw_crapcob => rw_crapcob  --> Registro de Cobranca de Recusa
+                                        ,pr_cdcritic => vr_cdcritic   --> Codigo da Critica
+                                        ,pr_dscritic => vr_dscritic); --> Descricao da Critica
+    
+    --Se ocorrer Erro
+    IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --Verificar cooperativa
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    --Se nao encontrou
+    IF cr_crapcop%NOTFOUND THEN
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Registro de cooperativa nao encontrado.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --Fechar Cursor
+    CLOSE cr_crapcop;
+    
+    -- Se a flag de envio de sms 1 dia antes do vencimento estiver pendente, 
+    -- altera para nao enviar
+    IF rw_crapcob.insmsant = 1 THEN
+      rw_crapcob.insmsant := 0;
+    END IF;
+    
+    -- Se a flag de envio de sms no vencimento estiver pendente, 
+    -- altera para nao enviar
+    IF rw_crapcob.insmsvct = 1 THEN
+      rw_crapcob.insmsvct := 0;
+    END IF;
+
+    -- Se a flag de envio de sms 1 dia apos ao vencimento estiver pendente, 
+    -- altera para nao enviar
+    IF rw_crapcob.insmspos = 1 THEN
+      rw_crapcob.insmspos := 0;
+    END IF;
+    
+    -- Se todas as flags de envio de SMS estiverem para nao enviar, alterar o indicador principal
+    IF rw_crapcob.insmsant = 0 AND
+       rw_crapcob.insmsvct = 0 AND
+       rw_crapcob.insmspos = 0 THEN
+      -- verifica se existe envio eventual. Se existir, nao pode alterar o indicador
+      OPEN cr_sms;
+      FETCH cr_sms INTO rw_sms;
+      IF cr_sms%NOTFOUND THEN
+        rw_crapcob.inavisms := 0;
+      END IF;
+      CLOSE cr_sms;
+    END IF;
+    
+    -- Gerar o retorno para o cooperado 
+    COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+                                      ,pr_cdocorre => 96   -- Cancelamento de SMS
+                                      ,pr_cdmotivo => 'S1' -- Solicitado cancelamento
+                                      ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                      ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                      ,pr_cdagectl => rw_crapcop.cdagectl
+                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                      ,pr_cdoperad => pr_cdoperad
+                                      ,pr_nrremass => pr_nrremass
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+    -- Verifica se ocorreu erro durante a execucao
+    IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    
+    -- Atualiza o indicador de SMS
+    BEGIN
+      UPDATE crapcob 
+         SET crapcob.inavisms = rw_crapcob.inavisms,
+             crapcob.insmsant = rw_crapcob.insmsant,
+             crapcob.insmsvct = rw_crapcob.insmsvct,
+             crapcob.insmspos = rw_crapcob.insmspos
+       WHERE crapcob.rowid    = rw_crapcob.rowid;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Erro ao atualizar crapcob. ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na rotina COBR0007.pc_inst_canc_sms. ' || SQLERRM;
+  END pc_inst_canc_sms;
+
+  -- Procedure para o envio de SMS
+  PROCEDURE pc_inst_envio_sms (pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                              ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta do cooperado
+                              ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE --> Numero do Convenio
+                              ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE --> Numero do documento
+                              ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data de Movimentacao
+                              ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do Operador
+                              ,pr_inavisms  IN PLS_INTEGER           --> Tipo de SMS 1 dia antes do vencimento
+                              ,pr_nrcelsac  IN crapsab.nrcelsac%TYPE --> Celular do sacado
+                              ,pr_nrremass  IN crapcob.nrremass%TYPE --> Numero da Remessa
+                              ,pr_cdcritic OUT INTEGER               --> Codigo da Critica
+                              ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
+    -- ...........................................................................................
+    --
+    --  Programa : pc_inst_canc_sms          Antigo: 
+    --  Sistema  : Cred
+    --  Sigla    : COBR0007
+    --  Autor    : Andrino Carlos de Souza Junior
+    --  Data     : Setembro/2016                     Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para cancelar envio de SMS
+    --
+    --   Alteracao : 
+    --
+    -- ...........................................................................................
+    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
+    -- Tratamento de erros
+    vr_exc_erro   EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);
+
+    ------------------------------- CURSORES ---------------------------------    
+    -- Cursor para verificar se a conta esta configurada para envio de SMS
+    CURSOR cr_config IS
+      SELECT 1
+        FROM tbcobran_sms_contrato a
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND dhcancela IS NULL;
+    rw_config cr_config%ROWTYPE;
+
+    -- Cursor para verificar se a cooperativa esta parametrizada para envia linha digitavel         
+    CURSOR cr_param IS
+      SELECT 1
+        FROM crapcop --tbcobran_param_sms Andrino
+       WHERE cdcooper = pr_cdcooper;
+--         AND fllinha_digitavel = 1; Andrino
+    rw_param cr_param%ROWTYPE;
+
+    -- Cursor para buscar o celular do sacado
+    CURSOR cr_crapsab(pr_nrinssac crapsab.nrinssac%TYPE) IS
+      SELECT nrcelsac
+        FROM crapsab
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrinssac = pr_nrinssac;
+    rw_crapsab cr_crapsab%ROWTYPE;
+    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
+    
+    ------------------------------- VARIAVEIS -------------------------------
+    rw_crapcop    COBR0007.cr_crapcop%ROWTYPE;
+
+    -- Registro de Cobrança
+    rw_crapcob    COBR0007.cr_crapcob%ROWTYPE;
+
+  BEGIN
+    --Inicializa variaveis erro
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;   
+
+    --Verificar cooperativa
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    --Se nao encontrou
+    IF cr_crapcop%NOTFOUND THEN
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Registro de cooperativa nao encontrado.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --Fechar Cursor
+    CLOSE cr_crapcop;
+    
+    -- Verifica se a conta possui permissao de envio de SMS
+    OPEN cr_config;
+    FETCH cr_config INTO rw_config;
+    IF cr_config%NOTFOUND THEN
+      -- Gerar o retorno para o cooperado 
+      COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+                                        ,pr_cdocorre => 37   -- Instrucao Rejeitada
+                                        ,pr_cdmotivo => 'B8' -- Motivo
+                                        ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                        ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                        ,pr_cdagectl => rw_crapcop.cdagectl
+                                        ,pr_dtmvtolt => pr_dtmvtolt
+                                        ,pr_cdoperad => pr_cdoperad
+                                        ,pr_nrremass => pr_nrremass
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+      -- Verifica se ocorreu erro durante a execucao
+      IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Recusar a instrucao
+      CLOSE cr_config;
+      vr_dscritic := 'Conta nao parametrizada para envio de SMS!';
+      RAISE vr_exc_erro;
+      
+    END IF;
+    CLOSE cr_config;
+    
+    
+    -- Verifica se a instrucao foi feita apos as 19 horas
+    IF to_char(SYSDATE,'HH24') >= 19 THEN
+      -- Gerar o retorno para o cooperado 
+       COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+                                         ,pr_cdocorre => 37   -- Instrucao Rejeitada
+                                         ,pr_cdmotivo => 'B5' -- Horario excedido
+                                         ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                         ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                         ,pr_cdagectl => rw_crapcop.cdagectl
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_nrremass => pr_nrremass
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+      -- Verifica se ocorreu erro durante a execucao
+      IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Recusar a instrucao
+      vr_dscritic := 'Instrucao nao pode ser efetuada apos as 19 horas';
+      RAISE vr_exc_erro;
+    END IF;
+      
+    -- Processo de Validacao Recusas Padrao
+    COBR0007.pc_efetua_val_recusa_padrao(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
+                                        ,pr_nrdconta => pr_nrdconta   --> Numero da Conta
+                                        ,pr_nrcnvcob => pr_nrcnvcob   --> Numero Convenio
+                                        ,pr_nrdocmto => pr_nrdocmto   --> Numero Documento
+                                        ,pr_dtmvtolt => pr_dtmvtolt   --> Data Movimento
+                                        ,pr_cdoperad => pr_cdoperad   --> Operador
+                                        ,pr_cdinstru => '95'          --> Codigo Instrucao
+                                        ,pr_nrremass => pr_nrremass   --> Numero da Remessa
+                                        ,pr_rw_crapcob => rw_crapcob  --> Registro de Cobranca de Recusa
+                                        ,pr_cdcritic => vr_cdcritic   --> Codigo da Critica
+                                        ,pr_dscritic => vr_dscritic); --> Descricao da Critica
+    
+    --Se ocorrer Erro
+    IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Se o indicador de linha digitavel for diferente do previsto, nao faz nada
+    IF pr_inavisms NOT IN (1,2) THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Se o numero do celular do sacado for maior que zeros, atualiza no sacado
+    IF substr(pr_nrcelsac,3,9) > 69999999 THEN
+      BEGIN
+        UPDATE crapsab a
+           SET a.nrcelsac = pr_nrcelsac
+         WHERE a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta
+           AND a.nrinssac = rw_crapcob.nrinssac;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao atualizar crapsab. ' || SQLERRM;
+            RAISE vr_exc_erro;
+      END;
+    ELSE -- Busca o celular do sacado
+      OPEN cr_crapsab(rw_crapcob.nrinssac);
+      FETCH cr_crapsab INTO rw_crapsab;
+      CLOSE cr_crapsab;
+      
+      -- Verifica se nao existe celular para o sacado
+      IF substr(rw_crapsab.nrcelsac,3,9) < 69999999 THEN
+        -- Gerar o retorno para o cooperado 
+        COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+                                          ,pr_cdocorre => 37   -- Instrucao Rejeitada
+                                          ,pr_cdmotivo => 'B7' -- Andrino ver Motivo
+                                          ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                          ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                          ,pr_cdagectl => rw_crapcop.cdagectl
+                                          ,pr_dtmvtolt => pr_dtmvtolt
+                                          ,pr_cdoperad => pr_cdoperad
+                                          ,pr_nrremass => pr_nrremass
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+        -- Verifica se ocorreu erro durante a execucao
+        IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+          
+        -- Recusar a instrucao
+        vr_dscritic := 'Celular do sacado nao encontrado. Favor efetuar o cadastro!';
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    
+    -- Se o indcador de linha digitavel na CRAPCOB for 0 (nao foi enviado nada), altera o indicador
+    IF rw_crapcob.inavisms = 0 THEN
+      -- Se o indicador for para enviar a linha digital, verifica se a cooperativa permite
+      IF pr_inavisms = 1 THEN
+        -- Verifica se a cooperativa esta parametrizada para enviar linha digitavel
+        OPEN cr_param;
+        FETCH cr_param INTO rw_param;
+        IF cr_param%NOTFOUND THEN
+          -- Gerar o retorno para o cooperado 
+          COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
+                                            ,pr_cdocorre => 37   -- Instrucao Rejeitada
+                                            ,pr_cdmotivo => 'B6' -- Andrino ver Motivo
+                                            ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                            ,pr_cdagectl => rw_crapcop.cdagectl
+                                            ,pr_dtmvtolt => pr_dtmvtolt
+                                            ,pr_cdoperad => pr_cdoperad
+                                            ,pr_nrremass => pr_nrremass
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+          -- Verifica se ocorreu erro durante a execucao
+          IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+          
+          -- Recusar a instrucao
+          CLOSE cr_param;
+          vr_dscritic := 'Cooperativa nao permite envio de linha digitavel no SMS!';
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_param;
+      END IF;
+
+      -- Altera o indicador de linha digitavel do boleto
+      BEGIN
+        UPDATE crapcob 
+           SET crapcob.inavisms = pr_inavisms
+         WHERE crapcob.rowid    = rw_crapcob.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao atualizar crapcob. ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+    END IF;
+        
+    -- Insere na tebal de envios de SMS como eventual
+    BEGIN
+      INSERT INTO tbcobran_sms
+        (cdcooper,
+         nrdconta,
+         nrcnvcob,
+         nrdocmto,
+         nrdctabb,
+         cdbandoc,
+         dhgeracao,
+         invencimento,
+         instatus_sms)
+       VALUES
+        (pr_cdcooper,
+         pr_nrdconta,
+         pr_nrcnvcob,
+         pr_nrdocmto,
+         rw_crapcob.nrdctabb,
+         rw_crapcob.cdbandoc,
+         SYSDATE,
+         4,
+         1);
+    EXCEPTION
+      WHEN dup_val_on_index THEN
+        NULL;
+      WHEN OTHERS THEN
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Erro ao atualizar crapsab. ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na rotina COBR0007.pc_inst_envio_sms. ' || SQLERRM;
+  END pc_inst_envio_sms;
 
 END COBR0007;
 /
