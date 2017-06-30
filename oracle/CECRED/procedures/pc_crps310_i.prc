@@ -266,7 +266,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 							  sendo que o correto para este nível é até o 14 dia de atraso. (Rafael Monteiro).
 
                  23/03/2017 - Ajustes PRJ343 - Cessão Cartão de Credito.
-                              (Odirlei-AMcom)
+                              (Odirlei-AMcom)                
+
+                 16/05/2017 - Acionamento da criação do Risco para Cartões Credito BB (Andrei-Mouts)
 
   ............................................................................ */
 
@@ -919,6 +921,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_idxpep            VARCHAR2(50);
       vr_idxepr            VARCHAR2(20);
       vr_idxepr_rw         VARCHAR2(20);
+      
+      -- variaveis para criação de rotina paralela
+      vr_dsplsql VARCHAR2(4000);
+      vr_jobname VARCHAR2(4000);
       
       -- Subrotina para escrever texto na variável CLOB do XML
       PROCEDURE pc_escreve_xml(pr_desdados IN VARCHAR2) IS
@@ -2491,10 +2497,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                        lpad(pr_rw_crapepr.nrctremp,10,'0');
           
           IF vr_tab_cessoes.exists(vr_idxpep) THEN    
-          -- Calcular diferença de dias entre a parcela e o dia atual
+              -- Calcular diferença de dias entre a parcela e o dia atual
             vr_diasvenc := vr_tab_cessoes(vr_idxpep) - pr_rw_crapdat.dtmvtolt;
           ELSE
-            -- Calcular diferença de dias entre a parcela e o dia atual
+          -- Calcular diferença de dias entre a parcela e o dia atual
           vr_diasvenc := rw_crappep.dtvencto - pr_rw_crapdat.dtmvtolt;
           END IF;
           
@@ -4365,41 +4371,41 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 END IF;                
                 
                 IF vr_qtdprazo > 0 THEN
-                  -- Copiar o valor do risco para a variavel específica de
-                  -- valores a vencer conforme o prazo calculado
-                  IF vr_qtdprazo <= 180   THEN
-                    vr_vltit180 := vr_vltit180 + vr_vlsrisco;
-                  ELSIF vr_qtdprazo <= 360   THEN
-                    vr_vltit360 := vr_vltit360 + vr_vlsrisco;
+                -- Copiar o valor do risco para a variavel específica de
+                -- valores a vencer conforme o prazo calculado
+                IF vr_qtdprazo <= 180   THEN
+                  vr_vltit180 := vr_vltit180 + vr_vlsrisco;
+                ELSIF vr_qtdprazo <= 360   THEN
+                  vr_vltit360 := vr_vltit360 + vr_vlsrisco;
+                ELSE
+                  vr_vltit999 := vr_vltit999 + vr_vlsrisco;
+                END IF;
+                -- Copiar o valor calculado para o vetor de valores
+                -- a vencer conforme o prazo encontrado
+                CASE
+                  WHEN vr_qtdprazo <= 30 THEN
+                    vr_tab_vlavence(1) := vr_tab_vlavence(1) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 60 THEN
+                    vr_tab_vlavence(2) := vr_tab_vlavence(2) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 90 THEN
+                    vr_tab_vlavence(3) := vr_tab_vlavence(3) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 180 THEN
+                    vr_tab_vlavence(4) := vr_tab_vlavence(4) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 360 THEN
+                    vr_tab_vlavence(5) := vr_tab_vlavence(5) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 720 THEN
+                    vr_tab_vlavence(6) := vr_tab_vlavence(6) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 1080 THEN
+                    vr_tab_vlavence(7) := vr_tab_vlavence(7) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 1440 THEN
+                    vr_tab_vlavence(8) := vr_tab_vlavence(8) + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 1800 THEN
+                    vr_tab_vlavence(9) := vr_tab_vlavence(9)  + vr_vlsrisco;
+                  WHEN vr_qtdprazo <= 5400 THEN
+                    vr_tab_vlavence(10) := vr_tab_vlavence(10) + vr_vlsrisco;
                   ELSE
-                    vr_vltit999 := vr_vltit999 + vr_vlsrisco;
-                  END IF;
-                  -- Copiar o valor calculado para o vetor de valores
-                  -- a vencer conforme o prazo encontrado
-                  CASE
-                    WHEN vr_qtdprazo <= 30 THEN
-                      vr_tab_vlavence(1) := vr_tab_vlavence(1) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 60 THEN
-                      vr_tab_vlavence(2) := vr_tab_vlavence(2) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 90 THEN
-                      vr_tab_vlavence(3) := vr_tab_vlavence(3) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 180 THEN
-                      vr_tab_vlavence(4) := vr_tab_vlavence(4) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 360 THEN
-                      vr_tab_vlavence(5) := vr_tab_vlavence(5) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 720 THEN
-                      vr_tab_vlavence(6) := vr_tab_vlavence(6) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 1080 THEN
-                      vr_tab_vlavence(7) := vr_tab_vlavence(7) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 1440 THEN
-                      vr_tab_vlavence(8) := vr_tab_vlavence(8) + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 1800 THEN
-                      vr_tab_vlavence(9) := vr_tab_vlavence(9)  + vr_vlsrisco;
-                    WHEN vr_qtdprazo <= 5400 THEN
-                      vr_tab_vlavence(10) := vr_tab_vlavence(10) + vr_vlsrisco;
-                    ELSE
-                      vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
-                  END CASE;
+                    vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
+                END CASE;
                 ELSE
                   -- Grava a quantidade de dias que estah mais em atraso
                   IF vr_qtdiaatr >= vr_qtdprazo THEN
@@ -5036,6 +5042,28 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                            
       -- Efetuar Commit de informações pendentes de gravação
       COMMIT;
+      
+      -- Somente no processo mensal
+      IF to_char(pr_rw_crapdat.dtmvtolt,'mm') != to_char(pr_rw_crapdat.dtmvtopr,'mm') THEN
+        -- Acionar rotina para integração dos contratos oriundos de Cartões Crédito BB
+        vr_dsplsql := 'BEGIN'||chr(13)
+                   || '  risc0002.pc_gera_risco_cartao_vip_proc('||pr_cdcooper
+                                                              ||','''||pr_cdprogra||''''
+                                                              ||','''||to_char(pr_rw_crapdat.dtmvtolt,'dd/mm/rrrr')||''''
+                                                              ||','''||to_char(vr_dtrefere,'dd/mm/rrrr')||''');'||chr(13)
+                   || 'END;';
+        -- Montar o prefixo do código do programa para o jobname
+        vr_jobname := 'crps310_carga_vip_$';
+        -- Faz a chamada ao programa paralelo atraves de JOB
+        gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Código da cooperativa
+                              ,pr_cdprogra  => pr_cdprogra  --> Código do programa
+                              ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
+                              ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
+                              ,pr_interva   => NULL          --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                              ,pr_jobname   => vr_jobname   --> Nome randomico criado
+                              ,pr_des_erro  => vr_des_erro);
+      END IF;  
+      
       -- Inicialização do XML para o relatorio 349
       dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
       dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);

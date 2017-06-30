@@ -2,7 +2,7 @@
    Programa: Fontes/risco.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Margarete                       Ultima Alteracao: 31/12/2016
+   Autor   : Margarete                       Ultima Alteracao: 19/05/2017
    Data    : Junho/2001
 
    Dados referentes ao programa:
@@ -137,6 +137,10 @@
                07/03/2016 - Projeto 306 - Provisao cartao de credito. (James)
                
                31/12/2016 - Incorporaçao Transulcred -> Transpocred.  (Oscar)
+
+               19/05/2017 - Projeto 408 - Provisao Garantias Prestadas Central > Sing. (Andrei-Mouts)
+               
+              
 ............................................................................. */
 
 { includes/var_online.i }
@@ -408,12 +412,12 @@ ASSIGN aux_cdvencid[1]  =  205
 FORM SKIP (1)
      "Opcao:"         AT 6
      glb_cddopcao     AT 13 NO-LABEL AUTO-RETURN
-                      HELP "Informe a opcao desejada (A, C, E, F ,K, I, R, M OU T)"
+                      HELP "Informe a opcao desejada (A, C, E, F ,K, I, R, M, T ou G)"
                       VALIDATE (glb_cddopcao = "A" OR glb_cddopcao = "C" OR
                                 glb_cddopcao = "E" OR glb_cddopcao = "F" OR
                                 glb_cddopcao = "K" OR glb_cddopcao = "I" OR
                                 glb_cddopcao = "R" OR glb_cddopcao = "M" OR 
-                                glb_cddopcao = "T",
+                                glb_cddopcao = "T" OR glb_cddopcao = "G",
                                 "014 - Opcao errada.")
 
      "Data Referencia: " AT 18
@@ -624,6 +628,7 @@ DO WHILE TRUE:
 
       IF   glb_cddopcao <> "C"  AND
            glb_cddopcao <> "T"  AND
+           glb_cddopcao <> "G"  AND
            glb_cddopcao <> "R"  THEN
            DO:
                /*** Verifica se pode rodar ou nao **/
@@ -845,7 +850,6 @@ DO WHILE TRUE:
                 aux_handproc = PROC-HANDLE NO-ERROR
                                  (INPUT glb_cdcooper,
                                   INPUT STRING(tel_dtrefere,"99/99/9999"),
-                                  OUTPUT "",
                                   OUTPUT "").
 
             CLOSE STORED-PROC pc_risco_t
@@ -864,6 +868,41 @@ DO WHILE TRUE:
             HIDE MESSAGE NO-PAUSE.
 
         END.       
+   ELSE
+   IF   glb_cddopcao = "G"   THEN
+        DO:
+            RUN fontes/confirma.p (INPUT "",
+                                   OUTPUT aux_confirma).
+
+            IF aux_confirma <> "S" THEN
+               NEXT.
+
+            MESSAGE "Aguarde... Gerando Arq. Contabilizacao Garantias...".
+        
+            { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_risco_g
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT glb_cdcooper,
+                                  INPUT STRING(tel_dtrefere,"99/99/9999"),
+                                  OUTPUT "").
+
+            CLOSE STORED-PROC pc_risco_g
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dscritic = pc_risco_g.pr_dscritic WHEN pc_risco_g.pr_dscritic <> ?.
+
+            IF aux_dscritic <> ""  THEN
+               DO:
+                   BELL.
+                   MESSAGE aux_dscritic VIEW-AS ALERT-BOX.
+               END.
+
+            HIDE MESSAGE NO-PAUSE.
+
+        END.           
         
 END.
 
@@ -1451,7 +1490,7 @@ PROCEDURE verifica_conta_migracao_risco:
             IF  AVAIL craptco THEN
                 RETURN "NOK".
         END.
-
+        
         
     /*Migracao Transulcred -> Transpocred */
     IF  par_cdcooper  = 09         AND
