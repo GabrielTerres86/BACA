@@ -81,7 +81,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
 
   --------------------------- SUBROTINAS INTERNAS --------------------------
 
-  vr_nomdojob    VARCHAR2(40) := 'JBEPR_BAIXA_OPERACIONAL_COBRANCA';
+  vr_nomdojob    VARCHAR2(40) := 'JBCOBRAN_BAIXA_OPERACIONAL';
   vr_flgerlog    BOOLEAN := FALSE;
   
   -- Envia e-mail de erro para Cobranca@cecred.coop.br
@@ -96,7 +96,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
     BEGIN
        gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                  ,pr_cdprogra        => 'CRPS711'
-                                 ,pr_des_destino     => 'ricardo.linhares@cecred.coop.br'
+                                 ,pr_des_destino     => 'cobranca@cecred.coop.br'
                                  ,pr_des_assunto     => 'Erro CRPS711'
                                  ,pr_des_corpo       => pr_dscritic
                                  ,pr_des_anexo       => NULL
@@ -118,7 +118,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
     BEGIN
        vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                        ,pr_cdcooper => pr_cdcooper
-                                       ,pr_nmsubdir => '/log');
+                                       ,pr_nmsubdir => 'log');
 
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2
@@ -173,7 +173,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
 
        vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                            ,pr_cdcooper => rw_crapcop.cdcooper
-                                           ,pr_nmsubdir => '/log');
+                                           ,pr_nmsubdir => 'log');
 
        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                  ,pr_ind_tipo_log => 1
@@ -286,14 +286,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
                   optit."CanPgto" canpgto,
                   optit."MeioPgto" meiopgto,
                   optit."SitTitPgto" sittitpgto,
-                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",20,6))) nrcnvcob, -- numero do convenio
-                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",26,8))) nrdconta, -- numero da conta do cooperado
-                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",34,9))) nrdocmto -- numero do boleto           
-             FROM TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcsql ctrl
-       INNER JOIN TBJDNPCDSTLEG_JD2LG_OpTit@jdnpcsql optit
+                  cob.cdcooper,
+                  cob.nrdconta,
+                  cob.nrcnvcob,                  
+                  cob.nrdocmto
+--                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",20,6))) nrcnvcob, -- numero do convenio
+--                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",26,8))) nrdconta, -- numero da conta do cooperado
+--                  TO_NUMBER(TRIM(SUBSTR(optit."NumCodBarrasBaixaOperac",34,9))) nrdocmto -- numero do boleto           
+             FROM TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcbisql ctrl
+       INNER JOIN TBJDNPCDSTLEG_JD2LG_OpTit@jdnpcbisql optit
                ON optit."CdLeg" = ctrl."CdLeg"
               AND optit."IdTituloLeg" = ctrl."IdTituloLeg"
               AND optit."IdOpJD" = ctrl."IdOpJD"
+       INNER JOIN crapcob cob
+               ON cob.idtitleg = ctrl."IdTituloLeg"
             WHERE optit."TpOpJD" IN ('BO','CB')
               AND TO_DATE(optit."DtHrOpJD",'YYYYMMDDhh24miss') >= pr_dtmvtoan;
          rw_jd cr_jd%ROWTYPE;         
@@ -301,8 +307,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
     BEGIN
       
     FOR rw_jd IN cr_jd (pr_dtmvtoan => pr_data_filtro) LOOP
+       pr_baixa_operac(rw_jd.rownum).cdcooper := rw_jd.cdcooper;
+       pr_baixa_operac(rw_jd.rownum).dtmvtolt := rw_crapdat.dtmvtolt;
        pr_baixa_operac(rw_jd.rownum).nrtit_legado := rw_jd.idtituloleg;
-       pr_baixa_operac(rw_jd.rownum).nroperac_legado := rw_jd.idopleg;
+       pr_baixa_operac(rw_jd.rownum).nroperac_legado := nvl(rw_jd.idopleg,0);
        pr_baixa_operac(rw_jd.rownum).nroperac_jd := rw_jd.idopjd;
        pr_baixa_operac(rw_jd.rownum).nrdconta := rw_jd.nrdconta;
        pr_baixa_operac(rw_jd.rownum).nrcnvcob := rw_jd.nrcnvcob;
@@ -314,7 +322,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
        pr_baixa_operac(rw_jd.rownum).tpbxoper := rw_jd.tpbaixaoperac;
        pr_baixa_operac(rw_jd.rownum).nrispbif := rw_jd.ispbpartrecbdrbaixaoperac;
        pr_baixa_operac(rw_jd.rownum).cddbanco := rw_jd.codpartrecbdrbaixaoperac;
-       pr_baixa_operac(rw_jd.rownum).inpessoa := rw_jd.tppessoaport;
+       pr_baixa_operac(rw_jd.rownum).inpessoa := CASE rw_jd.tppessoaport WHEN 'F' THEN 1 ELSE 2 END;
        pr_baixa_operac(rw_jd.rownum).nrcpfcgc := rw_jd.cnpj_cpfport;
        pr_baixa_operac(rw_jd.rownum).dtproc_baixa := TO_DATE(rw_jd.dtprocbaixaoperac,'YYYYMMDDhh24miss');
        pr_baixa_operac(rw_jd.rownum).vlbaixa := rw_jd.vlrbaixaoperactit;
@@ -336,7 +344,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
   
     FORALL idx IN INDICES OF pr_tab_baixa_operac SAVE EXCEPTIONS 
       INSERT INTO tbcobran_baixa_operac
-          ( nrtit_legado
+          ( cdcooper
+           ,dtmvtolt 
+           ,dtcredito
+           ,nrtit_legado
            ,nroperac_legado
            ,nroperac_jd
            ,nrdconta
@@ -358,7 +369,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
            ,tpmeio_pag
            ,insitpag) 
       VALUES 
-          ( pr_tab_baixa_operac(idx).nrtit_legado
+          ( pr_tab_baixa_operac(idx).cdcooper
+           ,pr_tab_baixa_operac(idx).dtmvtolt
+           ,pr_tab_baixa_operac(idx).dtcredito
+           ,pr_tab_baixa_operac(idx).nrtit_legado
            ,pr_tab_baixa_operac(idx).nroperac_legado
            ,pr_tab_baixa_operac(idx).nroperac_jd
            ,pr_tab_baixa_operac(idx).nrdconta
@@ -395,10 +409,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
   BEGIN
     DECLARE
       vr_index PLS_INTEGER;
+      vr_idtitleg VARCHAR2(25);
       BEGIN
         FOR vr_index IN pr_tab_baixa_operac.FIRST..pr_tab_baixa_operac.LAST LOOP
-          DELETE TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcsql ctrl
-           WHERE ctrl."IdTituloLeg"  = pr_tab_baixa_operac(vr_index).NRTIT_LEGADO;
+          vr_idtitleg := to_char(pr_tab_baixa_operac(vr_index).NRTIT_LEGADO);
+          DELETE TBJDNPCDSTLEG_JD2LG_OpTit_Ctrl@jdnpcbisql ctrl
+           WHERE ctrl."IdTituloLeg"  = vr_idtitleg;
         END LOOP;
         
       EXCEPTION

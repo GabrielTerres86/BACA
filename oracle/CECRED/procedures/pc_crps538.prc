@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 21/06/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -340,8 +340,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             
                17/04/2017 - Adicionar NVL no campo cddbanco para o armazanamento do nome do relatorio 
                             crrl618 (Lucas Ranghetti #620567)
-
-			   21/06/2017 - Alterado mensagens de LOG da crapcol #696421 (Tiago/Rodrigo).
+                            
+               02/05/2017 - Entrega 02 - Prj.307 Automatização Arquivos Contábeis Ayllos (Jonatas-Supero)                            
    .............................................................................*/
 
      DECLARE
@@ -1919,11 +1919,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                END IF;
 
                -- Caso esteja dentro da lista abaixo
-               IF vr_cdcritic IN (9,592,595,965,980) THEN
+               IF vr_cdcritic IN (9,592,595,965,966,980) THEN
                  -- Monta a mensagem
                  vr_desdados := '50' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') ||
                                 ',1455,4894,' || TO_CHAR(vr_tab_cratrej(vr_index_cratrej).vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
-                                ',157,"' || GENE0007.fn_caract_acento(UPPER(LTRIM(vr_dscritic,lpad(vr_cdcritic,3,0) || ' - '))) ||
+                                ',5210,"' || GENE0007.fn_caract_acento(UPPER(LTRIM(vr_dscritic,lpad(vr_cdcritic,3,0) || ' - '))) ||
                                 ' COOPERADO C/C ' || GENE0002.fn_mask_conta(vr_tab_cratrej(vr_index_cratrej).nrdconta) ||
                                 ' (CONFORME CRITICA RELATORIO 605_' || GENE0002.fn_mask(vr_contador - 1,'99') || ')"' || chr(10);
                  -- Adiciona a linha ao arquivo de criticas
@@ -2369,12 +2369,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              IF vr_inreproc THEN
                -- Nome arquivo impressao
                vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
-                             gene0002.fn_mask(nvl(vr_tab_rel618(vr_index_rel618).cddbanco,0),'999') || 
+                             gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || 
                            '_REP_'||GENE0002.fn_busca_time||'.lst';
              ELSE   
              --Nome arquivo Impressao
              vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
-                           gene0002.fn_mask(nvl(vr_tab_rel618(vr_index_rel618).cddbanco,0),'999') || '.lst';
+                           gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || '.lst';
              END IF;
 
              --Descricao da Origem
@@ -4879,8 +4879,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                          vr_tab_rel618(vr_index_rel618).nrdocmto:= rw_crabcob.dsdoccop;
                          vr_tab_rel618(vr_index_rel618).dtvencto:= rw_crabcob.dtvencto;
                          vr_tab_rel618(vr_index_rel618).vldocmto:= rw_crabcob.vltitulo;
-                         vr_tab_rel618(vr_index_rel618).vldesaba:= APLI0001.fn_round((nvl(rw_crabcob.vldescto,0) + nvl(rw_crabcob.vlabatim,0)),2);
-                         vr_tab_rel618(vr_index_rel618).vljurmul:= APLI0001.fn_round(nvl(vr_vlrjuros,0) + nvl(vr_vlrmulta,0),2);
+                         vr_tab_rel618(vr_index_rel618).vldesaba:= TRUNC((nvl(rw_crabcob.vldescto,0) + nvl(rw_crabcob.vlabatim,0)),2);
+                         vr_tab_rel618(vr_index_rel618).vljurmul:= TRUNC(nvl(vr_vlrjuros,0) + nvl(vr_vlrmulta,0),2);
                          vr_tab_rel618(vr_index_rel618).vlrpagto:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100;
                          vr_tab_rel618(vr_index_rel618).vlrdifer:= 0;
                          vr_tab_rel618(vr_index_rel618).vldescar:= vr_vldescar;
@@ -5042,7 +5042,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                        --Acumular valor dos juros na fatura
                        vr_vlfatura:= nvl(vr_vlfatura,0) + nvl(vr_vlrjuros,0);
                      WHEN 2 THEN /* mes */
-                       vr_vlrjuros:= APLI0001.fn_round((rw_crapcob.vltitulo *
+                       vr_vlrjuros:= TRUNC((rw_crapcob.vltitulo *
                                                   ((rw_crapcob.vljurdia / 100) / 30) *
                                                    (vr_dtmvtolt - rw_crapcob.dtvencto)),2);
                        --Acumular valor dos juros na fatura
@@ -5060,7 +5060,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  END IF; --vr_flgvenci
 
                  /* se pagou valor menor ou vencido e é do convenio EMPRESTIMO */
-                 IF (ROUND(vr_vlliquid,2) < ROUND(vr_vlfatura,2) OR vr_flgvenci) AND
+                 IF (TRUNC(vr_vlliquid,2) < TRUNC(vr_vlfatura,2) OR vr_flgvenci) AND
                     vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'EMPRESTIMO' THEN
                     
                    /* Criacao da tabela generica gncptit - utilizada na conciliacao */
@@ -5156,7 +5156,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    -- pular para o proximo registro - devolvido em arquivo
                     RAISE vr_exc_proximo;
                  -- Se pagou valor a menor e é ACORDO
-                 ELSIF ROUND(vr_vlliquid,2) < ROUND(vr_vlfatura,2) AND 
+                 ELSIF TRUNC(vr_vlliquid,2) < TRUNC(vr_vlfatura,2) AND 
                     vr_tab_crapcco(vr_index_crapcco).dsorgarq = 'ACORDO' THEN
                     
                    /* Criacao da tabela generica gncptit - utilizada na conciliacao */
@@ -5254,7 +5254,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  END IF;
 
                  /* se pagou valor menor do que deveria, joga critica no log */
-                 IF ROUND(vr_vlliquid,2) < ROUND(vr_vlfatura,2) AND NOT vr_liqaposb THEN
+                 IF TRUNC(vr_vlliquid,2) < TRUNC(vr_vlfatura,2) AND NOT vr_liqaposb THEN
                    vr_cdcritic:= 940;
                    --Buscar descricao critica
                    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -5328,7 +5328,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      rw_crapsab.nmdsacad:= NULL;
                    END IF;
 
-                   IF ( ROUND(vr_vlfatura,2) - ROUND(vr_vlliquid,2) ) >= vr_vlrmincac THEN
+                   IF ( TRUNC(vr_vlfatura,2) - TRUNC(vr_vlliquid,2) ) >= vr_vlrmincac THEN
 
                      --Montar Indice para relatorio 618
                      vr_index_rel618:= lpad(to_char(vr_cdbanpag,'fm000'),10,'0')||
@@ -5344,10 +5344,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      vr_tab_rel618(vr_index_rel618).nrdocmto:= rw_crapcob.dsdoccop;
                      vr_tab_rel618(vr_index_rel618).dtvencto:= rw_crapcob.dtvencto;
                      vr_tab_rel618(vr_index_rel618).vldocmto:= rw_crapcob.vltitulo;
-                     vr_tab_rel618(vr_index_rel618).vldesaba:= APLI0001.fn_round((nvl(rw_crapcob.vldescto,0) + nvl(rw_crapcob.vlabatim,0)),2);
-                     vr_tab_rel618(vr_index_rel618).vljurmul:= APLI0001.fn_round(nvl(vr_vlrjuros,0) + nvl(vr_vlrmulta,0),2);
+                     vr_tab_rel618(vr_index_rel618).vldesaba:= TRUNC((nvl(rw_crapcob.vldescto,0) + nvl(rw_crapcob.vlabatim,0)),2);
+                     vr_tab_rel618(vr_index_rel618).vljurmul:= TRUNC(nvl(vr_vlrjuros,0) + nvl(vr_vlrmulta,0),2);
                      vr_tab_rel618(vr_index_rel618).vlrpagto:= TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100;
-                     vr_tab_rel618(vr_index_rel618).vlrdifer:= ROUND(nvl(vr_tab_rel618(vr_index_rel618).vldocmto,0) -
+                     vr_tab_rel618(vr_index_rel618).vlrdifer:= TRUNC(nvl(vr_tab_rel618(vr_index_rel618).vldocmto,0) -
                                                                    nvl(vr_tab_rel618(vr_index_rel618).vldesaba,0) +
                                                                    nvl(vr_tab_rel618(vr_index_rel618).vljurmul,0) -
                                                                    nvl(vr_tab_rel618(vr_index_rel618).vlrpagto,0),2);
@@ -5355,9 +5355,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                    END IF;
 
-                 ELSIF ROUND(vr_vlliquid,2) > ROUND(vr_vlfatura,2) THEN
+                 ELSIF TRUNC(vr_vlliquid,2) > TRUNC(vr_vlfatura,2) THEN
                    --Juros recebe valor liquidacao menos o valor fatura
-                   vr_vlrjuros:= nvl(vr_vlrjuros,0) + (nvl(vr_vlliquid,0) - nvl(vr_vlfatura,0));
+                   vr_vlrjuros:= nvl(vr_vlliquid,0) - nvl(vr_vlfatura,0);
                  END IF;
                  --Determinar o tipo de liquidacao
                  CASE SUBSTR(vr_setlinha,50,1)
@@ -5385,7 +5385,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  END IF;
 
                  -- Flag para verificar pagamento a menor
-                 vr_flamenor := (ROUND(vr_vlliquid,2) < ROUND(vr_vlfatura,2) AND NOT vr_liqaposb);
+                 vr_flamenor := (TRUNC(vr_vlliquid,2) < TRUNC(vr_vlfatura,2) AND NOT vr_liqaposb);
 
                  /* se nao for liquidacao de titulo já pago, entao liq normal */
                  IF NOT vr_liqaposb THEN
@@ -7220,7 +7220,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
-                                                     || 'Inicio Geracao Log CRAPCOL' );
+                                                     || 'Inicio Geracao Log Erros Crapcol' );
 
        --Montar data e hora para log
        vr_dataflog:= SYSDATE;
@@ -7293,7 +7293,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                     || vr_cdprogra || ' --> '
-                                                    || 'Fim Geracao Log CRAPCOL' );
+                                                    || 'Fim Geracao Log Erros Crapcol' );
 
        -- Se há comandos a serem processados
        IF vr_tab_comando.COUNT() > 0 THEN

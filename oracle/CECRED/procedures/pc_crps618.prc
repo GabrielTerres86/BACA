@@ -1,5 +1,5 @@
-ÔªøCREATE OR REPLACE PROCEDURE cecred.pc_crps618(pr_cdcooper  IN craptab.cdcooper%type,
-                                              pr_nrdconta  IN crapcob.nrdconta%TYPE,
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%type,
+                                              pr_nrdconta  IN crapcob.nrdconta%TYPE,                                              
                                               pr_cdcritic OUT crapcri.cdcritic%TYPE,
                                               pr_dscritic OUT VARCHAR2) AS
 
@@ -29,17 +29,17 @@
                 21/10/2013 - Incluido parametro novo na prep-retorno-cooperado
                              ref. ao numero de remessa do arquivo (Rafael).
                              
-                15/11/2013 - Mudan√ßas no processo de registro dos titulos na 
-                             CIP: a partir da libera√ßƒÉo de novembro/2013, os
-                             titulos gerados serƒÉo registrados por este 
+                15/11/2013 - MudanÁas no processo de registro dos titulos na 
+                             CIP: a partir da liberaÁao de novembro/2013, os
+                             titulos gerados serao registrados por este 
                              programa definidos pela CRON. O campo 
-                             "crapcob.insitpro" ir√° utilizar os seguintes 
+                             "crapcob.insitpro" ir· utilizar os seguintes 
                              valores:
                              0 -> sacado comum (nao DDA);
-                             1 -> sacado a verificar se √© DDA;
+                             1 -> sacado a verificar se È DDA;
                              2 -> Enviado a CIP;
                              3 -> Sacado DDA OK;
-                             4 -> nƒÉo haver√° mais -> retornar a "zero";
+                             4 -> nao haver· mais -> retornar a "zero";
                              
                 03/12/2013 - Incluido nome da temp-table tt-remessa-dda nos 
                              campos onde faltavam o nome da tabela. (Rafael)
@@ -59,18 +59,18 @@
                 17/07/2014 - Alterado forma de gravacao do tipo de multa para
                              garantir a confirmacao do registro na CIP. (Rafael)
                              
-                12/02/2014 - Incluido restri√ßƒÉo para nƒÉo enviar cobran√ßa para a cabine 
+                12/02/2014 - Incluido restriÁao para nao enviar cobranÁa para a cabine 
                              no qual o valor ultrapasse 9.999.999,99, pois a cabine
-                             existe essa limita√ßƒÉo de valor e apresentar√° falha nƒÉo 
+                             existe essa limitaÁao de valor e apresentar· falha nao 
                              tratada SD-250064 (Odirlei-AMcom)
                              
                 28/04/2015 - Ajustar indicador de alt de valor ref a boletos
-                             vencidos DDA para "N" -> Sacado nƒÉo pode alterar
+                             vencidos DDA para "N" -> Sacado nao pode alterar
                              o valor de boleto vencido. (SD 279793 - Rafael)
                              
                 29/05/2015 - Concatenar motivo "A4" para titulos DDA no registro
                              de confirmacao de retorno na crapret.
-                           - Enviar titulo Cooperativa/EE ao DDA quando j√°
+                           - Enviar titulo Cooperativa/EE ao DDA quando j·
                              enviado para a PG. (Projeto 219 - Rafael)
                                                          
                 31/07/2015 - Ajuste para retirar o caminho absoluto na chamada
@@ -80,20 +80,20 @@
                 18/08/2015 - Ajuste na data limite de pagto para boletos do 
                              convenio "EMPRESTIMO" - Projeto 210 (Rafael).
                              
-                14/11/2016 - CONVERS√ÉO PROGRESS >> ORACLE (Renato Darosci - Supero)
+                14/11/2016 - CONVERS√O PROGRESS >> ORACLE (Renato Darosci - Supero)
                 
                 01/12/2016 - Alterado para enviar como texto informativo o conteudo do campo
                              dsinform, ao inves do campo dsdinstr
                              Heitor (Mouts) - Chamado 564818
 
-                27/12/2016 - Tratamentos para Nova Plataforma de Cobran√ßa
+                27/12/2016 - Tratamentos para Nova Plataforma de CobranÁa
                              PRJ340 - NPC (Odirlei-AMcom)
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps618';     -- Nome do programa
   vr_dsarqlog     CONSTANT VARCHAR2(12) := 'crps618.log'; -- Nome do arquivo de log
   vr_vllimcab     CONSTANT NUMBER       := 99999999.99;    -- Define o valor limite da cabine
-  vr_cdoperad     CONSTANT VARCHAR2(10) := '1';           -- C√≥digo do operador - verificar se ser√° fixo ou parametro
+  vr_cdoperad     CONSTANT VARCHAR2(10) := '1';           -- CÛdigo do operador - verificar se ser· fixo ou parametro
 
   -- CURSORES 
   -- Buscar as cooperativas para processamento
@@ -105,9 +105,10 @@
          , cop.cdagectl
       FROM crapcop cop
      WHERE (pr_cdcooper = 3 AND cop.cdcooper <> 3 AND cop.flgativo = 1) -- batch
-        OR (pr_cdcooper <> 3 AND cop.cdcooper = pr_cdcooper);           -- registro online
+        OR (pr_cdcooper <> 3 AND cop.cdcooper = pr_cdcooper) -- registro online
+     ORDER BY cop.cdcooper;           
   
-  -- Buscar os t√≠tulos a serem registrados na CIP
+  -- Buscar os tÌtulos a serem registrados na CIP
   CURSOR cr_titulos_carga (pr_cdcooper crapcop.cdcooper%TYPE
                           ,pr_cdbcoctl crapcop.cdbcoctl%TYPE
                           ,pr_vlrollou crapcob.vltitulo%TYPE
@@ -178,11 +179,12 @@
        AND cob.nrdconta = ceb.nrdconta
        AND cob.flgregis = 1 -- TRUE 
 --       AND cob.insitpro IN (0,1)
-       AND cob.inenvcip IN (0,1)
+--       AND cob.inenvcip IN (0,1,2)
        AND cob.incobran = 0
-       AND  cob.dtdpagto is null
+       AND cob.dtdpagto is null
        AND cob.dtvencto >= pr_dtmvtolt 
        AND cob.vltitulo >= pr_vlrollou
+       AND nvl(cob.nrdident,0) = 0
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
        AND sab.nrinssac = cob.nrinssac
@@ -191,7 +193,7 @@
        AND cco.cddbanco = pr_cdbcoctl       
      ORDER BY cob.nrinssac;
   
-  -- Buscar os t√≠tulos a serem registrados na CIP
+  -- Buscar os tÌtulos a serem registrados na CIP
   CURSOR cr_titulos(pr_cdcooper crapcop.cdcooper%TYPE
                    ,pr_cdbcoctl crapcop.cdbcoctl%TYPE
                    ,pr_nrdconta crapass.nrdconta%TYPE
@@ -247,7 +249,7 @@
          -- CRAPASS
          , ass.inpessoa
          , ass.nrcpfcgc
-         , ass.nmprimtl
+         , ass.nmprimtl         
       FROM crapcco cco
          , crapceb ceb
          , crapass ass
@@ -268,6 +270,7 @@
        AND (cob.nrdconta = pr_nrdconta OR NVL(pr_nrdconta,0) = 0)
        AND ((NVL(pr_nrdconta,0) > 0 AND cob.inregcip = 1) OR
             (NVL(pr_nrdconta,0) = 0 ))
+       AND nvl(cob.nrdident,0) = 0
        AND sab.cdcooper = cob.cdcooper
        AND sab.nrdconta = cob.nrdconta
        AND sab.nrinssac = cob.nrinssac
@@ -275,48 +278,12 @@
        AND cco.cdcooper = pr_cdcooper
        AND cco.cddbanco = pr_cdbcoctl
      ORDER BY cob.nrinssac;
-  
-  -- Buscar os registros dos bancos
-  CURSOR cr_crapban IS
-    SELECT ban.cdbccxlt
-         , ban.nrispbif 
-      FROM crapban  ban;
-  
-  -- Buscar os t√≠tulos que receberam "OK" da CIP
-  CURSOR cr_ok_cip(pr_cdcooper crapcop.cdcooper%TYPE
-                  ,pr_cdbcoctl crapcop.cdbcoctl%TYPE
-                  ,pr_dtmvtoan crapcob.dtmvtolt%TYPE) IS 
-    SELECT cob.cdbandoc
-         , cob.idtitleg
-         , cob.idopeleg 
-         , cob.insitpro 
-      FROM crapcco   cco
-         , crapceb   ceb
-         , crapcob   cob
-     WHERE ceb.cdcooper = cco.cdcooper
-       AND ceb.nrconven = cco.nrconven
-       AND cob.cdcooper = ceb.cdcooper
-       AND cob.nrcnvcob = ceb.nrconven
-       AND cob.nrdconta = ceb.nrdconta
-       AND cob.flgregis = 1 -- TRUE 
---       AND cob.flgcbdda = 1 -- TRUE
---       AND cob.insitpro = 2
-       AND cob.inenvcip = 2 -- enviado
-       AND cob.dtmvtolt >= pr_dtmvtoan
-       AND cob.incobran = 0
-       AND cco.cdcooper = pr_cdcooper
-       AND cco.cddbanco = pr_cdbcoctl
-       AND cco.flgregis = 1; -- TRUE
-  
+    
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-  
-  -- TIPOS
-  TYPE tp_tab_crapban IS TABLE OF cr_crapban%ROWTYPE INDEX BY BINARY_INTEGER;
-  
-  -- VARI√ÅVEIS
+    
+  -- VARI¡VEIS
   vr_tb_remessa_dda     DDDA0001.typ_tab_remessa_dda;
   vr_tb_retorno_dda     DDDA0001.typ_tab_retorno_dda;
-  vr_tb_crapban         tp_tab_crapban;
   
   vr_inauxtab           NUMBER;
   vr_tppessoa           VARCHAR2(1);
@@ -329,503 +296,12 @@
   vr_tpdenvio           INTEGER;
   vr_flgerlog           BOOLEAN;
   vr_cdcooper           crapcop.cdcooper%TYPE;
+  vr_idx_lat            VARCHAR2(60);
+  vr_tab_lat_consolidada PAGA0001.typ_tab_lat_consolidada;
   
   -- EXCEPTIONS
-  vr_exc_saida          EXCEPTION; 
-  
-  -- Procedure para criacao de titulo
-  PROCEDURE pc_cria_titulo(pr_rw_titulos IN OUT cr_titulos%ROWTYPE
-                          ,pr_crapdat    IN     BTCH0001.cr_crapdat%ROWTYPE
-                          ,pr_cdagectl   IN     crapcop.cdagectl%TYPE
-                          ,pr_tpdenvio   IN     INTEGER                   --> Tipo de envio(0-Normal/Batch, 1-Online, 2-Carga inicial)
-                          ,pr_des_erro      OUT VARCHAR2
-                          ,pr_dscritic      OUT VARCHAR2) IS 
-    
-    -- CONSTANTES
-    vr_dtinicio   CONSTANT DATE := to_date('10/07/1997', 'DD/MM/RRRR');
-    
-    -- CURSORES
-    -- Buscar pra√ßa n√£o executante de protesto
-    CURSOR cr_crappnp(pr_nmextcid  crappnp.nmextcid%TYPE
-                     ,pr_cduflogr  crappnp.cduflogr%TYPE) IS
-      SELECT 1
-        FROM crappnp  pnp
-       WHERE pnp.nmextcid = pr_nmextcid  
-         AND pnp.cduflogr = pr_cduflogr;
-  
-    -- VARI√ÅVEIS     
-    vr_flgdprot   crapcob.flgdprot%TYPE;
-    vr_qtdiaprt   crapcob.qtdiaprt%TYPE;
-    vr_indiaprt   crapcob.indiaprt%TYPE;
-    vr_cdbarras   VARCHAR2(50);
-    vr_dsdjuros   VARCHAR2(500);
-    vr_cddespec   VARCHAR2(50);
-    vr_dtemissa   DATE;
-    vr_ftvencto   NUMBER;
-    vr_inauxreg   NUMBER;
-    vr_fldigito   BOOLEAN;
-    vr_dscmplog   VARCHAR2(100);
-    
-  BEGIN 
-    
-    -- Indicador de execu√ß√£o
-    pr_des_erro := 'NOK';
-    
-    -- Inicializa
-    vr_flgdprot := NULL;
-    vr_qtdiaprt := NULL;
-    vr_indiaprt := NULL;
-    
-    --Definir complemento do log conforme tipo de envio
-    vr_dscmplog := NULL;
-    IF pr_tpdenvio = 1 THEN
-      vr_dscmplog := ' online';
-    ELSIF pr_tpdenvio = 2 THEN
-      vr_dscmplog := ' carga NPC';
-    END IF;
-    
-    -- Buscar pra√ßa n√£o executante de protesto
-    OPEN  cr_crappnp(pr_rw_titulos.nmcidsac
-                    ,pr_rw_titulos.cdufsaca);
-    FETCH cr_crappnp INTO vr_inauxreg;
-
-    -- Se encontrar registro    
-    IF cr_crappnp%FOUND THEN
-      -- Atribuir o valor as vari√°veis para atualizar os campos no update
-      vr_flgdprot := 0; -- FALSE
-      vr_qtdiaprt := 0;
-      vr_indiaprt := 3;
-    
-      -- Inserir o cadastro de log do boleto
-      BEGIN
-        INSERT INTO crapcol(cdcooper
-                           ,nrdconta
-                           ,nrdocmto
-                           ,nrcnvcob
-                           ,dslogtit
-                           ,cdoperad
-                           ,dtaltera
-                           ,hrtransa)
-                     VALUES(pr_rw_titulos.cdcooper     -- cdcooper
-                           ,pr_rw_titulos.nrdconta     -- nrdconta
-                           ,pr_rw_titulos.nrdocmto     -- nrdocmto
-                           ,pr_rw_titulos.nrcnvcob     -- nrcnvcob
-                           ,'Obs.: Praca nao executante de protesto'||vr_dscmplog -- dslogtit
-                           ,'1'                        -- cdoperad
-                           ,TRUNC(SYSDATE)             -- dtaltera
-                           ,GENE0002.fn_busca_time()); -- hrtransa
-      EXCEPTION
-        WHEN OTHERS THEN
-          pr_dscritic := 'PC_CRIA_TITULO: Erro ao inserir CRAPCOL: '||SQLERRM;
-          RETURN;
-      END;
-    END IF;
-    
-    -- Atualizar informa√ß√µes de cobran√ßa
-    BEGIN
-      UPDATE crapcob cob
-         SET cob.flgdprot = NVL(vr_flgdprot,cob.flgdprot)
-           , cob.qtdiaprt = NVL(vr_qtdiaprt,cob.qtdiaprt)
-           , cob.indiaprt = NVL(vr_indiaprt,cob.indiaprt)
-           , cob.idopeleg = seqcob_idopeleg.NEXTVAL
-           , cob.idtitleg = seqcob_idtitleg.NEXTVAL
-       WHERE ROWID = pr_rw_titulos.rowidcob
-       RETURNING cob.idopeleg
-               , cob.idtitleg 
-            INTO pr_rw_titulos.idopeleg
-               , pr_rw_titulos.idtitleg;
-    EXCEPTION
-      WHEN OTHERS THEN
-        pr_dscritic := 'PC_CRIA_TITULO: Erro ao atualizar CRAPCOB: '||SQLERRM;
-        RETURN;
-    END; 
-    
-    --##-- CALCULAR E MONTAR O C√ìDIGO DE BARRAS --##--
-      
-    -- Se a data de vencimento √© superior a 22/02/2025
-    IF pr_rw_titulos.dtvencto >= TO_DATE('22/02/2025','DD/MM/RRRR') THEN
-      vr_ftvencto := (pr_rw_titulos.dtvencto - TO_DATE('22/02/2025','DD/MM/RRRR') ) + 1000;
-    ELSE
-      vr_ftvencto := (pr_rw_titulos.dtvencto - vr_dtinicio);
-    END IF;
-
-    -- Agrupar os valores para formar o c√≥digo de barras
-    vr_cdbarras := LPAD(pr_rw_titulos.cdbandoc, 3, '0') -- BANCO
-                || '9'                                  -- MOEDA 
-                || '1'                                  -- NAO ALTERAR - D√çGITO CONSTANTE - Ser√° calculado abaixo
-                || LPAD(vr_ftvencto, 4, '0')            -- FATOR DE VENCIMENTO
-                || TO_CHAR(pr_rw_titulos.vltitulo * 100, 'FM0000000000') -- VALOR DO T√çTULO
-                || LPAD(pr_rw_titulos.nrcnvcob, 6, '0') -- N√öMERO DO CONVENIO DE COBRANCA
-                || LPAD(pr_rw_titulos.nrnosnum, 17, '0')-- NOSSO N√öMERO 
-                || LPAD(pr_rw_titulos.cdcartei, 2, '0');-- CODIGO DA CARTEIRA DO BLOQUETO
-
-    -- Verificar / calcular o d√≠gito verificador
-    CXON0000.pc_calc_digito_titulo(pr_valor   => vr_cdbarras
-                                  ,pr_retorno => vr_fldigito);
-               
-    --##-- ------------------------------------ --##--
-      
-    -- Verifica o tipo dos juros
-    vr_dsdjuros := CASE pr_rw_titulos.tpjurmor  
-                     WHEN 1 THEN '1'
-                     WHEN 2 THEN '3'
-                     WHEN 3 THEN '5'
-                   END;
-      
-    -- C√≥digo da esp√©cie do bloqueto
-    vr_cddespec := CASE pr_rw_titulos.cddespec
-                     WHEN 1 THEN '2'
-                     WHEN 2 THEN '4'
-                     WHEN 3 THEN '12'
-                     WHEN 4 THEN '21'
-                     WHEN 5 THEN '23'
-                     WHEN 6 THEN '17'
-                     WHEN 7 THEN '99'
-                   END;
-      
-    -- Se n√£o encontrar o banco
-    IF NOT vr_tb_crapban.EXISTS(pr_rw_titulos.cdbandoc) THEN
-      pr_dscritic := 'Banco nao encontrado.';
-      RETURN;  -- NOK;
-    END IF;
-
-    -- Se foi passado data
-    IF pr_crapdat.rowid IS NOT NULL THEN
-      -- Se a data de hoje for menor que a data de movimento
-      IF TRUNC(SYSDATE) < pr_crapdat.dtmvtolt THEN
-        vr_dtemissa := pr_crapdat.dtmvtoan;
-      ELSE
-        vr_dtemissa := pr_crapdat.dtmvtolt;
-      END IF;
-    ELSE
-      -- Define a data atual como data de emiss√£o
-      vr_dtemissa := TRUNC(SYSDATE);
-    END IF;
-      
-    -- Definir o √≠ndice
-    vr_inauxtab := vr_tb_remessa_dda.COUNT() + 1;
-      
-    vr_tb_remessa_dda(vr_inauxtab).rowidcob := pr_rw_titulos.rowidcob;
-      
-    vr_tb_remessa_dda(vr_inauxtab).cdlegado := 'LEG';
-    vr_tb_remessa_dda(vr_inauxtab).nrispbif := vr_tb_crapban(pr_rw_titulos.cdbandoc).nrispbif;
-    vr_tb_remessa_dda(vr_inauxtab).idopeleg := pr_rw_titulos.idopeleg;
-    vr_tb_remessa_dda(vr_inauxtab).idtitleg := pr_rw_titulos.idtitleg;
-    vr_tb_remessa_dda(vr_inauxtab).tpoperad := 'I'; 
-    vr_tb_remessa_dda(vr_inauxtab).cdifdced := 085; 
-    -- Verifica se √© pessoa f√≠sica ou Jur√≠dica
-    IF pr_rw_titulos.inpessoa = 1 THEN
-      vr_tb_remessa_dda(vr_inauxtab).tppesced := 'F';
-    ELSE
-      vr_tb_remessa_dda(vr_inauxtab).tppesced := 'J';
-    END IF;
-    vr_tb_remessa_dda(vr_inauxtab).nrdocced := pr_rw_titulos.nrcpfcgc;
-    vr_tb_remessa_dda(vr_inauxtab).nmdocede := REPLACE(pr_rw_titulos.nmprimtl,'&','%26');
-    vr_tb_remessa_dda(vr_inauxtab).cdageced := pr_cdagectl;
-    vr_tb_remessa_dda(vr_inauxtab).nrctaced := pr_rw_titulos.nrdconta;
-    -- Pessoa f√≠sica ou jur√≠dica conforme verificado anteriormente
-    vr_tb_remessa_dda(vr_inauxtab).tppesori := vr_tb_remessa_dda(vr_inauxtab).tppesced;
-    vr_tb_remessa_dda(vr_inauxtab).nrdocori := pr_rw_titulos.nrcpfcgc;
-    vr_tb_remessa_dda(vr_inauxtab).nmdoorig := REPLACE(pr_rw_titulos.nmprimtl,'&','%26');
-      
-    IF pr_rw_titulos.cdtpinsc = 1 THEN 
-      vr_tb_remessa_dda(vr_inauxtab).tppessac := 'F';
-    ELSE
-      vr_tb_remessa_dda(vr_inauxtab).tppessac := 'J';
-    END IF;
-      
-    vr_tb_remessa_dda(vr_inauxtab).nrdocsac := pr_rw_titulos.nrinssac;
-    vr_tb_remessa_dda(vr_inauxtab).nmdosaca := pr_rw_titulos.nmdsacad;
-    vr_tb_remessa_dda(vr_inauxtab).dsendsac := pr_rw_titulos.dsendsac;
-    vr_tb_remessa_dda(vr_inauxtab).dscidsac := pr_rw_titulos.nmcidsac;
-    vr_tb_remessa_dda(vr_inauxtab).dsufsaca := pr_rw_titulos.cdufsaca;
-    vr_tb_remessa_dda(vr_inauxtab).nrcepsac := pr_rw_titulos.nrcepsac;
-    vr_tb_remessa_dda(vr_inauxtab).tpdocava := pr_rw_titulos.cdtpinav; 
-      
-    -- Se o tipo de inscricao do avalista for diferente de zero
-    IF pr_rw_titulos.cdtpinav <> 0 THEN
-      vr_tb_remessa_dda(vr_inauxtab).nrdocava := pr_rw_titulos.nrinsava;
-    END IF;
-      
-    vr_tb_remessa_dda(vr_inauxtab).nmdoaval := TRIM(pr_rw_titulos.nmdavali);
-
-    vr_tb_remessa_dda(vr_inauxtab).cdcartei := '1'; -- Cobranca simples 
-    vr_tb_remessa_dda(vr_inauxtab).cddmoeda := '09'; -- 9 = Real 
-    vr_tb_remessa_dda(vr_inauxtab).dsnosnum := pr_rw_titulos.nrnosnum;
-    vr_tb_remessa_dda(vr_inauxtab).dscodbar := vr_cdbarras;
-    vr_tb_remessa_dda(vr_inauxtab).dtvencto := TO_NUMBER(TO_CHAR(pr_rw_titulos.dtvencto,'RRRRMMDD'));
-    vr_tb_remessa_dda(vr_inauxtab).vlrtitul := pr_rw_titulos.vltitulo;
-    vr_tb_remessa_dda(vr_inauxtab).nrddocto := pr_rw_titulos.dsdoccop;
-    vr_tb_remessa_dda(vr_inauxtab).cdespeci := vr_cddespec;
-    vr_tb_remessa_dda(vr_inauxtab).dtemissa := TO_NUMBER(TO_CHAR(vr_dtemissa,'RRRRMMDD'));
-      
-    -- Se o flag for TRUE
-    IF pr_rw_titulos.flgdprot = 1 THEN 
-      vr_tb_remessa_dda(vr_inauxtab).nrdiapro := pr_rw_titulos.qtdiaprt;
-      vr_tb_remessa_dda(vr_inauxtab).dtlipgto := 
-                                       TO_NUMBER(TO_CHAR(pr_rw_titulos.dtvencto + pr_rw_titulos.qtdiaprt,'RRRRMMDD'));
-    ELSE 
-      -- Se for emprestimo
-      IF pr_rw_titulos.dsorgarq = 'EMPRESTIMO' THEN
-        vr_tb_remessa_dda(vr_inauxtab).dtlipgto := TO_NUMBER(TO_CHAR(pr_rw_titulos.dtvencto,'RRRRMMDD'));
-      ELSE
-        vr_tb_remessa_dda(vr_inauxtab).dtlipgto := TO_NUMBER(TO_CHAR(pr_rw_titulos.dtvencto + 52,'RRRRMMDD'));
-      END IF;
-    END IF;
-      
-    vr_tb_remessa_dda(vr_inauxtab).tpdepgto := 3; -- vencto indeterminado 
-    vr_tb_remessa_dda(vr_inauxtab).indnegoc := 'N';
-    vr_tb_remessa_dda(vr_inauxtab).vlrabati := pr_rw_titulos.vlabatim;
-      
-    -- Se o valor de juros di√°rio
-    IF pr_rw_titulos.vljurdia > 0 THEN 
-      vr_tb_remessa_dda(vr_inauxtab).dtdjuros := TO_NUMBER(TO_CHAR(pr_rw_titulos.dtvencto + 1,'RRRRMMDD'));
-    END IF;
-      
-    vr_tb_remessa_dda(vr_inauxtab).dsdjuros := vr_dsdjuros;
-    vr_tb_remessa_dda(vr_inauxtab).vlrjuros := NVL(pr_rw_titulos.vljurdia,0);
-      
-    -- Verificar multa
-    IF pr_rw_titulos.tpdmulta NOT IN ('1','2') THEN
-      vr_tb_remessa_dda(vr_inauxtab).dtdmulta := NULL; 
-      vr_tb_remessa_dda(vr_inauxtab).cddmulta := 3; 
-      vr_tb_remessa_dda(vr_inauxtab).vlrmulta := 0; 
-    ELSE 
-      vr_tb_remessa_dda(vr_inauxtab).dtdmulta := TO_NUMBER(TO_CHAR(pr_rw_titulos.dtvencto + 1,'RRRRMMDD'));
-      vr_tb_remessa_dda(vr_inauxtab).cddmulta := pr_rw_titulos.tpdmulta;
-      vr_tb_remessa_dda(vr_inauxtab).vlrmulta := pr_rw_titulos.vlrmulta;
-    END IF;
-      
-    -- Se flag esta marcado como 1 - SIM
-    IF pr_rw_titulos.flgaceit = 1 THEN
-      vr_tb_remessa_dda(vr_inauxtab).flgaceit := 'S';
-    ELSE 
-      vr_tb_remessa_dda(vr_inauxtab).flgaceit := 'N';
-    END IF;
-      
-    -- Se o valor de desconto √© maior que zero
-    IF pr_rw_titulos.vldescto > 0 THEN 
-      vr_tb_remessa_dda(vr_inauxtab).dtddesct := TO_NUMBER(TO_CHAR(pr_rw_titulos.dtvencto,'RRRRMMDD'));
-      vr_tb_remessa_dda(vr_inauxtab).cdddesct := 1;
-      vr_tb_remessa_dda(vr_inauxtab).vlrdesct := pr_rw_titulos.vldescto;
-    ELSE 
-      vr_tb_remessa_dda(vr_inauxtab).dtddesct := NULL;
-      vr_tb_remessa_dda(vr_inauxtab).cdddesct := 0;
-      vr_tb_remessa_dda(vr_inauxtab).vlrdesct := 0; 
-    END IF;
-      
-    vr_tb_remessa_dda(vr_inauxtab).dsinstru := TRIM(pr_rw_titulos.dsinform);
-    vr_tb_remessa_dda(vr_inauxtab).tpmodcal := '04'; -- ‚Äì CIP calcula boletos a vencer e vencido.
-    vr_tb_remessa_dda(vr_inauxtab).flavvenc := 'N'; -- Indicador se o valor do boleto pode ser alterado 
-
-    vr_tb_remessa_dda(vr_inauxtab).inpagdiv := pr_rw_titulos.inpagdiv;             
-    vr_tb_remessa_dda(vr_inauxtab).vlminimo := pr_rw_titulos.vlminimo; 
-    vr_tb_remessa_dda(vr_inauxtab).dtbloque := pr_rw_titulos.dtbloque;        
-
-    --> gravar como envio online
-    IF pr_tpdenvio = 1 THEN
-      vr_tb_remessa_dda(vr_inauxtab).flonline := 'S';
-    ELSE
-      vr_tb_remessa_dda(vr_inauxtab).flonline := 'N';
-    END IF; 
-    
-      
-    -- Indicador de execu√ß√£o
-    pr_des_erro := 'OK';
-  
-  EXCEPTION
-    WHEN OTHERS THEN
-      pr_des_erro := 'NOK';
-      pr_dscritic := 'Erro na PC_CRIA_TITULO: '||SQLERRM;
-  END pc_cria_titulo;
-  
-  
-  /* Rotina para verificar titulos confirmados/rejeitados na CIP */
-  PROCEDURE pc_verifica_titulos_dda(pr_cdcooper       IN NUMBER
-                                   ,pr_des_erro      OUT VARCHAR2
-                                   ,pr_dscritic      OUT VARCHAR2) IS 
-
-    -- CURSORES
-    -- Buscar dados da cobran√ßa
-    CURSOR cr_crapcob(pr_idtitleg IN crapcob.idtitleg%TYPE) IS 
-      SELECT cob.rowid   rowidcob
-           , cob.cdcooper
-           , cob.nrdconta
-           , cob.nrcnvcob
-           , cob.nrdocmto
-        FROM crapcob cob 
-       WHERE cob.idtitleg = pr_idtitleg;
-    rw_crapcob  cr_crapcob%ROWTYPE;
-
-    -- VARI√ÅVEIS
-    vr_qttitreg    NUMBER;
-    vr_qttitrej    NUMBER := 0;
-    vr_dscritic    VARCHAR2(1000);
-    vr_des_erro    VARCHAR2(10);
-
-  BEGIN
-    
-    -- Inicializa
-    pr_des_erro := 'NOK';
-  
-    -- Procedure para Executar retorno operacao Titulos DDA
-    DDDA0001.pc_retorno_tit_tab_DDA(pr_tab_remessa_dda => vr_tb_remessa_dda
-                                   ,pr_tab_retorno_dda => vr_tb_retorno_dda
-                                   ,pr_cdcritic        => vr_cdcritic
-                                   ,pr_dscritic        => vr_dscritic);
-    
-    -- Se houver retorno de erro
-    IF vr_dscritic IS NOT NULL THEN
-      pr_dscritic := vr_dscritic;
-      RETURN; -- Retorno com NOK
-    END IF;
-    
-    -- Zerar os contatores
-    vr_qttitreg := 0;
-    vr_qttitrej := 0;
-    
-    -- Se N√ÉO houve retorno 
-    IF vr_tb_retorno_dda.COUNT() > 0 THEN
-      -- Percorrer os registros com INSITPRO = 4 -- EJ/EC erro
-      FOR ind IN vr_tb_retorno_dda.FIRST..vr_tb_retorno_dda.LAST LOOP
-        
-        -- Verifica o insitpro -- EJ/EC erro
-        IF vr_tb_retorno_dda(ind).insitpro = 4 THEN
-        
-          -- Buscar dados da cobran√ßa
-          OPEN  cr_crapcob(vr_tb_retorno_dda(ind).idtitleg);
-          FETCH cr_crapcob INTO rw_crapcob;
-          
-          -- Se encontrar registros
-          IF cr_crapcob%FOUND THEN
-            BEGIN
-              UPDATE crapcob cob
-                 SET cob.insitpro = 0 -- sacado comum
-                   , cob.flgcbdda = 0 -- FALSE
-                   , cob.inenvcip = 4 -- rejeitado
-               WHERE cob.rowid    = rw_crapcob.rowidcob;
-            EXCEPTION
-              WHEN OTHERS THEN
-                pr_dscritic := 'PC_VERIFICA_TITULOS_DDA: Erro ao atualizar CRAPCOB: '||SQLERRM;
-                RETURN; -- Retorno com NOK
-            END;
-            
-            -- Cria o log da cobran√ßa
-            PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowidcob
-                                         ,pr_cdoperad => vr_cdoperad
-                                         ,pr_dtmvtolt => SYSDATE
-                                         ,pr_dsmensag => 'Titulo Rejeitado na CIP'
-                                         ,pr_des_erro => vr_des_erro
-                                         ,pr_dscritic => vr_dscritic);
-          
-            -- Se ocorrer erro
-            IF vr_des_erro <> 'OK' THEN
-              pr_dscritic := vr_dscritic;
-              RETURN; -- Retorno com NOK
-            END IF;
-            
-            -- Sumarizar a quantidade de registros
-            vr_qttitrej := NVL(vr_qttitrej,0) + 1;
-          END IF;
-        
-          -- Fecha o cursor
-          CLOSE cr_crapcob;
-        
-        END IF; -- vr_tb_retorno_dda(ind).insitpro = 4
-      END LOOP;
-      
-      -- Percorrer os registros com INSITPRO = 3 -- RC - Registro CIP
-      FOR ind IN vr_tb_retorno_dda.FIRST..vr_tb_retorno_dda.LAST LOOP
-        -- Verifica o insitpro -- RC - Registro CIP
-        IF vr_tb_retorno_dda(ind).insitpro = 3 THEN
-          -- Sumarizar a quantidade de registros
-          vr_qttitreg := NVL(vr_qttitreg,0) + 1;
-
-          -- Buscar dados da cobran√ßa
-          OPEN  cr_crapcob(vr_tb_retorno_dda(ind).idtitleg);
-          FETCH cr_crapcob INTO rw_crapcob;
-          
-          -- Se encontrar registros
-          IF cr_crapcob%FOUND THEN
-            BEGIN
-              UPDATE crapcob cob
-                 SET cob.insitpro = vr_tb_retorno_dda(ind).insitpro
-                   , cob.flgcbdda = 1 -- TRUE
-                   , cob.inenvcip = 3 -- confirmado
-                   , cob.dhenvcip = SYSDATE
-               WHERE cob.rowid    = rw_crapcob.rowidcob;
-            EXCEPTION
-              WHEN OTHERS THEN
-                pr_dscritic := 'PC_VERIFICA_TITULOS_DDA: Erro ao atualizar CRAPCOB: '||SQLERRM;
-                RETURN; -- Retorno com NOK
-            END;
-            
-            -- Cria o log da cobran√ßa
-            PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowidcob
-                                         ,pr_cdoperad => vr_cdoperad
-                                         ,pr_dtmvtolt => SYSDATE
-                                         ,pr_dsmensag => 'Titulo Registrado - CIP'
-                                         ,pr_des_erro => vr_des_erro
-                                         ,pr_dscritic => vr_dscritic);
-          
-            -- Se ocorrer erro
-            IF vr_des_erro <> 'OK' THEN
-              pr_dscritic := vr_dscritic;
-              RETURN; -- Retorno com NOK
-            END IF;
-            
-            -- Atualizar a CRAPRET
-            BEGIN
-              UPDATE crapret ret
-                 SET ret.cdmotivo = 'A4'
-               WHERE ret.cdcooper = rw_crapcob.cdcooper 
-                 AND ret.nrdconta = rw_crapcob.nrdconta 
-                 AND ret.nrcnvcob = rw_crapcob.nrcnvcob 
-                 AND ret.nrdocmto = rw_crapcob.nrdocmto 
-                 AND ret.cdocorre = 2
-                 AND TRIM(ret.cdmotivo) IS NULL;
-            EXCEPTION
-              WHEN OTHERS THEN
-                pr_dscritic := 'PC_VERIFICA_TITULOS_DDA: Erro ao atualizar CRAPRET: '||SQLERRM;
-                RETURN; -- Retorno com NOK
-            END;
-          END IF; -- cr_crapcob%FOUND 
-        END IF; -- vr_tb_retorno_dda(ind).insitpro = 3
-      END LOOP; -- vr_tb_retorno_dda
-    END IF;
-    
-    -- Se houveram titulos registrados
-    IF NVL(vr_qttitreg,0) > 0 THEN
-      -- Gerar log no arquivo do CRPS618
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1 -- Processo Normal
-                                ,pr_nmarqlog     => vr_dsarqlog 
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - '||vr_cdprogra||' --> Titulos registrados: '||vr_qttitreg);
-    ELSE
-      -- Gerar log no arquivo do CRPS618
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1 -- Processo Normal
-                                ,pr_nmarqlog     => vr_dsarqlog 
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - '||vr_cdprogra||' --> Nenhum titulo registrado');
-
-    END IF;
-
-    -- Se houveram titulos rejeitados
-    IF NVL(vr_qttitrej,0) > 0 THEN
-      -- Gerar log no arquivo do CRPS618
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1 -- Processo Normal
-                                ,pr_nmarqlog     => vr_dsarqlog 
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                            ' - '||vr_cdprogra||' --> Titulos rejeitados: '||vr_qttitrej);
-    END IF;
-
-    -- RETORNAR SITUA√á√ÉO DE OK PARA A EXECU√á√ÉO
-    pr_des_erro := 'OK';
-
-  END pc_verifica_titulos_dda;
+  vr_exc_saida          EXCEPTION;     
+       
   
   PROCEDURE pc_atualiza_status_envio_dda(pr_tab_remessa_dda IN OUT DDDA0001.typ_tab_remessa_dda
                                         ,pr_tpdenvio        IN INTEGER  --> tipo de envio(0-Normal/Batch, 1-Online, 2-Carga inicial)    
@@ -855,7 +331,7 @@
                , insitpro = 0
                , idtitleg = 0
                , idopeleg = 0
-               , inenvcip = 0 -- n√£o enviar
+               , inenvcip = 0 -- n„o enviar
                , dhenvcip = null
            WHERE ROWID = pr_tab_remessa_dda(vr_index).rowidcob;
         EXCEPTION
@@ -924,11 +400,11 @@
     WHEN vr_exc_saida THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      pr_dscritic := 'N√£o foi possivel atualizar crapcob status DDA: '||SQLERRM;  
+      pr_dscritic := 'N„o foi possivel atualizar crapcob status DDA: '||SQLERRM;  
        
   END pc_atualiza_status_envio_dda;  
   
-  --> Rotina para controlar gera√ß√£o da carga inicial do NPC
+  --> Rotina para controlar geraÁ„o da carga inicial do NPC
   PROCEDURE pc_carga_inic_npc(pr_cdcooper IN crapcop.cdcooper%TYPE,
                               pr_cdbcoctl IN crapcop.cdbcoctl%TYPE,      
                               pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE,
@@ -938,7 +414,7 @@
     vr_dstextab     craptab.dstextab%TYPE;  
     vr_tab_campos   gene0002.typ_split;  
     vr_dscritic     VARCHAR2(4000);
-  
+    
   
   BEGIN
   
@@ -948,74 +424,78 @@
                                      ,pr_nmsistem => 'CRED'
                                      ,pr_tptabela => 'GENERI'
                                      ,pr_cdempres => 0
-                                     ,pr_cdacesso => 'ROLLOUT_CIP_CARGA_INIC'
+                                     ,pr_cdacesso => 'ROLLOUT_CIP_CARGA'
                                      ,pr_tpregist => 0); 
       
     vr_tab_campos:= gene0002.fn_quebra_string(vr_dstextab,';');
     
     IF vr_tab_campos.count > 0 THEN
-    --> Verificar se esta no dia da cargar inicial da faixa de rollout
-    --> e se ainda nao rodou a carga
-    IF to_date(vr_tab_campos(2),'DD/MM/RRRR') = pr_rw_crapdat.dtmvtolt AND 
-       vr_tab_campos(1) = 0 THEN
-       
-      vr_tb_remessa_dda.DELETE();
-      vr_tb_retorno_dda.DELETE(); 
-       
-      -- Buscar titulos que atendem a regra de rollout da carga inicial
-      FOR rw_titulos IN cr_titulos_carga(pr_cdcooper => pr_cdcooper
-                                        ,pr_cdbcoctl => pr_cdbcoctl
-                                        ,pr_vlrollou => vr_tab_campos(3)
-                                        ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt) LOOP        
+      --> Verificar se esta no dia da cargar inicial da faixa de rollout
+      --> e se ainda nao rodou a carga
+      IF to_date(vr_tab_campos(2),'DD/MM/RRRR') = pr_rw_crapdat.dtmvtolt AND 
+         vr_tab_campos(1) = 0 THEN
+         
+        vr_tb_remessa_dda.DELETE();
+        vr_tb_retorno_dda.DELETE(); 
+         
+        -- Buscar titulos que atendem a regra de rollout da carga inicial
+        FOR rw_titulos IN cr_titulos_carga(pr_cdcooper => pr_cdcooper
+                                          ,pr_cdbcoctl => pr_cdbcoctl
+                                          ,pr_vlrollou => vr_tab_campos(3)
+                                          ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt) LOOP        
 
-        -- Tratamento para nao enviar para a cabine pois a cabine existe essa limita√ßao de valor 
-        IF rw_titulos.vltitulo > vr_vllimcab THEN 
-          -- Devido a limita√ß√£o da cabine, indica como n√£o sendo sacado DDA
-          vr_insitpro := 0;
-           
-          -- Cria o log da cobran√ßa
-          PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_titulos.rowidcob
-                                       ,pr_cdoperad => vr_cdoperad
-                                       ,pr_dtmvtolt => SYSDATE
-                                       ,pr_dsmensag => 'Falha no envio para a CIP (valor superior ao suportado)'
-                                       ,pr_des_erro => vr_des_erro
-                                       ,pr_dscritic => vr_dscritic);
-        
-          -- Se ocorrer erro
-          IF vr_des_erro <> 'OK' THEN
-            RAISE vr_exc_saida;
+          -- Tratamento para nao enviar para a cabine pois a cabine existe essa limitaÁao de valor 
+          IF rw_titulos.vltitulo > vr_vllimcab THEN 
+            -- Devido a limitaÁ„o da cabine, indica como n„o sendo sacado DDA
+            vr_insitpro := 0;
+             
+            -- Cria o log da cobranÁa
+            PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_titulos.rowidcob
+                                         ,pr_cdoperad => vr_cdoperad
+                                         ,pr_dtmvtolt => SYSDATE
+                                         ,pr_dsmensag => 'Falha no envio para a CIP (valor superior ao suportado)'
+                                         ,pr_des_erro => vr_des_erro
+                                         ,pr_dscritic => vr_dscritic);
+          
+            -- Se ocorrer erro
+            IF vr_des_erro <> 'OK' THEN
+              RAISE vr_exc_saida;
+            END IF;
+          END IF; -- FIM: rw_titulos.vltitulo > vr_vllimcab        
+
+
+          -- Rotina para criaÁ„o de titulo
+          DDDA0001.pc_cria_remessa_dda(pr_rowid_cob => rw_titulos.rowidcob
+                                     , pr_tpoperad => 'I'
+                                     , pr_tpdbaixa => NULL
+                                     , pr_dtvencto => rw_titulos.dtvencto
+                                     , pr_vldescto => rw_titulos.vldescto
+                                     , pr_vlabatim => rw_titulos.vlabatim
+                                     , pr_flgdprot => (CASE rw_titulos.flgdprot WHEN 0 THEN FALSE ELSE TRUE END)
+                                     , pr_tab_remessa_dda => vr_tb_remessa_dda
+                                     , pr_cdcritic => vr_cdcritic
+                                     , pr_dscritic => vr_dscritic);
+                                  
+          IF trim(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
           END IF;
-        END IF; -- FIM: rw_titulos.vltitulo > vr_vllimcab        
-
-
-          -- Rotina para cria√ß√£o de titulo
-          pc_cria_titulo(pr_rw_titulos => rw_titulos 
-                        ,pr_crapdat    => pr_rw_crapdat
-                        ,pr_cdagectl   => pr_cdagectl
-                        ,pr_tpdenvio   => vr_tpdenvio
-                        ,pr_des_erro   => vr_des_erro
-                        ,pr_dscritic   => vr_dscritic);
-                        
-          IF vr_des_erro <> 'OK' THEN
-          RAISE vr_exc_saida;
-        END IF;                        
-                                          
+                               
                                             
-      END LOOP;  
-      
-      -- Realizar a remessa de t√≠tulos DDA
-      DDDA0001.pc_remessa_tit_tab_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
-                                     ,pr_tab_retorno_dda => vr_tb_retorno_dda
-                                     ,pr_cdcritic        => vr_cdcritic
-                                     ,pr_dscritic        => vr_dscritic);
-      
-      -- Verificar se ocorreu erro
+        END LOOP;  
+        
+        -- Realizar a remessa de tÌtulos DDA
+        DDDA0001.pc_remessa_tit_tab_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
+                                       ,pr_tab_retorno_dda => vr_tb_retorno_dda
+                                       ,pr_cdcritic        => vr_cdcritic
+                                       ,pr_dscritic        => vr_dscritic);
+        
+        -- Verificar se ocorreu erro
         IF trim(vr_dscritic) IS NOT NULL THEN
-        pr_dscritic := 'Erro na rotina PC_REMESSA_TITULOS_DDA[carga NPC]: '||vr_dscritic;
-        RAISE vr_exc_saida;
-      END IF;
-      
-        -- Atualizar status da remessa de t√≠tulos DDA      
+          pr_dscritic := 'Erro na rotina PC_REMESSA_TITULOS_DDA[carga NPC]: '||vr_dscritic;
+          RAISE vr_exc_saida;
+        END IF;
+        
+        -- Atualizar status da remessa de tÌtulos DDA      
         pc_atualiza_status_envio_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
                                     ,pr_tpdenvio        => 2
                                     ,pr_cdcritic        => vr_cdcritic
@@ -1027,29 +507,29 @@
           RAISE vr_exc_saida;
         END IF;                                  
               
-      --> Atualizar tab para informar que ja gerou dados da carga
-      BEGIN
-        UPDATE craptab tab
-           SET tab.dstextab = '1'||SUBSTR(tab.dstextab,2)
-         WHERE cdcooper        = pr_cdcooper 
-           AND upper(nmsistem) = 'CRED'
-           AND upper(tptabela) = 'GENERI'
-           AND cdempres        = 0
-           AND upper(cdacesso) = 'ROLLOUT_CIP_CARGA_INIC'
-           AND tpregist        = 0; 
+        --> Atualizar tab para informar que ja gerou dados da carga
+        BEGIN
+          UPDATE craptab tab
+             SET tab.dstextab = '1'||SUBSTR(tab.dstextab,2)
+           WHERE cdcooper        = pr_cdcooper 
+             AND upper(nmsistem) = 'CRED'
+             AND upper(tptabela) = 'GENERI'
+             AND cdempres        = 0
+             AND upper(cdacesso) = 'ROLLOUT_CIP_CARGA'
+             AND tpregist        = 0; 
+          
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tab ROLLOUT_CIP_CARGA: '|| SQLERRM;
+            RAISE vr_exc_saida;
+        END;
         
-      EXCEPTION 
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar tab ROLLOUT_CIP_CARGA_INIC: '|| SQLERRM;
-          RAISE vr_exc_saida;
-      END;
-      
-      -- limpar temptables
-      vr_tb_remessa_dda.DELETE();
-      vr_tb_retorno_dda.DELETE(); 
-      
-      --> commitar carga
-      COMMIT;       
+        -- limpar temptables
+        vr_tb_remessa_dda.DELETE();
+        vr_tb_retorno_dda.DELETE(); 
+        
+        --> commitar carga
+        COMMIT;  
       END IF;     
        
     END IF;
@@ -1068,12 +548,12 @@
       vr_tb_remessa_dda.DELETE();
       vr_tb_retorno_dda.DELETE(); 
       
-      pr_dscritic := 'N√£o foi possivel gerar carga inicial: '||SQLERRM;
+      pr_dscritic := 'N„o foi possivel gerar carga inicial: '||SQLERRM;
   END pc_carga_inic_npc;
   
-  --> Controla log proc_batch, para apenas exibir qnd realmente processar informa√ß√£o
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informaÁ„o
   PROCEDURE pc_controla_log_batch(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                                  pr_dstiplog IN VARCHAR2, -- 'I' in√≠cio; 'F' fim; 'E' erro
+                                  pr_dstiplog IN VARCHAR2, -- 'I' inÌcio; 'F' fim; 'E' erro
                                   pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     vr_dscritic_aux VARCHAR2(4000);
   BEGIN
@@ -1083,12 +563,12 @@
     
       vr_dscritic_aux := pr_dscritic;
       
-      --> Se √© erro e possui conta, concatenar o numero da conta no erro
+      --> Se È erro e possui conta, concatenar o numero da conta no erro
       IF pr_nrdconta <> 0 THEN
         vr_dscritic_aux := vr_dscritic_aux||' - Conta: '||pr_nrdconta;
       END IF;
       
-      --> Controlar gera√ß√£o de log de execu√ß√£o dos jobs 
+      --> Controlar geraÁ„o de log de execuÁ„o dos jobs 
       BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
                                ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
                                ,pr_nomdojob  => vr_cdprogra    --> Nome do job
@@ -1103,31 +583,22 @@
    
 BEGIN
   
-  -- Incluir nome do m√≥dulo logado
+  -- Incluir nome do mÛdulo logado
   gene0001.pc_informa_acesso(pr_module => 'PC_'||UPPER(vr_cdprogra),
                              pr_action => vr_cdprogra);
-     
-  
-  -- Limpar a tabela de mem√≥ria
-  vr_tb_crapban.DELETE();
-  
-  -- Carregar o registros de bancos
-  FOR rw_crapban IN cr_crapban LOOP
-    -- Incluir o registro do banco na tabela de mem√≥ria
-    vr_tb_crapban(rw_crapban.cdbccxlt) := rw_crapban;
-  END LOOP;
-  
+      
+ 
   -- Percorrer as cooperativas
   FOR rw_crapcop IN cr_crapcop LOOP
   
     /* Busca data do sistema */ 
     OPEN  BTCH0001.cr_crapdat(rw_crapcop.cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-    -- Verificar se existe informa√ß√£o, e gerar erro caso n√£o exista
+    -- Verificar se existe informaÁ„o, e gerar erro caso n„o exista
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
       -- Fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
-      -- Gerar exce√ß√£o
+      -- Gerar exceÁ„o
       vr_cdcritic := 1;
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_saida;
@@ -1141,23 +612,23 @@ BEGIN
       continue;
     END IF;
     
-    -- Log de in√≠cio da execu√ß√£o
+    -- Log de inÌcio da execuÁ„o
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
                           pr_dstiplog  => 'I');
     
     --> variavel apenas para controle do log, caso seja abortado o programa
     vr_cdcooper := rw_crapcop.cdcooper;
     
-    /* DESNECESS√ÅRIO POIS O LOOP J√Å EH POR COOPERATIVA
+    /* DESNECESS¡RIO POIS O LOOP J¡ EH POR COOPERATIVA
     -- Verifica se a cooperativa esta cadastrada 
     OPEN  cr_crapcop(vr_cdcooper);
     FETCH cr_crapcop INTO vr_inregist;
     
-    -- Verificar se existe informa√ß√£o, e gerar erro caso n√£o exista
+    -- Verificar se existe informaÁ„o, e gerar erro caso n„o exista
     IF cr_crapcop%NOTFOUND THEN
       -- Fechar o cursor
       CLOSE cr_crapcop;
-      -- Gerar exce√ß√£o
+      -- Gerar exceÁ„o
       vr_cdcritic := 651;
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_saida;
@@ -1174,7 +645,7 @@ BEGIN
     END IF;
     
     IF vr_tpdenvio = 0 THEN
-      --> Controlar gera√ß√£o da carga inicial do NPC
+      --> Controlar geraÁ„o da carga inicial do NPC
       pc_carga_inic_npc(pr_cdcooper   => rw_crapcop.cdcooper,
                         pr_cdbcoctl   => rw_crapcop.cdbcoctl,      
                         pr_rw_crapdat => rw_crapdat,
@@ -1187,11 +658,11 @@ BEGIN
       END IF;
     END IF;
 
-    -- Limpar registros de mem√≥ria
+    -- Limpar registros de memÛria
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
     
-    -- Rotina para registrar os t√≠tulos na CIP
+    -- Rotina para registrar os tÌtulos na CIP
     FOR rw_titulos IN cr_titulos(pr_cdcooper => rw_crapcop.cdcooper
                                 ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                                 ,pr_nrdconta => pr_nrdconta
@@ -1201,14 +672,14 @@ BEGIN
       -- Se for o primeiro NRINSSAC
       IF rw_titulos.nrseqreg = 1 THEN
           
-        -- Verificar o tipo da inscri√ß√£o
+        -- Verificar o tipo da inscriÁ„o
         IF rw_titulos.cdtpinsc = 1 THEN
           vr_tppessoa := 'F'; /*Fisica*/
         ELSE
           vr_tppessoa := 'J'; /*Juridica*/
         END IF;
 
-        -- Chamar rotina para realizar as verifica√ß√µes do SAcado
+        -- Chamar rotina para realizar as verificaÁıes do SAcado
         DDDA0001.pc_verifica_sacado_dda(pr_tppessoa => vr_tppessoa
                                        ,pr_nrcpfcgc => rw_titulos.nrinssac
                                        ,pr_flgsacad => vr_flgsacad
@@ -1232,15 +703,15 @@ BEGIN
       -- Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
       IF rw_titulos.inemiten  = 3   AND 
          rw_titulos.inemiexp <> 2   THEN 
-        CONTINUE; -- Passar para o pr√≥ximo registro
+        CONTINUE; -- Passar para o prÛximo registro
       END IF;
 
-      -- Tratamento para nƒÉo enviar para a cabine pois a cabine existe essa limita√ßƒÉo de valor 
+      -- Tratamento para nao enviar para a cabine pois a cabine existe essa limitaÁao de valor 
       IF rw_titulos.vltitulo > vr_vllimcab THEN 
-        -- Devido a limita√ß√£o da cabine, indica como n√£o sendo sacado DDA
+        -- Devido a limitaÁ„o da cabine, indica como n„o sendo sacado DDA
         vr_insitpro := 0;
          
-        -- Cria o log da cobran√ßa
+        -- Cria o log da cobranÁa
         PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_titulos.rowidcob
                                      ,pr_cdoperad => vr_cdoperad
                                      ,pr_dtmvtolt => SYSDATE
@@ -1254,7 +725,7 @@ BEGIN
         END IF;
       END IF; -- FIM: rw_titulos.vltitulo > vr_vllimcab
       
-      --> Verificar rollout da plataforma de cobran√ßa
+      --> Verificar rollout da plataforma de cobranÁa
       IF 1 = NPCB0001.fn_verifica_rollout 
                                  ( pr_cdcooper     => rw_titulos.cdcooper, --> Codigo da cooperativa
                                    pr_dtmvtolt     => rw_crapdat.dtmvtolt, --> Data de movimento
@@ -1265,18 +736,21 @@ BEGIN
 
       -- Se sacado for DDA, entao titulo eh DDA 
       IF vr_insitpro = 2 THEN
-      
-        -- Rotina para cria√ß√£o de titulo
-        pc_cria_titulo(pr_rw_titulos => rw_titulos 
-                      ,pr_crapdat    => rw_crapdat
-                      ,pr_cdagectl   => rw_crapcop.cdagectl
-                      ,pr_tpdenvio   => vr_tpdenvio
-                      ,pr_des_erro   => vr_des_erro
-                      ,pr_dscritic   => vr_dscritic);
-                                
-        IF vr_des_erro <> 'OK' THEN
-            RAISE vr_exc_saida;
-        END IF;         
+        
+        DDDA0001.pc_cria_remessa_dda(pr_rowid_cob => rw_titulos.rowidcob
+                                   , pr_tpoperad => 'I'
+                                   , pr_tpdbaixa => NULL
+                                   , pr_dtvencto => rw_titulos.dtvencto
+                                   , pr_vldescto => rw_titulos.vldescto
+                                   , pr_vlabatim => rw_titulos.vlabatim
+                                   , pr_flgdprot => (CASE rw_titulos.flgdprot WHEN 0 THEN FALSE ELSE TRUE END)
+                                   , pr_tab_remessa_dda => vr_tb_remessa_dda
+                                   , pr_cdcritic => vr_cdcritic
+                                   , pr_dscritic => vr_dscritic);
+              
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
       
       ELSE
         -- Atualizar CRAPCOB 
@@ -1284,9 +758,33 @@ BEGIN
           UPDATE crapcob
              SET flgcbdda = 0 -- FALSE
                , insitpro = 0
-               , inenvcip = 0 -- n√£o enviar
-               , dhenvcip = null
+               , inenvcip = 0 -- n„o enviar
+               , dhenvcip = NULL
+               , inregcip = 0 -- sem registro na CIP
            WHERE ROWID = rw_titulos.rowidcob;
+          
+          -- se as formas de registro forem online ou batch
+          -- gerar tarifa de cobranÁa comum (ocorrencia 2 sem motivo)
+          IF vr_tpdenvio IN (1,2) THEN 
+            -- Cria registro para cobranca tarifa.
+            vr_idx_lat:= lpad(rw_titulos.cdcooper,10,'0')||
+                         lpad(rw_titulos.nrdconta,10,'0')||
+                         lpad(rw_titulos.nrcnvcob,10,'0')||
+                         lpad(2,10,'0')||
+                         lpad('',10,'0')||
+                         lpad(vr_tab_lat_consolidada.Count+1,10,'0');
+                         
+            -- registrar tarifa de titulos comuns (nao DDA)
+            vr_tab_lat_consolidada(vr_idx_lat).cdcooper := rw_titulos.cdcooper;
+            vr_tab_lat_consolidada(vr_idx_lat).nrdconta := rw_titulos.nrdconta;
+            vr_tab_lat_consolidada(vr_idx_lat).nrdocmto := rw_titulos.nrdocmto;
+            vr_tab_lat_consolidada(vr_idx_lat).nrcnvcob := rw_titulos.nrcnvcob;
+            vr_tab_lat_consolidada(vr_idx_lat).dsincide := 'RET';
+            vr_tab_lat_consolidada(vr_idx_lat).cdocorre := 02; -- 02 - Entrada Confirmada
+            vr_tab_lat_consolidada(vr_idx_lat).cdmotivo := '';
+            vr_tab_lat_consolidada(vr_idx_lat).vllanmto := rw_titulos.vltitulo;
+          END IF;
+           
         EXCEPTION
           WHEN OTHERS THEN
             pr_dscritic := 'Erro[3] ao atualizar CRAPCOB: '||SQLERRM;
@@ -1295,7 +793,28 @@ BEGIN
       END IF;
     END LOOP;  
     
-    -- Realizar a remessa de t√≠tulos DDA
+    -- tarifas a lancar, caso houver
+    IF vr_tab_lat_consolidada.count() > 0 THEN    
+      PAGA0001.pc_efetua_lancto_tarifas_lat(pr_cdcooper => rw_crapcop.cdcooper
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_tab_lat_consolidada => vr_tab_lat_consolidada
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+      -- Se ocorreu critica escreve no proc_message.log
+      -- N„o para o processo
+      IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                      ' - ERRO no lancamento de tarifas: ' || 
+                                                      vr_cdcritic || ' - ' || vr_dscritic);
+        vr_cdcritic:= NULL;
+        vr_dscritic:= NULL;
+      END IF;
+    END IF;
+    
+    -- Realizar a remessa de tÌtulos DDA
     DDDA0001.pc_remessa_tit_tab_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
                                    ,pr_tab_retorno_dda => vr_tb_retorno_dda
                                    ,pr_cdcritic        => vr_cdcritic
@@ -1307,7 +826,7 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
     
-    -- Atualizar status da remessa de t√≠tulos DDA      
+    -- Atualizar status da remessa de tÌtulos DDA      
     pc_atualiza_status_envio_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
                                 ,pr_tpdenvio        => vr_tpdenvio
                                 ,pr_cdcritic        => vr_cdcritic
@@ -1322,82 +841,18 @@ BEGIN
     -- Rotina para buscar o "OK" da CIP
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
-    
-    -- crps618 s√≥ dever√° buscar o OK da CIP, quando for executado em modo batch    
-    -- se o pr_nrdconta > 0, crps618 foi chamado pelo registro de boletos online
-    -- pela b1wnet0001 (IB)
-    IF nvl(pr_nrdconta,0) = 0 THEN
-    
-    -- Percorrer os registros que tiveram retorno Ok da CIP
-    FOR rw_ok_cip IN cr_ok_cip(rw_crapcop.cdcooper
-                              ,rw_crapcop.cdbcoctl
-                              ,BTCH0001.rw_crapdat.dtmvtoan) LOOP
-    
-       -- Definir o √≠ndice
-      vr_inauxtab := vr_tb_remessa_dda.COUNT() + 1;
-      
-          -- Carrega temp remessa-dda para verificacao       
-      vr_tb_remessa_dda(vr_inauxtab).nrispbif := vr_tb_crapban(rw_ok_cip.cdbandoc).nrispbif;
-      vr_tb_remessa_dda(vr_inauxtab).cdlegado := 'LEG';
-      vr_tb_remessa_dda(vr_inauxtab).idtitleg := rw_ok_cip.idtitleg;
-      vr_tb_remessa_dda(vr_inauxtab).idopeleg := rw_ok_cip.idopeleg;
-      vr_tb_remessa_dda(vr_inauxtab).insitpro := rw_ok_cip.insitpro;
-    END LOOP;
-
-    -- Se encontrar registros na tabela
-    IF vr_tb_remessa_dda.COUNT() > 0 THEN
-      pc_verifica_titulos_dda(pr_cdcooper   => rw_crapcop.cdcooper
-                             ,pr_des_erro   => vr_des_erro
-                             ,pr_dscritic   => vr_dscritic);
-      
-      -- Se houve o retorno de erro
-      IF vr_des_erro <> 'OK' THEN
-        RAISE vr_exc_saida;
-      END IF;
-    ELSE
-      -- Gerar log no arquivo do CRPS618
-      BTCH0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                ,pr_ind_tipo_log => 1 -- Processo Normal
-                                ,pr_nmarqlog     => vr_dsarqlog 
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - '||vr_cdprogra||' --> Nenhum titulo registrado');
-
-    END IF;
-    
-    END IF; -- NVL(pr_nrdconta,0) = 0
-    
-    -- Log de in√≠cio da execu√ß√£o
+        
+    -- Log de inÌcio da execuÁ„o
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
                           pr_dstiplog  => 'F');
     
                                                   
-    --> Gravar dados a cada cooperativa
+    --> Gravar dados a cada cooperativa (batch)
+    IF nvl(pr_nrdconta,0) = 0 THEN
     COMMIT;
-  END LOOP; -- Fim loop cooperativas
-  
-  --> Se nao for ONLINE
-  IF nvl(pr_nrdconta,0) = 0 THEN
-  
-    -- Log de in√≠cio da execu√ß√£o
-    pc_controla_log_batch(pr_cdcooper  => pr_cdcooper,
-                          pr_dstiplog  => 'I');
-    vr_cdcooper := pr_cdcooper;
-                          
-    --> Buscar retorno operacao Titulos NPC
-    DDDA0001.pc_retorno_operacao_tit_NPC(pr_cdcritic => vr_cdcritic  --Codigo de Erro
-                                        ,pr_dscritic => vr_dscritic); --Descricao de Erro
-    
-    -- Verifica se ocorreu erro
-    IF NVL(vr_cdcritic,0) > 0 OR 
-       vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
     END IF;
-       
-    -- Log de in√≠cio da execu√ß√£o
-    pc_controla_log_batch(pr_cdcooper  => pr_cdcooper,
-                          pr_dstiplog  => 'F');
     
-  END IF;  
+  END LOOP; -- Fim loop cooperativas    
   
 EXCEPTION
   WHEN vr_exc_saida THEN
@@ -1406,39 +861,43 @@ EXCEPTION
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
   
-    -- Se foi retornado apenas c√≥digo
+    -- Se foi retornado apenas cÛdigo
     IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descri√ß√£o
+      -- Buscar a descriÁ„o
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
     END IF;
-    -- Devolvemos c√≥digo e critica encontradas
+    -- Devolvemos cÛdigo e critica encontradas
     pr_cdcritic := nvl(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
     
-    -- Log de erro in√≠cio da execu√ß√£o
+    -- Log de erro inÌcio da execuÁ„o
     pc_controla_log_batch(pr_cdcooper  => vr_cdcooper,
                           pr_dstiplog  => 'F',
                           pr_dscritic  => pr_dscritic);
     
     
     -- Efetuar rollback
+    IF nvl(pr_nrdconta,0) = 0 THEN
     ROLLBACK;
+    END IF;
   WHEN OTHERS THEN
     
     -- Rotina para buscar o "OK" da CIP
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
   
-    -- Efetuar retorno do erro n√£o tratado
+    -- Efetuar retorno do erro n„o tratado
     pr_cdcritic := 0;
     pr_dscritic := SQLERRM;
     
-    -- Log de erro in√≠cio da execu√ß√£o
+    -- Log de erro inÌcio da execuÁ„o
     pc_controla_log_batch(pr_cdcooper  => vr_cdcooper,
                           pr_dstiplog  => 'F',
                           pr_dscritic  => pr_dscritic);
     
     -- Efetuar rollback
+    IF nvl(pr_nrdconta,0) = 0 THEN
     ROLLBACK;
+    END IF;
 END pc_crps618;
 /
