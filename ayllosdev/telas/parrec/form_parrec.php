@@ -39,7 +39,7 @@
 				
 				<br/>                                          
 				
-				<label for="flsitibn">INTERNET BANKING:</label>                     
+				<label for="flsitibn">INTERNET BANKING / MOBILE:</label>                     
 				<input type="radio" id="flsitibns" name="flsitibn" value="1" style="height: 20px; margin: 3px 0px 3px 3px !important;"/>
 				<label for="flsitibns">Sim</label>		                            
 				<input type="radio" id="flsitibnn" name="flsitibn" value="0" style="height: 20px; margin: 3px 0px 3px 3px !important;"/>

@@ -3,7 +3,7 @@
    Programa: siscaixa/web/crap020.w
    Sistema : Caixa On-Line
    Sigla   : CRED
-                                                Ultima atualizacao: 17/02/2017
+                                                Ultima atualizacao: 02/06/2017
 
    Dados referentes ao programa:
 
@@ -57,6 +57,8 @@
 
 				        17/02/2017 - Retirar v_dssencrd <> '' pois precisamos validar se 
 							               senha esta informada (Lucas Ranghetti #597410)
+                
+                02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 -----------------------------------------------------------------------------*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -1544,7 +1546,7 @@ PROCEDURE process-web-request :
                   = STRING(INTEGER(v_nrocontade), '>>>>,>>>,9').
             IF v_nrocontapara <> '' THEN
               ASSIGN v_nrocontapara =
-                     STRING(dec(v_nrocontapara), '>>>>>>>>>>>>>9').
+                     STRING(dec(v_nrocontapara), '>>>>>>>>>>>>>>>>>>>9').
 
             DELETE PROCEDURE h-b1crap20.
 

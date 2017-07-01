@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 12/01/2017
+   Data    : Setembro/2016                        Ultima atualizacao: 27/06/2017
 
    Dados referentes ao programa:
 
@@ -31,6 +31,11 @@ BEGIN
 
                12/01/2017 - Ajuste para verificar se cooperado é migrado 
                             (Adriano - SD 592406).
+
+
+			   27/06/2017 - Ajustes para atender as mudanças do catalago de TED - SPB
+			                (Adriano - SD 698655).
+
    ............................................................................. */
 
    DECLARE
@@ -352,7 +357,30 @@ BEGIN
                                 pr_ind_tipo_log => 2, --> erro tratado
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Iniciando processo de TEDs Sicredi',
-                                pr_nmarqlog     => vr_nmarqlog);                                
+                                pr_nmarqlog     => vr_nmarqlog);   
+                                
+     --Limpa a tabela de controle de arquivos. Remove todos os registros do ano anterior.
+     BEGIN 
+       
+       DELETE tbted_control_arq
+        WHERE to_char(tbted_control_arq.dtrefere,'RRRR') = to_char(TRUNC(SYSDATE,'YEAR')-1,'RRRR');
+       
+     EXCEPTION
+       WHEN OTHERS THEN
+         --Descricao do erro recebe mensagam da critica
+         vr_dscritic := 'Nao foi possivel limpar a tabela de controle de arquivos processados.';
+         
+         -- Envio centralizado de log de erro
+         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                   ,pr_ind_tipo_log => 2 -- Erro tratato
+                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> '
+                                                       || vr_dscritic );
+                                                       
+         --Sair do programa
+         RAISE vr_exc_saida;
+     
+     END;                             
      
      -- Busca diretorio das TEDs para processamento
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
@@ -466,7 +494,7 @@ BEGIN
              
            END IF;
 
-           -- Verificar tipo da mensagem
+		       -- Verificar tipo da mensagem
            vr_nmevehead := substr(vr_dslinharq,3,3);
            
            IF vr_nmevehead NOT IN('STR','PAG') THEN
@@ -596,14 +624,14 @@ BEGIN
                -- No Trailler, sair do LOOP
                IF substr(vr_dslinharq,1,2) = 'TT' THEN
                  EXIT;
-               END IF;
-
+               END IF;               
+             
                -- Ler ISPB
                BEGIN
                  IF substr(vr_dslinharq,1,2) = '05' THEN
-                   vr_nrispbif := substr(vr_dslinharq,407,8);
+                   vr_nrispbif := substr(vr_dslinharq,407,8); 
                  ELSE
-                   vr_nrispbif := substr(vr_dslinharq,404,8);
+                   vr_nrispbif := substr(vr_dslinharq,404,8); 
                  END IF;
                EXCEPTION
                  WHEN OTHERS THEN
@@ -650,7 +678,12 @@ BEGIN
                  END IF;  
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,70,13);
+                   IF substr(vr_dslinharq,1,2) = '05' THEN
+                     vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,43,13);
+                   ELSE
+                     vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,70,13);
+                   END IF; 
+                   
                    RAISE vr_exc_saida;
                END;
 
@@ -663,7 +696,12 @@ BEGIN
                  END IF;
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
+                   IF substr(vr_dslinharq,1,2) = '05' THEN
+                     vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
+                   ELSE
+                     vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,274,14);
+                   END IF;                   
+                   
                    RAISE vr_exc_saida;
                END;
 
@@ -827,7 +865,7 @@ BEGIN
                BEGIN
                  -- Separar conforme tipo da mensagem
                  IF substr(vr_dslinharq,1,2) = '05' THEN
-                   vr_cdbandif := substr(vr_dslinharq,56,3);
+                   vr_cdbandif := substr(vr_dslinharq,56,3); 
                    vr_cdagedif := 0;
                    vr_nrctadif := 0;
                    vr_nrcpfdif := substr(vr_dslinharq,339,14);

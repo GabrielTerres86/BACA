@@ -1170,7 +1170,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
 															,pr_nrcpfope => 0
 															,pr_nrdddtel => pr_nrdddtel
 															,pr_nrtelefo => pr_nrtelefo
-															,pr_dtrecarga => trunc(SYSDATE)
+															,pr_vlrecarga => pr_vlrecarga
+                              ,pr_dtrecarga => trunc(SYSDATE)
 															,pr_qtmesagd => 0
 															,pr_cddopcao => 1 -- Data atual
 															,pr_idorigem => vr_idorigem

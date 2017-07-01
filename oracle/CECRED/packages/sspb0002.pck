@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --
 --    Programa: SSPB0002
 --    Autor   : Douglas Quisinski
---    Data    : Julho/2015                      Ultima Atualizacao: 12/12/2016
+--    Data    : Julho/2015                      Ultima Atualizacao: 08/06/2017
 --
 --    Dados referentes ao programa:
 --
@@ -64,6 +64,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --                12/12/2016 - Ajustar conciliação para que durante o periodo de 01/01/2017 até 21/03/2017
 --                             (mesmo período em que o DE->PARA ira ocorrer no crps531_1 que processa as 
 --                             mensagens de TED) (Douglas - Chamado 570148)
+--
+--                15/05/2017 - Adicionar conciliação das mensagens STR0010, PAG0111, STR0048
+--                             (Douglas - Chamado 524133)
+--
+--                08/06/2017 - Adicionar mensagens 'PAG0142R2','STR0034R2','PAG0134R2' referentes ao
+--                             novo catalogo do SPB (Lucas Ranghetti #668207)
 ---------------------------------------------------------------------------------------------------------------
   -- Tipo de registro para conter as informações das linhas do arquivo
   TYPE typ_recdados IS RECORD (nrdlinha INTEGER
@@ -111,7 +117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 04/08/2015                        Ultima atualizacao: 12/12/2016
+    Data    : 04/08/2015                        Ultima atualizacao: 08/06/2016
 
     Dados referentes ao programa:
 
@@ -157,6 +163,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                              01/01/2017 até 21/03/2017 (mesmo período em que o DE->PARA 
                              ira ocorrer no crps531_1 que processa as  mensagens de TED) 
                              (Douglas - Chamado 570148)                             
+                
+                15/05/2017 - Adicionar conciliação das mensagens STR0010, PAG0111, STR0048
+                             (Douglas - Chamado 524133)
+
+                08/06/2017 - Adicionar mensagens 'PAG0142R2','STR0034R2','PAG0134R2' referentes ao
+                             novo catalogo do SPB (Lucas Ranghetti #668207)
     ............................................................................. */
     DECLARE
       -- Exceção
@@ -309,7 +321,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
          WHERE spb.cdcooper > 0
            -- Apenas as mensagens de VR BOLETO
            AND spb.dsmensag in ('STR0026','PAG0122','STR0026R2','PAG0122R2',
-                                'STR0006','STR0006R2','STR0025','PAG0121')
+                                'STR0006','STR0006R2','STR0025','PAG0121',
+                                'PAG0142R2','STR0034R2','PAG0134R2')
            AND spb.dtmensag = pr_dtmensag;
       rw_gnmvspb cr_gnmvspb%ROWTYPE;
            
@@ -338,6 +351,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
            AND tco.flgativo = 1;
       rw_craptco cr_craptco%ROWTYPE;
            
+      -- Mensagens de TED devolvidas
+      CURSOR cr_msg_devolvida (pr_dttransa  IN DATE) IS
+        SELECT spb.cdcooper
+              ,spb.nrdconta
+              ,spb.cdagenci
+              ,spb.nrdcaixa
+              ,spb.cdoperad
+              ,spb.dttransa
+              ,spb.hrtransa
+              ,spb.cdprogra
+              ,spb.nmevento
+              ,spb.nrctrlif
+              ,spb.vldocmto
+              ,spb.cdbanco_origem
+              ,spb.cdagencia_origem
+              ,spb.nmtitular_origem
+              ,spb.nrcpf_origem
+              ,spb.cdbanco_destino
+              ,spb.cdagencia_destino
+              ,spb.nrconta_destino
+              ,spb.nmtitular_destino
+              ,spb.nrcpf_destino
+              ,spb.dsmotivo_rejeicao
+              ,spb.nrispbif
+          FROM tbspb_trans_rejeitada spb 
+         WHERE spb.dttransa = pr_dttransa;
+
       -- Registro de Cooperativas/Agência
       TYPE typ_tbagenci_coop IS TABLE OF INTEGER INDEX BY BINARY_INTEGER;
       vr_tbagenci_coop typ_tbagenci_coop;
@@ -438,14 +478,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             -- Desconsiderar tipo de mensagem STR0007, pois são mensagens que não afeta cliente (manter a STR0007R2, pois essa afeta)
             IF vr_dsmensag IN ('STR0004','STR0004R2','STR0003','STR0003R2','STR0007') OR
                vr_dsmensag IS NULL THEN
-              CONTINUE;
-            END IF;
-            
-            -- Nao conciliar devoluções remetidas, 
-            -- apenas alertar qual credito esta efetivado e nao creditou a conta, 
-            -- pois neste caso significa que houve problema neste tipo de mensagem
-            IF vr_dsmensag IN('STR0010','PAG0111') THEN 
-              -- Ignorar essas mensagens (Karoline - SPB)
               CONTINUE;
             END IF;
             
@@ -653,7 +685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               -- Criticar qualquer mensagem recebida com esta nomenclatura, independente de status. 
               -- Ayllos não realiza o crédito desta TED automaticamente
               IF vr_dsmensag IN ('STR0025R2','STR0029R2','STR0034R2','STR0040R2',
-                                 'PAG0121R2','PAG0134R2','PAG0142R2') THEN
+                                 'PAG0121R2','PAG0134R2') THEN
                 -- Sempre gerar crítica
                 vr_cria_critica := 1;
                 -- Nao conciliar essa mensagem
@@ -790,15 +822,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                                      TO_CHAR(vr_vlconsul * 100);
               
               -- TED por esta finalidade não credita automaticamente a conta corrente. 
-              -- Validar os campos: Agência, Conta Corrente, Valor
-              ELSIF vr_dsmensag IN('STR0006R2') THEN 
+              -- Validar os campos: Numero de Controle STR/PAG, Valor
+              ELSIF vr_dsmensag IN('STR0006R2','STR0025R2','STR0034R2',
+                                   'PAG0121R2','PAG0142R2','PAG0134R2') THEN 
                       
                 -- Conciliar essa mensagem
                 vr_conciliar    := 1;
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
                 vr_chave_conciliar:= vr_dsmensag || '_' ||
-                                     TO_CHAR(vr_cdagenci_cre_concil) || '_' || 
-                                     TO_CHAR(vr_nrdconta_cre_concil) || '_' ||
+                                     vr_nrcontro || '_' ||
                                      TO_CHAR(vr_vlconsul * 100);
                                      
               -- Mensagem é enviada através da Cabine JD.
@@ -859,6 +891,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                                      TO_CHAR(vr_nrcpfcgc_deb_pesq) || '_' || -- CPF/CNPJ Debitado
                                      TO_CHAR(vr_vlconsul * 100); -- Valor do Documento
 
+              -- Mensagens de devolução
+              ELSIF vr_dsmensag IN('STR0010','PAG0111','STR0048') THEN 
+              
+                -- Conciliar essa mensagem
+                vr_conciliar    := 1;
+                -- Validar os campos: Numero de controle IF, Valor
+                vr_chave_conciliar:= vr_dsmensag || '_' ||-- Mensagem
+                                     vr_nrctrlif || '_' ||  -- Numero de Controle
+                                     TO_CHAR(vr_vlconsul * 100); -- Valor do Documento
               END IF;
             END IF; -- Fim da Duplicidade
               
@@ -1111,6 +1152,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             vr_nrcpfcgc_cre := rw_craplmt.nrcpfcgc_if;
             vr_nmcli_cre    := rw_craplmt.nmcooper_if;
             
+          -- TED por esta finalidade não credita automaticamente a conta corrente. 
+          -- Validar os campos: Numero de Controle STR/PAG, Valor
+          ELSIF vr_dsmensag IN('STR0025R2','PAG0121R2','PAG0142R2') THEN 
+            vr_chave_conciliar:= vr_dsmensag || '_' ||
+                                 TO_CHAR(rw_craplmt.nrctrlif) || '_' || -- Numer de Controle STR/PAG
+                                 TO_CHAR(rw_craplmt.vldocmto  * 100); -- Valor do Documento
+
+            -- Dados Conta Debitada
+            vr_banco_deb    := rw_craplmt.cddbanco_if;
+            vr_cdagenci_deb := rw_craplmt.cdagenci_if;
+            vr_nrdconta_deb := rw_craplmt.nrdconta_if;
+            vr_nrcpfcgc_deb := rw_craplmt.nrcpfcgc_if;
+            vr_nmcli_deb    := rw_craplmt.nmcooper_if;
+            -- Dados Conta Creditada
+            vr_banco_cre    := rw_craplmt.cddbanco_cop;
+            vr_cdagenci_cre := rw_craplmt.cdagenci_cop;
+            vr_nrdconta_cre := rw_craplmt.nrdconta_cop;
+            vr_nrcpfcgc_cre := rw_craplmt.nrcpfcgc_cop;
+            vr_nmcli_cre    := rw_craplmt.nmcooper_cop;
+            
           END IF;
           
           -- Verificar se a opcao eh para listar apenas as duplicidades
@@ -1271,7 +1332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               
           -- TED por esta finalidade não credita automaticamente a conta corrente. 
           -- Validar os campos: Agência, Conta Corrente, Valor
-          ELSIF rw_gnmvspb.dsmensag IN('STR0006R2') THEN 
+          ELSIF rw_gnmvspb.dsmensag IN('STR0006R2','PAG0142R2','STR0034R2','PAG0134R2') THEN 
             -- Montar a chave de acordo com os campos que sao comparados para conciliar
             vr_chave_conciliar:= rw_gnmvspb.dsmensag || '_' ||
                                  TO_CHAR(TRIM(rw_gnmvspb.cdagencr)) || '_' || 
@@ -1325,7 +1386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                             TO_CHAR(vr_cdagenci_cre) || -- Agencia Creditada 
                             TO_CHAR(vr_nrdconta_cre) || -- Conta Creditada
                             TO_CHAR(vr_nrcpfcgc_cre) || -- CPF/CNPJ Creditado
-                            TO_CHAR(vr_vlconsul * 100); -- Valor (MULTIPLICAR POR 100 PARA TIRAR DECIMAIS)
+                            TO_CHAR(rw_gnmvspb.vllanmto * 100); -- Valor (MULTIPLICAR POR 100 PARA TIRAR DECIMAIS)
                              
             -- Verifica Duplicidade do arquivo
             vr_dsduplic:= 'N';
@@ -1428,6 +1489,150 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
           END IF; -- Fim da duplicidade
                                           
         END LOOP;
+        
+        -- Carregar todas as mensagens devolvidas
+        FOR rw_msg_devolvida IN cr_msg_devolvida (pr_dttransa => vr_dtmensag) LOOP
+          -- Montar a chave de acordo com os campos que sao comparados para conciliar
+          vr_chave_conciliar:= TO_CHAR(rw_msg_devolvida.nmevento) || '_' || 
+                               TO_CHAR(rw_msg_devolvida.nrctrlif) || '_' || 
+                               TO_CHAR(rw_msg_devolvida.vldocmto * 100);
+
+          -- Buscar o codigo do Banco Creditado
+          vr_banco_cre    := rw_msg_devolvida.cdbanco_destino;
+          -- Conta Creditada
+          vr_ispbif_cre   := '5463212'; -- ISPB da CECRED
+          vr_nmcli_cre    := rw_msg_devolvida.nmtitular_origem;
+          vr_nrcpfcgc_cre := rw_msg_devolvida.nrcpf_origem;
+          vr_nrdconta_cre := rw_msg_devolvida.nrdconta;
+          vr_cdagenci_cre := rw_msg_devolvida.cdagencia_origem;
+          
+          -- Buscar o codigo do Banco Debitado
+          vr_banco_deb    := rw_msg_devolvida.cdbanco_origem;
+          -- Conta Debitada
+          vr_ispbif_deb   := rw_msg_devolvida.nrispbif;
+          vr_nmcli_deb    := rw_msg_devolvida.nmtitular_destino;
+          vr_nrcpfcgc_deb := rw_msg_devolvida.nrcpf_destino;
+          vr_nrdconta_deb := rw_msg_devolvida.nrconta_destino;
+          vr_cdagenci_deb := rw_msg_devolvida.cdagencia_destino;
+
+          -- Verificar se a opcao eh para listar apenas as duplicidades
+          IF pr_dsdopcao = 'OI' THEN
+            
+            -- Para a duplicidade temos validar outros campos
+            -- Indice das linhas que foram processadas
+            vr_index_proc:= 'AYLLOS'                 || -- Identificacao AYLLOS
+                            TO_CHAR(vr_ispbif_deb)   || -- Banco Debitada
+                            TO_CHAR(vr_cdagenci_deb) || -- Agencia Debitada
+                            TO_CHAR(vr_nrdconta_deb) || -- Conta Debitada
+                            TO_CHAR(vr_nrcpfcgc_deb) || -- CPF/CNPJ Debitado
+                            TO_CHAR(vr_ispbif_cre)   || -- Banco Creditado
+                            TO_CHAR(vr_cdagenci_cre) || -- Agencia Creditada 
+                            TO_CHAR(vr_nrdconta_cre) || -- Conta Creditada
+                            TO_CHAR(vr_nrcpfcgc_cre) || -- CPF/CNPJ Creditado
+                            TO_CHAR(rw_msg_devolvida.vldocmto * 100); -- Valor (MULTIPLICAR POR 100 PARA TIRAR DECIMAIS)
+                             
+            -- Verifica Duplicidade do arquivo
+            vr_dsduplic:= 'N';
+            IF vr_tbprocessados.EXISTS(vr_index_proc) THEN
+              vr_dsduplic:= 'S';
+            ELSE
+              -- Armazena a linha processada
+              -- Gerar as informacoes de conciliacao do arquivo com os valores identificados em um dos tipos...
+              vr_tbprocessados(vr_index_proc).nrdlinha := pr_tbcritic.COUNT() + 1;
+              vr_tbprocessados(vr_index_proc).dsduplic := 'N';
+              vr_tbprocessados(vr_index_proc).cddotipo := rw_msg_devolvida.nmevento;
+              vr_tbprocessados(vr_index_proc).nrcontro := '';
+              vr_tbprocessados(vr_index_proc).nrctrlif := rw_msg_devolvida.nrctrlif;
+              vr_tbprocessados(vr_index_proc).vlconcil := rw_msg_devolvida.vldocmto;
+              vr_tbprocessados(vr_index_proc).dtmensag := to_char(rw_msg_devolvida.dttransa,'DD/MM/RRRR');
+              vr_tbprocessados(vr_index_proc).dsdahora := '00:00:00';
+              vr_tbprocessados(vr_index_proc).dsespeci := 'NAO';
+              -- Dados Conta Debitada
+              vr_tbprocessados(vr_index_proc).cddbanco_deb := vr_banco_deb;
+              vr_tbprocessados(vr_index_proc).cdagenci_deb := vr_cdagenci_deb;
+              vr_tbprocessados(vr_index_proc).nrdconta_deb := vr_nrdconta_deb;
+              vr_tbprocessados(vr_index_proc).nrcpfcgc_deb := vr_nrcpfcgc_deb;
+              vr_tbprocessados(vr_index_proc).nmcooper_deb := vr_nmcli_deb;
+              -- Dados Conta Creditada
+              vr_tbprocessados(vr_index_proc).cddbanco_cre := vr_banco_cre;
+              vr_tbprocessados(vr_index_proc).cdagenci_cre := vr_cdagenci_cre;
+              vr_tbprocessados(vr_index_proc).nrdconta_cre := vr_nrdconta_cre;
+              vr_tbprocessados(vr_index_proc).nrcpfcgc_cre := vr_nrcpfcgc_cre;
+              vr_tbprocessados(vr_index_proc).nmcooper_cre := vr_nmcli_cre; 
+              vr_tbprocessados(vr_index_proc).dsorigemerro := 'AYLLOS';
+            END IF;
+              
+            -- Zerar os identificadores de criação do  erro
+            vr_cria_critica:= 0; --> Identifica a geração da Crítica
+            -- verificar se eh duplicado
+            IF vr_dsduplic = 'S' THEN
+              vr_cria_critica:= 1;
+              -- verificar o registro jah foi adicionado as criticas
+              IF vr_tbprocessados(vr_index_proc).dsduplic != 'S' THEN
+                -- Se nao existir 
+                -- Atualiza o duplicado
+                vr_tbprocessados(vr_index_proc).dsduplic := 'S';
+                -- Se estiver com critica apenas armazena o original
+                vr_chave_conciliar:= vr_index_proc || to_char(pr_tbcritic.COUNT() + 1);
+                pr_tbcritic(vr_chave_conciliar) := vr_tbprocessados(vr_index_proc);
+              END IF;
+              -- gerar a chave para gerar o duplicado
+              vr_chave_conciliar:= vr_index_proc || to_char(pr_tbcritic.COUNT() + 1);
+              -- Gerar as informacoes de conciliacao do arquivo com os valores identificados em um dos tipos...
+              -- Gerar as informacoes de conciliacao do arquivo com os valores identificados em um dos tipos...
+              pr_tbcritic(vr_chave_conciliar).nrdlinha := pr_tbcritic.COUNT() + 1;
+              pr_tbcritic(vr_chave_conciliar).dsduplic := 'N';
+              pr_tbcritic(vr_chave_conciliar).cddotipo := rw_msg_devolvida.nmevento;
+              pr_tbcritic(vr_chave_conciliar).nrcontro := '';
+              pr_tbcritic(vr_chave_conciliar).nrctrlif := rw_msg_devolvida.nrctrlif;
+              pr_tbcritic(vr_chave_conciliar).vlconcil := rw_msg_devolvida.vldocmto;
+              pr_tbcritic(vr_chave_conciliar).dtmensag := to_char(rw_msg_devolvida.dttransa,'DD/MM/RRRR');
+              pr_tbcritic(vr_chave_conciliar).dsdahora := '00:00:00';
+              pr_tbcritic(vr_chave_conciliar).dsespeci := 'NAO';
+              -- Dados Conta Debitada
+              pr_tbcritic(vr_chave_conciliar).cddbanco_deb := vr_banco_deb;
+              pr_tbcritic(vr_chave_conciliar).cdagenci_deb := vr_cdagenci_deb;
+              pr_tbcritic(vr_chave_conciliar).nrdconta_deb := vr_nrdconta_deb;
+              pr_tbcritic(vr_chave_conciliar).nrcpfcgc_deb := vr_nrcpfcgc_deb;
+              pr_tbcritic(vr_chave_conciliar).nmcooper_deb := vr_nmcli_deb;
+              -- Dados Conta Creditada
+              pr_tbcritic(vr_chave_conciliar).cddbanco_cre := vr_banco_cre;
+              pr_tbcritic(vr_chave_conciliar).cdagenci_cre := vr_cdagenci_cre;
+              pr_tbcritic(vr_chave_conciliar).nrdconta_cre := vr_nrdconta_cre;
+              pr_tbcritic(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
+              pr_tbcritic(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
+              pr_tbcritic(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+              
+            END IF; -- FIM gerar critica duplicidade
+          ELSE
+            -- Gerar as informacoes de conciliacao do arquivo com os valores identificados em um dos tipos...
+            vr_tbayllos(vr_chave_conciliar).nrdlinha := vr_tbayllos.COUNT() + 1;
+            vr_tbayllos(vr_chave_conciliar).dsduplic := 'N';
+            vr_tbayllos(vr_chave_conciliar).cddotipo := rw_msg_devolvida.nmevento;
+            vr_tbayllos(vr_chave_conciliar).nrcontro := '';
+            vr_tbayllos(vr_chave_conciliar).nrctrlif := rw_msg_devolvida.nrctrlif;
+            vr_tbayllos(vr_chave_conciliar).vlconcil := rw_msg_devolvida.vldocmto;
+            vr_tbayllos(vr_chave_conciliar).dtmensag := to_char(rw_msg_devolvida.dttransa,'DD/MM/RRRR');
+            vr_tbayllos(vr_chave_conciliar).dsdahora := '00:00:00';
+            vr_tbayllos(vr_chave_conciliar).dsespeci := 'NAO';
+            -- Dados Conta Debitada
+            vr_tbayllos(vr_chave_conciliar).cddbanco_deb := vr_banco_deb;
+            vr_tbayllos(vr_chave_conciliar).cdagenci_deb := vr_cdagenci_deb;
+            vr_tbayllos(vr_chave_conciliar).nrdconta_deb := vr_nrdconta_deb;
+            vr_tbayllos(vr_chave_conciliar).nrcpfcgc_deb := vr_nrcpfcgc_deb;
+            vr_tbayllos(vr_chave_conciliar).nmcooper_deb := vr_nmcli_deb;
+            -- Dados Conta Creditada
+            vr_tbayllos(vr_chave_conciliar).cddbanco_cre := vr_banco_cre;
+            vr_tbayllos(vr_chave_conciliar).cdagenci_cre := vr_cdagenci_cre;
+            vr_tbayllos(vr_chave_conciliar).nrdconta_cre := vr_nrdconta_cre;
+            vr_tbayllos(vr_chave_conciliar).nrcpfcgc_cre := vr_nrcpfcgc_cre;
+            vr_tbayllos(vr_chave_conciliar).nmcooper_cre := vr_nmcli_cre; 
+            vr_tbayllos(vr_chave_conciliar).dsorigemerro := 'AYLLOS';
+
+          END IF; -- Fim da duplicidade
+                                          
+        END LOOP;
+        
         -- Busca a proxima data
         vr_index_data := vr_tbdatas.NEXT(vr_index_data);
       END LOOP;
