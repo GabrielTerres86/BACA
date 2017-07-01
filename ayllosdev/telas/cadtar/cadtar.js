@@ -1,7 +1,7 @@
 ﻿/*!
  * FONTE        : cadtar.js
  * CRIAÇÃO      : Daniel Zimmermann / Tiago Machado         
- * DATA CRIAÇÃO : 26/11/2015
+ * DATA CRIAÇÃO : 24/06/2017
  * OBJETIVO     : Biblioteca de funções da tela CADTAR
  * --------------
  * ALTERAÇÕES   : 02/08/2013 - Incluso tratamento para registros de cobranca (Daniel). 	
@@ -16,6 +16,8 @@
  *                26/11/2015 - Ajustado para buscar os convenios de folha de pagamento
  *                             (Andre Santos - SUPERO)
  *
+ *                24/06/2017 - Ajustado tamanho do campo cdmotivo para aceitar 10 caracteres
+ *                             e 100px (Projeto 340 - NPC - Rafael)
  * -------------- 
  */
 
@@ -271,7 +273,7 @@ function formataCabecalho() {
 	rInpessoa.css({'width':'115px'});
 	rCdinctar.css({'width':'115px'});
 	rCdocorre.css({'width':'115px'});
-	rCdmotivo.css({'width':'155px'});
+	rCdmotivo.css({'width':'200px'}); //old - 155px 
 	
 	cCdtarifa.css({'width':'90px'}).attr('maxlength','9').setMask('INTEGER','zzzzzzzzz','','');
 	cCdcatego.css({'width':'90px'}).attr('maxlength','9').setMask('INTEGER','zzzzzzzzz','','');
@@ -285,7 +287,7 @@ function formataCabecalho() {
 	
 	cCdocorre.css({'width':'30px'}).attr('maxlength','2').setMask('INTEGER','zz','','');
 	
-	cCdmotivo.css({'width':'30px'}).attr('maxlength','3').setMask("STRING",3,charPermitido(),"");
+	cCdmotivo.css({'width':'100px'}).attr('maxlength','10').setMask("STRING",10,charPermitido(),""); //old - 30px maxlength - 3
 	cCdmotivo.css({'text-transform':'uppercase'});
 	
 	cDssubgru.css({'width':'460px'});

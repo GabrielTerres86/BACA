@@ -1,7 +1,7 @@
 <?
 /*************************************************************************
 	Fonte: consulta-habilita.php
-	Autor: Gabriel						Ultima atualizacao: 11/07/2016
+	Autor: Gabriel						Ultima atualizacao: 13/12/2016
 	Data : Dezembro/2010
 	
 	Objetivo: Tela para visualizar a consulta/habilitacao da rotina 
@@ -38,6 +38,13 @@
                 01/08/2016 - Ajuste no teste de qtdfloat pois estava deixando 
                              a opção vazia a ser selecionda (Marcos-Supero)
 
+				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
+
+				29/11/2016 - P341-Automatização BACENJUD - Realizar as validações pelo código
+				             do departamento ao invés da descrição (Renato Darosci - Supero)
+
+				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
 *************************************************************************/
 
 session_start();
@@ -58,27 +65,30 @@ $inpessoa    = $_POST["inpessoa"];
 $nrcnvceb    = $_POST["nrcnvceb"];
 $nrconven    = $_POST["nrconven"];
 $dsorgarq    = trim($_POST["dsorgarq"]);
-$dssitceb    = trim($_POST["dssitceb"]);
+$insitceb    = trim($_POST["insitceb"]);
 $inarqcbr    = $_POST["inarqcbr"];
 $cddemail    = $_POST["cddemail"];
 $dsdemail    = trim($_POST["dsdemail"]);
 $flgcruni    = trim($_POST["flgcruni"]);
 $flgregis    = trim($_POST["flgregis"]);
+$flgregon    = trim($_POST["flgregon"]);
+$flgpgdiv    = trim($_POST["flgpgdiv"]);
 $flcooexp    = trim($_POST["flcooexp"]);
 $flceeexp    = trim($_POST["flceeexp"]);
 $flserasa    = trim($_POST["flserasa"]);
-$cddbanco    = trim($_POST["cddbanco"]);
+$cddbanco	 = trim($_POST["cddbanco"]);
 $flgcebhm    = trim($_POST["flgcebhm"]);
 $cddopcao    = trim($_POST["cddopcao"]);
 $dsdmesag    = $_POST["dsdmesag"];
 $titulares   = $_POST["titulares"];
 $qtTitulares = $_POST["qtTitulares"];
 $emails_titular = $_POST["emails"];
-$flsercco    = trim($_POST["flsercco"]);
+$flsercco    = $_POST["flsercco"];
 $qtdfloat    = trim($_POST["qtdfloat"]);
 $flprotes    = trim($_POST["flprotes"]);
 $qtdecprz    = trim($_POST["qtdecprz"]);
-$idrecipr	   = trim($_POST["idrecipr"]);
+$idrecipr	 = trim($_POST["idrecipr"]);
+$inenvcob	 = trim($_POST["inenvcob"]);
 
 // Titulo de tela dependendo a opcao de CONSULTA/HABILITACAO
 $dstitulo = ($cddopcao == "C")? "CONSULTA" : "HABILITA&Ccedil;&Atilde;O"; 
@@ -191,11 +201,29 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     <input name= "dsorgarq" id="dsorgarq" class="campoTelaSemBorda" readonly value = " <?php echo $dsorgarq; ?>" />
                     <br />
                     
-                    <label for="dssitceb"><? echo utf8ToHtml('Situação Cobrança:') ?></label>
-                    <select name="dssitceb" id="dssitceb" class="<?php echo $campo; ?>">					 	
-                      <option id="dssitceb" value="yes" <?php if ($dssitceb == "ATIVO") { ?> selected  <?php } ?> > ATIVO   </option>
-                      <option id="dssitceb" value="no" <?php if ($dssitceb == "INATIVO" ) { ?> selected <?php } ?> > INATIVO</option>  													
+                    <label for="insitceb"><? echo utf8ToHtml('Situação Cobrança:') ?></label>               
+                    <select name="insitceb" id="insitceb" class="<?php echo $campo; ?>">					 	
+                      <option value="1" <?php if ($insitceb == "1")  { ?> selected <?php } ?> > ATIVO        </option>
+                      <option value="2" <?php if ($insitceb == "2" ) { ?> selected <?php } ?> > INATIVO      </option>  													
+                      
+                    <?php
+                      // Nao deve exibir opcoes na tela de alterar
+                      if ($cddopcao != "A") { ?>
+                          <option value="3" <?php if ($insitceb == "3" ) { ?> selected <?php } ?> > PENDENTE     </option>
+                          <option value="4" <?php if ($insitceb == "4" ) { ?> selected <?php } ?> > BLOQUEADO    </option>
+                          <option value="5" <?php if ($insitceb == "5" ) { ?> selected <?php } ?> > APROVADO     </option>
+                          <option value="6" <?php if ($insitceb == "6" ) { ?> selected <?php } ?> > <? echo utf8ToHtml('NÃO APROVADO'); ?> </option>
+                      <?php } else if ($insitceb == "5"){ // se for sit aprovado, deve carregar?>
+                          <option value="5" <?php if ($insitceb == "5" ) { ?> selected <?php } ?> > APROVADO     </option>
+                      <?php  }?>
                     </select>
+                    
+                    <?php
+                      // se nao for consulta e a situacao for aprovado ou inativo, habilita botao
+                      if ($cddopcao != "C" && ($insitceb == 5 || $insitceb == 2)) { ?>
+                          <input type="image" src="<? echo $UrlImagens; ?>botoes/ativar.gif" onClick="confirmaAtivacao(); return false;" id="btnAtivar" />
+                    <?php  }
+                    ?>
                     <br />
                             
                     <label for="flgregis"><? echo utf8ToHtml('Registrada:') ?></label>
@@ -205,6 +233,14 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     <?php
                         if ($cco_cddbanco == 85) {
                             ?>
+                            <label for="flgregon"><? echo utf8ToHtml('Registrar Online na CIP:') ?></label>
+                            <input name="flgregon" id="flgregon" type="checkbox" class="checkbox" readonly <?php if ($flgregon == "SIM" ) { ?> checked <?php } ?> />		
+                            <br />
+
+                            <label for="flgpgdiv"><? echo utf8ToHtml('Autorizar Pagamento Divergente:') ?></label>		
+                            <input name="flgpgdiv" id="flgpgdiv" type="checkbox" class="checkbox" readonly <?php if ($flgpgdiv == "SIM" ) { ?> checked <?php } ?> />		
+                            <br />
+
                             <label for="flcooexp"><? echo utf8ToHtml('Cooperado Emite e Expede:') ?></label>
                             <input name="flcooexp" id="flcooexp" type="checkbox" class="checkbox" readonly <?php if ($flcooexp == "SIM" ) { ?> checked <?php } ?> />		
                             <br />
@@ -232,10 +268,10 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                             
                             <div id="divOpcaoSerasaProtesto">
                                 <label for="flserasa"><? echo utf8ToHtml('Negativação via Serasa:') ?></label>
-                                <input name="flserasa" id="flserasa" type="checkbox" class="checkbox" <?php if ($flserasa == "SIM" ) { ?> checked <?php } ?> />
+                                <input name="flserasa" id="flserasa" type="checkbox" class="checkbox" readonly <?php if ($flserasa == "SIM" ) { ?> checked <?php } ?> />
                                 <br />
                                 <label for="flprotes"><? echo utf8ToHtml('Envio de Protesto:') ?></label>		
-                                <input name="flprotes" id="flprotes" type="checkbox" class="checkbox" <?php if ($flprotes == "SIM" ) { ?> checked <?php } ?> />
+                                <input name="flprotes" id="flprotes" type="checkbox" class="checkbox" readonly <?php if ($flprotes == "SIM" ) { ?> checked <?php } ?> />
                                 <br />
                             </div>
                         
@@ -256,6 +292,11 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     </select>
                     <br />
                     
+					<label for="inenvcob"><? echo utf8ToHtml('Forma Envio Arquivo Cobrança:') ?></label>
+					<select name="inenvcob" id="inenvcob" <?php if ($dsorgarq != 'IMPRESSO PELO SOFTWARE') { ?> disabled class="campoTelaSemBorda" <?php }else{ ?> class="<?php echo $campo; ?>" <?php } ?>>
+						<option id="inenvcob" value="1" <?php if ($dsorgarq == 'IMPRESSO PELO SOFTWARE' && $inenvcob == 1) { ?> selected <?php }elseif($dsorgarq != 'IMPRESSO PELO SOFTWARE'){ ?> selected <?php } ?>> INTERNET BANK </option>
+                        <option id="inenvcob" value="2" <?php if ($dsorgarq == 'IMPRESSO PELO SOFTWARE' && $inenvcob == 2) { ?> selected <?php } ?> > FTP </option>					   
+					</select >
                     <label for="dsdemail"><? echo utf8ToHtml('E-mail Arquivo Retorno:') ?></label>
                     <select name="dsdemail" id="dsdemail" class="<?php echo $campo; ?>">
                      
@@ -299,7 +340,7 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     
                     <div id="divCnvHomol" style="display:<?php echo $dsorgarq == 'IMPRESSO PELO SOFTWARE' ? 'block' : 'none'; ?>;">
                         <script>
-                            habilitaSetor('<?php echo $glbvars['dsdepart'] ?>');
+                            habilitaSetor('<?php echo $glbvars['cddepart'] ?>');
                         </script>
                         <br />
                         <label for="flgcebhm"><? echo utf8ToHtml('Convênio Homologado:') ?></label>
@@ -323,7 +364,6 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                         // Listagem dos subgrupos
                         $cont = 0;
                         $tot_percdesc = 0;
-						$tot_percdesc_recipr = 0;
                         foreach ($xmlSubGru as $sgr) {
                             $cat_dssubgru = $sgr->attributes['DSSUBGRU'];
                             ?>
@@ -406,28 +446,11 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                                             </script>
                                                             <?php
                                                         }
-														// Legenda somente calculo Reciprocidade
-														if ($cat_flrecipr == 1) {
-                                                    ?>
-															<span style="line-height:25px; margin-left:5px;" class="txtNormal">*</span>
-                                                            <?php
-                                                        } 
-														// Legenda sem desconto manual
-														else if ($cat_fldesman == 0 || $cco_fldctman == 0){
-														    ?>
-															<span style="line-height:25px; margin-left:5px;" class="txtNormal">**</span>
-                                                            <?php
-														}
                                                     ?>
                                                 </td>
                                             </tr>
                                             <?php
-                                            // Apenas somar as categorias se reciprocidade
-                                            if ($cat_flrecipr == 0){
                                             $tot_percdesc = $tot_percdesc + $cat_percdesc;
-                                            }else {
-											    $tot_percdesc_recipr = $tot_percdesc_recipr + $cat_percdesc;
-											}
                                             $cont++;
                                         }
                                         ?>
@@ -457,12 +480,13 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
 </form>
 
 <div id="divBotoes">
+    
     <?php
         // Selecionar convenio
         if ($cddopcao == 'S') {
             ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="consulta('I','','','true','','');return false;" id="btnContinuar" type="image" /><?php
         } else {
-            ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" id="btnContinuar" type="image" /><?php
+            ?><input src="<? echo $UrlImagens; ?>botoes/continuar.gif" id="btnContinuar" onClick="return false;" type="image" /><?php
         }
 
         // Se convenio INTERNET e tem mais titulares
@@ -550,17 +574,6 @@ $("#flprotes","#frmConsulta").unbind('click').bind('click', function(e) {
     }
 });
 
-// Se foi clicado no Negativação via Serasa
-$("#flserasa","#frmConsulta").unbind('click').bind('click', function(e) {
-    if ($(this).is(':checked')) {
-        var cco_flserasa = '<?php echo (int) $cco_flserasa; ?>';
-        if (cco_flserasa == '0') {
-            showError('error', 'Conv&ecirc;nio n&atilde;o permite negativa&ccedil;&atilde;o via Serasa!', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-            return false;
-        }
-    }
-});
-
 // Se foi informado Decurso de Prazo
 $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
     var cco_qtdecini = '<?php echo $cco_qtdecini; ?>';
@@ -601,7 +614,7 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
 
     if ($cddopcao == "I") { // Se eh inclusao
         ?>
-        $("#dssitceb","#divOpcaoConsulta").prop("disabled",true);
+        $("#insitceb","#divOpcaoConsulta").prop("disabled",true);
         $("#flceeexp","#divOpcaoConsulta").prop("checked",false);
 
         $("#dsorgarq","#frmConsulta").css({'width':'150px','background-color':'F3F3F3','font-size':'11px','padding':'2px 4px 1px 4px'});
@@ -610,10 +623,12 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
 
     if ($cddopcao == "C") { // Se consulta, desabilita
         ?>
-        $("#dssitceb","#divOpcaoConsulta").prop("disabled",true);
+        $("#insitceb","#divOpcaoConsulta").prop("disabled",true);
         $("#inarqcbr","#divOpcaoConsulta").prop("disabled",true);
         $("#dsdemail","#divOpcaoConsulta").prop("disabled",true);
         $("#flgregis","#divOpcaoConsulta").prop("disabled",true);
+        $("#flgregon","#divOpcaoConsulta").prop("disabled",true);
+        $("#flgpgdiv","#divOpcaoConsulta").prop("disabled",true);
         $("#flcooexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flceeexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flgcruni","#divOpcaoConsulta").prop("disabled",true);
@@ -623,6 +638,7 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         $("#qtdfloat","#divOpcaoConsulta").prop("disabled",true);
         $("#flprotes","#divOpcaoConsulta").prop("disabled",true);
         $("#qtdecprz","#divOpcaoConsulta").prop("disabled",true);
+        $("#inenvcob","#divOpcaoConsulta").prop("disabled",true);
         $(".clsPerDesconto","#divOpcaoConsulta").prop("disabled",true);
         <?php
     } else if ($dsdmesag != "" && $dsorgarq == "INTERNET" ) { // Nao tem senha liberada para Internet

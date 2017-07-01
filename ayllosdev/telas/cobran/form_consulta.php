@@ -14,12 +14,14 @@
  * [02/06/2015] Adriano (CECRED) : Alterado o label do campo "dtdocmto" para "Data Dcto".
  *
  * 30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+ * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança. 
  * 
+ * 17/01/2017 - Recebimento do flag flgdprot para definicao de layout da tela (Heitor - Mouts)
+ *
+ * 26/06/2017 - Alteração de DDA para Boleto DDD e inclusão de Campo Pagador DDA, Prj. 340 (Jean Michel)
+ *
  */
  
-?>
-
-<?php
  	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -27,11 +29,6 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 	
-?>
-
-
-<?php
-
 	$operacao 	= $_POST['operacao'];
 	$nrdconta	= $_POST['nrdconta'];
     $nrcnvcob	= $_POST['nrcnvcob'];
@@ -41,7 +38,9 @@
 	$flserasa	= $_POST['flserasa'];
 	$qtdianeg   = $_POST['qtdianeg'];
 	$flgdprot   = $_POST['flgdprot'];
-
+	$cdtpinsc   = $_POST['cdtpinsc'];
+	$nrinssac   = $_POST['nrinssac'];
+	
 	switch( $operacao ) {
 		case 'log':			$procedure = 'buca_log';			break;	
 		case 'instrucoes':	$procedure = 'busca_instrucoes';	break;
@@ -82,8 +81,32 @@
 	$registro 	= $xmlObjeto->roottag->tags[0]->tags;
 	$qtregist	= $xmlObjeto->roottag->tags[0]->attributes['QTREGIST'];
 	
-?>
+	/* MENSAGERIA */
+	echo "TP: " . $cdtpinsc;
+	// Buscar Informacoes de DDA
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <tppessoa>".(($cdtpinsc == 1) ? "F" : "J")."</tppessoa>";
+	$xml .= "   <nrcpfcgc>".$nrinssac."</nrcpfcgc>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
 
+	$xmlResult = mensageria($xml, "COBRAN", "VERIFICA_SACADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+	  $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	  if ($msgErro == "") {
+		$msgErro = $xmlObj->roottag->tags[0]->cdata;
+	  }
+	  
+	  exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina( $(\'#divRotina\') )', false);
+	  exit();
+	}
+	
+	$flgsacad = ($xmlObj->roottag->tags[0]->cdata == 0) ? "N" : "S";
+	
+?>
 
 <table cellpadding="0" cellspacing="0" border="0" >
 	<tr>
@@ -127,73 +150,80 @@
 												<legend> <? echo utf8ToHtml('Consulta de Cobrança');  ?> </legend>	
 												
 												<label for="nrinssac">CPF/CNPJ:</label>
-												<input type="text" id="nrinssac" name="nrinssac" value="<?php echo $nrinssac ?>"/>
+												<input type="text" id="nrinssac" name="nrinssac" value="<?php echo $nrinssac; ?>"/>
 
 												<label for="nrnosnum">Nosso Nr:</label>
-												<input type="text" id="nrnosnum" name="nrnosnum" value="<?php echo $nrnosnum ?>"/>
+												<input type="text" id="nrnosnum" name="nrnosnum" value="<?php echo $nrnosnum; ?>"/>
 
 												<label for="dsdoccop">Nr Doc:</label>
-												<input type="text" id="dsdoccop" name="dsdoccop" value="<?php echo $dsdoccop ?>"/>
+												<input type="text" id="dsdoccop" name="dsdoccop" value="<?php echo $dsdoccop; ?>"/>
 
 												<label for="nmdsacad">Pagador:</label>
-												<input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo $nmdsacad ?>"/>
+												<input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo $nmdsacad; ?>"/>
 
 												<label for="flgregis">Cob.Reg.:</label>
-												<input type="text" id="flgregis" name="flgregis" value="<?php echo $flgregis ?>"/>
+												<input type="text" id="flgregis" name="flgregis" value="<?php echo $flgregis; ?>"/>
+												
+												</br>
+												
+												<label for="flgcbdda">Boleto DDA:</label>
+												<input type="text" id="flgcbdda" name="flgcbdda" value="<?php echo $flgcbdda; ?>"/>
+												
+												<label for="flgsacad">Pagador DDA:</label>
+												<input type="text" id="flgsacad" name="flgsacad" value="<?php echo $flgsacad; ?>"/>
 
-												<label for="flgcbdda">DDA:</label>
-												<input type="text" id="flgcbdda" name="flgcbdda" value="<?php echo $flgcbdda ?>"/>
-
+												</br>
+												
 												<label for="dsendsac">Ender:</label>
-												<input type="text" id="dsendsac" name="dsendsac" value="<?php echo $dsendsac ?>"/>
+												<input type="text" id="dsendsac" name="dsendsac" value="<?php echo $dsendsac; ?>"/>
 
 												<label for="complend">Complem.:</label>
-												<input type="text" id="complend" name="complend" value="<?php echo $complend ?>"/>
+												<input type="text" id="complend" name="complend" value="<?php echo $complend; ?>"/>
 
 												<label for="nmbaisac">Bairro:</label>
-												<input type="text" id="nmbaisac" name="nmbaisac" value="<?php echo $nmbaisac ?>"/>
+												<input type="text" id="nmbaisac" name="nmbaisac" value="<?php echo $nmbaisac; ?>"/>
 
 												<label for="nmcidsac">Cidade:</label>
-												<input type="text" id="nmcidsac" name="nmcidsac" value="<?php echo $nmcidsac ?>"/>
+												<input type="text" id="nmcidsac" name="nmcidsac" value="<?php echo $nmcidsac; ?>"/>
 
 												<label for="cdufsaca">UF:</label>
-												<input type="text" id="cdufsaca" name="cdufsaca" value="<?php echo $cdufsaca ?>"/>
+												<input type="text" id="cdufsaca" name="cdufsaca" value="<?php echo $cdufsaca; ?>"/>
 
 												<label for="nrcepsac">CEP:</label>
-												<input type="text" id="nrcepsac" name="nrcepsac" value="<?php echo $nrcepsac ?>"/>
+												<input type="text" id="nrcepsac" name="nrcepsac" value="<?php echo $nrcepsac; ?>"/>
 
 												<label for="dscjuros">Juros:</label>
-												<input type="text" id="dscjuros" name="dscjuros" value="<?php echo $dscjuros ?>"/>
+												<input type="text" id="dscjuros" name="dscjuros" value="<?php echo $dscjuros; ?>"/>
 
 												<label for="dscmulta">Multa:</label>
-												<input type="text" id="dscmulta" name="dscmulta" value="<?php echo $dscmulta ?>"/>
+												<input type="text" id="dscmulta" name="dscmulta" value="<?php echo $dscmulta; ?>"/>
 
 												<label for="dscdscto">Descto:</label>
-												<input type="text" id="dscdscto" name="dscdscto" value="<?php echo $dscdscto ?>"/>
+												<input type="text" id="dscdscto" name="dscdscto" value="<?php echo $dscdscto; ?>"/>
 
 												<label for="dtdocmto">Data Dcto:</label>
-												<input type="text" id="dtdocmto" name="dtdocmto" value="<?php echo $dtdocmto ?>"/>
+												<input type="text" id="dtdocmto" name="dtdocmto" value="<?php echo $dtdocmto; ?>"/>
 
 												<label for="dsdespec">Esp Doc:</label>
-												<input type="text" id="dsdespec" name="dsdespec" value="<?php echo $dsdespec ?>"/>
+												<input type="text" id="dsdespec" name="dsdespec" value="<?php echo $dsdespec; ?>"/>
 
 												<label for="flgaceit">Aceite:</label>
-												<input type="text" id="flgaceit" name="flgaceit" value="<?php echo $flgaceit ?>"/>
+												<input type="text" id="flgaceit" name="flgaceit" value="<?php echo $flgaceit; ?>"/>
 
 												<label for="dsemiten">Tp. Emissao:</label>
-												<input type="text" id="dsemiten" name="dsemiten" value="<?php echo $dsemiten ?>"/>
+												<input type="text" id="dsemiten" name="dsemiten" value="<?php echo $dsemiten; ?>"/>
 												
 												<label for="dssituac">Status:</label>
-												<input type="text" id="dssituac" name="dssituac" value="<?php echo $dssituac ?>"/>
+												<input type="text" id="dssituac" name="dssituac" value="<?php echo $dssituac; ?>"/>
 
 												<label for="dtvencto">Vencto.:</label>
-												<input type="text" id="dtvencto" name="dtvencto" value="<?php echo $dtvencto ?>"/>
+												<input type="text" id="dtvencto" name="dtvencto" value="<?php echo $dtvencto; ?>"/>
 
 												<label for="vltitulo">Vlr Tit:</label>
-												<input type="text" id="vltitulo" name="vltitulo" value="<?php echo $vltitulo ?>"/>
+												<input type="text" id="vltitulo" name="vltitulo" value="<?php echo $vltitulo; ?>"/>
 
 												<label for="vldesabt">Desc/Abat:</label>
-												<input type="text" id="vldesabt" name="vldesabt" value="<?php echo $vldesabt ?>"/>
+												<input type="text" id="vldesabt" name="vldesabt" value="<?php echo $vldesabt; ?>"/>
 
 												<?php
 													if (strtoupper($flgdprot) == 'YES') {
@@ -214,22 +244,37 @@
 													}
 												?>
 
+                                                
 												<label for="dtdpagto">Pagto:</label>
-												<input type="text" id="dtdpagto" name="dtdpagto" value="<?php echo $dtdpagto ?>"/>
+												<input type="text" id="dtdpagto" name="dtdpagto" value="<?php echo $dtdpagto; ?>"/>
 
 												<label for="vldpagto">Vlr Pag:</label>
-												<input type="text" id="vldpagto" name="vldpagto" value="<?php echo $vldpagto ?>"/>
+												<input type="text" id="vldpagto" name="vldpagto" value="<?php echo $vldpagto; ?>"/>
 
 												<label for="vljurmul">Jur/Multa:</label>
-												<input type="text" id="vljurmul" name="vljurmul" value="<?php echo $vljurmul ?>"/>
+												<input type="text" id="vljurmul" name="vljurmul" value="<?php echo $vljurmul; ?>"/>
 
 												<label for="cdbandoc">Banco:</label>
-												<input type="text" id="cdbandoc" name="cdbandoc" value="<?php echo $cdbandoc ?>"/>
+												<input type="text" id="cdbandoc" name="cdbandoc" value="<?php echo $cdbandoc; ?>"/>
 												
-												<input type="hidden" id="inserasa" name="inserasa" value="<?php echo $inserasa ?>"/>
+												<input type="hidden" id="inserasa" name="inserasa" value="<?php echo $inserasa; ?>"/>
 												
-												<input type="hidden" id="flserasa" name="flserasa" value="<?php echo $flserasa ?>"/>
+												<input type="hidden" id="flserasa" name="flserasa" value="<?php echo $flserasa; ?>"/>
 												
+                                                <!-- Aviso SMS -->
+                                                <label for="dsavisms">SMS:</label>
+												<input type="text" id="dsavisms" name="dsavisms" value="<?php echo $dsavisms; ?>"/>
+                                                
+                                                <label for="dssmsant">1 dia Antes Vct:</label>
+												<input type="text" id="dssmsant" name="dssmsant" value="<?php echo $dssmsant; ?>"/>
+                                                
+                                                <label for="dssmsvct">No vencimento:</label>
+												<input type="text" id="dssmsvct" name="dssmsvct" value="<?php echo $dssmsvct; ?>"/>
+                                                
+                                                <label for="dssmspos"><? echo utf8ToHtml('1 dia Após Vct:') ?> </label>
+												<input type="text" id="dssmspos" name="dssmspos" value="<?php echo $dssmspos; ?>"/>
+                                                
+                                                <!-- Fim Aviso SMS -->
 											</fieldset>		
 											
 											<fieldset>

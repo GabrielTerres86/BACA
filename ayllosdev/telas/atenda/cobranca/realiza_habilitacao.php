@@ -2,7 +2,7 @@
 
 /*************************************************************************
 	Fonte: realiza_habilitacao.php
-	Autor: Gabriel						Ultima atualizacao: 17/06/2016
+	Autor: Gabriel						Ultima atualizacao: 13/12/2016
 	Data : Dezembro/2010
 	
 	Objetivo: Efetuar a habilitacao do convenio CEB.
@@ -33,6 +33,11 @@
 
                 17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
+				04/08/2016 - Adicionado campo de forma de envio de 
+						     arquivo de cobrança. (Reinert)
+
+				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
 *************************************************************************/
 
 	session_start();
@@ -54,13 +59,15 @@
 		
 	$nrdconta = $_POST["nrdconta"];
 	$nrconven = $_POST["nrconven"];
-	$dssitceb = $_POST["dssitceb"];
+    $insitceb = $_POST["insitceb"];
 	$inarqcbr = $_POST["inarqcbr"];
 	$cddemail = $_POST["cddemail"];
 	$flgcruni = $_POST["flgcruni"];
 	$flgcebhm = $_POST["flgcebhm"];
 	$dsdregis = $_POST["dsdregis"]; // Valores da emissao de boletos dos titulares
 	$flgregis = trim($_POST["flgregis"]);
+    $flgregon = trim($_POST["flgregon"]);
+    $flgpgdiv = trim($_POST["flgpgdiv"]);
 	$flcooexp = trim($_POST["flcooexp"]);
 	$flceeexp = trim($_POST["flceeexp"]);
     $flserasa = trim($_POST["flserasa"]);
@@ -71,6 +78,7 @@
     $flprotes = $_POST["flprotes"];
     $qtdecprz = $_POST["qtdecprz"];
     $idrecipr = (int) $_POST["idrecipr"];
+	$inenvcob = (int) $_POST["inenvcob"];
     $idreciprold = (int) $_POST["idreciprold"];
     $perdesconto = $_POST["perdesconto"];
 	$executandoProdutos = $_POST['executandoProdutos'];
@@ -80,7 +88,7 @@
 	$xmlHabilitaConvenio .= " <Dados>";
 	$xmlHabilitaConvenio .= "	<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlHabilitaConvenio .= "   <nrconven>".$nrconven."</nrconven>";
-	$xmlHabilitaConvenio .= "   <insitceb>".($dssitceb == "yes" ? 1 : 0)."</insitceb>";
+	$xmlHabilitaConvenio .= "   <insitceb>".$insitceb."</insitceb>";
 	$xmlHabilitaConvenio .= "   <inarqcbr>".$inarqcbr."</inarqcbr>";
 	$xmlHabilitaConvenio .= "   <cddemail>".$cddemail."</cddemail>";
 	$xmlHabilitaConvenio .= "   <flgcruni>".($flgcruni == "yes" ? 1 : 0)."</flgcruni>";
@@ -88,6 +96,8 @@
 	$xmlHabilitaConvenio .= "   <dsdregis>".$dsdregis."</dsdregis>";
 	$xmlHabilitaConvenio .= "   <idseqttl>1</idseqttl>";
 	$xmlHabilitaConvenio .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlHabilitaConvenio .= "   <flgregon>".$flgregon."</flgregon>";
+	$xmlHabilitaConvenio .= "   <flgpgdiv>".$flgpgdiv."</flgpgdiv>";
 	$xmlHabilitaConvenio .= "   <flcooexp>".$flcooexp."</flcooexp>";
 	$xmlHabilitaConvenio .= "   <flceeexp>".$flceeexp."</flceeexp>";
     $xmlHabilitaConvenio .= "   <flserasa>".$flserasa."</flserasa>";
@@ -97,6 +107,7 @@
     $xmlHabilitaConvenio .= "   <idrecipr>".$idrecipr."</idrecipr>";
     $xmlHabilitaConvenio .= "   <idreciprold>".$idreciprold."</idreciprold>";
     $xmlHabilitaConvenio .= "   <perdesconto>".$perdesconto."</perdesconto>";
+    $xmlHabilitaConvenio .= "   <inenvcob>".$inenvcob."</inenvcob>";	
 	$xmlHabilitaConvenio .= " </Dados>";
 	$xmlHabilitaConvenio .= "</Root>";
 
