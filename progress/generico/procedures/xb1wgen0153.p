@@ -3,7 +3,7 @@
 
    Programa: xb1wgen0153.p
    Autor   : Tiago Machado / Daniel Zimmermann
-   Data    : Fevereiro/2013                   Ultima atualizacao: 08/03/2016
+   Data    : Fevereiro/2013                   Ultima atualizacao: 25/01/2017
 
    Dados referentes ao programa:
 
@@ -26,6 +26,9 @@
 							
 			   14/04/2016 - Alterada procedure buscar-cadtar para buscar também
 						    o campo flutlpct. Prj. 218 - Pacotes de Tarifas (Lombardi).
+
+			   25/01/2017 - Adicionadas variaveis aux_cdhiscop e aux_cdhiscnt
+							(PRJ321 - Reinert).
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                       NO-UNDO.
@@ -63,7 +66,11 @@ DEF VAR aux_vlfinfvl AS DECI                                       NO-UNDO.
 DEF VAR aux_cdhistor AS INTE                                       NO-UNDO.
 DEF VAR aux_dshistor AS CHAR                                       NO-UNDO.
 DEF VAR aux_cdhisest AS INTE                                       NO-UNDO.
+DEF VAR aux_cdhiscop AS INTE                                       NO-UNDO.
+DEF VAR aux_cdhiscnt AS INTE                                       NO-UNDO.
 DEF VAR aux_dshisest AS CHAR                                       NO-UNDO.
+DEF VAR aux_dshiscnt AS CHAR                                       NO-UNDO.
+DEF VAR aux_dshiscop AS CHAR                                       NO-UNDO.
 DEF VAR aux_nrdconta AS INTE                                       NO-UNDO.
 DEF VAR aux_nrmatric AS INTE                                       NO-UNDO.
 DEF VAR aux_cdtipcta AS INTE                                       NO-UNDO.
@@ -215,6 +222,8 @@ PROCEDURE valores_entrada:
             WHEN "cdhistor" THEN aux_cdhistor = INTE(tt-param.valorCampo).
             WHEN "dshistor" THEN aux_dshistor = tt-param.valorCampo.
             WHEN "cdhisest" THEN aux_cdhisest = INTE(tt-param.valorCampo).
+			WHEN "cdhisdebcop" THEN aux_cdhiscop = INTE(tt-param.valorCampo).
+			WHEN "cdhisdebcnt" THEN aux_cdhiscnt = INTE(tt-param.valorCampo).
             WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo).
             WHEN "nrmatric" THEN aux_nrmatric = INTE(tt-param.valorCampo).
             WHEN "cdtipcta" THEN aux_cdtipcta = INTE(tt-param.valorCampo).
@@ -254,6 +263,8 @@ PROCEDURE valores_entrada:
             WHEN "cagencia" THEN aux_cagencia = INTE(tt-param.valorCampo).
             WHEN "flgchcus" THEN aux_flgchcus = LOGICAL(tt-param.valorCampo).
             WHEN "dshisest" THEN aux_dshisest = tt-param.valorCampo.
+			WHEN "dshisdebcnt" THEN aux_dshiscnt = tt-param.valorCampo.
+			WHEN "dshisdebcop" THEN aux_dshiscop = tt-param.valorCampo.
             WHEN "cdperiod" THEN aux_cdperiod = INTE(tt-param.valorCampo).
             WHEN "mespsqch" THEN aux_mespsqch = INTE(tt-param.valorCampo). 
             WHEN "anopsqch" THEN aux_anopsqch = INTE(tt-param.valorCampo). 
@@ -1936,6 +1947,22 @@ PROCEDURE lista-historicos:
     IF aux_dshistor  = '' AND
        aux_dshisest <> '' THEN
        aux_dshistor = aux_dshisest.
+
+    IF aux_cdhistor = 0  AND
+       aux_cdhiscop > 0  THEN
+       aux_cdhistor = aux_cdhiscop.
+
+    IF aux_dshistor  = '' AND
+       aux_dshiscop <> '' THEN
+       aux_dshistor = aux_dshiscop.
+
+    IF aux_cdhistor = 0  AND
+       aux_cdhiscnt > 0  THEN
+       aux_cdhistor = aux_cdhiscnt.
+
+    IF aux_dshistor  = '' AND
+       aux_dshiscnt <> '' THEN
+       aux_dshistor = aux_dshiscnt.
 
     RUN lista-historicos IN hBO(INPUT aux_cdcooper,
                                 INPUT aux_cdagenci,
