@@ -976,7 +976,11 @@ DO:
              aux_codigo_barras = STRING(xText:NODE-VALUE).
         ELSE
 		IF   xField:NAME = "NRCTLNPC" THEN
+        DO:
              aux_cdctrlcs = STRING(xText:NODE-VALUE). 
+             IF aux_cdctrlcs = ? THEN    
+                aux_cdctrlcs = "".
+        END.         
 		ELSE
         IF   xField:NAME = "FLGSITRC" THEN
              aux_flgsitrc = INTE(xText:NODE-VALUE).
