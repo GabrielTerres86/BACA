@@ -3344,7 +3344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
           ,pr_dtvencto
           ,pr_tpcptdoc
           ,pr_idtitdda
-          ,pr_cdctrlcs);
+          ,nvl(pr_cdctrlcs,' '));
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;

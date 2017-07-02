@@ -3812,7 +3812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                ,vr_nmprepos
                ,pr_idtitdda
                ,vr_tpdvalor
-               ,pr_cdctrlcs);
+               ,nvl(pr_cdctrlcs,' '));
          EXCEPTION
             WHEN OTHERS THEN
                vr_dscritic := 'Nao foi possivel agendar o pagamento. ';
