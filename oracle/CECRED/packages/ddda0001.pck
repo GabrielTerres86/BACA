@@ -2440,15 +2440,21 @@ CREATE OR REPLACE PACKAGE BODY "CECRED"."DDDA0001" AS
     --Selecionar dados saque
     CURSOR cr_dadosaque(pr_cnpjcpfpagdr IN NUMBER,
                         pr_tppessoa     IN VARCHAR2) IS
-      SELECT tbj."DDASitPagEletr" DDASitPagEletr
-            ,tbj."QtdAdesao"      QtdAdesao
-        FROM VWJDNPCPAG_PAGADOR_ELETRONICO@JDNPCBISQL  tbj
-       WHERE tbj."CNPJCPFPagdr"  = pr_cnpjcpfpagdr
+      SELECT tbj."SitCliPagdrDDA" DDASitPagEletr
+            ,tbj."QtdAdesCliPagdrDDA"      QtdAdesao
+        FROM tbjdnpccip_pageletr@jdnpcsql  tbj
+       WHERE tbj."CPFCNPJPagdr"  = pr_cnpjcpfpagdr
          AND tbj."TpPessoaPagdr" = pr_tppessoa;
            
     rw_dadosaque cr_dadosaque%ROWTYPE;
   
   BEGIN
+    
+    --> verificar se as informações foram marcadas corretamente
+    IF pr_tppessoa NOT IN ('J','F') OR
+       nvl(pr_nrcpfcgc,0) = 0 THEN
+      pr_flgsacad := 0; 
+    END IF;
   
     -- Busca os dados do saque
     OPEN cr_dadosaque(pr_cnpjcpfpagdr => pr_nrcpfcgc,
