@@ -4909,11 +4909,16 @@ PROCEDURE p_cria_titulo:
         ELSE
             ASSIGN aux_tppessoa = "J".
     
+            
+        /* Emergencial (Rafael) */
+        /* Retirado devido aos problemas entre transcoes SQL/Server e Oracle */
+        ASSIGN aux_flgsacad = 0.
+    
         /* Verificações para identificar se o boleto eh DDA "A4"
            se deve ser registrado online "R1"
            e se eh Cooperativa Emite e Expede "P1" */ 
            
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+/*        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
         /* Identificar se o pagador eh DDA */
         RUN STORED-PROCEDURE pc_verifica_sacado_DDA
@@ -4931,34 +4936,11 @@ PROCEDURE p_cria_titulo:
         
         ASSIGN aux_flgsacad = 0
                aux_flgsacad = pc_verifica_sacado_DDA.pr_flgsacad 
-                              WHEN pc_verifica_sacado_DDA.pr_flgsacad <> ?.
-        
-        
-        /* verificar o rollout de registro do valor do titulo */
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-       
-        RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
-            aux_ponteiro = PROC-HANDLE
-            ("SELECT npcb0001.fn_verifica_rollout(" + STRING(crapcob.cdcooper) + /* Cooperativa */
-             ",to_date('" + STRING(crapcob.dtmvtolt) + "', 'DD/MM/RRRR')" + /* Data de movimento */
-             "," + REPLACE(STRING(crapcob.vltitulo),",",".") + /* Vl. do Título */                                                     
-             ",1" +                       /* Tipo de regra de rollout(1-registro,2-pagamento)  */
-             ") FROM dual").
-        
-        FOR EACH {&sc2_dboraayl}.proc-text-buffer 
-        WHERE PROC-HANDLE = aux_ponteiro:
-           ASSIGN aux_rollout = INT(proc-text).
-        END.
-       
-        CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
-           WHERE PROC-HANDLE = aux_ponteiro.
-        
-       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-               
+                              WHEN pc_verifica_sacado_DDA.pr_flgsacad <> ?. */                              
         
         ASSIGN aux_cdmotivo = "".
         
-        /* 1) se pagador DDA ou boleto in ROLLOUT -> vr_cdmotivo = 'A4'; */ 
+        /* 1) se pagador DDA -> vr_cdmotivo = 'A4'; */ 
         IF aux_flgsacad = 1 THEN
             ASSIGN aux_cdmotivo = "A4".
         
