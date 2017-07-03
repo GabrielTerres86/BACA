@@ -838,8 +838,8 @@ PROCEDURE consulta-boleto-2via.
                          INPUT crapcob.vltitulo,
                          OUTPUT aux_rollout).  
 						 
-    IF aux_rollout = 0 AND /* fora da faixa de rollout */
-       crapcob.flgcbdda = FALSE THEN /* titulo comum (nao-DDA) */
+    IF aux_rollout = 0 THEN /* fora da faixa de rollout */
+       /*crapcob.flgcbdda = FALSE THEN titulo comum (nao-DDA) */
       DO:						                
 
 		RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
