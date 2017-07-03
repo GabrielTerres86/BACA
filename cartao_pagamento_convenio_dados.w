@@ -45,8 +45,11 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   14/06/2016 - #413717 Retirada a verificacao de impressora antes
                                da chamada da visualizacao da impressao (Carlos)
 
-				  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
+                  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
                                Futuros. Lenilson (Mouts)
+                               
+                  03/07/2017 - Inclusao do parameto de controle consulta npc na chamada
+                               da rotina efetua_pagamento.p, PRJ340 - NPC (Odirlei-AMcom)             
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -273,26 +276,26 @@ DEFINE FRAME f_cartao_pagto_convenio_dados
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 242 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.38 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.38 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 240 NO-TAB-STOP 
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
-          FONT 8
-     "Conta/Titular:" VIEW-AS TEXT
-          SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 140
-          FONT 8
-     "Data da Transação:" VIEW-AS TEXT
-          SIZE 33 BY .95 AT ROW 14.14 COL 13 WIDGET-ID 188
-          FONT 14
-     "Linha Digitável:" VIEW-AS TEXT
-          SIZE 26 BY .95 AT ROW 12.19 COL 20 WIDGET-ID 156
+     "Convênio:" VIEW-AS TEXT
+          SIZE 18 BY .95 AT ROW 10.29 COL 28 WIDGET-ID 184
           FONT 14
      "Valor do Pagamento:" VIEW-AS TEXT
           SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
           FONT 14
+     "Linha Digitável:" VIEW-AS TEXT
+          SIZE 26 BY .95 AT ROW 12.19 COL 20 WIDGET-ID 156
+          FONT 14
+     "Data da Transação:" VIEW-AS TEXT
+          SIZE 33 BY .95 AT ROW 14.14 COL 13 WIDGET-ID 188
+          FONT 14
+     "Conta/Titular:" VIEW-AS TEXT
+          SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 140
+          FONT 8
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+          FONT 8
      "Data do Pagamento:" VIEW-AS TEXT
           SIZE 34 BY .95 AT ROW 16 COL 11.6 WIDGET-ID 190
-          FONT 14
-     "Convênio:" VIEW-AS TEXT
-          SIZE 18 BY .95 AT ROW 10.29 COL 28 WIDGET-ID 184
           FONT 14
      RECT-132 AT ROW 9.81 COL 46 WIDGET-ID 198
      RECT-134 AT ROW 11.71 COL 46 WIDGET-ID 152
@@ -543,6 +546,7 @@ DO:
                                                  INPUT par_flagenda,
                                                  INPUT par_idtpdpag,
                                                  INPUT par_tpcptdoc,
+                                                 INPUT "", /* nrctrnpc */
                                                 OUTPUT aux_dsprotoc,
                                                 OUTPUT aux_cdbcoctl,
                                                 OUTPUT aux_cdagectl,
