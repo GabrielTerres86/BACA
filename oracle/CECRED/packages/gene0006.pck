@@ -1008,6 +1008,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         END IF;
         
       END IF;
+
+      -- Se chegou ate aqui, foi executado com sucesso
+      pr_des_erro := 'OK';
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
