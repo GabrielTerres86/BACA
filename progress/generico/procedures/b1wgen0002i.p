@@ -8828,7 +8828,8 @@ PROCEDURE valida_impressao:
    
     IF  AVAILABLE crawepr   THEN
         DO:
-        IF  crawepr.insitest < 2 THEN
+        /* Se ainda nao Enviada ou Enviada mas com Erro Consultas */
+        IF  crawepr.insitest < 2 OR crawepr.insitapr = 5 THEN
             DO:
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 

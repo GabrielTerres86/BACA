@@ -2594,7 +2594,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Variaveis de critica
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
-
+      
+      -- Obrigatoriedade analise automatica da Esteira
+      vr_inobriga VARCHAR2(1) := 'N';
+      
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
@@ -2636,9 +2639,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                                pr_cdcooper =>  pr_cdcooper,
                                                pr_cdacesso => 'EXC_ANALISE_CREDITO')||
                      ';';
-
+      
+      -- BUscar identificador de obrigação de análise automática
+      este0001.pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdlcremp => rw_crawepr.cdlcremp
+                                             ,pr_inobriga => vr_inobriga
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+      -- Tratar erros
+      IF vr_dscritic IS NOT NULL OR vr_cdcritic > 0 THEN 
+        RAISE vr_exc_saida;
+      END IF;
+      
       -- Verifica se a linha de credito atual esta parametrizada para nao possuir analise
-      IF instr(vr_dslinhas,';'||rw_crawepr.cdlcremp||';') > 0 THEN
+      IF instr(vr_dslinhas,';'||rw_crawepr.cdlcremp||';') > 0 OR vr_inobriga = 'S' THEN
 	    BEGIN
           UPDATE crawepr
              SET nrseqpac = 0

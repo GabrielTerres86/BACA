@@ -831,7 +831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 					/* Atualizar as perguntas do Rating */      
 					UPDATE crapprp prp
 						 SET prp.nrinfcad = NVL(pr_nrinfcad,prp.nrinfcad)
-								,prp.nrgarope = NVL(pr_nrinfcad,prp.nrgarope)
+								,prp.nrgarope = NVL(pr_nrgarope,prp.nrgarope)
 								,prp.nrliquid = NVL(pr_nrliquid,prp.nrliquid)
 								,prp.nrpatlvr = NVL(pr_nrparlvr,prp.nrpatlvr)
 								,prp.nrperger = NVL(pr_nrperger,prp.nrperger)
@@ -1795,10 +1795,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			
 			-- Tratar aprovação/reprovação
 			IF lower(pr_dsresana) IN ('aprovar','reprovar','erro') THEN
-				IF lower(pr_dsresana) = 'aprovar' THEN
+				-- Tratar status
+        IF lower(pr_dsresana) = 'aprovar' THEN
 					vr_insitapr := 1; -- Aprovado
-				ELSE
+				ELSIF lower(pr_dsresana) = 'reprovar' THEN
 					vr_insitapr := 2; -- Reprovado
+        ELSE
+          vr_insitapr := 5; -- Erro Consultas
 				END IF;
         
 				-- Atualizar proposta de empréstimo

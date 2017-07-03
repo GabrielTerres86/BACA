@@ -2003,7 +2003,8 @@ PROCEDURE obtem-propostas-emprestimo:
                 ASSIGN tt-proposta-epr.dssitapr = "Nao Aprov. Manual".
             END.
 					WHEN 3 THEN ASSIGN tt-proposta-epr.dssitapr = "Com Restricao".
-					WHEN 4 THEN ASSIGN tt-proposta-epr.dssitapr = "Refazer".
+					WHEN 4 THEN ASSIGN tt-proposta-epr.dssitapr = "Refazer".          
+          WHEN 5 THEN ASSIGN tt-proposta-epr.dssitapr = "Erro Consultas".
 					OTHERWISE tt-proposta-epr.dssitapr = "-".
 				END CASE.
     END.
@@ -4366,7 +4367,7 @@ PROCEDURE verifica-limites-excedidos:
 
                IF (par_vlutiliz + par_vlemprst) > par_vlcnsscr  THEN
                   DO:
-                      par_dsmesage = "Efetue consulta no SCR.".
+                      par_dsmesage = "Sera necessaria nova consulta ao SCR.".
                   END.
 
                 LEAVE.
@@ -12712,3 +12713,4 @@ PROCEDURE leitura_lem:
     RETURN "OK".
     
 END PROCEDURE.
+

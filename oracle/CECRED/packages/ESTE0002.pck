@@ -824,6 +824,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			vr_qtregist INTEGER;
 			vr_vlsalari crapcje.vlsalari%TYPE;
 			vr_vltotpre NUMBER(25,2);
+			vr_vlalugue NUMBER;
+			vr_vldespes NUMBER;
+			vr_vlrendim NUMBER;
 			vr_vlmedfat NUMBER;
 			vr_vlendivi NUMBER;
 			vr_qtmesest crapprm.dsvlrprm%TYPE;
@@ -846,7 +849,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			vr_tab_co_responsavel      EMPR0001.typ_tab_dados_epr;
 			vr_tab_co_responsavel_ord  EMPR0001.typ_tab_dados_epr;
 			vr_tab_dados_epr           EMPR0001.typ_tab_dados_epr;
-			vr_vet_nrctrliq            RATI0001.typ_vet_nrctrliq := RATI0001.typ_vet_nrctrliq(0,0,0,0,0,0,0,0,0,0);
 			
       --Tipo de registro do tipo data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -1050,11 +1052,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			-- Pegar salario do Conjuge
 			CURSOR cr_crapcje (pr_cdcooper IN crapnrc.cdcooper%type
 												,pr_nrdconta IN crapnrc.nrdconta%type) IS
-				SELECT nvl(sum(nvl(vlsalari,0)),0) vlsalari
+				SELECT nrcpfcjg 
+              ,nvl(sum(nvl(vlsalari,0)),0) vlsalari
 					FROM crapcje
 				 WHERE crapcje.cdcooper = pr_cdcooper
 					 AND crapcje.nrdconta = pr_nrdconta
-					 AND crapcje.idseqttl = 1;
+					 AND crapcje.idseqttl = 1
+         GROUP BY nrcpfcjg;
 			rw_crapcje cr_crapcje%rowtype;
 			    
       -- Buscar descrição
@@ -1295,18 +1299,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       rw_crapatr cr_crapatr%ROWTYPE;
     
       -- Buscar as informações do Arquivo SCR
-      CURSOR cr_crapopf(pr_dtmvtoan IN crapdat.dtmvtolt%TYPE) IS
+      CURSOR cr_crapopf IS
         SELECT qtopesfn
               ,qtifssfn
               ,dtrefere
           FROM crapopf
          WHERE nrcpfcgc = rw_crapass.nrcpfcgc
-           AND dtrefere <= pr_dtmvtoan
          ORDER BY dtrefere DESC;
       rw_crapopf cr_crapopf%ROWTYPE;
-    
+      
       -- Na sequencia buscar os valores dos vencimentos
-      CURSOR cr_crapvop IS
+      CURSOR cr_crapvop(pr_nrcpfcgc in crapass.nrcpfcgc%type) IS
         SELECT SUM(vlvencto) vlopesfn
               ,SUM(CASE
                      WHEN cdvencto BETWEEN 205 AND 290 THEN
@@ -1327,9 +1330,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                       0
                    END) vlvcto130
           FROM crapvop
-         WHERE nrcpfcgc = rw_crapass.nrcpfcgc
+         WHERE nrcpfcgc = pr_nrcpfcgc
            AND dtrefere = rw_crapopf.dtrefere;
-      rw_crapvop cr_crapvop%ROWTYPE;
+      rw_crapvop     cr_crapvop%ROWTYPE;
+      rw_crapvop_cje cr_crapvop%ROWTYPE;      
     
       -- Buscar todos os seguros da Conta do Cooperado 
       CURSOR cr_crapseg IS
@@ -1715,11 +1719,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Valor do Imovel (Somente quando não for alugado)
       IF rw_crapenc.vlalugue > 0 AND rw_crapenc.incasprp NOT IN (0, 3) THEN
-        vr_obj_generic2.put('valorImovel'
-                           ,este0001.fn_decimal_ibra(rw_crapenc.vlalugue));
+        vr_obj_generic2.put('valorImovel',este0001.fn_decimal_ibra(rw_crapenc.vlalugue));
+        vr_vlalugue := 0;
 			ELSE
-				-- Quando alugado usamos o mesmo campo para enviar valor do aluguel
+				-- Quando alugado enviaremos valor Aluguel
 				vr_obj_generic2.put('valorAluguel', este0001.fn_decimal_ibra(rw_crapenc.vlalugue));
+        vr_vlalugue := rw_crapenc.vlalugue;
 			END IF;    
 			
 			-- Busca dos bens do associado CURSOR cr_crapbem e vr_vlrtotbem
@@ -1847,7 +1852,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic2.put('estaDCTROR'
                            ,(rw_crapass.cdsitdtl = 2));
       END IF;
-    
+      				
+      -- Buscar as informações do Arquivo SCR   
+      OPEN cr_crapopf;
+      FETCH cr_crapopf
+        INTO rw_crapopf;
+      
+      IF cr_crapopf%FOUND THEN
+        CLOSE cr_crapopf;
+          
+        -- Na sequencia buscar os valores dos vencimentos
+        OPEN cr_crapvop(rw_crapass.nrcpfcgc);
+        FETCH cr_crapvop
+          INTO rw_crapvop;
+        CLOSE cr_crapvop;    
+          
+        -- Enfim, enviar as informações ao JSON
+        vr_obj_generic2.put('conscrOpSFN'
+                           ,este0001.fn_decimal_ibra(rw_crapvop.vlopesfn));
+        vr_obj_generic2.put('conscrOpVenc'
+                           ,este0001.fn_decimal_ibra(rw_crapvop.vlopevnc));
+        vr_obj_generic2.put('conscrOpPrej'
+                           ,este0001.fn_decimal_ibra(rw_crapvop.vlopeprj));
+        vr_obj_generic2.put('conscrQtOper', rw_crapopf.qtopesfn);
+        vr_obj_generic2.put('conscrqtIFs', rw_crapopf.qtifssfn);
+        vr_obj_generic2.put('conscr61a90'
+                           ,este0001.fn_decimal_ibra(rw_crapvop.vlvcto130));
+          
+      ELSE                      
+        CLOSE cr_crapopf;
+      END IF;   
+      
       -- Somente para Pessoa Fisica
       IF rw_crapass.inpessoa = 1 THEN
       
@@ -1986,50 +2021,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			  -- Somente para preponente
 				IF pr_flprepon THEN 
 
-					-- calcular nivel de comprometimento
-
-					-- Contratos que ele esta liquidando
-					vr_vet_nrctrliq(1)  := rw_crawepr.nrctrliq##1;
-					vr_vet_nrctrliq(2)  := rw_crawepr.nrctrliq##2;
-					vr_vet_nrctrliq(3)  := rw_crawepr.nrctrliq##3;
-					vr_vet_nrctrliq(4)  := rw_crawepr.nrctrliq##4;
-					vr_vet_nrctrliq(5)  := rw_crawepr.nrctrliq##5;
-					vr_vet_nrctrliq(6)  := rw_crawepr.nrctrliq##6;
-					vr_vet_nrctrliq(7)  := rw_crawepr.nrctrliq##7;
-					vr_vet_nrctrliq(8)  := rw_crawepr.nrctrliq##8;
-					vr_vet_nrctrliq(9)  := rw_crawepr.nrctrliq##9;
-					vr_vet_nrctrliq(10) := rw_crawepr.nrctrliq##10;
-
-					--Verificar se usa tabela juros
-					vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-																									,pr_nmsistem => 'CRED'
-																									,pr_tptabela => 'USUARI'
-																									,pr_cdempres => 11
-																									,pr_cdacesso => 'TAXATABELA'
-																									,pr_tpregist => 0);
-					-- Se a primeira posição do campo
-					-- dstextab for diferente de zero
-					vr_inusatab:= SUBSTR(vr_dstextab,1,1) != '0';
-
-					RATI0001.pc_nivel_comprometimento(pr_cdcooper     => pr_cdcooper     --> Cooperativa conectada
-																					 ,pr_cdoperad     => '1'             --> Operador conectado
-																					 ,pr_idseqttl     => 1               --> Sequencia do titular
-																					 ,pr_idorigem     => 5               --> Origem da requisição
-																					 ,pr_nrdconta     => pr_nrdconta     --> Conta do associado
-																					 ,pr_tpctrato     => 90              --> Tipo do Rating
-																					 ,pr_nrctrato     => pr_nrctremp     --> Número do contrato de Rating
-																					 ,pr_vet_nrctrliq => vr_vet_nrctrliq --> Vetor de contratos a liquidar
-																					 ,pr_vlpreemp     => rw_crawepr.vlpreemp     --> Valor da parcela
-																					 ,pr_rw_crapdat   => rw_crapdat      --> Calendário do movimento atual
-																					 ,pr_flgdcalc     => 1               --> Flag para calcular sim ou não
-																					 ,pr_inusatab     => vr_inusatab     --> Indicador de utilização da tabela de juros
-																					 ,pr_vltotpre     => vr_vltotpre     --> Valor calculado da prestação
-																					 ,pr_dscritic     => vr_dscritic);
-					-- Se retornou erro, deve abortar
-					IF nvl(vr_cdcritic,0) > 0 THEN
-						RAISE vr_exc_saida;
-					END IF;
-					
 					--Pegar salario do Conjuge
 					OPEN cr_crapcje (pr_cdcooper => pr_cdcooper
 													,pr_nrdconta => pr_nrdconta);
@@ -2040,12 +2031,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 						vr_vlsalari := rw_crapcje.vlsalari;
 					END IF;
           CLOSE cr_crapcje;
-					
-          IF (nvl(rw_crapttl.vlrendim,0) + nvl(rw_crapttl.vroutrorn,0) + nvl(vr_vlsalari,0)) <> 0 THEN
-            /* Dividir pelo ( salario + rendimentos + Salario conjuge ) */
-            vr_vltotpre := nvl(vr_vltotpre,0) / (nvl(rw_crapttl.vlrendim,0) + nvl(rw_crapttl.vroutrorn,0) + nvl(vr_vlsalari,0));
+          
+          -- Calcular rendimentos Titular + Conjuge
+          vr_vlrendim := nvl(rw_crapttl.vlrendim,0) + nvl(rw_crapttl.vroutrorn,0) + nvl(vr_vlsalari,0);
+          
+          -- Na sequencia buscar os valores dos vencimentos do Conjuge
+          OPEN cr_crapvop(rw_crapcje.nrcpfcjg);
+          FETCH cr_crapvop
+            INTO rw_crapvop_cje;
+          CLOSE cr_crapvop;
+          
+          -- Calcula o valor total da despesa
+          vr_vldespes := nvl(vr_vlalugue,0) + rw_crawepr.vlpreemp + 
+                         nvl(rw_crapvop.vlvcto130,0) + nvl(rw_crapvop_cje.vlvcto130,0);
+
+          -- Calcula o percentual de comprometimento
+          IF vr_vlrendim = 0 THEN
+            vr_vltotpre := 100; -- Se nao tiver renda, sera 100% de comprometimento
+          ELSE
+            vr_vltotpre := round(vr_vldespes / vr_vlrendim * 100,2);
           END IF;
-									-- Envio do percentual de comprometimento de renda do Preponente
+          
+          -- Envio do percentual de comprometimento de renda do Preponente
 				  vr_obj_generic2.put('percentComprometRenda' , ESTE0001.fn_decimal_ibra(vr_vltotpre));
 				END IF;				
       
@@ -2220,8 +2227,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         IF rw_crapjfn.perfatcl <> 0 THEN
           vr_obj_generic2.put('percentFaturamenMaiorCliente'
                              ,este0001.fn_decimal_ibra(rw_crapjfn.perfatcl));
-        END IF;
-      				
+        END IF;       
+        
 				-- Somente para preponente
 				IF pr_flprepon THEN 
 
@@ -2449,32 +2456,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Enviar flag se tem DebAutomático
       vr_obj_generic2.put('temDebaut', vr_temdebaut);
     
-      -- Buscar as informações do Arquivo SCR   
-      OPEN cr_crapopf(rw_crapdat.dtmvtoan);
-      FETCH cr_crapopf
-        INTO rw_crapopf;
-    
-      -- Na sequencia buscar os valores dos vencimentos
-      OPEN cr_crapvop;
-      FETCH cr_crapvop
-        INTO rw_crapvop;
-      CLOSE cr_crapvop;
-    
-		  IF cr_crapopf%FOUND THEN
-				-- Enfim, enviar as informações ao JSON
-				vr_obj_generic2.put('conscrOpSFN'
-													 ,este0001.fn_decimal_ibra(rw_crapvop.vlopesfn));
-				vr_obj_generic2.put('conscrOpVenc'
-													 ,este0001.fn_decimal_ibra(rw_crapvop.vlopevnc));
-				vr_obj_generic2.put('conscrOpPrej'
-													 ,este0001.fn_decimal_ibra(rw_crapvop.vlopeprj));
-				vr_obj_generic2.put('conscrQtOper', rw_crapopf.qtopesfn);
-				vr_obj_generic2.put('conscrqtIFs', rw_crapopf.qtifssfn);
-				vr_obj_generic2.put('conscr61a90'
-													 ,este0001.fn_decimal_ibra(rw_crapvop.vlvcto130));
-      END IF;    
-      CLOSE cr_crapopf;
-			    
       -- Buscar informações e Saldos das Aplicações 
       apli0002.pc_obtem_dados_aplicacoes(pr_cdcooper       => pr_cdcooper --Codigo Cooperativa
                                         ,pr_cdagenci       => 1 --Codigo Agencia
@@ -4352,7 +4333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           -- Passaremos a conta para montagem dos dados:
 
           pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => rw_crapavt.nrdconta
+                                 ,pr_nrdconta => rw_crapavt.nrdctato
                                  ,pr_nrctremp => pr_nrctremp
                                  ,pr_dsjsonan => vr_obj_socio
                                  ,pr_cdcritic => vr_cdcritic 
@@ -4402,10 +4383,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Setar flag para indicar que há participações
         vr_flpartic := true;
         -- Se socio for associado
-        IF rw_crapepa.nrdconta > 0 THEN 
+        IF rw_crapepa.nrctasoc > 0 THEN 
           -- Passaremos a conta para montagem dos dados:
           pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => rw_crapepa.nrdconta
+                                 ,pr_nrdconta => rw_crapepa.nrctasoc
                                  ,pr_nrctremp => pr_nrctremp
                                  ,pr_dsjsonan => vr_obj_particip
                                  ,pr_cdcritic => vr_cdcritic 
