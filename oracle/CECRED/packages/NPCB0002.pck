@@ -204,6 +204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_titulo4         NUMBER  := pr_titulo4; 
     vr_titulo5         NUMBER  := pr_titulo5;
     vr_codbarras       VARCHAR2(44) := pr_codigo_barras;       
+    vr_nrdcaixa        NUMBER  := pr_nrdcaixa; 
+    vr_flgpgdda        INTEGER := 0;
     vr_tab_erro        GENE0001.typ_tab_erro;
     vr_critica_data    BOOLEAN:= FALSE;
   BEGIN
@@ -224,6 +226,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
+    
+    --> verificar se veio do canal DDDA
+    IF vr_nrdcaixa = 999 THEN
+      vr_nrdcaixa := 900;
+      vr_flgpgdda := 1;
+    END IF;
+    
     
     -- rw_crapdat.dtmvtolt := TRUNC(SYSDATE); -- ver renato
     -- rw_crapdat.dtmvtolt := to_date('18/05/2017','DD/MM/RRRR');
@@ -248,7 +257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                         ,pr_nro_conta   => pr_nrdconta      --Numero Conta
                                         ,pr_idseqttl    => pr_idseqttl      --Sequencial do Titular
                                         ,pr_cod_agencia => pr_cdagenci      --Codigo da Agencia
-                                        ,pr_nro_caixa   => pr_nrdcaixa     --Numero Caixa
+                                        ,pr_nro_caixa   => vr_nrdcaixa      --Numero Caixa
                                         ,pr_codbarras   => vr_codbarras --Codigo Barras
                                         ,pr_flgcritica  => TRUE             --Flag Critica
                                         ,pr_nrdconta    => vr_nrdconta_cob  --Numero da Conta OUT
@@ -388,6 +397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                       ,pr_codigo_barras => pr_codigo_barras  
                                       ,pr_cdoperad      => pr_cdoperad  
                                       ,pr_idorigem      => pr_idorigem     
+                                      ,pr_flgpgdda      => vr_flgpgdda 
                                       ,pr_nrdocbenf     => vr_nrdocbenf
                                       ,pr_tppesbenf     => vr_tppesbenf
                                       ,pr_dsbenefic     => vr_dsbenefic      
@@ -432,10 +442,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
 
         -- Busca o valor do titulo de vencimento
         CXON0014.pc_retorna_vlr_tit_vencto(pr_cdcooper      => pr_cdcooper
-                                          ,pr_nrdconta      => pr_nrdcaixa
+                                          ,pr_nrdconta      => pr_nrdconta
                                           ,pr_idseqttl      => pr_idseqttl
                                           ,pr_cdagenci      => pr_cdagenci
-                                          ,pr_nrdcaixa      => pr_nrdcaixa
+                                          ,pr_nrdcaixa      => vr_nrdcaixa
                                           ,pr_titulo1       => pr_titulo1
                                           ,pr_titulo2       => pr_titulo2
                                           ,pr_titulo3       => pr_titulo3

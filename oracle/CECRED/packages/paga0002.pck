@@ -6636,7 +6636,7 @@ create or replace package body cecred.PAGA0002 is
                      ,pr_idtipcar               -- craplau.idtipcar
                      ,pr_nrcartao               -- craplau.nrcartao
                      ,vr_idanalise_fraude       -- craplau.idanafrd
-                     ,pr_cdctrlcs               -- craplau.cdctrlcs
+                     ,nvl(pr_cdctrlcs,' ')      -- craplau.cdctrlcs
                      )
                      returning idlancto
                         into vr_idlancto;
