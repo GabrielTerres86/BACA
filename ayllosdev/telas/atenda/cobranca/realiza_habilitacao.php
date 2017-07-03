@@ -2,7 +2,7 @@
 
 /*************************************************************************
 	Fonte: realiza_habilitacao.php
-	Autor: Gabriel						Ultima atualizacao: 17/06/2016
+	Autor: Gabriel						Ultima atualizacao: 13/12/2016
 	Data : Dezembro/2010
 	
 	Objetivo: Efetuar a habilitacao do convenio CEB.
@@ -36,6 +36,8 @@
 				04/08/2016 - Adicionado campo de forma de envio de 
 						     arquivo de cobrança. (Reinert)
 
+				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
 *************************************************************************/
 
 	session_start();
@@ -64,6 +66,8 @@
 	$flgcebhm = $_POST["flgcebhm"];
 	$dsdregis = $_POST["dsdregis"]; // Valores da emissao de boletos dos titulares
 	$flgregis = trim($_POST["flgregis"]);
+    $flgregon = trim($_POST["flgregon"]);
+    $flgpgdiv = trim($_POST["flgpgdiv"]);
 	$flcooexp = trim($_POST["flcooexp"]);
 	$flceeexp = trim($_POST["flceeexp"]);
     $flserasa = trim($_POST["flserasa"]);
@@ -92,6 +96,8 @@
 	$xmlHabilitaConvenio .= "   <dsdregis>".$dsdregis."</dsdregis>";
 	$xmlHabilitaConvenio .= "   <idseqttl>1</idseqttl>";
 	$xmlHabilitaConvenio .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xmlHabilitaConvenio .= "   <flgregon>".$flgregon."</flgregon>";
+	$xmlHabilitaConvenio .= "   <flgpgdiv>".$flgpgdiv."</flgpgdiv>";
 	$xmlHabilitaConvenio .= "   <flcooexp>".$flcooexp."</flcooexp>";
 	$xmlHabilitaConvenio .= "   <flceeexp>".$flceeexp."</flceeexp>";
     $xmlHabilitaConvenio .= "   <flserasa>".$flserasa."</flserasa>";

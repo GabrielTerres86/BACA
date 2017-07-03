@@ -1,0 +1,31 @@
+begin
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBCOBRAN_PROCESSA_RETORNO_NPC',
+                                job_type            => 'PLSQL_BLOCK',
+                                job_action          => 'DECLARE
+      VR_CDCRITIC INTEGER := 0;
+      VR_DSCRITIC VARCHAR2(4000) := NULL;
+    BEGIN
+      PC_CRPS718(PR_CDCOOPER => 3,
+                 PR_NRDCONTA => 0,
+                 PR_CDCRITIC => VR_CDCRITIC,
+                 PR_DSCRITIC => VR_DSCRITIC);
+  
+      IF TRIM(VR_DSCRITIC) IS NOT NULL THEN
+  
+        BTCH0001.PC_GERA_LOG_BATCH(PR_CDCOOPER     => 3,
+                                   PR_IND_TIPO_LOG => 2, -- Erro tratato
+                                   PR_NMARQLOG     => GENE0001.FN_PARAM_SISTEMA(''CRED'',
+                                                                                 3,
+                                                                                ''NOME_ARQ_LOG_MESSAGE''),
+                                   PR_DES_LOG      => TO_CHAR(SYSDATE, ''hh24:mi:ss'') ||
+                                                      '' - '' || ''PC_CRPS718'' || '' - '' || TRIM(vr_dscritic));
+      END IF;
+    END;',
+                                start_date          => to_date('03-07-2017 07:00:00', 'dd-mm-yyyy hh24:mi:ss'),
+                                repeat_interval     => 'Freq=MINUTELY;Interval=5',
+                                end_date            => to_date(null),
+                                job_class           => 'DEFAULT_JOB_CLASS',
+                                enabled             => true,
+                                auto_drop           => true,
+                                comments            => 'Processar retorno de titulos enviados a CIP');
+end;

@@ -96,14 +96,16 @@ PROCEDURE verifica-sacado-dda:
         
         { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
         
-        RUN STORED-PROCEDURE pc_verifica_sacado_DDA NO-ERROR
+        RUN STORED-PROCEDURE pc_verifica_sacado_DDA 
+            aux_handproc = PROC-HANDLE NO-ERROR
                              (INPUT tt-verifica-sacado.tppessoa, 
                               INPUT tt-verifica-sacado.nrcpfcgc,   
                              OUTPUT 0, 
                              OUTPUT 0,
                              OUTPUT "").
         
-        CLOSE STORED-PROCEDURE pc_verifica_sacado_DDA.
+        CLOSE STORED-PROCEDURE pc_verifica_sacado_DDA 
+              WHERE PROC-HANDLE = aux_handproc.
         
         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
         
@@ -224,22 +226,12 @@ PROCEDURE remessa-titulos-DDA:
                    
     END.
     
-    for each wt_remessa no-lock:
-        message wt_remessa_dda.dtoperac
-                wt_remessa_dda.hroperac
-                wt_remessa.idtitleg
-                view-as alert-box.
-    end.
-    
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
     
-/*    message "vai executar st" view-as alert-box. */
-
-    RUN STORED-PROCEDURE pc_remessa_titulos_dda NO-ERROR
+    RUN STORED-PROCEDURE pc_remessa_titulos_dda 
+        aux_handproc = PROC-HANDLE NO-ERROR
                           (OUTPUT 0,
                            OUTPUT "").
-
-/*    message "executou st" error-status:error view-as alert-box. */
     
     IF  ERROR-STATUS:ERROR  THEN 
         DO:
@@ -258,16 +250,13 @@ PROCEDURE remessa-titulos-DDA:
                 END.
         END.
     
-    CLOSE STORED-PROCEDURE pc_remessa_titulos_dda.
+    CLOSE STORED-PROCEDURE pc_remessa_titulos_dda 
+          WHERE PROC-HANDLE = aux_handproc.
     
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }    
     
-    
     ASSIGN aux_dscritic = pc_remessa_titulos_dda.pr_dscritic
                                 WHEN pc_remessa_titulos_dda.pr_dscritic <> ?.
-                                
-    message "passou altera_session critic?" aux_dscritic view-as alert-box.
-                                
                                 
     IF  aux_dscritic <> ""  THEN
         DO:
@@ -285,105 +274,20 @@ PROCEDURE remessa-titulos-DDA:
         BUFFER-COPY wt_remessa_dda TO tt-remessa-dda.
     END.
     
-/*    message "vai wt_retorno" view-as alert-box. */
-    
-    FOR EACH wt_retorno_dda NO-LOCK:
-/*        message "tem wt_retorno"
-                wt_retorno_dda.idtitleg
-                view-as alert-box.*/
-                
-        CREATE tt-retorno-dda.
-        BUFFER-COPY wt_retorno_dda TO tt-retorno-dda.
-    END.
-
-    FOR EACH wt_remessa_dda EXCLUSIVE-LOCK:
-        DELETE wt_remessa_dda.
-    END.
-                
-    FOR EACH wt_retorno_dda EXCLUSIVE-LOCK:
-        DELETE wt_retorno_dda.
-    END.
-
-/*    message "vai commitar" view-as alert-box.*/
-
-    END. /* do transaction */
-    
-/*    message "commit ok" view-as alert-box.*/
-
-    RETURN "OK".
-
-END PROCEDURE.
-                                  
-PROCEDURE Retorno-Operacao-Titulos-DDA:
-                                              
-    DEF INPUT  PARAM  TABLE        FOR tt-remessa-dda.    
-    DEF OUTPUT PARAM  TABLE        FOR tt-retorno-dda.
-    
-    
-    ASSIGN aux_msgerora = "".
-    
-    DO TRANSACTION:
-    
-    EMPTY TEMP-TABLE tt-retorno-dda.
-       
-    FOR EACH wt_remessa_dda EXCLUSIVE-LOCK:
-        DELETE wt_remessa_dda.
-    END.
-                
-    FOR EACH wt_retorno_dda EXCLUSIVE-LOCK:
-        DELETE wt_retorno_dda.
-    END.
-
-    FOR EACH tt-remessa-dda NO-LOCK:
-        CREATE wt_remessa_dda.
-        BUFFER-COPY tt-remessa-dda TO wt_remessa_dda.
-    END.
-    
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                         
-    RUN STORED-PROCEDURE pc_retorno_operacao_tit_DDA NO-ERROR
-                                (OUTPUT 0,
-                                 OUTPUT "").
-
-    CLOSE STORED-PROCEDURE pc_retorno_operacao_tit_DDA.
-    
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
-    
-    ASSIGN aux_dscritic = pc_retorno_operacao_tit_DDA.pr_dscritic
-                             WHEN pc_retorno_operacao_tit_DDA.pr_dscritic <> ?.
-
-    IF  aux_dscritic <> ""  THEN
-        DO:
-            UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS")   +
-                               " - B1wgen0087.p ' --> '" +
-                              aux_dscritic + " >> log/stored_procedure.log").
-            RETURN "NOK".
-        END.
-
-    EMPTY TEMP-TABLE tt-remessa-dda.
-    EMPTY TEMP-TABLE tt-retorno-dda.
-    
-    FOR EACH wt_remessa_dda NO-LOCK:
-        CREATE tt-remessa-dda.
-        BUFFER-COPY wt_remessa_dda TO tt-remessa-dda.
-    END.
-    
     FOR EACH wt_retorno_dda NO-LOCK:
         CREATE tt-retorno-dda.
         BUFFER-COPY wt_retorno_dda TO tt-retorno-dda.
     END.
-    
+
     FOR EACH wt_remessa_dda EXCLUSIVE-LOCK:
         DELETE wt_remessa_dda.
     END.
-                                 
+                
     FOR EACH wt_retorno_dda EXCLUSIVE-LOCK:
         DELETE wt_retorno_dda.
     END.
 
     END. /* do transaction */
-    
 
     RETURN "OK".
 
@@ -402,14 +306,16 @@ PROCEDURE grava-congpr-dda:
 
    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-   RUN STORED-PROCEDURE pc_grava_congpr_dda NO-ERROR 
+   RUN STORED-PROCEDURE pc_grava_congpr_dda 
+       aux_handproc = PROC-HANDLE NO-ERROR 
                        (INPUT par_cdcooper, 
                         INPUT par_datini, 
                         INPUT par_datfim,  
                         INPUT par_dtmvtolt, 
                         OUTPUT "").
 
-   CLOSE STORED-PROCEDURE pc_grava_congpr_dda.
+   CLOSE STORED-PROCEDURE pc_grava_congpr_dda
+         WHERE PROC-HANDLE = aux_handproc.
    
    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
    
@@ -442,7 +348,8 @@ PROCEDURE chegada-titulos-dda:
     
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
     
-    RUN STORED-PROCEDURE pc_chegada_titulos_DDA NO-ERROR
+    RUN STORED-PROCEDURE pc_chegada_titulos_DDA 
+        aux_handproc = PROC-HANDLE NO-ERROR
                         (INPUT par_cdcooper, 
                          INPUT par_cdprogra, 
                          INPUT par_dtemiini, 
@@ -450,7 +357,8 @@ PROCEDURE chegada-titulos-dda:
                         OUTPUT 0,
                         OUTPUT "").   
 
-    CLOSE STORED-PROCEDURE pc_chegada_titulos_DDA.
+    CLOSE STORED-PROCEDURE pc_chegada_titulos_DDA
+          WHERE PROC-HANDLE = aux_handproc.
     
     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
@@ -471,14 +379,16 @@ PROCEDURE busca-cedente-DDA:
 
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
     
-    RUN STORED-PROCEDURE pc_busca_cedente_DDA NO-ERROR 
+    RUN STORED-PROCEDURE pc_busca_cedente_DDA 
+        aux_handproc = PROC-HANDLE NO-ERROR 
                         (INPUT par_cdcooper,
                          INPUT par_idtitdda,
                         OUTPUT 0,
                         OUTPUT 0,
                         OUTPUT "").
 
-    CLOSE STORED-PROCEDURE pc_busca_cedente_DDA.
+    CLOSE STORED-PROCEDURE pc_busca_cedente_DDA
+          WHERE PROC-HANDLE = aux_handproc.
     
     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
     

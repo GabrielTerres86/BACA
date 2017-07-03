@@ -79,7 +79,10 @@ DEF TEMP-TABLE w_doctos                                             NO-UNDO
     FIELD cdseqdoc  LIKE craplft.cdseqfat
     FIELD dsbarras  LIKE craplft.cdbarras
     FIELD vllanmto  LIKE craplft.vllanmto
-    FIELD tpdocmto  AS LOGICAL  FORMAT "FAT/TIT".
+    FIELD tpdocmto  AS LOGICAL  FORMAT "FAT/TIT"
+    FIELD cdagenci  LIKE craptit.cdagenci
+    FIELD dtmvtolt  LIKE craptit.dtmvtolt
+    FIELD cdctrbxo  LIKE craptit.cdctrbxo.
     
 DEF QUERY q_doctos FOR w_doctos.
     
@@ -173,6 +176,8 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
                   DO:
                       RUN estorna_titulo IN h-b1wgen0016
                                             (INPUT  glb_cdcooper,
+                                             INPUT  w_doctos.cdagenci,
+                                             INPUT  w_doctos.dtmvtolt,
                                              INPUT  tel_nrdconta,
                                              INPUT  1, /* Titularidade */
                                              INPUT  w_doctos.cdbarras,
@@ -180,6 +185,7 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
                                              INPUT  w_doctos.vllanmto,
                                              INPUT  glb_cdoperad,
                                              INPUT  aux_idorigem,
+                                             INPUT  w_doctos.cdctrbxo,
                                              OUTPUT aux_dstransa,
                                              OUTPUT aux_dscritic,
                                              OUTPUT aux_dsprotoc).
@@ -445,7 +451,7 @@ DO  WHILE TRUE:
                            craplft.nrdolote = 15000 + tel_nrdcaixa   AND
                            craplft.nrdconta = tel_nrdconta
                            NO-LOCK:
-					
+                           
         /* Desconsiderar Guias DARF/DAS */					
 		IF  craplft.tpfatura = 1  OR
 		    craplft.tpfatura = 2  THEN
@@ -490,7 +496,10 @@ DO  WHILE TRUE:
         ASSIGN w_doctos.cdbarras = craptit.dscodbar
                w_doctos.cdseqdoc = craptit.nrdocmto
                w_doctos.vllanmto = craptit.vldpagto
+               w_doctos.cdagenci = craptit.cdagenci
+               w_doctos.dtmvtolt = craptit.dtmvtolt
                w_doctos.tpdocmto = NO
+               w_doctos.cdctrbxo = craptit.cdctrbxo
                w_doctos.dsbarras = SUBSTRING(craptit.dscodbar,01,04) + 
                                    SUBSTRING(craptit.dscodbar,20,01) + "." +
                                    SUBSTRING(craptit.dscodbar,21,04) + "0" +

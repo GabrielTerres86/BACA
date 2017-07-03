@@ -142,6 +142,7 @@ DEF INPUT  PARAM par_vlapagar AS DECI                                  NO-UNDO.
 DEF INPUT  PARAM par_versaldo AS INTE                                  NO-UNDO.
 DEF INPUT  PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF INPUT  PARAM par_tpcptdoc AS INTE                                  NO-UNDO. 
+DEF INPUT  PARAM par_cdctrlcs AS CHAR                                  NO-UNDO. 
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM xml_msgofatr AS CHAR                                  NO-UNDO.
@@ -222,7 +223,7 @@ ASSIGN aux_dstransa = (IF  par_idagenda = 1  THEN
       ,INPUT par_versaldo    /* Indicador de ver saldo         */
       ,INPUT INTE(par_flmobile) /* Indicador que origem é Mobile */
       ,INPUT par_tpcptdoc    /* Indicador de tipo de captura */
-
+      ,INPUT (par_cdctrlcs)    /* --> Numero de controle da consulta no NPC */
       ,OUTPUT ""             /* pr_xml_dsmsgerr */
       ,OUTPUT ""             /* pr_xml_msgofatr */
       ,OUTPUT ""             /* pr_xml_cdempcon */ 

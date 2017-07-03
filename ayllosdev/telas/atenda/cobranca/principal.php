@@ -33,7 +33,9 @@
 
 				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
 
-				27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
+				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)  
+
+                27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
 
 *************************************************************************/
 
@@ -193,6 +195,8 @@ function exibeErro($msgErro) {
 					   $flgcruni =  (getByTagName($convenios[$i]->tags,'flgcruni') == "yes") ? "SIM" : "NAO";
 					   $flgcebhm =  (getByTagName($convenios[$i]->tags,'flgcebhm') == "yes") ? "SIM" : "NAO";
 					   $flgregis =  (getByTagName($convenios[$i]->tags,'flgregis') == "yes") ? "SIM" : "NAO";
+                       $flgregon =  (getByTagName($convenios[$i]->tags,'flgregon') == "yes") ? "SIM" : "NAO";
+                       $flgpgdiv =  (getByTagName($convenios[$i]->tags,'flgpgdiv') == "yes") ? "SIM" : "NAO";
 					   $flcooexp =  (getByTagName($convenios[$i]->tags,'flcooexp') == "yes") ? "SIM" : "NAO";
 					   $flceeexp =  (getByTagName($convenios[$i]->tags,'flceeexp') == "yes") ? "SIM" : "NAO";
 					   $cddbanco =  getByTagName($convenios[$i]->tags,'cddbanco');
@@ -203,13 +207,12 @@ function exibeErro($msgErro) {
 					   $qtdecprz =  getByTagName($convenios[$i]->tags,'qtdecprz');
   					   $idrecipr =  getByTagName($convenios[$i]->tags,'idrecipr');
   					   $inenvcob =  getByTagName($convenios[$i]->tags,'inenvcob');
-
+						
                        // Verificar se existe algum convenio ativo(insitceb == 1)
                        if ($insitceb == 1 && $aux_insitceb == 0 ){
                            $aux_insitceb = $insitceb;
                        } 
-
-                       $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtdecprz."','".$idrecipr."','".$inenvcob."');";
+                       $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flgregon."','".$flgpgdiv."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtdecprz."','".$idrecipr."','".$inenvcob."');";
 					?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
@@ -276,6 +279,8 @@ function exibeErro($msgErro) {
 	<input type="hidden" id= "flgcruni"    name="flgcruni">
 	<input type="hidden" id= "flgcebhm"    name="flgcebhm">
 	<input type="hidden" id= "flgregis"    name="flgregis">
+    <input type="hidden" id= "flgregon"    name="flgregon">
+    <input type="hidden" id= "flgpgdiv"    name="flgpgdiv">
 	<input type="hidden" id= "flcooexp"    name="flcooexp">
 	<input type="hidden" id= "flceeexp"    name="flceeexp">
     <input type="hidden" id= "flserasa"    name="flserasa">

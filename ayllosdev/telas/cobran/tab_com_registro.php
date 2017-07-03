@@ -15,9 +15,10 @@
  *
  *              11/10/2016 - Inclusao dos campos de aviso por SMS 
  *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
-*               08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
+ *              08/01/2017 - Inclusao do campo flgdprot (Heitor - Mouts) - Chamado 574161 
  *              11/10/2016 - Inclusao dos campos de aviso por SMS 
  *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
+ *              26/06/2017 - Incluido campo flgsacad, Prj. 340 (Jean Michel)  
  */	
 ?>
 
@@ -61,6 +62,9 @@
 								  <input type="hidden" id="dsdoccop" name="dsdoccop" value="<? echo getByTagName($r->tags,'dsdoccop') ?>" />								  
 								  <input type="hidden" id="flgregis" name="flgregis" value="<? echo getByTagName($r->tags,'flgregis') ?>" />								  
 								  <input type="hidden" id="flgcbdda" name="flgcbdda" value="<? echo getByTagName($r->tags,'flgcbdda') ?>" />								  
+								  
+								  <input type="hidden" id="flgsacad" name="flgsacad" value="" />								  
+								  
 								  <input type="hidden" id="dsendsac" name="dsendsac" value="<? echo getByTagName($r->tags,'dsendsac') ?>" />								  
 								  <input type="hidden" id="complend" name="complend" value="<? echo getByTagName($r->tags,'complend') ?>" />								  
 								  <input type="hidden" id="nmbaisac" name="nmbaisac" value="<? echo getByTagName($r->tags,'nmbaisac') ?>" />								  

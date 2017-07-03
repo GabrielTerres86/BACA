@@ -71,7 +71,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps702 (pr_cdcooper IN crapcop.cdcooper%T
   --> Buscar beneficiarios que ficaram inaptos      
   CURSOR cr_sitbnf_inapto IS
     SELECT "CNPJ_CPFBenfcrio" nrcpfcgc
-      FROM VWJDDDABNF_Sit_Beneficiario@jdbnfsql
+      FROM cecredleg.VWJDDDABNF_Sit_Beneficiario@jdnpcsql
      WHERE "DtHrSitBenfcrio" >= to_number(to_char(SYSDATE, 'RRRRMMDD') || '000000')
        AND "SITIF" = 'I';
        
