@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 12/01/2017
+    Data    : Abril/2006                      Ultima Atualizacao: 12/05/2017
     
     Dados referentes ao programa:
 
@@ -393,7 +393,12 @@
                12/01/2017 - Ajuste para nao permitir que um favorecido de TED seja desativado
 					        caso o mesmo possua algum agendamento cadastrado
 							(Adriano - SD 593235).
-
+              
+              31/01/2017 - Alteraçao dos termos na rotina gera-termo-responsabilidade.
+                           Alteracao na rotina executa-envio-ted, incluido param de ip e dstransa
+                           PRJ335 - Analise de fraude. (Odirlei-AMcom).
+              
+               12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -2552,7 +2557,9 @@ PROCEDURE executa-envio-ted:
     DEF  INPUT PARAM par_cdispbif LIKE crapcti.nrispbif             NO-UNDO. 
     DEF  INPUT PARAM par_flmobile AS LOGICAL                        NO-UNDO.
     DEF  INPUT PARAM par_idagenda AS INTEGER                        NO-UNDO.
-    
+    DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dstransa AS CHAR                           NO-UNDO.
+
     DEF OUTPUT PARAM par_dsprotoc LIKE crappro.dsprotoc             NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-protocolo-ted.
@@ -2609,6 +2616,10 @@ PROCEDURE executa-envio-ted:
                                          INPUT par_cdispbif,
      INPUT aux_flmobile,
      INPUT par_idagenda,
+     INPUT par_iptransa,  /* pr_iptransa */
+     INPUT par_dstransa,  /* pr_dstransa */
+
+     
     OUTPUT "",  /*pr_dsprotoc*/
     OUTPUT "",  /*pr_tab_protocolo_ted CLOB --> dados do protocolo */
     OUTPUT 0,   /*pr_cdcritic               --> Codigo do erro*/
@@ -2817,6 +2828,12 @@ PROCEDURE executa_transferencia:
     DEF VAR aux_nrcartao          AS DECIMAL                        NO-UNDO.
     DEF VAR aux_nrctacar          AS INTE                           NO-UNDO.
     DEF VAR aux_contador          AS INTE                           NO-UNDO.
+	DEF VAR aux_cdhistor 		  AS INTE             			    NO-UNDO.
+	DEF VAR aux_cdhisest 		  AS INTE             			    NO-UNDO.
+	DEF VAR aux_vltarifa 		  AS DECI             			    NO-UNDO.
+	DEF VAR aux_dtdivulg 		  AS DATE             			    NO-UNDO.
+	DEF VAR aux_dtvigenc 		  AS DATE             			    NO-UNDO.
+	DEF VAR aux_cdfvlcop 		  AS INTE             			    NO-UNDO.
     DEF VAR aux_cdcritic          AS INTE                           NO-UNDO.
     DEF VAR aux_dscritic          AS CHAR                           NO-UNDO.
     
@@ -2827,6 +2844,7 @@ PROCEDURE executa_transferencia:
     DEF VAR h-b1crap00            AS HANDLE                         NO-UNDO.
     DEF VAR h-bo_algoritmo_seguranca AS HANDLE                      NO-UNDO.
     DEF VAR h-b1wgen0025          AS HANDLE                         NO-UNDO.
+	DEF VAR h-b1wgen0153          AS HANDLE              			NO-UNDO.
 
     DEFINE VARIABLE aux_nmprepos AS CHARACTER   NO-UNDO.
     DEFINE VARIABLE aux_nrcpfpre AS DECIMAL     NO-UNDO.
@@ -3722,6 +3740,94 @@ PROCEDURE executa_transferencia:
                                     END. /* If avail crapsnh */
                         END. /* Fim for each crappod */        
                     END.
+					
+				FIND FIRST crapprm WHERE crapprm.cdcooper = par_cdcooper AND 
+										 crapprm.nmsistem = 'CRED' 		 AND 
+										 crapprm.cdacesso = 'FOLHAIB_TARI_TRF_TPSAL'
+										 NO-LOCK NO-ERROR.
+										 
+				IF  crapprm.dsvlrprm = "1" AND /*Credito Salario*/
+					par_cdhisdeb     = 771 THEN /*Tarifa = Sim*/
+					DO:						
+						FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+						
+						RUN sistema/generico/procedures/b1wgen0153.p PERSISTENT SET h-b1wgen0153.
+						
+						IF  NOT VALID-HANDLE(h-b1wgen0153)  THEN
+							DO: 						
+								ASSIGN par_dscritic = "Nao foi possivel carregar a tarifa.".
+								RETURN "NOK".
+							END.
+						
+						RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
+														(INPUT par_cdcooper,
+														 INPUT 'TRANSTPSAL',
+														 INPUT par_vllanmto,
+														 INPUT "b1wgen0015", /* cdprogra */
+														OUTPUT aux_cdhistor,
+														OUTPUT aux_cdhisest,
+														OUTPUT aux_vltarifa,
+														OUTPUT aux_dtdivulg,
+														OUTPUT aux_dtvigenc,
+														OUTPUT aux_cdfvlcop,
+														OUTPUT TABLE tt-erro).
+						
+						IF  RETURN-VALUE <> "OK"  THEN
+							DO:
+								DELETE PROCEDURE h-b1wgen0153.
+								
+								FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+								IF  AVAIL tt-erro  THEN
+									ASSIGN par_dscritic = tt-erro.dscritic.
+								ELSE
+									ASSIGN par_dscritic = "Nao foi possivel carregar a tarifa.".
+
+								RETURN "NOK".
+							END.
+						
+						RUN cria_lan_auto_tarifa IN h-b1wgen0153
+											    (INPUT par_cdcooper,
+												 INPUT par_nrdconta,           
+												 INPUT par_dtmvtocd,
+												 INPUT aux_cdhistor, 
+												 INPUT aux_vltarifa,
+												 INPUT '1',			                                      /* cdoperad */
+												 INPUT 1,                                                 /* cdagenci */
+												 INPUT 100,                                               /* cdbccxlt */         
+												 INPUT 10299,                              				  /* nrdolote */        
+												 INPUT 18,                                                /* tpdolote */         
+												 INPUT aux_nrseqdig,                                      /* nrdocmto */
+												 INPUT par_nrdconta,                                  	  /* nrdconta */
+												 INPUT STRING(par_nrdconta,"99999999"),                   /* nrdctitg */
+												 INPUT "Fato gerador tarifa:" + STRING(aux_nrseqdig),     /* cdpesqbb */
+												 INPUT 0,                                                 /* cdbanchq */
+												 INPUT 0,                                                 /* cdagechq */
+												 INPUT 0,                                                 /* nrctachq */
+												 INPUT FALSE,                                             /* flgaviso */
+												 INPUT 0,                                                 /* tpdaviso */
+												 INPUT aux_cdfvlcop,                                      /* cdfvlcop */
+												 INPUT crapdat.inproces,                                  /* inproces */
+												OUTPUT TABLE tt-erro).
+						
+						IF  RETURN-VALUE <> "OK"  THEN
+							DO:
+								DELETE PROCEDURE h-b1wgen0153.
+								
+								FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+								IF  AVAIL tt-erro  THEN
+									ASSIGN par_dscritic = tt-erro.dscritic.
+								ELSE
+									ASSIGN par_dscritic = "Nao foi possivel lancar a tarifa.".
+
+								RETURN "NOK".
+							END.
+						
+						DELETE PROCEDURE h-b1wgen0153.
+						
+					END.
+										
             END. /* Fim IF origem = 3 */
             
     END. /* Fim do DO TRANSACTION */
@@ -10883,19 +10989,9 @@ PROCEDURE gera-termo-responsabilidade:
         AT 9 SKIP
         "\033\105\COOPERADO\033\106, as operacoes serao canceladas e deverao ser novamente registradas "
         AT 9 SKIP
-        "e aprovadas."
+        "e aprovadas."        
         AT 9 SKIP(1)
-        "\033\105\ 1.1.4\033\106  O \033\105\COOPERADO\033\106 assume total responsabilidade pelas movimentacoes, transacoes e "
-        SKIP
-        "contratacoes realizadas por meio deste canal eletronico, isentando a "
-        AT 9 SKIP
-        "\033\105\COOPERATIVA\033\106 de qualquer responsabilidade por eventuais prejuizos sofridos, "
-        AT 9 SKIP
-        "inclusive causados a terceiros, decorrentes de atos praticados mediante a "
-        AT 9 SKIP
-        "utilizacao de senha pessoal."
-        AT 9 SKIP(1)
-        "\033\105\ 1.1.5\033\106  O \033\105\COOPERADO\033\106 podera cadastrar OPERADOR(ES) para utilizacao da conta online, "
+        "\033\105\ 1.1.4\033\106  O \033\105\COOPERADO\033\106 podera cadastrar OPERADOR(ES) para utilizacao da conta online, "
         SKIP
         "hipotese em que necessariamente devera(ao) ser definida(s) a(s) senha(s) e as "
         AT 9 SKIP
@@ -10961,7 +11057,35 @@ PROCEDURE gera-termo-responsabilidade:
         AT 9 SKIP
         "inclusive, utiliza-la como meio de prova valida e eficaz em juizo ou fora dele."
         AT 9 SKIP(1)
-        "\033\105\ 1.5\033\106  A \033\105\COOPERATIVA\033\106 podera disponibilizar por meio dos canais de autoatendimento "
+        "\033\105\ 1.5\033\106  O \033\105\COOPERADO\033\106 assume total responsabilidade pelas movimentacoes, transacoes e "
+        SKIP
+        "      contratacoes realizadas por meio deste canal eletronico, isentando a "
+        SKIP
+        "      \033\105\COOPERATIVA\033\106 de qualquer responsabilidade por eventuais prejuizos sofridos, "
+        SKIP
+        "      inclusive causados a terceiros, decorrentes de atos praticados mediante a "
+        SKIP
+        "      utilizacao de senha pessoal."        
+        SKIP(1)
+        "\033\105\ 1.6\033\106  O cooperado reconhece que a COOPERATIVA realiza, por amostragem, de forma moderada, "
+        SKIP
+        "      generalizada e impessoal, o monitoramento das movimentacoes, transacoes e contratacoes "
+        SKIP
+        "      realizadas por meio dos canais de autoatendimento, podendo, sem aviso previo, reprovar "
+        SKIP
+        "      determinada operacao ou ate mesmo bloquear o acesso do COOPERADO aos canais de autoatendimento, "
+        SKIP
+        "      caso identifique indicios de irregularidades.  "
+        SKIP(1)
+        "\033\105\ 1.6.1\033\106  Caso o acesso aos canais de autoatendimento seja bloqueado pela COOPERATIVA, "
+        SKIP
+        "         o COOPERADO devera comparecer ao Posto de Atendimento da COOPERATIVA para verificacao "
+        SKIP
+        "         do ocorrido e eventual recadastramento de senha."
+
+        
+        SKIP(1)
+        "\033\105\ 1.7\033\106  A \033\105\COOPERATIVA\033\106 podera disponibilizar por meio dos canais de autoatendimento "
         SKIP
         "      existentes, ou ainda aqueles que venham a ser criados, a possibilidade de contratacao de "
         SKIP
@@ -10969,7 +11093,7 @@ PROCEDURE gera-termo-responsabilidade:
         SKIP
         "      sua contratacao, observadas as regras estipuladas pela \033\105\COOPERATIVA\033\106 para cada produto "
         SKIP
-        "      ofertado."        
+        "      ofertado."              
         SKIP(5)
         WITH WIDTH 150 NO-BOX NO-LABEL FRAME f_termo_pj.
 
@@ -11009,17 +11133,7 @@ PROCEDURE gera-termo-responsabilidade:
         SKIP
         "devendo o \033\105\COOPERADO\033\106 comparecer novamente ao Posto de Atendimento da "
         AT 9 SKIP
-        "\033\105\COOPERATIVA\033\106 para recadastramento de senha."
-        AT 9 SKIP(1)        
-        "\033\105\ 1.1.3\033\106  O \033\105\COOPERADO\033\106 assume total responsabilidade pelas movimentacoes, transacoes e "
-        SKIP
-        "contratacoes realizadas por meio deste canal eletronico, isentando a "
-        AT 9 SKIP
-        "\033\105\COOPERATIVA\033\106 de qualquer responsabilidade por eventuais prejuizos sofridos, "
-        AT 9 SKIP
-        "inclusive causados a terceiros, decorrentes de atos praticados mediante a "
-        AT 9 SKIP
-        "utilizacao de senha pessoal."
+        "\033\105\COOPERATIVA\033\106 para recadastramento de senha."        
         AT 9 SKIP(1)        
         "\033\105\ 1.2\033\106  O aplicativo para celular e o canal pelo qual o \033\105\COOPERADO\033\106 tem acesso a sua conta, "
         SKIP
@@ -11074,8 +11188,34 @@ PROCEDURE gera-termo-responsabilidade:
         "pela \033\105\COOPERATIVA\033\106, nao estando, no entanto, obrigado a faze-lo, podendo, "
         AT 9 SKIP
         "inclusive, utiliza-la como meio de prova valida e eficaz em juizo ou fora dele."
+        AT 9 SKIP(1)        
+        "\033\105\ 1.5\033\106  O \033\105\COOPERADO\033\106 assume total responsabilidade pelas movimentacoes, transacoes e "
+        SKIP
+        "      contratacoes realizadas por meio deste canal eletronico, isentando a "
+        SKIP
+        "      \033\105\COOPERATIVA\033\106 de qualquer responsabilidade por eventuais prejuizos sofridos, "
+        SKIP
+        "      inclusive causados a terceiros, decorrentes de atos praticados mediante a "
+        SKIP
+        "      utilizacao de senha pessoal."
+        SKIP(1)
+        "\033\105\ 1.6\033\106  O cooperado reconhece que a COOPERATIVA realiza, por amostragem, de forma moderada, " 
+        SKIP
+        "      generalizada e impessoal, o monitoramento das movimentacoes, transacoes e contratacoes "
+        SKIP
+        "      realizadas por meio dos canais de autoatendimento, podendo, sem aviso previo, reprovar   "
+        SKIP
+        "      determinada operacao ou ate mesmo bloquear o acesso do COOPERADO aos canais de autoatendimento, "
+        SKIP
+        "      caso identifique indicios de irregularidades."
+        SKIP(1)
+        "\033\105\ 1.6.1\033\106  Caso o acesso aos canais de autoatendimento seja bloqueado pela COOPERATIVA, "
+        SKIP
+        "o COOPERADO devera comparecer ao Posto de Atendimento da COOPERATIVA para verificacao do "
+        AT 9 SKIP
+        "ocorrido e eventual recadastramento de senha."
         AT 9 SKIP(1)
-        "\033\105\ 1.5\033\106  A \033\105\COOPERATIVA\033\106 podera disponibilizar por meio dos canais de autoatendimento "
+        "\033\105\ 1.7\033\106  A \033\105\COOPERATIVA\033\106 podera disponibilizar por meio dos canais de autoatendimento "
         SKIP
         "      existentes, ou ainda aqueles que venham a ser criados, a possibilidade de contratacao de "
         SKIP
@@ -11085,7 +11225,7 @@ PROCEDURE gera-termo-responsabilidade:
         SKIP
         "      ofertado."        
         SKIP(1)
-        "\033\105\ 1.5.1\033\106  Tratando-se de conta conjunta, o \033\105\COOPERADO\033\106 se declara ciente que os demais "
+        "\033\105\ 1.7.1\033\106  Tratando-se de conta conjunta, o \033\105\COOPERADO\033\106 se declara ciente que os demais "
         SKIP
         "titulares da conta tambem poderao realizar, em seu nome, as contratacoes "
         AT 9 SKIP

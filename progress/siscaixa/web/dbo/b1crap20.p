@@ -30,7 +30,7 @@
 
     b1crap20.p - DOC/TED - Inclusao
     
-    Ultima Atualizacao: 17/02/2017
+    Ultima Atualizacao: 02/06/2017
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -240,6 +240,8 @@
 							 aborte o programa. (Odirlei - AMcom)				 		 
 						
 				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
+									 		 
+                02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 									 		 
 -----------------------------------------------------------------------------*/
                              
@@ -939,6 +941,9 @@ PROCEDURE valida-valores:
 
         END.
 
+    /* DOC */
+    IF  p-tipo-doc = 'D' OR p-tipo-doc = 'C' THEN
+        DO:        
 	IF  p-cod-agencia-banco = 0 THEN 
         DO:
             ASSIGN i-cod-erro  = 0
@@ -951,6 +956,79 @@ PROCEDURE valida-valores:
                            INPUT c-desc-erro,
                            INPUT YES).            
         END. 
+
+             /* Para DOC continua como 13 o tamanho maximo */
+             IF LENGTH(STRING(p-nro-conta-para)) > 13 THEN
+                DO:
+                    ASSIGN i-cod-erro  = 0
+                           c-desc-erro = "Informe o numero da conta com ate 13 caracteres." .
+                           
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).            
+                END.
+        END.
+    ELSE  /* TED */
+        DO:
+            IF  p-cod-agencia-banco = 0 AND 
+               (p-tipo-conta-cr = 1  OR 
+                p-tipo-conta-cr = 2) THEN
+                DO:
+                    IF  p-tipo-conta-cr = 1 THEN
+                        ASSIGN i-cod-erro  = 0
+                               c-desc-erro = 
+                                     "Preenchimento de campo agencia obrigatorio para o " +
+                                     "tipo de conta: Conta Corrente.". 
+                    ELSE
+                        ASSIGN i-cod-erro  = 0
+                               c-desc-erro = 
+                                     "Preenchimento de campo agencia obrigatorio para o " +
+                                     "tipo de conta: Conta Poupanca.". 
+                           
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).                           
+                END.
+            ELSE
+                DO:
+                    IF  p-cod-agencia-banco <> 0 AND
+                        p-tipo-conta-cr = 3 THEN
+                        DO:
+                            ASSIGN i-cod-erro  = 0
+                                   c-desc-erro = 
+                                         "Preenchimento de campo agencia nao e permitido para o " +
+                                         "tipo de conta: Conta de Pagamento.". 
+
+                            RUN cria-erro (INPUT p-cooper,
+                                           INPUT p-cod-agencia,
+                                           INPUT p-nro-caixa,
+                                           INPUT i-cod-erro,
+                                           INPUT c-desc-erro,
+                                           INPUT YES).            
+                        END.
+                END.
+                
+           IF ((p-tipo-conta-cr = 1  OR  /* Conta Corrente */
+                p-tipo-conta-cr = 2) AND /* Conta Poupanca */
+                LENGTH(STRING(p-nro-conta-para)) > 13 ) THEN
+                DO:
+                    ASSIGN i-cod-erro  = 0
+                           c-desc-erro = "Informe o numero da conta com ate 13 caracteres." .
+                           
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).            
+                  END.
+        END.
 
     IF  p-nro-conta-para = 0  THEN 
         DO:
@@ -2455,7 +2533,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                 TRIM(c-desc-agencia)              
            iLnAut = iLnAut + 1  c-literal[iLnAut] = ""       
            iLnAut = iLnAut + 1  c-literal[iLnAut] = "CONTA...: " + 
-                                TRIM(STRING(craptvl.nrcctrcb,"ZZZZZZZZZZZZZ9"))  
+                                TRIM(STRING(craptvl.nrcctrcb,"ZZZZZZZZZZZZZZZZZZZ9"))  
                                 + " TIPO DE PESSOA: " + 
                                 TRIM(c-tipo-pessoa-para)
            iLnAut = iLnAut + 1  c-literal[iLnAut] = "TITULAR1: " + 
@@ -2730,9 +2808,9 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                    crattem.cdagenci = craptvl.cdagenci
                    crattem.cdbantrf = craptvl.cdbccrcb
                    crattem.cdagetrf = craptvl.cdagercb
-                   crattem.nrctatrf = DEC(SUBSTR(STRING(craptvl.nrcctrcb,"9999999999999"),1,12))
-                   crattem.nrdigtrf = SUBSTR(STRING(craptvl.nrcctrcb,"9999999999999"), 
-                                             LENGTH(STRING(craptvl.nrcctrcb,"9999999999999")),1)
+                   crattem.nrctatrf = DEC(SUBSTR(STRING(craptvl.nrcctrcb,"99999999999999999999"),1,20))
+                   crattem.nrdigtrf = SUBSTR(STRING(craptvl.nrcctrcb,"99999999999999999999"), 
+                                             LENGTH(STRING(craptvl.nrcctrcb,"99999999999999999999")),1)
                    crattem.nmfuncio = craptvl.nmpesrcb
                    crattem.nrcpfcgc = craptvl.cpfcgrcb
                    crattem.nrdocmto = craptvl.nrdocmto
