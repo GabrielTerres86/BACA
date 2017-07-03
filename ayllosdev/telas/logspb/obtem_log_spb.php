@@ -3,7 +3,7 @@
 	//**************************************************************************//
 	//*** Fonte: obtem_log_spb.php                                           ***//
 	//*** Autor: David                                                       ***//
-	//*** Data : Novembro/2009                Última Alteração: 31/01/2017   ***//
+	//*** Data : Novembro/2009                Última Alteração: 28/06/2017   ***//
 	//***                                                                    ***//
 	//*** Objetivo  : Obter log das transações SPB                           ***//
 	//***                                                                    ***//	 
@@ -50,6 +50,10 @@
     //***			  31/11/2017 - Ajustes para exibir TEDs estornadas		 ***//
     //***			               devido a analise de fraude                ***//
     //***			               PRJ335 - Analise de fraude(Odirlei-AMcom) ***//
+	//***                                                                    ***//
+	//***             28/06/2017 - Ajustado mascara dos campos de numero de  ***//
+	//***                          conta, pois o tamanho foi aumentado para  ***//
+	//***                          20 (Douglas - Chamado 668207)             ***//
 	//**************************************************************************//
 	
 	session_start();
@@ -112,7 +116,7 @@
 				exibeErro("Situa&ccedil;&atilde;o inv&aacute;lida.");
             }
         /* opcao Estorno so podera ser utilizado para Enviadas ou Todos */    
-		}else if ($cdsitlog == "E") {
+		} else if ($cdsitlog == "E") {
             if ($numedlog <> "1"  && $numedlog <> "4"){
 				exibeErro("Situa&ccedil;&atilde;o inv&aacute;lida.");
             }
@@ -219,12 +223,12 @@
 				objLog   = new Object();				
 				objLog.cdbandst = "<?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?>";
 				objLog.cdagedst = "<?php echo $logDetalhado[$i]->tags[2]->cdata; ?>";
-				objLog.nrctadst = "<?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
+				objLog.nrctadst = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
 				objLog.dsnomdst = "<?php echo $logDetalhado[$i]->tags[4]->cdata; ?>";
 				objLog.dscpfdst = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?>";				
 				objLog.cdbanrem = "<?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?>";
 				objLog.cdagerem = "<?php echo $logDetalhado[$i]->tags[7]->cdata; ?>";
-				objLog.nrctarem = "<?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
+				objLog.nrctarem = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
 				objLog.dsnomrem = "<?php echo $logDetalhado[$i]->tags[9]->cdata; ?>";
 				objLog.dscpfrem = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?>";								
 				objLog.vltransa = "<?php echo number_format(str_replace(",",".",$logDetalhado[$i]->tags[12]->cdata),2,",","."); ?>";
@@ -244,9 +248,9 @@
 				}		
 				
 				if ($numedlog == "1") {
-					$nrctalog = formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-");					
+					$nrctalog = formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-");					
 				} else {               
-					$nrctalog = formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-");
+					$nrctalog = formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-");
 				}  
 			?>
 			
@@ -259,12 +263,12 @@
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[15]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[7]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[9]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[2]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[4]->cdata; ?></td>';
 			strHTML += '					<td width="50px" class="txtNormal"  align="left"><?php echo $logDetalhado[$i]->tags[17]->cdata; ?></td>';
@@ -431,12 +435,12 @@
 				objLog   = new Object();				
 				objLog.cdbandst = "<?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?>";
 				objLog.cdagedst = "<?php echo $logDetalhado[$i]->tags[2]->cdata; ?>";
-				objLog.nrctadst = "<?php echo formataNumericos("zzzz,zzz,zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
+				objLog.nrctadst = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
 				objLog.dsnomdst = "<?php echo $logDetalhado[$i]->tags[4]->cdata; ?>";
 				objLog.dscpfdst = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?>";				
 				objLog.cdbanrem = "<?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?>";
 				objLog.cdagerem = "<?php echo $logDetalhado[$i]->tags[7]->cdata; ?>";
-				objLog.nrctarem = "<?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
+				objLog.nrctarem = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
 				objLog.dsnomrem = "<?php echo $logDetalhado[$i]->tags[9]->cdata; ?>";
 				objLog.dscpfrem = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?>";								
 				objLog.vltransa = "<?php echo number_format(str_replace(",",".",$logDetalhado[$i]->tags[12]->cdata),2,",","."); ?>";
@@ -463,12 +467,12 @@
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[15]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[7]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[9]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[2]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[4]->cdata; ?></td>';
 			strHTML += '					<td width="50px" class="txtNormal"  align="left"><?php echo $logDetalhado[$i]->tags[17]->cdata; ?></td>';
@@ -633,12 +637,12 @@
 				objLog   = new Object();				
 				objLog.cdbandst = "<?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?>";
 				objLog.cdagedst = "<?php echo $logDetalhado[$i]->tags[2]->cdata; ?>";
-				objLog.nrctadst = "<?php echo formataNumericos("zzzz,zzz,zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
+				objLog.nrctadst = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
 				objLog.dsnomdst = "<?php echo $logDetalhado[$i]->tags[4]->cdata; ?>";
 				objLog.dscpfdst = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?>";				
 				objLog.cdbanrem = "<?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?>";
 				objLog.cdagerem = "<?php echo $logDetalhado[$i]->tags[7]->cdata; ?>";
-				objLog.nrctarem = "<?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
+				objLog.nrctarem = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
 				objLog.dsnomrem = "<?php echo $logDetalhado[$i]->tags[9]->cdata; ?>";
 				objLog.dscpfrem = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?>";								
 				objLog.vltransa = "<?php echo number_format(str_replace(",",".",$logDetalhado[$i]->tags[12]->cdata),2,",","."); ?>";
@@ -665,12 +669,12 @@
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[15]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[7]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[9]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[2]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[4]->cdata; ?></td>';
 			strHTML += '					<td width="50px" class="txtNormal"  align="left"><?php echo $logDetalhado[$i]->tags[17]->cdata; ?></td>';
@@ -787,12 +791,12 @@
 				objLog   = new Object();				
 				objLog.cdbandst = "<?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?>";
 				objLog.cdagedst = "<?php echo $logDetalhado[$i]->tags[2]->cdata; ?>";
-				objLog.nrctadst = "<?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
+				objLog.nrctadst = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?>";
 				objLog.dsnomdst = "<?php echo $logDetalhado[$i]->tags[4]->cdata; ?>";
 				objLog.dscpfdst = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?>";				
 				objLog.cdbanrem = "<?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?>";
 				objLog.cdagerem = "<?php echo $logDetalhado[$i]->tags[7]->cdata; ?>";
-				objLog.nrctarem = "<?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
+				objLog.nrctarem = "<?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?>";
 				objLog.dsnomrem = "<?php echo $logDetalhado[$i]->tags[9]->cdata; ?>";
 				objLog.dscpfrem = "<?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?>";								
 				objLog.vltransa = "<?php echo number_format(str_replace(",",".",$logDetalhado[$i]->tags[12]->cdata),2,",","."); ?>";
@@ -811,7 +815,7 @@
 					$cor = "#F4F3F0";
 				}		
 
-				$nrctalog = formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-");
+				$nrctalog = formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-");
 				
 			?>
 			strHTML += '				<tr id="trMsgLog<?php echo $i; ?>" style="cursor: pointer; background-color: <?php echo $cor; ?>" onClick="selecionaMsgLog(<?php echo $i; ?>,<?php echo (strpos($logDetalhado[$i]->tags[14]->cdata,'NAO OK')) ? 1 : 0; ?>);">';
@@ -822,12 +826,12 @@
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[15]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[6]->cdata == 0 ? "" : $logDetalhado[$i]->tags[6]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[7]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[8]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[10]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[9]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[1]->cdata == 0 ? "" : $logDetalhado[$i]->tags[1]->cdata; ?></td>';
 			strHTML += '					<td width="100px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[2]->cdata; ?></td>';
-			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
+			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("zzz.zzz.zzz.zzz.zzz.zzz.zzz-9",$logDetalhado[$i]->tags[3]->cdata,".-"); ?></td>';
 			strHTML += '					<td width="140px" class="txtNormal" align="left"><?php echo formataNumericos("99999999999999",$logDetalhado[$i]->tags[5]->cdata,""); ?></td>';
 			strHTML += '					<td width="330px" class="txtNormal" align="left"><?php echo $logDetalhado[$i]->tags[4]->cdata; ?></td>';
 			strHTML += '					<td width="50px" class="txtNormal"  align="left"><?php echo $logDetalhado[$i]->tags[17]->cdata; ?></td>';

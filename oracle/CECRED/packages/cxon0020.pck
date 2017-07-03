@@ -321,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 12/05/2017
+    Data     : Junho/2013.                   Ultima atualizacao: 08/06/2017 
   
     Dados referentes ao programa:
   
@@ -355,6 +355,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                             (Adriano - SD 620221).
                 
                 12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+                            
+                08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -2547,7 +2549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
   
       Dados referentes ao programa:
   
@@ -2558,6 +2560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
                   08/10/2015 - Ajustado para gerar o numero da conta no protocolo com "."
                                conforme progress SD341797 (Odirlei-Amcom)
+                               
+                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -3062,7 +3066,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       CLOSE cr_crapban;
     END IF;
      
-    
     vr_dsinfor2 := vr_dsinfor2 ||'#'||to_char(pr_cdageban,'fm0000');
     
     --> Obtem dados da agencia do favorecido para Protocolo
@@ -3079,7 +3082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     --> Formata dados do favorecido para Protocolo
     vr_dsinfor2 := vr_dsinfor2||
-                  TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzzzzzzzzz.9'))||
+                  TRIM(gene0002.fn_mask(to_char(pr_nrctatrf),'zzzzzzzzzzzzzzzzzzz.9'))||
                   '#'||gene0002.fn_mask(pr_cdispbif,'zzzzzzzzz9');
     vr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,pr_inpessoa);
     vr_dsinfor3 := TRIM(pr_nmtitula) ||'#'|| vr_dscpfcgc ||'#';

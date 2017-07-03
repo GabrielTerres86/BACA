@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: logspb.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Novembro/2009                Última Alteração: 07/11/2015 ***//
+	//*** Data : Novembro/2009                Última Alteração: 11/05/2017 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar tela LOGSPB                                  ***//
 	//***                                                                  ***//
@@ -39,7 +39,10 @@
 	//***														           ***//
     //***             27/01/2016 - Permitir exibir TEDs Extornadas         ***//
     //***                          PRJ335 - Analise de Fraude(Odirlei-AMcom) ***//
-	/************************************************************************/
+	//***                                                                 ***//
+	//***             11/05/2017 - Adicionado o "Devoluções" no campo     ***//
+	//***                          "TIPO" (Douglas - Chamado 541233)      ***//
+	//***********************************************************************//
 	
 	session_start();
 	
@@ -161,6 +164,7 @@
 																							  <select name="numedlog" id="numedlog" class="campo">
 																								  <option value="1" selected>Enviadas</option>
 																								  <option value="2">Recebidas</option>
+																								  <option value="5">Devolu&ccedil;&otilde;es</option>
 																								  <option value="3">Log</option>		
 																								  <option value="4">Todos</option>
 																							  </select>
@@ -179,11 +183,11 @@
 																							  <div id="divSituacao">																								    
 																								  <label for="cdsitlog" class="txtNormalBold">Situa&ccedil;&atilde;o:</label>
 																									  <select name="cdsitlog" id="cdsitlog" class="campo" >
-																										  <option value="P" selected>Processadas</option>
-																										  <option value="D">Devolvidas</option>
+																										  <option value="P" id="optProcessada" selected>Processadas</option>
+																										  <option value="D" id="optDevolvida">Devolvidas</option>
 																										  <option value="R" id="optRejeitada">Rejeitadas</option>
                                                                                                           <option value="E" id="optEstornada">Estornadas</option>
-																										  <option value="T">Todos</option>
+																										  <option value="T" id="optTodas">Todos</option>
 																									  </select>																												
 																							  </div>																								
 																							

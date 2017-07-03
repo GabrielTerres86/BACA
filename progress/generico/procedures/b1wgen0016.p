@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 12/04/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 02/06/2017
     
     Dados referentes ao programa:
 
@@ -485,11 +485,13 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
               12/04/2017 - Incluido tratamento de transaçoes pendentes 13. 
                            PRJ319 - Recarga de Celular (Lombardi)
 
+
+              02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
+
               14/06/2017 - Incluido comando TRUNC para cortar o valor de iof em 2 casas
                            decimais, estava falhando comparacao devido ao arredondamento.
                            Heitor (Mouts) - Chamado 688338
-
- .............................................................................*/
+ .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
 
@@ -6725,7 +6727,7 @@ PROCEDURE gera_arquivo_log_ted:
            ", nrcpfope: " + STRING(par_nrcpfope)                  +
            ", cddbanco: " + STRING(par_cddbanco,"zzzz9")          +
            ", cdageban: " + STRING(par_cdageban,"zzzzz9")         +
-           ", nrctadst: " + STRING(par_nrctadst,"zzzzzzzzzz,zz9,9") +
+           ", nrctadst: " + STRING(par_nrctadst,"zzzzzzzzzzzzzzzz,zz9,9") +
            ", nmtitula: " + STRING(par_nmtitula)                  +
            ", nrcpfcgc: " + STRING(par_nrcpfcgc)                  +
            ", inpessoa: " + STRING(par_inpessoa)                  +
