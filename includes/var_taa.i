@@ -4,7 +4,7 @@
    Sistema : TAA - Cooperativa de Credito
    Sigla   : TAA
    Autor   : Edson/Evandro
-   Data    : Janeiro/2010                         Ultima atualizacao: 10/02/2016
+   Data    : Janeiro/2010                         Ultima atualizacao: 03/07/2017
    
    Dados referentes ao programa:
 
@@ -107,6 +107,8 @@
 			   18/05/2017 - Atualização para versão 9.3 (Paulo Samuel).
 
 			   30/06/2017 - Atualização para versão 9.4 (Paulo Samuel).
+			   
+			   03/07/2017 - Atualização para versão 9.5 (David).
 .............................................................................. */
 
                             
@@ -119,7 +121,7 @@ DEF {1} SHARED VAR glb_cdagetfn AS INT                                   NO-UNDO
 DEF {1} SHARED VAR glb_ipterfin AS CHAR                                  NO-UNDO.
 DEF {1} SHARED VAR glb_nmserver AS CHAR                                  NO-UNDO. /* Servidor */
 DEF {1} SHARED VAR glb_nmservic AS CHAR                                  NO-UNDO. /* Serviço WebSpeed */
-DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v9.4"                NO-UNDO.
+DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v9.5"                NO-UNDO.
 
 /* Temporizador */
 DEF {1} SHARED VAR glb_nrtempor AS INT                                   NO-UNDO.
