@@ -1324,7 +1324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).vlminimo := pr_rec_cobranca.vlminimo;
     pr_tab_crapcob(vr_index).inpagdiv := pr_rec_cobranca.inpagdiv;
     pr_tab_crapcob(vr_index).inenvcip := pr_rec_cobranca.inenvcip;
-	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
+  	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
     pr_tab_crapcob(vr_index).flserasa := pr_rec_cobranca.flserasa;
     pr_tab_crapcob(vr_index).qtdianeg := pr_rec_cobranca.qtdianeg;
 
@@ -2072,7 +2072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         -- Verificar se eh Cooperativa Emite e Expede
         IF pr_tab_crapcob(vr_idx_cob).inemiten = 3 THEN
           vr_inregcip := 2; -- Registro via batch
-      ELSE
+        ELSE
           vr_inregcip := 1; -- Registro ONLINE
         END IF;
       ELSE
@@ -11301,6 +11301,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             -- Se nao ocorreu erro no header, carrega as informacoes de banco
             vr_rec_header.cdbcoctl := rw_crapcop.cdbcoctl;
             vr_rec_header.cdagectl := rw_crapcop.cdagectl;
+            
+            -- atribui regra para envio a CIP
+            vr_rec_cobranca.inenvcip := 1; -- a enviar            
             
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'R' THEN    
