@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 21/03/2016
+    Data    : Fevereiro/2011               ultima Atualizacao: 26/09/2016
 
     Dados referentes ao programa:
 
@@ -259,6 +259,7 @@
 
               16/02/2016 - Adicionado verificacao se chassi informado ja se encontra em outro
                            emprestimo em aberto. (Jorge/Gielow) - SD 391096             
+						         
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
               01/02/2017 - Inclusao de comando validate crapepr. Ao chamar a rotina de rating, esta
@@ -266,6 +267,15 @@
                            apenas os antigos e impactando na geracao do rating.
                            Heitor (Mouts)
 
+			  04/01/2016 - Validar se as informações de Imóvel foram devidamente preenchidas
+			               para o contrato de empréstimo (Renato Darosci - Supero) - M326
+              28/09/2016 - Incluido verificacao de contratos de acordos na procedure
+						               transf_contrato_prejuizo e valida_dados_efetivacao_proposta,
+                           Prj. 302 (Jean Michel).
+                     
+              17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
+                           de Imóveis estejam preenchidas, conforme solicitaçao antes da 
+                           liberaçao do projeto (Renato - Supero)
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2209,12 +2219,14 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEFINE INPUT PARAM par_flgerlog AS LOGI                            NO-UNDO.
     DEFINE INPUT PARAM par_nrctremp AS INTE                            NO-UNDO.
 
-    DEF VAR            aux_contador AS INTE                            NO-UNDO.
-    DEF VAR            aux_stsnrcal AS LOGI                            NO-UNDO.
-    DEF VAR            aux_cdempres AS INTE                            NO-UNDO.
-    DEF VAR            aux_dsoperac AS CHAR                            NO-UNDO.
-    DEF VAR            h-b1wgen0110 AS HANDLE                          NO-UNDO.
-    DEF VAR            aux_nrctrliq AS CHAR                            NO-UNDO.
+    DEF VAR aux_contador AS INTE    NO-UNDO.
+    DEF VAR aux_stsnrcal AS LOGI    NO-UNDO.
+    DEF VAR aux_cdempres AS INTE    NO-UNDO.
+    DEF VAR aux_dsoperac AS CHAR    NO-UNDO.
+    DEF VAR h-b1wgen0110 AS HANDLE  NO-UNDO.
+    DEF VAR aux_nrctrliq AS CHAR    NO-UNDO.
+    DEF VAR aux_flgativo AS INTEGER NO-UNDO.
+	  /* DEF VAR aux_flimovel AS INTEGER NO-UNDO. 17/02/2017 - Validaçao removida */
 
     DEF BUFFER crabbpr FOR crapbpr.
     
@@ -2498,8 +2510,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
         END.
      
 	 /* Verificar se a analise foi finalizada */
-     IF crawepr.insitest <> 3 THEN   
-     DO:
+        IF crawepr.insitest <> 3 THEN DO:
          ASSIGN aux_cdcritic = 0
                 aux_dscritic = " A proposta nao pode ser efetivada, "
                                 + " verifique a situacao da proposta".
@@ -2512,14 +2523,10 @@ PROCEDURE valida_dados_efetivacao_proposta:
                              INPUT-OUTPUT aux_dscritic).
         
               RETURN "NOK".
-     
         END.
 
-
-        /** Verificar "inliquid" do contrato relacionado
-            a ser liquidado              **/
+        /** Verificar "inliquid" do contrato relacionado a ser liquidado **/
         DO  aux_contador = 1 TO 10 :
-
             IF  crawepr.nrctrliq[aux_contador] > 0 THEN DO:
 
                 IF  CAN-FIND(FIRST crabepr
@@ -2616,7 +2623,6 @@ PROCEDURE valida_dados_efetivacao_proposta:
     END.
             END.
         END.
-
     END.
 
     FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
@@ -2637,6 +2643,68 @@ PROCEDURE valida_dados_efetivacao_proposta:
            RETURN "NOK".
         END.
 
+    /* 17/02/2017 - Retirado a validaçao conforme solicitaçao 
+    ELSE DO:  /* Se encontrar linha de crédito */
+    
+        /* Se o tipo do contrato for igual a 3 -> Contratos de imóveis */
+        IF craplcr.tpctrato = 3 THEN DO:
+            
+			ASSIGN aux_flimovel = 0.
+
+		    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+            /* Verifica se ha contratos de acordo */
+            RUN STORED-PROCEDURE pc_valida_imoveis_epr
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                ,INPUT par_nrdconta
+                                                ,INPUT crawepr.nrctremp
+                                                ,OUTPUT 0
+                                                ,OUTPUT 0
+                                                ,OUTPUT "").
+
+            CLOSE STORED-PROC pc_valida_imoveis_epr
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = INT(pc_valida_imoveis_epr.pr_cdcritic) WHEN pc_valida_imoveis_epr.pr_cdcritic <> ?
+                   aux_dscritic = pc_valida_imoveis_epr.pr_dscritic WHEN pc_valida_imoveis_epr.pr_dscritic <> ?
+				   aux_flimovel = INT(pc_valida_imoveis_epr.pr_flimovel).
+        
+            IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+            DO:
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT 1, /* nrdcaixa  */
+                               INPUT 1, /* sequencia */
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                RETURN "NOK".
+            END.        
+          
+            IF aux_flimovel = 1 THEN
+            DO:
+            
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "A proposta nao pode ser efetivada, dados dos Imoveis nao cadastrados.".
+
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT 1, /* nrdcaixa  */
+                               INPUT 1, /* sequencia */
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                RETURN "NOK".
+             
+            END. /* IF aux_flimovel = 1 THEN */
+        END. /* IF craplcr.tpctrato = 3 */
+    END. /* IF  NOT AVAIL craplcr */
+	FIM - 17/02/2017 - Retirado a validaçao conforme solicitaçao */
+    
     IF  par_dtmvtolt > crawepr.dtlibera THEN
         DO:
             ASSIGN  aux_cdcritic = 0
@@ -2651,7 +2719,65 @@ PROCEDURE valida_dados_efetivacao_proposta:
                            INPUT-OUTPUT aux_dscritic).
             RETURN "NOK".
         END.
+    
+    /* Verificacao de contrato de acordo */  
+    DO  aux_contador = 1 TO 10:
 
+      IF  crawepr.nrctrliq[aux_contador] > 0 THEN DO:
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+        /* Verifica se ha contratos de acordo */
+        RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,INPUT crawepr.nrctrliq[aux_contador]
+                                              ,OUTPUT 0
+                                              ,OUTPUT 0
+                                              ,OUTPUT "").
+
+        CLOSE STORED-PROC pc_verifica_acordo_ativo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+               aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+               aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+        
+        IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+          DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 1, /* nrdcaixa  */
+                           INPUT 1, /* sequencia */
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+        END.
+
+        IF aux_flgativo = 1 THEN
+          DO:
+            
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "A proposta nao pode ser efetivada, contrato marcado para liquidar esta em acordo.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 1, /* nrdcaixa  */
+                           INPUT 1, /* sequencia */
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+             
+          END.
+     END.   
+   END.
+   /* Fim verificacao contrato acordo */  
+   
     RETURN "OK".
 
 END PROCEDURE. /*   valida dados efetivacao proposta    */
@@ -2949,7 +3075,9 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_vliofepr AS DECI                                      NO-UNDO.
     DEF VAR aux_dsoperac AS CHAR                                      NO-UNDO.
     DEF VAR aux_flgportb AS LOGI INIT FALSE                           NO-UNDO.
+    DEF VAR aux_flcescrd AS LOGI INIT FALSE                           NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                      NO-UNDO.
+    DEF VAR aux_flgativo AS INTE                                      NO-UNDO.
 
     DEF VAR h-b1wgen0097 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0134 AS HANDLE                                    NO-UNDO.
@@ -3006,6 +3134,16 @@ PROCEDURE grava_efetivacao_proposta:
 
     IF RETURN-VALUE <> "OK"   THEN
        RETURN "NOK".
+
+    FOR FIRST crapfin FIELDS(tpfinali)
+        WHERE crapfin.cdcooper = par_cdcooper AND
+              crapfin.cdfinemp = crawepr.cdfinemp
+              NO-LOCK: END.
+              
+    IF AVAILABLE crapfin THEN     
+       /* cessao de credito */
+       IF crapfin.tpfinali = 1 THEN
+          ASSIGN aux_flcescrd = TRUE.
 
     EFETIVACAO:
     DO TRANSACTION ON ERROR UNDO, LEAVE:
@@ -3217,13 +3355,19 @@ PROCEDURE grava_efetivacao_proposta:
           END.
 
 
-       IF   aux_flgportb = FALSE THEN
+       IF aux_flgportb = FALSE THEN
             DO:
        RUN sistema/generico/procedures/b1wgen0097.p PERSISTENT SET h-b1wgen0097.
 
        RUN consulta_iof IN h-b1wgen0097 (INPUT par_cdcooper,
                                          INPUT par_dtmvtolt,
                                          INPUT crawepr.vlemprst,
+                                         INPUT par_nrdconta,
+                                         INPUT par_dtdpagto,
+                                         INPUT crawepr.qtpreemp,
+                                         INPUT crawepr.cdlcremp,
+                                         INPUT crawepr.vlpreemp,
+                                         INPUT crawepr.dtlibera,
                                         OUTPUT aux_vliofepr,
                                         OUTPUT TABLE tt-erro).
 
@@ -3321,7 +3465,9 @@ PROCEDURE grava_efetivacao_proposta:
 
        ASSIGN par_mensagem = ''.
 
-       IF crawepr.dsnivris <> aux_dsnivris THEN
+       IF crawepr.dsnivris <> aux_dsnivris AND           
+          /* nao atualizar o risco no caso de cessao */
+          aux_flcescrd = FALSE THEN 
           DO:
                FIND CURRENT crawepr EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                IF AVAIL crawepr THEN DO:
@@ -4122,6 +4268,8 @@ PROCEDURE transf_contrato_prejuizo.
     DEF VAR aux_mesrefju     AS INTE                                NO-UNDO.
     DEF VAR aux_anorefju     AS INTE                                NO-UNDO.
 
+    DEF VAR aux_flgativo     AS DEC                                 NO-UNDO.
+  
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_flgtrans = FALSE.
@@ -4147,6 +4295,61 @@ PROCEDURE transf_contrato_prejuizo.
 
            RETURN "NOK".
        END.
+            
+       /* Verificacao de contrato de acordo */  
+      
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Verifica se ha contratos de acordo */
+        RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,INPUT par_nrctremp
+                                              ,0
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_verifica_acordo_ativo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+               aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+               aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+        
+        IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+          DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 1, /* nrdcaixa  */
+                           INPUT 1, /* sequencia */
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+          END.        
+          
+        IF aux_flgativo = 1 THEN
+          DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Transferencia para prejuizo nao permitida, emprestimo em acordo.".
+
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT 1, /* nrdcaixa  */
+                          INPUT 1, /* sequencia */
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+
+           RETURN "NOK".
+             
+       END.
+          
+       /* Fim verificacao contrato acordo */     
+          
           
        FOR LAST crapris FIELDS(innivris dtdrisco)
                         WHERE crapris.cdcooper = par_cdcooper     AND
@@ -4647,6 +4850,8 @@ PROCEDURE desfaz_transferencia_prejuizo.
     DEF VAR     aux_cdcritic AS INTE                                NO-UNDO.
     DEF VAR     aux_nrseqdig AS INTE                                NO-UNDO.
 
+    DEF VAR     aux_flgativo AS DEC                                 NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
 
 
@@ -4654,7 +4859,6 @@ PROCEDURE desfaz_transferencia_prejuizo.
 
     TRANSFERE:
     DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:
-
 
         FOR FIRST crapepr
             WHERE crapepr.cdcooper = par_cdcooper
@@ -4736,6 +4940,60 @@ PROCEDURE desfaz_transferencia_prejuizo.
 
                 RETURN "NOK".
             END.
+
+			/* Verificacao de contrato de acordo */  
+      
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+			/* Verifica se ha contratos de acordo */
+			RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+			aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+												,INPUT par_nrdconta
+												,INPUT par_nrctremp
+												,0
+												,0
+												,"").
+
+			CLOSE STORED-PROC pc_verifica_acordo_ativo
+					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+			ASSIGN aux_cdcritic = 0
+					aux_dscritic = ""
+					aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+					aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+					aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+      
+			IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+			DO:
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT 1, /* nrdcaixa  */
+                               INPUT 1, /* sequencia */
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                RETURN "NOK".
+            END.
+
+			IF aux_flgativo = 1 THEN
+			DO:
+				ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "Nao e possivel desfazer prejuizo, emprestimo em acordo.".
+
+				RUN gera_erro (INPUT par_cdcooper,
+								INPUT par_cdagenci,
+								INPUT 1, /* nrdcaixa  */
+								INPUT 1, /* sequencia */
+								INPUT aux_cdcritic,
+								INPUT-OUTPUT aux_dscritic).
+
+				RETURN "NOK".
+           
+			END.
+     
+			/* Fim verificacao contrato acordo */
 
             IF NOT VALID-HANDLE(h-b1wgen0043) THEN
                RUN sistema/generico/procedures/b1wgen0043.p
