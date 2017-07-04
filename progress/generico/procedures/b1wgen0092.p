@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 17/01/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 04/07/2017
     
    Dados referentes ao programa:
    
@@ -172,6 +172,9 @@
               09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
                            esquerda no campo de senha informada pelo usuário
                            Rafael (Mouts) - Chamado 657038
+                           
+              04/07/2017 - Incluido validaçao para nao conseguir incluir debito automatico quando
+                           o primeiro titular da conta é de menor (Tiago/Thiago #652776)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1619,6 +1622,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
+    DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1737,6 +1741,23 @@ PROCEDURE grava-dados:
             
         IF  par_cddopcao = "I" THEN
             DO: 
+                /*Validar se o cooperado for menor de idade nao deixar incluir a autorizaçao*/
+                ASSIGN aux_dtamenor = ADD-INTERVAL( TODAY, -18, "YEARS").
+                
+                 FIND crapttl 
+                WHERE crapttl.cdcooper = par_cdcooper 
+                  AND crapttl.nrdconta = par_nrdconta
+                  AND crapttl.idseqttl = 1
+                  AND crapttl.dtnasttl > aux_dtamenor
+                  NO-LOCK NO-ERROR.
+                /*Fim valida*/
+            
+                IF AVAILABLE(crapttl) THEN
+                   DO:
+                      ASSIGN aux_dscritic = "Nao foi possivel incluir autorizacao de debito, cooperado menor de idade.".
+                      UNDO Grava, LEAVE Grava.
+                   END.
+            
                 ASSIGN aux_vlrcalcu = ""
                        aux_cdempres = "0".
                 
