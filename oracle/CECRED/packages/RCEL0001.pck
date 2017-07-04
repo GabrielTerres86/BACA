@@ -1562,7 +1562,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Objetivo  : Rotina para efetuar a recarga de celular
 
-    Alteracoes: 06/06/2017 - Incluir a gravação da data de repasse do valor para 
+    Alteracoes: 31/05/2017 - Adicionados parametros Cooperativa e CNPJ na requisição
+                             RealizarVenda do Aymaru. PRJ 321 - Recarga de Celular (Lombardi)
+
+                06/06/2017 - Incluir a gravação da data de repasse do valor para 
                              a Rede Tendencia(dtrepasse) (Renato Darosci)
     ..............................................................................*/		
 	  DECLARE
@@ -1957,6 +1960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			-- Fechar cursor
 			CLOSE cr_inf_rec;
 			
+      vr_recarga.put('Cooperativa', pr_cdcooper ); -- Codigo da Cooperativa
 			vr_recarga.put('Fornecedor', rw_inf_rec.nmoperadora); -- Nome da operadora
 			vr_recarga.put('TipoProduto', rw_inf_rec.tpoperacao); -- Tipo produto FIXO
 			vr_recarga.put('Produto', rw_inf_rec.nmproduto);      -- Nome do produto
@@ -2611,7 +2615,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
    Objetivo  : Enviar requisição para receber e atualizar os produtos e valores 
 	             disponíveis para Recarga de Celular
 
-   Alteracoes: 
+   Alteracoes: 31/05/2017 - Adicionados parametros Cooperativa e CNPJ na requisição
+                            ListarProdutos do Aymaru. PRJ 321 - Recarga de Celular (Lombardi)
   ..........................................................................*/
 	  -- Variáveis auxiliares
 	  vr_cdprogra  VARCHAR2(40) := 'RCEL0001.PC_SOLICITA_PRODUTOS_RECARGA';
@@ -2639,6 +2644,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                     -- Parametros para Ocorrencia
                    ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
 									 
+    vr_parametros(1).chave := 'Cooperativa';
+    vr_parametros(1).valor := 3;
+    
 		-- Consumir rest do AYMARU
 		AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Comercial/Recarga/ListarProdutos'
 																			 ,pr_verbo => WRES0001.GET
@@ -2916,7 +2924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,rw_xmlProduto.tpoperacao);
 					ELSE -- Valor pré-fixado
             
-            IF rw_xmlProduto.nmproduto <> 'SERCOMTEL FIXO' THEN
+            IF rw_xmlProduto.nmproduto LIKE '%FIXO%' THEN
               
 						-- Criar novo produto
 						INSERT INTO tbrecarga_produto(cdoperadora
