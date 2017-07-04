@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 25/04/2016
+   Data    : Outubro/2011                      Ultima atualizacao: 12/12/2016
 
    Dados referentes ao programa:
 
@@ -113,6 +113,16 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
 			   25/04/2016 - Remocao de caracteres invalidos no nome da agencia 
 							conforme solicitado no chamado 429584 (Kelvin)
 
+               21/11/2016 - Alterado idorigem Mobile de 9 para 10.
+                            PRJ335 - Analise de fraudes (Odirlei-AMcom) 
+
+               21/11/2016 - Rotina pc_executa_envio_ted - Inclusao de parametros.
+                                   pc_envio_ted - Tratamento para gerar registro de analise de fraude
+                            PRJ335 - Analise de fraudes (Odirlei-AMcom) 
+							
+               12/12/2016 - Nao cobrar tarifa de TED quando a origem for do 
+                            BacenJud (Andrino - Mouts). Projeto 341-Bacenjud
+							
 ..............................................................................*/
   --  antigo tt-protocolo-ted 
   TYPE typ_reg_protocolo_ted 
@@ -199,6 +209,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_cdispbif IN INTEGER                --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0      --> Indicador se origem é do Mobile
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
+                          ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -230,6 +242,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_cdispbif IN INTEGER                --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0      --> Indicador se origem é do Mobile
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
+                          ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT CLOB --> dados do protocolo
@@ -261,6 +275,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0 --> Indicador se origem é do Mobile
                           ,pr_idagenda IN INTEGER  --> Tipo de agendamento                          
+                          ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED        
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
@@ -305,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 20/03/2017 
+    Data     : Junho/2013.                   Ultima atualizacao: 08/06/2017 
   
     Dados referentes ao programa:
   
@@ -331,8 +347,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 
                 05/10/2016 - Implementei correcoes e alteracoes na pc_enviar_ted SD 535051. (Carlos Rafael Tanholi).
                 
+                21/11/2016 - Rotina pc_executa_envio_ted - Inclusao de parametros.
+                                   pc_envio_ted - Tratamento para gerar registro de analise de fraude
+                            PRJ335 - Analise de fraudes (Odirlei-AMcom) 
+                
                 20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
                             (Adriano - SD 620221).
+                
+                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+                            
+                08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -725,6 +749,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                  ,pr_cdagenci   => pr_cdageope  -- Agencia do Associado
                                  ,pr_tpoperac   => 4 /* TED */  -- Tipo de Operacao (0=todos)
                                  ,pr_inpessoa   => pr_inpessoa  -- Tipo de Pessoa
+                                 ,pr_idagenda   => 0             --Tipo de agendamento
+                                 ,pr_cdtiptra   => 0             --Tipo de transferencia
                                  ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                  ,pr_cdcritic   => vr_cdcritic    --Código do erro
                                  ,pr_dscritic   => vr_dscritic);  --Descricao do erro
@@ -1219,6 +1245,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0 --> Indicador se origem é do Mobile
                           ,pr_idagenda IN INTEGER  --> Tipo de agendamento                          
+                          ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile                         
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED        
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL      
@@ -1231,7 +1259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 05/10/2016
+      Data     : Junho/2015.                   Ultima atualizacao: 26/04/2017
   
       Dados referentes ao programa:
   
@@ -1260,6 +1288,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   05/10/2016 - Removi as chamadas para gera_log_lote_uso, ajustei os campos do insert na craptvl
                                movi a chamada da procedure gera_log_ope_cartao para antes do UPDATE na craplot.
                                SD 535051. (Carlos Rafael Tanholi).
+                 
+				 14/11/2016 - Alterado cdorigem 9 para 10, novo cdorigem especifico para mobile
+	                          PRJ335 - Analise de Fraude(Odirlei-AMcom) 
+
+                  21/11/2016 - Tratamento para gerar analise de fraude das TEDs.
+                               PRJ335 - Analise de Fraude(Odirlei-AMcom) 
+                               
+                  26/04/2017 - Ajustado para nao realizar analise de fraude para efetivações
+                               de agendamento. PRJ335 - Analise de Fraude(Odirlei-AMcom)               
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -1371,6 +1408,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     rw_craplot_tvl cr_craplot%ROWTYPE;
     rw_craplot_lcm cr_craplot%ROWTYPE;
     
+    --> Buscar dados da tarifa
+    CURSOR cr_craplat (pr_rowid ROWID) IS
+      SELECT lat.cdlantar
+        FROM craplat lat
+       WHERE lat.rowid = pr_rowid; 
+    rw_craplat cr_craplat%ROWTYPE;   
+    
     ------------> ESTRUTURAS DE REGISTRO <-----------
     
     --Tabela de memória de limites de horario
@@ -1426,6 +1470,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
 	vr_qtacobra   INTEGER;
 	vr_fliseope   INTEGER;		
+    
+    vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
     
     ---------------- SUB-ROTINAS ------------------
     -- Procedimento para inserir o lote e não deixar tabela lockada
@@ -1663,6 +1709,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     IF pr_flmobile = 1 THEN /* Canal Mobile */
       vr_nrctrlif := vr_nrctrlif ||'M';
+    ELSIF pr_idorigem = 1 THEN /* Origem BacenJud - Ayllos */
+      vr_nrctrlif := vr_nrctrlif ||'A';
     ELSE /* Canal InternetBank */
       vr_nrctrlif := vr_nrctrlif ||'I';
     END IF;
@@ -1735,12 +1783,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
      
+    --> Para as origens InternetBank e Mobile,
+    --> Deve ser gerado o registro de analise de fraude antes de
+    --> realizar a operação
+    IF pr_idorigem IN (3) AND 
+       pr_idagenda <> 2   THEN --> Nao gerar analise para agendamentos
+    
+      IF pr_flmobile = 1 THEN
+			  vr_idorigem := 10; --> MOBILE
+      ELSE
+        vr_idorigem := pr_idorigem;
+      END IF;
+      
+      vr_idanalise_fraude := NULL;
+      --> Rotina para Inclusao do registro de analise de fraude  
+      AFRA0001.pc_Criar_Analise_Antifraude( pr_cdcooper    => pr_cdcooper   
+                                          ,pr_cdagenci    => pr_cdageope   
+                                          ,pr_nrdconta    => pr_nrdconta   
+                                          ,pr_cdcanal     => vr_idorigem    
+                                          ,pr_iptransacao => pr_iptransa
+                                          ,pr_dtmvtolt    => rw_crapdat.dtmvtocd   
+                                          ,pr_cdproduto   => 30 --> TED 
+										                      ,pr_cdoperacao  => 12 --> TED Eletronica 
+                                          ,pr_dstransacao => pr_dstransa
+                                          ,pr_tptransacao => 1 --> Online
+                                          ,pr_idanalise_fraude => vr_idanalise_fraude
+                                          ,pr_dscritic   => vr_dscritic);
+      vr_dscritic := NULL;
+    END IF;
+    
+     
     BEGIN
       INSERT INTO craptvl
                 (craptvl.cdcooper
                 ,craptvl.tpdoctrf
                 ,craptvl.idopetrf
                 ,craptvl.nrdconta
+                ,craptvl.idseqttl
                 ,craptvl.cpfcgemi
                 ,craptvl.nmpesemi
                 ,craptvl.nrdctitg
@@ -1770,11 +1849,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,craptvl.nrispbif
                 ,craptvl.nrautdoc                
                 ,craptvl.flgpesdb
-                ,craptvl.flgpescr)
+                ,craptvl.flgpescr
+                ,craptvl.idanafrd
+               )
          VALUES (rw_crapcop.cdcooper     --> craptvl.cdcooper
                 ,3                       --> craptvl.tpdoctrf
                 ,vr_nrctrlif             --> craptvl.idopetrf     
                 ,pr_nrdconta             --> craptvl.nrdconta
+                ,pr_idseqttl             --> craptvl.idseqttl
                 ,pr_nrcpfcgc             --> craptvl.cpfcgemi
                 ,upper(pr_nmprimtl)      --> craptvl.nmpesemi
                 ,rw_crapass.nrdctitg     --> craptvl.nrdctitg
@@ -1810,7 +1892,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,(CASE pr_inpesfav       --> craptvl.flgpescr
                     WHEN 1 THEN 1 /*TRUE*/
                     ELSE 0        /*FALSE*/
-                  END))
+                  END)
+                ,vr_idanalise_fraude     --> craptvl.idanafrd
+                )
         RETURNING craptvl.tpdctadb, craptvl.flgtitul
              INTO rw_craptvl.tpdctadb, rw_craptvl.flgtitul;
     EXCEPTION 
@@ -1858,9 +1942,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     
+    -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
+    IF pr_tpctafav = 9 THEN
+      vr_cdhisted := 1406;
+    ELSE
     -- definir historico de ted
     vr_cdhisted := 555;
-    
+    END IF;
+
     /* Grava uma autenticacao */
     CXON0000.pc_grava_autenticacao_internet 
                           (pr_cooper       => pr_cdcooper     --> Codigo Cooperativa
@@ -2073,8 +2162,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
       END IF;
 
+      IF pr_tpctafav = 9 THEN -- Se for BacenJud nao deve cobrar tarifa
+        NULL;
 	    -- Se não isenta cobrança da tarifa
-      IF vr_fliseope <> 1 THEN
+      ELSIF vr_fliseope <> 1 THEN
 
         IF pr_idagenda = 1 OR
            vr_debtarifa    THEN 
@@ -2167,9 +2258,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
             RAISE vr_exc_erro;
           END IF;
         END IF;
+        
+        --> Caso possua analise de fraude  e gerou tarifa
+        --> atualizar a analise com o numero da tarifa, para
+        --> caso necessario conseguir estorna-la
+        IF nvl(vr_idanalise_fraude,0) > 0 AND 
+           (vr_rowid_craplat IS NOT NULL OR vr_cdlantar IS NOT NULL) THEN
+           
+          IF vr_cdlantar IS NULL THEN
+            --> Buscar dados da tarifa
+            OPEN cr_craplat (pr_rowid => vr_rowid_craplat);          
+            FETCH cr_craplat INTO rw_craplat;            
+            CLOSE cr_craplat;
+            vr_cdlantar := rw_craplat.cdlantar;
+      END IF;
+            
+          IF vr_cdlantar IS NOT NULL THEN
+            BEGIN
+              UPDATE tbgen_analise_fraude 
+                 SET tbgen_analise_fraude.cdlantar = vr_cdlantar 
+               WHERE tbgen_analise_fraude.idanalise_fraude = vr_idanalise_fraude;
+            EXCEPTION 
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar analise de fraude: '||SQLERRM;
+                RAISE vr_exc_erro;
+            END;            
+    END IF;
+    
+        END IF;  -- Fim IF analise 
+        
+        
       END IF;
     END IF;
     
+    --> Caso possua processo de analise de fraude, não deve enviar a TED para a cabine
+    --> Processo ocorrerá apos o retorno da analise
+    IF nvl(vr_idanalise_fraude,0) = 0 THEN 
     -- Procedimento para envio do TED para o SPB
     SSPB0001.pc_proc_envia_tec_ted 
                           (pr_cdcooper =>  rw_crapcop.cdcooper  --> Cooperativa
@@ -2213,7 +2337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF; 
-    
+    END IF;
     -- verificar se lote esta lockado
     IF fn_verifica_lote_uso(pr_rowid => rw_craplot_tvl.rowid ) = 1 THEN
       vr_dscritic:= 'Registro de lote '||rw_craplot_tvl.nrdolote||' em uso. Tente novamente.';  
@@ -2244,7 +2368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
     
 		IF pr_flmobile = 1 THEN
-			vr_idorigem := 9;
+			vr_idorigem := 10; --> MOBILE
 		ELSE
 			IF pr_idorigem = 0 THEN
 				vr_idorigem := 7;
@@ -2411,6 +2535,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_cdispbif IN INTEGER                --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0      --> Indicador se origem é do Mobile
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
+                          ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -2423,7 +2549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
   
       Dados referentes ao programa:
   
@@ -2434,6 +2560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
                   08/10/2015 - Ajustado para gerar o numero da conta no protocolo com "."
                                conforme progress SD341797 (Odirlei-Amcom)
+                               
+                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -2856,6 +2984,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   ,pr_cdispbif => pr_cdispbif --> ISPB Banco Favorecido
                   ,pr_flmobile => pr_flmobile --> Indicador se origem é do Mobile
                   ,pr_idagenda => pr_idagenda --> Tipo de agendamento                          
+                  ,pr_iptransa => pr_iptransa --> IP da transacao no IBank/mobile
+                  ,pr_dstransa => pr_dstransa --> Descrição da transacao no IBank/mobile                                            
                   -- saida
                   ,pr_nrdocmto => vr_nrdocmto --> Documento TED        
                   ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL      
@@ -2936,7 +3066,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       CLOSE cr_crapban;
     END IF;
      
-    
     vr_dsinfor2 := vr_dsinfor2 ||'#'||to_char(pr_cdageban,'fm0000');
     
     --> Obtem dados da agencia do favorecido para Protocolo
@@ -2953,7 +3082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     --> Formata dados do favorecido para Protocolo
     vr_dsinfor2 := vr_dsinfor2||
-                  TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzz.9'))||
+                  TRIM(gene0002.fn_mask(to_char(pr_nrctatrf),'zzzzzzzzzzzzzzzzzzz.9'))||
                   '#'||gene0002.fn_mask(pr_cdispbif,'zzzzzzzzz9');
     vr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,pr_inpessoa);
     vr_dsinfor3 := TRIM(pr_nmtitula) ||'#'|| vr_dscpfcgc ||'#';
@@ -3197,6 +3326,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_cdispbif IN INTEGER                --> ISPB Banco Favorecido
                           ,pr_flmobile IN INTEGER DEFAULT 0      --> Indicador se origem é do Mobile
                           ,pr_idagenda IN INTEGER                --> Tipo de agendamento
+                          ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                          ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo    
                           ,pr_tab_protocolo_ted OUT CLOB --> dados do protocolo
@@ -3254,6 +3385,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 pr_cdispbif => pr_cdispbif, 
                 pr_flmobile => pr_flmobile, 
                 pr_idagenda => pr_idagenda, 
+                pr_iptransa => pr_iptransa,
+                pr_dstransa => pr_dstransa,
                 pr_dsprotoc => pr_dsprotoc, 
                 pr_tab_protocolo_ted => vr_tab_protocolo_ted, 
                 pr_cdcritic => pr_cdcritic, 
