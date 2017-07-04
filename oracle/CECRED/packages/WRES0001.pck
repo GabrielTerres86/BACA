@@ -91,13 +91,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
                        ,pr_dtrequisicao IN DATE
                        ,pr_resposta     IN typ_http_response
                        ,pr_dtresposta   IN DATE
-                       ,pr_cdcritic     IN crapcri.cdcritic%TYPE) IS
+                       ,pr_cdcritic     IN crapcri.cdcritic%TYPE) IS   
+  PRAGMA AUTONOMOUS_TRANSACTION;                       
   BEGIN
    DECLARE
      vr_clob_cabecalho_requisicao CLOB;
-     vr_clob_cabecalho_resposta   CLOB; 
+     vr_clob_cabecalho_resposta   CLOB;
+
    BEGIN
-     
      -- Cria um CLOB do cabeçalho da Requisição
      pc_cabecalho_to_clob(pr_cabecalho => pr_requisicao.cabecalho
                          ,pr_clob      => vr_clob_cabecalho_requisicao);
@@ -129,6 +130,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
                        ,pr_resposta.status_code
                        ,pr_cdcritic);
                        
+        COMMIT;
+        
+       EXCEPTION
+         WHEN OTHERS THEN
+           ROLLBACK;
+   
       END;                       
 
   END;
