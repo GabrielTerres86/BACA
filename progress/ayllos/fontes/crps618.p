@@ -80,10 +80,14 @@
                29/06/2017 - Fonte convertido para Oracle - Projeto 340 (Rafael)
  ........................................................................... */
 
-{ includes/var_batch.i }
+{ includes/var_batch.i "NEW" }
 { sistema/generico/includes/var_oracle.i }
 
+/**** Executara na CECRED - Rafael ****/
 ASSIGN glb_cdprogra = "crps618"
+       glb_cdcooper = 3. 
+
+/*ASSIGN glb_cdprogra = "crps618"
        glb_flgbatch = FALSE
        glb_cdoperad = "1"
        glb_cdcritic = 0
@@ -98,6 +102,13 @@ IF  glb_cdcritic > 0 THEN DO:
                       "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
     RETURN.
      END.     
+*/
+
+
+UNIX SILENT VALUE("echo " + STRING(TODAY) + " " + 
+                            STRING(TIME,"HH:MM:SS") +
+                  " - " + glb_cdprogra + "' --> '"  +
+                  "Programa iniciado" + " >> log/crps618.log").
 
 ETIME(TRUE).
 
@@ -118,7 +129,7 @@ END.
     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                    " - " + glb_cdprogra + "' --> '"  +
                       "Erro ao executar Stored Procedure: '" +
-                      aux_msgerora + "' >> log/proc_batch.log").
+                      aux_msgerora + "' >> log/crps618.log").
     RETURN.
 END.
 
@@ -138,7 +149,7 @@ IF  glb_cdcritic <> 0   OR
         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                        " - " + glb_cdprogra + "' --> '"  +
                           "Erro ao rodar: " + STRING(glb_cdcritic) + " " + 
-                          "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
+                          "'" + glb_dscritic + "'" + " >> log/crps618.log").
         RETURN.
 END.
      
@@ -146,6 +157,6 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                            " - " + glb_cdprogra + "' --> '"  +
                   "Stored Procedure rodou em "         + 
                   STRING(INT(ETIME / 1000),"HH:MM:SS") + 
-                  " >> log/proc_batch.log").
+                  " >> log/crps618.log").
                   
 RUN fontes/fimprg.p.

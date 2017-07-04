@@ -1011,6 +1011,7 @@ BEGIN
      vr_input_file  utl_file.file_type;
      
      --Variáveis arquivo contábil
+     vr_aux_contador       NUMBER := 0;
      vr_nom_diretorio      VARCHAR2(200); 
      vr_nom_dir_copia      VARCHAR2(200);
      vr_input_filectb      utl_file.file_type;  
@@ -1114,8 +1115,8 @@ BEGIN
         vr_tab_historico('0623DOC-CRED CO').nrctades := 4894;
         vr_tab_historico('0623DOC-CRED CO').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. DOC - CRED CO NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
 
-        vr_tab_historico('0632OB 12 STN').nrctaori := 1773;
-        vr_tab_historico('0632OB 12 STN').nrctades := 1179;
+        vr_tab_historico('0632OB 12 STN').nrctaori := 1179;
+        vr_tab_historico('0632OB 12 STN').nrctades := 4894;
         vr_tab_historico('0632OB 12 STN').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
 
         vr_tab_historico('0633SEGURO').nrctaori := 1179;
@@ -5067,30 +5068,6 @@ BEGIN
            --Se for o primeiro
            IF vr_flgfirst THEN
              
-             -- Busca do diretório onde ficará o arquivo
-             vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
-                                                       pr_cdcooper => pr_cdcooper,
-                                                       pr_nmsubdir => 'contab');
-         
-             -- Busca do diretório onde o Radar ou Matera pegará o arquivo                                          
-             vr_nom_dir_copia := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                          ,pr_cdcooper => 0
-                                                          ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
-                                                          
-             
-             vr_nmarquiv := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(pr_cdcooper,2,0)||'_CRITICAITG.txt';
-             -- Tenta abrir o arquivo de log em modo gravacao
-             gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio     --> Diretório do arquivo
-                                     ,pr_nmarquiv => vr_nmarquiv          --> Nome do arquivo
-                                     ,pr_tipabert => 'W'                  --> Modo de abertura (R,W,A)
-                                     ,pr_utlfileh => vr_input_filectb     --> Handle do arquivo aberto
-                                     ,pr_des_erro => vr_dscritic);        --> Erro
-             
-             IF vr_dscritic IS NOT NULL THEN
-               vr_cdcritic := 0; 
-               RAISE vr_exc_saida;
-             END IF;
-             
              --Inicia PL Table com lista de histórios e informações para cada um deles
              pc_inicia_historico;                                                          
            
@@ -5175,6 +5152,36 @@ BEGIN
            
            --Se histórico está na PL Table gera linha no arquivo para Radar/Matera    
            IF vr_tab_historico.exists(vr_dshistor) THEN   
+             
+             vr_aux_contador := vr_aux_contador + 1; 
+             
+             IF vr_aux_contador = 1 THEN
+
+               -- Busca do diretório onde ficará o arquivo
+               vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                                         pr_cdcooper => pr_cdcooper,
+                                                         pr_nmsubdir => 'contab');
+           
+               -- Busca do diretório onde o Radar ou Matera pegará o arquivo                                          
+               vr_nom_dir_copia := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                            ,pr_cdcooper => 0
+                                                            ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
+                                                            
+               
+               vr_nmarquiv := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(pr_cdcooper,2,0)||'_CRITICAITG.txt';
+               -- Tenta abrir o arquivo de log em modo gravacao
+               gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio     --> Diretório do arquivo
+                                       ,pr_nmarquiv => vr_nmarquiv          --> Nome do arquivo
+                                       ,pr_tipabert => 'W'                  --> Modo de abertura (R,W,A)
+                                       ,pr_utlfileh => vr_input_filectb     --> Handle do arquivo aberto
+                                       ,pr_des_erro => vr_dscritic);        --> Erro
+               
+               IF vr_dscritic IS NOT NULL THEN
+                 vr_cdcritic := 0; 
+                 RAISE vr_exc_saida;
+               END IF;
+                 
+             END IF;
            
              vr_setlinha_ctb := fn_set_cabecalho('20'
                                                 ,rw_crapdat.dtmvtolt
@@ -5227,8 +5234,8 @@ BEGIN
            
          END LOOP;
          
-         IF NOT vr_flgfirst THEN
-           -- Fechar Arquivo
+         -- Fechar Arquivo
+         IF vr_aux_contador > 0 THEN
            BEGIN
               gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_filectb); --> Handle do arquivo aberto;
            EXCEPTION
@@ -5238,7 +5245,7 @@ BEGIN
               vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarquiv||'>: ' || SQLERRM;
               RAISE vr_exc_saida;
            END;
-           
+             
           -- Copia o arquivo gerado para o diretório final convertendo para DOS
           gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarquiv||' > '||vr_nom_dir_copia||'/'||vr_nmarquiv||' 2>/dev/null',
                                       pr_typ_saida   => vr_typ_said,
@@ -5248,9 +5255,8 @@ BEGIN
              vr_dscritic := 'Erro ao copiar o arquivo '||vr_nmarquiv||': '||vr_dscritic;
              raise vr_exc_saida;
           end if;
-           
-           
-         END IF;
+        END IF;
+
          
          -- Inicilizar as informacoes do XML
          pc_escreve_xml('</rejeitados>');

@@ -450,6 +450,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
           ,lgp.tpdpagto
           ,lgp.vlrtotal
           ,lgp.inpesgps
+          ,lgp.nrctapag
           ,ROW_NUMBER ()
             OVER (PARTITION BY lgp.cdcooper ORDER BY lgp.cdcooper) nrseqreg
       FROM craplgp lgp
@@ -1091,6 +1092,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps638(pr_cdcooper IN crapcop.cdcooper%TY
                           ,pr_vltrfuni => vr_aux_vltargps
                           ,pr_vltarifa => vr_vltarifa_1414
                           ,pr_dsmeiarr => vr_aux_dsmeiarr
+                          ,pr_nrdconta => rw_craplgp.nrctapag
                           ,pr_inpessoa => rw_craplgp.inpesgps
                           ,pr_cdagenci => rw_craplgp.cdagenci);
 

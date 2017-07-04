@@ -1,9 +1,8 @@
-
 /*..............................................................................
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 30/03/2017
+   Data    : 14/07/2006                        Ultima atualizacao: 31/01/2017
 
    Dados referentes ao programa:
 
@@ -257,23 +256,31 @@
 
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança(Odirlei-AMcom)
-
+                            
                09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
                             nao fixara em convenio INTERNET, mas utilizara uma logica
                             semelhante ao que acontece para SERASA, assumindo valor
                             TRUE se algum dos convenios possuir a opcao de protesto
                             habilitada. Heitor (Mouts) - Chamado 554656
 
+               16/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
+
 		       23/12/2016 - Ajustes referentes a melhoria de performance na cobrança 
 			                do IB (Tiago/Ademir SD566906).
 
                31/01/2017 - Ajuste para carregar o nome do beneficiario na geracao do 
 			                boleto (Douglas - Chamado 601478)
+
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança(Odirlei-AMcom)
 
+               02/01/2017 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Ricardo Linhares)                                                              
+
                30/03/2017 - Adicionado o parametro par_idseqttl na chamada da procedure
                             busca-nome-imp-blt (Douglas - Chamado 637660)
+
 .............................................................................*/
 
 
@@ -933,10 +940,15 @@ PROCEDURE gravar-boleto:
     DEF  INPUT PARAM par_qtdianeg AS INTE                           NO-UNDO.
 
     /* Aviso SMS */
-    DEF  INPUT PARAM par_inavisms AS INTE                                  NO-UNDO.
-    DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
-    DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
-    DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM par_inavisms AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_insmsant AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_insmsvct AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_insmspos AS INTE                           NO-UNDO.
+
+    /* NPC */
+    DEF  INPUT PARAM par_flgregon AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpagdiv AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlminimo AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-consulta-blt.
@@ -979,10 +991,9 @@ PROCEDURE gravar-boleto:
 
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
-
+    
     /* Nome do Beneficiario para imprimir no boleto */
     DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
-
     /* Tratamento para os boletos e a emissão de carnê */
     DEF VAR aux_vltitulo      AS DECI                               NO-UNDO.
     DEF VAR aux_vldescto      AS DECI                               NO-UNDO.
@@ -1356,6 +1367,39 @@ PROCEDURE gravar-boleto:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
+        IF par_flgregis AND ( par_vlminimo > 0 OR CAN-DO("0,1,2", STRING(par_inpagdiv)) ) THEN
+           DO:           
+           
+             IF par_vlminimo > 0.01 AND (par_inpagdiv = 0 OR par_inpagdiv = 2) THEN                         
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Valor minimo informado nao esta de acordo com " + 
+                                          "o tipo de pagto divergente".
+
+                    UNDO TRANSACAO, LEAVE TRANSACAO.
+                END.
+             
+             
+             IF par_vlminimo > 0.01 AND par_inpagdiv = 1 THEN              
+                DO:                
+                  IF par_vlminimo > (par_vltitulo - (par_vldescto + par_vlabatim)) THEN
+                     DO:
+                       ASSIGN aux_cdcritic = 0
+                              aux_dscritic = "Valor minimo superior ao valor final boleto".
+
+                       UNDO TRANSACAO, LEAVE TRANSACAO.
+                     END.                     
+                END.
+                
+             IF par_vlminimo = 0 AND par_inpagdiv = 1 THEN         
+                 DO:
+                   ASSIGN aux_cdcritic = 0
+                          aux_dscritic = "Valor minimo deve ser superior a zero".
+
+                   UNDO TRANSACAO, LEAVE TRANSACAO.
+                 END.                              
+           END.
+
 
         RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
 
@@ -1386,8 +1430,8 @@ PROCEDURE gravar-boleto:
 			      DO:   
 				        ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
 			      END.
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
+				    UNDO TRANSACAO, LEAVE TRANSACAO.
+        END.
 
 
         /* ************************************************************************* */
@@ -1922,7 +1966,12 @@ PROCEDURE gravar-boleto:
                                    INPUT par_inavisms,
                                    INPUT par_insmsant,
                                    INPUT par_insmsvct,
-                                   INPUT par_insmspos,
+                                   INPUT par_insmspos,         
+                                                                   
+                                   /* NPC */
+                                   INPUT crapceb.flgregon,
+                                   INPUT par_inpagdiv,
+                                   INPUT par_vlminimo,
 
                                    INPUT TABLE tt-dados-sacado-blt,
                                    INPUT-OUTPUT aux_lsdoctos,
@@ -2000,8 +2049,7 @@ PROCEDURE gravar-boleto:
                            tar_cdhistor = 0
                            tar_cdfvlcop = 0.
                 
-                    IF  aux_inpessoa <> 3 AND 
-                        par_inemiten <> 3 THEN /* nao cobrar tarifa na geracao ref Cooperativa/EE */
+                    IF  aux_inpessoa <> 3 THEN /* nao cobrar tarifa na geracao ref Cooperativa/EE */
                         DO:
                             /* Busca informacoes tarifa */
                             RUN carrega_dados_tarifa_cobranca IN h-b1wgen0153
@@ -2010,7 +2058,7 @@ PROCEDURE gravar-boleto:
                                                INPUT  tt-consulta-blt.nrcnvcob,         /* nrconven */ 
                                                INPUT  "RET",                            /* dsincide REM/RET */ 
                                                INPUT  2,                                /* cdocorre */
-                                               INPUT  "",                               /* cdmotivo */
+                                               INPUT  tt-consulta-blt.cdmotivo,         /* cdmotivo */
                                                INPUT  aux_inpessoa,                     /* inpessoa */
                                                INPUT  1,                                /* vllanmto */
                                                INPUT  "",                               /* cdprogra */
@@ -2023,6 +2071,17 @@ PROCEDURE gravar-boleto:
                                                OUTPUT tar_cdfvlcop,                     /* cdfvlcop */
                                                OUTPUT TABLE tt-erro).
                         END.
+
+                    
+                    IF TEMP-TABLE tt-erro:HAS-RECORDS THEN 
+                       DO:
+                       
+                         /* erro de tarifa nao cadastrada */
+                         FIND FIRST tt-erro EXCLUSIVE-LOCK NO-ERROR.
+                         
+                         /* sera ignorada */
+                         DELETE tt-erro.
+                       END.
 
                     IF  VALID-HANDLE(h-b1wgen0153)  THEN
                         DELETE PROCEDURE h-b1wgen0153.
@@ -2060,12 +2119,13 @@ PROCEDURE gravar-boleto:
         END.
         /* FIM - cobrar tarifas de forma consolidada */
           
-        IF   RETURN-VALUE = "NOK"  THEN
+        /* Enviar para CIP */
+        IF crapceb.flgregon = TRUE THEN /* Envia para CIP apenas no Online */ 
         DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Erro na rotina remessa-titulos-DDA. Verificar.".
-
-            RETURN "NOK".
+        
+          RUN enviar-cip (INPUT par_cdcooper,
+                          INPUT par_nrdconta).
+          
         END.
 
     END.
@@ -2134,6 +2194,27 @@ PROCEDURE gravar-boleto:
     
 END PROCEDURE.
 
+PROCEDURE enviar-cip:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                        RUN STORED-PROCEDURE pc_registra_tit_cip_online  aux_handproc = PROC-HANDLE
+                        (INPUT par_cdcooper,
+                         INPUT par_nrdconta,
+                         OUTPUT 0, 
+                         OUTPUT "").
+
+                        CLOSE STORED-PROC pc_registra_tit_cip_online 
+                                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    RETURN "OK".
+  
+END PROCEDURE.
 
 /******************************************************************************/
 /**           Procedure para retornar dados para geracao de boletos          **/
@@ -2164,8 +2245,10 @@ PROCEDURE gera-dados:
     DEF VAR aux_valormin         AS DEC                             NO-UNDO.
     DEF VAR aux_textodia         AS CHAR                            NO-UNDO.
     DEF VAR aux_flprotes         AS LOG                             NO-UNDO.
+    DEF VAR aux_flgregon         AS LOG                             NO-UNDO.
+    DEF VAR aux_flgpgdiv         AS LOG                             NO-UNDO.
     DEF VAR aux_flpersms         AS INT                             NO-UNDO.
-    DEF VAR aux_fllindig         AS INT                             NO-UNDO.
+    DEF VAR aux_fllindig         AS INT                             NO-UNDO. 
     DEF VAR aux_flsitsms         AS INT                             NO-UNDO.
     DEF VAR aux_idcontrato       AS INT                             NO-UNDO.
             
@@ -2370,7 +2453,9 @@ PROCEDURE gera-dados:
                            OUTPUT aux_intipemi).
 
     ASSIGN aux_flserasa = FALSE
-	         aux_flprotes = FALSE.
+               aux_flprotes = FALSE
+               aux_flgregon = FALSE
+               aux_flgpgdiv = FALSE.
 
     FOR EACH  crapceb WHERE crapceb.cdcooper = par_cdcooper     AND 
                             crapceb.nrdconta = par_nrdconta     AND
@@ -2380,11 +2465,19 @@ PROCEDURE gera-dados:
                            crapcco.cddbanco = 85               AND /*Cecred*/
 							             crapcco.flginter = TRUE NO-LOCK:
 
-    IF aux_flprotes = FALSE THEN
-       aux_flprotes = crapceb.flprotes.
+        
+
+    IF aux_flgregon = FALSE THEN
+       IF crapcco.dsorgarq = "INTERNET" THEN
+          aux_flgregon = crapceb.flgregon.
+
+    IF aux_flgpgdiv = FALSE THEN
+       IF crapcco.dsorgarq = "INTERNET" THEN
+          aux_flgpgdiv = crapceb.flgpgdiv.
 
 		IF aux_flserasa = FALSE THEN
         ASSIGN aux_nrconven = crapcco.nrconven
+                 aux_flprotes = crapceb.flprotes
                aux_flserasa = crapceb.flserasa.
 
     END.
@@ -2393,6 +2486,33 @@ PROCEDURE gera-dados:
         FIND crapcco WHERE crapcco.cdcooper = par_cdcooper AND
                            crapcco.nrconven = aux_nrconven
                            NO-LOCK NO-ERROR.
+
+    IF  aux_intipcob = 0  THEN
+        DO:
+            ASSIGN aux_cdcritic = 563 
+                   aux_dscritic = "".
+           
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                   
+            IF  par_flgerlog  THEN
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT aux_dstransa,
+                                    INPUT FALSE,
+                                    INPUT par_idseqttl,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid).
+
+            RETURN "NOK".
+        END.
 
     FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                              crapenc.nrdconta = par_nrdconta AND
@@ -2489,7 +2609,7 @@ PROCEDURE gera-dados:
 
     IF aux_dscritic <> "" THEN
       DO:
-
+      
           RUN gera_erro (INPUT par_cdcooper,
                          INPUT par_cdagenci,
                          INPUT par_nrdcaixa,
@@ -2548,13 +2668,16 @@ PROCEDURE gera-dados:
                               WHEN pc_verif_permite_lindigi.pr_flglinha_digitavel <> ?
            aux_dscritic = pc_verif_permite_lindigi.pr_dscritic
                               WHEN pc_verif_permite_lindigi.pr_dscritic <> ?.       
-      
+
     CREATE tt-dados-blt.
     ASSIGN tt-dados-blt.vllbolet = crapsnh.vllbolet
            tt-dados-blt.dsdinstr = crapsnh.dsdinstr
            tt-dados-blt.dtmvtolt = aux_datdodia
            tt-dados-blt.nrdctabb = crapcco.nrdctabb
            tt-dados-blt.nrconven = crapcco.nrconven
+           tt-dados-blt.cddbanco = crapcco.cddbanco
+           tt-dados-blt.flgregon = INT(aux_flgregon)
+           tt-dados-blt.flgpgdiv = INT(aux_flgpgdiv)
 
         /* tt-dados-blt.cdcartei = crapcco.nrvarcar*/
            tt-dados-blt.cdcartei = crapcco.cdcartei
@@ -4085,7 +4208,7 @@ DO TRANSACTION:
      CREATE tt-consulta-blt.
 
      ASSIGN tt-consulta-blt.nmprimtl = REPLACE(p-nmdobnfc,"&","%26").
-
+  
      /*  Verifica no Cadastro de Sacados Cobranca */
      
      FIND crapsab WHERE crapsab.cdcooper = crapcob.cdcooper AND
@@ -4423,10 +4546,15 @@ PROCEDURE p_cria_titulo:
     DEF INPUT   PARAM p-qtdianeg    LIKE crapcob.qtdianeg   NO-UNDO.
 
     /* Aviso SMS */
-    DEF  INPUT PARAM p-inavisms AS INTE                                  NO-UNDO.
-    DEF  INPUT PARAM p-insmsant AS INTE                                  NO-UNDO.
-    DEF  INPUT PARAM p-insmsvct AS INTE                                  NO-UNDO.
-    DEF  INPUT PARAM p-insmspos AS INTE                                  NO-UNDO.
+    DEF  INPUT PARAM p-inavisms AS INTE                     NO-UNDO.
+    DEF  INPUT PARAM p-insmsant AS INTE                     NO-UNDO.
+    DEF  INPUT PARAM p-insmsvct AS INTE                     NO-UNDO.
+    DEF  INPUT PARAM p-insmspos AS INTE                     NO-UNDO.
+    
+    /* NPC */
+    DEF INPUT   PARAM p-flgregon    AS INTE                 NO-UNDO.
+    DEF INPUT   PARAM p-inpagdiv    LIKE crapcob.inpagdiv   NO-UNDO.
+    DEF INPUT   PARAM p-vlminimo    LIKE crapcob.vlminimo   NO-UNDO.
 
     DEF INPUT   PARAM TABLE FOR tt-dados-sacado-blt.
     DEF INPUT-OUTPUT  PARAM p-lsdoctos       AS CHAR        NO-UNDO.
@@ -4455,6 +4583,19 @@ PROCEDURE p_cria_titulo:
     DEF VAR aux_valormin AS DEC                             NO-UNDO.
     DEF VAR aux_textodia AS CHAR                            NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                            NO-UNDO.
+    
+    /* Registrar na CIP */ 
+    DEF VAR aux_inregcip AS INTEGER                         NO-UNDO.
+    /* Indicador do tipo de pessoa fisica/juridica */ 
+    DEF VAR aux_tppessoa AS CHAR                            NO-UNDO.
+    /* Identificador de pagador DDA */
+    DEF VAR aux_flgsacad AS INTEGER                         NO-UNDO.
+    /* Rollout do valor do titulo */
+    DEF VAR aux_rollout  AS INTEGER                         NO-UNDO.
+    /* Motivo */
+    DEF VAR aux_cdmotivo AS CHAR                            NO-UNDO.
+    /* Ponteiro para buscar o Valor de Rollout */ 
+    DEF VAR aux_ponteiro AS INTEGER                         NO-UNDO.
     
     FIND crapcco WHERE cdcooper = p-cdcooper
                    AND nrconven = p-nrcnvcob NO-LOCK NO-ERROR.
@@ -4580,7 +4721,7 @@ PROCEDURE p_cria_titulo:
 
 
     END.
-
+    
     /* Se foi informado para enviar aviso, porem sem selecionar
        o momente, deve gravar como nao enviar aviso */
     IF  p-inavisms <> 0 AND 
@@ -4590,6 +4731,21 @@ PROCEDURE p_cria_titulo:
     DO:
       ASSIGN p-inavisms = 0.
     END.
+    
+    /* se o convenio do cooperado possuir registro online
+       devera gravar o boleto com registro online; */ 
+    ASSIGN aux_inregcip = 0.
+    IF p-flgregon = 1 THEN 
+    DO:
+        /* Verificar se eh Cooperativa Emite e Expede*/
+        IF p-inemiten = 3 THEN
+            ASSIGN aux_inregcip = 2. /* Registro via batch */ 
+        ELSE
+            ASSIGN aux_inregcip = 1. /* Registro ONLINE */ 
+    END.
+    ELSE 
+        ASSIGN aux_inregcip = 0. /* Sem registro na CIP */ 
+    
     
     CREATE crapcob.
     ASSIGN crapcob.cdcooper = p-cdcooper
@@ -4611,6 +4767,7 @@ PROCEDURE p_cria_titulo:
            crapcob.dtretcob = p-dtmvtolt
            crapcob.dtdocmto = p-dtdocmto
            crapcob.dtvencto = p-vencimto
+           crapcob.dtvctori = p-vencimto
            crapcob.vldescto = p-vldescto
            crapcob.vlabatim = p-vlabatim
            crapcob.cdmensag = p-cdmensag
@@ -4636,8 +4793,16 @@ PROCEDURE p_cria_titulo:
            crapcob.inavisms = p-inavisms
            crapcob.insmsant = p-insmsant
            crapcob.insmsvct = p-insmsvct
-           crapcob.insmspos = p-insmspos
+           crapcob.insmspos = p-insmspos 
 
+           /* NPC */        
+           crapcob.inenvcip = IF p-cddbanco = 85 THEN 1 ELSE 0
+           crapcob.inpagdiv = p-inpagdiv
+           crapcob.vlminimo = p-vlminimo
+           
+           /* 0=sem registro na CIP, 1=registro online, 2=registro offline*/
+           crapcob.inregcip = aux_inregcip
+           
            crapcob.indiaprt = p-indiaprt
            crapcob.vljurdia = p-vljurdia
            crapcob.vlrmulta = p-vlrmulta
@@ -4734,10 +4899,60 @@ PROCEDURE p_cria_titulo:
         DELETE PROCEDURE h-b1wgen0088.
 
     END.
-    ELSE IF crapcob.cdbandoc = 085 AND 
-            p-flgregis             AND 
-            p-inemiten <> 3        THEN DO: /* nao gerar confirmacao de retorno
-                                               qdo emissao Cooperativa/EE */
+    ELSE IF crapcob.cdbandoc = 085 THEN DO: 
+    
+        /* Identificar se eh pessoa fisica ou juridica
+             -> cdtpinsc = 1 -- Fisica
+             -> cdtpinsc = 2 -- Juridica */
+        IF crapcob.cdtpinsc = 1 THEN
+            ASSIGN aux_tppessoa = "F".
+        ELSE
+            ASSIGN aux_tppessoa = "J".
+    
+            
+        /* Emergencial (Rafael) */
+        /* Retirado devido aos problemas entre transcoes SQL/Server e Oracle */
+        ASSIGN aux_flgsacad = 0.
+    
+        /* Verificações para identificar se o boleto eh DDA "A4"
+           se deve ser registrado online "R1"
+           e se eh Cooperativa Emite e Expede "P1" */ 
+           
+/*        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+        /* Identificar se o pagador eh DDA */
+        RUN STORED-PROCEDURE pc_verifica_sacado_DDA
+            aux_handproc = PROC-HANDLE NO-ERROR
+                                    (INPUT aux_tppessoa,
+                                     INPUT crapcob.nrinssac,
+                                    OUTPUT 0,   /* pr_flgsacad */
+                                    OUTPUT 0,   /* pr_cdcritic */
+                                    OUTPUT ""). /* pr_dscritic */
+
+        CLOSE STORED-PROC pc_verifica_sacado_DDA
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_flgsacad = 0
+               aux_flgsacad = pc_verifica_sacado_DDA.pr_flgsacad 
+                              WHEN pc_verifica_sacado_DDA.pr_flgsacad <> ?. */                              
+        
+        ASSIGN aux_cdmotivo = "".
+        
+        /* 1) se pagador DDA -> vr_cdmotivo = 'A4'; */ 
+        IF aux_flgsacad = 1 THEN
+            ASSIGN aux_cdmotivo = "A4".
+        
+        /* 2) se inregcip = 1 -> vr_cdmotivo = 'R1' (concatenar); */ 
+        IF aux_inregcip = 1 THEN
+            ASSIGN aux_cdmotivo = aux_cdmotivo + "R1".
+        
+        /* 3) se inemiten = 3 -> vr_cdmotivo = 'P1' (concatenar); */ 
+        IF p-inemiten = 3 THEN
+            ASSIGN aux_cdmotivo = aux_cdmotivo + "P1".
+                   
+        ASSIGN tt-consulta-blt.cdmotivo = aux_cdmotivo.
 
         RUN sistema/generico/procedures/b1wgen0090.p PERSISTENT 
             SET h-b1wgen0090.
@@ -4750,13 +4965,13 @@ PROCEDURE p_cria_titulo:
                 RETURN "NOK".
             END.
 
-
         FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper
             NO-LOCK NO-ERROR.
       
+
         RUN prep-retorno-cooperado IN h-b1wgen0090 (INPUT ROWID(crapcob),
                                                     INPUT 2, /* ent confirmada */
-                                                    INPUT "",
+                                                    INPUT aux_cdmotivo,
                                                     INPUT 0,
                                                     INPUT crapcop.cdbcoctl,
                                                     INPUT crapcop.cdagectl,

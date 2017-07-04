@@ -165,7 +165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                             1623,1624,1625,1626,1627,1628,1684,527,530,1119,1120,1123,1124,1125,1126,1136,
                             1137,2057,2058,51,135,1917,1919,1148,1810,1837,1838,1028,777,851,1988,1660,1661,
                             2059,909,910,913,914,915,916,945,946,1007,1008,1148,2227,2237,2238,2239,2240,2249,
-                            2250,2251,2252)
+                            2250,2251,2252,2221)
          AND l.cdcooper = 3   --Apenas lançamentos realizados na central para a filiada
          AND l.dtmvtolt = pr_dtmvtolt 
          AND c.cdcooper = pr_cdcooper
@@ -220,11 +220,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     vr_exc_erro          EXCEPTION;
     vr_file_erro         EXCEPTION;
 
-    vr_dsprefix          VARCHAR2(20);
+    vr_dsprefix          VARCHAR2(50);
     vr_nrctacrt          VARCHAR2(30);
     vr_cdctactb          NUMBER;
     vr_decendio          VARCHAR2(2);
-    vr_dtdecendio        VARCHAR2(6);
+    vr_dtdecendio        VARCHAR2(8);
     vr_tppessoa          VARCHAR2(2);
     vr_descricao         VARCHAR2(500);
     vr_nrctaori          NUMBER;
@@ -241,7 +241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         
         vr_tab_historico(1624).nrctaori := 1452;
         vr_tab_historico(1624).nrctades := 1781;
-        vr_tab_historico(1624).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. SUPRIMENTO DE CASH'; 
+        vr_tab_historico(1624).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RECOLHIMENTO DE CASH'; 
 
         vr_tab_historico(1625).nrctaori := 1781;
         vr_tab_historico(1625).nrctades := 1452;
@@ -249,7 +249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         
         vr_tab_historico(1626).nrctaori := 1452;
         vr_tab_historico(1626).nrctades := 1781;
-        vr_tab_historico(1626).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. SUPRIMENTO DE NUMERARIOS NOS PA''S''';
+        vr_tab_historico(1626).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. RECOLHIMENTO DE NUMERARIOS NOS PA''S''';
         
         vr_tab_historico(1627).nrctaori := 1781;
         vr_tab_historico(1627).nrctades := 1452;
@@ -257,7 +257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         
         vr_tab_historico(1628).nrctaori := 1452;
         vr_tab_historico(1628).nrctades := 1781;
-        vr_tab_historico(1628).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. AJUSTE DIFERENÇA DE FALTA DE NUMERARIOS';
+        vr_tab_historico(1628).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. AJUSTE DIFERENÇA DE SOBRA DE NUMERARIOS';
         
         vr_tab_historico(1684).nrctaori := 1452;
         vr_tab_historico(1684).nrctades := 1781;
@@ -445,7 +445,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                 
         vr_tab_historico(2252).nrctaori := 4340;
         vr_tab_historico(2252).nrctades := 1452;
-        vr_tab_historico(2252).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR TELEFONICA';                
+        vr_tab_historico(2252).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR TELEFONICA';
+        
+        vr_tab_historico(2221).nrctaori := 8311;
+        vr_tab_historico(2221).nrctades := 1452;
+        vr_tab_historico(2221).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DESPESA COM RESSARCIMENTO DO USO DO SISBACEN';
+
+
    END;  
     
 
@@ -556,11 +562,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
-                       vr_cdctactb||
-                       ',1452,' ||
+                       '1272,'||
+                       '1452,' ||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||vr_nrctacrt||' SICREDI"';
+                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' SICREDI"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -570,10 +576,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
                        '1452,'||
-                       vr_cdctactb||','||
+                       '1272,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||vr_nrctacrt||' SICREDI"';
+                       '"CENTRALIZACAO FINANCEIRA CECRED DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' SICREDI"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
@@ -608,11 +614,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
-                       vr_cdctactb||
-                       ',1452,' ||
+                       '1193,'||
+                       '1452,' ||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||vr_nrctacrt||' BRADESCO"';
+                       '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' BRADESCO"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -622,10 +628,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
                        '1452,'||
-                       vr_cdctactb||','||
+                       '1193,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
-                       '"CREDITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||vr_nrctacrt||' BRADESCO"';
+                       '"CREDITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. CENTRALIZACAO FINANCEIRA DA C/C '||NVL(vr_nrctacrt,rw_craplcm.nrdocmto)||' BRADESCO"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet); 
@@ -699,7 +705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       END IF;
         
       --Gravar linha gerencial
-      IF rw_craplcm.cdhistor in (909,910,913,914,915,916,945,946,1007,1008, 2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059) THEN
+      IF rw_craplcm.cdhistor in (909,910,913,914,915,916,945,946,1007,1008, 2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059,2221) THEN
          
         vr_linhadet := '999'||','||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));
           
