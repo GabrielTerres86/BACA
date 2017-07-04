@@ -3,14 +3,16 @@
 	/************************************************************************
 	 Fonte: eventos_em_andamento_busca.php                                             
 	 Autor: Guilherme                                                 
-	 Data : Setembro/2009                &Uacute;ltima Altera&ccedil;&atilde;o: 14/07/2011    
+	 Data : Setembro/2009                &Uacute;ltima Altera&ccedil;&atilde;o: 04/07/2017    
 	
 	 Objetivo  : Buscar eventos em andamento de acordo com o parametro
 				 de observa&ccedil;&atilde;o
 	
 	 Altera&ccedil;&otilde;es:     
 					14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
-	 
+					
+					04/07/2017 - Alterado na campo periodo para pegar a data certa 
+					             na posicao do array detalhesEvento (Tiago/Thiago #699994)	 
 	************************************************************************/
 	session_start();
 
@@ -96,7 +98,7 @@
 		<br />
 		
 		<label for="dsperiod">Per&iacute;odo:</label>
-		<input type="text" name="dsperiod" id="dsperiod" value="<?php echo $detalhesEvento[1]->cdata." &agrave; ".$detalhesEvento[1]->cdata; ?>" >
+		<input type="text" name="dsperiod" id="dsperiod" value="<?php echo $detalhesEvento[1]->cdata." &agrave; ".$detalhesEvento[2]->cdata; ?>" >
 
 		<br />
 
