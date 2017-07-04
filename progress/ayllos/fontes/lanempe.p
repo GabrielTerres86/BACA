@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 01/03/2012
+   Data    : Janeiro/94.                         Ultima atualizacao: 14/02/2017
 
    Dados referentes ao programa:
 
@@ -52,11 +52,17 @@
                           
              16/08/2016 - Controlar o preenchimento da data de pagamento do prejuízo,
                           no momento da liquidaçao do mesmo. (Renato Darosci - M176)
+                          
+             23/09/2016 - Inclusao da verificacao de contrato de acordo (Jean Michel).             
+
+             14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
+                          (Jaison/James - PRJ302)
+
 ............................................................................. */
 
 { includes/var_online.i }
 { includes/var_lanemp.i }
-
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/var_internet.i }
 
 DEF BUFFER crablem FOR craplem.
@@ -195,6 +201,63 @@ DO WHILE TRUE:
 
       END.  /*  Fim do DO WHILE TRUE  */
 
+      /* Verifica se ha contratos de acordo */            
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      
+      RUN STORED-PROCEDURE pc_verifica_situacao_acordo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                            ,INPUT tel_nrdconta
+                                            ,INPUT tel_nrctremp
+                                            ,0 /* pr_flgretativo */
+                                            ,0 /* pr_flgretquitado */
+                                            ,0 /* pr_flgretcancelado */
+                                            ,0
+                                            ,"").
+
+      CLOSE STORED-PROC pc_verifica_situacao_acordo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+      ASSIGN glb_cdcritic      = 0
+             glb_dscritic      = ""
+             glb_cdcritic      = pc_verifica_situacao_acordo.pr_cdcritic WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+             glb_dscritic      = pc_verifica_situacao_acordo.pr_dscritic WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+             aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+             aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
+      
+      IF glb_cdcritic > 0 THEN
+        DO:
+            RUN fontes/critic.p.
+            BELL.
+            MESSAGE glb_dscritic.
+            ASSIGN glb_cdcritic = 0.
+            NEXT.
+        END.
+      ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+        DO:
+          MESSAGE glb_dscritic.
+          ASSIGN glb_cdcritic = 0.
+          NEXT.
+        END.
+                
+      /* Se estiver ATIVO */
+      IF aux_flgretativo = 1 THEN
+        DO:
+          MESSAGE "Exclusao nao permitida, emprestimo em acordo.".
+          NEXT.
+        END. 
+                  
+      /* Se estiver QUITADO */
+      IF aux_flgretquitado = 1 THEN
+        DO:
+          MESSAGE "Lancamento nao permitido, contrato liquidado atraves de acordo.".
+          NEXT.
+        END. 
+                  
+      /* Fim verifica se ha contratos de acordo */
+
+        
       LEAVE.
 
    END.  /*  Fim do DO WHILE TRUE  */
