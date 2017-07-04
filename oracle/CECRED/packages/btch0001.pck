@@ -6,12 +6,19 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: --/--/----
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas do processamento batch
+  --
+  -- Alterações:
+  --             03/07/2017 - Colocada descrição da mensagem de erro no padrão
+  --                        - Ajustada rotina de calcular o tempo de execução
+  --                        - incluido tratamento de excptions nos cursores para melhorar os erros
+  --                          (Belli - Envolti - Chamado 667957)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Cursor genérico de calendário */
@@ -72,6 +79,9 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
   /* Função para retornar se os relatórios do processo estão sendo gerados */
   FUNCTION fn_procrel_exec(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN;
 
+  /* Função para retornar se todas as cooperativas estão online (sem processos rodando) */
+  FUNCTION fn_cooperativas_online RETURN BOOLEAN;
+
   /* Procedimento para criar o arquivo de controle do início de geração dos relatórios da cadeia */
   PROCEDURE pc_atuali_procrel(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
                              ,pr_flgsitua IN VARCHAR2              --> Situação (E-Execução, O-OK)
@@ -84,7 +94,12 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
                              ,pr_nmarqlog     IN VARCHAR2 DEFAULT NULL     --> Nome para gravação de log em arquivo específico
                              ,pr_flnovlog     IN VARCHAR2 DEFAULT 'N'      --> Flag S/N para criar um arquivo novo
                              ,pr_flfinmsg     IN VARCHAR2 DEFAULT 'S'      --> Flag S/N  para informar ao fim da msg [PL/SQL]
-                             ,pr_dsdirlog     IN VARCHAR2 DEFAULT NULL);   --> Diretorio onde será gerado o log
+                             ,pr_dsdirlog     IN VARCHAR2 DEFAULT NULL     --> Diretorio onde será gerado o log
+                             ,pr_dstiplog     IN VARCHAR2 DEFAULT 'O'      --> Tipo do log: I - início; F - fim; O || E - ocorrênci
+                             ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL     --> Programa/job
+                             ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%TYPE DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%TYPE DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             ,pr_flgsucesso    IN tbgen_prglog.flgsucesso%TYPE DEFAULT 1); -- Indicador de sucesso da execução
 
   /* Controlar geração de log de execução dos jobs */
   PROCEDURE pc_log_exec_job(pr_cdcooper     IN crapcop.cdcooper%TYPE     --> Cooperativa
@@ -92,6 +107,7 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
                            ,pr_nomdojob     IN VARCHAR2                  --> Nome do job
                            ,pr_dstiplog     IN VARCHAR2                  --> Tipo de log(I-inicio,F-Fim,E-Erro)
                            ,pr_dscritic     IN VARCHAR2                  --> Critica a ser apresentada em caso de erro
+                           ,pr_nmarqlog     IN VARCHAR2 DEFAULT NULL     --> Nome para gravação de log em arquivo específico
                            ,pr_flgerlog IN OUT BOOLEAN);                 --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
                            
                            
@@ -142,25 +158,49 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
                                    ,pr_dschvpfm IN crappfm.dschvpfm%TYPE                  --> Chave de acesso da análise
                                    ,pr_dsparame IN crappfm.dsparame%TYPE DEFAULT ' ');   --> Parametros auxiliares para análise
 
-  PROCEDURE pc_log_internal_exception(pr_cdcooper IN crapcop.cdcooper%TYPE); --> Cooperativa
+  PROCEDURE pc_log_internal_exception(pr_cdcooper IN crapcop.cdcooper%TYPE DEFAULT 3); --> Cooperativa
 
 END btch0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
-
+/*
   ---------------------------------------------------------------------------------------------------------------
   --
   -- Programa : BTCH0001
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: --/--/----
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas do processamento batch
-  ---------------------------------------------------------------------------------------------------------------
+  --
+  -- 11/01/2017 - #551199 Criada a função fn_cooperativas_online para retornar se todas as cooperativas 
+  --              estão online (Carlos)
+  --              
+  -- 12/01/2017 - #551192 Alterada a mensagem "PROGRAMA COM ERRO" para "PROGRAMA COM ALERTA" na rotina 
+  --              pc_log_exec_job quando o tipo de log não for de início, fim ou erro e for informada a
+  --              crítica (Carlos)
+  --  
+  -- 16/02/2017 - #601794 Inclusão do log em tabela pelo procedimento cecred.pc_log_programa no procedimento
+  --              pc_log_exec_job para que seja possível desativar o log dos jobs em arquivo (Carlos)
+  
+  10/04/2017 - No procedimento pc_log_exec_job, retirado o cursor de cálculo de tempo de execução do job.
+               Inclusão do parâmetro pr_nmarlog na chamada da rotina pc_log_programa e melhoria na
+               extração do CDPROGRAMA da mensagem (Carlos)
+  
+  18/05/2017 - No procedimento pc_gera_log_batch, simplificada a lógica de extração do nome do programa da
+               mensagem enviada. Se não encontrar a seta '-->' o programa ficará vazio; Mensagem irá
+               acrescida de module e action (read_module) para melhorar o rastreio do mesmo (Carlos)  
+  
+  03/07/2017 - Colocada descrição da mensagem de erro no padrão 
+             - Ajustada rotina de calcular o tempo de execução
+             - incluido tratamento de excptions nos cursores para melhorar os erros
+               (Belli - Envolti - Chamado 667957)
+  
+  --------------------------------------------------------------------------------------------------------------- */
 
   -- Tratamento de erros
   vr_exc_erro exception;
@@ -335,6 +375,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     END;
   END fn_procrel_exec;
 
+  /* Função para retornar se todas as cooperativas estão online (sem processos rodando) */
+  FUNCTION fn_cooperativas_online RETURN BOOLEAN IS
+  BEGIN
+    -- ..........................................................................
+    -- Programa: fn_cooperativas_online
+    -- Sistema : Conta-Corrente - Cooperativa de Credito
+    -- Sigla   : CRED
+    -- Autor   : Carlos Henrique
+    -- Data    : Janeiro/2017.                     Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: Sempre que necessário
+    -- Objetivo  : A função tem o intuito de retornar se todas as cooperativas estão online.
+    -- .............................................................................  
+  
+    DECLARE
+    vr_online number(1);
+
+    BEGIN
+      SELECT CASE
+               WHEN EXISTS (SELECT 1
+                       FROM crapdat
+                           ,crapcop
+                      WHERE crapcop.flgativo = 1
+                        AND crapdat.cdcooper = crapcop.cdcooper
+                        AND crapdat.inproces <> 1) THEN
+                0  -- não estão online todas as cooperativas ativas
+               ELSE
+                1  -- online
+             END
+        INTO vr_online
+        FROM dual;
+      RETURN vr_online = 1;
+    END;
+  END fn_cooperativas_online;
+  
   /* Procedimento para atualizar o arquivo de controle de geração dos relatórios da cadeia */
   PROCEDURE pc_atuali_procrel(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
                              ,pr_flgsitua IN VARCHAR2              --> Situação (E-Execução, O-OK)
@@ -412,12 +489,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 
   /* Incluir log de execução. */
   PROCEDURE pc_gera_log_batch(pr_cdcooper     IN crapcop.cdcooper%TYPE     --> Cooperativa
-                             ,pr_ind_tipo_log IN NUMBER                    --> Nivel criticidade do log
+                             ,pr_ind_tipo_log IN NUMBER                    --> Tipo de mensagem do log
                              ,pr_des_log      IN VARCHAR2                  --> Descrição do log em si
                              ,pr_nmarqlog     IN VARCHAR2 DEFAULT NULL     --> Nome para gravação de log em arquivo específico
                              ,pr_flnovlog     IN VARCHAR2 DEFAULT 'N'      --> Flag S/N para criar um arquivo novo
                              ,pr_flfinmsg     IN VARCHAR2 DEFAULT 'S'      --> Flag S/N  para informaR ao fim da msg [PL/SQL]
-                             ,pr_dsdirlog     IN VARCHAR2 DEFAULT NULL) IS --> Diretorio onde será gerado o log
+                             ,pr_dsdirlog     IN VARCHAR2 DEFAULT NULL     --> Diretorio onde será gerado o log
+                             ,pr_dstiplog     IN VARCHAR2 DEFAULT 'O'      --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             ,pr_cdprograma   IN VARCHAR2 DEFAULT NULL     --> Programa/job
+                             ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%TYPE DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             ,pr_flgsucesso    IN tbgen_prglog.flgsucesso%TYPE DEFAULT 1 -- Indicador de sucesso da execução
+                             ) IS
   BEGIN
     -- ..........................................................................
     --
@@ -463,7 +546,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       vr_nom_arquivo VARCHAR2(30);      -- Nome do arquivo
       vr_ind_modo_abertura VARCHAR2(1); -- Modo de abertura do Log
       vr_fim_da_msg VARCHAR2(10) := ''; -- [PL/SQL] final da mensagem
+
+      vr_idprglog tbgen_prglog.idprglog%TYPE := 0;      
+      vr_tipomensagem tbgen_prglog_ocorrencia.tpocorrencia%TYPE := 0;
+      vr_cdprograma   tbgen_prglog.cdprograma%TYPE := '';
+      vr_nmarqlog VARCHAR2(4000);
+      
+      vr_tab_erro gene0002.typ_split;
+      vr_des_log VARCHAR2(4000);
+      
+      vr_modulo VARCHAR2(100);
+      vr_acao   VARCHAR2(100);
     BEGIN
+      
+    CASE pr_ind_tipo_log
+      WHEN 1 THEN
+        -- 4 mensagem
+        vr_tipomensagem := 4;
+      WHEN 2 THEN
+        -- 1 erro de negócio
+        vr_tipomensagem := 1;
+      WHEN 3 THEN
+        -- 2 erro nao tratado
+        vr_tipomensagem := 2;
+      ELSE
+        -- 3 alerta
+        vr_tipomensagem := 3;
+      END CASE;   
+
+      vr_nmarqlog := TRIM(lower(pr_nmarqlog));
+      
+      IF vr_nmarqlog IS NULL THEN
+        vr_nmarqlog := NVL(gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_BATCH'),'proc_batch.log');
+      END IF;
+      
+      -- Extrair apenas a mensagem depois da seta
+      IF INSTR(pr_des_log, '-->', 1, 1) > 0 THEN
+        vr_des_log := TRIM(substr(pr_des_log, (INSTR(pr_des_log, '-->', 1, 1)) + 3));
+      ELSE 
+        vr_des_log := pr_des_log;
+      END IF;
+
+      IF TRIM(pr_cdprograma) IS NOT NULL THEN
+        vr_cdprograma := TRIM(pr_cdprograma);
+      ELSE 
+        -- Extrair CDPROGRAMA da mensagem
+        -- 23/03/2017 11:30:00 - CRPS123 --> erro qualquer
+        IF INSTR(pr_des_log, '-->', 1, 1) > 0 THEN
+          vr_tab_erro := gene0002.fn_quebra_string(
+                        pr_string => TRIM(SUBSTR(pr_des_log, 1, INSTR(pr_des_log, '-->', 1, 1) -1)),
+                        pr_delimit => ' ');
+          vr_cdprograma := vr_tab_erro(vr_tab_erro.count());
+        ELSE          
+          vr_cdprograma := '';
+        END IF;
+        
+      END IF;
+
+      DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
+      vr_des_log := vr_des_log || ' - Module: ' || vr_modulo ||
+                                  ' - Action: ' || vr_acao;
+
+      cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog,      -- tbgen_prglog
+                             PR_CDPROGRAMA => vr_cdprograma,    -- tbgen_prglog
+                             pr_cdcooper   => pr_cdcooper,      -- tbgen_prglog
+                             pr_tpexecucao => pr_tpexecucao,    -- tbgen_prglog
+                             pr_tpocorrencia  => vr_tipomensagem,  -- tbgen_prglog_ocorrencia
+                             pr_cdcriticidade => pr_cdcriticidade, -- tbgen_prglog_ocorrencia
+                             pr_dsmensagem   => vr_des_log,        -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso   => pr_flgsucesso,  -- tbgen_prglog
+                             pr_nmarqlog     => vr_nmarqlog,
+                             PR_IDPRGLOG     => vr_idprglog);
       
       IF pr_dsdirlog IS NOT NULL THEN
         vr_dircop_log := pr_dsdirlog;
@@ -538,6 +691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                            ,pr_nomdojob     IN VARCHAR2                  --> Nome do job
                            ,pr_dstiplog     IN VARCHAR2                  --> Tipo de log(I-inicio,F-Fim,E-Erro)
                            ,pr_dscritic     IN VARCHAR2                  --> Critica a ser apresentada em caso de erro
+                           ,pr_nmarqlog     IN VARCHAR2 DEFAULT NULL     --> Nome para gravação de log em arquivo específico
                            ,pr_flgerlog IN OUT BOOLEAN                   --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
                            ) IS
     -- ..........................................................................
@@ -546,7 +700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --  Sistema  : Processos Batch
     --  Sigla    : BTCH
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2016.                   Ultima atualizacao: 16/05/2016
+    --  Data     : Maio/2016.                   Ultima atualizacao: 03/07/2017
     --
     --  Dados referentes ao programa:
     --
@@ -554,6 +708,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --   Objetivo  : Gerar log de execução dos jobs
     --
     --   Alteracoes: 
+    --               03/07/2017 - Colocada descrição da mensagem de erro no padrão 
+    --                          - Ajustada rotina de calcular o tempo de execução
+    --                          - incluido tratamento de excptions nos cursores para melhorar os erros
+    --                            (Belli - Envolti - Chamado 667957)
     --               
     -- .............................................................................
     
@@ -567,8 +725,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     rw_crapprg cr_crapprg%ROWTYPE;    
     
     -- Cursor para buscar o tempo de execução do programa
+    -- incluido comando para truncar e eliminar um erro de dizema periodica - Chamado 667957 - 04/07/2018
     CURSOR cr_tempo IS
-    SELECT to_char(to_date((SYSDATE - x.LOGON_TIME)  *24*60*60,'SSSSS'),'HH24:MI:SS')
+    SELECT to_char(to_date( TRUNC(SYSDATE - x.LOGON_TIME)  *24*60*60,'SSSSS'),'HH24:MI:SS')
       FROM v$session x
      WHERE audsid = SYS_CONTEXT('USERENV', 'SESSIONID');
     
@@ -577,75 +736,142 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     vr_dsdtempo VARCHAR2(40);
     vr_dslogmes VARCHAR2(400);
     
+    -- Trata Erro - Chamado 667957 - 034/07/2018
+    vr_exc_saida  EXCEPTION;
+    vr_dscritic   VARCHAR2(4000);
+    
   BEGIN
   
     -- Buscar nome do programa
-    OPEN cr_crapprg;
-    FETCH cr_crapprg INTO rw_crapprg;
-    CLOSE cr_crapprg;
-    
+    BEGIN
+      OPEN cr_crapprg;
+      FETCH cr_crapprg INTO rw_crapprg;
+      CLOSE cr_crapprg;
+      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao gerar log - cr_crapprg - erro:' || SQLERRM;
+        RAISE vr_exc_saida;
+    END;
+     
     --> Log de inicio de execução
     IF pr_dstiplog = 'I' AND pr_flgerlog = FALSE THEN
       -- Gerar log
-      vr_dscdolog := 'Inicio da execucao: '|| pr_nomdojob ||' - '|| rw_crapprg.dsprogra##1;                     
+      vr_dscdolog := 'Inicio da execucao: ' || pr_nomdojob;
+
+      IF trim(rw_crapprg.dsprogra##1) IS NOT NULL THEN
+        vr_dscdolog := vr_dscdolog || ' - ' || trim(rw_crapprg.dsprogra##1);
+      END IF;
+      
+      IF pr_dscritic IS NOT NULL THEN
+        vr_dscdolog := vr_dscdolog || ' ' || pr_dscritic;
+      END IF;
+      
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017      
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - JOB --> '|| vr_dscdolog);
-    
+                                                    ' - ' || nvl(pr_nomdojob,'JOB') || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscdolog,
+                                 pr_dstiplog     => pr_dstiplog,
+                                 pr_nmarqlog     => pr_nmarqlog,
+                                 pr_cdprograma   => pr_nomdojob,
+                                 pr_tpexecucao   => 2);
       pr_flgerlog := TRUE;
     --> Log de final da execução
     ELSIF pr_dstiplog = 'F' AND pr_flgerlog THEN
     
       --> Calcular tempo conforme inicio da execução
-      OPEN cr_tempo;
-      FETCH cr_tempo INTO vr_dsdtempo;
-      CLOSE cr_tempo;
+      BEGIN
+        OPEN cr_tempo;
+        FETCH cr_tempo INTO vr_dsdtempo;
+        CLOSE cr_tempo;
+        -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Geração de log - cr_tempo - erro:' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
       
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017      
       -- Gerar log
-      vr_dscdolog := pr_nomdojob ||' --> Stored Procedure rodou em '|| 
+      vr_dscdolog := 'Stored Procedure rodou em '|| 
                      vr_dsdtempo|| '.';
                      
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog);
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscdolog);
     
-      vr_dscdolog := pr_nomdojob ||' --> Execucao ok';
+      vr_dscdolog := 'Execucao ok';
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog);
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscdolog,
+                                 pr_dstiplog     => pr_dstiplog,
+                                 pr_cdprograma   => pr_nomdojob,
+                                 pr_nmarqlog     => pr_nmarqlog,
+                                 pr_tpexecucao   => 2);
 
     --> Log Final com erro
     ELSIF pr_dstiplog = 'E' AND pr_flgerlog THEN
-      vr_dscdolog := pr_nomdojob ||' --> PROGRAMA COM ERRO: '||pr_dscritic;
+      
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog);        
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || pr_dscritic,
+                                 pr_dstiplog     => pr_dstiplog,
+                                 pr_cdprograma   => pr_nomdojob,
+                                 pr_nmarqlog     => pr_nmarqlog,
+                                 pr_tpexecucao   => 2);
+
     --> Caso passado critica e nao caiu em nenhuma situalção acima
     ELSIF pr_dscritic IS NOT NULL THEN
+      
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
     
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := pr_nomdojob ||' --> PROGRAMA COM ERRO: '||pr_dscritic;
+      vr_dscdolog := pr_nomdojob ||' --> PROGRAMA COM ALERTA: '||pr_dscritic;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog,
-                                 pr_nmarqlog     => vr_dslogmes);
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || vr_dscdolog,
+                                 pr_nmarqlog     => vr_dslogmes,
+                                 pr_dstiplog     => 'E',
+                                 pr_cdprograma   => pr_nomdojob,
+                                 pr_tpexecucao   => 2);
      
     END IF; 
   
   EXCEPTION
-    WHEN OTHERS THEN
+    WHEN vr_exc_saida THEN       
+      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := pr_nomdojob ||' --> Erro ao gerar log: '||SQLERRM;
+      vr_dscdolog := vr_dscritic;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog,
-                                 pr_nmarqlog     => vr_dslogmes);
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || vr_dscdolog,
+                                 pr_nmarqlog     => vr_dslogmes,
+                                 pr_tpexecucao   => 2);
+    WHEN OTHERS THEN
+      
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
+      vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+      vr_dscdolog := 'Erro ao gerar log: '||SQLERRM;
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, 
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || vr_dscdolog,
+                                 pr_nmarqlog     => vr_dslogmes,
+                                 pr_tpexecucao   => 2);
     
   END pc_log_exec_job;
   
@@ -1313,12 +1539,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 
   -- Programa: pc_log_internal_exception
   -- Autor   : Carlos
-  -- Data    : Julho/2015.                        Ultima atualizacao:
+  -- Data    : Julho/2015.                        Ultima atualizacao: 03/02/2017
   -- Objetivo  : Verificar e criar log de exceções internas do oracle, tais como: string maior que o limite 
   --             definido no tipo varchar, divisão por zero e outras.
   --             Deve ser usado na exception OTHERS. 
   --             Ex. de caminho do log: viacredi/log/internal_exception.log 
-  PROCEDURE pc_log_internal_exception(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+  -- Alterações
+  --
+  -- 03/02/2017 - #601772 Procedure defasado pelo pc_internal_exception. Modificado o corpo da 
+  --              rotina para ficar retrocompatível (Carlos)
+  PROCEDURE pc_log_internal_exception(pr_cdcooper IN crapcop.cdcooper%TYPE DEFAULT 3) IS
   BEGIN
     DECLARE
     vr_sqlcode NUMBER := SQLCODE;
