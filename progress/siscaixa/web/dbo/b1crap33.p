@@ -25,6 +25,9 @@
                 09/12/2013 - Alterado estrutura de leitura da tabela craplot (Daniel).     
                 
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).        
+                
+                03/07/2017 - Remover separaçao de cheques Superiores e Inferiores na geraçao 
+                             do relatório Resumido. PRJ367 - Compe Sessao Unica (Lombardi)
 ------------------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -114,13 +117,6 @@ FORM SKIP(1)
      res_qtchqcop AT 24 NO-LABEL
      res_vlchqcop AT 34 NO-LABEL   */
      "** CARTA REMESSA **" AT 25
-     SKIP(1)                           
-     res_qtchqmen AT  4 LABEL "Cheques Inferiores"
-     res_vlchqmen AT 34 NO-LABEL
-     SKIP(1)                           
-     res_qtchqmai AT  4 LABEL "Cheques Superiores" 
-     res_vlchqmai AT 34 NO-LABEL "( >=" tab_vlchqmai FORMAT "zzz,zz9.99" 
-                        NO-LABEL ")  "
      SKIP(1)
      tot_qtcheque AT  8 LABEL "TOTAL DIGITADO"
      tot_vlcheque AT 34 NO-LABEL
@@ -469,16 +465,16 @@ PROCEDURE Impressao:
 
         IF   tot_qtcheque > 0  THEN   DO:
              DISPLAY STREAM str_1
-                     /* res_qtchqcop */
+                     /* res_qtchqcop
                      res_qtchqmen
                      res_qtchqmai
-                     /* res_vlchqcop */
+                     res_vlchqcop 
                      res_vlchqmen
-                     res_vlchqmai
+                     res_vlchqmai*/
                      tot_qtcheque 
                      tot_vlcheque 
-                     tab_vlchqmai
-                     /* res_dschqcop */
+                   /*tab_vlchqmai
+                     res_dschqcop */
                      WITH FRAME f_resumo.
         END.
       

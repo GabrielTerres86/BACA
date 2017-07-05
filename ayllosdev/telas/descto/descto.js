@@ -9,6 +9,7 @@
  * [29/03/2012] Rogérius Militão   (DB1) : Ajuste no layout padrão
  * [29/06/2012] Jorge Hamaguchi (CECRED) : AJuste para novo esquema de impressao em funcao Gera_Impressao()
  * [21/09/2016] Jaison (CECRED)          : Projeto 300 - Inclusao das opcoes L e N.
+ * [20/06/2017] Lucas Lombardi(CECRED)   : Retiradas as linhas Menor e Maior. PRJ367 - Compe Sessao Unica
  */
 
 //Formulários e Tabela
@@ -902,23 +903,17 @@ function formataOpcaoF() {
     rDschqdev = $('label[for="dschqdev"]', '#' + frmOpcao);
     rDschqcop = $('label[for="dschqcop"]', '#' + frmOpcao);
     rDschqban = $('label[for="dschqban"]', '#' + frmOpcao);
-    rDsdmenor = $('label[for="dsdmenor"]', '#' + frmOpcao);
-    rDsdmaior = $('label[for="dsdmaior"]', '#' + frmOpcao);
     rDscredit = $('label[for="dscredit"]', '#' + frmOpcao);
     rDtlibera = $('label[for="dtlibera"]', '#' + frmOpcao);
     rQtcheque = $('label[for="qtcheque"]', '#' + frmOpcao);
     rQtchqdev = $('label[for="qtchqdev"]', '#' + frmOpcao);
     rQtchqcop = $('label[for="qtchqcop"]', '#' + frmOpcao);
     rQtchqban = $('label[for="qtchqban"]', '#' + frmOpcao);
-    rQtdmenor = $('label[for="qtdmenor"]', '#' + frmOpcao);
-    rQtdmaior = $('label[for="qtdmaior"]', '#' + frmOpcao);
     rQtcredit = $('label[for="qtcredit"]', '#' + frmOpcao);
     rVlcheque = $('label[for="vlcheque"]', '#' + frmOpcao);
     rVlchqdev = $('label[for="vlchqdev"]', '#' + frmOpcao);
     rVlchqcop = $('label[for="vlchqcop"]', '#' + frmOpcao);
     rVlchqban = $('label[for="vlchqban"]', '#' + frmOpcao);
-    rVlrmenor = $('label[for="vlrmenor"]', '#' + frmOpcao);
-    rVlrmaior = $('label[for="vlrmaior"]', '#' + frmOpcao);
     rVlcredit = $('label[for="vlcredit"]', '#' + frmOpcao);
     rLqtdedas = $('label[for="lqtdedas"]', '#' + frmOpcao);
     rLvalores = $('label[for="lvalores"]', '#' + frmOpcao);
@@ -937,15 +932,11 @@ function formataOpcaoF() {
     rQtchqdev.addClass('rotulo-linha').css({'width': '20px'});
     rQtchqcop.addClass('rotulo-linha').css({'width': '20px'});
     rQtchqban.addClass('rotulo-linha').css({'width': '20px'});
-    rQtdmenor.addClass('rotulo-linha').css({'width': '20px'});
-    rQtdmaior.addClass('rotulo-linha').css({'width': '20px'});
     rQtcredit.addClass('rotulo-linha').css({'width': '20px'});
     rVlcheque.addClass('rotulo-linha').css({'width': '20px'});
     rVlchqdev.addClass('rotulo-linha').css({'width': '20px'});
     rVlchqcop.addClass('rotulo-linha').css({'width': '20px'});
     rVlchqban.addClass('rotulo-linha').css({'width': '20px'});
-    rVlrmenor.addClass('rotulo-linha').css({'width': '20px'});
-    rVlrmaior.addClass('rotulo-linha').css({'width': '20px'});
     rVlcredit.addClass('rotulo-linha').css({'width': '20px'});
 
     rLqtdedas.addClass('rotulo').css({'width': '360px'});
@@ -957,15 +948,11 @@ function formataOpcaoF() {
     cQtchqdev = $('#qtchqdev', '#' + frmOpcao);
     cQtchqcop = $('#qtchqcop', '#' + frmOpcao);
     cQtchqban = $('#qtchqban', '#' + frmOpcao);
-    cQtrmenor = $('#qtdmenor', '#' + frmOpcao);
-    cQtrmaior = $('#qtdmaior', '#' + frmOpcao);
     cQtcredit = $('#qtcredit', '#' + frmOpcao);
     cVlcheque = $('#vlcheque', '#' + frmOpcao);
     cVlchqdev = $('#vlchqdev', '#' + frmOpcao);
     cVlchqcop = $('#vlchqcop', '#' + frmOpcao);
     cVlchqban = $('#vlchqban', '#' + frmOpcao);
-    cVlrmenor = $('#vlrmenor', '#' + frmOpcao);
-    cVlrmaior = $('#vlrmaior', '#' + frmOpcao);
     cVlcredit = $('#vlcredit', '#' + frmOpcao);
 
     cDtlibera.css({'width': '90px'}).addClass('data');
@@ -973,15 +960,11 @@ function formataOpcaoF() {
     cQtchqdev.css({'width': '120px'}).addClass('inteiro');
     cQtchqcop.css({'width': '120px'}).addClass('inteiro');
     cQtchqban.css({'width': '120px'}).addClass('inteiro');
-    cQtrmenor.css({'width': '120px'}).addClass('inteiro');
-    cQtrmaior.css({'width': '120px'}).addClass('inteiro');
     cQtcredit.css({'width': '120px'}).addClass('inteiro');
     cVlcheque.css({'width': '120px'}).addClass('monetario');
     cVlchqdev.css({'width': '120px'}).addClass('monetario');
     cVlchqcop.css({'width': '120px'}).addClass('monetario');
     cVlchqban.css({'width': '120px'}).addClass('monetario');
-    cVlrmenor.css({'width': '120px'}).addClass('monetario');
-    cVlrmaior.css({'width': '120px'}).addClass('monetario');
     cVlcredit.css({'width': '120px'}).addClass('monetario');
 
     // Outros	

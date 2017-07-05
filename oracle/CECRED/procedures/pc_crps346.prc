@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Junho/2003.                         Ultima atualizacao: 01/02/2017
+   Data    : Junho/2003.                         Ultima atualizacao: 21/06/2017
 
    Dados referentes ao programa:
 
@@ -183,7 +183,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
 						   nao eram encontrados, imprimindo em branco.
 						   Jonata (Mouts) - Chamado 588174
 
-              01/02/2017 - Tratar incorporacao da Transulcred. (Fabricio)
+              01/02/2017 - Tratar incorporacao da Transulcred. (Fabricio)	   
+                            
+              21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
+                           email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
 
    ............................................................................. */
 
@@ -1397,77 +1400,6 @@ BEGIN
             vr_cdcritic := 0;
             vr_flgentra := FALSE;
           END IF;
-        ELSIF vr_vllanmto >= vr_vlchqvlb THEN
-          -- Critica quando o valor do lancamento for maior que o param 2 do VALORESVLB
-          BEGIN 
-            INSERT INTO CRAPREJ (cdcooper
-                                ,dtmvtolt
-                                ,cdagenci
-                                ,cdbccxlt
-                                ,nrdolote
-                                ,tplotmov
-								,dtrefere
-                                ,nrdconta
-                                ,nrdctabb
-                                ,nrdocmto
-                                ,vllanmto
-                                ,nrseqdig
-                                ,cdcritic
-                                ,cdpesqbb
-                                ,indebcre
-                                ,dshistor
-                                ,tpintegr)
-                         VALUES (pr_cdcooper                              -- cdcooper
-                                ,rw_crapdat.dtmvtolt                      -- dtmvtolt
-                                ,vr_cdagenci                              -- cdagenci
-                                ,vr_cdbccxlt                              -- cdbccxlt
-                                ,vr_nrdolote                              -- nrdolote
-                                ,1                                        -- tplotmov
-                                ,vr_dtrefere                              -- dtrefere
-                                ,vr_nrdconta                              -- nrdconta
-                                ,vr_nrdctabb                              -- nrdctabb
-                                ,vr_nrdocmto                              -- nrdocmto
-                                ,vr_vllanmto                              -- vllanmto
-                                ,vr_nrseqint                              -- nrseqdig
-                                ,929                                      -- cdcritic
-                                ,vr_cdpesqbb                              -- cdpesqbb
-                                ,vr_indebcre                              -- indebcre
-                                ,rpad(vr_dshistor,15,' ') || vr_dsageori  -- dshistor
-                                ,1                      );                -- tpintegr
-          EXCEPTION 
-            WHEN OTHERS THEN 
-              vr_dscritic := ' ao inserir registro de Rejeição --> ' ||sqlerrm;
-              RAISE vr_exc_saida;
-          END;
-          -- Solicita envio de email informando sobre o cheque vlb 
-          vr_conteudo := 'Segue dados do Cheque VLB:<br><br>' ||
-                         'Cooperativa: ' || pr_cdcooper ||
-                         ' - ' || rw_crapcop.nmrescop ||
-                         '<br>PA: ' || rw_crapass.cdagenci ||
-                         '<br>Banco: ' ||
-                         to_char(vr_cdbccxlt,'fm990') || '<br>' ||
-                         'Conta/dv: ' ||
-                         gene0002.fn_mask_conta(vr_nrdconta) ||
-                         '<br>' ||
-                         'Cheque: ' ||
-                         gene0002.fn_mask(vr_nrdocmto, 'zzz.zz9.9') ||
-                         '<br>' ||
-                         'Valor: R$ ' ||
-                         to_char(vr_vllanmto, '999g999g990d00') ||
-                         '<br>' ||
-                         'Data: ' || to_char(vr_dtleiarq, 'dd/mm/rrrr');
-          -- Solicitar envio do email 
-          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                    ,pr_cdprogra        => 'PC_'||vr_cdprogra
-                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS346_EMAIL_CHEQUEVLB')
-                                    ,pr_des_assunto     => 'Cheque VLB ' || to_char(vr_cdbccxlt, 'fm000') || ' - ' || to_char(vr_dtleiarq, 'dd/mm/rrrr')
-                                    ,pr_des_corpo       => vr_conteudo
-                                    ,pr_des_anexo       => null
-                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                    ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
-                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
-                                    ,pr_des_erro        => vr_dscritic);
-            
         END IF;
           
         -- Verifica se há negativação no cheque 

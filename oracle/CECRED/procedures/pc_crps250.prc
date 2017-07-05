@@ -13,7 +13,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98.                       Ultima atualizacao: 31/03/2016
+   Data    : Novembro/98.                       Ultima atualizacao: 21/06/2017
                                                                           
    Dados referentes ao programa:
 
@@ -126,6 +126,9 @@ BEGIN
 
 			  31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
 				  		  (Adriano - SD 426308).			    
+
+              21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
+                           email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
 
 ............................................................................. */
     DECLARE
@@ -1370,60 +1373,6 @@ BEGIN
         END IF;
        
       END IF;
-
-      IF vr_aux_vllanmto >= vr_aux_vlchqvlb THEN
-        BEGIN            
-          INSERT INTO craprej (cdcooper, dtrefere, nrdconta, nrdocmto, vllanmto, nrseqdig, cdcritic, cdpesqbb)
-          VALUES(pr_cdcooper          --cdcooper
-                ,vr_aux_dtauxili      --dtrefere
-                ,vr_aux_nrdconta      --nrdconta
-                ,vr_aux_nrdocmto      --nrdocmto
-                ,vr_aux_vllanmto      --vllanmto
-                ,vr_aux_nrseqarq      --nrseqdig
-                ,929                  --cdcritic
-                ,vr_aux_cdpesqbb      --cdpesqbb
-                );
-          EXCEPTION
-            WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir registro craprej (#6): '||sqlerrm;
-            RAISE vr_exc_saida;
-        END;
-
-        -- envia email informando sobre o cheque vlb         
-        vr_conteudo := 'Segue dados do Cheque VLB:\n\n' || 
-                           'Cooperativa: ' || to_char(pr_cdcooper) || ' - ' || rw_crapcop.nmrescop || '\n' ||
-                           'PA: '          || to_char(rw_crapass.cdagenci) || '\n' ||
-                           'Banco: '       || to_char(vr_aux_cdbancob, 'fm990') || '\n' || 
-                           'Conta/dv: '    || to_char(vr_aux_nrdconta) || '\n' ||
-                           'Cheque: '      || to_char(vr_aux_nrdocmto) || '\n' ||
-                           'Valor: R$ '    || to_char(vr_aux_vllanmto) || '\n' ||
-                           'Data: '        || to_char(vr_aux_dtleiarq,'dd/mm/RRRR');
-
-        vr_assunto := 'Cheque VLB ' || to_char(vr_aux_cdbancob, 'fm990') || ' - ' || to_char(vr_aux_dtleiarq,'dd/mm/RRRR');
-
-        --Enviar Email
-        GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
-                                  ,pr_cdprogra        => vr_cdprogra    --> Programa conectado
-                                  ,pr_des_destino     => 'CECRED <cecred@cecred.coop.br>;spb@cecred.coop.br;compe@cecred.coop.br,' --> Um ou mais detinatários separados por ';' ou ','
-                                  ,pr_des_assunto     => vr_assunto     --> Assunto do e-mail
-                                  ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
-                                  ,pr_des_anexo       => NULL           --> Um ou mais anexos separados por ';' ou ','
-                                  ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
-                                  ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
-                                  ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
-                                  ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
-                                  ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
-                                  ,pr_flg_log_batch   => 'N'           --> Incluir inf. no log
-                                  ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
-        --Se ocorreu erro
-        IF vr_dscritic IS NOT NULL THEN
-          vr_cdcritic:= 0;
-          --Levantar Excecao
-          RAISE vr_exc_saida;
-        END IF;
-        
-      END IF; -- vr_aux_vllanmto >= vr_aux_vlchqvlb
-
 
       IF vr_aux_flgfirst THEN
 

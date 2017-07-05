@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 15/04/2016
  * OBJETIVO     : Rotina para alteração e inclusão cadastral da tela PARHPG
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 19/06/2017 - Removida a linha com informações da Devolução VLB.
+				               PRJ367 - Compe Sessao Unica (Lombardi)
  * -------------- 
  */
 ?> 
@@ -47,9 +48,6 @@
 	$hrnetcan = isset($_POST["hrnetcan"]) ? $_POST["hrnetcan"] : ""; // Horario de Cancelamento de Pagamento INTERNET/MOBILE
 	$hrtaacau = isset($_POST["hrtaacau"]) ? $_POST["hrtaacau"] : ""; // Atualizar Horario Cancelamento do Pagamento TAA "S/N"
 	$hrtaacan = isset($_POST["hrtaacan"]) ? $_POST["hrtaacan"] : ""; // Horario de Cancelamento de Pagamento TAA
-	$hrvlbatu = isset($_POST["hrvlbatu"]) ? $_POST["hrvlbatu"] : ""; // Atualizar Horario DEVOLUCAO VLB "S/N"
-	$hrvlbini = isset($_POST["hrvlbini"]) ? $_POST["hrvlbini"] : ""; // Horario de Pagamento DEVOLUCAO VLB - Inicial
-	$hrvlbfim = isset($_POST["hrvlbfim"]) ? $_POST["hrvlbfim"] : ""; // Horario de Pagamento DEVOLUCAO VLB - Final
 	$hrdiuatu = isset($_POST["hrdiuatu"]) ? $_POST["hrdiuatu"] : ""; // Atualizar Horario DEVOLUCAO DIURNA "S/N"
 	$hrdiuini = isset($_POST["hrdiuini"]) ? $_POST["hrdiuini"] : ""; // Horario de Pagamento DEVOLUCAO DIURNA - Inicial
 	$hrdiufim = isset($_POST["hrdiufim"]) ? $_POST["hrdiufim"] : ""; // Horario de Pagamento DEVOLUCAO DIURNA - Final
@@ -87,9 +85,6 @@
 	$xml .= "   <hrnetcan>".$hrnetcan."</hrnetcan>";
 	$xml .= "   <hrtaacau>".$hrtaacau."</hrtaacau>";
 	$xml .= "   <hrtaacan>".$hrtaacan."</hrtaacan>";
-	$xml .= "   <hrvlbatu>".$hrvlbatu."</hrvlbatu>";
-	$xml .= "   <hrvlbini>".$hrvlbini."</hrvlbini>";
-	$xml .= "   <hrvlbfim>".$hrvlbfim."</hrvlbfim>";
 	$xml .= "   <hrdiuatu>".$hrdiuatu."</hrdiuatu>";
 	$xml .= "   <hrdiuini>".$hrdiuini."</hrdiuini>";
 	$xml .= "   <hrdiufim>".$hrdiufim."</hrdiufim>";

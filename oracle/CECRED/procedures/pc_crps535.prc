@@ -11,7 +11,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Dezembro/2009                   Ultima atualizacao: 02/12/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 21/06/2017
 
    Dados referentes ao programa:
 
@@ -123,7 +123,11 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
 
 			   04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)                            
 
-               02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+               02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)		
+                            
+               21/06/2017 - Remoção do processamento do arquivo de cheque VLB(DVN) e tratado novo 
+                            arquivo de devolução em contingência(DCG). Ajuste nos historicos.
+                            PRJ367 - Compe Sessao Unica (Lombardi)
 
 ............................................................................. */
 
@@ -763,7 +767,7 @@ BEGIN
         vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 1;
         vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
 
-      ELSIF vr_array_arquivo(ind) LIKE ('5'||lpad(rw_crapcop.cdagectl,4,'0')||'%.DVN') THEN
+      ELSIF vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crapcop.cdagectl,4,'0')||'%.DCG') THEN
         -- Grupo de arquivos .DVN
         vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 2;
         vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
@@ -885,7 +889,7 @@ BEGIN
       -- Verifica se é final de arquivo
       IF SUBSTR(vr_dstexto,1,10)  = '9999999999' AND
         (SUBSTR(vr_dstexto,48,06) = 'CEL615'     OR
-         SUBSTR(vr_dstexto,48,06) = 'DVA615')    THEN -- Cheque VLB
+         SUBSTR(vr_dstexto,48,06) = 'DCG614')    THEN -- Sessão de Contingência
          IF substr(vr_dstexto,151,10) <> ww_nrlinha THEN
             vr_cdcritic := 166;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -929,7 +933,7 @@ BEGIN
       -- Faz validacoes especificas para a primeira linha
       IF ww_nrlinha = 1 THEN
         IF (SUBSTR(vr_dstexto,48,06) <> 'CEL615'  AND
-            SUBSTR(vr_dstexto,48,06) <> 'DVA615') THEN   -- Cheque VLB
+            SUBSTR(vr_dstexto,48,06) <> 'DCG614') THEN   -- Sessão de Contingência
           vr_cdcritic := 473; --Codigo de remessa invalido.
         ELSIF SUBSTR(vr_dstexto,151,10) <> ww_nrlinha THEN
           vr_cdcritic := 166; -- Sequencia errada
@@ -967,7 +971,7 @@ BEGIN
         -- Se for um arquivo do tipo DNN = Noturna = 1
         IF SUBSTR(vr_arquivos(ind).nmarquivo,-2,1) = 'N' THEN
           vr_cdperdev := 1;
-        ELSE -- DDN / DVN = Diurna  = 2
+        ELSE -- DDN / DCG = Diurna  = 2
           vr_cdperdev := 2;
         END IF;
 
@@ -1232,9 +1236,10 @@ BEGIN
             IF rw_crapdpb.dtliblan <= rw_crapdat.dtmvtolt THEN
               vr_cdhistor := 351; --CH.DEV.CUST.
             ELSE
-              IF rw_crapdpb.cdhistor = 3 OR rw_crapdpb.cdhistor = 1526 THEN --DEP.CHQ.PR. / 1526 - DEP. INTERCOOP.
+              -- 6-DEPOSITO BLOQ / 1523-DEP. INTERCOOP
+              IF rw_crapdpb.cdhistor = 6 THEN 
                 vr_cdhistor := 24;
-              ELSIF rw_crapdpb.cdhistor = 4 OR rw_crapdpb.cdhistor = 1523 THEN --DEP.CHQ.FPR. / 1523 - DEP.INTERCOOP.
+              ELSIF rw_crapdpb.cdhistor = 1523 THEN
                 vr_cdhistor := 27;
               ELSIF rw_crapdpb.cdhistor IN (357,881) THEN --DEP.BLOQ.CUST
                 vr_cdhistor := 657; --CH.DEV.CUST.

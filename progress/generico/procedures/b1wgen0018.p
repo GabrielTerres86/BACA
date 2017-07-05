@@ -2,7 +2,7 @@
 
     Programa: b1wgen0018.p
     Autor   : GATI - Peixoto/Eder
-    Data    : Setembro/2009                   Ultima Atualizacao: 23/09/2016
+    Data    : Setembro/2009                   Ultima Atualizacao: 20/06/2017
     
     Dados referentes ao programa:
 
@@ -125,6 +125,9 @@
                  23/09/2016 - Alterado valida_limites_desconto e valida_dados_desconto
                               para leitura da nova TAB de desconto segmentada por tipo de pessoa.
                               PRJ-300 - Desconto de cheque(Odirlei-AMcom)
+                              
+                 20/06/2017 - Retirada separaçao de cheques maiores e menores no relatório CRRL308.
+                              PRJ367 - Compe Sessao Unica (Lombardi)
                               
 .............................................................................*/
 
@@ -3691,14 +3694,6 @@ PROCEDURE pi_grava_tt-fechamento_descto:
              ASSIGN tt-fechamento.qtchqban = tt-fechamento.qtchqban + 1
                     tt-fechamento.vlchqban = tt-fechamento.vlchqban + 
                                              crapcdb.vlcheque.
-             IF  crapcdb.vlcheque < 300 THEN
-                 ASSIGN tt-fechamento.vlrmenor = tt-fechamento.vlrmenor + 
-                                                 crapcdb.vlcheque
-                        tt-fechamento.qtdmenor = tt-fechamento.qtdmenor + 1.
-             ELSE
-                 ASSIGN tt-fechamento.vlrmaior = tt-fechamento.vlrmaior + 
-                                                 crapcdb.vlcheque
-                        tt-fechamento.qtdmaior = tt-fechamento.qtdmaior + 1.
          END.
 
 END PROCEDURE. /* pi_grava_tt-fechamento_descto */
@@ -3731,15 +3726,6 @@ PROCEDURE pi_grava_tt-fechamento_custodia:
              ASSIGN tt-fechamento.qtchqban = tt-fechamento.qtchqban + 1
                     tt-fechamento.vlchqban = tt-fechamento.vlchqban + 
                                              crapcst.vlcheque.
-             
-             IF  crapcst.vlcheque < 300 THEN
-                 ASSIGN tt-fechamento.vlrmenor = tt-fechamento.vlrmenor + 
-                                                 crapcst.vlcheque
-                        tt-fechamento.qtdmenor = tt-fechamento.qtdmenor + 1.   
-             ELSE
-                 ASSIGN tt-fechamento.vlrmaior = tt-fechamento.vlrmaior + 
-                                                 crapcst.vlcheque
-                        tt-fechamento.qtdmaior = tt-fechamento.qtdmaior + 1.
          END.
 
 END PROCEDURE. /* pi_grava_tt-fechamento_custodia */

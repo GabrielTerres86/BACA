@@ -209,6 +209,11 @@
                            
               04/04/2017 - Incluir validacao para contas migradas na procedure gera_lancamento 
                            (Lucas Ranghetti #620180)
+                           
+              13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
+                           Fraudes/Impedimentos e remoçao do processo de devoluçao de Cheques.
+                           PRJ367 - Compe Sessao Unica (Lombardi)
+              
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -223,7 +228,7 @@ DEF INPUT  PARAM p-cddevolu AS INT                                   NO-UNDO.
    6 = 2a EXECUCAO (CECRED)
 */
 
-{ includes/var_batch.i }   
+{ includes/var_batch.i "new"}   
 { sistema/generico/includes/var_internet.i }
 
 DEF STREAM str_1. /* Relatorios */
@@ -345,14 +350,15 @@ ASSIGN glb_cdprogra = "crps264"
        glb_flgbatch = false.
 
 RUN fontes/iniprg.p.
-
+/*
 IF   glb_cdcritic > 0 THEN
     RETURN.
-  
+  */
 /*Devido a mudancas na tela PRCCTL que podera ser acessada
  por outras coops alem da CECRED é necessario que este
  ASSIGN permaneça para um funcionamento correto*/
-ASSIGN glb_cdcooper = 3.
+ASSIGN glb_cdcooper = 3
+       glb_dtmvtolt = 01/25/2017.
   
 IF   glb_inrestar > 0   AND   glb_nrctares = 0   THEN
      glb_inrestar = 0.
@@ -463,41 +469,10 @@ ELSE
                            IF   p-cddevolu = 3      THEN     /* CONTA ITG */
                                 RUN gera_arquivo_ctaitg.
                            ELSE
-                           IF   p-cddevolu = 4      OR
-                                p-cddevolu = 5      OR
+                           IF   p-cddevolu = 5      OR
                                 p-cddevolu = 6      THEN     /*   CECRED   */
                                 DO:
                                     RUN gera_arquivo_cecred.
-                                    /* Envia mensagem ao SPB para os cheques VLB
-                                       nao devolvidos; aqueles que foram 
-                                       compensados. */
-                             
-                                    IF   p-cddevolu = 4 THEN
-                                         DO:
-                                             /* 524 = CHEQUE COMP.
-                                                572 = CHEQUE TRF. COMP */
-                                             ASSIGN aux_cdhistor = "524,572".
-
-                                             RUN envia_mensagem_spb
-                                                          (INPUT p-cdcooper,
-                                                           INPUT aux_cdagenci,
-                                                           INPUT glb_dtmvtoan,
-                                                           INPUT aux_cdhistor,
-                                                           INPUT aux_cdbanchq,
-                                                           INPUT aux_valorvlb).
-                                                           
-                                             /*   Tratamento para Migracao 
-                                                  especifico da AltoVale   */
-                                             IF   p-cdcooper = 1 OR
-                                                  p-cdcooper = 2 THEN
-                                                  RUN envia_mensagem_spb_mig
-                                                          (INPUT p-cdcooper,
-                                                           INPUT aux_cdagenci,
-                                                           INPUT glb_dtmvtoan,
-                                                           INPUT aux_cdhistor,
-                                                           INPUT aux_cdbanchq,
-                                                           INPUT aux_valorvlb).
-                                         END.
                                 END.
                        
                            /* Gerar log com o fim da execução */ 
@@ -764,16 +739,6 @@ PROCEDURE gera_lancamento:
                         END.                
 
             /*  CECRED */
-            WHEN 4 THEN DO:
-                            /*  Seleciona somente devolucoes VLB */
-
-                            IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
-                                 NEXT.
-            
-                            IF   crapdev.vllanmto < aux_valorvlb THEN
-                                 NEXT.
-                        END.
-              
             WHEN 5 OR WHEN 6 THEN DO:
                             
                     IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
@@ -860,8 +825,7 @@ PROCEDURE gera_lancamento:
                                             craplot.nrdolote = 10109
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                     ELSE
-                    IF   p-cddevolu = 4 OR
-                         p-cddevolu = 5 OR
+                    IF   p-cddevolu = 5 OR
                          p-cddevolu = 6 THEN       /*  CECRED  */
                          FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
                                             craplot.dtmvtolt = glb_dtmvtolt AND
@@ -889,7 +853,7 @@ PROCEDURE gera_lancamento:
                                       WHEN 1 THEN craplot.nrdolote = 10110.
                                       WHEN 2 THEN craplot.nrdolote = 8451.
                                       WHEN 3 THEN craplot.nrdolote = 10109.
-                                      WHEN 4 OR WHEN 5 OR WHEN 6 THEN 
+                                      WHEN 5 OR WHEN 6 THEN 
                                                   craplot.nrdolote = 10117.
                                   END CASE.
                               END.
@@ -1008,7 +972,7 @@ PROCEDURE gera_lancamento:
                       craplcm.nrdctitg = "".
 
 
-                 IF   p-cddevolu = 4 OR p-cddevolu = 5 OR p-cddevolu = 6 THEN
+                 IF   p-cddevolu = 5 OR p-cddevolu = 6 THEN
                       DO:
                           ASSIGN craplcm.nrdctitg = "".
                           
@@ -1035,21 +999,14 @@ PROCEDURE gera_lancamento:
                                          gncpchq.cdalinea = 21.
                                 END.
                                 
-                          IF    p-cddevolu = 4 THEN  /* Devolucao VLB - 9:00* */
-                                crapdev.indevarq = 2.  /* Envia */ 
-                          ELSE
-                          IF    p-cddevolu = 5 THEN  /* 1a devolucao - 11:00* */
+                          IF    p-cddevolu = 5 THEN  /* 1a devolucao - 13:30* */
                                 DO:
-                                    /*  Interior e VLB Truncado */
-                                    IF   crapcop.flgdsirc  = NO           AND  
-                                         crapdev.vllanmto >= aux_vldevolu THEN
-                                         crapdev.indevarq = 1.   /* Nao envia */
-                                    ELSE
-                                         crapdev.indevarq = 2.   /* Envia */
+                                    crapdev.indevarq = 2.   /* Envia */
                                 END.
-                          ELSE                       /* 2a devolucao - 16:30* */
+                          ELSE /* 2a devolucao – 19:00 – Sessao de Prevencao a Fraudes e Impedimentos*/
+                               /* Somente alineas 20, 21, 24, 25, 28, 30, 35 e 70 */
                                /* Na segunda Devolucao envia todos com o 
-                                  indicador = 1, para saber que ja foi env. */
+                                  indicador = 1, para saber quem ja foi env. */
                                crapdev.indevarq = 1.  /* Envia */
                                
                           craplcm.dsidenti = STRING(crapdev.indevarq,"9").
@@ -1439,27 +1396,17 @@ PROCEDURE gera_lancamento:
         ELSE /* Conta = 0 */
             DO:                  
                 /*  CECRED */
-                IF  p-cddevolu = 4 THEN 
+                /* Diurna e Noturna */
+                IF  p-cddevolu = 5 OR p-cddevolu = 6 THEN                             
                     DO:
-                        /*  Seleciona somente devolucoes VLB */
-                        IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
-                             NEXT.
-        
-                        IF   crapdev.vllanmto < aux_valorvlb THEN
-                             NEXT.
+                        IF  crapdev.cdbanchq <> crapcop.cdbcoctl THEN
+                            NEXT.    
                     END.
-                ELSE 
-                    DO:                  
-                        /* Diurna e Noturna */
-                        IF  p-cddevolu = 5 OR p-cddevolu = 6 THEN                             
-                            IF  crapdev.cdbanchq <> crapcop.cdbcoctl THEN
-                                NEXT.    
-                    END.
-        
-                /* Verificar se alinea do cheque devolvido é 35 */
-                IF  crapdev.cdalinea = 35 THEN
-                    ASSIGN crapdev.insitdev = 1
-                           crapdev.indevarq = 2.
+                ELSE
+                  /* Verificar se alinea do cheque devolvido é 35 */
+                  IF  crapdev.cdalinea = 35 THEN
+                      ASSIGN crapdev.insitdev = 1
+                             crapdev.indevarq = 2.
             END.
     END.  /*  Fim do FOR EACH e da transacao  */
     
@@ -2284,8 +2231,6 @@ PROCEDURE gera_arquivo_cecred:
    DEF VAR aux_totvlnot AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
    DEF VAR aux_totqtdes AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
    DEF VAR aux_totvldes AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
-   DEF VAR aux_totqtvlb AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
-   DEF VAR aux_totvlvlb AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
    DEF VAR aux_totqtrej AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
    DEF VAR aux_totvlrej AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
    DEF VAR aux_totalqtd AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
@@ -2352,10 +2297,6 @@ PROCEDURE gera_arquivo_cecred:
         aux_totqtcax                                 AT 65
         aux_totvlcax                                 AT 73
         SKIP(1)
-        "TOTAL DE DEVOLUCOES NO ARQUIVO VLB: "       AT 26
-        aux_totqtvlb                                 AT 65
-        aux_totvlvlb                                 AT 73
-        SKIP(1)
         "TOTAL DE DEVOLUCOES NO ARQUIVO DIURNO: "    AT 23
         aux_totqtdiu                                 AT 65
         aux_totvldiu                                 AT 73
@@ -2417,20 +2358,14 @@ PROCEDURE gera_arquivo_cecred:
    ELSE
         aux_mes = STRING(MONTH(glb_dtmvtolt),"9").
 
-   /* 1a Exec(Cheque VLB) = DVS | 2a Exec = DVD | 3a Exec = DVT */
+   /* 1a Exec = DVD | 2a Exec = DVT */
 
-   IF   p-cddevolu = 4 THEN /* Cheque VLB - 1a Exec */
-        ASSIGN aux_extensao = ".DVS"
-               aux_nmarqchq = "rl/crrl219_4.lst"
-               aux_nmarqdev = "devolu_cecred_vlb.txt"
-               aux_dssufarq = "5".
-   ELSE
-   IF   p-cddevolu = 5 THEN /* 2a Exec */
+   IF   p-cddevolu = 5 THEN /* 1a Exec */
         ASSIGN aux_extensao = ".DVD"
                aux_nmarqchq = "rl/crrl219_5.lst"
                aux_nmarqdev = "devolu_cecred_diurna.txt"
                aux_dssufarq = "1".
-   ELSE                     /* 3a Exec */
+   ELSE                     /* 2a Exec */
         ASSIGN aux_extensao = ".DVT"
                aux_nmarqchq = "rl/crrl219_6.lst"
                aux_nmarqdev = "devolu_cecred_noturna.txt"
@@ -2459,8 +2394,6 @@ PROCEDURE gera_arquivo_cecred:
           aux_totvlnot = 0
           aux_totqtdes = 0
           aux_totvldes = 0
-          aux_totqtvlb = 0
-          aux_totvlvlb = 0
           aux_totqtrej = 0
           aux_totvlrej = 0
           aux_totalqtd = 0
@@ -2576,12 +2509,6 @@ PROCEDURE gera_arquivo_cecred:
                                                    crapdev.vllanmto.
            
                      WHEN 2 THEN 
-                        IF   crapdev.vllanmto >= aux_valorvlb THEN
-                             ASSIGN aux_dsorigem = "Arq. VLB"
-                                    aux_totqtvlb = aux_totqtvlb + 1
-                                    aux_totvlvlb = aux_totvlvlb + 
-                                                   crapdev.vllanmto.
-                        ELSE
                              ASSIGN aux_dsorigem = "Arq. Diurno"
                                     aux_totqtdiu = aux_totqtdiu + 1
                                     aux_totvldiu = aux_totvldiu +
@@ -2592,17 +2519,9 @@ PROCEDURE gera_arquivo_cecred:
                        aux_totvlrej = aux_totvlrej + crapdev.vllanmto
                        tt-relchdv.dsorigem = aux_dsorigem.
               
-                IF   p-cddevolu = 4 THEN
-                     DO:
-                         IF   crapdev.indevarq <> 2 OR 
-                              crapdev.vllanmto < aux_valorvlb THEN
-                              NEXT.
-                     END.
-                ELSE
                 IF   p-cddevolu = 5 THEN
                      DO:
-                         IF   crapdev.indevarq <> 2 OR 
-                              crapdev.vllanmto > aux_valorvlb THEN
+                         IF   crapdev.indevarq <> 2 THEN
                               NEXT.
                      END.
                 ELSE
@@ -2809,11 +2728,9 @@ PROCEDURE gera_arquivo_cecred:
                                 aux_totvlcax = aux_totvlcax +
                                                crapdev.vllanmto
                                 aux_totalqtd = aux_totqtcax + aux_totqtnot +
-                                               aux_totqtdiu + aux_totqtdes +
-                                               aux_totqtvlb
+                                               aux_totqtdiu + aux_totqtdes
                                 aux_totalvlr = aux_totvlcax + aux_totvlnot +
-                                               aux_totvldiu + aux_totvldes +
-                                               aux_totvlvlb.
+                                               aux_totvldiu + aux_totvldes.
 
                          NEXT.
                      END.
@@ -2863,13 +2780,11 @@ PROCEDURE gera_arquivo_cecred:
                                                aux_totalqtd = aux_totqtcax + 
                                                               aux_totqtnot +
                                                               aux_totqtdiu + 
-                                                              aux_totqtdes +
-                                                              aux_totqtvlb
+                                                              aux_totqtdes
                                                aux_totalvlr = aux_totvlcax + 
                                                               aux_totvlnot +
                                                               aux_totvldiu + 
-                                                              aux_totvldes +
-                                                              aux_totvlvlb.
+                                                              aux_totvldes.
                                         NEXT.
                                     END.    
                           END.
@@ -2890,31 +2805,19 @@ PROCEDURE gera_arquivo_cecred:
            
                          WHEN 2 THEN 
                          DO: 
-                            IF crapdev.vllanmto >= aux_valorvlb THEN
-                            DO:
-                                ASSIGN aux_dsorigem = "Arq. VLB"
-                                       aux_totqtvlb = aux_totqtvlb + 1
-                                       aux_totvlvlb = aux_totvlvlb +
-                                                      crapdev.vllanmto.
-                            END.
-                            ELSE
-                            DO:
-                                ASSIGN aux_dsorigem = "Arq. Diurno"
-                                       aux_totqtdiu = aux_totqtdiu + 1
-                                       aux_totvldiu = aux_totvldiu +
-                                                      crapdev.vllanmto.
-                            END.
+                            ASSIGN aux_dsorigem = "Arq. Diurno"
+                                   aux_totqtdiu = aux_totqtdiu + 1
+                                   aux_totvldiu = aux_totvldiu +
+                                                  crapdev.vllanmto.
                          END.
                 END CASE.     
             END.
                
 
        ASSIGN aux_totalqtd = aux_totqtcax + aux_totqtnot + 
-                             aux_totqtdiu + aux_totqtdes +
-                             aux_totqtvlb
+                             aux_totqtdiu + aux_totqtdes
               aux_totalvlr = aux_totvlcax + aux_totvlnot + 
-                             aux_totvldiu + aux_totvldes +
-                             aux_totvlvlb.
+                             aux_totvldiu + aux_totvldes.
      
        tt-relchdv.dsorigem = aux_dsorigem.
        
@@ -2975,13 +2878,6 @@ PROCEDURE gera_arquivo_cecred:
             NEXT.
            END.           
        
-       IF   p-cddevolu = 4 THEN
-            DO:
-                IF   crapdev.indevarq <> 2 OR 
-                     crapdev.vllanmto < aux_valorvlb THEN
-                     NEXT.
-            END.
-       ELSE
        IF   p-cddevolu = 5 THEN
             DO:
                  IF   crapdev.indevarq <> 2 THEN
@@ -3018,56 +2914,18 @@ PROCEDURE gera_arquivo_cecred:
                 ELSE
                      aux_cdcmpchq = INT(SUBSTR(gncpchq.dsidenti,79,3)).
                 
-                IF   p-cddevolu = 4 THEN
-                     DO:
-                         aux_cdtipdoc = 36.
-
-                         ASSIGN aux_cdbandep = INT(SUBSTR(gncpchq.dsidenti,
-                                                   56,3))
-                                aux_cdagedep = INT(SUBSTR(gncpchq.dsidenti,
-                                                   63,4)).
-                         
-                         FIND crapagb WHERE crapagb.cddbanco = aux_cdbandep AND
-                                            crapagb.cdageban = aux_cdagedep
-                                            NO-LOCK NO-ERROR.
-
-                         IF   AVAILABLE crapagb  THEN
-                              DO:
-                                  FIND LAST crapfsf WHERE 
-                                       crapfsf.cdcidade = crapagb.cdcidade AND
-                                       crapfsf.dtferiad = glb_dtmvtolt
-                                       NO-LOCK NO-ERROR.
-                                  
-                                  IF   AVAILABLE crapfsf THEN
-                                       aux_cdtipdoc = 38.
-                              END.
-                              
-                         aux_linhadet = SUBSTR(gncpchq.dsidenti,1,53) +
-                                        STRING(crapdev.cdalinea,"99") +
-                                        SUBSTR(gncpchq.dsidenti,56,23) +
-                                        STRING(aux_cdcmpchq,"999") +
-                                        SUBSTR(gncpchq.dsidenti,82,66) +
-                                        STRING(aux_cdtipdoc,"999") +
-                                        STRING(aux_nrsequen,"9999999999").
-
-                         PUT STREAM str_2 aux_linhadet FORMAT "x(160)".
-
-                         PUT STREAM str_2 SKIP.
-                     END.
-                ELSE
-                     DO:
-                         aux_linhadet = SUBSTR(gncpchq.dsidenti,1,53) +
-                                        STRING(crapdev.cdalinea,"99") +
-                                        SUBSTR(gncpchq.dsidenti,56,23) +
-                                        STRING(aux_cdcmpchq,"999") +
-                                        SUBSTR(gncpchq.dsidenti,82,69) +
-                                        STRING(aux_nrsequen,"9999999999").
-
-                         PUT STREAM str_2 aux_linhadet FORMAT "x(160)".
-
-                         PUT STREAM str_2 SKIP.
-                     END.
                 
+                aux_linhadet = SUBSTR(gncpchq.dsidenti,1,53) +
+                               STRING(crapdev.cdalinea,"99") +
+                               SUBSTR(gncpchq.dsidenti,56,23) +
+                               STRING(aux_cdcmpchq,"999") +
+                               SUBSTR(gncpchq.dsidenti,82,69) +
+                               STRING(aux_nrsequen,"9999999999").
+
+                PUT STREAM str_2 aux_linhadet FORMAT "x(160)".
+
+                PUT STREAM str_2 SKIP.
+        
                 ASSIGN aux_nrsequen = aux_nrsequen + 1
                        aux_vldtotal = aux_vldtotal + crapdev.vllanmto.
                 
@@ -3193,11 +3051,10 @@ PROCEDURE gera_arquivo_cecred:
        DOWN STREAM str_1 WITH FRAME f_todos_cecred.
 
        IF   LAST (tt-relchdv.nrdconta) THEN
-            DISPLAY STREAM str_1  aux_totqtcax   aux_totvlcax   aux_totqtvlb
-                                  aux_totvlvlb   aux_totqtdiu   aux_totvldiu 
-                                  aux_totqtnot   aux_totvlnot   aux_totqtdes
-                                  aux_totvldes   aux_totqtrej   aux_totvlrej
-                                  aux_totalqtd   aux_totalvlr
+            DISPLAY STREAM str_1  aux_totqtcax   aux_totvlcax   aux_totqtdiu
+                                  aux_totvldiu   aux_totqtnot   aux_totvlnot
+                                  aux_totqtdes   aux_totvldes   aux_totqtrej
+                                  aux_totvlrej   aux_totalqtd   aux_totalvlr
                                   WITH FRAME f_totais.
    END.
 
@@ -3272,327 +3129,6 @@ PROCEDURE gera_arquivo_cecred:
    RUN fontes/imprim_unif.p (INPUT p-cdcooper).
                 
 END PROCEDURE.
-
-PROCEDURE envia_mensagem_spb:
-
-    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
-    DEF INPUT PARAM par_cdagenci AS INTE NO-UNDO.
-    DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
-    DEF INPUT PARAM par_cdhistor AS CHAR NO-UNDO.
-    DEF INPUT PARAM par_cdbanchq AS INTE NO-UNDO.
-    DEF INPUT PARAM par_valorvlb AS DECI NO-UNDO.
-
-    DEF VARIABLE    aux_ispbdebt AS DECI NO-UNDO.
-    DEF VARIABLE    aux_ispbcred AS DECI NO-UNDO.
-    DEF VARIABLE    aux_cdlegado AS INTE NO-UNDO.
-    
-    /* ISPB Debt. eh os 8 primeiros digitos do CNPJ da Coop */
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "GENERI"     AND
-                       craptab.cdempres = 0            AND
-                       craptab.cdacesso = "CNPJCENTRL" AND 
-                       craptab.tpregist = 0  NO-LOCK NO-ERROR.
-
-    IF   AVAIL craptab THEN
-         ASSIGN aux_ispbdebt = DECIMAL(craptab.dstextab).
-
-    /* Busca os dados da central para pegar o cdagectl(legado) */
-    FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
-
-    IF   NOT AVAIL crapcop THEN
-         DO:
-             ASSIGN glb_cdcritic = 651.
-             RUN fontes/critic.p. 
-             UNIX SILENT VALUE(
-                "echo " + STRING(TIME,"HH:MM:SS") +
-                " - " + glb_cdprogra + "' --> '"  +
-                "Envio mensagem SPB - Coop: " +
-                STRING(glb_cdcooper, "999") +
-                glb_dscritic + " >> log/proc_message.log").
-             RETURN.
-         END.
-    ELSE
-         ASSIGN aux_cdlegado = crapcop.cdagectl.
-
-
-    /* Busca novamente os dados da singular para qual esta sendo executado a
-       devolucao */
-    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-
-    IF   NOT AVAIL crapcop THEN
-         DO:
-             ASSIGN glb_cdcritic = 651.
-             RUN fontes/critic.p. 
-             UNIX SILENT VALUE(
-                "echo " + STRING(TIME,"HH:MM:SS") +
-                " - " + glb_cdprogra + "' --> '"  +
-                "Envio mensagem SPB - Coop: " +
-                STRING(par_cdcooper, "999") +
-                glb_dscritic + " >> log/proc_message.log").
-             RETURN.
-         END.
-
-    FOR EACH craplcm WHERE craplcm.cdcooper =  par_cdcooper               AND
-                           craplcm.dtmvtolt =  par_dtmvtolt               AND
-                           craplcm.cdagenci =  par_cdagenci               AND
-                           craplcm.cdbccxlt =  par_cdbanchq               AND
-                           CAN-DO(par_cdhistor, STRING(craplcm.cdhistor)) AND
-                           craplcm.vllanmto >= par_valorvlb NO-LOCK:
-
-        RUN verifica_incorporacao(INPUT  craplcm.cdcooper,
-                                  INPUT  craplcm.nrdconta,
-                                  INPUT  craplcm.nrdocmto,
-                                  OUTPUT aux_cdcopant, 
-                                  OUTPUT aux_nrdconta_tco,
-                                  OUTPUT aux_cdagectl).
-
-        IF aux_nrdconta_tco > 0 THEN
-            ASSIGN vr_nrdconta = aux_nrdconta_tco
-                   vr_cdcooper = aux_cdcopant 
-                   vr_cdagectl = aux_cdagectl.
-        ELSE
-            ASSIGN vr_nrdconta = craplcm.nrdconta
-                   vr_cdcooper = craplcm.cdcooper 
-                   vr_cdagectl = crapcop.cdagectl.
-
-        /* VIACON - se conta incorporada devera identificar conta antiga do 
-         cheque   para ler na crapdev */
-        IF   NOT CAN-FIND(FIRST crapdev WHERE 
-                                crapdev.cdcooper  = craplcm.cdcooper AND
-                                crapdev.cdbanchq  = craplcm.cdbccxlt AND
-                            DEC(crapdev.nrctachq) = vr_nrdconta      AND
-                                crapdev.nrcheque  = craplcm.nrdocmto AND
-                                crapdev.cdhistor <> 46) THEN
-             DO:
-                 /* VIACON - devera validar com a agencia do cheque da coop 
-                 antiga se for conta incorporada */
-                 IF   craplcm.cdbanchq = crapcop.cdbcoctl AND
-                      craplcm.cdagechq = vr_cdagectl      THEN
-                      NEXT.
-                 ELSE
-                      DO:
-                          FIND crapban WHERE 
-                               crapban.cdbccxlt = craplcm.cdbanchq 
-                               NO-LOCK NO-ERROR.
-
-                          IF   NOT AVAIL crapban THEN
-                               DO:
-                                   ASSIGN glb_cdcritic = 057.
-                                   RUN fontes/critic.p. 
-                                   UNIX SILENT VALUE(
-                                      "echo " + STRING(TIME,"HH:MM:SS") +
-                                      " - " + glb_cdprogra + "' --> '"  +
-                                      "Envio mensagem SPB - Banco: " +
-                                      STRING(par_cdbanchq, "999") +
-                                      glb_dscritic + " >> log/proc_message.log").
-                                   NEXT.
-                               END.
-
-                          ASSIGN aux_ispbcred = crapban.nrispbif.
-                
-                          RUN envia_arquivo_xml 
-                                      (INPUT craplcm.cdbanchq,
-                                       INPUT aux_ispbdebt,
-                                       INPUT aux_ispbcred,
-                                       INPUT craplcm.nrdocmto,
-                                       INPUT craplcm.vllanmto,
-                                       INPUT STRING(craplcm.nrdconta),
-                                       INPUT aux_cdlegado).
-                      END.
-             END.
-    END.
-
-END PROCEDURE.
-
-
-/*  Tratamento especifico para Migracao da AltoVale  */
-
-PROCEDURE envia_mensagem_spb_mig:
-
-    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
-    DEF INPUT PARAM par_cdagenci AS INTE NO-UNDO.
-    DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
-    DEF INPUT PARAM par_cdhistor AS CHAR NO-UNDO.
-    DEF INPUT PARAM par_cdbanchq AS INTE NO-UNDO.
-    DEF INPUT PARAM par_valorvlb AS DECI NO-UNDO.
-
-    DEF VARIABLE    aux_ispbdebt AS DECI NO-UNDO.
-    DEF VARIABLE    aux_ispbcred AS DECI NO-UNDO.
-    DEF VARIABLE    aux_cdlegado AS INTE NO-UNDO.
-    
-    /* ISPB Debt. eh os 8 primeiros digitos do CNPJ da Coop */
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "GENERI"     AND
-                       craptab.cdempres = 0            AND
-                       craptab.cdacesso = "CNPJCENTRL" AND 
-                       craptab.tpregist = 0  NO-LOCK NO-ERROR.
-
-    IF   AVAIL craptab THEN
-         ASSIGN aux_ispbdebt = DECIMAL(craptab.dstextab).
-
-    /* Busca os dados da central para pegar o cdagectl(legado) */
-    FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
-
-    IF   NOT AVAIL crapcop THEN
-         DO:
-             ASSIGN glb_cdcritic = 651.
-             RUN fontes/critic.p. 
-             UNIX SILENT VALUE(
-                "echo " + STRING(TIME,"HH:MM:SS") +
-                " - " + glb_cdprogra + "' --> '"  +
-                "Envio mensagem SPB - Coop: " +
-                STRING(glb_cdcooper, "999") +
-                glb_dscritic + " >> log/proc_message.log").
-             RETURN.
-         END.
-    ELSE
-         ASSIGN aux_cdlegado = crapcop.cdagectl.
-
-
-    /* Busca novamente os dados da singular para qual esta sendo executado a
-       devolucao */
-    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-
-    IF   NOT AVAIL crapcop THEN
-         DO:
-             ASSIGN glb_cdcritic = 651.
-             RUN fontes/critic.p. 
-             UNIX SILENT VALUE(
-                "echo " + STRING(TIME,"HH:MM:SS") +
-                " - " + glb_cdprogra + "' --> '"  +
-                "Envio mensagem SPB - Coop: " +
-                STRING(par_cdcooper, "999") +
-                glb_dscritic + " >> log/proc_message.log").
-             RETURN.
-         END.
-
-    FOR EACH craplcm WHERE craplcm.cdcooper =  16                         AND
-                           craplcm.dtmvtolt =  par_dtmvtolt               AND
-                           craplcm.cdagenci =  par_cdagenci               AND
-                           craplcm.cdbccxlt =  par_cdbanchq               AND
-                           CAN-DO(par_cdhistor, STRING(craplcm.cdhistor)) AND
-                           craplcm.vllanmto >= par_valorvlb NO-LOCK:
-
-        FIND craptco WHERE craptco.cdcooper = craplcm.cdcooper AND
-                           craptco.nrdconta = craplcm.nrdconta AND
-                           craptco.tpctatrf = 1                AND
-                           craptco.flgativo = TRUE
-                           NO-LOCK NO-ERROR.
-
-        IF   NOT AVAILABLE craptco THEN
-             NEXT.
-        
-        IF   NOT CAN-FIND(FIRST crapdev WHERE 
-                                crapdev.cdcooper  = p-cdcooper       AND
-                                crapdev.cdbanchq  = craplcm.cdbccxlt AND
-                            DEC(crapdev.nrctachq) = craptco.nrctaant AND
-                                crapdev.nrcheque  = craplcm.nrdocmto AND
-                                crapdev.cdhistor <> 46) THEN
-             DO:
-                 IF   craplcm.cdbanchq = crapcop.cdbcoctl AND
-                      craplcm.cdagechq = crapcop.cdagectl THEN
-                      NEXT.
-                 ELSE
-                      DO:
-                          FIND crapban WHERE 
-                               crapban.cdbccxlt = craplcm.cdbanchq 
-                               NO-LOCK NO-ERROR.
-
-                          IF   NOT AVAIL crapban THEN
-                               DO:
-                                   ASSIGN glb_cdcritic = 057.
-                                   RUN fontes/critic.p. 
-                                   UNIX SILENT VALUE(
-                                      "echo " + STRING(TIME,"HH:MM:SS") +
-                                      " - " + glb_cdprogra + "' --> '"  +
-                                      "Envio mensagem SPB - Banco: " +
-                                      STRING(par_cdbanchq, "999") +
-                                      glb_dscritic + " >> log/proc_message.log").
-                                   NEXT.
-                               END.
-
-                          ASSIGN aux_ispbcred = crapban.nrispbif.
-                
-                          RUN envia_arquivo_xml 
-                                      (INPUT craplcm.cdbanchq,
-                                       INPUT aux_ispbdebt,
-                                       INPUT aux_ispbcred,
-                                       INPUT craplcm.nrdocmto,
-                                       INPUT craplcm.vllanmto,
-                                       INPUT STRING(craplcm.nrdconta),
-                                       INPUT aux_cdlegado).
-                      END.
-             END.
-    END.
-
-    FOR EACH craplcm WHERE craplcm.cdcooper =  1                          AND
-                           craplcm.dtmvtolt =  par_dtmvtolt               AND
-                           craplcm.cdagenci =  par_cdagenci               AND
-                           craplcm.cdbccxlt =  par_cdbanchq               AND
-                           CAN-DO(par_cdhistor, STRING(craplcm.cdhistor)) AND
-                           craplcm.vllanmto >= par_valorvlb NO-LOCK:
-
-        FIND craptco WHERE craptco.cdcooper = craplcm.cdcooper AND
-                           craptco.nrdconta = craplcm.nrdconta AND
-                           craptco.tpctatrf = 1                AND
-                           craptco.flgativo = TRUE
-                           NO-LOCK NO-ERROR.
-
-        
-        IF   NOT AVAILABLE craptco THEN
-             NEXT.
-        ELSE
-            /* VIACON - Se for conta incorporada da coop. 4 ou 15 NEXT */ 
-            IF  craptco.cdcopant = 4 OR craptco.cdcopant = 15 THEN
-                NEXT.
-        
-        IF   NOT CAN-FIND(FIRST crapdev WHERE 
-                                crapdev.cdcooper  = p-cdcooper       AND
-                                crapdev.cdbanchq  = craplcm.cdbccxlt AND
-                            DEC(crapdev.nrctachq) = craptco.nrctaant AND
-                                crapdev.nrcheque  = craplcm.nrdocmto AND
-                                crapdev.cdhistor <> 46) THEN
-             DO:
-                 IF   craplcm.cdbanchq = crapcop.cdbcoctl AND
-                      craplcm.cdagechq = crapcop.cdagectl THEN
-                      NEXT.
-                 ELSE
-                      DO:
-                          FIND crapban WHERE 
-                               crapban.cdbccxlt = craplcm.cdbanchq 
-                               NO-LOCK NO-ERROR.
-
-                          IF   NOT AVAIL crapban THEN
-                               DO:
-                                   ASSIGN glb_cdcritic = 057.
-                                   RUN fontes/critic.p. 
-                                   UNIX SILENT VALUE(
-                                      "echo " + STRING(TIME,"HH:MM:SS") +
-                                      " - " + glb_cdprogra + "' --> '"  +
-                                      "Envio mensagem SPB - Banco: " +
-                                      STRING(par_cdbanchq, "999") +
-                                      glb_dscritic + " >> log/proc_message.log").
-                                   NEXT.
-                               END.
-
-                          ASSIGN aux_ispbcred = crapban.nrispbif.
-                
-                          RUN envia_arquivo_xml 
-                                      (INPUT craplcm.cdbanchq,
-                                       INPUT aux_ispbdebt,
-                                       INPUT aux_ispbcred,
-                                       INPUT craplcm.nrdocmto,
-                                       INPUT craplcm.vllanmto,
-                                       INPUT STRING(craplcm.nrdconta),
-                                       INPUT aux_cdlegado).
-                      END.
-             END.
-    END.
-
-END PROCEDURE.
-
 
 PROCEDURE envia_arquivo_xml:
 
