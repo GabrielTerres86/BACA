@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 20/05/2014
+   Data    : Setembro/2009.                     Ultima atualizacao: 04/07/2017
 
    Dados referentes ao programa:
 
@@ -67,7 +67,8 @@
                             em virtude do 531_1 rodar em paralelo).
                             (Chamado 158826) - (Fabricio)
                             
-                            
+               04/07/2017 - Adicionar o ID paralelo na mensagem de log
+                            (Douglas - Chamado 524133)
 ............................................................................ */
 
 { includes/var_batch.i  "NEW" }
@@ -262,6 +263,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                       STRING(TIME,"HH:MM:SS") +
                       " - " + glb_cdprogra + "' --> '" +
                       "Inicio da Execucao Paralela - PID: " + aux_dspidprg +
+                      " - " + STRING(aux_idparale) +
                       " Seq.: " + STRING(crawarq.nrsequen,"zzzz9") +
                       " Mensagem: " + crawarq.nmarquiv + 
                       " >> /usr/coop/" + crapcop.dsdircop + "/log/crps531_" + 

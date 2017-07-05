@@ -83,14 +83,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 04/05/2017                        Ultima atualizacao:   /  /    
+    Data    : 04/05/2017                        Ultima atualizacao: 04/07/2017
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para gravar as mensagens de TED
     
-    Alteracoes: 
+    Alteracoes: 04/07/2017 - Remover a gravacao do erro no arquivo de log, o programa
+                             que chamar a procedure devera realizar o tratamento
+                             (Douglas - Chamado 524133)
     ............................................................................. */
     DECLARE
     
@@ -105,9 +107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - '
-                       || pr_cdprograma || ' --> ' ||
-                       'Erro na inclusao do mensagem de TED do SPB.' ||
+        pr_dscritic := 'Erro na inclusao do mensagem de TED do SPB.' ||
                        ' Coop: ' || pr_cdcooper || 
                        ', Num Controle: ' || pr_nrctrlif || 
                        ', Evento: ' || pr_nmevento ||
@@ -117,12 +117,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
       
         pc_internal_exception(pr_cdcooper => pr_cdcooper,
                               pr_compleme => pr_dscritic);
-      
-        --Escrever No LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratato
-                                   pr_cdprograma   => pr_cdprograma,
-                                   pr_des_log      => pr_dscritic);
       
     END;
   END pc_grava_mensagem_ted;
@@ -160,14 +154,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 04/05/2017                        Ultima atualizacao:   /  /    
+    Data    : 04/05/2017                        Ultima atualizacao: 04/07/2017
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para gravar as mensagens de TED Rejeitada
     
-    Alteracoes: 
+    Alteracoes: 04/07/2017 - Remover a gravacao do erro no arquivo de log, o programa
+                             que chamar a procedure devera realizar o tratamento
+                             (Douglas - Chamado 524133)
+
     ............................................................................. */
     DECLARE
     
@@ -224,9 +221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
     
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := to_char(sysdate,'hh24:mi:ss')|| ' - '
-                       || pr_cdprogra || ' --> ' ||
-                       'Erro ao incluir mensagem de TED REJEITADA.' ||
+        pr_dscritic := 'Erro ao incluir mensagem de TED REJEITADA.' ||
                        ' Coop: ' || pr_cdcooper || 
                        ', Conta: ' || pr_nrdconta || 
                        ', Agencia: ' || pr_cdagenci ||
@@ -251,12 +246,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0003 AS
       
         pc_internal_exception(pr_cdcooper => pr_cdcooper,
                               pr_compleme => pr_dscritic);
-      
-        --Escrever No LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratato
-                                   pr_cdprograma   => pr_cdprogra,
-                                   pr_des_log      => pr_dscritic);
       
     END;
   END pc_grava_msg_ted_rejeita;
