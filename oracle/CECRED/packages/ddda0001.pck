@@ -2424,7 +2424,7 @@ CREATE OR REPLACE PACKAGE BODY "CECRED"."DDDA0001" AS
     --  Sistema  : Procedure para verificacao de saque do DDA
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior - RKAM
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 26/01/2017
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 04/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -2434,8 +2434,16 @@ CREATE OR REPLACE PACKAGE BODY "CECRED"."DDDA0001" AS
     -- Alteração : 26/01/2017 - Alterado tabela de consulta.
     --                          PRJ340 - NPC (Odirlei-AMcom)
     --
+    --             04/07/2017 - Incluido Autonomous Transaction pois o select realizado no dblink
+    --                          do SQL/Server JDNPC, abre uma transação. (Rafael)
     --
     ---------------------------------------------------------------------------------------------------------------
+  
+    -- Pragma - abre nova sessao devido ao acesso dblink @jdnpcsql
+    ---------------------------------------------------------------------------------------------------------------
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    ---------------------------------------------------------------------------------------------------------------    
+
   
     --Selecionar dados saque
     CURSOR cr_dadosaque(pr_cnpjcpfpagdr IN NUMBER,
@@ -2473,8 +2481,21 @@ CREATE OR REPLACE PACKAGE BODY "CECRED"."DDDA0001" AS
     ELSE
       pr_flgsacad := 0;
     END IF;
+    
+    IF cr_dadosaque%ISOPEN THEN
+      CLOSE cr_dadosaque;
+    END IF;
+    
+    COMMIT;
+    
   EXCEPTION
     WHEN OTHERS THEN
+      ROLLBACK;
+      
+      IF cr_dadosaque%ISOPEN THEN
+        CLOSE cr_dadosaque;
+      END IF;
+      
       pr_cdcritic := 0;
       pr_dscritic := 'Erro gerar DDDA0001.pc_verifica_sacado_DDA: ' ||
                      SQLERRM;

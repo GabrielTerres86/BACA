@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Março/2014.                     Ultima atualizacao: 24/02/2017
+       Data    : Março/2014.                     Ultima atualizacao: 04/07/2017
 
        Dados referentes ao programa:
 
@@ -51,6 +51,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
                    24/02/2017 - Incluindo tratamento para enviar e-mail para responsavel caso
                                 o arquivo ao tenha trailler, conforme solicitado no chamado
                                 615979. (Kelvin)
+                                
+                   04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
+                                solicitado no chamado 703589. (Kelvin)
 ........................................................................................................... */
     DECLARE                                                                             
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -68,17 +71,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
       vr_nrseqarq   INTEGER;                                           --> Sequencia de Arquivo						
       vr_maior_seq  INTEGER  := 0;                                     --> Maior Sequencia de Arquivo					
       vr_contador   NUMBER:= 0;                                        --> Conta qtd. arquivos	
+      vr_conarqui   NUMBER:= 0;                                        --> Contador auxiliar para for
       vr_indice     NUMBER:= 0;                                        --> Conta qtd. linhas arquivo	
       vr_idinsert   NUMBER:= 0;                                        --> Conta qtd. linhas inseridas fatura	
       vr_chave      NUMBER:= 0;
-      vr_flgtrail   NUMBER;                                             --> Identifica se o arquivo tem trailler
-
+      vr_flgtrail   NUMBER;                                            --> Identifica se o arquivo tem trailler
+      vr_listarq    VARCHAR2(5000);                                     -->Lista de arquivos
+      vr_split      gene0002.typ_split := gene0002.typ_split();
 
       --Variaveis para e-mail
       vr_conteudo    VARCHAR2(4000); 	      
       vr_des_assunto VARCHAR2(100);
       vr_email_dest  VARCHAR2(100);
-      
+
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
@@ -257,103 +262,41 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
       vr_direto_connect := vr_dsdireto || '/recebe';
 						      
       -- monta nome do arquivo
-      vr_nmrquivo := 'DAUT756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '*.*';
-										 			
-      -- Apaga o arquivo pc_crps673.txt caso exista
-      vr_comando:= 'rm ' || vr_direto_connect || '/pc_crps673.txt 2> /dev/null';			
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-												 
-      --Verificar se existe arquivo(s) para ser processado
-      vr_comando:= 'ls ' || vr_direto_connect || '/'|| vr_nmrquivo || ' | wc -l ';
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
-        RAISE vr_exc_saida;
-      ELSE								
-        --Se retornou zero arquivos entao sai do programa
-        IF substr(vr_dscritic,1,1) = '0' OR vr_dscritic IS NULL THEN
-					--Montar mensagem critica
-          vr_cdcritic:= 182;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          --Levantar Excecao
-          RAISE vr_exc_fimprg;
-        END IF;
-      END IF;
+      vr_nmrquivo := 'DAUT756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '%.%';
 			
-      -- Criar o arquivo pc_crps673.txt baseado no comando LS
-      vr_comando:= 'ls ' || vr_direto_connect || '/'|| vr_nmrquivo || ' 1>> '|| vr_direto_connect || '/pc_crps673.txt';
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
-        RAISE vr_exc_saida;
+      gene0001.pc_lista_arquivos(pr_path     => vr_direto_connect 
+                                ,pr_pesq     => vr_nmrquivo  
+                                ,pr_listarq  => vr_listarq 
+                                ,pr_des_erro => vr_des_erro); 
+                                          
+      --Ocorreu um erro no lista_arquivos
+      IF TRIM(vr_des_erro) IS NOT NULL THEN
+         vr_cdcritic := 0;
+         vr_dscritic := vr_des_erro;
+         RAISE vr_exc_saida;
+      END IF;  
+      
+      --Nao encontrou nenhuma arquivo para processar
+      IF TRIM(vr_listarq) IS NULL THEN
+         vr_cdcritic := 182;
+         vr_dscritic := NULL;
+         RAISE vr_exc_fimprg;
+      END IF;  
+      
+      vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
+                                           ,pr_delimit => ',');
+      
+      IF vr_split.count = 0 THEN
+         vr_cdcritic := 182;
+         vr_dscritic := NULL;
+         RAISE vr_exc_fimprg;
       END IF;
-			
-	  --Bloco de leitura do arquivo pc_crps673.txt
-      BEGIN													
-        --Abre o arquivo pc_crps673.txt
-        gene0001.pc_abre_arquivo(pr_nmdireto => vr_direto_connect --> Diretório do arquivo
-                                ,pr_nmarquiv => 'pc_crps673.txt'  --> Nome do arquivo
-                                ,pr_tipabert => 'R'               --> Modo de abertura (R,W,A)
-                                ,pr_utlfileh => vr_ind_arquiv     --> Handle do arquivo aberto
-                                ,pr_des_erro => vr_dscritic);     --> Erro
-        IF vr_dscritic IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_saida;
-        END IF;
-				
-        LOOP					
-          -- Verifica se o arquivo está aberto
-          IF  utl_file.IS_OPEN(vr_ind_arquiv) THEN
-            -- Le os dados em pedaços e escreve no Blob
-            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv --> Handle do arquivo aberto
-                                                                    ,pr_des_text => vr_nmarquiv); --> Texto lido
-            -- Incrementar contador
-            vr_contador:= Nvl(vr_contador,0) + 1;
-
-            -- Separar o nome do arquivo do caminho
-            GENE0001.pc_separa_arquivo_path(pr_caminho => vr_nmarquiv
-                                           ,pr_direto  => vr_direto_connect
-                                                                         ,pr_arquivo => vr_nmarquiv);																					 																					 
-            -- Popular o vetor de arquivos
-            vr_vet_nmarquiv(vr_contador):= vr_nmarquiv;
-						
-          END IF;
-        END LOOP;
-				
-        -- Fechar o arquivo
-        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
-				
-        -- Apaga o arquivo pc_crps673.txt no unix
-        vr_comando:= 'rm ' || vr_direto_connect || '/pc_crps673.txt 2> /dev/null';			
-        -- Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_comando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
-        IF vr_typ_saida = 'ERR' THEN
-            RAISE vr_exc_saida;
-        END IF;
-
-      EXCEPTION													
-        WHEN utl_file.invalid_operation THEN												
-          -- Nao conseguiu abrir o arquivo
-          vr_dscritic:= 'Erro ao abrir o arquivo pc_crps673.txt na rotina pc_crps673.';
-          RAISE vr_exc_saida;
-        WHEN no_data_found THEN						
-          -- Terminou de ler o arquivo
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
-      END;
-		
+      
+      FOR vr_conarqui IN vr_split.FIRST..vr_split.LAST LOOP
+        vr_vet_nmarquiv(vr_conarqui) := vr_split(vr_conarqui);    
+        vr_contador :=  vr_conarqui; 
+      END LOOP;                                          
+     
       -- Se o contador está zerado
       IF vr_contador = 0 THEN				
         vr_cdcritic:= 182;
@@ -672,7 +615,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
           EXIT;
           
         END IF;
-        
+
         -- Montar Comando para copiar o arquivo lido para o diretório recebidos do CONNECT
         vr_comando:= 'cp '|| vr_direto_connect || '/' || vr_vet_nmarquiv(i) ||
                      ' '  || vr_dsdireto || '/recebidos/ 2> /dev/null';

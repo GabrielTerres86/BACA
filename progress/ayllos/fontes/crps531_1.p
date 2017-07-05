@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 02/06/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 04/07/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -193,6 +193,13 @@
                02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
                         - Enviar e-mail interbancario para a mensagem STR0003R2 (Lucas Ranghetti #654769)              
               
+               30/06/2017 - Ajustado os parametros passados na chamada da 
+                            pc_gera_log_batch (Douglas - Chamado 524133)
+
+               04/07/2017 - Ajustar as procedures grava_mensagem_ted e grava_ted_rejeitada
+                            para gerar as mensagens de erro no arquivo de log 
+                            crps531_DDMMYYYY.log (Douglas - Chamado 524133)
+               
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -1968,8 +1975,9 @@ PROCEDURE importa_xml.
                 ASSIGN aux_manter_fisico = TRUE
                        aux_msgspb_xml = STRING(TODAY,"99/99/9999") + " - " +
                                         STRING(TIME,"HH:MM:SS") +
-                                        " - " + glb_cdprogra + " -->"  + 
-                                        "  PID: " + STRING(aux_idparale) + 
+                                        " - " + glb_cdprogra + " --> " +
+                                        "Alerta da Execucao Paralela - " + 
+                                        "PID: " + STRING(aux_idparale) + 
                                         " Seq.: " + STRING(aux_idprogra) + 
                                         " - Mensagem de TED nao possui data. " + 
                                         "Verifique arquivo fisico: " + aux_nmarqxml.
@@ -1990,7 +1998,10 @@ PROCEDURE importa_xml.
                                       INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
                                       INPUT ?,              /* Diretorio onde será gerado o log */
                                       INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
-                                      INPUT glb_cdprogra).  /* Programa/job */
+                                      INPUT glb_cdprogra,   /* Programa/job */
+                                      INPUT 3,              /* Execucao via BATCH */
+                                      INPUT 0,              /* Criticidade BAIXA */ 
+                                      INPUT 1).             /* Processo executado com sucesso */
                                                                
                 CLOSE STORED-PROC pc_gera_log_batch
                       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -5076,32 +5087,10 @@ PROCEDURE processa_conta_transferida:
                                                  INPUT log_msgderro,
                                                  INPUT aux_hrtransa).
                      
-                     
-                     /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
-                     IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
-                     DO: 
-                         /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
-                         UNIX SILENT VALUE 
-                              ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-                               + "/salvar/" + aux_nmarqxml). 
-                     END.
-                     ELSE
-                         DO: 
-                             /* Verificar se o parametro está para MOVER o arquivo */
-                             IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
-                             DO:
-                                 /* Movemos o arquivo para o salvar */ 
-                     UNIX SILENT VALUE 
-                          ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-                           + "/salvar/" + aux_nmarqxml). 
-                             END.
-                                 ELSE
-                                 DO:
-                                     /* Se nao esta movendo, remove o arquivo */
-                                     UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
-                                 END.
-                         END.
-                     
+                     /* Mover o arquivo de XML */ 
+                     RUN mover_arquivo_xml(INPUT aux_nmarqxml,
+                                           INPUT b-crapcop.dsdircop).
+
                      RETURN "NOK".
                  END.
 
@@ -5172,30 +5161,9 @@ PROCEDURE processa_conta_transferida:
                                         INPUT log_msgderro,
                                         INPUT aux_hrtransa).
             
-            /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
-            IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
-            DO: 
-                /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
-                UNIX SILENT VALUE 
-                     ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-                      + "/salvar/" + aux_nmarqxml). 
-            END.
-            ELSE
-                DO: 
-                    /* Verificar se o parametro está para MOVER o arquivo */
-                    IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
-                    DO:
-                        /* Movemos o arquivo para o salvar */ 
-            UNIX SILENT VALUE 
-                 ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-                  + "/salvar/" + aux_nmarqxml). 
-                    END.
-                        ELSE
-                        DO:
-                            /* Se nao esta movendo, remove o arquivo */
-                            UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
-                        END.
-                END.
+            /* Mover o arquivo de XML */ 
+            RUN mover_arquivo_xml(INPUT aux_nmarqxml,
+                                  INPUT b-crapcop.dsdircop).
             
             RETURN "OK".
         END.
@@ -5308,30 +5276,9 @@ PROCEDURE processa_conta_transferida:
         END.
     END.
 
-    /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
-    IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
-    DO: 
-        /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
-    UNIX SILENT VALUE
-         ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-          + "/salvar/" + aux_nmarqxml). 
-    END.
-    ELSE
-        DO: 
-            /* Verificar se o parametro está para MOVER o arquivo */
-            IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
-            DO:
-                /* Movemos o arquivo para o salvar */ 
-                UNIX SILENT VALUE 
-                     ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
-                      + "/salvar/" + aux_nmarqxml). 
-            END.
-                ELSE
-                DO:
-                    /* Se nao esta movendo, remove o arquivo */
-                    UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
-                END.
-        END.
+    /* Mover o arquivo de XML */ 
+    RUN mover_arquivo_xml(INPUT aux_nmarqxml,
+                          INPUT b-crapcop.dsdircop).
 
     RETURN "OK".
 END.
@@ -5408,30 +5355,9 @@ PROCEDURE salva_arquivo:
                           ELSE
                                crapcop.dsdircop.
 
-    
-    /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
-    IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN
-    DO: 
-        /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
-        UNIX SILENT VALUE 
-             ("mv " + crawarq.nmarquiv + " /usr/coop/" + aux_dsdircop
-              + "/salvar/" + aux_nmarqxml). 
-    END.
-    ELSE
-        DO: 
-            /* Verificar se o parametro está para MOVER o arquivo */
-            IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
-            DO:
-                /* Movemos o arquivo para o salvar */ 
-    UNIX SILENT VALUE ("mv " + crawarq.nmarquiv + " /usr/coop/" + aux_dsdircop +
-                       "/salvar/" + aux_nmarqxml). 
-            END.
-                ELSE
-                DO:
-                    /* Se nao esta movendo, remove o arquivo */
-                    UNIX SILENT VALUE ("rm " + crawarq.nmarquiv ). 
-                END.
-        END.
+    /* Mover o arquivo de XML */ 
+    RUN mover_arquivo_xml(INPUT aux_nmarqxml,
+                          INPUT aux_dsdircop).
 
 END PROCEDURE.
 
@@ -5447,7 +5373,7 @@ PROCEDURE verifica_processo:
                                crapcop.cdcooper.
     
     FIND crabdat WHERE crabdat.cdcooper = aux_cdcooper NO-LOCK NO-ERROR.
-        
+
     IF   TODAY > crabdat.dtmvtolt   THEN    
          DO:
              RUN deleta_objetos.
@@ -5556,8 +5482,9 @@ PROCEDURE finaliza_paralelo.
                       STRING(TIME,"HH:MM:SS") +
                       " - " + glb_cdprogra + "' -->    '" +
                       "Fim da Execucao Paralela - " + 
-                      "Seq.: " + STRING(aux_idprogra,"zzzz9") + " - " + 
-                      "Mensagem: " + aux_nmarqori  + 
+                      "PID: " + STRING(aux_idparale) + 
+                      " Seq.: " + STRING(aux_idprogra) +                       
+                      " - Mensagem: " + aux_nmarqori  + 
                       " >> /usr/coop/" + crapcop.dsdircop + "/log/crps531_" +   
                       STRING(crapdat.dtmvtolt,"99999999") + ".log").                      
     QUIT.                  
@@ -6070,12 +5997,52 @@ PROCEDURE grava_mensagem_ted.
     
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     
-    ASSIGN aux_cderro = pc_grava_mensagem_ted.pr_cdcritic
+    ASSIGN aux_cderro = 0
+           aux_dserro = ""
+           aux_cderro = pc_grava_mensagem_ted.pr_cdcritic
                             WHEN pc_grava_mensagem_ted.pr_cdcritic <> ?
            aux_dserro = pc_grava_mensagem_ted.pr_dscritic
                             WHEN pc_grava_mensagem_ted.pr_dscritic <> ?.
+
+    IF aux_dserro <> "" THEN
+    DO:
+
+        /* Gravar a mensagem que deu erro */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_gera_log_batch
+            aux_handproc = PROC-HANDLE NO-ERROR
+                           (INPUT glb_cdcooper,   /* Cooperativa */ 
+                            INPUT 2,              /* Nivel criticidade do log "Erro tratato" */
+                            INPUT (STRING(TODAY,"99/99/9999") + " - " +
+                                   STRING(TIME,"HH:MM:SS") +
+                                   " - " + glb_cdprogra + " -->   " +
+                                   "Erro na Execucao Paralela - " + 
+                                   "PID: " + STRING(aux_idparale) + 
+                                   " Seq.: " + STRING(aux_idprogra) + 
+                                   " Mensagem: " + aux_nmarqori  + 
+                                   " --> " + aux_dserro),   /* Descriçao do log em si */
+                                   
+                            INPUT "crps531_" + 
+                                  STRING(crapdat.dtmvtolt,"99999999") + 
+                                  ".log",         /* Nome para gravaçao de log em arquivo específico */
+                                  
+                            INPUT "N",            /* Flag S/N para criar um arquivo novo */ 
+                            INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
+                            INPUT ?,              /* Diretorio onde será gerado o log */
+                            INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
+                            INPUT glb_cdprogra,   /* Programa/job */
+                            INPUT 3,              /* Execucao via BATCH */
+                            INPUT 0,              /* Criticidade BAIXA */ 
+                            INPUT 1).             /* Processo executado com sucesso */
+                                                     
+        CLOSE STORED-PROC pc_gera_log_batch
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    END.
    
-   RETURN "OK".
+    RETURN "OK".
    
 END PROCEDURE.
 
@@ -6144,11 +6111,90 @@ PROCEDURE grava_ted_rejeitada.
     
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     
-    ASSIGN aux_cderro = pc_grava_msg_ted_rejeita.pr_cdcritic
+    ASSIGN aux_cderro = 0
+           aux_dserro = ""
+           aux_cderro = pc_grava_msg_ted_rejeita.pr_cdcritic
                           WHEN pc_grava_msg_ted_rejeita.pr_cdcritic <> ?
            aux_dserro = pc_grava_msg_ted_rejeita.pr_dscritic
                           WHEN pc_grava_msg_ted_rejeita.pr_dscritic <> ?.
+
+    IF aux_dserro <> "" THEN
+    DO:
+
+        /* Gravar a mensagem que deu erro */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_gera_log_batch
+            aux_handproc = PROC-HANDLE NO-ERROR
+                           (INPUT glb_cdcooper,   /* Cooperativa */ 
+                            INPUT 2,              /* Nivel criticidade do log "Erro tratato" */
+                            INPUT (STRING(TODAY,"99/99/9999") + " - " +
+                                   STRING(TIME,"HH:MM:SS") +
+                                   " - " + glb_cdprogra + " -->   " +
+                                   "Erro na Execucao Paralela - " + 
+                                   "PID: " + STRING(aux_idparale) + 
+                                   " Seq.: " + STRING(aux_idprogra) + 
+                                   " Mensagem: " + aux_nmarqori  + 
+                                   " --> " + aux_dserro),   /* Descriçao do log em si */
+                                   
+                            INPUT "crps531_" + 
+                                  STRING(crapdat.dtmvtolt,"99999999") + 
+                                  ".log",         /* Nome para gravaçao de log em arquivo específico */
+                                  
+                            INPUT "N",            /* Flag S/N para criar um arquivo novo */ 
+                            INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
+                            INPUT ?,              /* Diretorio onde será gerado o log */
+                            INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
+                            INPUT glb_cdprogra,   /* Programa/job */
+                            INPUT 3,              /* Execucao via BATCH */
+                            INPUT 0,              /* Criticidade BAIXA */ 
+                            INPUT 1).             /* Processo executado com sucesso */
+                                                     
+        CLOSE STORED-PROC pc_gera_log_batch
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    END.
    
    RETURN "OK".
     
 END PROCEDURE.
+
+
+PROCEDURE mover_arquivo_xml:
+
+    DEF INPUT PARAM par_nmarq_mover AS CHAR    NO-UNDO.
+    DEF INPUT PARAM par_nmdir_mover AS CHAR    NO-UNDO.
+    
+    /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
+    IF CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg) THEN
+    DO: 
+        /* Se a mensagem nao eh gravada na nova estrutura, vamos continuar movendo ela */ 
+        UNIX SILENT VALUE 
+             ("mv " + crawarq.nmarquiv + " /usr/coop/" + 
+              par_nmdir_mover + "/salvar/" + par_nmarq_mover +
+              " 2>> /usr/coop/" + par_nmdir_mover + "/log/" + 
+              "crps531_" + STRING(crapdat.dtmvtolt,"99999999") + ".log"). 
+    END.
+    ELSE
+        DO: 
+            /* Verificar se o parametro está para MOVER o arquivo */
+            IF aux_msgspb_mover = 1 OR aux_manter_fisico THEN
+            DO:
+                /* Movemos o arquivo para o salvar */ 
+                UNIX SILENT VALUE ("mv " + crawarq.nmarquiv + " /usr/coop/" + 
+                                   par_nmdir_mover + "/salvar/" + par_nmarq_mover + 
+                                   " 2>> /usr/coop/" + par_nmdir_mover + "/log/" + 
+                                   "crps531_" + STRING(crapdat.dtmvtolt,"99999999") + ".log").
+            END.
+                ELSE
+                DO:
+                    /* Se nao esta movendo, remove o arquivo */
+                    UNIX SILENT VALUE ("rm " + crawarq.nmarquiv + 
+                                       " 2>> /usr/coop/" + par_nmdir_mover + "/log/" + 
+                                       "crps531_" + STRING(crapdat.dtmvtolt,"99999999") + ".log"). 
+                END.
+        END.
+
+END PROCEDURE.
+

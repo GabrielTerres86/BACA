@@ -22,6 +22,7 @@
  * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança.
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
  * 26/06/2017 - Incluido campo de Sacado DDA, Prj. 340 (Jean Michel)
+ * 03/07/2017 - Incluido nova instância do campo Cobrança Registrada, Prj. 340 (Jean Michel)
  */
 
 //Formulários e Tabela
@@ -106,7 +107,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var dsdoccop = $('#dsdoccop', '#' + frmOpcao).val();
     var flgregis = $('#flgregis', '#' + frmOpcao).val();
     var inestcri = $('#inestcri', '#' + frmOpcao).val();
-
+	
     cTodosOpcao.removeClass('campoErro');
 
     var mensagem = 'Aguarde, buscando dados ...';
@@ -997,10 +998,9 @@ function formataTabela() {
     var ordemInicial = new Array();
     //ordemInicial = [[0,0]];	
 
-
     // sem registro
-    if (flgregis == 'no') {
-        var arrayLargura = new Array();
+    if (flgregis == 'no' || flgregis == 'N') {
+		var arrayLargura = new Array();
         arrayLargura[0] = '95px';
         arrayLargura[1] = '65px';
         arrayLargura[2] = '75px';
@@ -1018,7 +1018,8 @@ function formataTabela() {
         arrayAlinha[6] = 'right';
 
         // com registro
-    } else if (flgregis == 'yes') {
+    } else if (flgregis == 'yes' || flgregis == 'S') {
+		
         var arrayLargura = new Array();
         arrayLargura[0] = '110px';
         arrayLargura[1] = '95px';
@@ -2316,8 +2317,7 @@ function btnVoltar() {
 			$('input, select', '#' + frmOpcao + ' fieldset:eq(' + x + ')').limpaFormulario();
 			$('fieldset:eq(' + x + ')', '#' + frmOpcao).css({ 'display': 'none' });
 		}
-
-        controlaLayoutC();
+		controlaLayoutC();
 
     } else if (cddopcao === 'C' && ni > 0 && $('fieldset:eq(' + ni + ')', '#' + frmOpcao).css('display') == 'block') {
         
@@ -2326,15 +2326,18 @@ function btnVoltar() {
 			$('fieldset:eq(' + x + ')', '#' + frmOpcao).css({ 'display': 'none' });
 		}
 		
-        tipoOptionC();
-        cTpconsul.habilitaCampo();
+        //tipoOptionC(); JMD
+		
         cConsulta.habilitaCampo();
+		cFlgregis = $('#flgregis', '#' + frmOpcao); //JMD
         cFlgregis.habilitaCampo();
-        cInestcri.habilitaCampo().focus();
-
+		cTpconsul.habilitaCampo();        
+        cInestcri.habilitaCampo();
+		cInestcri.focus();
+		tipoOptionC(); //JMD
     } else if (cddopcao === 'C' && isHabilitado(cConsulta)) {
         estadoInicial();
-
+		
     } else if (cddopcao == 'R' && $('fieldset:eq(1)', '#' + frmOpcao).css('display') == 'block') {
         $('input, select', '#' + frmOpcao + ' fieldset:eq(1)').limpaFormulario();
         $('fieldset:eq(1)', '#' + frmOpcao).css({ 'display': 'none' });

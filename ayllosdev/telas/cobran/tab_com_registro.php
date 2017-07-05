@@ -19,6 +19,7 @@
  *              11/10/2016 - Inclusao dos campos de aviso por SMS 
  *                           PRJ319 - SMS Cobrança (Odirlei - AMcom)
  *              26/06/2017 - Incluido campo flgsacad, Prj. 340 (Jean Michel)  
+ *              03/07/2017 - Inclusao da funcao formataTabela(), PRJ340 (Jean Michel)
  */	
 ?>
 
@@ -231,6 +232,7 @@
 		controlaOperacao(<? echo "'".$operacao."','".($nriniseq + $nrregist)."','".$nrregist."'"; ?>);
 	});	
 	
+	$('#divRegistros','#divTela').formataTabela();
 	$('#divPesquisaRodape','#divTela').formataRodapePesquisa();
-
+	
 </script>
