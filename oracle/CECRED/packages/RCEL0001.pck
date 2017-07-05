@@ -2766,6 +2766,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 							recarga de celular
 	Alteracoes: 30/05/2017 - Ajuste para desprezar o produto "SERCOMTEL FIXO".
                            Projeto 321 - Recarga de Celular (Lombardi)
+                           
+              05/07/2017 - Ajuste para desprezar qualquer produto com "FIXO"
+                           no nome. Projeto 321 - Recarga de Celular (Lombardi)
 	..............................................................................*/
 	
 	-- Variavel de criticas
@@ -2924,7 +2927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,rw_xmlProduto.tpoperacao);
 					ELSE -- Valor pré-fixado
             
-            IF rw_xmlProduto.nmproduto LIKE '%FIXO%' THEN
+            IF rw_xmlProduto.nmproduto NOT LIKE '%FIXO%' THEN
               
 						-- Criar novo produto
 						INSERT INTO tbrecarga_produto(cdoperadora
