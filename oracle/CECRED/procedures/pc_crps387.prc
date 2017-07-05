@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 30/06/2017
+   Data    : Abril/2004                        Ultima atualizacao: 05/07/2017
 
    Dados referentes ao programa:
 
@@ -425,6 +425,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                30/06/2017 - Modificado o "tail -2" para uma solucao mais dinamica e que comtempla
                             varias situações do arquivo com quebra e sem quebra de linha ao final
                             (Tiago/Fabricio #701374)
+                            
+               05/07/2017 - Nao vamos criar crapndb registro "F" para cada registro "B" criticado,
+                            o registro "F" eh exclusivo do registro "E" (Lucas Ranghetti #706349)
+                      
 ............................................................................ */
 
 
@@ -2425,8 +2429,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_cdcritic := 15; --  Agencia nao cadastrada.               
                           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
-                          -- Não devemos criar crapndb para registro C
-                          IF vr_tpregist <> 'C' THEN
+                          -- Não devemos criar crapndb para registro C e B
+                          IF vr_tpregist NOT IN( 'C', 'B') THEN
                             -- Para cada regitro D rejeitado, retornamos o H        
                             IF vr_tpregist = 'D' THEN
                               vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2483,8 +2487,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_cdcritic := 15; --  Agencia nao cadastrada.               
                           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
-                          -- Não devemos criar crapndb para registro C
-                          IF vr_tpregist <> 'C' THEN
+                          -- Não devemos criar crapndb para registro C e B
+                          IF vr_tpregist NOT IN( 'C', 'B') THEN
                             -- Para cada regitro D rejeitado, retornamos o H        
                             IF vr_tpregist = 'D' THEN
                               vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2549,8 +2553,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_cdcritic := 564; -- Conta nao cadastrada.
                       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
-                          -- Não devemos criar crapndb para registro C
-                          IF vr_tpregist <> 'C' THEN
+                          -- Não devemos criar crapndb para registro C e B
+                          IF vr_tpregist NOT IN( 'C', 'B') THEN
                       -- Para cada regitro D rejeitado, retornamos o H        
                       IF vr_tpregist = 'D' THEN
                         vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2627,8 +2631,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_cdcritic := 15; --  Agencia nao cadastrada.               
                         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
-                        -- Não devemos criar crapndb para registro C
-                        IF vr_tpregist <> 'C' THEN
+                        -- Não devemos criar crapndb para registro C e B
+                        IF vr_tpregist NOT IN( 'C', 'B') THEN
                         -- Para cada regitro D rejeitado, retornamos o H        
                         IF vr_tpregist = 'D' THEN
                           vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2686,8 +2690,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_cdcritic := 453; -- Autorizacao nao encontrada.
                         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
                           
-                        -- Não devemos criar crapndb para registro C
-                        IF vr_tpregist <> 'C' THEN
+                        -- Não devemos criar crapndb para registro C e B
+                        IF vr_tpregist NOT IN( 'C', 'B') THEN
                         -- Para cada regitro D rejeitado, retornamos o H
                         IF vr_tpregist = 'D' THEN
                           vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2808,8 +2812,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrdconta := vr_nro_conta_dec;
                       END IF;
 
-                      -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
-                      IF vr_tpregist <> 'C' THEN
+                      -- Somente ira gerar crapndb caso o registro não seja do tipo "C" e "B"
+                      IF vr_tpregist NOT IN( 'C', 'B') THEN
                         pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                       END IF;
                       continue;
@@ -2855,8 +2859,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                          
                          IF cr_craptco_coop%FOUND THEN                                                  
                             CLOSE cr_craptco_coop;
-                            -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
-                            IF vr_tpregist <> 'C' THEN
+                            -- Somente ira gerar crapndb caso o registro não seja do tipo "C" e "B"
+                            IF vr_tpregist NOT IN ('C','B') THEN
                                vr_cdcooper := pr_cdcooper;
                                pc_critica_debito_cooperativa(2, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                             END IF;
@@ -2920,8 +2924,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     IF pr_cdcooper = 3 AND (vr_cdagedeb < 100 OR vr_cdagedeb > vr_cdultage) 
                        AND vr_cdagedeb <> 1 THEN
 
-                      -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
-                      IF vr_tpregist <> 'C' THEN
+                      -- Somente ira gerar crapndb caso o registro não seja do tipo "C" e "B"
+                      IF vr_tpregist NOT IN( 'C', 'B') THEN
                         pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                       END IF;
                       continue;
@@ -3035,8 +3039,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                      IF rw_crapcop.cdcooper = 3 AND -- se for Cecred
                         ((vr_cdcooper) < 1 OR                  -- Cooperativa de transferencia nao existir
                          (vr_cdcooper) > vr_cdultcop) THEN
-                       -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
-                       IF vr_tpregist <> 'C' THEN
+                       -- Somente ira gerar crapndb caso o registro não seja do tipo "C" e "B"
+                       IF vr_tpregist NOT IN( 'C', 'B') THEN
                          pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                        END IF;
                        continue;
@@ -3064,8 +3068,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                          
                          IF cr_craptco_coop%FOUND THEN                                                  
                             CLOSE cr_craptco_coop;
-                            -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
-                            IF vr_tpregist <> 'C' THEN
+                            -- Somente ira gerar crapndb caso o registro não seja do tipo "C" e "B"
+                            IF vr_tpregist NOT IN( 'C', 'B') THEN
                                vr_cdcooper := pr_cdcooper;
                                pc_critica_debito_cooperativa(2, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                             END IF;
@@ -3112,8 +3116,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                   -- Verifica se o numero da conta eh invalido
                   IF vr_nrdconta >= 100000000 THEN
-                    -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
-                    IF vr_tpregist <> 'C' THEN
+                    -- Somente ira gerar crapndb caso o registro não seja do tipo "C" e "B"
+                    IF vr_tpregist NOT IN( 'C', 'B') THEN
                       pc_critica_debito_cooperativa(2, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                     END IF;
                     continue;
@@ -3145,8 +3149,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_cdcritic := 95;                                                    -- TITULAR DA CONTA BLOQUEADO
                           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
 
-                          -- Não devemos criar crapndb para registro C
-                          IF vr_tpregist <> 'C' THEN                          
+                          -- Não devemos criar crapndb para registro C e B
+                          IF vr_tpregist NOT IN( 'C', 'B') THEN                          
                           vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
                           
                           -- Para cada regitro D rejeitado, retornamos o H
