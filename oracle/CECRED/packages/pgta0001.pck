@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades de Pagamento de Titulos Lote
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao:  21/03/2017
+--  Data     : Abril/2014.                   Ultima atualizacao:  05/07/2017
 --
 -- Dados referentes ao programa:
 --
@@ -27,6 +27,8 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --
 --             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
 --
+--             05/07/2017 - Ajuste nas procedures pc_rejeitar_arq_pgto e pc_gerar_arq_log_pgto
+--                          para buscarem tambem arquivos com extensao .TXT gerados no sistema MATERA (Diego).
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno
@@ -3229,44 +3231,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               IF nvl(vr_cdcritic,0) = 0 AND 
                  TRIM(vr_dscritic) IS NULL THEN
                  
-              PAGA0001.pc_verifica_titulo (pr_cdcooper => pr_cdcooper           --Codigo da cooperativa
-                                          ,pr_nrdconta => rw_crapdpt.nrdconta   --Numero da conta
-                                          ,pr_idseqttl => 1                     --FIXO ---> Sequencial titular
-                                          ,pr_idagenda => 2                     --Indicador agendamento 2-Agendamento
-                                          ,pr_lindigi1 => vr_lindigi1           --Linha digitavel 1
-                                          ,pr_lindigi2 => vr_lindigi2           --Linha digitavel 2
-                                          ,pr_lindigi3 => vr_lindigi3           --Linha digitavel 3
-                                          ,pr_lindigi4 => vr_lindigi4           --Linha digitavel 4
-                                          ,pr_lindigi5 => vr_lindigi5           --Linha digitavel 5
-                                          ,pr_cdbarras => vr_dscodbar           --IN OUT --Codigo de Barras
-                                          ,pr_vllanmto => rw_crapdpt.vldpagto   --Valor Lancamento
-                                          ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
-                                          ,pr_idorigem => pr_idorigem           --Indicador de origem
-                                          ,pr_indvalid => 1                     --nao validar
-										  ,pr_flmobile => 0                     --Indicador mobile
-                                          ,pr_cdctrlcs => vr_cdctrlcs           --Numero de controle de connsulta NPC
-                                          -- Abaixo, todas OUT...
-                                          ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
-                                          ,pr_vlfatura => vr_vlfatura           --Valor fatura
-                                          ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
-                                          ,pr_vldifere => vr_vldifere           --Indicador valor diferente
-                                          ,pr_nrctacob => vr_nrctacob           --Numero Conta Cobranca
-                                          ,pr_insittit => vr_insittit           --Indicador Situacao Titulo
-                                          ,pr_intitcop => vr_intitcop           --Indicador Titulo Cooperativa
-                                          ,pr_nrcnvcob => vr_nrcnvcob           --Numero Convenio Cobranca
-                                          ,pr_nrboleto => vr_nrboleto           --Numero Boleto
-                                          ,pr_nrdctabb => vr_nrdctabb           --Numero conta
-                                          ,pr_dstransa => vr_dstransa           --Descricao transacao
-                                          ,pr_cobregis => vr_cobregis           --Cobranca Registrada
-                                          ,pr_msgalert => vr_msgalert           --mensagem alerta
-                                          ,pr_vlrjuros => vr_vlrjuros           --Valor Juros
-                                          ,pr_vlrmulta => vr_vlrmulta           --Valor Multa
-                                          ,pr_vldescto => vr_vldescto           --Valor desconto
-                                          ,pr_vlabatim => vr_vlabatim           --Valor Abatimento
-                                          ,pr_vloutdeb => vr_vloutdeb           --Valor saida debito
-                                          ,pr_vloutcre => vr_vloutcre           --Valor saida credito
-                                          ,pr_cdcritic => vr_cdcritic           --C-odigo da critica
-                                          ,pr_dscritic => vr_dscritic);         --Descricao critica
+                PAGA0001.pc_verifica_titulo (pr_cdcooper => pr_cdcooper           --Codigo da cooperativa
+                                            ,pr_nrdconta => rw_crapdpt.nrdconta   --Numero da conta
+                                            ,pr_idseqttl => 1                     --FIXO ---> Sequencial titular
+                                            ,pr_idagenda => 2                     --Indicador agendamento 2-Agendamento
+                                            ,pr_lindigi1 => vr_lindigi1           --Linha digitavel 1
+                                            ,pr_lindigi2 => vr_lindigi2           --Linha digitavel 2
+                                            ,pr_lindigi3 => vr_lindigi3           --Linha digitavel 3
+                                            ,pr_lindigi4 => vr_lindigi4           --Linha digitavel 4
+                                            ,pr_lindigi5 => vr_lindigi5           --Linha digitavel 5
+                                            ,pr_cdbarras => vr_dscodbar           --IN OUT --Codigo de Barras
+                                            ,pr_vllanmto => rw_crapdpt.vldpagto   --Valor Lancamento
+                                            ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
+                                            ,pr_idorigem => pr_idorigem           --Indicador de origem
+                                            ,pr_indvalid => 1                     --nao validar
+			      	                      ,pr_flmobile => 0                     --Indicador mobile
+                                            ,pr_cdctrlcs => vr_cdctrlcs           --Numero de controle de connsulta NPC
+                                           -- Abaixo, todas OUT...
+                                            ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
+                                            ,pr_vlfatura => vr_vlfatura           --Valor fatura
+                                            ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
+                                            ,pr_vldifere => vr_vldifere           --Indicador valor diferente
+                                            ,pr_nrctacob => vr_nrctacob           --Numero Conta Cobranca
+                                            ,pr_insittit => vr_insittit           --Indicador Situacao Titulo
+                                            ,pr_intitcop => vr_intitcop           --Indicador Titulo Cooperativa
+                                            ,pr_nrcnvcob => vr_nrcnvcob           --Numero Convenio Cobranca
+                                            ,pr_nrboleto => vr_nrboleto           --Numero Boleto
+                                            ,pr_nrdctabb => vr_nrdctabb           --Numero conta
+                                            ,pr_dstransa => vr_dstransa           --Descricao transacao
+                                            ,pr_cobregis => vr_cobregis           --Cobranca Registrada
+                                            ,pr_msgalert => vr_msgalert           --mensagem alerta
+                                            ,pr_vlrjuros => vr_vlrjuros           --Valor Juros
+                                            ,pr_vlrmulta => vr_vlrmulta           --Valor Multa
+                                            ,pr_vldescto => vr_vldescto           --Valor desconto
+                                            ,pr_vlabatim => vr_vlabatim           --Valor Abatimento
+                                            ,pr_vloutdeb => vr_vloutdeb           --Valor saida debito
+                                            ,pr_vloutcre => vr_vloutcre           --Valor saida credito
+                                            ,pr_cdcritic => vr_cdcritic           --C-odigo da critica
+                                            ,pr_dscritic => vr_dscritic);         --Descricao critica
               
               END IF;
               --Se nao ocorreu erro
@@ -4144,8 +4146,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Monta nome do Arquivo de Erro (.ERR)
     vr_nmarquivo_err := REPLACE(UPPER(pr_nmarquiv),'.REM','.ERR');
 
+	vr_nmarquivo_err := REPLACE(UPPER(vr_nmarquivo_err),'.TXT','.ERR');
+
     -- Monta nome do Arquivo de Log (.LOG)
     vr_nmarquivo_log := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	vr_nmarquivo_log := REPLACE(UPPER(vr_nmarquivo_log),'.TXT','.LOG');
 
     -- Verificar qual Tipo de Retorno o Cooperado Possui
     OPEN cr_crapcpt(pr_cdcooper => pr_cdcooper
@@ -4653,6 +4659,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
       -- Define nome do arquivo .LOG com base nome do Arquivo de Remessa
       vr_nmarquiv := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	  vr_nmarquiv := REPLACE(UPPER(vr_nmarquiv),'.TXT','.LOG');
 
       -- Define o diretório do arquivo
       vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
