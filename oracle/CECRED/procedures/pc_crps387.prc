@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 05/07/2017
+   Data    : Abril/2004                        Ultima atualizacao: 06/07/2017
 
    Dados referentes ao programa:
 
@@ -428,6 +428,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                05/07/2017 - Nao vamos criar crapndb registro "F" para cada registro "B" criticado,
                             o registro "F" eh exclusivo do registro "E" (Lucas Ranghetti #706349)
+                            
+               06/07/2017 - Incluir tratamento para validar corretamente a versao do layout,
+                            tambem enviar e-mail caso ocorra erro nao tratado em alguma linha
+                            (Lucas Ranghetti #707912)
                       
 ............................................................................ */
 
@@ -1347,8 +1351,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                          || 'Arquivo '||vr_tab_arquivos(idx)||' problemas header!');
 
               -- Montar mensagem para enviar no e-mail
-              vr_dscritic := vr_dscritic  || '\n' ||
-                             'Convenio: ' || pr_cdconven || '\n' ||
+              vr_dscritic := vr_dscritic  || '<br>' ||
+                             'Convenio: ' || pr_cdconven || '<br>' ||
                              'NSA: '      || vr_nrseqgen;
 
               pc_envia_critica_email('CRPS387A',
@@ -1367,9 +1371,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
         IF cr_gnconve_2%NOTFOUND THEN
           IF pr_cdcooper = 3 THEN
             -- Montar mensagem para enviar no e-mail
-            vr_dscritic := gene0001.fn_busca_critica(566) || '\n' ||
-                           'Convenio: ' || pr_cdconven    || '\n' ||
-                           'Arquivo: '  || pr_nmarqdeb    || '\n' ||
+            vr_dscritic := gene0001.fn_busca_critica(566) || '<br>' ||
+                           'Convenio: ' || pr_cdconven    || '<br>' ||
+                           'Arquivo: '  || pr_nmarqdeb    || '<br>' ||
                            'NSA: '      || pr_nrseqarq;
            -- Envia critica por email
            pc_envia_critica_email('CRPS387A',
@@ -1399,12 +1403,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               vr_cdcritic := 468; -- Tipo de registro errado;
             END IF;
 
-            IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,2,1) <> 1 THEN
+            IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,2,1) <> 1 AND 
+               vr_cdcritic = 0 THEN
               vr_cdcritic := 473; -- Codigo de remessa invalido.
             END IF;
 
             BEGIN
-              IF TO_NUMBER(trim(SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,3,20))) <> TO_NUMBER(vr_nrconven) THEN
+              IF TO_NUMBER(trim(SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,3,20))) <> TO_NUMBER(vr_nrconven) AND
+                 vr_cdcritic = 0 THEN
                 vr_cdcritic := 474; -- Codigo e/ou numero do convenio invalido.
               END IF;
             EXCEPTION
@@ -1412,12 +1418,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               WHEN OTHERS THEN
                  vr_cdcritic := 474; -- Codigo e/ou numero do convenio invalido.
             END;
-            IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,80,2) NOT IN (4,5)             OR
-               SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,80,2) <> rw_gnconve_2.nrlayout THEN
-              vr_cdcritic := 477; -- Versao invalida.
-            END IF;
-
-            IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,82,17) <> 'DEBITO AUTOMATICO' THEN
+            -- Validar versão do arquivo
+            BEGIN 
+              IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,80,2) NOT IN (4,5)             OR
+                 SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,80,2) <> rw_gnconve_2.nrlayout AND 
+                 vr_cdcritic = 0 THEN
+                vr_cdcritic := 477; -- Versao invalida.
+              END IF;
+            EXCEPTION 
+              WHEN OTHERS THEN
+                vr_cdcritic := 477; -- Versao invalida.
+            END;   
+                      
+            IF SUBSTR(vr_tab_crawarq(vr_ind_arq).setlinha,82,17) <> 'DEBITO AUTOMATICO' AND 
+               vr_cdcritic = 0 THEN
               vr_cdcritic := 478; -- Nao eh arquivo de debito automatico.
             END IF;
 
@@ -1441,9 +1455,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                          || vr_cdprogra || ' --> '
                                                          || vr_dscritic || ' ' || vr_nmarquiv);
               -- Montar mensagem para enviar no e-mail
-              vr_dscritic := vr_dscritic  || '\n' ||
-                             'Convenio: ' || vr_cdconven || '\n' ||
-                             'Arquivo: '  || vr_nmarqaux || '\n' ||
+              vr_dscritic := vr_dscritic  || '<br>' ||
+                             'Convenio: ' || pr_cdconven || '<br>' ||
+                             'Arquivo: '  || vr_nmarqaux || '<br>' ||
                              'NSA: '      || vr_nrsequen;
 
               -- Envio de email de critica
@@ -1817,9 +1831,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
               IF pr_cdcooper = 3 THEN -- Se for da Cecred
                 -- Montar mensagem para enviar no e-mail
-                vr_dscritic := vr_dscritic  || '\n' ||
-                               'Convenio: ' || rw_gnconve.cdconven || '\n' ||
-                               'Arquivo: '  || vr_tab_nmarquiv(i)  || '\n' ||
+                vr_dscritic := vr_dscritic  || '<br>' ||
+                               'Convenio: ' || rw_gnconve.cdconven || '<br>' ||
+                               'Arquivo: '  || vr_tab_nmarquiv(i)  || '<br>' ||
                                'NSA: '      || vr_nrseqarq;
 
                 -- Envia critica por email
@@ -4705,9 +4719,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_tab_relato(vr_ind).cdcritic := 9; -- Associado nao cadastrado.
                       END IF;
                     END IF;
-
                     continue;
-
                   END IF;
                 EXCEPTION
                   WHEN OTHERS THEN
@@ -4724,6 +4736,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                                || vr_cdprogra || ' --> '
                                                                || vr_tab_erro(vr_tab_erro.count)
                                               ,pr_nmarqlog => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
+                          
+                    -- Enviar e-mail somente na CECRED                    
+                    IF pr_cdcooper = 3 THEN
+                       -- Enviar e-mail com o log gerado
+                      gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                                ,pr_cdprogra        => 'CRPS387A'
+                                                ,pr_des_destino     => vr_emaildst
+                                                ,pr_des_assunto     => 'Critica importacao debito - CONVENIO'
+                                                ,pr_des_corpo       => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
+                                                                       || vr_cdprogra || ' --> '
+                                                                       || vr_tab_erro(vr_tab_erro.count)
+                                                ,pr_des_anexo       => NULL
+                                                ,pr_flg_enviar      => 'N' -- Enviar na Hora S/N
+                                                ,pr_des_erro        => vr_dscritic);
+
+                      -- Verificar se houve erro ao solicitar e-mail
+                      IF vr_dscritic IS NOT NULL THEN
+                        RAISE vr_exc_saida;
+                      END IF;
+                    END IF;
                     -- Caso houver erro na leitura da linha, efetua o rollback somente para a linha
                     ROLLBACK TO LEITURA_LINHA;
 
