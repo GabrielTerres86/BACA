@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Gabriel
-    Data    : Outubro/2008                   Ultima Atualizacao: 03/12/2013
+    Data    : Outubro/2008                   Ultima Atualizacao: 22/03/2017
 
     Dados referente ao programa:
 
@@ -90,6 +90,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                03/12/2013 - Nao considerar titulos descontados 085 pagos
                             via compe na composição da carteira de desconto
                             de titulos (Gabriel).
+                            
+               22/03/2017 - Segregar informações de saldo de desconto de cheques em PF e PJ
+                            Projeto 307 Automatização Arquivos Contábeis Ayllos (Jonatas - Supero)
      ............................................................................. */
 
      DECLARE
@@ -129,7 +132,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                 ,insittit craptdb.insittit%TYPE
                 ,cdbandoc craptdb.cdbandoc%TYPE
                 ,nrdctabb craptdb.nrdctabb%TYPE
-                ,flgregis crapcob.flgregis%TYPE);
+                ,flgregis crapcob.flgregis%TYPE
+                ,inpessoa crapass.inpessoa%TYPE);
 
        --Definicao do tipo de tabela crapsab
        TYPE typ_reg_crapsab IS
@@ -145,6 +149,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                 ,qtnaouti NUMBER
                 ,vlrnaout NUMBER);
 
+       -- Pl Table para resumo de valores totais de desconto de títulos por agência - crrl494
+       TYPE typ_tot_dsc_tit IS
+         RECORD(vllimite NUMBER(20,2)
+               ,vlbrutor NUMBER(20,2)
+               ,vlbrutos NUMBER(20,2)
+               ,vlapropr NUMBER(20,2)
+               ,vlaprops NUMBER(20,2)
+               ,totsldis NUMBER(20,2));
+        
+       -- Pl Table para resumo de valores totais de desconto cheque por agência - crrl494
+       TYPE typ_tot_dsc_tit_pf_pj IS
+         RECORD(vllimite_pf NUMBER(20,2)
+               ,vlbrutor_pf NUMBER(20,2)
+               ,vlbrutos_pf NUMBER(20,2)
+               ,vlapropr_pf NUMBER(20,2)
+               ,vlaprops_pf NUMBER(20,2)
+               ,totsldis_pf NUMBER(20,2)
+               ,vllimite_pj NUMBER(20,2)
+               ,vlbrutor_pj NUMBER(20,2)
+               ,vlbrutos_pj NUMBER(20,2)
+               ,vlapropr_pj NUMBER(20,2)
+               ,vlaprops_pj NUMBER(20,2)
+               ,totsldis_pj NUMBER(20,2));
+
+
        --Definicao dos tipos de tabelas de memoria
        TYPE typ_tab_crrl493 IS TABLE OF typ_reg_crrl493 INDEX BY VARCHAR2(40);
        TYPE typ_tab_saldo   IS TABLE OF typ_reg_saldo   INDEX BY VARCHAR2(100);
@@ -152,14 +181,18 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        TYPE typ_tab_crapsab IS TABLE OF typ_reg_crapsab INDEX BY VARCHAR2(35);
        TYPE typ_tab_craplim IS TABLE OF NUMBER          INDEX BY PLS_INTEGER;
        TYPE typ_tab_limite  IS TABLE OF typ_reg_limite  INDEX BY VARCHAR2(11);
+       TYPE typ_tab_tot_dsc_tit_pf_pj IS TABLE OF typ_tot_dsc_tit_pf_pj INDEX BY BINARY_INTEGER;           
+       TYPE typ_tab_tot_dsc_tit IS TABLE OF typ_tot_dsc_tit INDEX BY BINARY_INTEGER;       
 
        --Definicao das tabelas de memoria
-       vr_tab_crrl493 typ_tab_crrl493;
-       vr_tab_saldo   typ_tab_saldo;
-       vr_tab_vencto  typ_tab_vencto;
-       vr_tab_crapsab typ_tab_crapsab;
-       vr_tab_craplim typ_tab_craplim;
-       vr_tab_limite  typ_tab_limite;
+       vr_tab_crrl493           typ_tab_crrl493;
+       vr_tab_saldo             typ_tab_saldo;
+       vr_tab_vencto            typ_tab_vencto;
+       vr_tab_crapsab           typ_tab_crapsab;
+       vr_tab_craplim           typ_tab_craplim;
+       vr_tab_limite            typ_tab_limite;
+       vr_tab_tot_dsc_tit       typ_tab_tot_dsc_tit; 
+       vr_tab_tot_dsc_tit_pf_pj typ_tab_tot_dsc_tit_pf_pj;          
 
        --Cursores da rotina crps518
 
@@ -245,6 +278,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                ,craptdb.nrborder
                ,crapass.cdagenci
                ,crapass.nmprimtl
+               ,crapass.inpessoa
                ,craptdb.rowid
          FROM   crapass
                ,craptdb craptdb
@@ -542,6 +576,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
          vr_jur_qtnaouti INTEGER:= 0;
          vr_jur_vlrnaout NUMBER:= 0;
          vr_dtrefere     DATE;
+         vr_dspessoa     VARCHAR2(2);
 
          --Variaveis para indices
          vr_index_limite VARCHAR2(11);
@@ -647,12 +682,19 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                vr_vllimite:= 0;
              END IF;
 
+             IF vr_tab_saldo(vr_index_saldo).inpessoa = 1 then
+               vr_dspessoa := 'PF';
+             ELSE
+               vr_dspessoa := 'PJ';
+             END IF;
+
              --Montar tag da conta para arquivo XML
              pc_escreve_xml
                ('<conta>
                   <cdagenci>'||vr_tab_saldo(vr_index_saldo).cdagenci||'</cdagenci>
                   <nrdconta>'||GENE0002.fn_mask_conta(vr_tab_saldo(vr_index_saldo).nrdconta)||'</nrdconta>
                   <nmprimtl>'||vr_tab_saldo(vr_index_saldo).nmprimtl||'</nmprimtl>
+                  <inpessoa>'||vr_dspessoa||'</inpessoa>                  
                   <totitulo>'||To_Char(vr_lim_totitulo,'fm999g999')||'</totitulo>
                   <titsemrg>'||To_Char(vr_lim_titsemrg,'fm999g999')||'</titsemrg>
                   <totborde>'||To_Char(vr_lim_totborde,'fm999g999')||'</totborde>
@@ -663,6 +705,76 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                   <vlaprops>'||To_Char(vr_lim_vlaprops,'fm999g999g999d00')||'</vlaprops>
                   <totsldis>'||To_Char(vr_lim_totsldis,'fm999g999g999d00')||'</totsldis>
                </conta>');
+
+               
+             --Sumarizar valores desconto cheques por agencia
+             IF NOT vr_tab_tot_dsc_tit.exists(vr_tab_saldo(vr_index_saldo).cdagenci) THEN
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite := NVL(vr_vllimite,0); 
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor := NVL(vr_lim_vlbrutor,0); 
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos := NVL(vr_lim_vlbrutos,0); 
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr := NVL(vr_lim_vlapropr,0);
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops := NVL(vr_lim_vlaprops,0);               
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis := NVL(vr_lim_totsldis,0);                              
+             ELSE
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite := vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite + NVL(vr_vllimite,0); 
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor := vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor + NVL(vr_lim_vlbrutor,0); 
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos := vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos + NVL(vr_lim_vlbrutos,0); 
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr := vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr + NVL(vr_lim_vlapropr,0);
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops := vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops + NVL(vr_lim_vlaprops,0);               
+               vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis := vr_tab_tot_dsc_tit(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis + NVL(vr_lim_totsldis,0);   
+             END IF;                                        
+
+              
+             --Sumarizar valores desconto cheques por agencia e tipo de pessoa
+             IF NOT vr_tab_tot_dsc_tit_pf_pj.exists(vr_tab_saldo(vr_index_saldo).cdagenci) THEN
+               IF vr_tab_saldo(vr_index_saldo).inpessoa = 1 then
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pf := NVL(vr_vllimite,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pf := NVL(vr_lim_vlbrutor,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pf := NVL(vr_lim_vlbrutos,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pf := NVL(vr_lim_vlapropr,0);
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pf := NVL(vr_lim_vlaprops,0);               
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pf := NVL(vr_lim_totsldis,0);                              
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pj := 0; 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pj := 0; 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pj := 0; 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pj := 0;
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pj := 0;               
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pj := 0;                              
+               ELSE
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pj := NVL(vr_vllimite,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pj := NVL(vr_lim_vlbrutor,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pj := NVL(vr_lim_vlbrutos,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pj := NVL(vr_lim_vlapropr,0);
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pj := NVL(vr_lim_vlaprops,0);               
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pj := NVL(vr_lim_totsldis,0);                              
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pf := 0; 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pf := 0; 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pf := 0; 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pf := 0;
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pf := 0;               
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pf := 0;                                          
+               END IF; 
+              
+             ELSE
+                  
+               IF vr_tab_saldo(vr_index_saldo).inpessoa = 1 then
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pf := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pf + NVL(vr_vllimite,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pf := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pf + NVL(vr_lim_vlbrutor,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pf := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pf + NVL(vr_lim_vlbrutos,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pf := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pf + NVL(vr_lim_vlapropr,0);
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pf := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pf + NVL(vr_lim_vlaprops,0);               
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pf := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pf + NVL(vr_lim_totsldis,0);                              
+               ELSE
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pj := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vllimite_pj + NVL(vr_vllimite,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pj := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutor_pj + NVL(vr_lim_vlbrutor,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pj := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlbrutos_pj + NVL(vr_lim_vlbrutos,0); 
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pj := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlapropr_pj + NVL(vr_lim_vlapropr,0);
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pj := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).vlaprops_pj + NVL(vr_lim_vlaprops,0);               
+                 vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pj := vr_tab_tot_dsc_tit_pf_pj(vr_tab_saldo(vr_index_saldo).cdagenci).totsldis_pj + NVL(vr_lim_totsldis,0); 
+               END IF;                   
+              
+             END IF;
+             
 
              --Zerar Variaveis
              vr_lim_totborde:= 0;
@@ -783,6 +895,90 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
            vr_jur_vlrnaout:= 0;
 
          END LOOP; --rw_crapage
+
+         
+         --Quadro de resumo de desconto de títulos
+         pc_escreve_xml('<resumo_dsc_tit>');
+         --Resumo total por agencia de desconto de títulos
+         vr_index_limite := null;    
+         vr_index_limite := vr_tab_tot_dsc_tit.first;
+         LOOP
+            
+           EXIT WHEN vr_index_limite IS NULL;
+           
+           IF (vr_tab_tot_dsc_tit(vr_index_limite).vllimite + vr_tab_tot_dsc_tit(vr_index_limite).vlbrutor + 
+              vr_tab_tot_dsc_tit(vr_index_limite).vlbrutos + vr_tab_tot_dsc_tit(vr_index_limite).vlapropr +
+              vr_tab_tot_dsc_tit(vr_index_limite).vlaprops + vr_tab_tot_dsc_tit(vr_index_limite).totsldis) <> 0 THEN
+
+             pc_escreve_xml('<total_geral>'
+                          ||  '<res_cdagenci>'||vr_index_limite||'</res_cdagenci>'
+                          ||  '<res_vllimite>'||to_char(vr_tab_tot_dsc_tit(vr_index_limite).vllimite, 'FM999G999G999G990D00')||'</res_vllimite>'
+                          ||  '<res_vlbrutor>'||to_char(vr_tab_tot_dsc_tit(vr_index_limite).vlbrutor, 'FM999G999G999G990D00')||'</res_vlbrutor>'
+                          ||  '<res_vlbrutos>'||to_char(vr_tab_tot_dsc_tit(vr_index_limite).vlbrutos, 'FM999G999G999G990D00')||'</res_vlbrutos>'
+                          ||  '<res_vlapropr>'||to_char(vr_tab_tot_dsc_tit(vr_index_limite).vlapropr, 'FM999G999G999G990D00')||'</res_vlapropr>'                                                                                                                                       
+                          ||  '<res_vlaprops>'||to_char(vr_tab_tot_dsc_tit(vr_index_limite).vlaprops, 'FM999G999G999G990D00')||'</res_vlaprops>'                                                                                                                                       
+                          ||  '<res_totsldis>'||to_char(vr_tab_tot_dsc_tit(vr_index_limite).totsldis, 'FM999G999G999G990D00')||'</res_totsldis>'                                                                                                                                                                                       
+                          ||'</total_geral>');  
+           END IF;  
+              
+           vr_index_limite := vr_tab_tot_dsc_tit.NEXT(vr_index_limite);
+              
+         END LOOP;
+          
+         --Resumo por tipo de pessoa e agencia de desconto de títulos
+         FOR indpes in 1..2 LOOP
+           vr_index_limite := null;
+           vr_index_limite := vr_tab_tot_dsc_tit_pf_pj.first;
+           LOOP
+              
+             EXIT WHEN vr_index_limite IS NULL;
+              
+             
+             IF indpes = 1 THEN
+
+               IF (vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vllimite_pf + vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutor_pf + 
+                  vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutos_pf + vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlapropr_pf +
+                  vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlaprops_pf + vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).totsldis_pf) <> 0 THEN
+
+                
+                 pc_escreve_xml('<total_pf>'
+                              ||  '<res_cdagenci_pf>'||vr_index_limite||'</res_cdagenci_pf>'
+                              ||  '<res_vllimite_pf>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vllimite_pf, 'FM999G999G999G990D00')||'</res_vllimite_pf>'
+                              ||  '<res_vlbrutor_pf>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutor_pf, 'FM999G999G999G990D00')||'</res_vlbrutor_pf>'
+                              ||  '<res_vlbrutos_pf>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutos_pf, 'FM999G999G999G990D00')||'</res_vlbrutos_pf>'
+                              ||  '<res_vlapropr_pf>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlapropr_pf, 'FM999G999G999G990D00')||'</res_vlapropr_pf>'                                                                                                                                       
+                              ||  '<res_vlaprops_pf>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlaprops_pf, 'FM999G999G999G990D00')||'</res_vlaprops_pf>'                                                                                                                                       
+                              ||  '<res_totsldis_pf>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).totsldis_pf, 'FM999G999G999G990D00')||'</res_totsldis_pf>'                                                                                                                                                                                       
+                              ||'</total_pf>');  
+               END IF; 
+             ELSE
+             
+               IF (vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vllimite_pj + vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutor_pj + 
+                  vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutos_pj + vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlapropr_pj +
+                  vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlaprops_pj + vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).totsldis_pj) <> 0 THEN
+               
+             
+                 pc_escreve_xml('<total_pj>'
+                              ||  '<res_cdagenci_pj>'||vr_index_limite||'</res_cdagenci_pj>'
+                              ||  '<res_vllimite_pj>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vllimite_pj, 'FM999G999G999G990D00')||'</res_vllimite_pj>'
+                              ||  '<res_vlbrutor_pj>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutor_pj, 'FM999G999G999G990D00')||'</res_vlbrutor_pj>'
+                              ||  '<res_vlbrutos_pj>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlbrutos_pj, 'FM999G999G999G990D00')||'</res_vlbrutos_pj>'
+                              ||  '<res_vlapropr_pj>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlapropr_pj, 'FM999G999G999G990D00')||'</res_vlapropr_pj>'                                                                                                                                       
+                              ||  '<res_vlaprops_pj>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).vlaprops_pj, 'FM999G999G999G990D00')||'</res_vlaprops_pj>'                                                                                                                                       
+                              ||  '<res_totsldis_pj>'||to_char(vr_tab_tot_dsc_tit_pf_pj(vr_index_limite).totsldis_pj, 'FM999G999G999G990D00')||'</res_totsldis_pj>'                                                                                                                                                                                       
+                              ||'</total_pj>');            
+               END IF;
+             END IF; 
+
+              
+             vr_index_limite := vr_tab_tot_dsc_tit_pf_pj.NEXT(vr_index_limite);
+                
+           END LOOP;
+         END LOOP;
+          
+         pc_escreve_xml('</resumo_dsc_tit>');
+         
+         
 
          -- Inicializar o agrupador utilizam
          pc_escreve_xml('<utilizam>');
@@ -1727,6 +1923,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
              vr_tab_saldo(vr_index_saldo).cdbandoc:= rw_craptdb.cdbandoc;
              vr_tab_saldo(vr_index_saldo).nrdctabb:= rw_craptdb.nrdctabb;
              vr_tab_saldo(vr_index_saldo).flgregis:= rw_crapcob.flgregis;
+             vr_tab_saldo(vr_index_saldo).inpessoa:= rw_craptdb.inpessoa;
            END IF;
          END LOOP; --rw_craptdb_494
        END LOOP; --rw_crapbdt_494
@@ -1819,4 +2016,3 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
     END;
    END pc_crps518;
 /
-
