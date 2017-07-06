@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Gabriel
-    Data    : Outubro/2008                   Ultima Atualizacao: 22/03/2017
+    Data    : Outubro/2008                   Ultima Atualizacao: 06/07/2017
 
     Dados referente ao programa:
 
@@ -94,6 +94,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                22/03/2017 - Segregar informações de saldo de desconto de cheques em PF e PJ
                             Projeto 307 Automatização Arquivos Contábeis Ayllos (Jonatas - Supero)
 
+               05/07/2017 - #707221 Forçando o index craplim##craplim1 no cursor 
+                            cr_craplim_2 (Carlos)
      ............................................................................. */
 
      DECLARE
@@ -516,7 +518,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
          --Selecionar informacoes do primeiro limite
          CURSOR cr_craplim_2 (pr_cdcooper IN craplim.cdcooper%TYPE
                              ,pr_nrdconta IN craplim.nrdconta%TYPE) IS
-           SELECT craplim.vllimite
+           SELECT /*+ index (craplim CRAPLIM##CRAPLIM1) */ craplim.vllimite
            FROM craplim craplim
            WHERE craplim.cdcooper = pr_cdcooper
            AND   craplim.nrdconta = pr_nrdconta
