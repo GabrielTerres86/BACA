@@ -27,7 +27,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                    Ultima atualizacao: 29/02/2016
+   Data    : Abril/2006.                    Ultima atualizacao: 19/04/2017
 
    Dados referentes ao programa:
 
@@ -112,6 +112,8 @@
                29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                             solicitado no chamado 402159 (Kelvin).
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)  
 .............................................................................*/ 
 
 
@@ -249,7 +251,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                      crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
             END.
     
-       IF   crapass.dsnacion <> log_dsnacion   THEN
+       IF   crapass.cdnacion <> log_cdnacion   THEN
             DO:
                 ASSIGN log_nmdcampo = "nacion. 1.ttl"
                        log_flgrecad = TRUE.
@@ -1862,7 +1864,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                              RUN atualiza_crapalt.
                     END.
     
-               IF   crapttl.dsnacion <> log_dsnacion   THEN
+               IF   crapttl.cdnacion <> log_cdnacion   THEN
                     DO:
                         ASSIGN log_nmdcampo = "nacion.".
     
@@ -2516,7 +2518,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
 
                 END.
 
-             IF crapcrl.dsnacion <> log_dsnacion_crl   THEN
+             IF crapcrl.cdnacion <> log_cdnacion_crl   THEN
                 DO:
                    ASSIGN log_nmdcampo = "nacionalidade. " +
                                          STRING(log_idseqmen_crl) +

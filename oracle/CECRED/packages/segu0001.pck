@@ -136,7 +136,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
     ,nrcadast  crapass.nrcadast%type
     ,nmprimtl  crapass.nmprimtl%type
     ,dtnasctl  crapass.dtnasctl%type
-    ,dsnacion  crapass.dsnacion%type
+    ,dsnacion  crapnac.dsnacion%type
     ,dsproftl  crapass.dsproftl%type
     ,dtadmiss  crapass.dtadmiss%type
     ,dtdemiss  crapass.dtdemiss%TYPE
@@ -1239,7 +1239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: 29/01/2016
+  --  Data     : Abril/2015.                   Ultima atualizacao: 17/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1248,6 +1248,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --
   -- Alteracoes: 29/01/2016 - Alteracao de flginspc para inserasa - Pre-Aprovado fase II.
   --                          (Jaison/Anderson)
+  --
+  --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   --
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -1260,12 +1262,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%rowtype;
+       
+      -- Busca a Nacionalidade
+      CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+        SELECT crapnac.dsnacion
+          FROM crapnac
+         WHERE crapnac.cdnacion = pr_cdnacion;
 
       --Variaveis Locais
       vr_dsorigem VARCHAR2(1000);
       vr_dstransa VARCHAR2(1000);
       vr_nrdrowid ROWID;
       vr_index    PLS_INTEGER;
+      vr_dsnacion crapnac.dsnacion%TYPE;
 
       --Variaveis de Erro
       vr_cdcritic integer;
@@ -1298,6 +1307,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
         vr_index:= pr_tab_associado.COUNT + 1;
+
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         pr_tab_associado(vr_index).nrmatric:= rw_crapass.nrmatric;
         pr_tab_associado(vr_index).indnivel:= rw_crapass.indnivel;
         pr_tab_associado(vr_index).nrdconta:= rw_crapass.nrdconta;
@@ -1305,7 +1321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_tab_associado(vr_index).nrcadast:= rw_crapass.nrcadast;
         pr_tab_associado(vr_index).nmprimtl:= rw_crapass.nmprimtl;
         pr_tab_associado(vr_index).dtnasctl:= rw_crapass.dtnasctl;
-        pr_tab_associado(vr_index).dsnacion:= rw_crapass.dsnacion;
+        pr_tab_associado(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_associado(vr_index).dsproftl:= rw_crapass.dsproftl;
         pr_tab_associado(vr_index).dtadmiss:= rw_crapass.dtadmiss;
         pr_tab_associado(vr_index).dtdemiss:= rw_crapass.dtdemiss;

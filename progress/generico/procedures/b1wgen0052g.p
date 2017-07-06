@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 15/07/2016
+    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
   
     Dados referentes ao programa:
   
@@ -149,7 +149,10 @@
                 15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
                              (Lucas Ranghetti #484923)
 				
-                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
 .............................................................................*/
                                                      
 
@@ -208,7 +211,7 @@ PROCEDURE Grava_Dados :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO. 
@@ -506,7 +509,7 @@ PROCEDURE Grava_Dados :
                       INPUT par_dtcnscpf,  
                       INPUT par_dtnasctl,  
                       INPUT par_tpnacion,  
-                      INPUT par_dsnacion,  
+                      INPUT par_cdnacion,  
                       INPUT par_dsnatura,
                       INPUT par_cdufnatu,
                       INPUT par_cdocpttl,
@@ -712,7 +715,7 @@ PROCEDURE Altera PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
@@ -878,7 +881,7 @@ PROCEDURE Altera PRIVATE :
               INPUT par_dtcnscpf,
               INPUT par_dtnasctl,
               INPUT par_tpnacion,
-              INPUT par_dsnacion,
+              INPUT par_cdnacion,
               INPUT par_dsnatura,
               INPUT par_cdocpttl,
               INPUT par_cdestcvl,
@@ -949,7 +952,7 @@ PROCEDURE Altera PRIVATE :
                       INPUT crabass.dtcnscpf,
                       INPUT crabass.dtnasctl,
                       INPUT par_tpnacion,
-                      INPUT crabass.dsnacion,
+                      INPUT crabass.cdnacion,
                       INPUT par_dsnatura,
                       INPUT par_cdufnatu,
                       INPUT crabttl.cdestcvl,
@@ -1199,7 +1202,7 @@ PROCEDURE Altera_Ass PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -1269,7 +1272,7 @@ PROCEDURE Altera_Ass PRIVATE :
                    crabass.nmmaeptl = CAPS(par_nmmaettl)
                    crabass.cdsexotl = par_cdsexotl
                    crabass.dtnasctl = par_dtnasctl
-                   crabass.dsnacion = CAPS(par_dsnacion)
+                   crabass.cdnacion = par_cdnacion
                    /* Retirado campo crabass.dsnatura */
                    crabass.dsproftl = CAPS(par_dsproftl)
                    crabass.nrcadast = par_nrcadast
@@ -2323,7 +2326,7 @@ PROCEDURE Altera_Fis PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -2421,7 +2424,7 @@ PROCEDURE Altera_Fis PRIVATE :
                crabttl.dtcnscpf = par_dtcnscpf
                crabttl.dtnasttl = par_dtnasctl
                crabttl.tpnacion = par_tpnacion
-               crabttl.dsnacion = CAPS(par_dsnacion)
+               crabttl.cdnacion = par_cdnacion
                crabttl.dsnatura = CAPS(par_dsnatura)
                crabttl.cdufnatu = CAPS(par_cdufnatu)
                crabttl.cdestcvl = par_cdestcvl
@@ -5862,7 +5865,7 @@ PROCEDURE Procurador PRIVATE :
                                                     INPUT crapcrl.dtnascin,
                                                     INPUT crapcrl.cddosexo,
                                                     INPUT crapcrl.cdestciv,
-                                                    INPUT crapcrl.dsnacion,
+                                                    INPUT crapcrl.cdnacion,
                                                     INPUT crapcrl.dsnatura,
                                                     INPUT crapcrl.cdcepres,
                                                     INPUT crapcrl.dsendres,
@@ -5929,7 +5932,7 @@ PROCEDURE Procurador PRIVATE :
                       crapavt.dtnascto    = tt-crapavt.dtnascto
                       crapavt.cdsexcto    = tt-crapavt.cdsexcto
                       crapavt.cdestcvl    = tt-crapavt.cdestcvl
-                      crapavt.dsnacion    = UPPER(tt-crapavt.dsnacion)
+                      crapavt.cdnacion    = tt-crapavt.cdnacion
                       crapavt.dsnatura    = UPPER(tt-crapavt.dsnatura)
                       crapavt.nrcepend    = tt-crapavt.nrcepend
                       crapavt.dsendres[1] = UPPER(tt-crapavt.dsendres[1])
@@ -6226,7 +6229,7 @@ PROCEDURE atualiza_avt_crl PRIVATE:
                     crapavt.dtnascto = ? 
                     crapavt.cdsexcto = 0
                     crapavt.cdestcvl = 0 
-                    crapavt.dsnacion = "" 
+                    crapavt.cdnacion = 0
                     crapavt.dsnatura = "" 
                     crapavt.nrcepend = 0 
                     crapavt.dsendres = ""
@@ -6274,7 +6277,7 @@ PROCEDURE atualiza_avt_crl PRIVATE:
                     crapcrl.dtnascin = ?
                     crapcrl.cddosexo = 0
                     crapcrl.cdestciv = 0
-                    crapcrl.dsnacion = ""
+                    crapcrl.cdnacion = 0
                     crapcrl.dsnatura = ""
                     crapcrl.cdcepres = 0
                     crapcrl.dsendres = ""

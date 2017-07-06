@@ -159,6 +159,8 @@
 
 				 28/03/2017 - Realizado ajuste para que quando filtrar procurador pelo CPF, busque
 							  apenas contas ativas, coforme solicitado no chamado 566363. (Kelvin)
+
+                18/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 							  
 				 26/04/2017 - Ajustado o problema que não carregava os procuradores na tela contas,
 							  conforme solicitado no chamado 659095. (Kelvin)	
@@ -537,6 +539,15 @@ PROCEDURE Busca_Dados_Id:
                      LEAVE BuscaId.
                   END.
 
+              /* Buscar a Nacionalidade */
+              FOR FIRST crapnac FIELDS(dsnacion)
+                                WHERE crapnac.cdnacion = crabavt.cdnacion
+                                      NO-LOCK:
+
+                  ASSIGN tt-crapavt.dsnacion = crapnac.dsnacion.
+
+              END.
+
                IF NOT VALID-HANDLE(h-b1wgen9999) THEN
                   RUN sistema/generico/procedures/b1wgen9999.p
                       PERSISTENT SET h-b1wgen9999.
@@ -748,7 +759,7 @@ PROCEDURE Busca_Dados_Ass:
 
         FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc nmprimtl tpdocptl 
                                  nrdocptl cdoedptl cdufdptl dtemdptl dsproftl 
-                                 dtnasctl cdsexotl dsnacion inpessoa)
+                                 dtnasctl cdsexotl cdnacion inpessoa)
                            WHERE crabass.cdcooper = par_cdcooper AND
                                  crabass.nrdconta = par_nrdctato 
                                  NO-LOCK,
@@ -791,7 +802,7 @@ PROCEDURE Busca_Dados_Ass:
                    tt-crapavt.dtnascto    = crabass.dtnasctl
                    tt-crapavt.cdsexcto    = crabass.cdsexotl
                    tt-crapavt.cdestcvl    = crabttl.cdestcvl
-                   tt-crapavt.dsnacion    = crabass.dsnacion
+                   tt-crapavt.cdnacion    = crabass.cdnacion
                    tt-crapavt.dsnatura    = crabttl.dsnatura
                    tt-crapavt.nmmaecto    = crabttl.nmmaettl
                    tt-crapavt.nmpaicto    = crabttl.nmpaittl
@@ -812,6 +823,15 @@ PROCEDURE Busca_Dados_Ass:
                    tt-crapavt.nrctremp    = crabttl.idseqttl
                    tt-crapavt.tpctrato    = 6 /*Procuradores*/
                    NO-ERROR.
+
+                   /* Buscar a Nacionalidade */
+                   FOR FIRST crapnac FIELDS(dsnacion)
+                                     WHERE crapnac.cdnacion = crabass.cdnacion
+                                           NO-LOCK:
+
+                       ASSIGN tt-crapavt.dsnacion = crapnac.dsnacion.
+
+                   END.
 
             IF  ERROR-STATUS:ERROR THEN
                 DO:
@@ -1048,7 +1068,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexcto AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -1407,7 +1427,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  NOT CAN-FIND(crapnac WHERE crapnac.dsnacion = par_dsnacion) THEN
+        IF  NOT CAN-FIND(crapnac WHERE crapnac.cdnacion = par_cdnacion) THEN
             DO:
                ASSIGN aux_cdcritic = 28.
                LEAVE Valida.
@@ -1875,7 +1895,7 @@ PROCEDURE Valida_Dados:
                                           INPUT tt-resp.dtnascin,
                                           INPUT tt-resp.cddosexo,
                                           INPUT tt-resp.cdestciv,
-                                          INPUT tt-resp.dsnacion,
+                                          INPUT tt-resp.cdnacion,
                                           INPUT tt-resp.dsnatura,
                                           INPUT tt-resp.cdcepres,
                                           INPUT tt-resp.dsendres,
@@ -2858,7 +2878,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexcto AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -3564,7 +3584,7 @@ PROCEDURE Grava_Dados:
                       crapavt.dtnascto    = par_dtnascto
                       crapavt.cdsexcto    = aux_cdsexcto
                       crapavt.cdestcvl    = par_cdestcvl
-                      crapavt.dsnacion    = UPPER(par_dsnacion)
+                      crapavt.cdnacion    = par_cdnacion
                       crapavt.dsnatura    = UPPER(par_dsnatura)
                       crapavt.nrcepend    = par_nrcepend
                       crapavt.dsendres[1] = UPPER(par_dsendere)
@@ -3698,7 +3718,7 @@ PROCEDURE Grava_Dados:
                              INPUT tt-resp.dtnascin,
                              INPUT tt-resp.cddosexo,
                              INPUT tt-resp.cdestciv,
-                             INPUT tt-resp.dsnacion,
+                             INPUT tt-resp.cdnacion,
                              INPUT tt-resp.dsnatura,
                              INPUT INT(tt-resp.cdcepres),
                              INPUT tt-resp.dsendres,
@@ -4209,7 +4229,7 @@ Exclui: DO TRANSACTION
                                             INPUT crapcrl.dtnascin,
                                             INPUT crapcrl.cddosexo,
                                             INPUT crapcrl.cdestciv,
-                                            INPUT crapcrl.dsnacion,
+                                            INPUT crapcrl.cdnacion,
                                             INPUT crapcrl.dsnatura,
                                             INPUT crapcrl.cdcepres,
                                             INPUT crapcrl.dsendres,

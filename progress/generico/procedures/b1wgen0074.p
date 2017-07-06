@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 02/12/2016
+    Data    : Maio/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -193,6 +193,9 @@
 				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
 				             (Incorporacao Transposul). (Fabricio)
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -4830,7 +4833,7 @@ PROCEDURE Critica_Cadastro_Pf:
         FOR EACH craxttl FIELDS(cdcooper idseqttl nrdconta nmextttl nrcpfcgc 
                                 dtcnscpf cdsitcpf tpdocttl nrdocttl cdoedttl 
                                 cdufdttl dtemdttl dtnasttl cdsexotl tpnacion 
-                                dsnacion dsnatura inhabmen dthabmen cdgraupr 
+                                cdnacion dsnatura inhabmen dthabmen cdgraupr 
                                 cdestcvl grescola nmtalttl nmmaettl nmpaittl 
                                 cdnatopc cdocpttl tpcttrab cdempres nmextemp 
                                 dsproftl cdnvlcgo cdfrmttl cdufnatu)
@@ -4911,7 +4914,7 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Tipo Nacionalidade", 
                       INPUT {&TT-IDENT} ).
 
-            IF  craxttl.dsnacion = "" THEN
+            IF  craxttl.cdnacion = "" THEN
                 RUN Trata_Critica
                     ( INPUT craxttl.idseqttl,
                       INPUT "Nacionalidade", 
@@ -5314,7 +5317,7 @@ PROCEDURE Critica_Cadastro_Pj:
                   INPUT {&TT-REGIS} ).
 
         FOR FIRST crabavt FIELDS(nrcpfcgc nmdavali tpdocava nrdocava cdoeddoc
-                                 cdufddoc dtemddoc dtnascto dsnacion dsnatura 
+                                 cdufddoc dtemddoc dtnascto cdnacion dsnatura 
                                  nrcepend dsendres nmbairro nmcidade cdufresd 
                                  nmmaecto dsproftl dtvalida)
                           WHERE crabavt.cdcooper = par_cdcooper   AND
@@ -5370,7 +5373,7 @@ PROCEDURE Critica_Cadastro_Pj:
                       INPUT "Data de Nascimento do Representante/Procurador",
                       INPUT {&TT-PROCU} ).
 
-            IF  crabavt.dsnacion = "" THEN
+            IF  crabavt.cdnacion = "" THEN
                 RUN Trata_Critica
                     ( INPUT 0,
                       INPUT "Nacionalidade do Representante/Procurador",

@@ -260,6 +260,8 @@
           
 		   09/11/2016 - Alterado campo crapabc.nrseqdig para crapabc.cdocorre.
 		                PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
+
+            12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 					      
            26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
                        contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)         
@@ -2110,7 +2112,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_nrender1,
@@ -2135,7 +2137,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_nrender2,
@@ -4220,7 +4222,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav1, 
                                   INPUT par_cdufava1, 
                                   INPUT par_nrcepav1, 
-                                  INPUT "", /* nacionalidade*/
+                                  INPUT 0, /* nacionalidade*/
                                   INPUT 0, /* endividamento */
                                   INPUT 0, /* renda mensal */
                                   INPUT par_nrender1,
@@ -4246,7 +4248,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav2, 
                                   INPUT par_cdufava2, 
                                   INPUT par_nrcepav2,
-                                  INPUT "",  /* nacionalidade */
+                                  INPUT 0,  /* nacionalidade */
                                   INPUT 0,  /* Endividamento */
                                   INPUT 0,
                                   INPUT par_nrender2,

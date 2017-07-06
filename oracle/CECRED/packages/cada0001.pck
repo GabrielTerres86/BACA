@@ -123,7 +123,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
            ,cdsexcto crapavt.cdsexcto%type
            ,cdestcvl crapavt.cdestcvl%type
            ,dsestcvl VARCHAR2(100)
-           ,dsnacion crapavt.dsnacion%type
+           ,cdnacion crapnac.cdnacion%type
+           ,dsnacion crapnac.dsnacion%type
            ,dsnatura crapavt.dsnatura%type
            ,nmmaecto crapttl.nmmaettl%type
            ,nmpaicto crapttl.nmpaittl%type
@@ -172,7 +173,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
            ,dtnascin crapcrl.dtnascin%type
            ,cddosexo crapcrl.cddosexo%type
            ,cdestciv crapcrl.cdestciv%type
-           ,dsnacion crapcrl.dsnacion%type
+           ,cdnacion crapnac.cdnacion%type
+           ,dsnacion crapnac.dsnacion%type
            ,dsnatura crapcrl.dsnatura%type
            ,cdcepres crapcrl.cdcepres%type
            ,dsendres crapcrl.dsendres%type
@@ -567,7 +569,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro
                          
-  PROCEDURE pc_busca_nacionalidades(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
+  PROCEDURE pc_busca_nacionalidades(pr_cdnacion IN crapnac.cdnacion%TYPE --> Codigo da nacionalidade
+                                   ,pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -624,6 +627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
   TYPE tab_motdem IS TABLE OF craptab.dstextab%TYPE INDEX BY BINARY_INTEGER;
   vr_tbmotdem   tab_motdem;
 
+  vr_dsnacion   crapnac.dsnacion%TYPE;
 
   -- Busca dos dados do associado
   CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -647,11 +651,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           ,crapass.dtemdptl
           ,crapass.dtnasctl
           ,crapass.cdsexotl
-          ,crapass.dsnacion
+          ,crapass.cdnacion
     FROM crapass
     WHERE crapass.cdcooper = pr_cdcooper
     AND   crapass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
+
+  -- Busca a Nacionalidade
+  CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+    SELECT crapnac.dsnacion
+      FROM crapnac
+     WHERE crapnac.cdnacion = pr_cdnacion;
 
   --Selecionar Cadastro Tipos de natureja juridica
   CURSOR cr_gncdntj (pr_cdnatjur IN gncdntj.cdnatjur%type) IS
@@ -3287,7 +3297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 01/03/2016
+   Data    : Janeiro/2014.                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -3302,6 +3312,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                01/03/2016 - Adicionado SUBSTR para os campos nmrespon, nmpairsp, nmmaersp
                             que são carregados da crapttl, e que possuem tamanho de campos
                             diferentes (Douglas - Chamado 410909)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   ............................................................................. */
   BEGIN
     DECLARE
@@ -3343,7 +3355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapttl.dtnasttl
               ,crapttl.cdsexotl
               ,crapttl.cdestcvl
-              ,crapttl.dsnacion
+              ,crapttl.cdnacion
               ,crapttl.dsnatura
               ,crapttl.nmpaittl
               ,crapttl.nmmaettl
@@ -3534,6 +3546,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       FETCH cr_crapttl INTO rw_crapttl;
       --Se Encontrou
       IF cr_crapttl%FOUND THEN
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crapttl.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         pr_tab_crapcrl(vr_index).nmrespon:= SUBSTR(rw_crapttl.nmextttl,1,40);
         pr_tab_crapcrl(vr_index).nridenti:= rw_crapttl.nrdocttl;
         pr_tab_crapcrl(vr_index).dsorgemi:= rw_crapttl.cdoedttl;
@@ -3542,7 +3560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_tab_crapcrl(vr_index).dtnascin:= rw_crapttl.dtnasttl;
         pr_tab_crapcrl(vr_index).cddosexo:= rw_crapttl.cdsexotl;
         pr_tab_crapcrl(vr_index).cdestciv:= rw_crapttl.cdestcvl;
-        pr_tab_crapcrl(vr_index).dsnacion:= rw_crapttl.dsnacion;
+        pr_tab_crapcrl(vr_index).cdnacion:= rw_crapttl.cdnacion;
+        pr_tab_crapcrl(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_crapcrl(vr_index).dsnatura:= rw_crapttl.dsnatura;
         pr_tab_crapcrl(vr_index).nmpairsp:= SUBSTR(rw_crapttl.nmpaittl,1,64);
         pr_tab_crapcrl(vr_index).nmmaersp:= SUBSTR(rw_crapttl.nmmaettl,1,64);
@@ -3644,7 +3663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -3652,6 +3671,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para buscar dados empresa participante pelo rowid
 
    Alteracoes: 10/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
   ............................................................................. */
   BEGIN
@@ -3724,6 +3745,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       IF NOT vr_flgcadas THEN
         --Buscar proximo Indice
         vr_index:= pr_tab_crapcrl.COUNT+1;
+
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crapcrl.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         --Inserir Representante Legal
         pr_tab_crapcrl(vr_index).cddopcao:= pr_cddopcao;
         pr_tab_crapcrl(vr_index).cdcooper:= rw_crapcrl.cdcooper;
@@ -3741,7 +3769,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_tab_crapcrl(vr_index).dtnascin:= rw_crapcrl.dtnascin;
         pr_tab_crapcrl(vr_index).cddosexo:= rw_crapcrl.cddosexo;
         pr_tab_crapcrl(vr_index).cdestciv:= rw_crapcrl.cdestciv;
-        pr_tab_crapcrl(vr_index).dsnacion:= rw_crapcrl.dsnacion;
+        pr_tab_crapcrl(vr_index).cdnacion:= rw_crapcrl.cdnacion;
+        pr_tab_crapcrl(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_crapcrl(vr_index).dsnatura:= rw_crapcrl.dsnatura;
         pr_tab_crapcrl(vr_index).cdcepres:= rw_crapcrl.cdcepres;
         pr_tab_crapcrl(vr_index).dsendres:= rw_crapcrl.dsendres;
@@ -3833,7 +3862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao:
+   Data    : Janeiro/2014.                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -3841,6 +3870,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Buscar dados dos Responsaveis Legais do associado
 
    Alteracoes: 10/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
   ............................................................................. */
   BEGIN
@@ -3896,7 +3927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapcrl.dtnascin
               ,crapcrl.cddosexo
               ,crapcrl.cdestciv
-              ,crapcrl.dsnacion
+              ,crapcrl.cdnacion
               ,crapcrl.dsnatura
               ,crapcrl.cdcepres
               ,crapcrl.dsendres
@@ -4156,6 +4187,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           ELSE
             --Incrementar Indice para tabela memoria
             vr_index:= pr_tab_crapcrl.count+1;
+
+            -- Busca a Nacionalidade
+            vr_dsnacion := '';
+            OPEN  cr_crapnac(pr_cdnacion => rw_crapcrl.cdnacion);
+            FETCH cr_crapnac INTO vr_dsnacion;
+            CLOSE cr_crapnac;
+
             --Carregar tabela memoria
             pr_tab_crapcrl(vr_index).cdcooper:= rw_crapcrl.cdcooper;
             pr_tab_crapcrl(vr_index).nrctamen:= rw_crapcrl.nrctamen;
@@ -4172,7 +4210,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
             pr_tab_crapcrl(vr_index).dtnascin:= rw_crapcrl.dtnascin;
             pr_tab_crapcrl(vr_index).cddosexo:= rw_crapcrl.cddosexo;
             pr_tab_crapcrl(vr_index).cdestciv:= rw_crapcrl.cdestciv;
-            pr_tab_crapcrl(vr_index).dsnacion:= rw_crapcrl.dsnacion;
+            pr_tab_crapcrl(vr_index).cdnacion:= rw_crapcrl.cdnacion;
+            pr_tab_crapcrl(vr_index).dsnacion:= vr_dsnacion;
             pr_tab_crapcrl(vr_index).dsnatura:= rw_crapcrl.dsnatura;
             pr_tab_crapcrl(vr_index).cdcepres:= rw_crapcrl.cdcepres;
             pr_tab_crapcrl(vr_index).dsendres:= rw_crapcrl.dsendres;
@@ -4298,7 +4337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 02/06/2014
+   Data    : Janeiro/2014.                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -4309,6 +4348,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 
                02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
                             adicionados na crapttl. (Douglas - Chamado 131253)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
   ............................................................................. */
   BEGIN
@@ -4327,7 +4368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapttl.dtnasttl
               ,crapttl.cdsexotl
               ,crapttl.cdestcvl
-              ,crapttl.dsnacion
+              ,crapttl.cdnacion
               ,crapttl.dsnatura
               ,crapttl.nmpaittl
               ,crapttl.nmmaettl
@@ -4464,6 +4505,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           END IF;
           --Fechar Cursor
           CLOSE cr_crapenc;
+
+          -- Busca a Nacionalidade
+          vr_dsnacion := '';
+          OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
+          FETCH cr_crapnac INTO vr_dsnacion;
+          CLOSE cr_crapnac;
+
           --Criar Avalista
           vr_index:= pr_tab_crapavt.Count+1;
           pr_tab_crapavt(vr_index).cddconta:= gene0002.fn_mask_conta(rw_crapass.nrdconta);
@@ -4479,7 +4527,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           pr_tab_crapavt(vr_index).dtnascto:= rw_crapass.dtnasctl;
           pr_tab_crapavt(vr_index).cdsexcto:= rw_crapass.cdsexotl;
           pr_tab_crapavt(vr_index).cdestcvl:= rw_crapttl.cdestcvl;
-          pr_tab_crapavt(vr_index).dsnacion:= rw_crapass.dsnacion;
+          pr_tab_crapavt(vr_index).cdnacion:= rw_crapass.cdnacion;
+          pr_tab_crapavt(vr_index).dsnacion:= vr_dsnacion;
           pr_tab_crapavt(vr_index).dsnatura:= rw_crapttl.dsnatura;
           pr_tab_crapavt(vr_index).nmmaecto:= rw_crapttl.nmmaettl;
           pr_tab_crapavt(vr_index).nmpaicto:= rw_crapttl.nmpaittl;
@@ -4677,7 +4726,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapttl.dtnasttl
               ,crapttl.cdsexotl
               ,crapttl.cdestcvl
-              ,crapttl.dsnacion
+              ,crapttl.cdnacion
               ,crapttl.dsnatura
               ,crapttl.nmpaittl
               ,crapttl.nmmaettl
@@ -4817,7 +4866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 02/06/2014
+   Data    : Janeiro/2014.                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -4828,6 +4877,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 
                02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
                             adicionados na crapttl. (Douglas - Chamado 131253)
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
   ............................................................................. */
   BEGIN
@@ -5004,6 +5055,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       ELSE
         --Incrementar Indice
         vr_index:= pr_tab_crapavt.Count+1;
+
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crabavt.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
         --Criar tabela avalistascopiando dados da tabela
         pr_tab_crapavt(vr_index).cdcooper:= rw_crabavt.cdcooper;
         pr_tab_crapavt(vr_index).cdoeddoc:= rw_crabavt.cdoeddoc;
@@ -5018,7 +5076,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         pr_tab_crapavt(vr_index).dtadmsoc:= rw_crabavt.dtadmsoc;
         pr_tab_crapavt(vr_index).dsproftl:= rw_crabavt.dsproftl;
         pr_tab_crapavt(vr_index).dtnascto:= rw_crabavt.dtnascto;
-        pr_tab_crapavt(vr_index).dsnacion:= rw_crabavt.dsnacion;
+        pr_tab_crapavt(vr_index).cdnacion:= rw_crabavt.cdnacion;
+        pr_tab_crapavt(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_crapavt(vr_index).dsnatura:= rw_crabavt.dsnatura;
         pr_tab_crapavt(vr_index).dsendres(1):= rw_crabavt.dsendres##1;
         pr_tab_crapavt(vr_index).dsendres(2):= rw_crabavt.dsendres##2;
@@ -5959,7 +6018,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
   END pc_lista_cooperativas_web;
   
   --Busca as nacionalidades cadastradas no sistema
-  PROCEDURE pc_busca_nacionalidades(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
+  PROCEDURE pc_busca_nacionalidades(pr_cdnacion IN crapnac.cdnacion%TYPE --> Codigo da nacionalidade
+                                   ,pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -5971,23 +6031,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Kelvin Souza Ott
-   Data    : 13/05/2016                        Ultima atualizacao: --/--/----
+   Data    : 13/05/2016                        Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado
    Objetivo  : Rotina para buscar as nacionalidades
 
-   Alteracoes: 
+   Alteracoes: 12/04/2017 - Retornar o codigo da nacionalidade. (Jaison/Andrino)
                 
     ............................................................................. */                                    
-    CURSOR cr_crapnac (p_dsnacion IN crapnac.dsnacion%TYPE) IS
-      SELECT nac.dsnacion 
-            ,nac.cdnacion
-        FROM crapnac nac
-       WHERE (UPPER(nac.dsnacion) LIKE '%' || UPPER(pr_dsnacion) || '%') 
-          OR (TRIM(pr_dsnacion) IS NULL)
-       ORDER BY nac.dsnacion;
+    CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE
+                     ,pr_dsnacion IN crapnac.dsnacion%TYPE) IS
+      SELECT cdnacion
+            ,dsnacion
+        FROM crapnac
+       WHERE cdnacion = DECODE(NVL(pr_cdnacion,0),0,cdnacion, pr_cdnacion)
+         AND (TRIM(pr_dsnacion) IS NULL
+          OR  UPPER(dsnacion) LIKE '%'||UPPER(pr_dsnacion)||'%')
+       ORDER BY dsnacion;
     
     -- Variaveis de log
     vr_cdcooper NUMBER;
@@ -6021,11 +6083,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     END IF;                         
     
     -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nacionalidades/>');
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><root><nacionalidades/></root>');
     
     --Loop nas nacionalidades   
-    FOR rw_crapnac IN cr_crapnac(p_dsnacion => pr_dsnacion) LOOP
+    FOR rw_crapnac IN cr_crapnac(pr_cdnacion => pr_cdnacion
+                                ,pr_dsnacion => pr_dsnacion) LOOP
        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => 0,pr_tag_nova => 'nacionalidade',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
+       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidade',pr_posicao => vr_auxconta, pr_tag_nova => 'cdnacion', pr_tag_cont => rw_crapnac.cdnacion, pr_des_erro => vr_dscritic);
        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidade',pr_posicao => vr_auxconta, pr_tag_nova => 'dsnacion', pr_tag_cont => rw_crapnac.dsnacion, pr_des_erro => vr_dscritic);
        
        -- Incrementa contador p/ posicao no XML
@@ -6063,18 +6127,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
   /* .............................................................................
-   Programa: pc_busca_nacionalidades
+   Programa: pc_inclui_nacionalidade
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Kelvin Souza Ott
-   Data    : 16/05/2016                        Ultima atualizacao: --/--/----
+   Data    : 16/05/2016                        Ultima atualizacao: 12/04/2017
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado
    Objetivo  : Rotina para incluir as nacionalidades
 
-   Alteracoes: 
+   Alteracoes: 12/04/2017 - Cadastrar o codigo da nacionalidade. (Jaison/Andrino)
                 
     ............................................................................. */                                    
     CURSOR cr_crapnac (p_dsnacion IN crapnac.dsnacion%TYPE) IS
@@ -6129,10 +6193,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nacionalidades/>');    
     
     --Inclui a nacionalidade
-    INSERT INTO cecred.crapnac
-      (dsnacion)
+    INSERT INTO crapnac
+      (cdnacion
+      ,dsnacion)
     VALUES
-      (UPPER(pr_dsnacion));
+      (NVL((SELECT MAX(cdnacion) FROM crapnac),0) + 1
+      ,UPPER(pr_dsnacion));
     
   EXCEPTION
     WHEN vr_exc_saida THEN

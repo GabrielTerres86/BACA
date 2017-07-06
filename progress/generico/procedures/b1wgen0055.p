@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 16/11/2016
+    Data    : Janeiro/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -136,6 +136,10 @@
 
                 16/11/2016 - Criar ttl como nao politicamente exposto ao inves
                              de pendente (Tiago/Thiago SD532690).
+                             
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)               
+                             
 .............................................................................*/
 
 
@@ -937,6 +941,12 @@ PROCEDURE Atualiza_Campos:
                tt-dados-fis.dspessoa = "FISICA"
                tt-dados-fis.cdgraupr = par_cdgraupr.
 
+        
+        /* Buscar nacionalidade */
+        FIND FIRST crapnac
+             WHERE crapnac.cdnacion = brapttl.cdnacion
+             NO-LOCK NO-ERROR.
+        
         /* Grau escolar */
         ASSIGN tt-dados-fis.grescola = brapttl.grescola.
        
@@ -952,7 +962,8 @@ PROCEDURE Atualiza_Campos:
                tt-dados-fis.dtemdttl = brapttl.dtemdttl  
                tt-dados-fis.dtnasttl = brapttl.dtnasttl  
                tt-dados-fis.tpnacion = brapttl.tpnacion  
-               tt-dados-fis.dsnacion = brapttl.dsnacion  
+               tt-dados-fis.cdnacion = brapttl.cdnacion  
+               tt-dados-fis.dsnacion = crapnac.dsnacion  
                tt-dados-fis.dsnatura = brapttl.dsnatura
                tt-dados-fis.cdufnatu = brapttl.cdufnatu
                tt-dados-fis.inhabmen = brapttl.inhabmen  
@@ -1021,7 +1032,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_tpdocttl LIKE crapttl.tpdocttl             NO-UNDO.
     DEF  INPUT PARAM par_cdufdttl LIKE crapttl.cdufdttl             NO-UNDO.
     DEF  INPUT PARAM par_cdsexotl LIKE crapttl.cdsexotl             NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion LIKE crapttl.dsnacion             NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion LIKE crapttl.cdnacion             NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl LIKE crapttl.cdestcvl             NO-UNDO.
     DEF  INPUT PARAM par_grescola LIKE crapttl.grescola             NO-UNDO.
     DEF  INPUT PARAM par_inpessoa LIKE crapttl.inpessoa             NO-UNDO.
@@ -1261,7 +1272,7 @@ PROCEDURE Grava_Dados:
                 tt-dados-fis-ant.tpdocttl = crapttl.tpdocttl
                 tt-dados-fis-ant.cdufdttl = crapttl.cdufdttl
                 tt-dados-fis-ant.cdsexotl = crapttl.cdsexotl
-                tt-dados-fis-ant.dsnacion = crapttl.dsnacion
+                tt-dados-fis-ant.cdnacion = crapttl.cdnacion
                 tt-dados-fis-ant.cdestcvl = crapttl.cdestcvl
                 tt-dados-fis-ant.grescola = crapttl.grescola
                 tt-dados-fis-ant.inpessoa = crapttl.inpessoa
@@ -1432,7 +1443,7 @@ PROCEDURE Grava_Dados:
                crapttl.dtnasttl = par_dtnasttl
                crapttl.cdsexotl = par_cdsexotl
                crapttl.tpnacion = par_tpnacion
-               crapttl.dsnacion = CAPS(par_dsnacion)
+               crapttl.cdnacion = par_cdnacion
                crapttl.dsnatura = CAPS(par_dsnatura)
                crapttl.cdufnatu = CAPS(par_cdufnatu)
                crapttl.inhabmen = par_inhabmen
@@ -1532,7 +1543,7 @@ PROCEDURE Grava_Dados:
                tt-dados-fis-atl.tpdocttl = crapttl.tpdocttl
                tt-dados-fis-atl.cdufdttl = crapttl.cdufdttl
                tt-dados-fis-atl.cdsexotl = crapttl.cdsexotl
-               tt-dados-fis-atl.dsnacion = crapttl.dsnacion
+               tt-dados-fis-atl.cdnacion = crapttl.cdnacion
                tt-dados-fis-atl.cdestcvl = crapttl.cdestcvl
                tt-dados-fis-atl.grescola = crapttl.grescola
                tt-dados-fis-atl.inpessoa = crapttl.inpessoa
@@ -1672,7 +1683,7 @@ PROCEDURE Grava_Dados:
                              INPUT tt-resp.dtnascin,
                              INPUT tt-resp.cddosexo,
                              INPUT tt-resp.cdestciv,
-                             INPUT tt-resp.dsnacion,
+                             INPUT tt-resp.cdnacion,
                              INPUT tt-resp.dsnatura,
                              INPUT INT(tt-resp.cdcepres),
                              INPUT tt-resp.dsendres,
@@ -2735,7 +2746,7 @@ PROCEDURE Grava_Alteracao:
                    brapass.cdoedptl = brapttl.cdoedttl 
                    brapass.cdufdptl = brapttl.cdufdttl
                    brapass.dtemdptl = brapttl.dtemdttl
-                   brapass.dsnacion = brapttl.dsnacion    
+                   brapass.cdnacion = brapttl.cdnacion    
                    /* Retirado campo brapass.dsnatura */       
                    brapass.cdsexotl = brapttl.cdsexotl
                    brapass.dtnasctl = brapttl.dtnasttl
@@ -2795,7 +2806,7 @@ PROCEDURE Grava_Alteracao:
                                           crafttl.dtnasttl = brapttl.dtnasttl
                                           crafttl.cdsexotl = brapttl.cdsexotl  
                                           crafttl.tpnacion = brapttl.tpnacion  
-                                          crafttl.dsnacion = brapttl.dsnacion  
+                                          crafttl.cdnacion = brapttl.cdnacion  
                                           crafttl.dsnatura = brapttl.dsnatura
                                           crafttl.cdufnatu = brapttl.cdufnatu
                                           crafttl.inhabmen = brapttl.inhabmen  
@@ -3234,7 +3245,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_dtnasttl LIKE crapttl.dtnasttl       NO-UNDO.
     DEF  INPUT PARAM par_cdsexotl LIKE crapttl.cdsexotl       NO-UNDO.
     DEF  INPUT PARAM par_tpnacion LIKE crapttl.tpnacion       NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion LIKE crapttl.dsnacion       NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion LIKE crapttl.cdnacion       NO-UNDO.
     DEF  INPUT PARAM par_dsnatura LIKE crapttl.dsnatura       NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu LIKE crapttl.cdufnatu       NO-UNDO.
     DEF  INPUT PARAM par_inhabmen LIKE crapttl.inhabmen       NO-UNDO.
@@ -3679,13 +3690,12 @@ PROCEDURE Valida_Dados:
 
               LEAVE Valida.
            END.
-
         
         /* validar a nacionalidade */
         IF NOT CAN-FIND(FIRST crapnac WHERE 
-                        crapnac.dsnacion = par_dsnacion NO-LOCK) THEN
+                        crapnac.cdnacion = par_cdnacion NO-LOCK) THEN
            DO:
-              ASSIGN par_nmdcampo = "dsnacion"
+              ASSIGN par_nmdcampo = "cdnacion"
                      aux_cdcritic = 28.
 
               LEAVE Valida.
@@ -3911,7 +3921,7 @@ PROCEDURE Valida_Dados:
                                            INPUT tt-resp.dtnascin,
                                            INPUT tt-resp.cddosexo,
                                            INPUT tt-resp.cdestciv,
-                                           INPUT tt-resp.dsnacion,
+                                           INPUT tt-resp.cdnacion,
                                            INPUT tt-resp.dsnatura,
                                            INPUT tt-resp.cdcepres,
                                            INPUT tt-resp.dsendres,

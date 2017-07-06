@@ -2,7 +2,7 @@
 
     Programa: b1wgen0055tt.i
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 27/07/2015
+    Data    : Janeiro/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Definicao das Temp-Tables
 
@@ -15,6 +15,8 @@
                              
                 27/07/2015 - Reformulacao cadastral (Gabriel-RKAM)             
                 
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)    
 ..............................................................................*/
 
                                                                              
@@ -40,6 +42,7 @@ DEFINE TEMP-TABLE tt-dados-fis NO-UNDO
     FIELD cdufdttl LIKE crapttl.cdufdttl 
     FIELD cdsexotl LIKE crapttl.cdsexotl
     FIELD dsnacion AS CHARACTER          
+    FIELD cdnacion AS INTEGER          
     FIELD dshabmen AS CHARACTER          
     FIELD cdestcvl LIKE crapttl.cdestcvl
     FIELD grescola LIKE crapttl.grescola
