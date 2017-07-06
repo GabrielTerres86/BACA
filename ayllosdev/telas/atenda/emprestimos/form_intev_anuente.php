@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulário da rotina Emprestimos da tela ATEND
  *
  * ALTERACOES   : * 000: [05/09/2012] Mudar para layout padrao (Gabriel) 
+ *                  001: [15/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */	
  ?>
 
@@ -38,10 +39,12 @@
 			<option value="CT">CT</option>
 		</select>
 		<input name="nrdocava" id="nrdocava" type="text" value="" />
+        <br />
 		
-		<label for="dsnacion">Nacio.:</label>
-		<input name="dsnacion" id="dsnacion" type="text" value="" />
+		<label for="cdnacion">Nacio.:</label>
+        <input name="cdnacion" id="cdnacion" type="text" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsnacion" id="dsnacion" type="text" value="" />
 		<br />		
 				
 	</fieldset>

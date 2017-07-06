@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Julho/94.                       Ultima atualizacao: 12/08/2015
+   Data    : Julho/94.                       Ultima atualizacao: 19/04/2017
 
    Dados referentes ao programa:
 
@@ -84,6 +84,9 @@
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                           PRJ339 - CRM (Odirlei-AMcom)
+                           
 ............................................................................. */
 
 /* Variaveis genericas da rotina */
@@ -103,7 +106,8 @@ DEF        VAR aux_inhabmen LIKE crapttl.cdgraupr                    NO-UNDO.
 DEF        VAR log_nmprimtl LIKE crapass.nmprimtl                    NO-UNDO.
 DEF        VAR log_dtnasctl LIKE crapass.dtnasctl                    NO-UNDO.
 DEF        VAR log_nrcpfcgc LIKE crapass.nrcpfcgc                    NO-UNDO.
-DEF        VAR log_dsnacion LIKE crapass.dsnacion                    NO-UNDO.
+DEF        VAR log_cdnacion LIKE crapnac.cdnacion                    NO-UNDO.
+DEF        VAR log_dsnacion LIKE crapnac.dsnacion                    NO-UNDO.
 DEF        VAR log_cdestcvl LIKE crapttl.cdestcvl                    NO-UNDO.
 DEF        VAR log_dsproftl LIKE crapass.dsproftl                    NO-UNDO.
 DEF        VAR log_tpdocptl LIKE crapass.tpdocptl                    NO-UNDO.

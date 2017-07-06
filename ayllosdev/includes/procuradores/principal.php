@@ -18,6 +18,8 @@
  *					
  *				  23/11/2016 - Ajuste realizado para remover os caracteres invalidos no momento
  *							   da exclusao do procurador. (SD 557425 Kelvin)	
+ *
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  */
 ?> 
 <?
@@ -210,6 +212,7 @@
 		$frm_cdestcvl = getByTagName($registros[0]->tags,'cdestcvl');
 		$frm_cdsexcto = getByTagName($registros[0]->tags,'cdsexcto');
 		$frm_dsnacion = getByTagName($registros[0]->tags,'dsnacion');
+        $frm_cdnacion = getByTagName($registros[0]->tags,'cdnacion');
 		$frm_dsnatura = getByTagName($registros[0]->tags,'dsnatura');
 		$frm_nrcepend = getByTagName($registros[0]->tags,'nrcepend');
 		$frm_dsendres = getByTagName($registros[0]->tags[30]->tags,'dsendres.1');

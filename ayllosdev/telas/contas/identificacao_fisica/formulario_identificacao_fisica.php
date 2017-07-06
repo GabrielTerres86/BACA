@@ -18,6 +18,7 @@
  * 009: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral
  * 011: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
+ * 012: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -107,10 +108,12 @@
 		<input name="destpnac" id="destpnac" type="text" value="<? echo getByTagName($IdentFisica,'destpnac') ?>" />
 		<br />
 		
-		<label for="dsnacion">Nacional.:</label>
-		<input name="dsnacion" id="dsnacion" type="text" maxlength="15" value="<? echo getByTagName($IdentFisica,'dsnacion') ?>" />
+        <label for="cdnacion">Nacional.:</label>
+        <input name="cdnacion" id="cdnacion" type="text" maxlength="5" class="codigo pesquisa" value="<? echo getByTagName($IdentFisica,'cdnacion') ?>" />        
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsnacion" id="dsnacion" type="text" maxlength="15" value="<? echo getByTagName($IdentFisica,'dsnacion') ?>" />
 		
+		<br />
 		<label for="cdsexotl">Sexo:</label>
 		<input name="cdsexotl" type="radio" class="radio" value="1" <? if (getByTagName($IdentFisica,'cdsexotl') == '1') { echo ' checked'; } ?> />
 		<label for="sexoMas" class="radio">Masculino</label>

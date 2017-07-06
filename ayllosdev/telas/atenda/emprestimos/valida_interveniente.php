@@ -4,6 +4,10 @@
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 06/05/2011 
  * OBJETIVO     : valida os dados dos intervenientes.
+ * --------------
+ * ALTERAÇÕES   :
+ * --------------
+ * 000: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */
 ?>
  
@@ -18,7 +22,7 @@
 	// Guardo os parâmetos do POST em variáveis	
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 	$nrctaava = (isset($_POST['nrctaava'])) ? $_POST['nrctaava'] : '';
-	$dsnacion = (isset($_POST['dsnacion'])) ? $_POST['dsnacion'] : '';
+	$cdnacion = (isset($_POST['cdnacion'])) ? $_POST['cdnacion'] : '';
 	$tpdocava = (isset($_POST['tpdocava'])) ? $_POST['tpdocava'] : '';
 	$nmconjug = (isset($_POST['nmconjug'])) ? $_POST['nmconjug'] : '';
 	$tpdoccjg = (isset($_POST['tpdoccjg'])) ? $_POST['tpdoccjg'] : '';
@@ -55,7 +59,7 @@
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	        
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";            
 	$xml .= "		<nrctaava>".$nrctaava."</nrctaava>";                        
-	$xml .= "		<dsnacion>".$dsnacion."</dsnacion>";                        
+	$xml .= "		<cdnacion>".$cdnacion."</cdnacion>";                        
 	$xml .= "		<tpdocava>".$tpdocava."</tpdocava>";                        
 	$xml .= "		<nmconjug>".$nmconjug."</nmconjug>";                        
 	$xml .= "		<tpdoccjg>".$tpdoccjg."</tpdoccjg>";                        

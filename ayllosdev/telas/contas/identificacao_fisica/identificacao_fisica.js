@@ -19,6 +19,7 @@
  * 011: [23/08/2013] David               : Incluir campo UF Naturalidade - cdufnatu 
  * 012: [01/09/2015] Gabriel (RKAM)      : Reformulacao cadastral.
  * 013: [30/05/2016] Kelvin 			 : Incluso a rotina para tratar caracteres invalidos do campo nmextemp. SD (442417)
+ * 014: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
  */
  
   
@@ -343,7 +344,7 @@ function liberaOperacao() {
 	var cNatureza		= $('#inpessoa','#'+nomeForm);	
 	var cUfNatural      = $('#cdufnatu','#'+nomeForm);
 	var camposGrupo1	= $('#cdgraupr, #nrcpfcgc','#'+nomeForm);	
-	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#dtnasttl,#dsnacion,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#nmtalttl,#qtfoltal,input[name=\'cdsexotl\']','#'+nomeForm);
+	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#nmtalttl,#qtfoltal,input[name=\'cdsexotl\']','#'+nomeForm);
 	
 	
 	// ALTERAÇÃO
@@ -429,6 +430,7 @@ function manterRotina() {
 	var cdufdttl = $('#cdufdttl','#'+nomeForm).val();
 	var dtemdttl = $('#dtemdttl','#'+nomeForm).val();
 	var tpnacion = $('#tpnacion','#'+nomeForm).val();
+    var cdnacion = $('#cdnacion','#'+nomeForm).val();
 	var dsnacion = $('#dsnacion','#'+nomeForm).val();
 	var dtnasttl = $('#dtnasttl','#'+nomeForm).val();
 	var dsnatura = $('#dsnatura','#'+nomeForm).val();
@@ -482,7 +484,7 @@ function manterRotina() {
 		data: {
 			nrdconta: nrdconta, idseqttl: idseqttl, cdgraupr: cdgraupr,	nrcpfcgc: nrcpfcgc, nmextttl: nmextttl, cdsitcpf: cdsitcpf,
 			dtcnscpf: dtcnscpf, tpdocttl: tpdocttl, nrdocttl: nrdocttl,	cdoedttl: cdoedttl, cdufdttl: cdufdttl, dtemdttl: dtemdttl,
-			tpnacion: tpnacion, dsnacion: dsnacion, dtnasttl: dtnasttl,	dsnatura: dsnatura, inhabmen: inhabmen, dthabmen: dthabmen,
+			tpnacion: tpnacion, cdnacion: cdnacion, dtnasttl: dtnasttl,	dsnatura: dsnatura, inhabmen: inhabmen, dthabmen: dthabmen,
 			cdestcvl: cdestcvl, grescola: grescola, cdfrmttl: cdfrmttl,	nmcertif: nmcertif, nmtalttl: nmtalttl, qtfoltal: qtfoltal,
 			cdsexotl: cdsexotl,	operacao: operacao, nrctattl: nrctattl,	cdnatopc: cdnatopc, cdocpttl: cdocpttl, tpcttrab: tpcttrab,
 			nmextemp: nmextemp, nrcpfemp: nrcpfemp, dsproftl: dsproftl,	cdnvlcgo: cdnvlcgo, nrfonemp: nrfonemp, cdturnos: cdturnos,
@@ -568,7 +570,7 @@ function controlaLayout() {
 	cDataEmissao.addClass('data').css('width','73px');
 	
 	// FIELDSET PERFIL
-	var rRotulos_2		= $('label[for=\'tpnacion\'],label[for=\'dsnacion\'],label[for=\'dsnatura\'],label[for=\'inhabmen\'],label[for=\'cdestcvl\'],label[for=\'grescola\'],label[for=\'cdfrmttl\'],label[for=\'nmtalttl\']','#'+nomeForm);	
+	var rRotulos_2		= $('label[for=\'tpnacion\'],label[for=\'cdnacion\'],label[for=\'dsnatura\'],label[for=\'inhabmen\'],label[for=\'cdestcvl\'],label[for=\'grescola\'],label[for=\'cdfrmttl\'],label[for=\'nmtalttl\']','#'+nomeForm);	
 	var rDtNascimento	= $('label[for=\'dtnasttl\']','#'+nomeForm);	
 	var rDtEmancipacao	= $('label[for=\'dthabmen\']','#'+nomeForm);	
 	var rSexo			= $('label[for=\'cdsexotl\']','#'+nomeForm);	
@@ -577,11 +579,12 @@ function controlaLayout() {
 	rRotulos_2.addClass('rotulo').css('width','73px');
 	rDtNascimento.css('width','101px');
 	rDtEmancipacao.css('width','118px');
-	rSexo.css('width','38px');
+	rSexo.addClass('rotulo').css('width','73px');
 	rUfNatural.css('width','29px');
 	
 	var cDescricoes		= $('#dsescola,#dsestcvl,#destpnac','#'+nomeForm);
 	var cDesNacional	= $('#dsnacion','#'+nomeForm);
+    var cCdNacional	    = $('#cdnacion','#'+nomeForm);
 	var cDesNatural		= $('#dsnatura','#'+nomeForm);
 	var cUfNatural		= $('#cdufnatu','#'+nomeForm);
 	var cDesCursoSup	= $('#rsfrmttl','#'+nomeForm);
@@ -597,7 +600,8 @@ function controlaLayout() {
 	
 	cDescricoes.addClass('descricao').css('width','388px');
 	cDesCursoSup.addClass('descricao').css('width','197px');	
-	cDesNacional.addClass('alpha pesquisa').css('width','256px').attr('maxlength','15');
+	cDesNacional.addClass('alpha').css('width','256px').attr('maxlength','15');
+    //cCdNacional.addClass('inteiro').css('width','56px').attr('maxlength','5');
 	cDesNatural.addClass('alpha pesquisa').css('width','182px').attr('maxlength','25');		
 	cDtNascimento.addClass('data').css('width','65px');
 	cRespLegal.css('width','256px');
@@ -608,13 +612,14 @@ function controlaLayout() {
 		
 	// DEFININDO OS GRUPOS DE VARIÁVEIS
 	var camposGrupo1	= $('#cdgraupr, #nrcpfcgc','#'+nomeForm);
-	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#dtnasttl,#dsnacion,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#nmtalttl,#qtfoltal','#'+nomeForm);
+	var camposGrupo2	= $('#nmextttl,#cdsitcpf,#dtcnscpf,#tpdocttl,#nrdocttl,#cdoedttl,#cdufdttl,#dtemdttl,#tpnacion,#cdnacion,#dtnasttl,#dsnatura,#cdufnatu,#inhabmen,#dthabmen,#cdestcvl,#grescola,#cdfrmttl,#nmcertif,#nmtalttl,#qtfoltal','#'+nomeForm);
 	var nrctattl 		= $('#nrctattl','#'+nomeForm).val();			
 	
 	// INICIA COM TUDO BLOQUEADO	
 	camposGrupo1.desabilitaCampo();
 	camposGrupo2.desabilitaCampo();
 	cSexo.desabilitaCampo();
+    cDesNacional.desabilitaCampo();
 	cNatureza.desabilitaCampo();
 	
 	controlaFocoEnter(nomeForm);
@@ -817,6 +822,9 @@ function controlaPesquisas() {
 		if ( !$(this).prev().hasClass('campoTelaSemBorda') ) $(this).css('cursor','pointer');
 		
 		$(this).unbind("click").bind("click",( function() {
+            
+            campoAnterior = $(this).prev().attr('name');
+             
 			if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
 				return false;
 			} else {						
@@ -843,7 +851,7 @@ function controlaPesquisas() {
 					return false;
 
 				// Nacionalidade
-				} else if ( campoAnterior == 'dsnacion' ) {
+				} else if ( campoAnterior == 'cdnacion' ) {
 					mostraNacionalidade();
 					/*procedure	= 'busca_nacionalidade';
 					titulo      = 'Nacionalidade';
@@ -903,6 +911,16 @@ function controlaPesquisas() {
 		return false;
 	}); 
 	
+		
+    //  Nacionalidade
+	$('#cdnacion','#'+nomeForm).unbind('change').bind('change',function() {
+		procedure	= 'BUSCAR_NACIONALIDADE';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('CADA0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,'frmDadosIdentFisica');        
+		return false;
+	}); 
+    
 		
 	// Estado Civil
 	$('#cdestcvl','#'+nomeForm).unbind('focusout').bind('focusout',function() {

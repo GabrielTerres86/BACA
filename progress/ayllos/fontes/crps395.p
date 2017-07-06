@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Maio/2004                         Ultima atualizacao: 15/02/2017
+   Data    : Maio/2004                         Ultima atualizacao: 19/04/2017
 
    Dados referentes ao programa:
 
@@ -178,6 +178,9 @@
 
 				15/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
 			     		     SD 594718 (Kelvin).
+              
+              19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                           PRJ339 - CRM (Odirlei-AMcom)             
 ..............................................................................*/
 
 DEF STREAM str_1.
@@ -220,7 +223,7 @@ DEFINE TEMP-TABLE tt-crawcrd NO-UNDO
     FIELD cdsexotl AS CHARACTER
     FIELD dsdemail LIKE crapcem.dsdemail
     FIELD dsestcvl LIKE gnetcvl.dsestcvl
-    FIELD dsnacion LIKE crapttl.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD nmmaettl LIKE crapttl.nmmaettl
     FIELD complend LIKE crapenc.complend
     FIELD nrtelefo AS CHARACTER
@@ -262,7 +265,7 @@ DEFINE TEMP-TABLE tt-crawcri NO-UNDO
     FIELD cdsexotl AS CHARACTER
     FIELD dsdemail LIKE crapcem.dsdemail
     FIELD dsestcvl LIKE gnetcvl.dsestcvl
-    FIELD dsnacion LIKE crapttl.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD nmmaettl LIKE crapttl.nmmaettl
     FIELD complend LIKE crapenc.complend
     FIELD nrtelefo AS CHARACTER
@@ -603,7 +606,7 @@ PROCEDURE Busca_Dados:
   DEF VAR aux_dsendere LIKE crapenc.dsendere                           NO-UNDO.
   DEF VAR aux_cdsexotl AS CHAR                                         NO-UNDO.
   DEF VAR aux_cdoedttl LIKE crapttl.cdoedttl                           NO-UNDO.
-  DEF VAR aux_dsnacion LIKE crapttl.dsnacion                           NO-UNDO.
+  DEF VAR aux_dsnacion LIKE crapnac.dsnacion                           NO-UNDO.
   DEF VAR aux_nmmaettl LIKE crapttl.nmmaettl                           NO-UNDO.
   DEF VAR aux_dsestcvl LIKE gnetcvl.dsestcvl                           NO-UNDO.
   DEF VAR aux_cdgraupr LIKE crawcrd.cdgraupr                           NO-UNDO.
@@ -716,8 +719,17 @@ PROCEDURE Busca_Dados:
           DO:
               ASSIGN aux_cdsexotl = IF crapttl.cdsexotl = 1 THEN "M" ELSE "F"
                          aux_cdoedttl = crapttl.cdoedttl
-                         aux_dsnacion = crapttl.dsnacion
                          aux_nmmaettl = crapttl.nmmaettl.
+
+              /* Buscar nacionalidade */
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapttl.cdnacion
+                   NO-LOCK NO-ERROR.
+              
+              IF  AVAILABLE crapnac THEN
+                ASSIGN aux_dsnacion = crapnac.dsnacion.
+              ELSE     
+                ASSIGN aux_dsnacion = "".    
 
               IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
                   RUN sistema/generico/procedures/b1wgen0060.p 
@@ -984,9 +996,18 @@ PROCEDURE Busca_Dados:
           DO:
               ASSIGN aux_cdsexotl = IF crapttl.cdsexotl = 1 THEN "M" ELSE "F"
                          aux_cdoedttl = crapttl.cdoedttl
-                         aux_dsnacion = crapttl.dsnacion
                          aux_nmmaettl = crapttl.nmmaettl.
 
+              /* Buscar nacionalidade */
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapttl.cdnacion
+                   NO-LOCK NO-ERROR.
+              
+              IF  AVAILABLE crapnac THEN
+                ASSIGN aux_dsnacion = crapttl.dsnacion.
+              ELSE     
+                ASSIGN aux_dsnacion = "".
+                
               IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
                   RUN sistema/generico/procedures/b1wgen0060.p 
                       PERSISTENT SET h-b1wgen0060.

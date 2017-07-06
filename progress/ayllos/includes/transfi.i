@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah
-   Data    : Outubro/91                        Ultima atualizacao: 12/08/2015
+   Data    : Outubro/91                        Ultima atualizacao: 19/04/2017
 
    Dados referentes ao programa:
 
@@ -159,6 +159,9 @@
               12/08/2015 - Projeto Reformulacao cadastral
                            Eliminado o campo nmdsecao (Tiago Castro - RKAM).
 
+              19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                           PRJ339 - CRM (Odirlei-AMcom)  
+                           
 .............................................................................*/
 
 /* Handle para a BO */
@@ -885,7 +888,7 @@ PROCEDURE proc_duplica:
                crapass.nrcadast = crabass.nrcadast
                crapass.nmprimtl = crabass.nmprimtl
                crapass.dtnasctl = crabass.dtnasctl
-               crapass.dsnacion = crabass.dsnacion
+               crapass.cdnacion = crabass.cdnacion
                crapass.dsproftl = crabass.dsproftl
                crapass.dtadmiss = crabass.dtadmiss
                crapass.dtdemiss = crabass.dtdemiss
@@ -973,7 +976,7 @@ PROCEDURE proc_duplica:
                    crapavt.cdufresd    = crabavt.cdufresd
                    crapavt.dtmvtolt    = crabavt.dtmvtolt
                    crapavt.cdcooper    = crabavt.cdcooper
-                   crapavt.dsnacion    = crabavt.dsnacion
+                   crapavt.cdnacion    = crabavt.cdnacion
                    crapavt.nrendere    = crabavt.nrendere
                    crapavt.complend    = crabavt.complend
                    crapavt.nmbairro    = crabavt.nmbairro
@@ -1007,7 +1010,7 @@ PROCEDURE proc_duplica:
                         crapttl.nmextttl = crapass.nmprimtl
                         crapttl.inpessoa = crapass.inpessoa
                         crapttl.nrcpfcgc = crapass.nrcpfcgc
-                        crapttl.dsnacion = crapass.dsnacion 
+                        crapttl.cdnacion = crapass.cdnacion 
                         crapttl.dtnasttl = crapass.dtnasctl
                         crapttl.cdsexotl = crabttl.cdsexotl
                         crapttl.cdgraupr = 0

@@ -8,6 +8,7 @@
  *
  *    ALTERAÇÕES: 29/10/2013 - Ajuste para alimentar o arrayAvalBusca somente se for encontrado algum 
 							   interveniente (Adriano).
+ *                08/05/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */
 ?>
  
@@ -67,6 +68,7 @@
 		echo 'arrayAvalBusca.length = 0;';
 			
 		echo 'arrayAvalBusca[\'nrctaava\'] = "'. getByTagName($avalista,'nrctaava').'" ;';
+		echo 'arrayAvalBusca[\'cdnacion\'] = "'. getByTagName($avalista,'cdnacion').'" ;';
 		echo 'arrayAvalBusca[\'dsnacion\'] = "'. getByTagName($avalista,'dsnacion').'" ;';
 		echo 'arrayAvalBusca[\'tpdocava\'] = "'. getByTagName($avalista,'tpdocava').'" ;';
 		echo 'arrayAvalBusca[\'nmconjug\'] = "'. getByTagName($avalista,'nmconjug').'" ;';
