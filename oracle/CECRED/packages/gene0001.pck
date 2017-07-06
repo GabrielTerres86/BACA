@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 09/05/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 29/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -29,6 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo  (Belli-Envolti)
   --  09/06/2017 - #660327 informa acesso dispara a procudere pc_set_modulo  (Belli-Envolti)
   --  16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal(Belli-Envolti)
+  --  29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -407,7 +408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 16/06/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 29/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -432,6 +433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --             09/06/2017 - #660327 Criada a procudere pc_set_moduloLe informação do modulo (Belli-Envolti)
   --             09/06/2017 - #660327 informa acesso dispara a procedure pc_set_modulo (Belli-Envolti)
   --             16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal (Belli-Envolti)
+  --             29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -2980,7 +2982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : pc_set_modulo
    Autor    : Cesar Belli
-   Data     : 09/06/2017                        Ultima atualizacao: 09/06/2017   
+   Data     : 09/06/2017                        Ultima atualizacao: 29/06/2017   
    Chamado  : 660327
 
    Dados referentes ao programa:
@@ -2989,15 +2991,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
    Objetivo  : Seta modulo e ação no banco de dados Oracle
 
    Alteracoes: 
+               29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
       
   ---------------------------------------------------------------------------------------------------------------*/
 
-    -- Limpar qualquer informação anterior
-    DBMS_APPLICATION_INFO.SET_MODULE('','');
-    -- Inclui na sessão o modulo em execução
-    -- Isto facilita monitoramento posterior
-    DBMS_APPLICATION_INFO.SET_MODULE(module_name => pr_module
+    if pr_module is null then
+      -- Limpar qualquer informação anterior
+      DBMS_APPLICATION_INFO.SET_ACTION('');
+      -- Isto facilita monitoramento posterior
+      DBMS_APPLICATION_INFO.SET_ACTION(action_name => pr_action);
+    else
+      -- Limpar qualquer informação anterior
+      DBMS_APPLICATION_INFO.SET_MODULE('','');
+      -- Isto facilita monitoramento posterior
+      DBMS_APPLICATION_INFO.SET_MODULE(module_name => pr_module
                                     ,action_name => pr_action);
+    end if;       
   END;
 
 --  
