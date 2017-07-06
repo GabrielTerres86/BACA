@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades de Pagamento de Titulos Lote
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao:  21/03/2017
+--  Data     : Abril/2014.                   Ultima atualizacao:  05/07/2017
 --
 -- Dados referentes ao programa:
 --
@@ -27,6 +27,8 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --
 --             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
 --
+--             05/07/2017 - Ajuste nas procedures pc_rejeitar_arq_pgto e pc_gerar_arq_log_pgto
+--                          para buscarem tambem arquivos com extensao .TXT gerados no sistema MATERA (Diego).
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno
@@ -4145,8 +4147,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Monta nome do Arquivo de Erro (.ERR)
     vr_nmarquivo_err := REPLACE(UPPER(pr_nmarquiv),'.REM','.ERR');
 
+	vr_nmarquivo_err := REPLACE(UPPER(vr_nmarquivo_err),'.TXT','.ERR');
+
     -- Monta nome do Arquivo de Log (.LOG)
     vr_nmarquivo_log := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	vr_nmarquivo_log := REPLACE(UPPER(vr_nmarquivo_log),'.TXT','.LOG');
 
     -- Verificar qual Tipo de Retorno o Cooperado Possui
     OPEN cr_crapcpt(pr_cdcooper => pr_cdcooper
@@ -4654,6 +4660,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
       -- Define nome do arquivo .LOG com base nome do Arquivo de Remessa
       vr_nmarquiv := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	  vr_nmarquiv := REPLACE(UPPER(vr_nmarquiv),'.TXT','.LOG');
 
       -- Define o diretório do arquivo
       vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop

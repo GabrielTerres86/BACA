@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS689(pr_cdcooper  IN craptab.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2014                     Ultima atualizacao: / /
+     Data    : Agosto/2014                     Ultima atualizacao: 04/07/2017
 
      Dados referentes ao programa:
 
@@ -23,7 +23,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS689(pr_cdcooper  IN craptab.cdcooper%T
 
      Observacoes:
 
-     Alteracoes:
+     Alteracoes: 04/07/2017 - Incluida busca por arquivos com extensao TXT 
+	                          gerados pelo sistema MATERA (Diego).
   ............................................................................. */
 
   -- CURSORES
@@ -74,6 +75,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS689(pr_cdcooper  IN craptab.cdcooper%T
   vr_array_arquivo gene0002.typ_split;
   vr_sort_arquivos typ_sortarq;
   vr_list_arquivos VARCHAR2(10000);
+  vr_list_arquivos_matera VARCHAR2(10000);
   -- Variável para formar chaves para collections
   vr_dschave       VARCHAR2(100);
   -- Variáveis para leitura
@@ -186,6 +188,33 @@ BEGIN
          vr_cdcritic := 0;
          RAISE vr_exc_proxcoop;
       END IF;
+
+	  -- Busca arquivos gerados no sistema MATERA
+	  vr_dsmascar      := lpad(rw_crapcop.cdcooper,3,'0') ||'.%.PGT%.TXT';
+
+      vr_list_arquivos := NULL;
+
+      -- Retorna a lista dos arquivos do diretório, conforme padrão *cdcooper*.*.rem
+      gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
+                                ,pr_pesq     => vr_dsmascar
+                                ,pr_listarq  => vr_list_arquivos_matera
+                                ,pr_des_erro => vr_dscritic);
+
+      -- Testar saida com erro
+      IF vr_dscritic IS NOT NULL THEN
+         -- Gerar exceção
+         vr_cdcritic := 0;
+         RAISE vr_exc_proxcoop;
+      END IF;
+
+	  IF   vr_list_arquivos_matera IS NOT NULL  THEN
+	       
+		   IF   vr_list_arquivos IS NOT NULL  THEN
+		        vr_list_arquivos := vr_list_arquivos ||',' || vr_list_arquivos_matera;
+		   ELSE
+		        vr_list_arquivos := vr_list_arquivos_matera;
+		   END IF;
+	  END IF;
 
       -- Verifica se retornou arquivos
       IF vr_list_arquivos IS NOT NULL THEN
