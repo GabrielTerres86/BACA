@@ -562,9 +562,9 @@ FORM SKIP
      tot_vlgerfac        FORMAT "->>,>>>,>>>,>>9.99"   AT 45
      tot_vlgerroc        FORMAT "->>,>>>,>>>,>>9.99"   AT 75
      WITH WIDTH 132 NO-BOX NO-LABELS FRAME f_total_tarifa.    
+*/
 
-
-ASSIGN glb_cdprogra = "crps548".
+ASSIGN glb_cdprogra = "crps548"
        glb_flgbatch = FALSE.
  
 
