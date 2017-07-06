@@ -661,6 +661,7 @@ DO WHILE TRUE:
                       aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
                                                           ,INPUT crawepr.nrdconta
                                                           ,INPUT crawepr.nrctrliq[aux_contador]
+														  ,INPUT 3
                                                           ,0
                                                           ,0
                                                           ,"").
@@ -1517,6 +1518,7 @@ DO WHILE TRUE:
          aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                              ,INPUT tel_nrdconta
                                              ,INPUT crabepr.nrctremp
+											 ,INPUT 3
                                              ,OUTPUT 0
                                              ,OUTPUT 0
                                              ,OUTPUT "").

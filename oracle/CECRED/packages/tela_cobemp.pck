@@ -1773,8 +1773,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
       -- Verifica contratos de acordo
       RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrdconta => pr_nrdconta                                       
                                        ,pr_nrctremp => pr_nrctremp
+                                       ,pr_cdorigem => 3
                                        ,pr_flgativo => vr_flgativo
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic);
@@ -4412,6 +4413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
           RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_tab_import(vr_index).cdcooper
                                            ,pr_nrdconta => vr_tab_import(vr_index).nrdconta
                                            ,pr_nrctremp => vr_tab_import(vr_index).nrctremp
+                                           ,pr_cdorigem => 3
                                            ,pr_flgativo => vr_flgativo
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);

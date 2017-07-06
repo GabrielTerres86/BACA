@@ -5420,6 +5420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
                                      ,pr_nrctremp => 0
+                                     ,pr_cdorigem => 0
                                      ,pr_flgativo => vr_flgativo
                                      ,pr_cdcritic => vr_cdcritic
                                      ,pr_dscritic => vr_dscritic);

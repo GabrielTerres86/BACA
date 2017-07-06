@@ -1365,6 +1365,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                                       ,INPUT par_nrdconta
                                                       ,INPUT par_nrctremp
+													  ,INPUT 3
                                                       ,0
                                                       ,0
                                                       ,"").
@@ -3530,6 +3531,7 @@ PROCEDURE valida-dados-gerais:
               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                         ,INPUT par_nrdconta
                         ,INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))
+						,INPUT 3
                         ,0
                         ,0
                         ,"").

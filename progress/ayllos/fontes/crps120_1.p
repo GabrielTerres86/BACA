@@ -195,6 +195,7 @@ DO WHILE TRUE:
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                         ,INPUT par_nrdconta
                                         ,INPUT par_nrctremp
+										,INPUT 3
                                         ,0
                                         ,0
                                         ,"").

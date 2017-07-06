@@ -4706,6 +4706,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                             aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                                                 ,INPUT tel_nrdctabb
                                                                 ,INPUT his_nrctremp
+																,INPUT 3
                                                                 ,OUTPUT 0
                                                                 ,OUTPUT 0
                                                                 ,OUTPUT "").
