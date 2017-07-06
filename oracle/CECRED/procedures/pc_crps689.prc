@@ -194,7 +194,6 @@ BEGIN
 
       vr_list_arquivos := NULL;
 
-      -- Retorna a lista dos arquivos do diretório, conforme padrão *cdcooper*.*.rem
       gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                                 ,pr_pesq     => vr_dsmascar
                                 ,pr_listarq  => vr_list_arquivos_matera
