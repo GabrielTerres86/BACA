@@ -31,12 +31,10 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
 							
 			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
-							com formato invalido. (Carlos Rafael Tanholi - SD 531031)                            
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 
                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
-                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                        
-
-                24/02/2017 - Melhoria 119 - Composicao saldo de fim de semana - Jean (Mout´S)							
+                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -437,7 +435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 17/11/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 06/07/2017
 
    Dados referentes ao programa:
 
@@ -707,7 +705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
               02/06/2016 - Adicionado validações Para melhorar desempenho da 
                            rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
-                          
+                           
               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                            desta package.(Carlos Rafael Tanholi).                              
                            
@@ -724,12 +722,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            pc_obtem_saldo_dia (Carlos)
                29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)
-
+			    
               06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).
 
                17/11/2016 - Correcao do cursor cr_crapepr removendo o comando NVL com intuito de
                							ganho em performance. SD 516113 (Carlos Rafael Tanholi)			  
+
+               23/02/2017 - Adicionado históricos de débito em c/c de recarga nas procedures
+							              pc_obtem_saldo_dia e pc_consulta_extrato. (PRJ321 Reinert)
+
+               07/03/2017 - Alteracao no texto da procedure pc_envia_extrato_email informando a 
+                            descontinuidade do extrato essa solicitacao partiu de uma necessidade de 
+                            performance sobre o crps217 (Carlos Rafael Tanholi)
+
+			   31/03/2017 - Melhoria 119 - inclusão de novos históricos para tratamento de saldo e extrato aos fins de semana
+			                (Jean / Mout´S)
+
+			   24/04/2017 - Nao considerar valores bloqueados para compor o saldo de Dep. a vista.
+			                Heitor (Mouts) - Melhoria 440
+											
+			   04/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
+				            pc_obtem_saldo_dia. (Reinert)
+
+			   15/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
+							pc_consulta_extrato. (Reinert)
+              
 
 ..............................................................................*/
 
@@ -781,7 +799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND ( pr_lsthistor_ret = ' ' OR ','||pr_lsthistor_ret||',' LIKE ('%,'||lcm.cdhistor||',%') );     --> Retornar quando passado         
   rw_craplcm_olt cr_craplcm_olt%ROWTYPE;    
           
-         
+
   -- Busca de lançamentos no periodo para a conta do associado
   CURSOR cr_craplcm_ign(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
                    ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Número da conta
@@ -844,6 +862,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND epr.nrdconta = pr_nrdconta
        AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
+
+	CURSOR cr_his_recarga(pr_cdhistor IN tbrecarga_operadora.cdhisdeb_cooperado%TYPE) IS
+	  SELECT 1
+		  FROM tbrecarga_operadora tope
+		 WHERE tope.flgsituacao = 1
+		   AND tope.cdhisdeb_cooperado = pr_cdhistor;
+	rw_his_recarga cr_his_recarga%ROWTYPE;
+  vr_cdpesqbb gene0002.typ_split;
 
   -- Gurdar o Progress Recid da tabela de saldo
   vr_progress_recid crapsda.progress_recid%TYPE;
@@ -977,6 +1003,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       FROM craphcb hcb,
            tbcrd_his_vinculo_bancoob tbcrd
      WHERE tbcrd.cdtrnbcb = hcb.cdtrnbcb;
+
+  -- Selecionar os códigos de históricos das operadoras ativas
+  CURSOR cr_operadoras IS
+	  SELECT DISTINCT(tope.cdhisdeb_cooperado)
+		  FROM tbrecarga_operadora tope
+		 WHERE tope.flgsituacao = 1;
 
   /* Tabelas de memória para guardar registros cfme estrutura das Temp Tables */
   vr_tab_extr typ_tab_extrato_conta;    --> tt-extrato_conta
@@ -1901,6 +1933,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_tariidx varchar2(11);
       -- Historicos 'de-para' Cabal
       vr_cdhishcb VARCHAR2(4000);
+			-- Históricos operadoras de celular
+			vr_cdhisope VARCHAR2(4000);
       -- Flag selecionar crapsda
       vr_crapsda BOOLEAN;
       vr_lscdhist_ret     VARCHAR2(1000);
@@ -2042,7 +2076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       /** que TODAY. Valido somente se par_dtrefere igual ao dia do feriado,**/
       /** sabado ou domingo.                                                **/
       /***********************************************************************/
-      IF vr_dtrefere > pr_rw_crapdat.dtmvtoan AND vr_dtrefere <= pr_rw_crapdat.dtmvtocd THEN
+      IF vr_dtrefere > pr_rw_crapdat.dtmvtoan AND vr_dtrefere < pr_rw_crapdat.dtmvtocd THEN
         -- Busca de dos lançamentos:
         -- --- ---------------------------------
         -- 316 SAQUE CARTAO
@@ -2125,7 +2159,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_cdhishcb := vr_cdhishcb || ',' || rw_craphcb.cdhistor;
         END LOOP;
 
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb; --> Lista com códigos de histórico a retornar         
+        -- Buscar os históricas de operadoras de celular
+        FOR rw_operadoras IN cr_operadoras LOOP
+					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
+				END LOOP;
+
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
@@ -2821,7 +2860,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  Depositos Identificados (Alisson - AMcom)
 
                     01/04/2015 - Ajuste na variavel vr_dshistor (Jean Michel).
-                    
+
                     17/05/2016 - Incluido tratamento para historico 1019 exibir o correta
                                  descrição no historico e para caso for um lançamento de 
                                  debito automatico concatenar com historico complementar
@@ -3166,6 +3205,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         END IF;
       END IF;
 
+      -- Verificar se histórico da lcm é algum histórico de recarga
+      OPEN cr_his_recarga(rw_craplcm.cdhistor);
+			FETCH cr_his_recarga INTO rw_his_recarga;
+
+      -- Se encontrou
+      IF cr_his_recarga%FOUND THEN
+				vr_cdpesqbb := gene0002.fn_quebra_string(rw_craplcm.cdpesqbb, ';');
+				vr_dsextrat := 'REC.CEL(' || vr_cdpesqbb(2) || ')';
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_his_recarga;
       -- Se foi um lançamento de pagamento de parcela
       IF rw_craplcm.nrparepr > 0 THEN
         -- Buscar destalhes do empréstimo
@@ -3189,6 +3239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                               ,pr_tab_extr  => pr_tab_extr
                               ,pr_des_chave => vr_ind_tab
                               ,pr_seq_reg   => vr_nrsequen);
+																														
         -- Finalmente cria o novo registro
         pr_tab_extr(vr_ind_tab).nrdconta := vr_nrdconta;
         pr_tab_extr(vr_ind_tab).dtmvtolt := vr_dtmvtolt;
@@ -3346,6 +3397,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_tariidx varchar2(11);
       -- Historicos 'de-para' Cabal
       vr_cdhishcb VARCHAR2(4000);
+			-- Históricos operadoras de celular
+			vr_cdhisope VARCHAR2(4000);			
       --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
 
@@ -3593,7 +3646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       /** Valido somente se par_dtfimper igual ao dia do feriado, sabado ou **/
       /** domingo.                                                          **/
       /***********************************************************************/
-      IF pr_dtfimper > pr_rw_crapdat.dtmvtoan AND pr_dtfimper <= pr_rw_crapdat.dtmvtocd THEN
+      IF pr_dtfimper > pr_rw_crapdat.dtmvtoan AND pr_dtfimper < pr_rw_crapdat.dtmvtocd THEN
         -- Busca de dos lançamentos:
         -- --- ---------------------------------
         -- 316 SAQUE CARTAO
@@ -3622,12 +3675,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_cdhishcb := vr_cdhishcb || ',' || rw_craphcb.cdhistor;
         END LOOP;
 
+        -- Buscar os históricas de operadoras de celular
+        FOR rw_operadoras IN cr_operadoras LOOP
+					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
+				END LOOP;
 
 
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
-                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb) LOOP --> Lista com códigos de histórico a retornar
+                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
           -- Se for uma transferencia agendada, nao compor saldo
           IF NOT( (rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
@@ -3973,8 +4030,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --                20/01/2014 - Não remover o arquivo na solicitação de e-mail (Marcos-Supero)
     --
     --                22/09/2014 - Adicionado observacao no corpo de e-mail (Daniele).
-
-
+    --
+    --                07/03/2017 - Alteracao no texto informando a descontinuidade do extrato	
+    --                             essa solicitacao partiu de uma necessidade de performance 
+    --                             sobre o crps217 (Carlos Rafael Tanholi)
+    --                              
+    --
     DECLARE
       -- Período do extrato
       vr_dsperiod VARCHAR2(400);
@@ -4333,12 +4394,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
             -- Montagem do corpo do e-mail
             vr_dscorpo := 'Prezado (a) Cooperado (a),<br><br>'
-                       || 'Você esta recebendo o extrato da sua conta. Para visualiza-lo, clique no arquivo anexo<br>'
-                       || 'e digite sua senha. A senha é a mesma utilizada no tele-atendimento. Se voce ainda nao possui<br>'
-                       || 'esta senha, dirija-se ao seu Posto de Atendimento para cadastrar uma.<br><br>'
-                       || 'Se você preferir cancelar o recebimento, basta acessar sua conta no site da cooperativa, opcao de '
-                       || 'Informativos/Recebimento, ou entrar em contato com o Posto de Atendimento onde voce movimenta sua conta.<br><br>'
-                       || 'OBS.: Esta mensagem foi enviada automaticamente, em caso de duvidas entre em contato com sua cooperativa!<br><br>'
+            
+                       || 'O serviço de envio de extrato por e-mail será suspenso a partir do mês de junho.<br>'
+                       || 'Utilize os canais de autoatendimento da sua cooperativa para continuar tendo acesso ao seu extrato. '
+                       || 'Você pode consultá-lo por meio dos Caixas Eletrônicos, Conta Online ou ainda pelo aplicativo CECRED Mobile.<br><br>'
+
+                       || 'Caso tenha dúvidas em relação ao acesso a esses canais, entre em contato com o SAC: 0800 647 2200 ou com seu posto de atendimento.<br><br>'
+
+                       || 'Você está recebendo o extrato da sua conta. Para visualizá-lo, clique no arquivo anexo e digite sua senha. A senha é a mesma utilizada no tele-atendimento.<br><br>'
+                       
+                       || 'OBS.: Esta mensagem foi enviada automaticamente, em caso de dúvidas entre em contato com sua cooperativa!<br><br>'
                        || 'Atenciosamente,<br>'
                        || pr_nmrescop||'.';
             -- Enviar por e-mail o arquivo gerado
@@ -6166,7 +6231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
      Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
 
-	             03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
+                 03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
                               Projeto 299/3 - Pre Aprovado (Lombardi)
     ..............................................................................*/
 
@@ -6484,8 +6549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_vlacerto := vr_vlacerto;
     END IF;
 
-    vr_vlstotal := nvl(vr_vlsddisp,0) + nvl(vr_vlsdbloq,0) + nvl(vr_vlsdblpr,0) +
-                    nvl(vr_vlsdblfp,0) + nvl(vr_vlsdchsl,0);
+    vr_vlstotal := nvl(vr_vlsddisp,0) + nvl(vr_vlsdchsl,0);
     vr_vlblqjud := 0;
     vr_vlresblq := 0;
 
@@ -6507,7 +6571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     pr_tab_saldos(vr_ind).vlsdblpr := vr_vlsdblpr;
     pr_tab_saldos(vr_ind).vlsdblfp := vr_vlsdblfp;
     pr_tab_saldos(vr_ind).vlsdchsl := vr_vlsdchsl;
-    pr_tab_saldos(vr_ind).vlstotal := vr_vlsdchsl + vr_vlsdblfp + vr_vlsdblpr + vr_vlsdbloq + vr_vlsddisp;
+    pr_tab_saldos(vr_ind).vlstotal := vr_vlsdchsl + vr_vlsddisp;
     pr_tab_saldos(vr_ind).vlsaqmax := vr_vlsaqmax;
     pr_tab_saldos(vr_ind).vlacerto := vr_vlacerto;
     pr_tab_saldos(vr_ind).vllimcre := rw_crapass.vllimcre;
@@ -6894,7 +6958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_dscritic:= 'Erro na extr0001.pc_consulta_extrato_car --> '|| SQLERRM;
 
   END pc_consulta_extrato_car;  
-
+  
   --> Rotina para obter as medias dos cooperados
   PROCEDURE pc_obtem_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                              ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
