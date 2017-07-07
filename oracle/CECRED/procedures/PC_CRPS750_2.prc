@@ -151,6 +151,20 @@ BEGIN
          AND ret.flcredit = 0;
     rw_ret cr_ret%ROWTYPE;
     
+   -- Consulta contratos ativos de acordos
+   CURSOR cr_ctr_acordo IS
+   SELECT tbrecup_acordo_contrato.nracordo
+         ,tbrecup_acordo.cdcooper
+         ,tbrecup_acordo.nrdconta
+         ,tbrecup_acordo_contrato.nrctremp
+     FROM tbrecup_acordo_contrato
+     JOIN tbrecup_acordo
+       ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo
+    WHERE tbrecup_acordo.cdsituacao = 1
+      AND tbrecup_acordo_contrato.cdorigem IN (2,3);
+
+   rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
+   
     --tabela de Memoria dos detalhes de emprestimo
     vr_tab_crawepr EMPR0001.typ_tab_crawepr;
 
@@ -165,6 +179,10 @@ BEGIN
 
     /* Tabela de Memoria de Calculados */
     vr_tab_calculado empr0001.typ_tab_calculado;
+
+    /* Contratos de acordo */
+    TYPE typ_tab_acordo   IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
+    vr_tab_acordo   typ_tab_acordo;
 
     --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -191,6 +209,7 @@ BEGIN
     vr_anorefju INTEGER;
     vr_flgpripr BOOLEAN;
 
+    vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
     --Variaveis de Indices
        vr_index_crawepr VARCHAR2(30);
     vr_index_pgto_parcel PLS_INTEGER;
@@ -339,6 +358,14 @@ BEGIN
 
     --Limpar Tabela
     pc_limpa_tabela;
+
+      -- Carregar Contratos de Acordos
+    FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
+      vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
+                     LPAD(rw_ctr_acordo.nrctremp,10,'0');
+      vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
+    END LOOP;
+
 
     -- Parametro de bloqueio de resgate de valores em c/c
     -- ref ao pagto de contrato com boleto (Projeto 210)
@@ -549,6 +576,14 @@ BEGIN
 
           END IF;
 
+          -- Verifica acordos
+          vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                         LPAD(rw_crappep.nrctremp,10,'0');
+
+          IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+            vr_flgpagpa := FALSE;
+          END IF;
+
 
           /* Sem valor suficiente para pagar parcela ou parcela ja liquidada */
           IF NOT vr_flgpagpa THEN
@@ -741,6 +776,15 @@ BEGIN
           END IF;
 
         END IF;
+
+        -- verifica acordos
+        vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                       LPAD(rw_crappep.nrctremp,10,'0');
+
+        IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+          vr_vlsomato := 0;
+        END IF;
+
 
         IF vr_vlsomato <= 0 THEN
           /* Sem nada para pagar */
