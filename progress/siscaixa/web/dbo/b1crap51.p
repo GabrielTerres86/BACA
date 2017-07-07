@@ -165,7 +165,7 @@
                01/06/2017 - Incluso tratativa para critica 757 apenas quando 
 			                cheque nao estiver descontado. (Daniel)	
                             
-               21/06/2017 - Substituidos os históricos 3 e 4 pelo histórico 6-DEPOSITO BLOQ. 
+               21/06/2017 - Substituidos os históricos 3 e 4 pelo histórico 2433-DEPOSITO BLOQ. 
                             PRJ367 - Compe Sessao Unica (Lombardi)
                
 ............................................................................. */
@@ -1337,7 +1337,7 @@ PROCEDURE valida-deposito-com-captura:
     IF   aux_nrctcomp > 0   THEN
          ASSIGN i-cdhistor = 386.
     ELSE
-         ASSIGN i-cdhistor = 6.
+         ASSIGN i-cdhistor = 2433.
 
     FIND craphis WHERE craphis.cdcooper = crapcop.cdcooper   AND
                        craphis.cdhistor = i-cdhistor
@@ -2241,7 +2241,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
     IF   aux_nrctcomp > 0   THEN
          ASSIGN i-cdhistor = 386.
     ELSE
-         ASSIGN i-cdhistor = 6.
+         ASSIGN i-cdhistor = 2433.
 
     FIND craphis WHERE craphis.cdcooper = crapcop.cdcooper   AND
                        craphis.cdhistor = i-cdhistor
@@ -3289,7 +3289,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
     IF   aux_nrctcomp > 0   THEN
          ASSIGN i-cdhistor = 386.
     ELSE
-         ASSIGN i-cdhistor = 6.
+         ASSIGN i-cdhistor = 2433.
 
     FIND craphis WHERE craphis.cdcooper = crabcop.cdcooper   AND
                        craphis.cdhistor = i-cdhistor
@@ -4425,7 +4425,7 @@ PROCEDURE atualiza-deposito-com-captura:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 6
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -4446,7 +4446,7 @@ PROCEDURE atualiza-deposito-com-captura:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 6
+              crapdpb.cdhistor = 2433
               crapdpb.nrdocmto = INT(c-docto)
               crapdpb.dtmvtolt = crapdat.dtmvtolt
               crapdpb.cdagenci = p-cod-agencia
@@ -5477,7 +5477,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 6
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -5499,7 +5499,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 6
+              crapdpb.cdhistor = 2433
               crapdpb.nrdocmto = INT(c-docto)
               crapdpb.dtmvtolt = crapdat.dtmvtolt
               crapdpb.cdagenci = p-cod-agencia
@@ -6612,7 +6612,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 6
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -6634,7 +6634,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 6
+              crapdpb.cdhistor = 2433
               crapdpb.nrdocmto = INT(c-docto)
               crapdpb.dtmvtolt = crapdat.dtmvtolt
               crapdpb.cdagenci = p-cod-agencia

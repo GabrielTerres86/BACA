@@ -1236,8 +1236,8 @@ BEGIN
             IF rw_crapdpb.dtliblan <= rw_crapdat.dtmvtolt THEN
               vr_cdhistor := 351; --CH.DEV.CUST.
             ELSE
-              -- 6-DEPOSITO BLOQ / 1523-DEP. INTERCOOP
-              IF rw_crapdpb.cdhistor = 6 THEN 
+              -- 2433-DEPOSITO BLOQ / 1523-DEP. INTERCOOP
+              IF rw_crapdpb.cdhistor = 2433 THEN 
                 vr_cdhistor := 24;
               ELSIF rw_crapdpb.cdhistor = 1523 THEN
                 vr_cdhistor := 27;
