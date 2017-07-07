@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 12/04/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 07/07/2017
 
    Dados referentes ao programa:
 
@@ -677,6 +677,10 @@
                      altera-valor-proposta, atualiza-dados-avalista-proposta
                      Substituicao do 'LEAVE Grava' ou 'LEAVE Grava_valor' por 'RETURN NOK' em algumas situacoes
                      Chamado 660371 - Ana (Envolti)
+
+              07/07/2017 - Nao permitir utilizar linha 100, quando possuir acordo
+                           de estouro de conta ativo. (Jaison/James)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3488,6 +3492,46 @@ PROCEDURE valida-dados-gerais:
                  ASSIGN aux_dscritic =
                          "Linha de credito bloqueada. Migracao de PA.".
                  LEAVE.
+             END.
+
+        /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
+        IF   par_cdlcremp = 100  THEN
+             DO:
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                 /* Verifica se ha contratos de acordo */
+                 RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                     ,INPUT par_nrdconta
+                                                     ,INPUT par_nrdconta
+                                                     ,INPUT 1
+                                                     ,0
+                                                     ,0
+                                                     ,"").
+
+                 CLOSE STORED-PROC pc_verifica_acordo_ativo
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                 ASSIGN aux_flgativo = 0
+                        aux_cdcritic = 0
+                        aux_dscritic = ""
+                        aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                        aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                        aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo) WHEN pc_verifica_acordo_ativo.pr_flgativo <> ?.
+                                  
+                  IF   aux_cdcritic > 0   OR
+                       (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+                       DO:
+                           LEAVE.
+                       END.
+                                
+                  IF   aux_flgativo = 1  THEN
+                       DO:
+                           ASSIGN aux_dscritic = "Operacao nao permitida, conta corrente esta em acordo.".
+                           LEAVE.
+                       END.
              END.
 
         FIND craplcr WHERE craplcr.cdcooper = par_cdcooper   AND
