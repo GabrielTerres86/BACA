@@ -211,7 +211,7 @@
                            (Lucas Ranghetti #620180)
                            
               13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
-                           Fraudes/Impedimentos e remoçao do processo de devoluçao de Cheques.
+                           Fraudes/Impedimentos e remoçao do processo de devoluçao VLB.
                            PRJ367 - Compe Sessao Unica (Lombardi)
               
 ..............................................................................*/
@@ -228,7 +228,7 @@ DEF INPUT  PARAM p-cddevolu AS INT                                   NO-UNDO.
    6 = 2a EXECUCAO (CECRED)
 */
 
-{ includes/var_batch.i "new"}   
+{ includes/var_batch.i }   
 { sistema/generico/includes/var_internet.i }
 
 DEF STREAM str_1. /* Relatorios */
@@ -350,15 +350,14 @@ ASSIGN glb_cdprogra = "crps264"
        glb_flgbatch = false.
 
 RUN fontes/iniprg.p.
-/*
+
 IF   glb_cdcritic > 0 THEN
     RETURN.
-  */
+
 /*Devido a mudancas na tela PRCCTL que podera ser acessada
  por outras coops alem da CECRED é necessario que este
  ASSIGN permaneça para um funcionamento correto*/
-ASSIGN glb_cdcooper = 3
-       glb_dtmvtolt = 01/25/2017.
+ASSIGN glb_cdcooper = 3.
   
 IF   glb_inrestar > 0   AND   glb_nrctares = 0   THEN
      glb_inrestar = 0.

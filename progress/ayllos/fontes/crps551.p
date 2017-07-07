@@ -184,7 +184,7 @@ DEF STREAM str_1.   /* Relatorio */
 { sistema/generico/includes/var_oracle.i }
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
-DEF        VAR rel_nmrelato AS CHAR    FORMAT "x(40)" EXTENT 10       NO-UNDO.
+DEF        VAR rel_nmrelato AS CHAR    FORMAT "x(40)" EXTENT 5       NO-UNDO.
 DEF        VAR rel_nrmodulo AS INT     FORMAT "9"                    NO-UNDO.
 DEF        VAR rel_nmmodulo AS CHAR    FORMAT "x(15)" EXTENT 5
                                INIT ["DEP. A VISTA   ","CAPITAL        ",
@@ -295,9 +295,6 @@ ASSIGN glb_cdprogra = "crps551"
        glb_flgbatch = false.
        
 RUN fontes/iniprg.p.
-
-ASSIGN glb_cdcritic = 0.
-rel_nmrelato[1] = "teste".
 
 IF   glb_cdcritic > 0 THEN
      RETURN.
@@ -416,7 +413,7 @@ UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - "
 /* GERAR RELATORIO */
 
 ASSIGN aux_nmarqimp    = "rl/crrl541.lst"
-       glb_cdrelato[1] = 541
+       glb_cdrelato[2] = 541
        glb_cdempres    = 11.
        
 { includes/cabrel132_1.i }
