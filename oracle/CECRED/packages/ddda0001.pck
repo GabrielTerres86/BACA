@@ -3560,6 +3560,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                              ,pr_idtitleg   => pr_idtitleg          --> Identificador do titulo no legado
                              ,pr_idopeleg   => pr_idopeleg          --> Identificador da operadao do legado
                              ,pr_iddopeJD   => pr_iddopeJD);        --> Identificador da operadao da JD                                   
+                             
+      --> Atualizar informações do boleto
+      BEGIN
+        UPDATE crapcob cob
+           SET cob.nratutit = nvl(pr_nratutit,cob.nratutit)
+              ,cob.ininscip = 2
+         WHERE cob.rowid    = rw_crapcob.rowidcob;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar CRAPCOB: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;                                                                      
       
     END IF;
             
@@ -3687,6 +3699,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                              ,pr_idtitleg   => pr_idtitleg          --> Identificador do titulo no legado
                              ,pr_idopeleg   => pr_idopeleg          --> Identificador da operadao do legado
                              ,pr_iddopeJD   => pr_iddopeJD);        --> Identificador da operadao da JD                                   
+                             
+      --> Atualizar informações do boleto
+      BEGIN
+        UPDATE crapcob cob
+           SET cob.ininscip = 2
+         WHERE cob.rowid    = rw_crapcob.rowidcob;
+         
+         dbms_output.put_line(rw_crapcob.rowidcob);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar CRAPCOB: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;                                         
       
     END IF;
             
