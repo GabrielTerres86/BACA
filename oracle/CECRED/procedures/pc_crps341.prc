@@ -11,7 +11,7 @@ BEGIN
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Edson
-    Data    : Abril/2003                      Ultima atualizacao: 20/06/2016
+    Data    : Abril/2003                      Ultima atualizacao: 07/07/2017
 
     Dados referentes ao programa:
 
@@ -105,6 +105,10 @@ BEGIN
 
 
                 20/06/2016 - Ajuste para não parar o processo em caso de contas em prejuizo (Daniel - Cecred) 
+                
+                07/07/2017 - #703725 Uso da variável vr_dscritic no lugar de pr_dscritic para logar as críticas
+                             corretamente; e tratamento para ir para o próximo registro do cr_craplau ao invés de 
+                             sair do looping (Carlos)
   ............................................................................. */
   DECLARE
     --Busca os dados da cooperativa
@@ -341,11 +345,10 @@ BEGIN
       pr_des_reto := 'OK';
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic > 0 AND
-           vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
         -- Gerar rotina de gravação de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
                               pr_cdagenci => pr_cdagenci,
@@ -586,11 +589,10 @@ BEGIN
       pr_des_reto := 'OK';
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic > 0 AND
-           vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
         -- Gerar rotina de gravação de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
                               pr_cdagenci => nvl(rw_craplot.cdagenci, 0),
@@ -600,11 +602,10 @@ BEGIN
                               pr_dscritic => vr_dscritic,
                               pr_tab_erro => pr_tab_erro);
       WHEN vr_exc_log THEN
-        IF vr_cdcritic > 0 AND
-           vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
         -- Gera log do erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                    pr_ind_tipo_log => 2, -- Erro tratado
@@ -1324,11 +1325,10 @@ BEGIN
       pr_des_reto := 'OK';
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic > 0 AND
-           vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
         pr_des_reto := 'NOK';
         -- Gerar rotina de gravação de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
@@ -1339,6 +1339,10 @@ BEGIN
                               pr_dscritic => vr_dscritic,
                               pr_tab_erro => pr_tab_erro);
       WHEN OTHERS THEN
+        
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper,
+                                     pr_compleme => 'Conta:' || pr_nrdconta);
+      
         vr_dscritic := 'pc_proc_trata_desconto --> Erro não tratado ao processar tratamento de desconto de cheques:' || 'Conta:' || pr_nrdconta ||
                        '.Detalhes:' || sqlerrm;
         pr_des_reto := 'NOK';
@@ -1449,8 +1453,8 @@ BEGIN
                                    pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic || ' CONTA = ' || gene0002.fn_mask_conta(vr_nrdconta));
       --  IF vr_cdcritic = 251 OR
       --     vr_cdcritic = 95 THEN
-          vr_cdcritic := 0;
-          CONTINUE;
+        vr_cdcritic := 0;
+        CONTINUE;
       --  END IF;
       --  RAISE vr_exc_saida;
       END IF;
@@ -1478,11 +1482,11 @@ BEGIN
       IF vr_des_reto <> 'OK' THEN
         IF vr_tab_erro.COUNT > 0 THEN
           -- Montar erro
-          pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
         ELSE
           -- Por algum motivo retornou erro mais a tabela veio vazia
-          pr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada proc_trata_desconto';
+          vr_dscritic := 'Tab.Erro vazia - não é possível retornar o erro da chamada proc_trata_desconto';
         END IF;
         IF vr_cdcritic > 0 AND
            vr_cdcritic <> 777 THEN
@@ -1493,7 +1497,10 @@ BEGIN
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                    pr_ind_tipo_log => 2, -- Erro tratado
                                    pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic || ' CONTA = ' || gene0002.fn_mask_conta(vr_nrdconta));
-        RAISE vr_exc_saida;
+        
+        vr_cdcritic := 0;
+        vr_dscritic := '';
+        CONTINUE; -- Próximo craplau
       END IF;
     END LOOP;
     -- Tratamento de cheques de contas migradas
@@ -1642,15 +1649,12 @@ BEGIN
         dbms_lob.close(vr_dsxmldad);
         dbms_lob.freetemporary(vr_dsxmldad);
       end if;
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND
-         vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
+
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
       -- Se foi gerada critica para envio ao log
-      IF vr_cdcritic > 0 OR
-         vr_dscritic IS NOT NULL THEN
+      IF vr_dscritic IS NOT NULL THEN
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                    pr_ind_tipo_log => 2, -- Erro tratado
@@ -1670,19 +1674,19 @@ BEGIN
         dbms_lob.close(vr_dsxmldad);
         dbms_lob.freetemporary(vr_dsxmldad);
       end if;
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND
-         vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
+
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
       -- Devolvemos código e critica encontradas
-      pr_cdcritic := NVL(vr_cdcritic,
-                         0);
+      pr_cdcritic := NVL(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
+
+      cecred.pc_internal_exception(pr_cdcooper);
+
       -- Liberando a memoria alocada pro CLOB
       if nvl(length(vr_dsxmldad), 0) > 0 then
         dbms_lob.close(vr_dsxmldad);
@@ -1695,4 +1699,4 @@ BEGIN
       ROLLBACK;
   END;
 END PC_CRPS341;
-
+/
