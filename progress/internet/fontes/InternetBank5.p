@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 20/04/2017
+   Data    : Marco/2007                        Ultima atualizacao: 05/07/2017
 
    Dados referentes ao programa:
 
@@ -45,20 +45,23 @@
                             do XML. (Projeto Boleto formato carne - Douglas)
 
                04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel) 
-			   
-			   15/08/2016 - Removido validacao de convenio na consulta da tela
-							manutencao, conforme solicitado no chamado 497079.
-							(Kelvin)
+                           
+                           15/08/2016 - Removido validacao de convenio na consulta da tela
+                                                        manutencao, conforme solicitado no chamado 497079.
+                                                        (Kelvin)
 
-			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+                           03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
                02/01/2017 - Melhorias referentes a performance no IB na parte 
-			                de cobrança, incluido flprotes no xml de retorno
-							(Tiago/Ademir SD573538).  		
+                                        de cobrança, incluido flprotes no xml de retorno
+                                                        (Tiago/Ademir SD573538).                  
 
                20/04/2017 - Adicionado vencimento original (dtvctori) e 
                             flag de boleto dda (flgcbdda) no xml de retorno
                             (P340 - Rafael)
+														
+							 05/07/2017 - Ajuste da flgcbdda, inserido condicao de ROLLOUT,
+													  Prj. 340 (Jean Michel)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -104,6 +107,11 @@ DEF VAR aux_nmprimtl_ben LIKE crapass.nmprimtl                         NO-UNDO.
 DEF VAR aux_nrcpfcgc_ben LIKE crapass.nrcpfcgc                         NO-UNDO.
 DEF VAR aux_inpessoa_ben LIKE crapass.inpessoa                         NO-UNDO.
 DEF VAR aux_dsdemail_ben LIKE crapcem.dsdemail                         NO-UNDO.
+
+/* Variaveis de ROLLOUT */
+DEF VAR aux_dstextab LIKE craptab.dstextab                             NO-UNDO.
+DEF VAR aux_dtmvtolt LIKE crapdat.dtmvtolt                             NO-UNDO.
+DEF VAR aux_vltitulo LIKE crapcob.vltitulo                             NO-UNDO.
 
 /* determinando tipo de consulta */
 IF par_flgregis = 1 THEN
@@ -263,6 +271,35 @@ ASSIGN xml_operacao.dslinxml = "<DADOS><intipcob>" +
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<DADOS_BOLETOS>".
 
+FIND craptab WHERE craptab.cdcooper = par_cdcooper  
+               AND craptab.nmsistem = "CRED"         
+               AND craptab.tptabela = "GENERI"       
+               AND craptab.cdempres = 0              
+               AND craptab.cdacesso = "ROLLOUT_CIP_PAG"  
+               AND craptab.tpregist = 0 NO-LOCK NO-ERROR.
+
+
+IF  NOT AVAILABLE craptab   THEN
+    DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                
+        IF  AVAILABLE tt-erro  THEN
+            aux_dscritic = tt-erro.dscritic.
+        ELSE
+            aux_dscritic = "Nao foi possivel consultar ROLLOUT.".
+                    
+        xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+                
+        RETURN "NOK".     
+
+    END.
+ELSE 
+    DO:
+       ASSIGN aux_dstextab = craptab.dstextab
+              aux_dtmvtolt = DATE(ENTRY(1,aux_dstextab,";"))
+              aux_vltitulo = DEC(ENTRY(2,aux_dstextab,";")).
+    END.
+
 FOR EACH tt-consulta-blt NO-LOCK:
 
     ASSIGN aux_nmprimtl_ben = tt-consulta-blt.nmprimtl
@@ -412,7 +449,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<vltitulo_atualizado>" + STRING(tt-consulta-blt.vltitulo_atualizado,"zzzzzzzzz9.99") + "</vltitulo_atualizado>" +
                                     "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
                                     "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
-									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
+                                                                        "<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
                                     /* Aviso SMS */
                                     "<inavisms>" + STRING(tt-consulta-blt.inavisms) + "</inavisms>" +
                                     "<insmsant>" + STRING(tt-consulta-blt.insmsant) + "</insmsant>" +
@@ -423,9 +460,9 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                         tt-consulta-blt.dtvencto 
                                       ELSE 
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
-                                   "<flgcbdda>" + tt-consulta-blt.flgcbdda + "</flgcbdda>" +
-                                   "</BOLETO>".
-
+                                   "<flgcbdda>" + (IF (tt-consulta-blt.dtmvtolt >= aux_dtmvtolt AND tt-consulta-blt.vltitulo >= aux_vltitulo) THEN "S" ELSE "N") + "</flgcbdda>" +
+                                   "</BOLETO>".       
+  
 END.
 
 CREATE xml_operacao.
