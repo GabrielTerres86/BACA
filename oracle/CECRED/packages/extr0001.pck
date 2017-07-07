@@ -435,7 +435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 04/05/2017
+    Data     : Dezembro/2012.                   Ultima atualizacao: 06/07/2017
 
    Dados referentes ao programa:
 
@@ -747,6 +747,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
 			   15/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
 							pc_consulta_extrato. (Reinert)
+              
+         06/07/2017 - #707230 Forçando o index craplcm##craplcm2 no cursor cr_craplcm_ign (Carlos)
 
 ..............................................................................*/
 
@@ -801,11 +803,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
   -- Busca de lançamentos no periodo para a conta do associado
   CURSOR cr_craplcm_ign(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
-                   ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Número da conta
-                   ,pr_dtiniper  IN crapdat.dtmvtolt%TYPE  --> Data movimento inicial
-                   ,pr_dtfimper  IN crapdat.dtmvtolt%TYPE  --> Data movimento final
+                       ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Número da conta
+                       ,pr_dtiniper  IN crapdat.dtmvtolt%TYPE  --> Data movimento inicial
+                       ,pr_dtfimper  IN crapdat.dtmvtolt%TYPE  --> Data movimento final
                        ,pr_cdhistor_ign IN craplcm.cdhistor%TYPE) IS
-    SELECT lcm.nrdconta
+    SELECT /*+ index (lcm CRAPLCM##CRAPLCM2) */ 
+           lcm.nrdconta
           ,lcm.nrdolote
           ,lcm.dtmvtolt
           ,lcm.cdagenci
@@ -861,7 +864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND epr.nrdconta = pr_nrdconta
        AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
-	
+
 	CURSOR cr_his_recarga(pr_cdhistor IN tbrecarga_operadora.cdhisdeb_cooperado%TYPE) IS
 	  SELECT 1
 		  FROM tbrecarga_operadora tope
@@ -2040,10 +2043,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END IF;
       -- Busca de todos os lançamentos
       FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
-                                  ,pr_nrdconta => pr_nrdconta           --> Número da conta
-                                  ,pr_dtiniper => rw_crapsda.dtmvtolt+1 --> Data do saldo da conta + 1 dia, para não trazer ele
-                                  ,pr_dtfimper => vr_dtrefere           --> Data movimento final processado acima
-                                  ,pr_cdhistor_ign => '289') LOOP      --> Lista com códigos de histórico a ignorar
+                                          ,pr_nrdconta => pr_nrdconta           --> Número da conta
+                                          ,pr_dtiniper => rw_crapsda.dtmvtolt+1 --> Data do saldo da conta + 1 dia, para não trazer ele
+                                          ,pr_dtfimper => vr_dtrefere           --> Data movimento final processado acima
+                                          ,pr_cdhistor_ign => 289) LOOP         --> Código de histórico a ignorar
         -- Chama rotina que compõe o saldo do dia
         pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_ign.vllanmto
                            ,pr_inhistor => rw_craplcm_ign.inhistor
@@ -3575,11 +3578,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
     
       -- Busca de todos os lançamentos
-      FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper  --> Cooperativa conectada
-                                  ,pr_nrdconta => pr_nrdconta      --> Número da conta
-                                  ,pr_dtiniper => vr_dtiniper      --> Data movimento inicial
-                                  ,pr_dtfimper => vr_dtfimper      --> Data movimento final
-                                          ,pr_cdhistor_ign => '289') LOOP  --> Lista com códigos de histórico a ignorar
+      FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
+                                          ,pr_nrdconta => pr_nrdconta    --> Número da conta
+                                          ,pr_dtiniper => vr_dtiniper    --> Data movimento inicial
+                                          ,pr_dtfimper => vr_dtfimper    --> Data movimento final
+                                          ,pr_cdhistor_ign => 289) LOOP  --> Código do histórico a ignorar
         -- Chama rotina que gera-registro-extrato na temp-table
         pc_gera_registro_extrato(pr_cdcooper     => pr_cdcooper   --> Cooperativa conectada
                                 ,pr_rowid        => rw_craplcm_ign.rowid --> Registro buscado da craplcm
@@ -3678,6 +3681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FOR rw_operadoras IN cr_operadoras LOOP
 					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
 				END LOOP;
+
 
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta

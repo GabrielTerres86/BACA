@@ -2430,7 +2430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             cxon0020.pc_executa_envio_ted(
                                  pr_cdcooper => rw_ted.cdcooper  --> Cooperativa    
                                 ,pr_cdagenci => 1  --> Agencia
-                                ,pr_nrdcaixa => 1  --> Caixa Operador    
+                                ,pr_nrdcaixa => 900  --> Caixa Operador    
                                 ,pr_cdoperad => '1'  --> Operador Autorizacao
                                 ,pr_idorigem => 1 -- Alterado por Andrino para ajuste no LOGSPB 7 --Batch --> Origem                 
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data do movimento

@@ -1052,7 +1052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            AND tab.tpregist        = pr_tpregist;
     BEGIN
       -- Se a tabela com as informações de valor por coop estiver vazia
-      IF vr_vet_vlrating.COUNT = 0 THEN
+      IF NOT vr_vet_vlrating.EXISTS(pr_cdcooper) THEN
         -- Busca de todos registros para atualizar o vetor
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
                                     ,pr_tptabela => 'GENERI'
