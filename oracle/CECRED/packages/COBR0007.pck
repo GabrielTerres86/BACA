@@ -326,6 +326,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           ,cob.insmsant
           ,cob.insmsvct
           ,cob.insmspos
+          ,cob.flserasa
+          ,cob.qtdianeg
           ,cob.vlminimo
           ,cob.inpagdiv
           ,cob.rowid
@@ -514,6 +516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                    ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                    ,pr_cdcritic => vr_cdcritic     --Codigo do erro
                                    ,pr_dscritic => vr_dscritic);   --Descricao do erro
+                                   
       --Se ocorreu erro
       IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         --levantar Excecao
@@ -8159,6 +8162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --               20/05/2017 - Ajustado parametro flgdprot para 0 quando enviar informacao a CIP
     --                            de um titulo DDA ao cancelar protesto (P340 - NPC - Rafael)
     --
+    --               09/06/2017 - Ajustar para tratar as negativacoes do serasa (Douglas - Melhoria 271.2)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -8214,6 +8218,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     rw_crapret    COBR0007.cr_crapret%ROWTYPE;
     -- Registro de Cadastro de Cobranca
     rw_crapcco    COBR0007.cr_crapcco%ROWTYPE;
+    -- Registro de Data
+    rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE;
 
     --Tabelas de Memoria de Remessa
     vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
@@ -8223,6 +8229,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_nrseqreg     INTEGER;
     vr_rowid_ret    ROWID;
     vr_index_lat    VARCHAR2(60);
+
+    -- Identificar se o boleto possui Negativacao Serasa
+    vr_is_serasa    BOOLEAN;
 
   BEGIN
     --Inicializa variaveis erro
@@ -8289,7 +8298,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;
     END IF;
 
+    -- Verificamos se o boleto possui Negativacao no Serasa
+    IF rw_crapcob.flserasa = 1 AND 
+       rw_crapcob.qtdianeg > 0 THEN
+      -- Sera tratado como Negativacao Serasa
+      vr_is_serasa := TRUE;
+    ELSE 
+      -- Sera tratado como Protesto
+      vr_is_serasa := FALSE;
+    END IF;
+
     -----  VALIDACOES PARA RECUSAR  -----
+    -- Verificamos se o boleto possui Negativacao no Serasa
+    IF vr_is_serasa THEN 
+      -- Buscar a data
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
+      -- Verificacoes para recusar Instrucao de Negativacao do Serasa
+      IF rw_crapdat.dtmvtolt >= (rw_crapcob.dtvencto + rw_crapcob.qtdianeg) THEN
+        -- Gerar o retorno para o cooperado 
+        COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                           ,pr_cdocorre => 26   -- Instrucao Rejeitada
+                                           ,pr_cdmotivo => 'S1' -- Motivo
+                                           ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                           ,pr_cdagectl => rw_crapcop.cdagectl
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_cdoperad => pr_cdoperad
+                                           ,pr_nrremass => pr_nrremass
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+        -- Verifica se ocorreu erro durante a execucao
+        IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Recusar a instrucao
+        vr_dscritic := 'Excedido prazo cancelamento da instrucao automatica de negativacao! ' ||
+                       'Negativacao Serasa nao efetuada!';
+        RAISE vr_exc_erro;        
+      END IF;
+      
+      /* Verificar se foi enviado ao Serasa */
+      IF  rw_crapcob.inserasa <> 0 THEN
+        -- Gerar o retorno para o cooperado 
+        COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                           ,pr_cdocorre => 26   -- Instrucao Rejeitada
+                                           ,pr_cdmotivo => 'S1' -- Motivo
+                                           ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                           ,pr_cdagectl => rw_crapcop.cdagectl
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_cdoperad => pr_cdoperad
+                                           ,pr_nrremass => pr_nrremass
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+        -- Verifica se ocorreu erro durante a execucao
+        IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Recusar a instrucao
+        vr_dscritic := 'Titulo ja enviado para Negativacao. ' ||
+                       'Negativacao Serasa nao efetuada!';
+        RAISE vr_exc_erro;        
+      END IF;
+                
+    ELSE -- Fim das validacoes de negativacao Serasa
+
     -- Titulos sem confirmacao Instrucao de Protesto
     OPEN cr_crapret (pr_cdcooper => rw_crapcob.cdcooper
                     ,pr_nrdconta => rw_crapcob.nrdconta
@@ -8575,8 +8653,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     IF cr_crapcre%ISOPEN THEN
       CLOSE cr_crapcre;
     END IF;
+    END IF;
     ------ FIM - VALIDACOES PARA RECUSAR ------
 
+    -- Verificar se nao eh Serasa
+    IF NOT vr_is_serasa THEN 
+      -- As informacoes de DDA e Titulos Migrados 
+      -- sao apenas para Protesto
     IF rw_crapcob.flgcbdda = 1 AND
        rw_crapcob.cdbandoc = rw_crapcop.cdbcoctl  THEN
       -- Executa procedimentos do DDA-JD 
@@ -8647,12 +8730,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         CLOSE cr_crapcco;
       END IF;
     END IF;
+    END IF;
     
     --Se tem remesssa dda na tabela
     IF vr_tab_remessa_dda.COUNT > 0 THEN
       rw_crapcob.idopeleg:= vr_tab_remessa_dda(vr_tab_remessa_dda.LAST).idopeleg;
     END IF;
     
+    IF vr_is_serasa THEN
+      -- removido regra da negativacao serasa
+      rw_crapcob.flserasa := 0;
+      rw_crapcob.qtdianeg := 0;
+      
+      --Atualizar Cobranca
+      BEGIN
+        UPDATE crapcob SET crapcob.flserasa = rw_crapcob.flserasa,
+                           crapcob.qtdianeg = rw_crapcob.qtdianeg
+        WHERE crapcob.rowid = rw_crapcob.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao atualizar crapcob.(SERASA) ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+
+      -- LOG de processo
+      PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid  --ROWID da Cobranca
+                                   ,pr_cdoperad => pr_cdoperad   --Operador
+                                   ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+                                   ,pr_dsmensag => 'Cancel. Instrucao Negativacao' -- Descricao Mensagem
+                                   ,pr_des_erro => vr_des_erro   --Indicador erro
+                                   ,pr_dscritic => vr_dscritic); --Descricao erro
+      --Se Ocorreu erro
+      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF rw_crapcob.cdbandoc = rw_crapcop.cdbcoctl  THEN 
+        -- Gerar o retorno para o cooperado 
+        -- 94 - Confirmacao de Cancelamento Negativacao Serasa
+        COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                           ,pr_cdocorre => 94   -- Confirmacao de Cancelamento Negativacao Serasa
+                                           ,pr_cdmotivo => 'S4' -- Motivo 
+                                           ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                           ,pr_cdagectl => rw_crapcop.cdagectl
+                                           ,pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_cdoperad => pr_cdoperad
+                                           ,pr_nrremass => pr_nrremass
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+        -- Verifica se ocorreu erro durante a execucao
+        IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+    
+        --Montar Indice para lancamento tarifa
+        vr_index_lat:= lpad(pr_cdcooper,10,'0')||
+                       lpad(pr_nrdconta,10,'0')||
+                       lpad(pr_nrcnvcob,10,'0')||
+                       lpad(19,10,'0')||
+                       lpad('0',10,'0')||
+                       lpad(pr_tab_lat_consolidada.Count+1,10,'0');
+        -- Gerar registro Tarifa 
+        pr_tab_lat_consolidada(vr_index_lat).cdcooper:= pr_cdcooper;
+        pr_tab_lat_consolidada(vr_index_lat).nrdconta:= pr_nrdconta;
+        pr_tab_lat_consolidada(vr_index_lat).nrdocmto:= pr_nrdocmto;
+        pr_tab_lat_consolidada(vr_index_lat).nrcnvcob:= pr_nrcnvcob;
+        pr_tab_lat_consolidada(vr_index_lat).dsincide:= 'RET';
+        pr_tab_lat_consolidada(vr_index_lat).cdocorre:= 94;    -- 94 - Confirmacao de Cancelamento Negativacao Serasa
+        pr_tab_lat_consolidada(vr_index_lat).cdmotivo:= 'S4';  -- Motivo
+        pr_tab_lat_consolidada(vr_index_lat).vllanmto:= rw_crapcob.vltitulo;
+      END IF; -- FIM do IF cdbandoc = 85
+      
+      -- Fim das alteracoes do Serasa
+    ELSE
     -- removido regra da canc de protesto 
     -- permitir boleto de qualquer IF (Rafael)
     rw_crapcob.flgdprot := 0;
@@ -8785,6 +8938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         pr_tab_lat_consolidada(vr_index_lat).cdmotivo:= NULL;  -- Motivo
         pr_tab_lat_consolidada(vr_index_lat).vllanmto:= rw_crapcob.vltitulo;
       END IF;
+    END IF;
     END IF;
     
   EXCEPTION
@@ -9187,6 +9341,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --   Alteracao : 25/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
     --
+    --               23/06/2017 - Alterado para fechar o cursor cr_crapcre ao inves do cr_crapcco
+    --                            pois ocasionava erro no programa porque fechava um cursor que nao
+    --                            estava aberto no momento (Tiago/Rodrigo #698180)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -9480,7 +9637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     ELSE 
       -- Fechar cursor
-      CLOSE cr_crapcco;
+      CLOSE cr_crapcre;
     END IF;
     ------ FIM - VALIDACOES PARA RECUSAR ------
 
