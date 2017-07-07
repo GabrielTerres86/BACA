@@ -10451,6 +10451,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                  
   END pc_debita_fatura;    
 
+  /*
+    Alterações: 29/06/2017 - Incluido GENE0001.pc_informa_acesso pois ocasionava
+                             problemas de conversao de numericos (Tiago/Fabricio);
+  */
   PROCEDURE pc_debita_fatura_job IS  
   BEGIN
 
@@ -10492,6 +10496,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END pc_controla_log_batch;
 
     BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_cdprogra
+                                ,pr_action => NULL);      
       
       -- Log de inicio de execucao
       pc_controla_log_batch(pr_dstiplog => 'I');

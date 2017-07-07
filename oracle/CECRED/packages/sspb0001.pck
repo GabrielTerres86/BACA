@@ -4074,7 +4074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Evandro
-      Data     : Dezembro/2006.                   Ultima atualizacao: 22/09/2016
+      Data     : Dezembro/2006.                   Ultima atualizacao: 30/06/2017
 
 
       Dados referentes ao programa:
@@ -4091,6 +4091,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                na qtinfoln (Douglas - Chamado 356338)
                                
                   22/09/2016 - Arrumar validacao para horario limite de envio de ted (Lucas Ranghetti #500917)
+                  
+                  30/06/2017 - Logar possiveis erros saindo da proc_envia_tec_ted. (Fabricio)
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -4653,11 +4655,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 --------- SAIDA --------
                                 ,pr_cdcritic => vr_cdcritic                            --> Codigo do erro
                                 ,pr_dscritic => vr_dscritic) ;
-                                
-          IF vr_cdcritic IS NOT NULL THEN
+
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              btch0001.pc_gera_log_batch(pr_cdcooper => pr_cdcooper,
+                                         pr_nmarqlog     => 'TRFSAL',
+                                         pr_ind_tipo_log => 2,
+                                         pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' ||
+                                         'SSPB0001 --> Operador: ' || pr_cdoperad || ' - ' || vr_cdcritic || ' - ' || vr_dscritic);
+                        
               vr_dscritic := 'Nao foi possivel enviar o TEC ao SPB';
               RAISE vr_exc_erro;
           END IF;
+                                       
           -- buscar proximo
           vr_idxtbtem := vr_tab_crattem.next(vr_idxtbtem);
 
