@@ -281,6 +281,9 @@
                30/03/2017 - Adicionado o parametro par_idseqttl na chamada da procedure
                             busca-nome-imp-blt (Douglas - Chamado 637660)
 
+               07/07/2017 - Ajuste na leitura da flprotes.
+                            PRJ340 - NPC (Odirlei-AMcom)   
+
 .............................................................................*/
 
 
@@ -2475,9 +2478,11 @@ PROCEDURE gera-dados:
        IF crapcco.dsorgarq = "INTERNET" THEN
           aux_flgpgdiv = crapceb.flgpgdiv.
 
+    IF aux_flprotes = FALSE THEN
+       aux_flprotes = crapceb.flprotes.
+
 		IF aux_flserasa = FALSE THEN
         ASSIGN aux_nrconven = crapcco.nrconven
-                 aux_flprotes = crapceb.flprotes
                aux_flserasa = crapceb.flserasa.
 
     END.
