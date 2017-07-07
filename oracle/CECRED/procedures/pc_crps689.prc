@@ -192,7 +192,7 @@ BEGIN
 	  -- Busca arquivos gerados no sistema MATERA
 	  vr_dsmascar      := lpad(rw_crapcop.cdcooper,3,'0') ||'.%.PGT%.TXT';
 
-      vr_list_arquivos := NULL;
+      vr_list_arquivos_matera := NULL;
 
       gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                                 ,pr_pesq     => vr_dsmascar
