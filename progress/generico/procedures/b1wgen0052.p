@@ -101,6 +101,12 @@
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                   - Inclusão do parametro CDAGENCI para a funcao GRAVA_DADOS
 
+                07/07/2017 - Opcao D nao estava funcionando corretamente, sempre retornava erro na
+                             gravacao dos dados. Foi incluida opcao D novamente na rotina e tratado
+                             problema com validacao da data de nascimento.
+                             Heitor (Mouts) - Chamado 702785
+
+
 ............................................................................*/
 
 
@@ -925,8 +931,9 @@ PROCEDURE Valida_Dados:
             END.
 
         IF   par_inpessoa = 1    AND 
-             par_idorigem <> 1    AND 
-             par_verrespo = TRUE  THEN
+             par_idorigem <> 1   AND
+             par_dtnasctl <> ?   AND
+             par_verrespo = TRUE THEN
              DO:
                 IF VALID-HANDLE(h-b1wgen9999) THEN
                    DELETE OBJECT h-b1wgen9999.
@@ -1647,6 +1654,7 @@ PROCEDURE Grava_Dados:
         IF  par_cddopcao = "A" OR
             par_cddopcao = "I" OR 
             par_cddopcao = "X" OR 
+            par_cddopcao = "D" OR
             par_cddopcao = "J" THEN
             DO:
                 ASSIGN aux_dscritic = "".
