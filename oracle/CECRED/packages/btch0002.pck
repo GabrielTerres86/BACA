@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     Sistema : Processos Batch
     Sigla   : BTCH
     Autor   : Odirlei Busana - AMcom
-    Data    : Maio/2014.                       Ultima atualizacao: 28/04/2017
+    Data    : Maio/2014.                       Ultima atualizacao: 07/07/2017
   
    Dados referentes ao programa:
   
@@ -118,6 +118,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
                             para ter permissao de exclusao do arquivo ao rodar novamente 
                             a tela process ref ao chamado 491624(Lucas Ranghetti/Elton)
+                            
+               07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
+                            ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
   ---------------------------------------------------------------------------------------------------------------*/
   -- Gerar criticas do processo
   PROCEDURE pc_gera_criticas_proces (pr_cdcooper       IN NUMBER,                 --> Codigo da cooperativa
@@ -148,7 +151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Margarete/Mirtes
-   Data    : Junho/2004.                     Ultima atualizacao: 28/04/2017
+   Data    : Junho/2004.                     Ultima atualizacao: 07/07/2017
 
    Dados referentes ao programa:
 
@@ -332,6 +335,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
                             para ter permissao de exclusao do arquivo ao rodar novamente 
                             a tela process (Lucas Ranghetti/Elton)
+                            
+               07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
+                            ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
   ..............................................................................*/  
     ------------------------------- CURSORES ---------------------------------
 
@@ -554,23 +560,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     -- Buscar Boletim de caixa ABERTO
     CURSOR cr_crapbcx (pr_cdcooper crapcop.cdcooper%type,
                        pr_dtmvtolt DATE) IS
-      SELECT crapbcx.cdopecxa
-            ,crapbcx.cdagenci
-            ,crapbcx.nrdcaixa
-            ,crapope.nmoperad
-        FROM crapbcx,
-             crapope       
+      SELECT crapbcx.cdopecxa,
+             crapbcx.cdagenci,
+             crapbcx.nrdcaixa,
+             crapope.nmoperad
+        FROM crapbcx, crapope
        WHERE crapbcx.cdcooper = pr_cdcooper
          AND crapbcx.dtmvtolt = pr_dtmvtolt
-         AND crapope.cdcooper = pr_cdcooper        
-         AND crapope.cdcooper = crapbcx.cdcooper        
-         AND UPPER(crapope.cdoperad) = UPPER(crapbcx.cdopecxa)
+         AND crapope.cdcooper = pr_cdcooper
+         AND crapope.cdcooper = crapbcx.cdcooper
+         AND upper(crapope.cdoperad) = upper(crapbcx.cdopecxa)
          AND crapbcx.cdsitbcx = 1
-         /* Nao considera se o caixa da INTERNET ou TAA estiver aberto, pois ele sao
+            /* Nao considera se o caixa da INTERNET ou TAA estiver aberto, pois ele sao
             fechados durante o processo */
-         AND NOT(crapbcx.cdagenci in (90,91)AND /** TAA **/
-                 crapbcx.nrdcaixa = 900     AND
-                 UPPER(crapbcx.cdopecxa) = '996'   );
+         AND NOT (crapbcx.cdagenci IN (90, 91) AND /** TAA **/
+                  crapbcx.nrdcaixa = 900 AND upper(crapbcx.cdopecxa) = '996')
+       ORDER BY crapbcx.cdcooper, 
+                crapbcx.cdagenci, 
+                crapbcx.nrdcaixa;
                  
     -- Buscar lotes
     CURSOR cr_craplot (pr_cdcooper crapcop.cdcooper%type,
