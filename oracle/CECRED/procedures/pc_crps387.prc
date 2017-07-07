@@ -429,8 +429,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                05/07/2017 - Nao vamos criar crapndb registro "F" para cada registro "B" criticado,
                             o registro "F" eh exclusivo do registro "E" (Lucas Ranghetti #706349)
                             
-               06/07/2017 - Incluir tratamento para validar corretamente a versao do layout,
-                            tambem enviar e-mail caso ocorra erro nao tratado em alguma linha
+               06/07/2017 - Incluir tratamento para validar corretamente a versao do layout
                             (Lucas Ranghetti #707912)
                       
 ............................................................................ */
@@ -4737,29 +4736,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                                || vr_tab_erro(vr_tab_erro.count)
                                               ,pr_nmarqlog => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                           
-                    -- Enviar e-mail somente na CECRED                    
-                    IF pr_cdcooper = 3 THEN
-                       -- Enviar e-mail com o log gerado
-                      gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                                ,pr_cdprogra        => 'CRPS387A'
-                                                ,pr_des_destino     => vr_emaildst
-                                                ,pr_des_assunto     => 'Critica importacao debito - CONVENIO'
-                                                ,pr_des_corpo       => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                                                       || vr_cdprogra || ' --> '
-                                                                       || vr_tab_erro(vr_tab_erro.count)
-                                                ,pr_des_anexo       => NULL
-                                                ,pr_flg_enviar      => 'N' -- Enviar na Hora S/N
-                                                ,pr_des_erro        => vr_dscritic);
-
-                      -- Verificar se houve erro ao solicitar e-mail
-                      IF vr_dscritic IS NOT NULL THEN
-                        RAISE vr_exc_saida;
-                      END IF;
-                    END IF;
+                    
                     -- Caso houver erro na leitura da linha, efetua o rollback somente para a linha
                     ROLLBACK TO LEITURA_LINHA;
-
-
                 END;
               END LOOP; -- Leitura linha a linha do arquivo para integracao
             END IF; -- not vr_arqvazio
