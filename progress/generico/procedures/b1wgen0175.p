@@ -3237,50 +3237,7 @@ PROCEDURE gera-devolu:
             crapdev.indctitg = TRUE.
 
         VALIDATE crapdev.
-        /*
-        IF (aux_cdbanchq = 756               OR 
-            aux_cdbanchq = 1)                AND 
-           (LOWER(par_nmdatela) = "devolu")  AND
-            par_vllanmto >= aux_valorvlb     THEN DO:
-            
-            ASSIGN aux_conteudo = "Segue dados do cheque marcado para "
-                                + "devolucao:\n\n" + "Cooperativa: "
-                                + STRING(par_cdcooper) + "\nBanco: "
-                                + TRIM(STRING(aux_cdbanchq, "zz9"))
-                                + "\n" + "Conta/dv: "
-                                + TRIM(STRING(par_nrdconta, "zzzz,zzz,9"))
-                                + "\n" + "Cheque: "
-                                + TRIM(STRING(par_nrdocmto, "zzz,zz9,9"))
-                                + "\n" + "Valor: R$ "
-                                + TRIM(STRING(par_vllanmto, "zzz,zzz,zz9.99"))
-                                + "\n" + "Alinea: "
-                                + TRIM(STRING(par_cdalinea, "zzz9")) + "\n"
-                                + "Data: " + STRING(par_dtmvtolt, "99/99/9999").
-    
-    
-            RUN sistema/generico/procedures/b1wgen0011.p 
-                PERSISTENT SET h-b1wgen0011.
-    
-            IF  VALID-HANDLE(h-b1wgen0011) THEN DO:
-                RUN enviar_email_completo IN h-b1wgen0011 
-                                         (par_cdcooper,
-                                         "geradev",
-                                         "CECRED<cecred@cecred.coop.br>",
-                                         "spb@cecred.coop.br," +
-                                         "compe@cecred.coop.br",
-                                         ("Devolucao " +
-                                         STRING(aux_cdbanchq, "zz9") +
-                                         " - " + 
-                                         STRING(par_dtmvtolt, "99/99/9999")),
-                                         "",
-                                         "",
-                                         aux_conteudo,
-                                         TRUE).
-    
-                DELETE PROCEDURE h-b1wgen0011.
-            END.
-        END.
-        */
+        
     END.
     ELSE
     IF  par_inchqdev = 2   OR
@@ -3456,52 +3413,7 @@ PROCEDURE gera-devolu:
              crapdev.indctitg = TRUE.
 
         VALIDATE crapdev.
-        /*
-        IF  (aux_cdbanchq = 756               OR 
-             aux_cdbanchq = 1)                AND 
-            (LOWER(par_nmdatela) = "devolu")  AND
-             par_vllanmto >= aux_valorvlb     THEN DO:
-            ASSIGN aux_conteudo = "Segue dados do cheque marcado para "
-                                + "devolucao:\n\n" + "Cooperativa: "
-                                + STRING(par_cdcooper) + "\nBanco: "
-                                + TRIM(STRING(aux_cdbanchq, "zz9")) + "\n"
-                                + "Conta/dv: "
-                                + TRIM(STRING(par_nrdconta,
-                                             "zzzz,zzz,9"))
-                                + "\n" + "Cheque: "
-                                + TRIM(STRING(par_nrdocmto,
-                                             "zzz,zz9,9"))
-                                + "\n" + "Valor: R$ "
-                                + TRIM(STRING(par_vllanmto,
-                                             "zzz,zzz,zz9.99"))
-                                + "\n" + "Alinea: "
-                                + TRIM(STRING(par_cdalinea, "zzz9")) + "\n"     
-                                + "Data: " + STRING(par_dtmvtolt,
-                                                   "99/99/9999").
-
-            RUN sistema/generico/procedures/b1wgen0011.p 
-                PERSISTENT SET h-b1wgen0011.
-
-            IF  VALID-HANDLE(h-b1wgen0011) THEN DO:
-                RUN enviar_email_completo IN h-b1wgen0011 
-                             (par_cdcooper,
-                              "geradev",
-                              "CECRED<cecred@cecred.coop.br>",
-                              "spb@cecred.coop.br," +
-                              "compe@cecred.coop.br",
-                              ("Devolucao VLB " +
-                               STRING(aux_cdbanchq, "zz9") +
-                               " - " + 
-                               STRING(par_dtmvtolt, "99/99/9999")),
-                              "",
-                              "",
-                              aux_conteudo,
-                              TRUE).
-
-                DELETE PROCEDURE h-b1wgen0011.
-            END.
-        END.
-        */
+        
     END.
     ELSE
     IF  par_inchqdev = 5   THEN DO:
