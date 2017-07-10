@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS330
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 30/03/2017
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 04/07/2017
   --
   --  Dados referentes ao programa:
   --
@@ -31,6 +31,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --              30/03/2017 - #551229 Job ENVIO_SERASA excluído para a criação dos jobs JBCOBRAN_ENVIO_SERASA e JBCOBRAN_RECEBE_SERASA.
   --                           Log de início, fim e erros na execução do job. (Carlos)
+  --
+  --              04/07/2017 - #701001 Correção do parametro cdcritic para dscritic na rotina fn_busca_critica
+  --                           da exception vr_exc_saida (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Atualiza a situacao do boleto como enviada
@@ -819,7 +822,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        WHEN vr_exc_saida THEN
 
            -- Buscar a descrição
-         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_cdcritic);
+         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
          -- Devolvemos código e critica encontradas
          pr_cdcritic := NVL(vr_cdcritic,0);
