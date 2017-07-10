@@ -450,7 +450,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    -- Log de erro de execucao
                    pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                         ,pr_dstiplog => 'E'
-                                        ,pr_dscritic => 'Acordo: ' || vr_nracordo || '. Critica: ' || vr_dscritic);
+                                        ,pr_dscritic => 'Acordo: ' || vr_nracordo || 
+                                                        '. Critica: ' || vr_dscritic || 
+                                                        '. Detalhe: '||vr_dsdetcri);
                    pr_flgemail := TRUE;
                    ROLLBACK; -- Desfaz acoes
                    EXIT; -- Sai do loop de linhas
