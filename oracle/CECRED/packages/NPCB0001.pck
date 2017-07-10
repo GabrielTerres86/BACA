@@ -443,13 +443,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Objetivo  : Rotina para verificar e montar o código de barras pela linha
                   digitável e vice-versa
                   
-      Alteração : 
+      Alteração : 05/06/2017 - Incluido validação do digito do codigo de barras.
+                               PRJ340 - NPC (Odirlei-AMcom)
+        
         
     ..........................................................................*/
     -----------> CURSORES <-----------
     
     ----------> VARIAVEIS <-----------
-    vr_de_valor_calc   NUMBER;
+    vr_de_valor_calc   VARCHAR2(100);
     vr_flg_zeros       BOOLEAN;
     vr_nro_digito      NUMBER;
     vr_retorno         BOOLEAN; 
@@ -558,8 +560,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
               WHEN 2 THEN pr_titulo2 := TO_NUMBER(vr_de_valor_calc);
               WHEN 3 THEN pr_titulo3 := TO_NUMBER(vr_de_valor_calc);
            END CASE;
+           
         END LOOP; --For idx 1..3
      END IF; -- Se foi informado a linha digitável
+           
+     vr_retorno := TRUE;
+     -- Calculo do Digito Verificador  - Titulo
+     vr_de_valor_calc:= pr_codbarra;
+     --Executar rotina calculo digito titulo
+     CXON0000.pc_calc_digito_titulo (pr_valor   => vr_de_valor_calc --> Valor Calculado
+                                    ,pr_retorno => vr_retorno);     --> Retorno digito correto
+     --Se retornou erro
+     -- Se não retornou o dígito verificador
+     IF NOT vr_retorno THEN
+       -- Retornar a crítica 
+       pr_cdcritic := 8;
+       pr_dscritic := NULL;
+       RAISE vr_exc_erro;
+     END IF;     
   
   EXCEPTION 
      WHEN vr_exc_erro THEN
