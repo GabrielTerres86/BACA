@@ -39,6 +39,19 @@
                                  ,pr_cdcritic  OUT INTEGER                --> Codigo da Critica
                                  ,pr_dscritic  OUT VARCHAR2);             --> Descricao da critica
 
+  -- Procedure para baixar o titulo progress -- Demetrius
+  PROCEDURE pc_inst_pedido_baixa_prg (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
+                                     ,pr_nrdconta  IN crapcob.nrdconta%TYPE   --> Numero da Conta
+                                     ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE   --> Numero Convenio
+                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE   --> Numero Documento
+                                     ,pr_cdocorre  IN NUMBER                  --> Codigo Ocorrencia
+                                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE   --> Data pagamento
+                                     ,pr_cdoperad  IN crapope.cdoperad%TYPE   --> Operador
+                                     ,pr_nrremass  IN INTEGER                 --> Numero da Remessa
+                                     ,pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada
+                                     ,pr_cdcritic  OUT INTEGER                --> Codigo da Critica
+                                     ,pr_dscritic  OUT VARCHAR2);             --> Descricao da critica
+
   -- Procedure para gerar o protesto do titulo
   PROCEDURE pc_inst_pedido_baixa_decurso (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
                                          ,pr_nrdconta IN crapcob.nrdconta%TYPE   --> Numero da Conta
@@ -316,6 +329,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           ,cob.insmsant
           ,cob.insmsvct
           ,cob.insmspos
+          ,cob.vlminimo
+          ,cob.inpagdiv
           ,cob.rowid
      FROM crapcob cob
     WHERE cob.cdcooper = pr_cdcooper
@@ -3495,6 +3510,136 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
   END pc_inst_pedido_baixa;
 
+  PROCEDURE pc_inst_pedido_baixa_prg (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
+                                     ,pr_nrdconta  IN crapcob.nrdconta%TYPE   --> Numero da Conta
+                                     ,pr_nrcnvcob  IN crapcob.nrcnvcob%TYPE   --> Numero Convenio
+                                     ,pr_nrdocmto  IN crapcob.nrdocmto%TYPE   --> Numero Documento
+                                     ,pr_cdocorre  IN NUMBER                  --> Codigo Ocorrencia
+                                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE   --> Data pagamento
+                                     ,pr_cdoperad  IN crapope.cdoperad%TYPE   --> Operador
+                                     ,pr_nrremass  IN INTEGER                 --> Numero da Remessa
+                                     ,pr_tab_lat_consolidada IN OUT PAGA0001.typ_tab_lat_consolidada
+                                     ,pr_cdcritic  OUT INTEGER                --> Codigo da Critica
+                                     ,pr_dscritic  OUT VARCHAR2)IS             --> Descricao da critica
+
+  BEGIN
+     DECLARE
+      --Selecionar informacoes Cobranca
+      CURSOR cr_crapcob  (pr_cdcooper IN crapcob.cdcooper%TYPE
+                         ,pr_cdbandoc IN crapcob.cdbandoc%TYPE
+                         ,pr_nrdctabb IN crapcob.nrdctabb%TYPE
+                         ,pr_nrdconta IN crapcob.nrdconta%type
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%type
+                         ,pr_nrdocmto IN crapcob.nrdocmto%type) IS
+        SELECT cob.rowid
+              ,cob.cdbandoc
+              ,cob.nrdctabb
+          FROM crapcob cob
+         WHERE cob.cdcooper = pr_cdcooper
+           AND cob.cdbandoc = pr_cdbandoc
+           AND cob.nrdctabb = pr_nrdctabb
+           AND cob.nrdconta = pr_nrdconta
+           AND cob.nrcnvcob = pr_nrcnvcob
+           AND cob.nrdocmto = pr_nrdocmto
+         ORDER BY cob.progress_recid ASC;
+
+      rw_crapcob cr_crapcob%ROWTYPE;
+
+      --Registro de Cadastro de Cobranca
+      rw_crapcco COBR0007.cr_crapcco%ROWTYPE;
+
+      --Tabelas de Memoria de Remessa
+      rw_crapcop         COBR0007.cr_crapcop%ROWTYPE;
+
+      --Variaveis de erro
+      vr_des_erro VARCHAR2(4000);
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+      --Variaveis de Excecao
+      vr_exc_erro EXCEPTION;
+
+   BEGIN
+      --Inicializar variaveis retorno
+      pr_cdcritic:= NULL;
+      pr_dscritic:= NULL;
+
+      --Verificar cooperativa
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      --Se nao encontrou
+      IF cr_crapcop%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcop;
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Registro de cooperativa nao encontrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcop;
+
+      -- Buscar parâmetros do cadastro de cobrança
+      OPEN  cr_crapcco(pr_cdcooper => pr_cdcooper
+                      ,pr_nrconven => pr_nrcnvcob);
+      FETCH cr_crapcco INTO rw_crapcco;
+      -- Se não encontrar registro
+      IF cr_crapcco%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcco;
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Registro de cobranca nao encontrado.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcco;
+
+      OPEN cr_crapcob (pr_cdcooper => pr_cdcooper
+                      ,pr_cdbandoc => rw_crapcco.cddbanco
+                      ,pr_nrdctabb => rw_crapcco.nrdctabb
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_nrcnvcob => pr_nrcnvcob
+                      ,pr_nrdocmto => pr_nrdocmto);
+      --Posicionar no proximo registro
+      FETCH cr_crapcob INTO rw_crapcob;
+      --Se nao encontrar
+      IF cr_crapcob%NOTFOUND THEN
+        --Fechar Cursor
+        CLOSE cr_crapcob;
+        --Mensagem Critica
+        vr_dscritic:= 'Registro de cobranca nao encontrado';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapcob;
+
+      COBR0007.pc_inst_pedido_baixa (pr_idregcob => rw_crapcob.rowid
+                                    ,pr_cdocorre => 1
+                                    ,pr_dtmvtolt => pr_dtmvtolt
+                                    ,pr_cdoperad => pr_cdoperad
+                                    ,pr_nrremass => pr_nrremass
+                                    ,pr_tab_lat_consolidada => pr_tab_lat_consolidada
+                                    ,pr_cdcritic => pr_cdcritic
+                                    ,pr_dscritic => pr_dscritic);
+        --Se ocorreu erro
+        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+      WHEN OTHERS THEN
+        -- Erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na rotina COBR0007.pc_inst_pedido_baixa_prg. '||sqlerrm;
+    END;
+
+  END pc_inst_pedido_baixa_prg;
+ 
   -- Procedure para gerar protesto do titulo por decurso
   PROCEDURE pc_inst_pedido_baixa_decurso (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
                                          ,pr_nrdconta IN crapcob.nrdconta%TYPE   --Numero da Conta
@@ -4278,6 +4423,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       
       -- Recusar a instrucao
       vr_dscritic := 'Valor de Abatimento superior ao Valor do Boleto - ' ||
+                     'Abatimento nao efetuado!';
+      RAISE vr_exc_erro;
+    END IF;
+
+    vr_vltitabr := rw_crapcob.vltitulo - rw_crapcob.vldescto - pr_vlabatim;
+    --> Verificar se valor do titulo ficará menor que o valor minimo
+    IF rw_crapcob.inpagdiv = 1 AND 
+       rw_crapcob.vlminimo > vr_vltitabr THEN
+      -- Gerar o retorno para o cooperado 
+      COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                         ,pr_cdocorre => 26   -- Instrucao Rejeitada
+                                         ,pr_cdmotivo => '34' -- Motivo
+                                         ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                         ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                         ,pr_cdagectl => rw_crapcop.cdagectl
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_nrremass => pr_nrremass
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+      -- Verifica se ocorreu erro durante a execucao
+      IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Recusar a instrucao
+      vr_dscritic := 'Valor de Abatimento maior que o permitido devido ao Valor minimo boleto - ' ||
                      'Abatimento nao efetuado!';
       RAISE vr_exc_erro;
     END IF;
@@ -6009,6 +6181,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       
       -- Recusar a instrucao
       vr_dscritic := 'Valor de Desconto superior ao Valor do Boleto - Desconto nao efetuado!';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    vr_vltitabr := rw_crapcob.vltitulo - pr_vldescto - rw_crapcob.vlabatim;
+    --> Verificar se valor do titulo ficará menor que o valor minimo
+    IF rw_crapcob.inpagdiv = 1 AND 
+       rw_crapcob.vlminimo > vr_vltitabr THEN
+      -- Gerar o retorno para o cooperado 
+      COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
+                                         ,pr_cdocorre => 26   -- Instrucao Rejeitada
+                                         ,pr_cdmotivo => '29' -- Motivo
+                                         ,pr_vltarifa => 0    -- Valor da Tarifa  
+                                         ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                         ,pr_cdagectl => rw_crapcop.cdagectl
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_nrremass => pr_nrremass
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+      -- Verifica se ocorreu erro durante a execucao
+      IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Recusar a instrucao
+      vr_dscritic := 'Valor de Desconto maior que o permitido devido ao Valor minimo boleto - ' ||
+                     'Desconto nao efetuado!';
       RAISE vr_exc_erro;
     END IF;
     
@@ -7951,7 +8150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 25/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 20/05/2017
     --
     --  Dados referentes ao programa:
     --
@@ -7959,6 +8158,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --   Objetivo  : Procedure para Alterar o vencimento
     --
     --   Alteracao : 25/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
+    --
+    --               20/05/2017 - Ajustado parametro flgdprot para 0 quando enviar informacao a CIP
+    --                            de um titulo DDA ao cancelar protesto (P340 - NPC - Rafael)
     --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -8387,7 +8589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                                        ,pr_dtvencto  => rw_crapcob.dtvencto      --Data Vencimento
                                        ,pr_vldescto  => rw_crapcob.vldescto      --Valor Desconto
                                        ,pr_vlabatim  => rw_crapcob.vlabatim      --Valor Abatimento
-                                       ,pr_flgdprot  => rw_crapcob.flgdprot      --Flag Protesto
+                                       ,pr_flgdprot  => 0                        --Flag Protesto
                                        ,pr_tab_remessa_dda => vr_tab_remessa_dda --tabela remessa
                                        ,pr_tab_retorno_dda => vr_tab_retorno_dda --Tabela memoria retorno DDA
                                        ,pr_cdcritic  => vr_cdcritic2             --Codigo Critica
@@ -8722,7 +8924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       RAISE vr_exc_erro;
     END IF;
 
-    -- Verificar se boleto já está na situaçăo pretendida
+    -- Verificar se boleto já está na situaçao pretendida
     IF rw_crapcob.inemiten = 3  THEN
       -- Gerar o retorno para o cooperado 
       COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid
