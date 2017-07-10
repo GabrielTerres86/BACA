@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades de Pagamento de Titulos Lote
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao:  21/03/2017
+--  Data     : Abril/2014.                   Ultima atualizacao:  05/07/2017
 --
 -- Dados referentes ao programa:
 --
@@ -27,6 +27,8 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --
 --             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
 --
+--             05/07/2017 - Ajuste nas procedures pc_rejeitar_arq_pgto e pc_gerar_arq_log_pgto
+--                          para buscarem tambem arquivos com extensao .TXT gerados no sistema MATERA (Diego).
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno
@@ -3002,7 +3004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        vr_cdocorre VARCHAR2(5);
        vr_dtmvtolt DATE;
 
-
+       
        vr_exc_critico EXCEPTION;
        vr_tab_erro GENE0001.typ_tab_erro;
 
@@ -3185,7 +3187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                           ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
                                           ,pr_idorigem => pr_idorigem           --Indicador de origem
                                           ,pr_indvalid => 1                     --nao validar
-										                      ,pr_flmobile => 0                     --Indicador mobile
+										  ,pr_flmobile => 0                     --Indicador mobile
                                           -- Abaixo, todas OUT...
                                           ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
                                           ,pr_vlfatura => vr_vlfatura           --Valor fatura
@@ -3827,7 +3829,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
                RAISE vr_exc_saida;
 
-            END IF;
+         END IF;
          END IF;
 
 
@@ -4052,8 +4054,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Monta nome do Arquivo de Erro (.ERR)
     vr_nmarquivo_err := REPLACE(UPPER(pr_nmarquiv),'.REM','.ERR');
 
+	vr_nmarquivo_err := REPLACE(UPPER(vr_nmarquivo_err),'.TXT','.ERR');
+
     -- Monta nome do Arquivo de Log (.LOG)
     vr_nmarquivo_log := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	vr_nmarquivo_log := REPLACE(UPPER(vr_nmarquivo_log),'.TXT','.LOG');
 
     -- Verificar qual Tipo de Retorno o Cooperado Possui
     OPEN cr_crapcpt(pr_cdcooper => pr_cdcooper
@@ -4561,6 +4567,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
       -- Define nome do arquivo .LOG com base nome do Arquivo de Remessa
       vr_nmarquiv := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	  vr_nmarquiv := REPLACE(UPPER(vr_nmarquiv),'.TXT','.LOG');
 
       -- Define o diretório do arquivo
       vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
