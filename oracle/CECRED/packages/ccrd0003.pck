@@ -6336,7 +6336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           -- fecha cursor
           CLOSE cr_crapalt;
 
-          END LOOP;
+        END LOOP;
         END LOOP;
 
         -- monta TRAILER do arquivo
@@ -6559,6 +6559,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    17/04/2017 - Tratamento para abrir chamado e enviar email caso ocorra
                                 algum erro na importacao do arquivo ccr3 (Lucas Ranghetti #630298)
 
+                   19/06/2017 - Tratamento para validar se o arquivo foi recebido completo.
+                                Caso o arquivo CCR3 tenha sido recebido incompleto, enviamos
+                                e-mail e abrimos chamado (Douglas - Chamado 647872)
+
 
                    29/06/2017 - Alterado o cursor do primeiro grupo de afinidade, para buscar um cartao
                                 em uso/liberado, e que a conta ainda nao tenha uma solicitacao de cartao
@@ -6616,6 +6620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_linha      NUMBER          := 0;                              --> Linha do arquivo
       vr_idprglog   tbgen_prglog.idprglog%TYPE;                         
       vr_destinatario_email VARCHAR2(500);                             --> Destinatario E-mail 
+      vr_saida_tail VARCHAR2(1000);                                    --> Retorno do tail -2
     
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -7568,6 +7573,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         
       END pc_log_dados_arquivo;
 
+      PROCEDURE pc_log_arq_invalido(pr_nmdarqui IN VARCHAR2) IS
+        vr_dstpdreg VARCHAR2(50);
+        vr_dstexto VARCHAR2(2000);
+        vr_titulo VARCHAR2(1000);
+      BEGIN
+        -- Texto para utilizar na abertura do chamado e no email enviado
+        vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
+                     'Arquivo ' || pr_nmdarqui || ' foi recebido incompleto.';
+
+        -- Parte inicial do texto do chamado e do email        
+        vr_titulo:= '<b>O arquivo de retorno da Solicitacao de Cartao Bancoob CABAL foi recebido incompleto.</b><br>';
+                  
+        -- Buscar e-mails dos destinatarios do produto cartoes
+        vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
+                 
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                              ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                              ,pr_cdmensagem    => 0             --> pr_cdmensagem
+                              ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+                              ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                              ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+                              ,pr_texto_chamado => vr_titulo
+                              ,pr_destinatario_email => vr_destinatario_email
+                              ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+                              ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
+        cecred.pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                              ,PR_CDPROGRAMA => vr_cdprogra   --> Codigo do programa ou do job
+                              ,pr_tpexecucao => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               -- Parametros para Ocorrencia
+                              ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)  
+        
+        
+      END pc_log_arq_invalido;
+
     BEGIN
     
       -- extrai dados do XML 
@@ -7788,6 +7832,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                          '), arquivo '|| vr_vet_nmarquiv(i) ||' não será processado.';
           -- gravar log do erro
           pc_log_message;
+          CONTINUE;
+        END IF;
+
+        /* Verificar se o arquivo esta completo - Ultima linha */
+        vr_comando:= 'tail -2 '||vr_direto_connect||'/'||vr_vet_nmarquiv(i);
+
+        --Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_comando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_saida_tail);
+                             
+        --Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+          pc_log_message;
+          CONTINUE;
+        END IF;
+                              
+        --Verificar se a ultima linha é o Trailer
+        IF SUBSTR(vr_saida_tail,001,06) <> 'CCR309' AND   -- Antigo 
+           SUBSTR(vr_saida_tail,351,06) <> 'CCR309' THEN  -- Servidor "_AIX"             
+          vr_cdcritic:= 999;
+          vr_dscritic:= 'Arquivo incompleto.';  
+          -- gerar o log
+          pc_log_arq_invalido(pr_nmdarqui => vr_vet_nmarquiv(i));
+          -- levantar excecao
           CONTINUE;
         END IF;
 
@@ -8097,7 +8168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 IF substr(vr_des_text,275,3) <> '000' THEN
                   
                   -- Somente os registros d Inclusao sera gravado na tabela craprej
-                  IF vr_tipooper = '01' THEN
+                  IF substr(vr_des_text,7,2) = '01' THEN
                   
                      BEGIN
                         INSERT INTO craprej
@@ -9777,7 +9848,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     END;
 
   END pc_crps672;
-
 
   /*.......................................................................................
 
