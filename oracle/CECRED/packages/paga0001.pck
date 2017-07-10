@@ -1177,7 +1177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 10/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1527,6 +1527,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     para PM.AGROLANDIA (Tiago/Fabricio #647174)                        
                     
        08/06/2017 - Retirado "OR" por problemas na compilacao(Tiago).
+       
+       10/07/2017 - Adicionar tratamento para validar o vencimento dos tributos
+                    sicredi (Lucas Ranghetti #653552)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -10096,7 +10099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 26/05/2017
+    --  Data     : Junho/2013.                   Ultima atualizacao: 10/07/2017
     --
     --  Dados referentes ao programa:
     --
@@ -10118,6 +10121,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --               26/05/2017 - Incluido validacao para nao agendar faturas vencidas
     --                            para PM.AGROLANDIA (Tiago/Fabricio #647174)    
+    --
+    --               10/07/2017 - Adicionar tratamento para validar o vencimento dos tributos
+    --                            sicredi (Lucas Ranghetti #653552)
     -- ..........................................................................
 
   BEGIN
@@ -10214,6 +10220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_dtferiado DATE;
       vr_datdodia  DATE;
       vr_nmoperad  VARCHAR2(100);
+      vr_dttolera  DATE;
 
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -10557,6 +10564,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       END IF;
 
       IF pr_idagenda = 2 THEN /** Agendamento **/
+      
+        -- Se for convenio sicredi
+        IF rw_crapcon.flgcnvsi = 1 THEN 
+          /* Validação referente aos dias de tolerancia */
+          cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
+                                               ,pr_cdagenci      => vr_cdagenci
+                                               ,pr_cdempcon      => rw_crapcon.cdempcon
+                                               ,pr_cdsegmto      => rw_crapcon.cdsegmto
+                                               ,pr_codigo_barras => pr_cdbarras
+                                               ,pr_dtmvtopg      => pr_dtagenda
+                                               ,pr_flnrtole      => TRUE                                    
+                                               ,pr_dttolera      => vr_dttolera
+                                               ,pr_cdcritic      => vr_cdcritic
+                                               ,pr_dscritic      => vr_dscritic);
+          
+          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
       
         -- Validar se fatura esta vencida
         IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. ITAJAI 
