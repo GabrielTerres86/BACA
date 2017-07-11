@@ -2966,12 +2966,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                          AND crapepr.nrdconta = crapris.nrdconta
                          AND crapepr.nrctremp = crapris.nrctremp
                          AND crapepr.tpemprst = pr_tpemprst)
-/*         --> Deve ignorar emprestimos de cessao de credito                 
+         --> Deve ignorar emprestimos de cessao de credito                 
         AND NOT EXISTS (SELECT 1
                           FROM tbcrd_cessao_credito ces
                          WHERE ces.cdcooper = crapris.cdcooper
                            AND ces.nrdconta = crapris.nrdconta
-                           AND ces.nrctremp = crapris.nrctremp)*/ ;  
+                           AND ces.nrctremp = crapris.nrctremp);  
     -- Vencimento do risco
     cursor cr_crapvri (pr_cdcooper in crapris.cdcooper%type,
                        pr_nrdconta in crapris.nrdconta%type,
