@@ -61,6 +61,9 @@
 								  <input type="hidden" id="dsdoccop" name="dsdoccop" value="<? echo getByTagName($r->tags,'dsdoccop') ?>" />								  
 								  <input type="hidden" id="flgregis" name="flgregis" value="<? echo getByTagName($r->tags,'flgregis') ?>" />								  
 								  <input type="hidden" id="flgcbdda" name="flgcbdda" value="<? echo getByTagName($r->tags,'flgcbdda') ?>" />								  
+								  
+								  <input type="hidden" id="flgsacad" name="flgsacad" value="" />								  
+								  
 								  <input type="hidden" id="dsendsac" name="dsendsac" value="<? echo getByTagName($r->tags,'dsendsac') ?>" />								  
 								  <input type="hidden" id="complend" name="complend" value="<? echo getByTagName($r->tags,'complend') ?>" />								  
 								  <input type="hidden" id="nmbaisac" name="nmbaisac" value="<? echo getByTagName($r->tags,'nmbaisac') ?>" />								  
@@ -227,6 +230,7 @@
 		controlaOperacao(<? echo "'".$operacao."','".($nriniseq + $nrregist)."','".$nrregist."'"; ?>);
 	});	
 	
+	$('#divRegistros','#divTela').formataTabela();
 	$('#divPesquisaRodape','#divTela').formataRodapePesquisa();
 
 </script>

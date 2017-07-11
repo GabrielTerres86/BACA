@@ -95,9 +95,13 @@
   
 			   29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
 
+               22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                           (Jaison/Cechet)			  
+
 			   02/01/2017 - Melhorias referentes a performance no IB na parte
 			                de cobrança, adicionado campo flprotes na temptable
 							tt-consulta-blt (Tiago/Ademir SD573538).  
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-consulta-blt
@@ -217,7 +221,10 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD dsavisms AS CHAR
 	FIELD dssmsant AS CHAR
 	FIELD dssmsvct AS CHAR
-	FIELD dssmspos AS CHAR.
+	FIELD dssmspos AS CHAR
+    FIELD inenvcip LIKE crapcob.inenvcip
+    FIELD inpagdiv LIKE crapcob.inpagdiv
+    FIELD vlminimo LIKE crapcob.vlminimo.
 
 DEF TEMP-TABLE tt-arq-cobranca  
     FIELD cdseqlin AS INTEGER

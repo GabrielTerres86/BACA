@@ -4,7 +4,7 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 22/02/2017
+   Data    : 13/04/2011                        Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -160,8 +160,12 @@ create or replace package cecred.PAGA0002 is
        06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                           (Adriano - SD509480).    
                                         
+             29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  	  
+
 							 22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
                                         
+			 17/04/2017 - Alterações referentes à Nova Plataforma de Cobrança - NPC (Renato-Amcom)
+                           
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD
@@ -292,7 +296,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_dscedent IN VARCHAR2                 --> Descrição do cedente
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
-                               
+                               ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2);        --> Retorno de critica (OK ou NOK)  
@@ -329,7 +333,7 @@ create or replace package cecred.PAGA0002 is
                                ,pr_versaldo IN  INTEGER                 --> Indicador de ver saldo
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
-                               
+                               ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_xml_dsmsgerr OUT VARCHAR2            --> Retorno XML de critica
                                ,pr_xml_msgofatr OUT VARCHAR2            --> Retorno XML com mensagem para fatura
                                ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio
@@ -517,6 +521,7 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
                                       ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade  
                                       ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                                      ,pr_cdctrlcs IN craplau.cdctrlcs%TYPE  --> Código de controle de consulta
                                       /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                     ,pr_msgofatr OUT VARCHAR2
@@ -765,6 +770,8 @@ create or replace package body cecred.PAGA0002 is
   --                        - Removido pc_monitora_ted, rotina será utilizada na AFRA0001 
   --                          PRJ335 - Analise de fraudes (Odirlei-AMcom)                     
   --
+  --              29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  
+  --
   --             07/02/2017 - #604294 Log de exception others na rotina pc_proc_agendamento_recorrente e
   --                          aumento do tamanho das variáveis vr_dslinxml_desaprov e vr_dslinxml_aprov
   --                          para evitar possível repetição do problema relatado no chamado (Carlos)
@@ -850,7 +857,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 12/06/2016
+      Data    : Abril/2007.                       Ultima atualizacao: 12/06/2017
    
       Dados referentes ao programa:
        
@@ -2055,6 +2062,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
                                 ,pr_dshistor => pr_dshistor  --> Descricao da finalidade
                                 ,pr_iptransa => pr_iptransa  --> IP da transacao no IBank/mobile
+                                ,pr_cdctrlcs => NULL         
                                 /* parametros de saida */                               
                                 ,pr_dstransa => vr_dstrans1  --> Descrição de transação
                 ,pr_msgofatr => vr_msgofatr
@@ -2083,7 +2091,6 @@ create or replace package body cecred.PAGA0002 is
                           vr_tab_limite(vr_tab_limite.first).hrfimpag || '.';
         END IF;
                         
-                       
       -- Se retornou critica
       ELSE
         -- Se retornou critica , deve abortar
@@ -2178,7 +2185,7 @@ create or replace package body cecred.PAGA0002 is
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       pr_xml_dsmsgerr := '<dsmsgsuc>'|| vr_dscritic ||'</dsmsgsuc>'||
                          '<idastcjt>'|| vr_idastcjt ||'</idastcjt>'||
-						'<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'') ||'</dsprotoc>';
+						 '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0') ||'</dsprotoc>';
     END IF;  
     
     pc_proc_geracao_log(pr_flgtrans => 1 /*TRUE*/);
@@ -2242,7 +2249,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_dscedent IN VARCHAR2                 --> Descrição do cedente
                                ,pr_nrcpfope IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
-                               
+                               ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_xml_dsmsgerr   OUT VARCHAR2          --> Retorno XML de critica
                                ,pr_xml_operacao26 OUT CLOB              --> Retorno XML da operação 26
                                ,pr_dsretorn       OUT VARCHAR2) IS      --> Retorno de critica (OK ou NOK)
@@ -2506,6 +2513,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
 								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
+                                 ,pr_cdctrlcs => pr_cdctrlcs           --> Numero de controle da consulta no NPC
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -2725,6 +2733,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_versaldo IN  INTEGER                 --> Indicador de ver saldo
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
                                ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                               ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_xml_dsmsgerr OUT VARCHAR2            --> Retorno XML de critica
                                ,pr_xml_msgofatr OUT VARCHAR2            --> Retorno XML com mensagem para fatura
                                ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio
@@ -3239,6 +3248,7 @@ create or replace package body cecred.PAGA0002 is
                                           ,pr_tpcptdoc => pr_tpcptdoc    --> Tipo de captura do documento
                                           ,pr_idtitdda => pr_idtitdda    --> Identificador do titulo no DDA
                                           ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
+                                          ,pr_cdctrlcs => pr_cdctrlcs    --> Código de controle de consulta
                                           ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
                                           ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
         
@@ -3334,6 +3344,7 @@ create or replace package body cecred.PAGA0002 is
                                  ,pr_idorigem => 3 /* INTERNET */      --> Indicador de origem
                                  ,pr_indvalid => 0                     --> Validar
 								                 ,pr_flmobile => pr_flmobile           --> Indicador Mobile
+                                 ,pr_cdctrlcs => pr_cdctrlcs           --> Numero de controle da consulta no NPC
                                  ,pr_nmextbcc => vr_nmconban           --> Nome do banco
                                  ,pr_vlfatura => vr_vlrdocum           --> Valor fatura
                                  ,pr_dtdifere => vr_dtdifere           --> Indicador data diferente
@@ -3411,6 +3422,7 @@ create or replace package body cecred.PAGA0002 is
                                           ,pr_tpcptdoc => pr_tpcptdoc    --> Tipo de captura do documento
                                           ,pr_idtitdda => pr_idtitdda    --> Identificador do titulo no DDA
                                           ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
+                                          ,pr_cdctrlcs => pr_cdctrlcs    --> Código de controle de consulta
                                           ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
                                           ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
         
@@ -3465,6 +3477,7 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_vloutcre => vr_vloutcre          --Valor saida credito
                            ,pr_nrcpfope => pr_nrcpfope          --Numero cpf operador
                            ,pr_tpcptdoc => pr_tpcptdoc          --Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                           ,pr_cdctrlcs => pr_cdctrlcs          --> Numero de controle da consulta no NPC
                            ,pr_dstransa => vr_dstrans1          --Descricao transacao
                            ,pr_dsprotoc => vr_dsprotoc          --Descricao Protocolo
                            ,pr_cdbcoctl => vr_cdbcoctl          --Codigo Banco Centralizador
@@ -3563,7 +3576,7 @@ create or replace package body cecred.PAGA0002 is
                                   ,pr_cdfinali => 0            --> Codigo de finalidade
                                   ,pr_dstransf => ' '          --> Descricao da transferencia
                                   ,pr_dshistor => ' '          --> Descricao da finalidade
-                                  
+                                  ,pr_cdctrlcs => pr_cdctrlcs  --> Código de controle de consulta
                                   /* parametros de saida */                               
                                   ,pr_dstransa => vr_dstrans1  --> Descrição de transação
                                   ,pr_msgofatr => vr_msgofatr
@@ -3601,7 +3614,7 @@ create or replace package body cecred.PAGA0002 is
     pr_xml_msgofatr := '<msgofatr>'|| vr_msgofatr ||'</msgofatr>';
     pr_xml_cdempcon := '<cdempcon>'|| to_char(vr_cdempcon,'fm0000')||'</cdempcon>';
     pr_xml_cdsegmto := '<cdsegmto>'|| to_char(vr_cdsegmto)||'</cdsegmto>';    
-	pr_xml_dsprotoc := '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'') ||'</dsprotoc>';
+	pr_xml_dsprotoc := '<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'0') ||'</dsprotoc>';
     
     pc_proc_geracao_log(pr_flgtrans => 1 /* TRUE*/);
     pr_dsretorn := 'OK';
@@ -5795,6 +5808,7 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
                                       ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade
                                       ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
+                                      ,pr_cdctrlcs IN craplau.cdctrlcs%TYPE  --> Código de controle de consulta
                                       /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_msgofatr OUT VARCHAR2
@@ -6023,6 +6037,7 @@ create or replace package body cecred.PAGA0002 is
 
     ---------------> VARIAVEIS <-----------------
     vr_dscritic VARCHAR2(4000);
+    vr_cdcritic INTEGER;
     --Tabela de memoria de erros
     vr_tab_erro GENE0001.typ_tab_erro;
     
@@ -6582,6 +6597,7 @@ create or replace package body cecred.PAGA0002 is
                     ,craplau.idtipcar
 					          ,craplau.nrcartao
                     ,craplau.idanafrd
+                    ,craplau.cdctrlcs 
                     )
              VALUES ( pr_cdcooper               -- craplau.cdcooper
                      ,pr_nrdconta               -- craplau.nrdconta
@@ -6619,6 +6635,7 @@ create or replace package body cecred.PAGA0002 is
                      ,pr_idtipcar               -- craplau.idtipcar
                      ,pr_nrcartao               -- craplau.nrcartao
                      ,vr_idanalise_fraude       -- craplau.idanafrd
+                     ,nvl(pr_cdctrlcs,' ')      -- craplau.cdctrlcs
                      )
                      returning idlancto
                         into vr_idlancto;
@@ -6658,8 +6675,11 @@ create or replace package body cecred.PAGA0002 is
         RAISE vr_exc_erro;
     END; -- fim tratamento de rollback to save point
     
-    -- Se for um boleto DDA
-    IF pr_idtitdda > 0 THEN
+    -- Se for um boleto DDA ou
+    -- Nova plataforma de cobrança
+    IF pr_idtitdda > 0 OR 
+       TRIM(pr_cdctrlcs) IS NOT NULL THEN
+       
       --Atualizar situacao titulo
       DDDA0001.pc_atualz_situac_titulo_sacado (pr_cdcooper => pr_cdcooper      -- Codigo da Cooperativa
                                               ,pr_cdagecxa => pr_cdagenci      -- Codigo da Agencia
@@ -6671,18 +6691,13 @@ create or replace package body cecred.PAGA0002 is
                                               ,pr_idseqttl => pr_idseqttl      -- Sequencial do titular
                                               ,pr_idtitdda => pr_idtitdda      -- Indicador Titulo DDA
                                               ,pr_cdsittit => 2 /* agendado */ -- Situacao Titulo
-                                              ,pr_flgerlog => FALSE            -- Gerar Log
-                                              ,pr_des_erro => vr_des_erro      -- Indicador erro OK/NOK
-                                              ,pr_tab_erro => vr_tab_erro);    -- Tabela de memoria de erros
+                                              ,pr_cdctrlcs => pr_cdctrlcs      -- Identificador da consulta
+                                              ,pr_flgerlog => 0                -- Gerar Log
+                                              ,pr_cdcritic => vr_cdcritic      -- Codigo de critica
+                                              ,pr_dscritic => vr_dscritic);    -- Descrição de critica
       --Se ocorreu erro
-      IF vr_des_erro = 'NOK' THEN
-        IF vr_tab_erro.Count > 0 THEN
-          --Mensagem de erro
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          vr_dscritic := 'Falha na requisicao ao DDA.';
-        END IF;
-        
+      IF nvl(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN        
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -6690,6 +6705,12 @@ create or replace package body cecred.PAGA0002 is
           
   EXCEPTION
     WHEN vr_exc_erro THEN
+      IF nvl(vr_cdcritic,0) > 0 AND
+         TRIM(vr_dscritic) IS NULL THEN  
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+         
+      END IF;   
+    
       pr_dscritic := vr_dscritic_aux || vr_dscritic;
     WHEN OTHERS THEN
 
@@ -7299,6 +7320,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
                                 ,pr_dshistor => pr_dshistor  --> Descricao da finalidade                               
                                 ,pr_iptransa => pr_iptransa  --> IP da transacao no IBank/mobile
+                                ,pr_cdctrlcs => NULL         --> Código de controle de consulta
                                 /* parametros de saida */                               
                                 ,pr_dstransa => pr_dstransa  --> Descrição de transação
                                 ,pr_msgofatr => vr_msgofatr
@@ -9369,7 +9391,8 @@ create or replace package body cecred.PAGA0002 is
              lau.nrctadst,
              lau.dslindig,
              lau.idtitdda,
-             lau.dscodbar
+             lau.dscodbar,
+             lau.cdctrlcs
              
         FROM craplau lau
        WHERE lau.cdcooper = pr_cdcooper
@@ -9741,17 +9764,14 @@ create or replace package body cecred.PAGA0002 is
                                               ,pr_nrdconta => pr_nrdconta   --Numero da Conta
                                               ,pr_idseqttl => pr_idseqttl   --Sequencial do titular
                                               ,pr_idtitdda => rw_craplau.idtitdda   --Indicador Titulo DDA
+                                              ,pr_cdctrlcs => rw_craplau.cdctrlcs   --Identificador da consulta
                                               ,pr_cdsittit => 1             --Situacao Titulo
-                                              ,pr_flgerlog => FALSE         --Gerar Log
-                                              ,pr_des_erro => vr_des_erro   --Indicador erro OK/NOK
-                                              ,pr_tab_erro => vr_tab_erro); --Tabela de memoria de erros
+                                              ,pr_flgerlog => 0                -- Gerar Log
+                                              ,pr_cdcritic => vr_cdcritic      -- Codigo de critica
+                                              ,pr_dscritic => vr_dscritic);    -- Descrição de critica
       --Se ocorreu erro
-      IF vr_des_erro = 'NOK' AND vr_tab_erro.Count > 0 THEN
-        
-        --Mensagem de erro
-        vr_cdcritic:= 0;
-        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        
+      IF nvl(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN        
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;

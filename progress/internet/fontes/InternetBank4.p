@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 11/10/2016
+   Data    : Marco/2007                        Ultima atualizacao: 02/01/2017
 
    Dados referentes ao programa:
 
@@ -53,14 +53,20 @@
                             
                
                28/10/2016 - Ajustes realizados referente a melhoria 271. (Kelvin)
+
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança (Odirlei-AMcom)
+
+               22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
+                            
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
     
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i   }
 { sistema/internet/includes/b1wnet0001tt.i }
 { sistema/generico/includes/b1wgen0010tt.i }
 { sistema/generico/includes/b1wgen0015tt.i }
@@ -115,6 +121,9 @@ DEF  INPUT PARAM par_insmsant AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_insmsvct AS INTE                                  NO-UNDO.
 DEF  INPUT PARAM par_insmspos AS INTE                                  NO-UNDO.
 
+DEF  INPUT PARAM par_flgregon AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_inpagdiv AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_vlminimo AS DECI                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -260,7 +269,12 @@ RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    INPUT par_inavisms,
                                    INPUT par_insmsant,
                                    INPUT par_insmsvct,
-                                   INPUT par_insmspos,
+                                   INPUT par_insmspos,         
+        
+                                   /* NPC */
+                                   INPUT par_flgregon,
+                                   INPUT par_inpagdiv,
+                                   INPUT par_vlminimo,
 
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-consulta-blt,
@@ -453,6 +467,16 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    STRING(tt-consulta-blt.insmspos) + 
                                    "</insmspos>" +
                                    
+                                   "<inenvcip>" + 
+                                   STRING(tt-consulta-blt.inenvcip) + 
+                                   "</inenvcip>" +
+                                   "<inpagdiv>" + 
+                                   STRING(tt-consulta-blt.inpagdiv) + 
+                                   "</inpagdiv>" +
+                                   "<vlminimo>" + 
+                                   STRING(tt-consulta-blt.vlminimo) + 
+                                   "</vlminimo>" +
+                                   
                                    "</boleto>".
 
     /* Geramos esse log apenas quando for emissão de boleto */
@@ -570,6 +594,8 @@ ASSIGN xml_operacao.dslinxml = "<dados_beneficiario><nmprimtl>" +
                                "</inpessoa><dsdemail>" + 
                                aux_dsdemail_ben + 
                                "</dsdemail></dados_beneficiario>".
+
+ 
 
 RETURN "OK".
 

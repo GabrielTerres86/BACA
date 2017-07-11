@@ -7,7 +7,7 @@
 
       Alteracoes: 19/05/2011 - Incluir Cob. Regis (Guilherme).
 
-				  14/07/2011 - Alterado para layout padr„o
+				  14/07/2011 - Alterado para layout padr√£o
 							   (Gabriel Capoia - DB1)
 
 				  26/07/2011 - Incluir opcao de impressao (Gabriel)
@@ -21,12 +21,12 @@
 				  10/05/2013 - Retirado campo de valor maximo do boleto vllbolet
 							   Retirado funcao validaDadosTitulares (Jorge)
 
-				  19/09/2013 - Inclusao do campo Convenio Homologado. CriaÁ„o da function
+				  19/09/2013 - Inclusao do campo Convenio Homologado. Cria√ß√£o da function
 				               habilitaSetor (Carlos)
 
-				  06/11/2014 - CorreÁ„o de bug na funÁ„o "habilitaSetor" que utilizava a funÁ„o "IndexOf"
-							   onde ocasionava erro no navegador IE. Isso tudo para que a fosse possÌvel adicionar
-							   o convÍnio "IMPRESSO PELO SOFTWARE" na tela de cobranÁas. (Kelvin)
+				  06/11/2014 - Corre√ß√£o de bug na fun√ß√£o "habilitaSetor" que utilizava a fun√ß√£o "IndexOf"
+							   onde ocasionava erro no navegador IE. Isso tudo para que a fosse poss√≠vel adicionar
+							   o conv√™nio "IMPRESSO PELO SOFTWARE" na tela de cobran√ßas. (Kelvin)
 
 				  28/04/2015 - Incluido campos cooperativa emite e expede e
 							   cooperado emite e expede. (Reinert)
@@ -39,25 +39,28 @@
                   18/02/2016 - PRJ 213 - Reciprocidade. (Jaison/Marcos)
 
                   27/04/2016 - Ajuste para que departamento CANAIS possa ter acesso
-                               a todas as funÁıes da tela, conforme solicitadono
+                               a todas as fun√ß√µes da tela, conforme solicitadono
                                chamado 441903. (Kelvin)
 
-                  04/08/2016 - Adicionado campo de forma de envio de arquivo de cobranÁa. (Reinert)
+                  04/08/2016 - Adicionado campo de forma de envio de arquivo de cobran√ßa. (Reinert)
 
-                  28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobranÁa (Odirlei/AMcom)
+                  28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobran√ßa (Odirlei/AMcom)
 
-                  11/07/2016 - Ajustes para apenas solicitar senha para as alteraÁıes
+                  11/07/2016 - Ajustes para apenas solicitar senha para as altera√ß√µes
                                de desconto manuais.
                                PRJ213 - Reciprocidade (odirlei-AMcom)
 
 
-                  18/08/2016  - Adicionado funÁ„o controlaFoco.(Evandro - RKAM).
+                  18/08/2016  - Adicionado fun√ß√£o controlaFoco.(Evandro - RKAM).
 
-                  29/11/2016 - P341-AutomatizaÁ„o BACENJUD - Realizar as validaÁıes pelo cÛdigo
-				               do departamento ao invÈs da descriÁ„o (Renato Darosci - Supero)
+                  29/11/2016 - P341-Automatiza√ß√£o BACENJUD - Realizar as valida√ß√µes pelo c√≥digo
+				               do departamento ao inv√©s da descri√ß√£o (Renato Darosci - Supero)
 
-                  19/04/2017 - Ajuste para imprimir o termo corretamente (ades„o/cancelamento)
+                  19/04/2017 - Ajuste para imprimir o termo corretamente (ades√£o/cancelamento)
 				               (Douglas - Chamado 641198)
+
+				  13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
+
  ***********************************************************************/
 
 var dsdregis = "";  // Variavel para armazenar os valores dos titulares
@@ -67,12 +70,12 @@ var callafterCobranca = '';
 
 // Numero do convenio que deve ser impresso
 var nrconven_imprimir = 0; 
-// Tipo de Impressao do Termo (1 - Ades„o / 2 - Cancelamento)
+// Tipo de Impressao do Termo (1 - Ades√£o / 2 - Cancelamento)
 var tpdtermo_imprimir = 1;
 
 
 function habilitaSetor(setorLogado) {
-    // Se o setor logado n„o for 1-CANAIS, 18-SUPORTE ou 20-TI
+    // Se o setor logado n√£o for 1-CANAIS, 18-SUPORTE ou 20-TI
     if ((setorLogado != 1) && (setorLogado != 18) && (setorLogado != 20)) {
         $('#flgcebhm', '#frmConsulta').desabilitaCampo();
     }
@@ -117,7 +120,7 @@ function habilitaSetor(setorLogado) {
 	});
  }
 
- //FunÁ„o para controle de navegaÁ„o
+ //Fun√ß√£o para controle de navega√ß√£o
  function controlaFoco() {
      $('#divConteudoOpcao').each(function () {
          $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
@@ -167,7 +170,7 @@ function habilitaSetor(setorLogado) {
  }
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
+function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
 
     var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
 
@@ -183,6 +186,8 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
     $("#flgcruni", "#divConteudoOpcao").val(flgcruni);
     $("#flgcebhm", "#divConteudoOpcao").val(flgcebhm);
     $("#flgregis", "#divConteudoOpcao").val(flgregis);
+    $("#flgregon", "#divConteudoOpcao").val(flgregon);
+    $("#flgpgdiv", "#divConteudoOpcao").val(flgpgdiv);
     $("#flcooexp", "#divConteudoOpcao").val(flcooexp);
     $("#flceeexp", "#divConteudoOpcao").val(flceeexp);
     $("#flserasa", "#divConteudoOpcao").val(flserasa);
@@ -196,7 +201,7 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
 
 	// Numero do convenio selecionado
 	nrconven_imprimir = normalizaNumero(nrconven);
-	// Se o convenio esta ativo, imprimir termo de ades„o, caso contr·rio o de cancelamento
+	// Se o convenio esta ativo, imprimir termo de ades√£o, caso contr√°rio o de cancelamento
 	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
  }
 
@@ -221,7 +226,7 @@ function realizaExclusao(inapurac) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, Excluindo o conv&ecirc;nio ...");
 
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -266,6 +271,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     var qtTitulares = $("#qtTitulares", "#divConteudoOpcao").val();
     var titulares = $("#titulares", "#divConteudoOpcao").val();
     var dsdmesag = $("#dsdmesag", "#divConteudoOpcao").val();
+    var flgregon = $("#flgregon", "#divConteudoOpcao").val();
+    var flgpgdiv = $("#flgpgdiv", "#divConteudoOpcao").val();
     var flcooexp = $("#flcooexp", "#divConteudoOpcao").val();
     var flceeexp = $("#flceeexp", "#divConteudoOpcao").val();
     var flserasa = $("#flserasa", "#divConteudoOpcao").val();
@@ -355,6 +362,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
             flgcruni: flgcruni,
             flgcebhm: flgcebhm,
             flgregis: flgregis,
+            flgregon: flgregon,
+            flgpgdiv: flgpgdiv,
             flcooexp: flcooexp,
             flceeexp: flceeexp,
             flserasa: flserasa,
@@ -385,7 +394,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
 	});
 }
 
-// Se habilitacao, valida dados primeiro , senao j· chama os titulares
+// Se habilitacao, valida dados primeiro , senao j√° chama os titulares
 function titulares(cddopcao, titulares) {
 
 	if (trim(cddopcao) != "C") { // Se habilitacao, primeiro valida dados da tela
@@ -453,7 +462,7 @@ function validaHabilitacao() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, Validando a habilita&ccedil;&atilde;o do conv&ecirc;nio ...");
 
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -488,7 +497,7 @@ function validaDadosLimites(flgconti, titulares, cddopcao) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, Validando os dados da habilita&ccedil;&atilde;o do conv&ecirc;nio ...");
 
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -524,7 +533,7 @@ function confirmaHabilitacao(cddopcao) {
     var dsmensagem = insitceb == '1' ? "Confirma a habilita&ccedil;&atilde;o do conv&ecirc;nio?" : "Confirma a inativa&ccedil;&atilde;o do conv&ecirc;nio?";
 	
 	nrconven_imprimir = normalizaNumero($("#nrconven", "#divOpcaoConsulta").val()); 
-	// Se o convenio esta ativo, imprimir termo de ades„o, caso contrario o termo de cancelamento
+	// Se o convenio esta ativo, imprimir termo de ades√£o, caso contrario o termo de cancelamento
 	tpdtermo_imprimir = (insitceb == 1) ? 1 : 2;
 
     showConfirmacao(dsmensagem, 'Confirma&ccedil;&atilde;o - Ayllos', 'confirmaHabilitacaoSerasa("' + cddopcao + '")', ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
@@ -572,7 +581,7 @@ function validaHabilitacaoSerasa(cddopcao) {
             // Mostra mensagem de aguardo
             showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
 
-            // Carrega conte˙do da opÁ„o atravÈs de ajax
+            // Carrega conte√∫do da op√ß√£o atrav√©s de ajax
             $.ajax({
                 type: "POST",
                 dataType: 'html',
@@ -606,7 +615,7 @@ function validaHabilitacaoSerasa(cddopcao) {
         // Mostra mensagem de aguardo
         showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
 
-        // Carrega conte˙do da opÁ„o atravÈs de ajax
+        // Carrega conte√∫do da op√ß√£o atrav√©s de ajax
         $.ajax({
             type: "POST",
             dataType: 'html',
@@ -666,6 +675,16 @@ function realizaHabilitacao() {
     qtdfloat = normalizaNumero(qtdfloat);
     qtdecprz = normalizaNumero(qtdecprz);
 
+    if ($("#flgregon", "#divOpcaoConsulta").prop("checked") == true) {
+		var flgregon = 1;
+    } else {
+		var flgregon = 0;
+	}
+    if ($("#flgpgdiv", "#divOpcaoConsulta").prop("checked") == true) {
+		var flgpgdiv = 1;
+    } else {
+		var flgpgdiv = 0;
+	}
     if ($("#flcooexp", "#divOpcaoConsulta").prop("checked") == true) {
 		var flcooexp = 1;
     } else {
@@ -698,7 +717,7 @@ function realizaHabilitacao() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, Incluindo a habilita&ccedil;&atilde;o do conv&ecirc;nio ...");
 
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -713,6 +732,8 @@ function realizaHabilitacao() {
 			flgcebhm: flgcebhm,
 			dsdregis: dsdregis,
 			flgregis: flgregis,
+            flgregon: flgregon,
+            flgpgdiv: flgpgdiv,
 			flcooexp: flcooexp,
 			flceeexp: flceeexp,
 			flserasa: flserasa,
@@ -802,7 +823,7 @@ function testemunhas(flgregis) {
 
 	var nmrotina = "imprimirTermoAdesao";
 
-	// Carrega conte˙do da opÁ„o atravÈs do Ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s do Ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -836,7 +857,7 @@ function validaCpf(nmrotina) {
 
 	showMsgAguardo('Aguarde, validando os dados ...');
 
-	// Carrega conte˙do da opÁ„o atravÈs do Ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s do Ajax
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
@@ -868,7 +889,7 @@ function validaCpf(nmrotina) {
 }
 
 
-// FunÁ„o para carregar impressao de termo de ades„o em PDF
+// Fun√ß√£o para carregar impressao de termo de ades√£o em PDF
 function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
 
     var nmdtest1 = $("#nmdtest1", "#divTestemunhas").val();
@@ -904,7 +925,7 @@ function imprimirTermoAdesao(flgregis, dsdtitul, tpimpres) {
 		callafter = callafterCobranca;
 	}
 
-	// Zerar as vari·veis
+	// Zerar as vari√°veis
 	nrconven_imprimir = 0; 
 	tpdtermo_imprimir = 1;
 	
@@ -938,6 +959,8 @@ function controlaLayout(nomeForm) {
         var Ldsorgarq = $('label[for="dsorgarq"]', '#' + nomeForm);
         var Linsitceb = $('label[for="insitceb"]', '#' + nomeForm);
         var Lflgregis = $('label[for="flgregis"]', '#' + nomeForm);
+        var Lflgregon = $('label[for="flgregon"]', '#' + nomeForm);
+        var Lflgpgdiv = $('label[for="flgpgdiv"]', '#' + nomeForm);
         var Lflcooexp = $('label[for="flcooexp"]', '#' + nomeForm);
         var Lflceeexp = $('label[for="flceeexp"]', '#' + nomeForm);
         var Lflserasa = $('label[for="flserasa"]', '#' + nomeForm);
@@ -968,6 +991,8 @@ function controlaLayout(nomeForm) {
         Ldsorgarq.addClass('rotulo').css('width', '210px');
         Linsitceb.addClass('rotulo').css('width', '210px');
         Lflgregis.addClass('rotulo').css('width', '210px');
+        Lflgregon.addClass('rotulo').css('width', '210px');
+        Lflgpgdiv.addClass('rotulo').css('width', '210px');
         Lflcooexp.addClass('rotulo').css('width', '210px');
         Lflceeexp.addClass('rotulo').css('width', '210px');
         Lflserasa.addClass('rotulo').css('width', '210px');
@@ -1215,7 +1240,7 @@ function testemunhasCancelamento(flgregis) {
 
     var nmrotina = "imprimirTermoCancelamento";
 
-    // Carrega conte˙do da opÁ„o atravÈs do Ajax
+    // Carrega conte√∫do da op√ß√£o atrav√©s do Ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1266,7 +1291,7 @@ function acessaAba(id,cddopcao) {
     $("#btnContinuar").show();
 
     var cddbanco = $("#cco_cddbanco", "#frmConsulta").val();
-    // Removido esta forma de atribuir pois n„o funciona com modo de compatibilidade
+    // Removido esta forma de atribuir pois n√£o funciona com modo de compatibilidade
     //var linkContinuar = 'acessaAba(' + (id + 1) + ',\'' + cddopcao + '\');';
     //var linkContinua2 = 'validaDadosLimites(\'true\',\'\',\'' + cddopcao + '\');';
     //var linkVoltar  = 'acessaOpcaoAba();';
@@ -1300,7 +1325,7 @@ function acessaAba(id,cddopcao) {
         document.getElementById("btnVoltar").onclick=function(){acessaAba(id + 1,cddopcao);}
     }
 
-    // Removido esta forma de atribuir pois n„o funciona com modo de compatibilidade
+    // Removido esta forma de atribuir pois n√£o funciona com modo de compatibilidade
     //$("#btnContinuar").attr("onclick",linkContinuar);
     //$("#btnVoltar").attr("onClick",linkVoltar);
     return false;
@@ -1346,7 +1371,7 @@ function abrirReciprocidadeAcompanhamento() {
 
     var nrconven = normalizaNumero($("#nrconven", "#frmConsulta").val());
 
-    // Carrega conte˙do da opÁ„o atravÈs do Ajax
+    // Carrega conte√∫do da op√ß√£o atrav√©s do Ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1382,7 +1407,7 @@ function abrirReciprocidadeCalculo() {
     var idrecipr = $('#idrecipr','#frmConsulta').val();
     var idprmrec = $('#idprmrec','#frmConsulta').val();
 
-    // Carrega conte˙do da opÁ„o atravÈs do Ajax
+    // Carrega conte√∫do da op√ß√£o atrav√©s do Ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -1434,12 +1459,12 @@ function executaReciprocidadeCalculo() {
             idreciprold != glb_idreciproci &&
             idreciprold > 0) {
 
-            // Solicitamos confirmaÁ„o do operador, em caso de cancelamento retornaremos ao calculo antigo.
+            // Solicitamos confirma√ß√£o do operador, em caso de cancelamento retornaremos ao calculo antigo.
             showConfirmacao("Aten&ccedil;&atilde;o: Qualquer altera&ccedil;&atilde;o na Reciprocidade acarretar&aacute; no cancelamento do per&iacute;odo de apura&ccedil;&atilde;o atual!", 'Confirma&ccedil;&atilde;o - Ayllos', ' aplicaCalculoReciproci()', ' reverteCalculoOld()', 'continuar.gif', 'cancelar.gif');
 
         } else {
 
-            // Novo calculo, ou n„o existia o anterior, ent„o sempre chamaremos a aplicaÁ„o do calculo
+            // Novo calculo, ou n√£o existia o anterior, ent√£o sempre chamaremos a aplica√ß√£o do calculo
             aplicaCalculoReciproci();
         }
 
@@ -1449,11 +1474,11 @@ function executaReciprocidadeCalculo() {
 
 // Funcao para aplicar os descontos de reciprocidade calculada
 function aplicaCalculoReciproci() {
-    // Buscar valores do novo c·lculo novamente
+    // Buscar valores do novo c√°lculo novamente
     var glb_perdesconto = converteMoedaFloat($('#glb_perdesconto', '#frmConsulta').val());
     var glb_idreciproci = normalizaNumero($('#glb_idreciproci', '#frmConsulta').val());
 
-    // Utilizar somente o valor m·ximo
+    // Utilizar somente o valor m√°ximo
     var perdesconto_maximo_recipro = converteMoedaFloat($('#perdesconto_maximo_recipro', '#frmConsulta').val());
     var perdesconto_recipro = (perdesconto_maximo_recipro < glb_perdesconto ? perdesconto_maximo_recipro : glb_perdesconto);
 
@@ -1469,14 +1494,14 @@ function aplicaCalculoReciproci() {
         tot_perdesconto = tot_perdesconto + perdesconto_recipro;
     });
 
-    // Guardar o valor total do c·lculo atualizando o valor que veio do banco
+    // Guardar o valor total do c√°lculo atualizando o valor que veio do banco
     $('#tot_percdesc_recipr', '#frmConsulta').val(tot_perdesconto);
 
 }
 
-// Funcao para reverter o calculo n„o confirmado
+// Funcao para reverter o calculo n√£o confirmado
 function reverteCalculoReciproci() {
-    // Retornaremos o id do calculo anterior, pois o operador n„o confirmou a alteraÁ„o
+    // Retornaremos o id do calculo anterior, pois o operador n√£o confirmou a altera√ß√£o
     $('#idrecipr', '#frmConsulta').val($('#idreciprold', '#frmConsulta').val());
 }
 
@@ -1485,12 +1510,12 @@ function verificaSenhaCoordenador() {
     var flsolicita = false;
     var flgapvco = normalizaNumero($('#flgapvco', '#frmConsulta').val());
 
-    // Somente se for necessario solicitar aprovaÁ„o
+    // Somente se for necessario solicitar aprova√ß√£o
     if (flgapvco == 1) {
         var tot_percdesc = $('#tot_percdesc', '#frmConsulta').val();
         var tot_percdesc_recipr = $('#tot_percdesc_recipr', '#frmConsulta').val();
 
-        // Acumular categorias conforme reciprocidade ou n„o
+        // Acumular categorias conforme reciprocidade ou n√£o
         var tot_percdesc_campo = 0;
         $(".clsCatFlrecipr0").each(function (index) {
            tot_percdesc_campo = tot_percdesc_campo + converteMoedaFloat($(this).val());
@@ -1506,7 +1531,7 @@ function verificaSenhaCoordenador() {
         }
 
     }
-    // Se for necess·rio solicitar senha do coordenador
+    // Se for necess√°rio solicitar senha do coordenador
     if (flsolicita) {
         pedeSenhaCoordenador(2,'realizaHabilitacao();','divRotina');
     } else {
@@ -1516,7 +1541,7 @@ function verificaSenhaCoordenador() {
 
 function gera_ajuda() {
     showMsgAguardo('Aguarde, gerando ...');
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	var UrlOperacao = UrlSite + "telas/atenda/cobranca/gera_ajuda.php";
 	$.ajax({
 		type: "POST",
@@ -1562,7 +1587,7 @@ function ativarConvenio(){
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, Ativando o conv&ecirc;nio ...");
 
-	// Carrega conte˙do da opÁ„o atravÈs de ajax
+	// Carrega conte√∫do da op√ß√£o atrav√©s de ajax
 	$.ajax({
 		dataType: "html",
 		type: "POST",
@@ -1767,7 +1792,7 @@ function CancelarServSMS(){
     consultaServicoSMS('CA');
 }
 
-// FunÁ„o para carregar impressao de servico de SMS em PDF
+// Fun√ß√£o para carregar impressao de servico de SMS em PDF
 function imprimirServSMS(cddopcao) {
 	 showMsgAguardo("Aguarde, gerando impress&atilde;o ...");
     var idcontrato = normalizaNumero($("#idcontrato", "#divServSMS").val());

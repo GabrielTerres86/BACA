@@ -696,7 +696,7 @@ function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq = 1, flgCarregando = 
 					cdfaixav	: cdfaixav,
 					flgtodos	: flgtodos,
 					cddopcao	: cddopcao,
-					cdtipcat	: cdtipcat, /* Daniel */
+					cdtipcat	: cdtipcat, /* Daniel */		
 					nriniseq	: nriniseq,	
 					redirect	: 'script_ajax' 
 				},
@@ -864,7 +864,7 @@ function validaReplicacao(){
 	var vlminimo = $('#vlminimo','#frmAtribuicaoDetalhamento').val();
 	var vlmaximo = $('#vlmaximo','#frmAtribuicaoDetalhamento').val();
 	var flgtiptar= $('input[type=radio][name=flgtiptar]:checked','#frmAtribuicaoDetalhamento').val();
-
+	
 	var cddopcao = $('#cddopcao','#frmCab').val();
 	
 	
@@ -904,7 +904,7 @@ function validaReplicacao(){
 			 lstvlmax  = lstvlmax  + $('#vlmaximotab'+i,'#formAtribuicaoDetalhamento').val() + ';';
 			 lstcdcop  = lstcdcop  + $('#cdcooper'+i,'#formAtribuicaoDetalhamento').val() + ';'; 
 			 lstlcrem  = lstlcrem  + $('#cdlcremptab'+i,'#formAtribuicaoDetalhamento').val() + ';';
-
+			 
 			 flglsttptar = $('#vltarifatab'+i,'#formAtribuicaoDetalhamento').val().toString().replace(/\,/g, '.') > 0 ? 1 : 2;
 			 lsttptar  = lsttptar  + flglsttptar + ';';
 
@@ -1031,7 +1031,7 @@ function realizaOpFco(cddopfco) {
 				return false;
 		}
 	}	
-
+	
 	if ( $('#dtdivulg','#frmAtribuicaoDetalhamento').val() == '' ) {
 				showError("error","Data Divulgação deve ser informado.","Alerta - Ayllos","focaCampoErro(\'dtdivulg\', \'frmAtribuicaoDetalhamento\');bloqueiaFundo($('#divRotina'));",false);
 				return false;
@@ -1115,7 +1115,7 @@ function realizaOpFco(cddopfco) {
 	var vlminimo = $('#vlminimo','#frmAtribuicaoDetalhamento').val();
 	var vlmaximo = $('#vlmaximo','#frmAtribuicaoDetalhamento').val();
 	var flgtiptar= $('input[type=radio][name=flgtiptar]:checked','#frmAtribuicaoDetalhamento').val();
-
+	
 	var cddopcao = $('#cddopcao','#frmCab').val();
 	
 	var nrconven = $('#nrconven','#frmAtribuicaoDetalhamento').val();
@@ -1125,7 +1125,7 @@ function realizaOpFco(cddopfco) {
 	var cdlcremp = $('#cdlcremp','#frmAtribuicaoDetalhamento').val(); /* Daniel */
 	
 	var cdinctar = $('#cdinctar','#frmCab').val();
-
+	
 	var cdtipcat = $('#cdtipcat','#frmCab').val();
 	
 	cdcopatu = normalizaNumero(cdcopatu);
@@ -1135,7 +1135,7 @@ function realizaOpFco(cddopfco) {
 	vlperc   = normalizaNumero(vlperc);
 	vlminimo = normalizaNumero(vlminimo);
 	vlmaximo = normalizaNumero(vlmaximo);
-
+	
 	nrconven = normalizaNumero(nrconven);
 	
 	cdlcremp = normalizaNumero(cdlcremp);
@@ -1948,9 +1948,9 @@ function formataTabDetalhamento() {
 	//if ( ( aux_cdtipcat == 2 ) || ( aux_cdtipcat == 3 ) )  { /* 2 - Convenio    3 - Linha Credito */ 
 	//	arrayLargura[0] = '120px';
 	//}
-
+	
 	if(normalizaNumero($('#cdtipcat','#frmCab').val()) == 2 || normalizaNumero($('#cdtipcat','#frmCab').val()) == 3){ // convenio ou linha de credito
-		var arrayLargura = new Array();
+	var arrayLargura = new Array();
 		arrayLargura[0] = '111px';
 		arrayLargura[1] = '63px';
 		arrayLargura[2] = '63px';
@@ -2018,7 +2018,7 @@ function formataTabDetalhamento() {
 		gblFcoVlpertar = $(this).find('#vlpertar > span').text() ;
 		gblFcoVlmintar = $(this).find('#vlmintar > span').text() ;
 		gblFcoVlmaxtar = $(this).find('#vlmaxtar > span').text() ;
-
+		
 		if (glbFcoCdlcremp == 0) {
 			glbFcoDslcremp = "LINHA PADRAO";
 		}
@@ -2658,7 +2658,7 @@ function buscaAtribuicaoDetalhamento(cdatrdet) {
 	var vlinifvl2 = normalizaNumero($('#vlinifvl', '#frmDetalhaTarifa').val());
 	var vlfinfvl2 = normalizaNumero($('#vlfinfvl', '#frmDetalhaTarifa').val());
 	var cdtipcat = normalizaNumero($('#cdtipcat', '#'+frmCab).val());
-
+	
 	var cddopfco = cdatrdet;	
 	
 	if (cdatrdet == 'I'){
@@ -2670,7 +2670,7 @@ function buscaAtribuicaoDetalhamento(cdatrdet) {
 	}	
 
 	var vltarifa2 = number_format(glbFcoVltarifa,2,',','');	
-	var vlrepass2 = number_format(glbFcoVlrepass,2,',','');
+	var vlrepass2 = number_format(glbFcoVlrepass,2,',','');	
 	
 	var vlpertar = number_format(gblFcoVlpertar,2,',','');
 	var vlmintar = number_format(gblFcoVlmintar,2,',','');
@@ -2817,7 +2817,7 @@ function replicaCooperativaDet(opReplica) {
 	var vlminimo  = normalizaNumero($('#vlminimo', '#'+frmAtribDet).val());
 	var vlmaximo  = normalizaNumero($('#vlmaximo', '#'+frmAtribDet).val());
 	var flgtiptar = $('input[type=radio][name=flgtiptar]:checked', '#'+frmAtribDet).val();
-
+	
 	var nrcnvatu  = normalizaNumero($('#nrconven', '#'+frmAtribDet).val());
 	var cdocorre  = normalizaNumero($('#cdocorre','#frmCab').val());
 	
@@ -2906,7 +2906,7 @@ function formataAtribuicaoDetalhamento() {
 	var rVlperc     = $('label[for="vlperc"]','#'+frmAtribuicaoDetalhamento);
 	var rVlminimo   = $('label[for="vlminimo"]','#'+frmAtribuicaoDetalhamento);
 	var rVlmaximo   = $('label[for="vlmaximo"]','#'+frmAtribuicaoDetalhamento);
-
+	
 	var rNrconven	= $('label[for="nrconven"]','#'+frmAtribuicaoDetalhamento);
 	var rCdlcremp	= $('label[for="cdlcremp"]','#'+frmAtribuicaoDetalhamento);
 	
@@ -2939,7 +2939,7 @@ function formataAtribuicaoDetalhamento() {
 	var cDtdivulg	= $('#dtdivulg','#'+frmAtribuicaoDetalhamento);	
 	var cDtvigenc	= $('#dtvigenc','#'+frmAtribuicaoDetalhamento);	
 	var cVltarifa	= $('#vltarifa2','#'+frmAtribuicaoDetalhamento);
-	var cVlrepass	= $('#vlrepass2','#'+frmAtribuicaoDetalhamento);
+	var cVlrepass	= $('#vlrepass2','#'+frmAtribuicaoDetalhamento);	
 	var cVlperc     = $('#vlperc','#'+frmAtribuicaoDetalhamento);
 	var cVlminimo   = $('#vlminimo','#'+frmAtribuicaoDetalhamento);
 	var cVlmaximo   = $('#vlmaximo','#'+frmAtribuicaoDetalhamento);	
@@ -3035,7 +3035,7 @@ function btnReblicar() {
 				showError("error","Cooperativa deve ser informado.","Alerta - Ayllos","focaCampoErro(\'cdcopaux\', \'frmAtribuicaoDetalhamento\');bloqueiaFundo($('#divRotina'));",false);
 				return false;
 	}
-
+	
 	if ( !$('input[type=radio][name=flgtiptar]').is(":checked") ) {
 				showError("error","Tipo de Tarifação deve ser informado.","Alerta - Ayllos","focaCampoErro(\'flgperc\', \'frmAtribuicaoDetalhamento\');bloqueiaFundo($('#divRotina'));",false);
 				return false;
@@ -4011,7 +4011,7 @@ function btnConcluirComLinhaCredito() {
 	if ( $('#vlrepass2','#frmAtribuicaoDetalhamento').val() == '' ) {
 				showError("error","Custo/Repasse deve ser informado.","Alerta - Ayllos","focaCampoErro(\'vlrepass2\', \'frmAtribuicaoDetalhamento\');bloqueiaFundo($('#divRotina'));",false);
 	return false;
-	}
+}
 	
 	// Se não esta bloqueado é inclusão.
 	if ( ! $('#dtdivulg','#frmAtribuicaoDetalhamento').hasClass('campoTelaSemBorda')  ) {	

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 14/12/2016
+   Data    : Marco/2007                        Ultima atualizacao: 16/12/2016
 
    Dados referentes ao programa:
 
@@ -50,6 +50,10 @@
 						  mas mesmo assim levava todo o tempo como se tivesse 
 						  carregado, validacao agora esta dentro da b1wnet0001.seleciona-sacados
 						  (Tiago/Ademir SD566906)
+
+               16/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -316,6 +320,9 @@ IF  AVAILABLE tt-dados-blt  THEN
                                        "<flprotes>" + STRING(tt-dados-blt.flprotes) + "</flprotes>" +
                                        "<flpersms>" + STRING(tt-dados-blt.flpersms) + "</flpersms>" +
                                        "<fllindig>" + STRING(tt-dados-blt.fllindig) + "</fllindig>" +
+                                       "<cddbanco>" + STRING(tt-dados-blt.cddbanco) + "</cddbanco>" +
+                                       "<flgregon>" + STRING(tt-dados-blt.flgregon) + "</flgregon>" +
+                                       "<flgpgdiv>" + STRING(tt-dados-blt.flgpgdiv) + "</flgpgdiv>" +
                                        "</BOLETO>".
 
     END.

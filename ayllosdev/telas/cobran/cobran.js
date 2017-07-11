@@ -21,6 +21,8 @@
  *              5 - Data de Vencimento, 6 - Nome do Pagador (Douglas - Chamado 441759)
  * [11/10/2016] Odirlei Busana(AMcom)  : Inclusao dos campos de aviso por SMS. PRJ319 - SMS Cobrança.
  * 08/01/2017 - Adicionar o campo flgdprot para definir label e informacao a mostrar (Protesto x Negativacao (Heitor - Mouts) - Chamado 574161
+ * 26/06/2017 - Incluido campo de Sacado DDA, Prj. 340 (Jean Michel)
+ * 03/07/2017 - Incluido nova instância do campo Cobrança Registrada, Prj. 340 (Jean Michel)
  */
 
 //Formulários e Tabela
@@ -45,7 +47,7 @@ var ni = 0;
 
 var registro;
 
-var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
+var cdcooper, nrinssac, nrnosnum, dsdoccop, nmdsacad, flgcbdda, flgsacad, flgreaux, dsendsac, complend, nmbaisac, nmcidsac, cdufsaca, nrcepsac,
 	dscjuros, dscmulta, dscdscto, dtdocmto, dsdespec, flgaceit, dsstacom, dtvencto, vltitulo, vldesabt, qtdiaprt, dtdpagto, vldpagto,
 	vljurmul, cdbandoc, nrdcoaux, nrcnvcob, cdsituac, dssituac, cdtpinsc, nrdocmto, dsemiten, inserasa, flserasa, qtdianeg,
     dsavisms, dssmsant, dssmsvct, dssmspos, flgdprot;
@@ -105,7 +107,7 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var dsdoccop = $('#dsdoccop', '#' + frmOpcao).val();
     var flgregis = $('#flgregis', '#' + frmOpcao).val();
     var inestcri = $('#inestcri', '#' + frmOpcao).val();
-
+	
     cTodosOpcao.removeClass('campoErro');
 
     var mensagem = 'Aguarde, buscando dados ...';
@@ -996,10 +998,9 @@ function formataTabela() {
     var ordemInicial = new Array();
     //ordemInicial = [[0,0]];	
 
-
     // sem registro
-    if (flgregis == 'no') {
-        var arrayLargura = new Array();
+    if (flgregis == 'no' || flgregis == 'N') {
+		var arrayLargura = new Array();
         arrayLargura[0] = '95px';
         arrayLargura[1] = '65px';
         arrayLargura[2] = '75px';
@@ -1017,7 +1018,8 @@ function formataTabela() {
         arrayAlinha[6] = 'right';
 
         // com registro
-    } else if (flgregis == 'yes') {
+    } else if (flgregis == 'yes' || flgregis == 'S') {
+		
         var arrayLargura = new Array();
         arrayLargura[0] = '110px';
         arrayLargura[1] = '95px';
@@ -1137,6 +1139,7 @@ function selecionaTabela(tr) {
         nmdsacad = $('#nmdsacad', tr).val();
         flgreaux = $('#flgregis', tr).val();
         flgcbdda = $('#flgcbdda', tr).val();
+		flgsacad = $('#flgsacad', tr).val();
         dsendsac = $('#dsendsac', tr).val();
         complend = $('#complend', tr).val();
         nmbaisac = $('#nmbaisac', tr).val();
@@ -1200,6 +1203,8 @@ function buscaConsulta(operacao) {
             flserasa: flserasa,
             qtdianeg: qtdianeg,
 			flgdprot: flgdprot,
+			cdtpinsc: cdtpinsc,
+			nrinssac: nrinssac,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1248,6 +1253,7 @@ function formataConsulta() {
     rNmdsacad = $('label[for="nmdsacad"]', '#frmConsulta');
     rFlgregis = $('label[for="flgregis"]', '#frmConsulta');
     rFlgcbdda = $('label[for="flgcbdda"]', '#frmConsulta');
+	rFlgsacad = $('label[for="flgsacad"]', '#frmConsulta');
     rDsendsac = $('label[for="dsendsac"]', '#frmConsulta');
     rComplend = $('label[for="complend"]', '#frmConsulta');
     rNmbaisac = $('label[for="nmbaisac"]', '#frmConsulta');
@@ -1285,7 +1291,8 @@ function formataConsulta() {
     rDsdoccop.addClass('rotulo-linha').css({ 'width': '70px' });
     rNmdsacad.addClass('rotulo').css({ 'width': '61px' });
     rFlgregis.addClass('rotulo-linha').css({ 'width': '70px' });
-    rFlgcbdda.addClass('rotulo-linha').css({ 'width': '33px' });
+    rFlgcbdda.addClass('rotulo').css({ 'width': '80px' });
+	rFlgsacad.addClass('rotulo-linha').css({ 'width': '100px' });
     rDsendsac.addClass('rotulo').css({ 'width': '61px' });
     rComplend.addClass('rotulo-linha').css({ 'width': '70px' });
     rNmbaisac.addClass('rotulo').css({ 'width': '61px' });
@@ -1321,6 +1328,7 @@ function formataConsulta() {
     cNmdsacad = $('#nmdsacad', '#frmConsulta');
     cFlgregis = $('#flgregis', '#frmConsulta');
     cFlgcbdda = $('#flgcbdda', '#frmConsulta');
+	cFlgsacad = $('#flgsacad', '#frmConsulta');
     cDsendsac = $('#dsendsac', '#frmConsulta');
     cComplend = $('#complend', '#frmConsulta');
     cNmbaisac = $('#nmbaisac', '#frmConsulta');
@@ -1359,6 +1367,9 @@ function formataConsulta() {
     cNmdsacad.val(nmdsacad).css({ 'width': '366px' });
     cFlgregis.val(flgreaux).css({ 'width': '50px' });
     cFlgcbdda.val(flgcbdda).css({ 'width': '50px' });
+	
+	cFlgsacad.css({ 'width': '50px' });	
+	
     cDsendsac.val(dsendsac).css({ 'width': '366px' });
     cComplend.val(complend).css({ 'width': '140px' });
     cNmbaisac.val(nmbaisac).css({ 'width': '140px' });
@@ -2316,15 +2327,18 @@ function btnVoltar() {
 			$('fieldset:eq(' + x + ')', '#' + frmOpcao).css({ 'display': 'none' });
 		}
 		
-        tipoOptionC();
-        cTpconsul.habilitaCampo();
+        //tipoOptionC(); JMD
+		
         cConsulta.habilitaCampo();
+		cFlgregis = $('#flgregis', '#' + frmOpcao); //JMD
         cFlgregis.habilitaCampo();
-        cInestcri.habilitaCampo().focus();
-
+		cTpconsul.habilitaCampo();        
+        cInestcri.habilitaCampo();
+		cInestcri.focus();
+		tipoOptionC(); //JMD
     } else if (cddopcao === 'C' && isHabilitado(cConsulta)) {
         estadoInicial();
-
+		
     } else if (cddopcao == 'R' && $('fieldset:eq(1)', '#' + frmOpcao).css('display') == 'block') {
         $('input, select', '#' + frmOpcao + ' fieldset:eq(1)').limpaFormulario();
         $('fieldset:eq(1)', '#' + frmOpcao).css({ 'display': 'none' });
