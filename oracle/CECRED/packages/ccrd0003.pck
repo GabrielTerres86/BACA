@@ -1915,7 +1915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 13/06/2017
+    Data    : Maio/14.                    Ultima atualizacao: 04/07/2017
 
     Dados referentes ao programa:
 
@@ -2006,7 +2006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 07/12/2016 - Tratamento Incorporacao Transposul. (Fabricio)
                 
                 16/12/2016 - Ajustes para incorporacao/migracao. (Fabricio)
-                             
+
                 03/02/2017 - #601772 Inclusão de verificação e log de erros de execução através do 
                              procedimento pc_internal_exception no procedimento pc_crps670 (Carlos)
 
@@ -2020,6 +2020,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 13/06/2017 - Tratar para abrir chamado quando ocorrer algum erro no 
                              processamento da conciliacao do cartao Bancoob/Cabal (Lucas Ranghetti #680746)
+                04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
+                             solicitado no chamado 703589. (Kelvin)
+                             
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -2088,6 +2091,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_dstrnbcb VARCHAR2(100);
       vr_nrdlinha INTEGER := 0;
       vr_nmarqimp VARCHAR2(100);
+      vr_conarqui   NUMBER:= 0;                                        
+      vr_listarq    VARCHAR2(2000);                                    
+      vr_split      gene0002.typ_split := gene0002.typ_split();
+      
       vr_dsdircop crapcop.dsdircop%TYPE;      
       
       -- Tratamento de erros
@@ -2631,12 +2638,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END LOOP;
 
         -- Fechar as tags e descarregar o buffer        
-         pc_escreve_xml('</agenci>');
+        pc_escreve_xml('</agenci>');
       
 
         -- GERAR RESUMO POR COOPERATIVA
-         pc_resumo_coop;
-         pc_escreve_xml('</cooper>');
+        pc_resumo_coop;
+        pc_escreve_xml('</cooper>');         
 
          
         pc_escreve_xml('</crrl685>',TRUE);
@@ -2960,104 +2967,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
 
         -- monta nome do arquivo
-        vr_nmrquivo := 'CEXT_756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '_*.*';
+        vr_nmrquivo := 'CEXT_756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '_%.%';
 
-        -- Apaga o arquivo pc_crps670.txt caso exista
-        vr_comando:= 'rm ' || vr_direto_connect || '/pc_crps670.txt 2> /dev/null';
-        --Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_comando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
+        gene0001.pc_lista_arquivos(pr_path     => vr_direto_connect 
+                                  ,pr_pesq     => vr_nmrquivo  
+                                  ,pr_listarq  => vr_listarq 
+                                  ,pr_des_erro => vr_dscritic); 
 
-        --Verificar se existe arquivo(s) para ser processado
-        vr_comando:= 'ls ' || vr_direto_connect || '/'|| vr_nmrquivo || ' | wc -l ';
-        --Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_comando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
-        IF vr_typ_saida = 'ERR' THEN
+        --Ocorreu um erro no lista_arquivos
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdcritic := 0;
           RAISE vr_exc_saida;
-        ELSE
-          --Se retornou zero arquivos entao sai do programa
-          IF substr(vr_dscritic,1,1) = '0' OR vr_dscritic IS NULL THEN
-            --Montar mensagem critica
-            vr_cdcritic:= 182;
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-            --Levantar Excecao
-            RAISE vr_exc_fimprg;
-          END IF;
-        END IF;
-
-        -- Criar o arquivo pc_crps670.txt baseado no comando LS
-        vr_comando:= 'ls ' || vr_direto_connect || '/'|| vr_nmrquivo|| ' 1>> '|| vr_direto_connect || '/pc_crps670.txt';
-
-        --Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_comando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
-        IF vr_typ_saida = 'ERR' THEN
-          RAISE vr_exc_saida;
-        END IF;
-
-        --Bloco de leitura do arquivo pc_crps670.txt
-
-        BEGIN
-          --Abre o arquivo pc_crps670.txt
-          gene0001.pc_abre_arquivo(pr_nmdireto => vr_direto_connect --> Diretório do arquivo
-                                  ,pr_nmarquiv => 'pc_crps670.txt'  --> Nome do arquivo
-                                  ,pr_tipabert => 'R'               --> Modo de abertura (R,W,A)
-                                  ,pr_utlfileh => vr_ind_arquiv     --> Handle do arquivo aberto
-                                  ,pr_des_erro => vr_dscritic);     --> Erro
-          IF vr_dscritic IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_saida;
           END IF;
 
-          LOOP
-            -- Verifica se o arquivo está aberto
-            IF  utl_file.IS_OPEN(vr_ind_arquiv) THEN
-              -- Le os dados em pedaços e escreve no Blob
-              gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv --> Handle do arquivo aberto
-                                          ,pr_des_text => vr_nmarquiv); --> Texto lido
-              -- Incrementar contador
-              vr_contador:= Nvl(vr_contador,0) + 1;
+        --Nao encontrou nenhuma arquivo para processar
+        IF TRIM(vr_listarq) IS NULL THEN
+          vr_cdcritic := 182;
+          vr_dscritic := NULL;
+          RAISE vr_exc_fimprg;
+        END IF;
 
-              -- Separar o nome do arquivo do caminho
-              GENE0001.pc_separa_arquivo_path(pr_caminho => vr_nmarquiv
-                                             ,pr_direto  => vr_direto_connect
-                                             ,pr_arquivo => vr_nmarquiv);
-              -- Popular o vetor de arquivos
-              vr_vet_nmarquiv(vr_contador):= vr_nmarquiv;
+        vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
+									                           ,pr_delimit => ',');
 
-            END IF;
+        IF vr_split.count = 0 THEN
+          vr_cdcritic := 182;
+          vr_dscritic := NULL;
+          RAISE vr_exc_fimprg;
+          END IF;
+
+        FOR vr_conarqui IN vr_split.FIRST..vr_split.LAST LOOP
+          vr_vet_nmarquiv(vr_conarqui) := vr_split(vr_conarqui);    
+          vr_contador :=  vr_conarqui; 
           END LOOP;
-
-          -- Fechar o arquivo
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
-
-          -- Apaga o arquivo pc_crps670.txt no unix
-          vr_comando:= 'rm ' || vr_direto_connect || '/pc_crps670.txt 2> /dev/null';
-          -- Executar o comando no unix
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => vr_comando
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_dscritic);
-          IF vr_typ_saida = 'ERR' THEN
-            RAISE vr_exc_saida;
-          END IF;
-
-        EXCEPTION
-          WHEN utl_file.invalid_operation THEN
-            -- Nao conseguiu abrir o arquivo
-            vr_dscritic:= 'Erro ao abrir o arquivo pc_crps670.txt na rotina pc_crps670.';
-            RAISE vr_exc_saida;
-          WHEN no_data_found THEN
-            -- Terminou de ler o arquivo
-            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
-        END;
 
         -- Se o contador está zerado
         IF vr_contador = 0 THEN
@@ -6432,7 +6374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
           END LOOP;
 
-        END LOOP;
+          END LOOP;
 
         -- monta TRAILER do arquivo
         vr_dstraile := ('CCB3'                         /* Pedido         */      ||
@@ -6543,7 +6485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 29/06/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 04/07/2017
 
        Dados referentes ao programa:
 
@@ -6624,7 +6566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
                                 (Chamado 532712) - (Fabrício)
 
-                           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+				           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
                                 (Chamado 532712) - (Fabricio)
                                 
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
@@ -6658,6 +6600,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    29/06/2017 - Alterado o cursor do primeiro grupo de afinidade, para buscar um cartao
                                 em uso/liberado, e que a conta ainda nao tenha uma solicitacao de cartao
                                 (Douglas - Chamado 637487)
+                   
+                   04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
+                                solicitado no chamado 703589. (Kelvin)
     ............................................................................ */
 
     DECLARE
@@ -6712,6 +6657,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_idprglog   tbgen_prglog.idprglog%TYPE;                         
       vr_destinatario_email VARCHAR2(500);                             --> Destinatario E-mail 
       vr_saida_tail VARCHAR2(1000);                                    --> Retorno do tail -2
+      vr_conarqui   NUMBER:= 0;                                        
+      vr_listarq    VARCHAR2(2000);                                    
+      vr_split      gene0002.typ_split := gene0002.typ_split(); 
     
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -6978,7 +6926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            -- Se o parametro vir nulo, deve considerar as situações 3 e 4
            AND (pcr.insitcrd = pr_insitcrd OR (pr_insitcrd IS NULL AND pcr.insitcrd IN (3,4)))
            AND (pcr.flgprcrd = pr_flgprcrd OR pr_flgprcrd IS NULL);
-
+      
       -- Buscar o código do grupo de afinidade, ignorando os parametros
       -- que estejam sendo passados como null
       CURSOR cr_crawcrd_em_uso(pr_cdcooper IN crawcrd.cdcooper%TYPE
@@ -7531,29 +7479,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
         
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-                                     pr_cdoperad => '1',
-                                                       pr_dscritic => '',
-                                                       pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
-                                                       pr_dstransa => 'Alterar Situacao Cartao de Credito',
-                                                       pr_dttransa => TRUNC(SYSDATE),
-                                                       pr_flgtrans => 1,
-                                                       pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
-                                                       pr_idseqttl => 0,
-                                                       pr_nmdatela => 'PC_CRPS672',
-                                                       pr_nrdconta => pr_nrdconta,
-                                                       pr_nrdrowid => vr_nrdrowid);
+				                     pr_cdoperad => '1',
+													   pr_dscritic => '',
+													   pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
+													   pr_dstransa => 'Alterar Situacao Cartao de Credito',
+													   pr_dttransa => TRUNC(SYSDATE),
+													   pr_flgtrans => 1,
+													   pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+													   pr_idseqttl => 0,
+													   pr_nmdatela => 'PC_CRPS672',
+													   pr_nrdconta => pr_nrdconta,
+													   pr_nrdrowid => vr_nrdrowid);
 
         -- Numero do Cartao
-              gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                                                  pr_nmdcampo => 'Cartao',
-                                                                  pr_dsdadant => '',
-                                                                  pr_dsdadatu => pr_nrcrcard);
+			  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+				  												pr_nmdcampo => 'Cartao',
+					  											pr_dsdadant => '',
+						  										pr_dsdadatu => pr_nrcrcard);
                                   
         -- Situacao do Cartao
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                                                  pr_nmdcampo => 'Situacao',
-                                                                  pr_dsdadant => rw_crawcrd.insitcrd,
-                                                                  pr_dsdadatu => vr_insitcrd);
+				  												pr_nmdcampo => 'Situacao',
+					  											pr_dsdadant => rw_crawcrd.insitcrd,
+						  										pr_dsdadatu => vr_insitcrd);
         
         -- Data de Cancelamento
         IF rw_crawcrd.dtcancel <> vr_dtcancel THEN
@@ -7668,11 +7616,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_dstpdreg VARCHAR2(50);
         vr_dstexto VARCHAR2(2000);
         vr_titulo VARCHAR2(1000);
-      BEGIN
+    BEGIN
         -- Texto para utilizar na abertura do chamado e no email enviado
         vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
                      'Arquivo ' || pr_nmdarqui || ' foi recebido incompleto.';
-
+    
         -- Parte inicial do texto do chamado e do email        
         vr_titulo:= '<b>O arquivo de retorno da Solicitacao de Cartao Bancoob CABAL foi recebido incompleto.</b><br>';
                   
@@ -7751,66 +7699,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-                  
+      			
       -- buscar informações do arquivo a ser processado
       OPEN cr_crapscb;
       FETCH cr_crapscb INTO rw_crapscb;
       CLOSE cr_crapscb;
 
-      -- buscar caminho de arquivos do Bancoob/CABAL
-      vr_direto_connect := rw_crapscb.dsdirarq || '/recebe';
 
-      -- Busca do diretório base da cooperativa para a geração de relatórios
-      vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
-                                          ,pr_cdcooper => vr_cdcooper_ori
-                                          ,pr_nmsubdir => null);
-
-      -- monta nome do arquivo
-      vr_nmrquivo := 'CCR3756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '_*.*';
-
-      -- Apaga o arquivo pc_crps672.txt caso exista
-      vr_comando:= 'rm ' || vr_direto_connect || '/pc_crps672.txt 2> /dev/null';
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-
-      --Verificar se existe arquivo(s) para ser processado
-      vr_comando:= 'ls ' || vr_direto_connect || '/'|| vr_nmrquivo || ' | wc -l ';
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
-        RAISE vr_exc_saida;
-      ELSE
-        --Se retornou zero arquivos entao sai do programa
-        IF substr(vr_dscritic,1,1) = '0' OR vr_dscritic IS NULL THEN
-          --Montar mensagem critica
-          vr_cdcritic:= 182;
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          --Levantar Excecao
-          RAISE vr_exc_fimprg;
-        END IF;
-      END IF;
-
-      -- Criar o arquivo pc_crps672.txt baseado no comando LS
-      vr_comando:= 'ls ' || vr_direto_connect || '/'|| vr_nmrquivo|| ' 1>> '|| vr_direto_connect || '/pc_crps672.txt';
-
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
-        RAISE vr_exc_saida;
-      END IF;
-
-      --Bloco de leitura do arquivo pc_crps672.txt
-
-      BEGIN
          /*Popula o vetor com as informações do tipo de solicitação*/
           vr_vet_nmtipsol(0) := 'ERR - TIPO DE SOLICITAÇAO EM BRANCO';
           vr_vet_nmtipsol(1) := 'INCLUSAO DE CARTAO';
@@ -7832,59 +7727,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_vet_nmtipsol(50) := 'MODIFICACAO DE PIN';
           vr_vet_nmtipsol(99) := 'EXCLUSAO DE CARTAO';
           
-        --Abre o arquivo pc_crps672.txt
-        gene0001.pc_abre_arquivo(pr_nmdireto => vr_direto_connect --> Diretório do arquivo
-                                 ,pr_nmarquiv => 'pc_crps672.txt'  --> Nome do arquivo
-                                ,pr_tipabert => 'R'               --> Modo de abertura (R,W,A)
-                                ,pr_utlfileh => vr_ind_arquiv     --> Handle do arquivo aberto
-                                ,pr_des_erro => vr_dscritic);     --> Erro
-        IF vr_dscritic IS NOT NULL THEN
-          --Levantar Excecao
+      
+      -- buscar caminho de arquivos do Bancoob/CABAL
+      vr_direto_connect := rw_crapscb.dsdirarq || '/recebe';
+
+      -- Busca do diretório base da cooperativa para a geração de relatórios
+      vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
+                                          ,pr_cdcooper => vr_cdcooper_ori
+                                          ,pr_nmsubdir => null);
+
+      -- monta nome do arquivo
+      vr_nmrquivo := 'CCR3756' || TO_CHAR(lpad(rw_crapcop.cdagebcb,4,'0')) || '_%.%';
+
+      gene0001.pc_lista_arquivos(pr_path     => vr_direto_connect 
+                                ,pr_pesq     => vr_nmrquivo  
+                                ,pr_listarq  => vr_listarq 
+                                ,pr_des_erro => vr_des_erro); 
+      
+      --Ocorreu um erro no lista_arquivos
+      IF TRIM(vr_des_erro) IS NOT NULL THEN
+        vr_cdcritic := 0;
+        vr_dscritic := vr_des_erro;
           RAISE vr_exc_saida;
         END IF;
 
-        LOOP
-          -- Verifica se o arquivo está aberto
-          IF  utl_file.IS_OPEN(vr_ind_arquiv) THEN
-            -- Le os dados em pedaços e escreve no Blob
-            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv --> Handle do arquivo aberto
-                                        ,pr_des_text => vr_nmarquiv); --> Texto lido
-            -- Incrementar contador
-            vr_contador:= Nvl(vr_contador,0) + 1;
-
-            -- Separar o nome do arquivo do caminho
-            GENE0001.pc_separa_arquivo_path(pr_caminho => vr_nmarquiv
-                                           ,pr_direto  => vr_direto_connect
-                                           ,pr_arquivo => vr_nmarquiv);
-            -- Popular o vetor de arquivos
-            vr_vet_nmarquiv(vr_contador):= vr_nmarquiv;
-
+      --Nao encontrou nenhuma arquivo para processar
+      IF TRIM(vr_listarq) IS NULL THEN
+        vr_cdcritic := 182;
+        vr_dscritic := NULL;
+        RAISE vr_exc_fimprg;
           END IF;
-        END LOOP;
 
-        -- Fechar o arquivo
-        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
+      vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
+									                         ,pr_delimit => ',');
 
-        -- Apaga o arquivo pc_crps672.txt no unix
-         vr_comando:= 'rm ' || vr_direto_connect || '/pc_crps672.txt 2> /dev/null';
-        -- Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_comando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_dscritic);
-        IF vr_typ_saida = 'ERR' THEN
-          RAISE vr_exc_saida;
+      IF vr_split.count = 0 THEN
+        vr_cdcritic := 182;
+        vr_dscritic := NULL;
+        RAISE vr_exc_fimprg;
         END IF;
 
-      EXCEPTION
-        WHEN utl_file.invalid_operation THEN
-          -- Nao conseguiu abrir o arquivo
-          vr_dscritic:= 'Erro ao abrir o arquivo pc_crps672.txt na rotina pc_crps672.';
-          RAISE vr_exc_saida;
-        WHEN no_data_found THEN
-          -- Terminou de ler o arquivo
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
-      END;
+        FOR vr_conarqui IN vr_split.FIRST..vr_split.LAST LOOP
+          vr_vet_nmarquiv(vr_conarqui) := vr_split(vr_conarqui);    
+          vr_contador :=  vr_conarqui; 
+        END LOOP;
 
       -- Se o contador está zerado
       IF vr_contador = 0 THEN
@@ -7991,7 +7877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF substr(vr_des_text,5,2) = '01'  THEN
 
                  BEGIN 
-                     vr_tipooper := to_number(substr(vr_des_text,7,2));
+  	               vr_tipooper := to_number(substr(vr_des_text,7,2));
                  EXCEPTION 
                    WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
@@ -8454,7 +8340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 END;
 
                
-                
+               
                 BEGIN 
                   vr_codrejei := TO_NUMBER(substr(vr_des_text,211,3));
                 EXCEPTION 
@@ -9923,7 +9809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     END;
 
   END pc_crps672;
-  
+
   /*.......................................................................................
 
    Programa: CCDR0003
@@ -10655,7 +10541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                                  
   END pc_debita_fatura;    
 
-  PROCEDURE pc_debita_fatura_job IS  
+  PROCEDURE pc_debita_fatura_job IS      
   BEGIN
 
     DECLARE 
@@ -10696,7 +10582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END pc_controla_log_batch;
 
     BEGIN
-      
+  
       -- Log de inicio de execucao
       pc_controla_log_batch(pr_dstiplog => 'I');
       

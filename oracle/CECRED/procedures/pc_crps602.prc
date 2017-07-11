@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andr? Santos - Supero
-   Data    : JULHO/2011                      Ultima atualizacao: 22/11/2013
+   Data    : JULHO/2011                      Ultima atualizacao: 04/07/2017
 
    Dados referentes ao programa:
 
@@ -33,6 +33,9 @@ BEGIN
                25/11/2013 - Ajustes na passagem dos parâmetros para restart (Marcos-Supero)
 
                27/06/2014 - Correcao da nomenclatura do arquivo de LOG (.err) 169763 - (Carlos Rafael Tanholi)
+                            
+               04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
+                            solicitado no chamado 703589. (Kelvin)
 
 ............................................................................. */
   DECLARE
@@ -118,8 +121,9 @@ BEGIN
 
 
     vr_contador      number;
-
     vr_flgrejei      BOOLEAN := FALSE;
+    vr_flg_fimprg    NUMBER(1);
+    vr_flg_erro      NUMBER(1);
 
     --Variaveis utilizadas para armazenar os dados extraido dos arquivos
     vr_vlemreal  NUMBER  := 0;
@@ -172,98 +176,69 @@ BEGIN
     END;
 
     --Procedimento para buscar os arquivos a serem processados e valida-los
-    PROCEDURE pc_consistearq (pr_contaarq out number,
-                              pr_dscritic out varchar2) is
+    PROCEDURE pc_consistearq (pr_contaarq   OUT NUMBER
+                             ,pr_flg_erro   OUT NUMBER  
+                             ,pr_flg_fimprg OUT NUMBER 
+                             ,pr_dscritic   OUT VARCHAR2) is
 
       vr_qtregist NUMBER;
       vr_nrdconta VARCHAR2(15);
       vr_dtarquiv VARCHAR2(8);
       vr_flgerros BOOLEAN := FALSE;
       vr_extensao VARCHAR(4) := '';
+      vr_conarqui NUMBER:= 0;  
+      vr_listarq  VARCHAR2(2000);
+      vr_des_erro VARCHAR2(4000);                                    
+      vr_split    gene0002.typ_split := gene0002.typ_split();
 
     BEGIN
 
       --Inicializar variaveis
-      vr_nmarqdeb := 'carfat.*.original*';
+      vr_nmarqdeb := 'carfat.%.original%';
       vr_qtregist := 0;
       vr_nrdconta := '2656-0164666';
+      pr_flg_erro := 0;
+      pr_flg_fimprg := 0;
 
-      --eliminar o arquivo caso exista
-      vr_comando:= 'rm '||vr_nom_direto || '/bradesco/'||'pc_crps602.txt';
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => pr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
-        --se deu erro eh pq o arquivo nao existe
-        pr_dscritic := null;
-      END IF;
 
-      -- Verificar se existe arquivos a serem importatos
-      vr_comando:= 'ls '|| vr_nom_direto || '/bradesco/'|| vr_nmarqdeb||' | wc -l';
+      gene0001.pc_lista_arquivos(pr_path     => vr_nom_direto || '/bradesco/' 
+                                ,pr_pesq     => vr_nmarqdeb  
+                                ,pr_listarq  => vr_listarq 
+                                ,pr_des_erro => vr_des_erro);
 
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => pr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
-        RAISE vr_exc_erro;
-      ELSE
-        --Se retornou zero arquivos entao sai do programa
-        IF SUBSTR(pr_dscritic,1,1) = '0' OR
-          pr_dscritic IS NULL THEN
-          pr_dscritic := NULL;
-          pr_contaarq := 0;
-          return;
-        ELSE
-          pr_dscritic := NULL;
+      --Ocorreu um erro no lista_arquivos
+      IF TRIM(vr_des_erro) IS NOT NULL THEN
+        vr_cdcritic := 0;
+        vr_dscritic := vr_des_erro;
+        pr_flg_erro := 1;
+        RETURN;
         END IF;
+      
+      --Nao encontrou nenhuma arquivo para processar
+      IF TRIM(vr_listarq) IS NULL THEN
+        vr_cdcritic := 182;
+        vr_dscritic := NULL;
+        pr_flg_fimprg := 1;
+        RETURN;
       END IF;
 
-      -- Criar o arquivo pc_crps602.txt baseado no comando LS
-      vr_comando:= 'ls ' || vr_nom_direto || '/bradesco/'|| vr_nmarqdeb|| ' 1>> '|| vr_nom_direto || '/bradesco/pc_crps602.txt';
+      vr_split := gene0002.fn_quebra_string(pr_string  => vr_listarq
+                                           ,pr_delimit => ',');
 
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => pr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
-        RAISE vr_exc_erro;
-      END IF;
-
-      --Bloco de leitura do arquivo pc_crps602.txt
-      BEGIN
-        --Abre o arquivo pc_crps602.txt
-        gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_direto||'/bradesco'     --> Diretorio do arquivo
-                                ,pr_nmarquiv => 'pc_crps602.txt'  --> Nome do arquivo
-                                ,pr_tipabert => 'R'               --> Modo de abertura (R,W,A)
-                                ,pr_utlfileh => vr_input_file     --> Handle do arquivo aberto
-                                ,pr_des_erro => pr_dscritic);     --> Erro
-        IF pr_dscritic IS NOT NULL THEN
-          --Levantar Excecao
-          RAISE vr_exc_erro;
+      IF vr_split.count = 0 THEN
+        vr_cdcritic := 182;
+        vr_dscritic := NULL;
+        pr_flg_fimprg := 1;
+        RETURN;
         END IF;
 
-        LOOP
-          --Verifica se o arquivo esta aberto
-          IF  utl_file.IS_OPEN(vr_input_file) THEN
-            -- Le os dados em pedacos e escreve no Blob
-            gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                        ,pr_des_text => vr_nom_arquivo); --> Texto lido
-            --Incrementar contador
-            pr_contaarq:= NVL(pr_contaarq,0) + 1;
+      FOR vr_conarqui IN vr_split.FIRST..vr_split.LAST LOOP
 
+        vr_vet_nmarqtel(vr_conarqui) := vr_split(vr_conarqui);    
 
-            --Separar o nome do arquivo do caminho
-            GENE0001.pc_separa_arquivo_path(pr_caminho => vr_nom_arquivo
-                                           ,pr_direto  => vr_nom_dirarq
-                                           ,pr_arquivo => vr_nom_arquivo);
+        pr_contaarq :=  vr_conarqui; 
 
-            --Popular o vetor de arquivos
-            vr_vet_nmarqtel(pr_contaarq):= vr_nom_arquivo;
+        vr_nom_dirarq := vr_nom_direto || '/bradesco';
 
             -- Converte o arquivo de DOS para Unix
             gene0001.pc_oscommand_shell(pr_des_comando => 'dos2ux '||
@@ -274,31 +249,7 @@ BEGIN
             gene0001.pc_oscommand_shell(pr_des_comando => 'mv '||
                                         vr_nom_direto||'/'||vr_vet_nmarqtel(pr_contaarq)||'.ux'||
                                         ' ' ||vr_nom_direto||'/'||vr_vet_nmarqtel(pr_contaarq));
-
-          END IF;
         END LOOP;
-
-      EXCEPTION
-        WHEN utl_file.invalid_operation THEN
-          --Nao conseguiu abrir o arquivo
-          pr_dscritic:= 'Erro ao abrir o arquivo pc_crps602.txt na rotina pc_crps602.';
-          RAISE vr_exc_erro;
-        WHEN no_data_found THEN
-          -- Fechar o arquivo
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
-
-          -- Apaga o arquivo pc_crps602.txt no unix
-          vr_comando:= 'rm '||vr_nom_dirarq||'/'||'pc_crps602.txt';
-          --Executar o comando no unix
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => vr_comando
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => pr_dscritic);
-
-          IF vr_typ_saida = 'ERR' THEN
-            NULL; --RAISE vr_exc_erro;
-          END IF;
-      END;
 
       --Valida cada arquivo lido
       FOR idx IN 1..pr_contaarq LOOP
@@ -1129,12 +1080,22 @@ BEGIN
                                           ,pr_nmsubdir => null);
 
     -- Consistir arquivos a serem processados
-    pc_consistearq(pr_contaarq => vr_contador,
-                   pr_dscritic => vr_dscritic);
+    pc_consistearq(pr_contaarq   => vr_contador
+                  ,pr_flg_erro   => vr_flg_erro 
+                  ,pr_flg_fimprg => vr_flg_fimprg
+                  ,pr_dscritic   => vr_dscritic);
 
     IF vr_dscritic is not null THEN
       -- Envio centralizado de log de erro
       RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_flg_erro = 1 THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    IF vr_flg_fimprg = 1 THEN
+      RAISE vr_exc_fimprg;
     END IF;
 
     --Ler todos os arquivos identificados pela pc_consistearq
