@@ -707,7 +707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
-                       '4816,1452,'||
+                       '4453,1452,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
                        '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. RECOLHIMENTO DE IRRF S/ CAPTACAO ('||
@@ -720,7 +720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
-                       '4532,1452,'||
+                       '4453,1452,'||
                        TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
                        ',5210,' ||
                        '"DEBITO C/C '||rw_craplcm.nrctafmt||' CECRED REF. RECOLHIMENTO DE IOF S/ OPERACOES DE CREDITO ('||
