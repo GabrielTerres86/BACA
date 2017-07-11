@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                      Ultima atualizacao: 10/01/2017
+   Data    : Abril/2004                      Ultima atualizacao: 16/06/2017
 
    Dados referentes ao programa:
 
@@ -120,29 +120,32 @@
                             batimento do lote processo. (Fabricio)
                
               29/08/2014 - Incluso parametro par_dshistor na proc_envia_tec_ted
-                           referente a descriÁ„o do histÛrico(Vanessa). 
+                           referente a descri√ß√£o do hist√≥rico(Vanessa). 
                            
               24/10/2014 - Enviar hora da transacao (Jonata-RKAM).
                             
-              11/12/2014 - Convers„o da fn_sequence para procedure para n„o
+              11/12/2014 - Convers√£o da fn_sequence para procedure para n√£o
                            gerar cursores abertos no Oracle. (Dionathan)
                            
               03/06/2015 - Remover validacao do conveio 53 Foz do brasil
                            (Lucas Ranghetti #292200)
                            
-              05/06/2015 - Inclus„o do paramentro par_cdispbif = 0 na procedure
+              05/06/2015 - Inclus√£o do paramentro par_cdispbif = 0 na procedure
                            proc_envia_tec_ted (Vanessa - FDR041 SD271603)
                            
-              02/09/2015 - Inclusao da geraÁao do arquivo REPCNVFIL.TXT para 
+              02/09/2015 - Inclusao da gera√ßao do arquivo REPCNVFIL.TXT para 
                            cada cooperativa  PRJ-214 (Vanessa) 
 
 
-              07/10/2016 - AlteraÁ„o do diretÛrio para geraÁ„o de arquivo cont·bil.
+              07/10/2016 - Altera√ß√£o do diret√≥rio para gera√ß√£o de arquivo cont√°bil.
                            P308 (Ricardo Linhares).                            
                             
                            
 			  10/01/2017 - Ajuste para enviar TED somente se o valor for maior que zero 
 						  (Adriano  - SD 597906).		       
+
+              16/06/2017 - Adicionado e-mail convenios@cecred.coop.br, conforme
+                           solicitado no chamado 687836 (Kelvin).
 .............................................................................*/
                         
 { includes/var_batch.i}
@@ -446,7 +449,8 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
         RUN enviar_email IN b1wgen0011
                          (INPUT glb_cdcooper,
                           INPUT glb_cdprogra,
-                          INPUT "financeiro@cecred.coop.br",    
+                          INPUT "financeiro@cecred.coop.br," +
+                                "convenios@cecred.coop.br",
                           INPUT '"Lancamentos Arrecadacoes Convenios"' +
                                 " - " + CAPS(crabcop.nmrescop),
                           INPUT SUBSTRING(aux_arqrel_1, 4),

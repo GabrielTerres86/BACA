@@ -431,7 +431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     AND  (pr_flgdispb = 9 OR crapban.flgdispb = pr_flgdispb);
   rw_crapban cr_crapban%ROWTYPE;
 
-
+  
   /* Procedure para gerar xml boleto */
   PROCEDURE pc_gera_xml_vr_boleto (pr_cdcooper   IN INTEGER   --Codigo Cooperativa
                                   ,pr_cdorigem   IN INTEGER   --Identificador Origem
@@ -1800,24 +1800,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                  ,pr_tab_erro           OUT GENE0001.typ_tab_erro                  --> Tabela contendo os erros
                                 ) IS
     /*.........................................................................
-    --
-    --  Programa : pc_obtem_log_cecred           Antigo: b1wgen0050.p/obtem-log-cecred
-    --
-    --
-    --  Sistema  : Cred
-    --  Sigla    : SSPB0001
-    --  Autor    : Odirlei Busana - AMcom
-    --  Data     : novembro/2013.                   Ultima atualizacao: 26/09/2016
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Obter log do SPB da Cecred
-    --   Alteracoes:
-    --               10/11/2015 - Adicionado parametro de entrada pr_inestcri. 
-    --                            (Jorge/Andrino)
-    --
-    --               26/09/2016 - M211 - Adicionado busca das TEDs Sicredi (Jonata-RKAM)              
+    
+      Programa : pc_obtem_log_cecred           Antigo: b1wgen0050.p/obtem-log-cecred
+    
+    
+      Sistema  : Cred
+      Sigla    : SSPB0001
+      Autor    : Odirlei Busana - AMcom
+      Data     : novembro/2013.                   Ultima atualizacao: 04/07/2017
+    
+      Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado
+       Objetivo  : Obter log do SPB da Cecred
+       Alteracoes:
+                   10/11/2015 - Adicionado parametro de entrada pr_inestcri. 
+                                (Jorge/Andrino)
+    
+                   26/09/2016 - M211 - Adicionado busca das TEDs Sicredi (Jonata-RKAM)
+                   
+                   04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
+                                solicitado no chamado 703589. (Kelvin)
       ..............................................................................*/
 
     vr_exc_erro EXCEPTION;
@@ -1832,6 +1835,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nriniseq    INTEGER;
     vr_cdcritic    NUMBER;
     vr_dscritic    VARCHAR2(1000);
+    vr_listarq    VARCHAR2(2000);                                    
+    vr_des_erro   VARCHAR2(4000);
 
     /* Busca dos dados da cooperativa */
     CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -2083,28 +2088,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       -- Busca do diretorio base da cooperativa
       vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                            ,pr_cdcooper => pr_cdcooper
-                                           ,pr_nmsubdir => '/log');
+                                           ,pr_nmsubdir => '/log') || '/';
 
-      vr_nmarqlog := vr_nmdireto||'/mqcecred_processa_'||
-                     to_char(pr_dtmvtini,'DDMMRR')||'.log';
+      vr_nmarqlog := 'mqcecred_processa_' || to_char(pr_dtmvtini,'DDMMRR')||'.log';
 
 
-      -- Verificar se o arquivo existe
-      vr_comando:= 'ls ' || vr_nmarqlog|| ' | wc -l';
+      gene0001.pc_lista_arquivos(pr_path     => vr_nmdireto 
+                                ,pr_pesq     => vr_nmarqlog
+                                ,pr_listarq  => vr_listarq 
+                                ,pr_des_erro => vr_des_erro); 
 
-      --Executar o comando no unix
-      GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_comando
-                           ,pr_typ_saida   => vr_typ_saida
-                           ,pr_des_saida   => vr_dscritic);
-      IF vr_typ_saida = 'ERR' THEN
+      IF TRIM(vr_des_erro) IS NOT NULL THEN
         RAISE vr_exc_erro;
       ELSE
-        --Se retornou zero , não existe o arquivo
-        IF pr_numedlog = 3 AND
-           SUBSTR(vr_dscritic,1,1) = '0' AND
-           vr_dscritic IS NULL THEN
-          --Gerar Critica e sair do programa
+        --Nao encontrou nenhuma arquivo para processar
+        IF TRIM(vr_listarq) IS NULL THEN
           vr_cdcritic:= 0;
           vr_dscritic := 'Nao existe log das transacoes para este dia.';
 
@@ -2117,12 +2115,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 pr_tab_erro => pr_tab_erro);
 
           pr_dscritic := 'NOK';
-          return;
-
+          RETURN;        
         ELSE
           vr_dscritic := NULL;
 
-          SSPB0001.pc_le_arquivo_log ( pr_nmarqlog => vr_nmarqlog -- Nomer do arquivo de log
+          SSPB0001.pc_le_arquivo_log ( pr_nmarqlog => vr_nmdireto || vr_listarq -- Nomer do arquivo de log
                                       ,pr_numedlog => 3-- Indicador de log a carregar
                                       ,pr_cdsitlog => null-- Codigo de situação de log
                                       ,pr_dscritic => vr_dscritic
@@ -2735,12 +2732,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
                                catalogo 4.07 (Lucas Ranghetti #537580)
                            
-                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)                  
-                  
+                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)      
+
                   27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
                                estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. 
                                ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
-                                  
+                              
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
     ------------> ESTRUTURAS DE REGISTRO <-----------
@@ -3054,7 +3051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
     END;
-
+    
     -- descarregar buffer
     pc_escreve_xml(' ',TRUE);
     gene0002.pc_XML_para_arquivo(pr_XML     => vr_des_xml,
@@ -3233,11 +3230,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                quando for repasse de recarga de celular. PRJ 321. (Lombardi)
 
                   08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
-
+                  
                   27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
                                estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen. 
                                ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
-
+                  
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
