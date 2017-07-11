@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 25/05/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 11/07/2017
     
    Dados referentes ao programa:
    
@@ -182,6 +182,9 @@
                            
               25/05/2017 - Incluir vr_dstransa atualizada apos a chamada do bloqueia_lancamento
                            (Lucas Ranghetti #671626).
+                           
+              11/07/2017 - Incluir tratamento para permitir a exclusao da autorizaçao somente no 
+                           proximo dia util apos o cancelamento na procedure grava-dados (Lucas Ranghetti #703802)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2160,7 +2163,21 @@ PROCEDURE grava-dados:
                 ELSE
                 IF  par_cddopcao = "E" THEN
                     DO:
-                        
+                        IF  crapatr.dtiniatr = par_dtmvtolt THEN
+                            DO: 
+                                ASSIGN aux_dscritic = "Esta alteracao podera" +
+                                                      " ser efetuada no proximo dia util.".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                            
+                         /* Permitir a exclusao do debito somente no proximo dia util apos 
+                            o cancelamento */
+                         IF  crapatr.dtfimatr = par_dtmvtolt THEN
+                             DO:
+                                ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
+                                UNDO Grava, LEAVE Grava.
+                             END.
+                             
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
