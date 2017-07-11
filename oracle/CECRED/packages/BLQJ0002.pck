@@ -10,7 +10,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
    
     Objetivo  : Efetuar a comunicacao do Ayllos com o Webjud
                  
-    Alteracoes: 
+    Alteracoes: 26/06/2017 - Ajustes no nome do favorecido da TED e no select de busca
+                             de TEDs pendentes (Andrino - Mouts)
 
   .............................................................................*/
 
@@ -1622,7 +1623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          pr_indbloqueio_saldo,
          pr_nrcnpj_if_destino,
          pr_nragencia_if_destino,
-         substr(pr_nmfavorecido,70),
+         substr(pr_nmfavorecido,1,70),
          pr_nrcpfcnpj_favorecido,
          pr_tpdeposito,
          pr_cddeposito,
@@ -2130,7 +2131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              b.indbloqueio_saldo,
              b.nrcnpj_if_destino,
              b.nragencia_if_destino,
-             b.nmfavorecido,
+             substr(b.nmfavorecido,1,60) nmfavorecido,
              b.nrcpfcnpj_favorecido,
              b.tpdeposito,
              b.cddeposito,
@@ -2140,16 +2141,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                          b.dsoficio) qtreg,
              ROW_NUMBER() OVER (PARTITION BY a.cdcooper,
                                              a.nrcpfcnpj,
+                                             b.nrdconta, 
                                              b.dsoficio
                                     ORDER BY a.cdcooper,
                                              a.nrcpfcnpj,
+                                             b.nrdconta, 
                                              b.dsoficio) nrreg
                                              
         FROM tbblqj_ordem_transf b,
              tbblqj_ordem_online a
        WHERE a.tpordem = 4 -- Ted
          AND a.instatus = 1 -- Pendente
-         AND b.idordem = a.idordem
+         AND a.dhrequisicao < trunc(SYSDATE) -- Somente buscar as do dia anterior,
+                                   -- pois as teds estavam sendo devolvidas (problema com a Caixa Economica)         AND b.idordem = a.idordem
          ORDER BY a.cdcooper,
              a.nrcpfcnpj,
              b.nrdconta, 
@@ -2427,7 +2431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
             cxon0020.pc_executa_envio_ted(
                                  pr_cdcooper => rw_ted.cdcooper  --> Cooperativa    
                                 ,pr_cdagenci => 1  --> Agencia
-                                ,pr_nrdcaixa => 1  --> Caixa Operador    
+                                ,pr_nrdcaixa => 900  --> Caixa Operador    
                                 ,pr_cdoperad => '1'  --> Operador Autorizacao
                                 ,pr_idorigem => 1 -- Alterado por Andrino para ajuste no LOGSPB 7 --Batch --> Origem                 
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data do movimento
