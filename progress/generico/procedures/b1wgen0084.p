@@ -2658,6 +2658,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                                 ,INPUT par_nrdconta
                                                 ,INPUT crawepr.nrctremp
+												,INPUT 3
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT "").
@@ -2731,6 +2732,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                               ,INPUT par_nrdconta
                                               ,INPUT crawepr.nrctrliq[aux_contador]
+											  ,INPUT 3
                                               ,OUTPUT 0
                                               ,OUTPUT 0
                                               ,OUTPUT "").
@@ -4305,6 +4307,7 @@ PROCEDURE transf_contrato_prejuizo.
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                               ,INPUT par_nrdconta
                                               ,INPUT par_nrctremp
+											  ,INPUT 3
                                               ,0
                                               ,0
                                               ,"").
@@ -4950,6 +4953,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
 			aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
 												,INPUT par_nrdconta
 												,INPUT par_nrctremp
+												,INPUT 3
 												,0
 												,0
 												,"").

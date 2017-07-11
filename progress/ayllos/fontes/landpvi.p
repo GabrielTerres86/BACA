@@ -1075,7 +1075,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                PAUSE 3 NO-MESSAGE.
                NEXT.
            END.
-   
+           
       IF   CAN-DO ("3,4",STRING(tel_cdhistor))   THEN
            DO:
                MESSAGE 
@@ -4696,6 +4696,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                             aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                                                 ,INPUT tel_nrdctabb
                                                                 ,INPUT his_nrctremp
+																,INPUT 3
                                                                 ,OUTPUT 0
                                                                 ,OUTPUT 0
                                                                 ,OUTPUT "").

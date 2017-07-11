@@ -606,7 +606,7 @@ DO WHILE TRUE:
          END.
       ELSE
          DO:
-         
+            
             IF crawepr.insitest <> 3 AND 
                crawepr.dtenvest <> ? THEN
             DO:
@@ -635,8 +635,8 @@ DO WHILE TRUE:
                            "nao pode ser usado para o produto TR.".
                    NEXT.
                END.
-                            
-            /** Verificar "inliquid" do contrato relacionado
+           
+           /** Verificar "inliquid" do contrato relacionado
                 a ser liquidado              **/
             DO  aux_contador = 1 TO 10 :
 
@@ -661,6 +661,7 @@ DO WHILE TRUE:
                       aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
                                                           ,INPUT crawepr.nrdconta
                                                           ,INPUT crawepr.nrctrliq[aux_contador]
+														  ,INPUT 3
                                                           ,0
                                                           ,0
                                                           ,"").
@@ -689,20 +690,20 @@ DO WHILE TRUE:
                   MESSAGE glb_dscritic.
                   ASSIGN glb_cdcritic = 0.
                   NEXT.
-                    END.
+              END.
             ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
               DO:
                 MESSAGE glb_dscritic.
                 ASSIGN glb_cdcritic = 0.
                 NEXT.
-                END.
+              END.
               
             IF aux_flgativo = 1 THEN
               DO:
                 MESSAGE "Lancamento nao permitido, contrato marcado para liquidar esta em acordo".
                 PAUSE 3 NO-MESSAGE.
                 NEXT.
-           END.
+              END.
               
            IF  aux_flctrliq THEN
                NEXT.
@@ -1503,7 +1504,7 @@ DO WHILE TRUE:
          LEAVE.
 
       END.  /*  Fim do DO WHILE TRUE  */
-
+      
       /* 17/02/2017 - Retirado a validaçao conforme solicitaçao 
       /* Se o tipo do contrato for igual a 3 -> Contratos de imóveis */
       IF craplcr.tpctrato = 3 THEN DO:
@@ -1517,6 +1518,7 @@ DO WHILE TRUE:
          aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                              ,INPUT tel_nrdconta
                                              ,INPUT crabepr.nrctremp
+											 ,INPUT 3
                                              ,OUTPUT 0
                                              ,OUTPUT 0
                                              ,OUTPUT "").

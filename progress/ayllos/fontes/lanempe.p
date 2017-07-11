@@ -208,6 +208,7 @@ DO WHILE TRUE:
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                             ,INPUT tel_nrdconta
                                             ,INPUT tel_nrctremp
+											,INPUT 3
                                             ,0 /* pr_flgretativo */
                                             ,0 /* pr_flgretquitado */
                                             ,0 /* pr_flgretcancelado */
