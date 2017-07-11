@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 19/06/2017
+   Data    : Novembro/98                     Ultima atualizacao: 10/07/2017
 
    Dados referentes ao programa:
 
@@ -514,32 +514,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
                             
-			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
-			                na leitura do cursor cr_crapepr. (Reinert)
+			         23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+			                      na leitura do cursor cr_crapepr. (Reinert)
 							
-			   28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+			         28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).   
 
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
-			                (Daniel)
+			                      (Daniel)
                             
                28/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
 
-			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
-							SD 549917 (Carlos Rafael Tanholi)
+			         09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
+							              SD 549917 (Carlos Rafael Tanholi)
 
                16/11/2016 - Ajustar cursor cr_craplcm6 para efetuar a busca correta das 
                             Despesas Sicredi (Lucas Ranghetti #508130)
                      
-			   30/11/2016 - Correção para buscar corretamente registro da crapstn
-			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
+			         30/11/2016 - Correção para buscar corretamente registro da crapstn
+			                       de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
                       
                06/03/2017 - Alterações Projeto 307 - Automatização Arquivos Contábeis Ayllos
                             Inclusão de novos históricos e retirada de lançamentos de reversão (Jontas-Supero)
                      
                17/03/2017 - Ajustes referente ao projeto M338.1, não estourar a conta corrente com cobrança 
-			                de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
-							(Adriano - SD 632569).
+			                      de juros e IOF de Limite de Crédito e Adiantamento a Depositante - Somente Lautom
+							             (Adriano - SD 632569).
 
 							 21/03/2017 - Adicionado tratamento de recarga de celular no arquivo 
 														contábil - PRJ321. (Reinert)
@@ -564,6 +564,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                19/06/2017 - Ajuste para enviar apenas cheques em desconto aprovados (insitana = 1)
                             PRJ300-Desconto de cheque(Odirlei-AMcom)
+                            
+               10/07/2017 - Ajuste na geração de lançamento contábil de receita de recarga de 
+                            celular - SD 707484 - (Jonatas - Supero)
 
 ............................................................................ */
 
@@ -1398,43 +1401,64 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
 	-- Buscar operadoras ativas
 	CURSOR cr_operadora (pr_cdcooper IN craplcm.cdcooper%TYPE
-	                    ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+	                    ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                      ,pr_inpessoa IN crapass.inpessoa%TYPE) IS
 	  SELECT tope.cdoperadora
-		      ,topr.nmoperadora
-					,topr.perreceita
-          ,ass.inpessoa
-		      ,SUM(tope.vlrecarga) totrecarga
-		  FROM tbrecarga_operacao tope
-			    ,tbrecarga_operadora topr
+          ,topr.nmoperadora
+          ,topr.perreceita
+          ,decode(pr_inpessoa,0,0,ass.inpessoa) inpessoa
+          ,ass.cdagenci
+          ,sum(vlrecarga) vlrecarga  
+          ,(round((sum(vlrecarga) * (topr.perreceita /100)),2)) vl_receita
+      FROM tbrecarga_operacao tope
+          ,tbrecarga_operadora topr
           ,crapass             ass
-		 WHERE tope.cdcooper = ass.cdcooper
+     WHERE tope.cdcooper = ass.cdcooper
        and tope.nrdconta = ass.nrdconta
        and tope.cdcooper = pr_cdcooper
-		   AND tope.insit_operacao = 2
-			 AND tope.dtdebito = pr_dtmvtolt
-			 AND topr.cdoperadora = tope.cdoperadora
-			GROUP BY tope.cdoperadora
-		          ,topr.nmoperadora
-					    ,topr.perreceita
-              ,ass.inpessoa;
+       AND tope.insit_operacao = 2
+       AND tope.dtdebito = pr_dtmvtolt
+       AND topr.cdoperadora = tope.cdoperadora
+       AND ass.inpessoa = decode(pr_inpessoa,0,ass.inpessoa,pr_inpessoa)
+      GROUP BY tope.cdoperadora
+              ,topr.nmoperadora
+              ,topr.perreceita
+              ,ass.cdagenci
+              ,decode(pr_inpessoa,0,0,ass.inpessoa)
+      order by ass.cdagenci;
+      
+      
+	CURSOR cr_recargas (pr_cdcooper IN craplcm.cdcooper%TYPE
+	                   ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                     ,pr_inpessoa IN crapass.inpessoa%TYPE) IS
+                     
+   SELECT cdagenci,
+          inpessoa,
+          sum(vl_receita) vl_receita
+     FROM (SELECT tope.cdoperadora
+                 ,topr.perreceita
+                 ,decode(pr_inpessoa,0,0,ass.inpessoa) inpessoa
+                 ,ass.cdagenci
+                 ,(round((sum(vlrecarga) * (topr.perreceita /100)),2)) vl_receita
+             FROM tbrecarga_operacao tope
+                 ,tbrecarga_operadora topr
+                 ,crapass             ass
+            WHERE tope.cdcooper       = ass.cdcooper
+              and tope.nrdconta       = ass.nrdconta
+              and tope.cdcooper       = pr_cdcooper
+              AND tope.insit_operacao = 2
+              AND tope.dtdebito       = pr_dtmvtolt
+              AND topr.cdoperadora    = tope.cdoperadora
+              AND ass.inpessoa        = decode(pr_inpessoa,0,ass.inpessoa,pr_inpessoa)
+             GROUP BY tope.cdoperadora
+                     ,topr.perreceita
+                     ,ass.cdagenci
+                     ,decode(pr_inpessoa,0,0,ass.inpessoa)
+             order by ass.cdagenci)
+   GROUP BY cdagenci,
+            inpessoa
+   ORDER BY cdagenci;      
 		 		 
-	-- Recarga de celular
-  CURSOR cr_recargas (pr_cdcooper    IN craplcm.cdcooper%TYPE
-	                   ,pr_dtmvtolt    IN craplcm.dtmvtolt%TYPE
-										 ,pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE
-                     ,pr_inpessoa    IN crapass.inpessoa%TYPE) IS
-    SELECT ass.cdagenci
-		      ,SUM(nvl(tope.vlrecarga, 0)) totrecpa
-		  FROM tbrecarga_operacao tope
-			    ,crapass ass
-		 WHERE tope.cdcooper       = pr_cdcooper
-		   AND tope.insit_operacao = 2
-			 AND tope.dtdebito       = pr_dtmvtolt			 
-			 AND tope.cdoperadora    = pr_cdoperadora
-       AND ass.inpessoa        = pr_inpessoa
-			 AND ass.cdcooper        = tope.cdcooper
-			 AND ass.nrdconta        = tope.nrdconta
-  GROUP BY ass.cdagenci;
 	-- Repasse recarga de celular
 	CURSOR cr_craptvl_recarg (pr_cdcooper IN crapcop.cdcooper%TYPE
 	                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
@@ -2209,20 +2233,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   TYPE typ_tab_vlr_descbr_pes IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
   vr_tab_vlr_descbr_pes typ_tab_vlr_descbr_pes;
   
-
+  
   -- Registro para inicializar dados por operadora de celular
-  TYPE typ_reg_recarga_celular
-    IS RECORD (nmoperadora   VARCHAR2(100)
-              ,perreceita    NUMBER    --> percentual receita
-              ,totrecarga_pf NUMBER    --> valor total recarga pf
-              ,totrecarga_pj NUMBER);  --> valor total recarga
-
-  -- pl-table principal que indexa os registros operadora de celular
-  TYPE typ_tab_recarga_celular     IS TABLE OF typ_reg_recarga_celular INDEX BY PLS_INTEGER;
-  TYPE typ_tab_age_recarga_celular IS TABLE OF typ_tab_recarga_celular INDEX BY PLS_INTEGER;  
-
-  vr_tab_recarga_celular     typ_tab_recarga_celular;   
-  vr_tab_age_recarga_celular typ_tab_age_recarga_celular;
+  TYPE typ_reg_recarga_cel_ope
+    IS RECORD (nmoperadora tbrecarga_operadora.nmoperadora%type,
+               vlreceita   tbrecarga_operacao.vlrecarga%type);
+               
+  TYPE typ_tab_recarga_cel_ope IS TABLE OF typ_reg_recarga_cel_ope INDEX BY PLS_INTEGER;
+  vr_tab_recarga_cel_ope typ_tab_recarga_cel_ope;
   
   TYPE typ_tab_receita_cel_pf IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
   TYPE typ_tab_receita_cel_pj IS TABLE OF NUMBER INDEX BY PLS_INTEGER;  
@@ -2350,6 +2368,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_nom_arquivo         VARCHAR2(100);
   vr_chave               PLS_INTEGER;
   
+  -- Variavel recarga de celular
+  vr_index               NUMBER;
   
   vr_nrctacre            rw_craphis.nrctacrd%TYPE;
   vr_cdagenci            NUMBER;
@@ -2946,12 +2966,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                          AND crapepr.nrdconta = crapris.nrdconta
                          AND crapepr.nrctremp = crapris.nrctremp
                          AND crapepr.tpemprst = pr_tpemprst)
-         --> Deve ignorar emprestimos de cessao de credito                 
+/*         --> Deve ignorar emprestimos de cessao de credito                 
         AND NOT EXISTS (SELECT 1
                           FROM tbcrd_cessao_credito ces
                          WHERE ces.cdcooper = crapris.cdcooper
                            AND ces.nrdconta = crapris.nrdconta
-                           AND ces.nrctremp = crapris.nrctremp) ;  
+                           AND ces.nrctremp = crapris.nrctremp)*/ ;  
     -- Vencimento do risco
     cursor cr_crapvri (pr_cdcooper in crapris.cdcooper%type,
                        pr_nrdconta in crapris.nrdconta%type,
@@ -11433,120 +11453,72 @@ BEGIN
   --  Fim da contabilizacao da COMP. ELETRONICA ...............................
 
 	-- RECEITA RECARGA DE CELULAR ..............................................
+  
+  FOR inpes IN 1..2 LOOP
+    FOR rw_operadora IN cr_operadora(pr_cdcooper => pr_cdcooper
+                                    ,pr_dtmvtolt => vr_dtmvtolt
+                                    ,pr_inpessoa => inpes) LOOP
+  		
+      IF rw_operadora.vl_receita > 0 THEN
+        
+        vr_index := rw_operadora.cdoperadora;
+        
+        if vr_tab_recarga_cel_ope.exists(vr_index) then
+           vr_tab_recarga_cel_ope(vr_index).vlreceita :=  vr_tab_recarga_cel_ope(vr_index).vlreceita +  rw_operadora.vl_receita;
+        else         
+           vr_tab_recarga_cel_ope(vr_index).vlreceita :=  rw_operadora.vl_receita; 
+           vr_tab_recarga_cel_ope(vr_index).nmoperadora := rw_operadora.nmoperadora;        
+        end if;
+        
+        if rw_operadora.inpessoa = 1 then
+          vr_receita_cel_pf := nvl(vr_receita_cel_pf,0) + rw_operadora.vl_receita;
+        else
+          vr_receita_cel_pj := nvl(vr_receita_cel_pj,0) + rw_operadora.vl_receita;
+        end if;
 
-  FOR rw_operadora IN cr_operadora(pr_cdcooper => pr_cdcooper
-		                              ,pr_dtmvtolt => vr_dtmvtolt) LOOP
-																	
-    IF rw_operadora.totrecarga > 0 AND rw_operadora.perreceita > 0 THEN																	
-      
-      --Valores por Operadora e tipo pessoa
-      IF vr_tab_recarga_celular.exists(rw_operadora.cdoperadora) THEN
-        IF rw_operadora.inpessoa = 1 THEN
-          vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pf := nvl(vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pf,0) + rw_operadora.totrecarga;   
-        ELSE
-          vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pj := nvl(vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pj,0) + rw_operadora.totrecarga;          
-        END IF;
-      ELSE
-        vr_tab_recarga_celular(rw_operadora.cdoperadora).nmoperadora := rw_operadora.nmoperadora;  
-        vr_tab_recarga_celular(rw_operadora.cdoperadora).perreceita  := rw_operadora.perreceita;  
-        IF rw_operadora.inpessoa = 1 THEN
-          vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pf  := rw_operadora.totrecarga; 
-          vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pj  := 0;
-        ELSE                           
-          vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pj  := rw_operadora.totrecarga; 
-          vr_tab_recarga_celular(rw_operadora.cdoperadora).totrecarga_pf  := 0;          
-        END IF;
-      END IF;																
-			
-			-- Listar o total de recargas por pa
-			FOR rw_recargas_pa IN cr_recargas(pr_cdcooper => pr_cdcooper
-																			 ,pr_dtmvtolt => vr_dtmvtolt
-																			 ,pr_cdoperadora => rw_operadora.cdoperadora
-                                       ,pr_inpessoa    => rw_operadora.inpessoa) LOOP
+      END IF;
 
-        IF vr_tab_age_recarga_celular.exists(rw_operadora.cdoperadora) THEN
-          IF vr_tab_age_recarga_celular(rw_operadora.cdoperadora).exists(rw_recargas_pa.cdagenci) THEN
-            IF rw_operadora.inpessoa = 1 THEN
-              vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pf := nvl(vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pf,0) + rw_recargas_pa.totrecpa;  
-            ELSE
-              vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pj := nvl(vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pj,0) + rw_recargas_pa.totrecpa;                
-            END IF;              
-          ELSE
-            vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).perreceita := rw_operadora.perreceita;             
-            IF rw_operadora.inpessoa = 1 THEN
-              vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pf := rw_recargas_pa.totrecpa;                
-              vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pj := 0;            
-            ELSE
-              vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pj := rw_recargas_pa.totrecpa;                
-              vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pf := 0;                        
-            END IF;            
-          END IF;
-        ELSE
-          vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).perreceita := rw_operadora.perreceita;           
-          IF rw_operadora.inpessoa = 1 THEN
-            vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pf := rw_recargas_pa.totrecpa;                
-            vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pj := 0;            
-          ELSE
-            vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pj := rw_recargas_pa.totrecpa;                
-            vr_tab_age_recarga_celular(rw_operadora.cdoperadora)(rw_recargas_pa.cdagenci).totrecarga_pf := 0;                        
-          END IF;
-        END IF;	        
-                                       
-			END LOOP;
-		END IF;
-	END LOOP;
+    END LOOP;
+  END LOOP;
   
   --
-  vr_chave := vr_tab_recarga_celular.first;
+  
+  vr_chave := vr_tab_recarga_cel_ope.first;
   WHILE vr_chave IS NOT NULL LOOP
     
-			/* Linha 1 - Cabecalho*/
-			vr_cdestrut := '55';
-			vr_linhadet := trim(vr_cdestrut)||
-										 trim(vr_dtmvtolt_yymmdd)||','||
-										 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-										 '4340,'|| 
-										 '7543,'||
-                   trim(to_char(((vr_tab_recarga_celular(vr_chave).totrecarga_pf + vr_tab_recarga_celular(vr_chave).totrecarga_pj) * (vr_tab_recarga_celular(vr_chave).perreceita / 100)), '999999990.00'))||','||
-										 '5210,'||
-										 '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
-                   vr_tab_recarga_celular(vr_chave).nmoperadora || '"';
-			gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);																	
+		/* Linha 1 - Cabecalho*/
+		vr_cdestrut := '55';
+		vr_linhadet := trim(vr_cdestrut)||
+									 trim(vr_dtmvtolt_yymmdd)||','||
+									 trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+									 '4340,'|| 
+									 '7543,'||
+                    trim(to_char(vr_tab_recarga_cel_ope(vr_chave).vlreceita, '999999990.00'))||','||
+									 '5210,'||
+									 '"(crps249) RECEITA RECARGA DE CELULAR - ' ||
+                    vr_tab_recarga_cel_ope(vr_chave).nmoperadora || '"';
+		
+    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);	
+      
+    --
+    --Gera gerencial por operadora
+    FOR rw_operadora in cr_operadora(pr_cdcooper => pr_cdcooper
+		                                ,pr_dtmvtolt => vr_dtmvtolt
+                                    ,pr_inpessoa => 0) LOOP
+      
+      vr_linhadet := to_char(rw_operadora.cdagenci, 'fm000')|| ',' ||
+                     trim(to_char(rw_operadora.vl_receita,'999999990.00'));
 			
-    --
-    vr_cdagenci := vr_tab_age_recarga_celular(vr_chave).first;
-    WHILE vr_cdagenci IS NOT NULL LOOP
-
-      vr_linhadet := to_char(vr_cdagenci, 'fm000')|| ',' ||
-                      trim(to_char(((vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pf + vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pj) * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100)),
-												'999999990.00'));
-				gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       
       --
-      IF vr_tab_receita_cel_pf.exists(vr_cdagenci) THEN
-        vr_tab_receita_cel_pf(vr_cdagenci) := vr_tab_receita_cel_pf(vr_cdagenci) + (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pf * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100));
-      ELSE
-        vr_tab_receita_cel_pf(vr_cdagenci) := (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pf * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100));
-      END IF;
-      
-      IF vr_tab_receita_cel_pj.exists(vr_cdagenci) THEN
-        vr_tab_receita_cel_pj(vr_cdagenci) := vr_tab_receita_cel_pj(vr_cdagenci) + (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pj * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100));
-      ELSE
-        vr_tab_receita_cel_pj(vr_cdagenci) := (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pj * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100));
-      END IF;
-      --
-      vr_receita_cel_pf := vr_receita_cel_pf + (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pf * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100));
-      vr_receita_cel_pj := vr_receita_cel_pj + (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).totrecarga_pj * (vr_tab_age_recarga_celular(vr_chave)(vr_cdagenci).perreceita / 100));    
-      --
-      vr_cdagenci := vr_tab_age_recarga_celular(vr_chave).next(vr_cdagenci);       
     END LOOP;
-    vr_cdagenci := NULL;
+    
+    vr_chave := vr_tab_recarga_cel_ope.next(vr_chave);
     --
-    vr_chave := vr_tab_recarga_celular.next(vr_chave); 
   END LOOP;
   
   vr_chave    := NULL;
-  vr_cdagenci := NULL;
 	--
   IF vr_receita_cel_pf > 0 THEN
 
@@ -11563,23 +11535,21 @@ BEGIN
                    '"RECEITA RECARGA DE CELULAR - PESSOA FISICA"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     
-    vr_cdagenci := vr_tab_receita_cel_pf.first;
+    FOR I IN 1..2 LOOP
     
-    WHILE vr_cdagenci IS NOT NULL LOOP
+      FOR rw_recargas in cr_recargas(pr_cdcooper => pr_cdcooper
+		                                   ,pr_dtmvtolt => vr_dtmvtolt
+                                       ,pr_inpessoa => 1) LOOP
 
-      IF vr_tab_receita_cel_pf(vr_cdagenci) > 0 THEN
-        vr_linhadet := to_char(vr_cdagenci, 'fm000')|| ',' ||
-                        trim(to_char(vr_tab_receita_cel_pf(vr_cdagenci),'999999990.00'));
-    gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-      END IF;
+          vr_linhadet := to_char(rw_recargas.cdagenci, 'fm000')|| ',' ||
+                         trim(to_char(rw_recargas.vl_receita,'999999990.00'));
+          gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
-      vr_cdagenci := vr_tab_receita_cel_pf.next(vr_cdagenci); 
 			END LOOP;
+    END LOOP;
     
   END IF;
   --
-  vr_cdagenci := NULL;
-    --
   IF vr_receita_cel_pj > 0 THEN
 
     /* Linha 1 - Cabecalho*/
@@ -11594,18 +11564,19 @@ BEGIN
                    '"RECEITA RECARGA DE CELULAR - PESSOA JURIDICA"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     
-    vr_cdagenci := vr_tab_receita_cel_pj.first;
-    
-    WHILE vr_cdagenci IS NOT NULL LOOP
-      
-      IF vr_tab_receita_cel_pj(vr_cdagenci) > 0 THEN
-        vr_linhadet := to_char(vr_cdagenci, 'fm000')|| ',' ||
-                        trim(to_char(vr_tab_receita_cel_pj(vr_cdagenci),'999999990.00'));
-        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-		END IF;
-          
-      vr_cdagenci := vr_tab_receita_cel_pj.next(vr_cdagenci); 
-	END LOOP;
+    FOR I IN 1..2 LOOP
+
+      FOR rw_recargas in cr_recargas(pr_cdcooper => pr_cdcooper
+		                                ,pr_dtmvtolt => vr_dtmvtolt
+                                    ,pr_inpessoa => 2) LOOP
+
+          vr_linhadet := to_char(rw_recargas.cdagenci, 'fm000')|| ',' ||
+                         trim(to_char(rw_recargas.vl_receita,'999999990.00'));
+          gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+
+			END LOOP;
+
+    END LOOP;
 	
   END IF;
   -- Fim RECEITA RECARGA DE CELULAR ...........................................	

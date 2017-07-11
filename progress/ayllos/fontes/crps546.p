@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Fernando
-    Data    : Dezembro/2009                     Ultima alteracao: 26/02/2014
+    Data    : Dezembro/2009                     Ultima alteracao: 20/06/2017
 
     Dados referentes ao programa:
 
@@ -64,9 +64,14 @@
                             
                26/02/2014 - Ajustes para aumento de format do nome resumido da
                             cooperativa de 11 para 20 (Carlos)
+                            
+               20/06/2017 - Geraçao de tabela com lançamentos contábeis centralizados de 
+                            cada cooperativa filiada na central para posterior geraçao de 
+                            arquivo para o Matera. (Jonatas-Supero)                                  
 ..............................................................................*/
 
 { includes/var_batch.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEFINE STREAM str_1.
 
@@ -122,6 +127,17 @@ DEFINE TEMP-TABLE w-msg-desc                                           NO-UNDO
        FIELD qtmensag AS INTE
        FIELD vltarifa AS DECI  
 INDEX w-msg1 AS PRIMARY cdagenci dtmensag dsmensag.
+
+DEF TEMP-TABLE tt-detlctctl                                            NO-UNDO
+    FIELD cdcooper AS INT
+    FIELD cdagenci AS INT
+    FIELD cdhistor AS INT
+    FIELD vllamnto AS DEC
+    FIELD nrdconta AS INT
+    FIELD nrctadeb AS INT
+    FIELD nrctacrd AS INT
+    FIELD dsrefere AS CHAR FORMAT "x(200)"
+    FIELD intiplct AS INT.
 
 FORM "TED/TEC - DEVOLU TED/TEC"
      "   -   "
@@ -309,7 +325,10 @@ IF  AVAILABLE gncdtrf  THEN
 IF   f_executa(glb_dtmvtolt) THEN 
      DO:
         IF  glb_cdcooper = 3 THEN      
+            DO:
             RUN pi_executa_por_coop.     
+                 RUN pi_insere_det_lct_ctl.
+            END.
         ELSE                               
             /* Executa para todos os PAs da Cooperativa selecionada */
             RUN pi_executa_por_pac.   
@@ -447,6 +466,163 @@ PROCEDURE pi_executa_por_coop.
 
 END PROCEDURE.
 /*........................................................................... */
+PROCEDURE pi_gera_tab_lct_central:
+
+    DEFINE INPUT PARAMETER     par_cdcopfld       AS INTEGER            NO-UNDO.
+    DEFINE INPUT PARAMETER     par_nrctacmp       AS INTEGER            NO-UNDO.
+
+    DEFINE VAR aux_cdagenci_fld                   AS INTEGER            NO-UNDO.
+
+    FOR EACH gntarcp WHERE gntarcp.cdcooper  = par_cdcopfld     AND
+                           gntarcp.dtmvtolt >= aux_dtiniprg     AND
+                           gntarcp.dtmvtolt <= aux_dtfimprg     AND
+                          (gntarcp.cdtipdoc  = 14           OR
+                           gntarcp.cdtipdoc  = 15             ) NO-LOCK:
+
+     
+
+        /* Debitadas em conta corrente */
+        IF   gntarcp.cdtipdoc = 15  AND  gntarcp.vldocmto > 0 THEN
+
+                 
+             DO:
+           
+                  /*Linhas com valor total*/
+                  FIND tt-detlctctl WHERE 
+                       tt-detlctctl.cdcooper = par_cdcopfld AND
+                       tt-detlctctl.cdhistor = 812 AND
+                       tt-detlctctl.cdagenci = 0 AND
+                       tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
+     
+                  IF  NOT AVAILABLE tt-detlctctl  THEN
+                      DO:
+                           CREATE tt-detlctctl.
+                           ASSIGN tt-detlctctl.cdcooper = par_cdcopfld
+                                  tt-detlctctl.cdhistor = 812
+                                  tt-detlctctl.cdagenci = 0 
+                                  tt-detlctctl.nrdconta = par_nrctacmp
+                                  tt-detlctctl.nrctadeb = 7264
+                                  tt-detlctctl.nrctacrd = 1455
+                                  tt-detlctctl.dsrefere = "DEBITO C/C " + 
+                                                          STRING(par_nrctacmp,"zzzz,zzz,9") + 
+                                                          " COMPE CECRED REF. TIB – SPB"
+                                  tt-detlctctl.intiplct = 0.
+                                         
+                      END.
+                  ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + gntarcp.vldocmto.
+                  
+                  
+                  IF   gntarcp.cdagenci = 0 THEN
+                       DO:
+                            FIND FIRST crapage WHERE crapage.cdcooper = gntarcp.cdcooper AND
+                                                     crapage.flgdsede = TRUE
+                                                     NO-LOCK NO-ERROR.
+                                 
+                            ASSIGN aux_cdagenci_fld = crapage.cdagenci.
+                       END.
+                  ELSE
+                       ASSIGN aux_cdagenci_fld = gntarcp.cdagenci. 
+                       
+                       
+                  /*Linhas com valor por agencia*/
+                  FIND tt-detlctctl WHERE 
+                       tt-detlctctl.cdcooper = par_cdcopfld AND
+                       tt-detlctctl.cdhistor = 812 AND
+                       tt-detlctctl.cdagenci = aux_cdagenci_fld AND
+                       tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                  IF  NOT AVAILABLE tt-detlctctl  THEN
+                      DO:
+                           CREATE tt-detlctctl.
+                           ASSIGN tt-detlctctl.cdcooper = par_cdcopfld
+                                  tt-detlctctl.cdhistor = 812
+                                  tt-detlctctl.cdagenci = aux_cdagenci_fld 
+                                  tt-detlctctl.nrdconta = par_nrctacmp
+                                  tt-detlctctl.nrctadeb = 7264
+                                  tt-detlctctl.nrctacrd = 1455
+                                  tt-detlctctl.dsrefere = "DEBITO C/C " + 
+                                                          STRING(par_nrctacmp,"zzzz,zzz,9") + 
+                                                          " COMPE CECRED REF. TIB – SPB"
+                                  tt-detlctctl.intiplct = 1.
+                                         
+                      END.
+                  ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + gntarcp.vldocmto.                       
+                       
+             END.
+             
+        ELSE
+
+             IF   gntarcp.cdtipdoc = 14  AND  gntarcp.vldocmto > 0 THEN
+                  DO:
+                  
+                       /*Linhas com valor total*/
+                       FIND tt-detlctctl WHERE 
+                            tt-detlctctl.cdcooper = par_cdcopfld AND
+                            tt-detlctctl.cdhistor = 813 AND
+                            tt-detlctctl.cdagenci = 0 AND
+                            tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
+     
+                       IF  NOT AVAILABLE tt-detlctctl  THEN
+                           DO:
+                               CREATE tt-detlctctl.
+                               ASSIGN tt-detlctctl.cdcooper = par_cdcopfld
+                                      tt-detlctctl.cdhistor = 813
+                                      tt-detlctctl.cdagenci = 0 
+                                      tt-detlctctl.nrdconta = par_nrctacmp
+                                      tt-detlctctl.nrctadeb = 1455
+                                      tt-detlctctl.nrctacrd = 7264
+                                      tt-detlctctl.dsrefere = "CREDITO C/C " + 
+                                                               STRING(par_nrctacmp,"zzzz,zzz,9") + 
+                                                               " COMPE CECRED REF. TIB – SPB"
+                                      tt-detlctctl.intiplct = 0.
+                                         
+                           END.
+                       ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + gntarcp.vldocmto.                  
+                                             
+                  
+                       IF   gntarcp.cdagenci = 0 THEN
+                            DO:
+                                 FIND FIRST crapage WHERE crapage.cdcooper = gntarcp.cdcooper AND
+                                                          crapage.flgdsede = TRUE
+                                                          NO-LOCK NO-ERROR.
+                                 
+                                 ASSIGN aux_cdagenci_fld = crapage.cdagenci.
+                            END.
+                       ELSE
+                            ASSIGN aux_cdagenci_fld = gntarcp.cdagenci. 
+                       
+
+                       /*Linhas com valor por agencia*/
+                       FIND tt-detlctctl WHERE 
+                            tt-detlctctl.cdcooper = par_cdcopfld AND
+                            tt-detlctctl.cdhistor = 813 AND
+                            tt-detlctctl.cdagenci = aux_cdagenci_fld AND
+                            tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                       IF  NOT AVAILABLE tt-detlctctl  THEN
+                           DO:
+                               CREATE tt-detlctctl.
+                               ASSIGN tt-detlctctl.cdcooper = par_cdcopfld
+                                      tt-detlctctl.cdhistor = 813
+                                      tt-detlctctl.cdagenci = aux_cdagenci_fld 
+                                      tt-detlctctl.nrdconta = par_nrctacmp
+                                      tt-detlctctl.nrctadeb = 1455
+                                      tt-detlctctl.nrctacrd = 7264
+                                      tt-detlctctl.dsrefere = "CREDITO C/C " + 
+                                                               STRING(par_nrctacmp,"zzzz,zzz,9") + 
+                                                               " COMPE CECRED REF. TIB – SPB"
+                                      tt-detlctctl.intiplct = 1.
+                                         
+                           END.
+                       ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + gntarcp.vldocmto.                  
+                  
+                  END.
+   
+    END. /* END FOREACH */
+
+
+END PROCEDURE.
+/*........................................................................... */
 PROCEDURE imprime_coop.
 
     ASSIGN glb_nmformul = ""
@@ -501,8 +677,17 @@ PROCEDURE imprime_coop.
         IF   LAST-OF(w-dados-coop.cdcooper)   THEN
              DO:
                 IF   w-dados-coop.vltotal <> 0 THEN
-                     RUN cria_lancamento(INPUT crapcop.nrctacmp,
-                                         INPUT w-dados-coop.vltotal).
+                     DO:
+                          
+                          RUN pi_gera_tab_lct_central(INPUT w-dados-coop.cdcooper,
+                                                      INPUT crapcop.nrctacmp).
+                                                      
+                          RUN cria_lancamento(INPUT crapcop.nrctacmp,
+                                              INPUT w-dados-coop.vltotal,
+                                              INPUT w-dados-coop.cdcooper).                        
+
+                                                      
+                     END.
              END.
         
         DISPLAY STREAM str_1 aux_dscooper          w-dados-coop.qtmsgenv
@@ -697,8 +882,9 @@ END.
 /*............................................................................*/
 PROCEDURE cria_lancamento:
 
- DEFINE INPUT PARAMETER par_nrctacmp AS INTEGER             NO-UNDO.
- DEFINE INPUT PARAMETER par_vlrlamto AS DECIMAL             NO-UNDO. 
+ DEFINE INPUT PARAMETER par_nrctacmp     AS INTEGER         NO-UNDO.
+ DEFINE INPUT PARAMETER par_vlrlamto     AS DECIMAL         NO-UNDO. 
+ DEFINE INPUT PARAMETER par_cdcooper_fld AS DECIMAL         NO-UNDO.
 
  DEFINE VARIABLE aux_cdhistor        AS INTEGER             NO-UNDO.
 
@@ -780,14 +966,58 @@ PROCEDURE cria_lancamento:
         craplot.qtcompln = craplot.qtcompln + 1
         craplot.nrseqdig = craplcm.nrseqdig.
  
- IF   aux_cdhistor = 812   THEN /* Debito de TIB */                
+ IF   aux_cdhistor = 812   THEN /* Debito de TIB */  
+ 
       ASSIGN craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
-             craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
+                                craplot.vlcompdb = craplot.vlcompdb + craplcm.vllanmto.
  ELSE
+                 
       ASSIGN craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
-             craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto.
+                                craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto.
 
  FIND CURRENT craplot NO-LOCK NO-ERROR.
 
 END.
-                                   
+
+/******************************************************************************
+ Geracao do tabela de lançamentos contábeis centralizados para envio ao Matera
+******************************************************************************/
+PROCEDURE pi_insere_det_lct_ctl:
+    
+    DO TRANSACTION:
+    
+         FOR EACH tt-detlctctl:
+    
+              /* Preparando a sessao para conectar-se no Oracle */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                       
+              /* Efetuar a chamada a rotina Oracle */
+              RUN STORED-PROCEDURE pc_insere_lct_central
+                   aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT glb_dtmvtopr,
+                             INPUT tt-detlctctl.cdcooper,
+                             INPUT tt-detlctctl.cdagenci,
+                             INPUT tt-detlctctl.cdhistor,
+                             INPUT tt-detlctctl.vllamnto,
+                             INPUT tt-detlctctl.nrdconta,
+                             INPUT tt-detlctctl.nrctadeb,
+                             INPUT tt-detlctctl.nrctacrd,
+                             INPUT tt-detlctctl.dsrefere,
+                             INPUT tt-detlctctl.intiplct,
+                             OUTPUT 0,
+                             OUTPUT "").
+                                                    
+              /* Fechar o procedimento para buscarmos o resultado */
+              CLOSE STORED-PROC pc_insere_lct_central
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+              
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                               
+              /* Busca possíveis erros */
+              ASSIGN glb_dscritic = pc_insere_lct_central.pr_dscritic
+                WHEN pc_insere_lct_central.pr_dscritic <> ?. 
+         END.
+    END.
+
+END PROCEDURE.
+                              
