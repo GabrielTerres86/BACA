@@ -690,7 +690,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 17/04/2017
+  --  Data     : Março/2014.                   Ultima atualizacao: 10/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -780,6 +780,9 @@ create or replace package body cecred.PAGA0002 is
 	--
   --             12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
   --                          referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
+  --
+                 10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
+                              um agendamento de Transferencia (Lucas Ranghetti #676219)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -815,6 +818,13 @@ create or replace package body cecred.PAGA0002 is
     WHERE crapcob.ROWID = pr_rowid;
   rw_crapcob cr_crapcob%ROWTYPE;
   
+  CURSOR cr_craphec(pr_cdcooper IN crapcop.cdcooper%TYPE
+                   ,pr_cdprogra IN VARCHAR2) IS
+ SELECT MAX(c.hrfimexe) hrfimexe
+   FROM craphec c
+  WHERE c.cdcooper = pr_cdcooper
+    AND upper(c.cdprogra) = upper(pr_cdprogra);
+  rw_craphec cr_craphec%ROWTYPE;
   
   /* Procedimento do internetbank operação 22 - Transferencia */
   PROCEDURE pc_InternetBank22 ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
@@ -958,6 +968,9 @@ create or replace package body cecred.PAGA0002 is
                                        
                   12/06/2017 - Alterar tipo do parametro pr_nrctatrf para varchar2 
                                referentes ao Novo Catalogo do SPB (Lucas Ranghetti #668207)
+                               
+                  10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
+                               um agendamento de Transferencia (Lucas Ranghetti #676219)
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
    
@@ -1012,6 +1025,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nmdcampo   VARCHAR2(500);
 
     vr_vltarifa   NUMBER := 0;
+    vr_hrfimpag   VARCHAR2(50);
 
     -----------> SubPrograma <------------
     -- Gerar log
@@ -1442,8 +1456,9 @@ create or replace package body cecred.PAGA0002 is
     IF nvl(vr_cdcritic,0) <> 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
        RAISE vr_exc_erro; 
-    END IF;                                   
+    END IF;            
     
+   
     /** Agendamento recorrente **/
     IF pr_idagenda = 3 THEN 
     
@@ -1530,7 +1545,7 @@ create or replace package body cecred.PAGA0002 is
     IF nvl(vr_cdcritic,0) <> 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF;
+    END IF;  
 
       -- Se nao retornou erro, validar dados TED
     IF pr_tpoperac = 4 AND /** TED **/
@@ -2019,6 +2034,25 @@ create or replace package body cecred.PAGA0002 is
         END IF;            
       END IF; 
 
+      -- Buscar ultimo horario da DEBNET
+      OPEN cr_craphec(pr_cdcooper => pr_cdcooper, 
+                      pr_cdprogra => 'DEBNET');
+      FETCH cr_craphec INTO rw_craphec;
+      
+      IF cr_craphec%FOUND THEN 
+        -- Fechar cursor
+        CLOSE cr_craphec;    
+        IF pr_cdtiptra IN(1,5) THEN
+          vr_hrfimpag:= to_char(to_date(rw_craphec.hrfimexe,'sssss'), 'hh24:mi');
+        ELSE
+          vr_hrfimpag:= vr_tab_limite(vr_tab_limite.first).hrfimpag;
+        END IF;
+      ELSE
+        -- Fechar cursor
+        CLOSE cr_craphec;
+        vr_hrfimpag:= vr_tab_limite(vr_tab_limite.first).hrfimpag;
+      END IF;
+
       /* Procedimento para gerar os agendamentos de pagamento/transferencia/Credito salario */
       PAGA0002.pc_cadastrar_agendamento 
                                ( pr_cdcooper => pr_cdcooper  --> Codigo da cooperativa
@@ -2088,7 +2122,7 @@ create or replace package body cecred.PAGA0002 is
                         ||
                         ' com sucesso para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||                         
                         ', mediante saldo disponivel em conta corrente ate as '        || 
-                          vr_tab_limite(vr_tab_limite.first).hrfimpag || '.';
+                          vr_hrfimpag || '.';
         END IF;
                        
       -- Se retornou critica
