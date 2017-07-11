@@ -2659,7 +2659,14 @@ PROCEDURE valida_dados_efetivacao_proposta:
               IF   aux_cdcritic > 0   OR
                    (aux_dscritic <> ? AND aux_dscritic <> "") THEN
                    DO:
-                       LEAVE.
+                       RUN gera_erro (INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT 1,
+                                      INPUT aux_cdcritic,
+                                      INPUT-OUTPUT aux_dscritic).
+
+                       RETURN "NOK".
                    END.
                             
               IF   aux_flgativo = 1  THEN
