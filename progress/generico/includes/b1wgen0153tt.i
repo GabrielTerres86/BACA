@@ -21,7 +21,9 @@
                              
                 08/03/2016 - Inclusao da TT tt-tbtarif-pacotes, Prj. 218,
                              Pacotes de Tarifas (Jean Michel).
-
+							 
+				11/07/2017 - Melhoria 150 - adicionado campos na estrutura
+                             tt-atribdet
 .............................................................................*/
 
 DEF TEMP-TABLE tt-grupos NO-UNDO
@@ -133,7 +135,11 @@ DEF TEMP-TABLE tt-atribdet NO-UNDO
     FIELD dsconven AS CHAR
     FIELD cdlcremp AS INTE
     FIELD dslcremp AS CHAR
-    FIELD nmoperad AS CHAR.
+    FIELD nmoperad AS CHAR
+	FIELD tpcobtar AS INTE
+	FIELD vlpertar AS DECI
+	FIELD vlmintar AS DECI
+	FIELD vlmaxtar AS DECI.
 
 DEF TEMP-TABLE tt-associados NO-UNDO
     FIELD nrdconta AS INTE
