@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 21/06/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 26/06/2017
 
    Dados referentes ao programa:
 
@@ -242,7 +242,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                07/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
-                            
+				
                04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)
 
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
@@ -250,7 +250,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
-			         07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+			   07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
                             
                12/01/2017 - Limpar crapdev com situacao devolvido, jogar as 
@@ -263,8 +263,14 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                30/03/2017 - Alteração na geração do arquivo AAMMDD_CRITICAS.txt para gerar 
                             lançamentos da crítica de código 96 (Cheques com Contraordem).
-                            P307 - (Jonatas - Supero)				   
+                            P307 - (Jonatas - Supero)
+ 
+               07/04/2017 - #642531 Tratamento do tail para pegar/validar os dados da última linha
+                            do arquivo corretamente (Carlos)                            
                             
+               26/06/2017 - Alteração na geração do arquivo AAMMDD_CRITICAS.txt para gerar 
+                            lançamentos da crítica de código 950 414 - P307 - (Jonatas - Supero)                            
+ 
                21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
                             email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
  
@@ -567,7 +573,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
           vr_nrcheque   gncpchq.nrcheque%TYPE;
           vr_cdtipreg   gncpchq.cdtipreg%TYPE;
           vr_exc_erro   EXCEPTION;
-          
+
       
 
         BEGIN
@@ -1601,8 +1607,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 RAISE vr_exc_erro;
               END IF;
 
-              --Se o final do arquivo estiver errado
-              IF SUBSTR(vr_setlinha,01,10) <> '9999999999' THEN
+              --Se o final do arquivo estiver errado (validar as duas posições possíveis)
+              IF SUBSTR(vr_setlinha,01,10) <> '9999999999' AND
+                 SUBSTR(vr_setlinha,162,10) <> '9999999999' THEN
                 vr_cdcritic:= 258;
                 vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                 vr_compl_erro:= ' - Arquivo: '|| vr_vet_nmarquiv(idx);
@@ -2341,6 +2348,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   RAISE vr_exc_erro;
                 END IF;
 
+                IF SUBSTR(vr_setlinha,162,10) = '9999999999' THEN
+                  vr_setlinha := SUBSTR(vr_setlinha,162);
+                END IF;
+
                 --Se o final do arquivo estiver errado
                 IF SUBSTR(vr_setlinha,01,10) <> '9999999999' THEN
                   vr_cdcritic:= 0;
@@ -2358,7 +2369,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   vr_des_erro := NULL;
                   vr_compl_erro:= NULL;
                 ELSE
-
                   --Armazena os totais contidos na ultima linha do arquivo nas variaveis
                   vr_tot_qtregrec:= To_Number(SubStr(vr_setlinha,151,10)) -2;
                   vr_tot_vlregrec:= Round(To_Number(SubStr(vr_setlinha,74,17)) /100,2);
@@ -3847,7 +3857,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       -- Se não tiver critica
                       IF vr_cdcritic = 0 AND 
                          vr_cdcritic_aux = 0 THEN                        
-                      
+                        
                         IF cr_tbchq_param_conta%ISOPEN THEN
                           CLOSE cr_tbchq_param_conta;  
                         END IF;                         
@@ -4812,7 +4822,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         END IF;
                       END IF;
                     END IF;
-
+                    
                     IF vr_cdcritic = 96 THEN
                       -- Monta a mensagem
                       vr_desdados := '50' || 
@@ -4826,6 +4836,33 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
                       -- Adiciona a linha ao arquivo de criticas
                       dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);
+                      
+                    ELSIF vr_cdcritic = 950 THEN
+                      -- Monta a mensagem
+                      vr_desdados := '50' || 
+                                     TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
+                                     TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
+                                     ',4958,1413,' ||               
+                                     TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                     ',5210,"' || 
+                                     ' DEVOLUCAO DO CHEQUE CUSTODIADO/DESCONTADO EM OUTRA IF' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
+                                     ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
+                                     ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
+                      -- Adiciona a linha ao arquivo de criticas
+                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);                      
+                    ELSIF vr_cdcritic = 414 THEN
+                      -- Monta a mensagem
+                      vr_desdados := '50' || 
+                                     TO_CHAR(rw_crapdat.dtmvtolt,'DDMMRR') || ',' || 
+                                     TO_CHAR(rw_crapdat.dtmvtopr,'DDMMRR') || --Entra no próximo dia útil
+                                     ',4958,1413,' ||               
+                                     TO_CHAR(rw_craprej.vllanmto,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                     ',5210,"' || 
+                                     ' CHEQUE DEVOLVIDO PELO SISTEMA ' || GENE0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z') || 
+                                     ' DO COOPERADO C/C ' || GENE0002.fn_mask_conta(rw_craprej.nrdconta) ||
+                                     ' (CONFORME CRITICA RELATORIO 526)"' || chr(10);
+                      -- Adiciona a linha ao arquivo de criticas
+                      dbms_lob.writeappend(vr_clobcri, length(vr_desdados),vr_desdados);                      
                     END IF;
 
 
