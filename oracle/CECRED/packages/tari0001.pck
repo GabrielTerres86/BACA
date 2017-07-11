@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --
   --  Programa: TARI0001                         Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Tiago Machado/Daniel Zimmermann
-  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 08/06/2016
+  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 11/07/2017
   --
   --  Dados referentes ao programa:
   --
