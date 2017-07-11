@@ -7,6 +7,10 @@
  * -------------------------
  * ALTERAÇÕES   : 02/08/2013 - Incluso tratamento para registros
  *							   de cobranca (Daniel).
+ *
+ *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e 
+ *                             "Valor Maximo" (Mateus - MoutS)
+ *
  * -------------------------
  */
 ?>
@@ -28,6 +32,7 @@
 	$vlfinfvl2 = (isset($_POST['vlfinfvl2'])) ? $_POST['vlfinfvl2'] : 0;
 	$cdfvlcop  = (isset($_POST['cdfvlcop'])) ? $_POST['cdfvlcop'] : 0;	
 	$nrconven  =  (isset($_POST['nrconven'])) ? $_POST['nrconven'] : 0;	
+	$cdtipcat  = (isset($_POST['cdtipcat'])) ? $_POST['cdtipcat'] : 0;	
 	
 	$cdlcremp  =  (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : 0;	
 	
@@ -40,6 +45,10 @@
 		$vlrepass = (isset($_POST['vlrepass'])) ? $_POST['vlrepass'] : 0;
 		$nmrescop = (isset($_POST['nmrescop'])) ? $_POST['nmrescop'] : '';
 		$dsconven = (isset($_POST['dsconven'])) ? $_POST['dsconven'] : '';
+		$tpcobtar = (isset($_POST['tpcobtar'])) ? $_POST['tpcobtar'] : '';
+		$vlpertar = (isset($_POST['vlpertar'])) ? $_POST['vlpertar'] : '';
+		$vlmintar = (isset($_POST['vlmintar'])) ? $_POST['vlmintar'] : '';
+		$vlmaxtar = (isset($_POST['vlmaxtar'])) ? $_POST['vlmaxtar'] : '';
 		
 		$dslcremp = (isset($_POST['dslcremp'])) ? $_POST['dslcremp'] : '';
 	}
