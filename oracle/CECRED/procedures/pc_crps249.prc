@@ -11486,10 +11486,12 @@ BEGIN
 		                                ,pr_dtmvtolt => vr_dtmvtolt
                                     ,pr_inpessoa => 0) LOOP
       
-      vr_linhadet := to_char(rw_operadora.cdagenci, 'fm000')|| ',' ||
-                     trim(to_char(rw_operadora.vl_receita,'999999990.00'));
+      IF rw_operadora.cdoperadora = vr_chave THEN
+        vr_linhadet := to_char(rw_operadora.cdagenci, 'fm000')|| ',' ||
+                       trim(to_char(rw_operadora.vl_receita,'999999990.00'));
 			
-      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+      END IF;
       
       --
     END LOOP;

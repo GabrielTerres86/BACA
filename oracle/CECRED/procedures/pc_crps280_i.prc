@@ -3665,8 +3665,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          --Agupar valores microcrédito das filiadas por finalidade
          IF pr_cdcooper = 3 AND (TRUNC(pr_rw_crapdat.dtmvtolt,'mm') <> TRUNC(pr_rw_crapdat.dtmvtopr,'mm')) THEN
             
-            IF vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,2,3,4) AND
-               vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 1 AND
+            IF ((vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) AND
+                vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 1) OR
+                (vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (2,3)) AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 0) AND
                vr_tab_crapris(vr_des_chave_crapris).dsorgrec <> ' ' THEN
             
                -- Busca valor de parcelas pagas
