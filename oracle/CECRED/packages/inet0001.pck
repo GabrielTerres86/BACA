@@ -275,7 +275,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
 
   --Tipo de tabela para limite internet
   TYPE typ_tab_internet IS TABLE OF typ_reg_internet INDEX BY PLS_INTEGER;
-
+  
   
   --Tipo de Registro para contas-cadastradas
   TYPE typ_reg_contas_cadastradas IS
@@ -781,7 +781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           vr_iddiauti:= 2;
         ELSE
           vr_iddiauti:= 1;
-      END IF;
+        END IF;
 
         --Criar registro para tabela limite horarios
         vr_index_limite:= pr_tab_limite.Count+1;
@@ -1023,25 +1023,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             IF rw_crapcop.flgopstr = 1 THEN -- TRUE
                vr_hrinipag := rw_crapcop.iniopstr;
                vr_hrfimpag := rw_crapcop.fimopstr; 
-
+         
                /**
-              IF rw_crapcop.iniopstr <= vr_hratual AND rw_crapcop.fimopstr >= vr_hratual THEN
+               IF rw_crapcop.iniopstr <= vr_hratual AND rw_crapcop.fimopstr >= vr_hratual THEN
                   vr_flgutstr := TRUE; -- Esta dentro do horario cadastrado para STR
-            END IF;          
+               END IF;
                **/
             ELSE
-            -- Operando com mensagens PAG  
-            IF rw_crapcop.flgoppag = 1 THEN -- TRUE
+                 -- Operando com mensagens PAG  
+                 IF rw_crapcop.flgoppag = 1 THEN -- TRUE
                     vr_hrinipag := rw_crapcop.inioppag;
                     vr_hrfimpag := rw_crapcop.fimoppag;
          
                   /**
-              IF rw_crapcop.inioppag <= vr_hratual AND rw_crapcop.fimoppag >= vr_hratual THEN
+                  IF rw_crapcop.inioppag <= vr_hratual AND rw_crapcop.fimoppag >= vr_hratual THEN
                      vr_flgutpag := TRUE; -- Esta dentro do horario cadastrado para PAG 
-              END IF;
+                  END IF;
                   **/
+                  END IF;
             END IF;    
-            END IF;            
           END IF;
 
           --Se for feriado ou final semana
@@ -2093,7 +2093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                      
               28/01/2016 - Ajustes para permitir TED no ultimo dia do ano (Tiago/Elton)
 
-			        17/02/2016 - Excluido validacao de conta nao cadastrada para TED (Jean Michel).
+			  17/02/2016 - Excluido validacao de conta nao cadastrada para TED (Jean Michel).
 
 			  06/05/2016 - Ajuste para validar o banco e agencia da conta destino em operações
 						               de TED (Adriano - M117).
@@ -2104,10 +2104,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               17/05/2016 - Ajuste na mensagem de retorno ao validar o saldo limite
                            (Adriano - M117).    
 						   
-			  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
-						            
-              18/07/2016 - Incluido pr_tpoperac = 10 -> DARF/DAS, Prj. 338 (Jean Michel).
+						  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
 
+              18/07/2016 - Incluido pr_tpoperac = 10 -> DARF/DAS, Prj. 338 (Jean Michel).
+						   
 			  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
 						            
               12/12/2016 - Ajuste para não realizar a validação de conta favorecida ativa
@@ -2116,6 +2116,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
               10/03/2017 - Ajustes para liberar agendamento de TED para o ultimo dia util
                            do ano (Tiago/Elton SD586106)
+              
+			  13/06/2017 - Alteração na mensagem de "Conta destino nao habilitada para receber valores da transferencia."
+			               para "Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online"
+						   (Rafael Monteiro - Mouts - 690752)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -2459,10 +2463,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         RAISE vr_exc_erro;
       END IF;
 
-	IF pr_tpoperac = 10 AND -- DARF/DAS 
-		 pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
-		 	pr_tab_limite(pr_tab_limite.FIRST).idesthor := 1;
-      END IF;
+			IF pr_tpoperac = 10 AND -- DARF/DAS 
+				 pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
+				 	pr_tab_limite(pr_tab_limite.FIRST).idesthor := 1;
+			END IF;
 
       --Se nao for para validar retorna
       IF NOT pr_flgvalid THEN
@@ -2633,7 +2637,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF pr_tpoperac IN (5) AND vr_datdodia >= to_date('31/12/2016','dd/mm/RRRR') AND
              vr_cdcopctl = 17 THEN						  
               vr_cdcritic := 0;
-              vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+              --vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+			  vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
@@ -2652,7 +2657,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Se nao encontrou ou a conta naoesta ativa
           IF cr_crapcti%FOUND AND rw_crapcti.insitcta <> 2 THEN  /** Ativa **/
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+            --vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+			vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
             
             --Fechar Cursor
             CLOSE cr_crapcti;
@@ -2700,7 +2706,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             SD 563147 */
           IF cr_crapcti%FOUND AND pr_nmdatela <> 'CRPS705' AND rw_crapcti.insitcta <> 2 THEN  /** Ativa **/
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+            --vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+			vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
             
             --Fechar Cursor
             CLOSE cr_crapcti;
@@ -2710,7 +2717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
           
           --Fechar Cursor
-          CLOSE cr_crapcti;
+          CLOSE cr_crapcti;      
 
         END IF;
       ELSE
@@ -2950,11 +2957,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                vr_dscritic:= 'A data mínima para agendamento deve ser '||To_Char(rw_crapdat.dtmvtopr,'DD/MM/YYYY')||'.';
             END IF;
           ELSE
-            --Montar mensagem erro
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';            
+          --Montar mensagem erro
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
           END IF;
-          --Levantar Excecao          
+          --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
         /** Agendamento normal **/
