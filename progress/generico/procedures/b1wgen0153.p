@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 17/04/2017
+    Data    : Fevereiro/2013                Ultima Atualizacao: 11/07/2017
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -143,6 +143,7 @@
                17/04/2017 - Alterar for each com last-off por find last na busca-novo-cdfvlcop
                             (Lucas Ranghetti #633002)
                            
+				11/07/2017 - Melhoria 150 - Tarifação de operações de crédito por percentual
               
 ............................................................................*/
 
@@ -1721,7 +1722,8 @@ PROCEDURE buscar-linha-credito:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     FIND FIRST craplcr WHERE craplcr.cdcooper = par_cdcopatu AND
-                             craplcr.cdlcremp = par_cdlcremp AND                              craplcr.cdusolcr <> 1           AND
+                             craplcr.cdlcremp = par_cdlcremp AND
+							 craplcr.cdusolcr <> 1           AND
                              craplcr.flgtarif = FALSE        
                              NO-LOCK NO-ERROR.
 
@@ -6093,7 +6095,7 @@ PROCEDURE busca-novo-cdfvlcop:
             
     IF  AVAILABLE crapfco THEN
         ASSIGN par_cdfvlcop = crapfco.cdfvlcop + 1.
-
+            
 END PROCEDURE.
 
 /******************************************************************************
@@ -6120,7 +6122,10 @@ PROCEDURE incluir-cadfco:
     DEF INPUT PARAM par_cdocorre AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_cdlcremp AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_cdinctar AS INTE                    NO-UNDO.
-
+	DEF INPUT PARAM par_tpcobtar AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_vlpertar AS DECI                    NO-UNDO.
+    DEF INPUT PARAM par_vlmintar AS DECI                    NO-UNDO.
+    DEF INPUT PARAM par_vlmaxtar AS DECI                    NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_flgregis AS LOGICAL                         NO-UNDO.
@@ -6239,7 +6244,11 @@ PROCEDURE incluir-cadfco:
            crapfco.dtvigenc = par_dtvigenc
            crapfco.nrconven = par_nrconven
            crapfco.cdlcremp = par_cdlcremp
-           crapfco.cdoperad = par_cdoperad.
+           crapfco.cdoperad = par_cdoperad
+		   crapfco.tpcobtar = par_tpcobtar
+		   crapfco.vlpertar = par_vlpertar
+		   crapfco.vlmintar = par_vlmintar
+		   crapfco.vlmaxtar = par_vlmaxtar.
     VALIDATE crapfco.
 
     RETURN "OK".
@@ -6338,6 +6347,10 @@ PROCEDURE alterar-cadfco:
     DEF INPUT PARAM par_cdocorre AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_cdlcremp AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_cdinctar AS INTE                    NO-UNDO.
+	DEF INPUT PARAM par_tpcobtar AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_vlpertar AS DECI                    NO-UNDO.
+    DEF INPUT PARAM par_vlmintar AS DECI                    NO-UNDO.
+    DEF INPUT PARAM par_vlmaxtar AS DECI                    NO-UNDO.	
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -6486,7 +6499,11 @@ PROCEDURE alterar-cadfco:
                           crapfco.dtvigenc = par_dtvigenc
                           crapfco.nrconven = par_nrconven
                           crapfco.cdlcremp = par_cdlcremp
-                          crapfco.cdoperad = par_cdoperad.
+                          crapfco.cdoperad = par_cdoperad
+						  crapfco.tpcobtar = par_tpcobtar
+		                  crapfco.vlpertar = par_vlpertar
+		                  crapfco.vlmintar = par_vlmintar
+		                  crapfco.vlmaxtar = par_vlmaxtar.
                    LEAVE.
                 END.
         END.
@@ -6531,6 +6548,10 @@ PROCEDURE buscar-cadfco:
     DEF OUTPUT PARAM par_dtvigenc AS DATE                   NO-UNDO.
     DEF OUTPUT PARAM par_flgnegat AS LOGICAL                NO-UNDO.
     DEF OUTPUT PARAM par_nrconven AS INTE                   NO-UNDO.
+	DEF OUTPUT PARAM par_tpcobtar AS INTE                   NO-UNDO.
+    DEF OUTPUT PARAM par_vlpertar AS DECI                   NO-UNDO.
+    DEF OUTPUT PARAM par_vlmintar AS DECI                   NO-UNDO.
+    DEF OUTPUT PARAM par_vlmaxtar AS DECI                   NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -6556,7 +6577,11 @@ PROCEDURE buscar-cadfco:
            par_vltarifa = crapfco.vltarifa
            par_vlrepass = crapfco.vlrepass
            par_dtdivulg = crapfco.dtdivulg
-           par_dtvigenc = crapfco.dtvigenc.
+           par_dtvigenc = crapfco.dtvigenc
+		   par_tpcobtar = crapfco.tpcobtar
+           par_vlpertar = crapfco.vlpertar
+           par_vlmintar = crapfco.vlmintar
+           par_vlmaxtar = crapfco.vlmaxtar.
 
     RETURN "OK".
 END PROCEDURE.
@@ -6575,6 +6600,8 @@ PROCEDURE carrega-atribuicao-detalhamento:
     DEF INPUT PARAM par_cdfaixav AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_flgtodos AS LOGICAL                 NO-UNDO.
     DEF INPUT PARAM par_cdtipcat AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE                    NO-UNDO.
 
     DEF OUTPUT PARAM par_qtregist AS INTE                   NO-UNDO.     
     DEF OUTPUT PARAM TABLE FOR tt-atribdet.
@@ -6589,9 +6616,17 @@ PROCEDURE carrega-atribuicao-detalhamento:
     DEF VAR aux_dslcremp        LIKE craplcr.dslcremp       NO-UNDO.
     DEF VAR aux_nmoperad        LIKE crapope.nmoperad       NO-UNDO.
 
+    DEF VAR aux_nrseqatu AS INTE                            NO-UNDO.
+    DEF VAR aux_nrseqini AS INTE                            NO-UNDO.
+    DEF VAR aux_nrseqfim AS INTE                            NO-UNDO.
+
     EMPTY TEMP-TABLE tt-atribdet.
 
     ASSIGN aux_nrregist = 0.
+
+    ASSIGN aux_nrseqatu = 0
+           aux_nrseqini = par_nriniseq
+           aux_nrseqfim = par_nriniseq + par_nrregist.
 
     IF par_cdtipcat <> 3 THEN /* Credito */
     DO:
@@ -6656,6 +6691,14 @@ PROCEDURE carrega-atribuicao-detalhamento:
                     aux_nmoperad = STRING(crapfco.cdoperad) + " - " + crapope.nmoperad.
                 END.
 
+                ASSIGN aux_nrseqatu = aux_nrseqatu + 1.
+                
+                IF aux_nrseqatu < aux_nrseqini  OR
+                       aux_nrseqatu >= aux_nrseqfim THEN
+                        DO:
+                            NEXT.
+                        END.
+
                 CREATE tt-atribdet.
                 ASSIGN tt-atribdet.cdfvlcop = crapfco.cdfvlcop
                        tt-atribdet.cdfaixav = crapfco.cdfaixav
@@ -6668,6 +6711,10 @@ PROCEDURE carrega-atribuicao-detalhamento:
                        tt-atribdet.nrconven = aux_nrconven
                        tt-atribdet.dsconven = aux_dsconven
                        tt-atribdet.nmoperad = aux_nmoperad
+					   tt-atribdet.tpcobtar = crapfco.tpcobtar
+					   tt-atribdet.vlpertar = crapfco.vlpertar
+					   tt-atribdet.vlmintar = crapfco.vlmintar
+					   tt-atribdet.vlmaxtar = crapfco.vlmaxtar
                        aux_nrregist = aux_nrregist + 1.
 
             END.
@@ -6714,9 +6761,17 @@ PROCEDURE carrega-atribuicao-detalhamento:
 
                 /* Busca o nome do operador (PRJ - 218) */
                 ASSIGN aux_nmoperad = "".
-                FOR FIRST crapope FIELDS(nmoperad) WHERE crapope.cdoperad = crapfco.cdoperad NO-LOCK.
+                FOR FIRST crapope FIELDS(nmoperad) WHERE crapope.cdoperad = crapfco.cdoperad NO-LOCK:
                     aux_nmoperad = STRING(crapfco.cdoperad) + " - " + crapope.nmoperad.
                 END.
+
+                ASSIGN aux_nrseqatu = aux_nrseqatu + 1.
+                
+                IF aux_nrseqatu < aux_nrseqini  OR
+                       aux_nrseqatu >= aux_nrseqfim THEN
+                        DO:
+                            NEXT.
+                        END.
 
                 CREATE tt-atribdet.
                 ASSIGN tt-atribdet.cdfvlcop = crapfco.cdfvlcop
@@ -6730,13 +6785,17 @@ PROCEDURE carrega-atribuicao-detalhamento:
                        tt-atribdet.cdlcremp = aux_cdlcremp
                        tt-atribdet.dslcremp = aux_dslcremp
                        tt-atribdet.nmoperad = aux_nmoperad
+					   tt-atribdet.tpcobtar = crapfco.tpcobtar
+					   tt-atribdet.vlpertar = crapfco.vlpertar
+					   tt-atribdet.vlmintar = crapfco.vlmintar
+					   tt-atribdet.vlmaxtar = crapfco.vlmaxtar					   
                        aux_nrregist = aux_nrregist + 1.
     
             END.
-    
         END.
     END.
 
+	ASSIGN par_qtregist = aux_nrseqatu.
 
     RETURN "OK".
 
@@ -6924,6 +6983,10 @@ PROCEDURE replicar-cadfco:
     DEF INPUT PARAM par_cdlcremp AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_lstlcrem AS CHAR                    NO-UNDO.
     DEF INPUT PARAM par_cdinctar AS INTE                    NO-UNDO.
+	DEF INPUT PARAM par_lsttptar AS CHAR                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlper AS CHAR                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlmin AS CHAR                    NO-UNDO.
+	DEF INPUT PARAM par_lstvlmax AS CHAR                    NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -6959,6 +7022,10 @@ PROCEDURE replicar-cadfco:
                            INPUT par_cdocorre,
                            INPUT INTE(ENTRY(aux_cont,par_lstlcrem,';')),
                            INPUT par_cdinctar,
+						   INPUT INTE(ENTRY(aux_cont,par_lsttptar,';')),
+						   INPUT DECI(ENTRY(aux_cont,par_lstvlper,';')),
+						   INPUT DECI(ENTRY(aux_cont,par_lstvlmin,';')),
+						   INPUT DECI(ENTRY(aux_cont,par_lstvlmax,';')),
                            OUTPUT TABLE tt-erro).
 
         FIND FIRST tt-erro NO-LOCK NO-ERROR.
