@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Marco/2005                       Ultima atualizacao: 13/04/2015
+   Data    : Marco/2005                       Ultima atualizacao: 04/07/2017
 
    Dados referentes ao programa:
 
@@ -155,6 +155,9 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                
                13/04/2015 - Ajuste na validação de daa limite do cancelamento, para que não seja debitado 
                             se o cancelamento ocorrer no mesmo dia da criação do seguro SD-275054 (Odirlei-AMcom)             
+                            
+               04/07/2017 - Ajustes para antecipar o debito dos seguros que caem no fim do mes e que esta
+                            data nao é um dia util (Tiago/Thiago #680197)                         
                ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -167,9 +170,10 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
      where cdcooper = pr_cdcooper;
   rw_crapcop     cr_crapcop%rowtype;
   -- Buscar informações de seguros residenciais que ainda não foram debitados no mês
-  cursor cr_crapseg (pr_cdcooper in crapseg.cdcooper%type,
-                     pr_nrctares in crapseg.nrdconta%type,
-                     pr_dtmvtolt in crapseg.dtmvtolt%type) is
+  CURSOR cr_crapseg (pr_cdcooper in crapseg.cdcooper%TYPE,
+                     pr_nrctares in crapseg.nrdconta%TYPE,
+                     pr_dtmvtolt in crapseg.dtmvtolt%TYPE,
+                     pr_dtprdebi in crapseg.dtmvtolt%TYPE) IS 
     select crapseg.cdsegura,
            crapseg.tpplaseg,
            crapseg.cdsitseg,
@@ -194,7 +198,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crapseg.nrdconta > pr_nrctares
        and crapseg.tpseguro >= 11
        and crapseg.indebito = 0
-       and (   crapseg.dtdebito <= pr_dtmvtolt
+       and (   crapseg.dtdebito <= pr_dtprdebi
             or crapseg.dtprideb = pr_dtmvtolt)
      order by dtmvtolt, cdagenci, cdbccxlt, nrdolote, nrdconta, nrctrseg;
   rw_crapseg     cr_crapseg%rowtype;
@@ -387,6 +391,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   vr_lcm_vllanmto  craplcm.vllanmto%type;
   vr_indebito      crapseg.indebito%type;
   vr_dtdebito      crapseg.dtdebito%type;
+  vr_dtprdebi      crapseg.dtdebito%type;
   -- PL/Table para armazenar os dados do seguro
   type typ_cratseg is record (tpregist  number(1),
                               nrdconta  crapass.nrdconta%type,
@@ -674,11 +679,19 @@ begin
     close cr_craplot;
   end if;
 
+  IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') <> TO_CHAR(rw_crapdat.dtmvtopr,'MM') THEN
+     vr_dtprdebi := TRUNC(rw_crapdat.dtmvtopr,'MM') - 1;
+  ELSE
+     vr_dtprdebi := rw_crapdat.dtmvtolt;
+  END if;
+
   --
   -- Gera débito das parcelas normais ou cota única
-  for rw_crapseg in cr_crapseg (pr_cdcooper,
-                                vr_nrctares,
-                                vr_dtmvtolt) loop
+  FOR rw_crapseg in cr_crapseg (pr_cdcooper => pr_cdcooper
+                               ,pr_nrctares => vr_nrctares
+                               ,pr_dtmvtolt => vr_dtmvtolt
+                               ,pr_dtprdebi => vr_dtprdebi) LOOP
+    
     -- Busca informações da seguradora
     open cr_crapcsg (pr_cdcooper,
                      rw_crapseg.cdsegura);
@@ -1565,4 +1578,3 @@ exception
     rollback;
 end;
 /
-
