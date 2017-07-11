@@ -31,7 +31,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 26/09/2016
+    Data    : Fevereiro/2011               ultima Atualizacao: 07/07/2017
 
     Dados referentes ao programa:
 
@@ -276,6 +276,10 @@
               17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
                            de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                            liberaçao do projeto (Renato - Supero)
+
+              07/07/2017 - Nao permitir utilizar linha 100, quando possuir acordo
+                           de estouro de conta ativo. (Jaison/James)
+
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2624,6 +2628,62 @@ PROCEDURE valida_dados_efetivacao_proposta:
             END.
         END.
     END.
+
+    /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
+    IF   crawepr.cdlcremp = 100  THEN
+         DO:
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+             /* Verifica se ha contratos de acordo */
+             RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                 ,INPUT par_nrdconta
+                                                 ,INPUT par_nrdconta
+                                                 ,INPUT 1
+                                                 ,0
+                                                 ,0
+                                                 ,"").
+
+             CLOSE STORED-PROC pc_verifica_acordo_ativo
+               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_flgativo = 0
+                    aux_cdcritic = 0
+                    aux_dscritic = ""
+                    aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                    aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                    aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo) WHEN pc_verifica_acordo_ativo.pr_flgativo <> ?.
+                              
+              IF   aux_cdcritic > 0   OR
+                   (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+                   DO:
+                       RUN gera_erro (INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT 1,
+                                      INPUT aux_cdcritic,
+                                      INPUT-OUTPUT aux_dscritic).
+
+                       RETURN "NOK".
+                   END.
+                            
+              IF   aux_flgativo = 1  THEN
+                   DO:
+                       ASSIGN aux_cdcritic = 0
+                              aux_dscritic = "Operacao nao permitida, conta corrente esta em acordo.".
+
+                       RUN gera_erro (INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT 1,
+                                      INPUT aux_cdcritic,
+                                      INPUT-OUTPUT aux_dscritic).
+
+                       RETURN "NOK".
+                   END.
+         END.
 
     FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
                        craplcr.cdlcremp = crawepr.cdlcremp NO-LOCK NO-ERROR.
