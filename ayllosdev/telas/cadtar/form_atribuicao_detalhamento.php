@@ -6,6 +6,10 @@
  * OBJETIVO     : Tela de exibição atribuições detalhamento 
  * --------------
  * ALTERAÇÕES   : 02/08/2013 - Incluso novo campo convenio (Daniel).
+ *
+ *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e 
+ *                             "Valor Maximo" (Mateus - MoutS)
+ *
  * -------------- 
  */		
 ?>
@@ -56,6 +60,15 @@
 		</tr>
 		<tr>
 			<td>
+				<label for="flgtiptar"><? echo utf8ToHtml('Tipo de Tarifa&ccedil;&atilde;o:') ?></label>
+				<input type="radio" name="flgtiptar" id="flgPerc" class="radio" onclick="controlarTipoTarifa();" value="2" <? echo $tpcobtar == '2' ?  'checked' : '' ?>>
+				<label for="flgPerc" class="radio"><? echo utf8ToHtml('Percentual') ?></label>
+				<input type="radio" name="flgtiptar" id="flgFixo" class="radio" onclick="controlarTipoTarifa();" value="1" <? echo $tpcobtar == '1' ? 'checked' : '' ?>>
+				<label for="flgFixo" class="radio"><? echo utf8ToHtml('Valor Fixo') ?></label>
+			</td>
+		</tr>
+		<tr>
+			<td>
 				<label for="dtdivulg"><? echo utf8ToHtml('Data de divulga&ccedil;&atilde;o:') ?></label>
 				<input type="text" id="dtdivulg" name="dtdivulg" value="<? echo $dtdivulg == 0 ? '' : $dtdivulg ?>" />	
 				<label for="dtvigenc"><? echo utf8ToHtml('Data inicio vig&ecirc;ncia:') ?></label>
@@ -64,10 +77,16 @@
 		</tr>
 		<tr>
 			<td>
-				<label for="vltarifa2"><? echo utf8ToHtml('Valor tarifa:') ?></label>
-				<input type="text" id="vltarifa2" name="vltarifa2" value="<? echo $vltarifa == '' ? 0 : $vltarifa ?>" />	
-				<label for="vlrepass2"><? echo utf8ToHtml('Custo/Repasse:') ?></label>
-				<input type="text" name="vlrepass2" id="vlrepass2"  value="<? echo $vlrepass == '' ? 0 : $vlrepass ?>" />
+				<label for="vltarifa2" style="<? echo $cddopfco == 'A' && $tpcobtar == 1 ? '' : 'display: none' ?>"><? echo utf8ToHtml('Valor tarifa:') ?></label>
+				<input type="text" id="vltarifa2" name="vltarifa2" value="<? echo $vltarifa == '' ? 0 : $vltarifa ?>" style="<? echo $cddopfco == 'A' && $tpcobtar == 1 ? '' : 'display: none' ?>" />
+                <label for="vlperc" style="<? echo $cddopfco == 'A' && $tpcobtar == 2 ? '' : 'display: none' ?>"><? echo utf8ToHtml('Percentual:') ?></label>
+				<input type="text" id="vlperc" name="vlperc" value="<? echo $vlpertar == '' ? 0 : $vlpertar ?>" style="<? echo $cddopfco == 'A' && $tpcobtar == 2 ? '' : 'display: none' ?>" />
+                <label for="vlminimo" style="<? echo $cddopfco == 'A' && $tpcobtar == 2 ? '' : 'display: none' ?>"><? echo utf8ToHtml('Vl.Min:') ?></label>
+				<input type="text" id="vlminimo" name="vlminimo" value="<? echo $vlmintar == '' ? 0 : $vlmintar ?>" style="<? echo $cddopfco == 'A' && $tpcobtar == 2 ? '' : 'display: none' ?>" />
+                <label for="vlmaximo" style="<? echo $cddopfco == 'A' && $tpcobtar == 2 ? '' : 'display: none' ?>"><? echo utf8ToHtml('Vl.Max:') ?></label>
+				<input type="text" id="vlmaximo" name="vlmaximo" value="<? echo $vlmaxtar == '' ? 0 : $vlmaxtar ?>" style="<? echo $cddopfco == 'A' && $tpcobtar == 2 ? '' : 'display: none' ?>" />
+				<label for="vlrepass2" style="<? echo $cddopfco == 'A' ? '' : 'display: none' ?>"><? echo utf8ToHtml('Custo/Repasse:') ?></label>
+				<input type="text" name="vlrepass2" id="vlrepass2"  value="<? echo $vlrepass == '' ? 0 : $vlrepass ?>" style="<? echo $cddopfco == 'A' ? '' : 'display: none' ?>" />
 
 			</td>
 		</tr>
@@ -99,7 +118,7 @@
 	<br style="clear:both" />
 	<a href="#" class="botao" id="btVoltar"    onClick="<? echo 'fechaRotina($(\'#divUsoGenerico\')); exibeRotina($(\'#divRotina\'));'; ?> return false;">Voltar</a>
 	<a href="#" class="botao" id="btReplicar"  onClick="<? echo 'btnReblicar();'; ?> return false;">Replicar</a>
-	<a href="#" class="botao" id="btSalvar"    onClick="<? echo "controlaOpFco('".$cddopfco."');"; ?> return false;">Concluir</a>
+	<a href="#" class="botao" id="btSalvar"    onClick="<? echo /*$cdtipcat == 3 ? "btnConfirmarConcluirComLinhaCredito();" : */"controlaOpFco('".$cddopfco."');" ; ?> return false;">Concluir</a>
 </div>
 
 
