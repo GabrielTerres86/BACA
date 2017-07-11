@@ -11,6 +11,9 @@
  *                26/11/2015 - Ajustado para buscar os convenios de folha de pagamento
  *                             (Andre Santos - SUPERO)
  *
+ *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e 
+ *                             "Valor Maximo" (Mateus - MoutS)
+ *
  * -------------- 
  */
 ?>
@@ -41,7 +44,12 @@
 	
 	$cdtipcat		= (isset($_POST['cdtipcat'])) ? $_POST['cdtipcat'] : 0 ; 
 	$cdlcratu		= (isset($_POST['cdlcratu'])) ? $_POST['cdlcratu'] : 0 ; 
-	$cdinctar		= (isset($_POST['cdinctar'])) ? $_POST['cdinctar'] : 0 ; 
+	$cdinctar		= (isset($_POST['cdinctar'])) ? $_POST['cdinctar'] : 0 ;
+
+	$flgtiptar      = (isset($_POST['flgtiptar'])) ? $_POST['flgtiptar'] : 0 ;
+	$vlperc         = (isset($_POST['vlperc'])) ? $_POST['vlperc'] : 0 ;
+	$vlminimo       = (isset($_POST['vlminimo'])) ? $_POST['vlminimo'] : 0 ;
+	$vlmaximo       = (isset($_POST['vlmaximo'])) ? $_POST['vlmaximo'] : 0 ;
 
 	$procedure = 'replica-cooperativas-det';
 	
@@ -118,13 +126,23 @@
 	echo		'</td>';
 	echo		'<td style="border-right:none;padding:0;" valign="center">';
 	echo			'<label for="dtvigenc3">'.utf8ToHtml('Data vig&ecirc;ncia').'</label>';
-	echo		'</td>';	
+	echo		'</td>';
 	echo		'<td style="border-right:none;padding:0;" valign="center">';
 	echo			'<label for="vltarifa3">'.utf8ToHtml('Tarifa').'</label>';
 	echo		'</td>';	
 	echo		'<td style="border-right:none;padding:0;" valign="center">';
+	echo			'<label for="vlperc2">'.utf8ToHtml('Percentual').'</label>';
+	echo		'</td>';
+	echo		'<td style="border-right:none;padding:0;" valign="center">';
+	echo			'<label for="vlminimo2">'.utf8ToHtml('Vl.Min').'</label>';
+	echo		'</td>';
+	echo		'<td style="border-right:none;padding:0;" valign="center">';
+	echo			'<label for="vlmaximo2">'.utf8ToHtml('Vl.Max').'</label>';
+	echo		'</td>';
+	echo		'<td style="border-right:none;padding:0;" valign="center">';
 	echo			'<label for="vlrepass3">'.utf8ToHtml('Custo').'</label>';
 	echo		'</td>';
+	
 	echo	'</tr>';
 	
 	
@@ -159,11 +177,21 @@
 		echo '		<input class="campo dataDet" style="width:100" type="text" id="dtvigenc'.$conta.'" name="dtvigenc'.$conta.'" value="'.$dtvigenc.'"  />	';
 		echo '	</td>';
 		echo '	<td style="border-right:none;padding:0;" valign="center">';		
-		echo '		<input class="campo moedaDet" style="width:100" type="text" id="vltarifatab'.$conta.'" name="vltarifa'.$conta.'" value="'.$vltarifa.'"  />	';
+		echo '		<input class="campo moedaDet" style="width:100" type="text" id="vltarifatab'.$conta.'" name="vltarifa'.$conta.'" value="'.$vltarifa.'" onchange="limparCamposTipoPerc(this.id);"  />	';
 		echo '	</td>';		
+		echo '	<td style="border-right:none;padding:0;" valign="center">';		
+		echo '		<input class="campo moedaDet" style="width:100" type="text" id="vlperctab'.$conta.'" name="vlperc'.$conta.'" value="'.$vlperc.'" onchange="limparCamposTipoFixo(this.id);"  />	';
+		echo '	</td>';
+		echo '	<td style="border-right:none;padding:0;" valign="center">';		
+		echo '		<input class="campo moedaDet" style="width:100" type="text" id="vlminimotab'.$conta.'" name="vlminimo'.$conta.'" value="'.$vlminimo.'" onchange="limparCamposTipoFixo(this.id);"  />	';
+		echo '	</td>';
+		echo '	<td style="border-right:none;padding:0;" valign="center">';		
+		echo '		<input class="campo moedaDet" style="width:100" type="text" id="vlmaximotab'.$conta.'" name="vlmaximo'.$conta.'" value="'.$vlmaximo.'" onchange="limparCamposTipoFixo(this.id);"  />	';
+		echo '	</td>';
 		echo '	<td style="border-right:none;padding:0;" valign="center">';		
 		echo '		<input class="campo moedaDet" style="width:100" type="text" id="vlrepasstab'.$conta.'" name="vlrepass'.$conta.'" value="'.$vlrepass.'"  />	';
 		echo '	</td>';
+
 		echo '</tr>';		
 		
 	} 	
