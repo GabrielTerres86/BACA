@@ -37,9 +37,14 @@
                13/01/2014 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO) 
+                            
+               20/06/2017 - Geraçao de tabela com lançamentos contábeis centralizados de 
+                            cada cooperativa filiada na central para posterior geraçao de 
+                            arquivo para o Matera. (Jonatas-Supero)                                
 ............................................................................. */
 
 { includes/var_batch.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR rel_nmrelato AS CHAR    FORMAT "x(40)" EXTENT 5       NO-UNDO.
@@ -74,6 +79,27 @@ DEF        VAR aux_vldebicf AS DEC                                   NO-UNDO.
 DEF        VAR aux_vldebtic AS DEC                                   NO-UNDO.
 
 DEF        VAR aux_flgfirst AS LOGI     INIT TRUE                    NO-UNDO.
+DEF        VAR aux_dsrefere AS CHAR     FORMAT "x(200)"              NO-UNDO.
+DEF        VAR aux_cdagectl AS INT                                   NO-UNDO.
+
+DEF TEMP-TABLE tt-aux-detlctctl NO-UNDO
+    FIELD cdcooper AS INT
+    FIELD cdagenci AS INT
+    FIELD vllamnto AS DEC
+    FIELD indebcrd AS INT.
+    
+DEF TEMP-TABLE tt-detlctctl                                            NO-UNDO
+    FIELD cdcooper AS INT
+    FIELD cdagenci AS INT
+    FIELD cdhistor AS INT
+    FIELD vllamnto AS DEC
+    FIELD nrdconta AS INT
+    FIELD nrctadeb AS INT
+    FIELD nrctacrd AS INT
+    FIELD dsrefere AS CHAR FORMAT "x(200)"
+    FIELD intiplct AS INT.    
+    
+    
 
 DEF BUFFER crabcop FOR crapcop.
 
@@ -117,6 +143,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                     BY gntarcp.cdtipdoc:
 
         IF   FIRST-OF(gntarcp.cdcooper)  THEN
+             DO:
              ASSIGN aux_vllanmto = 0
                     aux_vlcretib = 0 
                     aux_vldebtib = 0
@@ -126,6 +153,9 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                     aux_vldebicf = 0
                     aux_vldebdev = 0.
         
+                  FIND FIRST crapcop WHERE crapcop.cdcooper = gntarcp.cdcooper
+                       NO-LOCK NO-ERROR.
+             END.
         IF   gntarcp.cdtipdoc = 1  OR    /* Cheque Inferior Nossa Remessa */
              gntarcp.cdtipdoc = 2  OR    /* Cheque Superior Nossa Remessa */
              gntarcp.cdtipdoc = 3  OR    /* Titulo/Cobranca Nossa Remessa */
@@ -145,20 +175,199 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
              ASSIGN aux_vldebtib = aux_vldebtib + gntarcp.vldocmto.
         ELSE
         IF   gntarcp.cdtipdoc = 12 THEN  /* Cheque Roubado Sua Remessa */
-             ASSIGN aux_vlcrechr = aux_vlcrechr + gntarcp.vldocmto.
+             DO:
+             
+                  IF gntarcp.cdagenci = 0 THEN
+                       DO:
+                            FIND FIRST crapage WHERE crapage.cdcooper = gntarcp.cdcooper AND
+                                                     crapage.flgdsede = TRUE
+                                                     NO-LOCK NO-ERROR.
+                                 
+                            ASSIGN aux_cdagectl = crapage.cdagenci.
+                       END.
+                  ELSE
+                       ASSIGN aux_cdagectl = gntarcp.cdagenci. 
+                            
+                  ASSIGN aux_vlcrechr = aux_vlcrechr + gntarcp.vldocmto.
+             
+
+                  FIND tt-aux-detlctctl WHERE 
+                       tt-aux-detlctctl.cdcooper = gntarcp.cdcooper AND 
+                       tt-aux-detlctctl.cdagenci = aux_cdagectl AND
+                       tt-aux-detlctctl.indebcrd = 0 EXCLUSIVE-LOCK NO-ERROR.
+
+                  IF  NOT AVAILABLE tt-aux-detlctctl  THEN
+                      DO:
+                  
+                  CREATE tt-aux-detlctctl.
+                  ASSIGN tt-aux-detlctctl.cdcooper = gntarcp.cdcooper
+                                  tt-aux-detlctctl.cdagenci = aux_cdagectl
+                                  tt-aux-detlctctl.indebcrd = 0. /*debito*/
+                      END.
+                  ASSIGN tt-aux-detlctctl.vllamnto = tt-aux-detlctctl.vllamnto + gntarcp.vldocmto.                     
+             
+             END.
+             
         ELSE
         IF   gntarcp.cdtipdoc = 11 THEN  /* Cheque Roubado Nossa Remessa */
-             ASSIGN aux_vldebchr = aux_vldebchr + gntarcp.vldocmto.
+             DO:
+             
+                  IF gntarcp.cdagenci = 0 THEN
+                       DO:
+                            FIND FIRST crapage WHERE crapage.cdcooper = gntarcp.cdcooper AND
+                                                     crapage.flgdsede = TRUE
+                                                     NO-LOCK NO-ERROR.
+                                 
+                            ASSIGN aux_cdagectl = crapage.cdagenci.
+                       END.
+                  ELSE
+                       ASSIGN aux_cdagectl = gntarcp.cdagenci. 
+                       
+                  ASSIGN aux_vldebchr = aux_vldebchr + gntarcp.vldocmto.
+
+                  FIND tt-aux-detlctctl WHERE 
+                       tt-aux-detlctctl.cdcooper = gntarcp.cdcooper AND 
+                       tt-aux-detlctctl.cdagenci = aux_cdagectl AND
+                       tt-aux-detlctctl.indebcrd = 1 EXCLUSIVE-LOCK NO-ERROR.
+
+                  IF  NOT AVAILABLE tt-aux-detlctctl  THEN
+                      DO:
+                  
+                  CREATE tt-aux-detlctctl.
+                  ASSIGN tt-aux-detlctctl.cdcooper = gntarcp.cdcooper
+                                  tt-aux-detlctctl.cdagenci = aux_cdagectl
+                                  tt-aux-detlctctl.indebcrd = 1. /*debito*/
+                      END.
+                  ASSIGN tt-aux-detlctctl.vllamnto = tt-aux-detlctctl.vllamnto + gntarcp.vldocmto.   
+             END.
+             
         ELSE
         IF   gntarcp.cdtipdoc = 9  OR    /* Devolucao Sua Remessa Noturna */
              gntarcp.cdtipdoc = 10 THEN  /* Devolucao Sua Remessa Diurna */
-             ASSIGN aux_vldebdev = aux_vldebdev + gntarcp.vldocmto.
+             
+             DO:
+                  ASSIGN aux_vldebdev = aux_vldebdev + gntarcp.vldocmto.
+             
+                  IF gntarcp.cdagenci = 0 THEN
+                       DO:
+                            FIND FIRST crapage WHERE crapage.cdcooper = gntarcp.cdcooper AND
+                                                     crapage.flgdsede = TRUE
+                                                     NO-LOCK NO-ERROR.
+                                 
+                            ASSIGN aux_cdagectl = crapage.cdagenci.
+                       END.
+                  ELSE
+                       ASSIGN aux_cdagectl = gntarcp.cdagenci. 
+
+             
+                 /*Linhas com valor por agencia*/
+                  FIND tt-detlctctl WHERE 
+                       tt-detlctctl.cdcooper = gntarcp.cdcooper AND
+                       tt-detlctctl.cdhistor = 814 AND
+                       tt-detlctctl.cdagenci = aux_cdagectl AND
+                       tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                  IF  NOT AVAILABLE tt-detlctctl  THEN
+                      DO:
+                           CREATE tt-detlctctl.
+                           ASSIGN tt-detlctctl.cdcooper = gntarcp.cdcooper
+                                  tt-detlctctl.cdhistor = 814
+                                  tt-detlctctl.cdagenci = aux_cdagectl 
+                                  tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                  tt-detlctctl.nrctadeb = 8308
+                                  tt-detlctctl.nrctacrd = 1455
+                                  tt-detlctctl.dsrefere = "DEBITO C/C " +
+                                                          STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
+                                                          " COMPE CECRED REF. TAXA DEVOLUCAO CHEQUE"
+                                  tt-detlctctl.intiplct = 1.
+                                         
+                      END.
+                  ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + gntarcp.vldocmto.             
+             
+             END.
+             
         ELSE
         IF   gntarcp.cdtipdoc = 13 THEN  /* ICF */
-             ASSIGN aux_vldebicf = aux_vldebicf + gntarcp.vldocmto.
+             DO:
+                  ASSIGN aux_vldebicf = aux_vldebicf + gntarcp.vldocmto.
+                  
+                  IF gntarcp.cdagenci = 0 THEN
+                       DO:
+                            FIND FIRST crapage WHERE crapage.cdcooper = gntarcp.cdcooper AND
+                                                     crapage.flgdsede = TRUE
+                                                     NO-LOCK NO-ERROR.
+                                 
+                            ASSIGN aux_cdagectl = crapage.cdagenci.
+                       END.
+                  ELSE
+                       ASSIGN aux_cdagectl = gntarcp.cdagenci. 
+                  
+                 /*Linhas com valor por agencia*/
+                  FIND tt-detlctctl WHERE 
+                       tt-detlctctl.cdcooper = gntarcp.cdcooper AND
+                       tt-detlctctl.cdhistor = 822 AND
+                       tt-detlctctl.cdagenci = aux_cdagectl AND
+                       tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                  IF  NOT AVAILABLE tt-detlctctl  THEN
+                      DO:
+                           CREATE tt-detlctctl.
+                           ASSIGN tt-detlctctl.cdcooper = gntarcp.cdcooper
+                                  tt-detlctctl.cdhistor = 822
+                                  tt-detlctctl.cdagenci = aux_cdagectl 
+                                  tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                  tt-detlctctl.nrctadeb = 8308
+                                  tt-detlctctl.nrctacrd = 1455
+                                  tt-detlctctl.dsrefere = "DEBITO C/C " +
+                                                          STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
+                                                          " COMPE CECRED REF. TAXA ICF"
+                                  tt-detlctctl.intiplct = 1.
+                                         
+                      END.
+                  ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + gntarcp.vldocmto.                    
+                                              
+             END.   
         ELSE
         IF   gntarcp.cdtipdoc = 18 THEN  /* CCF */
-             ASSIGN aux_vldebccf = aux_vldebccf + gntarcp.vldocmto.
+             DO:
+                  ASSIGN aux_vldebccf = aux_vldebccf + gntarcp.vldocmto.
+                  
+                  IF gntarcp.cdagenci = 0 THEN
+                       DO:
+                            FIND FIRST crapage WHERE crapage.cdcooper = gntarcp.cdcooper AND
+                                                     crapage.flgdsede = TRUE
+                                                     NO-LOCK NO-ERROR.
+                                 
+                            ASSIGN aux_cdagectl = crapage.cdagenci.
+                       END.
+                  ELSE
+                       ASSIGN aux_cdagectl = gntarcp.cdagenci.                   
+                  
+                 /*Linhas com valor por agencia*/
+                  FIND tt-detlctctl WHERE 
+                       tt-detlctctl.cdcooper = gntarcp.cdcooper AND
+                       tt-detlctctl.cdhistor = 839 AND
+                       tt-detlctctl.cdagenci = aux_cdagectl AND
+                       tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                  IF  NOT AVAILABLE tt-detlctctl  THEN
+                      DO:
+                           CREATE tt-detlctctl.
+                           ASSIGN tt-detlctctl.cdcooper = gntarcp.cdcooper
+                                  tt-detlctctl.cdhistor = 839
+                                  tt-detlctctl.cdagenci = aux_cdagectl 
+                                  tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                  tt-detlctctl.nrctadeb = 8308
+                                  tt-detlctctl.nrctacrd = 1455
+                                  tt-detlctctl.dsrefere = "DEBITO C/C " +
+                                                          STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
+                                                          " COMPE CECRED REF. TAXA CCF"
+                                  tt-detlctctl.intiplct = 1.
+                                         
+                      END.
+                  ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + gntarcp.vldocmto.                    
+         
+             END.
         ELSE
         IF   gntarcp.cdtipdoc = 25 THEN  /* TIC */
              ASSIGN aux_vldebtic = aux_vldebtic + gntarcp.vldocmto.
@@ -194,11 +403,107 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                           IF   aux_vllanmto < 0   THEN
                                ASSIGN aux_cdhistor = 811 /*TIB DEBITO*/
                                       aux_vllanmto = aux_vllanmto * -1.
+                                      
                           ELSE                    
                                ASSIGN aux_cdhistor = 809. /*TIB CREDITO*/
 
                           RUN pi_cria_craplcm (INPUT aux_vllanmto,
                                                INPUT aux_cdhistor).
+                                               
+                          IF   aux_vlcrechr > 0 THEN
+                              DO:
+                                               
+                                   CREATE tt-detlctctl.
+                                   ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
+                                           tt-detlctctl.cdhistor = 811
+                                          tt-detlctctl.cdagenci = 0 
+                                          tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                           tt-detlctctl.vllamnto = aux_vlcrechr
+                                           tt-detlctctl.nrctadeb = 1455
+                                           tt-detlctctl.nrctacrd = 7264
+                                          tt-detlctctl.dsrefere = "CREDITO C/C " + 
+                                                                  STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
+                                                                  " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                          tt-detlctctl.intiplct = 0.
+                                         
+                              END.
+
+                          
+                          IF   aux_vldebchr > 0 THEN
+                              DO:
+
+                                   CREATE tt-detlctctl.
+                                   ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
+                                          tt-detlctctl.cdhistor = 809
+                                          tt-detlctctl.cdagenci = 0 
+                                          tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                          tt-detlctctl.vllamnto = aux_vldebchr                                          
+                                          tt-detlctctl.nrctadeb = 7264
+                                          tt-detlctctl.nrctacrd = 1455
+                                          tt-detlctctl.dsrefere = "DEBITO C/C " + 
+                                                                  STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
+                                                                  " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                          tt-detlctctl.intiplct = 0.
+                                         
+                              END.
+                          
+                                                     
+                          FOR EACH tt-aux-detlctctl WHERE tt-aux-detlctctl.cdcooper = crapcop.cdcooper NO-LOCK:
+                          
+                            IF tt-aux-detlctctl.indebcrd = 0 THEN
+                                 DO:
+                                 /*Linhas com valor por agencia*/
+                                 FIND tt-detlctctl WHERE 
+                                      tt-detlctctl.cdcooper = tt-aux-detlctctl.cdcooper AND
+                                      tt-detlctctl.cdhistor = 811 AND
+                                      tt-detlctctl.cdagenci = tt-aux-detlctctl.cdagenci AND
+                                      tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                                 IF  NOT AVAILABLE tt-detlctctl  THEN
+                                     DO:
+                                          CREATE tt-detlctctl.
+                                          ASSIGN tt-detlctctl.cdcooper = tt-aux-detlctctl.cdcooper
+                                                 tt-detlctctl.cdhistor = 811
+                                                 tt-detlctctl.cdagenci = tt-aux-detlctctl.cdagenci 
+                                                 tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                                 tt-detlctctl.nrctadeb = 1455
+                                                 tt-detlctctl.nrctacrd = 7264
+                                                 tt-detlctctl.dsrefere = "CREDITO C/C " + 
+                                                                         STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
+                                                                         " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                                 tt-detlctctl.intiplct = 1.
+                                         
+                                     END.
+                                 ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + tt-aux-detlctctl.vllamnto.                             
+                                 END.
+                            
+                            ELSE
+                                 DO:
+                                 /*Linhas com valor por agencia*/
+                                 FIND tt-detlctctl WHERE 
+                                      tt-detlctctl.cdcooper = tt-aux-detlctctl.cdcooper AND
+                                      tt-detlctctl.cdhistor = 809 AND
+                                      tt-detlctctl.cdagenci = tt-aux-detlctctl.cdagenci AND
+                                      tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                                 IF  NOT AVAILABLE tt-detlctctl  THEN
+                                     DO:
+                                          CREATE tt-detlctctl.
+                                          ASSIGN tt-detlctctl.cdcooper = tt-aux-detlctctl.cdcooper
+                                                 tt-detlctctl.cdhistor = 809
+                                                 tt-detlctctl.cdagenci = tt-aux-detlctctl.cdagenci 
+                                                      tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                                 tt-detlctctl.nrctadeb = 7264
+                                                 tt-detlctctl.nrctacrd = 1455
+                                                 tt-detlctctl.dsrefere = "DEBITO C/C " + 
+                                                                         STRING(crapcop.nrctacmp,"zzzz,zzz,9") +
+                                                                         " COMPE CECRED REF. TIB CHEQUE ROUBO"
+                                                 tt-detlctctl.intiplct = 1.
+                                         
+                                     END.
+                                 ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + tt-aux-detlctctl.vllamnto. 
+                                 END.       
+                          END.
                                                
                           ASSIGN aux_vllanmto = 0.
                       END.
@@ -208,13 +513,62 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                           RUN pi_cria_craplcm (INPUT aux_vldebdev,
                                                INPUT 814).
                                                
+                          /*Linhas com valor total*/
+                          FIND tt-detlctctl WHERE 
+                               tt-detlctctl.cdcooper = crapcop.cdcooper AND
+                               tt-detlctctl.cdhistor = 814 AND
+                               tt-detlctctl.cdagenci = 0 AND
+                               tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
+     
+                          IF  NOT AVAILABLE tt-detlctctl  THEN
+                              DO:
+                                   CREATE tt-detlctctl.
+                                   ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
+                                          tt-detlctctl.cdhistor = 814
+                                          tt-detlctctl.cdagenci = 0 
+                                          tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                          tt-detlctctl.nrctadeb = 8308
+                                          tt-detlctctl.nrctacrd = 1455
+                                          tt-detlctctl.dsrefere = "DEBITO C/C " +
+                                                                  STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
+                                                                  " COMPE CECRED REF. TAXA DEVOLUCAO CHEQUE"
+                                          tt-detlctctl.intiplct = 0.
+                                         
+                              END.
+                          ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vldebdev. 
+                                               
                           ASSIGN aux_vldebdev = 0.
+                          
                       END.
                       
                  IF   aux_vldebicf > 0 THEN
                       DO:
                           RUN pi_cria_craplcm (INPUT aux_vldebicf,
                                                INPUT 822).
+                                               
+                          /*Linhas com valor total*/
+                          FIND tt-detlctctl WHERE 
+                               tt-detlctctl.cdcooper = crapcop.cdcooper AND
+                               tt-detlctctl.cdhistor = 822 AND
+                               tt-detlctctl.cdagenci = 0 AND
+                               tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
+     
+                          IF  NOT AVAILABLE tt-detlctctl  THEN
+                              DO:
+                                   CREATE tt-detlctctl.
+                                   ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
+                                          tt-detlctctl.cdhistor = 822
+                                          tt-detlctctl.cdagenci = 0 
+                                          tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                          tt-detlctctl.nrctadeb = 8308
+                                          tt-detlctctl.nrctacrd = 1455
+                                          tt-detlctctl.dsrefere = "DEBITO C/C " +
+                                                                  STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
+                                                                  " COMPE CECRED REF. TAXA ICF"
+                                          tt-detlctctl.intiplct = 0.
+                                         
+                              END.
+                          ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vldebicf.                                                
                                                
                           ASSIGN aux_vldebicf = 0.
                       END.
@@ -223,6 +577,30 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                       DO:
                           RUN pi_cria_craplcm (INPUT aux_vldebccf,
                                                INPUT 839).
+
+                          /*Linhas com valor total*/
+                          FIND tt-detlctctl WHERE 
+                               tt-detlctctl.cdcooper = crapcop.cdcooper AND
+                               tt-detlctctl.cdhistor = 839 AND
+                               tt-detlctctl.cdagenci = 0 AND
+                               tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
+     
+                          IF  NOT AVAILABLE tt-detlctctl  THEN
+                              DO:
+                                   CREATE tt-detlctctl.
+                                   ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
+                                          tt-detlctctl.cdhistor = 839
+                                          tt-detlctctl.cdagenci = 0 
+                                          tt-detlctctl.nrdconta = crapcop.nrctacmp
+                                          tt-detlctctl.nrctadeb = 8308
+                                          tt-detlctctl.nrctacrd = 1455
+                                          tt-detlctctl.dsrefere = "DEBITO C/C " +
+                                                                  STRING(crapcop.nrctacmp,"zzzz,zzz,9") + 
+                                                                  " COMPE CECRED REF. TAXA CCF"
+                                          tt-detlctctl.intiplct = 0.
+                                         
+                              END.
+                          ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vldebccf.  
                                                
                           ASSIGN aux_vldebccf = 0.
                       END.
@@ -240,6 +618,8 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
 
 END. /* DO TRANSACTION */
 
+/*Gera tabela lançamentos para o Matera*/
+RUN pi_insere_det_lct_ctl.
 
 /*  Atualiza Registros do gntarcp  */
 
@@ -417,6 +797,48 @@ PROCEDURE atualiza_gntarcp:
        END.  /* END FOR EACH */
     END.
                    
+END PROCEDURE.
+
+/******************************************************************************
+ Geracao do tabela de lançamentos contábeis centralizados para envio ao Matera
+******************************************************************************/
+PROCEDURE pi_insere_det_lct_ctl:
+    
+    DO TRANSACTION:
+    
+         FOR EACH tt-detlctctl:
+    
+              /* Preparando a sessao para conectar-se no Oracle */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                       
+              /* Efetuar a chamada a rotina Oracle */
+              RUN STORED-PROCEDURE pc_insere_lct_central
+                   aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT glb_dtmvtopr,
+                             INPUT tt-detlctctl.cdcooper,
+                             INPUT tt-detlctctl.cdagenci,
+                             INPUT tt-detlctctl.cdhistor,
+                             INPUT tt-detlctctl.vllamnto,
+                             INPUT tt-detlctctl.nrdconta,
+                             INPUT tt-detlctctl.nrctadeb,
+                             INPUT tt-detlctctl.nrctacrd,
+                             INPUT tt-detlctctl.dsrefere,
+                             INPUT tt-detlctctl.intiplct,
+                             OUTPUT 0,
+                             OUTPUT "").
+                                                    
+              /* Fechar o procedimento para buscarmos o resultado */
+              CLOSE STORED-PROC pc_insere_lct_central
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+              
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                                               
+              /* Busca possíveis erros */
+              ASSIGN glb_dscritic = pc_insere_lct_central.pr_dscritic
+                WHEN pc_insere_lct_central.pr_dscritic <> ?. 
+         END.
+    END.
+
 END PROCEDURE.
 
 /*............................................................................*/

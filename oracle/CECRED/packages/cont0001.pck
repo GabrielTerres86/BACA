@@ -33,6 +33,19 @@ CREATE OR REPLACE PACKAGE CECRED.CONT0001 is
                                    
   PROCEDURE pc_gera_arquivos_contabeis(pr_dtmvtolt IN DATE
                                       ,pr_dtmvtopr IN DATE);
+                                      
+  PROCEDURE pc_insere_lct_central(pr_dtmvtolt      IN DATE,
+                                  pr_cdcooper      IN NUMBER,
+                                  pr_cdagenci      IN NUMBER,
+                                  pr_cdhistor      IN NUMBER,
+                                  pr_vllamnto      IN NUMBER,
+                                  pr_nrdconta      IN NUMBER,
+                                  pr_nrconta_deb   IN NUMBER,
+                                  pr_nrconta_cred  IN NUMBER,
+                                  pr_dsrefere      IN VARCHAR2,
+                                  pr_tplancamento  IN NUMBER,
+                                  pr_cdcritic     OUT NUMBER,
+                                  pr_dscritic     OUT VARCHAR2);                                        
                                                                   
 END CONT0001;
 /
@@ -94,6 +107,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       FROM crapcop
      WHERE cdcooper <> 3
   ORDER BY cdcooper;
+  
+  CURSOR cr_lct_central(pr_cdcooper in tbcontab_lanctos_centraliza.cdcooper%type/*,
+                        pr_dtmvtolt in tbcontab_lanctos_centraliza.dtmvtolt%type*/) IS
+    SELECT t.dtmvtolt,
+           t.cdagenci,
+           t.cdhistor,
+           t.nrdconta,
+           t.nrconta_deb,
+           t.nrconta_cred,
+           t.dsrefere,
+           t.tplancamento,
+           sum(t.vllancamento) vllancamento
+      FROM tbcontab_lanctos_centraliza t
+     WHERE t.cdhistor in (809,811,812,813,814,822,839,909,910,913,914,916,915,945,946,1007,1008)
+    --   AND t.dtmvtolt = pr_dtmvtolt
+       AND t.cdcooper = pr_cdcooper
+    GROUP BY t.dtmvtolt,
+             t.cdagenci,
+             t.cdhistor,
+             t.nrdconta,
+             t.nrconta_deb,
+             t.nrconta_cred,
+             t.dsrefere,
+             t.tplancamento
+    ORDER BY t.dtmvtolt,
+             t.cdhistor,
+             t.tplancamento,
+             t.nrconta_deb,
+             t.dsrefere,
+             t.cdagenci; 
 
   --
   PROCEDURE pc_abre_arquivo(pr_cdcooper  IN NUMBER,
@@ -164,8 +207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
          AND l.cdhistor IN (440,446,544,545,1024,1069,1160,1161,1024,1069,841,842,1802,1538,
                             1623,1624,1625,1626,1627,1628,1684,527,530,1119,1120,1123,1124,1125,1126,1136,
                             1137,2057,2058,51,135,1917,1919,1148,1810,1837,1838,1028,777,851,1988,1660,1661,
-                            2059,909,910,913,914,915,916,945,946,1007,1008,1148,2227,2237,2238,2239,2240,2249,
-                            2250,2251,2252,2221)
+                            2059,1148,2227,2237,2238,2239,2240,2249,2250,2251,2252,2221)
          AND l.cdcooper = 3   --Apenas lançamentos realizados na central para a filiada
          AND l.dtmvtolt = pr_dtmvtolt 
          AND c.cdcooper = pr_cdcooper
@@ -371,46 +413,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(2059).nrctades := 8285;
         vr_tab_historico(2059).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. REEMBOLSO RECEBIDO DO SESCOOP PARA PARTE DO CUSTEIO DOS CURSOS/TREINAMENTOS OFERTADOS AOS COLABORADORES';         
                 
-        vr_tab_historico(909).nrctaori := 8308;
-        vr_tab_historico(909).nrctades := 1452;
-        vr_tab_historico(909).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. TARIFA EXTRATO C/C TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA';             
-                
-        vr_tab_historico(910).nrctaori := 1452;
-        vr_tab_historico(910).nrctades := 7254;
-        vr_tab_historico(910).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. TARIFA EXTRATO C/C TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA';         
-                
-        vr_tab_historico(913).nrctaori := 8308;
-        vr_tab_historico(913).nrctades := 1452;
-        vr_tab_historico(913).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. TARIFA SAQUE TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA';
-                
-        vr_tab_historico(914).nrctaori := 1452;
-        vr_tab_historico(914).nrctades := 7254;
-        vr_tab_historico(914).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. TARIFA SAQUE TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA';
-                
-        vr_tab_historico(915).nrctaori := 8308;
-        vr_tab_historico(915).nrctades := 1452;
-        vr_tab_historico(915).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. TARIFA PAGAMENTO DE TITULOS TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA';
-                
-        vr_tab_historico(916).nrctaori := 1452;
-        vr_tab_historico(916).nrctades := 7254;
-        vr_tab_historico(916).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. TARIFA PAGAMENTO DE TITULOS TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA';
-                
-        vr_tab_historico(945).nrctaori := 8308;
-        vr_tab_historico(945).nrctades := 1452;
-        vr_tab_historico(945).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. TARIFA TRANSFERENCIA TAA PAGAS A OUTRAS COOPERATIVAS DO SISTEMA';
-                
-        vr_tab_historico(946).nrctaori := 1452;
-        vr_tab_historico(946).nrctades := 7254;
-        vr_tab_historico(946).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. TARIFA TRANSFERENCIA TAA RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA';
-                
-        vr_tab_historico(1007).nrctaori := 8308;
-        vr_tab_historico(1007).nrctades := 1452;
-        vr_tab_historico(1007).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO PAGAS A OUTRAS COOPERATIVAS DO SISTEMA';
-                
-        vr_tab_historico(1008).nrctaori := 1452;
-        vr_tab_historico(1008).nrctades := 7254;
-        vr_tab_historico(1008).dsrefere := 'CREDITO C/C pr_nrctafmt CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA';
-                
         vr_tab_historico(2227).nrctaori := 4340;
         vr_tab_historico(2227).nrctades := 1452;
         vr_tab_historico(2227).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE RECARGA DE CELULAR TIM';
@@ -465,6 +467,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
     pc_inicia_historico;
     vr_contador := 0;
+    
+    --leitura e lançamentos gravados em tabela acumulado nos programas de origem
+    FOR rw_lct_central IN cr_lct_central(pr_cdcooper/*, pr_dtmvtolt*/) LOOP
+      
+      IF rw_lct_central.cdhistor IN (909,910,913,914,915,916,945,946,1007,1008) THEN 
+        
+        vr_contador := vr_contador + 1;
+        
+        IF vr_contador = 1 THEN
+             
+          cont0001.pc_abre_arquivo(pr_cdcooper,pr_dtmvtolt,'LCTOSCENTRALIZACAO',pr_retfile);
+
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_file_erro;
+          END IF;
+
+        END IF;  
+          
+        IF rw_lct_central.cdagenci = 0 AND rw_lct_central.tplancamento = 0 THEN      
+    
+          vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                         TRIM(to_char(rw_lct_central.dtmvtolt, 'ddmmyy')) || ','|| 
+                         rw_lct_central.nrconta_deb||','||
+                         rw_lct_central.nrconta_cred||','||                         
+                         TRIM(to_char(rw_lct_central.vllancamento, '99999999999990.00')) ||
+                         ',5210,' ||
+                         '"'||rw_lct_central.dsrefere||'"';
+
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+
+        ELSE
+          vr_linhadet := LPAD(rw_lct_central.cdagenci,3,0) ||','|| TRIM(to_char(rw_lct_central.vllancamento, '99999999999990.00')); 
+          -- Gravar Linha          
+          pc_gravar_linha(vr_linhadet);          
+        END IF;
+        
+      END IF;
+      
+    END LOOP;
+    --
 
     FOR rw_craplcm IN cr_craplcm LOOP
       
@@ -705,7 +748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       END IF;
         
       --Gravar linha gerencial
-      IF rw_craplcm.cdhistor in (909,910,913,914,915,916,945,946,1007,1008, 2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059,2221) THEN
+      IF rw_craplcm.cdhistor in (2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059,2221) THEN
          
         vr_linhadet := '999'||','||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));
           
@@ -857,15 +900,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
              crapcop c 
        WHERE l.nrdconta = c.nrctacmp
          AND l.cdcooper = 3    --Apenas lançamentos da central
-         AND l.cdhistor in (574, 577, 787, 788, 789, 790, 807, 808, 809, 811, 812, 813, 814, 822, 839)
+         AND l.cdhistor in (574, 577, 787, 788, 789, 790, 807, 808)
          AND l.dtmvtolt = pr_dtmvtolt
          AND c.cdcooper = pr_cdcooper
       GROUP BY DECODE(l.cdhistor,788,787,790,789,l.cdhistor),
              l.nrdconta,
              TRIM(to_char(l.nrdconta,'999g999g999g9'))
       ORDER BY DECODE(l.cdhistor,788,787,790,789,l.cdhistor);
-
-             
+      
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico IS
      BEGIN
@@ -891,26 +933,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(808).nrctades := 1452;
         vr_tab_historico(808).dsrefere := 'CENTRALIZACAO FINANCEIRA C/C pr_nrctafmt COMPE CECRED';
         
-        vr_tab_historico(809).nrctaori := 1455;
-        vr_tab_historico(809).nrctades := 7264;
-        vr_tab_historico(809).dsrefere := 'CREDITO C/C pr_nrctafmt COMPE CECRED REF. TIB CHEQUE ROUBO';
-        
-        vr_tab_historico(811).nrctaori := 7264;
-        vr_tab_historico(811).nrctades := 1455;
-        vr_tab_historico(811).dsrefere := 'DEBITO C/C pr_nrctafmt COMPE CECRED REF. TIB CHEQUE ROUBO';
-        
-        vr_tab_historico(814).nrctaori := 8308;
-        vr_tab_historico(814).nrctades := 1455;
-        vr_tab_historico(814).dsrefere := 'DEBITO C/C pr_nrctafmt COMPE CECRED REF. TAXA DEVOLUCAO CHEQUE';        
-        
-        vr_tab_historico(839).nrctaori := 8308;
-        vr_tab_historico(839).nrctades := 1455;
-        vr_tab_historico(839).dsrefere := 'DEBITO C/C pr_nrctafmt COMPE CECRED REF. TAXA CCF';
-        
-        vr_tab_historico(822).nrctaori := 8308;
-        vr_tab_historico(822).nrctades := 1455;
-        vr_tab_historico(822).dsrefere := 'DEBITO C/C pr_nrctafmt COMPE CECRED REF. TAXA ICF';  
-        
         vr_tab_historico(577).nrctaori := 1455;
         vr_tab_historico(577).nrctades := 1802;
         vr_tab_historico(577).dsrefere := 'CREDITO C/C pr_nrctafmt REF. RECEITA TARIFAS INTERBANCARIO CECRED - TIB REF. MES MM/YYYY';
@@ -919,13 +941,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(2270).nrctades := 1455;
         vr_tab_historico(2270).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DEVOLUCAO REMETIDA DE COBRANCA';    
         
-        vr_tab_historico(812).nrctaori := 7264;
-        vr_tab_historico(812).nrctades := 1455;
-        vr_tab_historico(812).dsrefere := 'DEBITO C/C pr_nrctafmt COMPE CECRED REF. TIB – SPB';                          
-        
-        vr_tab_historico(813).nrctaori := 1455;
-        vr_tab_historico(813).nrctades := 7264;
-        vr_tab_historico(813).dsrefere := 'CREDITO C/C pr_nrctafmt COMPE CECRED REF. TIB – SPB';                                                                
    END;  
              
     
@@ -940,6 +955,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     vr_contador := 0;
     
     pc_inicia_historico;
+    
+    --leitura e lançamentos gravados em tabela acumulado nos programas de origem
+    FOR rw_lct_central IN cr_lct_central(pr_cdcooper/*, pr_dtmvtolt*/) LOOP
+      
+      IF rw_lct_central.cdhistor IN (809,811,812,813,814,822,839) THEN 
+        
+        vr_contador := vr_contador + 1;
+        
+        IF vr_contador = 1 THEN
+             
+          cont0001.pc_abre_arquivo(pr_cdcooper,pr_dtmvtolt,'LCTOSCOMPE',pr_retfile);
+
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_file_erro;
+          END IF;
+
+        END IF;  
+          
+        IF rw_lct_central.cdagenci = 0 AND rw_lct_central.tplancamento = 0 THEN      
+    
+          vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                         TRIM(to_char(rw_lct_central.dtmvtolt, 'ddmmyy')) || ','|| 
+                         rw_lct_central.nrconta_deb||','||
+                         rw_lct_central.nrconta_cred||','||                         
+                         TRIM(to_char(rw_lct_central.vllancamento, '99999999999990.00')) ||
+                         ',5210,' ||
+                         '"'||rw_lct_central.dsrefere||'"';
+
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);
+
+        ELSE
+          vr_linhadet := LPAD(rw_lct_central.cdagenci,3,0) ||','||TRIM(to_char(rw_lct_central.vllancamento, '99999999999990.00')); 
+          -- Gravar Linha
+          pc_gravar_linha(vr_linhadet);          
+        END IF;
+        
+      END IF;
+      
+    END LOOP;
+    --
+    
 
     FOR rw_craplcm in cr_craplcm LOOP
       
@@ -955,23 +1012,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
       END IF;
       
-      --IF rw_craplcm.cdhistor NOT IN (809,811,812,813) THEN
-        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                       TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
-                       vr_tab_historico(rw_craplcm.cdhistor).nrctaori||','||
-                       vr_tab_historico(rw_craplcm.cdhistor).nrctades||','||                         
-                       TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
-                       ',5210,' ||
-                       '"'||REPLACE(REPLACE(vr_tab_historico(rw_craplcm.cdhistor).dsrefere,'pr_nrctafmt',rw_craplcm.nrctafmt),'MM/YYYY',to_char(pr_dtmvtolt, 'MM/YYYY'))||'"';
+      vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                     TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
+                     vr_tab_historico(rw_craplcm.cdhistor).nrctaori||','||
+                     vr_tab_historico(rw_craplcm.cdhistor).nrctades||','||                         
+                     TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')) ||
+                     ',5210,' ||
+                     '"'||REPLACE(REPLACE(vr_tab_historico(rw_craplcm.cdhistor).dsrefere,'pr_nrctafmt',rw_craplcm.nrctafmt),'MM/YYYY',to_char(pr_dtmvtolt, 'MM/YYYY'))||'"';
 
         -- Gravar Linha
-        pc_gravar_linha(vr_linhadet); 
---      END IF;
-      
-      IF rw_craplcm.cdhistor in (809,811,814,822,839,812,813) THEN
-         vr_linhadet := '999,'||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00')); 
-         pc_gravar_linha(vr_linhadet);              
-      END IF;
+      pc_gravar_linha(vr_linhadet); 
        
     END LOOP;
     
@@ -1246,6 +1296,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     
   
   END pc_gera_arquivos_contabeis;
+  --
+  PROCEDURE pc_insere_lct_central(pr_dtmvtolt      IN DATE,
+                                  pr_cdcooper      IN NUMBER,
+                                  pr_cdagenci      IN NUMBER,
+                                  pr_cdhistor      IN NUMBER,
+                                  pr_vllamnto      IN NUMBER,
+                                  pr_nrdconta      IN NUMBER,
+                                  pr_nrconta_deb   IN NUMBER,
+                                  pr_nrconta_cred  IN NUMBER,
+                                  pr_dsrefere      IN VARCHAR2,
+                                  pr_tplancamento  IN NUMBER,
+                                  pr_cdcritic     OUT NUMBER,
+                                  pr_dscritic     OUT VARCHAR2) IS
+    
+  BEGIN
+    BEGIN
+      INSERT INTO tbcontab_lanctos_centraliza(dtmvtolt,
+                                              cdcooper, 
+                                              cdagenci, 
+                                              cdhistor, 
+                                              vllancamento, 
+                                              nrdconta, 
+                                              nrconta_deb, 
+                                              nrconta_cred, 
+                                              dsrefere, 
+                                              tplancamento)
+                                       VALUES(pr_dtmvtolt,
+                                              pr_cdcooper, 
+                                              pr_cdagenci, 
+                                              pr_cdhistor, 
+                                              pr_vllamnto, 
+                                              pr_nrdconta, 
+                                              pr_nrconta_deb, 
+                                              pr_nrconta_cred, 
+                                              pr_dsrefere, 
+                                              pr_tplancamento);                                    
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro ao inserir tbcontab_lanctos_centraliza: ' ||SQLERRM;
+    END;
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dscritic := 'Erro na geral na procedure pc_insere_lct_central: ' ||SQLERRM;     
+  END;  
   --
 END CONT0001;
 /
