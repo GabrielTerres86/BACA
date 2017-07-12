@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 04/04/2017
+    Data    : Marco/07.                       Ultima atualizacao: 13/06/2017
     
     Dados referentes ao programa:
 
@@ -207,8 +207,18 @@
               03/02/2017 - Incluir dtlibera para as consultas de cheques em custodia/desconto
                            (Lucas Ranghetti #600012)
                            
+	            30/03/2017 - Gerar lançamentos de cheques descontados ou custodiados de 
+			                     operações entre cooperados no arquivo AAMMDD_CRITICAS.txt
+						               P307 - (Jonatas - Supero)
+                           
               04/04/2017 - Incluir validacao para contas migradas na procedure gera_lancamento 
-                           (Lucas Ranghetti #620180)
+                           (Lucas Ranghetti #620180)	   
+
+              19/04/2017 - Substituir o dtlibera das consultas de cheques em custodia/desconto
+                           por dtdevolu = ? (Lucas Ranghetti #640682)
+
+              08/05/2017 - Incluso tratativa crapcst.nrborder = 0 nas duas leituras
+			               FOR LAST crapcst (Daniel - Projeto 300) 
                            
               13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
                            Fraudes/Impedimentos e remoçao do processo de devoluçao VLB.
@@ -233,6 +243,8 @@ DEF INPUT  PARAM p-cddevolu AS INT                                   NO-UNDO.
 
 DEF STREAM str_1. /* Relatorios */
 DEF STREAM str_2. /* Arquivos   */
+DEF STREAM str_3. /* Arquivo Contábil */
+
 
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR rel_nmresemp AS CHAR    FORMAT "x(15)"                NO-UNDO.
@@ -305,6 +317,12 @@ DEF        VAR aux_cdcopant AS INTE                                  NO-UNDO.
 DEF        VAR vr_nrdconta  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdcooper  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdagectl  AS INTE                                  NO-UNDO. 
+
+/*variaveis da arquivo contábil AAMMDD_CRITICAS.txt*/
+DEF        VAR aux_nmarqcri AS CHAR                                  NO-UNDO.
+DEF        VAR aux_nmarqcop AS CHAR                                  NO-UNDO.
+DEF        VAR aux_linhaarq AS CHAR                                  NO-UNDO.
+DEF        VAR aux_contador AS INT                                   NO-UNDO.
 
 DEF        VAR aux_flcraptco AS LOGICAL                              NO-UNDO.
 
@@ -1137,8 +1155,7 @@ PROCEDURE gera_lancamento:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
-                                           AND crapcdb.dtlibera >= glb_dtmvtoan
-                                           AND crapcdb.dtlibera <= glb_dtmvtolt
+                                           AND crapcdb.dtdevolu = ?
                                            NO-LOCK:
                        END.                        
                        
@@ -1267,8 +1284,8 @@ PROCEDURE gera_lancamento:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
-                                                  AND crapcst.dtlibera >= glb_dtmvtoan
-                                                  AND crapcst.dtlibera <= glb_dtmvtolt
+												  AND crapcst.dtdevolu = ?
+												  AND crapcst.nrborder = 0
                                                   NO-LOCK:
                               END.
                         
@@ -2398,7 +2415,8 @@ PROCEDURE gera_arquivo_cecred:
           aux_totalqtd = 0
           aux_totalvlr = 0
           aux_tprelato = 1
-          aux_primeira = TRUE.
+          aux_primeira = TRUE
+          aux_contador = 0.
    
    FOR EACH crapdev WHERE crapdev.cdcooper = p-cdcooper        AND
                           crapdev.cdbanchq = crapcop.cdbcoctl  AND
@@ -2416,7 +2434,7 @@ PROCEDURE gera_arquivo_cecred:
        DO:
            IF aux_primeira = TRUE  THEN
            DO:
-               /* Não executa*/
+               /* Nao executa*/
            END.
            ELSE
            DO:
@@ -2843,8 +2861,7 @@ PROCEDURE gera_arquivo_cecred:
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
-                                           AND crapcdb.dtlibera >= glb_dtmvtoan
-                                           AND crapcdb.dtlibera <= glb_dtmvtolt
+                                           AND crapcdb.dtdevolu = ?
                                            NO-LOCK:
                        END.                        
                        
@@ -2861,8 +2878,8 @@ PROCEDURE gera_arquivo_cecred:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
-                                                  AND crapcst.dtlibera >= glb_dtmvtoan
-                                                  AND crapcst.dtlibera <= glb_dtmvtolt
+												  AND crapcst.dtdevolu = ?
+												  AND crapcst.nrborder = 0
                                                   NO-LOCK:
                               END.
                         
@@ -2874,8 +2891,39 @@ PROCEDURE gera_arquivo_cecred:
                            END.                                 
                     END.       
                    
-            NEXT.
+                    IF p-cddevolu = 6 THEN
+                       DO:
+                          IF aux_contador = 0 THEN
+                             DO:
+                                ASSIGN aux_contador = aux_contador + 1.
+
+                                ASSIGN aux_nmarqcri = SUBSTRING(STRING(YEAR(glb_dtmvtolt),'9999'),3,2) + 
+                                                      STRING(MONTH(glb_dtmvtolt),'99')   +
+                                                      STRING(DAY(glb_dtmvtolt),'99') + '_CRITICADEVOLU.txt'.
+               
+                                OUTPUT STREAM str_3 TO VALUE("/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri) APPEND.                               
+                               
            END.           
+       																									  
+                          ASSIGN aux_linhaarq = "20" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + 
+                                                STRING(MONTH(glb_dtmvtolt),"99")   +
+                                                STRING(DAY(glb_dtmvtolt),"99")     + "," +
+                                                STRING(DAY(glb_dtmvtolt),"99") +
+                                                STRING(MONTH(glb_dtmvtolt),"99")  +
+                                                SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2) + "," +
+                                                "1411,4958," +
+                                                TRIM(REPLACE(STRING(tt-relchdv.vllanmto,"zzzzzzzzzzzzz9.99"),",",".")) +
+                                                ",5210," +
+                                                '"' + "ACERTO ENTRE CONTAS DEVIDO A DEVOLUCAO DE CHEQUE " + STRING(crapdev.nrcheque,"9999999") + 
+                                                " DO COOPERADO DE C/C " + TRIM(REPLACE(STRING(crapdev.nrctachq,"zzzz,zzz,9"),",",".")) + 
+                                                " CUSTODIADO/DESCONTADO PELO COOPERADO DE C/C " + TRIM(REPLACE(STRING(tt-relchdv.nrdconta,"zzzz,zzz,9"),",",".")) +
+                                                " (CONFORME CRITICA NO RELATORIO 219)" + '"'.
+                                          
+                          PUT STREAM str_3 aux_linhaarq FORMAT "x(250)" SKIP.
+                       END.
+                   
+               NEXT.
+           END.    										     
        
        IF   p-cddevolu = 5 THEN
             DO:
@@ -2989,6 +3037,20 @@ PROCEDURE gera_arquivo_cecred:
                               
             END.
    END.
+   
+   IF aux_contador > 0 THEN
+      DO:
+          OUTPUT STREAM str_3 CLOSE.
+   
+          ASSIGN aux_nmarqcop = SUBSTRING(STRING(YEAR(glb_dtmvtolt),'9999'),3,2) + 
+                                STRING(MONTH(glb_dtmvtolt),'99')   +
+                                STRING(DAY(glb_dtmvtolt),'99') + '_' + 
+						                    STRING(p-cdcooper,'99') +
+						                    '_CRITICADEVOLU.txt'.   
+   
+          UNIX SILENT VALUE("ux2dos " + "/usr/coop/" + crapcop.dsdircop + "/contab/" + aux_nmarqcri + " > " +
+                            "/usr/sistemas/arquivos_contabeis/ayllos/" + aux_nmarqcop + " 2>/dev/null").
+      END.
    
    IF   flg_devolbcb = TRUE THEN
         DO:
