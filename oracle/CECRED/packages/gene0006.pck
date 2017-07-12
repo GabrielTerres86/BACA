@@ -1008,9 +1008,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         END IF;
         
       END IF;
-
-      -- Se chegou ate aqui, foi executado com sucesso
-      pr_des_erro := 'OK';
       
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -1090,6 +1087,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                 ,pr_dsprotoc => pr_dsprotoc   --> Descrição do protocolo
                                 ,pr_dscritic => pr_dscritic   --> Descrição crítica
                                 ,pr_des_erro => pr_des_erro); --> Descrição dos erros de processo
+
+                                
+      -- O progress aguarda um retorno
+      IF TRIM(pr_des_erro) IS NULL THEN
+        -- Se chegou ate aqui, foi executado com sucesso
+        pr_des_erro := 'OK';
+      END IF;
       
     EXCEPTION
       WHEN OTHERS THEN
