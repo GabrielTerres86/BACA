@@ -14,7 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   --  
   --			  16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
   --
-  --			  12/07/2017 - Chamado 687332 - correção da gravação da CRAPLAU - Jean (Mout´S)
+  --		      12/07/2017 - Chamado 687332 - Alteração da gravação da coluna CDSEQTEL na CRAPLAU - Jean (Mout´S)
   --------------------------------------------------------------------------------------------------------------*/
 
 	TYPE typ_reg_cstdsc IS
@@ -7105,8 +7105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								cheque, onde é creditado o valor líquido da operação na conta do 
 								cooperado, como também os encargos (IOF e tarifa (se houver)).
 
-    Alteracoes: 20/06/2017 - Ajuste na verificação de cheques que estão pendente de entrega.
-                             PRJ300-Desconto de cheque(Lombardi)
+    Alteracoes: -----
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7330,32 +7329,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   -- Verificar se o cheque ainda está pendente de entrega
 	CURSOR cr_crapdcc(pr_cdcooper IN crapdcc.cdcooper%TYPE
 									 ,pr_nrdconta IN crapdcc.nrdconta%TYPE
-									 ,pr_nrborder IN crapdcc.nrborder%TYPE
-                   ,pr_nrremret IN crapdcc.nrremret%TYPE
-                   ,pr_cdcmpchq IN crapdcc.cdcmpchq%TYPE
-                   ,pr_cdbanchq IN crapdcc.cdbanchq%TYPE
-                   ,pr_cdagechq IN crapdcc.cdagechq%TYPE
-                   ,pr_nrctachq IN crapdcc.nrctachq%TYPE
-                   ,pr_nrcheque IN crapdcc.nrcheque%TYPE) IS
-	  SELECT dcc.inconcil
-          ,hcc.dtcustod
+									 ,pr_nrborder IN crapdcc.nrborder%TYPE) IS	
+	  SELECT 1
       FROM crapdcc dcc
           ,craphcc hcc
           ,crapcdb cdb
      WHERE dcc.cdcooper = pr_cdcooper
        AND dcc.nrdconta = pr_nrdconta
        AND dcc.nrborder = pr_nrborder
-       AND dcc.nrremret = pr_nrremret
-       AND dcc.cdcmpchq = pr_cdcmpchq
-       AND dcc.cdbanchq = pr_cdbanchq
-       AND dcc.cdagechq = pr_cdagechq
-       AND dcc.nrctachq = pr_nrctachq
-       AND dcc.nrcheque = pr_nrcheque
        AND dcc.intipmvt IN (1,3)
+       AND dcc.cdtipmvt = 1
        AND hcc.cdcooper = dcc.cdcooper
        AND hcc.nrdconta = dcc.nrdconta
        AND hcc.nrremret = dcc.nrremret
        AND hcc.intipmvt = dcc.intipmvt
+       AND (dcc.inconcil = 0
+        OR  hcc.dtcustod IS NULL)
        AND cdb.cdcooper = dcc.cdcooper
        AND cdb.nrdconta = dcc.nrdconta
        AND cdb.nrborder = dcc.nrborder
@@ -7460,39 +7449,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       RAISE vr_exc_erro;    
     END IF;
     
+    -- Verificar se o cheque ainda está pendente de entrega
+    OPEN cr_crapdcc(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_nrborder => pr_nrborder);
+    FETCH cr_crapdcc INTO rw_crapdcc;
+      
+    -- Se existir registro é porque o cheque ainda está pendente de entrega
+    IF cr_crapdcc%FOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Borderô possui cheque(s) aprovado(s) pendentes de entrega. Liberação não permitida.';
+      RAISE vr_exc_erro;      
+    END IF;
+    -- Fechar cursor
+    CLOSE cr_crapdcc;
+    
     -- Percorrer todos os cheques do bordero
     FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
 			                          ,pr_nrdconta => pr_nrdconta
 																,pr_nrborder => pr_nrborder) LOOP
-      
-      -- Verificar se o cheque ainda está pendente de entrega
-      OPEN cr_crapdcc(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta
-                     ,pr_nrborder => pr_nrborder
-                     ,pr_nrremret => rw_crapcdb.nrremret
-                     ,pr_cdcmpchq => rw_crapcdb.cdcmpchq
-                     ,pr_cdbanchq => rw_crapcdb.cdbanchq
-                     ,pr_cdagechq => rw_crapcdb.cdagechq
-                     ,pr_nrctachq => rw_crapcdb.nrctachq
-                     ,pr_nrcheque => rw_crapcdb.nrcheque);
-                     
-      FETCH cr_crapdcc INTO rw_crapdcc;
-        
-      -- Se não existir registro
-      IF cr_crapdcc%NOTFOUND THEN
-        CLOSE cr_crapdcc;
-        vr_cdcritic := 0;
-        vr_dscritic := 'Cheque sem registro de Custódia.';
-        RAISE vr_exc_erro;
-      END IF;
-      -- Fechar cursor
-      CLOSE cr_crapdcc;
-      -- Se ainda está pendente de entrega
-      IF rw_crapdcc.inconcil = 0 OR  rw_crapdcc.dtcustod IS NULL THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Borderô possui cheque(s) aprovado(s) pendentes de entrega. Liberação não permitida.';
-        RAISE vr_exc_erro;
-      END IF;
       
 			-- Alimentar PlTable com dados do cheque
 			vr_index_cheque := vr_tab_cheques.count;
@@ -8632,9 +8607,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Resgatar cheques custodiados no dia de movimento
 
-    Alteracoes: 20/06/2017 - Retirado update na tabela crapcdb.
-                             PRJ300-Desconto de cheque(Lombardi)
-                             
+    Alteracoes: -----
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -8745,14 +8718,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         CLOSE cr_crapcst_resg_hoje;
       END IF;
       
-      /*
       -- Atualizar informações do cheque no borderô
       UPDATE crapcdb cdb
          SET cdb.dtdevolu = rw_crapdat.dtmvtolt
             ,cdb.cdopedev = pr_cdoperad
             ,cdb.insitchq = 1
        WHERE cdb.rowid = rw_crapcdb.rowid_cdb;
-		  */
+				 
       
       -- Resgatar cheque de custódia
       cust0001.pc_efetua_resgate_custodia(pr_cdcooper => pr_cdcooper
