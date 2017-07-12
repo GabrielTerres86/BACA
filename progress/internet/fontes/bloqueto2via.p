@@ -14,6 +14,9 @@
       
    Alteracoes: 27/01/2017 - Recuperar os campos flserasa e qtdianeg 
 	                        e gravar no objeto boleto (Tiago/Ademir SD601919)
+
+			   11/07/2017 - Inclusão do campo flgcbdda, Prj. 340 - NPC (Jean Michel)
+	                        
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -143,7 +146,7 @@ IF  VALID-HANDLE(h-b1wnet0001)  THEN
             criaCampo("dsdinstr",tt-consulta-blt.dsdinstr).        
             criaCampo("dsdoccop",STRING(tt-consulta-blt.dsdoccop)).
             criaCampo("dtvencto",STRING(tt-consulta-blt.dtvencto,"99/99/9999")).
-            criaCampo("dtdoagto",(IF  tt-consulta-blt.dtdpagto = ?  THEN " "
+            criaCampo("dtdpagto",(IF  tt-consulta-blt.dtdpagto = ?  THEN " "
                                   ELSE STRING(tt-consulta-blt.dtdpagto,
                                              "99/99/9999"))).
             criaCampo("vltitulo",TRIM(STRING(tt-consulta-blt.vltitulo,
@@ -194,10 +197,10 @@ IF  VALID-HANDLE(h-b1wnet0001)  THEN
             criaCampo("cdtpinav",STRING(tt-consulta-blt.cdtpinav, "9")).
             criaCampo("nrinsava",STRING(tt-consulta-blt.nrinsava)).
             criaCampo("nrdconta",STRING(tt-consulta-blt.nrdconta)).
-            
+			            
             criaCampo("vldocmto",TRIM(STRING(tt-consulta-blt.vldocmto,
                                              "zzzzzzzzz9.99"))).
-            criaCampo("vldocmto",TRIM(STRING(tt-consulta-blt.vlmormul,
+            criaCampo("vlmormul",TRIM(STRING(tt-consulta-blt.vlmormul,
                                              "zzzzzzzzz9.99"))).
             criaCampo("dtvctori",(IF  tt-consulta-blt.dtvctori = ?  THEN " "
                                   ELSE STRING(tt-consulta-blt.dtvctori,
@@ -205,7 +208,8 @@ IF  VALID-HANDLE(h-b1wnet0001)  THEN
             criaCampo("flserasa",(IF tt-consulta-blt.flserasa = TRUE THEN
                                   "S" ELSE "N")).
 			criaCampo("qtdianeg",STRING(tt-consulta-blt.qtdianeg, "99")).											  
-											 
+			criaCampo("flgcbdda",STRING(tt-consulta-blt.flgcbdda)).								 
+			
         END. /* fim for each tt-consulta-blt */
 
     END. /* IF VALID-HANDLE(h-b1wnet0001) */
