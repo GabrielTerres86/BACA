@@ -3654,6 +3654,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              21/06/2017 - Mostrar lancamento futuro de cred de cobranca NPC pagos fora do sistema
   --                           Cecred por baixa operacional (Projeto 340 - Rafael)
+  --
+  --              12/07/2017 - Ajuste na busca do limite de credito do associado para permitir
+  --                           acessar a tela ATENDA mesmo quando o limite estiver Em Estudo (Mateus - MoutS)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -5298,13 +5301,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             IF cr_craplim%NOTFOUND THEN
               --Fechar cursor
               CLOSE cr_craplim;
-              --Montar mensagem de erro com base na critica
-              vr_cdcritic:= 105;
-              --Sair do programa
-              RAISE vr_exc_erro;
+              --Selecionar informacoes dos limites de credito do associado
+              OPEN cr_craplim (pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => rw_crapsld.nrdconta
+                            ,pr_tpctrlim => 1
+                            ,pr_insitlim => 1);
+              --Posicionar no proximo registro
+              FETCH cr_craplim INTO rw_craplim;
+              --Se nao encontrou
+              IF cr_craplim%NOTFOUND THEN
+                --Fechar cursor
+                CLOSE cr_craplim;
+                --Montar mensagem de erro com base na critica
+                vr_cdcritic:= 105;
+                --Sair do programa
+                RAISE vr_exc_erro;
+              END IF;
             END IF;
-            --Fechar Cursor
-            CLOSE cr_craplim;
           END IF; 
           --Fechar Cursor
           IF cr_craplim%ISOPEN THEN
