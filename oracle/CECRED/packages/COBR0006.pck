@@ -3059,8 +3059,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           -- 95 = Instrucao manual de envio de SMS
           WHEN 95 THEN
             COBR0007.pc_inst_envio_sms(pr_cdcooper => vr_instrucao.cdcooper,
-                                       pr_nrdconta => vr_instrucao.nrcnvcob,
-                                       pr_nrcnvcob => vr_instrucao.nrdconta,
+                                       pr_nrdconta => vr_instrucao.nrdconta,
+                                       pr_nrcnvcob => vr_instrucao.nrcnvcob,
                                        pr_nrdocmto => vr_instrucao.nrdocmto,
                                        pr_dtmvtolt => pr_dtmvtolt,
                                        pr_cdoperad => pr_cdoperad,
@@ -3077,8 +3077,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           -- 96 = Cancelamento de envio de SMS
           WHEN 96 THEN
             COBR0007.pc_inst_canc_sms(pr_cdcooper => vr_instrucao.cdcooper,
-                                      pr_nrdconta => vr_instrucao.nrcnvcob,
-                                      pr_nrcnvcob => vr_instrucao.nrdconta,
+                                      pr_nrdconta => vr_instrucao.nrdconta,
+                                      pr_nrcnvcob => vr_instrucao.nrcnvcob,
                                       pr_nrdocmto => vr_instrucao.nrdocmto,
                                       pr_dtmvtolt => pr_dtmvtolt,
                                       pr_cdoperad => pr_cdoperad,
