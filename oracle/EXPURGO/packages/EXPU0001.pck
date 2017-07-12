@@ -476,13 +476,13 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
          AND c1.OWNER = c2.OWNER
          AND c1.R_CONSTRAINT_NAME = c2.CONSTRAINT_NAME
          
-         AND c2.OWNER = pr_nmowner
-         AND c2.TABLE_NAME = pr_nmtabela_pri
+         AND c2.OWNER = UPPER(pr_nmowner)
+         AND c2.TABLE_NAME = UPPER(pr_nmtabela_pri)
          AND c2.CONSTRAINT_TYPE = 'P'
             
-         AND c1.TABLE_NAME = pr_nmtabela
+         AND c1.TABLE_NAME = UPPER(pr_nmtabela)
          AND c1.CONSTRAINT_TYPE = 'R'
-         AND c1.OWNER = pr_nmowner;
+         AND c1.OWNER = UPPER(pr_nmowner);
          
     
     -----------> VARIAVEIS <-----------
@@ -976,124 +976,6 @@ CREATE OR REPLACE PACKAGE BODY EXPURGO.EXPU0001  is
         
         END IF;
         
-        
-        /*
-        
-        --> Nao montar clausula where para opcao de somente copia
-        --> Está irá fazer carga total da tabela
-        vr_dsdwhere := NULL;
-        IF rw_tbhstctl.tpoperacao <> 1 THEN
-          vr_dsdwhere := 'TRUNC('||rw_tbhstctl.nmtabela||'.'||rw_tbhstctl.nmcampo_refere||') < '||
-                         'TO_DATE('''|| to_char(vr_dtdiaatu - rw_tbhstctl.nrdias_refere,'DD/MM/RRRR')||''',''DD/MM/RRRR'')';
-        END IF;  
-        --> Realizar expurgo dos dados
-        pc_expurgo_tabela (pr_idcontrole       => rw_tbhstctl.idcontrole,      --> Id de controle
-                           pr_nmowner          => rw_tbhstctl.nmowner,         --> Nome do owner onde a tabela se encontra
-                           pr_nmtabela         => rw_tbhstctl.nmtabela,        --> Nome da tabela a ser copiada
-                           pr_dscampos         => rw_tbhstctl.nmcampo_refere,  --> Campos da chave, para opcao somente copia
-                           pr_tpoperacao       => rw_tbhstctl.tpoperacao,      --> Tipo de operacao (1-somente copia/ 2- copia e exclui/ 3-somente exclui)
-                           pr_dsdwhere         => vr_dsdwhere,                        
-                           pr_tab_comand       => vr_tab_comand,               --> Retornar os comandos de deleção, a serem efetuados no final de todas as copias
-                           pr_qtdregis         => vr_qtdregis,                 --> Retorna a quantidade de registros copiados/excluidos 
-                           pr_dscritic         => vr_dscritic_aux);                --> Retorna critica
-            
-        
-        vr_qtdtempo := (DBMS_UTILITY.get_time - vr_tempoini)/100;
-               
-        
-        --> Gerar log apenas se nao for operação de apenas exclui(pois esta o log será gerado em outro monento)
-        IF rw_tbhstctl.tpoperacao <> 3 OR 
-           vr_dscritic_aux IS NOT NULL THEN
-           
-          --> Gerar log da operacao
-          pc_log_expurgo (pr_idcontrole  => rw_tbhstctl.idcontrole,      --> Id de controle de expurgo
-                          pr_tpoperacao  => 1,                           --> tipo de operacao realizada (1-copia/ 3-exclusao) 
-                          pr_qtdregis    => vr_qtdregis,                 --> Qtd de registros excluidos
-                          pr_qtdtempo    => vr_qtdtempo,                 --> Tempo de processamento
-                          pr_dslogexp    => vr_dscritic_aux,             --> Descrição de critica/log do expurgo     
-                          pr_dscritic    => vr_dscritic);                --> Retorna critica
-        
-          IF TRIM(vr_dscritic) IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;   
-          
-          -- Caso retornou erro, ir para a proxima tabela
-          IF vr_dscritic_aux IS NOT NULL THEN
-            vr_dscritic_aux := NULL;
-            RAISE vr_exc_prox; 
-          END IF;        
-          
-        END IF;             
-      
-        --> VERIFICAR/PROCESSAR TABELAS DEPENDENTES
-        pc_processar_expurgo_dep (pr_idcontrole       => rw_tbhstctl.idcontrole,    --> Id de controle de expurgo principal/anterior 
-                                  pr_nrdias_retencao  => rw_tbhstctl.nrdias_refere, --> Numero de dias de retenção de dados
-                                  pr_dsdwhere         => vr_dsdwhere,               --> Clausula where
-                                  pr_tab_comand       => vr_tab_comand,             --> Retornar os comandos de deleção, a serem efetuados no final de todas as copias
-                                  pr_dscritic         => vr_dscritic_aux );
-        
-        -- Caso retornou erro, ir para a proxima tabela
-        -- Ja foi gerado log na rotina de dependentes
-        IF vr_dscritic_aux IS NOT NULL THEN
-          vr_dscritic_aux := NULL;
-          RAISE vr_exc_prox; 
-        END IF; 
-        
-        --> Apenas realizar a deleção se nao for  1-apenas copia
-        IF rw_tbhstctl.tpoperacao <> 1 THEN
-        
-          IF vr_tab_comand.count = 0 THEN
-            vr_dscritic_aux := 'Comandos de Deleção não encontrados.';
-            RAISE vr_exc_prox;          
-          END IF;
-        
-          --> BUSCAR COMANDOS DE DELEÇÃO
-          FOR vr_idx IN REVERSE vr_tab_comand.first..vr_tab_comand.last LOOP
-          
-            vr_tempoini := DBMS_UTILITY.get_time;
-            
-            --> Executar comando de exclusao
-            BEGIN
-              EXECUTE IMMEDIATE vr_tab_comand(vr_idx).dscomand;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic_aux := 'Erro ao efetuar exclusao '||vr_tab_comand(vr_idx).nmtabela||
-                                   ': '||SQLERRM;      
-            END;
-            
-            vr_qtdtempo := (DBMS_UTILITY.get_time - vr_tempoini)/100;          
-            vr_qtregexc := SQL%ROWCOUNT;
-            
-            --> apenas validar qnt se nao ja apresentou erro
-            IF vr_dscritic_aux IS NULL AND
-               --> Somente exclusao nao precisa validar qtd 
-               rw_tbhstctl.tpoperacao <> 3 THEN
-              IF vr_qtregexc <> nvl(vr_tab_comand(vr_idx).qtdregis,0) THEN
-                vr_dscritic_aux := 'Quantidade de registro copiados e excluidos da tabela '||
-                                   vr_tab_comand(vr_idx).nmtabela || ' não conferem';      
-              END IF;
-            END IF;
-            
-            --> Gerar log da operacao
-            pc_log_expurgo (pr_idcontrole  => vr_tab_comand(vr_idx).idcontrole,   --> Id de controle de expurgo
-                            pr_tpoperacao  => 3,                           --> tipo de operacao realizada (1-copia/ 3-exclusao) 
-                            pr_qtdregis    => vr_qtregexc,                 --> Qtd de registros excluidos
-                            pr_qtdtempo    => vr_qtdtempo,                 --> Tempo de processamento
-                            pr_dslogexp    => NULL,                        --> Descrição de critica/log do expurgo     
-                            pr_dscritic    => vr_dscritic);                --> Retorna critica
-          
-            IF TRIM(vr_dscritic) IS NOT NULL THEN
-              RAISE vr_exc_erro;
-            END IF;
-            
-            IF vr_dscritic_aux IS NOT NULL THEN
-              vr_dscritic_aux := NULL;
-              RAISE vr_exc_prox;
-            END IF;
-            
-          
-          END LOOP;
-        END IF;*/
         --> Atualizar controle com a data de execução
         BEGIN
           UPDATE tbhst_controle ctl
