@@ -318,7 +318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 25/01/2017
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 12/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -338,6 +338,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --                          do código e não mais pela descrição (Renato Darosci - Supero)
   --
   --             25/01/2017 - Criacao da pc_gera_data_pag_tr. (Jaison/James)
+  --
+  --             12/07/2017 - #712635 Inclusão tabela crapcco nos cursores cr_tbepr_cobranca e cr_crapcob 
+  --                          para otimização (Carlos)
   --
   ---------------------------------------------------------------------------
 
@@ -1026,14 +1029,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				FROM crapcob cob
 						,tbepr_cobranca cde
 						,crapass ass
+            ,crapcco cco
 			 WHERE cde.cdcooper = pr_cdcooper
 				 AND cde.nrdconta = pr_nrdconta
 				 AND cde.nrcnvcob = pr_nrcnvcob
 				 AND cde.nrboleto = pr_nrdocmto
+         AND cco.cdcooper = cde.cdcooper
+         AND cco.nrconven = cde.nrcnvcob
          AND cob.cdcooper = cde.cdcooper
          AND cob.nrdconta = cde.nrdconta_cob
          AND cob.nrcnvcob = cde.nrcnvcob
          AND cob.nrdocmto = cde.nrboleto
+         AND cob.cdbandoc = cco.cddbanco
+         AND cob.nrdctabb = cco.nrdctabb
 				 AND ass.cdcooper = cde.cdcooper
 				 AND ass.nrdconta = cde.nrdconta
 			 ORDER BY cde.nrdconta, cde.nrctremp;
@@ -2858,7 +2866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							 ,('(' || to_char(cde.nrddd_sms,'000') || ')' || to_char(cde.nrtel_sms, '9999g9999','nls_numeric_characters=.-')) dsdtelef
 							 ,cde.nmcontato nmpescto
 							 ,cde.nrdconta_cob nrctacob
-           FROM crapcob cob, tbepr_cobranca cde, crapass ass
+           FROM crapcob cob, tbepr_cobranca cde, crapass ass, crapcco cco
           WHERE cde.cdcooper = pr_cdcooper                            --> Cód. cooperativa
 					  AND (pr_cdagenci = 0     OR ass.cdagenci =  pr_cdagenci)  --> PA
 						AND (pr_nrdconta = 0     OR cde.nrdconta =  pr_nrdconta)  --> Nr. da Conta
@@ -2871,10 +2879,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             AND ( cob.dtvencto <= NVL(pr_dtvenctf, to_date('31/12/2099','dd/mm/yyyy')) OR ( cob.dtvencto IS NULL AND pr_dtvenctf IS NULL))
             AND ( cob.dtdpagto >= NVL(pr_dtpagtoi, to_date('01/01/0001','dd/mm/yyyy')) OR ( cob.dtdpagto IS NULL AND pr_dtpagtoi IS NULL))
             AND ( cob.dtdpagto <= NVL(pr_dtpagtof, to_date('31/12/2099','dd/mm/yyyy')) OR ( cob.dtdpagto IS NULL AND pr_dtpagtof IS NULL))
+            AND cco.cdcooper = cde.cdcooper
+            AND cco.nrconven = cde.nrcnvcob            
 					  AND cob.cdcooper = cde.cdcooper
             AND cob.nrdconta = cde.nrdconta_cob
             AND cob.nrcnvcob = cde.nrcnvcob
             AND cob.nrdocmto = cde.nrboleto
+            AND cob.cdbandoc = cco.cddbanco
+            AND cob.nrdctabb = cco.nrdctabb
             AND ass.cdcooper = cde.cdcooper
             AND ass.nrdconta = cde.nrdconta
 				  ORDER BY cde.nrdconta,
