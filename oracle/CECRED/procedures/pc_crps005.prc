@@ -1669,7 +1669,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                          <vlsddisp>'||to_char(vr_tab_crat055(vr_des_chave).vlsddisp,'fm999g999g990d00')||'</vlsddisp>
                          <vllimcre>'||to_char(vr_tab_crat055(vr_des_chave).vllimcre,'fm999999999999')||'</vllimcre>
                          <vlsdbltl>'||to_char(vr_tab_crat055(vr_des_chave).vlsdbltl,'fm999g999g990d00')||'</vlsdbltl>
-                         <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm999g999g990d00')||'</vlstotal>
+                         <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm9g999g999g990d00')||'</vlstotal>
                        </conta>');
            -- Se este for o ultimo registro do vetor, ou da agência
            IF vr_des_chave = vr_tab_crat055.LAST OR vr_tab_crat055(vr_des_chave).cdagenci <> vr_tab_crat055(vr_tab_crat055.NEXT(vr_des_chave)).cdagenci THEN
