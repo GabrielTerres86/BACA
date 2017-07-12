@@ -108,8 +108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
      WHERE cdcooper <> 3
   ORDER BY cdcooper;
   
-  CURSOR cr_lct_central(pr_cdcooper in tbcontab_lanctos_centraliza.cdcooper%type/*,
-                        pr_dtmvtolt in tbcontab_lanctos_centraliza.dtmvtolt%type*/) IS
+  CURSOR cr_lct_central(pr_cdcooper in tbcontab_lanctos_centraliza.cdcooper%type) IS
     SELECT t.dtmvtolt,
            t.cdagenci,
            t.cdhistor,
@@ -121,7 +120,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
            sum(t.vllancamento) vllancamento
       FROM tbcontab_lanctos_centraliza t
      WHERE t.cdhistor in (809,811,812,813,814,822,839,909,910,913,914,916,915,945,946,1007,1008)
-    --   AND t.dtmvtolt = pr_dtmvtolt
        AND t.cdcooper = pr_cdcooper
     GROUP BY t.dtmvtolt,
              t.cdagenci,
@@ -1288,6 +1286,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       
     END LOOP;
     
+    --Limpa os dados da tabela de lançamentos centralizados.
+    DELETE FROM TBCONTAB_LANCTOS_CENTRALIZA;
+    COMMIT;
+    
     btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                pr_ind_tipo_log => 2, -- Erro tratado
                                pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
@@ -1331,7 +1333,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                                               pr_nrconta_deb, 
                                               pr_nrconta_cred, 
                                               pr_dsrefere, 
-                                              pr_tplancamento);                                    
+                                              pr_tplancamento);
+                                              
+      COMMIT;
+                                                                                        
     EXCEPTION
       WHEN OTHERS THEN
         pr_dscritic := 'Erro ao inserir tbcontab_lanctos_centraliza: ' ||SQLERRM;
