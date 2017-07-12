@@ -681,6 +681,11 @@
 
               02/05/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
+			  08/06/2017 - Inicializacao do parâmetro par_nrctremp nas rotinas grava-proposta-completa,
+                     altera-valor-proposta, atualiza_dados_avalista_proposta
+                     Substituicao do 'LEAVE Grava' ou 'LEAVE Grava_valor' por 'RETURN NOK' em algumas situacoes
+                     Chamado 660371 - Ana (Envolti)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3779,7 +3784,7 @@ PROCEDURE valida-dados-gerais:
                       aux_dscritic = pc_busca_linha_credito_prog.pr_dscritic
                                      WHEN pc_busca_linha_credito_prog.pr_dscritic <> ?.
                                      
-               IF INDEX (aux_lslcremp, STRING(par_cdlcremp)) > 0 THEN
+               IF INDEX (aux_lslcremp, ";" + STRING(par_cdlcremp) + ";") > 0 THEN
                       DO:
                           ASSIGN aux_dscritic = "Linha de credito nao permitida".
                           LEAVE.
@@ -5600,7 +5605,7 @@ PROCEDURE grava-proposta-completa:
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE INIT 0                    NO-UNDO. /*Inicializaçao = CH660371 - Ana (Envolti)*/
     DEF  INPUT PARAM par_tpemprst AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgcmtlc AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_vlutiliz AS DECI                           NO-UNDO.
@@ -5791,8 +5796,7 @@ PROCEDURE grava-proposta-completa:
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p PERSISTENT SET h-b1wgen0110.
 
-
-    /*Monta a mensagem da opereacao para envio no e-mail*/
+    /*Monta a mensagem da operacao para envio no e-mail*/
     IF par_cddopcao = "A" THEN
        ASSIGN aux_dsoperac =  "Tentativa de alteracao da proposta de "     +
                               "emprestimo/financiamento na conta "         +
@@ -6086,6 +6090,33 @@ PROCEDURE grava-proposta-completa:
 
                              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
+                             EMPTY TEMP-TABLE tt-erro.
+
+                             ASSIGN aux_cdcritic = 0
+                                    aux_dscritic = ""
+                                    aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+                                    aux_dstransa = "NRCTEMP: * " + pc_sequence_progress.pr_sequenc.
+
+                             RUN proc_gerar_log (INPUT par_cdcooper,
+                                                 INPUT par_cdoperad,
+                                                 INPUT "",
+                                                 INPUT aux_dsorigem,
+                                                 INPUT aux_dstransa,
+                                                 INPUT TRUE,
+                                                 INPUT par_idseqttl,
+                                                 INPUT par_nmdatela,
+                                                 INPUT par_nrdconta,
+                                                OUTPUT aux_nrdrowid).
+
+                             /*Chamado 660371 - Se sequence nula ou com 0 -> está com erro*/
+                             /*Seta mensagem de erro, sai da transaçao e gera log*/
+                             IF pc_sequence_progress.pr_sequenc = ? /*OR pc_sequence_progress.pr_sequenc = 0*/ THEN 
+                                DO: 
+                                    ASSIGN aux_cdcritic = 0                                
+                                           aux_dscritic = "Erro ao buscar sequence na tabela CRAPMAT.".
+                                    LEAVE.
+                             END.
+
                              ASSIGN par_nrctremp = INTE(pc_sequence_progress.pr_sequence)
                                                    WHEN pc_sequence_progress.pr_sequence <> ?.
 
@@ -6126,7 +6157,10 @@ PROCEDURE grava-proposta-completa:
            LEAVE.
 
         END.             
-        IF   aux_cdcritic <> 0   THEN
+
+        /*Chamado 660371*/
+        IF   aux_cdcritic <> 0    or 
+             aux_dscritic <> ""  THEN
              UNDO, LEAVE Grava.
 
         /* Mandar como parametro de volta o recid da proposta e o numero */
@@ -6247,7 +6281,15 @@ PROCEDURE grava-proposta-completa:
             OUTPUT TABLE tt-msg-confirma).
 
         IF   RETURN-VALUE <> "OK"   THEN
+             do:
+				     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na atualizacao de dados do avalista da proposta".
+               EMPTY TEMP-TABLE tt-erro.
              UNDO Grava, LEAVE Grava.
+             end.
 
         RUN verifica_microcredito (INPUT par_cdcooper,
                                    INPUT par_cdlcremp,
@@ -6294,8 +6336,18 @@ PROCEDURE grava-proposta-completa:
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-msg-confirma).
 
+
         IF   RETURN-VALUE <> "OK"   THEN
+             do:
+				     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na alteracao do valor da proposta".
+               EMPTY TEMP-TABLE tt-erro.
              UNDO Grava, LEAVE Grava.
+             end.
+
 
         /* Atualiza a data de liberacao */
         ASSIGN crawepr.dtlibera = par_dtlibera.
@@ -6355,7 +6407,16 @@ PROCEDURE grava-proposta-completa:
         DELETE PROCEDURE h-b1wgen0024.
         
         IF   RETURN-VALUE <> "OK"   THEN
-             UNDO Grava, RETURN "NOK".
+             do:
+				     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na gravacao de dados da proposta".
+               EMPTY TEMP-TABLE tt-erro.
+               UNDO Grava, LEAVE Grava.
+             end.
+
                                                                    
         /* Se Alienaçao ou Hipoteca */
         IF   craplcr.tpctrato = 2   OR
@@ -6377,7 +6438,17 @@ PROCEDURE grava-proposta-completa:
                                                OUTPUT TABLE tt-erro).
 
                  IF   RETURN-VALUE <> "OK" THEN
-                      UNDO Grava, RETURN "NOK".
+             do:
+				     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na gravacao da alienacao da hipoteca".
+               EMPTY TEMP-TABLE tt-erro.
+               UNDO Grava, LEAVE Grava.
+             end.
+
+
              END.
 
         RUN sistema/generico/procedures/b1wgen0024.p
@@ -6408,7 +6479,15 @@ PROCEDURE grava-proposta-completa:
         DELETE PROCEDURE h-b1wgen0024.
 
         IF   RETURN-VALUE <> "OK"   THEN
-             UNDO Grava, RETURN "NOK".
+             do:
+				     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na gravacao dos dados do cadastro".
+               EMPTY TEMP-TABLE tt-erro.
+               UNDO Grava, LEAVE Grava.
+             end.
         
         RUN sistema/generico/procedures/b1wgen0043.p
                         PERSISTENT SET h-b1wgen0043.
@@ -6430,6 +6509,18 @@ PROCEDURE grava-proposta-completa:
                                           INPUT  FALSE,
                                           OUTPUT TABLE tt-erro).
         DELETE PROCEDURE h-b1wgen0043.
+
+        IF   RETURN-VALUE <> "OK"   THEN 
+             do:
+				     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na gravacao do rating".
+               EMPTY TEMP-TABLE tt-erro.
+               UNDO Grava, LEAVE Grava.
+             end.
+        
 
         IF  crawepr.tpemprst <> 1  THEN
             DO:
@@ -6453,11 +6544,17 @@ PROCEDURE grava-proposta-completa:
                 DELETE PROCEDURE h-b1wgen0084.
 
                 IF   RETURN-VALUE <> "OK"   THEN
-                     UNDO Grava, RETURN "NOK".
+             do:
+				     FIND FIRST tt-erro NO-ERROR.
+               IF   AVAIL tt-erro   THEN
+                    aux_dscritic = tt-erro.dscritic.
+               ELSE
+                    aux_dscritic = "Ocorreram erros na exclusao das parcelas da proposta".
+               EMPTY TEMP-TABLE tt-erro.
+               UNDO Grava, LEAVE Grava.
+             end.
              END.
 
-        IF   RETURN-VALUE <> "OK"   THEN
-             UNDO Grava, RETURN "NOK".
         
     END. /* Fim Grava- Fim TRANSACTION */
      
@@ -6559,7 +6656,7 @@ PROCEDURE altera-valor-proposta:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE INIT 0                    NO-UNDO. /*Inicializaçao - Chamado 660371*/
     DEF  INPUT PARAM par_flgcmtlc AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlpreemp AS DECI                           NO-UNDO.
@@ -12255,7 +12352,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE INIT 0                    NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dsdopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrctaava AS INTE                           NO-UNDO.
