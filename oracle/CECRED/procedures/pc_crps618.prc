@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael
-    Data    : janeiro/2012.                     Ultima atualizacao: 14/11/2016
+    Data    : janeiro/2012.                     Ultima atualizacao: 12/07/2017
  
     Dados referentes ao programa:
  
@@ -88,6 +88,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
 
                 27/12/2016 - Tratamentos para Nova Plataforma de Cobrança
                              PRJ340 - NPC (Odirlei-AMcom)
+                             
+                12/07/2017 - Retirado cobranca de tarifa após a rejeição do 
+                             boleto DDA na CIP (Rafael)
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps618';     -- Nome do programa
@@ -762,29 +765,7 @@ BEGIN
                , dhenvcip = NULL
                , inregcip = 0 -- sem registro na CIP
            WHERE ROWID = rw_titulos.rowidcob;
-          
-          -- se as formas de registro forem online ou batch
-          -- gerar tarifa de cobrança comum (ocorrencia 2 sem motivo)
-          IF vr_tpdenvio IN (1,2) THEN 
-            -- Cria registro para cobranca tarifa.
-            vr_idx_lat:= lpad(rw_titulos.cdcooper,10,'0')||
-                         lpad(rw_titulos.nrdconta,10,'0')||
-                         lpad(rw_titulos.nrcnvcob,10,'0')||
-                         lpad(2,10,'0')||
-                         lpad('',10,'0')||
-                         lpad(vr_tab_lat_consolidada.Count+1,10,'0');
-                         
-            -- registrar tarifa de titulos comuns (nao DDA)
-            vr_tab_lat_consolidada(vr_idx_lat).cdcooper := rw_titulos.cdcooper;
-            vr_tab_lat_consolidada(vr_idx_lat).nrdconta := rw_titulos.nrdconta;
-            vr_tab_lat_consolidada(vr_idx_lat).nrdocmto := rw_titulos.nrdocmto;
-            vr_tab_lat_consolidada(vr_idx_lat).nrcnvcob := rw_titulos.nrcnvcob;
-            vr_tab_lat_consolidada(vr_idx_lat).dsincide := 'RET';
-            vr_tab_lat_consolidada(vr_idx_lat).cdocorre := 02; -- 02 - Entrada Confirmada
-            vr_tab_lat_consolidada(vr_idx_lat).cdmotivo := '';
-            vr_tab_lat_consolidada(vr_idx_lat).vllanmto := rw_titulos.vltitulo;
-          END IF;
-           
+                     
         EXCEPTION
           WHEN OTHERS THEN
             pr_dscritic := 'Erro[3] ao atualizar CRAPCOB: '||SQLERRM;
@@ -792,28 +773,7 @@ BEGIN
         END;
       END IF;
     END LOOP;  
-    
-    -- tarifas a lancar, caso houver
-    IF vr_tab_lat_consolidada.count() > 0 THEN    
-      PAGA0001.pc_efetua_lancto_tarifas_lat(pr_cdcooper => rw_crapcop.cdcooper
-                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                           ,pr_tab_lat_consolidada => vr_tab_lat_consolidada
-                                           ,pr_cdcritic => vr_cdcritic
-                                           ,pr_dscritic => vr_dscritic);
-      -- Se ocorreu critica escreve no proc_message.log
-      -- Não para o processo
-      IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                      ' - ERRO no lancamento de tarifas: ' || 
-                                                      vr_cdcritic || ' - ' || vr_dscritic);
-        vr_cdcritic:= NULL;
-        vr_dscritic:= NULL;
-      END IF;
-    END IF;
-    
+        
     -- Realizar a remessa de títulos DDA
     DDDA0001.pc_remessa_tit_tab_dda(pr_tab_remessa_dda => vr_tb_remessa_dda
                                    ,pr_tab_retorno_dda => vr_tb_retorno_dda
@@ -849,12 +809,13 @@ BEGIN
                                                   
     --> Gravar dados a cada cooperativa (batch)
     IF nvl(pr_nrdconta,0) = 0 THEN
-    COMMIT;
+      COMMIT;
     END IF;
     
   END LOOP; -- Fim loop cooperativas    
   
 EXCEPTION
+  
   WHEN vr_exc_saida THEN
     
     -- Rotina para buscar o "OK" da CIP
@@ -878,8 +839,9 @@ EXCEPTION
     
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
-    ROLLBACK;
+      ROLLBACK;
     END IF;
+    
   WHEN OTHERS THEN
     
     -- Rotina para buscar o "OK" da CIP
@@ -897,7 +859,7 @@ EXCEPTION
     
     -- Efetuar rollback
     IF nvl(pr_nrdconta,0) = 0 THEN
-    ROLLBACK;
+      ROLLBACK;
     END IF;
 END pc_crps618;
 /
