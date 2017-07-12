@@ -512,7 +512,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
 	--              27/04/2017 - Incluido procedures pc_busca_intippes e pc_retorna_conaut_esteira.
 	--                           Alterado procedures pc_obrigacao_consulta, pc_solicita_retorno_req,
 	--                           pc_processa_retorno_req e pc_solicita_consulta_biro. (PRJ337 - Motor de Crédito / Reinert)
-  --
+  --  
+  --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
+  --                           pc_solicita_consulta_biro (Ana - Envolti)
+--
+--
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -2708,16 +2712,35 @@ PROCEDURE pc_trata_erro_retorno(pr_cdcooper IN crapepr.cdcooper%TYPE, --> Codigo
                                 pr_nrdocmto IN crapepr.nrctremp%TYPE, --> Numero do documento
                                 pr_nrprotoc IN crapcbd.nrprotoc%TYPE, --> Numero do protocolo do biro
                                 pr_nrconbir IN crapcbd.nrconbir%TYPE, --> Numero da consulta no biro
-                                pr_dscritic IN OUT VARCHAR2)  IS          -->  Texto de erro/critica encontrada
+                                pr_dscritic IN OUT VARCHAR2,
+                                pr_tpocorre IN VARCHAR2 DEFAULT 2) IS --> Texto de erro/critica encontrada
     vr_qtconsul crapcbc.qtconsul%TYPE; --> Quantidade de registros consultados
+    vr_titulo   varchar2(10);          --> indica se é erro ou alerta
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --                                                      Última atualização: 06/06/2017
+  --
+  --              06/06/2017 - Inclusão do parâmetro para indicar o tipo de ocorrência a gravar na tabela
+  --                           tbgen_prglog_ocorrencia e padronização da mensagem
+  --                           (Ana - Envolti) CH=660433 / 660325
+  --
+  ---------------------------------------------------------------------------------------------------------------
   BEGIN
+    --Verifica se é erro ou alerta
+    IF pr_tpocorre = '1' THEN
+       vr_titulo := 'ALERTA';
+    ELSE
+       vr_titulo := 'ERRO';
+    END IF;
+       
     -- Envio centralizado de log de erro
     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                               || 'Conta: '    || ' --> ' ||pr_nrdconta
-                                               || ' Contrato: '|| ' --> ' ||pr_nrdocmto
-                                               || ' Erro: '    || ' --> ' ||pr_dscritic
+                              ,pr_ind_tipo_log => pr_tpocorre  
+                              ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                  ' - '||'SSPC0001'||' --> '|| 
+                                                  vr_titulo||': '|| pr_dscritic||' Nrdconta:'||pr_nrdconta|| 
+                                                  ',Nrdocmto:'||pr_nrdocmto||',Nrprotoc:'||pr_nrprotoc|| 
+                                                  ',Nrconbir:'||pr_nrconbir
                               ,pr_nmarqlog => 'CONAUT');
 
     -- Atualiza o numero do protocolo nos detalhes
@@ -5225,6 +5248,18 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                     pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
                                     pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
 
+
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --                                                      Ultima atualizacao: 
+  --
+  --              06/06/2017 - Alteração da mensagem de retorno do cursor crawepr
+  --                           pc_solicita_consulta_biro CH=660371
+  --                         - Tratamento na chamada da pc_gera_log_batch CH=660433 / CH=660325
+  --                           (Ana - Envolti) 06/06/2017
+  --
+  ---------------------------------------------------------------------------------------------------------------
+
     -- Cursor sobre os dados de emprestimo
     CURSOR cr_crawepr IS
       SELECT crawepr.nrctaav1,
@@ -5469,8 +5504,10 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                             vr_dtenvest;    
       
       -- Se nao encontrar o emprestimo, retorna com erro
+      --Alterada mensagem CH=660371
       IF cr_crawepr%NOTFOUND THEN
-        vr_dscritic := 'Emprestimo inexistente. Favor verificar!';
+        vr_dscritic := 'Contrato de Emprestimo inexistente. Favor verificar!';
+
         CLOSE cr_crawepr;
         RAISE vr_exc_saida;
       END IF;
@@ -6495,13 +6532,15 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
            
-      -- Trata erro na requisicao
+      --Tratamento na chamada da pc_gera_log_batch CH=660433 / CH=660325
+      -- Trata erro na requisicao, mostra parãmentros na gravação da tbgen_prglog
       pc_trata_erro_retorno(pr_cdcooper => pr_cdcooper,
                             pr_nrdconta => pr_nrdconta,
                             pr_nrdocmto => pr_nrdocmto,
                             pr_nrprotoc => vr_nrprotoc,
                             pr_nrconbir => vr_nrconbir,
-                            pr_dscritic => vr_dscritic);
+                            pr_dscritic => vr_dscritic,
+                            pr_tpocorre => 1);
       
       -- Volta o numero da consulta do biro no emprestimo
       IF pr_inprodut = 1 THEN
@@ -6538,13 +6577,15 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
 
+      --Tratamento na chamada da pc_gera_log_batch CH=660433 / CH=660325
       -- Trata erro na requisicao
       pc_trata_erro_retorno(pr_cdcooper => pr_cdcooper,
                             pr_nrdconta => pr_nrdconta,
                             pr_nrdocmto => pr_nrdocmto,
                             pr_nrprotoc => vr_nrprotoc,
                             pr_nrconbir => vr_nrconbir,
-                            pr_dscritic => vr_dscritic);
+                            pr_dscritic => vr_dscritic,
+                            pr_tpocorre => 2);
 
       -- Volta o numero da consulta do biro no emprestimo
       IF pr_inprodut = 1 THEN
