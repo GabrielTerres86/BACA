@@ -1554,7 +1554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_efetua_recarga
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Fevereiro/2017                 Ultima atualizacao:
+    Data    : Fevereiro/2017                 Ultima atualizacao: 12/07/2017
 
     Dados referentes ao programa:
 
@@ -1567,6 +1567,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
                 06/06/2017 - Incluir a gravação da data de repasse do valor para 
                              a Rede Tendencia(dtrepasse) (Renato Darosci)
+
+		        12/07/2017 - Corrigida ordem dos parâmetros vr_cdcritic e vr_dscritic na
+				             chamada do Aymaru (Diego).
+							 
     ..............................................................................*/		
 	  DECLARE
 		  -- Variavel de criticas
@@ -1973,8 +1977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,pr_parametros => vr_parametros
 																				 ,pr_conteudo => vr_recarga
 																				 ,pr_resposta => vr_resposta
-																				 ,pr_dscritic => vr_cdcritic
-																				 ,pr_cdcritic => vr_dscritic);
+																				 ,pr_dscritic => vr_dscritic
+																				 ,pr_cdcritic => vr_cdcritic);
 			-- Se retornou alguma crítica														 
 			IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 				-- Gerar crítica
