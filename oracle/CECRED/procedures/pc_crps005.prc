@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 20/02/2017
+   Data    : Novembro/91.                    Ultima atualizacao: 26/04/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -365,15 +365,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                             
                17/06/2015 - #295005 Alterado o campo usado como filtro do tipo de linha de 
                             crédito, de dslcremp para dsorgrec (Carlos)
-               
+			         
                26/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
                             
-               29/09/2016 - Alteração do diretório para geração de arquivo contábil.
+			   29/09/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
                             
                20/02/2017 - Ajuste no processo de emissão do relatório 006_999.
                             P307 (Ricardo Linhares).                            
+                            
+               26/04/2017 - Retirado a geração do arquivo microcredito_coop_59dias
+                            (Tiago/Rodrigo #654647).
      ............................................................................. */
 
      DECLARE
@@ -789,17 +792,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_tab_rel_agpvlbjd   typ_reg_tot;
        vr_tab_rel_vlcntinv   typ_reg_tot; -- P307 CONTA INVESTIMENTO
 
-       vr_eh_ultimo_dia_mes BOOLEAN;
-       
-       -- P307 Calculo de Compensação de Microcrédito
-       vr_tot_vltttlcr_dim        NUMBER := 0;
-       vr_tot_vltttlcr_dim_outros NUMBER := 0;       
-       vr_totatraso59_dim         NUMBER := 0;
-       vr_totatraso59_dim_outros  NUMBER := 0;
-       
-       -- P307 Variáveis para criar arquivo de Compensação Microcrédito
-       vr_txt_compmicro VARCHAR2(32700);       
-
        /* Cursores da pc_crps005 */
 
        -- Selecionar os dados da Cooperativa
@@ -908,7 +900,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          FROM crapsld crapsld
          WHERE crapsld.cdcooper = pr_cdcooper;
        rw_crapsld cr_crapsld%ROWTYPE;
-       
+
        --Selecionar informacoes dos lancamentos
        CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE
                          ,pr_nrdconta IN craplcm.nrdconta%TYPE) IS
@@ -1068,7 +1060,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            AND crapneg.cdhisest = 1
            AND crapneg.nrdocmto = pr_nrdocmto
            AND crapneg.vlestour = pr_vlestour;
-           
+
 
        /* Variaveis Locais da pc_crps005 */
 
@@ -1082,9 +1074,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_tab_resgate    APLI0001.typ_tab_resgate;
        vr_tab_dados_rpp  APLI0001.typ_tab_dados_rpp;
 
-       --Indices das temp-tables       
-       vr_ind PLS_INTEGER;
-       
+
        vr_vlsldapl NUMBER;
        vr_vlsldrgt NUMBER;
        vr_vlsldtot NUMBER;
@@ -1190,22 +1180,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_index_crat007_final VARCHAR2(15);
 
        -- Variável para armazenar as informações em XML
-       vr_des_xml   CLOB;
-       vr_des_xml2  CLOB;
+       vr_des_xml   CLOB;       
        vr_dstexto   VARCHAR2(32700);
        vr_des_chave VARCHAR2(400);
-       
-       --Variaveis arquivos microcredito
-       vr_nom_diretorio VARCHAR2(200);
-       vr_nom_dir_copia VARCHAR2(200);
-       vr_nmarquivo     VARCHAR2(200);
-       vr_arq           utl_file.file_type;
 
        --Variaveis de Excecao
        vr_exc_saida  EXCEPTION;
        vr_exc_fimprg EXCEPTION;
        vr_exc_pula   EXCEPTION;
-   
+
        --Funcao para concatenar os telefones da conta
        FUNCTION fn_concatena_fones (pr_cdcooper IN crapdat.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -1287,23 +1270,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            --Sair do programa
            RAISE vr_exc_erro;
        END;
-       
-       -- Função para verificar se é ultimo dia do mês
-       FUNCTION fn_eh_ultimo_dia_mes RETURN BOOLEAN IS
-         vr_eh_ultimo_dia BOOLEAN := FALSE;
-       BEGIN
-
-         IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') <> TO_CHAR(rw_crapdat.dtmvtopr,'MM') THEN
-           vr_eh_ultimo_dia := TRUE;
-         END IF;
-         RETURN vr_eh_ultimo_dia;
-         
-       END;
 
        -- Função para totalizar valores da conta de Investimento
        FUNCTION fn_totalizar_conta_inves(pr_cdcooper IN crapcop.cdcooper%TYPE             
                                         ,pr_inpessoa IN crapass.inpessoa%TYPE) RETURN NUMBER IS
-                                                
+
          vr_tot_conta NUMBER := 0;    
          vr_exc_erro EXCEPTION;            
          
@@ -1341,198 +1312,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            RAISE vr_exc_erro;         
        END;          
        
-       PROCEDURE pc_abrir_arq_comp_microcred(pr_cdcooper IN crapass.cdcooper%TYPE
-                                            ,pr_utlfile IN OUT NOCOPY UTL_FILE.file_type) IS
-
-        vr_ds_error       VARCHAR2(500);
-         
-       BEGIN
-         
-         vr_nmarquivo := TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD') ||'_'|| LPAD(TO_CHAR(pr_cdcooper),2,0) || '_MICROCREDITO_COMPENSACAO.TXT';
-         
-         vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C'
-                                                  ,pr_cdcooper => pr_cdcooper
-                                                  ,pr_nmsubdir => 'contab');
-                                                  
-         GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio
-                                 ,pr_nmarquiv => vr_nmarquivo
-                                 ,pr_tipabert => 'W'
-                                 ,pr_utlfileh => pr_utlfile
-                                 ,pr_des_erro => vr_ds_error);
-                                      
-       END;
-       
-       PROCEDURE pc_escrever_recursos_dim IS
-           vr_txt_compmicro VARCHAR2(500);
-       BEGIN
-         
-           -- 1ª linha
-           vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtolt,'YYMMDD') || ','
-                            || to_char(rw_crapdat.dtmvtolt,'DDMMYY')       || ','
-                            || '3967'                                      || ','
-                            || '9264'                                      || ','
-                            || TRIM(TO_CHAR(vr_tot_vltttlcr_dim - vr_totatraso59_dim,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','
-                            || '5210'                                || ','
-                            || '"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 59 DIAS."';
-          
-           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                         ,pr_des_text => vr_txt_compmicro);
-                                        
-                            
-           -- 2ª linha                                  
-           vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtolt,'YYMMDD')    || ','
-                            || to_char(rw_crapdat.dtmvtolt,'DDMMYY')          || ','
-                            || '3972'                                         || ','
-                            || '9264'                                         || ','
-                            || TRIM(TO_CHAR(vr_totatraso59_dim,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','
-                            || '5210'                                         || ','
-                            || '"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 59 DIAS."';                                  
-
-           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                         ,pr_des_text => vr_txt_compmicro);
-                            
-           -- 3ª linha
-           vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')                  || ','
-                            || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                        || ','
-                            || '9264'                                                           || ','
-                            || '3967'                                                           || ','
-                            || TRIM(TO_CHAR(vr_tot_vltttlcr_dim - vr_totatraso59_dim,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','
-                            || '5210'                                                           || ','
-                            || '"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 59 DIAS."';
-                            
-           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                         ,pr_des_text => vr_txt_compmicro);
-                           
-           -- 4ª linha                                  
-           vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')       || ','
-                            || to_char(rw_crapdat.dtmvtopr,'DDMMYY')             || ','
-                            || '9264'                                            || ','
-                            || '3972'                                            || ','
-                            || TRIM(TO_CHAR(vr_totatraso59_dim,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','
-                            || '5210'                                            || ','
-                            || '"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 59 DIAS."';                                                              
-                            
-           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                         ,pr_des_text => vr_txt_compmicro);
-                                         
-       END;
-       --
-       
-       PROCEDURE pc_escrever_recursos_dim_venc IS
-         vr_txt_compmicro VARCHAR2(500);
-       BEGIN
-         
-         -- 1ª linha
-         vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtolt,'YYMMDD')                              || ','
-                          || to_char(rw_crapdat.dtmvtolt,'DDMMYY')                                    || ','
-                          || '3965'                                                                   || ','
-                          || '9264'                                                                   || ','
-                          || TRIM(TO_CHAR(vr_tot_vltttlcr_dim_outros - vr_totatraso59_dim_outros,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','                          
-                          || '5210'                                                                   || ','
-                          || '"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 59 DIAS."';       
-
-         GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                       ,pr_des_text => vr_txt_compmicro);
-                          
-                          
-         -- 2ª linha
-         vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtolt,'YYMMDD')             || ','
-                          || to_char(rw_crapdat.dtmvtolt,'DDMMYY')                   || ','
-                          || '3968'                                                  || ','
-                          || '9264'                                                  || ','
-                          || TRIM(TO_CHAR(vr_totatraso59_dim_outros,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','                                                    
-                          || '5210'                                                  || ','
-                          || '"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 59 DIAS."';                                 
-
-         GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                       ,pr_des_text => vr_txt_compmicro);
-
-                                       
-         -- 3ª linha
-         vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')                              || ','
-                          || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                                    || ','
-                          || '9264'                                                                       || ','
-                          || '3965'                                                                       || ','
-                          || TRIM(TO_CHAR(vr_tot_vltttlcr_dim_outros - vr_totatraso59_dim_outros,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','                                                    
-                          || '5210'                                                                       || ','
-                          || '"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 59 DIAS."';       
-
-         GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                       ,pr_des_text => vr_txt_compmicro);
-                            
-                          
-         -- 4ª linha
-         vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtopr,'YYMMDD')                 || ','
-                          || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                       || ','
-                          || '9264'                                                      || ','
-                          || '3968'                                                      || ','
-                          || TRIM(TO_CHAR(vr_totatraso59_dim_outros,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','                                                    
-                          || '5210'                                                      || ','
-                          || '"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 59 DIAS."';                                 
-
-         GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                       ,pr_des_text => vr_txt_compmicro);
-         
-       END;
-
-       PROCEDURE pc_escrever_recurros_mic_caixa (pr_nrctactl IN crapcop.nrctactl%TYPE) IS
-         vr_txt_compmicro VARCHAR2(500);
-         vr_vlsdeved      NUMBER := 0;        
-         
-         CURSOR cr_vlsdeved IS
-          SELECT SUM(epr.vlsdeved) vlsdeved
-            FROM craplcr lcr
-                ,crapepr epr
-           WHERE epr.nrdconta = pr_nrctactl
-             AND epr.cdcooper = lcr.cdcooper 
-             AND epr.cdlcremp = lcr.cdlcremp
-             AND epr.cdcooper = 3 -- Fixo Central
-             AND epr.cdfinemp = 1 -- Fixo (REPASSE RECURSOS PNMPO CEF)
-             AND lcr.cdusolcr = 1
-             AND lcr.dsorgrec <> ' ';
-          rw_vlsdeved cr_vlsdeved%ROWTYPE;
-         
-       BEGIN
-  
-         -- Busca o Saldo Devedor       
-         OPEN cr_vlsdeved;
-         FETCH cr_vlsdeved INTO rw_vlsdeved;
-         IF cr_vlsdeved%FOUND THEN
-           vr_vlsdeved := rw_vlsdeved.vlsdeved;  
-         END IF;
-         CLOSE cr_vlsdeved;     
-         
-         
-         IF nvl(vr_vlsdeved,0) <> 0 then
-           
-            -- 1ª linha
-           vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtolt,'YYMMDD')                              || ','
-                            || to_char(rw_crapdat.dtmvtolt,'DDMMYY')                                    || ','
-                            || '3957'                                                                   || ','
-                            || '9264'                                                                   || ','
-                            || TRIM(TO_CHAR(vr_vlsdeved,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','                                                      
-                            || '5210' || ','
-                            || '"CAIXA – CREDITOS CAPTADOS POR COOPERATIVAS REF. MES DE ' || TRIM(UPPER(to_char(rw_crapdat.dtmvtolt,'month'))) || '/' || to_char(rw_crapdat.dtmvtolt,'yyyy') || '"';                          
-
-
-           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                         ,pr_des_text => vr_txt_compmicro);
-                        
-                            
-           -- 2ª linha
-           vr_txt_compmicro := '50'||to_char(rw_crapdat.dtmvtolt,'YYMMDD')                              || ','
-                            || to_char(rw_crapdat.dtmvtopr,'DDMMYY')                                    || ','
-                            || '9264'                                                                   || ','
-                            || '3957'                                                                   || ','
-                            || TRIM(TO_CHAR(vr_vlsdeved,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,')) || ','   
-                            || '5210' || ','
-                            || '"CAIXA – REVERSAO DOS CREDITOS CAPTADOS POR COOPERATIVAS REF. MES DE ' || TRIM(UPPER(to_char(rw_crapdat.dtmvtolt,'month'))) || '/' || to_char(rw_crapdat.dtmvtolt,'yyyy') || '"';                          
-
-           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_arq
-                                         ,pr_des_text => vr_txt_compmicro);
-         
-         END IF;
-       END;
 
        --Procedure para gravar movimentos Ci
        PROCEDURE pc_grava_movimentos_ci (pr_cdcooper IN crapass.cdcooper%TYPE
@@ -1738,12 +1517,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            RAISE vr_exc_erro;
        END;
 
-       --Escrever no arquivo CLOB
-       PROCEDURE pc_escreve_xml2(pr_des_dados IN VARCHAR2) IS
-       BEGIN
-         --Escrever no arquivo XML
-         dbms_lob.writeappend(vr_des_xml2,length(pr_des_dados||Chr(10)),pr_des_dados||Chr(10));
-       END;
 
        --Geração do relatório de Maiores Depositantes (crrl055)
        PROCEDURE pc_imprime_crrl055 (pr_des_erro OUT VARCHAR2) IS
@@ -3083,10 +2856,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_nom_direto_cop VARCHAR2(100);
          vr_dstextab   craptab.dstextab%TYPE;
          vr_nmarqtxt   VARCHAR2(100):= 'slddev.txt';
-         vr_nmarqimp2  VARCHAR2(100):= rw_crapcop.dsdircop||'_microcredito_59dias.txt';
-         
-         --
-         vr_typ_said         VARCHAR2(4);
+
 
        BEGIN
          --Inicializar variavel de erro
@@ -3647,14 +3417,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            END IF;
            --Total Linha Credito recebe total pessoa fisica + total pessoa juridica
            vr_rel_vltttlcr:= Nvl(vr_tab_totais_final(vr_des_chave).vltttfis,0) + Nvl(vr_tab_totais_final(vr_des_chave).vltttjur,0);
-           
-           IF vr_eh_ultimo_dia_mes THEN
-             IF vr_tab_totais_final(vr_des_chave).tipo = 'MICROCREDITO DIM' THEN
-               vr_tot_vltttlcr_dim := vr_tot_vltttlcr_dim + vr_rel_vltttlcr; -- Acumulo total da linha
-             ELSIF vr_tab_totais_final(vr_des_chave).tipo IN ('MICROCREDITO PNMPO CAIXA','MICROCREDITO PNMPO DIM') THEN
-               vr_tot_vltttlcr_dim_outros := vr_tot_vltttlcr_dim_outros + vr_rel_vltttlcr; -- Acumulo total da linha 
-             END IF;
-           END IF;
 
            --Montar arquivo XML
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<micro_id id="'||vr_tab_totais_final(vr_des_chave).cdlcremp||'">
@@ -3668,45 +3430,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              --Montar arquivo XML com os totais
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</micro>');
              
-           END IF;
-           
-           IF vr_des_chave = vr_tab_totais_final.LAST THEN
-               
-             IF vr_eh_ultimo_dia_mes THEN
-               
-               --Abre o arquivo
-               pc_abrir_arq_comp_microcred(pr_cdcooper => pr_cdcooper
-                                          ,pr_utlfile  => vr_arq);
-             
-               --Microcredito DIM
-               pc_escrever_recursos_dim;
-               
-               --Microcredito Outros
-               pc_escrever_recursos_dim_venc;
-               
-               --Saldo dos Recursos Captados – Microcrédito CAIXA
-               pc_escrever_recurros_mic_caixa(pr_nrctactl => pr_nrctactl);
-               
-               -- Busca do diretório onde o Radar ou Matera pegará o arquivo                                          
-               vr_nom_dir_copia := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                            ,pr_cdcooper => 0
-                                                            ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');               
-               
-               --Fecha o arquivo                              
-               GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arq);   
-                                          
-               -- Copia o arquivo gerado para o diretório final convertendo para DOS
-               gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarquivo||' > '||vr_nom_dir_copia||'/'||vr_nmarquivo||' 2>/dev/null',
-                                           pr_typ_saida   => vr_typ_said,
-                                           pr_des_saida   => vr_dscritic);
-               -- Testar erro
-               if vr_typ_said = 'ERR' then
-                 vr_dscritic := 'Erro ao copiar o arquivo '||vr_nmarquivo||': '||vr_dscritic;
-                 raise vr_exc_erro;
-               end if;
-               
-             END IF;
-           
+
            END IF;
            
            -- Buscar o próximo registro da tabela
@@ -3768,20 +3492,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              --Levantar Excecao
              RAISE vr_exc_erro;
            END IF;
-
-           -- Inicializar o CLOB
-           dbms_lob.createtemporary(vr_des_xml2, TRUE);
-           dbms_lob.open(vr_des_xml2, dbms_lob.lob_readwrite);
-
-           --Escrever o cabecalho do arquivo de dados
-           vr_setlinha:= '    PA     CONTA/DV   CONTRATO   LINHA   SALDO DEVEDOR    ULTIMO PAG';
-           --Escrever o cabecalho no arquivo
-           pc_escreve_xml2(vr_setlinha);
-           --Montar a linha tracejada do cabecalho
-           vr_setlinha:= '    '||LPad('-',64,'-');
-           --Escrever o cabecalho no arquivo
-           pc_escreve_xml2(vr_setlinha);
-
            /* Mostrar contas atrasadas ate 59 dias */
            -- Processar todos os registros de atrasados
            vr_des_chave := vr_tab_atrasados.FIRST;
@@ -3795,16 +3505,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              --Acumular total por linha de credito
              vr_rel_vltotatr:= vr_rel_vltotatr + vr_tab_atrasados(vr_des_chave).vlsdeved;
 
-             --Montar linha para escrever no arquivo de dados
-             vr_setlinha:= '   '|| --3
-                           LPad(vr_tab_atrasados(vr_des_chave).cdagenci,3,' ')||'  '|| --9
-                           RPad(LTrim(gene0002.fn_mask_conta(vr_tab_atrasados(vr_des_chave).nrdconta)),10,' ')||'  '|| --20
-                           LPad(To_Char(vr_tab_atrasados(vr_des_chave).nrctremp,'fm999g999g999'),11,' ')||'     '|| --35
-                           RPad(vr_tab_atrasados(vr_des_chave).cdlcremp,4,' ')||'  '|| --39
-                           RPad(to_char(vr_tab_atrasados(vr_des_chave).vlsdeved,'fm9999g999g990d00'),17,' ')||'   '||--58
-                           to_char(vr_tab_atrasados(vr_des_chave).dtultpag,'DD/MM/YYYY');
-             --Escrever a linha no arquivo
-             pc_escreve_xml2(vr_setlinha);
 
              -- Se este for o ultimo registro do vetor, ou da agência
              IF vr_des_chave = vr_tab_atrasados.LAST OR vr_tab_atrasados(vr_des_chave).cdlcremp <> vr_tab_atrasados(vr_tab_atrasados.NEXT(vr_des_chave)).cdlcremp THEN
@@ -3815,40 +3515,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                              </conta>');
                --Montar arquivo XML com os totais
                gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</linha>');
-               
-               vr_setlinha:= lpad(' ',25,' ')||'Total da linha:'||chr(13)||
-                             lpad(' ',41,' ')||to_char(vr_rel_vltotatr,'fm999g999g999g990d00')||chr(13)||chr(13); 
-               --Escrever a linha no arquivo
-               pc_escreve_xml2(vr_setlinha);
-               
+
              END IF;
              -- Buscar o próximo registro da tabela
              vr_des_chave := vr_tab_atrasados.NEXT(vr_des_chave);
            END LOOP;
-           
-           -- Enfim, agenda a geração do relatorio como txt
-           GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper    --> Cooperativa conectada
-                                              ,pr_cdprogra  => vr_cdprogra    --> Programa chamador
-                                              ,pr_dtmvtolt  => vr_dtmvtolt    --> Data do movimento atual
-                                              ,pr_dsxml     => vr_des_xml2    --> Arquivo XML de dados
-                                              ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nmarqimp2 --> Path/Nome do arquivo PDF gerado
-                                              ,pr_cdrelato  => 005               --> Como não há, usamos o código do programa mesmo
-                                              ,pr_flg_impri => 'N'               --> Chamar a impress?o (Imprim.p)
-                                              ,pr_flg_gerar => 'N'               --> Gerar o arquivo na hora
-                                              ,pr_dspathcop => vr_nom_direto_cop --> Copiar apos geracao
-                                              ,pr_fldoscop  => 'S'       --> Converter para DOS após cópia
-                                              ,pr_flgremarq => 'S'       --> Flag para remover o arquivo apos copia/email
-                                              ,pr_des_erro  => vr_des_erro); --> Saida com erro
 
-           -- Testar se houve erro
-           IF vr_des_erro IS NOT NULL THEN
-             -- Gerar exceção
-             RAISE vr_exc_erro;
-           END IF;
-
-           -- Liberando a memória alocada pro CLOB
-           dbms_lob.close(vr_des_xml2);
-           dbms_lob.freetemporary(vr_des_xml2);
          END IF;
 
 
@@ -4721,7 +4393,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        -- Incluir nome do módulo logado
        GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS005'
                                  ,pr_action => NULL);
-                                 
+
        -- Verifica se a cooperativa esta cadastrada
        OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
        FETCH cr_crapcop INTO rw_crapcop;
@@ -4760,8 +4432,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          --Ultimo dia do mes anterior
          vr_dtultdia:= rw_crapdat.dtultdia;
        END IF;
-       
-       vr_eh_ultimo_dia_mes := fn_eh_ultimo_dia_mes();
 
        -- Validações iniciais do programa
        BTCH0001.pc_valida_iniprg (pr_cdcooper => pr_cdcooper
@@ -5414,7 +5084,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              IF rw_crapsld.vlblqjud > 0 THEN
                vr_tab_rel_vlblqjud(rw_crapass.inpessoa):= vr_tab_rel_vlblqjud(rw_crapass.inpessoa) + Nvl(rw_crapsld.vlblqjud,0);
              END IF;
-             
+
              --Se valor saldo disponivel + valor saldo cheque salario for negativo
              IF (rw_crapsld.vlsddisp + rw_crapsld.vlsdchsl) < 0 THEN
                --Se o saldo disponivel + saldo cheque salario + limite de credito for > 0
@@ -6059,7 +5729,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                                   ,pr_vlsldrgt => vr_vlsldrgt   --> Saldo Total para Resgate
                                                   ,pr_cdcritic => vr_cdcritic   --> Código da crítica
                                                   ,pr_dscritic => vr_dscritic); --> Descrição da crítica
-                                                        
+            																						
                 IF nvl(vr_cdcritic,0) <> 0 OR 
                    TRIM(vr_dscritic) IS NOT NULL THEN
                   RAISE vr_exc_saida;
@@ -6521,7 +6191,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                           vr_tab_atrasados(vr_index_atrasados).nrctremp:= rw_crapepr.nrctremp;
                           vr_tab_atrasados(vr_index_atrasados).dtultpag:= rw_crapepr.dtultpag;
                           vr_tab_atrasados(vr_index_atrasados).vlsdeved:= vr_vlsdeved;
-                          
+
                         END IF;
                       END IF;
                     END IF;  --vr_vlsdeved > 0
@@ -6563,30 +6233,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                       vr_pessafis:= 0;
                       vr_pessajur:= 0;
                       
-                    ELSE
-                      --Necessário abrir cursor para buscar dsorgrec
-                      OPEN cr_craplcr2 (pr_cdcooper => rw_crapepr.cdcooper
-                                       ,pr_cdlcremp => rw_crapepr.cdlcremp);
-                      --Posicionar no primeiro registro
-                      FETCH cr_craplcr2 INTO rw_craplcr2; 
-                      CLOSE cr_craplcr2;                       
-                    
+
                     END IF;
                     
-                    IF vr_eh_ultimo_dia_mes THEN -- acumula atrasos de microcredito DIM
-                        
-                      IF rw_craplcr2.dsorgrec IN('MICROCREDITO DIM') THEN
-                        IF vr_dias > 59 THEN
-                          vr_totatraso59_dim := vr_totatraso59_dim + vr_vlsdeved;
-                        END IF;
-                      ELSIF rw_craplcr2.dsorgrec IN('MICROCREDITO PNMPO CAIXA','MICROCREDITO PNMPO DIM') THEN
-                        IF vr_dias > 59 THEN
-                          vr_totatraso59_dim_outros := vr_totatraso59_dim_outros + vr_vlsdeved;
-                        END IF; 
-                      END IF;
-                        
-                    END IF;                    
-                    
+
                   EXCEPTION
                     WHEN vr_exc_saida THEN
                       RAISE vr_exc_saida;
@@ -6626,7 +6276,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
         vr_tab_rel_vlcntinv(3) := fn_totalizar_conta_inves(pr_cdcooper => pr_cdcooper
                                                           ,pr_inpessoa => 3);                                                          
 
-                          
+
         --Gerar relatorio Maiores Depositantes
         pc_imprime_crrl055(pr_des_erro => vr_dscritic); 
         --Se retornou erro
