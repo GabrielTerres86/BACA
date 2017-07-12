@@ -13,6 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   --  Alteracoes: 22/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
   --  
   --			  16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
+  --
+  --			  12/07/2017 - Chamado 687332 - correção da gravação da CRAPLAU - Jean (Mout´S)
   --------------------------------------------------------------------------------------------------------------*/
 
 	TYPE typ_reg_cstdsc IS
@@ -7604,7 +7606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								 ,0
 								 ,0
 								 ,pr_cdcooper
-								 ,(to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') || ' ' ||
+								 ,(to_char(rw_crapbdc.dtmvtolt, 'DD/MM/RRRR') || ' ' ||
 									to_char(rw_crapbdc.cdagenci, 'fm000') 		  || ' ' ||
 									to_char(700, 'fm000') 		  || ' ' ||
 									to_char(vr_tab_cheques(vr_idx_cheque).nrdolote, 'fm000000')   || ' ' ||
