@@ -469,7 +469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       
       -- Se enviou com sucesso
       IF vr_dscritic IS NULL THEN
-        vr_dhenvio := SYSDATE;
+        
         UPDATE tbgen_sms_lote lot
            SET lot.idsituacao = 'E' -- Em espera de Retorno
               ,lot.dtmvtolt = vr_dhenvio
