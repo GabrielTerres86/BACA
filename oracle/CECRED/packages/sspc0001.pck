@@ -2841,9 +2841,6 @@ PROCEDURE pc_trata_erro_retorno(pr_cdcooper IN crapepr.cdcooper%TYPE, --> Codigo
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
-    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
-    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_trata_erro_retorno');  
-
     --Verifica se é erro ou alerta
     IF pr_tpocorre = '1' THEN
        vr_titulo := 'ALERTA';
