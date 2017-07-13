@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 13/06/2017
+    Data    : Marco/07.                       Ultima atualizacao: 13/07/2017
     
     Dados referentes ao programa:
 
@@ -218,12 +218,14 @@
                            por dtdevolu = ? (Lucas Ranghetti #640682)
 
               08/05/2017 - Incluso tratativa crapcst.nrborder = 0 nas duas leituras
-			               FOR LAST crapcst (Daniel - Projeto 300) 
+			                     FOR LAST crapcst (Daniel - Projeto 300) 
                            
               13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
                            Fraudes/Impedimentos e remoçao do processo de devoluçao VLB.
                            PRJ367 - Compe Sessao Unica (Lombardi)
               
+              13/07/2017 - Alterar a situação do insitchq das tabelas crapcdb e crapcst
+                           para 3 depois que criar o craplcm (Lucas Ranghetti #659855)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -1147,7 +1149,7 @@ PROCEDURE gera_lancamento:
                        RELEASE craplot.
                        
                        /* Desconto */
-                       FOR LAST crapcdb FIELDS(cdcooper nrdconta nrcheque cdbanchq  cdagechq nrctachq) 
+                       FOR LAST crapcdb FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq insitchq) 
                                          WHERE crapcdb.cdcooper = aux_cdcooper
                                            AND crapcdb.cdcmpchq = crapfdc.cdcmpchq
                                            AND crapcdb.cdbanchq = crapfdc.cdbanchq
@@ -1156,7 +1158,7 @@ PROCEDURE gera_lancamento:
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
                                            AND CAN-DO("0,2",STRING(crapcdb.insitchq))
                                            AND crapcdb.dtdevolu = ?
-                                           NO-LOCK:
+                                           EXCLUSIVE-LOCK:
                        END.                        
                        
                        IF  AVAILABLE crapcdb THEN          
@@ -1272,11 +1274,13 @@ PROCEDURE gera_lancamento:
 
                                VALIDATE craplot.
                                VALIDATE craplcm.
+                               
+                               ASSIGN crapcdb.insitchq = 3.  /* Devolvido */
                            END.
                        ELSE /* nao encontrou crapcdb */
                            DO:
                               /* Custodia */
-                              FOR LAST crapcst FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq) 
+                              FOR LAST crapcst FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq insitchq) 
                                                 WHERE crapcst.cdcooper = aux_cdcooper
                                                   AND crapcst.cdcmpchq = crapfdc.cdcmpchq
                                                   AND crapcst.cdbanchq = crapfdc.cdbanchq
@@ -1284,9 +1288,9 @@ PROCEDURE gera_lancamento:
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
                                                   AND CAN-DO("0,2",STRING(crapcst.insitchq))
-												  AND crapcst.dtdevolu = ?
-												  AND crapcst.nrborder = 0
-                                                  NO-LOCK:
+                                                  AND crapcst.dtdevolu = ?
+                                                  AND crapcst.nrborder = 0
+                                                  EXCLUSIVE-LOCK:
                               END.
                         
                               IF  AVAILABLE crapcst THEN
@@ -1401,6 +1405,8 @@ PROCEDURE gera_lancamento:
                                     
                                       VALIDATE craplot.
                                       VALIDATE craplcm.
+                                      
+                                      ASSIGN crapcst.insitchq = 3.  /* Devolvido */
                                   END.
                            END.
                     END. /* crapdev.cdhistor = 47 */
