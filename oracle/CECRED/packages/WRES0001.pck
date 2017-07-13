@@ -6,15 +6,15 @@ CREATE OR REPLACE PACKAGE CECRED.WRES0001 AS
     Sistema  : Rotinas genéricas para acesso a um serviço HTTP
     Sigla    : WRES
     Autor    : Ricardo Linhares
-    Data     : Outubro/2016.                   Ultima atualizacao: 11/07/2017
+    Data     : Outubro/2016.                   Ultima atualizacao: 13/07/2017
   
    Dados referentes ao programa:
   
    Frequencia: -----
    Objetivo  : Fornecer funcionalidades para acessar um serviço HTTP
-
-   Alterações: 11/07/2017 - Alterado timeout default para 110 (Ricardo).
-                
+   Alterações: 11/07/2017 - Alterado timeout default para 110 (Ricardo). 
+   
+			   13/07/2017 - Adicionado tratamento para verificar quando é erro de Timeout (ricardo linhares)              
   ---------------------------------------------------------------------------*/
 
   -- Constantes para definição de Verbos HTTP
@@ -62,12 +62,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
     Sistema  : Rotinas genéricas para acesso a um serviço HTTP
     Sigla    : WRES
     Autor    : Ricardo Linhares
-    Data     : Outubro/2016.                   Ultima atualizacao: 
+    Data     : Outubro/2016.                   Ultima atualizacao: 13/07/2017
   
    Dados referentes ao programa:
   
    Frequencia: -----
    Objetivo  : Fornecer funcionalidades para acessar um serviço HTTP
+   
+   Alteracoes: 13/07/2017 - Adicionado tratamento para verificar quando é erro de Timeout (ricardo linhares)   
                 
   ---------------------------------------------------------------------------*/
   
@@ -235,7 +237,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
       END IF;
 
       -- Pega o retnorno da chamada
-      vr_res := utl_http.get_response(vr_req);
+      BEGIN
+        vr_res := utl_http.get_response(vr_req);
+      EXCEPTION
+         WHEN OTHERS THEN
+           IF INSTR(UPPER(SQLERRM), 'TIMEOUT') > 0 THEN
+             pr_resposta.status_code := utl_http.HTTP_REQUEST_TIME_OUT;
+             pr_cdcritic := 0;
+             pr_dscritic := 'Ocorreu Timeout da requisicao HTTP';
+           ELSE
+             pr_cdcritic := 0;
+             pr_dscritic := 'Ocorreu um erro ao processar requisicao HTTP: '||SQLERRM;
+           END IF;
+         
+         RAISE vr_exc_saida;      
+       END;
+
       vr_dtresposta := SYSDATE;
     
       -- Busca os cabeçalhos de retorno
