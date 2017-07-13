@@ -36,7 +36,7 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --              13/09/2016 - Quando a data vier vazia, nao gerar erro (Andrino-RKAM)
   --
   --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
-  --                         - Inclução módulo e ação e rotina de loh no exception otheres - Chamado 663304
+  --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -497,7 +497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --                           PRJ207 - Esteira  (Odirlei-AMcom)
   --
   --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
-  --                         - Inclução módulo e ação e rotina de loh no exception otheres - Chamado 663304
+  --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -625,7 +625,7 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapbir');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
@@ -637,7 +637,7 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapbir');  
 
 
@@ -824,7 +824,7 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapcbr');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
@@ -836,7 +836,7 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapcbr');  
 
         OPEN cr_crapcbr;
@@ -1057,7 +1057,7 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_craprbi');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
@@ -1069,7 +1069,7 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_craprbi');  
 
         OPEN cr_craprbi;
@@ -1318,7 +1318,7 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapmbr');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
@@ -1330,7 +1330,7 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapmbr');  
 
         OPEN cr_crapmbr;
@@ -1548,7 +1548,7 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crappcb');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
@@ -1560,7 +1560,7 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crappcb');  
 
         -- Monta o produto para o log
@@ -1822,7 +1822,7 @@ PROCEDURE pc_tela_conaut_crapprm(pr_cddopcao IN VARCHAR2              --> Tipo d
       
       vr_qtsegrsp      PLS_INTEGER;
     BEGIN
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapprm');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
@@ -1834,7 +1834,7 @@ PROCEDURE pc_tela_conaut_crapprm(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapprm');  
 
         -- Verifica o tipo de acao que sera executada
@@ -1972,7 +1972,7 @@ PROCEDURE pc_consulta_campo_conaut( pr_nmcamp   IN VARCHAR2                  -- 
       vr_exc_saida     EXCEPTION;
       vr_contador      PLS_INTEGER := 0;    
     BEGIN
-        -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
         GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_campo_conaut');  
 
       -- Verifica o tipo de campo que se deseja consultar
@@ -2042,7 +2042,7 @@ PROCEDURE pc_insere_crapcbd(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- Sequencial
                             pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
                             pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_insere_crapcbd');  
 
     INSERT INTO crapcbd
@@ -2212,7 +2212,7 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
     vr_nrseqdet_soc crapcbd.nrseqdet%TYPE; --> Sequencia de detalhe da consulta do socio
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.fn_verifica_reaproveitamento');  
 
     -- Busca a ordem de importancia da consulta que sera realizada
@@ -2774,7 +2774,7 @@ PROCEDURE pc_insere_craprpf(pr_nrconbir IN  craprpf.nrconbir%TYPE, --> Sequencia
                             pr_dtultneg IN  craprpf.dtultneg%TYPE, --> Data da ultima negativa 
                             pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_insere_craprpf');  
 
     INSERT INTO craprpf
@@ -2820,7 +2820,7 @@ PROCEDURE pc_trata_erro_retorno(pr_cdcooper IN crapepr.cdcooper%TYPE, --> Codigo
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_trata_erro_retorno');  
 
     --Verifica se é erro ou alerta
@@ -2906,7 +2906,7 @@ PROCEDURE pc_envia_requisicao(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codigo 
     vr_result        VARCHAR2(100); --> Resultado do campo do cabecalho
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_envia_requisicao');  
   
     -- Busca a url de comunicacao 
@@ -3039,7 +3039,7 @@ FUNCTION fn_separa_cidade_uf(pr_nmcidade IN VARCHAR2,     --> Nome da cidade com
                              pr_idretorn IN PLS_INTEGER)  --> Indicador de retorno - 1=Municipio, 2=UF
                                          RETURN VARCHAR2 IS
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.fn_separa_cidade_uf');  
 
     -- Se for para retornar municipio
@@ -3092,7 +3092,7 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
     vr_exc_saida  EXCEPTION; --> Excecao prevista
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_retorno_req');  
     
     -- Busca o diretorio onde sera gravado o XML
@@ -3240,7 +3240,7 @@ PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_tab_xml   gene0007.typ_tab_tagxml; --> PL Table para armazenar conteúdo XML
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_conteudo_campo');  
 
     -- Busca a informacao no XML
@@ -3367,7 +3367,7 @@ PROCEDURE pc_processa_retorno_req(pr_nrconbir IN crapcbd.nrconbir%TYPE,  --> Num
     vr_dsmsgobs VARCHAR2(500);         --> Mensagem da observacao existente na tag de reaproveitamento
     vr_txalinea VARCHAR2(30);          --> Receber a alinea como texto para tratamento do campo dsmotivo
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_processa_retorno_req');  
 
     -- Inicializa o contador de consultas
@@ -5078,7 +5078,7 @@ PROCEDURE pc_atualiza_scr(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da c
     vr_exc_saida  EXCEPTION; --> Excecao prevista
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_scr');  
 
     -- Busca os dados do conjuge
@@ -5278,7 +5278,7 @@ PROCEDURE pc_atualiza_tab_controle(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Nu
     vr_exc_saida  EXCEPTION; --> Excecao prevista
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_tab_controle');  
 
     -- Efetua a somatoria das pendencias financeiras 
@@ -5357,7 +5357,7 @@ PROCEDURE pc_monta_cpf_cnpj_envio(pr_xml  IN OUT XmlType,               --> XML 
                                   pr_dtconscr IN DATE,                  --> Data base para a consulta no SCR
                                   pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_monta_cpf_cnpj_envio');  
 
     -- Envia o cabecalho e o tipo de consulta
@@ -5402,7 +5402,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
   --              06/06/2017 - Alteração da mensagem de retorno do cursor crawepr
   --                           pc_solicita_consulta_biro CH=660371
   --                         - Tratamento na chamada da pc_gera_log_batch CH=660433 / CH=660325
-  --                         - Inclução módulo e ação e rotina de loh no exception otheres - Chamado 663304
+  --                         - Inclusão módulo e ação e rotina de loh no exception otheres - Chamado 663304
   --                           (Ana - Envolti) 06/06/2017
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -6783,7 +6783,7 @@ PROCEDURE pc_solicita_consulta_biro_xml(pr_cdcooper IN  crapepr.cdcooper%TYPE, -
                                         pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
     vr_dscritic VARCHAR2(500); --> Retorno das criticas de geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_consulta_biro_xml');  
     
     -- Efetua a consulta no biro da Ibratan
@@ -6828,7 +6828,7 @@ PROCEDURE pc_busca_modalidade_prm(pr_cdcooper IN  crappcb.cdcooper%TYPE, --> Cod
          AND crapmbr.nrordimp <> 0 -- Para nao pegar a consulta Bacen
         ORDER BY crappcb.vlinicio DESC;
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_modalidade_prm');  
 
     -- Busca os parametros de consultas para identificar qual biro sera utilizado
@@ -6889,7 +6889,7 @@ PROCEDURE pc_verifica_mud_faixa(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codig
     vr_vlemprst     crawepr.vlemprst%TYPE;     --> Valor total de emprestimo que o cooperado possui
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_mud_faixa');  
     
     -- Joga como padrao que nao muda o valor
@@ -6999,7 +6999,7 @@ PROCEDURE pc_verifica_mud_faixa_emp(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     rw_crawepr cr_crawepr%ROWTYPE;
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_mud_faixa_emp');  
     
     -- Busca o valor do emprestimo e o numero da consulta do biro
@@ -7042,7 +7042,7 @@ PROCEDURE pc_verifica_mud_faixa_lim(pr_cdcooper IN  craplim.cdcooper%TYPE, --> C
     rw_craplim cr_craplim%ROWTYPE;
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_mud_faixa_lim');  
     
     -- Busca o valor do emprestimo e o numero da consulta do biro
@@ -7117,7 +7117,7 @@ PROCEDURE pc_obrigacao_consulta_xml(pr_cdcooper IN  crapass.cdcooper%TYPE, --> C
     vr_inpessoa PLS_INTEGER;
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_obrigacao_consulta_xml');  
 
     -- Busca os dados dos emprestimos
@@ -7179,7 +7179,7 @@ PROCEDURE pc_obrigacao_cns_cpl_xml(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Co
     vr_inobriga VARCHAR2(01);
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_obrigacao_cns_cpl_xml');  
     
     -- Exeucta a rotina principal
@@ -7237,7 +7237,7 @@ PROCEDURE pc_obrigacao_consulta(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codig
     vr_cdbircon crapcbd.cdbircon%TYPE; --> Codigo do biro de consulta
     vr_cdmodbir crapcbd.cdmodbir%TYPE; --> Modalidade do biro de consulta
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_obrigacao_consulta');  
     
     -- Efetua a verificacao de linha de credito habilitada para consulta
@@ -7335,7 +7335,7 @@ PROCEDURE pc_busca_consulta_biro(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codi
          AND crapcbd.inreterr = 0  -- Nao houve erros
        ORDER BY crapcbd.dtconbir DESC; -- Buscar a consuilta mais recente
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_consulta_biro');  
 
     -- Busca os detalhes das consultas de biros
@@ -7361,7 +7361,7 @@ PROCEDURE pc_busca_consulta_biro_xml(pr_cdcooper IN  crapass.cdcooper%TYPE, --> 
     vr_nrseqdet crapcbd.nrseqdet%TYPE;
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_consulta_biro_xml');  
 
     -- Busca o codigo do biro e a sequencia
@@ -7418,7 +7418,7 @@ PROCEDURE pc_busca_cns_biro(pr_cdcooper       IN  crapass.cdcooper%TYPE, --> Cod
           OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca);
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_cns_biro');  
 
     -- Busca os detalhes das consultas de biros para o emprestimo
@@ -7455,7 +7455,7 @@ PROCEDURE pc_busca_cns_biro_xml(pr_cdcooper       IN  crapass.cdcooper%TYPE, -->
     vr_nrseqdet crapcbd.nrseqdet%TYPE;
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_cns_biro_xml');  
 
     -- Busca o codigo do biro e a sequencia
@@ -7479,7 +7479,7 @@ PROCEDURE pc_consulta_geral(pr_nrconbir IN  crapcbd.nrconbir%TYPE --> Numero da 
     vr_nmdcampo VARCHAR2(500);
     vr_des_erro VARCHAR2(500);
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_geral');  
 
     -- busca o xml com os parametros gerais
@@ -7523,7 +7523,7 @@ PROCEDURE pc_consulta_geral_xml(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_geral_xml');  
     
     -- Verifica qual o biro e a modalidade da consulta
@@ -7783,7 +7783,7 @@ PROCEDURE pc_consulta_spc(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da con
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_vlregist   craprsc.vlregist%TYPE :=0; --> Somatorio do campo vlregist
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_spc');  
 
     -- Criar cabeçalho do XML
@@ -7872,7 +7872,7 @@ PROCEDURE pc_consulta_cheque(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_nmtagpnc   VARCHAR2(20); --> Nome da tag principal
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_cheque');  
 
     IF pr_idsitchq = 1 THEN
@@ -7967,7 +7967,7 @@ PROCEDURE pc_consulta_cabecalho(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_cabecalho');  
 
     -- Criar cabeçalho do XML
@@ -8063,7 +8063,7 @@ PROCEDURE pc_consulta_pefin_refin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numer
     vr_nmtagpnc   VARCHAR2(20); --> Nome da tag principal
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_pefin_refin');  
 
     -- Define o nome da tag principal
@@ -8166,7 +8166,7 @@ PROCEDURE pc_consulta_protesto(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero d
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_protesto');  
 
     -- Resumo das pendencias financeiras do Refin/Pefin
@@ -8235,7 +8235,7 @@ PROCEDURE pc_consulta_pendencia_fin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_nmtagpnc   VARCHAR2(20); --> Nome da tag principal
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_pendencia_fin');  
 
     -- Criar cabeçalho do XML
@@ -8306,7 +8306,7 @@ PROCEDURE pc_consulta_acao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da co
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_acao');  
 
     -- Criar cabeçalho do XML
@@ -8402,7 +8402,7 @@ PROCEDURE pc_consulta_bacen_xml(pr_cdcooper       IN  crapass.cdcooper%TYPE --> 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_nrconbir   crapcbd.nrconbir%TYPE; --> Numero da consulta do biro
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_bacen_xml');  
   
     -- Se for emprestimo, entao busca os dados na crawepr
@@ -8467,7 +8467,7 @@ PROCEDURE pc_consulta_bacen(pr_cdcooper       IN  crapass.cdcooper%TYPE --> Codi
     vr_nmdcampo VARCHAR2(500);
     vr_des_erro VARCHAR2(500);
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_bacen');  
 
     pc_consulta_bacen_xml(pr_cdcooper       => pr_cdcooper,
@@ -8514,7 +8514,7 @@ PROCEDURE pc_consulta_falencia(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero d
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_falencia');  
 
     -- Criar cabeçalho do XML
@@ -8605,7 +8605,7 @@ PROCEDURE pc_consulta_socios(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da 
     vr_contador_det PLS_INTEGER :=0; --> Contador de registros de pendencias financeiras para geracao do xml
     vr_contador_psa PLS_INTEGER :=0; --> Contador de registros de pendencias financeiras para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_socios');  
 
     -- Criar cabeçalho do XML
@@ -8712,7 +8712,7 @@ PROCEDURE pc_consulta_administrador(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_dtmanadm   VARCHAR2(50);    --> Descricao da data do mandato
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_administrador');  
 
     -- Criar cabeçalho do XML
@@ -8800,7 +8800,7 @@ PROCEDURE pc_consulta_participacao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Nume
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_participacao');  
 
     -- Criar cabeçalho do XML
@@ -8858,7 +8858,7 @@ FUNCTION fn_verifica_situacao(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero da c
          AND craprpf.nrseqdet = pr_nrseqdet;
     rw_crapcbd cr_crapcbd%ROWTYPE;
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.fn_verifica_situacao');  
 
     -- Busca as pendencias financeiras
@@ -8905,7 +8905,7 @@ PROCEDURE pc_verifica_situacao(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero
       vr_flsituac VARCHAR2(01);
 
     BEGIN
-      -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+      -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
       GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_situacao');  
 
       -- Se vier com zeros, nao deve retornar nenhum valor nos parametros de saida
@@ -8944,7 +8944,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       vr_dsmodbir crapmbr.dsmodbir%TYPE;
 
     BEGIN
-      -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+      -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
       GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_situacao_xml');  
 
       -- Busca os dados com base na rotina original
@@ -9030,7 +9030,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_contador   PLS_INTEGER := 0; --> Contador de registro de detalhes
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_relato_xml');  
 
     -- Cria o no inicial do XML
@@ -9143,7 +9143,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_contador   PLS_INTEGER := 0; --> Contador de registro de detalhes
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_relato_det_xml');  
 
     -- Cria o no inicial do XML
@@ -9205,7 +9205,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_nrseqdet crapcbd.nrseqdet%TYPE;
 
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cadastrais_xml');  
 
     -- Busca o codigo do biro e a sequencia
@@ -9247,7 +9247,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_nrinfcad   PLS_INTEGER := 1; -- Flag de informacoes cadastrais
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cad_emp');  
 
     -- Busca as pendencias financeiras
@@ -9354,7 +9354,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_nrinfcad   PLS_INTEGER := 1; -- Flag de informacoes cadastrais
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cad_lim');  
 
     -- Busca as pendencias financeiras
@@ -9484,7 +9484,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_nrinfcad   PLS_INTEGER := 1; -- Flag de informacoes cadastrais
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cad_cta');  
 
     -- Abre o numero da consulta do biro 
@@ -9557,7 +9557,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
                                        pr_cdcritic OUT PLS_INTEGER,              --> Código da crítica
                                        pr_dscritic OUT VARCHAR2) IS              --> Descrição da crítica
   BEGIN
-    -- Inclução nome do módulo logado - 12/07/2018 - Chamado 663304
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cadastrais');  
 
     IF pr_inprodut = 1 THEN -- Se for emprestimo
