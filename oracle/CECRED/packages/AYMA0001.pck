@@ -156,12 +156,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
     --  Sistema  : Rotinas do Aymaru
     --  Sigla    : AYMA0001
     --  Autor    : Ricardo Linhares
-    --  Data     : Outubro/2016.                   Ultima atualizacao: --/--/----
+    --  Data     : Outubro/2016.                   Ultima atualizacao: 13/07/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Efetua uma requisição Rest para o Aymaru.
+	--
+	--   Alteracoes: 13/07/2017 - Atribuido Timeout de 110 segundos (Ricardo). 
 
     -- .............................................................................                                        
     
@@ -182,7 +184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
                                         ,pr_delimitador => ';') authentication_id
               ,gene0002.fn_busca_entrada(pr_postext     => 2
                                         ,pr_dstext      => dsvlrprm
-                                        ,pr_delimitador => ';') authentication_secred
+                                        ,pr_delimitador => ';') authentication_secret
           FROM crapprm
          WHERE nmsistem = 'CRED'
            AND cdcooper = 0
@@ -251,10 +253,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
       -- header para Authentication Secret
       vr_index_http_cabecalho := vr_index_http_cabecalho + 1;
       vr_cabecalho(vr_index_http_cabecalho).chave := TRIM(gene0002.fn_busca_entrada(pr_postext     => 1
-                                                                                   ,pr_dstext      => rw_token_aymaru.authentication_secred
+                                                                                   ,pr_dstext      => rw_token_aymaru.authentication_secret
                                                                                    ,pr_delimitador => ':'));
       vr_cabecalho(vr_index_http_cabecalho).valor := TRIM(gene0002.fn_busca_entrada(pr_postext     => 2
-                                                                                     ,pr_dstext      => rw_token_aymaru.authentication_secred
+                                                                                     ,pr_dstext      => rw_token_aymaru.authentication_secret
                                                                                      ,pr_delimitador => ':'));
 
     
@@ -284,6 +286,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
       vr_requisicao.cabecalho := vr_cabecalho;
       vr_requisicao.parametros := pr_parametros;
       vr_requisicao.conteudo := vr_conteudo;
+	  vr_requisicao.timeout := 110;
     
       -- chamada para consumidor REST
       WRES0001.pc_consumir_rest(pr_requisicao => vr_requisicao
