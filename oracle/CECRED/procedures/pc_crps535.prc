@@ -436,7 +436,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
     INDEX BY PLS_INTEGER;
 
   -- Tipo de registro para armazenar os arquivos lidos do diretorio
-  TYPE typ_diretorio IS RECORD (idarquivo     NUMBER  -- 1 = DDN e DNN; 2 = DVN
+  TYPE typ_diretorio IS RECORD (idarquivo     NUMBER  -- 1 = DDN e DNN; 2 = DCG
                                ,nmarquivo     VARCHAR2(200));
   TYPE typ_tabarq  IS TABLE OF typ_diretorio INDEX BY BINARY_INTEGER;
 
@@ -768,7 +768,7 @@ BEGIN
         vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
 
       ELSIF vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crapcop.cdagectl,4,'0')||'%.DCG') THEN
-        -- Grupo de arquivos .DVN
+        -- Grupo de arquivos .DCG
         vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 2;
         vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
 
@@ -783,8 +783,8 @@ BEGIN
           vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 3;
           vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
 
-        ELSIF vr_array_arquivo(ind) LIKE ('5'||lpad(rw_crabcop.cdagectl,4,'0')||'%.DVN') THEN
-          -- Grupo de arquivos .DVN
+        ELSIF vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crabcop.cdagectl,4,'0')||'%.DCG') THEN
+          -- Grupo de arquivos .DCG
           vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 4;
           vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
 
