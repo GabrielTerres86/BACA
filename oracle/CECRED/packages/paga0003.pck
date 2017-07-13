@@ -2896,31 +2896,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																							 pr_dtmvtolt => pr_dtmvtopg, 
 																							 pr_tipo     => 'A');
 
-    -- busca ultimo horario da debsic
-    OPEN cr_craphec(pr_cdcooper => pr_cdcooper
-                   ,pr_cdprogra => 'DEBSIC');
-    FETCH cr_craphec INTO rw_craphec;
+    -- Se for um agendamento vamos verificar se ja esgotou horario DEBSIC
+    IF pr_idagenda = 2 THEN
+      -- busca ultimo horario da debsic
+      OPEN cr_craphec(pr_cdcooper => pr_cdcooper
+                     ,pr_cdprogra => 'DEBSIC');
+      FETCH cr_craphec INTO rw_craphec;
 
-    IF cr_craphec%NOTFOUND THEN
-      CLOSE cr_craphec;
-      vr_hriniexe:= 0;
-    ELSE
-      CLOSE cr_craphec;
-      vr_hriniexe:= rw_craphec.hriniexe;
-    END IF;
-    
-    -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
-    -- que antecede o final de semana ou feriado nacional
-    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
-       rw_crapdat.dtmvtolt = vr_dtmvtopg THEN
-       
-      IF pr_tpdaguia = 1 THEN -- DARF
-        vr_dscritic := 'Agendamento de DARF permitido apenas para o proximo dia util.'; 
-      ELSE -- DAS
-        vr_dscritic := 'Agendamento de DAS permitido apenas para o proximo dia util.'; 
+      IF cr_craphec%NOTFOUND THEN
+        CLOSE cr_craphec;
+        vr_hriniexe:= 0;
+      ELSE
+        CLOSE cr_craphec;
+        vr_hriniexe:= rw_craphec.hriniexe;
       END IF;
       
-      RAISE vr_exc_erro;     
+      -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
+      -- que antecede o final de semana ou feriado nacional
+      IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
+         rw_crapdat.dtmvtolt = vr_dtmvtopg THEN
+         
+        IF pr_tpdaguia = 1 THEN -- DARF
+          vr_dscritic := 'Agendamento de DARF permitido apenas para o proximo dia util.'; 
+        ELSE -- DAS
+          vr_dscritic := 'Agendamento de DAS permitido apenas para o proximo dia util.'; 
+        END IF;
+        
+        RAISE vr_exc_erro;     
+      END IF;
     END IF;
 
 		-- Procedure para validar limites para transacoes
