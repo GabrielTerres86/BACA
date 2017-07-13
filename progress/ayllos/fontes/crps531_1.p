@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 04/07/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 07/07/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -199,6 +199,9 @@
                04/07/2017 - Ajustar as procedures grava_mensagem_ted e grava_ted_rejeitada
                             para gerar as mensagens de erro no arquivo de log 
                             crps531_DDMMYYYY.log (Douglas - Chamado 524133)
+
+               07/07/2017 - Ajustar a gravacao do XML da mensagem de TED, para ser feito apenas
+                            quando o retorno da verifica_processo for OK (Douglas - Chamado 524133)
                
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
@@ -1927,94 +1930,100 @@ PROCEDURE importa_xml.
             
    END. /** Fim do DO ... TO **/    
                    
-   
-    /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
-    IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN  
+
+    /* Verificar se o processo já foi finalizado  */ 
+    RUN verifica_processo.
+    IF   RETURN-VALUE = "OK"   THEN
     DO:
    
-        IF   aux_NumCtrlRem <> ""  THEN
-             ASSIGN aux_nro_controle = aux_NumCtrlRem.
-        ELSE
-             ASSIGN aux_nro_controle = aux_NumCtrlIF.          
-
-        IF  aux_tagCABInf THEN  
-            ASSIGN aux_cdagectl_pesq = INT(SUBSTRING(aux_NumCtrlIF,8,4)).
-        ELSE 
-            ASSIGN aux_cdagectl_pesq = INT(aux_AgCredtd).
-        
-        FIND FIRST crabcop 
-            WHERE crabcop.cdagectl =  aux_cdagectl_pesq
-        NO-LOCK NO-ERROR.
-        
-        /* Verificar se recebemos data na mensagem XML */    
-        IF aux_DtMovto <> "" THEN
+        /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
+        IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN  
         DO:
-            
-            IF LENGTH(aux_setlinh2) > 4000 THEN
-                ASSIGN aux_msgspb_xml = "XML muito grande. Verifique arquivo fisico: " + aux_nmarqxml
-                       aux_manter_fisico = TRUE. 
+       
+            IF   aux_NumCtrlRem <> ""  THEN
+                 ASSIGN aux_nro_controle = aux_NumCtrlRem.
+            ELSE
+                 ASSIGN aux_nro_controle = aux_NumCtrlIF.          
+
+            IF  aux_tagCABInf THEN  
+                ASSIGN aux_cdagectl_pesq = INT(SUBSTRING(aux_NumCtrlIF,8,4)).
             ELSE 
-                ASSIGN aux_msgspb_xml = aux_setlinh2
-                       aux_manter_fisico = FALSE. 
-                
-            /* gravar a mensagem de TED que descriptografamos */
-            RUN grava_mensagem_ted (INPUT (IF AVAILABLE crabcop THEN 
-                                               crabcop.cdcooper
-                                           ELSE
-                                               glb_cdcooper),                  /* Codigo da Cooperativa */
-                                    INPUT aux_nro_controle,                  /* Numero de controle */ 
-                                    INPUT DATE(ENTRY(3, aux_DtMovto, "-") + 
-                                               ENTRY(2, aux_DtMovto, "-") +
-                                               ENTRY(1, aux_DtMovto, "-")), /* Data da mensagem */ 
-                                    INPUT aux_CodMsg,                       /* Evento */ 
-                                    INPUT aux_msgspb_xml).                    /* XML da mensagem */ 
-        END.
-        ELSE
+                ASSIGN aux_cdagectl_pesq = INT(aux_AgCredtd).
+            
+            FIND FIRST crabcop 
+                WHERE crabcop.cdagectl =  aux_cdagectl_pesq
+            NO-LOCK NO-ERROR.
+            
+            /* Verificar se recebemos data na mensagem XML */    
+            IF aux_DtMovto <> "" THEN
             DO:
                 
-                ASSIGN aux_manter_fisico = TRUE
-                       aux_msgspb_xml = STRING(TODAY,"99/99/9999") + " - " +
-                                        STRING(TIME,"HH:MM:SS") +
-                                        " - " + glb_cdprogra + " --> " +
-                                        "Alerta da Execucao Paralela - " + 
-                                        "PID: " + STRING(aux_idparale) + 
-                                        " Seq.: " + STRING(aux_idprogra) + 
-                                        " - Mensagem de TED nao possui data. " + 
-                                        "Verifique arquivo fisico: " + aux_nmarqxml.
-                
-                /* Gravar a mensagem que deu erro */
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-                RUN STORED-PROCEDURE pc_gera_log_batch
-                    aux_handproc = PROC-HANDLE NO-ERROR
-                                     (INPUT glb_cdcooper,   /* Cooperativa */ 
-                                      INPUT 2,              /* Nivel criticidade do log "Erro tratato" */
-                                      INPUT aux_msgspb_xml,   /* Descriçao do log em si */
-                                      INPUT "crps531_" + 
-                                            STRING(crapdat.dtmvtolt,"99999999") + 
-                                            ".log",         /* Nome para gravaçao de log em arquivo específico */
-                                      
-                                      INPUT "N",            /* Flag S/N para criar um arquivo novo */ 
-                                      INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
-                                      INPUT ?,              /* Diretorio onde será gerado o log */
-                                      INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
-                                      INPUT glb_cdprogra,   /* Programa/job */
-                                      INPUT 3,              /* Execucao via BATCH */
-                                      INPUT 0,              /* Criticidade BAIXA */ 
-                                      INPUT 1).             /* Processo executado com sucesso */
-                                                               
-                CLOSE STORED-PROC pc_gera_log_batch
-                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-            
+                IF LENGTH(aux_setlinh2) > 4000 THEN
+                    ASSIGN aux_msgspb_xml = "XML muito grande. Verifique arquivo fisico: " + aux_nmarqxml
+                           aux_manter_fisico = TRUE. 
+                ELSE 
+                    ASSIGN aux_msgspb_xml = aux_setlinh2
+                           aux_manter_fisico = FALSE. 
+                    
+                /* gravar a mensagem de TED que descriptografamos */
+                RUN grava_mensagem_ted (INPUT (IF AVAILABLE crabcop THEN 
+                                                   crabcop.cdcooper
+                                               ELSE
+                                                   glb_cdcooper),                  /* Codigo da Cooperativa */
+                                        INPUT aux_nro_controle,                  /* Numero de controle */ 
+                                        INPUT DATE(ENTRY(3, aux_DtMovto, "-") + 
+                                                   ENTRY(2, aux_DtMovto, "-") +
+                                                   ENTRY(1, aux_DtMovto, "-")), /* Data da mensagem */ 
+                                        INPUT aux_CodMsg,                       /* Evento */ 
+                                        INPUT aux_msgspb_xml).                    /* XML da mensagem */ 
             END.
+            ELSE
+                DO:
+                    
+                    ASSIGN aux_manter_fisico = TRUE
+                           aux_msgspb_xml = STRING(TODAY,"99/99/9999") + " - " +
+                                            STRING(TIME,"HH:MM:SS") +
+                                            " - " + glb_cdprogra + " --> " +
+                                            "Alerta da Execucao Paralela - " + 
+                                            "PID: " + STRING(aux_idparale) + 
+                                            " Seq.: " + STRING(aux_idprogra) + 
+                                            " - Mensagem de TED nao possui data. " + 
+                                            "Verifique arquivo fisico: " + aux_nmarqxml.
+                    
+                    /* Gravar a mensagem que deu erro */
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                    RUN STORED-PROCEDURE pc_gera_log_batch
+                        aux_handproc = PROC-HANDLE NO-ERROR
+                                         (INPUT glb_cdcooper,   /* Cooperativa */ 
+                                          INPUT 2,              /* Nivel criticidade do log "Erro tratato" */
+                                          INPUT aux_msgspb_xml,   /* Descriçao do log em si */
+                                          INPUT "crps531_" + 
+                                                STRING(crapdat.dtmvtolt,"99999999") + 
+                                                ".log",         /* Nome para gravaçao de log em arquivo específico */
+                                          
+                                          INPUT "N",            /* Flag S/N para criar um arquivo novo */ 
+                                          INPUT "N",            /* Flag S/N  para informaR ao fim da msg [PL/SQL] */
+                                          INPUT ?,              /* Diretorio onde será gerado o log */
+                                          INPUT "E",            /* Tipo do log: I - início; F - fim; O || E - ocorrencia */
+                                          INPUT glb_cdprogra,   /* Programa/job */
+                                          INPUT 3,              /* Execucao via BATCH */
+                                          INPUT 0,              /* Criticidade BAIXA */ 
+                                          INPUT 1).             /* Processo executado com sucesso */
+                                                                   
+                    CLOSE STORED-PROC pc_gera_log_batch
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                    
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                END.
+        END.
     END.
    
-   /* remove arquivo temporario descriptografado */ 
-   UNIX SILENT VALUE ("rm " + aux_nmarquiv).  
+    /* remove arquivo temporario descriptografado */ 
+    UNIX SILENT VALUE ("rm " + aux_nmarquiv).  
 
-   RETURN "OK".
+    RETURN "OK".
    
 END PROCEDURE.
 

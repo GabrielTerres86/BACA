@@ -954,9 +954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_des_erro = 'NOK' THEN
         RAISE vr_exc_erro;
-      END IF; 
-    
-      dbms_output.put_line(vr_xml.getclobval());
+      END IF;     
     
       -- Enviar requisição para webservice
       soap0001.pc_cliente_webservice(pr_endpoint    => NPCB0003.fn_url_SendSoapNPC(pr_idservic => 3)
@@ -970,9 +968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;
-      
-      dbms_output.put_line(vr_xml_res.getclobval());
+      END IF;      
     
       -- Verifica se ocorreu retorno com erro no XML
       pc_obtem_fault_packet(pr_xml      => vr_xml_res
@@ -1610,7 +1606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 16/03/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 12/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -1624,6 +1620,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             16/03/2015 - Ajuste na busca do titular, caso não seja informado deve buscar o principal
     --                          (Odirlei-AMcom)
     --
+    --             12/07/2017 - Ajuste na data de desconto, pois conforme documentação da CIP, a data de desconto 
+    --                          só pode ser utilizada quando for menor que a data do vencimento. Portanto,
+    --                          não será utilizada. (Rafael)
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1693,6 +1692,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
          WHERE crapban.nrispbif = pr_nrispbif;
       rw_crapban_ispb cr_crapban_ispb%ROWTYPE;           
                        
+      -- buscar data de referencia da cabine JDNPC      
+      CURSOR cr_abertura IS
+        SELECT MAX("DataMov") datamov
+          FROM TBJDDDA_CTRL_ABERTURA@jdnpcsql
+         WHERE "ISPBCliente" = 5463212;
+      rw_abertura cr_abertura%ROWTYPE;
       
       --Variaveis Locais
       vr_index    INTEGER;
@@ -1710,6 +1715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_indiaprt   crapcob.indiaprt%TYPE;
       vr_inauxreg   NUMBER;
       vr_dsmsglog   crapcol.dslogtit%TYPE;
+      vr_data  VARCHAR2(20) := To_Char(SYSDATE, 'YYYYMMDDHH24MISS');
       
       --Variaveis Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1721,6 +1727,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
       
+      -- buscar data de referencia da cabine JDNPC
+      OPEN cr_abertura;
+      FETCH cr_abertura
+       INTO rw_abertura;
+          
       --Selecionar registro cobranca
       OPEN cr_crapcob(pr_rowid => pr_rowid_cob);
       --Posicionar no proximo registro
@@ -2156,8 +2167,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_tab_remessa_dda(vr_index).vlrtitul := rw_crapcob.vltitulo;
       pr_tab_remessa_dda(vr_index).nrddocto := rw_crapcob.dsdoccop;
       pr_tab_remessa_dda(vr_index).cdespeci := vr_cddespec;
-      pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
-                                                                ,'YYYYMMDD'));
+      
+      -- Ajuste devido ao erro EDDA0395 - Data de emissao > Data de referencia
+      IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > rw_abertura.datamov THEN
+        pr_tab_remessa_dda(vr_index).dtemissa := rw_abertura.datamov;
+      ELSE
+        pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
+                                                                  ,'YYYYMMDD')); 
+      END IF;
+      
       IF pr_flgdprot = TRUE THEN
         pr_tab_remessa_dda(vr_index).nrdiapro := rw_crapcob.qtdiaprt;
       ELSE
@@ -2208,16 +2226,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       ELSE
         pr_tab_remessa_dda(vr_index).flgaceit := 'N';
       END IF;
-      IF pr_vldescto > 0 THEN
-        IF rw_crapcob.cdmensag = 1 THEN 
-          pr_tab_remessa_dda(vr_index).dtddesct := NULL;
-        ELSE
-          pr_tab_remessa_dda(vr_index).dtddesct := TO_NUMBER(To_Char(pr_dtvencto + 52
-                                                                  ,'YYYYMMDD'));
-        END IF;                                                                  
-      ELSE
-        pr_tab_remessa_dda(vr_index).dtddesct := NULL;
-      END IF;
+
+      -- conforme documentação da CIP, a data de desconto só pode ser utilizada
+      -- quando for menor que a data do vencimento
+      -- Portanto, não será utilizada
+      pr_tab_remessa_dda(vr_index).dtddesct := NULL;
+      
       IF pr_vldescto > 0 THEN
         pr_tab_remessa_dda(vr_index).cdddesct := '1';
       ELSE
@@ -3313,14 +3327,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : DDDA
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Janeiro/2017.                   Ultima atualizacao: 
+    --  Data     : Janeiro/2017.                   Ultima atualizacao: 12/07/2017
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
     --
-    -- Alteracoes: 
+    -- Alteracoes: 12/07/2017 - Atualizar motivo A4 na confirmação do boleto na crapret (Rafael)
     ---------------------------------------------------------------------------------------------------------------
   
     ---------->>> CURSORES <<<-----------
@@ -3403,6 +3417,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
            , cob.nrdident =  nvl(pr_idtitnpc,cob.nrdident)           
            , cob.nratutit =  nvl(pr_nratutit,cob.nratutit)
        WHERE cob.rowid    = rw_crapcob.rowidcob;
+       
+       IF pr_cdstiope = 'RC' THEN
+         
+         UPDATE crapret ret
+            SET cdmotivo = 'A4' || cdmotivo
+          WHERE ret.cdcooper = rw_crapcob.cdcooper
+            AND ret.nrdconta = rw_crapcob.nrdconta
+            AND ret.nrcnvcob = rw_crapcob.nrcnvcob
+            AND ret.nrdocmto = rw_crapcob.nrdocmto
+            AND ret.cdocorre = 2; -- 2=Confirmacao de registro de boleto
+            
+        END IF;
+        
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao atualizar CRAPCOB: '||SQLERRM;
@@ -3706,7 +3733,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
            SET cob.ininscip = 2
          WHERE cob.rowid    = rw_crapcob.rowidcob;
          
-         dbms_output.put_line(rw_crapcob.rowidcob);
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar CRAPCOB: '||SQLERRM;
@@ -3865,16 +3891,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                      
             ELSIF rw_retnpc.tpoperac = 'CO' THEN --> Cancelamento da Baixa Operacional enviada pelo Banco Recebedor
               --> Acão ainda nao definida, será programada em segunda etapa
-              continue;
+              NULL;
             ELSIF rw_retnpc.tpoperac = 'JB' THEN --> Baixa Efetiva feita diretamente no JDNPC(Contingência)
               --> Acão ainda nao definida, será programada em segunda etapa
-              continue;
+              NULL;
             ELSIF rw_retnpc.tpoperac = 'DP' THEN --> Baixa por Decurso de Prazo
               --> Acão ainda nao definida, será programada em segunda etapa
-              continue;        
+              NULL; 
             ELSE
               -- Demais tipos de operacao serão ignoradas
-              continue;
+              NULL;
           END IF;    
           
           --> verificar se transacao apresentou erro
@@ -3891,7 +3917,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                                       ' - DDDA0001 -> ' || vr_dscritic,
                                        pr_nmarqlog     => vr_dslogmes);
              
-             continue;
           END IF; 
                     
           -- Commitar registro por registro processado
@@ -3949,15 +3974,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   BEGIN
     DECLARE
     
-      /*CURSOR cr_abertura IS
+      CURSOR cr_abertura IS
         SELECT MAX("DataMov") datamov
           FROM TBJDDDA_CTRL_ABERTURA@jdddasql
          WHERE "ISPBCliente" = 5463212;
-    
-         VER RAFAEL
-         */
-    
-     -- rw_abertura cr_abertura%ROWTYPE;
+      rw_abertura cr_abertura%ROWTYPE;
     
       --Variaveis Locais
       vr_index INTEGER;
@@ -3977,7 +3998,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
     
-      /*OPEN cr_abertura;
+      OPEN cr_abertura;
       FETCH cr_abertura
         INTO rw_abertura;
     
@@ -3991,7 +4012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       
       ELSE
         CLOSE cr_abertura;
-      END IF;*/
+      END IF;
       
     
       --Percorrer as remessas
@@ -5791,8 +5812,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         RAISE vr_exc_erro;
       END IF; 
     
-      dbms_output.put_line(vr_xml.getclobval());
-    
       -- Enviar requisição para webservice
       soap0001.pc_cliente_webservice(pr_endpoint    => NPCB0003.fn_url_SendSoapNPC(pr_idservic => 4)
                                     ,pr_acao        => NULL
@@ -5805,9 +5824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;
-      
-      dbms_output.put_line(vr_xml_res.getclobval());
+      END IF;     
     
       -- Verifica se ocorreu retorno com erro no XML
       pc_obtem_fault_packet(pr_xml      => vr_xml_res

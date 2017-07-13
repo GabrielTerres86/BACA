@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael Cechet
-    Data    : abril/2017.                     Ultima atualizacao: 17/04/2017
+    Data    : abril/2017.                     Ultima atualizacao: 12/07/2017
  
     Dados referentes ao programa:
  
@@ -16,10 +16,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     Objetivo  : Buscar confirmacao de registros e intrucoes
                 comandadas dos titulos na CIP.
     
-    Observacoes: Horario de execucao: todos os dias, das 6:00h as 21:00h
-                                      a cada 2 minutos.
+    Observacoes: Horario de execucao: todos os dias, a cada 5 minutos.
                                       
-    Alteracoes: 
+    Alteracoes: 12/07/2017 - Permitir que o programa rode em todas as cooperativas
+                             diariamente, inclusive finais de semana. (Rafael)        
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps718';     -- Nome do programa
@@ -103,13 +103,7 @@ BEGIN
     END IF;
     -- Fechar 
     CLOSE BTCH0001.cr_crapdat;
-    
-    --> se ainda estiver rodando o processo batch
-    -- nao deve rodar o programa
-    IF rw_crapdat.inproces <> 1 THEN
-      continue;
-    END IF;
-    
+        
     -- Log de início da execução
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
                           pr_dstiplog  => 'I');
