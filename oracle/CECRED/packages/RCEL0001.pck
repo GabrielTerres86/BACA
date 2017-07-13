@@ -1554,7 +1554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_efetua_recarga
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Fevereiro/2017                 Ultima atualizacao: 12/07/2017
+    Data    : Fevereiro/2017                 Ultima atualizacao: 13/07/2017
 
     Dados referentes ao programa:
 
@@ -1570,6 +1570,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
 		        12/07/2017 - Corrigida ordem dos parâmetros vr_cdcritic e vr_dscritic na
 				             chamada do Aymaru (Diego).
+
+                13/07/2017 - Efetuado tratamento para critica de Timeout na requisicao
+				             de recarga de celular (Diego). 
 							 
     ..............................................................................*/		
 	  DECLARE
@@ -1982,9 +1985,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			-- Se retornou alguma crítica														 
 			IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 				-- Gerar crítica
-				vr_dserrlog := vr_dscritic;
 				vr_cdcritic := 0;
 				vr_dscritic := 'Não foi possível efetuar a recarga.';
+
+				     -- saida por TIMEOUT  
+				IF   vr_resposta.status_code = 408  THEN
+				     vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
+			    ELSE
+				     vr_dserrlog := vr_dscritic;
+			    END IF;
 				
 				-- Gerar log
 				pc_gera_log_erro(pr_cdcooper => pr_cdcooper
@@ -2010,8 +2019,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				ELSE
 					vr_dscritic := 'Não foi possível efetuar a recarga.';
 				END IF;
-				-- Descrição do erro da Rede Tendencia
-				vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+
+			    -- Descrição do erro da Rede Tendencia
+			    vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+
 				-- Gerar log
 				pc_gera_log_erro(pr_cdcooper => pr_cdcooper
 												,pr_nrdconta => pr_nrdconta
