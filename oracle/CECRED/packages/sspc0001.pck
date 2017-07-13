@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --
   --  Programa: SSPC0001         
   --  Autor   : Andrino Carlos de Souza Junior
-  --  Data    : Julho/2014                     Ultima Atualizacao: 12/09/2016
+  --  Data    : Julho/2014                     Ultima Atualizacao: 19/05/2017
   --
   --  Dados referentes ao programa:
   --
@@ -35,6 +35,9 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --                           (Oscar)
   --              13/09/2016 - Quando a data vier vazia, nao gerar erro (Andrino-RKAM)
   --
+  --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
+  --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
+  --                           pc_solicita_consulta_biro (Ana - Envolti)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -498,7 +501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --  Programa: SSPC0001                        
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Julho/2014                     Ultima Atualizacao: - 27/04/2017
+  --  Data    : Julho/2014                     Ultima Atualizacao: - 19/05/2017
   --
   --  Dados referentes ao programa:
   --
@@ -514,6 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
 	--                           pc_processa_retorno_req e pc_solicita_consulta_biro. (PRJ337 - Motor de Crédito / Reinert)
   --  
   --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
+  --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
 --
 --
@@ -642,6 +646,8 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapbir');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
                                 ,pr_cdcooper => vr_cdcooper
@@ -652,6 +658,9 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapbir');  
+
 
         OPEN cr_crapbir;
           FETCH cr_crapbir
@@ -695,6 +704,8 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na atualizacao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               -- Descricao do erro na insercao de registros
               vr_dscritic := 'Problema ao atualizar CRAPBIR: ' || sqlerrm;
               RAISE vr_exc_saida;
@@ -724,6 +735,8 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na delecao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
                 -- Descricao do erro na insercao de registros
                 vr_dscritic := 'Problema ao excluir CRAPBIR: ' || sqlerrm;
                 RAISE vr_exc_saida;
@@ -748,6 +761,8 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na insercao de registros
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
                 vr_dscritic := 'Problema ao inserir CRAPBIR: ' || sqlerrm;
                 RAISE vr_exc_saida;
 
@@ -767,7 +782,8 @@ PROCEDURE pc_tela_conaut_crapbir(pr_cddopcao IN VARCHAR2              --> Tipo d
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
-
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em CRAPBIR: ' || SQLERRM;
 
@@ -829,6 +845,8 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapcbr');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
                                 ,pr_cdcooper => vr_cdcooper
@@ -839,6 +857,8 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapcbr');  
 
         OPEN cr_crapcbr;
           FETCH cr_crapcbr
@@ -889,6 +909,8 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na atualizacao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
               -- Descricao do erro na insercao de registros
               vr_dscritic := 'Problema ao atualizar CRAPBIR: ' || sqlerrm;
               RAISE vr_exc_saida;
@@ -929,6 +951,8 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na delecao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                 -- Descricao do erro na insercao de registros
                 vr_dscritic := 'Problema ao excluir CRAPCBR: ' || sqlerrm;
                 RAISE vr_exc_saida;
@@ -972,6 +996,8 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na insercao de registros
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                 vr_dscritic := 'Problema ao inserir CRAPCBR: ' || sqlerrm;
                 RAISE vr_exc_saida;
 
@@ -991,7 +1017,8 @@ PROCEDURE pc_tela_conaut_crapcbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
-
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em CRAPCBR: ' || SQLERRM;
 
@@ -1051,6 +1078,8 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_craprbi');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
                                 ,pr_cdcooper => vr_cdcooper
@@ -1061,6 +1090,8 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_craprbi');  
 
         OPEN cr_craprbi;
           FETCH cr_craprbi
@@ -1135,6 +1166,8 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na atualizacao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
               -- Descricao do erro na insercao de registros
               vr_dscritic := 'Problema ao atualizar craprbi: ' || sqlerrm;
               RAISE vr_exc_saida;
@@ -1181,6 +1214,8 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na delecao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                 -- Descricao do erro na insercao de registros
                 vr_dscritic := 'Problema ao excluir craprbi: ' || sqlerrm;
                 RAISE vr_exc_saida;
@@ -1217,6 +1252,8 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na insercao de registros
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                 vr_dscritic := 'Problema ao inserir craprbi: ' || sqlerrm;
                 RAISE vr_exc_saida;
 
@@ -1236,6 +1273,8 @@ PROCEDURE pc_tela_conaut_craprbi(pr_cddopcao IN VARCHAR2              --> Tipo d
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em craprbi: ' || SQLERRM;
@@ -1300,6 +1339,8 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapmbr');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
                                 ,pr_cdcooper => vr_cdcooper
@@ -1310,6 +1351,8 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapmbr');  
 
         OPEN cr_crapmbr;
           FETCH cr_crapmbr
@@ -1353,6 +1396,8 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na atualizacao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+               CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               -- Descricao do erro na insercao de registros
               vr_dscritic := 'Problema ao atualizar crapmbr: ' || sqlerrm;
               RAISE vr_exc_saida;
@@ -1388,6 +1433,8 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na delecao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
                 -- Descricao do erro na insercao de registros
                 vr_dscritic := 'Problema ao excluir crapmbr: ' || sqlerrm;
                 RAISE vr_exc_saida;
@@ -1418,6 +1465,8 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na insercao de registros
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
                 vr_dscritic := 'Problema ao inserir crapmbr: ' || sqlerrm;
                 RAISE vr_exc_saida;
 
@@ -1437,6 +1486,8 @@ PROCEDURE pc_tela_conaut_crapmbr(pr_cddopcao IN VARCHAR2              --> Tipo d
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em crapmbr: ' || SQLERRM;
@@ -1518,6 +1569,8 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crappcb');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
                                 ,pr_cdcooper => vr_cdcooper
@@ -1528,7 +1581,8 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
-
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crappcb');  
 
         -- Monta o produto para o log
         IF pr_inprodut = 1 THEN
@@ -1617,6 +1671,8 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na atualizacao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
               -- Descricao do erro na insercao de registros
               vr_dscritic := 'Problema ao atualizar crappcb: ' || sqlerrm;
               RAISE vr_exc_saida;
@@ -1666,6 +1722,8 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na delecao do registro
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                 -- Descricao do erro na insercao de registros
                 vr_dscritic := 'Problema ao excluir crappcb: ' || sqlerrm;
                 RAISE vr_exc_saida;
@@ -1712,6 +1770,8 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
             -- Verifica se houve problema na insercao de registros
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                 vr_dscritic := 'Problema ao inserir crappcb: ' || sqlerrm;
                 RAISE vr_exc_saida;
 
@@ -1731,6 +1791,8 @@ PROCEDURE pc_tela_conaut_crappcb(pr_cddopcao IN VARCHAR2              --> Tipo d
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em crappcb: ' || SQLERRM;
@@ -1781,6 +1843,8 @@ PROCEDURE pc_tela_conaut_crapprm(pr_cddopcao IN VARCHAR2              --> Tipo d
       
       vr_qtsegrsp      PLS_INTEGER;
     BEGIN
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_tela_conaut_crapprm');  
 
         gene0004.pc_extrai_dados(pr_xml => pr_retxml
                                 ,pr_cdcooper => vr_cdcooper
@@ -1791,6 +1855,8 @@ PROCEDURE pc_tela_conaut_crapprm(pr_cddopcao IN VARCHAR2              --> Tipo d
                                 ,pr_idorigem => vr_idorigem
                                 ,pr_cdoperad => vr_cdoperad
                                 ,pr_dscritic => vr_dscritic);
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SSPC0001.pc_tela_conaut_crapprm');  
 
         -- Verifica o tipo de acao que sera executada
         CASE pr_cddopcao
@@ -1836,10 +1902,14 @@ PROCEDURE pc_tela_conaut_crapprm(pr_cddopcao IN VARCHAR2              --> Tipo d
                      AND cdacesso = 'CONAUT_RESPOSTA';
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                    CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                     vr_dscritic := 'Erro ao alterar a CRAPPRM: '||SQLERRM;
                     RAISE vr_exc_saida;
                 END;
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
                 vr_dscritic := 'Erro ao inserir na CRAPPRM: '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
@@ -1872,6 +1942,8 @@ PROCEDURE pc_tela_conaut_crapprm(pr_cddopcao IN VARCHAR2              --> Tipo d
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em CRAPCBR: ' || SQLERRM;
@@ -1921,6 +1993,8 @@ PROCEDURE pc_consulta_campo_conaut( pr_nmcamp   IN VARCHAR2                  -- 
       vr_exc_saida     EXCEPTION;
       vr_contador      PLS_INTEGER := 0;    
     BEGIN
+        -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+        GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_campo_conaut');  
 
       -- Verifica o tipo de campo que se deseja consultar
       IF upper(pr_nmcamp) = 'CDBIRCON' THEN -- Codigo do biro
@@ -1967,6 +2041,8 @@ PROCEDURE pc_consulta_campo_conaut( pr_nmcamp   IN VARCHAR2                  -- 
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || vr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => NULL);  
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em CONAUT: ' || SQLERRM;
 
@@ -1987,6 +2063,9 @@ PROCEDURE pc_insere_crapcbd(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- Sequencial
                             pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
                             pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_insere_crapcbd');  
+
     INSERT INTO crapcbd
       (nrconbir,
        nrseqdet,
@@ -2017,6 +2096,8 @@ PROCEDURE pc_insere_crapcbd(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- Sequencial
      WHEN dup_val_on_index THEN
        NULL; -- Nao fazer nada, pois o resumo foi enviado
      WHEN OTHERS THEN
+       -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
        pr_dscritic := 'Erro ao inserir na CRAPCBD: ' ||SQLERRM;
    END;
 
@@ -2152,6 +2233,9 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
     vr_nrseqdet_soc crapcbd.nrseqdet%TYPE; --> Sequencia de detalhe da consulta do socio
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.fn_verifica_reaproveitamento');  
+
     -- Busca a ordem de importancia da consulta que sera realizada
     OPEN cr_crapmbr;
     FETCH cr_crapmbr INTO rw_crapmbr;
@@ -2249,6 +2333,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
          RETURNING nrseqdet INTO vr_nrseqdet;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPCBD: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2285,6 +2371,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPRSC: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2315,6 +2403,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPPRF: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2358,6 +2448,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPCSF: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2386,6 +2478,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPPRT: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2414,6 +2508,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPRFC: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2446,6 +2542,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPABR: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2476,6 +2574,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPPSA: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2500,6 +2600,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
             AND nrseqdet = rw_crapcbd.nrseqdet);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao duplicar CRAPRPF: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -2592,6 +2694,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
            RETURNING nrseqdet INTO vr_nrseqdet_soc;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             vr_dscritic := 'Erro ao duplicar CRAPCBD do socio: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -2622,6 +2726,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
               AND nrseqdet = rw_crapcbd_soc.nrseqdet);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             vr_dscritic := 'Erro ao duplicar CRAPPSA do socio: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -2646,6 +2752,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
               AND nrseqdet = rw_crapcbd_soc.nrseqdet);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             vr_dscritic := 'Erro ao duplicar CRAPRPF do socio: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -2671,6 +2779,8 @@ FUNCTION fn_verifica_reaproveitamento(pr_nrconbir IN  crapcbd.nrconbir%TYPE, -- 
       RETURN FALSE;
       
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_dscritic := SQLERRM;
       RETURN FALSE;
@@ -2685,6 +2795,9 @@ PROCEDURE pc_insere_craprpf(pr_nrconbir IN  craprpf.nrconbir%TYPE, --> Sequencia
                             pr_dtultneg IN  craprpf.dtultneg%TYPE, --> Data da ultima negativa 
                             pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_insere_craprpf');  
+
     INSERT INTO craprpf
       (nrconbir,
        nrseqdet,
@@ -2703,6 +2816,8 @@ PROCEDURE pc_insere_craprpf(pr_nrconbir IN  craprpf.nrconbir%TYPE, --> Sequencia
     WHEN dup_val_on_index THEN
       NULL; -- Nao faz nada, pois o resumo ja veio do arquivo
      WHEN OTHERS THEN
+       -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+       CECRED.pc_internal_exception (pr_cdcooper => NULL);  
        pr_dscritic := 'Erro ao inserir na CRAPRPF: ' ||SQLERRM;
    END;
 
@@ -2726,6 +2841,9 @@ PROCEDURE pc_trata_erro_retorno(pr_cdcooper IN crapepr.cdcooper%TYPE, --> Codigo
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_trata_erro_retorno');  
+
     --Verifica se é erro ou alerta
     IF pr_tpocorre = '1' THEN
        vr_titulo := 'ALERTA';
@@ -2752,6 +2870,8 @@ PROCEDURE pc_trata_erro_retorno(pr_cdcooper IN crapepr.cdcooper%TYPE, --> Codigo
        WHERE nrconbir = pr_nrconbir;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         pr_dscritic := 'Erro ao atualizar CRAPCBD: ' ||SQLERRM;
         RETURN;
     END;
@@ -2766,6 +2886,8 @@ PROCEDURE pc_trata_erro_retorno(pr_cdcooper IN crapepr.cdcooper%TYPE, --> Codigo
        WHERE nrconbir = pr_nrconbir;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         pr_dscritic := 'Erro ao atualizar CRAPCBD: ' ||SQLERRM;
         RETURN;
     END;
@@ -2805,6 +2927,8 @@ PROCEDURE pc_envia_requisicao(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codigo 
     vr_result        VARCHAR2(100); --> Resultado do campo do cabecalho
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_envia_requisicao');  
   
     -- Busca a url de comunicacao 
     v_ds_url := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
@@ -2848,6 +2972,8 @@ PROCEDURE pc_envia_requisicao(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codigo 
       l_http_request  := UTL_HTTP.begin_request(v_ds_url,'POST',utl_http.http_version_1_1);
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Nao foi possivel conectar com Ibratan: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -2915,6 +3041,8 @@ PROCEDURE pc_envia_requisicao(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codigo 
       END;
       
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -2932,6 +3060,9 @@ FUNCTION fn_separa_cidade_uf(pr_nmcidade IN VARCHAR2,     --> Nome da cidade com
                              pr_idretorn IN PLS_INTEGER)  --> Indicador de retorno - 1=Municipio, 2=UF
                                          RETURN VARCHAR2 IS
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.fn_separa_cidade_uf');  
+
     -- Se for para retornar municipio
     IF pr_idretorn = 1 THEN
       -- Se nao possuir quebra por UF, retorna o nome inteiro da UF
@@ -2979,6 +3110,8 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
     vr_exc_saida  EXCEPTION; --> Excecao prevista
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_retorno_req');  
     
     -- Busca o diretorio onde sera gravado o XML
     vr_nmdirarq := gene0001.fn_diretorio(pr_tpdireto => 'C',
@@ -3078,6 +3211,8 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
       pr_retxml := xmltype(vr_ds_xml);
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         gene0002.pc_clob_para_arquivo(pr_clob => vr_ds_xml, 
                                       pr_caminho => vr_nmdirarq, 
                                       pr_arquivo => 'erro_xml'||to_char(sysdate,'HH24MISS')||'.xml', 
@@ -3107,6 +3242,8 @@ PROCEDURE pc_solicita_retorno_req(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Cód
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -3123,6 +3260,9 @@ PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_tab_xml   gene0007.typ_tab_tagxml; --> PL Table para armazenar conteúdo XML
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_conteudo_campo');  
+
     -- Busca a informacao no XML
     gene0007.pc_itera_nodos(pr_xpath      => pr_nrcampo
                            ,pr_xml        => pr_retxml
@@ -3153,6 +3293,8 @@ PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML
     WHEN vr_exc_saida THEN
       pr_dscritic := 'Erro ao buscar campo '||pr_nrcampo||'. '||vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => NULL);  
       pr_dscritic := 'Erro ao buscar campo '||pr_nrcampo||'. '||SQLERRM;
   END;
   
@@ -3261,6 +3403,9 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_txalinea VARCHAR2(30);          --> Receber a alinea como texto para tratamento do campo dsmotivo
 		vr_intippes NUMBER;                --> Receber o enquadramento do tipo de pessoa na proposta
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_processa_retorno_req');  
+
     -- Inicializa o contador de consultas
     vr_contador := 1;
     LOOP
@@ -3295,6 +3440,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/CADASTRO/LOCALIZACAO/CEP', 'N',vr_crapcbd.nrcepend, vr_dscritic);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
           vr_dscritic := 'Erro processo titular da consulta-'||vr_contador||': '||SQLERRM;
           RAISE vr_exc_saida;
        END;
@@ -3392,6 +3539,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/OBSERVACOES/LISTA_OBSERVACAO/OBSERVACAO/MENSAGEM', 'S',vr_dsmsgobs, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro processo reaproveitamento-'||vr_contador||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -3408,6 +3557,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                                            substr(vr_dsmsgobs,instr(vr_dsmsgobs,':')-2,8)  ,'dd/mm/yyyyhh24:mi:ss');
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               -- Apenas insere um log de erro
               btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -3457,6 +3608,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           INTO vr_nrseqdet, vr_inpessoa;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
           vr_dscritic := 'Erro ao atualizar CRAPCBD: ' ||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -3510,6 +3663,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_VENCIMENTO', 'D',vr_craprsc.dtvencto, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro processo no SPC-'||vr_contador||'-'||vr_inlocnac||'-'||vr_contador_rsc||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -3548,6 +3703,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              vr_inlocnac);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPRSC: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -3582,6 +3739,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_VENCIMENTO','D',vr_crapprf.dtvencto, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro processo PEFIN / REFIN-'||vr_contador||'-'||vr_contador_prf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -3612,6 +3771,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              vr_crapprf.dsnature);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPPRF: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -3639,6 +3800,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
             pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULTIMO','D',vr_craprpf.dtultneg, vr_dscritic);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               vr_dscritic := 'Erro resumo PEFIN Serasa-'||vr_contador||': '||SQLERRM;
               RAISE vr_exc_saida;
           END;
@@ -3663,6 +3826,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
             pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULTIMO','D',vr_craprpf.dtultneg, vr_dscritic);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               vr_dscritic := 'Erro resumo REFIN Serasa-'||vr_contador||': '||SQLERRM;
               RAISE vr_exc_saida;
           END;
@@ -3715,6 +3880,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
             pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'IDENTIFICACAO','S',vr_crapprf.dsinstit, vr_dscritic);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               vr_dscritic := 'Erro PEFIN/REFIN do Serasa-'||vr_contador||'-'||vr_inpefref||'-'||vr_contador_prf||': '||SQLERRM;
               RAISE vr_exc_saida;
           END;
@@ -3747,6 +3914,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                vr_crapprf.dsmtvreg);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               vr_dscritic := 'Erro ao inserir na CRAPPRF: '||SQLERRM;
               RAISE vr_exc_saida;
           END;
@@ -3813,6 +3982,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'QTDE_TOTAL',   'S',vr_crapcsf.qtcheque, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro cheque sem fundo do SPC-'||vr_contador||'-'||vr_insitchq||'-'||vr_contador_csf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -3868,6 +4039,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              vr_txalinea);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPCSF: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -3952,6 +4125,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'MOTIVO',       'S',vr_txalinea, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro cheque sem fundo do Serasa-'||vr_contador||'-'||vr_insitchq||'-'||vr_contador_csf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4005,6 +4180,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              vr_txalinea);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPCSF (Serasa): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4030,6 +4207,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULTIMO', 'D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro resumo protesto-'||vr_contador||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4063,6 +4242,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_OCORRENCIA','D',vr_crapprt.dtprotes, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro protesto-'||vr_contador||'-'||vr_contador_prt||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4093,6 +4274,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              decode(rw_crapbir.cdbircon,2,fn_separa_cidade_uf(vr_crapprt.nmcidade,2),' ')); 
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPPRT: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4119,6 +4302,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULTIMO','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro resumo de acoes-'||vr_contador||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4154,6 +4339,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DISTRITO_JUR', 'N',vr_crapabr.nrdistri, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro no retorno de acoes-'||vr_contador||'-'||vr_contador_abr||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4189,6 +4376,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              fn_separa_cidade_uf(vr_crapabr.nmcidade,2));
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPABR: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4212,6 +4401,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULTIMO','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro no resumo de falencias-'||vr_contador||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4246,6 +4437,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CIDADE',       'S',vr_craprfc.nmcidade, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro processo de falencias-'||vr_contador||'-'||vr_contador_rfc||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4276,6 +4469,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              fn_separa_cidade_uf(vr_craprfc.nmcidade,2));
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPRFC: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4321,6 +4516,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'PERC_PARTIC',    'N',vr_crapcbd.pertotal, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro processo busca de socios-'||vr_contador||'-'||vr_contador_soc||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4376,6 +4573,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              0);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPCBD (socio): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4421,6 +4620,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'MANDATO',        'S',vr_crapcbd.dtmanadm, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro processo socios administradores-'||vr_contador||'-'||vr_contador_adm||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4448,6 +4649,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              AND cdmodbir = rw_crapbir.cdmodbir;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao alterar a CRAPCBD (administrador): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4503,6 +4706,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                vr_crapcbd.dtmanadm);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
               vr_dscritic := 'Erro ao inserir na CRAPCBD (socio/adm): '||SQLERRM;
               RAISE vr_exc_saida;
           END;
@@ -4540,6 +4745,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'PERC_PARTIC',    'N',vr_crappsa.pertotal, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro processo de empresas participantes-'||vr_contador||'-'||vr_contador_soc||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4590,6 +4797,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
              vr_crappsa.nmvincul);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro ao inserir na CRAPPSA: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4656,6 +4865,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         END IF;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
           vr_dscritic := 'Erro processo BACEN-'||vr_contador||'-'||vr_contador_adm||': '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -4678,6 +4889,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
            AND cdbircon = rw_crapbir.cdbircon;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
           vr_dscritic := 'Erro ao alterar a CRAPCBD (bacen): '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -4725,6 +4938,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULT_PEFIN','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro pendencia financeira PEFIN-'||vr_contador||'-'||vr_contador_rpf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4748,6 +4963,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULT_REFIN','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro pendencia financeira REFIN-'||vr_contador||'-'||vr_contador_rpf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4771,6 +4988,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULT_PROTESTO','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro pendencia financeira protesto-'||vr_contador||'-'||vr_contador_rpf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4794,6 +5013,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULT_ACAO_JUD','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro pendencia financeira acao judicial-'||vr_contador||'-'||vr_contador_rpf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4816,6 +5037,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULT_PART_FALEN','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro pendencia financeira falencia-'||vr_contador||'-'||vr_contador_rpf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4839,6 +5062,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULT_CHQ_FUNDO','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro pendencia financeira Cheque sem fundo-'||vr_contador||'-'||vr_contador_rpf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4862,6 +5087,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_ULT_CHQ_SUSCAN','D',vr_craprpf.dtultneg, vr_dscritic);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
             vr_dscritic := 'Erro pendencia financeira cheque sustado-'||vr_contador||'-'||vr_contador_rpf||': '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4902,6 +5129,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -4950,6 +5179,9 @@ PROCEDURE pc_atualiza_scr(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da c
     vr_exc_saida  EXCEPTION; --> Excecao prevista
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_scr');  
+
     -- Busca os dados do conjuge
     OPEN cr_crapcje;
     FETCH cr_crapcje INTO rw_crapcje;
@@ -4974,6 +5206,8 @@ PROCEDURE pc_atualiza_scr(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da c
                                                        3,1);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             vr_dscritic := 'Erro ao alterar a CRAPPRP (bacen-tit): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -4995,6 +5229,8 @@ PROCEDURE pc_atualiza_scr(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da c
                                                        1,1); -- Emprestimo   
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             vr_dscritic := 'Erro ao alterar a CRAPAVT (bacen): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -5016,6 +5252,8 @@ PROCEDURE pc_atualiza_scr(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da c
                                                        1,1); -- Emprestimo   
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             vr_dscritic := 'Erro ao alterar a CRAPAVL (bacen): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -5038,6 +5276,8 @@ PROCEDURE pc_atualiza_scr(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da c
                                                        3,1);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
             vr_dscritic := 'Erro ao alterar a CRAPPRP (bacen-cje): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -5055,6 +5295,8 @@ PROCEDURE pc_atualiza_scr(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero da c
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -5137,6 +5379,9 @@ PROCEDURE pc_atualiza_tab_controle(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Nu
     vr_exc_saida  EXCEPTION; --> Excecao prevista
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_tab_controle');  
+
     -- Efetua a somatoria das pendencias financeiras 
     FOR rw_craprpf IN cr_craprpf(pr_nrconbir) LOOP
       BEGIN
@@ -5158,6 +5403,8 @@ PROCEDURE pc_atualiza_tab_controle(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Nu
         WHEN dup_val_on_index THEN
           NULL; -- Nao faz nada, pois o resumo ja veio do arquivo
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => null);  
           vr_dscritic := 'Erro ao inserir na CRAPRPF: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -5177,6 +5424,8 @@ PROCEDURE pc_atualiza_tab_controle(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Nu
        WHERE nrconbir = pr_nrconbir;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => null);  
         pr_dscritic := 'Erro ao atualizar a CRAPCBD: ' ||SQLERRM;
         RETURN;
     END;
@@ -5191,6 +5440,8 @@ PROCEDURE pc_atualiza_tab_controle(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Nu
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -5207,6 +5458,8 @@ PROCEDURE pc_monta_cpf_cnpj_envio(pr_xml  IN OUT XmlType,               --> XML 
                                   pr_dtconscr IN DATE,                  --> Data base para a consulta no SCR
                                   pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_monta_cpf_cnpj_envio');  
 
     -- Envia o cabecalho e o tipo de consulta
     gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'LISTA_CONSULTA', pr_posicao => 0          , pr_tag_nova => 'CONSULTA',    pr_tag_cont => NULL, pr_des_erro => pr_dscritic);
@@ -5256,6 +5509,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
   --              06/06/2017 - Alteração da mensagem de retorno do cursor crawepr
   --                           pc_solicita_consulta_biro CH=660371
   --                         - Tratamento na chamada da pc_gera_log_batch CH=660433 / CH=660325
+  --                         - Inclusão módulo e ação e rotina de loh no exception otheres - Chamado 663304
   --                           (Ana - Envolti) 06/06/2017
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -5319,7 +5573,6 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
          AND crapass.nrdconta (+) = crapcje.nrctacje
          AND (crapcje.nrcpfcjg <> 0 OR crapass.nrcpfcgc IS NOT NULL);
 
-
     -- Busca as tags para a consulta do biro
     CURSOR cr_crapmbr(pr_cdbircon crapmbr.cdbircon%TYPE,
                       pr_cdmodbir crapmbr.cdmodbir%TYPE) IS
@@ -5371,7 +5624,6 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
          AND dtinicon <= trunc(SYSDATE);
     rw_crapcbr cr_crapcbr%ROWTYPE;
          
-
     -- Cursor para busca do tempo de reaproveitamento
     CURSOR cr_craprbi(pr_inprodut craprbi.inprodut%TYPE,
                       pr_inpessoa craprbi.inpessoa%TYPE) IS
@@ -5472,7 +5724,6 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     vr_contige_este VARCHAR2(500)         := '';
     
   BEGIN
-   
     GENE0001.pc_informa_acesso(pr_module => 'ATENDA'
   	                          ,pr_action => 'SSPC0001.pc_solicita_consulta_biro');
 
@@ -5817,6 +6068,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
          rw_crapope.cdpactra);
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao inserir CRAPCBC: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -5831,6 +6084,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
            AND nrctremp = pr_nrdocmto;
       EXCEPTION
         WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao atualizar a tabela CRAWEPR: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -5844,6 +6099,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
            AND tpctrlim = 1; -- limite de credito
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao atualizar a tabela CRAPLIM: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -6453,6 +6710,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
            AND tpctrato = 90; -- Contrato de emprestimo
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao atualizar a tabela CRAPPRP: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -6470,6 +6729,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
            AND craplim.tpctrlim = 1; -- Limite de credito            
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
           vr_dscritic := 'Erro ao atualizar a tabela CRAPPRP: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
@@ -6573,6 +6834,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       pr_dscritic := nvl(vr_dscritic_padrao, vr_dscritic);
 
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -6630,6 +6893,8 @@ PROCEDURE pc_solicita_consulta_biro_xml(pr_cdcooper IN  crapepr.cdcooper%TYPE, -
                                         pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
     vr_dscritic VARCHAR2(500); --> Retorno das criticas de geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_consulta_biro_xml');  
     
     -- Efetua a consulta no biro da Ibratan
     pc_solicita_consulta_biro(pr_cdcooper => pr_cdcooper,
@@ -6673,6 +6938,9 @@ PROCEDURE pc_busca_modalidade_prm(pr_cdcooper IN  crappcb.cdcooper%TYPE, --> Cod
          AND crapmbr.nrordimp <> 0 -- Para nao pegar a consulta Bacen
         ORDER BY crappcb.vlinicio DESC;
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_modalidade_prm');  
+
     -- Busca os parametros de consultas para identificar qual biro sera utilizado
     OPEN cr_crappcb;
     FETCH cr_crappcb INTO pr_cdbircon, pr_cdmodbir;
@@ -6731,6 +6999,8 @@ PROCEDURE pc_verifica_mud_faixa(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> Codig
     vr_vlemprst     crawepr.vlemprst%TYPE;     --> Valor total de emprestimo que o cooperado possui
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_mud_faixa');  
     
     -- Joga como padrao que nao muda o valor
     pr_flmudfai := 'N';
@@ -6839,6 +7109,8 @@ PROCEDURE pc_verifica_mud_faixa_emp(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     rw_crawepr cr_crawepr%ROWTYPE;
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_mud_faixa_emp');  
     
     -- Busca o valor do emprestimo e o numero da consulta do biro
     OPEN cr_crawepr;
@@ -6880,6 +7152,8 @@ PROCEDURE pc_verifica_mud_faixa_lim(pr_cdcooper IN  craplim.cdcooper%TYPE, --> C
     rw_craplim cr_craplim%ROWTYPE;
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_mud_faixa_lim');  
     
     -- Busca o valor do emprestimo e o numero da consulta do biro
     OPEN cr_craplim;
@@ -6953,6 +7227,9 @@ PROCEDURE pc_obrigacao_consulta_xml(pr_cdcooper IN  crapass.cdcooper%TYPE, --> C
     vr_inpessoa PLS_INTEGER;
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_obrigacao_consulta_xml');  
+
     -- Busca os dados dos emprestimos
     OPEN cr_crawepr;
     FETCH cr_crawepr INTO rw_crawepr;
@@ -7012,6 +7289,8 @@ PROCEDURE pc_obrigacao_cns_cpl_xml(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Co
     vr_inobriga VARCHAR2(01);
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_obrigacao_cns_cpl_xml');  
     
     -- Exeucta a rotina principal
     pc_obrigacao_consulta(pr_cdcooper, 
@@ -7074,6 +7353,8 @@ PROCEDURE pc_obrigacao_consulta(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codig
     vr_inobriga_esteira_auto VARCHAR2(1);   --> Obrigação de passagem pela Analise Auto Esteira Sim/Não
     
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_obrigacao_consulta');  
     
     -- Efetua a verificacao de linha de credito habilitada para consulta
     -- somente se o produto for de emprestimo / financiamento
@@ -7184,6 +7465,9 @@ PROCEDURE pc_busca_consulta_biro(pr_cdcooper IN  crapass.cdcooper%TYPE, --> Codi
          AND crapcbd.inreterr = 0  -- Nao houve erros
        ORDER BY crapcbd.dtconbir DESC; -- Buscar a consuilta mais recente
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_consulta_biro');  
+
     -- Busca os detalhes das consultas de biros
     OPEN cr_crapcbd;
     FETCH cr_crapcbd INTO pr_nrconbir, pr_nrseqdet;
@@ -7207,6 +7491,9 @@ PROCEDURE pc_busca_consulta_biro_xml(pr_cdcooper IN  crapass.cdcooper%TYPE, --> 
     vr_nrseqdet crapcbd.nrseqdet%TYPE;
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_consulta_biro_xml');  
+
     -- Busca o codigo do biro e a sequencia
     pc_busca_consulta_biro(pr_cdcooper, pr_nrdconta, vr_nrconbir, vr_nrseqdet);
     -- Criar cabeçalho do XML
@@ -7261,6 +7548,9 @@ PROCEDURE pc_busca_cns_biro(pr_cdcooper       IN  crapass.cdcooper%TYPE, --> Cod
           OR  crapcbd.nrcpfcgc = pr_nrcpfcgc_busca);
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_cns_biro');  
+
     -- Busca os detalhes das consultas de biros para o emprestimo
     IF pr_inprodut = 1 THEN
       OPEN cr_crapcbd_emp;
@@ -7295,6 +7585,9 @@ PROCEDURE pc_busca_cns_biro_xml(pr_cdcooper       IN  crapass.cdcooper%TYPE, -->
     vr_nrseqdet crapcbd.nrseqdet%TYPE;
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_busca_cns_biro_xml');  
+
     -- Busca o codigo do biro e a sequencia
     pc_busca_cns_biro(pr_cdcooper, pr_nrdconta, pr_nrdocmto, pr_inprodut, pr_nrdconta_busca, pr_nrcpfcgc_busca, vr_nrconbir, vr_nrseqdet);
     -- Criar cabeçalho do XML
@@ -7316,6 +7609,8 @@ PROCEDURE pc_consulta_geral(pr_nrconbir IN  crapcbd.nrconbir%TYPE --> Numero da 
     vr_nmdcampo VARCHAR2(500);
     vr_des_erro VARCHAR2(500);
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_geral');  
 
     -- busca o xml com os parametros gerais
     pc_consulta_geral_xml(pr_nrconbir => pr_nrconbir,
@@ -7358,6 +7653,8 @@ PROCEDURE pc_consulta_geral_xml(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_geral_xml');  
 
     -- Verifica qual o biro e a modalidade da consulta
     OPEN cr_crapcbd;
@@ -7576,6 +7873,8 @@ PROCEDURE pc_consulta_geral_xml(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -7614,6 +7913,9 @@ PROCEDURE pc_consulta_spc(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da con
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_vlregist   craprsc.vlregist%TYPE :=0; --> Somatorio do campo vlregist
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_spc');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -7656,6 +7958,8 @@ PROCEDURE pc_consulta_spc(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da con
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -7698,6 +8002,9 @@ PROCEDURE pc_consulta_cheque(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_nmtagpnc   VARCHAR2(20); --> Nome da tag principal
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_cheque');  
+
     IF pr_idsitchq = 1 THEN
       vr_nmtagpnc := 'crapcsf_sem_fundos';
     ELSE
@@ -7741,6 +8048,8 @@ PROCEDURE pc_consulta_cheque(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da 
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -7788,6 +8097,9 @@ PROCEDURE pc_consulta_cabecalho(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_cabecalho');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -7828,6 +8140,8 @@ PROCEDURE pc_consulta_cabecalho(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero 
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -7879,6 +8193,9 @@ PROCEDURE pc_consulta_pefin_refin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numer
     vr_nmtagpnc   VARCHAR2(20); --> Nome da tag principal
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_pefin_refin');  
+
     -- Define o nome da tag principal
     IF pr_inpefref = 1 THEN
       vr_nmtagpnc := 'crapprf_pefin';
@@ -7930,6 +8247,8 @@ PROCEDURE pc_consulta_pefin_refin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numer
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -7977,6 +8296,9 @@ PROCEDURE pc_consulta_protesto(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero d
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_protesto');  
+
     -- Resumo das pendencias financeiras do Refin/Pefin
     OPEN cr_craprpf;
     FETCH cr_craprpf INTO rw_craprpf;
@@ -8017,6 +8339,8 @@ PROCEDURE pc_consulta_protesto(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero d
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8041,6 +8365,9 @@ PROCEDURE pc_consulta_pendencia_fin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_nmtagpnc   VARCHAR2(20); --> Nome da tag principal
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_pendencia_fin');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -8072,6 +8399,8 @@ PROCEDURE pc_consulta_pendencia_fin(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8107,6 +8436,9 @@ PROCEDURE pc_consulta_acao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da co
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_acao');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -8139,6 +8471,8 @@ PROCEDURE pc_consulta_acao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da co
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8198,6 +8532,8 @@ PROCEDURE pc_consulta_bacen_xml(pr_cdcooper       IN  crapass.cdcooper%TYPE --> 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_nrconbir   crapcbd.nrconbir%TYPE; --> Numero da consulta do biro
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_bacen_xml');  
   
     -- Se for emprestimo, entao busca os dados na crawepr
     IF pr_inprodut = 1 THEN  
@@ -8239,6 +8575,8 @@ PROCEDURE pc_consulta_bacen_xml(pr_cdcooper       IN  crapass.cdcooper%TYPE --> 
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8259,6 +8597,9 @@ PROCEDURE pc_consulta_bacen(pr_cdcooper       IN  crapass.cdcooper%TYPE --> Codi
     vr_nmdcampo VARCHAR2(500);
     vr_des_erro VARCHAR2(500);
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_bacen');  
+
     pc_consulta_bacen_xml(pr_cdcooper       => pr_cdcooper,
                          pr_nrdconta       => pr_nrdconta,
                          pr_nrdocmto       => pr_nrdocmto,
@@ -8303,6 +8644,9 @@ PROCEDURE pc_consulta_falencia(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero d
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_falencia');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -8334,6 +8678,8 @@ PROCEDURE pc_consulta_falencia(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero d
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8389,6 +8735,9 @@ PROCEDURE pc_consulta_socios(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da 
     vr_contador_det PLS_INTEGER :=0; --> Contador de registros de pendencias financeiras para geracao do xml
     vr_contador_psa PLS_INTEGER :=0; --> Contador de registros de pendencias financeiras para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_socios');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -8454,6 +8803,8 @@ PROCEDURE pc_consulta_socios(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Numero da 
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8491,6 +8842,9 @@ PROCEDURE pc_consulta_administrador(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
     vr_dtmanadm   VARCHAR2(50);    --> Descricao da data do mandato
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_administrador');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -8533,6 +8887,8 @@ PROCEDURE pc_consulta_administrador(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Num
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8574,6 +8930,9 @@ PROCEDURE pc_consulta_participacao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Nume
 
     vr_contador   PLS_INTEGER :=0; --> Contador de registros para geracao do xml
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_consulta_participacao');  
+
     -- Criar cabeçalho do XML
     IF pr_retxml IS NULL THEN
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -8609,6 +8968,8 @@ PROCEDURE pc_consulta_participacao(pr_nrconbir IN crapcbd.nrconbir%TYPE --> Nume
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => null);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8627,6 +8988,9 @@ FUNCTION fn_verifica_situacao(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero da c
          AND craprpf.nrseqdet = pr_nrseqdet;
     rw_crapcbd cr_crapcbd%ROWTYPE;
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.fn_verifica_situacao');  
+
     -- Busca as pendencias financeiras
     OPEN cr_crapcbd;
     FETCH cr_crapcbd INTO rw_crapcbd;
@@ -8671,6 +9035,9 @@ PROCEDURE pc_verifica_situacao(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Numero
       vr_flsituac VARCHAR2(01);
 
     BEGIN
+      -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+      GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_situacao');  
+
       -- Se vier com zeros, nao deve retornar nenhum valor nos parametros de saida
       IF nvl(pr_nrconbir,0) = 0 THEN
         RETURN;
@@ -8707,6 +9074,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       vr_dsmodbir crapmbr.dsmodbir%TYPE;
 
     BEGIN
+      -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+      GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_verifica_situacao_xml');  
+
       -- Busca os dados com base na rotina original
       pc_verifica_situacao(pr_nrconbir,
                            pr_nrseqdet,
@@ -8790,6 +9160,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_contador   PLS_INTEGER := 0; --> Contador de registro de detalhes
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_relato_xml');  
+
     -- Cria o no inicial do XML
     pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><dados/>');   
     
@@ -8838,6 +9211,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8898,6 +9273,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_contador   PLS_INTEGER := 0; --> Contador de registro de detalhes
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_solicita_relato_det_xml');  
+
     -- Cria o no inicial do XML
     pr_retxml   := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><dados/>');   
     
@@ -8930,6 +9308,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -8955,6 +9335,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_nrseqdet crapcbd.nrseqdet%TYPE;
 
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cadastrais_xml');  
+
     -- Busca o codigo do biro e a sequencia
     pc_atualiza_inf_cadastrais(pr_cdcooper, pr_nrdconta, pr_nrdocmto, pr_inprodut, pr_cdcritic, pr_dscritic);
     -- Criar cabeçalho do XML
@@ -8994,6 +9377,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_nrinfcad   PLS_INTEGER := 1; -- Flag de informacoes cadastrais
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cad_emp');  
+
     -- Busca as pendencias financeiras
     OPEN cr_crapcbd;
     FETCH cr_crapcbd INTO rw_crapcbd;
@@ -9017,6 +9403,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapprp.tpctrato = 90;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapprp: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9029,6 +9417,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapttl.idseqttl = 1;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapttl: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9040,6 +9430,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapjur.nrdconta = pr_nrdconta;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapjur: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9054,6 +9446,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -9090,6 +9484,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_nrinfcad   PLS_INTEGER := 1; -- Flag de informacoes cadastrais
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cad_lim');  
+
     -- Busca as pendencias financeiras
     OPEN cr_crapcbd;
     FETCH cr_crapcbd INTO rw_crapcbd;
@@ -9113,6 +9510,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND craplim.tpctrlim = 1;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar craplim: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9127,6 +9526,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapprp.tpctrato = 1;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapprp: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9141,6 +9542,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapttl.idseqttl = 1;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapttl: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9152,6 +9555,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapjur.nrdconta = pr_nrdconta;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapjur: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9167,6 +9572,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -9207,6 +9614,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_nrinfcad   PLS_INTEGER := 1; -- Flag de informacoes cadastrais
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cad_cta');  
+
     -- Abre o numero da consulta do biro 
     OPEN cr_crapcbd_2;
     FETCH cr_crapcbd_2 INTO rw_crapcbd_2;
@@ -9233,6 +9643,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapttl.idseqttl = 1;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapttl: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9244,6 +9656,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
          AND crapjur.nrdconta = pr_nrdconta;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
         vr_dscritic := 'Erro ao atualizar crapjur: '||SQLERRM;
         RAISE vr_exc_saida;
     END;
@@ -9258,6 +9672,8 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);  
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
@@ -9271,6 +9687,9 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
                                        pr_cdcritic OUT PLS_INTEGER,              --> Código da crítica
                                        pr_dscritic OUT VARCHAR2) IS              --> Descrição da crítica
   BEGIN
+    -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inf_cadastrais');  
+
     IF pr_inprodut = 1 THEN -- Se for emprestimo
       pc_atualiza_inf_cad_emp(pr_cdcooper => pr_cdcooper,
                               pr_nrdconta => pr_nrdconta,
