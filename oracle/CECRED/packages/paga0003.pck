@@ -42,7 +42,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                 ,pr_vlrtotal IN NUMBER -- Valor total do pagamento da guia
                                 ,pr_dtapurac IN DATE -- Período de apuração da guia
                                 ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
-                                ,pr_cdtribut IN NUMBER -- Código de tributação da guia
+                                ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
                                 ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                 ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                 ,pr_vlrprinc IN NUMBER -- Valor principal da guia
@@ -80,7 +80,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                             ,pr_dsnomfon IN VARCHAR2	-- Nome e telefone da guia
                             ,pr_dtapurac IN DATE		-- Período de apuração da guia
                             ,pr_nrcpfcgc IN VARCHAR2  -- CPF/CNPJ da guia
-                            ,pr_cdtribut IN NUMBER  -- Código de tributação da guia
+                            ,pr_cdtribut IN VARCHAR2  -- Código de tributação da guia
                             ,pr_nrrefere IN NUMBER  -- Número de referência da guia
                             ,pr_dtvencto IN DATE		-- Data de vencimento da guia
                             ,pr_vlrprinc IN NUMBER	-- Valor principal da guia
@@ -117,7 +117,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
 															,pr_dsnomfon IN  VARCHAR2               -- Período de apuração da guia
 															,pr_dtapurac IN  DATE                   -- CPF/CNPJ da guia
 															,pr_nrcpfcgc IN  VARCHAR2               -- Código de tributação da guia
-															,pr_cdtribut IN  NUMBER                 -- Número de referência da guia
+															,pr_cdtribut IN  VARCHAR2                 -- Número de referência da guia
 															,pr_nrrefere IN  NUMBER                 -- Data de vencimento da guia
 															,pr_dtvencto IN  DATE                   -- Valor principal da guia
 															,pr_vlrprinc IN  NUMBER                 -- Valor da multa da guia
@@ -154,7 +154,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_dsnomfon IN VARCHAR2 -- Nome e telefone da guia
                                   ,pr_dtapurac IN DATE -- Período de apuração da guia
                                   ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
-                                  ,pr_cdtribut IN NUMBER -- Código de tributação da guia
+                                  ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
                                   ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                   ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                   ,pr_vlrprinc IN NUMBER -- Valor principal da guia
@@ -165,6 +165,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
 																	,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) 
+                                  ,pr_dsprotoc OUT VARCHAR2 --Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    );
@@ -212,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 22/02/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 08/05/2017
   
    Dados referentes ao programa: 
   
@@ -223,6 +224,8 @@ END paga0003;
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
 					        - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
 							 
+       08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
+							 								   
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -283,6 +286,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHERE crapcon.cdcooper = pr_cdcooper
     AND   crapcon.cdempcon = pr_cdempcon
     AND   crapcon.cdsegmto = pr_cdsegmto;
+  
+    --Selecionar Cadastro Convenios Sicredi
+    CURSOR cr_crapstb (pr_cdtribut IN crapstb.cdtribut%type) IS
+      SELECT crapstb.cdtribut
+      FROM crapstb
+      WHERE crapstb.cdtribut = pr_cdtribut;
+    rw_crapstb cr_crapstb%ROWTYPE;
   
   PROCEDURE pc_monitoracao_pagamento(pr_cdcooper crapcop.cdcooper%TYPE -- pr_cdcooper
                                     ,pr_nrdconta crapass.nrdconta%TYPE -- pr_nrdconta
@@ -885,7 +895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dsinfor3 := vr_dsinfor3 || '#Número do CPF ou CNPJ: '  || TO_CHAR(gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,vr_inpessoa));
       vr_dsinfor3 := vr_dsinfor3 || '#Código da Receita: '      || LPAD(pr_cdtribut, 4, '0');
       
-      IF pr_cdtribut = 6106 THEN
+      IF pr_cdtribut = '6106' THEN
         vr_dsinfor3 := vr_dsinfor3 || '#Valor da Receita Bruta: ' || TO_CHAR(pr_vlrecbru,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
         vr_dsinfor3 := vr_dsinfor3 || '#Percentual: '             || TO_CHAR(pr_vlpercen,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
       ELSE
@@ -970,7 +980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ,pr_vlrtotal IN NUMBER -- Valor total do pagamento da guia
                                 ,pr_dtapurac IN DATE -- Período de apuração da guia
                                 ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
-                                ,pr_cdtribut IN NUMBER -- Código de tributação da guia
+                                ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
                                 ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                 ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                 ,pr_vlrprinc IN NUMBER -- Valor principal da guia
@@ -992,11 +1002,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_verifica_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+     Data    : Julho/2016.                    Ultima atualizacao: 08/05/2017
 
      Objetivo  : Procedure para validação de pagamento de DARF/DAS
 
-     Alteracoes: 
+     Alteracoes: 08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1349,6 +1359,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
       END IF;
       
+      /* DARF PRETO EUROPA */
+      IF rw_crapcon.cdempcon IN (64,153) AND rw_crapcon.cdsegmto = 5 THEN /* DARFC0064  ou DARFC0153*/
+        /* Validacao Cd. Tributo */
+        --Selecionar Cadastro Convenios Sicredi
+        OPEN cr_crapstb (pr_cdtribut => TO_NUMBER(SUBSTR(pr_cdbarras,37,4)));
+        --Posicionar no proximo registro
+        FETCH cr_crapstb INTO rw_crapstb;
+        --Se nao encontrar
+        IF cr_crapstb%NOTFOUND THEN
+          --Fechar Cursor
+          CLOSE cr_crapstb;
+          --Mensagem erro
+          vr_dscritic:= 'Tributo nao cadastrado.';          
+          RAISE vr_exc_erro;
+        END IF;
+        --Fechar Cursor
+        CLOSE cr_crapstb;
+      END IF;
       -- Validação referente aos dias de tolerancia
       cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
                                            ,pr_cdagenci      => vr_cdagenci
@@ -1568,7 +1596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                             ,pr_dsnomfon IN VARCHAR2	-- Nome e telefone da guia
                             ,pr_dtapurac IN DATE		-- Período de apuração da guia
                             ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
-                            ,pr_cdtribut IN NUMBER  -- Código de tributação da guia
+                            ,pr_cdtribut IN VARCHAR2  -- Código de tributação da guia
                             ,pr_nrrefere IN NUMBER  -- Número de referência da guia
                             ,pr_dtvencto IN DATE		-- Data de vencimento da guia
                             ,pr_vlrprinc IN NUMBER	-- Valor principal da guia
@@ -1938,7 +1966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			ELSE -- MANUAL
 			  -- Pega o nome do convenio
 				OPEN cr_crapscn (pr_cdempres => CASE pr_cdtribut
-																						 WHEN 6106 THEN 'D0'
+																		         WHEN '6106' THEN 'D0'
 																						 ELSE 'A0' 
 																	      END,
 												 pr_tpmeiarr => CASE pr_idorigem
@@ -2476,7 +2504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_dsnomfon IN  VARCHAR2               -- Nome e telefone da guia
                                ,pr_dtapurac IN  DATE                   -- Período de apuração da guia
                                ,pr_nrcpfcgc IN  VARCHAR2               -- CPF/CNPJ da guia
-                               ,pr_cdtribut IN  NUMBER                 -- Código de tributação da guia
+                               ,pr_cdtribut IN  VARCHAR2               -- Código de tributação da guia
                                ,pr_nrrefere IN  NUMBER                 -- Número de referência da guia
                                ,pr_dtvencto IN  DATE                   -- Data de vencimento da guia
                                ,pr_vlrprinc IN  NUMBER                 -- Valor principal da guia
@@ -3066,6 +3094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																pr_dtagenda => vr_dtmvtopg,
 																pr_cdtrapen => 0,
 																pr_tpleitor => pr_tpleitor,
+																pr_dsprotoc => vr_dsprotoc,
 																pr_cdcritic => vr_cdcritic,
 																pr_dscritic => vr_dscritic);
 																
@@ -3129,6 +3158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 														                        <DADOS_PAGAMENTO>
 																										      <dsmsgope>'|| nvl(vr_dsmsgope,' ') ||'</dsmsgope>
 																													<idastcjt>'|| nvl(TO_CHAR(vr_idastcjt),' ') ||'</idastcjt>
+																													<dsprotoc>'|| NVL(TRIM(vr_dsprotoc),'')    ||'</dsprotoc>
 																									  </DADOS_PAGAMENTO>');
 			-- Encerrar a tag raiz
 			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
@@ -3231,7 +3261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dsnomfon IN VARCHAR2 -- Nome e telefone da guia
                                   ,pr_dtapurac IN DATE -- Período de apuração da guia
                                   ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
-                                  ,pr_cdtribut IN NUMBER -- Código de tributação da guia
+                                  ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
                                   ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                   ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                   ,pr_vlrprinc IN NUMBER -- Valor principal da guia
@@ -3242,6 +3272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
 								  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+								,pr_dsprotoc OUT VARCHAR2 -- Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    ) IS
@@ -3464,7 +3495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		
 		ELSE --manual				
 			OPEN cr_crapscn2 (pr_cdempres => CASE pr_cdtribut
-											WHEN 6106 THEN 'D0'
+																					WHEN '6106' THEN 'D0'
 												ELSE 'A0' 
 																				END,
 												pr_tpmeiarr => 	CASE pr_idorigem
@@ -3655,6 +3686,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           RAISE vr_exc_erro; 
       END;
 			
+
+			
 			-- inserção dados detalhados DARF/DAS
 			BEGIN
         INSERT INTO tbpagto_agend_darf_das
@@ -3790,6 +3823,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				 TRIM(vr_dscritic) IS NOT NULL THEN
 				RAISE vr_exc_erro;
 			END IF;
+						
+			pr_dsprotoc := vr_dsprotoc;
 						
   EXCEPTION
     WHEN vr_exc_erro THEN
