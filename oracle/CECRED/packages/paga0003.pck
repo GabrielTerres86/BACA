@@ -222,8 +222,8 @@ END paga0003;
    Alteracoes: 
 	             
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
-					  - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
-							 								   
+					        - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+                  
        08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
 							 								   
        25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o 
@@ -288,7 +288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHERE crapcon.cdcooper = pr_cdcooper
     AND   crapcon.cdempcon = pr_cdempcon
     AND   crapcon.cdsegmto = pr_cdsegmto;
-  
+    
     --Selecionar Cadastro Convenios Sicredi
     CURSOR cr_crapstb (pr_cdtribut IN crapstb.cdtribut%type) IS
       SELECT crapstb.cdtribut
@@ -2900,6 +2900,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																							 pr_dtmvtolt => pr_dtmvtopg, 
 																							 pr_tipo     => 'A');
 
+    -- Se for um agendamento vamos verificar se ja esgotou horario DEBSIC
+    IF pr_idagenda = 2 THEN
     -- busca ultimo horario da debsic
     OPEN cr_craphec(pr_cdcooper => pr_cdcooper
                    ,pr_cdprogra => 'DEBSIC');
@@ -2925,6 +2927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END IF;
       
       RAISE vr_exc_erro;     
+    END IF;
     END IF;
 
 		-- Procedure para validar limites para transacoes
