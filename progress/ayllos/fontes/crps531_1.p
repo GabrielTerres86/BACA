@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 07/07/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 14/07/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -203,6 +203,10 @@
                07/07/2017 - Ajustar a gravacao do XML da mensagem de TED, para ser feito apenas
                             quando o retorno da verifica_processo for OK (Douglas - Chamado 524133)
                
+               14/07/2017 - Ajustar a procedure deleta_objetos para validar se o handle do objeto eh 
+                            valido para que seja excluido (Douglas - Chamado 524133)
+
+
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -1805,14 +1809,29 @@ END PROCEDURE.
 
 PROCEDURE deleta_objetos.
   
-    DELETE OBJECT hTextTag2.  
-    DELETE OBJECT hTextTag.  
-    DELETE OBJECT hNameTag.
-    DELETE OBJECT hSubNode2.
-    DELETE OBJECT hSubNode.
-    DELETE OBJECT hNode.
-    DELETE OBJECT hRoot.
-    DELETE OBJECT hDoc.
+    IF  VALID-HANDLE (hTextTag2)  THEN
+        DELETE OBJECT hTextTag2.  
+
+    IF  VALID-HANDLE (hTextTag)  THEN        
+        DELETE OBJECT hTextTag.  
+    
+    IF  VALID-HANDLE (hNameTag)  THEN
+        DELETE OBJECT hNameTag.
+    
+    IF  VALID-HANDLE (hSubNode2)  THEN
+        DELETE OBJECT hSubNode2.
+    
+    IF  VALID-HANDLE (hSubNode)  THEN
+        DELETE OBJECT hSubNode.
+    
+    IF  VALID-HANDLE (hNode)  THEN
+        DELETE OBJECT hNode.
+    
+    IF  VALID-HANDLE (hRoot)  THEN
+        DELETE OBJECT hRoot.
+    
+    IF  VALID-HANDLE (hDoc)  THEN
+        DELETE OBJECT hDoc.
 
 END PROCEDURE.
 
