@@ -15,7 +15,7 @@ AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme / Supero
-    Data    : Novembro/2009.                   Ultima atualizacao: 02/10/2013
+    Data    : Novembro/2009.                   Ultima atualizacao: 07/04/2017
 
     Dados referentes ao programa:
 
@@ -63,7 +63,9 @@ AS
                             informações dos cheques, pois estava sendo realizado 
                             a liquidação no registro errado, causando problemas 
                             como relatado no chamado 264379 ( Renato - Supero )
-                            
+
+               07/04/2017 - #642531 Tratamento do tail para pegar/validar os dados da última linha
+                            do arquivo corretamente (Carlos)
                19/06/2017 - Retirados tratamentos efetuados para separação de cheques 
                             com valor Inferior e Superior.
 
@@ -246,7 +248,8 @@ AS
                                          ,pr_des_saida   => vr_des_saida);
 
               -- Se o comeco da linha nao for 9999999999, criticar
-              if  substr(vr_des_saida,1,10) != '9999999999' then
+              if  SUBSTR(vr_des_saida,1,10) <> '9999999999' AND
+                  SUBSTR(vr_des_saida,162,10) <> '9999999999' then
                 -- Monta descricao de critica para aparecer no log.
                 vr_cdcritic := 258;
                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
