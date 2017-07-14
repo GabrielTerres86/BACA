@@ -1,7 +1,7 @@
 /*****************************************************************************
  Fonte: menu.js                                                     
  Autor: David                                                       
- Data : Julho/2007        			Ultima Alteracoes: 30/11/2015             
+ Data : Julho/2007        			Ultima Alteracoes: 14/07/2017            
                                                                     
  Objetivo  : Funções para controle do menu                           
              Necessita a chamada de jquery.js e funcoes.js           
@@ -19,6 +19,8 @@
               03/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
 			  
 			  30/11/2015 - Evitar erros na chamada da AUTORI (Gabriel-RKAM)
+
+              14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
 ***************************************************************************/
 
 $(document).ready(function() {
@@ -172,6 +174,14 @@ function carregaTela () {
 	$("#nrdconta","#frmMenu").val(nrdconta);		
  }
  
+ function setaParametrosImped (nmdatela, nmrotina, nrdconta, flgcadas, nmtelant) {
+	$("#flgcadas","#frmMenu").val(flgcadas);	
+	$("#nmtelant","#frmMenu").val(nmtelant);	
+	$("#nmdatela","#frmMenu").val(nmdatela.toUpperCase());	
+	$("#nmrotina","#frmMenu").val(nmrotina.toUpperCase());	
+	$("#nrdconta","#frmMenu").val(nrdconta);		
+ }
+ 
  function direcionaTela (nmdatela,flgcriti) {
   
 	// Se tem que trocar de senha , nao permitir mudar de tela
@@ -239,6 +249,46 @@ function setaATENDA() {
 	$("#produtosTelasServicosAdicionais","#frmMenu").val(adicionais);	
 	$("#atualizarServicos","#frmMenu").val(servicos);	
 	$("#posicao","#frmMenu").val(posicao);	
+}
+
+function setaImped() {
+	
+	var produtos = "";
+	var produtosAtenda = "";
+	var produtosContas = "";
+	
+	if ($("#nmtelant","#frmMenu").val() == "COBRAN"){		
+		produtos = produtosCancM;
+		produtosAtenda = produtosCancMAtenda;
+		produtosContas = produtosCancMContas;
+	}else{
+		for (var i = 0; i < produtosCancM.length; i++ ) {		
+			produtos += replaceAll(produtosCancM[i],'"',"\'") + "|";
+		}
+
+		produtos = produtos.substr(0,produtos.length - 1);
+		
+		for (var i = 0; i < produtosCancMAtenda.length; i++ ) {
+			produtosAtenda += replaceAll(produtosCancMAtenda[i],'"',"\'") + "|";
+		}	
+		
+		produtosAtenda = produtosAtenda.substr(0,produtosAtenda.length - 1);
+		
+		for (var i = 0; i < produtosCancMContas.length; i++ ) {
+			produtosContas += replaceAll(produtosCancMContas[i],'"',"\'") + "|";
+		}	
+		
+		produtosContas = produtosContas.substr(0,produtosContas.length - 1);		
+		if ($("#nmtelant","#frmMenu").val() != "CONTAS" || posicao == 0){
+			posicao++;
+		}
+	}	
+	
+	$("#executandoImpedimentos","#frmMenu").val('true');
+	$("#produtosCancM","#frmMenu").val(produtos);
+	$("#produtosCancMAtenda","#frmMenu").val(produtosAtenda);
+	$("#produtosCancMContas","#frmMenu").val(produtosContas);
+	$("#posicao","#frmMenu").val(posicao);
 }
 
 function efetuaLogoff() {	

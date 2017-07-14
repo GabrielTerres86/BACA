@@ -19,6 +19,7 @@ DEF TEMP-TABLE tt-inf-produto NO-UNDO
   FIELD vlcompcr AS DECIMAL
   FIELD vllimcar AS DECIMAL
   FIELD vlresapl AS DECIMAL
+  FIELD vlsrdrpp AS DECIMAL
   FIELD flcobran AS INTEGER 
   FIELD flseguro AS INTEGER 
   FIELD flconsor AS INTEGER

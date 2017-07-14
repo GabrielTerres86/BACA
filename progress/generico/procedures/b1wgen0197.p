@@ -21,22 +21,46 @@
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0009tt.i }
 { sistema/generico/includes/b1wgen0019tt.i }
+{ sistema/generico/includes/b1wgen0021tt.i }
 { sistema/generico/includes/b1wgen0030tt.i }
 { sistema/generico/includes/b1wgen0033tt.i }
 { sistema/generico/includes/b1wgen0081tt.i }
 { sistema/generico/includes/b1wgen0082tt.i }
 { sistema/generico/includes/b1wgen0197tt.i }
 
+DEFINE TEMP-TABLE tt-autori                                             NO-UNDO
+    FIELD cdhistor LIKE crapatr.cdhistor
+    FIELD dshistor LIKE craphis.dshistor
+    FIELD cddddtel LIKE crapatr.cddddtel
+    FIELD cdrefere AS DECI FORMAT "zzzzzzzzzzzzzzzzzzzzzzzz9"
+    FIELD dtautori LIKE crapatr.dtiniatr
+    FIELD dtcancel LIKE crapatr.dtfimatr
+    FIELD dtultdeb LIKE crapatr.dtultdeb
+    FIELD dtvencto LIKE crapatr.ddvencto
+    FIELD nmfatura LIKE crapatr.nmfatura
+    FIELD nmempres LIKE crapatr.nmempres
+    FIELD nmempcon LIKE gnconve.nmempres
+    FIELD vlrmaxdb LIKE crapatr.vlrmaxdb
+    FIELD desmaxdb AS CHAR
+    FIELD cdempcon LIKE crapatr.cdempcon
+    FIELD cdsegmto LIKE crapatr.cdsegmto
+    FIELD dbcancel AS LOGI.
+
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
 DEF VAR h-b1wgen0002 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0006 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0009 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0019 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0021 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0030 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0033 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0078 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0081 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0082 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0092 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_dsdidade AS CHAR                                           NO-UNDO.
@@ -46,6 +70,9 @@ DEF VAR aux_vlresapl AS DECIMAL INIT 0                                 NO-UNDO.
 DEF VAR aux_dsdmesag AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdhistor AS INTE                                           NO-UNDO.
+DEF VAR aux_cdrefere AS INTE                                           NO-UNDO.
+DEF VAR aux_flgsicre AS CHAR                                           NO-UNDO.
 
 /******************************************************************************/
 
@@ -147,18 +174,6 @@ PROCEDURE busca_inf_produtos:
                                                     OUTPUT aux_dsdidade).
     DELETE PROCEDURE h-b1wgen0002.
 
-    IF  RETURN-VALUE <> "OK"  THEN
-        DO:
-          FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-          IF   AVAIL tt-erro  THEN
-               par_dscritic = tt-erro.dscritic.
-          ELSE
-               par_dscritic = "Nao foi possivel listar as propostas de emprestimo.".
-
-          LEAVE.
-        END.
-
     CREATE tt-inf-produto.
     ASSIGN tt-inf-produto.vlemprst = 0
            tt-inf-produto.vllimpro = 0
@@ -166,6 +181,7 @@ PROCEDURE busca_inf_produtos:
            tt-inf-produto.vlcompcr = 0
            tt-inf-produto.vllimcar = 0
            tt-inf-produto.vlresapl = 0
+           tt-inf-produto.vlsrdrpp = 0
            tt-inf-produto.flcobran = 0
            tt-inf-produto.flseguro = 0
            tt-inf-produto.flconsor = 0
@@ -202,18 +218,6 @@ PROCEDURE busca_inf_produtos:
                                       OUTPUT TABLE tt-erro,                                      
                                       OUTPUT TABLE tt-msg-confirma).
     DELETE PROCEDURE h-b1wgen0019.
-
-    IF  RETURN-VALUE <> "OK"  THEN
-        DO:
-          FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-          IF   AVAIL tt-erro  THEN
-               par_dscritic = tt-erro.dscritic.
-          ELSE
-               par_dscritic = "Nao foi possivel obter o limite de cheque especial.".
-
-          LEAVE.
-        END.
     
     FOR FIRST tt-proposta-limcredito NO-LOCK:
       ASSIGN tt-inf-produto.vllimpro = tt-proposta-limcredito.vllimpro.
@@ -235,19 +239,7 @@ PROCEDURE busca_inf_produtos:
                                            OUTPUT TABLE tt-desconto_cheques).
     
     DELETE PROCEDURE h-b1wgen0009.
-    
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO:
-          FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-          IF   AVAIL tt-erro  THEN
-               par_dscritic = tt-erro.dscritic.
-          ELSE
-               par_dscritic = "Nao foi possivel obter o limite de desconto de cheque.".
-
-          LEAVE.
-        END.
-        
+            
     FOR FIRST tt-desconto_cheques NO-LOCK:
       ASSIGN tt-inf-produto.vllimdsc = tt-desconto_cheques.vllimite.
     END.
@@ -268,18 +260,6 @@ PROCEDURE busca_inf_produtos:
                                            OUTPUT TABLE tt-desconto_titulos).
 
     DELETE PROCEDURE h-b1wgen0030.
-    
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO:
-          FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-          IF   AVAIL tt-erro  THEN
-               par_dscritic = tt-erro.dscritic.
-          ELSE
-               par_dscritic = "Nao foi possivel obter o limite de desconto de titulo.".
-
-          LEAVE.
-        END.
         
     FOR FIRST tt-desconto_titulos NO-LOCK:
       ASSIGN tt-inf-produto.vllimdsc = tt-inf-produto.vllimdsc + tt-desconto_titulos.vllimite.
@@ -345,19 +325,9 @@ PROCEDURE busca_inf_produtos:
 
       DELETE PROCEDURE h-b1wgen0081.
 
-      IF  RETURN-VALUE = "NOK"  THEN
-          DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-            IF   AVAIL tt-erro  THEN
-                 par_dscritic = tt-erro.dscritic.
-            ELSE
-                 par_dscritic = "Nao foi possivel obter os dados das aplicacoes.".
-
-            LEAVE.
-          END.
-
-      ASSIGN aux_vlresapl = aux_vlresapl + tt-dados-aplicacao.vllanmto.
+      FOR FIRST tt-dados-aplicacao:
+        ASSIGN aux_vlresapl = aux_vlresapl + tt-dados-aplicacao.vllanmto.
+      END.
 
     END.
     
@@ -382,18 +352,6 @@ PROCEDURE busca_inf_produtos:
                                               OUTPUT TABLE tt-emails-titular).
 
     DELETE PROCEDURE h-b1wgen0082.
-
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO:
-          FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-          IF   AVAIL tt-erro  THEN
-               par_dscritic = tt-erro.dscritic.
-          ELSE
-               par_dscritic = "Nao foi possivel obter os dados de cobranca.".
-
-          LEAVE.
-        END.
 
     FOR FIRST tt-cadastro-bloqueto:
         ASSIGN tt-inf-produto.flcobran = 1.
@@ -495,6 +453,317 @@ PROCEDURE busca_inf_produtos:
                          NO-LOCK:
         ASSIGN tt-inf-produto.flpdbrde = 1.
     END.
+    
+    RETURN "OK".
+    
 END PROCEDURE.
 
+PROCEDURE canc_auto_produtos:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_flaceint AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flaplica AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flfolpag AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_fldebaut AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_fllimint AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flplacot AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flpouppr AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    DEF VAR aux_contador AS INTE                                    NO-UNDO.
+
+    FOR FIRST crapass FIELDS(dtdemiss)
+                      WHERE crapass.cdcooper = par_cdcooper AND
+                            crapass.nrdconta = par_nrdconta AND
+                            crapass.dtdemiss <> ? NO-LOCK:
+
+      Grava: DO TRANSACTION
+          ON ERROR  UNDO Grava, LEAVE Grava
+          ON QUIT   UNDO Grava, LEAVE Grava
+          ON STOP   UNDO Grava, LEAVE Grava
+          ON ENDKEY UNDO Grava, LEAVE Grava:
+
+        /* PLANO DE COTAS */
+        IF par_flplacot = 1 THEN
+          DO:
+            RUN sistema/generico/procedures/b1wgen0021.p PERSISTENT SET h-b1wgen0021.
+            
+            RUN cancelar-plano-atual IN h-b1wgen0021 (INPUT par_cdcooper,
+                                                      INPUT par_cdagenci,
+                                                      INPUT par_nrdcaixa,
+                                                      INPUT par_cdoperad,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_idorigem,
+                                                      INPUT par_nrdconta,
+                                                      INPUT par_idseqttl,
+                                                      OUTPUT TABLE tt-erro,
+                                                      OUTPUT TABLE tt-cancelamento).
+            DELETE PROCEDURE h-b1wgen0021.
+
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                  FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                  IF   AVAIL tt-erro  THEN
+                       par_dscritic = "Plano de cotas - " + tt-erro.dscritic + "</br>".
+                  ELSE
+                       par_dscritic = "Plano de cotas - Nao foi possivel efetuar o cancelamento automatico.</br>".              
+                END.
+          END.
+        
+        /* POUP. PROG. */
+        IF par_flpouppr = 1 THEN
+          DO:
+            FOR EACH craprpp FIELDS(nrctrrpp)
+                             WHERE craprpp.cdcooper = par_cdcooper AND
+                                   craprpp.nrdconta = par_nrdconta AND
+                                   craprpp.cdsitrpp <> 3 NO-LOCK:
+            
+              RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006.      
+              
+              RUN cancelar-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,
+                                                     INPUT par_cdagenci,
+                                                     INPUT par_nrdcaixa,
+                                                     INPUT par_cdoperad,
+                                                     INPUT par_nmdatela,
+                                                     INPUT par_idorigem,
+                                                     INPUT par_nrdconta,
+                                                     INPUT par_idseqttl,
+                                                     INPUT craprpp.nrctrrpp,
+                                                     INPUT par_dtmvtolt,
+                                                     INPUT TRUE,
+                                                    OUTPUT TABLE tt-erro).          
+              DELETE PROCEDURE h-b1wgen0006.
+
+              IF  RETURN-VALUE = "NOK"  THEN
+                  DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                    IF   AVAIL tt-erro  THEN
+                         par_dscritic = par_dscritic + "Poupanca Programada - " + tt-erro.dscritic + "</br>".
+                    ELSE
+                         par_dscritic = par_dscritic + "Poupanca Programada - Nao foi possivel efetuar o cancelamento automatico.</br>".
+                  END.
+              
+            END.
+          END.
+        /* APLICACAO */
+        IF par_flaplica = 1 THEN
+          DO: 
+            FOR EACH crapaar FIELDS(nrctraar)
+                             WHERE crapaar.cdcooper = par_cdcooper AND
+                                   crapaar.nrdconta = par_nrdconta AND
+                                   crapaar.cdsitaar <> 3 NO-LOCK:
+
+              RUN sistema/generico/procedures/b1wgen0081.p PERSISTENT SET h-b1wgen0081.
+
+              RUN excluir-agendamento IN h-b1wgen0081 (INPUT par_cdcooper,
+                                                       INPUT par_nrdconta,
+                                                       INPUT par_idseqttl,
+                                                       INPUT crapaar.nrctraar,
+                                                       INPUT par_cdoperad,
+                                                      OUTPUT TABLE tt-erro).
+                                                      
+              DELETE PROCEDURE h-b1wgen0081.
+
+              IF  RETURN-VALUE = "NOK"  THEN
+                  DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                    IF   AVAIL tt-erro  THEN
+                         par_dscritic = par_dscritic + "Aplicacao - " + tt-erro.dscritic + "</br>".
+                    ELSE
+                         par_dscritic = par_dscritic + "Aplicacao - Nao foi possivel efetuar o cancelamento automatico.</br>".
+                  END.
+
+            END.  
+          END.
+          
+        /* DEB. AUT. */
+        IF par_fldebaut = 1 THEN
+          DO:
+            RUN sistema/generico/procedures/b1wgen0092.p PERSISTENT SET h-b1wgen0092.      
+            
+            RUN busca-autori IN h-b1wgen0092(INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT par_cdoperad,
+                                             INPUT par_nmdatela,
+                                             INPUT par_idorigem,
+                                             INPUT par_nrdconta,
+                                             INPUT par_idseqttl,
+                                             INPUT TRUE, /* LOG */
+                                             INPUT par_dtmvtolt,
+                                             INPUT "E",
+                                             INPUT 0,
+                                             INPUT 0,
+                                             INPUT 0,
+                                            OUTPUT TABLE tt-erro, 
+                                            OUTPUT TABLE tt-autori).
+
+            DELETE PROCEDURE h-b1wgen0092.
+
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                  FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                  IF   AVAIL tt-erro  THEN
+                       par_dscritic = par_dscritic + "Debito automatico - " + tt-erro.dscritic + "</br>".
+                  ELSE
+                       par_dscritic = par_dscritic + "Debito automatico - Nao foi possivel efetuar o cancelamento automatico.</br>".
+                END.    
+                
+            FOR EACH tt-autori:
+                  
+              Contador: DO aux_contador = 1 TO 10:
+
+                  FOR FIRST crapatr WHERE crapatr.cdcooper = par_cdcooper AND
+                                          crapatr.nrdconta = par_nrdconta AND
+                                          crapatr.cdhistor = tt-autori.cdhistor AND
+                                          crapatr.cdrefere = tt-autori.cdrefere
+                                          USE-INDEX crapatr1
+                                          EXCLUSIVE-LOCK:
+                  END.
+                  
+                  IF  NOT AVAIL crapatr THEN
+                      IF  LOCKED crapatr  THEN
+                          DO:
+                              IF  aux_contador = 10 THEN
+                                  DO:
+                                      RUN gera_erro (INPUT par_cdcooper,
+                                                     INPUT par_cdagenci,
+                                                     INPUT par_nrdcaixa,
+                                                     INPUT 1,
+                                                     INPUT 341,
+                                                     INPUT-OUTPUT aux_dscritic).
+                                      par_dscritic = par_dscritic + "Debito automatico - " + aux_dscritic + "</br>".                                                 
+                                  END.
+                              ELSE 
+                                  DO:
+                                      PAUSE 1 NO-MESSAGE.
+                                      NEXT Contador.
+                                  END.
+                          END.
+                      ELSE 
+                          DO:
+                              RUN gera_erro (INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT 1,
+                                             INPUT 453,
+                                             INPUT-OUTPUT aux_dscritic).
+                              par_dscritic = par_dscritic + "Debito automatico - " + aux_dscritic + "</br>".
+                          END.
+                  ELSE
+                    DO:
+                      ASSIGN crapatr.cdopeexc = par_cdoperad
+                             crapatr.cdageexc = par_cdagenci
+                             crapatr.dtinsexc = TODAY
+                             crapatr.dtfimatr = par_dtmvtolt.
+                      LEAVE Contador.
+                    END.
+              END.      
+            
+            END.
+            
+            RUN sistema/generico/procedures/b1wgen0078.p PERSISTENT SET h-b1wgen0078.                
+                
+            RUN encerrar-sacado-dda IN h-b1wgen0078(INPUT par_cdcooper,  
+                                                    INPUT par_cdagenci,  
+                                                    INPUT par_nrdcaixa,  
+                                                    INPUT par_cdoperad,  
+                                                    INPUT par_nmdatela,  
+                                                    INPUT par_idorigem,  
+                                                    INPUT par_nrdconta,  
+                                                    INPUT par_idseqttl,  
+                                                    INPUT par_dtmvtolt,  
+                                                    INPUT TRUE,          
+                                                   OUTPUT TABLE tt-erro).
+            DELETE PROCEDURE h-b1wgen0078.
+
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                  FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                  IF   AVAIL tt-erro  THEN
+                       par_dscritic = par_dscritic + "DDA - " + tt-erro.dscritic + "</br>".                                                 
+                  ELSE
+                       par_dscritic = par_dscritic + "DDA - Nao foi possivel efetuar o cancelamento automatico.</br>".
+                END.
+            
+          END.
+        /* FOLHA PAG. */          
+        IF par_flfolpag = 1 THEN
+          DO:
+            FOR EACH crapemp WHERE crapemp.cdcooper = par_cdcooper AND
+                                   crapemp.nrdconta = par_nrdconta EXCLUSIVE-LOCK:
+              ASSIGN crapemp.flgpgtib = FALSE.
+            END.
+          END.
+        
+        /* ACESSO INTERNET */
+        IF par_flaceint = 1 THEN
+          DO:
+            RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
+            
+            RUN cancelar-senha-internet IN h-b1wgen0015 (INPUT par_cdcooper,
+                                                         INPUT par_cdagenci,
+                                                         INPUT par_nrdcaixa,
+                                                         INPUT par_cdoperad,
+                                                         INPUT par_nmdatela,
+                                                         INPUT par_idorigem,
+                                                         INPUT par_nrdconta,
+                                                         INPUT par_idseqttl,
+                                                         INPUT par_dtmvtolt,
+                                                         INPUT 0,
+                                                         INPUT TRUE, /** LOG **/
+                                                        OUTPUT TABLE tt-msg-confirma,
+                                                        OUTPUT TABLE tt-erro).
+
+            DELETE PROCEDURE h-b1wgen0015.
+
+            IF  RETURN-VALUE = "NOK"  THEN
+                DO:
+                  FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                  IF   AVAIL tt-erro  THEN
+                       par_dscritic = par_dscritic + "Internet e Limite - " + tt-erro.dscritic + "</br>".
+                  ELSE
+                       par_dscritic = "Internet e Limite - Nao foi possivel efetuar o cancelamento automatico.</br>".
+                END.      
+          END.
+
+        ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,",")).
+
+        RUN proc_gerar_log (INPUT par_cdcooper,
+                            INPUT par_cdoperad,
+                            INPUT "",
+                            INPUT aux_dsorigem,
+                            INPUT "Cancelamento automatico de produtos",
+                            INPUT TRUE,
+                            INPUT par_idseqttl, /** idseqttl **/
+                            INPUT par_nmdatela,
+                            INPUT par_nrdconta, /* nrdconta */
+                           OUTPUT aux_nrdrowid).
+
+      END.      
+    END.
+    
+    IF NOT AVAILABLE crapass THEN
+      ASSIGN par_dscritic = "Nao foi possivel efetuar o cancelamento automatico. Conta ainda esta ativa.".
+      
+    IF par_dscritic <> ? AND par_dscritic <> "" THEN
+      RETURN "NOK".
+      
+    RETURN "OK".
+    
+END PROCEDURE.
 /******************************************************************************/

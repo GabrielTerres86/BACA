@@ -20,6 +20,7 @@
  * [30/01/2015] Andre Santos(SUPERO): Incluir o item Convenio CDC
  * [03/08/2015] Reformulacao cadastral (Gabriel-RKAM)
  * [19/09/2015] Gabriel (RKAM) Projeto 217: Ajuste para chamada da rotina Produtos.
+ * [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
 
  */
  
@@ -305,8 +306,23 @@
 	// Se foi chamada pela tela MATRIC (inclusao de nova conta), carregar as rotinas para finalizar cadastro
 	var nmrotina = '<? echo $_POST['nmrotina']; ?>';
 	var nrdconta = '<? echo $_POST['nrdconta']; ?>';
+	var nmtelant = '<? echo $_POST['nmtelant']; ?>'; 					 // Nome da tela anterior chamadora
 	var flgcadas = '<? echo ($nmtelant == 'MATRIC') ? 'M' : 'C'; ?>';
-		
+	var flgimped = '<? echo ($nmtelant == 'IMPEDI') ? true : false; ?>';
+	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
+	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	
+	if (executandoImpedimentos){
+		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
+		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
+		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
+		var posicao = '<? echo $_POST['posicao']; ?>';
+		produtosCancM = produtos.split("|");		
+		produtosCancMAtenda = produtosAtenda.split("|");
+		produtosCancMContas = produtosContas.split("|");
+	}
+	
 	if (nrdconta != '') {
 		 $("#nrdconta","#frmCabContas").val(nrdconta);
 		 $("#idseqttl","#frmCabContas").val(1);

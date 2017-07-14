@@ -22,6 +22,7 @@
  * 015: [19/09/2015] Gabriel (RKAM) Projeto 217: Ajuste para chamada da rotina Produtos.
  * 016: [05/01/2016] Carlos (CECRED)         : #350828 Impressao de declaração de pessoa exposta politicamente.
  * 017: [14/09/2016] Kelvin (CECRED) 		 : Ajuste feito para resolver o problema relatado no chamado 506554.
+ * 018: [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
  */
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela CONTAS
@@ -50,6 +51,7 @@ var produtosTelasServicos = new Array();
 var produtosTelasServicosAdicionais = new Array();
 var executandoProdutosServicos = false;
 var executandoProdutos = false;
+var executandoImpedimentos = false;
 var executandoProdutosServicosAdicionais = false;
 var posicao = 0;
 var atualizarServicos = new Array();
@@ -202,8 +204,7 @@ function acessaRotina(nomeValidar, nomeTitulo, nomeURL, opeProdutos) {
 
         var urlScript = UrlSite + "includes/" + nomeURL + "/" + nomeURL;
 
-    } else if (executandoProdutos == true) {
-
+    } else if (executandoProdutos == true || executandoImpedimentos == true) {
         var url = UrlSite + "telas/atenda/" + nomeURL + "/" + nomeURL;
         var urlScript = UrlSite + "telas/atenda/" + nomeURL + "/" + nomeURL;
         var nomeDaTela = 'ATENDA';
@@ -247,6 +248,9 @@ function acessaRotina(nomeValidar, nomeTitulo, nomeURL, opeProdutos) {
                 $('.fecharRotina').click(function () {
                     idseqttl = $('#idseqttl', '#frmCabContas').val();
                     fechaRotina(divRotina);
+					if (executandoImpedimentos){
+						sequenciaImpedimentos();
+					}
                     return false;
                 });
             }
@@ -292,6 +296,25 @@ function encerraRotina(flgCabec) {
     } else {
         // Retira trava do fundo
         divError.escondeMensagem();
+    }
+}
+
+function sequenciaImpedimentos() {
+    if (executandoImpedimentos) {	
+		if (posicao <= produtosCancMContas.length) {
+			if (produtosCancMContas[posicao - 1] == '' || produtosCancMContas[posicao - 1] == 'undefined'){
+				eval(produtosCancM[posicao - 1]);
+				posicao++;
+			}else{
+				eval(produtosCancMContas[posicao - 1]);
+				posicao++;
+			}
+            return false;
+        }else{
+			eval(produtosCancM[posicao - 1]);
+			posicao++;
+			return false;
+		}
     }
 }
 
@@ -350,6 +373,11 @@ function obtemCabecalho(id, opbackgr, assincrono) {
                 if (flgcadas == 'M') {
                     trataCadastramento();
                 }
+				if (executandoImpedimentos){
+					sequenciaImpedimentos();
+				}else if (flgimped){
+					retornaImpedimentos();
+				}
             } catch (error) {
                 hideMsgAguardo();
                 showError("error", "Não foi possível concluir a requisição. " + error.message + ".", "Alerta - Ayllos", "$('#nrdconta','#frmCabContas').focus()");
@@ -621,4 +649,12 @@ function trataCadastramento() {
         acessaRotina('IDENTIFICACAO', 'Identificação', 'identificacao_juridica');
     }
 
+}
+
+function retornaImpedimentos(){
+	
+    // Limpar tela anterior
+    $("#divMsgsAlerta").css('visibility', 'hidden');
+
+	acessaRotina('IMPEDIMENTOS DESLIGAMENTO', 'Impedimentos', 'impedimentos_desligamento');
 }

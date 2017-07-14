@@ -13,35 +13,41 @@
 	 if ($valor == 1) return 'Sim'; else return 'N&atilde;o';
  }
  
+ 
+ $produtos = array('1', '3', '8', '10', '14', '15', '16');
 ?>
-<table width="100%" height="92%">
+<table width="100%" height="94%">
 	<tr>
-		<td width="35%" height="100%">
+		<td width="40%" height="100%">
 			<form name="frmCancAuto" id="frmCancAuto" class="formulario" style="height: inherit; position: relative">
 				<fieldset style="height: inherit">				
 				<legend>Cancelamento Autom&aacute;tico</legend>
 					<table>
-						<?foreach( $regServicos as $result ) {?>
-							
-							<tr id="<?echo getByTagName($result->tags,'cdproduto');?>">
-							
-								<?if(getByTagName($result->tags,'flativo') == 'S'){?>	
-									<td><a style="padding: 0px 0 0 3px;"><img style="width:25px; height:25px;" src="<? echo $UrlImagens; ?>geral/servico_ativo.gif" id="lupaServico" name="lupaServico" /></a></td>
-									<td style="text-align:left;width:260px">
-										<label><?echo getByTagName($result->tags,'dsproduto');?></label>
-									</td>
-								<?}?>
+						<?foreach( $regServicos as $result ) {
+							if (in_array(getByTagName($result->tags,'cdproduto'), $produtos)){
+								if(getByTagName($result->tags,'flativo') == 'S'){?>	
+									<tr id="<?echo getByTagName($result->tags,'cdproduto');?>">
+																
+										<td><a style="padding: 0px 0 0 3px;"><img style="width:25px; height:25px;" src="<? echo $UrlImagens; ?>geral/servico_ativo.gif" id="lupaServico" name="lupaServico" /></a></td>
+										<td style="text-align:left;width:260px">
+											<label><?echo getByTagName($result->tags,'dsproduto');?></label>
+										</td>
+										<td style="vertical-align: middle">
+											<input class="checkbox" type="checkbox" style="margin-top: 0px" id="<?echo getByTagName($result->tags,'cdproduto');?>"/>
+										</td>
 
-							</tr>
+									</tr>
+								<?}?>
+							<?}?>
 						<?}?>
 					</table>
 					<div class="divBotoes" style="position: absolute; bottom: 0; left: 0; right: 0">
-						<a href="#" class="botao" id="btProsseguir"  onClick="btnContinuar(); return false;" style="float: none; padding:3px 6px;">Continuar</a>
+						<a href="#" class="botao" id="btProsseguir"  onClick="efetuaCancelamentoAuto(); return false;" style="float: none; padding:3px 6px;">Continuar</a>
 					</div>
 				</fieldset>
 			</form>
 		</td>
-		<td width="70%" height="100%">
+		<td width="60%" height="100%">
 			<form name="frmCancManl" id="frmCancManl" class="formulario" style="height: inherit; position: relative;">
 				<fieldset style="height: inherit">
 				<legend>Cancelamento Manual</legend>
@@ -54,7 +60,7 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlemprst')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="1"/>
 							</td>
 						</tr>
 						<tr>
@@ -65,7 +71,7 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vllimpro')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="2"/>
 							</td>
 						</tr>
 						<tr>
@@ -76,7 +82,7 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vllimdsc')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="3"/>
 							</td>
 						</tr>
 						<tr>
@@ -87,7 +93,7 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlcompcr')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="4"/>
 							</td>
 						</tr>
 						<tr>
@@ -98,7 +104,7 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vllimcar')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="5"/>
 							</td>
 						</tr>
 						<tr>
@@ -109,128 +115,18 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlresapl')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="6"/>
 							</td>
 						</tr>
 						<tr>
 							<td>								
-								<label class="checkbox">Cobran&ccedil;a banc&atilde;ria</label>
+								<label class="checkbox">Resgate da poupan&ccedil;a programada</label>
 							</td>
 							<td>
-								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flcobran')); ?></label>
+								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlsrdrpp')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Seguros</label>
-							</td>
-							<td>
-								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flseguro')); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Cons&oacute;rcio</label>
-							</td>
-							<td>
-								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flconsor')); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Conta ITG</label>
-							</td>
-							<td>
-								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgctitg')); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Vendas com cart&otilde;es - Parceiro Bancoob</label>
-							</td>
-							<td>
-								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgccbcb')); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Vendas com cart&otilde;es - Parceiro BB</label>
-							</td>
-							<td>
-								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgccbdb')); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Folhas de cheque em uso</label>
-							</td>
-							<td>
-								<label><? echo getByTagName($regServicos2->tags,'qtfdcuso'); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Cheques devolvidos</label>
-							</td>
-							<td>
-								<label><? echo getByTagName($regServicos2->tags,'qtchqdev'); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Talon&aacute;rios em estoque</label>
-							</td>
-							<td>
-								<label><? echo getByTagName($regServicos2->tags,'qtreqtal'); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Cheques cancelados</label>
-							</td>
-							<td>
-								<label><? echo getByTagName($regServicos2->tags,'qtchqcan'); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Benef&iacute;cio INSS</label>
-							</td>
-							<td>
-								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgbinss')); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="7"/>
 							</td>
 						</tr>
 						<tr>
@@ -241,7 +137,144 @@
 								<label><? echo formataFlag(getByTagName($regServicos2->tags,'inarqcbr')); ?></label>							
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+							<?if (getByTagName($regServicos2->tags,'inarqcbr') == 1){?>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="8"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Cobran&ccedil;a banc&aacute;ria</label>
+							</td>
+							<td>
+								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flcobran')); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'flcobran') == 1){?>							
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="9"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Seguros</label>
+							</td>
+							<td>
+								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flseguro')); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'flseguro') == 1){?>														
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="10"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Cons&oacute;rcio</label>
+							</td>
+							<td>
+								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flconsor')); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'flconsor') == 1){?>																					
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="11"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Conta ITG</label>
+							</td>
+							<td>
+								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgctitg')); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'flgctitg') == 1){?>							
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="12"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Vendas com cart&otilde;es - Parceiro Bancoob</label>
+							</td>
+							<td>
+								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgccbcb')); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'flgccbcb') == 1){ ?>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="13"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Vendas com cart&otilde;es - Parceiro BB</label>
+							</td>
+							<td>
+								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgccbdb')); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'flgccbdb') == 1){?>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="14"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Folhas de cheque em uso</label>
+							</td>
+							<td>
+								<label><? echo getByTagName($regServicos2->tags,'qtfdcuso'); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="15"/>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Cheques devolvidos</label>
+							</td>
+							<td>
+								<label><? echo getByTagName($regServicos2->tags,'qtchqdev'); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="16"/>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Talon&aacute;rios em estoque</label>
+							</td>
+							<td>
+								<label><? echo getByTagName($regServicos2->tags,'qtreqtal'); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Cheques cancelados</label>
+							</td>
+							<td>
+								<label><? echo getByTagName($regServicos2->tags,'qtchqcan'); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="18"/>
+							</td>
+						</tr>
+						<tr>
+							<td>								
+								<label class="checkbox">Benef&iacute;cio INSS</label>
+							</td>
+							<td>
+								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flgbinss')); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'flgbinss') == 1){?>							
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="19"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -252,12 +285,14 @@
 								<label><? echo formataFlag(getByTagName($regServicos2->tags,'flpdbrde')); ?></label>														
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px"/>
+							<?if (getByTagName($regServicos2->tags,'flpdbrde') == 1){?>														
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="20"/>
+							<?}?>
 							</td>
 						</tr>
 					</table>
 					<div class="divBotoes" style="position: absolute; bottom: 0; left: 0; right: 0">
-						<a href="#" class="botao" id="btProsseguir"  onClick="btnContinuar(); return false;" style="float: none; padding:3px 6px;">Continuar</a>
+						<a href="#" class="botao" id="btProsseguir"  onClick="efetuaCancelamentoManual()" style="float: none; padding:3px 6px;">Continuar</a>
 					</div>
 				</fieldset>							
 			</form>

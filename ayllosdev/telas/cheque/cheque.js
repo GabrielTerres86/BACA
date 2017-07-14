@@ -14,11 +14,12 @@
  * [10/06/2016] Lucas Ranghetti         : Alterado Width da frame dos detalhes (#422753)
  * [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * [26/04/2017] Lucas Ranghetti         : Limpar numero do cheque quando acionar o estado inicial.
+ * [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
  * --------------
  */
 
 // Variáveis globais usadas para as requisições AJAX
-var nrdconta, idseqttl, nrtipoop, nrcheque;
+var idseqttl, nrtipoop, nrcheque;
 
 // Variáveis globais para alguns seletores úteis
 var frmCheque, frmCabecalho, frmTipoCheque, divTabela;
@@ -36,7 +37,7 @@ var cNrpedido, cDtsolped, cDtrecped, cDsdocmc7,
 $(document).ready(function() {
 	
 	// Inicializando algumas variáveis
-	nrdconta = 0;
+	//nrdconta = 0;
 	idseqttl = 1;
 	nrtipoop = '';
 	nrcheque = '';
@@ -256,6 +257,9 @@ function formataCabecalho() {
 		}
 	});
 	
+	if (nrdconta != 0){		
+		$('#btnOK').click();
+	}
 	
 }
 
@@ -428,7 +432,15 @@ function funcaoVoltar(){
 			$('table > tbody', 'div.divRegistros').html('');
 			$('table > tbody > tr > td', 'div#divPesquisaRodape').each(function(i){ $(this).html(''); });
 		} else {
-			estadoInicial();			
+			if (executandoImpedimentos){
+				if (posicao == 1){
+					posicao++;
+				}
+				eval(produtosCancM[posicao - 1]);				
+				return false;
+			}else{
+				estadoInicial();			
+			}
 		}		
 	}else{
 		trocaVisao();

@@ -25,6 +25,13 @@ DEF VAR aux_nrdconta AS INTE                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_idseqttl AS INTE                                           NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                           NO-UNDO.
+DEF VAR aux_flaceint AS INTE                                           NO-UNDO.
+DEF VAR aux_flaplica AS INTE                                           NO-UNDO.
+DEF VAR aux_flfolpag AS INTE                                           NO-UNDO.
+DEF VAR aux_fldebaut AS INTE                                           NO-UNDO.
+DEF VAR aux_fllimint AS INTE                                           NO-UNDO.
+DEF VAR aux_flplacot AS INTE                                           NO-UNDO.
+DEF VAR aux_flpouppr AS INTE                                           NO-UNDO.
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
@@ -51,6 +58,13 @@ PROCEDURE valores_entrada:
             WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo).  
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo). 
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
+            WHEN "flaceint" THEN aux_flaceint = INTE(tt-param.valorCampo).
+            WHEN "flaplica" THEN aux_flaplica = INTE(tt-param.valorCampo).
+            WHEN "flfolpag" THEN aux_flfolpag = INTE(tt-param.valorCampo).
+            WHEN "fldebaut" THEN aux_fldebaut = INTE(tt-param.valorCampo).
+            WHEN "fllimint" THEN aux_fllimint = INTE(tt-param.valorCampo).
+            WHEN "flplacot" THEN aux_flplacot = INTE(tt-param.valorCampo).
+            WHEN "flpouppr" THEN aux_flpouppr = INTE(tt-param.valorCampo).
             
         END CASE.
     
@@ -93,3 +107,46 @@ PROCEDURE busca_inf_produtos:
         END.        
 
 END PROCEDURE.    
+
+PROCEDURE canc_auto_produtos:
+
+     RUN canc_auto_produtos IN hBO (INPUT aux_cdcooper,
+                                    INPUT aux_cdagenci,
+                                    INPUT aux_nrdcaixa,
+                                    INPUT aux_cdoperad,
+                                    INPUT aux_nmdatela,
+                                    INPUT aux_idorigem,                                    
+                                    INPUT aux_nrdconta,
+                                    INPUT aux_idseqttl,
+                                    INPUT aux_dtmvtolt,
+                                    INPUT aux_flaceint,
+                                    INPUT aux_flaplica,
+                                    INPUT aux_flfolpag,
+                                    INPUT aux_fldebaut,
+                                    INPUT aux_fllimint,
+                                    INPUT aux_flplacot,
+                                    INPUT aux_flpouppr,                                    
+                                    OUTPUT aux_dscritic).
+       
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            
+            CREATE tt-erro.            
+            ASSIGN tt-erro.cdcritic = aux_cdcritic
+                   tt-erro.dscritic = "Alguns produtos apresentaram criticas: </br>" + aux_dscritic.
+    
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END. 
+    ELSE 
+        DO:
+            CREATE tt-msg-confirma.
+            ASSIGN tt-msg-confirma.dsmensag = "Cancelamento automatico realizado com sucesso.".            
+            
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
+                             INPUT "Mensagem").
+            RUN piXmlSave.
+        END.    
+        
+END.
