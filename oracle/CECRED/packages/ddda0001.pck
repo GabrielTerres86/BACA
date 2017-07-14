@@ -326,12 +326,6 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
                                ,pr_dtmvtolt IN DATE -- Data de movimentos
                                ,pr_dscritic OUT VARCHAR2); -- Descricao da critica
 
-  /* Procedure para chamar a rotina pc_retorno_operacao_tit_dda
-  em PLSQL através da rotina Progress via DataServer */
- PROCEDURE pc_retorno_operacao_tit_DDA(pr_tab_remessa_dda IN DDDA0001.typ_tab_remessa_dda --Remessa dda
-                                      ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda --Retorno dda
-                                      ,pr_cdcritic        OUT crapcri.cdcritic%type --Codigo de Erro
-                                      ,pr_dscritic        OUT VARCHAR2); --Descricao de Erro
 
   /* Procedure para chamar a rotina pc_remessa_titulos_dda
   em PLSQL através da rotina Progress via DataServer */
@@ -422,7 +416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0079.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 22/11/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 13/07/2016
   --
   -- Dados referentes ao programa:
   --
@@ -445,6 +439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --                          (pc_remessa_tit_tab_dda) e PC_REMESSA_TITULOS_DDA (pc_remessa_tit_tab_dda) 
   --                          como públicas. (Renato Darosci - Supero)
   --
+  --             13/07/2017 - Retirado procedure pc_retorno_operacao_tit_DDA (antigo JDDDA) (Rafael)
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -2438,7 +2433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : Procedure para verificacao de saque do DDA
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior - RKAM
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 04/07/2017
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 14/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -2451,22 +2446,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             04/07/2017 - Incluido Autonomous Transaction pois o select realizado no dblink
     --                          do SQL/Server JDNPC, abre uma transação. (Rafael)
     --
+    --             13/07/2017 - Subsituido tabela de pesquisa de pagador DDA tbjdnpccip_pageletr pela
+    --                          view VWJDNPCPAG_PAGADOR_ELETRONICO. Motivo: tabela contem menos 
+    --                          pagadores DDA que a VIEW. (Rafael)
+    --
+    --             14/07/2017 - Retirado Autonomous Transacion por orientação dos DBAs. (Rafael)
     ---------------------------------------------------------------------------------------------------------------
-  
-    -- Pragma - abre nova sessao devido ao acesso dblink @jdnpcsql
-    ---------------------------------------------------------------------------------------------------------------
-    PRAGMA AUTONOMOUS_TRANSACTION;
-    ---------------------------------------------------------------------------------------------------------------    
-
-  
+    
     --Selecionar dados saque
-    CURSOR cr_dadosaque(pr_cnpjcpfpagdr IN NUMBER,
+/*    CURSOR cr_dadosaque(pr_cnpjcpfpagdr IN NUMBER,
                         pr_tppessoa     IN VARCHAR2) IS
       SELECT tbj."SitCliPagdrDDA" DDASitPagEletr
             ,tbj."QtdAdesCliPagdrDDA"      QtdAdesao
         FROM tbjdnpccip_pageletr@jdnpcsql  tbj
        WHERE tbj."CPFCNPJPagdr"  = pr_cnpjcpfpagdr
-         AND tbj."TpPessoaPagdr" = pr_tppessoa;
+         AND tbj."TpPessoaPagdr" = pr_tppessoa; */
+         
+    --Selecionar dados saque
+    CURSOR cr_dadosaque(pr_cnpjcpfpagdr IN NUMBER,
+                        pr_tppessoa     IN VARCHAR2) IS
+      SELECT 
+         tbj."DDASitPagEletr" DDASitPagEletr
+        ,tbj."QtdAdesao"      QtdAdesao
+        FROM VWJDNPCPAG_PAGADOR_ELETRONICO@jdnpcbisql tbj
+       WHERE tbj."CNPJCPFPagdr"  = pr_cnpjcpfpagdr
+         AND tbj."TpPessoaPagdr" = pr_tppessoa;          
            
     rw_dadosaque cr_dadosaque%ROWTYPE;
   
@@ -2499,12 +2503,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     IF cr_dadosaque%ISOPEN THEN
       CLOSE cr_dadosaque;
     END IF;
-    
-    COMMIT;
-    
+        
   EXCEPTION
     WHEN OTHERS THEN
-      ROLLBACK;
       
       IF cr_dadosaque%ISOPEN THEN
         CLOSE cr_dadosaque;
@@ -3101,133 +3102,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END LOOP; -- Fim da busca pelos titulos
   
   END pc_grava_congpr_dda; /* Procedure para retorno remessa DDA */
-
-  /* Procedure para Executar retorno operacao Titulos DDA */
-  PROCEDURE pc_retorno_operacao_tit_DDA(pr_tab_remessa_dda IN DDDA0001.typ_tab_remessa_dda --Remessa dda
-                                       ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda --Retorno dda
-                                       ,pr_cdcritic        OUT crapcri.cdcritic%type --Codigo de Erro
-                                       ,pr_dscritic        OUT VARCHAR2) IS --Descricao de Erro
-    ---------------------------------------------------------------------------------------------------------------
-    --
-    --  Programa : pc_retorno_operacao_tit_DDA    Antigo: procedures/b1wgen0087.p/Retorno-Operacao-Titulos-DDA
-    --  Sistema  : PProcedure para Executar retorno operacao Titulos DDA
-    --  Sigla    : CRED
-    --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 05/02/2014
-    --
-    -- Dados referentes ao programa:
-    --
-    -- Frequencia: -----
-    -- Objetivo  : Procedure para Executar retorno operacao Titulos DDA
-    --
-    -- Alteracoes: 05/02/2014 - Ajuste no fechamento do cursor da cr_craptit (Gabriel)
-    ---------------------------------------------------------------------------------------------------------------
-  BEGIN
-    DECLARE
-      CURSOR cr_craptit(pr_cdlegado IN TBJDDDALEG_JD2LG_OPTITULO.CdLegado@jdddasql%type
-                       ,pr_nrispbif IN TBJDDDALEG_JD2LG_OPTITULO.ISPBIF@jdddasql%TYPE
-                       ,pr_idtitleg IN TBJDDDALEG_JD2LG_OPTITULO.IdTitLeg@jdddasql%TYPE
-                       ,pr_idopeleg IN TBJDDDALEG_JD2LG_OPTITULO.IdOperacaoLeg@jdddasql%type) IS
-        SELECT TBJ."ISPBAdministrado" ISPBAdministrado
-              ,TBJ."IdOpJD"   IdOpJD
-              ,TBJ."DtHrOpJD" DtHrOpJD
-              ,TBJ."SitOpJD"  SitOpJD
-              ,TBJ."IdTituloLeg" IdTituloLeg
-              ,TBJ."NumIdentcTit" NumIdentcTit
-              ,TBJ."NumRefAtlCadTit" NumRefAtlCadTit
-          FROM tbjdnpcdstleg_jd2lg_optit@jdnpcbisql TBJ
-         WHERE TBJ."CdLeg"            = pr_cdlegado
-           AND TBJ."ISPBAdministrado" = pr_nrispbif
-           AND TBJ."IdTituloLeg"      = pr_idtitleg
-           AND TBJ."IdOpLeg"          = pr_idopeleg
-         ORDER BY TBJ."DtHrOpJD" DESC;
-      rw_craptit cr_craptit%ROWTYPE;
-      --Variaveis Locais
-      vr_index     INTEGER;
-      vr_index_ret INTEGER;
-      --Variaveis Erro
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      vr_dscritic VARCHAR2(4000);
-      --Variaveis Excecao
-      vr_exc_erro EXCEPTION;
-    BEGIN
-      --Inicializar variaveis retorno
-      pr_cdcritic := NULL;
-      pr_dscritic := NULL;
-    
-      --Percorrer todas as remessas
-      vr_index := pr_tab_remessa_dda.FIRST;
-      WHILE vr_index IS NOT NULL LOOP
-      
-        --Encontrar Titulo
-        OPEN cr_craptit(pr_cdlegado => pr_tab_remessa_dda(vr_index).cdlegado
-                       ,pr_nrispbif => pr_tab_remessa_dda(vr_index).nrispbif
-                       ,pr_idtitleg => pr_tab_remessa_dda(vr_index).idtitleg
-                       ,pr_idopeleg => pr_tab_remessa_dda(vr_index).idopeleg);
-        --Posicionar no proximo registro
-        FETCH cr_craptit
-          INTO rw_craptit;
-        --Se encontrar
-        IF cr_craptit%FOUND THEN
-          --Fechar Cursor
-          CLOSE cr_craptit;
-          
-            -- deletar registro de controle
-            BEGIN
-              
-              DELETE tbjdnpcdstleg_jd2lg_optit_ctrl@jdnpcbisql
-               WHERE "ISPBAdministrado"  = rw_craptit.ISPBAdministrado
-                 AND "IdOpJD"            = rw_craptit.IdOpJD
-                 AND "IdTituloLeg"       = rw_craptit.IdTituloLeg;
-            EXCEPTION
-              WHEN Others THEN
-                vr_cdcritic := 0;
-                vr_dscritic := 'Erro ao deletar registro tbjdnpcdstleg_jd2lg_optit_ctrl. ' ||
-                               'IdOpJD: '||rw_craptit.IdOpJD||' -> '||sqlerrm;
-                --Levantar Excecao
-                RAISE vr_exc_erro;
-            END;
-
-          --Criar retorno
-          vr_index_ret := pr_tab_retorno_dda.Count + 1;
-          pr_tab_retorno_dda(vr_index_ret).idtitleg := pr_tab_remessa_dda(vr_index)
-                                                       .idtitleg;
-          pr_tab_retorno_dda(vr_index_ret).idopeleg := pr_tab_remessa_dda(vr_index)
-                                                       .idopeleg;
-          pr_tab_retorno_dda(vr_index_ret).nrdident := rw_craptit.NumIdentcTit;
-          pr_tab_retorno_dda(vr_index_ret).nratutit := rw_craptit.NumRefAtlCadTit;
-          CASE rw_craptit.SitOpJD
-            WHEN 'PJ' THEN
-              /* Recebido JD */
-              pr_tab_retorno_dda(vr_index_ret).insitpro := 2;
-            WHEN 'RC' THEN
-              pr_tab_retorno_dda(vr_index_ret).insitpro := 3;
-            WHEN 'EJ' THEN
-              pr_tab_retorno_dda(vr_index_ret).insitpro := 4;
-            WHEN 'EC' THEN
-              pr_tab_retorno_dda(vr_index_ret).insitpro := 4;
-            ELSE
-              NULL;
-          END CASE;
-        ELSE
-          --Fechar Cursor
-          CLOSE cr_craptit;
-        END IF;
-        --Proximo registro
-        vr_index := pr_tab_remessa_dda.NEXT(vr_index);
-      END LOOP;
-    
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-      
-      WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina DDDA0001.pc_retorno_operacao_tit_DDA. ' ||
-                       SQLERRM;
-    END;
-  END pc_retorno_operacao_tit_DDA;
 
   --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
   PROCEDURE pc_trata_retorno_erro ( pr_cdcooper       IN  crapcob.cdcooper%TYPE   --> Codigo da cooperativa 
@@ -3937,12 +3811,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     WHEN vr_exc_erro THEN    
       ROLLBACK; 
       pr_cdcritic := vr_cdcritic;
-      vr_dscritic := vr_dscritic;
+      pr_dscritic := vr_dscritic;
       
     WHEN OTHERS THEN     
       ROLLBACK;      
       pr_cdcritic := vr_cdcritic;
-      vr_dscritic := vr_dscritic;      
+      pr_dscritic := vr_dscritic || ' - ' || SQLERRM;      
   
   END pc_retorno_operacao_tit_NPC;
 
@@ -3976,7 +3850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     
       CURSOR cr_abertura IS
         SELECT MAX("DataMov") datamov
-          FROM TBJDDDA_CTRL_ABERTURA@jdddasql
+          FROM TBJDDDA_CTRL_ABERTURA@jdnpcsql
          WHERE "ISPBCliente" = 5463212;
       rw_abertura cr_abertura%ROWTYPE;
     
