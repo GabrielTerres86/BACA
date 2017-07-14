@@ -328,6 +328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           ,cob.insmspos
           ,cob.vlminimo
           ,cob.inpagdiv
+          ,cob.cdmensag
           ,cob.rowid
      FROM crapcob cob
     WHERE cob.cdcooper = pr_cdcooper
@@ -5945,7 +5946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 22/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 12/07/2017
     --
     --  Dados referentes ao programa:
     --
@@ -5954,6 +5955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --   Alteracao : 22/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
     --
+    --               12/07/2017 - Ajustes para atualizar crapcob.cdmensag. PRJ340(Odirlei-AMcom)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -6320,9 +6322,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       rw_crapcob.idopeleg:= vr_tab_remessa_dda(vr_tab_remessa_dda.LAST).idopeleg;
     END IF;
 
+    --> Se possuir Desconto
+    IF rw_crapcob.vldescto > 0 THEN
+      --> Marcar cdmensag
+      rw_crapcob.cdmensag := 1;
+    END IF;    
+
     --Atualizar Cobranca
     BEGIN
       UPDATE crapcob SET crapcob.vldescto = rw_crapcob.vldescto,
+                         crapcob.cdmensag = rw_crapcob.cdmensag,
                          crapcob.idopeleg = rw_crapcob.idopeleg
       WHERE crapcob.rowid = rw_crapcob.rowid;
     EXCEPTION
@@ -6552,7 +6561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Douglas Quisinski
-    --  Data     : Janeiro/2016                     Ultima atualizacao: 22/01/2016
+    --  Data     : Janeiro/2016                     Ultima atualizacao: 12/07/2017
     --
     --  Dados referentes ao programa:
     --
@@ -6561,6 +6570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --   Alteracao : 22/01/2016 - Coversao Progress -> Oracle (Douglas - Importacao de Arquivos CNAB)
     --
+    --               12/07/2017 - Ajustes para atualizar crapcob.cdmensag. PRJ340(Odirlei-AMcom)
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -6871,6 +6881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Atualizar Cobranca
     BEGIN
       UPDATE crapcob SET crapcob.vldescto = rw_crapcob.vldescto,
+                         crapcob.cdmensag = 0, --> marcar como não possui desconto
                          crapcob.idopeleg = rw_crapcob.idopeleg
       WHERE crapcob.rowid = rw_crapcob.rowid;
     EXCEPTION
