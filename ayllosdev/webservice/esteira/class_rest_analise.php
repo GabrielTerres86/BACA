@@ -131,6 +131,8 @@ class RestAnalise extends RestServerJson{
 			      $xml .= "   <nrgarope>".$oDados->indicadoresGeradosRegra->garantia."</nrgarope>";
 			      $xml .= "   <nrparlvr>".$oDados->indicadoresGeradosRegra->patrimonioPessoalLivre."</nrparlvr>";
 			      $xml .= "   <nrperger>".$oDados->indicadoresGeradosRegra->percepcaoGeralEmpresa."</nrperger>";
+            $xml .= "   <desscore>".$oDados->indicadoresGeradosRegra->descricaoScoreBVS."</desscore>";
+            $xml .= "   <datscore>".$oDados->indicadoresGeradosRegra->dataScoreBVS."</datscore>";
 			      $xml .= "   <dsrequis>".$this->getFileContents()."</dsrequis>";
 			      $xml .= "   <namehost>".$this->getNameHost()."</namehost>";
 			      $xml .= " </Dados>";

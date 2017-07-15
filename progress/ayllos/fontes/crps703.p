@@ -23,6 +23,7 @@
 DEF VAR aux_cdcooper AS INTEGER                                    NO-UNDO.
 DEF VAR aux_cdcritic AS INTEGER                                    NO-UNDO.
 DEF VAR aux_dscritic AS CHARACTER                                  NO-UNDO.
+DEF VAR aux_dsmensag AS CHARACTER                                  NO-UNDO.
 DEF VAR aux_qtsucess AS INTEGER                                    NO-UNDO.
 DEF VAR aux_qtderros AS INTEGER                                    NO-UNDO.
 
@@ -162,6 +163,7 @@ FOR EACH crapcop FIELDS (cdcooper)
                            INPUT crawepr.nrctremp, /* dsiduser */
                            INPUT 0,                /* flreiflx */
                            INPUT "E",              /* tpenvest */
+                          OUTPUT aux_dsmensag,  
                           OUTPUT aux_cdcritic, 
                           OUTPUT aux_dscritic).
        

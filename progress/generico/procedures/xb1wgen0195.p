@@ -2,14 +2,14 @@
 
    Programa: xb1wgen0195.p
    Autor   : Odirlei Busana (AMcom)
-   Data    : Marco/2016                     Ultima atualizacao: 10/03/2016
+   Data    : Marco/2016                     Ultima atualizacao: 13/07/2017
 
    Dados referentes ao programa:
 
    Objetivo  : BO de Comunicacao XML VS BO de envio de informacoes 
                para a Esteira de Credito (b1wgen0195.p)
 
-   Alteracoes:
+   Alteracoes: 13/07/2017 - P337 - Retorno de mensagens da Aprovacao (Marcos-Supero)
    
 .............................................................................*/   
 
@@ -26,6 +26,7 @@ DEF VAR aux_idorigem AS INTE                                           NO-UNDO.
 DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_flreiflx AS INTE                                           NO-UNDO.
 DEF VAR aux_tpenvest AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
@@ -109,6 +110,7 @@ PROCEDURE Enviar_proposta_esteira:
                            INPUT aux_dsiduser,
                            INPUT aux_flreiflx,
                            INPUT aux_tpenvest,
+                          OUTPUT aux_dsmensag, 
                           OUTPUT aux_cdcritic, 
                           OUTPUT aux_dscritic).
        
@@ -125,7 +127,7 @@ PROCEDURE Enviar_proposta_esteira:
     ELSE 
         DO:
             CREATE tt-msg-confirma.
-            ASSIGN tt-msg-confirma.dsmensag = "Proposta Enviada para Esteira com Sucesso.".            
+            tt-msg-confirma.dsmensag = aux_dsmensag.
             
             RUN piXmlNew.
             RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,

@@ -38,13 +38,14 @@
 |   ratings-cooperado                    | RATI0001.pc_ratings_cooperado       |
 |   descricao-situacao                   | RATI0001.fn_descricao_situacao      |
 |   verifica_operacoes                   | RATI0001.pc_verifica_operacoes      |  
-|   proc_calcula					     | RATI0001.pc_proc_calcula            |
+|   proc_calcula                         | RATI0001.pc_proc_calcula            |
 |   verifica_atualizacao                 | RATI0001.pc_verifica_atualizacao    |
 |   atualiza_rating                      | RATI0001.pc_atualiza_rating         |
-|   valida-itens-rating				     | RATI0001.pc_valida_itens_rating     |
+|   valida-itens-rating                  | RATI0001.pc_valida_itens_rating     |
 |   verifica_rating                      | RATI0001.pc_verifica_rating         |
 |   gera_rating                          | RATI0001.pc_gera_rating             |
 |   obtem_emprestimo_risco               | RATI0002.pc_obtem_emprestimo_risco  |
+|   grava_rating                         | RATI0001.pc_grava_rating            |
 +----------------------------------------+-------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -207,7 +208,7 @@
               26/06/2015 - Ajuste na procedure "obtem_emprestimo_risco" para
                            o projeto de provisao. (James)  
 
-			  03/07/2015 - Projeto 217 Reformula? Cadastral IPP Entrada
+                          03/07/2015 - Projeto 217 Reformula? Cadastral IPP Entrada
                            Ajuste nos codigos de natureza juridica para o
                            existente na receita federal (Tiago Castro - RKAM)           
                            
@@ -223,9 +224,9 @@
               21/12/2015 - Alterada data permitida pra recalculo do rating para
                            permitir na data 29/12 (Lucas Lunelli)
                            
-			  03/06/2016 - Alteracao na atribuicao de notas do rating, se for AA, deve
-			               assumir a nota referente ao risco A.
-						   Chamado 431839 (Andrey - RKAM)
+                          03/06/2016 - Alteracao na atribuicao de notas do rating, se for AA, deve
+                                       assumir a nota referente ao risco A.
+                                                   Chamado 431839 (Andrey - RKAM)
 
               25/04/2017 - Alterado rotina pc_obtem_emprestimo_risco para chamada da rotina oracle.
                            PRJ337 - Motor de Credito (Odirlei-Amcom)
@@ -7154,7 +7155,7 @@ PROCEDURE nivel_comprometimento:
                                                     OUTPUT par_qtprecal,
                                                     OUTPUT TABLE tt-erro).
              DELETE PROCEDURE h-b1wgen0002.
-                          
+             
              IF   RETURN-VALUE <> "OK"   THEN
                   DO:
                       FIND FIRST tt-erro NO-LOCK NO-ERROR.
@@ -7180,7 +7181,6 @@ PROCEDURE nivel_comprometimento:
                 ASSIGN par_vltotpre = par_vltotpre + crapebn.vlparepr.
 
              END.
-
 
              ASSIGN aux_valorpre = 0.     
 
@@ -7226,6 +7226,7 @@ PROCEDURE nivel_comprometimento:
                                 crapebn.nrctremp = par_nrctrato  NO-LOCK) THEN
                   ASSIGN par_vltotpre = par_vltotpre + par_vlpreemp. /* Somar contrato atual */
        
+         
          END.
     ELSE                           /* Se C.especial / desconto  */ 
          DO:                                         

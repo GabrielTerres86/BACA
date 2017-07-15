@@ -116,7 +116,7 @@ function verificaImpressao(par_idimpres){
 	idimpres = par_idimpres;
 
 	if ((idimpres == 3 || idimpres == 5 || idimpres == 7) && inobriga == 'S'){
-		showError('error','Proposta ainda n&atilde;o analisada automaticamente pela Esteira! N&atilde;o ser&aacute; poss&iacute;vel gerar \'Proposta\', \'Rating\' ou \'Consultas\'!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		showError('error','An&aacute;lise de Cr&eacute;dito ainda n&atilde;o foi efetuada! N&atilde;o ser&aacute; poss&iacute;vel gerar \'Proposta\', \'Rating\' ou \'Consultas\'!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
 		return false;
 	}
 	

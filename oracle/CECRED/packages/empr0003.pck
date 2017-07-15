@@ -85,6 +85,20 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
                                    ,pr_nmdcampo OUT VARCHAR2                          --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);                        --> Erros do processo
 
+  /* Rotina para acionar a geração de PRoposta PDF no Progress */
+  PROCEDURE pc_gera_proposta_pdf(pr_cdcooper in crawepr.cdcooper%TYPE --> Código da cooperativa
+                                ,pr_cdagenci in crawepr.nrdconta%TYPE --> Código da Agencia
+                                ,pr_nrdcaixa in INTEGER               --> Numero do Caixa                                        
+                                ,pr_nmdatela in VARCHAR2              --> Tela
+                                ,pr_cdoperad in crapope.cdoperad%TYPE --> Código do Operador
+                                ,pr_idorigem in PLS_INTEGER           --> Origem 
+                                ,pr_nrdconta in crawepr.nrdconta%TYPE --> Numero da conta
+                                ,pr_dtmvtolt in date                  --> Data atual
+                                ,pr_dtmvtopr in date                  --> Data próxima
+                                ,pr_nrctremp in crawepr.nrctremp%TYPE --> nro do contrato
+                                ,pr_dsiduser in varchar2              --> ID da sessão ou id randomico
+                                ,pr_nmarqpdf IN OUT varchar2 );          --> Caminho/Arquivo gerado
+
   /* Rotina para impressao do relatorio  crrl_42 */
   PROCEDURE pc_gera_perfil_empr(pr_cdcooper IN crawepr.cdcooper%TYPE  --> Código da cooperativa
                                 ,pr_nrdconta IN crawepr.nrdconta%TYPE --> Numero da conta
@@ -93,7 +107,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                 ,pr_retxml   IN OUT CLOB              --> Arquivo de retorno do XML
                                 );
-
+  
   /* Imprime o demonstrativo do contrato de emprestimo pre-aprovado */
   PROCEDURE pc_gera_demonst_pre_aprovado(pr_cdcooper IN crawepr.cdcooper%TYPE --> Código da Cooperativa
                                         ,pr_cdagenci IN crawepr.nrdconta%TYPE --> Código da Agencia
@@ -1808,6 +1822,79 @@ BEGIN
         ROLLBACK;
 
     END pc_imprime_contrato_xml;
+
+  /* Rotina para acionar a geração de PRoposta PDF no Progress */
+  PROCEDURE pc_gera_proposta_pdf(pr_cdcooper in crawepr.cdcooper%TYPE --> Código da cooperativa
+                                ,pr_cdagenci in crawepr.nrdconta%TYPE --> Código da Agencia
+                                ,pr_nrdcaixa in INTEGER               --> Numero do Caixa                                        
+                                ,pr_nmdatela in VARCHAR2              --> Tela
+                                ,pr_cdoperad in crapope.cdoperad%TYPE --> Código do Operador
+                                ,pr_idorigem in PLS_INTEGER           --> Origem 
+                                ,pr_nrdconta in crawepr.nrdconta%TYPE --> Numero da conta
+                                ,pr_dtmvtolt in date                  --> Data atual
+                                ,pr_dtmvtopr in date                  --> Data próxima
+                                ,pr_nrctremp in crawepr.nrctremp%TYPE --> nro do contrato
+                                ,pr_dsiduser in varchar2              --> ID da sessão ou id randomico
+                                ,pr_nmarqpdf IN OUT varchar2 ) IS          --> Caminho/Arquivo gerado
+  /* .............................................................................
+
+       Programa: pc_gera_proposta_pdf
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Marcos Martini (Supero)
+       Data    : Julho/2017.                         Ultima atualizacao:
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+       Objetivo  : Prepara a chamada de Script Shell que irá acionar o fonte 
+                   gera_pdf_proposta.p que irá chamar a geração do PDF da proposta
+                   e irá escrever o mesmo no caminho que solicitarmos na chamada 
+
+       Alteracoes:
+
+    ............................................................................. */
+    vr_dscomand     VARCHAR2(4000); --> Comando para baixa do arquivo
+    vr_des_reto     VARCHAR2(3);    --> tipo saida
+    vr_dsparame     VARCHAR2(4000); 
+  BEGIN
+    
+        
+    -- Comando para Execucao
+    vr_dscomand := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_GERA_PROP_EMPR');
+    
+    -- Montar os parâmetros:
+    --  aux_cdcooper
+    --  aux_cdagenci
+    --  aux_nrdcaixa
+    --  aux_nmdatela
+    --  aux_cdoperad     
+    --  aux_idorigem
+    --  aux_nrdconta
+    --  aux_dtmvtolt
+    --  aux_dtmvtopr
+    --  aux_nrctremp
+    --  aux_dsiduser
+    --  aux_nmarqpdf
+    vr_dsparame := pr_cdcooper||';'
+                || pr_cdagenci||';'
+                || pr_nrdcaixa||';'
+                || pr_nmdatela||';'
+                || pr_cdoperad||';'
+                || pr_idorigem||';'
+                || pr_nrdconta||';'
+                || to_char(pr_dtmvtolt,'mmddrrrr')||';'
+                || to_char(pr_dtmvtopr,'mmddrrrr')||';'
+                || pr_nrctremp||';'
+                || pr_dsiduser||';'
+|| replace(pr_nmarqpdf,'/cooph/','/coop/');
+    -- Incluir os parametros    
+    vr_dscomand := REPLACE(vr_dscomand,'[params]',vr_dsparame);
+
+    -- Executar comando para Download
+    GENE0001.pc_OScommand(pr_typ_comando => 'SR'
+                         ,pr_des_comando => vr_dscomand);
+  END;
 
     PROCEDURE pc_gera_perfil_empr(pr_cdcooper IN crawepr.cdcooper%TYPE --> Código da cooperativa
                                  ,pr_nrdconta IN crawepr.nrdconta%TYPE --> Numero da conta

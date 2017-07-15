@@ -549,6 +549,27 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                     ,pr_inusatab     IN BOOLEAN               --> Indicador de utilização da tabela de juros
                                     ,pr_vltotpre    OUT NUMBER                --> Valor calculado da prestação
                                     ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro															 
+                                    
+  /*****************************************************************************
+                  Gravar dados do rating do cooperado
+  *****************************************************************************/
+  PROCEDURE pc_grava_rating(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
+                           ,pr_cdagenci IN crapass.cdagenci%TYPE --> Codigo Agencia
+                           ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Numero Caixa
+                           ,pr_cdoperad IN crapnrc.cdoperad%TYPE --> Codigo Operador
+                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de movimento
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da Conta
+                           ,pr_inpessoa IN crapass.inpessoa%TYPE --> Tipo Pessoa
+                           ,pr_nrinfcad IN crapprp.nrinfcad%TYPE --> Informacoes Cadastrais
+                           ,pr_nrpatlvr IN crapprp.nrpatlvr%TYPE --> Patrimonio pessoal livre
+                           ,pr_nrperger IN crapprp.nrperger%TYPE --> Percepção Geral Empresa
+                           ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Sequencial do Titular
+                           ,pr_idorigem IN INTEGER               --> Identificador Origem
+                           ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da tela
+                           ,pr_flgerlog IN INTEGER               --> Identificador de geração de log
+                           ,pr_cdcritic OUT NUMBER               --> Codigo Critica
+                           ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
+                                    
 END RATI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
@@ -3916,9 +3937,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_tab_erro gene0001.typ_tab_erro;
       vr_des_reto VARCHAR2(10);
       -- Variaveis do retorno da pc_calc_saldo_epr
-      vr_vlsdeved NUMBER(20,8);          --> Valor de saldo devedor
-      vr_valorpre NUMBER;                --> Auxiliar para soma de todas as parcelas que o usuário está liquidando
-      vr_qtprecal NUMBER;                --> Quantidade calculada das parcelas
+      vr_vlsdeved NUMBER(20,8) := 0;     --> Valor de saldo devedor
+      vr_valorpre NUMBER := 0;           --> Auxiliar para soma de todas as parcelas que o usuário está liquidando
+      vr_qtprecal NUMBER := 0;           --> Quantidade calculada das parcelas
       -- registro de datas
       rw_crapdat  btch0001.cr_crapdat%rowtype;
 
@@ -10610,5 +10631,198 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
             
   END pc_gera_rating;
  
+  /*****************************************************************************
+                  Gravar dados do rating do cooperado
+  *****************************************************************************/
+  PROCEDURE pc_grava_rating(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
+                           ,pr_cdagenci IN crapass.cdagenci%TYPE --> Codigo Agencia
+                           ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Numero Caixa
+                           ,pr_cdoperad IN crapnrc.cdoperad%TYPE --> Codigo Operador
+                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de movimento
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da Conta
+                           ,pr_inpessoa IN crapass.inpessoa%TYPE --> Tipo Pessoa
+                           ,pr_nrinfcad IN crapprp.nrinfcad%TYPE --> Informacoes Cadastrais
+                           ,pr_nrpatlvr IN crapprp.nrpatlvr%TYPE --> Patrimonio pessoal livre
+                           ,pr_nrperger IN crapprp.nrperger%TYPE --> Percepção Geral Empresa
+                           ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Sequencial do Titular
+                           ,pr_idorigem IN INTEGER               --> Identificador Origem
+                           ,pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da tela
+                           ,pr_flgerlog IN INTEGER               --> Identificador de geração de log
+                           ,pr_cdcritic OUT NUMBER               --> Codigo Critica
+                           ,pr_dscritic OUT VARCHAR2             --> Descricao critica
+                              ) IS
+
+  /* ..........................................................................
+
+     Programa: pc_grava_rating         Antigo: b1wgen0043.p/grava_rating
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Marcos - Supero
+     Data    : Julho/2017.                          Ultima Atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que chamado por outros programas.
+     Objetivo  :  Gravar dados do rating do cooperado
+
+     Alteracoes:  
+
+  ............................................................................. */
+    /*--Cursor para buscar o rating do cooperado
+    CURSOR cr_crapnrc(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctrrat IN crapnrc.nrctrrat%TYPE
+                     ,pr_tpctrrat IN crapnrc.tpctrrat%TYPE) IS
+    SELECT nrc.tpctrrat
+          ,nrc.nrctrrat
+          ,nrc.dtmvtolt
+          ,nrc.insitrat
+          ,nrc.progress_recid
+      FROM crapnrc nrc
+     WHERE nrc.cdcooper = pr_cdcooper
+       AND nrc.nrdconta = pr_nrdconta
+       AND nrc.nrctrrat = pr_nrctrrat
+       AND nrc.tpctrrat = pr_tpctrrat;
+    rw_crapnrc cr_crapnrc%ROWTYPE;
+    
+    --Cursor para buscar o cadastro de proposta
+    CURSOR cr_crapprp(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctrato IN crapprp.nrctrato%TYPE
+                     ,pr_tpctrato IN crapprp.tpctrato%TYPE) IS
+    SELECT prp.nrgarope
+          ,prp.nrinfcad
+          ,prp.nrliquid
+          ,prp.nrpatlvr
+          ,prp.nrperger          
+      FROM crapprp prp
+     WHERE prp.cdcooper = pr_cdcooper
+       AND prp.nrdconta = pr_nrdconta
+       AND prp.nrctrato = pr_nrctrato 
+       AND prp.nrctrato = pr_nrctrato;
+    rw_crapprp cr_crapprp%ROWTYPE;
+
+    --Cursor para buscar o limite
+    CURSOR cr_craplim(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE
+                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE
+                     ,pr_tpctrlim IN craplim.tpctrlim%TYPE) IS
+    SELECT lim.nrgarope
+          ,lim.nrinfcad
+          ,lim.nrliquid
+          ,lim.nrpatlvr
+          ,lim.nrperger          
+      FROM craplim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrdconta = pr_nrdconta
+       AND lim.nrctrlim = pr_nrctrlim 
+       AND lim.nrctrlim = pr_nrctrlim;
+    rw_craplim cr_craplim%ROWTYPE;*/
+
+  --------------- VARIAVEIS ----------------
+    -- Variaveis para manter critica
+    vr_exc_erro EXCEPTION;
+    vr_exc_saida EXCEPTION;
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+    
+    -- Variaveis para manter o log
+    vr_dsorigem  VARCHAR2(50);
+    vr_dstransa  VARCHAR2(54);
+    vr_nrdrowid  ROWID;
+
+  BEGIN
+    
+    -- Montar variaveis para log
+    IF pr_flgerlog = 1 THEN
+      vr_dsorigem := TRIM(gene0001.vr_vet_des_origens(pr_idorigem));
+      vr_dstransa := 'Gravar dados de rating do cooperado.';
+    END IF;
+    
+    -- Para PF
+    IF pr_inpessoa = 1 THEN 
+      UPDATE crapttl
+         SET crapttl.nrinfcad = pr_nrinfcad
+            ,crapttl.nrpatlvr = pr_nrpatlvr
+       WHERE crapttl.cdcooper = pr_cdcooper
+         AND crapttl.nrdconta = pr_nrdconta
+         AND crapttl.idseqttl = pr_idseqttl; 
+    ELSE -- PJ
+      UPDATE crapjur
+         SET crapjur.nrinfcad = pr_nrinfcad
+            ,crapjur.nrpatlvr = pr_nrpatlvr
+            ,crapjur.nrperger = pr_nrperger
+       WHERE crapjur.cdcooper = pr_cdcooper
+         AND crapjur.nrdconta = pr_nrdconta;      
+      
+    END IF;
+    
+    -- Se foi solicitado o envio de LOG
+    IF pr_flgerlog = 1 THEN
+      -- Gerar LOG de envio do e-mail
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => null
+                          ,pr_dsorigem => vr_dsorigem
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => pr_dtmvtolt
+                          ,pr_flgtrans => 0 --> FALSE
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
+                          ,pr_idseqttl => pr_idseqttl
+                          ,pr_nmdatela => pr_nmdatela
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+    END IF;                    
+                                  
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK
+      pr_cdcritic := vr_cdcritic;
+      IF vr_dscritic IS NULL AND pr_cdcritic > 0 THEN 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      END IF;
+      pr_dscritic := vr_dscritic;
+
+      -- Se foi solicitado o envio de LOG
+      IF pr_flgerlog = 1 THEN
+        -- Gerar LOG de envio do e-mail
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => pr_dscritic
+                            ,pr_dsorigem => vr_dsorigem
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => pr_dtmvtolt
+                            ,pr_flgtrans => 0 --> FALSE
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+      END IF;
+      
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na atualizado em RATI0001.pc_grava_rating --> '||sqlerrm;
+      
+      -- Se foi solicitado o envio de LOG
+      IF pr_flgerlog = 1 THEN
+        -- Gerar LOG de envio do e-mail
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => pr_dscritic
+                            ,pr_dsorigem => vr_dsorigem
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => pr_dtmvtolt
+                            ,pr_flgtrans => 0 --> FALSE
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+
+      END IF;
+            
+  END pc_grava_rating;
+
 END RATI0001;
 /

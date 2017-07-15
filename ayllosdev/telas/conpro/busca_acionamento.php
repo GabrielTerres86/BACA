@@ -9,9 +9,6 @@
  * ALTERAÇÕES   : 
  * -------------- 
  */
-?> 
-
-<?php
 
 session_start();
 require_once('../../includes/config.php');
@@ -50,8 +47,7 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     if ($msgErro == "") {
         $msgErro = $xmlObj->roottag->tags[0]->cdata;
     }
-
-    exibeErroNew($msgErro);
+    exibirErro('error', $msgErro, 'Alerta - Ayllos', "", true);
     exit();
 }
 
@@ -59,9 +55,3 @@ $registros = $xmlObj->roottag->tags[0]->tags;
 $qtregist = $xmlObj->roottag->tags[1]->cdata;
 
 include('tab_acionamento.php');
-
-function exibeErroNew($msgErro) {
-    echo 'hideMsgAguardo();';
-    echo 'showError("error","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");';
-    exit();
-}

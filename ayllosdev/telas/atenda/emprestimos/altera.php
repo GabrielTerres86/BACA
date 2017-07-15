@@ -18,6 +18,10 @@
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");	
+  
+  isPostMethod();
+	$inobriga = (isset($_POST['inobriga'])) ? $_POST['inobriga'] : '';
+  
 ?>
 
 <table id="altera"cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -58,8 +62,10 @@
 												
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " id="todaProp" onClick="fechaAltera('A_NOVA_PROP');return false;">Toda a proposta de empr&eacute;stimo </a>
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_VALOR');return false;"> Somente o valor da proposta </a>																
-										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_NUMERO');return false;"> Alterar o n&uacute;mero do contrato </a>
-										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('CONSULTAS');return false;"> Somente Consultas </a>
+										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_NUMERO');return false;"> Alterar o n&uacute;mero do contrato </a>										
+                    <? IF ($inobriga!="S"){?>
+                    <a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('CONSULTAS');return false;"> Somente Consultas </a>
+                    <?}?>
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="fechaAltera('A_AVALISTA');return false;"> Alterar Somente Avalistas </a>
                                         <a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btVoltar" onClick="fechaAltera('fechar');return false;"> Voltar </a>
 										

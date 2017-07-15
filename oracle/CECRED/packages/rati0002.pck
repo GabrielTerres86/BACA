@@ -2443,6 +2443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       CURSOR cr_crawepr IS
         SELECT crawepr.nrseqpac,
                crawepr.cdlcremp,
+               crawepr.cdfinemp,
                crawepr.vlpreemp,
                crawepr.vlemprst,
                craplcr.qtrecpro,
@@ -2639,9 +2640,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                                pr_cdcooper =>  pr_cdcooper,
                                                pr_cdacesso => 'EXC_ANALISE_CREDITO')||
                      ';';
+
+      -- Abre os dados do associado
+      OPEN cr_crapass(pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_dscritic := 'Associado nao cadastrado. Favor verificar!';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_crapass;
       
       -- BUscar identificador de obrigação de análise automática
       este0001.pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
+                                             ,pr_inpessoa => rw_crapass.inpessoa
+                                             ,pr_cdfinemp => rw_crawepr.cdfinemp
                                              ,pr_cdlcremp => rw_crawepr.cdlcremp
                                              ,pr_inobriga => vr_inobriga
                                              ,pr_cdcritic => vr_cdcritic
@@ -2676,16 +2689,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         -- Encerra o processo sem erro, pois eh previsto isso
         RETURN;
       END IF;
-
-      -- Abre os dados do associado
-      OPEN cr_crapass(pr_nrdconta);
-      FETCH cr_crapass INTO rw_crapass;
-      IF cr_crapass%NOTFOUND THEN
-        CLOSE cr_crapass;
-        vr_dscritic := 'Associado nao cadastrado. Favor verificar!';
-        RAISE vr_exc_saida;
-      END IF;
-      CLOSE cr_crapass;
 
       -- Atualiza o indice da tabela
       vr_ind := 1;
@@ -3541,6 +3544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       CLOSE cr_crawepr;      
     END IF;
     
+    -- Obtem o pior risco dentre as propostas
     pc_obtem_emprestimo_risco( pr_cdcooper => pr_cdcooper         --> Codigo da cooperativa
                               ,pr_cdagenci => pr_cdagenci         --> Codigo de agencia
                               ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
@@ -3558,12 +3562,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                               ,pr_nivrisco => vr_dsnivris         --> Retorna nivel do risco
                               ,pr_dscritic => vr_dscritic         --> Descrição da critica
                               ,pr_cdcritic => vr_cdcritic);       --> Codigo da critica
-    
+      
     IF TRIM(vr_dscritic) IS NOT NULL OR
        nvl(vr_cdcritic,0) > 0 THEN
       RAISE vr_exc_erro; 
     END IF;   
-    
+      
     --> Atualizar risco
     BEGIN
       UPDATE crawepr
@@ -3573,7 +3577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel atualizar risco da proposta: '||SQLERRM;
         RAISE vr_exc_erro;
-    END;
+    END; 
     
     
   EXCEPTION 

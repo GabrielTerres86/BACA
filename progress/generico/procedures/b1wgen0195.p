@@ -199,6 +199,7 @@ PROCEDURE Enviar_proposta_esteira:
        E - Efetivar Proposta */
     DEF  INPUT PARAM par_tpenvest AS CHAR                           NO-UNDO.  
     
+    DEF OUTPUT PARAM par_dsmensag AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
     
@@ -226,12 +227,12 @@ PROCEDURE Enviar_proposta_esteira:
               ASSIGN par_tpenvest = "A".
     END.
         
-        /***** Verificar se a Esteira esta em contigencia *****/
+    /***** Verificar se a Esteira esta em contigencia *****/
     RUN verifica_regras_esteira
              ( INPUT par_cdcooper,
                INPUT par_nrdconta,
                INPUT par_nrctremp,
-                                 INPUT par_tpenvest,
+               INPUT par_tpenvest,
               OUTPUT par_cdcritic,
               OUTPUT par_dscritic).
    
@@ -269,7 +270,7 @@ PROCEDURE Enviar_proposta_esteira:
       IF aux_nmarqpdf = ""  THEN
       DO:
         par_dscritic = "Nao foi possivel gerar impressao da proposta " + 
-                       "para envio a Esteira.".
+                       "para Analise de Credito.".
         RETURN "NOK".
       END.
     END.
@@ -290,6 +291,7 @@ PROCEDURE Enviar_proposta_esteira:
             INPUT par_nrctremp,   /* pr_nrctremp */
             INPUT par_dtmvtolt,   /* pr_dtmvtolt */
             INPUT aux_nmarqpdf,   /* pr_nmarquiv */
+            OUTPUT "",            /* pr_dsmensag */
             OUTPUT 0,             /* pr_cdcritic */
             OUTPUT ""             /* pr_dscritic */
             ).        
@@ -297,7 +299,11 @@ PROCEDURE Enviar_proposta_esteira:
         CLOSE STORED-PROCEDURE pc_incluir_proposta_est WHERE PROC-HANDLE = aux_handproc.
         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
         
-        ASSIGN par_cdcritic = 0
+        ASSIGN par_dsmensag = ""
+               par_dsmensag = pc_incluir_proposta_est.pr_dsmensag
+                              WHEN pc_incluir_proposta_est.pr_dsmensag <> ?
+        
+               par_cdcritic = 0
                par_cdcritic = pc_incluir_proposta_est.pr_cdcritic
                               WHEN pc_incluir_proposta_est.pr_cdcritic <> ?
                par_dscritic = ""
@@ -438,8 +444,7 @@ PROCEDURE Enviar_proposta_esteira:
     END.
 
     /* Verifica se retornou critica */
-    IF par_cdcritic > 0 OR 
-       par_dscritic <> "" THEN                       
+    IF par_cdcritic >= 0 AND par_dscritic <> "" THEN                       
     DO:
        RETURN "NOK".
     END.

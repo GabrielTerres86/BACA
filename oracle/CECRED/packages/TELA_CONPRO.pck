@@ -552,8 +552,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                        -- Situação Ayllos
                       ,
                        DECODE(epr.insitest,0,'Nao enviada'
-														 ,1,'Enviada @ para Analise Autom.'
-														 ,2,'Reenviado@para Analise Manual'
+														 ,1,'Env. p/@Analise@Autom.'
+														 ,2,'Env. p/@Analise@Manual'
 														 ,3,'Analise@Finalizada'
 														 ,4,'Expirado','') situacao_ayllos
                        -- Parecer esteira
@@ -562,13 +562,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                               0,
                               'Nao@Analisado',
                               1,
-                              'Aprovado',
+                              'Aprov'||decode(epr.cdopeapr,'MOTOR','.@Aut.','ESTEIRA','.@Man.','ada'),
                               2,
-                              'Nao@Aprovado',
+                              'Rejeit'||decode(epr.cdopeapr,'MOTOR','.@Aut.','ESTEIRA','.@Man.','ada'),
                               3,
                               'Com@Restricao',
                               4,
-                              'Refazer') parecer_esteira
+                              'Refazer',
+                              5,
+                              'Erro') parecer_esteira
                        
                        --  ,epr.cdopeste cdopeste
                       ,
@@ -1599,7 +1601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
            AND ( a.nrctrprp = pr_nrctremp OR pr_nrctremp = 0)
            AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
            AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
-		 ORDER BY a.idacionamento;
+		 ORDER BY a.DHACIONAMENTO DESC;
       rw_crawepr cr_cratbepr%ROWTYPE;
       
      -- Descritivo Retorno
@@ -1812,13 +1814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 
       -- Executar comando para Download
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                           ,pr_des_comando => vr_dscomando
-                           ,pr_typ_saida   => vr_des_reto
-                           ,pr_des_saida   => vr_dscritic);
-      -- Se ocorreu erro
-      IF vr_des_reto = 'ERR' THEN
-        RAISE vr_exc_saida;
-      END IF;
+                           ,pr_des_comando => vr_dscomando);
 
       -- Se NAO encontrou o arquivo
       IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || '/' || vr_nmarquiv) THEN

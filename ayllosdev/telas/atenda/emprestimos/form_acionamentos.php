@@ -49,11 +49,10 @@ if ($dsprotocolo) {
     visualizaPDF($nmarquiv);
 
 // Mostra a listagem
-} else {
-    ?>
+} else { ?>
     <div id='divResultadoAciona'>
         <fieldset id='tabConteudo'>
-            <legend><b><?= utf8ToHtml('Acionamentos Proposta: '); echo formataNumericos("zzz.zz9",$nrctremp,"."); ?></b></legend>
+            <legend><b><?= utf8ToHtml('Detalhes Proposta: '); echo formataNumericos("zzz.zz9",$nrctremp,"."); ?></b></legend>
             <div class='divRegistros'>
                 <table>
                 <thead>

@@ -78,7 +78,11 @@
 	}
 	
 	if ($operacao == 'A_PROT_CRED') {
-		echo 'atualizaArray("A_PROTECAO_TIT", ' . $glbvars["cdcooper"] . ');';			
+        if ($inobriga2 == 'N') {
+            echo 'atualizaArray("A_PROTECAO_TIT", ' . $glbvars["cdcooper"] . ');';			
+        } else {
+            echo 'atualizaArray("A_BUSCA_OBS", ' . $glbvars["cdcooper"] . ');';
+        }
 	}
 	else if ($operacao == 'A_PROTECAO_TIT') {
 		echo 'atualizaArray("A_BUSCA_OBS", ' . $glbvars["cdcooper"] . ');';	
@@ -109,7 +113,7 @@
 		$xml_geral = simplexml_load_string($xmlResult);
 		$inobriga = $xml_geral->inobriga;	
 	
-		if ($inobriga == 'N' || $inobriga == "C") {
+		if (($inobriga == 'N' || $inobriga == "C") && $inobriga2 == 'N') {
 			echo 'atualizaArray("I_PROTECAO_TIT");';
 		} else {
 			echo 'arrayProtCred["nrinfcad"] = 1;';
