@@ -109,6 +109,8 @@
 			   30/06/2017 - Atualização para versão 9.4 (Paulo Samuel).
 			   
 			   03/07/2017 - Atualização para versão 9.5 (David).
+
+			   17/07/2017 - Atualização para versão 9.6 (Paulo Samuel).
 .............................................................................. */
 
                             
