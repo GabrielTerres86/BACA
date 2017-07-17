@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 06/03/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 17/07/2017
 
    Dados referentes ao programa:
 
@@ -339,6 +339,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             converter cddidenti para numero antes de realizar a clausula where
                             pois a autoconversao do oracle nao convertia de forma adequada
                             (Tiago/Fabricio SD616352).             
+                            
+               17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
+                            e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -1292,6 +1295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       EXCEPTION
         WHEN OTHERS THEN
+                  
         pr_dscritic := 'Validacao de GPS nao efetuada.';
 
         RAISE vr_exc_saida;
@@ -1477,6 +1481,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     --Tabela de erros
     vr_tab_erro gene0001.typ_tab_erro;
+    
+    vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
 
   BEGIN
     pr_des_reto := 'NOK';
@@ -2061,17 +2067,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                        ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
                                        ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo Log
                                        ,pr_des_reto => pr_des_reto -- Saida OK/NOK
-                                       ,pr_dscritic => pr_dscritic); -- Mensagem Erro
+                                       ,pr_dscritic => pr_dscritic); -- Mensagem Erro                                      
 
     IF pr_des_reto <> 'OK'
     OR TRIM(pr_dscritic) IS NOT NULL THEN
       --Retorno NOK
-      RAISE vr_exc_saida;
+      /* Se chegou ate este ponto nao deve gerar RAISE pois a guia ja consta como paga 
+         no Sicredi. (Chamado 704313) - (Fabricio)
+      RAISE vr_exc_saida; */
+      cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                            ,PR_CDPROGRAMA    => 'INSS0002.pc_gps_arrecadar_sicredi'   --> Codigo do programa ou do job
+                            ,pr_tpexecucao    => 3             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            -- Parametros para Ocorrencia
+                            ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                            ,pr_cdcriticidade => 1             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                            ,pr_dsmensagem    => pr_cdcooper || ' - ' ||
+                                                 pr_nrdconta || ' - ' ||
+                                                 pr_cdidenti || ' - ' ||
+                                                 pr_vlrdinss || ' - ' ||
+                                                 vr_mmaacomp || ' - ' ||
+                                                 pr_cddpagto || ' - ' ||
+                                                 pr_dscritic    --> dscritic
+                            ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+                            
     END IF;
 
     ----------------------------
     -- Retorno OK
     pr_des_reto := 'OK';
+    pr_cdcritic := 0;
+    pr_dscritic := NULL;
 
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => pr_cdoperad
