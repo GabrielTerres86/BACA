@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
+CREATE OR REPLACE PACKAGE CECRED.btch0001 AS 
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -11,7 +11,7 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
-  -- Objetivo  : Agrupar rotinas do processamento batch
+  -- Objetivo  : Agrupar rotinas do processamento batch 
   --
   -- Alterações:
   --             03/07/2017 - Colocada descrição da mensagem de erro no padrão
