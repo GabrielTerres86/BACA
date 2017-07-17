@@ -278,8 +278,7 @@ PROCEDURE gera-relatorio-lotes:
         ASSIGN rel_dtmvtolt = par_dtmvtolt.
 
         DISPLAY STREAM 
-                str_1 rel_dtmvtolt tt-relat-lotes.dsdsaldo 
-                tt-relat-lotes.vlchmatb WITH FRAME f_cab.    
+                str_1 rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.    
 
         ASSIGN pac_qtdlotes = 0
                pac_qtchqcop = 0 
@@ -300,8 +299,7 @@ PROCEDURE gera-relatorio-lotes:
                 PAGE STREAM str_1.
 
                 DISPLAY STREAM str_1 
-                        rel_dtmvtolt tt-relat-lotes.dsdsaldo 
-                        tt-relat-lotes.vlchmatb WITH FRAME f_cab.
+                        rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.
             END.
 
         CLEAR FRAME f_tot.
@@ -2281,8 +2279,7 @@ PROCEDURE gera-lista PRIVATE:
                     PAGE STREAM str_1.
 
                     DISPLAY STREAM str_1 
-                            rel_dtmvtolt tt-relat-lotes.dsdsaldo
-                            tt-relat-lotes.vlchmatb WITH FRAME f_cab.
+                            rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.
                 END.
         END.
 
@@ -2335,8 +2332,7 @@ PROCEDURE gera-lista PRIVATE:
             PAGE STREAM str_1.
                    
             DISPLAY STREAM str_1 
-                    rel_dtmvtolt tt-relat-lotes.dsdsaldo 
-                    tt-relat-lotes.vlchmatb WITH FRAME f_cab.
+                    rel_dtmvtolt tt-relat-lotes.dsdsaldo WITH FRAME f_cab.
         END.
 
     ASSIGN pac_qtdlotes = 0

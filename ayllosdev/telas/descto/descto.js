@@ -924,8 +924,6 @@ function formataOpcaoF() {
     rDschqdev.addClass('rotulo').css({'width': '250px'});
     rDschqcop.addClass('rotulo').css({'width': '250px'});
     rDschqban.addClass('rotulo').css({'width': '250px'});
-    rDsdmenor.addClass('rotulo').css({'width': '250px'});
-    rDsdmaior.addClass('rotulo').css({'width': '250px'});
     rDscredit.addClass('rotulo').css({'width': '250px'});
     rDtlibera.addClass('rotulo-linha').css({'width': '20px'});
     rQtcheque.addClass('rotulo-linha').css({'width': '20px'});

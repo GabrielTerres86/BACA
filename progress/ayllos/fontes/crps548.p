@@ -2144,9 +2144,9 @@ PROCEDURE imprime_relat_sintetico:
     DISPLAY STREAM str_1 tot_vlgerfac
                          tot_vlgerroc
     WITH FRAME f_total_tarifa.             
-    
+*/    
     OUTPUT STREAM str_1 CLOSE.
-*/
+
     ASSIGN glb_nrcopias = 1
            glb_nmformul = "132col"
            glb_nmarqimp = aux_nmarqimp.
