@@ -15,7 +15,6 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
   --
   -- Alterações:
   --             03/07/2017 - Colocada descrição da mensagem de erro no padrão
-  --                        - Ajustada rotina de calcular o tempo de execução
   --                        - incluido tratamento de excptions nos cursores para melhorar os erros
   --                          (Belli - Envolti - Chamado 667957)
   --
@@ -196,7 +195,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                acrescida de module e action (read_module) para melhorar o rastreio do mesmo (Carlos)  
   
   03/07/2017 - Colocada descrição da mensagem de erro no padrão 
-             - Ajustada rotina de calcular o tempo de execução
              - incluido tratamento de excptions nos cursores para melhorar os erros
                (Belli - Envolti - Chamado 667957)
   
@@ -709,7 +707,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --
     --   Alteracoes: 
     --               03/07/2017 - Colocada descrição da mensagem de erro no padrão 
-    --                          - Ajustada rotina de calcular o tempo de execução
     --                          - incluido tratamento de excptions nos cursores para melhorar os erros
     --                            (Belli - Envolti - Chamado 667957)
     --               
@@ -724,16 +721,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
          AND upper(cdprogra) = pr_cdprogra;
     rw_crapprg cr_crapprg%ROWTYPE;    
     
-    -- Cursor para buscar o tempo de execução do programa
-    -- incluido comando para truncar e eliminar um erro de dizema periodica - Chamado 667957 - 04/07/2018
-    CURSOR cr_tempo IS
-    SELECT to_char(to_date( TRUNC(SYSDATE - x.LOGON_TIME)  *24*60*60,'SSSSS'),'HH24:MI:SS')
-      FROM v$session x
-     WHERE audsid = SYS_CONTEXT('USERENV', 'SESSIONID');
+
     
     ------------------------------- VARIAVEIS -------------------------------
     vr_dscdolog VARCHAR2(4000);
-    vr_dsdtempo VARCHAR2(40);
+    
     vr_dslogmes VARCHAR2(400);
     
     -- Trata Erro - Chamado 667957 - 034/07/2018
@@ -747,17 +739,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       OPEN cr_crapprg;
       FETCH cr_crapprg INTO rw_crapprg;
       CLOSE cr_crapprg;
-      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
+      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017            
+      
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao gerar log - cr_crapprg - erro:' || SQLERRM;
+        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+        
+        vr_dscritic := 'cursor cr_crapprg - com erro: ' || SQLERRM;
         RAISE vr_exc_saida;
-    END;
+    END;        
      
     --> Log de inicio de execução
     IF pr_dstiplog = 'I' AND pr_flgerlog = FALSE THEN
       -- Gerar log
-      vr_dscdolog := 'Inicio da execucao: ' || pr_nomdojob;
+      vr_dscdolog := 'Inicio da execucao';
 
       IF trim(rw_crapprg.dsprogra##1) IS NOT NULL THEN
         vr_dscdolog := vr_dscdolog || ' - ' || trim(rw_crapprg.dsprogra##1);
@@ -781,30 +777,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --> Log de final da execução
     ELSIF pr_dstiplog = 'F' AND pr_flgerlog THEN
     
-      --> Calcular tempo conforme inicio da execução
-      BEGIN
-        OPEN cr_tempo;
-        FETCH cr_tempo INTO vr_dsdtempo;
-        CLOSE cr_tempo;
-        -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Geração de log - cr_tempo - erro:' || SQLERRM;
-          RAISE vr_exc_saida;
-      END;
-      
-      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017      
-      -- Gerar log
-      vr_dscdolog := 'Stored Procedure rodou em '|| 
-                     vr_dsdtempo|| '.';
-                     
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 1, 
-                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || pr_nomdojob || ' --> ' || 
-                                                    'ALERTA: ' || vr_dscdolog);
-    
       vr_dscdolog := 'Execucao ok';
+
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
@@ -835,9 +809,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
     
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := pr_nomdojob ||' --> PROGRAMA COM ALERTA: '||pr_dscritic;
+      vr_dscdolog := 'pr_dstiplog fora do padrão:' || pr_dstiplog || ' - ' ||pr_dscritic;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, 
+                                 pr_ind_tipo_log => 3, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
                                                     ' - ' || pr_nomdojob || ' --> ' || 
                                                     'ERRO: ' || vr_dscdolog,
@@ -849,10 +823,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     END IF; 
   
   EXCEPTION
-    WHEN vr_exc_saida THEN       
+    WHEN vr_exc_saida THEN 
       -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := vr_dscritic;
+      vr_dscdolog := pr_dscritic || ' - ' || vr_dscritic;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
@@ -860,18 +834,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                                     'ERRO: ' || vr_dscdolog,
                                  pr_nmarqlog     => vr_dslogmes,
                                  pr_tpexecucao   => 2);
+      
     WHEN OTHERS THEN
+                                 
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
       
       -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := 'Erro ao gerar log: '||SQLERRM;
+      vr_dscdolog := pr_dscritic || ' - Log com problema: '||SQLERRM ;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
                                                     ' - ' || pr_nomdojob || ' --> ' || 
                                                     'ERRO: ' || vr_dscdolog,
                                  pr_nmarqlog     => vr_dslogmes,
-                                 pr_tpexecucao   => 2);
+                                 pr_tpexecucao   => 2);                          
     
   END pc_log_exec_job;
   
@@ -1550,19 +1527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   --              rotina para ficar retrocompatível (Carlos)
   PROCEDURE pc_log_internal_exception(pr_cdcooper IN crapcop.cdcooper%TYPE DEFAULT 3) IS
   BEGIN
-    DECLARE
-    vr_sqlcode NUMBER := SQLCODE;
-      
-    BEGIN     
-      IF vr_sqlcode < 0 THEN
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 2, -- Erro tratado
-                                   pr_des_log      => to_char(sysdate,'dd/mm/RRRR hh24:mi:ss')||' --> ' || 
-                                   dbms_utility.format_error_backtrace || ' - ' ||
-                                   dbms_utility.format_error_stack,
-                                   pr_nmarqlog     => 'internal_exception.log');
-      END IF;
-    END;
+    cecred.pc_internal_exception(pr_cdcooper);
   END pc_log_internal_exception;
 
 END btch0001;
