@@ -270,7 +270,9 @@
 
            02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
                         quando excluir bordero.
-                        PRJ300 - Desconto de cheque(Odirlei-AMcom)            
+                        PRJ300 - Desconto de cheque(Odirlei-AMcom)         
+						
+		  14/07/2017 - na exclusao do bordero, gerar registro de LOG - Jean (Mout´s)   
 					                
 ............................................................................. */
 
@@ -10254,7 +10256,10 @@ PROCEDURE efetua_exclusao_bordero:
                     END.  /*  Fim do DO TO  */
                 
                     IF  AVAILABLE craplau  THEN
+					DO:
                         DELETE craplau.
+						aux_contado2 = aux_contado2 + 1. /* Quantidade de Cheques excluidos - Jean (MOut´S)*/
+				    END.
                 END.
     
             DELETE crapcdb.                   
@@ -10340,11 +10345,11 @@ PROCEDURE efetua_exclusao_bordero:
         RETURN "NOK".
     END.
     
-    IF  par_flgerlog  THEN
-    DO:
+   /* IF  par_flgerlog  THEN|
+    DO: */
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,
-                            INPUT "",
+                            INPUT "Exclusao do bordero. Quantidade de cheques: " + STRING(aux_contado2,"999999"),
                             INPUT aux_dsorigem,
                             INPUT aux_dstransa,
                             INPUT TRUE,
@@ -10362,7 +10367,7 @@ PROCEDURE efetua_exclusao_bordero:
                                 INPUT "Operador",
                                 INPUT "",
                                 INPUT par_cdoperad).
-    END.    
+   /* END. */    
     
     RETURN "OK".
 
