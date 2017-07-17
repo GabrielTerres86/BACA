@@ -331,14 +331,6 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
   em PLSQL através da rotina Progress via DataServer */
   PROCEDURE pc_remessa_titulos_dda(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                   ,pr_dscritic OUT VARCHAR2);
-
-  /* Procedure para Executar retorno operacao Titulos DDA diretamente do ORACLE
-  --> Foi criado uma rotina para fazer o meio de campo pois não é permitido ter 
-      sobrecarga de método, pois estraga o schema holder                     */
-  PROCEDURE pc_retorno_tit_tab_DDA(pr_tab_remessa_dda  IN DDDA0001.typ_tab_remessa_dda  -- Remessa dda
-                                  ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda  -- Retorno dda
-                                  ,pr_cdcritic        OUT crapcri.cdcritic%type         -- Codigo de Erro
-                                  ,pr_dscritic        OUT VARCHAR2);                    -- Descricao de Erro
  
   /* Procedure para Executar retorno da remessa da títulos da DDA diretamente do ORACLE
   --> Foi criado uma rotina para fazer o meio de campo pois não é permitido ter 
@@ -4271,22 +4263,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END;
   END pc_remessa_titulos_dda;
   
-  --###########################################################################################################--
-  -- PROCEDIMENTO PARA CHAMAR A ROTINA PC_RETORNO_OPERACAO_TIT_DDA DIRETAMENTE NO ORACLE
-  PROCEDURE pc_retorno_tit_tab_DDA(pr_tab_remessa_dda  IN DDDA0001.typ_tab_remessa_dda  -- Remessa dda
-                                  ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda  -- Retorno dda
-                                  ,pr_cdcritic        OUT crapcri.cdcritic%type         -- Codigo de Erro
-                                  ,pr_dscritic        OUT VARCHAR2) IS                  -- Descricao de Erro
-  
-  BEGIN
-    
-    -- Chamar a rotina interna
-    pc_retorno_operacao_tit_DDA(pr_tab_remessa_dda => pr_tab_remessa_dda
-                               ,pr_tab_retorno_dda => pr_tab_retorno_dda
-                               ,pr_cdcritic        => pr_cdcritic
-                               ,pr_dscritic        => pr_dscritic);
-                                
-  END pc_retorno_tit_tab_DDA;
   --###########################################################################################################--
   -- PROCEDIMENTO PARA CHAMAR A ROTINA PC_RETORNO_OPERACAO_TIT_DDA DIRETAMENTE NO ORACLE
   PROCEDURE pc_remessa_tit_tab_dda(pr_tab_remessa_dda IN OUT DDDA0001.typ_tab_remessa_dda  -- Remessa dda
