@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
 
     Programa: SEGU0001 (Antigo b1wgen0045.p)
     Autor   : Guilherme/SUPERO
-    Data    : Outubro/2009                       Ultima Atualizacao: 26/10/2016
+    Data    : Outubro/2009                       Ultima Atualizacao: 03/07/2017
 
     Dados referentes ao programa:
 
@@ -59,6 +59,11 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                              temporaria de associados. Projeto 299/3 - Pre Aprovado (Lombardi).
 
                 26/10/2016 - PRJ 187.2 - Ajuste nas datas na importação (Guilherme/SUPERO)
+  
+                03/07/2017 - Incluido rotina de setar modulo Oracle 
+                           - Implementado Log no padrão
+                             ( Belli - Envolti - #667957)
+  
 ..............................................................................*/
 
   --  Tipo de registro para PlTable de seguros
@@ -612,7 +617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: 22/08/2016
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -621,6 +626,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --
   -- Alteracao : 22/08/2016 - Criada procedure pc_buscar_plaseg_web que buscar o valor do plano
   --                          de acordo com os parametros (Tiago/Thiago #462910)
+  --
+  --             19/06/2017 - #642644 Alterado o nome do arquivo gerado em pc_importa_seg_auto_sicr e
+  --                          enviado como anexo no e-mail, de ERRO_ARQ_SEG% para RESUMO_ARQ_SEG% (Carlos)
+  --
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                        - Implementado Log no padrão
+  --                          ( Belli - Envolti - #667957)
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -653,13 +666,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para contabilizar seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Retorna quantidade de seguros novos e cancelados do tipo e periodo informado
-
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -700,6 +717,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       rw_crapseg_cance cr_crapseg_cance%rowtype;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => null, pr_action => 'SEGU0001.pc_contabiliza');      
+
       -- BUSCA SEGUROS NOVOS
       OPEN cr_crapseg_novos (pr_cdcooper => pr_cdcooper
                             ,pr_tpseguro => pr_tpseguro
@@ -744,13 +765,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos coletar dados dos seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar taxas dos seguros
-
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
 
     --Variaveis de Erro
@@ -773,6 +798,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
          AND craptab.tpregist BETWEEN 1 AND 3;
     rw_craptab cr_craptab%rowtype;
   BEGIN
+    
+    -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_busca_dados_seg');      
+
     --Inicializar varaivel retorno erro
     pr_cdcritic:= NULL;
     pr_dscritic:= NULL;
@@ -807,7 +836,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
      WHEN vr_exc_erro THEN
        pr_cdcritic:= vr_cdcritic;
        pr_dscritic:= vr_dscritic;
-     WHEN OTHERS THEN
+     WHEN OTHERS THEN                          
+       -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+       
+       -- Descrição do erro            
        pr_cdcritic:= 0;
        pr_dscritic:= 'Erro na rotina SEGU0001.pc_busca_dados_seg. '||SQLERRM;
   END; -- pc_busca_dados_seg
@@ -826,12 +859,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos coletar dados dos seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar valores dos seguros
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     vr_chave VARCHAR2(15);         -- auxiliar para chave da PlTable de seguros
@@ -867,6 +905,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     rw_craplcm cr_craplcm%rowtype;
 
   BEGIN
+    
+    -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_seguros_resid_vida');      
+
     -- Leitura da craplcm
     OPEN cr_craplcm;
     LOOP
@@ -890,6 +932,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     CLOSE cr_craplcm;
   EXCEPTION
     WHEN others THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno nao OK
       pr_des_reto := 'Erro rotina pc_seguros_resid_vida: '||SQLERRM;
   END; -- pc_seguros_resid_vida
@@ -918,12 +962,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos coletar dados dos seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar seguros de automovel
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -982,6 +1031,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     vr_nrcontad NUMBER(09) := 0;
     vr_inpessoa NUMBER(03) := 0;
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_seguros_auto');      
+
       -- Limpa tabela de saida
       pr_tab_info_seguros.delete;
 
@@ -1214,6 +1267,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_reto := 'NOK';
     END; -- pc_seguros_auto
   END;
@@ -1239,7 +1294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: 17/04/2017
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1249,7 +1304,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   -- Alteracoes: 29/01/2016 - Alteracao de flginspc para inserasa - Pre-Aprovado fase II.
   --                          (Jaison/Anderson)
   --
-  --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
   --
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -1262,7 +1318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%rowtype;
-       
+
       -- Busca a Nacionalidade
       CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
         SELECT crapnac.dsnacion
@@ -1284,6 +1340,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_associados');      
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -1524,6 +1583,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_associados. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -1558,12 +1619,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar informacoes da pessoa Juridica
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -1588,6 +1654,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_pessoa_juridica');      
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -1668,6 +1737,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_pessoa_juridica. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -1702,12 +1773,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar informacoes do titular
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -1735,6 +1811,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_titular');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -1816,6 +1895,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_titular. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -1851,12 +1932,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar informacoes da empresa
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -1882,6 +1968,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_empresa');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -1962,6 +2051,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_empresa. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -2000,12 +2091,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar informacoes dos planos seguro
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -2036,6 +2132,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_plano_seguro');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -2138,6 +2237,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_plano_seguro. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -2177,12 +2278,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar informacoes da seguradora
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -2229,6 +2335,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_seguradora');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -2390,6 +2499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                              ,pr_tab_erro => pr_tab_erro);
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_seguradora. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -2427,12 +2538,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar motivos de cancelamento
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -2461,6 +2577,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_motivo_can');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -2573,6 +2692,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_motivo_can. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -2610,12 +2731,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para buscar informacoes dos seguros
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -2671,6 +2797,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro  EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_seguros');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -3075,6 +3204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_seguros. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -3115,12 +3246,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para calcular a data de debito
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -3143,6 +3279,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_calcular_data_debito');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -3250,6 +3389,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_calcular_data_debito. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -3284,12 +3425,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para atualizar matricula
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -3314,6 +3460,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_atualizar_matricula');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -3402,6 +3551,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       pr_des_erro:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         vr_dscritic:= 'Erro na rotina SEGU0001.pc_atualizar_matricula. '||sqlerrm;
         -- Chamar rotina de gravação de erro
@@ -3679,12 +3830,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido
-  --  Data     : Abril/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Abril/2015.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para criar os seguros
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -3782,6 +3938,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_cria_seguro');
 
       --Inicializar Variaveis
       vr_cdcritic:= 0;
@@ -4241,6 +4400,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               INTO rw_craplot.rowid;
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
                 -- se ocorreu algum erro durante a criação
                 vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
                 RAISE vr_exc_erro;
@@ -4258,6 +4419,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               WHERE craplot.rowid = rw_craplot.rowid;
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
                 -- se ocorreu algum erro durante a criação
                 vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
                 RAISE vr_exc_erro;
@@ -4368,6 +4531,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               ,rw_crawseg.vlpremio;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
             vr_dscritic:= 'Erro ao inserir registro na crawseg. '||sqlerrm;
             --Levantar Excecao
             RAISE vr_exc_erro;
@@ -4443,6 +4608,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             INTO rw_crawseg.qtparcel;
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
               vr_dscritic:= 'Erro ao atualizar crawseg(1). '||sqlerrm;
               --Levantar Excecao
               RAISE vr_exc_erro;
@@ -4462,6 +4629,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             INTO rw_crawseg.qtparcel;
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
               vr_dscritic:= 'Erro ao atualizar crawseg(2). '||sqlerrm;
               --Levantar Excecao
               RAISE vr_exc_erro;
@@ -4592,6 +4761,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
           INTO vr_rowid_crapseg;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
             vr_dscritic:= 'Erro ao inserir crapseg. '||sqlerrm;
             --Levantar Excecao
             RAISE vr_exc_erro;
@@ -4604,6 +4775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             WHERE crapseg.rowid = vr_rowid_crapseg;
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
               vr_dscritic:= 'Erro ao atualizar crapseg(1). '||sqlerrm;
               --Levantar Excecao
               RAISE vr_exc_erro;
@@ -4620,6 +4793,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             WHERE crapseg.rowid = vr_rowid_crapseg;
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
               vr_dscritic:= 'Erro ao atualizar crapseg(2). '||sqlerrm;
               --Levantar Excecao
               RAISE vr_exc_erro;
@@ -4721,6 +4896,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                              ,pr_tab_erro => pr_tab_erro);
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_des_erro:= 'NOK';
         --Mensagem Erro
         vr_cdcritic:= 0;
@@ -4747,6 +4924,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                 ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
       BEGIN
     DECLARE
 
@@ -4776,6 +4958,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
       BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_buscar_plaseg_web');
 
        -- Recupera dados de log para consulta posterior
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -4792,6 +4977,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
               END IF;
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SEGU0001.pc_buscar_plaseg_web');
 
         --Buscar Plano Seguro
       pc_buscar_plano_seguro (pr_cdcooper => vr_cdcooper        -- Cooperativa
@@ -4871,7 +5059,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
-                  WHEN OTHERS THEN
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);   
         -- Retorno não OK
         pr_des_erro:= 'NOK';
 
@@ -4891,7 +5081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     Programa: pc_importa_seg_auto_sicr
     Sistema : Ayllos/JOB
     Autor   : Guilherme/SUPERO
-    Data    : Maio/2016                 Ultima atualizacao:
+    Data    : Maio/2016                 Ultima atualizacao: 03/07/2017
 
     Dados referentes ao programa:
 
@@ -4905,13 +5095,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 19/08/2016 - Implementar o processamento de registros de retorno de
                              cancelamento ( Renato Darosci - Supero )
+  
+                03/07/2017 - Incluido rotina de setar modulo Oracle 
+                           - Implementado Log no padrão
+                             ( Belli - Envolti - #667957)
+  
     ..............................................................................*/
 
       ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'SEGU0001';
-      vr_nomdojob CONSTANT VARCHAR2(100) := 'JB_IMP_SEGURO_AUTO_SICR';
+      vr_nomdojob CONSTANT VARCHAR2(100) := 'JBSEG_AUTO_SICR_IMP';
 
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
@@ -4923,7 +5118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_flgerlog   BOOLEAN := FALSE;
       vr_temarquiv  BOOLEAN;
       vr_nmarqlog   VARCHAR2(100);
-      vr_nmarqerr   VARCHAR2(80):='';
+      vr_nmarqerr   VARCHAR2(80) := '';
       vr_raizcoop   VARCHAR2(50);
       vr_nmdirlog   VARCHAR2(100);
       vr_indierro   NUMBER;
@@ -4946,6 +5141,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       -- PL/Table que vai armazenar os nomes de arquivos a serem processados
       vr_tab_arqtmp      gene0002.typ_split;
+      
+      -- Novo Vetor para posicionar a linha - Chamado 667957 - 07/07/2017      
+      TYPE type_linha IS TABLE OF NUMBER INDEX BY VARCHAR2(105);
+      v_linha                type_linha;  
+      vr_cdchave             varchar2(105);
+      vr_nrlinha             number(20);      
 
       --vr_contareg   PLS_INTEGER;
       vr_dsdanexo   VARCHAR2(200);
@@ -4978,6 +5179,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_reg_casa    tbseg_vida_benefici%ROWTYPE; -- A tabela para esse Seguro ainda nao existe
       vr_reg_prst    tbseg_vida_benefici%ROWTYPE; -- A tabela para esse Seguro ainda nao existe
       vr_reg_tpatu   typ_reg_flg_atu;
+     
+      -- Variaveis de posicionamento de modulo - 05/07/2017 - Chamado 667957
+      vr_acao             VARCHAR2   (100) := 'SEGU0001.pc_importa_seg_auto_sicr'; 
+      
+      -- Variaveis de inclusão de log  - 05/07/2017 - Chamado 667957
+      vr_idprglog            tbgen_prglog.idprglog%TYPE := 0; 
 
 
       ------------------------------- CURSORES ---------------------------------
@@ -5110,17 +5317,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
       --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
-                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+      PROCEDURE pc_controla_log_batch(pr_dstiplog_in     IN VARCHAR2,
+                                      pr_dscritic_in     IN VARCHAR2 DEFAULT NULL,
+                                      pr_dsfixa_in       IN VARCHAR2 DEFAULT 'ERRO: ',
+                                      pr_tpocorrencia_in IN VARCHAR2 DEFAULT 2
+                                      ) IS
+                                      
       BEGIN
-
+        
+        vr_nmarqlog := 'proc_batch.log';           
+        vr_dscriti2 := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra 
+                               || ' --> ' 
+                               || pr_dsfixa_in    || pr_dscritic_in                 
+                               || ' - Module: ' || vr_cdprogra 
+                               || ' - Action: ' || vr_acao;
+        
         --> Controlar geração de log de execução dos jobs
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => nvl(pr_cdcooper,3) --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+        cecred.pc_log_programa(pr_dstiplog      => pr_dstiplog_in    , -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                               pr_cdprograma    => vr_nomdojob       , -- tbgen_prglog
+                               pr_cdcooper      => nvl(pr_cdcooper,3), -- tbgen_prglog
+                               pr_tpexecucao    => 1,                  -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               pr_tpocorrencia  => pr_tpocorrencia_in, -- tbgen_prglog_ocorrencia -- 4 Mensagem
+                               pr_cdcriticidade => 0,           -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                               pr_dsmensagem    => vr_dscriti2, -- tbgen_prglog_ocorrencia
+                               pr_flgsucesso    => 1,           -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
+                               pr_nmarqlog      => vr_nmarqlog,
+                               pr_idprglog      => vr_idprglog
+                               );                                 
 
       END pc_controla_log_batch;
 
@@ -5136,6 +5359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_nmarqdat  gene0002.typ_split;
 
       BEGIN
+
         -- Se foi retornado apenas código
         IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
           -- Buscar a descrição
@@ -5148,8 +5372,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
         IF pr_indierro = 1 THEN
-          vr_nmarqlog := 'log_SEGUROS_' || to_char(rw_crapdat.dtmvtocd,'RRRRMMDD');
-          vr_flfinmsg := 'S';
+          vr_nmarqlog := 'proc_batch.log';
+          vr_flfinmsg := 'S';          
+          pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                pr_dscritic_in => 'Falta Tratar - ' || vr_dscriti2);                          
         ELSE
           -- BLOCO PRA EXTRAIR A DATA DO NOME DO ARQUIVO
           vr_vet_arqv := gene0002.fn_quebra_string(pr_string =>pr_cdprogra, pr_delimit => '_' );
@@ -5158,25 +5384,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             vr_nmarqdat := gene0002.fn_quebra_string(pr_string =>vr_vet_arqv(idx), pr_delimit => '.' );
           END LOOP;
 
-          vr_nmarqlog := 'ERRO_ARQ_SEG_' || vr_nmarqdat(1) || '_' ||to_char(SYSDATE,'hh24');
+          vr_nmarqlog := 'RESUMO_ARQ_SEG_' || vr_nmarqdat(1) || '_' ||to_char(SYSDATE,'hh24');
           vr_flfinmsg := 'N';
-          vr_dscriti2 := pr_cdprogra || ' -> ' ||
-                         to_char(sysdate,'dd/mm/rrrr hh24:mi:ss')||' - ' || vr_dscriti2;
           vr_nmarqerr := vr_nmarqlog || '.log';
-        END IF;
+                              
+          vr_dscriti2 := to_char(sysdate,'hh24:mi:ss')||' - ' || pr_cdprogra 
+                                 || ' --> ' 
+                                 || 'ALERTA: '       || vr_dscriti2;
 
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => vr_dscriti2
-                                  ,pr_nmarqlog     => vr_nmarqlog
-                                  ,pr_flfinmsg     => vr_flfinmsg);
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
+                                     ,pr_ind_tipo_log => 1
+                                     ,pr_des_log      => vr_dscriti2
+                                     ,pr_nmarqlog     => vr_nmarqlog
+                                     ,pr_flfinmsg     => vr_flfinmsg
+                                     ,pr_cdprograma   => pr_cdprogra);
+        END IF;
 
       EXCEPTION
         WHEN OTHERS THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Problemas com geracao de Log';
-            RAISE vr_exc_saida;
+          -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                           
+          -- Acerto geração de erro via vr_exc_saida - Chamado 667957 - 05/07/2018
+          vr_cdcritic := 0;
+          vr_dscritic := 'Problemas com geracao de Log - ' || SQLERRM;                                    
+          RAISE vr_exc_saida;
       END gera_log;
 
 
@@ -5203,17 +5435,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             COMMIT;
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
               vr_dscritic := 'SEGU0001.pc_controla_execucao: Erro ao atualizar PRM[0] => ' ||
-                             SQLERRM ;
+                             SQLERRM ;              
+              -- Acerto do log - Chamado 667957 - 05/07/2017              
               --> Final da execução com ERRO
-              pc_controla_log_batch(pr_dstiplog => 'E',
-                                    pr_dscritic => vr_dscritic);
-              -- Gera LOG
-              gera_log(pr_cdcooper => 3 --pr_cdcooper
-                      ,pr_cdprogra => vr_cdprogra
-                      ,pr_indierro => 1
-                      ,pr_cdcritic => 0
-                      ,pr_dscritic => ' =>   ' || vr_dscritic);
+              pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                    pr_dscritic_in => vr_dscritic);
           END;
         END IF;
 
@@ -5234,24 +5463,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         BEGIN
           UPDATE crapprm prm
              SET prm.dsvlrprm = vr_vlprmjob
-           WHERE prm.cdacesso ='FLAG_ARQ_SEGURO';
-
+           WHERE prm.cdacesso ='FLAG_ARQ_SEGURO';           
           COMMIT;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
             vr_dscritic := 'SEGU0001.pc_controla_execucao: Erro ao atualizar PRM[1] => ' ||
                            SQLERRM ;
+            -- Acerto do log - Chamado 667957 - 05/07/2017     
             --> Final da execução com ERRO
-            pc_controla_log_batch(pr_dstiplog => 'E',
-                                  pr_dscritic => vr_dscritic);
-            -- Gera LOG
-            gera_log(pr_cdcooper => 3 --pr_cdcooper
-                    ,pr_cdprogra => vr_cdprogra
-                    ,pr_indierro => 1
-                    ,pr_cdcritic => 0
-                    ,pr_dscritic => ' =>   ' || vr_dscritic);
+            pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                  pr_dscritic_in => vr_dscritic);
         END;
-
 
         -- Validar a hora atual de execução
         IF to_number(to_char(SYSDATE,'hh24')) >= vr_hrfimexe THEN -- Ultima Execução - as 12h
@@ -5268,12 +5492,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               vr_mailbody := REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_SEM_ARQ')
                                      ,'##DATA##'
                                      ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'));
-              -- Gera LOG
-              gera_log(pr_cdcooper => 3 --pr_cdcooper
-                      ,pr_cdprogra => vr_cdprogra
-                      ,pr_indierro => 1
-                      ,pr_cdcritic => 0
-                      ,pr_dscritic => ' =>   Envio de Email: ' || vr_mailtitu);
+              -- Acerto do log - Chamado 667957 - 05/07/2017     
+              --> Final da execução com ERRO
+              pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                    pr_dscritic_in => 'Envio de Email: ' || vr_mailtitu);                      
 
               -- Envio de email
               gene0003.pc_solicita_email(pr_cdcooper        => 3 --pr_cdcooper
@@ -5288,19 +5510,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                         ,pr_des_erro        => vr_dscritic);
               -- Se houver erros
               IF vr_dscritic IS NOT NULL THEN
-                --> Final da execução com ERRO
-                pc_controla_log_batch(pr_dstiplog => 'E',
-                                      pr_dscritic => vr_dscritic);
+                -- Acerto geração de erro via vr_exc_saida - Chamado 667957 - 05/07/2018
                 -- Gera critica
                 vr_cdcritic := 0;
-                vr_dscritic := 'Erro no envio do Email!' || '. Erro: '||vr_dscritic;
+                vr_dscritic := 'Envio do Email!' || '. Critica: '||vr_dscritic;
                 RAISE vr_exc_saida;
               END IF;
 
             END IF;
 
         END IF; -- Ultima Execução - as 12h
-
+        
      END pc_controla_execucao;
 
 
@@ -5329,73 +5549,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
   BEGIN
 
+    -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => vr_acao);      
 
     --------------- VALIDACOES INICIAIS -----------------
     vr_dsdirrec  := gene0001.fn_param_sistema('CRED', 0, 'DIR_SEG_AUTO_REC');
     vr_dsdirenv  := gene0001.fn_param_sistema('CRED', 0, 'DIR_SEG_AUTO_ENV');
     vr_dsdirmov  := gene0001.fn_param_sistema('CRED', 0, 'DIR_SEG_AUTO_OK');
     vr_nmarquiv  := 'SEGURO_CECRED_%'; -- Todos os arquivos com esse nome existentes na pasta
-
+    
 
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
      FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
 
-
-    pc_controla_log_batch(pr_dstiplog => 'I');
-
-    -- Gera LOG - Inicio do processamento
-    gera_log(pr_cdcooper => 3 --pr_cdcooper
-            ,pr_cdprogra => vr_cdprogra
-            ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-            ,pr_cdcritic => 0
-            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') || ' - INICIO DO PROCESSAMENTO');
+    -- Acerto do log - Chamado 667957 - 05/07/2017     
+    pc_controla_log_batch(pr_dstiplog_in     => 'I',
+                          pr_dsfixa_in       => 'ALERTA: ',
+                          pr_tpocorrencia_in => 4);
 
     gene0001.pc_lista_arquivos(pr_path     => vr_dsdirrec
                               ,pr_pesq     => vr_nmarquiv
                               ,pr_listarq  => vr_listaarqs
                               ,pr_des_erro => vr_dscritic);
 
+
     --Carregar a lista de arquivos txt na pl/table
     vr_tab_arqtmp := gene0002.fn_quebra_string(pr_string => vr_listaarqs);
 
-    -- Gera LOG de Erro do Arquivo
-    gera_log(pr_cdcooper => 3 --pr_cdcooper
-            ,pr_cdprogra => vr_cdprogra
-            ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-            ,pr_cdcritic => 0
-            ,pr_dscritic => ' TOTAL ARQUIVOS ENCONTRADOS: ' ||
-                            vr_tab_arqtmp.count
-             );
-
+    -- Acerto do log - Chamado 667957 - 05/07/2017  
+    --> Final da execução com ERRO
+    pc_controla_log_batch(pr_dstiplog_in => 'E',
+                          pr_dscritic_in => 'TOTAL ARQUIVOS ENCONTRADOS: ' ||
+                                            vr_tab_arqtmp.count,                          
+                          pr_dsfixa_in   => 'ALERTA: ',
+                          pr_tpocorrencia_in => 4 );  
 
     -- Controle de execução - Se tem ou não arquivo
     IF vr_tab_arqtmp.count = 0 THEN
       vr_temarquiv := FALSE; -- Nao tem arquivo
-      -- Gera LOG
-      gera_log(pr_cdcooper => 3 --pr_cdcooper
-              ,pr_cdprogra => vr_cdprogra
-              ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-              ,pr_cdcritic => 0
-              ,pr_dscritic => ' =>   Arquivo não encontrado - Hora: ' || to_char(SYSDATE,'hh24'));
+      -- Acerto do log - Chamado 667957 - 05/07/2017  
+      pc_controla_log_batch(pr_dstiplog_in => 'E',
+                            pr_dscritic_in => 'Arquivo não encontrado - Hora: ' || to_char(SYSDATE,'hh24'),                          
+                            pr_dsfixa_in   => 'ALERTA: ',
+                            pr_tpocorrencia_in => 4 );  
     ELSE
       vr_temarquiv := TRUE;  -- Tem arquivo na pasta
     END IF;
 
-    pc_controla_execucao(vr_temarquiv);
+   pc_controla_execucao(vr_temarquiv);
 
 
 
     -- Leitura da PL/Table e processamento dos arquivos
     FOR idx in 1..vr_tab_arqtmp.count LOOP -- LOOP de Arquivos da PASTA
-
-      -- Gera LOG
-      gera_log(pr_cdcooper => 3 --pr_cdcooper
-              ,pr_cdprogra => vr_cdprogra
-              ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-              ,pr_cdcritic => 0
-              ,pr_dscritic => ' => Processamento do arquivo: ' || vr_tab_arqtmp(idx) );
+      
+      -- Acerto do log - Chamado 667957 - 05/07/2017     
+      pc_controla_log_batch(pr_dstiplog_in => 'E',
+                            pr_dscritic_in => 'Processamento do arquivo: ' || vr_tab_arqtmp(idx),
+                            pr_dsfixa_in   => 'ALERTA: ',
+                            pr_tpocorrencia_in => 4);
 
       vr_tab_linhas.delete;
       vr_nmarqerr  := NULL;  -- A cada arquivo, limpa o nome do arquivo de ERROS
@@ -5409,64 +5623,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         vr_dscritic := vr_dscritic || ' , Arquivo: ' || vr_tab_arqtmp(idx);
-        -- Gera LOG
-        gera_log(pr_cdcooper => 3 --pr_cdcooper
-                ,pr_cdprogra => vr_cdprogra
-                ,pr_indierro => 1 -- 1-Log Geral 2-Log Erros Arquivo
-                ,pr_cdcritic => 0
-                ,pr_dscritic => ' =>  ' || vr_dscritic );
+      
+        -- Acerto do log - Chamado 667957 - 05/07/2017     
+        pc_controla_log_batch(pr_dstiplog_in => 'E',
+                              pr_dscritic_in => vr_dscritic);
+                
         CONTINUE; -- Passa para o proximo arquivo da lista
       END IF;
 
       -- Se não possuir linhas - Gera log erros
       IF vr_tab_linhas.count = 0 THEN
         vr_dscritic := 'Arquivo ' || vr_tab_arqtmp(idx) || ' não possui conteúdo!';
-        -- Gera LOG
-        gera_log(pr_cdcooper => 3 --pr_cdcooper
-                ,pr_cdprogra => vr_cdprogra
-                ,pr_indierro => 1
-                ,pr_cdcritic => 0
-                ,pr_dscritic => ' =>   ' || vr_dscritic);
+      
+        -- Acerto do log - Chamado 667957 - 05/07/2017     
+        pc_controla_log_batch(pr_dstiplog_in => 'E',
+                              pr_dscritic_in => vr_dscritic);
+                
         -- Gera LOG de Erro do Arquivo
         gera_log(pr_cdcooper => 3 --pr_cdcooper
                 ,pr_cdprogra => vr_tab_arqtmp(idx)
                 ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                 ,pr_cdcritic => 0
-                ,pr_dscritic => ' Arquivo ' || vr_tab_arqtmp(idx)
+                ,pr_dscritic => 'Arquivo ' || vr_tab_arqtmp(idx)
                                 || ' não possui conteúdo!'
                  );
-        CONTINUE; -- Passa para o proximo arquivo da lista
-     /* ELSE
-        IF vr_tab_linhas.count = 1 THEN
-          -- Caso só tenha uma linha importada, verificar
-          -- se essa linha é de erro.
-          -- SICREDI está mandando arquivo sem dados, mas com
-          -- o texto "NÃO HÁ REGISTROS A SEREM EXTRAÍDOS"
-          IF vr_tab_linhas(1).exists('$ERRO$') THEN
-            --Problemas com importacao do layout
-            vr_dscritic := vr_tab_linhas(1)('$ERRO$').texto;
-            -- Gera LOG
-            gera_log(pr_cdcooper => 3 --pr_cdcooper
-                    ,pr_cdprogra => vr_cdprogra
-                    ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                    ,pr_cdcritic => 0
-                    ,pr_dscritic => ' =>   Linha 1: ' || vr_dscritic);
-            -- Gera LOG de Erro do Arquivo
-            gera_log(pr_cdcooper => 3 --pr_cdcooper
-                    ,pr_cdprogra => vr_tab_arqtmp(idx)
-                    ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
-                    ,pr_cdcritic => 0
-                    ,pr_dscritic => ' Linha 1: ' || vr_dscritic
-                     );
-            CONTINUE; -- Passa para o proximo arquivo da lista
-          END IF;
-        END IF;*/
+        CONTINUE; -- Passa para o proximo arquivo da lista     
       END IF;
 
 
       /*** Renato Darosci - 16/08/2016 - PRocessar o registro de memória e reordena-lo ***/
       -- Garantir que a tabela não possua registros
       vr_tab_ordena.DELETE();
+            
+      -- Limpa Novo Vetor - Chamado 667957 - 07/07/2017   
+      v_linha.DELETE();
 
       -- Percorrer todas a tabela de memória com os dados do arquivo
       FOR vr_indice IN vr_tab_linhas.FIRST..vr_tab_linhas.LAST LOOP --LINHAS ARQUIVO
@@ -5491,6 +5681,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
         -- Inclui o registro de linha na tabela de ordenação
         vr_tab_ordena(vr_dsdchave) := vr_tab_linhas(vr_indice);
+        
+      -- Carrega Novo Vetor - Chamado 667957 - 07/07/2017         
+        vr_cdchave          := vr_dsdchave;
+        vr_nrlinha          := vr_indice;
+        v_linha(vr_cdchave) := vr_nrlinha;
 
       END LOOP;
 
@@ -5520,6 +5715,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       -- Navegar em cada linha do arquivo aberto para leitura
       FOR vr_indice2 IN vr_tab_linhas.FIRST..vr_tab_linhas.LAST LOOP --LINHAS ARQUIVO
 
+        -- Pociona chave Novo Vetor - Chamado 667957 - 07/07/2017   
+        
+        IF vr_tab_linhas(vr_indice2).exists('$ERRO$') THEN
+          vr_cdchave :=
+               to_char(SYSDATE, 'YYYY') || '1231' ||
+               to_char(SYSDATE, 'YYYY') || '1231' ||
+               LPAD(vr_indice2,14,'0')   ||
+               LPAD(vr_indice2,25,'0')   ||
+               LPAD(vr_indice2,25,'0')   ||
+               LPAD(vr_indice2,25,'0');
+        ELSE                  
+          vr_cdchave :=
+               to_char(vr_tab_linhas(vr_indice2)('DTINIVIGENCIA').data, 'YYYYMMDD') ||
+               to_char(vr_tab_linhas(vr_indice2)('DTINIPROPOSTA').data, 'YYYYMMDD') ||
+               LPAD(vr_tab_linhas(vr_indice2)('SEGURADOCPFCNPJ').numero,14,'0')     ||
+               LPAD(vr_tab_linhas(vr_indice2)('NRPROPOSTA').numero,25,'0')          ||
+               LPAD(vr_tab_linhas(vr_indice2)('NRAPOLICE').numero,25,'0')           ||
+               LPAD(vr_tab_linhas(vr_indice2)('NRENDOSSO').numero,25,'0');
+        END IF;
+    
+        vr_nrlinha := v_linha(vr_cdchave);     
+         
         -- Inicializa variaveis para cada linha do arquivo
         vr_dscritic   := NULL;
         vr_tpdseguro  := 0;
@@ -5537,22 +5754,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_reg_tpatu.tp_vida         := 'I';
         vr_reg_tpatu.tp_casa         := 'I';
         vr_reg_tpatu.tp_prst         := 'I';
+        
 
         IF vr_tab_linhas(vr_indice2).exists('$ERRO$') THEN
+          
           --Problemas com importacao do layout
           vr_dscritic := vr_tab_linhas(vr_indice2)('$ERRO$').texto;
-          -- Gera LOG
-          gera_log(pr_cdcooper => 3 --pr_cdcooper
-                  ,pr_cdprogra => vr_cdprogra
-                  ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                  ,pr_cdcritic => 0
-                  ,pr_dscritic => ' =>   ' || vr_dscritic);
+      
+          -- Acerto do log - Chamado 667957 - 05/07/2017     
+          pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                pr_dscritic_in => vr_dscritic);
+                  
+          -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
           -- Gera LOG de Erro do Arquivo
           gera_log(pr_cdcooper => 3 --pr_cdcooper
                   ,pr_cdprogra => vr_tab_arqtmp(idx)
                   ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                   ,pr_cdcritic => 0
-                  ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                  ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                    );
           CONTINUE; -- Passa para o proximo arquivo da lista
         END IF;
@@ -5575,13 +5794,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             -- Monta
             vr_dscritic := 'Cancelamento do Endosso não pode ser efetuado! Apólice/Endosso => '
                         || vr_nrapolice ||'/'|| vr_nrendosso;
-
             -- Gera LOG de Erro do Arquivo
+            -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
             gera_log(pr_cdcooper => 3 --pr_cdcooper
                     ,pr_cdprogra => vr_tab_arqtmp(idx)
                     ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                     ,pr_cdcritic => 0
-                    ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                    ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                      );
             CONTINUE; -- Passa para proxima linha
           END IF;
@@ -5598,14 +5817,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
              WHERE ROWID = rw_endosso_cancel.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              -- Gera LOG de Erro do Arquivo
-              gera_log(pr_cdcooper => 3 --pr_cdcooper
-                      ,pr_cdprogra => vr_cdprogra
-                      ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                      ,pr_cdcritic => 0
-                      ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ' => Erro ao atualizar Endosso: ' || SQLERRM
-                       );
+                                           
               ROLLBACK;
+              -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);         
+              -- Acerto do log - Chamado 667957 - 05/07/2017 
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
+              -- Gera LOG de Erro do Arquivo    
+              pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                    pr_dscritic_in => 'Linha '|| vr_nrlinha || 
+                                                      ' => Erro ao atualizar Endosso: ' || SQLERRM);
+                                           
               CONTINUE;
           END;
 
@@ -5617,19 +5839,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
           IF cr_endosso_ativa%NOTFOUND THEN
             -- Fechar cursor
             CLOSE cr_endosso_ativa;
+                     
+            ROLLBACK; -- desfaz a transação
 
             -- Monta
             vr_dscritic := 'Endosso a ser ativado não encontrado! Apolice => '
                             || rw_endosso_cancel.nrapolice;
-
-            -- Gera LOG de Erro do Arquivo
-            gera_log(pr_cdcooper => 3 --pr_cdcooper
-                    ,pr_cdprogra => vr_tab_arqtmp(idx)
-                    ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                    ,pr_cdcritic => 0
-                    ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
-                     );
-            ROLLBACK; -- desfaz a transação
+      
+            -- Acerto do log - Chamado 667957 - 05/07/2017 
+            -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
+            -- Gera LOG de Erro do Arquivo    
+            pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                  pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
+                                  
             CONTINUE; -- Passa para proxima linha
           END IF;
 
@@ -5645,14 +5867,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
              WHERE ROWID = rw_endosso_ativa.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              -- Gera LOG de Erro do Arquivo
-              gera_log(pr_cdcooper => 3 --pr_cdcooper
-                      ,pr_cdprogra => vr_cdprogra
-                      ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                      ,pr_cdcritic => 0
-                      ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ' => Erro ao Ativar Endosso: ' || SQLERRM
-                       );
+                                           
               ROLLBACK;
+              -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+      
+              -- Acerto do log - Chamado 667957 - 05/07/2017 
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
+              -- Gera LOG de Erro do Arquivo    
+              pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                    pr_dscritic_in => 'Linha '|| vr_nrlinha || 
+                                                      ' => Erro ao Ativar Endosso: ' || SQLERRM);
+                                           
               CONTINUE;
           END;
 
@@ -5697,12 +5923,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 WHEN 'Renovada'  THEN vr_reg_arquivo.indsituacao := 'V'; -- Conforme email Zago(Sicredi), tratar Renovadas como Vencidas
                 WHEN 'Vencida'   THEN vr_reg_arquivo.indsituacao := 'V';
                 ELSE vr_dscritic := 'Situação inválida! => ' || TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SITUACAO').texto,'"','')) ;
+                  -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
                   -- Gera LOG de Erro do Arquivo
                   gera_log(pr_cdcooper => 3 --pr_cdcooper
                           ,pr_cdprogra => vr_tab_arqtmp(idx)
                           ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                           ,pr_cdcritic => 0
-                          ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                          ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                            );
                   CONTINUE; -- Passa para proxima linha
               END CASE;
@@ -5737,12 +5964,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
               ELSE
                 vr_dscritic := 'Seguradora inválida! => ' || UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')));
+                -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
                 -- Gera LOG de Erro do Arquivo
                 gera_log(pr_cdcooper => 3 --pr_cdcooper
                         ,pr_cdprogra => vr_tab_arqtmp(idx)
                         ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                         ,pr_cdcritic => 0
-                        ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                        ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                         );
                 CONTINUE; -- Passa para proxima linha
 
@@ -5751,14 +5979,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               lt_d_nr_do_ci := TRIM(REPLACE(vr_tab_linhas(vr_indice2)('NUMEROCI'      ).texto,'"',''));
 
             EXCEPTION
-              WHEN OTHERS THEN   -- Erro de Atribuição / Tipo inválido
+              WHEN OTHERS THEN   
+                -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+                -- Erro de Atribuição / Tipo inválido
                 vr_dscritic := 'Tipo de dado inválido recebido! (Caracteres não numéricos)';
+                -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
                 -- Gera LOG de Erro do Arquivo
                 gera_log(pr_cdcooper => 3 --pr_cdcooper
                         ,pr_cdprogra => vr_tab_arqtmp(idx)
                         ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                         ,pr_cdcritic => 0
-                        ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                        ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                         );
                 CONTINUE; -- Passa para proxima linha
             END;
@@ -5768,12 +6000,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               -- Encontrou caracteres diferentes de 0 a 9
               vr_dscritic := 'Conteúdo inválido no campo CONTA/DV: ' ||
                              vr_tab_linhas(vr_indice2)('SEGURADOCONTA').texto;
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
                       ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                       ,pr_cdcritic => 0
-                      ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                      ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                        );
               CONTINUE; -- Passa para proxima linha
             ELSE -- AGENCIA CONTA contem apenas numeros
@@ -5790,17 +6023,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               IF cr_crapcop%NOTFOUND THEN
                 CLOSE cr_crapcop;
                 vr_dscritic := '=> Agência inválida: ' || vr_cdagectl || ' => "' || lt_d_nragecta || '"';
-                -- Gera LOG de Erro do Arquivo
-                gera_log(pr_cdcooper => 3 --pr_cdcooper
-                        ,pr_cdprogra => vr_cdprogra
-                        ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                        ,pr_cdcritic => 0
-                        ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ': ' || vr_dscritic
-                         );
+      
+                -- Acerto do log - Chamado 667957 - 05/07/2017 
+                -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
+                -- Gera LOG de Erro do Arquivo    
+                pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                      pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
+                         
                 -- Houve erro na Agencia/Conta
                 vr_reg_arquivo.inerro_import := 1; -- Registro COM ERRO de Agencia ou Conta
+                
 
               ELSE  -- Encontrou Cooperativa
+        
                 CLOSE cr_crapcop;
 
                 vr_reg_arquivo.cdcooper := rw_crapcop.cdcooper;
@@ -5812,15 +6047,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 --Se nao Encontrou
                 IF cr_crapass%NOTFOUND THEN
                   CLOSE cr_crapass;
-                  vr_dscritic := '=> Conta não encontrada na Agencia informada: ' || vr_reg_arquivo.nrdconta
+                           
+                  vr_dscritic := '=> Conta não encontrada na Agencia informada: ' 
+                                  || vr_reg_arquivo.nrdconta
                                   || ' => "' || lt_d_nragecta || '"';
-                  -- Gera LOG de Erro do Arquivo
-                  gera_log(pr_cdcooper => 3 --pr_cdcooper
-                          ,pr_cdprogra => vr_cdprogra
-                          ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                          ,pr_cdcritic => 0
-                          ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ': ' || vr_dscritic
-                           );
+      
+                  -- Acerto do log - Chamado 667957 - 05/07/2017 
+                  -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017   
+                  -- Gera LOG de Erro do Arquivo    
+                  pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                        pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
+                           
                   -- Houve erro na Agencia/Conta
                   vr_reg_arquivo.inerro_import := 1; -- Registro COM ERRO de Agencia ou Conta
                 ELSE
@@ -5848,12 +6085,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             IF regexp_like (vr_tab_linhas(vr_indice2)('VLRPRESTACAO').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
               vr_dscritic := 'Conteúdo inválido no campo VLR PRESTACAO';
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
                       ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                       ,pr_cdcritic => 0
-                      ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                      ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                        );
               CONTINUE; -- Passa para proxima linha
             ELSE
@@ -5865,12 +6103,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             IF regexp_like (vr_tab_linhas(vr_indice2)('TOTPREMIOBRUTO').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
               vr_dscritic := 'Conteúdo inválido no campo TOT.PREMIO BRUTO';
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
                       ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                       ,pr_cdcritic => 0
-                      ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                      ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                        );
               CONTINUE; -- Passa para proxima linha
             ELSE
@@ -5882,12 +6121,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             IF regexp_like (vr_tab_linhas(vr_indice2)('TOTPREMIOLIQUIDO').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
               vr_dscritic := 'Conteúdo inválido no campo TOT. PREMIO LIQUIDO';
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
                       ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                       ,pr_cdcritic => 0
-                      ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                      ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                        );
               CONTINUE; -- Passa para proxima linha
             ELSE
@@ -5899,12 +6139,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             IF regexp_like (vr_tab_linhas(vr_indice2)('VLRFRANQUIA').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
               vr_dscritic := 'Conteúdo inválido no campo VLR. FRANQUIA';
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
                       ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                       ,pr_cdcritic => 0
-                      ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                      ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                        );
               CONTINUE; -- Passa para proxima linha
             ELSE
@@ -5948,12 +6189,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 -- Gerar erro no log enviado para o Sicredi
                 vr_dscritic := '=> Endosso já processado anteriormente: ' || vr_reg_arquivo.nrapolice || '/' ||
                                 vr_reg_arquivo.nrendosso;
+                -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
                 -- Gera LOG de Erro do Arquivo
                 gera_log(pr_cdcooper => 3 --pr_cdcooper
                         ,pr_cdprogra => vr_tab_arqtmp(idx)
                         ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                         ,pr_cdcritic => 0
-                        ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                        ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                          );
                 CONTINUE; -- Passa para proxima linha
               END IF;
@@ -5972,13 +6214,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 CLOSE cr_tpendosso;
                 vr_dscritic := '=> Tipo/Subtipo do Endosso inválido: ' || vr_reg_arquivo.tpendosso || '/' ||
                                 vr_reg_arquivo.tpsub_endosso;
-                -- Gera LOG de Erro do Arquivo
-                gera_log(pr_cdcooper => 3 --pr_cdcooper
-                        ,pr_cdprogra => vr_cdprogra
-                        ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                        ,pr_cdcritic => 0
-                        ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ': ' || vr_dscritic
-                         );
+      
+                -- Acerto do log - Chamado 667957 - 05/07/2017 
+                -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
+                -- Gera LOG de Erro do Arquivo    
+                pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                      pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
+                         
                 CONTINUE; -- Passa para proxima linha
               END IF;
               CLOSE cr_tpendosso;
@@ -5994,12 +6236,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                '), Apólice ('  || vr_reg_arquivo.nrapolice  ||
                                ') e Endosso (' || vr_reg_arquivo.nrendosso  || ')!';
               END IF;
+              -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
                       ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                       ,pr_cdcritic => 0
-                      ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                      ,pr_dscritic => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic
                        );
               CONTINUE; -- Passa para proxima linha
             END  IF;
@@ -6089,12 +6332,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 CLOSE cr_seg_apolice;
                 IF  NOT vr_found_ant THEN
                   -- ERRO - Apólice não existe e recebeu um endosso
+                  -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
                   -- Gera LOG de Erro do Arquivo
                   gera_log(pr_cdcooper => 3 --pr_cdcooper
                           ,pr_cdprogra => vr_tab_arqtmp(idx)
                           ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                           ,pr_cdcritic => 0
-                          ,pr_dscritic => ' Linha '|| vr_indice2 || ': Recebimento de ENDOSSO para APÓLICE inexistente!' ||
+                          ,pr_dscritic => 'Linha '|| vr_nrlinha || ': Recebimento de ENDOSSO para APÓLICE inexistente!' ||
                                           ' Apólice ('   || vr_reg_arquivo.nrapolice  ||
                                           ') e Endosso ('  || vr_reg_arquivo.nrendosso  || ')'
                            );
@@ -6159,12 +6403,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               AND vr_reg_arquivo.nrapolice = rw_seg_base.nrapolice THEN
                   -- Apolice da Linha = Apolice da Base. Não pode importar
 
+                -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
                 -- Gera LOG de Erro do Arquivo
                 gera_log(pr_cdcooper => 3 --pr_cdcooper
                         ,pr_cdprogra => vr_tab_arqtmp(idx)
                         ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                         ,pr_cdcritic => 0
-                        ,pr_dscritic => ' Linha '|| vr_indice2 || ': Identificado envio de registro duplicado.' ||
+                        ,pr_dscritic => 'Linha '|| vr_nrlinha || ': Identificado envio de registro duplicado.' ||
                                         ' Proposta('     || vr_reg_arquivo.nrproposta ||
                                         '), Apólice ('   || vr_reg_arquivo.nrapolice  ||
                                         ') e Endosso ('  || vr_reg_arquivo.nrendosso  || ')'
@@ -6179,12 +6424,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 -- Se o endosso ativo da Apolice já for de cancelamento
                 IF  rw_seg_base.nrendosso   <> 0
                 AND rw_seg_base.tpendosso    IN (4,5) THEN
+                  -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
                   -- Gera LOG de Erro do Arquivo
                   gera_log(pr_cdcooper => 3 --pr_cdcooper
                           ,pr_cdprogra => vr_tab_arqtmp(idx)
                           ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                           ,pr_cdcritic => 0
-                          ,pr_dscritic => ' Linha '|| vr_indice2 || ': Apólice ' || vr_reg_arquivo.nrapolice || ' já recebeu endosso de cancelamento. '
+                          ,pr_dscritic => 'Linha '|| vr_nrlinha || ': Apólice ' || vr_reg_arquivo.nrapolice || ' já recebeu endosso de cancelamento. '
                            );
                   CONTINUE;
                 END IF;
@@ -6343,23 +6589,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                             ,pr_indierro => vr_indierro
                             ,pr_des_erro => vr_dscritic
                             ,pr_tab_erro => vr_tab_erro);
+                            
             IF NOT vr_flgsegok OR vr_dscritic IS NOT NULL THEN
-              -- Gera LOG de Erro do Arquivo
-              gera_log(pr_cdcooper => 3 --pr_cdcooper
-                      ,pr_cdprogra => vr_tab_arqtmp(idx)
-                      ,pr_indierro => vr_indierro -- 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                      ,pr_cdcritic => 0
-                      ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ' => ATENÇÃO: ' || vr_dscritic
-                       );
-              ROLLBACK;
-              CONTINUE; -- Passa para proxima linha
-            /*ELSE
-              -- Gera LOG
-              gera_log(pr_cdcooper => 3 --pr_cdcooper
-                      ,pr_cdprogra => vr_tab_arqtmp(idx)
-                      ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                      ,pr_cdcritic => 0
-                      ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ' => SUCESSO');  */
+              IF vr_indierro = 1 THEN          
+                -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
+                -- Gera LOG de Erro
+                pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                      pr_dscritic_in => vr_dscritic);                
+              ELSE
+                -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
+                -- Gera LOG de Erro do Arquivo
+                gera_log(pr_cdcooper => 3 --pr_cdcooper
+                        ,pr_cdprogra => vr_tab_arqtmp(idx)
+                        ,pr_indierro => vr_indierro -- 1 -- 1-Log Geral 2-Log Especifico Arquivo
+                        ,pr_cdcritic => 0
+                        ,pr_dscritic => 'Linha '|| vr_nrlinha || ' => ATENÇÃO: ' || vr_dscritic
+                        );
+                ROLLBACK;
+                CONTINUE; -- Passa para proxima linha            
+              END IF;            
             END IF;
           ------------------ FIM - PROCESSAMENTO PARA GRAVACAO DOS DADOS --------------------
         END IF; -- IF TRIM(vr_tab_linhas(vr_indice2)('NRENDOSSO_CANCELA').numero) IS NOT NULL
@@ -6382,12 +6630,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                        ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
+                               
+        -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
         -- Gera LOG
-        gera_log(pr_cdcooper => 3
-                ,pr_cdprogra => vr_cdprogra
-                ,pr_indierro => 1
-                ,pr_cdcritic => 0
-                ,pr_dscritic => ' =>   Envio de Email de Termino com Erro!');
+        pc_controla_log_batch(pr_dstiplog_in => 'E',
+                              pr_dscritic_in => 'Envio de Email de Termino com Erro!'); 
+                
       ELSE -- EMAIL de SUCESSO
         vr_dsdanexo := NULL;
         vr_mailbody := REPLACE(REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_S')
@@ -6395,12 +6643,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                        ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
+                               
+        -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
         -- Gera LOG
-        gera_log(pr_cdcooper => 3 --pr_cdcooper
-                ,pr_cdprogra => vr_cdprogra
-                ,pr_indierro => 1
-                ,pr_cdcritic => 0
-                ,pr_dscritic => ' =>   Envio de Email de Termino com Sucesso!');
+        pc_controla_log_batch(pr_dstiplog_in => 'E',
+                              pr_dscritic_in => 'Envio de Email de Termino com Sucesso!',
+                              pr_dsfixa_in   => 'ALERTA: ',
+                              pr_tpocorrencia_in => 4); 
 
       END IF;
 
@@ -6423,14 +6672,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         -- Gera critica
         vr_cdcritic := 0;
         vr_dscritic := 'Erro no envio do Email!' || '. Erro: '||vr_dscritic;
-        -- Gera LOG
-        gera_log(pr_cdcooper => 3
-                ,pr_cdprogra => vr_cdprogra
-                ,pr_indierro => 1
-                ,pr_cdcritic => 0
-                ,pr_dscritic => ' =>   ' || vr_dscritic);
+        
+        -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
+        -- Gera LOG de Erro
+        pc_controla_log_batch(pr_dstiplog_in => 'E',
+                              pr_dscritic_in => vr_dscritic);
       END IF;
-
+ 
       -- SE TEM LOG DE ERROS, ENVIAR PARA O CONNECT PARA SICREDI
       IF vr_dsdanexo IS NOT NULL THEN
 
@@ -6447,18 +6695,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                               ,pr_des_comando => vr_comando
                               ,pr_typ_saida   => vr_typ_saida
                               ,pr_des_saida   => vr_dscritic);
+                              
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
-          vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+          vr_dscritic:= 'Nao foi possivel executar comando unix.1. '||vr_comando;
+          -- Acerto do log - Chamado 667957 - 05/07/2017  
           --> Final da execução com ERRO
-          pc_controla_log_batch(pr_dstiplog => 'E',
-                                pr_dscritic => vr_dscritic);
-          -- Gera LOG
-          gera_log(pr_cdcooper => 3 --pr_cdcooper
-                  ,pr_cdprogra => vr_cdprogra
-                  ,pr_indierro => 1
-                  ,pr_cdcritic => 0
-                  ,pr_dscritic => ' =>   ' || vr_dscritic);
+          pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                pr_dscritic_in => vr_dscritic);
         END IF;
 
         -- Montar Comando para mover o arquivo LOG para o diretório connect/sicredi/ENVIA
@@ -6469,45 +6713,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                              ,pr_des_comando => vr_comando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
+                              
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
-          vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+          vr_dscritic:= 'Nao foi possivel executar comando unix.2. '||vr_comando;
+          -- Acerto do log - Chamado 667957 - 05/07/2017  
           --> Final da execução com ERRO
-          pc_controla_log_batch(pr_dstiplog => 'E',
-                                pr_dscritic => vr_dscritic);
-          -- Gera LOG
-          gera_log(pr_cdcooper => 3 --pr_cdcooper
-                  ,pr_cdprogra => vr_cdprogra
-                  ,pr_indierro => 1
-                  ,pr_cdcritic => 0
-                  ,pr_dscritic => ' =>   ' || vr_dscritic);
+          pc_controla_log_batch(pr_dstiplog_in => 'E',
+                                pr_dscritic_in => vr_dscritic);
         END IF;
       END IF;
-
-      -- Gera LOG
-      gera_log(pr_cdcooper => 3 --pr_cdcooper
-              ,pr_cdprogra => vr_cdprogra
-              ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
-              ,pr_cdcritic => 0
-              ,pr_dscritic => ' => Termino processamento do arquivo: ' || vr_tab_arqtmp(idx) );
+      
+      -- Acerto do log - Chamado 667957 - 05/07/2017     
+      pc_controla_log_batch(pr_dstiplog_in => 'E',
+                            pr_dscritic_in => 'Termino processamento do arquivo: ' || vr_tab_arqtmp(idx),
+                            pr_dsfixa_in   => 'ALERTA: ',
+                            pr_tpocorrencia_in => 4);
 
       --  Mover o arquivo após o processamento
       gene0001.pc_oscommand_shell(pr_des_comando => 'mv ' ||vr_dsdirrec||'/'||vr_tab_arqtmp(idx)||' '||vr_dsdirmov||'/'||vr_tab_arqtmp(idx));
 
 
     END LOOP; -- Fim da Lista de Arquivos da Pasta
+    
 
-
+    
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
-	
-	-- Gerar hora Fim no log
-    gera_log(pr_cdcooper => 3 --pr_cdcooper
-            ,pr_cdprogra => vr_cdprogra
-            ,pr_indierro => 1
-            ,pr_cdcritic => 0
-            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
-                                    ' - TERMINO DO PROCESSAMENTO.');
-
+        
     -- se for a ultima execução do dia,
     -- move arquivo de log de execução pra pasta /micros/cecred/segauto
     IF  vr_flultexc THEN
@@ -6526,71 +6758,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                            ,pr_des_comando => vr_comando
                            ,pr_typ_saida   => vr_typ_saida
                            ,pr_des_saida   => vr_dscritic);
+                              
+
+        
       -- Se ocorreu erro dar RAISE
       IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+        vr_dscritic:= 'Nao foi possivel executar comando unix.3. '||vr_comando;
         --> Final da execução com ERRO
-        pc_controla_log_batch(pr_dstiplog => 'E',
-                              pr_dscritic => vr_dscritic);
+        pc_controla_log_batch(pr_dstiplog_in => 'E',
+                              pr_dscritic_in => vr_dscritic);
       END IF;
     END IF;
 
     --> Log de final de execução
-    pc_controla_log_batch(pr_dstiplog => 'F');
+    pc_controla_log_batch(pr_dstiplog_in => 'F',
+                          pr_dsfixa_in => 'ALERTA: ',
+                          pr_tpocorrencia_in => 4);
 
     -- Finalizar a sessão com a efetivação dos dados
     COMMIT;
 
   EXCEPTION
     WHEN vr_exc_saida THEN -- SAIDA SEM ENVIO DE EMAIL
+
+      -- Efetuar rollback
+      ROLLBACK;
+      
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
         -- Buscar a descrição
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
-      -- Devolvemos código e critica encontradas das variaveis locais
-      --pr_cdcritic := NVL(vr_cdcritic,0);
-      --pr_dscritic := vr_dscritic;
 
       -- gera log do erro
-      gera_log(pr_cdcooper => 3 --pr_cdcooper
-              ,pr_cdprogra => vr_cdprogra
-              ,pr_indierro => 1
-              ,pr_cdcritic => 0
-              ,pr_dscritic => ' => TERMINO COM ERRO DO PROCESSAMENTO ' ||
-                              to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
-                              ' ' || vr_dscritic);
-
-      --> Final da execução com ERRO
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
-
-      -- Efetuar rollback
-      ROLLBACK;
-
+      pc_controla_log_batch(pr_dstiplog_in => 'E',
+                            pr_dscritic_in => vr_dscritic);
+                            
+      --> Log de final de execução
+      pc_controla_log_batch( pr_dstiplog_in => 'F',
+                             pr_tpocorrencia_in => 4);
 
 
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro não tratado
-      --pr_cdcritic := 0;
-      vr_dscritic := SQLERRM;
-      -- gera log do erro
-      gera_log(pr_cdcooper => 3 --pr_cdcooper
-              ,pr_cdprogra => vr_cdprogra
-              ,pr_indierro => 1
-              ,pr_cdcritic => 0
-              ,pr_dscritic => ' => TERMINO INESPERADO DO PROCESSAMENTO ' ||
-                              to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') || ' ' ||
-                              vr_dscritic);
-
-      --> Final da execução com ERRO
-      pc_controla_log_batch(pr_dstiplog => 'E',
-                            pr_dscritic => vr_dscritic);
 
       -- Efetuar rollback
       ROLLBACK;
-
-
+      
+      -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);         
+      -- Efetuar retorno do erro não tratado
+      vr_dscritic := SQLERRM;
+      --> Final da execução com ERRO
+      pc_controla_log_batch(pr_dstiplog_in => 'E',
+                            pr_dscritic_in => vr_dscritic);
+                            
+      pc_controla_log_batch(pr_dstiplog_in => 'F',
+                            pr_tpocorrencia_in => 4);
+                            
   END pc_importa_seg_auto_sicr;
 
   --Procedimento para Criar o Seguro
@@ -6611,12 +6835,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  :
   --  Sigla    : CRED
   --  Autor    : Guilherme/SUPERO
-  --  Data     : Maio/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Maio/2016.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para inserir dados de seguros, e seus filhos, Veiculos, Vida, etc.
+  --
+  -- Alterações:
+  --             03/07/2017 - Incluido rotina de setar modulo Oracle 
+  --                          ( Belli - Envolti - #667957)
+  -- 
 
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -6645,6 +6874,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       WHERE auto.idcontrato = p_idcontrato;
 
     BEGIN
+    
+      -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_insere_seguro');
 
       -- Verificar se veio dados de SEGUROS
       IF pr_seguros.count() > 0 THEN
@@ -6673,7 +6905,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 -- Mensagem de erro de retorno
                 vr_dscritic := 'Não encontrada Apólice a ser endossada.' ||
-                               ' [Apólice: ' || pr_seguros(vr_indice).nrapolice || ' - ' || pr_tipatu.tp_seguro || ']' ;
+                               ' [Apólice: ' || pr_seguros(vr_indice).nrapolice || 
+                               ' - ' || pr_tipatu.tp_seguro || ']' ;
 
                 -- Indicar erro do arquivo especifico
                 pr_indierro := 2;
@@ -6693,11 +6926,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                  WHERE ROWID = rw_contrato_endosso.rowid;
               EXCEPTION
                 WHEN OTHERS THEN
+                  -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                  CECRED.pc_internal_exception (pr_cdcooper => 3);   
                   vr_dscritic := 'Erro ao atualizar Endosso: ' || SQLERRM;
-
                   -- Indicar erro do arquivo especifico
                   pr_indierro := 1;
-
                   -- Exception
                   RAISE vr_exc_erro;
               END;
@@ -6766,6 +6999,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                  INTO vr_idcontrato(vr_indice);
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                CECRED.pc_internal_exception (pr_cdcooper => 3);   
                 -- se ocorreu algum erro durante a criação
                 vr_dscritic := 'Erro ao inserir Seguro: '||SQLERRM;
                 RAISE vr_exc_erro;
@@ -6805,11 +7040,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                  WHERE ROWID = rw_contrato_endosso.rowid;
               EXCEPTION
                 WHEN OTHERS THEN
+                  -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                  CECRED.pc_internal_exception (pr_cdcooper => 3);   
                   vr_dscritic := 'Erro ao atualizar Endosso: ' || SQLERRM;
-
                   -- Indicar erro do arquivo especifico
                   pr_indierro := 1;
-
                   -- Exception
                   RAISE vr_exc_erro;
               END;
@@ -6851,6 +7086,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                WHERE seg.idcontrato = vr_idcontrato(vr_indice);
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                CECRED.pc_internal_exception (pr_cdcooper => 3);   
                 -- se ocorreu algum erro durante a criação
                 vr_dscritic := 'Erro ao atualizar Seguro: '||SQLERRM;
                 RAISE vr_exc_erro;
@@ -6896,6 +7133,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                              ,pr_auto(vr_idx_auto).vlfranquia);
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao inserir Veículo do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -6915,6 +7154,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                      AND auto.idveiculo  = pr_auto(vr_idx_auto).idveiculo;
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao atualizar Veículo do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -6926,6 +7167,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                      AND auto.idveiculo  = pr_auto(vr_idx_auto).idveiculo;
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao atualizar Veículo do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -6948,6 +7191,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao inserir Beneficiário do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -6960,6 +7205,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao atualizar Beneficiário do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -6981,6 +7228,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao inserir Bem ao Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -6993,6 +7242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao atualizar Bem do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -7013,6 +7264,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao inserir Prestamista no Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -7025,6 +7278,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                 EXCEPTION
                   WHEN OTHERS THEN
+                    -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+                    CECRED.pc_internal_exception (pr_cdcooper => 3);   
                     -- se ocorreu algum erro durante a criação
                     vr_dscritic := 'Erro ao atualizar Prestamista do Seguro: '||SQLERRM;
                     RAISE vr_exc_erro;
@@ -7051,6 +7306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_des_erro := vr_dscritic;
 
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
+        CECRED.pc_internal_exception (pr_cdcooper => 3);   
         pr_flgsegur := FALSE;
         pr_des_erro := 'Erro na rotina pc_insere_seguro: '||SQLERRM;
     END;
