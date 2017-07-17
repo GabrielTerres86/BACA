@@ -1533,17 +1533,18 @@ END. /* Fim do FOR EACH crapcop */
 
 
 
-/* Nao sera mais usado - Projeto 367
-RUN imprime_relat_analitico.*/
+/* Nao sera mais gerado o relatório crrl547, porém continuará chamando esta procedure 
+para popular a tabela temporaria - Projeto 367 */
+RUN imprime_relat_analitico.
 RUN imprime_relat_sintetico.
 
 RUN fontes/fimprg.p.
 
-/*........................................................................... 
+/*........................................................................... */
 
 PROCEDURE imprime_relat_analitico:
 /* Quebra por COOPER */
-
+/* 
     ASSIGN aux_nmarqimp = "rl/crrl547.lst".
 
     OUTPUT STREAM str_2 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 65.
@@ -1552,12 +1553,12 @@ PROCEDURE imprime_relat_analitico:
     
     /* FRAME com o Titulo da pagina */
     VIEW STREAM str_2  FRAME f_titulo_analitico.
-
+*/
     /** PROCESSANDO RELATORIO **/
     FOR EACH bw-relatorio WHERE bw-relatorio.cdcooper <> 0 NO-LOCK
                        BREAK BY bw-relatorio.cdtipreg
                              BY bw-relatorio.cdcooper:
-
+/*
         FIND FIRST crabcop WHERE crabcop.cdcooper = bw-relatorio.cdcooper
                                  NO-LOCK NO-ERROR.
         
@@ -1624,7 +1625,7 @@ PROCEDURE imprime_relat_analitico:
 
                  END.
         END CASE.
-
+*/
         /* Acumula valores para esse tipo na cooperativa 0 - Acumular TOTAIS */
         RUN cria_tt_relatorio (INPUT 0,
                                INPUT bw-relatorio.cdtipreg,
@@ -1635,7 +1636,7 @@ PROCEDURE imprime_relat_analitico:
 
         RUN soma_tt_relatorio.
 
-
+/*
         IF   LAST-OF(bw-relatorio.cdtipreg) THEN 
              DO:
                  /* cdcooper = 0 eh o acumulador para campo TOTAL */
@@ -1724,8 +1725,9 @@ PROCEDURE imprime_relat_analitico:
                                    WITH FRAME f_total_analitico_3.
                  END CASE.
              END. /* END do LAST-OF */
+ */
     END. /* Fim FOR EACH */
-    
+ /*   
     OUTPUT STREAM str_2 CLOSE.
 
     ASSIGN glb_nrcopias = 1
@@ -1749,10 +1751,10 @@ PROCEDURE imprime_relat_analitico:
                                       INPUT TRUE).
                            
     DELETE PROCEDURE h-b1wgen0011.
-                
+*/                
 END PROCEDURE.
 
-........................................................................... */
+/*........................................................................... */
 
 PROCEDURE imprime_relat_sintetico:
 /* Consolidado por Tipo Movimento */
@@ -1903,6 +1905,7 @@ PROCEDURE imprime_relat_sintetico:
                    rel_tot_abbc
                    rel_totcecre
         WITH FRAME f_relat_sintetico_totais.
+
 /*** PROJETO 367 ***
     /* Inclusao das tarifas FAC/ROC */
 
@@ -2144,7 +2147,8 @@ PROCEDURE imprime_relat_sintetico:
     DISPLAY STREAM str_1 tot_vlgerfac
                          tot_vlgerroc
     WITH FRAME f_total_tarifa.             
-*/    
+****/ 
+   
     OUTPUT STREAM str_1 CLOSE.
 
     ASSIGN glb_nrcopias = 1
