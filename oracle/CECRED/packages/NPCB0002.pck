@@ -88,14 +88,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema  : Rotinas referentes a Nova Plataforma de Cobrança de Boletos
       Sigla    : NPCB
       Autor    : Renato Darosci - Supero
-      Data     : Dezembro/2016.                   Ultima atualizacao: --/--/----
+      Data     : Dezembro/2016.                   Ultima atualizacao: 17/07/2017
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas de transações da Nova Plataforma de Cobrança de Boletos
 
-      Alteracoes:
+      Alteracoes: 17/07/2017 - Ajustes na pc_consultar_valor_titulo para retornar o nome do beneficiario
+                               sem caracteres especiais que geram erro no xml(Odirlei-AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -379,7 +380,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       pr_vlrtitulo := nvl(vr_vlrtitulo,0);
       pr_nrdocbenf := rw_crapcob.nrdocbenf;
       pr_tppesbenf := rw_crapcob.tppesbenf;
-      pr_dsbenefic := rw_crapcob.dsbenefic;           
+      pr_dsbenefic := gene0007.fn_caract_acento(pr_texto => rw_crapcob.dsbenefic, 
+                                                pr_insubsti => 1 );           
           
     ELSE  -- titulo de fora, consultar CIP      
       
@@ -481,7 +483,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
         -- Retornar os valores consultados na CIP
         pr_nrdocbenf   := vr_nrdocbenf;
         pr_tppesbenf   := vr_tppesbenf;
-        pr_dsbenefic   := vr_dsbenefic;
+        pr_dsbenefic   := gene0007.fn_caract_acento(pr_texto => vr_dsbenefic, 
+                                                    pr_insubsti => 1  );
         pr_vlrtitulo   := vr_vlrtitulo;
         pr_vlrjuros    := vr_vlrjuros;
         pr_vlrmulta    := vr_vlrmulta;
