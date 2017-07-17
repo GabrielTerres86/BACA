@@ -328,6 +328,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                22/03/2017 - Alteração SILOC - Gerar registro na gncpdvc após inserir 
                             o registro na tabela tbcobran_devolucao (Renato Darosci)
                             
+               07/04/2017 - #642531 Tratamento do tail para pegar/validar os dados da última linha
+                            do arquivo corretamente (Carlos)
+
                12/04/2017 - Cooperado importou o boleto corretamente e imprimiu atraves do software proprio
                             porém na impressão ele utilizou o numero da conta sem o digito verificador e todos 
                             os pagamentos estao sendo rejeitados (Douglas - Chamado 650122)
@@ -2383,12 +2386,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              IF vr_inreproc THEN
                -- Nome arquivo impressao
                vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
-                             gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || 
+                             gene0002.fn_mask(nvl(vr_tab_rel618(vr_index_rel618).cddbanco,0),'999') || 
                            '_REP_'||GENE0002.fn_busca_time||'.lst';
              ELSE   
              --Nome arquivo Impressao
              vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
-                           gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || '.lst';
+                           gene0002.fn_mask(nvl(vr_tab_rel618(vr_index_rel618).cddbanco,0),'999') || '.lst';
              END IF;
 
              --Descricao da Origem
@@ -6541,7 +6544,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              RAISE vr_exc_saida;
            END IF;
            --Verificar linha controle
-           IF SUBSTR(vr_setlinha,01,10) <> '9999999999' THEN
+           IF SUBSTR(vr_setlinha,01,10) <> '9999999999' AND
+              SUBSTR(vr_setlinha,162,10) <> '9999999999' THEN
              --Codigo erro
              vr_cdcritic:= 258;
              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
