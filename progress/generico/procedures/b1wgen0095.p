@@ -2,7 +2,7 @@
     
     Programa: b1wgen0095.p
     Autor   : André - DB1
-    Data    : Junho/2011                         Ultima Atualizacao: 02/12/2016
+    Data    : Junho/2011                         Ultima Atualizacao: 24/01/2017
 
     Dados referentes ao programa:
 
@@ -73,6 +73,9 @@
 
                02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
+			   24/01/2017 - Ajustes para verificar o campo cdagebcb na crapcop
+			                para liberar o campo agencia na tela mantal
+							(Tiago/Elton SD549323)
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -879,9 +882,15 @@ PROCEDURE valida-agencia:
 
         IF  NOT AVAIL crapcop THEN
             DO:
+
+			    FIND crapcop WHERE crapcop.cdagebcb = par_cdagectl NO-LOCK NO-ERROR.
+
+				IF NOT AVAIL crapcop THEN
+				   DO:
                 ASSIGN aux_cdcritic = 134 
                        par_nmdcampo = "cdagechq".
                 LEAVE Verifica.
+            END.       
             END.       
         
         LEAVE Verifica.
@@ -4244,7 +4253,7 @@ PROCEDURE trata-custodia-desconto:
 
     IF  par_nrdconta <> par_nrctachq   THEN
         DO:
-
+         
             /*verifica se é uma conta cheque foi migrada*/
             FIND FIRST craptco 
             WHERE craptco.cdcooper = par_cdcooper 
