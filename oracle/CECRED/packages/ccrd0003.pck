@@ -4578,7 +4578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
      Sistema : Cartoes de Credito - Cooperativa de Credito
      Sigla   : CRRD
      Autor   : Lucas Lunelli
-     Data    : Maio/14.                    Ultima atualizacao: 02/05/2016
+     Data    : Maio/14.                    Ultima atualizacao: 14/07/2017
 
      Dados referentes ao programa:
 
@@ -4669,7 +4669,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              que causou os problemas relatados nos chamados 333541 e 333541 ( Renato - Supero )
 
                 02/05/2016 - Adicionado validacao na solicitacao de UPGRADE/DOWNGRADE para nao gerar
-                             solicitacao de cartao adicional nessa situacao (Douglas - Chamado 441407)             
+                             solicitacao de cartao adicional nessa situacao (Douglas - Chamado 441407)
+
+                14/07/2017 - Ajuste na validação de alteração do PA, pois da forma que estava o cooperado
+                             teve alteração nos dados de emprestimo, com a inclusão de um veículo PAMPA
+                             e o programa entendeu que houve troca de PA, enviando um solicitação de cartão
+                             (Douglas - Chamado 708661)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -6223,8 +6228,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
                  upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         OR
               -- procura por alteração de PAC
-                 upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                 upper(rw_crapalt.dsaltera) LIKE '%PA %'              OR
+              -- a alteracao de PA deve ser a primeira, 
+              -- ou separado por virgula
+                 upper(rw_crapalt.dsaltera) LIKE 'PAC %'              OR
+                 upper(rw_crapalt.dsaltera) LIKE 'PA %'               OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PAC %'            OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PA %'             OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PAC %'           OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PA %'            OR
                  -- procura por alteração de telefone
                  upper(rw_crapalt.dsaltera) LIKE '%TELEF.%'
                  THEN
@@ -6271,8 +6282,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   vr_flalttfc := FALSE;
 
                   -- Verificar se houve alteração no grupo de afinidade - por PA
-                  IF upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                     upper(rw_crapalt.dsaltera) LIKE '%PA %'              THEN
+                  -- a alteracao de PA deve ser a primeira, ou separado por virgula
+                  IF upper(rw_crapalt.dsaltera) LIKE 'PAC %'             OR
+                     upper(rw_crapalt.dsaltera) LIKE 'PA %'              OR
+                     upper(rw_crapalt.dsaltera) LIKE '%,PAC %'           OR
+                     upper(rw_crapalt.dsaltera) LIKE '%,PA %'            OR
+                     upper(rw_crapalt.dsaltera) LIKE '%, PAC %'          OR
+                     upper(rw_crapalt.dsaltera) LIKE '%, PA %'           THEN
                     vr_flaltafn := TRUE;
                   END IF;
 
