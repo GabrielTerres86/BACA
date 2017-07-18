@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 04/07/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 14/07/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -200,6 +200,13 @@
                             para gerar as mensagens de erro no arquivo de log 
                             crps531_DDMMYYYY.log (Douglas - Chamado 524133)
                
+               07/07/2017 - Ajustar a gravacao do XML da mensagem de TED, para ser feito apenas
+                            quando o retorno da verifica_processo for OK (Douglas - Chamado 524133)
+               
+               14/07/2017 - Ajustar a procedure deleta_objetos para validar se o handle do objeto eh 
+                            valido para que seja excluido (Douglas - Chamado 524133)
+
+
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -1802,13 +1809,28 @@ END PROCEDURE.
 
 PROCEDURE deleta_objetos.
   
+    IF  VALID-HANDLE (hTextTag2)  THEN
     DELETE OBJECT hTextTag2.  
+
+    IF  VALID-HANDLE (hTextTag)  THEN        
     DELETE OBJECT hTextTag.  
+    
+    IF  VALID-HANDLE (hNameTag)  THEN
     DELETE OBJECT hNameTag.
+    
+    IF  VALID-HANDLE (hSubNode2)  THEN
     DELETE OBJECT hSubNode2.
+    
+    IF  VALID-HANDLE (hSubNode)  THEN
     DELETE OBJECT hSubNode.
+    
+    IF  VALID-HANDLE (hNode)  THEN
     DELETE OBJECT hNode.
+    
+    IF  VALID-HANDLE (hRoot)  THEN
     DELETE OBJECT hRoot.
+    
+    IF  VALID-HANDLE (hDoc)  THEN
     DELETE OBJECT hDoc.
 
 END PROCEDURE.
@@ -1927,6 +1949,11 @@ PROCEDURE importa_xml.
             
    END. /** Fim do DO ... TO **/    
                    
+
+    /* Verificar se o processo já foi finalizado  */ 
+    RUN verifica_processo.
+    IF   RETURN-VALUE = "OK"   THEN
+    DO:
    
     /* Verificar as mensagens que serao desprezadas na gravacao da nova estrutura */
     IF NOT (CAN-DO(aux_msgspb_nao_copiar,aux_CodMsg)) THEN  
@@ -2009,6 +2036,7 @@ PROCEDURE importa_xml.
                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
             
             END.
+    END.
     END.
    
    /* remove arquivo temporario descriptografado */ 
@@ -5090,7 +5118,7 @@ PROCEDURE processa_conta_transferida:
                      /* Mover o arquivo de XML */ 
                      RUN mover_arquivo_xml(INPUT aux_nmarqxml,
                                            INPUT b-crapcop.dsdircop).
-                     
+
                      RETURN "NOK".
                  END.
 
@@ -5358,7 +5386,7 @@ PROCEDURE salva_arquivo:
     /* Mover o arquivo de XML */ 
     RUN mover_arquivo_xml(INPUT aux_nmarqxml,
                           INPUT aux_dsdircop).
-    
+
 END PROCEDURE.
 
 /* Verificar se o processo esta ainda executando */
@@ -5373,7 +5401,7 @@ PROCEDURE verifica_processo:
                                crapcop.cdcooper.
     
     FIND crabdat WHERE crabdat.cdcooper = aux_cdcooper NO-LOCK NO-ERROR.
-        
+
     IF   TODAY > crabdat.dtmvtolt   THEN    
          DO:
              RUN deleta_objetos.
@@ -6003,7 +6031,7 @@ PROCEDURE grava_mensagem_ted.
                             WHEN pc_grava_mensagem_ted.pr_cdcritic <> ?
            aux_dserro = pc_grava_mensagem_ted.pr_dscritic
                             WHEN pc_grava_mensagem_ted.pr_dscritic <> ?.
-   
+
     IF aux_dserro <> "" THEN
     DO:
 
@@ -6042,7 +6070,7 @@ PROCEDURE grava_mensagem_ted.
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     END.
    
-   RETURN "OK".
+    RETURN "OK".
    
 END PROCEDURE.
 
@@ -6117,7 +6145,7 @@ PROCEDURE grava_ted_rejeitada.
                           WHEN pc_grava_msg_ted_rejeita.pr_cdcritic <> ?
            aux_dserro = pc_grava_msg_ted_rejeita.pr_dscritic
                           WHEN pc_grava_msg_ted_rejeita.pr_dscritic <> ?.
-   
+
     IF aux_dserro <> "" THEN
     DO:
 
