@@ -8062,6 +8062,7 @@ PROCEDURE proc_operacao181:
                                                        INPUT aux_cdopcaodt,
                                                        INPUT aux_dtrecarga,
                                                        INPUT aux_qtmesagd,
+													   INPUT aux_flmobile,
                                                       OUTPUT aux_dsmsgerr,
                                                       OUTPUT TABLE xml_operacao).
 
