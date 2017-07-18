@@ -10173,14 +10173,15 @@ PROCEDURE efetua_recarga:
               INPUT aux_nrterfin,        /* Nr. terminal financeiro */
               INPUT aux_nrcartao,        /* Nr. cartao */
               INPUT aux_nrsequni,        /* Nr. sequencial unico */
-						  INPUT 4,             /* Id origem (4-TAA)*/
+		      INPUT 4,             /* Id origem (4-TAA)*/
               INPUT 0,             /* Indicador de aprovacao de transacao pendente */
-						  INPUT 0,             /* Indicador de operacao (transacao pendente) */
+			  INPUT 0,             /* Indicador de operacao (transacao pendente) */
+			  INPUT 0,             /* Indicador se origem é mobile (Não) */
               OUTPUT 0,            /* Indicador de assinatura conjunta */
               OUTPUT "",           /* Protocolo */
               OUTPUT "",           /* NSU Operadora */
-						  OUTPUT 0,            /* Código da crítica.*/
-						  OUTPUT "").          /* Desc. da crítica */
+			  OUTPUT 0,            /* Código da crítica.*/
+			  OUTPUT "").          /* Desc. da crítica */
 	
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_manter_recarga
