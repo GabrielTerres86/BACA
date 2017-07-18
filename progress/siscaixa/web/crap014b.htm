@@ -54,24 +54,35 @@ function verificaValor() {
     document.getElementById('v_nmbenefi').style.display   = "none";
     document.getElementById('tr_nmbenefi').style.display  = "none";
     
-    if (document.forms[0].v_cdctrlcs.value != ""){
-
+    // Se possuir informação do beneficiario, exibe os campos 
+    if (document.forms[0].v_nmbenefi.value != ""){ 
         document.getElementById('v_cpfcedente').style.display = "none";
         document.getElementById('c_dsdocbnf').style.display   = "block";
         document.getElementById('v_nmbenefi').style.display   = "block";
         document.getElementById('tr_nmbenefi').style.display  = "block";        
         
+    }
+    
+    if (document.forms[0].v_cdctrlcs.value != ""){
+    
         // Se nao foi informado a conta deve informar o CPF
-        if ( document.forms[0].v_conta.value == ""){
+        /* Campo não será exibido -  não é necessario informar no NPC
+        if ( document.forms[0].v_conta.value == "" || 
+             document.forms[0].v_conta.value != "0"){
         document.forms[0].v_cpfsacado.disabled = false;
         document.forms[0].v_cpfsacado.focus();
-        }
+        }*/
     if (valor >= 250000) {
+            document.forms[0].v_cpfcedente.disabled = false;
+            document.forms[0].v_cpfsacado.disabled = false;
             document.forms[0].v_cod.disabled = false;
             document.forms[0].v_senha.disabled = false;
+            document.forms[0].v_cpfsacado.focus();            
+            
         }
         
     }
+    
     else if (valor >= 250000) {
         document.forms[0].v_cpfcedente.disabled = false;
         document.forms[0].v_cpfsacado.disabled = false;

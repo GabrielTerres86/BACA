@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael
-    Data    : janeiro/2012.                     Ultima atualizacao: 12/07/2017
+    Data    : janeiro/2012.                     Ultima atualizacao: 14/07/2017
  
     Dados referentes ao programa:
  
@@ -91,6 +91,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                              
                 12/07/2017 - Retirado cobranca de tarifa após a rejeição do 
                              boleto DDA na CIP (Rafael)
+                             
+                14/07/2017 - Retirado verificação do inproces da crapdat. Dessa forma
+                             o programa pode ser executado todos os dias. (Rafael)
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps618';     -- Nome do programa
@@ -608,13 +611,7 @@ BEGIN
     END IF;
     -- Fechar 
     CLOSE BTCH0001.cr_crapdat;
-    
-    --> se ainda estiver rodando o processo batch
-    -- nao deve rodar o programa
-    IF rw_crapdat.inproces <> 1 THEN
-      continue;
-    END IF;
-    
+        
     -- Log de início da execução
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
                           pr_dstiplog  => 'I');

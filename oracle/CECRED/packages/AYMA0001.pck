@@ -6,12 +6,17 @@ CREATE OR REPLACE PACKAGE CECRED.AYMA0001 AS
     Sistema  : Rotinas genéricas para acesso ao Aymaru
     Sigla    : AYMA
     Autor    : Ricardo Linhares
-    Data     : Outubro/2016.                   Ultima atualizacao: 
+    Data     : Outubro/2016.                   Ultima atualizacao: 13/07/2017
   
    Dados referentes ao programa:
   
    Frequencia: -----
    Objetivo  : Fornecer funcionalidades para acessar o Aymaru
+
+   
+   Alteracoes: 13/07/2017 - Adicionado tratamento para receber HTTP Status Code
+                            mesmo que seja retornado erro (Ricardo Linhares).
+
                 
   ---------------------------------------------------------------------------*/
 
@@ -43,12 +48,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
     Sistema  : Rotinas genéricas para acesso ao Aymaru
     Sigla    : AYMA
     Autor    : Ricardo Linhares
-    Data     : Outubro/2016.                   Ultima atualizacao: 
+    Data     : Outubro/2016.                   Ultima atualizacao: 13/07/2017
   
    Dados referentes ao programa:
   
-   Frequencia: -----
+   Frequencia: Sempre que for chamado
    Objetivo  : Fornecer funcionalidades para acessar o Aymaru
+   
+   
+   Alteracoes: 13/07/2017 - Adicionado tratamento para receber HTTP Status Code
+                            mesmo que seja retornado erro (Ricardo Linhares).
+
                 
   ---------------------------------------------------------------------------*/
 
@@ -146,12 +156,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
     --  Sistema  : Rotinas do Aymaru
     --  Sigla    : AYMA0001
     --  Autor    : Ricardo Linhares
-    --  Data     : Outubro/2016.                   Ultima atualizacao: --/--/----
+    --  Data     : Outubro/2016.                   Ultima atualizacao: 13/07/2017
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Efetua uma requisição Rest para o Aymaru.
+	--
+	--   Alteracoes: 13/07/2017 - Atribuido Timeout de 110 segundos (Ricardo). 
 
     -- .............................................................................                                        
     
@@ -274,19 +286,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AYMA0001 AS
       vr_requisicao.cabecalho := vr_cabecalho;
       vr_requisicao.parametros := pr_parametros;
       vr_requisicao.conteudo := vr_conteudo;
+	  vr_requisicao.timeout := 110;
     
       -- chamada para consumidor REST
       WRES0001.pc_consumir_rest(pr_requisicao => vr_requisicao
-                      ,pr_resposta   => vr_resposta
-                      ,pr_dscritic   => pr_dscritic
-                      ,pr_cdcritic   => pr_cdcritic);
-                      
-      IF(pr_cdcritic > 0 OR TRIM(pr_dscritic) IS NOT NULL) THEN
-        RAISE vr_exc_erro;
-      END IF;                      
-                      
+                               ,pr_resposta   => vr_resposta
+                               ,pr_dscritic   => pr_dscritic
+                               ,pr_cdcritic   => pr_cdcritic);
+                                
       pr_resposta.status_code := vr_resposta.status_code;
       pr_resposta.status_message := vr_resposta.status_message;
+      
+      -- Verifica se houve erro
+      IF(pr_cdcritic > 0 OR TRIM(pr_dscritic) IS NOT NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;                            
 
       -- Verifica se há conteúdo na resposta      
       IF(length(vr_resposta.conteudo) > 0) THEN
