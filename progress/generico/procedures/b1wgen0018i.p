@@ -94,7 +94,7 @@ FORM rel_dtmvtolt            AT   1 LABEL "REFERENCIA"  FORMAT "99/99/9999"
      tt-relat-lotes.dsdsaldo AT  55 NO-LABEL            FORMAT "x(25)"
      SKIP(1)
      "  CHQS COOPERATIVA   CHEQUES OUTROS BANCOS" AT  46
-     "          ------ TOTAL -----"   
+     "------ TOTAL ------"   
      SKIP
      "DIGITADO EM PA     LOTE   CONTA/DV   BORDERO QTD.         VALOR" 
      "    QTD.         VALOR "
@@ -132,7 +132,7 @@ FORM crawlot.cdagenci  LABEL "PA"        FORMAT "zz9"
      crawlot.nrdconta  LABEL "CONTA/DV"  
      crawlot.qtchqcop  LABEL "QTD"        FORMAT "zzz9"                
      crawlot.vlchqcop  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"
-     crawlot.qtcheque  LABEL "QTD"        FORMAT "zzz9"                
+     crawlot.qtcheque  LABEL "QTD"        FORMAT "zzzzz9"                
      crawlot.vlcheque  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"
      crawlot.qtchqtot  LABEL "QTD"        FORMAT "zzz9"   
      crawlot.vlchqtot  LABEL "VALOR"      FORMAT "zzzz,zzz,zz9.99"
@@ -145,10 +145,10 @@ FORM SKIP(1)
      pac_qtdlotes        AT   11               NO-LABEL
      pac_qtchqcop        AT   24               NO-LABEL
      pac_vlchqcop        AT   30               NO-LABEL
-     pac_qtcheque                              NO-LABEL
-     pac_vlcheque        AT   51               NO-LABEL
-     pac_qtchqtot                              NO-LABEL
-     pac_vlchqtot        AT   72               NO-LABEL
+     pac_qtcheque        AT   47               NO-LABEL
+     pac_vlcheque        AT   53               NO-LABEL
+     pac_qtchqtot        AT   68               NO-LABEL
+     pac_vlchqtot        AT   74               NO-LABEL
      SKIP
      pac_dsdtraco        AT    1               NO-LABEL 
      WITH NO-LABELS NO-BOX  WIDTH 132 FRAME f_pac_c.
