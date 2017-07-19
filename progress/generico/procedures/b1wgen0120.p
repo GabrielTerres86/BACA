@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0120.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                     Ultima atualizacao: 10/01/2017
+    Data    : Outubro/2011                     Ultima atualizacao: 13/04/2017
 
     Objetivo  : Tranformacao BO tela BCAIXA
 
@@ -107,6 +107,11 @@
                              
                 10/01/2016 - #587076 aumento de formats para o boletim de caixa (Carlos)
 
+				13/04/2017 - Inserido o campo nrsequen no create da tt-estorno
+				             #625135 (Tiago/Elton)
+				
+                26/06/2017 - Incluido parametro de etapa com valor 0 para procedure Busca_Dados e valor 1 para procedure imprime_caixa_cofre
+            				 Chamado 660322 - (Belli Envolti)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -709,6 +714,7 @@ PROCEDURE Busca_Dados:
                                              INPUT par_cdoperad,
                                              INPUT par_cdprogra,
                                              INPUT par_dtmvtolt,
+                                             INPUT "0", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                                             OUTPUT aux_saldot,
                                             OUTPUT aux_nmarqimp,
                                             OUTPUT TABLE tt-erro,
@@ -726,6 +732,8 @@ PROCEDURE Busca_Dados:
                                              INPUT par_cdagencx,
                                              INPUT par_nrdcaixa,
                                              INPUT par_dtmvtolt,
+                                             INPUT par_cdprogra, /* Chamado 660322 23/06/2017 */
+                                             INPUT "0",          /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                                             OUTPUT aux_saldot,
                                             OUTPUT aux_nmarqimp,
                                             OUTPUT TABLE tt-erro,
@@ -745,6 +753,7 @@ PROCEDURE Busca_Dados:
                                              INPUT par_cdoperad,
                                              INPUT par_cdprogra,
                                              INPUT par_dtmvtolt,
+                                             INPUT "0", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                                             OUTPUT aux_saldot,
                                             OUTPUT aux_nmarqimp,
                                             OUTPUT TABLE tt-erro,
@@ -2248,7 +2257,8 @@ PROCEDURE Gera_Boletim:
             CREATE tt-estorno.
             ASSIGN tt-estorno.cdagenci = crapbcx.cdagenci    
                    tt-estorno.nrdcaixa = crapbcx.nrdcaixa     
-                   tt-estorno.nrseqaut = crapaut.nrseqaut.
+                   tt-estorno.nrseqaut = crapaut.nrseqaut
+				   tt-estorno.nrsequen = crapaut.nrsequen.
 
             IF  LAST(crapaut.nrsequen) THEN
                 DO:
@@ -5896,6 +5906,7 @@ PROCEDURE imprime_caixa_cofre:
                              INPUT par_cdoperad,
                              INPUT par_cdprogra,
                              INPUT par_dtmvtolt,
+                             INPUT "1", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                             OUTPUT aux_vlrsaldo,
                             OUTPUT aux_nmendter,
                             OUTPUT TABLE tt-erro,
@@ -5912,6 +5923,8 @@ PROCEDURE imprime_caixa_cofre:
                              INPUT par_cdagenci,
                              INPUT 0, /* nrdcaixa */
                              INPUT par_dtmvtolt,
+                             INPUT par_cdprogra, /* Chamado 660322 23/06/2017 */
+                             INPUT "1",          /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                             OUTPUT aux_vlrsaldo,
                             OUTPUT aux_nmendter,
                             OUTPUT TABLE tt-erro,
@@ -5931,6 +5944,7 @@ PROCEDURE imprime_caixa_cofre:
                              INPUT par_cdoperad,
                              INPUT par_cdprogra,
                              INPUT par_dtmvtolt,
+                             INPUT "1", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                             OUTPUT aux_vlrsaldo,
                             OUTPUT aux_nmendter,
                             OUTPUT TABLE tt-erro,
@@ -5999,6 +6013,7 @@ PROCEDURE SaldoCaixas:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_inetapa  AS CHAR                           NO-UNDO. /* Indica a etapa do processo Chamado 660322 26/06/2017 */
     DEF OUTPUT PARAM par_saldotot AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -6037,10 +6052,11 @@ PROCEDURE SaldoCaixas:
                         INPUT par_cdoperad,
                         INPUT par_cdprogra,
                         INPUT par_dtmvtolt,
+                        INPUT par_inetapa, /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                        OUTPUT "", /* nmarqimp */
                        OUTPUT 0,  /* saldotot */
                        OUTPUT "", /* critica */
-                       OUTPUT ?). /* tabela com registros */
+                       OUTPUT ?). /* tabela com registros */				   
 
     CLOSE STORED-PROC pc_saldo_caixas 
        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -6056,7 +6072,7 @@ PROCEDURE SaldoCaixas:
                              WHEN pc_saldo_caixas.pr_nmarqimp <> ?
            par_saldotot = pc_saldo_caixas.pr_saldotot
                              WHEN pc_saldo_caixas.pr_saldotot <> ?.
-    
+
     IF  aux_dscritic <> "" THEN
         DO:
             CREATE tt-erro.
@@ -6129,6 +6145,8 @@ PROCEDURE SaldoCofre:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO. /* Chamado 660322 26/06/2017 */
+    DEF  INPUT PARAM par_inetapa  AS CHAR                           NO-UNDO. /* Chamado 660322 26/06/2017 */
     DEF OUTPUT PARAM par_saldotot AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -6164,6 +6182,8 @@ PROCEDURE SaldoCofre:
                         INPUT par_cdagenci,
                         INPUT par_nrdcaixa,
                         INPUT par_dtmvtolt,
+                        INPUT par_cdprogra, /* Chamado 660322 26/06/2017 */
+                        INPUT par_inetapa,  /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                        OUTPUT "", /* nmarqimp */
                        OUTPUT 0,  /* saldotot */
                        OUTPUT "", /* critica */
@@ -6253,6 +6273,7 @@ PROCEDURE SaldoTotal:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_inetapa  AS CHAR                           NO-UNDO. /* Indica a etapa do processo Chamado 660322 26/06/2017 */
     DEF OUTPUT PARAM par_saldotot AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -6291,6 +6312,7 @@ PROCEDURE SaldoTotal:
                         INPUT par_cdoperad,
                         INPUT par_cdprogra,
                         INPUT par_dtmvtolt,
+                        INPUT par_inetapa, /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                        OUTPUT "", /* nmarqimp */
                        OUTPUT 0,  /* saldotot */
                        OUTPUT "", /* critica */
