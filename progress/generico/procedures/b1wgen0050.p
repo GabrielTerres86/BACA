@@ -43,7 +43,7 @@
 
     Programa: b1wgen0050.p
     Autor   : David
-    Data    : Novembro/2009                   Ultima Atualizacao: 27/09/2016
+    Data    : Novembro/2009                   Ultima Atualizacao: 19/07/2017
            
     Dados referentes ao programa:
                 
@@ -143,7 +143,8 @@
                             Tambem chamada a rotina convertida da obtem-log-cecred
                             (Jonata-RKAM)
                              
-                
+                19/07/2017 - Alterado impressao-log-pdf e impressao-log-csv para quando
+                             chamar obtem-log-cecred nao limitar os resultados a 9999 (Tiago #708595)
 ..............................................................................*/
 
 
@@ -2436,7 +2437,7 @@ PROCEDURE impressao-log-pdf:
                           INPUT par_nrdconta,
                           INPUT 0,
                           INPUT 1,
-                          INPUT 9999,
+                          INPUT 0, /*Qtd registros passar 0 pra trazer 9999999*/
                           INPUT par_inestcri,
                           INPUT (IF par_flgidlog = 2 THEN
 									0 /*Somente ted CECRED*/
@@ -2567,7 +2568,7 @@ PROCEDURE impressao-log-csv:
                           INPUT par_nrdconta,
                           INPUT 0,
                           INPUT 1,
-                          INPUT 9999,
+                          INPUT 0, /*Qtd registros passar 0 pra trazer 9999999*/
                           INPUT par_inestcri,
                           INPUT (IF par_flgidlog = 2 THEN
 									0 /*Somente ted CECRED*/
