@@ -471,7 +471,7 @@ function reabilitaForm() {
         </tr>
         <script language="SpeedScript">
             END.
-        FOR EACH tt-lancamentos NO-LOCK:
+        FOR EACH tt-lancamentos WHERE tt-lancamentos.tpdocmto = 6 NO-LOCK:
             ASSIGN v_foco_conta = FALSE.
         </script>
         <tr>

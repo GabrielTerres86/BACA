@@ -718,11 +718,12 @@ PROCEDURE process-web-request :
                     
                         IF  NOT AVAIL tt-cheques  THEN
                             CREATE tt-cheques.
-                            
-                        ASSIGN tt-cheques.nrdocmto = 3
-                               tt-cheques.dtlibera = crapmdw.dtlibcom
-                               tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                               v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
+                        
+                        IF  crapmdw.cdhistor = 2433  THEN
+                            ASSIGN tt-cheques.nrdocmto = 6
+                                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                                   v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
                         
                         FIND CURRENT tt-cheques NO-LOCK.
                         
@@ -730,12 +731,13 @@ PROCEDURE process-web-request :
 
                     ASSIGN vetorcheque = "".
                     
-                    FOR EACH tt-cheques NO-LOCK:
-                        IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
-                            ASSIGN vetorcheque = vetorcheque + ",".
-                              
-                        ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
-                                                         + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".
+                    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6  NO-LOCK:
+                        
+                          IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
+                              ASSIGN vetorcheque = vetorcheque + ",".
+                                
+                          ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
+                                                           + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".
                     END.
                     
                     {&OUT} '<script language="JavaScript">var cheques = new Array(); cheques.push(' + STRING(vetorcheque) + ');</script>'.
@@ -1127,10 +1129,11 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
             IF  NOT AVAIL tt-cheques  THEN
                 CREATE tt-cheques.
             
-            ASSIGN tt-cheques.nrdocmto = 6
-                   tt-cheques.dtlibera = crapmdw.dtlibcom
-                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                   v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
+            IF  crapmdw.cdhistor = 2433  THEN
+                ASSIGN tt-cheques.nrdocmto = 6
+                       tt-cheques.dtlibera = crapmdw.dtlibcom
+                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
                 
             FIND CURRENT tt-cheques NO-LOCK.
             
@@ -1138,12 +1141,13 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
 
         ASSIGN vetorcheque = "".
             
-        FOR EACH tt-cheques NO-LOCK:
-            IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
-                ASSIGN vetorcheque = vetorcheque + ",".
-                  
-            ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
-                                             + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".
+        FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
+            
+              IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
+                  ASSIGN vetorcheque = vetorcheque + ",".
+                    
+              ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
+                                               + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".                            
         END.
 
         {&OUT} '<script language="JavaScript">var cheques = new Array(); cheques.push(' + STRING(vetorcheque) + ');</script>'.  

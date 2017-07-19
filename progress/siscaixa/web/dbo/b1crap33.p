@@ -465,16 +465,11 @@ PROCEDURE Impressao:
 
         IF   tot_qtcheque > 0  THEN   DO:
              DISPLAY STREAM str_1
-                     /* res_qtchqcop
-                     res_qtchqmen
-                     res_qtchqmai
-                     res_vlchqcop 
-                     res_vlchqmen
-                     res_vlchqmai*/
+                     /* res_qtchqcop */
+                     /* res_vlchqcop */
                      tot_qtcheque 
                      tot_vlcheque 
-                   /*tab_vlchqmai
-                     res_dschqcop */
+                   /* res_dschqcop */
                      WITH FRAME f_resumo.
         END.
       

@@ -2764,7 +2764,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_c_docto_salvo       VARCHAR2(200) := '';
   vr_cdpacrem            PLS_INTEGER;
   vr_c_docto             VARCHAR2(200) := '';
-  vr_tpdmovto            INTEGER       := 0;
   vr_i_nro_docto         INTEGER       := 0;
   vr_p_literal           VARCHAR2(32000) := '';
   vr_p_ult_sequencia     INTEGER       := 0;
@@ -3141,13 +3140,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-           -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
-           IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
-              vr_tpdmovto := 2;             
-           ELSE
-              vr_tpdmovto := 1;
-           END IF;
-            
            pr_typ_tab_chq(vr_index).nrdocmto := 6;
            pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
            pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
@@ -3538,7 +3530,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_nrsequen := 0;
      
-     -- Cheque MENOR PRACA
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
           
@@ -4464,7 +4455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            ,48,' ');
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
 
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
      variavel VARCHAR2(32627), a solucao foi definir um tamanho para o parametro no 
@@ -5053,7 +5044,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_c_docto_salvo VARCHAR2(200)     := '';
   vr_cdpacrem PLS_INTEGER;
   vr_c_docto VARCHAR2(200)           := '';
-  vr_tpdmovto INTEGER                := 0;
   vr_i_nro_docto INTEGER             := 0;
   vr_p_literal VARCHAR2(32000)       := '';
   vr_p_ult_sequencia INTEGER         := 0;
@@ -5448,13 +5438,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-           -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
-           IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
-              vr_tpdmovto := 2;             
-           ELSE
-              vr_tpdmovto := 1;
-           END IF;
-            
                      pr_typ_tab_chq(vr_index).nrdocmto := 6;
            pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
            pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
@@ -5839,7 +5822,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_nrsequen := 0;
      
-     -- Cheque MAIOR FORA PRACA
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
 
@@ -6083,7 +6065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
      
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
@@ -6941,7 +6923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            ,48,' ');
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
      variavel VARCHAR2(32627), a solucao foi definir um tamanho para o parametro no 
@@ -7570,7 +7552,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_c_docto_salvo VARCHAR2(200)     := '';
   vr_cdpacrem PLS_INTEGER;  
   vr_c_docto VARCHAR2(200)           := '';
-  vr_tpdmovto INTEGER                := 0;
   vr_i_nro_docto INTEGER             := 0;
   vr_p_literal VARCHAR2(32000)       := '';
   vr_p_ult_sequencia INTEGER         := 0;
@@ -7958,12 +7939,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-           -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
-           IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
-              vr_tpdmovto := 2;             
-           ELSE
-              vr_tpdmovto := 1;
-           END IF;
                      pr_typ_tab_chq(vr_index).nrdocmto := 6;
            pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
            pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
@@ -8342,7 +8317,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_nrsequen := 0;
      
-     -- Cheque MAIOR FORA PRACA
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
 
@@ -8586,7 +8560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
      
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
@@ -9571,7 +9545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            ,48,' ');
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques maior fora praca
+     END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
      variavel VARCHAR2(32627), a solucao foi definir um tamanho para o parametro no 

@@ -197,11 +197,12 @@ function reabilitaForm() {
                 IF  NOT AVAIL tt-cheques  THEN
                     CREATE tt-cheques.
                 
-				ASSIGN tt-cheques.nrdocmto = 6
-					   tt-cheques.dtlibera = crapmdw.dtlibcom
-					   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-					   v_totdepos = v_totdepos + crapmdw.vlcompel.
-				
+                IF  crapmdw.cdhistor = 2433  THEN
+                    ASSIGN tt-cheques.nrdocmto = 6
+                           tt-cheques.dtlibera = crapmdw.dtlibcom
+                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                           v_totdepos = v_totdepos + crapmdw.vlcompel.
+            
                 FIND CURRENT tt-cheques NO-LOCK.
             END.
             /* Fim da montagem dos dados do resumo */        
@@ -519,11 +520,12 @@ function reabilitaForm() {
         
                 IF  NOT AVAIL tt-cheques  THEN
                     CREATE tt-cheques.
-                              
-                ASSIGN tt-cheques.nrdocmto = 6
-				       tt-cheques.dtlibera = crapmdw.dtlibcom
-				       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-				       v_totdepos = v_totdepos + crapmdw.vlcompel.
+
+                IF  crapmdw.cdhistor = 2433  THEN             
+                    ASSIGN tt-cheques.nrdocmto = 6
+                           tt-cheques.dtlibera = crapmdw.dtlibcom
+                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                           v_totdepos = v_totdepos + crapmdw.vlcompel.
 				
                 FIND CURRENT tt-cheques NO-LOCK.
             
@@ -653,7 +655,7 @@ function reabilitaForm() {
            </td>
         </tr>
         <script language="SpeedScript">END.</script>
-        <script language="SpeedScript">FOR EACH tt-cheques NO-LOCK:</script>
+        <script language="SpeedScript">FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:</script>
         <tr>
           <td width="34%" align="right" class="linhaform"> Cheq. Outros Bancos: </td>
            <td width="67%">

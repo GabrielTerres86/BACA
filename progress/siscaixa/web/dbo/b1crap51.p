@@ -1805,7 +1805,8 @@ PROCEDURE valida-deposito-com-captura:
                           crapmdw.nrposchq = i_posicao.
               
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
-                           ASSIGN crapmdw.nrdocmto = 6.
+              IF crapmdw.cdhistor = 2433 THEN
+                 ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -2680,7 +2681,8 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                           crapmdw.nrposchq = i_posicao.
               
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
-                           ASSIGN crapmdw.nrdocmto = 6.
+              IF crapmdw.cdhistor = 2433 THEN
+                 ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -3660,7 +3662,8 @@ PROCEDURE valida-deposito-com-captura-migrado:
                    ASSIGN crapmdw.nrtalchq = aux_nrtalchq
                           crapmdw.nrposchq = i_posicao.
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
-                           ASSIGN crapmdw.nrdocmto = 6.
+              IF crapmdw.cdhistor = 2433 THEN
+                 ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -4137,12 +4140,13 @@ PROCEDURE atualiza-deposito-com-captura:
             ASSIGN  aux_tpdmovto = 2.
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
-        
-        ASSIGN tt-cheques.nrdocmto = 6
-               tt-cheques.dtlibera = crapmdw.dtlibcom
-               tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-               de-valor = de-valor + crapmdw.vlcompel.
-        
+
+        IF crapmdw.cdhistor = 2433 THEN
+            ASSIGN tt-cheques.nrdocmto = 6
+                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                   de-valor = de-valor + crapmdw.vlcompel.
+          
         FIND CURRENT tt-cheques NO-LOCK.
         
     END.    
@@ -4357,7 +4361,7 @@ PROCEDURE atualiza-deposito-com-captura:
     ASSIGN aux_nrsequen = 0.
     
     /* Cheques menor fora praça */
-    FOR EACH tt-cheques NO-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
         ASSIGN aux_nrsequen = aux_nrsequen + 1
@@ -4496,8 +4500,9 @@ PROCEDURE atualiza-deposito-com-captura:
         FIND tt-cheques WHERE tt-cheques.dtlibera = crapmdw.dtlibcom AND
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
-
-        ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
+        
+        IF crapmdw.cdhistor = 2433 THEN
+           ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
         CREATE crapchd.
         ASSIGN crapchd.cdcooper = crapcop.cdcooper
@@ -4782,14 +4787,14 @@ PROCEDURE atualiza-deposito-com-captura:
                                       STRING(c-literal[17],"x(48)").
     
     FOR EACH tt-cheques NO-LOCK:
-    
-        ASSIGN p-literal-autentica = p-literal-autentica +
-                     STRING("CHEQ. OUTROS BANCOS: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                            " " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-        END.
+        IF tt-cheques.nrdocmto = 2433 THEN
+            ASSIGN p-literal-autentica = p-literal-autentica +
+                         STRING("CHEQ. OUTROS BANCOS: " +
+                                    STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
+                                " " +
+                                    STRING(tt-cheques.dtlibera,"99/99/9999"),
+                                    "x(48)").
+    END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)
@@ -5137,10 +5142,11 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
         
-        ASSIGN tt-cheques.nrdocmto = 6
-               tt-cheques.dtlibera = crapmdw.dtlibcom
-               tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-               de-valor = de-valor + crapmdw.vlcompel.
+        IF  crapmdw.cdhistor = 2433  THEN
+            ASSIGN tt-cheques.nrdocmto = 6
+                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                   de-valor = de-valor + crapmdw.vlcompel.
         
         FIND CURRENT tt-cheques NO-LOCK.
         
@@ -5406,8 +5412,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
        pela influencia do CAF */
     ASSIGN aux_nrsequen = 0.
     
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques NO-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
 
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
@@ -5551,8 +5556,9 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         FIND tt-cheques WHERE tt-cheques.dtlibera = crapmdw.dtlibcom AND
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
-
-        ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
+        
+        IF  crapmdw.cdhistor = 2433 THEN 
+            ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
         CREATE crapchd.
         ASSIGN crapchd.cdcooper = crapcop.cdcooper
@@ -5917,7 +5923,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                                       STRING(c-literal[17],"x(48)").
     
     FOR EACH tt-cheques NO-LOCK:
-    
+        IF  tt-cheques.nrdocmto = 6 THEN
             ASSIGN p-literal-autentica = 
                                 p-literal-autentica + 
                      STRING("CHEQ. OUTROS BANCOS: " +
@@ -5925,7 +5931,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-        END.
+    END.
 
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
@@ -6326,10 +6332,11 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
         
-        ASSIGN tt-cheques.nrdocmto = 6
-               tt-cheques.dtlibera = crapmdw.dtlibcom
-               tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-               de-valor = de-valor + crapmdw.vlcompel.
+        IF crapmdw.cdhistor = 2433 THEN
+            ASSIGN tt-cheques.nrdocmto = 6
+                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                   de-valor = de-valor + crapmdw.vlcompel.
         
         FIND CURRENT tt-cheques NO-LOCK.
         
@@ -6544,7 +6551,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
     ASSIGN aux_nrsequen = 0.
     
     /* Cheques menor fora praça */
-    FOR EACH tt-cheques NO-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
         ASSIGN aux_nrsequen = aux_nrsequen + 1
@@ -6685,7 +6692,8 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
 
-        ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
+        IF crapmdw.cdhistor = 2433 THEN
+           ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
         CREATE crapchd.
         ASSIGN crapchd.cdcooper = crapcop.cdcooper
@@ -7127,7 +7135,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                                       STRING(c-literal[17],"x(48)").
     
     FOR EACH tt-cheques NO-LOCK:
-    
+        IF  tt-cheques.nrdocmto = 6  THEN
             ASSIGN p-literal-autentica = 
                                 p-literal-autentica + 
                      STRING("CHEQ. OUTROS BANCOS: " +
@@ -7135,7 +7143,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-        END.
+    END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)
