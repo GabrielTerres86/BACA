@@ -26,6 +26,9 @@
                              crapfdc.dtlibtic >= data do movimento (SD. 163588 - Lunelli)
                              
                 05/09/2014 - Ajustes ref. ao Projeto 198-Viacon (Rafael).
+
+				18/07/2017 - Ajuste na procedure Ver_Custodia_Desconto para efetuar leitura de
+				             apenas cheques descontados liberados. (Daniel)
    
 .............................................................................*/
 
@@ -1352,6 +1355,7 @@ PROCEDURE Ver_Custodia_Desconto:
                                     crabcdb.cdagechq = aux_cdagechq     AND
                                     crabcdb.nrctachq = crabfdc.nrdctabb AND
                                     crabcdb.nrcheque = aux_nrcheque     AND
+									crabcdb.dtlibbdc <> ?               AND 
                                     crabcdb.dtdevolu = ?                AND
                                     crabcdb.dtlibera >= par_dtmvtolt NO-LOCK
                                     USE-INDEX crapcdb5: END.

@@ -14,7 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   --  
   --			  16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
   --
-  --		      12/07/2017 - Chamado 687332 - Alteração da gravação da coluna CDSEQTEL na CRAPLAU - Jean (Mout´S)
+  -- 		      12/07/2017 - Chamado 687332 - Alteração da gravação da coluna CDSEQTEL na CRAPLAU - Jean (Mout´S)
   --------------------------------------------------------------------------------------------------------------*/
 
 	TYPE typ_reg_cstdsc IS
@@ -7352,7 +7352,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
        AND dcc.nrctachq = pr_nrctachq
        AND dcc.nrcheque = pr_nrcheque
        AND dcc.intipmvt IN (1,3)
-       AND dcc.cdtipmvt = 1
        AND hcc.cdcooper = dcc.cdcooper
        AND hcc.nrdconta = dcc.nrdconta
        AND hcc.nrremret = dcc.nrremret
