@@ -199,7 +199,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                 ,pr_dscritic OUT VARCHAR2);
   
   -- Confirma recarga de celular
-  PROCEDURE pc_confirma_regarca_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
+  PROCEDURE pc_confirma_recarga_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE
                                   ,pr_idseqttl   IN crapttl.idseqttl%TYPE
                                   ,pr_nrcpfope   IN crapsnh.nrcpfcgc%TYPE
@@ -3647,7 +3647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 	END pc_cadastra_favorito;
   
   -- Confirma recarga de celular
-  PROCEDURE pc_confirma_regarca_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
+  PROCEDURE pc_confirma_recarga_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE
                                   ,pr_idseqttl   IN crapttl.idseqttl%TYPE
                                   ,pr_nrcpfope   IN crapsnh.nrcpfcgc%TYPE
@@ -3897,7 +3897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela RCEL0001: ' || SQLERRM;
     END;																			
-	END pc_confirma_regarca_ib;
+	END pc_confirma_recarga_ib;
   
   -- Buscar dados da recarga no Progress 
   PROCEDURE pc_busca_recarga_prog(pr_idoperacao IN INTEGER
