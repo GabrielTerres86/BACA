@@ -215,7 +215,7 @@ ELSE IF par_operacao = 6 THEN
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
-    RUN STORED-PROCEDURE pc_confirma_regarca_ib aux_handproc = PROC-HANDLE NO-ERROR
+    RUN STORED-PROCEDURE pc_confirma_recarga_ib aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper
                          ,INPUT par_nrdconta
                          ,INPUT par_idseqttl
@@ -238,15 +238,15 @@ ELSE IF par_operacao = 6 THEN
                          ,OUTPUT "").
                          
 
-    CLOSE STORED-PROC pc_confirma_regarca_ib aux_statproc = PROC-STATUS 
+    CLOSE STORED-PROC pc_confirma_recarga_ib aux_statproc = PROC-STATUS 
          WHERE PROC-HANDLE = aux_handproc.
     
     ASSIGN aux_dscritic = ""
            aux_msgretor = ""
-           aux_dscritic = pc_confirma_regarca_ib.pr_dscritic 
-                          WHEN pc_confirma_regarca_ib.pr_dscritic <> ?
-           aux_msgretor = pc_confirma_regarca_ib.pr_msg_retor 
-                          WHEN pc_confirma_regarca_ib.pr_msg_retor <> ?.
+           aux_dscritic = pc_confirma_recarga_ib.pr_dscritic 
+                          WHEN pc_confirma_recarga_ib.pr_dscritic <> ?
+           aux_msgretor = pc_confirma_recarga_ib.pr_msg_retor 
+                          WHEN pc_confirma_recarga_ib.pr_msg_retor <> ?.
     
     xml_req = STRING(aux_msgretor).
     

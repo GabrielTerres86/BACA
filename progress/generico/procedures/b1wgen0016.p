@@ -11788,7 +11788,7 @@ PROCEDURE aprova_trans_pend:
                         
                                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                              
-                                RUN STORED-PROCEDURE pc_confirma_regarca_ib aux_handproc = PROC-HANDLE NO-ERROR
+                                RUN STORED-PROCEDURE pc_confirma_recarga_ib aux_handproc = PROC-HANDLE NO-ERROR
                                                      (INPUT par_cdcooper
                                                      ,INPUT par_nrdconta
                                                      ,INPUT par_idseqttl
@@ -11811,15 +11811,15 @@ PROCEDURE aprova_trans_pend:
                                                      ,OUTPUT ""
                                                      ,OUTPUT 0
                                                      ,OUTPUT "").
-                                CLOSE STORED-PROC pc_confirma_regarca_ib 
+                                CLOSE STORED-PROC pc_confirma_recarga_ib 
                                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
                      
                                 ASSIGN aux_cdcritic = 0
                                        aux_dscritic = ""
-                                       aux_cdcritic = pc_confirma_regarca_ib.pr_cdcritic
-                                                      WHEN pc_confirma_regarca_ib.pr_cdcritic <> ?
-                                       aux_dscritic = pc_confirma_regarca_ib.pr_dscritic
-                                                      WHEN pc_confirma_regarca_ib.pr_dscritic <> ?.
+                                       aux_cdcritic = pc_confirma_recarga_ib.pr_cdcritic
+                                                      WHEN pc_confirma_recarga_ib.pr_cdcritic <> ?
+                                       aux_dscritic = pc_confirma_recarga_ib.pr_dscritic
+                                                      WHEN pc_confirma_recarga_ib.pr_dscritic <> ?.
                                        
                                 
                                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
