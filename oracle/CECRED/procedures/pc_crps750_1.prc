@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Everton (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 
+  Data    : Abril/2017.                    Ultima atualizacao:  19/07/2017
 
   Dados referentes ao programa:
 
@@ -25,6 +25,8 @@ BEGIN
   Objetivo  : Pagamento de parcelas dos emprestimos TR (Price TR) em substituição ao programa PC_CRPS171.
 
   Alteracoes: 12/04/2017 - Criação da rotina (Everton / Mout´S)
+
+              19/07/2017 - Adequação para pagamento de empréstimos com adiantamento e acertos gerais
 
     ............................................................................. */
 
@@ -190,12 +192,139 @@ BEGIN
       vr_dsctactrjud  crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
       vr_cdindice     VARCHAR2(30) := '';            --> Indice da tabela de acordos
       vr_mesespago    INTEGER;        
+      vr_inliquid     crapepr.inliquid%TYPE;
+      
+      -- Erro em chamadas da pc_gera_erro
+      vr_des_reto VARCHAR2(3);
+      vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
+       --
+       -- Leitura do indicador de uso da tabela de taxa de juros
+       vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                ,pr_nmsistem => 'CRED'
+                                                ,pr_tptabela => 'USUARI'
+                                                ,pr_cdempres => 11
+                                                ,pr_cdacesso => 'TAXATABELA'
+                                                ,pr_tpregist => 0);
+       -- Se encontrar
+       IF vr_dstextab IS NOT NULL THEN
+          -- Se a primeira posição do campo
+          -- dstextab for diferente de zero
+          IF SUBSTR(vr_dstextab,1,1) != '0' THEN
+             -- É porque existe tabela parametrizada
+             vr_inusatab := TRUE;
+          ELSE
+             -- Não existe
+             vr_inusatab := FALSE;
+          END IF;
+       ELSE
+          -- Não existe
+          vr_inusatab := FALSE;
+       END IF;        
+       --
+       FOR rw_crapepr IN cr_crapepr LOOP
+         --
+         IF TRUNC(rw_crapepr.dtdpagto_nova,'MM') >= TRUNC(vr_dtcursor,'MM') THEN
+           -- Inicializar variaveis para o cálculo
+           --vr_flgrejei := FALSE;
+           vr_diapagto := 0;
+           vr_qtprepag := NVL(rw_crapepr.qtprepag,0);
+           vr_vlprepag := 0;
+           vr_vlsdeved := NVL(rw_crapepr.vlsdeved,0);
+           vr_vljuracu := NVL(rw_crapepr.vljuracu,0);
+           vr_vljurmes := 0;
+           vr_dtultpag := rw_crapepr.dtultpag;
+           -- Chamar rotina de cálculo externa
+           empr0001.pc_leitura_lem(pr_cdcooper    => rw_crapepr.cdcooper
+                                  ,pr_cdprogra    => vr_cdprogra
+                                  ,pr_rw_crapdat  => rw_crapdat
+                                  ,pr_nrdconta    => rw_crapepr.nrdconta
+                                  ,pr_nrctremp    => rw_crapepr.nrctremp
+                                  ,pr_dtcalcul    => NULL
+                                  ,pr_diapagto    => vr_diapagto
+                                  ,pr_txdjuros    => vr_txdjuros
+                                  ,pr_qtprepag    => vr_qtprepag
+                                  ,pr_qtprecal    => vr_qtprecal_lem
+                                  ,pr_vlprepag    => vr_vlprepag
+                                  ,pr_vljuracu    => vr_vljuracu
+                                  ,pr_vljurmes    => vr_vljurmes
+                                  ,pr_vlsdeved    => vr_vlsdeved
+                                  ,pr_dtultpag    => vr_dtultpag
+                                  ,pr_cdcritic    => vr_cdcritic
+                                  ,pr_des_erro    => vr_dscritic);
+           -- Se a rotina retornou com erro
+           IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
+             -- Gerar exceção
+             RAISE vr_exc_erro;
+           END IF;
+           -- 
+           -- Se a parcela do mês foi paga
+           IF vr_qtprecal_lem >= 1 THEN
+             --
+             IF vr_vlsdeved = 0 THEN
+               --
+               vr_inliquid := 1;
+               --
+               -- Desativar o Rating associado a esta operaçao
+               rati0001.pc_desativa_rating(pr_cdcooper   => pr_cdcooper         --> Código da Cooperativa
+                                     ,pr_cdagenci   => 0                   --> Código da agência
+                                     ,pr_nrdcaixa   => 0                   --> Número do caixa
+                                     ,pr_cdoperad   => pr_cdoperad         --> Código do operador
+                                     ,pr_rw_crapdat => rw_crapdat          --> Vetor com dados de parâmetro (CRAPDAT)
+                                     ,pr_nrdconta   => rw_crapepr.nrdconta --> Conta do associado
+                                     ,pr_tpctrrat   => 90                  --> Tipo do Rating (90-Empréstimo)
+                                     ,pr_nrctrrat   => rw_crapepr.nrctremp --> Número do contrato de Rating
+                                     ,pr_flgefeti   => 'S'                 --> Flag para efetivação ou não do Rating
+                                     ,pr_idseqttl   => 1                   --> Sequencia de titularidade da conta
+                                     ,pr_idorigem   => 1                   --> Indicador da origem da chamada
+                                     ,pr_inusatab   => vr_inusatab         --> Indicador de utilização da tabela de juros
+                                     ,pr_nmdatela   => vr_cdprogra         --> Nome datela conectada
+                                     ,pr_flgerlog   => 'N'                 --> Gerar log S/N
+                                     ,pr_des_reto   => vr_des_reto         --> Retorno OK / NOK
+                                     ,pr_tab_erro   => vr_tab_erro);       --> Tabela com possíves erros
+
+
+
+               /** GRAVAMES **/
+                GRVM0001.pc_solicita_baixa_automatica(pr_cdcooper => pr_cdcooper          -- Código da cooperativa
+                                               ,pr_nrdconta => rw_crapepr.nrdconta  -- Numero da conta do contrato
+                                               ,pr_nrctrpro => rw_crapepr.nrctremp  -- Numero do contrato
+                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt  -- Data de movimento para baixa
+                                               ,pr_des_reto => vr_des_reto          -- Retorno OK ou NOK
+                                               ,pr_tab_erro => vr_tab_erro          -- Retorno de erros em PlTable
+                                               ,pr_cdcritic => vr_cdcritic          -- Retorno de codigo de critica
+                                               ,pr_dscritic => vr_dscritic);        -- Retorno de descricao de critica
+
+               
+             ELSE
+               vr_inliquid := 0;
+             END IF;
+             --
+       BEGIN
+               UPDATE crapepr
+                  SET dtdpagto  = add_months(rw_crapepr.dtdpagto,1)
+                     ,dtultpag  = vr_dtultpag
+                     ,indpagto  = 1
+                     ,inliquid  = vr_inliquid 
+                WHERE rowid = rw_crapepr.rowid;
+             EXCEPTION
+              WHEN OTHERS THEN
+                 -- Gerar erro e fazer rollback
+                 vr_dscritic := 'Erro ao atualizar o empréstimo (CRAPEPR).'
+                             || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
+                             || '. Detalhes: '||sqlerrm;
+                 RAISE vr_exc_erro;
+             END;
+             --  
+           END IF;     
+           --
+         END IF;
+         --
+       END LOOP;
        --
        BEGIN
          DELETE tbepr_tr_parcelas
            WHERE cdcooper = pr_cdcooper;
-      null;
        EXCEPTION
          WHEN OTHERS THEN
            --Variavel de erro recebe erro ocorrido
@@ -436,7 +565,7 @@ BEGIN
            vr_vlsdeved := 0;
          END IF;
 
-         -- Se o empréstimo não estiver ativo
+         -- Se o empréstimo estiver ativo
          IF rw_crapepr.inliquid = 0 THEN
            -- Acumular a quantidade calculada com a da tabela
            vr_qtprecal := rw_crapepr.qtprecal + vr_qtprecal_lem;
@@ -448,6 +577,12 @@ BEGIN
          vr_mesespago := trunc(vr_qtprecal) - trunc(rw_crapepr.qtprecal);
          --
          IF vr_mesespago > 0 THEN
+           -- Nao pode ter mais de 11 meses, senao cancela rotina
+           -- Andrino
+           IF vr_mesespago > 11 THEN
+             -- Adicionar de quantidade anos
+             vr_dtdpagto := add_months(rw_crapepr.dtdpagto_nova,vr_mesespago);
+           ELSE
            -- Adicionar de quantidade meses pago dentro do mês
            vr_dtdpagto := gene0005.fn_calc_data(pr_dtmvtolt => rw_crapepr.dtdpagto_nova  --> Data do pagamento anterior
                                                ,pr_qtmesano => vr_mesespago        --> + mês
@@ -457,6 +592,7 @@ BEGIN
            IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
            END IF;
+           END IF;
          ELSE
            vr_dtdpagto  := rw_crapepr.dtdpagto_nova;
          END IF;
@@ -465,11 +601,22 @@ BEGIN
          vr_qtparcela := vr_nrparcela - vr_qtprecal;
          vr_vlparcela := vr_qtparcela * rw_crapepr.vlpreemp;
          -- se saldo devedor menor que parcela ou for a última parcela, paga saldo devedor 
-         IF (vr_vlparcela > vr_vlsdeved) OR (vr_nrparcela >= rw_crapepr.qtpreemp) then
+         IF (vr_vlparcela > vr_vlsdeved) OR (vr_nrparcela > rw_crapepr.qtpreemp) then
            --
            vr_vlparcela := vr_vlsdeved;
            vr_qtparcela := vr_vlparcela / rw_crapepr.vlpreemp;
-           vr_nrparcela := rw_crapepr.qtpreemp;
+           --vr_nrparcela := rw_crapepr.qtpreemp;
+           --
+         ELSE
+           -- Andrino/Everton
+           -- Se tiver parcelas adiantadas, deve-se gerar tambem o pagamento dentro do mes
+           -- valor adiantado deve ser menor que o valor da parcela, pagondo a diferença até 
+           -- completar o valor da parcela para o mês em questão.
+           IF vr_dtdpagto > vr_dtcursor and vr_vlprepag < rw_crapepr.vlpreemp THEN
+              vr_dtdpagto  := rw_crapepr.dtdpagto;
+              vr_qtparcela := round(vr_vlprepag / rw_crapepr.vlpreemp,4);
+              vr_vlparcela := rw_crapepr.vlpreemp - vr_vlprepag;
+           END IF;
            --
          END IF;
          --
@@ -540,11 +687,11 @@ BEGIN
            vr_vlparcela := vr_qtparcela * rw_crapepr.vlpreemp;           
            --
            -- se saldo devedor menor que parcela ou for a última parcela, paga somente saldo devedor 
-           IF (vr_vlparcela > vr_vlsdeved) OR (vr_nrparcela >= rw_crapepr.qtpreemp) then
+           IF (vr_vlparcela > vr_vlsdeved) OR (vr_nrparcela > rw_crapepr.qtpreemp) then
              --
              vr_vlparcela := vr_vlsdeved;
              vr_qtparcela := vr_vlparcela / rw_crapepr.vlpreemp;
-             vr_nrparcela := rw_crapepr.qtpreemp;
+             --vr_nrparcela := rw_crapepr.qtpreemp;
             -- vr_vlsdeved  := 0;
              --
            END IF;
@@ -554,6 +701,8 @@ BEGIN
        END LOOP;
        --
     EXCEPTION
+      WHEN vr_exc_erro THEN
+        RAISE vr_exc_erro;
       WHEN OTHERS THEN
         --Variavel de erro recebe erro ocorrido
            vr_cdcritic:= 0;
@@ -562,6 +711,7 @@ BEGIN
         RAISE vr_exc_erro;
     END pc_gera_tabela_parcelas;
     -- 
+    --
     --
     --Fase processo 2
     --Procedure para gerar o pagamento das parcelas de empréstimos TR
@@ -792,6 +942,7 @@ BEGIN
       vr_inusatab     BOOLEAN;                --> Indicador S/N de utilização de tabela de juros
       vr_flgprc       INTEGER;
       vr_cdagencia    tbepr_tr_parcelas.cdagenci%TYPE;
+      vr_seqdig       NUMBER(10);
       
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
@@ -1134,11 +1285,11 @@ BEGIN
                                  ,nrdolote--
                                  ,cdpesqbb
                                  ,nrdconta
-                                 ,nrdctabb--
+                                 ,nrdctabb
                                  ,nrdctitg
-                                 ,nrdocmto--
+                                 ,nrdocmto
                                  ,cdhistor
-                                 ,nrseqdig
+                                 ,nrseqdig--
                                  ,vllanmto
                                  ,nrparepr)
                            VALUES(pr_cdcooper
@@ -1146,19 +1297,77 @@ BEGIN
                                  ,rw_craplot_8457.cdagenci
                                  ,rw_craplot_8457.cdbccxlt
                                  ,rw_craplot_8457.nrdolote
-                                 ,gene0002.fn_mask(rw_crapepr.nrctremp,'zz.zzz.zz9')  --' '
+                                 ,gene0002.fn_mask(rw_crapepr.nrctremp,'zz.zzz.zz9')  
                                  ,rw_crapepr.nrdconta
                                  ,rw_crapepr.nrdconta
                                  ,to_char(rw_crapepr.nrdconta,'fm00000000')
-                                 ,rw_craplot_8457.nrseqdig + 1     --rw_crapepr.nrctremp
+                                 ,rw_craplot_8457.nrseqdig + 1     
                                  ,108 --> Prest Empr.
                                  ,rw_craplot_8457.nrseqdig + 1
                                  ,vr_vldescto
                                  ,pr_nrparepr);
             EXCEPTION
+              WHEN DUP_VAL_ON_INDEX THEN
+                BEGIN
+                  SELECT MAX(NVL(nrseqdig,0))+1
+                    INTO vr_seqdig
+                    FROM craplcm
+                   WHERE cdcooper = pr_cdcooper
+                     AND dtmvtolt = rw_craplot_8457.dtmvtolt
+                     AND cdagenci = rw_craplot_8457.cdagenci
+                     AND cdbccxlt = rw_craplot_8457.cdbccxlt
+                     AND nrdolote = rw_craplot_8457.nrdolote;
+                 EXCEPTION
+                   WHEN OTHERS THEN   
+                       vr_dscritic := 'Erro ao criar sequencia da (CRAPLCM) '
+                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
+                            || '- Seq.Lote:'||to_char(rw_craplot_8457.nrseqdig+1)
+                            || '. Detalhes: '||sqlerrm;
+                   RAISE vr_exc_erro;                      
+                 END;
+                 --
+                 BEGIN 
+                     INSERT INTO craplcm(cdcooper--
+                                 ,dtmvtolt--
+                                 ,cdagenci--
+                                 ,cdbccxlt--
+                                 ,nrdolote--
+                                 ,cdpesqbb
+                                 ,nrdconta
+                                 ,nrdctabb
+                                 ,nrdctitg
+                                 ,nrdocmto
+                                 ,cdhistor
+                                 ,nrseqdig--
+                                 ,vllanmto
+                                 ,nrparepr)
+                           VALUES(pr_cdcooper
+                                 ,rw_craplot_8457.dtmvtolt
+                                 ,rw_craplot_8457.cdagenci
+                                 ,rw_craplot_8457.cdbccxlt
+                                 ,rw_craplot_8457.nrdolote
+                                 ,gene0002.fn_mask(rw_crapepr.nrctremp,'zz.zzz.zz9')  
+                                 ,rw_crapepr.nrdconta
+                                 ,rw_crapepr.nrdconta
+                                 ,to_char(rw_crapepr.nrdconta,'fm00000000')
+                                 ,rw_craplot_8457.nrseqdig + 1     
+                                 ,108 --> Prest Empr.
+                                 ,vr_seqdig
+                                 ,vr_vldescto
+                                 ,pr_nrparepr);
+                 EXCEPTION
+                   WHEN OTHERS THEN
+                   vr_dscritic := 'Erro ao criar lancamento2 para a conta corrente (CRAPLCM) '
+                            || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
+                            || '- Seq.Lote:'||to_char(rw_craplot_8457.nrseqdig+1)
+                            || '. Detalhes: '||sqlerrm;
+                RAISE vr_exc_erro;
+                 END;
+                 --                                 
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao criar lancamento para a conta corrente (CRAPLCM) '
                             || '- Conta:'||rw_crapepr.nrdconta || ' CtrEmp:'||rw_crapepr.nrctremp
+                            || '- Seq.Lote:'||to_char(rw_craplot_8457.nrseqdig+1)
                             || '. Detalhes: '||sqlerrm;
                 RAISE vr_exc_erro;
             END;
@@ -1196,7 +1405,7 @@ BEGIN
                                  ,rw_craplot_8457.dtmvtolt
                                  ,0
                                  ,rw_crapepr.nrdconta
-                                 ,to_number(to_char(sysdate,'hh24missmi')||to_char(pr_nrparepr))
+                                 ,to_number(to_char(systimestamp,'hh24missFF4')||to_char(pr_nrparepr))
                                  ,rw_craplot_8457.nrseqdig + 1
                                  ,2
                                  ,0
