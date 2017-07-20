@@ -622,7 +622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
   --                           (Tiago/Fabricio #647174)   
 
-                  13/06/2017 - Retirado validacao incorreta na procedure pc_retorna_vlr_titulo_iptu
+  --              13/06/2017 - Retirado validacao incorreta na procedure pc_retorna_vlr_titulo_iptu
   --                          (Tiago/Elton #691470)
   ---------------------------------------------------------------------------------------------------------------
 
