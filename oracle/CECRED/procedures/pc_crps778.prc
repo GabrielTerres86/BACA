@@ -611,13 +611,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                     
        EXCEPTION
          WHEN vr_exc_erro THEN
+
+           -- Verifica se houve código de erro
+           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 						
-            -- Verifica se houve código de erro
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
-						
-            IF vr_dscritic IS NOT NULL THEN
-             -- Envio centralizado de log de erro							 
-             -- Gera log 
+           IF vr_dscritic IS NOT NULL THEN
+             -- Envio centralizado de log de erro
              pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
                           pr_dscdolog => vr_dscritic);
            END IF;
@@ -627,7 +626,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
 
            -- Efetuar rollback				  
            ROLLBACK;
-             
+         WHEN OTHERS THEN
+           cecred.pc_internal_exception(3);
        END;
 				
      END LOOP; -- FOR rw_crapcoop
@@ -642,7 +642,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
          
      WHEN OTHERS THEN
 
-       btch0001.pc_log_internal_exception(3);
+       cecred.pc_internal_exception(3);
 
        -- Efetuar retorno do erro nao tratado
        pr_dscritic := sqlerrm;
