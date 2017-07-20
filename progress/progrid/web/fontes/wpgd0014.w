@@ -30,8 +30,8 @@
                 04/05/2016 - Correcao no contato de montagem do array de PA's para 
                              execucao do comando push. (Carlos Rafael Tanholi)
 														 
-						    14/07/2017 - Alteração da leitura da tabela crapedp para desconsiderar
-														 eventos EAD na procedure EnviaPac, SD.710219 (Jean Michel)
+		        14/07/2017 - Alteração da leitura da tabela crapedp para desconsiderar
+				      		 eventos EAD na procedure EnviaPac, SD.710219 (Jean Michel)
 														 
 ------------------------------------------------------------------------------*/
 
