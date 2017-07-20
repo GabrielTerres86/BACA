@@ -42,7 +42,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0079.p
     Autor     : David
-    Data      : Dezembro/2010                Ultima Atualizacao: 01/12/2014
+    Data      : Dezembro/2010                Ultima Atualizacao: 20/07/2017
     
     Dados referentes ao programa:
 
@@ -97,6 +97,9 @@
                  Chamado 229313 (Jean Reddiga - RKAM).    
                            
     29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)                         
+
+    20/07/2017 - Ajuste para remover caracteres especiais na listar titulo sacado
+                 PRJ340 - NPC (Odirlei-AMcom)                         
 .............................................................................*/
 
 
@@ -2299,6 +2302,30 @@ PROCEDURE requisicao-atualizar-situacao PRIVATE:
 
 END PROCEDURE.
 
+FUNCTION substituir_caracter RETURNS CHAR ( INPUT par_dsdtexto AS CHAR ) :
+
+DEF VAR aux_dsdtexto AS CHAR                                   NO-UNDO.
+
+  ASSIGN aux_dsdtexto = par_dsdtexto. 
+
+  ASSIGN aux_dsdtexto = REPLACE(
+                        REPLACE(
+                        REPLACE(
+                        REPLACE(
+                        REPLACE(aux_dsdtexto,",","")
+                                            ,";","")
+                                            ,"#","")
+                                            ,"&","E")
+                                            ,"'","").
+        
+  ASSIGN aux_dsdtexto = REPLACE(aux_dsdtexto,CHR(20),'').
+  ASSIGN aux_dsdtexto = REPLACE(aux_dsdtexto,CHR(24),'').
+  ASSIGN aux_dsdtexto = REPLACE(aux_dsdtexto,CHR(25),'').
+  ASSIGN aux_dsdtexto = REPLACE(aux_dsdtexto,CHR(26),'').
+
+
+  RETURN aux_dsdtexto.
+END.
 
 PROCEDURE carrega-dados-titulo PRIVATE:
 
@@ -2320,33 +2347,23 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
         WHEN "CPFCNPJBenfcrioOr" THEN 
             ASSIGN aux_nrdocced = DECI(hXmlText:NODE-VALUE).
         WHEN "NomRzSocBenfcrioOr" THEN
-            ASSIGN aux_nmcedent = REPLACE(
-                                  REPLACE(
-                                  REPLACE(
-                                  REPLACE(hXmlText:NODE-VALUE,",","")
-                                                             ,";","")
-                                                             ,"#","")
-                                                             ,"'","").
+        DO:
+        
+            ASSIGN aux_nmcedent = substituir_caracter(INPUT hXmlText:NODE-VALUE).
+            
+        END.                                                     
         WHEN "TpPessoaPagdr" THEN
             ASSIGN aux_tppessac = hXmlText:NODE-VALUE.
         WHEN "CPFCNPJPagdr" THEN
             ASSIGN aux_nrdocsac = DECI(hXmlText:NODE-VALUE).
         WHEN "NomRzSocPagdr" THEN
-            ASSIGN aux_nmdsacad = REPLACE(
-                                  REPLACE(
-                                  REPLACE(
-                                  REPLACE(hXmlText:NODE-VALUE,",","")
-                                                             ,";","")
-                                                             ,"#","")
-                                                             ,"'","").
+        DO:            
+            ASSIGN aux_nmdsacad = substituir_caracter(INPUT hXmlText:NODE-VALUE).            
+        END.
         WHEN "Nom_RzSocSacdrAvalst" THEN
-            ASSIGN aux_nmsacava = REPLACE(
-                                  REPLACE(
-                                  REPLACE(
-                                  REPLACE(hXmlText:NODE-VALUE,",","")
-                                                             ,";","")
-                                                             ,"#","")
-                                                             ,"'","").
+        DO:
+            ASSIGN aux_nmsacava = substituir_caracter(INPUT hXmlText:NODE-VALUE).            
+        END.
         WHEN "TpIdentcSacdrAvalst" THEN
             ASSIGN aux_tpdocsav = INTE(hXmlText:NODE-VALUE).
         WHEN "IdentcSacdrAvalst" THEN
@@ -2559,7 +2576,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
             ASSIGN aux_vltotcob = DECI(hXmlText:NODE-VALUE).
 
         WHEN "CidSacdEletrnc" THEN
-            ASSIGN aux_nmcidsac = hXmlText:NODE-VALUE.
+            ASSIGN aux_nmcidsac = substituir_caracter(INPUT hXmlText:NODE-VALUE).
         WHEN "UFSacdEletrnc" THEN
             ASSIGN aux_cdufssac = hXmlText:NODE-VALUE.
     END CASE.
