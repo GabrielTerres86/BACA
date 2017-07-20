@@ -4785,7 +4785,7 @@ PROCEDURE atualiza-deposito-com-captura:
          ASSIGN p-literal-autentica = p-literal-autentica + 
                                       STRING(c-literal[17],"x(48)").
     
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
         ASSIGN p-literal-autentica = p-literal-autentica +
                      STRING("CHEQ. OUTROS BANCOS: " +
                                 STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
