@@ -4360,8 +4360,7 @@ PROCEDURE atualiza-deposito-com-captura:
     
     ASSIGN aux_nrsequen = 0.
     
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
         ASSIGN aux_nrsequen = aux_nrsequen + 1
@@ -4460,7 +4459,7 @@ PROCEDURE atualiza-deposito-com-captura:
               crapdpb.inlibera = 1.
        VALIDATE crapdpb.
 
-    END. /* fim dos cheques menor fora praça */
+    END.
     
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
@@ -4786,14 +4785,13 @@ PROCEDURE atualiza-deposito-com-captura:
          ASSIGN p-literal-autentica = p-literal-autentica + 
                                       STRING(c-literal[17],"x(48)").
     
-    FOR EACH tt-cheques NO-LOCK:
-        IF tt-cheques.nrdocmto = 2433 THEN
-            ASSIGN p-literal-autentica = p-literal-autentica +
-                         STRING("CHEQ. OUTROS BANCOS: " +
-                                    STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                " " +
-                                    STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                    "x(48)").
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
+        ASSIGN p-literal-autentica = p-literal-autentica +
+                     STRING("CHEQ. OUTROS BANCOS: " +
+                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
+                            " " +
+                                STRING(tt-cheques.dtlibera,"99/99/9999"),
+                                "x(48)").
     END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
@@ -5412,7 +5410,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
        pela influencia do CAF */
     ASSIGN aux_nrsequen = 0.
     
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
 
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
@@ -5514,7 +5512,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
               crapdpb.inlibera = 1.
        VALIDATE crapdpb.
 
-    END. /* fim dos cheques menor fora praça */
+    END.
     
     
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
@@ -6550,8 +6548,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
        pela influencia do CAF */
     ASSIGN aux_nrsequen = 0.
     
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
         ASSIGN aux_nrsequen = aux_nrsequen + 1
@@ -6650,7 +6647,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
               crapdpb.vllanmto = tt-cheques.vlcompel
               crapdpb.inlibera = 1.
        VALIDATE crapdpb.
-    END. /* fim dos cheques menor fora praça */
+    END.
     
     
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
