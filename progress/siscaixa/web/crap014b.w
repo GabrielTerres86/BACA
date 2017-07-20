@@ -696,6 +696,10 @@ PROCEDURE process-web-request :
          vh_foco     = "21".
 
   IF v_nrdocbnf <> "" THEN DO:
+    IF v_cpfcedente = "" THEN
+    DO:
+      ASSIGN v_cpfcedente = v_nrdocbnf.
+    END.
   
     IF v_inpesbnf = "1" THEN
          ASSIGN c_dsdocbnf = STRING(DEC(v_nrdocbnf),"99999999999")
@@ -749,10 +753,6 @@ PROCEDURE process-web-request :
                de_tit5     = 0.
 
         
-        /* Se possui consulta NPC é necessario informar pagador*/
-        IF v_cdctrlcs <> "" THEN
-        DO:
-          
           /* Popular campo novamente caso apresente erro e 
             necessite apresentar na tela*/
           IF v_nrdocbnf <> "" THEN DO:
@@ -765,7 +765,11 @@ PROCEDURE process-web-request :
                         c_dsdocbnf = STRING(c_dsdocbnf,"xx.xxx.xxx/xxxx-xx").  
           END.
           
+        /* Se possui consulta NPC é necessario informar pagador*/
+        IF v_cdctrlcs <> "" THEN
+        DO:
           
+          /* Nao deve ser obrigado campo do CPF/CNPJ ou conta
           IF INT(v_conta) = 0 AND 
              (DECI(v_cpfsacado) = 0 OR 
               v_cpfsacado = "" )THEN
@@ -777,6 +781,7 @@ PROCEDURE process-web-request :
              RUN outputFields.
              NEXT. 
           END.
+          */
           
           /* Validar CPF/CNPJ Pagador */
           IF (DECI(v_cpfsacado) > 0 )THEN
@@ -1152,7 +1157,7 @@ PROCEDURE process-web-request :
                      IF l-houve-erro = NO AND 
                         TRIM(v_cdctrlcs) <> "" THEN
                      DO:
-                      MESSAGE "1-odirlei ".
+                      
                        /* Determinar situacao titulo */
                        IF aux-intitcop = 1 THEN
                           ASSIGN aux_cdsittit = 3.  /* Pg.IntraBanc. */
@@ -1195,7 +1200,6 @@ PROCEDURE process-web-request :
                                               WHEN pc_atualz_situac_titulo_sacado.pr_dscritic <> ?.
                        
                        
-                       MESSAGE "2-odirlei " + aux_dscritic.
                      IF  aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
                          ASSIGN l-houve-erro = YES.
                          FOR EACH w-craperr:

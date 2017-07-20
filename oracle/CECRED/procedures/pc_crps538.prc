@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 17/04/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 12/07/2017
 
    Dados referentes ao programa:
 
@@ -347,6 +347,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                02/05/2017 - Entrega 02 - Prj.307 Automatização Arquivos Contábeis Ayllos (Jonatas-Supero)                            
 
 			   21/06/2017 - Alterado mensagens de LOG da crapcol #696421 (Tiago/Rodrigo).
+
+               12/07/2017 - #712635 Inclusão tabela crapcco nos cursores cr_cde e cr_boletos_pagos_acordos 
+                            para otimização (Carlos)
    .............................................................................*/
 
      DECLARE
@@ -782,7 +785,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            FROM crapret ret,
                 crapcob cob,
                 tbepr_cobranca cde,
-                crapass ass
+                crapass ass,
+                crapcco cco
           WHERE ret.cdcooper = pr_cdcooper
             AND ret.nrcnvcob = pr_nrcnvcob
             AND ret.dtocorre = pr_dtocorre
@@ -791,11 +795,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             AND cob.nrcnvcob = ret.nrcnvcob
             AND cob.nrdconta = ret.nrdconta
             AND cob.nrdocmto = ret.nrdocmto
+            AND cco.cdcooper = cde.cdcooper
+            AND cco.nrconven = cde.nrcnvcob
             AND cob.nrctremp > 0
             AND cde.cdcooper = cob.cdcooper
             AND cde.nrdconta_cob = cob.nrdconta
             AND cde.nrcnvcob = cob.nrcnvcob
             AND cde.nrboleto = cob.nrdocmto
+            AND cob.cdbandoc = cco.cddbanco
+            AND cob.nrdctabb = cco.nrdctabb
             AND ass.cdcooper = cde.cdcooper
             AND ass.nrdconta = cde.nrdconta
             ORDER BY cde.nrdconta, cde.nrctremp;
@@ -821,6 +829,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
               , crapcob   cob
               , tbrecup_acordo_parcela  acp
               , tbrecup_acordo          aco
+              , crapcco                 cco
          WHERE ret.cdcooper = pr_cdcooper
            AND ret.nrcnvcob = pr_nrcnvcob
            AND ret.dtocorre = pr_dtocorre
@@ -835,6 +844,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            AND acp.nrdconta_cob = cob.nrdconta
            AND acp.nrconvenio   = cob.nrcnvcob
            AND acp.nrboleto     = cob.nrdocmto
+
+           AND cco.cdcooper = ret.cdcooper  
+           AND cco.nrconven = ret.nrcnvcob 
+           AND cob.cdbandoc = cco.cddbanco
+           AND cob.nrdctabb = cco.nrdctabb         
 
            AND aco.nracordo     = acp.nracordo;
        

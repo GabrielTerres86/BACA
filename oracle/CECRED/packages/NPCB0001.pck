@@ -902,19 +902,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 29/12/2016
+      Data     : Dezembro/2016.                   Ultima atualizacao: 12/07/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para validação do pagamento do boleto na Nova plataforma de cobrança 
-      Alteração : 
+      Alteração : 12/07/2017 - Alterado parametro de data da procedure fn_valor_calc_titulo_npc
+                               para correção de pagamentos DDA, Prj. 340 - NPC (Jean Michel)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
     --> Buscar dados da consulta
     CURSOR cr_cons_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE ) IS
       SELECT con.dsxml
+            ,con.dtmvtolt
         FROM tbcobran_consulta_titulo con
        WHERE con.cdctrlcs = pr_cdctrlcs;
        
@@ -1000,7 +1002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       WHEN 3 THEN --> 3 -- não aceita pagar valor divergente;
         --> Retornar valor do titulo calculado pela NPC
         vr_vltitcal := fn_valor_calc_titulo_npc
-                                 ( pr_dtmvtolt  => pr_dtmvtolt    --> Data de movimento                                                                   
+                                 ( pr_dtmvtolt  => rw_cons_titulo.dtmvtolt --> Data de movimento                                                                   
                                   ,pr_tbtitulo  => vr_tituloCIP); --> Regras de calculo de juros                                 
                                     
         --> Se valor estiver diferente retornar critica		

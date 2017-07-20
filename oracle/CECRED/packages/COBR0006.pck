@@ -1946,7 +1946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 14/07/2017
 
        Dados referentes ao programa:
 
@@ -1964,6 +1964,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
 				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                  14/07/2017 - Retirado verificação de pagador DDA e ROLLOUT. Essa verificação é
+                               feita no pc_crps618. (Rafael)
 
     ............................................................................ */   
     
@@ -1993,8 +1996,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_tppessoa VARCHAR2(1);
     -- Identificador de pagador DDA
     vr_flgsacad INTEGER;
-    -- Rollout do valor do titulo
-    vr_rollout  INTEGER;
     -- Motivo 
     vr_cdmotivo VARCHAR2(10);
 
@@ -2275,35 +2276,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             vr_tppessoa := 'J';
           END IF;
 
-          -- Verificações para identificar se o boleto eh DDA "A4"
-          -- se deve ser registrado online "R1"
-          -- e se eh Cooperativa Emite e Expede "P1"
-          
-          -- Identificar se o pagador eh DDA 
-          DDDA0001.pc_verifica_sacado_DDA(pr_tppessoa => vr_tppessoa
-                                         ,pr_nrcpfcgc => pr_tab_crapcob(vr_idx_cob).nrinssac
-                                         ,pr_flgsacad => vr_flgsacad
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-
-          -- verificar o rollout de registro do valor do titulo
-          vr_rollout := NPCB0001.fn_verifica_rollout(pr_cdcooper => pr_cdcooper
-                                                    ,pr_dtmvtolt => pr_tab_crapcob(vr_idx_cob).dtmvtolt
-                                                    ,pr_vltitulo => pr_tab_crapcob(vr_idx_cob).vltitulo
-                                                    ,pr_tpdregra => 1); --> Tipo de regra de rollout(1-registro,2-pagamento)
-                                         
           vr_cdmotivo := NULL;
-          -- 1) se pagador DDA 
-          IF NVL(vr_flgsacad,0) = 1 THEN -- retirado regra de rollout OR NVL(vr_rollout,0) = 1 THEN 
-            vr_cdmotivo := 'A4';
-          END IF;
-                                         
-          -- 2) se inregcip = 1 -> vr_cdmotivo = 'R1' (concatenar);
+          -- 1) se inregcip = 1 -> vr_cdmotivo = 'R1' (concatenar);
           IF vr_inregcip = 1 THEN
             vr_cdmotivo := NVL(vr_cdmotivo,'') || 'R1';
           END IF;
           
-          -- 3) se inemiten = 3 -> vr_cdmotivo = 'P1' (concatenar);
+          -- 2) se inemiten = 3 -> vr_cdmotivo = 'P1' (concatenar);
           IF pr_tab_crapcob(vr_idx_cob).inemiten = 3 THEN
             vr_cdmotivo := NVL(vr_cdmotivo,'') || 'P1';
           END IF;
