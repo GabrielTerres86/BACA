@@ -763,6 +763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
 			   15/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
 							pc_consulta_extrato. (Reinert)
+			   
+			   21/07/2017 - Incluído histórico 508 na procedure pc_consulta_extrato. (Andrey - Mouts)
 
 ..............................................................................*/
 
@@ -2179,7 +2181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
 				END LOOP;
 
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
@@ -3698,7 +3700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
-                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
+                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
           -- Se for uma transferencia agendada, nao compor saldo
           IF NOT( (rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
