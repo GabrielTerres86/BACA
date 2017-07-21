@@ -56,6 +56,7 @@ PROCEDURE valores_entrada:
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.                     
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.                 
             WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo).  
+            WHEN "idseqttl" THEN aux_idseqttl = INTE(tt-param.valorCampo).  
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo). 
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
             WHEN "flaceint" THEN aux_flaceint = INTE(tt-param.valorCampo).

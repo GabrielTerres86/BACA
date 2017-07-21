@@ -200,27 +200,10 @@ PROCEDURE busca_inf_produtos:
       ASSIGN tt-inf-produto.vlemprst = tt-inf-produto.vlemprst + tt-proposta-epr.vlemprst.
     END.
     
-    RUN sistema/generico/procedures/b1wgen0019.p PERSISTENT SET h-b1wgen0019.
-
-    RUN obtem-limite IN h-b1wgen0019 (INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nmdatela,
-                                      INPUT par_idorigem, /* Ayllos */
-                                      INPUT par_nrdconta,
-                                      INPUT par_idseqttl,
-                                      INPUT FALSE,                                      
-                                      INPUT par_dtmvtolt,
-                                      INPUT 0,
-                                      INPUT FALSE,
-                                      OUTPUT TABLE tt-proposta-limcredito,
-                                      OUTPUT TABLE tt-erro,                                      
-                                      OUTPUT TABLE tt-msg-confirma).
-    DELETE PROCEDURE h-b1wgen0019.
-    
-    FOR FIRST tt-proposta-limcredito NO-LOCK:
-      ASSIGN tt-inf-produto.vllimpro = tt-proposta-limcredito.vllimpro.
+    FOR EACH craplim WHERE craplim.cdcooper = par_cdcooper
+                       AND craplim.nrdconta = par_nrdconta
+                       AND craplim.insitlim = 2 NO-LOCK:
+      ASSIGN tt-inf-produto.vllimpro = tt-inf-produto.vllimpro + craplim.vllimite.
     END.
     
     RUN sistema/generico/procedures/b1wgen0009.p PERSISTENT SET h-b1wgen0009.    

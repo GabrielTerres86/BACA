@@ -35,7 +35,7 @@
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
-		<script type="text/javascript" src="../../scripts/menu.js"></script>
+		<script type="text/javascript" src="../../scripts/menu.js?keyrand<? echo rand(); ?>"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
 		<script type="text/javascript" src="<? echo $nometela ?>.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>

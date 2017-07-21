@@ -60,7 +60,9 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlemprst')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'vlemprst') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="1"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -71,7 +73,9 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vllimpro')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'vllimpro') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="2"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -82,7 +86,9 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vllimdsc')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'vllimdsc') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="3"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -93,7 +99,9 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlcompcr')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'vlcompcr') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="4"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -104,7 +112,9 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vllimcar')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'vllimcar') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="5"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -115,7 +125,9 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlresapl')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'vlresapl') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="6"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -126,7 +138,9 @@
 								<label>R$ <? echo formataMoeda(getByTagName($regServicos2->tags,'vlsrdrpp')); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'vlsrdrpp') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="7"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -228,7 +242,9 @@
 								<label><? echo getByTagName($regServicos2->tags,'qtfdcuso'); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'qtfdcuso') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="15"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
@@ -239,7 +255,9 @@
 								<label><? echo getByTagName($regServicos2->tags,'qtchqcan'); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'qtchqcan') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="16"/>
+							<?}?>
 							</td>
 						</tr>						
 						<tr>
@@ -250,7 +268,9 @@
 								<label><? echo getByTagName($regServicos2->tags,'qtchqdev'); ?></label>
 							</td>
 							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'qtchqdev') > 0){?>
 								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>
+							<?}?>
 							</td>
 						</tr>
 						<tr>
