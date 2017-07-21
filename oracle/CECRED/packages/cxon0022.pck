@@ -3533,6 +3533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
           
            /* Sequencial utilizado para separar um lançamento
            em conta para cada data nao ocorrendo duplicidade de chave */
@@ -3775,9 +3776,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
                    RAISE vr_exc_erro;
            END;           
+        END IF;           
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
-     END LOOP; -- Fim cheques menor praca
+     END LOOP;
      
      -- Criacao do LOTE de ORIGEM (DEBITO)
      vr_i_nro_lote    := 11000 + pr_nro_caixa;
@@ -3908,7 +3910,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
                                TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
 
+                  IF rw_verifica_mdw.cdhistor = 2433 THEN
                            vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'6');
+                  END IF;
                   
                   IF rw_verifica_mdw.cdhistor <> 386 THEN
                      vr_aux_nrseqdig := pr_typ_tab_chq(vr_index).nrseqlcm;
@@ -4448,14 +4452,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-       
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
         pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
+        END IF;
      END LOOP;
 
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
@@ -5826,6 +5830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
 
            /* Sequencial utilizado para separar um lançamento
          em conta para cada data nao ocorrendo duplicidade de chave */
@@ -6064,7 +6069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
                    RAISE vr_exc_erro;
            END;
-           
+        END IF;           
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
      END LOOP;
@@ -6196,7 +6201,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
                                TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
 
+                  IF rw_verifica_mdw.cdhistor = 2433 THEN
                            vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'6');
+                  END IF;
                   
                   IF rw_verifica_mdw.cdhistor <> 386 THEN
                      vr_aux_nrseqdig := pr_typ_tab_chq(vr_index).nrseqlcm;
@@ -6918,13 +6925,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-       pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS ..: '||
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
+          pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
+        END IF;
      END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
@@ -8322,7 +8330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
            /* Sequencial utilizado para separar um lançamento
          em conta para cada data nao ocorrendo duplicidade de chave */
 
@@ -8560,7 +8568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
                    RAISE vr_exc_erro;
            END;
-           
+        END IF;           
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
         
      END LOOP;
@@ -8693,7 +8701,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
                                TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
 
+                  IF rw_verifica_mdw.cdhistor = 2433 THEN
                            vr_i_nro_docto := TO_NUMBER(vr_c_docto_salvo||to_char(gene0002.fn_mask(pr_dsorigi => pr_typ_tab_chq(vr_index).nrsequen, pr_dsforma => '99' ))||'6');
+                  END IF;
                   
                   IF rw_verifica_mdw.cdhistor <> 386 THEN
                      vr_aux_nrseqdig := pr_typ_tab_chq(vr_index).nrseqlcm;
@@ -9540,14 +9550,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
-       
-       pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS ..: '||
+       IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
+          pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
         vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        
+        END IF;
      END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
