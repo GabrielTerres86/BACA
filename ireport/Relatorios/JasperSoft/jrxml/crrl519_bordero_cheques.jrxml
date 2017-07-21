@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2017-06-14T17:57:37 -->
+<!-- 2017-07-12T15:24:09 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_bordero" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="440" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -97,6 +97,9 @@
 	<field name="nrdlotes" class="java.lang.String">
 		<fieldDescription><![CDATA[nrdlotes]]></fieldDescription>
 	</field>
+	<field name="vltotiof" class="java.lang.String">
+		<fieldDescription><![CDATA[vltotiof]]></fieldDescription>
+	</field>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -180,19 +183,6 @@
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Valor Descontado: "+$F{vltotchq}]]></textFieldExpression>
-			</textField>
-			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="291" y="112" width="211" height="8" isRemoveLineWhenBlank="true" uuid="80b0ef15-513a-4644-af01-553f6a552572">
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-					<printWhenExpression><![CDATA[false]]></printWhenExpression>
-				</reportElement>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Tarifa do Contrato de Desconto: "+$F{vltarctr}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="40" y="144" width="239" height="8" isRemoveLineWhenBlank="true" uuid="b199d0c4-187a-4889-ab7e-f6fc165aad92">
@@ -335,6 +325,19 @@
 					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Periodicidade da Capitalização: "+$F{dsperiod}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="291" y="112" width="198" height="8" isRemoveLineWhenBlank="true" uuid="dac68fa7-e735-41c8-beb6-906a7cbe7e48">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["IOF: "+$F{vltotiof}]]></textFieldExpression>
 			</textField>
 		</band>
 	</pageHeader>
