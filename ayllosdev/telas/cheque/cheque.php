@@ -131,22 +131,30 @@
 	var flgcadas           	   = '<? echo $_POST['flgcadas']; ?>';           // Verificar se esta sendo feito o cadastro da nova conta 
 	var dtmvtolt		   	   = '<? echo $glbvars['dtmvtolt']; ?>';         // Data do sistema
 	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
+	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMAtenda = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMCheque = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var tppeschq = '0';
 
 	if (executandoImpedimentos){
 		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
 		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
 		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
+		var produtosCheque = "<? echo $_POST['produtosCancMCheque']; ?>";
 		var posicao = '<? echo $_POST['posicao']; ?>';
 		produtosCancM = produtos.split("|");		
 		produtosCancMAtenda = produtosAtenda.split("|");
 		produtosCancMContas = produtosContas.split("|");
-	}
-	
-	if (nrdconta != '') {
-		$("#nrdconta","#frmCabCheque").val(nrdconta);
-		$("#btnOK","#frmCabCheque").click();
-	}else{
-		nrdconta = 0;
-	}
+		produtosCancMCheque = produtosCheque.split("|");
+		eval(produtosCancMCheque[posicao - 1]);		
+		posicao++;
+		if (nrdconta != '') {
+			$("#nrdconta","#frmCabCheque").val(nrdconta);
+			$("#btnOK","#frmCabCheque").click();		
+		}else{
+			nrdconta = 0;
+		}
 
+	}	
 </script>
