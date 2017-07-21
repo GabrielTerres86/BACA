@@ -178,6 +178,7 @@
 				<input type="hidden" name="produtosCancM"           		id="produtosCancM" value="" > 
 				<input type="hidden" name="produtosCancMAtenda"           	id="produtosCancMAtenda" value="" > 
 				<input type="hidden" name="produtosCancMContas"           	id="produtosCancMContas" value="" > 
+				<input type="hidden" name="produtosCancMCheque"           	id="produtosCancMCheque" value="" > 
 				<input type="hidden" name="produtosTelasServicos"           id="produtosTelasServicos" value="" > 
 				<input type="hidden" name="produtosTelasServicosAdicionais" id="produtosTelasServicosAdicionais" value="" > 
 				<input type="hidden" name="atualizarServicos" 				id="atualizarServicos" value="" > 

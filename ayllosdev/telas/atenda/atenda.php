@@ -440,6 +440,8 @@ setVarSession("rotinasTela", $rotinasTela);
 	var produtosTelasServicosAdicionais = new Array();	                 // Rotinas adicionais a serem chamadas via PRODUTOS
 	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
 	var produtosCancMAtenda = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMCheque = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
 	var atualizarServicos = [];											 // Lista de produtos a atualizar	
 	var flgProdutos        = false; 									 // Verificar se ja entrou na rotina PRODUTOS apos vir da MATRIC/CONTAS
 	
@@ -482,10 +484,12 @@ setVarSession("rotinasTela", $rotinasTela);
 		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
 		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
 		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
+		var produtosCheque = "<? echo $_POST['produtosCancMCheque']; ?>";
 		var posicao = '<? echo $_POST['posicao']; ?>';
 		produtosCancM = produtos.split("|");		
 		produtosCancMAtenda = produtosAtenda.split("|");
 		produtosCancMContas = produtosContas.split("|");
+		produtosCancMCheque = produtosCheque.split("|");
 	}
 
 	if (nrdconta != '' && executandoImpedimentos == '') {

@@ -120,5 +120,6 @@
 	var produtosCancM 		   = "<? echo $_POST['produtosCancM']; ?>";
 	var produtosCancMAtenda    = "<? echo $_POST['produtosCancMAtenda']; ?>";
 	var produtosCancMContas    = "<? echo $_POST['produtosCancMContas']; ?>";
+	var produtosCancMCheque    = "<? echo $_POST['produtosCancMCheque']; ?>";
 	var posicao 			   = '<? echo $_POST['posicao']; ?>';
 </script>

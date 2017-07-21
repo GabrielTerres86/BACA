@@ -401,9 +401,11 @@ PROCEDURE busca_inf_produtos:
     END.
     
     /* Buscar quantidade de cheques devolvidos */
-    FOR EACH crapcec FIELDS(cdcooper)
-                      WHERE crapcec.cdcooper = par_cdcooper 
-                        AND crapcec.nrdconta = par_nrdconta NO-LOCK:
+    FOR EACH crapneg FIELDS(cdcooper)
+                      WHERE crapneg.cdcooper = par_cdcooper 
+                        AND crapneg.nrdconta = par_nrdconta 
+                        AND crapneg.cdhisest = 1
+                        AND CAN-DO("11,12,13", STRING(crapneg.cdobserv)) NO-LOCK:
         ASSIGN tt-inf-produto.qtchqdev = tt-inf-produto.qtchqdev + 1.
     END.
     
@@ -482,8 +484,7 @@ PROCEDURE canc_auto_produtos:
 
     FOR FIRST crapass FIELDS(dtdemiss)
                       WHERE crapass.cdcooper = par_cdcooper AND
-                            crapass.nrdconta = par_nrdconta AND
-                            crapass.dtdemiss <> ? NO-LOCK:
+                            crapass.nrdconta = par_nrdconta NO-LOCK:
 
       Grava: DO TRANSACTION
           ON ERROR  UNDO Grava, LEAVE Grava
@@ -758,7 +759,7 @@ PROCEDURE canc_auto_produtos:
     END.
     
     IF NOT AVAILABLE crapass THEN
-      ASSIGN par_dscritic = "Nao foi possivel efetuar o cancelamento automatico. Conta ainda esta ativa.".
+      ASSIGN par_dscritic = "Nao foi possivel efetuar o cancelamento automatico. Conta nao encontrada.".
       
     IF par_dscritic <> ? AND par_dscritic <> "" THEN
       RETURN "NOK".

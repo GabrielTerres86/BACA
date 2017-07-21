@@ -256,11 +256,13 @@ function setaImped() {
 	var produtos = "";
 	var produtosAtenda = "";
 	var produtosContas = "";
+	var produtosCheque = "";
 	
 	if ($("#nmtelant","#frmMenu").val() == "COBRAN"){		
 		produtos = produtosCancM;
 		produtosAtenda = produtosCancMAtenda;
 		produtosContas = produtosCancMContas;
+		produtosCheque = produtosCancMCheque;
 	}else{
 		for (var i = 0; i < produtosCancM.length; i++ ) {		
 			produtos += replaceAll(produtosCancM[i],'"',"\'") + "|";
@@ -279,7 +281,14 @@ function setaImped() {
 		}	
 		
 		produtosContas = produtosContas.substr(0,produtosContas.length - 1);		
-		if ($("#nmtelant","#frmMenu").val() != "CONTAS" || posicao == 0){
+		
+		for (var i = 0; i < produtosCancMCheque.length; i++ ) {
+			produtosCheque += replaceAll(produtosCancMCheque[i],'"',"\'") + "|";
+		}			
+		
+		produtosCheque = produtosCheque.substr(0,produtosCheque.length - 1);		
+
+		if (($("#nmtelant","#frmMenu").val() != "CONTAS" && $("#nmtelant","#frmMenu").val() != "CHEQUE") || posicao == 0){
 			posicao++;
 		}
 	}	
@@ -288,6 +297,7 @@ function setaImped() {
 	$("#produtosCancM","#frmMenu").val(produtos);
 	$("#produtosCancMAtenda","#frmMenu").val(produtosAtenda);
 	$("#produtosCancMContas","#frmMenu").val(produtosContas);
+	$("#produtosCancMCheque","#frmMenu").val(produtosCheque);
 	$("#posicao","#frmMenu").val(posicao);
 }
 

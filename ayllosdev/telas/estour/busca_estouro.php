@@ -8,7 +8,7 @@
  * ALTERAÇÕES   : 02/09/2015 - Ajuste para correção da conversão realizada pela DB1
 					     	   (Adriano).
  
- 
+				  21/07/2017 - Alterações referentes ao cancelamento manual de produtos do projeto 364.(Reinert) 
  */
 ?> 
 
@@ -63,7 +63,7 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];	
 		
-		if (!empty($nmdcampo)) { $retornoAposErro .= " $('#".$nmdcampo."','#frmCab').addClass(\'campoErro\').focus();"; }
+		if (!empty($nmdcampo)) { $retornoAposErro .= " $('#".$nmdcampo."','#frmCab').addClass(\'campoErro\').focus();btnVoltar();"; }
 		
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);		
 		

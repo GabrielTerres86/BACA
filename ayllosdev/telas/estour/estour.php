@@ -7,7 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 02/09/2015 - Ajuste para correção da conversão realizada pela DB1
 					     	   (Adriano).
- 
+				  21/07/2017 - Alterações referentes ao cancelamento manual de produtos do projeto 364.(Reinert)
  */
 ?>
 
@@ -118,3 +118,28 @@
 		</table>
 	</body>
 </html>
+<script>
+	var nrdconta           	   = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
+	var flgcadas           	   = '<? echo $_POST['flgcadas']; ?>';           // Verificar se esta sendo feito o cadastro da nova conta 
+	var dtmvtolt		   	   = '<? echo $glbvars['dtmvtolt']; ?>';         // Data do sistema
+	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
+	var produtosCancM = new Array();	                 				 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMAtenda = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMContas = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+	var produtosCancMCheque = new Array();	                 			 // Rotinas adicionais a serem chamadas via CONTAS/IMPEDIMENTOS
+
+	if (executandoImpedimentos){
+		var produtos =  "<? echo $_POST['produtosCancM']; ?>";
+		var produtosAtenda = "<? echo $_POST['produtosCancMAtenda']; ?>";
+		var produtosContas = "<? echo $_POST['produtosCancMContas']; ?>";
+		var produtosCheque = "<? echo $_POST['produtosCancMCheque']; ?>";
+		var posicao = '<? echo $_POST['posicao']; ?>';
+		produtosCancM = produtos.split("|");		
+		produtosCancMAtenda = produtosAtenda.split("|");
+		produtosCancMContas = produtosContas.split("|");
+		produtosCancMCheque = produtosCheque.split("|");
+		if (posicao == 1){
+			posicao++;
+		}
+	}	
+</script>

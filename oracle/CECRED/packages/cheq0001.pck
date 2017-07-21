@@ -24,6 +24,7 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
 	--               04/07/2016 - Adicionados busca_taloes_car para geração de relatório
   --                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
 	--
+	--				 21/07/2017 - Alterações referente ao cancelamento manual do projeto 364. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -154,6 +155,8 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                              ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação
                              ,pr_nrdconta  IN     NUMBER           --> Número da conta
                              ,pr_nrcheque  IN     NUMBER           --> Número de cheque
+														 ,pr_execimpe  IN     NUMBER           --> Se for chamado pela rotina de impedimentos
+														 ,pr_tppeschq  IN     NUMBER           --> Tipo de pesquisa da tela cheque vinda da rotina de impedimentos
                              ,pr_nrregist  IN     NUMBER           --> Número de registro
                              ,pr_nriniseq  IN     NUMBER           --> Inicial da sequencia
                              ,pr_xmllog    IN     VARCHAR2         --> XML com informações de LOG
@@ -2363,6 +2366,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação
                            ,pr_nrdconta  IN     NUMBER           --> Número da conta
                            ,pr_nrcheque  IN     NUMBER           --> Número de cheque
+													 ,pr_execimpe  IN     NUMBER           --> Se for chamado pela rotina de impedimentos
+													 ,pr_tppeschq  IN     NUMBER           --> Tipo de pesquisa da tela cheque vinda da rotina de impedimentos
                            ,pr_nrregist  IN     NUMBER           --> Número de registro
                            ,pr_nriniseq  IN     NUMBER           --> Inicial da sequencia
                            ,pr_xmllog    IN     VARCHAR2         --> XML com informações de LOG
@@ -2491,6 +2496,17 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                'from crapfdc ' ||
                'where cdcooper = ' || pr_cdcooper || ' ' ||
                'and nrdconta = ' || pr_nrdconta || ' ';
+
+    IF pr_execimpe = 1 THEN
+			CASE pr_tppeschq
+				WHEN 2 THEN 
+					vr_sql := vr_sql || 'and incheque = 0 '; -- Devolvido(Verificar)
+				WHEN 3 THEN
+					vr_sql := vr_sql || 'and incheque = 8 ';
+				ELSE
+					NULL;
+			END CASE;
+		END IF;
 
     -- Valida fluxo do processamento
     CASE pr_nrtipoop

@@ -68,6 +68,9 @@ function controlaLayout(operacao) {
 		bloqueiaFundo(divRotina);	
 		$(this).fadeIn(1000);
 		divRotina.centralizaRotinaH(); 
+		$('input[type="checkbox"]', '#frmCancAuto').each(function (i) {		
+			$(this).prop('checked', true);
+		});
 	});	
 	
 	return false;	
@@ -150,8 +153,10 @@ function efetuaCancelamentoManual(){
 	
 	produtosCancM = new Array();
 	produtosCancMAtenda = new Array();
+	produtosCancMContas = new Array();
+	produtosCancMCheque = new Array();
 	var index = 0;	
-	var flgcheque = false;
+
 	// Percorrendo todos os checkbox do frmCancManl
     $('input[type="checkbox"]', '#frmCancManl').each(function (i) {
 
@@ -166,6 +171,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'PRESTACOES\',\'Presta&ccedil;&otilde;oes\',\'prestacoes\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 					break;
 
@@ -178,6 +184,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite de Cr&eacute;dito\',\'limite_credito\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -191,6 +198,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -204,6 +212,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'DESCONTOS\',\'Descontos\',\'descontos\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -217,6 +226,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'CARTAO CRED\',\'Cart&otilde;es de Cr&eacute;dito\',\'cartao_credito\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -230,6 +240,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'APLICACOES\',\'Aplica&ccedil;&otilde;es\',\'aplicacoes\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -243,6 +254,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'POUP. PROG\',\'Poupan&ccedil;a Programada\',\'poupanca_programada\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -256,6 +268,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = 'acessaRotina(\'\',\'PAGTO POR ARQUIVO\',\'Pagto. por arquivo\',\'pagamento_titulo_arq\');';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;					
@@ -269,6 +282,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'COBRAN\',\'no\');';
 					produtosCancMAtenda[index] = '';
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -282,6 +296,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = "impedSeguros();";
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -295,6 +310,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'ATENDA\',\'no\');';
 					produtosCancMAtenda[index] = "impedConsorcios();";
 					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -308,6 +324,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'CONTAS\',\'no\');';
 					produtosCancMAtenda[index] = '';
 					produtosCancMContas[index] = 'acessaRotina(\'CONTA CORRENTE\',\'Conta Corrente\',\'conta_corrente\');';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -321,6 +338,7 @@ function efetuaCancelamentoManual(){
 										   'direcionaTela(\'CONTAS\',\'no\');';
 					produtosCancMAtenda[index] = '';
 					produtosCancMContas[index] = "showError('error','Cooperado possui cart&atilde;o Bancoob, orienta-lo a entrar em contato com a institui&ccedil;&atilde;o para efetuar o cancelamento','Alerta - Ayllos','sequenciaImpedimentos();');";
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -333,7 +351,8 @@ function efetuaCancelamentoManual(){
 										   'setaImped();' +					
 										   'direcionaTela(\'CONTAS\',\'no\');';
 					produtosCancMAtenda[index] = '';
-					produtosCancMContas[index] = "showError('error','Cooperado possui cart&atilde;o BB, orienta-lo a entrar em contato com a institui&ccedil;&atilde;o para efetuar o cancelamento','Alerta -  Ayllos','sequenciaImpedimentos();');";
+					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;
@@ -341,59 +360,67 @@ function efetuaCancelamentoManual(){
 				//CHEQUE -> FOLHAS DE CHEQUE EM USO
 				case "15":
 					
-					if (!flgcheque){
-						flgcheque = true;
-						produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
-											   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
-											   'setaImped();' +					
-											   'direcionaTela(\'CHEQUE\',\'no\');';
-						produtosCancMAtenda[index] = '';
-						produtosCancMContas[index] = '';
-						index++;
-					}
-					break;
-
-				//CHEQUE -> CHEQUES DEVOLVIDOS
-				case "16":
-				
-					if (!flgcheque){
-						flgcheque = true;
-						produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
-											   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
-											   'setaImped();' +					
-											   'direcionaTela(\'CHEQUE\',\'no\');';
-						produtosCancMAtenda[index] = '';
-						produtosCancMContas[index] = '';
-						index++;
-					}
-					break;
-
-				//CHEQUE -> TALONÁRIOS EM ESTOQUE
-				case "17":
-					if (!flgcheque){
-						flgcheque = true;
-						produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
-											   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
-											   'setaImped();' +					
-											   'direcionaTela(\'CHEQUE\',\'no\');';
-						produtosCancMAtenda[index] = '';
-						produtosCancMContas[index] = '';
-						index++;
-					}
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
+										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
+										   'setaImped();' +					
+										   'direcionaTela(\'CHEQUE\',\'no\');';
+					produtosCancMAtenda[index] = '';
+					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = 'tppeschq = \'1\';'; // Chq em uso
+					index++;
+					
 					break;
 
 				//CHEQUE -> CHEQUES CANCELADOS
+				case "16":
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
+										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
+										   'setaImped();' +					
+										   'direcionaTela(\'CHEQUE\',\'no\');';
+					produtosCancMAtenda[index] = '';
+					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = 'tppeschq = \'3\';'; // Chq cancelados
+					index++;
+					
+					break;					
+					
+				//CHEQUE -> CHEQUES DEVOLVIDOS
+				case "17":
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela ESTOUR ...\'); ' + 
+										   'setaParametrosImped(\'ESTOUR\',\'\',nrdconta,flgcadas, \'ESTOUR\');' +
+										   'setaImped();' +					
+										   'direcionaTela(\'ESTOUR\',\'no\');';
+					produtosCancMAtenda[index] = '';
+					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = ''; // Chq devolvidos
+					index++;
+					
+					break;
+
+				//CHEQUE -> TALONÁRIOS EM ESTOQUE
+				/*case "17":
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
+										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
+										   'setaImped();' +					
+										   'direcionaTela(\'CHEQUE\',\'no\');';
+					produtosCancMAtenda[index] = '';
+					produtosCancMContas[index] = '';
+					index++;
+					
+					break;
+				*/
+				//BENEFICIO INSS
 				case "18":
-					if (!flgcheque){
-						flgcheque = true;
-						produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
-											   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
-											   'setaImped();' +					
-											   'direcionaTela(\'CHEQUE\',\'no\');';
-						produtosCancMAtenda[index] = '';
-						produtosCancMContas[index] = '';
-						index++;
-					}
+
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CONTAS ...\'); ' + 
+										   'setaParametrosImped(\'CONTAS\',\'\',nrdconta,flgcadas, \'CONTAS\');' +
+										   'setaImped();' +					
+										   'direcionaTela(\'CONTAS\',\'no\');';
+					produtosCancMAtenda[index] = '';
+					produtosCancMContas[index] = "showError('error','Orientar o cooperado a transferir o benef&iacute;cio do INSS para outra institui&ccedil;&atilde;o.','Alerta - Ayllos','sequenciaImpedimentos();');";
+					produtosCancMCheque[index] = '';
+					index++;
+
 					break;
 
 				//BENEFICIO INSS
@@ -404,20 +431,8 @@ function efetuaCancelamentoManual(){
 										   'setaImped();' +					
 										   'direcionaTela(\'CONTAS\',\'no\');';
 					produtosCancMAtenda[index] = '';
-					produtosCancMContas[index] = "showError('error','Orientar o cooperado a transferir o benef&iacute;cio do INSS para outra institui&ccedil;&atilde;o.','Alerta - Ayllos','sequenciaImpedimentos();');";
-					index++;
-
-					break;
-
-				//BENEFICIO INSS
-				case "20":
-
-					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CONTAS ...\'); ' + 
-										   'setaParametrosImped(\'CONTAS\',\'\',nrdconta,flgcadas, \'CONTAS\');' +
-										   'setaImped();' +					
-										   'direcionaTela(\'CONTAS\',\'no\');';
-					produtosCancMAtenda[index] = '';
 					produtosCancMContas[index] = "showError('error','Verificar na Sede se cooperado possui produtos Procapcred, Finame, Cart&atilde;o BNDES e Inovacred.','Alerta - Ayllos','sequenciaImpedimentos();');";
+					produtosCancMCheque[index] = '';
 					index++;
 
 					break;

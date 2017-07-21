@@ -104,6 +104,17 @@ function buscaConta() {
 		success : function(response) { 
 					hideMsgAguardo();
 					eval(response);
+					if (executandoImpedimentos){
+						//$("[name=nrtipoop]", "#frmTipoCheque").val(5);
+						if (tppeschq == 1){
+							$("#tpChequ1","#frmTipoCheque").click();						
+						}else if (tppeschq == 2){
+							$("#tpChequ5","#frmTipoCheque").click();
+						}else if (tppeschq == 3){
+							$("#tpChequ5","#frmTipoCheque").click();						
+						}
+						$("#btBuscaCheque","#frmTipoCheque").click();						
+					}
 				}
 	}); 
 }
@@ -119,6 +130,12 @@ function buscaCheque(nriniseq) {
 	nrregist = normalizaNumero(cNrregist.val());	
 	nrtipoop = normalizaNumero($(cNrtipoop.selector+':checked').val());
 			
+	if (executandoImpedimentos){
+		var execimpe = 1;
+	}else{
+		var execimpe = 0;
+	}
+	
 	$.ajax({		
 		type	: 'POST',
 		dataType: 'html',
@@ -130,6 +147,8 @@ function buscaCheque(nriniseq) {
 				  nrcheque: nrcheque,
 				  nriniseq: nriniseq,
 				  nrregist: nrregist,
+				  execimpe: execimpe,
+				  tppeschq: tppeschq,
 				  redirect: 'script_ajax'
 				  
 				},
@@ -175,6 +194,7 @@ function controlaLayout() {
     if ($("#crm_inacesso","#frmCabCheque").val() == 1) {
         $("#nrdconta","#frmCabCheque").val($("#crm_nrdconta","#frmCabCheque").val());
     }
+	
 }
 
 function formataCabecalho() {
@@ -433,10 +453,7 @@ function funcaoVoltar(){
 			$('table > tbody > tr > td', 'div#divPesquisaRodape').each(function(i){ $(this).html(''); });
 		} else {
 			if (executandoImpedimentos){
-				if (posicao == 1){
-					posicao++;
-				}
-				eval(produtosCancM[posicao - 1]);				
+				sequenciaImpedimentos();
 				return false;
 			}else{
 				estadoInicial();			
@@ -487,4 +504,26 @@ function estadoInicial() {
 	cNrcheque.val('0');
 	$('table > tbody', 'div.divRegistros').html('');
 	$('table > tbody > tr > td', 'div#divPesquisaRodape').each(function(i){ $(this).html(''); });	
+}
+
+function sequenciaImpedimentos() {
+    if (executandoImpedimentos) {	
+		if (posicao <= produtosCancMCheque.length) {
+			if (produtosCancMCheque[posicao - 1] == '' || produtosCancMCheque[posicao - 1] == 'undefined'){
+				eval(produtosCancM[posicao - 1]);
+				posicao++;
+			}else{				
+				eval(produtosCancMCheque[posicao - 1]);
+				posicao++;
+				estadoInicial();
+				$("#nrdconta","#frmCabCheque").val(nrdconta);
+				$("#btnOK","#frmCabCheque").click();						
+			}
+            return false;
+        }else{
+			eval(produtosCancM[posicao - 1]);
+			posicao++;
+			return false;
+		}
+    }
 }

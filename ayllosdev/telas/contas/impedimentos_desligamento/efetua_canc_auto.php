@@ -66,9 +66,9 @@
 
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjServicos->roottag->tags[0]->name) == 'ERRO') {
-		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);fechaRotina(divRotina);',false);
+		exibirErro('error',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
 	}else{
-		exibirErro('inform',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[1]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);fechaRotina(divRotina);',false);
+		exibirErro('inform',$xmlObjServicos->roottag->tags[0]->tags[0]->tags[1]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
 	}
 	
 ?>

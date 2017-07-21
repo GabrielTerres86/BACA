@@ -233,13 +233,24 @@
 						</tr>
 						<tr>
 							<td>								
+								<label class="checkbox">Cheques cancelados</label>
+							</td>
+							<td>
+								<label><? echo getByTagName($regServicos2->tags,'qtchqcan'); ?></label>
+							</td>
+							<td style="vertical-align: middle">
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="16"/>
+							</td>
+						</tr>						
+						<tr>
+							<td>								
 								<label class="checkbox">Cheques devolvidos</label>
 							</td>
 							<td>
 								<label><? echo getByTagName($regServicos2->tags,'qtchqdev'); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="16"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>
 							</td>
 						</tr>
 						<tr>
@@ -250,18 +261,7 @@
 								<label><? echo getByTagName($regServicos2->tags,'qtreqtal'); ?></label>
 							</td>
 							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>
-							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Cheques cancelados</label>
-							</td>
-							<td>
-								<label><? echo getByTagName($regServicos2->tags,'qtchqcan'); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="18"/>
+								<!--<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>-->
 							</td>
 						</tr>
 						<tr>
@@ -273,7 +273,7 @@
 							</td>
 							<td style="vertical-align: middle">
 							<?if (getByTagName($regServicos2->tags,'flgbinss') == 1){?>							
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="19"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="18"/>
 							<?}?>
 							</td>
 						</tr>
@@ -286,7 +286,7 @@
 							</td>
 							<td style="vertical-align: middle">
 							<?if (getByTagName($regServicos2->tags,'flpdbrde') == 1){?>														
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="20"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="19"/>
 							<?}?>
 							</td>
 						</tr>
