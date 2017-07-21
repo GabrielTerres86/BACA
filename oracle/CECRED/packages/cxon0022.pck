@@ -3140,11 +3140,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-           pr_typ_tab_chq(vr_index).nrdocmto := 6;
-           pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-           pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-           vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
-                                                                                                                 
+           IF rw_verifica_mdw.cdhistor = 2433 THEN
+             pr_typ_tab_chq(vr_index).nrdocmto := 6;
+             pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+             pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+             vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
+           END IF;
         END LOOP;
         -- Fim da montagem do Resumo
           
@@ -5438,11 +5439,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-                     pr_typ_tab_chq(vr_index).nrdocmto := 6;
-           pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-           pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-           vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
-                                                                                                                 
+           IF rw_verifica_mdw.cdhistor = 2433 THEN
+             pr_typ_tab_chq(vr_index).nrdocmto := 6;
+             pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+             pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+             vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
+           END IF;
         END LOOP;
         -- Fim da montagem do Resumo
                         
@@ -7939,11 +7941,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
              pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
            END IF;
 
-                     pr_typ_tab_chq(vr_index).nrdocmto := 6;
-           pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-           pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-           vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
-                                                                                                                 
+           IF rw_verifica_mdw.cdhistor = 2433 THEN
+             pr_typ_tab_chq(vr_index).nrdocmto := 6;
+             pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+             pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+             vr_de_valor_total := vr_de_valor_total + rw_verifica_mdw.vlcompel;
+           END IF;
         END LOOP;
         -- Fim da montagem do Resumo
                         
