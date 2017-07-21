@@ -322,7 +322,7 @@ BEGIN
 
       /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
     if PR_CDAGENCI = 0
-    and   rw_crapdat.inproces > 2 then
+    and   rw_crapdat.inproces >= 2 then
        PC_CRPS750_1( pr_faseprocesso => 1
                     ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                     ,pr_nrdconta     => null  --> Número da conta
@@ -473,7 +473,7 @@ BEGIN
            vr_idtpprd := rw_crappep.idtpprd;
 
            if  rw_crappep.idtpprd = 'TR' then
-               if rw_crapdat.inproces > 2 then
+               if rw_crapdat.inproces >= 2 then
                   PC_CRPS750_1( pr_faseprocesso => 2
                               ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                               ,pr_nrdconta     => rw_crappep.nrdconta  --> Número da conta
@@ -528,7 +528,7 @@ BEGIN
 
     /* encerra a execucao da pc_crps750_1 */
     IF pr_cdagenci = 0
-    and rw_crapdat.inproces > 2 THEN
+    and rw_crapdat.inproces >= 2 THEN
         PC_CRPS750_1( pr_faseprocesso => 3
                       ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                       ,pr_nrdconta     => null  --> Número da conta
