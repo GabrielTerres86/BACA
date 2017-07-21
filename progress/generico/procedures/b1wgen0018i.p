@@ -122,8 +122,8 @@ FORM rel_dtmvtini             AT  1  LABEL "PERIODO"  FORMAT "99/99/9999" " a "
      rel_dtmvtfim                    NO-LABEL         FORMAT "99/99/9999"
      tt-relat-custod.dsdsaldo AT 55  NO-LABEL         FORMAT "x(25)"
      SKIP(1)
-     " CHEQUES COOPERATIVA      CHEQUES OUTROS BANCOS" AT  24
-     "       ------ TOTAL ------"
+     " CHEQUES COOPERATIVA  CHEQUES OUTROS BANCOS" AT  24
+     " ------ TOTAL ------"
      SKIP(1)
      WITH SIDE-LABELS NO-BOX WIDTH 132 FRAME f_cab_c.
       
