@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 19/06/2017
+   Data    : Novembro/98                     Ultima atualizacao: 10/07/2017
 
    Dados referentes ao programa:
 
@@ -565,6 +565,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                19/06/2017 - Ajuste para enviar apenas cheques em desconto aprovados (insitana = 1)
                             PRJ300-Desconto de cheque(Odirlei-AMcom)
                             
+               10/07/2017 - Ajuste na geração de lançamento contábil de receita de recarga de 
+                            celular - SD 707484 - (Jonatas - Supero)
+
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -1398,12 +1401,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
 	-- Buscar operadoras ativas
 	CURSOR cr_operadora (pr_cdcooper IN craplcm.cdcooper%TYPE
-	                    ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+	                    ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                      ,pr_inpessoa IN crapass.inpessoa%TYPE) IS
 	  SELECT tope.cdoperadora
           ,topr.nmoperadora
           ,topr.perreceita
-          ,ass.inpessoa
-		      ,SUM(tope.vlrecarga) totrecarga
+          ,decode(pr_inpessoa,0,0,ass.inpessoa) inpessoa
+          ,ass.cdagenci
+          ,sum(vlrecarga) vlrecarga  
+          ,(round((sum(vlrecarga) * (topr.perreceita /100)),2)) vl_receita
       FROM tbrecarga_operacao tope
           ,tbrecarga_operadora topr
           ,crapass             ass
@@ -1413,28 +1419,46 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND tope.insit_operacao = 2
        AND tope.dtdebito = pr_dtmvtolt
        AND topr.cdoperadora = tope.cdoperadora
+       AND ass.inpessoa = decode(pr_inpessoa,0,ass.inpessoa,pr_inpessoa)
       GROUP BY tope.cdoperadora
               ,topr.nmoperadora
               ,topr.perreceita
-              ,ass.inpessoa;
+              ,ass.cdagenci
+              ,decode(pr_inpessoa,0,0,ass.inpessoa)
+      order by ass.cdagenci;
       
-	-- Recarga de celular
+      
   CURSOR cr_recargas (pr_cdcooper    IN craplcm.cdcooper%TYPE
 	                   ,pr_dtmvtolt    IN craplcm.dtmvtolt%TYPE
-										 ,pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE
                      ,pr_inpessoa    IN crapass.inpessoa%TYPE) IS
-    SELECT ass.cdagenci
-		      ,SUM(nvl(tope.vlrecarga, 0)) totrecpa
+                     
+   SELECT cdagenci,
+          inpessoa,
+          sum(vl_receita) vl_receita
+     FROM (SELECT tope.cdoperadora
+                 ,topr.perreceita
+                 ,decode(pr_inpessoa,0,0,ass.inpessoa) inpessoa
+                 ,ass.cdagenci
+                 ,(round((sum(vlrecarga) * (topr.perreceita /100)),2)) vl_receita
              FROM tbrecarga_operacao tope
+                 ,tbrecarga_operadora topr
 			    ,crapass ass
-		 WHERE tope.cdcooper       = pr_cdcooper
+            WHERE tope.cdcooper       = ass.cdcooper
+              and tope.nrdconta       = ass.nrdconta
+              and tope.cdcooper       = pr_cdcooper
               AND tope.insit_operacao = 2
               AND tope.dtdebito       = pr_dtmvtolt
-			 AND tope.cdoperadora    = pr_cdoperadora
-       AND ass.inpessoa        = pr_inpessoa
-			 AND ass.cdcooper        = tope.cdcooper
-			 AND ass.nrdconta        = tope.nrdconta
-  GROUP BY ass.cdagenci;
+              AND topr.cdoperadora    = tope.cdoperadora
+              AND ass.inpessoa        = decode(pr_inpessoa,0,ass.inpessoa,pr_inpessoa)
+             GROUP BY tope.cdoperadora
+                     ,topr.perreceita
+                     ,ass.cdagenci
+                     ,decode(pr_inpessoa,0,0,ass.inpessoa)
+             order by ass.cdagenci)
+   GROUP BY cdagenci,
+            inpessoa
+   ORDER BY cdagenci;      
+		 		 
 	-- Repasse recarga de celular
 	CURSOR cr_craptvl_recarg (pr_cdcooper IN crapcop.cdcooper%TYPE
 	                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
@@ -2211,18 +2235,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   
   
   -- Registro para inicializar dados por operadora de celular
-  TYPE typ_reg_recarga_celular
-    IS RECORD (nmoperadora   VARCHAR2(100)
-              ,perreceita    NUMBER    --> percentual receita
-              ,totrecarga_pf NUMBER    --> valor total recarga pf
-              ,totrecarga_pj NUMBER);  --> valor total recarga
+  TYPE typ_reg_recarga_cel_ope
+    IS RECORD (nmoperadora tbrecarga_operadora.nmoperadora%type,
+               vlreceita   tbrecarga_operacao.vlrecarga%type);
                
-  -- pl-table principal que indexa os registros operadora de celular
-  TYPE typ_tab_recarga_celular     IS TABLE OF typ_reg_recarga_celular INDEX BY PLS_INTEGER;
-  TYPE typ_tab_age_recarga_celular IS TABLE OF typ_tab_recarga_celular INDEX BY PLS_INTEGER;  
-  
-  vr_tab_recarga_celular     typ_tab_recarga_celular;   
-  vr_tab_age_recarga_celular typ_tab_age_recarga_celular;
+  TYPE typ_tab_recarga_cel_ope IS TABLE OF typ_reg_recarga_cel_ope INDEX BY PLS_INTEGER;
+  vr_tab_recarga_cel_ope typ_tab_recarga_cel_ope;
   
   TYPE typ_tab_receita_cel_pf IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
   TYPE typ_tab_receita_cel_pj IS TABLE OF NUMBER INDEX BY PLS_INTEGER;  
@@ -2350,6 +2368,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_nom_arquivo         VARCHAR2(100);
   vr_chave               PLS_INTEGER;
   
+  -- Variavel recarga de celular
+  vr_index               NUMBER;
   
   vr_nrctacre            rw_craphis.nrctacrd%TYPE;
   vr_cdagenci            NUMBER;
