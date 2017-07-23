@@ -665,7 +665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 
     -- Se for liquidação do acordo, deve pagar o valor total do prejuízo
     IF NVL(pr_inliqaco,'N') = 'S' THEN
-      vr_vlpagmto := pr_vlsdprej;
+      vr_vlpagmto := NVL(pr_vlsdprej,0) + NVL(pr_vlttmupr,0) + NVL(pr_vlttjmpr,0);
     END IF;
 
     ------------------------------------------------------------------------------------------------------------
