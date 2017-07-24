@@ -570,6 +570,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                               4,
                               'Refazer',
                               5,
+                              'Derivar',
+                              6,
                               'Erro') parecer_esteira
                        
                        --  ,epr.cdopeste cdopeste
@@ -1601,6 +1603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
            AND ( a.nrctrprp = pr_nrctremp OR pr_nrctremp = 0)
            AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
            AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
+           AND a.tpacionamento IN(1,2)
 		 ORDER BY a.DHACIONAMENTO DESC;
       rw_crawepr cr_cratbepr%ROWTYPE;
       

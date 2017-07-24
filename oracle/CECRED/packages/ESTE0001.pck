@@ -470,20 +470,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       -- ou se houve Erro Conexão
       -- OU se foi enviada e recebemos a Derivação 
       IF rw_crawepr.insitest = 0 
-      OR (rw_crawepr.insitest = 3 AND rw_crawepr.cdopeapr = 'MOTOR' AND rw_crawepr.insitapr = 2) 
-      OR (rw_crawepr.insitest = 3 AND rw_crawepr.insitapr = 5 AND pr_tpenvest = 'I')       
-      OR (rw_crawepr.insitest = 1 AND pr_tpenvest = 'D') THEN
+      OR (rw_crawepr.insitest = 3 AND rw_crawepr.insitapr = 2 AND rw_crawepr.cdopeapr = 'MOTOR') 
+      OR (rw_crawepr.insitest = 3 AND rw_crawepr.insitapr = 6 AND pr_tpenvest = 'I')       
+      OR (rw_crawepr.insitest = 3 AND rw_crawepr.insitapr = 5) THEN
         -- Sair pois pode ser enviada
         RETURN;
       END IF;
       -- Não será possível enviar/reenviar para a Esteira
-      vr_dscritic := 'A proposta não pode ser ';
-      IF pr_tpenvest != 'M' THEN 
-        -- Incluir 're' para que a mensagem fique "reenviada"
-        vr_dscritic := vr_dscritic||'re';
-      END IF;
-      -- Finalizar a mensagem
-      vr_dscritic := vr_dscritic||'enviada para Análise de crédito, verifique a situação da proposta!';
+      vr_dscritic := 'A proposta não pode ser enviada para Análise de crédito, verifique a situação da proposta!';
       RAISE vr_exc_erro;      
     END IF;
     
@@ -573,15 +567,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 				RAISE vr_exc_erro;      
 			END IF;  
 	    
-			--> Buscar chave de acesso do motor
-			pr_autori_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																									pr_cdcooper => pr_cdcooper, 
-																									pr_cdacesso => 'AUTH_WEBSRV_MOTOR_IBRA');
-	  
+			--> Buscar chave de acesso do motor (Autorization é igual ao Consultas Automatizadas)
+			pr_autori_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                  pr_cdcooper =>  pr_cdcooper,
+                                                  pr_cdacesso => 'AUTORIZACAO_IBRATAN');
 			IF pr_autori_este IS NULL THEN      
-				vr_dscritic := 'Parametro AUTH_WEBSRV_MOTOR_IBRA não encontrado.';
+				vr_dscritic := 'Parametro AUTORIZACAO_IBRATAN não encontrado.';
 				RAISE vr_exc_erro;      
 			END IF;  
+      
+			-- Concatenar o Prefixo
+			pr_autori_este := 'CECRED'||lpad(pr_cdcooper,2,'0')||':'||pr_autori_este;
+      
+			-- Gerar Base 64
+			pr_autori_este := 'Ibratan '||sspc0001.pc_encode_base64(pr_autori_este);
       
 			--> Buscar chave de aplicação do motor
 			pr_chave_aplica := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
@@ -1041,14 +1040,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         pr_dscritic := fn_retorna_critica('{"Content":'||vr_response.content||'}');
         
         IF pr_dscritic IS NOT NULL THEN
-          pr_dscritic := vr_dscritic_aux||' '||pr_dscritic;            
+          -- Tratar mensagem específica de Fluxo Atacado:
+          -- "Nao sera possivel enviar a proposta para analise. Classificacao de risco e endividamento fora dos parametros da cooperativa"
+          IF pr_dscritic != 'Nao sera possivel enviar a proposta para analise. Classificacao de risco e endividamento fora dos parametros da cooperativa' THEN 
+            -- Mensagens diferentes dela terão o prefixo, somente ela não terá
+            pr_dscritic := vr_dscritic_aux||' '||pr_dscritic;            
+          END IF;  
         ELSE
           pr_dscritic := vr_dscritic_aux;            
         END IF;
         
       ELSE  
         pr_dscritic := vr_dscritic_aux;    
-      END IF;                       
+      END IF;                         
       
     END IF;
 		
@@ -1127,6 +1131,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
                   12/09/2016 Enviar o saldo do pre-aprovado se estiver liberado na conta
                   para ter pre-aprovado. (Oscar)
+                  
+                  27/02/2017 SD610862 - Enviar novas informações para a esteira:
+                               - cooperadoColaborador: Flag se eh proposta de colaborador
+                               - codigoCargo: Codigo do Cargo do Colaborador
+                               - classificacaoRisco: Nivel de risco no momento da criacao
+                               - renegociacao: Flag de renogociação ou não 
+                               - faturamentoAnual: Faturamento dos ultimos 12 meses
+                               
+                  20/07/2017 - P337 - Customizacoes Motor de Credit0 (Marcos-Supero)                               
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -1168,6 +1181,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
              epr.cdoperad,
              ope.nmoperad,
              pac.instatus,
+             epr.dsnivris,
+             epr.insitapr,
+             UPPER(epr.cdopeapr) cdopeapr,
              TO_CHAR(NRCTRLIQ##1) || ',' || TO_CHAR(NRCTRLIQ##2) || ',' ||
              TO_CHAR(NRCTRLIQ##3) || ',' || TO_CHAR(NRCTRLIQ##4) || ',' ||
              TO_CHAR(NRCTRLIQ##5) || ',' || TO_CHAR(NRCTRLIQ##6) || ',' ||
@@ -1252,6 +1268,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
          AND upper(ope.cdoperad) = upper(pr_cdoperad);
     
     rw_crapope cr_crapope%ROWTYPE;
+    
+    --> Buscar se a conta é de Colaborador Cecred
+    CURSOR cr_tbcolab(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS 
+      SELECT substr(lpad(col.cddcargo_vetor,7,'0'),5,3) cddcargo
+        FROM tbcadast_colaborador col
+       WHERE col.cdcooper = pr_cdcooper
+         AND col.nrcpfcgc = pr_nrcpfcgc
+         AND col.flgativo = 'A';                                          
+    vr_flgcolab BOOLEAN;
+    vr_cddcargo tbcadast_colaborador.cdcooper%TYPE;
+    
+    --> Calculo do faturamento PJ
+    CURSOR cr_crapjfn(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT vlrftbru##1+vlrftbru##2+vlrftbru##3+vlrftbru##4+vlrftbru##5+vlrftbru##6
+            +vlrftbru##7+vlrftbru##8+vlrftbru##9+vlrftbru##10+vlrftbru##11+vlrftbru##12 vltotfat
+       FROM crapjfn
+      WHERE cdcooper = pr_cdcooper
+        AND nrdconta = pr_nrdconta;
+    rw_crapjfn cr_crapjfn%ROWTYPE;
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -1422,9 +1459,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Vazio se for CDC
     IF rw_crawepr.inlcrcdc = 0 THEN
+      /* Se estiver zerado é pq não houve Parecer de Credito - ou seja - oriundo do Motor de Crédito */  
+      IF NVL(rw_crawepr.instatus, 0) = 0 THEN
+        /* Se reprovado no Motor */
+        IF rw_crawepr.cdopeapr = 'MOTOR' AND rw_crawepr.insitapr = 2 THEN 
+          /*Fixo 3-Nao Conceder*/
+          rw_crawepr.instatus := 3;
+        ELSE
+          /*Fixo 2-Analise Manual*/
+          rw_crawepr.instatus := 2;
+        END IF;
+      END IF;
       /*1-pre-aprovado, 2-analise manual, 3-nao conceder */
-      vr_obj_proposta.put('parecerPreAnalise', NVL(rw_crawepr.instatus, 0));
+      vr_obj_proposta.put('parecerPreAnalise', rw_crawepr.instatus);
     ELSE
+      /* Zerado para CDC */
       vr_obj_proposta.put('parecerPreAnalise', 0);
     END IF; 
     
@@ -1567,11 +1616,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     vr_obj_proposta.put('contratoNumero'     ,rw_crawepr.nrctremp);
 
+    -- Verificar se a conta é de colaborador do sistema Cecred
+    vr_cddcargo := NULL;
+    OPEN cr_tbcolab(pr_cdcooper => pr_cdcooper
+                   ,pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+    FETCH cr_tbcolab
+     INTO vr_cddcargo;
+    IF cr_tbcolab%FOUND THEN 
+      vr_flgcolab := TRUE;
+    ELSE
+      vr_flgcolab := FALSE;
+    END IF;
+    CLOSE cr_tbcolab; 
+    
+    -- Enviar tag indicando se é colaborador
+    vr_obj_proposta.put('cooperadoColaborador',vr_flgcolab);
+    
+    -- Enviar o cargo somente se colaborador
+    IF vr_flgcolab THEN 
+      vr_obj_proposta.put('codigoCargo',vr_cddcargo);
+    END IF;
+    
+    -- Enviar nivel de risco no momento da criacao 
+    vr_obj_proposta.put('classificacaoRisco',rw_crawepr.dsnivris);
+    
+    -- Enviar flag se a proposta é de renogociação
+    vr_obj_proposta.put('renegociacao',(rw_crawepr.dsliquid != '0,0,0,0,0,0,0,0,0,0'));
+    
+    -- BUscar faturamento se pessoa Juridica
+    IF rw_crapass.inpessoa = 2 THEN 
+      -- Buscar faturamento 
+      OPEN cr_crapjfn(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapjfn
+       INTO rw_crapjfn;
+      CLOSE cr_crapjfn;
+      vr_obj_proposta.put('faturamentoAnual',fn_decimal_ibra(rw_crapjfn.vltotfat));
+    END IF;
 
-vr_obj_proposta.put('ambienteTemp',TRUE);    
-    
-    
-    
+    -- Devolver o objeto criado
     pr_proposta := vr_obj_proposta;
   
   EXCEPTION
@@ -1644,6 +1727,8 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
             ,wpr.nrctaav2
             ,ass.inpessoa
             ,wpr.dsprotoc
+            ,wpr.cdlcremp
+            ,wpr.cdfinemp
             ,wpr.rowid
 				FROM crawepr wpr
             ,crapass ass
@@ -1653,7 +1738,7 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
 				 AND wpr.nrdconta = pr_nrdconta
 				 AND wpr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%ROWTYPE;
-		
+    
     -- Tipo Envio Esteira
     vr_tpenvest varchar2(1);
     
@@ -1683,21 +1768,30 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
     vr_destipo varchar2(1000);
     vr_desmens varchar2(4000);
     vr_dsmensag VARCHAR2(32767);
-
+    vr_inobriga VARCHAR2(1);
     
   BEGIN    
-		
+  
 	  -- Buscar informações da proposta
 	  OPEN cr_crawepr;
 		FETCH cr_crawepr INTO rw_crawepr;
 		CLOSE cr_crawepr;
     
-    -- Se a Cooperativa Obriga a passagem pelo Motor
-    -- E
-    -- Ainda não Enviada ou Enviada mas com Erro Conexao
-    IF GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'ANALISE_OBRIG_MOTOR_CRED') = 1 
-    AND (rw_crawepr.insitest = 0 OR rw_crawepr.insitapr = 5) THEN 
+    -- Verificar se a Cooperativa/Linha/Finalidade Obriga a passagem pelo Motor
+    pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
+                                  ,pr_inpessoa => rw_crawepr.inpessoa
+                                  ,pr_cdfinemp => rw_crawepr.cdfinemp
+                                  ,pr_cdlcremp => rw_crawepr.cdlcremp                                      
+                                  ,pr_inobriga => vr_inobriga
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+    
+    -- Se Obrigatorio e ainda não Enviada ou Enviada mas com Erro Conexao
+    IF vr_inobriga = 'S' AND (rw_crawepr.insitest = 0 OR rw_crawepr.insitapr = 6) THEN 
       
+      --> Guardar envio da Proposta
+      vr_hrenvest := to_char(SYSDATE,'sssss');
+    
       --> Gerar informações no padrao JSON da proposta de emprestimo
 			ESTE0002.pc_gera_json_analise(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
 													          pr_cdagenci  => rw_crawepr.cdagenci, --> Agência da Proposta
@@ -1755,9 +1849,7 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
 			-- verificar se retornou critica
 			IF vr_dscritic IS NOT NULL THEN
 				RAISE vr_exc_erro;
-			END IF;       
-			
-      vr_hrenvest := to_char(SYSDATE,'sssss');
+			END IF;
       
       -- Atualizar a proposta
 	    BEGIN
@@ -1787,8 +1879,8 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
       -- Efetuar laço para esperarmos (N) segundos ou o termino da analise recebido via POST
       WHILE NOT vr_flganlok AND to_number(to_char(sysdate,'sssss')) - vr_hrenvest < vr_qtsegund LOOP
 
-        -- Aguardar 1 segundo para evitar sobrecarga de processador
-        sys.dbms_lock.sleep(1);
+        -- Aguardar 0.5 segundo para evitar sobrecarga de processador
+        sys.dbms_lock.sleep(0.5);
         
         -- Verificar se a analise jah finalizou 
       	OPEN cr_crawepr;
@@ -1820,41 +1912,37 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
       
       -- Se houve expiração
       IF rw_crawepr.insitest = 1 THEN 
-        pr_dsmensag := 'Proposta permanece em Processamento...';
+        pr_dsmensag := 'Proposta permanece em <b>Processamento</b>...';
       ELSIF rw_crawepr.insitest = 2 THEN 
-        pr_dsmensag := 'Avaliação Manual';
+        pr_dsmensag := '<b>Avaliação Manual</b>';
       ELSIF rw_crawepr.insitest = 3 THEN 
         -- Conforme tipo de aprovacao
         IF rw_crawepr.insitapr = 1 THEN
-          pr_dsmensag := 'Aprovada';
-        ELSE
-          -- Erro ou ainda em analisa
-          IF rw_crawepr.insitapr IN(0,5) THEN 
-            pr_dsmensag := 'Erro motor de crédito';
-          -- Com restricoes
-          ELSIF rw_crawepr.insitapr = 3 THEN 
-            pr_dsmensag := 'Com Restricoes';        
-          -- Refazer
-          ELSIF rw_crawepr.insitapr = 4 THEN
-            pr_dsmensag := 'Refazer Proposta';
-          -- Rejeitada
-          ELSE 
-            pr_dsmensag := 'Rejeitada';          
-          END IF;
+          pr_dsmensag := '<b>Aprovada</b>';
+        ELSIF rw_crawepr.insitapr = 2 THEN 
+          pr_dsmensag := '<b>Rejeitada</b>';          
+        ELSIF rw_crawepr.insitapr IN(0,6) THEN 
+          pr_dsmensag := '<b>Erro</b> motor de crédito';
+        ELSIF rw_crawepr.insitapr = 3 THEN 
+          pr_dsmensag := '<b>Com Restricoes</b>';        
+        ELSIF rw_crawepr.insitapr = 4 THEN
+          pr_dsmensag := '<b>Refazer Proposta</b>';
+        ELSIF rw_crawepr.insitapr = 5 THEN
+          pr_dsmensag := '<b>Avaliação Manual</b>';
         END IF;
       ELSIF rw_crawepr.insitest = 4 THEN
-        pr_dsmensag := 'Expirada apos '||vr_qtsegund||' segundos de espera.';        
+        pr_dsmensag := '<b>Expirada</b> apos '||vr_qtsegund||' segundos de espera.';        
       ELSE 
-        pr_dsmensag := 'Finalizada com situação indefinida!';
+        pr_dsmensag := '<b>Finalizada</b> com situação indefinida!';
       END IF;
       
       -- Gerar mensagem padrao:
       pr_dsmensag := 'Resultado da Avaliação: '||pr_dsmensag;
       
       -- Se houver protocolo e a analise foi encerrada ou derivada
-      IF NVL(rw_crawepr.dsprotoc,' ') IS NOT NULL AND rw_crawepr.insitest in(2,3) THEN 
+      IF vr_dsprotoc IS NOT NULL AND rw_crawepr.insitest in(2,3) THEN 
         -- Buscar os detalhes do acionamento de retorno
-        OPEN cr_aciona(rw_crawepr.dsprotoc);
+        OPEN cr_aciona(vr_dsprotoc);
         FETCH cr_aciona
          INTO vr_dsconteudo_requisicao;
         -- Somente se encontrou
@@ -1872,15 +1960,18 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
                 vr_obj_lst := json_list(vr_obj_anl.get('mensagensDeAnalise').to_char());
                 -- Para cada mensagem 
                 for vr_idx in 1..vr_obj_lst.count() loop
-                  vr_obj_msg := json( vr_obj_lst.get(vr_idx));
-                  
-                  -- Se encontrar o atributo texto e tipo
-                  if vr_obj_msg.exist('texto') AND vr_obj_msg.exist('tipo') THEN
-                    vr_desmens := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_msg.get('texto').to_char(),'"'),'"'),'\u','\')));
-                    vr_destipo := RTRIM(LTRIM(vr_obj_msg.get('tipo').to_char(),'"'),'"');
-                  end if;
-                  --vr_dsmensag := vr_dsmensag || '<BR>'/*<img src="../../../imagens/geral/motor_'||vr_destipo||'.png" height="20" width="20">'*/||vr_desmens;                              
-                  vr_dsmensag := vr_dsmensag || '<BR>'/*['||vr_destipo||'] '*/||vr_desmens;                              
+                  BEGIN
+                    vr_obj_msg := json( vr_obj_lst.get(vr_idx));
+                    -- Se encontrar o atributo texto e tipo
+                    if vr_obj_msg.exist('texto') AND vr_obj_msg.exist('tipo') THEN
+                      vr_desmens := gene0007.fn_convert_web_db(UNISTR(replace(RTRIM(LTRIM(vr_obj_msg.get('texto').to_char(),'"'),'"'),'\u','\')));
+                      vr_destipo := REPLACE(RTRIM(LTRIM(vr_obj_msg.get('tipo').to_char(),'"'),'"'),'ERRO','REPROVAR');
+                    end if;
+                    vr_dsmensag := vr_dsmensag || '<BR>['||vr_destipo||'] '||vr_desmens;                              
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      NULL; -- Ignorar essa linha
+                  END;
                 END LOOP;
               END IF;
             END IF;
@@ -1896,10 +1987,10 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
         -- Se nao encontrou mensagem
         IF vr_dsmensag IS NULL THEN 
           -- Usar mensagem padrao
-          vr_dsmensag := '<br>Obs: para acessar detalhes da decisão, acionar [Detalhes Proposta]';            
+          vr_dsmensag := '<br>Obs: para acessar detalhes da decisão, acionar <b>[Detalhes Proposta]</b>';            
         ELSE
           -- Gerar texto padrão 
-          vr_dsmensag := '<br>Detalhes da decisão:<br>'|| vr_dsmensag;
+          vr_dsmensag := '<br>Detalhes da decisão:<br>###'|| vr_dsmensag;
         END IF;
         -- Concatenar ao retorno a mensagem montada
         pr_dsmensag := pr_dsmensag ||vr_dsmensag;
@@ -1992,7 +2083,7 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
       -- Efetuar gravação
       COMMIT;
     
-    END IF;   
+    END IF;     
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3092,29 +3183,29 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
                                           ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Tipo da Pessoa
                                           ,pr_cdfinemp IN crawepr.cdfinemp%TYPE  --> Cód. finalidade do credito
                                           ,pr_cdlcremp IN crawepr.cdlcremp%TYPE  --> Cód. linha de crédito
-                                           ---- OUT ----																					
+                                           ---- OUT ----                                          
                                           ,pr_inobriga OUT VARCHAR2              --> Indicador de obrigação de análisa automática ('S' - Sim / 'N' - Não)
                                           ,pr_cdcritic OUT PLS_INTEGER           --> Cód. da crítica
                                           ,pr_dscritic OUT VARCHAR2) IS          --> Desc. da crítica
-  BEGIN																					 
-	/* .........................................................................
+  BEGIN                                          
+  /* .........................................................................
     
-		Programa : pc_obrigacao_analise_automatica
-		Sistema  : Conta-Corrente - Cooperativa de Credito
-		Sigla    : CRED
-		Autor    : Lucas Reinert
-		Data     : Abril/2017                    Ultima atualizacao: --/--/----
+    Programa : pc_obrigacao_analise_automatica
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Lucas Reinert
+    Data     : Abril/2017                    Ultima atualizacao: --/--/----
     
-		Dados referentes ao programa:
+    Dados referentes ao programa:
     
-		Frequencia: Sempre que for chamado
-		Objetivo  : Tem como objetivo retornar positivo caso a proposta deverá passar 
-		            por análise automática ou posteriormente manual na Esteira de Crédito
-		Alteração : 
+    Frequencia: Sempre que for chamado
+    Objetivo  : Tem como objetivo retornar positivo caso a proposta deverá passar 
+                por análise automática ou posteriormente manual na Esteira de Crédito
+    Alteração : 
         
-	..........................................................................*/
-		DECLARE
-		
+  ..........................................................................*/
+    DECLARE
+    
       -- Verificação de finalidade pré-aprovada
       CURSOR cr_crapfin IS
         SELECT 1
@@ -3130,44 +3221,49 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
       -- Cursor para verificar se a linha de crédito não é de Aprovação Automática
       CURSOR cr_craplcr IS
         SELECT lcr.flgdisap
+              ,DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
           FROM craplcr lcr
          WHERE lcr.cdcooper = pr_cdcooper
            AND lcr.cdlcremp = pr_cdlcremp;
       vr_flgdisap craplcr.flgdisap%TYPE;
-				 
-		BEGIN	
-			
+      vr_inlcrcdc PLS_INTEGER;
+           
+    BEGIN 
+      
       -- Verificação de finalidade pré-aprovada
       OPEN cr_crapfin;
       FETCH cr_crapfin
        INTO vr_inpreapv;
       CLOSE cr_crapfin; 
     
-		  -- Verificar se a linha de crédito não é de aprovação automática
-		  OPEN cr_craplcr;
-			FETCH cr_craplcr INTO vr_flgdisap;
-		  CLOSE cr_craplcr;
-			
+      -- Verificar se a linha de crédito não é de aprovação automática
+      OPEN cr_craplcr;
+      FETCH cr_craplcr 
+       INTO vr_flgdisap,vr_inlcrcdc;
+      CLOSE cr_craplcr;
+      
       -- Se finalidade PRE-APROVADO
-			-- OU linha dispensa aprovação 
+      -- OU linha dispensa aprovação 
+      -- OU é linha CDC
       -- OU Esteira está em contingência 
       -- OU a Cooperativa não Obriga Análise Automática
-		  IF vr_inpreapv = 1
+      IF vr_inpreapv = 1
+      OR vr_inlcrcdc = 1
       OR vr_flgdisap = 1 
       OR GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'CONTIGENCIA_ESTEIRA_IBRA') = 1 
       OR GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'ANALISE_OBRIG_MOTOR_CRED') = 0 THEN
-				pr_inobriga := 'N';
-			ELSE 
-			  pr_inobriga := 'S';
-			END IF;
-			
-		EXCEPTION	    
-			WHEN OTHERS THEN
-				pr_cdcritic := 0;
-				pr_dscritic := 'Erro inesperado na rotina que verifica o tipo de análise da proposta: '||SQLERRM;
+        pr_inobriga := 'N';
+      ELSE 
+        pr_inobriga := 'S';
+      END IF;
+      
+    EXCEPTION     
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro inesperado na rotina que verifica o tipo de análise da proposta: '||SQLERRM;
 
-		END;
-	END pc_obrigacao_analise_automatic;	
+    END;
+  END pc_obrigacao_analise_automatic;	
 
   PROCEDURE pc_obrigacao_analise_autom_web(pr_cdfinemp IN crawepr.cdfinemp%TYPE  --> Finalidade de crédito
                                           ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Tipo da Pessoa
@@ -3489,7 +3585,7 @@ vr_obj_proposta.put('ambienteTemp',TRUE);
               BEGIN
                 UPDATE crawepr epr
                    SET epr.insitest = 3 --> Analise Finalizada
-                      ,epr.insitapr = 5 --> Erro na análise
+                      ,epr.insitapr = 6 --> Erro na análise
                  WHERE epr.cdcooper = rw_crawepr.cdcooper
                    AND epr.nrdconta = rw_crawepr.nrdconta
                    AND epr.nrctremp = rw_crawepr.nrctremp;

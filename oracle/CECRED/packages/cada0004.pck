@@ -280,6 +280,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                             ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
                             ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
+                            ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
                             ------ OUT ------
                             ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
                             ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
@@ -1720,6 +1721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
                             ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
+                            ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
                             ------ OUT ------
                             ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
                             ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
@@ -1888,7 +1890,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           
         END IF; --> Fim IF insitcrd IN (4,7)
       ELSE
-        pr_vltotccr := pr_vltotccr + 0; /* ZERAR LIMITE CONFORME SD 181559 */   
+        -- P337 - SOmente zerar se passado via parametro [ZERAR LIMITE CONFORME SD 181559]
+        IF pr_flgzerar = 'N' THEN
+          pr_vltotccr := pr_vltotccr + rw_crawcrd.vllimcrd; 
+        END IF;  
       END IF;
       
       -- Buscar situação

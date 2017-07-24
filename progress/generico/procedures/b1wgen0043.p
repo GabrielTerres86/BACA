@@ -4084,21 +4084,24 @@ PROCEDURE obtem_emprestimo_risco:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nivrisco AS CHAR                            NO-UNDO.
     
-    DEF VAR aux_nrctrliq AS CHAR                                     NO-UNDO.
+    DEF VAR aux_dsctrliq AS CHAR                                     NO-UNDO.
     DEF VAR aux_contador AS INTE                                     NO-UNDO.
+
+    /* Usar contratos enviados */    
+    IF TRIM(par_dsctrliq) <> "" AND UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN    
+       ASSIGN aux_dsctrliq = par_dsctrliq.  
     
-    
-    /* Percorre todos os contratos  */
+    /* Percorre todos os contratos enviados */
     DO aux_contador = 1 TO EXTENT(par_nrctrliq):
        IF par_nrctrliq[aux_contador] = 0 THEN
            NEXT.
               
-       IF aux_nrctrliq <> "" THEN
-          ASSIGN aux_nrctrliq = aux_nrctrliq + ";".
+       IF aux_dsctrliq <> "" THEN
+          ASSIGN aux_dsctrliq = aux_dsctrliq + ",".
        
-       ASSIGN aux_nrctrliq = aux_nrctrliq + STRING(par_nrctrliq[aux_contador]).
+       ASSIGN aux_dsctrliq = aux_dsctrliq + STRING(par_nrctrliq[aux_contador]).
     END.
-
+    
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
     /* Efetuar a chamada a rotina Oracle */ 
@@ -4115,8 +4118,7 @@ PROCEDURE obtem_emprestimo_risco:
                   ,INPUT (IF par_flgerlog THEN  "S" ELSE "N") /* pr_flgerlog --> identificador se deve gerar log S-Sim e N-Nao */
                   ,INPUT par_cdfinemp /* pr_cdfinemp --> Finalidade do emprestimo */
                   ,INPUT par_cdlcremp /* pr_cdlcremp --> Linha de credito do emprestimo */
-                  ,INPUT aux_nrctrliq /* pr_nrctrliq --> Lista de contratos liquidados */
-                  ,INPUT par_dsctrliq /* pr_dsctrliq --> Lista de descriçoes de situaçao dos contratos */
+                  ,INPUT aux_dsctrliq /* pr_dsctrliq --> Lista de descriçoes de situaçao dos contratos */
                   /* --------- OUT --------- */
                   ,OUTPUT ""          /* pr_nivrisco --> Retorna nivel do risco  */
                   ,OUTPUT ""          /* pr_dscritic --> Descriçao da critica    */
@@ -7262,7 +7264,7 @@ PROCEDURE nivel_comprometimento:
                        ASSIGN par_vltotpre = par_vltotpre + (par_vlpreemp / 12).           
          
          END.
-
+         
     RETURN "OK".
 
 END PROCEDURE.

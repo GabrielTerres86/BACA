@@ -149,7 +149,6 @@ CREATE OR REPLACE PACKAGE CECRED.RATI0002 is
                                       ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                                       ,pr_cdfinemp IN crapepr.cdfinemp%TYPE  --> Finalidade do emprestimo
                                       ,pr_cdlcremp IN crapepr.cdlcremp%TYPE  --> Linha de credito do emprestimo
-                                      ,pr_nrctrliq IN VARCHAR2               --> Lista de contratos liquidados
                                       ,pr_dsctrliq IN VARCHAR2               --> Lista de descrições de situação dos contratos
                                       ------ OUT ------
                                       ,pr_nivrisco     OUT VARCHAR2          --> Retorna nivel do risco
@@ -176,7 +175,7 @@ END RATI0002;
 CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : rati0002                     
+  --  Programa : rati0002
   --  Sistema  : Rotinas para Rating dos Cooperados
   --  Sigla    : RATI
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
@@ -187,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   -- Frequencia: -----
   -- Objetivo  : Rotinas para analise complementar do Rating
   --
-  -- Alteracoes: 12/11/2015 - Alterado as descricões de risco na procedure pc_retorna_analise_ctr 
+  -- Alteracoes: 12/11/2015 - Alterado as descricões de risco na procedure pc_retorna_analise_ctr
   --                          (Tiago/Rodrigo SD356389).
   --
   --             04/01/2016 - Incluida procedure pc_retorna_descricao_risco (Heitor - RKAM)
@@ -197,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   --                          Houve casos com alteracao de linha de credito que manteve o parecer indevidamente.
   --                          Heitor (RKAM) - Chamado 513641
   --
-  --             01/12/2016 - Fazer tratamento para incorporação. (Oscar)   
+  --             01/12/2016 - Fazer tratamento para incorporação. (Oscar)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina que indica se deve habilitar / desabilitar o parecer da analise de credito
@@ -218,13 +217,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_cdagenci      VARCHAR2(100);
       vr_nrdcaixa      VARCHAR2(100);
       vr_idorigem      VARCHAR2(100);
-      
+
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
 
       -- Variaveis gerais
-      vr_inparece VARCHAR2(01); 
+      vr_inparece VARCHAR2(01);
       vr_dssituacao VARCHAR2(12);
 
       -- Tratamento de erros
@@ -272,7 +271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                 vr_dscritic := 'Erro ao alterar CRAPPRM: '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
-            
+
             -- Se nao tiver atualizado nada, insere o registro
             IF SQL%ROWCOUNT = 0 THEN
               BEGIN
@@ -301,17 +300,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             ELSE
               vr_dssituacao := ' habilitou';
             END IF;
-            
+
             -- gera o log de alteracao
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                       ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_nmarqlog => 'PARRAC' 
+                                      ,pr_nmarqlog => 'PARRAC'
                                       ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - ' ||
                                          'Operador ' || vr_cdoperad || vr_dssituacao || ' o parecer da cooperativa.' );
 
 
-        END CASE;        
-        
+        END CASE;
+
     EXCEPTION
       WHEN vr_exc_saida THEN
 
@@ -340,13 +339,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                              ,pr_inpessoa crapqac.inpessoa%TYPE
                              ,pr_nrordper crapqac.nrordper%TYPE) IS
     BEGIN
-      INSERT INTO crapqac 
-        (nrseqqac, 
-         nrseqvac, 
-         nrseqiac, 
-         inpessoa, 
+      INSERT INTO crapqac
+        (nrseqqac,
+         nrseqvac,
+         nrseqiac,
+         inpessoa,
          nrordper,
-         instatus) 
+         instatus)
        VALUES
         (fn_sequence(pr_nmtabela => 'CRAPQAC', pr_nmdcampo => 'NRSEQQAC',pr_dsdchave => '0'),
          pr_nrseqvac,
@@ -354,7 +353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
          pr_inpessoa,
          pr_nrordper,
          3);
-    END;                             
+    END;
 
   -- Rotina geral de insert, update, select e delete da tela PARRAC na tabela CRAPVAC
   PROCEDURE pc_crapvac(pr_cddopcao IN VARCHAR2              --> Tipo de acao que sera executada (A - Alteracao / C - Consulta / E - Exclur / I - Inclur)
@@ -391,7 +390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_cdagenci      VARCHAR2(100);
       vr_nrdcaixa      VARCHAR2(100);
       vr_idorigem      VARCHAR2(100);
-      
+
       -- Variaveis gerais
       vr_contador PLS_INTEGER := 0;
       vr_nrseqvac crapvac.nrseqvac%TYPE;
@@ -436,12 +435,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
             -- Loop sobre as versoes do questionario de microcredito
             FOR rw_crapvac IN cr_crapvac LOOP
-                
+
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrseqvac', pr_tag_cont => rw_crapvac.nrseqvac, pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsversao', pr_tag_cont => rw_crapvac.dsversao, pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtinivig', pr_tag_cont => to_char(rw_crapvac.dtinivig,'dd/mm/yyyy'), pr_des_erro => vr_dscritic);
-              
+
               vr_contador := vr_contador + 1;
             END LOOP;
 
@@ -494,7 +493,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                 vr_dscritic := 'Problema ao inserir crapvac: ' || sqlerrm;
                 RAISE vr_exc_saida;
             END;
-            
+
             -- Insere o questionario vazio
             pc_insere_crapqac(vr_nrseqvac,1,1,0); -- Data de Nascimento
             pc_insere_crapqac(vr_nrseqvac,1,1,1);
@@ -593,12 +592,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             OR  inmensag IS NOT NULL
             OR  dsmensag IS NOT NULL);
       rw_crapqac cr_crapqac%ROWTYPE;
-           
+
     BEGIN
       --Abre o cursor de questionario
       OPEN cr_crapqac;
       FETCH cr_crapqac INTO rw_crapqac;
-      
+
       -- Se nao encontrar, entao o indicador esta inativo
       IF cr_crapqac%NOTFOUND THEN
         CLOSE cr_crapqac;
@@ -606,7 +605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       END IF;
       CLOSE cr_crapqac;
       RETURN 1; -- Retorna ativo
-    END;                                    
+    END;
 
   -- Rotina geral de insert, update e select da tela PARRAC na tabela CRAPQAC
   PROCEDURE pc_crapqac(pr_cddopcao IN VARCHAR2              --> Tipo de acao que sera executada (A - Alteracao / C - Consulta / I - Inclur)
@@ -640,7 +639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                crapqac.instatus,
                crapqac.inmensag,
                crapqac.dsmensag,
-               row_number() over (partition by crapqac.nrseqvac, crapqac.nrseqiac 
+               row_number() over (partition by crapqac.nrseqvac, crapqac.nrseqiac
                                       order by crapqac.nrseqvac, crapqac.nrseqiac, crapqac.inpessoa, crapqac.nrordper) nrseq
           FROM crapiac,
                crapqac
@@ -664,7 +663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_cdagenci      VARCHAR2(100);
       vr_nrdcaixa      VARCHAR2(100);
       vr_idorigem      VARCHAR2(100);
-      
+
       -- Variaveis gerais
       vr_ind PLS_INTEGER := -1;  -- Contador de indicadores
       vr_det PLS_INTEGER := 0;  -- Contador de detalhes
@@ -734,7 +733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
             -- Loop sobre as versoes do questionario de microcredito
             FOR rw_crapqac IN cr_crapqac LOOP
-              
+
               -- Se for um novo indicador, cria o nó do indicador
               IF rw_crapqac.nrseq = 1 THEN
                 vr_ind := vr_ind + 1;
@@ -742,11 +741,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                 gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'indicadores', pr_posicao => vr_ind, pr_tag_nova => 'nrseqvac', pr_tag_cont => rw_crapqac.nrseqvac, pr_des_erro => vr_dscritic);
                 gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'indicadores', pr_posicao => vr_ind, pr_tag_nova => 'nrseqiac', pr_tag_cont => rw_crapqac.nrseqiac, pr_des_erro => vr_dscritic);
                 gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'indicadores', pr_posicao => vr_ind, pr_tag_nova => 'dsindica', pr_tag_cont => rw_crapqac.dsindica, pr_des_erro => vr_dscritic);
-                
+
                 -- Verifica a situacao do indicador
                 vr_instatus := fn_verifica_situacao_idc(rw_crapqac.nrseqvac, rw_crapqac.nrseqiac);
                 gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'indicadores', pr_posicao => vr_ind, pr_tag_nova => 'instatus', pr_tag_cont => vr_instatus, pr_des_erro => vr_dscritic);
-                
+
               END IF;
 
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'indicadores'   , pr_posicao => vr_ind, pr_tag_nova => 'detalhe', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -758,7 +757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'detalhe', pr_posicao => vr_det, pr_tag_nova => 'instatus', pr_tag_cont => rw_crapqac.instatus, pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'detalhe', pr_posicao => vr_det, pr_tag_nova => 'inmensag', pr_tag_cont => rw_crapqac.inmensag, pr_des_erro => vr_dscritic);
               gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'detalhe', pr_posicao => vr_det, pr_tag_nova => 'dsmensag', pr_tag_cont => rw_crapqac.dsmensag, pr_des_erro => vr_dscritic);
-              
+
               vr_det := vr_det + 1;
             END LOOP;
 
@@ -861,14 +860,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Busca os dados da versao de origem
       OPEN cr_crapvac;
       FETCH cr_crapvac INTO rw_crapvac;
-      
+
       -- Se nao encontrar, cancela a rotina
-      IF cr_crapvac%NOTFOUND THEN  
+      IF cr_crapvac%NOTFOUND THEN
         CLOSE cr_crapvac;
         vr_dscritic := 'Versao de origem nao existe!';
         RAISE vr_exc_saida;
       END IF;
-    
+
       -- Efetua o loop sobre as cooperativas
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Exclui a versao que ja existe na data do questionario para a cooperativa de destino
@@ -894,7 +893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             vr_dscritic := 'Erro ao excluir CRAPVAC: '||sqlerrm;
             RAISE vr_Exc_saida;
         END;
-        
+
         -- Busca o sequencial da versao
         vr_nrseqvac := fn_sequence(pr_nmtabela => 'CRAPVAC', pr_nmdcampo => 'NRSEQVAC',pr_dsdchave => '0');
 
@@ -902,12 +901,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         BEGIN
           INSERT INTO crapvac
             (nrseqvac,
-             cdcooper, 
+             cdcooper,
              dsversao,
              dtinivig)
            VALUES
             (vr_nrseqvac,
-             rw_crapcop.cdcooper, 
+             rw_crapcop.cdcooper,
              rw_crapvac.dsversao,
              rw_crapvac.dtinivig);
         EXCEPTION
@@ -915,7 +914,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             vr_dscritic := 'Erro ao inserir CRAPVAC: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
-              
+
         -- Insere as perguntas para a nova versao
         BEGIN
           INSERT INTO crapqac
@@ -969,7 +968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
-    
+
   -- Rotina para criação de uma versao com base em outra versao de perguntas
   PROCEDURE pc_cria_versao(pr_nrseqvac IN crapvac.nrseqvac%TYPE --> Numero da versao do questionario de origem
                           ,pr_dsversao IN crapvac.dsversao%TYPE --> Nome da nova versao
@@ -1004,14 +1003,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Busca os dados da versao de origem
       OPEN cr_crapvac;
       FETCH cr_crapvac INTO rw_crapvac;
-      
+
       -- Se nao encontrar, cancela a rotina
-      IF cr_crapvac%NOTFOUND THEN  
+      IF cr_crapvac%NOTFOUND THEN
         CLOSE cr_crapvac;
         vr_dscritic := 'Versao de origem nao existe!';
         RAISE vr_exc_saida;
       END IF;
-    
+
       -- Exclui a versao que ja existe na data do questionario para a cooperativa de destino
       BEGIN
         DELETE crapqac
@@ -1035,7 +1034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_dscritic := 'Erro ao excluir CRAPVAC: '||sqlerrm;
           RAISE vr_Exc_saida;
       END;
-        
+
       -- Busca o sequencial da versao
       vr_nrseqvac := fn_sequence(pr_nmtabela => 'CRAPVAC', pr_nmdcampo => 'NRSEQVAC',pr_dsdchave => '0');
 
@@ -1043,12 +1042,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       BEGIN
         INSERT INTO crapvac
           (nrseqvac,
-           cdcooper, 
+           cdcooper,
            dsversao,
            dtinivig)
          VALUES
           (vr_nrseqvac,
-           rw_crapvac.cdcooper, 
+           rw_crapvac.cdcooper,
            pr_dsversao,
            to_date(pr_dtinivig,'dd/mm/yyyy'));
       EXCEPTION
@@ -1056,7 +1055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_dscritic := 'Erro ao inserir CRAPVAC: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
-              
+
       -- Insere as perguntas para a nova versao
       BEGIN
         INSERT INTO crapqac
@@ -1109,8 +1108,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
-    
-        
+
+
   -- Rotina para retornar as variaveis de parametro do indicador
   PROCEDURE pc_ret_variaveis_crapiac(pr_nrseqiac IN crapiac.nrseqiac%TYPE --> Sequencia do indicador
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -1139,14 +1138,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Abre o cursor sobre a tabela de indicadores de analise de credito
       OPEN cr_crapiac;
       FETCH cr_crapiac INTO rw_crapiac;
-      
+
       -- Se nao encontrar, da critica e encerra o processo
       IF cr_crapiac%NOTFOUND THEN
         CLOSE cr_crapiac;
         vr_dscritic := 'Sequencia do indicador nao cadastrada';
         RAISE vr_exc_saida;
       END IF;
-      
+
       -- Fecha o cursor
       CLOSE cr_crapiac;
 
@@ -1156,7 +1155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                      '<nmparam2>' || rw_crapiac.nmparam2 || '</nmparam2>'||
                                      '<nmparam3>' || rw_crapiac.nmparam3 || '</nmparam3>'||
                                      '</Root>');
-      
+
     EXCEPTION
       WHEN vr_exc_saida THEN
 
@@ -1188,7 +1187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
     BEGIN
       -- Atualiza a variavel temporaria com o texto do parametro
       vr_dstexto_tmp := pr_dstexto;
-      
+
       -- Busca a variavel conforme o numero informado no parametro
       FOR x IN 1..pr_inposic LOOP
         IF instr(vr_dstexto_tmp,'#') <> 0 THEN
@@ -1197,7 +1196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           RETURN NULL; -- Se nao encontrar, encerra o programa retornando nulo
         END IF;
       END LOOP;
-      
+
       -- Verifica ate que posicao eh o texto da variavel
       FOR x IN 1..length(vr_dstexto_tmp) LOOP
         IF ascii(substr(vr_dstexto_tmp,x,1)) BETWEEN 97 AND 122 OR -- Letra a ate o z
@@ -1230,19 +1229,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                crapqac a
          WHERE c.nrseqiac = a.nrseqiac
            AND a.nrseqvac = pr_nrseqvac
-           AND (rati0002.fn_retorna_variavel(a.dsmensag,1) IS NOT NULL 
+           AND (rati0002.fn_retorna_variavel(a.dsmensag,1) IS NOT NULL
             AND NOT EXISTS (SELECT 1
                               FROM crapiac b
                              WHERE b.nrseqiac = a.nrseqiac
                                AND rati0002.fn_retorna_variavel(a.dsmensag,1)
                                     IN (b.nmparam1, b.nmparam2, b.nmparam3)))
-            OR (rati0002.fn_retorna_variavel(a.dsmensag,2) IS NOT NULL 
+            OR (rati0002.fn_retorna_variavel(a.dsmensag,2) IS NOT NULL
             AND NOT EXISTS (SELECT 1
                               FROM crapiac b
                              WHERE b.nrseqiac = a.nrseqiac
                                AND rati0002.fn_retorna_variavel(a.dsmensag,2)
                                     IN (b.nmparam1, b.nmparam2, b.nmparam3)))
-            OR (rati0002.fn_retorna_variavel(a.dsmensag,3) IS NOT NULL 
+            OR (rati0002.fn_retorna_variavel(a.dsmensag,3) IS NOT NULL
             AND NOT EXISTS (SELECT 1
                               FROM crapiac b
                              WHERE b.nrseqiac = a.nrseqiac
@@ -1262,8 +1261,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
          GROUP BY crapiac.nrseqiac,
                   crapiac.dsindica
          ORDER BY crapiac.nrseqiac;
-         
- 
+
+
       -- Tipo de variavel de parametros de indicadores
       TYPE typ_reg_crapiac IS
         RECORD(qtmenpos PLS_INTEGER,
@@ -1271,7 +1270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       TYPE typ_tab_crapiac IS
         TABLE OF typ_reg_crapiac
         INDEX BY PLS_INTEGER;
-      
+
       vr_tab_crapiac typ_tab_crapiac;
 
       -- Variaveis de critica
@@ -1288,10 +1287,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Preenche a tabela de indicaores com as quantidades de mensagens necessarias
       --Data de Nascimento
       vr_tab_crapiac(1).qtmenpos := 1;
-      vr_tab_crapiac(1).qtmenerr := 2;      
+      vr_tab_crapiac(1).qtmenerr := 2;
       --Data de Fundacao
       vr_tab_crapiac(2).qtmenpos := 1;
-      vr_tab_crapiac(2).qtmenerr := 1;      
+      vr_tab_crapiac(2).qtmenerr := 1;
       --Comprometimento de Renda
       vr_tab_crapiac(3).qtmenpos := 2;
       vr_tab_crapiac(3).qtmenerr := 4;
@@ -1410,7 +1409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND dtvencto < pr_crapdat.dtmvtolt -- Data menor que o parametro. Foi deixado esta linha para pegar indice
            AND gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => dtvencto) < pr_crapdat.dtmvtolt;
       rw_crappep cr_crappep%ROWTYPE;
-           
+
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_inusatab    BOOLEAN;
@@ -1436,7 +1435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_vlparpag    crappep.vlparepr%TYPE := 0; -- Valor parcial em atraso. Este eh o valor que esta maior que o periodo
 
     BEGIN
-      
+
       --Buscar Indicador Uso Taxa da tabela
       vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                               ,pr_nmsistem => 'CRED'
@@ -1472,7 +1471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                                ,pr_cdempres => 11
                                                ,pr_cdacesso => 'PAREMPCTL'
                                                ,pr_tpregist => 1);
-      
+
       -- Efetua o loop sobre os emprestimos
       FOR rw_crapepr IN cr_crapepr LOOP
 
@@ -1524,20 +1523,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             -- Vai somar somente se a quantidade de meses em atraso for superior ao parametro
             IF vr_tab_dados_epr(vr_index_epr).qtmesatr > pr_qtmesclc THEN
               -- Acumula o valor de parcelas
-              -- Pega o valor total e divide 
-              vr_vlparpag := vr_vlparpag + 
+              -- Pega o valor total e divide
+              vr_vlparpag := vr_vlparpag +
                              ((vr_tab_dados_epr(vr_index_epr).vltotpag / vr_tab_dados_epr(vr_index_epr).qtmesatr) * -- Retorna o valor de cada parcela
                                              vr_tab_dados_epr(vr_index_epr).qtmesatr); -- Retorna a quantidade de meses que deve-se analisar
-                
+
             END IF;
 
             -- Acumula o valor de parcelas
-            -- Pega o valor total e divide 
+            -- Pega o valor total e divide
             IF vr_tab_dados_epr(vr_index_epr).qtmesatr > 0 THEN
-              vr_vltotpag := vr_vltotpag + 
+              vr_vltotpag := vr_vltotpag +
                            ((vr_tab_dados_epr(vr_index_epr).vltotpag / vr_tab_dados_epr(vr_index_epr).qtmesatr) * -- Retorna o valor de cada parcela
                                            vr_tab_dados_epr(vr_index_epr).qtmesatr); -- Retorna a quantidade de meses que deve-se analisar
-            END IF;              
+            END IF;
           ELSE -- Se for PP
             -- Abre o cursor de parcelas do contrato
             OPEN cr_crappep(rw_crapepr.nrctremp);
@@ -1545,7 +1544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             CLOSE cr_crappep;
 
             -- Acumula o valor de parcelas
-            vr_vltotpag := vr_vltotpag + vr_tab_dados_epr(vr_index_epr).vltotpag; 
+            vr_vltotpag := vr_vltotpag + vr_tab_dados_epr(vr_index_epr).vltotpag;
             vr_vlparpag := vr_vlparpag + nvl(rw_crappep.vlsaldo_par,0);
 
           END IF;
@@ -1553,7 +1552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_index_epr:= vr_tab_dados_epr.NEXT(vr_index_epr);
         END LOOP;
       END LOOP;
-      
+
       -- Se o valor parcial for maior que zeros, entao teve parcelas com atraso maior
       -- que o periodo de limite. Neste caso deve-se retornar o valor total de atraso,
       -- independente do periodo
@@ -1571,7 +1570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em analise_individual: ' || SQLERRM;
-    END;    
+    END;
 
   -- Efetua a analise de credito individualmente
   PROCEDURE pc_analise_individual(pr_nrseqpac IN crapdac.nrseqpac%TYPE --> Sequencial do parecer
@@ -1597,12 +1596,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
       -- Cursor sobre os indicadores
       CURSOR cr_crapiac IS
-        SELECT nrseqiac, 
-               inpesfis, 
+        SELECT nrseqiac,
+               inpesfis,
                inpesjur,
                inconjug,
                insocpfi,
-               insocpju 
+               insocpju
           FROM crapiac
          ORDER BY nrseqiac;
 
@@ -1620,7 +1619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND nrseqiac = pr_nrseqiac
            AND inpessoa = decode(inpessoa,3,inpessoa,pr_inpessoa)
          ORDER BY decode(nrordper,0,999,nrordper);
-      
+
       -- Busca o periodo de analise
       CURSOR cr_crapqac_per(pr_nrseqvac crapqac.nrseqvac%TYPE,
                             pr_nrseqiac crapiac.nrseqiac%TYPE) IS
@@ -1647,12 +1646,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                        6,'NORMAL - SEM TALAO',
                                        8,'OUTROS MOTIVOS',
                                        9,'ENCERRADA P/ OUTRO MOTIVO',
-                                         'OUTROS') dssitdct                
+                                         'OUTROS') dssitdct
           FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
-      
+
       -- Cursor sobre o titular da conta
       CURSOR cr_crapttl(pr_nrdconta crapass.nrdconta%TYPE) IS
         SELECT crapttl.dtnasttl,
@@ -1667,7 +1666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND crapttl.nrdconta = pr_nrdconta
            AND crapttl.idseqttl = 1;
       rw_crapttl     cr_crapttl%ROWTYPE;
-  
+
       -- Cursor sobre o titular da conta
       CURSOR cr_crapjur IS
         SELECT crapjur.dtiniatv,
@@ -1740,7 +1739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
          WHERE nrcpfcgc = pr_nrcpfcgc
          ORDER BY crapopf.dtrefere DESC;
        rw_crapopf cr_crapopf%ROWTYPE;
-               
+
       -- Cursor para busca dos dados do conjuge
       CURSOR cr_crapcje IS
         SELECT nrdconta,
@@ -1782,11 +1781,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                  WHERE crapcje.cdcooper = pr_cdcooper
                    AND crapcje.nrdconta = pr_nrdconta
                    AND crapcje.idseqttl = 1 -- Titular
-                   AND crapcje.nrdconta <> 0)                   
+                   AND crapcje.nrdconta <> 0)
           ORDER BY dtultalt DESC; -- Ordenar pela ultima atualizacao cadastral
       rw_crapcje cr_crapcje%ROWTYPE;
-      
-          
+
+
       -- Busca o total de operacoes em atraso, vencidas e com prejuizo
       CURSOR cr_crapvop(pr_nrcpfcgc crapass.nrcpfcgc%TYPE,
                         pr_dtrefere DATE,
@@ -1813,7 +1812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND crapepr.nrdconta = crapavl.nrctaavd
            AND crapepr.nrctremp = crapavl.nrctravd
            AND crapepr.inliquid = 0; -- Nao esta liquidado
-           
+
       -- Buscar o valor de operacoes de 61 a 90 dias
       CURSOR cr_crapvri(pr_nrdconta crapass.nrdconta%TYPE) IS
         SELECT SUM(vldivida)
@@ -1830,16 +1829,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta;
       rw_crapcot cr_crapcot%ROWTYPE;
-           
-      /* Conta incorporada */    
+
+      /* Conta incorporada */
       CURSOR cr_craptco(pr_cdcooper IN craptco.cdcooper%TYPE,
                         pr_nrdconta IN craptco.nrdconta%TYPE)  IS
          SELECT 1
-           FROM craptco 
-          WHERE craptco.cdcooper = pr_cdcooper                 
+           FROM craptco
+          WHERE craptco.cdcooper = pr_cdcooper
             AND craptco.nrdconta = pr_nrdconta;
       rw_craptco cr_craptco%ROWTYPE;
-           
+
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
@@ -1852,7 +1851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_cdagenci      VARCHAR2(100);
       vr_nrdcaixa      VARCHAR2(100);
       vr_idorigem      VARCHAR2(100);
-      
+
       -- Variaveis gerais
       vr_tab_crapdac crapdac%ROWTYPE;  -- Cria tabela com a mesma estrutura que a tabela CRAPDAC
       vr_nrseqvac    crapvac.nrseqvac%TYPE; -- Sequencial com a versao do questionario
@@ -1888,7 +1887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         RAISE vr_exc_saida;
       END IF;
       CLOSE cr_crapvac;
-        
+
       -- Abre os dados do associado
       OPEN cr_crapass;
       FETCH cr_crapass INTO rw_crapass;
@@ -1909,15 +1908,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           RAISE vr_exc_saida;
         END IF;
         CLOSE cr_crapttl;
-        
+
         -- Atualiza o indicador de informacao cadastral
         vr_nrinfcad := rw_crapttl.nrinfcad;
-        
+
         -- Busca a conta do conjuge
         OPEN cr_crapcje;
         FETCH cr_crapcje INTO rw_crapcje;
         CLOSE cr_crapcje;
-               
+
       ELSE -- Se for PJ
         -- Busca os dados do cadastro da PJ
         OPEN cr_crapjur;
@@ -1928,7 +1927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           RAISE vr_exc_saida;
         END IF;
         CLOSE cr_crapjur;
-        
+
         -- Atualiza o indicador de informacao cadastral
         vr_nrinfcad := rw_crapjur.nrinfcad;
 
@@ -1938,10 +1937,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                        ,pr_nrdcaixa => 0
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_vlmedfat => vr_vlmedfat
-                                       ,pr_tab_erro => vr_tab_erro 
+                                       ,pr_tab_erro => vr_tab_erro
                                        ,pr_des_reto => vr_des_reto);
 
-        
+
       END IF;
 
       -- Busca os dados do endereco do cooperado
@@ -2006,7 +2005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         rw_crapopf.qtifssfn := 0;
       END IF;
       CLOSE cr_crapopf;
-      
+
       -- Busca o total de operacoes vencidas
       OPEN cr_crapvop(rw_crapass.nrcpfcgc, rw_crapopf.dtrefere, 205, 290);
       FETCH cr_crapvop INTO vr_vlopevnc;
@@ -2048,7 +2047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
       -- Calcula o valor total dos rendimentos
       vr_vlrendim := nvl(rw_crapttl.vlsalari,0) + nvl(rw_crapttl.vlrendim,0) +
-                     nvl(rw_crapcje.vlsalari,0) + 
+                     nvl(rw_crapcje.vlsalari,0) +
                      nvl(vr_vlmedfat,0); -- Para os casos de PJ
 
       -- Busca o saldo devedor
@@ -2076,7 +2075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            (pr_intippes IN (3,4) AND pr_inpessoa = 2 AND rw_crapiac.insocpfi = 'N') OR -- Socio/Grupo Economico e PJ
            (pr_intippes = 5 AND pr_inpessoa = 1 AND rw_crapiac.inpesfis = 'N') OR -- Avalista e PF
            (pr_intippes = 5 AND pr_inpessoa = 2 AND rw_crapiac.inpesjur = 'N') THEN -- Avalista e PJ
-           
+
           CONTINUE; -- Vai para o proximo indicador
         END IF;
 
@@ -2084,7 +2083,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         IF fn_verifica_situacao_idc(vr_nrseqvac, rw_crapiac.nrseqiac) = 2 THEN
           CONTINUE; -- Vai para o proximo indicador
         END IF;
-        
+
         -- Se nao possuir quantidade de reciprocidade informado, nao calcula o
         -- indicador. Solicitado por Suzana em reuniao dia 13/02/2015
         IF rw_crapiac.nrseqiac = 8 AND pr_qtrecpro = 0 THEN
@@ -2104,7 +2103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             -- Sai do indicador
             EXIT;
           END IF;
-          
+
           -- Se for indicador de DATA DE NASCIMENTO
           IF rw_crapiac.nrseqiac = 1 THEN
             -- Atualiza o conteudo do parametro 1
@@ -2134,7 +2133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           -- Se for indicador de COMPROMETIMENTO DE RENDA
           ELSIF rw_crapiac.nrseqiac = 3 THEN
             -- Calcula o valor total da despesa
-            vr_vldespes := nvl(rw_crapenc_2.vlalugue,0) + pr_vlpreemp + 
+            vr_vldespes := nvl(rw_crapenc_2.vlalugue,0) + pr_vlpreemp +
                            nvl(vr_vldivida_tit,0) + nvl(vr_vldivida_cje,0);
 
             -- Calcula o percentual de comprometimento
@@ -2143,7 +2142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             ELSE
               vr_prcompro := round(vr_vldespes / vr_vlrendim * 100,2);
             END IF;
-            
+
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := to_char(vr_prcompro,'FM999G999G990D00');
 
@@ -2163,7 +2162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             -- Atualiza o conteudo dos parametros 1 e 2
             vr_tab_crapdac.vlparam1 := rw_crapenc.dscasprp;
             vr_tab_crapdac.vlparam2 := to_char(rw_crapenc.dtinires,'DD/MM/YYYY');
-            
+
             -- Verifica se o tipo de residencia eh igual ao parametrizado
             IF rw_crapenc.incasprp = rw_crapqac.vlparam1 THEN
               -- Se nao tiver parametro 2 ou se quantidade de meses for inferior ao parametro 2
@@ -2191,21 +2190,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
           -- Se for indicador de DATA DE ABERTURA DA CONTA
           ELSIF rw_crapiac.nrseqiac = 6 THEN
-            
+
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := to_char(rw_crapass.dtadmiss,'dd/mm/yyyy');
 
-            /* Procura se é uma conta incorporada */  
-            OPEN cr_craptco(pr_cdcooper, 
+            /* Procura se é uma conta incorporada */
+            OPEN cr_craptco(pr_cdcooper,
                             pr_nrdconta);
-            FETCH cr_craptco 
+            FETCH cr_craptco
              INTO rw_craptco;
 
             /* Só considera se não for conta incorporada */
             IF cr_craptco%NOTFOUND THEN
               CLOSE cr_craptco;
             -- Se a quantidade de meses de abertura da conta for inferior ao parametrizado
-            IF trunc(months_between(pr_crapdat.dtmvtolt,rw_crapass.dtadmiss)) <= to_number(rw_crapqac.vlparam1) THEN  
+            IF trunc(months_between(pr_crapdat.dtmvtolt,rw_crapass.dtadmiss)) <= to_number(rw_crapqac.vlparam1) THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
               EXIT;
             END IF;
@@ -2226,7 +2225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
           -- Se for indicador de RECIPROCIDADE DE CAPITAL
           ELSIF rw_crapiac.nrseqiac = 8 THEN
-            
+
             -- Atualiza o conteudo dos parametros 1, 2 e 3
             vr_tab_crapdac.vlparam1 := to_char(pr_qtrecpro,'FM999G999G990D00');
             vr_tab_crapdac.vlparam2 := to_char(rw_crapcot.vldcotas,'FM999G999G990D00');
@@ -2242,18 +2241,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           ELSIF rw_crapiac.nrseqiac = 9 THEN
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := to_char(rw_crapsld.vlsmstre,'FM999G999G990D00');
-            
+
             -- Verifica se o saldo medio eh menor do que o do parametro
             IF rw_crapsld.vlsmstre <= nvl(to_number(replace(rw_crapqac.vlparam1,'.',',')),0) THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
               EXIT;
             END IF;
-            
+
           -- Se for indicador de CHEQUES SEM FUNDOS
           ELSIF rw_crapiac.nrseqiac = 10 THEN
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := vr_qtcheque;
-            
+
             -- Verifica se a quantidade de cheques é maior do que o parametrizado
             IF vr_qtcheque >= nvl(to_number(rw_crapqac.vlparam1),0) THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
@@ -2264,7 +2263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           ELSIF rw_crapiac.nrseqiac = 11 THEN
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := vr_qtestour;
-            
+
             -- Verifica se a quantidade de estouros é maior do que o parametrizado
             IF vr_qtestour >= to_number(rw_crapqac.vlparam1) THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
@@ -2275,7 +2274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           ELSIF rw_crapiac.nrseqiac = 12 THEN
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := to_char(vr_vltotpag,'fm999G999G990D00');
-            
+
             -- Verifica se existe atraso na cooperativa superior ao parametro
             IF vr_vltotpag > to_number(replace(rw_crapqac.vlparam1,'.',',')) THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
@@ -2289,16 +2288,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             vr_tab_crapdac.vlparam1 := rw_crapopf.qtifssfn;
             -- Valor da renda
             vr_tab_crapdac.vlparam2 := vr_vlrendim;
-            
+
             -- Verifica se a renda eh menor que o parametro
-            IF to_number(vr_tab_crapdac.vlparam2) <= to_number(replace(rw_crapqac.vlparam1,'.',',')) AND 
+            IF to_number(vr_tab_crapdac.vlparam2) <= to_number(replace(rw_crapqac.vlparam1,'.',',')) AND
                to_number(vr_tab_crapdac.vlparam1) >  to_number(rw_crapqac.vlparam2) AND -- E a quantidade de instituicoes financeiras maior que o parametro
                rw_crapqac.nrordper IN (1,2) THEN -- Somente a ordem 1 e 2 eh este calculo
               -- Coloca a mascara correta
               vr_tab_crapdac.vlparam2 :=  to_char(vr_tab_crapdac.vlparam2,'fm999G999G990D00');
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
               EXIT;
-            ELSIF to_number(vr_tab_crapdac.vlparam2) > to_number(rw_crapqac.vlparam1) AND 
+            ELSIF to_number(vr_tab_crapdac.vlparam2) > to_number(rw_crapqac.vlparam1) AND
                to_number(vr_tab_crapdac.vlparam1) >  to_number(rw_crapqac.vlparam2) AND -- E a quantidade de instituicoes financeiras maior que o parametro
                rw_crapqac.nrordper = 3 THEN -- Somente a ordem 3 eh este calculo
               -- Coloca a mascara correta
@@ -2314,7 +2313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           ELSIF rw_crapiac.nrseqiac = 14 THEN
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := vr_vlopevnc;
-            
+
             -- Verifica se o valor de operacoes vencidas eh maior do que o parametro
             IF vr_vlopevnc >= nvl(to_number(replace(rw_crapqac.vlparam1,'.',',')),0) THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
@@ -2325,7 +2324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           ELSIF rw_crapiac.nrseqiac = 15 THEN
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := vr_vlopeprj;
-            
+
             -- Verifica se o valor de prejuizo eh maior que o parametrizado
             IF vr_vlopeprj >= nvl(to_number(replace(rw_crapqac.vlparam1,'.',',')),0) THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
@@ -2334,7 +2333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
           -- Se for indicador de RESTRICOES SPC/SERASA
           ELSIF rw_crapiac.nrseqiac = 16 THEN
-            
+
             -- Verifica se o indicador eh de restricoe relevantes e sequencia
             -- das perguntas refere-se ao indicador de restricoes relevantes
             IF vr_nrinfcad = 4 AND rw_crapqac.nrordper = 1 OR
@@ -2350,7 +2349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
           -- Se for indicador de CORRESPONSAVEL
           ELSIF rw_crapiac.nrseqiac = 17 THEN
-          
+
             -- Verifica se o Indicador de corresponsavel eh SIM
             IF vr_incorres = 'S' THEN
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
@@ -2359,7 +2358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
           END IF;
         END LOOP; -- Fim do loop sobre as perguntas do indicador (CRAPQAC)
-        
+
         -- Se existir analise sobre o indicador, insere o detalhe da analise
         IF vr_tab_crapdac.instatus IS NOT NULL THEN
           BEGIN
@@ -2412,7 +2411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
     END;
 
   -- Recebe a mensagem cadastrada e transforma em mensagem correta
-  FUNCTION fn_ajuste_mensagem(pr_dsmensag crapqac.dsmensag%TYPE --> Mensagem 
+  FUNCTION fn_ajuste_mensagem(pr_dsmensag crapqac.dsmensag%TYPE --> Mensagem
                              ,pr_nmparam1 crapiac.nmparam1%TYPE --> Nome do parametro 1
                              ,pr_nmparam2 crapiac.nmparam1%TYPE --> Nome do parametro 2
                              ,pr_nmparam3 crapiac.nmparam1%TYPE --> Nome do parametro 3
@@ -2420,17 +2419,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                              ,pr_vlparam2 crapdac.vlparam1%TYPE --> Conteudo do parametro 2
                              ,pr_vlparam3 crapdac.vlparam1%TYPE)--> Conteudo do parametro 3
                              RETURN VARCHAR2 IS
-      vr_dsmensag_ret VARCHAR2(500);                                                          
+      vr_dsmensag_ret VARCHAR2(500);
     BEGIN
       -- Subsstitui os parametros
       vr_dsmensag_ret := REPLACE(pr_dsmensag,'#'||pr_nmparam1,pr_vlparam1);
       vr_dsmensag_ret := REPLACE(vr_dsmensag_ret,'#'||pr_nmparam2,pr_vlparam2);
       vr_dsmensag_ret := REPLACE(vr_dsmensag_ret,'#'||pr_nmparam3,pr_vlparam3);
-      
+
       -- Retorna a mensagem
       RETURN vr_dsmensag_ret;
-      
-    END;                             
+
+    END;
 
   -- Efetua a analise de credito de um contrato
   PROCEDURE pc_efetua_analise_ctr(pr_cdcooper IN crawepr.cdcooper%TYPE --> Codigo da cooperativa
@@ -2438,7 +2437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                  ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Numero do contrato
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
-       
+
       -- Cursor para buscar os dados do emprestimo
       CURSOR cr_crawepr IS
         SELECT crawepr.nrseqpac,
@@ -2457,7 +2456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND craplcr.cdcooper = crawepr.cdcooper
            AND craplcr.cdlcremp = crawepr.cdlcremp;
       rw_crawepr cr_crawepr%ROWTYPE;
-      
+
       -- Cursor para buscar as demais contas do titular
       CURSOR cr_crapass_2 IS
         SELECT crapass_2.nrdconta,
@@ -2485,7 +2484,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Cursor para busca dos dados do conjuge
       CURSOR cr_crapcje IS
         SELECT nrdconta,
-               nrcpfcgc 
+               nrcpfcgc
           FROM (SELECT crapass.nrdconta,
                        crapass.nrcpfcgc,
                        crapass.dtultalt
@@ -2513,7 +2512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                    AND crapass.dtelimin IS NULL )-- O mesmo tem que estar ativo
           ORDER BY dtultalt DESC; -- Ordenar pela ultima atualizacao cadastral
       rw_crapcje cr_crapcje%ROWTYPE;
-      
+
       -- Cursor para busca das contas do grupo economico
       CURSOR cr_crapgrp IS
         SELECT DISTINCT crapass.nrdconta,
@@ -2595,10 +2594,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Variaveis de critica
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
-      
+
       -- Obrigatoriedade analise automatica da Esteira
       vr_inobriga VARCHAR2(1) := 'N';
-      
+
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
@@ -2650,7 +2649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         RAISE vr_exc_saida;
       END IF;
       CLOSE cr_crapass;
-      
+
       -- BUscar identificador de obrigação de análise automática
       este0001.pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
                                              ,pr_inpessoa => rw_crapass.inpessoa
@@ -2660,13 +2659,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
       -- Tratar erros
-      IF vr_dscritic IS NOT NULL OR vr_cdcritic > 0 THEN 
+      IF vr_dscritic IS NOT NULL OR vr_cdcritic > 0 THEN
         RAISE vr_exc_saida;
       END IF;
-      
+
       -- Verifica se a linha de credito atual esta parametrizada para nao possuir analise
       IF instr(vr_dslinhas,';'||rw_crawepr.cdlcremp||';') > 0 OR vr_inobriga = 'S' THEN
-	    BEGIN
+      BEGIN
           UPDATE crawepr
              SET nrseqpac = 0
            WHERE cdcooper = pr_cdcooper
@@ -2692,14 +2691,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
       -- Atualiza o indice da tabela
       vr_ind := 1;
-      
+
       -- Insere o titular para ser consultado
       vr_tab_consulta(vr_ind).nrdconta := pr_nrdconta;
       vr_tab_consulta(vr_ind).nrcpfcgc := rw_crapass.nrcpfcgc;
       vr_tab_consulta(vr_ind).inpessoa := rw_crapass.inpessoa;
       vr_tab_consulta(vr_ind).intippes := 1; -- Titular do emprestimo
       vr_tab_contas(pr_nrdconta).nrdconta := pr_nrdconta;
-      
+
       -- Busca as outras contas que o titular possui
       FOR rw_crapass_2 IN cr_crapass_2 LOOP
         -- Insere as demais contas do cooperado titular
@@ -2709,7 +2708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         vr_tab_consulta(vr_ind).inpessoa := rw_crapass_2.inpessoa; -- PF
         vr_tab_consulta(vr_ind).intippes := 1; -- Titular do emprestimo
         vr_tab_contas(rw_crapass_2.nrdconta).nrdconta := rw_crapass_2.nrdconta;
-      END LOOP;      
+      END LOOP;
 
       -- Se for pessoa fisica, verifica se deve consultar o conjuge
       IF rw_crapass.inpessoa = 1 THEN
@@ -2738,7 +2737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_tab_contas(rw_crapgrp.nrdconta).nrdconta := rw_crapgrp.nrdconta;
           -- Informa que tem grupo economico
           vr_ingrpeco := 'S';
-        END LOOP;      
+        END LOOP;
       END IF;
 
       -- Busca os cooperados que sao os socios da empresa
@@ -2757,19 +2756,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_tab_contas(rw_crapavt.nrdconta).nrdconta := rw_crapavt.nrdconta;
           -- Incrementa a quantidade de socios
           vr_qtsocios := vr_qtsocios + 1;
-          
+
           -- Se chegar a dois socios, deve-se encerrar o loop
           IF vr_qtsocios >= 2 THEN
             EXIT;
           END IF;
         END IF;
-          
+
         -- Atualiza o numero do CPF
         vr_nrcpfcgc_ant := rw_crapavt.nrcpfcgc;
-          
-      END LOOP;      
 
-      -- Se possuir avalista 1, deve-se enviar o mesmo   
+      END LOOP;
+
+      -- Se possuir avalista 1, deve-se enviar o mesmo
       IF nvl(rw_crawepr.nrctaav1,0) <> 0 THEN
         OPEN cr_crapass(rw_crawepr.nrctaav1);
         FETCH cr_crapass INTO rw_crapass;
@@ -2785,7 +2784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         CLOSE cr_crapass;
       END IF;
 
-      -- Se possuir avalista 2, deve-se enviar o mesmo   
+      -- Se possuir avalista 2, deve-se enviar o mesmo
       IF nvl(rw_crawepr.nrctaav2,0) <> 0 THEN
         OPEN cr_crapass(rw_crawepr.nrctaav2);
         FETCH cr_crapass INTO rw_crapass;
@@ -2812,7 +2811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             vr_dscritic := 'Erro ao excluir CRAPDAC: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
-        
+
         -- Exclui a capa da tabela do questionario
         BEGIN
           DELETE crappac
@@ -2822,7 +2821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
             vr_dscritic := 'Erro ao excluir CRAPPAC: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
-        
+
       END IF;
 
       -- Busca o novo numero de sequencial
@@ -2839,11 +2838,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir NRSEQPAC: '||SQLERRM;
-      END;           
-             
+      END;
+
       -- Posiciona o indice par ao primeiro registro da tabela de contas a serem consultadas
       vr_ind := vr_tab_consulta.first;
-      
+
       -- Percorre todos os registros a serem consultados
       WHILE vr_ind IS NOT NULL LOOP
         -- Efetua a analise da conta
@@ -2863,14 +2862,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF;
-        
+
         -- Vai para o proximo registro
-        vr_ind := vr_tab_consulta.next(vr_ind);        
+        vr_ind := vr_tab_consulta.next(vr_ind);
       END LOOP;
-      
+
       -- Atualiza a sequencia da analise de credito na proposta
       BEGIN
-        UPDATE crawepr 
+        UPDATE crawepr
            SET nrseqpac = rw_crawepr.nrseqpac
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
@@ -2880,12 +2879,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_dscritic := 'Erro ao atualizar CRAWEPR: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
-      
+
       -- Busca os status do titular e dos demais consultados na analise
       OPEN cr_crappac(rw_crawepr.nrseqpac);
       FETCH cr_crappac INTO rw_crappac;
       CLOSE cr_crappac;
-      
+
       -- Se o status do titular for pre-analisado e dos demais for
       -- diferente de pre-analisado, deve-se considerar status manual
       IF rw_crappac.instatus_tit = 1 AND
@@ -2894,7 +2893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       ELSE -- Considerar a analise do titular
         vr_instatus := rw_crappac.instatus_tit;
       END IF;
-      
+
       -- Atualiza o status no parecer principal
       BEGIN
         UPDATE crappac
@@ -2905,8 +2904,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_dscritic := 'Erro ao atualizar CRAPPAC: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
-      
-      
+
+
     EXCEPTION
       WHEN vr_exc_saida THEN
 
@@ -2922,46 +2921,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
   -- Funcao para efetuar a quebra do texto em 132 posicoes, para impressao na proposta
   FUNCTION fn_retorna_quebra_texto(pr_texto VARCHAR2) RETURN VARCHAR2 IS
-    vr_texto_tmp VARCHAR2(4000); 
+    vr_texto_tmp VARCHAR2(4000);
     vr_auxiliar VARCHAR2(4000);
-    vr_retorno VARCHAR2(4000); 
+    vr_retorno VARCHAR2(4000);
     vr_tamanho_max PLS_INTEGER := 132;
   BEGIN
-    
+
     -- Atualiza a variavel temporaria com o texto do parametro
     vr_texto_tmp := pr_texto;
-    
+
     -- Se o tamanho for maior que o maximo da linha, efetua a quebra
     WHILE length(vr_texto_tmp) > vr_tamanho_max LOOP
-      
+
       -- Busca somente o espaco maximo que a linha comporta
       vr_auxiliar := substr(vr_texto_tmp,1,vr_tamanho_max);
-      
+
       -- Efetua a varredura para encontrar o espaco antes da quebra
       FOR i IN 1..vr_tamanho_max LOOP
         EXIT WHEN substr(vr_auxiliar,length(vr_auxiliar),1) = ' ';
         vr_auxiliar := substr(vr_auxiliar,1,length(vr_auxiliar)-1);
       END LOOP;
-       
+
       -- Atualiza o retorno com parte da quebra encontrada
       IF vr_retorno IS NULL THEN
         vr_retorno := vr_auxiliar;
       ELSE
         vr_retorno := vr_retorno||';'||vr_auxiliar;
-      END IF;    
-      
+      END IF;
+
       -- Retira o texto que foi encontrado da string principal
       vr_texto_tmp := trim(substr(vr_texto_tmp,length(vr_auxiliar)));
-      
+
     END LOOP;
-    
+
     -- Atualiza a variavel de retorno com o saldo que ficou (menor que o tamanho maximo da linha)
     IF length(pr_texto) > vr_tamanho_max THEN
       vr_retorno := vr_retorno ||';'|| vr_texto_tmp;
     ELSE
       vr_retorno := vr_texto_tmp;
     END IF;
-    
+
     -- Retorna a variavel de retorno
     RETURN vr_retorno;
 
@@ -3020,7 +3019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND crapass.nrdconta = crapdac.nrdconta
            AND crapqac.dsmensag IS NOT NULL -- Nao mostrar quando a mensagem for vazia
          ORDER BY crapdac.intippes, crapdac.nrdconta, crapiac.nrseqiac;
-      
+
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
@@ -3047,11 +3046,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
       -- Criar cabeçalho do XML
       vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
-            
+
       -- Insere o parecer geral da proposta
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'instatus', pr_tag_cont => rw_crawepr.instatus, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'dsstatus', pr_tag_cont => rw_crawepr.dsstatus, pr_des_erro => vr_dscritic);
-            
+
       -- Efetua loop sobre as analises
       FOR rw_crapdac IN cr_crapdac(rw_crawepr.nrseqpac) LOOP
 
@@ -3064,7 +3063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_dsmensag_ate := nvl(vr_dsmensag_ate,'')||
                                fn_retorna_quebra_texto('- '||rw_crapdac.texto||';');
         END IF;
-        
+
         -- Se for o ultimo registro, insere os dados
         IF rw_crapdac.nrseq = rw_crapdac.qtseq THEN
           -- Busca a descricao do status
@@ -3075,7 +3074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           ELSE
             vr_dsstatus := 'Alto risco';
           END IF;
-          
+
           -- Popula o XML com o parecer individual
           gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'analise', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml => vr_retxml, pr_tag_pai => 'analise', pr_posicao => vr_ind, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapdac.nrdconta), pr_des_erro => vr_dscritic);
@@ -3095,7 +3094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
           vr_dsmensag_ate := NULL;
 
         END IF;
-          
+
       END LOOP;
 
       -- Converte o XML para CLOB
@@ -3129,7 +3128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         pr_retxml := vr_retxml.getclobval();
 
     END;
-    
+
   PROCEDURE pc_retorna_descricao_risco(pr_cdcooper IN crawepr.cdcooper%TYPE --> Codigo da cooperativa
                                       ,pr_nrdconta IN crawepr.nrdconta%TYPE --> Numero da conta
                                       ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Numero do contrato
@@ -3167,8 +3166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Converte o XML para CLOB
       pr_retxml := vr_retxml.getclobval();
   END;
-  
-  
+
+
   /******************************************************************************/
   /**      Procedure para trazer o risco na proposta de emprestimo.            **/
   /******************************************************************************/
@@ -3183,13 +3182,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                       ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                                       ,pr_cdfinemp IN crapepr.cdfinemp%TYPE  --> Finalidade do emprestimo
                                       ,pr_cdlcremp IN crapepr.cdlcremp%TYPE  --> Linha de credito do emprestimo
-                                      ,pr_nrctrliq IN VARCHAR2               --> Lista de contratos liquidados
                                       ,pr_dsctrliq IN VARCHAR2               --> Lista de descrições de situação dos contratos
                                       ------ OUT ------
                                       ,pr_nivrisco     OUT VARCHAR2          --> Retorna nivel do risco
                                       ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
                                       ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
-     
+
   /* ..........................................................................
     --
     --  Programa : pc_obtem_emprestimo_risco        Antiga: b1wgen0043.p/obtem_emprestimo_risco
@@ -3203,12 +3201,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para trazer o risco na proposta de emprestimo.
     --
-    --  Alteração : 
+    --  Alteração :
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------    
-    
+
+    ---------------> CURSORES <-----------------
+
     --> Buscar risco
     CURSOR cr_crapris (pr_cdcooper  crapris.cdcooper%TYPE,
                        pr_nrdconta  crapris.nrdconta%TYPE,
@@ -3223,10 +3221,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
        AND ris.dtrefere = pr_dtrefere
        AND ris.inddocto = 1
        AND ris.cdorigem = 3
-       AND (ris.vldivida > pr_vlarrasto OR 
+       AND (ris.vldivida > pr_vlarrasto OR
             pr_vlarrasto = 0);
-    rw_crapris cr_crapris%ROWTYPE;   
-    
+    rw_crapris cr_crapris%ROWTYPE;
+
     --> Buscar dados da finalidade
     CURSOR cr_crapfin (pr_cdcooper crapfin.cdcooper%TYPE,
                        pr_cdfinemp crapfin.cdfinemp%TYPE) IS
@@ -3235,35 +3233,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
        WHERE fin.cdcooper = pr_cdcooper
          AND fin.cdfinemp = pr_cdfinemp;
     rw_crapfin cr_crapfin%ROWTYPE;
-                
+
     --Registro do tipo calendario
     rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-    
+
     --------------> TEMPTABLE <-----------------
-    vr_tab_ocorren   CADA0004.typ_tab_ocorren;  
-    vr_tab_nrctrliq  gene0002.typ_split; 
+    vr_tab_ocorren   CADA0004.typ_tab_ocorren;
+    vr_tab_nrctrliq  gene0002.typ_split;
     vr_tab_impress_risco     rati0001.typ_tab_impress_risco;
     vr_tab_impress_risco_tl  rati0001.typ_tab_impress_risco;
-    
-            
+
+
     --------------> VARIAVEIS <-----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
     vr_des_reto VARCHAR2(10);
     vr_exc_erro EXCEPTION;
     vr_tab_erro gene0001.typ_tab_erro;
-    
+
     vr_dstextab_riscobacen craptab.dstextab%TYPE;
     vr_innivris  NUMBER;
     vr_vlarrast  NUMBER;
     vr_flgrefin  BOOLEAN := FALSE;
-    
+
   BEGIN
-  
-    --> Risco A 
+
+    --> Risco A
     vr_innivris := 2;
     vr_flgrefin := FALSE;
-    
+
     -- busca o risco bacen
     vr_dstextab_riscobacen := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                         ,pr_nmsistem => 'CRED'
@@ -3275,9 +3273,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_dscritic := 'Registro nao encontrado craptab;CRED;USUARI;11;RISCOBACEN';
       RAISE vr_exc_erro;
     END IF;
-    
+
     vr_vlarrast := SUBSTR(vr_dstextab_riscobacen,3,9);
-    
+
     -- Verifica se a cooperativa esta cadastrada
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -3293,8 +3291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
-    
-    --> Buscar o pior risco da ultima central 
+
+    --> Buscar o pior risco da ultima central
     CADA0004.pc_lista_ocorren
                     (pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
                     ,pr_cdagenci => pr_cdagenci --> Codigo de agencia
@@ -3310,7 +3308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                     ,pr_tab_ocorren  => vr_tab_ocorren   --> retorna temptable com os dados dos convenios
                     ,pr_des_reto     => vr_des_reto          --> OK ou NOK
                     ,pr_tab_erro     => vr_tab_erro );
-     
+
     -- Se houve retorno não Ok
     IF vr_des_reto = 'NOK' THEN
       -- Retornar a mensagem de erro
@@ -3321,33 +3319,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_tab_erro.DELETE;
 
       RAISE vr_exc_erro;
-    END IF;                                   
-    
+    END IF;
+
     --> Extrair valor
     IF vr_tab_ocorren.exists(vr_tab_ocorren.first) AND vr_tab_ocorren(vr_tab_ocorren.first).innivris <> 0 THEN
       vr_innivris := vr_tab_ocorren(vr_tab_ocorren.first).innivris;
     END IF;
-    
-    IF TRIM(pr_dsctrliq)  IS NULL                    AND 
-       UPPER(TRIM(pr_dsctrliq)) <> 'SEM LIQUIDACOES' THEN
-      vr_flgrefin := TRUE;
-    ELSE
+
+    IF TRIM(pr_dsctrliq) IS NOT NULL AND UPPER(TRIM(pr_dsctrliq)) <> 'SEM LIQUIDACOES' THEN
       --> Percorre todos os contratos
-      vr_tab_nrctrliq := gene0002.fn_quebra_string(pr_nrctrliq,';');
-      
-      IF vr_tab_nrctrliq.count >  0 THEN  
-        FOR i IN vr_tab_nrctrliq.first..vr_tab_nrctrliq.last LOOP          
-         IF vr_tab_nrctrliq(i) = 0 THEN
+      vr_tab_nrctrliq := gene0002.fn_quebra_string(REPLACE(pr_dsctrliq,';',','),',');
+
+      IF vr_tab_nrctrliq.count >  0 THEN
+        FOR i IN vr_tab_nrctrliq.first..vr_tab_nrctrliq.last LOOP
+         IF NVL(TRIM(vr_tab_nrctrliq(i)),'0') = '0' THEN
            continue;
-         END IF; 
-         
+         END IF;
+
          vr_flgrefin := TRUE;
          EXIT;
-      
+
         END LOOP;
       END IF;
     END IF;
-    
+
     --> Verificacao para saber se eh refinancimento
     IF vr_flgrefin THEN
       --> buscar ultimo risco verificando valor arrasto
@@ -3355,82 +3350,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                        pr_nrdconta  => pr_nrdconta,
                        pr_dtrefere  => rw_crapdat.dtmvtoan,
                        pr_vlarrasto => vr_vlarrast);
-      FETCH cr_crapris INTO rw_crapris;                 
+      FETCH cr_crapris INTO rw_crapris;
       IF cr_crapris%FOUND THEN
         CLOSE cr_crapris;
         IF rw_crapris.innivris > vr_innivris THEN
           vr_innivris := rw_crapris.innivris;
         END IF;
       ELSE
-        CLOSE cr_crapris;  
+        CLOSE cr_crapris;
         --> buscar ultimo risco
         OPEN cr_crapris (pr_cdcooper  => pr_cdcooper,
                          pr_nrdconta  => pr_nrdconta,
                          pr_dtrefere  => rw_crapdat.dtmvtoan,
                          pr_vlarrasto => 0);
-        
+
         FETCH cr_crapris INTO rw_crapris;
-        IF cr_crapris%FOUND THEN  
-          CLOSE cr_crapris;     
+        IF cr_crapris%FOUND THEN
+          CLOSE cr_crapris;
           --> Caso possuir Prejuizo para as operacoes abaixo do valor de arrasto, o Risco sera "H".
           --  Senao o Risco sera "A" e nao precisamos verificar o pior risco entre as operacoes                   */
          IF rw_crapris.innivris = 10 THEN
            IF rw_crapris.innivris > vr_innivris THEN
              vr_innivris := rw_crapris.innivris;
-           END IF;  
+           END IF;
          END IF;
-                            
-        ELSE 
+
+        ELSE
           CLOSE cr_crapris;
         END IF;
       END IF;
-    
+
     END IF;
-    
+
     --> Somente vamos verificar a cessao de credito, caso possui a finalidade
     IF pr_cdfinemp > 0 THEN
       --> Buscar dados da finalidade
       OPEN cr_crapfin (pr_cdcooper => pr_cdcooper,
                        pr_cdfinemp => pr_cdfinemp);
-      FETCH cr_crapfin INTO rw_crapfin; 
-      
-      IF cr_crapfin%FOUND AND 
+      FETCH cr_crapfin INTO rw_crapfin;
+
+      IF cr_crapfin%FOUND AND
          rw_crapfin.tpfinali = 1 THEN
         CLOSE cr_crapfin;
-        
+
         --> Risco D
         IF vr_innivris < 5 THEN
           vr_innivris := 5;
-        END IF;  
-        
+        END IF;
+
       ELSE
         CLOSE cr_crapfin;
       END IF;
-      
+
     END IF;
-    
+
     --> Chamado: 522658
     IF pr_cdlcremp > 0 THEN
-      IF pr_cdcooper = 2 AND 
+      IF pr_cdcooper = 2 AND
          pr_cdlcremp IN (800,850,900) THEN
-        --> Risco E 
+        --> Risco E
         IF vr_innivris < 6 THEN
           vr_innivris := 6;
-        END IF;  
-      ELSIF pr_cdcooper <> 2 AND 
+        END IF;
+      ELSIF pr_cdcooper <> 2 AND
             pr_cdlcremp IN (800,900) THEN
-        --> Risco E 
+        --> Risco E
         IF vr_innivris < 6 THEN
           vr_innivris := 6;
-        END IF;  
+        END IF;
       END IF;
-              
-    END IF; --> END IF pr_cdfinemp > 0 THEN 
-  
+
+    END IF; --> END IF pr_cdfinemp > 0 THEN
+
     IF vr_innivris = 10 THEN
       vr_innivris := 9;
     END IF;
-    
+
     -- Obter as descricoes do risco, provisao , etc ...
     RATI0001.pc_descricoes_risco
                        (pr_cdcooper             => pr_cdcooper             --> Cooperativa conectada
@@ -3441,13 +3436,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                        ,pr_tab_impress_risco_cl => vr_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
                        ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                        ,pr_des_reto             => vr_des_reto);
-    
-   
+
+
     IF vr_tab_impress_risco.exists(vr_tab_impress_risco.first) THEN
       pr_nivrisco := vr_tab_impress_risco(vr_tab_impress_risco.first).dsdrisco;
-    END IF;   
-  
-  EXCEPTION 
+    END IF;
+
+  EXCEPTION
     WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
       IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
@@ -3462,9 +3457,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_obtem_emprestimo_risco ' ||
-                     SQLERRM;      
+                     SQLERRM;
   END pc_obtem_emprestimo_risco;
-  
+
   /******************************************************************************/
   /**      Procedure para atualizar o risco na proposta de emprestimo.         **/
   /******************************************************************************/
@@ -3476,11 +3471,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                       ,pr_idorigem IN INTEGER                --> Identificado de oriem
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de movimento
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
-                                      ,pr_nrctremp IN crapepr.nrctremp%TYPE  --> Numero de contrato                                      
-                                      ------ OUT ------                                      
+                                      ,pr_nrctremp IN crapepr.nrctremp%TYPE  --> Numero de contrato
+                                      ------ OUT ------
                                       ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
                                       ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
-     
+
   /* ..........................................................................
     --
     --  Programa : pc_atualiza_risco_proposta        Antiga: b1wgen0002.p/atualiza_risco_proposta
@@ -3494,12 +3489,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para atualizar o risco na proposta de emprestimo.
     --
-    --  Alteração : 
+    --  Alteração :
     --
     -- ..........................................................................*/
-    
-    ---------------> CURSORES <-----------------    
-    
+
+    ---------------> CURSORES <-----------------
+
     --> Buscar dados da proposta de emprestimo
     CURSOR cr_crawepr ( pr_cdcooper  crawepr.cdcooper%TYPE,
                         pr_nrdconta  crawepr.nrdconta%TYPE,
@@ -3507,30 +3502,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       SELECT epr.cdfinemp,
              epr.cdlcremp,
              epr.nrctremp,
+             to_char(epr.nrctrliq##1) || ',' || to_char(epr.nrctrliq##2) || ',' ||
+             to_char(epr.nrctrliq##3) || ',' || to_char(epr.nrctrliq##4) || ',' ||
+             to_char(epr.nrctrliq##5) || ',' || to_char(epr.nrctrliq##6) || ',' ||
+             to_char(epr.nrctrliq##7) || ',' || to_char(epr.nrctrliq##8) || ',' ||
+             to_char(epr.nrctrliq##9) || ',' || to_char(epr.nrctrliq##10) dsliquid,
              epr.rowid
         FROM crawepr epr
        WHERE epr.cdcooper = pr_cdcooper
          AND epr.nrdconta = pr_nrdconta
          AND epr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%ROWTYPE;
-                
+
     --Registro do tipo calendario
     rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-    
+
     --------------> TEMPTABLE <-----------------
-    
-            
+
+
     --------------> VARIAVEIS <-----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
     vr_des_reto VARCHAR2(10);
     vr_exc_erro EXCEPTION;
-    
+
     vr_dsnivris VARCHAR2(100);
-    
-    
+
+
   BEGIN
-    
+
     --> Buscar dados da proposta de emprestimo
     OPEN cr_crawepr ( pr_cdcooper  => pr_cdcooper,
                       pr_nrdconta  => pr_nrdconta,
@@ -3541,9 +3541,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       vr_cdcritic := 510;
       RAISE vr_exc_erro;
     ELSE
-      CLOSE cr_crawepr;      
+      CLOSE cr_crawepr;
     END IF;
-    
+
     -- Obtem o pior risco dentre as propostas
     pc_obtem_emprestimo_risco( pr_cdcooper => pr_cdcooper         --> Codigo da cooperativa
                               ,pr_cdagenci => pr_cdagenci         --> Codigo de agencia
@@ -3556,31 +3556,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                               ,pr_flgerlog => 'N'                 --> identificador se deve gerar log S-Sim e N-Nao
                               ,pr_cdfinemp => rw_crawepr.cdfinemp --> Finalidade do emprestimo
                               ,pr_cdlcremp => rw_crawepr.cdlcremp --> Linha de credito do emprestimo
-                              ,pr_nrctrliq => rw_crawepr.nrctremp --> Lista de contratos liquidados
-                              ,pr_dsctrliq => NULL                --> Lista de descrições de situação dos contratos
+                              ,pr_dsctrliq => rw_crawepr.dsliquid --> Lista de descrições de situação dos contratos
                               ------ OUT ------
                               ,pr_nivrisco => vr_dsnivris         --> Retorna nivel do risco
                               ,pr_dscritic => vr_dscritic         --> Descrição da critica
                               ,pr_cdcritic => vr_cdcritic);       --> Codigo da critica
-      
+
     IF TRIM(vr_dscritic) IS NOT NULL OR
        nvl(vr_cdcritic,0) > 0 THEN
-      RAISE vr_exc_erro; 
-    END IF;   
-      
+      RAISE vr_exc_erro;
+    END IF;
+
     --> Atualizar risco
     BEGIN
       UPDATE crawepr
          SET crawepr.dsnivris = UPPER(vr_dsnivris)
-       WHERE crawepr.rowid = rw_crawepr.rowid;   
+       WHERE crawepr.rowid = rw_crawepr.rowid;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel atualizar risco da proposta: '||SQLERRM;
         RAISE vr_exc_erro;
-    END; 
-    
-    
-  EXCEPTION 
+    END;
+
+
+  EXCEPTION
     WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
       IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
@@ -3595,8 +3594,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
       -- Montar descrição de erro não tratado
       pr_dscritic := 'Erro não tratado na pc_obtem_emprestimo_risco ' ||
-                     SQLERRM;      
+                     SQLERRM;
   END pc_atualiza_risco_proposta;
-  
+
 END rati0002;
 /

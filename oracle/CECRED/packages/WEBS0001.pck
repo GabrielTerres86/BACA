@@ -893,8 +893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             RAISE vr_exc_erro_500;
         END;  
       
-      -- Senao se a proposta não foi derivada 
-      ELSIF pr_insitapr > 0 THEN 
+      ELSE
       
         -- Buscar os dados da finalidade
         OPEN cr_crapfin(pr_cdcooper => pr_cdcooper
@@ -1523,7 +1522,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			vr_exc_saida EXCEPTION;
 			vr_cdcritic PLS_INTEGER;
 			vr_dscritic VARCHAR2(4000);
-      vr_dsmensag VARCHAR2(32767);
 			vr_des_reto VARCHAR2(10);
 			
 			-- Variáveis auxiliares
@@ -1572,7 +1570,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
       vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
       
-			-- Função para verificar se parâmetro passado é numérico
+      -- Bloco PLSQL para chamar a execução paralela do pc_crps414
+      vr_dsplsql VARCHAR2(4000);
+      -- Job name dos processos criados
+      vr_jobname VARCHAR2(100);
+           
+ 			-- Função para verificar se parâmetro passado é numérico
 			FUNCTION fn_is_number(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
 			BEGIN
 			  IF TRIM(gene0002.fn_char_para_number(pr_vlparam)) IS NULL THEN
@@ -1811,38 +1814,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         
 		  END IF;
 			
-			-- Se resultado da análise não retornou erro
-			IF lower(pr_dsresana) <> 'erro' AND TRIM(pr_dsprotoc) IS NOT NULL THEN
-				-- Acionar rotina de consultas automatizadas
-				SSPC0001.pc_retorna_conaut_esteira(rw_crawepr.cdcooper 
-																				  ,rw_crawepr.nrdconta
-																				  ,rw_crawepr.nrctremp 
-																				  ,pr_dsprotoc
-																				  ,vr_cdcritic
-																				  ,vr_dscritic);
-			  -- Em caso de erro 
-			  IF vr_dscritic IS NOT NULL THEN 
-				  -- Adicionar ao LOG e continuar o processo
-				  btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																		 pr_ind_tipo_log => 2, 
-																		 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
-																										 || ' - WEBS0001 --> Erro ao solicitor retorno nas '
-																										 || 'Consulta Automaticas do Protocolo: '
-																										 || 'pr_dsprotocolo : '||pr_dsprotoc||', erro: '||vr_cdcritic||'-'||vr_dscritic,
-																		 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-																																								  pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
-			  END IF;
-			END IF;
-			
 			-- Tratar status
       IF lower(pr_dsresana) = 'aprovar' THEN
 			  vr_insitapr := 1; -- Aprovado
 			ELSIF lower(pr_dsresana) = 'reprovar' THEN
 				vr_insitapr := 2; -- Reprovado
       ELSIF lower(pr_dsresana) = 'derivar' THEN
-        vr_insitapr := 0; -- Em Estudo
+        vr_insitapr := 5; -- Derivada
       ELSE
-        vr_insitapr := 5; -- Erro
+        vr_insitapr := 6; -- Erro
 			END IF;
         
 			-- Atualizar proposta de empréstimo
@@ -1875,82 +1855,128 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                     ,pr_msg_detalhe => vr_msg_detalhe --> Mensagem de detalhe
                                     ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
                                     ,pr_retxml      => pr_retxml);    
-      -- Caso nao tenha havido erro na atualizado e seja derivação
-			IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL AND lower(pr_dsresana) = 'derivar' THEN
-				/*--> Enviar o comando de cancelamente da proposta caso já esteja em analise manual
-        --> Ignoraremos possiveis erros no retorno do cancelamento
-        ESTE0001.pc_cancelar_proposta_est(pr_cdcooper => rw_crawepr.cdcooper --> Codigo da cooperativa
-                                         ,pr_cdagenci => rw_crawepr.cdagenci --> Codigo da Agencia da Operacao
-                                         ,pr_cdoperad => rw_crawepr.cdopeste --> Codigo do Operador (Mesmo do envio Motor)
-                                         ,pr_cdorigem => 9 --> Origem - Esteira
-                                         ,pr_nrdconta => rw_crawepr.nrdconta --> Numero da conta
-                                         ,pr_nrctremp => rw_crawepr.nrctremp --> Numero do contrato
-                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data atual 
-                                         ,pr_cdcritic => vr_cdcritic   --> pr_cdcritic
-                                         ,pr_dscritic => vr_dscritic); --> pr_dscritic */ 
+      COMMIT;
+      
+      -- Caso nao tenha havido erro na atualizado 
+			IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL AND TRIM(pr_dsprotoc) IS NOT NULL THEN 
+      
+        -- Se resultado da análise não retornou erro
+        IF lower(pr_dsresana) <> 'erro' THEN
+          -- Acionar rotina para processamento consultas 
+          -- automatizadas paralelamenteo
+          vr_dsplsql := 'DECLARE'||chr(13)
+                     || '  vr_cdcritic NUMBER;'||chr(13)
+                     || '  vr_dscritic VARCHAR2(4000);'||chr(13)
+                     || 'BEGIN'||chr(13)
+                     || '  SSPC0001.pc_retorna_conaut_esteira('||rw_crawepr.cdcooper||chr(13)
+                     || '                                    ,'||rw_crawepr.nrdconta||chr(13)
+                     || '                                    ,'||rw_crawepr.nrctremp||chr(13)
+                     || '                                    ,'''||pr_dsprotoc||''''||chr(13)
+                     || '                                    ,vr_cdcritic'||chr(13)
+                     || '                                    ,vr_dscritic);'||chr(13)
+                     /*|| '  -- Em caso de erro '||chr(13)
+                     || '  IF vr_dscritic IS NOT NULL THEN '||chr(13)
+                     || '  -- Adicionar ao LOG e continuar o processo'||chr(13)
+                     || '  btch0001.pc_gera_log_batch(pr_cdcooper     => 3,'||chr(13)
+                     || '                             pr_ind_tipo_log => 2,'||chr(13)
+                     || '                             pr_des_log      => '''||to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')||''''||chr(13)
+                     || '                                             || '' - WEBS0001 --> Erro ao solicitor retorno nas '''||chr(13)
+                     || '                                             || ''Consulta Automaticas do Protocolo: '||pr_dsprotoc||''''||chr(13)
+                     || '                                             || '', erro: ''||vr_cdcritic||''-''||vr_dscritic,'||chr(13)
+                     || '                             pr_nmarqlog     => '''||gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE')||''','||chr(13)
+                     || '                             pr_flnovlog     => ''N'','||chr(13)
+                     || '                             pr_flfinmsg     => ''S'','||chr(13)
+                     || '                             pr_dsdirlog     => NULL,'||chr(13)
+                     || '                             pr_dstiplog     => ''O'','||chr(13)
+                     || '                             PR_CDPROGRAMA   => NULL);'||chr(13)
+                     || '  END IF;'||chr(13)*/
+                     || 'END;';
+                     
+          -- Montar o prefixo do código do programa para o jobname
+          vr_jobname := 'JBEPR_CONMOTOR_$';
+          -- Faz a chamada ao programa paralelo atraves de JOB
+          gene0001.pc_submit_job(pr_cdcooper  => rw_crawepr.cdcooper  --> Código da cooperativa
+                                ,pr_cdprogra  => 'ATENDA'     --> Código do programa
+                                ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
+                                ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
+                                ,pr_interva   => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                ,pr_jobname   => vr_jobname   --> Nome randomico criado
+                                ,pr_des_erro  => vr_dscritic);
+          -- Testar saida com erro
+          IF vr_dscritic IS NOT NULL THEN
+            -- Adicionar ao LOG e continuar o processo
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
+                                                       || ' - WEBS0001 --> Erro ao solicitor retorno nas '
+                                                       || 'Consultas Automaticas do Protocolo: '||pr_dsprotoc
+                                                       || ', erro: '||vr_cdcritic||'-'||vr_dscritic,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                                                    pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+          END IF; 
+        END IF;
         
-        --> Acionaremos o envio automático para a Esteira
-				ESTE0001.pc_incluir_proposta_est(pr_cdcooper => rw_crawepr.cdcooper --> Codigo da cooperativa
-																				,pr_cdagenci => rw_crawepr.cdagenci --> Codigo da Agencia da Operacao
-																				,pr_cdoperad => rw_crawepr.cdopeste --> Codigo do Operador (Mesmo do envio Motor)
-																				,pr_cdorigem => 9 --> Origem - Esteira
-																				,pr_nrdconta => rw_crawepr.nrdconta --> Numero da conta
-																				,pr_nrctremp => rw_crawepr.nrctremp --> Numero do contrato
-																				,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data atual 
-																				,pr_nmarquiv => NULL --> Sem Arquivo da Proposta
-																				,pr_dsmensag => vr_dsmensag   /* pr_dsmensag */
-                                        ,pr_cdcritic => vr_cdcritic   /* pr_cdcritic */
-																				,pr_dscritic => vr_dscritic); /* pr_dscritic */   
-        --> Montar status conforme erro ou não 
-        IF nvl(vr_cdcritic,0) >= 0 AND vr_dscritic IS NOT NULL THEN
-          --> Enviar o comando de cancelamente da proposta caso já esteja em analise manual
-          --> Ignoraremos possiveis erros no retorno do cancelamento
-          ESTE0001.pc_cancelar_proposta_est(pr_cdcooper => rw_crawepr.cdcooper --> Codigo da cooperativa
-                                           ,pr_cdagenci => rw_crawepr.cdagenci --> Codigo da Agencia da Operacao
-                                           ,pr_cdoperad => rw_crawepr.cdopeste --> Codigo do Operador (Mesmo do envio Motor)
-                                           ,pr_cdorigem => 9 --> Origem - Esteira
-                                           ,pr_nrdconta => rw_crawepr.nrdconta --> Numero da conta
-                                           ,pr_nrctremp => rw_crawepr.nrctremp --> Numero do contrato
-                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data atual 
-                                           ,pr_cdcritic => vr_cdcritic   --> pr_cdcritic
-                                           ,pr_dscritic => vr_dscritic); --> pr_dscritic
-          -- Tentaremos enviar novamente 
-          ESTE0001.pc_incluir_proposta_est(pr_cdcooper => rw_crawepr.cdcooper --> Codigo da cooperativa
-                                          ,pr_cdagenci => rw_crawepr.cdagenci --> Codigo da Agencia da Operacao
-                                          ,pr_cdoperad => rw_crawepr.cdopeste --> Codigo do Operador (Mesmo do envio Motor)
-                                          ,pr_cdorigem => 9 --> Origem - Esteira
-                                          ,pr_nrdconta => rw_crawepr.nrdconta --> Numero da conta
-                                          ,pr_nrctremp => rw_crawepr.nrctremp --> Numero do contrato
-                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data atual 
-                                          ,pr_nmarquiv => NULL --> Sem Arquivo da Proposta
-                                          ,pr_dsmensag => vr_dsmensag   /* pr_dsmensag */
-                                          ,pr_cdcritic => vr_cdcritic   /* pr_cdcritic */
-                                          ,pr_dscritic => vr_dscritic); /* pr_dscritic */   
-        END IF;
-        -- Se houver erro 
-        IF nvl(vr_cdcritic,0) >= 0 AND vr_dscritic IS NOT NULL THEN
-          vr_status      := 500;
-          vr_cdcritic    := 978;
-          vr_msg_detalhe := 'Nao foi possivel derivar a proposta, ocorreu uma erro interno no sistema.(10)';  
-          -- Atualiza acionamento da derivação com o código do erro
-          pc_gera_retor_proposta_esteira(pr_status      => vr_status      --> Status
-                                        ,pr_nrtransacao => vr_nrtransacao --> Numero da transacao
-                                        ,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
-                                        ,pr_dscritic    => vr_dscritic    --> Descricao critica  
-                                        ,pr_msg_detalhe => vr_msg_detalhe --> Mensagem de detalhe
-                                        ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
-                                        ,pr_retxml      => pr_retxml);          
-          -- Neste cenarío de exceção devemos atualizar a proposta como ERRO
-          UPDATE crawepr epr
-             SET epr.insitest = 3 --> Analise Finalizada
-                ,epr.insitapr = 5 --> Erro
-           WHERE epr.cdcooper = rw_crawepr.cdcooper
-             AND epr.nrdconta = rw_crawepr.nrdconta
-             AND epr.nrctremp = rw_crawepr.nrctremp;
-        END IF;
-        -- Efetuar gravação
-        COMMIT;               
-			END IF;                                      
+        -- Caso seja derivação
+        IF lower(pr_dsresana) = 'derivar' THEN
+          -- Acionar rotina para derivação automatica em  paralelo
+          vr_dsplsql := 'DECLARE'||chr(13)
+                     || '  vr_dsmensag VARCHAR2(4000);'||chr(13)
+                     || '  vr_cdcritic NUMBER;'||chr(13)
+                     || '  vr_dscritic VARCHAR2(4000);'||chr(13)
+                     || 'BEGIN'||chr(13)
+                     || 'ESTE0001.pc_incluir_proposta_est(pr_cdcooper => '||rw_crawepr.cdcooper ||chr(13)
+                     || '                                ,pr_cdagenci => '||rw_crawepr.cdagenci ||chr(13)
+                     || '                                ,pr_cdoperad => '''||rw_crawepr.cdopeste||''''||chr(13)
+                     || '                                ,pr_cdorigem => 9'                    ||chr(13)
+                     || '                                ,pr_nrdconta => '||rw_crawepr.nrdconta ||chr(13)
+                     || '                                ,pr_nrctremp => '||rw_crawepr.nrctremp ||chr(13)
+                     || '                                ,pr_dtmvtolt => to_date('''||to_char(rw_crapdat.dtmvtolt,'dd/mm/rrrr')||''',''dd/mm/rrrr'')'||chr(13)
+                     || '                                ,pr_nmarquiv => NULL'                  ||chr(13)
+                     || '                                ,pr_dsmensag => vr_dsmensag'           ||chr(13)
+                     || '                                ,pr_cdcritic => vr_cdcritic'           ||chr(13)
+                     || '                                ,pr_dscritic => vr_dscritic);'         ||chr(13)
+                     /*|| '  -- Em caso de erro '||chr(13)
+                     || '  IF nvl(vr_cdcritic,0) >= 0 AND vr_dscritic IS NOT NULL THEN '||chr(13)
+                     || '  -- Adicionar ao LOG e continuar o processo'||chr(13)
+                     || '  btch0001.pc_gera_log_batch(pr_cdcooper     => 3,'||chr(13)
+                     || '                             pr_ind_tipo_log => 2,'||chr(13)
+                     || '                             pr_des_log      => '''||to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')||''''||chr(13)
+                     || '                                             || '' - WEBS0001 --> Erro ao solicitor Derivacao Automatica '''||chr(13)
+                     || '                                             || '' do Protocolo: '||pr_dsprotoc||''''||chr(13)
+                     || '                                             || '', erro: ''||vr_cdcritic||''-''||vr_dscritic,'||chr(13)
+                     || '                             pr_nmarqlog     => '''||gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE')||''','||chr(13)
+                     || '                             pr_flnovlog     => ''N'','||chr(13)
+                     || '                             pr_flfinmsg     => ''S'','||chr(13)
+                     || '                             pr_dsdirlog     => NULL,'||chr(13)
+                     || '                             pr_dstiplog     => ''O'','||chr(13)
+                     || '                             PR_CDPROGRAMA   => NULL);'||chr(13)
+                     || '  END IF;'||chr(13)*/
+                     || 'END;';
+                     
+          -- Montar o prefixo do código do programa para o jobname
+          vr_jobname := 'JBEPR_DERMOTOR_$';
+          -- Faz a chamada ao programa paralelo atraves de JOB
+          gene0001.pc_submit_job(pr_cdcooper  => rw_crawepr.cdcooper  --> Código da cooperativa
+                                ,pr_cdprogra  => 'ATENDA'     --> Código do programa
+                                ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
+                                ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
+                                ,pr_interva   => null         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                                ,pr_jobname   => vr_jobname   --> Nome randomico criado
+                                ,pr_des_erro  => vr_dscritic);
+          -- Testar saida com erro
+          IF vr_dscritic IS NOT NULL THEN
+            -- Adicionar ao LOG e continuar o processo
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 2, 
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
+                                                       || ' - WEBS0001 --> Erro ao solicitor derivação '
+                                                       || ' Automatica do Protocolo: '||pr_dsprotoc
+                                                       || ', erro: '||vr_cdcritic||'-'||vr_dscritic,
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                                                    pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+          END IF; 
+        END IF; 
+      END IF;                                       
 			
 		EXCEPTION
 			WHEN vr_exc_saida THEN

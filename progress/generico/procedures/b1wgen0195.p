@@ -193,6 +193,7 @@ PROCEDURE Enviar_proposta_esteira:
     DEF  INPUT PARAM par_flreiflx AS INTE                           NO-UNDO.
     /* Tipo de envio dos dados para a Esteira 
        I - inclusao Proposta
+       D - Derivacao Proposta
        A - Alteracao Proposta
        N - Alterar Numero Proposta
        C - Cancelar Proposta
@@ -244,7 +245,7 @@ PROCEDURE Enviar_proposta_esteira:
     
     
     /* Gerar impressao da proposta em PDF para as opcoes abaixo*/
-    IF CAN-DO("I,A,E",par_tpenvest) THEN
+    IF CAN-DO("I,A,D,E",par_tpenvest) THEN
     DO:
         RUN gerar_proposta_pdf(
                      INPUT par_cdcooper
@@ -275,8 +276,8 @@ PROCEDURE Enviar_proposta_esteira:
       END.
     END.
       
-    /***** INCLUIR PROPOSTA *****/ 
-    IF par_tpenvest = "I" THEN
+    /***** INCLUIR/DERIVAR PROPOSTA *****/ 
+    IF CAN-DO("I,D",par_tpenvest) THEN
       DO:
         
         /* Chamar rotina de inclusao da proposta na Esteira*/

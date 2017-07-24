@@ -194,12 +194,12 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 		                     ,pr_clobxmlc  OUT CLOB                        --XML com informações de LOG
                              ,pr_des_erro  OUT VARCHAR2                    --> Status erro
                              ,pr_dscritic  OUT VARCHAR2);
-
+																
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   /*---------------------------------------------------------------------------------------------------------------
-  
+
     Programa : GENE0005
     Sistema  : Rotinas auxiliares para busca de informacões do negocio
     Sigla    : GENE
@@ -221,7 +221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
                             crapass em campos de indice que possuem UPPER
                             (Adriano - SD 463762).
-  
+
                20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
                             (Adriano - SD 620221).
                             
@@ -898,6 +898,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                04/10/2013 - Retirado insitctr = P no Ratinf do BNDES (Renato - Supero)
 
                07/01/2015 - Incluido possibilidade de buscar o saldo atual (Andrino - RKAM)
+
+			   24/07/2017 - Incluido Replace de ';' para ',' na lista de contratos 
+			                a liquidar (Marcos-Supero)
+
      ............................................................................. */
 
      DECLARE
@@ -1036,7 +1040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
        -- Se nao houver contas para liquidar
        IF Upper(pr_dsctrliq) != Upper('Sem liquidacoes') THEN
          -- Quantidade contas recebe numero entradas da string
-         vr_tab_dsctrliq:= GENE0002.fn_quebra_string(pr_string  => pr_dsctrliq, pr_delimit => ',');
+         vr_tab_dsctrliq:= GENE0002.fn_quebra_string(pr_string  => replace(pr_dsctrliq,';',','), pr_delimit => ',');
 
          -- Se o vetor retornar vazio
          IF vr_tab_dsctrliq.Count=0 THEN
@@ -1083,24 +1087,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
              -- Calcular o saldo devedor do emprestimo cfme o tipo da chamada:
              -- PAra chamadas do tipo 1 (Proveniente da conversão da fontes/saldo_utiliza.p)
              IF pr_tpdecons = 1 THEN
-               -- Utilizar a pc_calc_saldo_epr
-               EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
-                                         ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
-                                         ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
-                                         ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
-                                         ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
-                                         ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
-                                         ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
-                                         ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
-                                         ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
-                                         ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
+                 -- Utilizar a pc_calc_saldo_epr
+                 EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
+                                           ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+                                           ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
+                                           ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
+                                           ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
+                                           ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
+                                           ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
+                                           ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
+                                           ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
+                                           ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
 
-               -- Se ocorreu erro, gerar critica
-               IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
-                 -- Zerar saldo devedor
-                 vr_vlsdeved := 0;
-                 -- Gerar critica
-                 RAISE vr_exc_erro;
+                 -- Se ocorreu erro, gerar critica
+                 IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+                   -- Zerar saldo devedor
+                   vr_vlsdeved := 0;
+                   -- Gerar critica
+                   RAISE vr_exc_erro;
                END IF;
              ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr
@@ -1666,14 +1670,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
           END IF;
       
         END;
-    
+
   END pc_valida_cnpj;
       
   /* Procedure para validar cpf ou cnpj */
   PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
                                ,pr_stsnrcal OUT BOOLEAN     --Situacao
                                ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
-  BEGIN
+    BEGIN
     /* ..........................................................................
     
       Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj

@@ -2468,17 +2468,16 @@ BEGIN
       RAISE vr_exc_erro; 
     END IF;   
     
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
+    dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
+        
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '<root>');
     --Montar CLOB
     IF vr_tab_co_responsavel.COUNT > 0 THEN
-        
-      -- Criar documento XML
-      dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
-      dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
-        
-      -- Insere o cabeçalho do XML 
-      gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
-                             ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '<root>');
          
       --Buscar Primeiro beneficiario
       vr_index := vr_tab_co_responsavel.FIRST;
@@ -2502,14 +2501,13 @@ BEGIN
         vr_index := vr_tab_co_responsavel.next(vr_index);
       END LOOP;
       
-      -- Encerrar a tag raiz 
-      gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
-                             ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '</root>' 
-                             ,pr_fecha_xml      => TRUE);
+    END IF;  
+    -- Encerrar a tag raiz 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '</root>' 
+                           ,pr_fecha_xml      => TRUE);
       
-    END IF;
-    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
@@ -2886,6 +2884,12 @@ BEGIN
                          '<vlsdeved>'|| vr_tab_co_responsavel(vr_index).vlsdeved  ||'</vlsdeved>'||
                          '<dsfinemp>'|| vr_tab_co_responsavel(vr_index).dsfinemp  ||'</dsfinemp>'||
                          '<dslcremp>'|| vr_tab_co_responsavel(vr_index).dslcremp  ||'</dslcremp>'||
+                         '<cdlcremp>'|| vr_tab_co_responsavel(vr_index).cdlcremp  ||'</cdlcremp>'||
+                         '<qtmesdec>'|| vr_tab_co_responsavel(vr_index).qtmesdec  ||'</qtmesdec>'||
+                         '<qtprecal>'|| vr_tab_co_responsavel(vr_index).qtprecal  ||'</qtprecal>'||
+                         '<vlpreemp>'|| vr_tab_co_responsavel(vr_index).vlpreemp  ||'</vlpreemp>'||
+                         '<dspreapg>'|| vr_tab_co_responsavel(vr_index).dspreapg  ||'</dspreapg>'||
+                         '<inprejuz>'|| vr_tab_co_responsavel(vr_index).inprejuz  ||'</inprejuz>'||
                      '</responsavel>';
         
         -- Escrever no XML

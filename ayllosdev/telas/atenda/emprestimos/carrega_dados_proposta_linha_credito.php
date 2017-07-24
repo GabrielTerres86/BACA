@@ -18,6 +18,7 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : ''; 
 	$cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '';
+  $dsctrliq = (isset($_POST['dsctrliq'])) ? $_POST['dsctrliq'] : '';
 	
 	$xml  = "<Root>";
 	$xml .= "	<Cabecalho>";
@@ -25,7 +26,7 @@
 	$xml .= "		<Proc>carrega_dados_proposta_linha_credito</Proc>";
 	$xml .= "	</Cabecalho>";
 	$xml .= "	<Dados>";
-	$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml .= "		<cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
 	$xml .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
@@ -35,6 +36,7 @@
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<cdfinemp>".$cdfinemp."</cdfinemp>";
 	$xml .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
+  $xml .= "		<dsctrliq>".$dsctrliq."</dsctrliq>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

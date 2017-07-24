@@ -1094,7 +1094,7 @@ PROCEDURE Imprime_Consulta:
                                                  INPUT par_nrdconta,
                                                  INPUT par_inprodut,
                                                  INPUT par_nrctrato,
-                                                 INPUT par_nrdconta,
+                                                 INPUT 0,
                                                  INPUT crapass.nrcpfcgc,
                                                  OUTPUT aux_nrconbir,
                                                  OUTPUT aux_nrseqdet). 
@@ -1148,17 +1148,46 @@ PROCEDURE Imprime_Consulta:
                                   ASSIGN aux_cdcritic = 610.
                                   LEAVE.
                               END.
- 
-                         /* Dados do conjuge */
-                         RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
-                                                 INPUT par_nrdconta,
-                                                 INPUT par_inprodut,
-                                                 INPUT par_nrctrato,
-                                                 INPUT crapcje.nrctacje,
-                                                 INPUT crapcje.nrcpfcjg,
-                                                OUTPUT aux_nrconbir,
-                                                OUTPUT aux_nrseqdet).
-                                  
+
+                         IF crapcje.nrcpfcjg = 0 THEN
+                         DO:
+                           FIND crabass WHERE 
+                                crabass.cdcooper = par_cdcooper   AND
+                                crabass.nrdconta = crapcje.nrctacje
+                                NO-LOCK NO-ERROR.
+
+                            IF   NOT AVAIL crabass   THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 9.
+                                LEAVE.
+                            END.                              
+                            
+                            /* Dados do conjuge pela conta e CPF da CRAPASS */
+                            RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
+                                                    INPUT par_nrdconta,
+                                                    INPUT par_inprodut,
+                                                    INPUT par_nrctrato,
+                                                    INPUT crapcje.nrctacje,
+                                                    INPUT crabass.nrcpfcgc,
+                                                   OUTPUT aux_nrconbir,
+                                                   OUTPUT aux_nrseqdet).
+                            
+                            
+                          END.
+                          ELSE
+                          DO:
+                            /* Dados do conjuge direto da tabela de Conjuge */
+                            RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
+                                                    INPUT par_nrdconta,
+                                                    INPUT par_inprodut,
+                                                    INPUT par_nrctrato,
+                                                    INPUT crapcje.nrctacje,
+                                                    INPUT crapcje.nrcpfcjg,
+                                                   OUTPUT aux_nrconbir,
+                                                   OUTPUT aux_nrseqdet).    
+                         
+                          END.                      
+                                                
                          RUN Trata_Pessoa (INPUT par_cdcooper,
                                            INPUT crapcje.nrctacje,
                                            INPUT 0,
@@ -1185,7 +1214,8 @@ PROCEDURE Imprime_Consulta:
 
                           RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
                                                   INPUT par_nrdconta,
-                                                  INPUT par_inprodut,                                                   INPUT par_nrctrato,
+                                                  INPUT par_inprodut,                                                   
+                                                  INPUT par_nrctrato,
                                                   INPUT crabass.nrdconta,
                                                   INPUT crabass.nrcpfcgc,
                                                  OUTPUT aux_nrconbir,

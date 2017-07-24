@@ -1667,7 +1667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        INTO vr_nrcpfcgc;
       CLOSE cr_crapass;
       -- Efetuar split dos contratos passados para facilitar os testes
-      vr_split_pr_dsliquid := gene0002.fn_quebra_string(pr_dsliquid,',');
+      vr_split_pr_dsliquid := gene0002.fn_quebra_string(replace(pr_dsliquid,';',','),',');
       -- Para todos os empréstimos não liquidados
       FOR rw_crapepr IN cr_crapepr LOOP
         -- Buscar a proposta do mesmo
