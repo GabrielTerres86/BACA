@@ -8350,8 +8350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
 
         -- Recusar a instrucao
-        vr_dscritic := 'Excedido prazo cancelamento da instrucao automatica de negativacao! ' ||
-                       'Negativacao Serasa nao efetuada!';
+        vr_dscritic := 'Excedido prazo cancelamento da instrucao automatica de negativacao!';
         RAISE vr_exc_erro;        
       END IF;
       
@@ -8375,8 +8374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
 
         -- Recusar a instrucao
-        vr_dscritic := 'Titulo ja enviado para Negativacao. ' ||
-                       'Negativacao Serasa nao efetuada!';
+        vr_dscritic := 'Titulo ja enviado para Negativacao!';
         RAISE vr_exc_erro;        
       END IF;
                 
