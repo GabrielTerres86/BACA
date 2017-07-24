@@ -746,7 +746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       END IF;
         
       --Gravar linha gerencial
-      IF rw_craplcm.cdhistor in (2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059,2221) THEN
+      IF rw_craplcm.cdhistor in (2057, 2058, 1919, 1810, 1837, 1838, 1028, 777, 1988, 1660, 1661, 2059,2221, 1802, 1538) THEN
          
         vr_linhadet := '999'||','||TRIM(to_char(rw_craplcm.vllanmto, '99999999999990.00'));
           

@@ -1634,11 +1634,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_origem := 1780;  
                   vr_destino := 7112;                  
                   vr_descricao := '"AJUSTE CONTABIL - JUROS CCB IMOBILIZADO REFAP (INVESTIMENTOS)"';  
-               ELSIF vr_chave_finalidade = 3 THEN
+/*               ELSIF vr_chave_finalidade = 3 THEN
                   vr_origem := 5505;  
                   vr_destino := 7011;                  
                   vr_descricao := '"AJUSTE CONTABIL - JUROS CCB MAIS CREDITO"';                                      
-               ELSIF vr_chave_finalidade = 4 THEN
+*/               ELSIF vr_chave_finalidade = 4 THEN
                   vr_origem := 1440;  
                   vr_destino := 7306;                  
                   vr_descricao := '"AJUSTE CONTABIL REF. JUROS MICROCREDITO BNDES"';                  
@@ -1700,9 +1700,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_descricao := '"AJUSTE CONTABIL - PROVISAO CEF"';
                ELSIF vr_chave_finalidade = 2 THEN
                   --para provisão
-                  vr_destino := 5595;
+                  vr_destino := 1702;
                   --para reversao
-                  vr_origem  := 5595;  
+                  vr_origem  := 1702;  
                   vr_descricao := '"AJUSTE CONTABIL - PROVISAO CCB IMOBILIZADO REFAP"';                   
                ELSIF vr_chave_finalidade = 4 THEN
                   --para provisão
