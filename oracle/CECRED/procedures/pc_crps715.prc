@@ -13,7 +13,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
      Objetivo  : Realizar geração do arquivo contabil de emprestimo de
                  cessão de credito.
 
-     Alteracoes:
+     Alteracoes: Ajustes nas contas contabeis geradas nos lancamentos e criacao
+                 do lancamento gerencial 999 (SD 718024 Anderson).
 
   ............................................................................ */
 
@@ -91,7 +92,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
         --> Gerar linha com o somatorios
         GROUP BY ROLLUP  (ass.inpessoa, ris.cdagenci) 
         --> Ordenar para linha de somatorio ser apresentada primeiro
-        ORDER BY ass.inpessoa, ris.cdagenci DESC;
+        ORDER BY ass.inpessoa, nvl(ris.cdagenci,0) ASC;
   
   
   --> Listar valore das cessoes por agencia, pessoa
@@ -151,6 +152,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps715 (pr_cdcooper IN crapcop.cdcooper%T
   vr_dtvencto_ori DATE;
   vr_cdadmcrd     crapcrd.cdadmcrd%TYPE;
   vr_nrctremp     crapepr.nrctremp%TYPE;
+  vr_vltotali     crapris.vldivida%TYPE;
 
   -- Data do movimento no formato texto
   vr_dtultdma_util_yymmdd  varchar2(6);
@@ -279,17 +281,17 @@ BEGIN
         ELSIF rw_crapris.cdagenci IS NULL THEN
           
           IF rw_crapris.inpessoa = 1 THEN
-            vr_lshistor := '1753,5516';
+            vr_lshistor := '1753,1664';
             vr_dshistor := '"(Cessao) SALDO CESSÃO CARTÃO PESSOA FISICA."';
             
-            vr_lshistor_rev := '5516,1753';
+            vr_lshistor_rev := '1664,1753';
             vr_dshistor_rev := '"(Cessao) REVERSÃO SALDO CESSÃO CARTÃO PESSOA FISICA."';
             
           ELSIF rw_crapris.inpessoa = 2 THEN
-            vr_lshistor := '1754,5517';
+            vr_lshistor := '1754,1664';
             vr_dshistor := '"(Cessao) SALDO CESSÃO CARTÃO PESSOA JURIDICA."';
             
-            vr_lshistor_rev := '5517,1754';
+            vr_lshistor_rev := '1664,1754';
             vr_dshistor_rev := '"(Cessao) REVERSÃO SALDO CESSÃO CARTÃO PESSOA JURIDICA."';
             
           END IF;         
@@ -319,28 +321,44 @@ BEGIN
                            pr_flrevers => TRUE); 
           vr_dsdlinha := NULL;
           
-          
+          /* Armazena o total para o lançamento gerencial com PA 999 */
+          vr_vltotali := rw_crapris.vltotdiv;
         ELSE
-          --> montar linhas delathes
-          vr_dsdlinha := vr_dsdlinha ||
-                         to_char(rw_crapris.cdagenci,'fm000')||','|| 
-                         to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
+          --> Caso for a primeira linha detalhe, vamos escrever o lancamento gerencial PA999 da reversao.
+          IF rw_crapris.seqdreg = 2 THEN            
+            --> montar linhas detalhes
+            vr_dsdlinha := '999,'|| 
+                           to_char(vr_vltotali,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
                          chr(10);
+
+            --> inserir linha de reversao
+            pc_escreve_linha(pr_dsdlinha => vr_dsdlinha,
+                             pr_flrevers => TRUE);
         END IF;
         
-        --> Caso for a ultima linha detalhe
-        IF rw_crapris.seqdreg = rw_crapris.qtddreg THEN
-          --Escreve no arquivo duplicando os detalhes
-          vr_dsdlinha := vr_dsdlinha || vr_dsdlinha;
-          pc_escreve_linha(pr_dsdlinha => vr_dsdlinha,
-                           pr_fechaarq => TRUE);  --> descarregar buffer
+          --> montar linhas detalhes
+          vr_dsdlinha := to_char(rw_crapris.cdagenci,'fm000')||','|| 
+                         to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
+                         chr(10);
           
+          --> Escreve lançamento normal
+          pc_escreve_linha(pr_dsdlinha => vr_dsdlinha);          
           --> inserir linha de reversao
           pc_escreve_linha(pr_dsdlinha => vr_dsdlinha,
                            pr_flrevers => TRUE,
+                           pr_fechaarq => (rw_crapris.seqdreg = rw_crapris.qtddreg)); --> descarrega buffer se for a ultima linha
+
+          --> Caso for a ultima linha detalhe, vamos escrever o lancamento gerencial PA999.
+          IF rw_crapris.seqdreg = rw_crapris.qtddreg THEN          
+            --> montar linhas detalhes
+            vr_dsdlinha := '999,'|| 
+                           to_char(vr_vltotali,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
+                           chr(10);
+          
+            pc_escreve_linha(pr_dsdlinha => vr_dsdlinha,
                            pr_fechaarq => TRUE);  --> descarregar buffer
         END IF;
-      
+        END IF;
       
       END LOOP;
       

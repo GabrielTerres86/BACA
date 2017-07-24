@@ -392,12 +392,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas genericas para RISCO
   --  Sigla    : RISC
   --  Autor    : ?????
-  --  Data     : ?????                         Ultima atualizacao: 23/03/2017
+  --  Data     : ?????                         Ultima atualizacao: 21/07/2017
   --
   --  Dados referentes ao programa:
   --
   --   Objetivo  : 23/03/2017 - Ajustado para retornar valores da Cessao do cartao de credito.
   --                            PRJ343 - Cessao de credito (Odirlei-AMcom)   
+  --
+  --               21/07/2017 - Ajuste para somar os lançamentos de rendas a apropriar e provisao das 
+  --                            cessoes nos emprestimos PP modalidade 299 (SD 718024 Anderson).
   --
   -- .............................................................................
 
@@ -624,8 +627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         FETCH cr_cessao INTO vr_fleprces;
         CLOSE cr_cessao;  
        
+        --Conforme SD 718024 - os dados das cessoes devem ser somados aqui e na modalidade 299 também.
         IF vr_fleprces = 1 THEN
-          
           -- Por tipo de pessoa
           IF rw_crapris_jur.inpessoa = 1 THEN -- PF
 
@@ -647,8 +650,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               pr_tabvljur5(rw_crapris_jur.cdagenci).valorpj := NVL(rw_crapris_jur.vljura60,0);
             END IF;
           END IF;
+        END IF;
 
-        ELSIF par_cdmodali = 299 THEN
+        IF par_cdmodali = 299 THEN
 
           IF rw_crapris_jur.inpessoa = 1 THEN -- PF
 
@@ -712,7 +716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Felipe Oliveira
-  Data    : Dezembro/2014                       Ultima Alteracao: 27/04/2017
+  Data    : Dezembro/2014                       Ultima Alteracao: 21/07/2017
 
   Dados referentes ao programa:
 
@@ -753,6 +757,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
      27/04/2017 - Nas linhas de reversao verificar se é uma data util 
                   (Tiago/Thiago SD 589074).
+                  
+     21/07/2017 - Ajuste para somar os lançamentos de rendas a apropriar e provisao das 
+                  cessoes nos emprestimos PP modalidade 299 (SD 718024 Anderson).
   ............................................................................. */
 
 
@@ -1578,10 +1585,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1760_pre(rw_crapris.cdagenci).valor := vr_vlag1760_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
               vr_vlag1760_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
-      END IF;
+            END IF;
 
+            --Conforme SD 718024 - os dados das cessoes devem ser somados com os PP modalidade 299.
+            vr_rel1721_pre   := vr_rel1721_pre   + vr_vlpreatr;
+            IF vr_vlag1721_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlag1721_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1721_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
           END IF;
 
+          END IF;
         ELSE -- Se pessoa Juridica
           -- Verifica o tipo do empréstimo - PP
           IF rw_crapepr.tpemprst = 1 THEN
@@ -1594,9 +1608,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             ELSE
               vr_vlag1761_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
       END IF;
+          
+            --Conforme SD 718024 - os dados das cessoes devem ser somados com os PP modalidade 299.
+            vr_rel1723_pre   := vr_rel1723_pre + vr_vlpreatr;
+            IF vr_vlag1723_pre.exists(rw_crapris.cdagenci) THEN
+              vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlag1723_pre(rw_crapris.cdagenci).valor + vr_vlpreatr;
+            ELSE
+              vr_vlag1723_pre(rw_crapris.cdagenci).valor := vr_vlpreatr;
           END IF;
         END IF;
-
+        END IF;
       ELSE  -- FIM - CESSAO
 
       -- EMPRESTIMOS
@@ -2046,7 +2067,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
     vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
     
-    
     vr_contador := 1;
     WHILE vr_contador <= 16 LOOP
 
@@ -2112,7 +2132,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldevedo(34) := vr_rel1761_v_pre;
     vr_vldespes(34) := vr_rel1761_pre;
     
-
     -- Buscar o próximo dia útil
     vr_dtmvtopr := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
                                               ,pr_dtmvtolt  => (vr_dtrefere + 1) -- Próximo dia
@@ -2720,7 +2739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpf <> 0 THEN
         
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5532,1756,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5534,1756,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) RENDAS A APROPRIAR CESSÃO CARTAO PESSOA FISICA."';
@@ -2734,7 +2753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                          TRIM(to_char(vr_pacvljur_5(vr_contador).valorpf, '99999999999990.00'));
               -- Gravar Linha
               pc_gravar_linha(vr_linhadet);  
-    END IF;
+            END IF;
           END LOOP; 
 
       FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
@@ -2749,7 +2768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1756,5532,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1756,5534,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
@@ -2782,7 +2801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpj <> 0 THEN
 
         vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5533,1757,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',5535,1757,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -2811,7 +2830,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1757,5533,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1757,5535,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                        ',5210,' ||
                      '"(Cessao) REVERSAO RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -2844,7 +2863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpf <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7016,7537,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7537,7016,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
@@ -2873,7 +2892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',7537,7016,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',7016,7537,' ||
                      TRIM(to_char(vr_vldjuros3.valorpf, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA FISICA."';
@@ -2906,7 +2925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_vldjuros3.valorpj <> 0 THEN
 
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7017,7538,' ||
+                     TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7538,7017,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -2935,7 +2954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       -- Reversão
       vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',7538,7017,' ||
+                     TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',7017,7538,' ||
                      TRIM(to_char(vr_vldjuros3.valorpj, '99999999999990.00')) ||
                      ',5210,' ||
                      '"(Cessao) REVERSAO AJUSTE RENDAS A APROPRIAR CESSAO CARTAO PESSOA JURIDICA."';
@@ -4250,7 +4269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
           vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc, '009')) || ',' ||
                          TRIM(to_char(vr_vlag1760_pre(vr_contador).valor, '99999999999990.00'));
           pc_gravar_linha(vr_linhadet);
-    END IF;
+        END IF;
       END LOOP;
 
     END IF;
