@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 19/04/2017
+   Data    : Agosto/2007                      Ultima atualizacao: 10/07/2017
 
    Dados referentes ao programa:
 
@@ -151,7 +151,7 @@
                            
               19/05/2015 - Incluido nova temp-table para o projeto de cessao
                            de credito (James)  
- 	                                                                    
+                                                                             
               25/06/2015 - Projeto 215 - DV 3, incluso novo campo liquidia na 
                            tt-dados-epr (Daniel)    
  
@@ -165,17 +165,20 @@
               05/10/2015 - Revisao de contratos (Gabriel-RKAM)  
               
               17/11/2015 - Incluso novo campo dtapgoib na tt-dados-epr e
-			               cdorigem na tt-extrato_epr (Daniel) 
+                                       cdorigem na tt-extrato_epr (Daniel) 
 
-			  22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
-			               (Projeto Esteira de Credito - Daniel/Oscar) 	
+                          22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
+                                       (Projeto Esteira de Credito - Daniel/Oscar)         
                            
               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
-                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
+                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).
                            
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
-                            
+              
+              07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
+                           (Jaison/Marcos Martini - PRJ337)
+                           
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
     FIELD nrdconta LIKE crapass.nrdconta
@@ -274,7 +277,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD vlsdpjtl AS DECIMAL FORMAT "zzz,zzz,zz9.99-"
     FIELD cdorigem LIKE crapepr.cdorigem
     FIELD nrseqrrq AS INTE
-    FIELD portabil AS CHAR	
+    FIELD portabil AS CHAR        
     FIELD liquidia AS INTE
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
@@ -355,8 +358,10 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD portabil AS CHAR
     FIELD insitapr LIKE crawepr.insitapr
     FIELD err_efet AS INTE
-	FIELD dssitest AS CHAR
-	FIELD dssitapr AS CHAR.
+    FIELD dssitest AS CHAR
+    FIELD dssitapr AS CHAR
+    FIELD insitest LIKE crawepr.insitest
+    FIELD inobriga AS CHAR.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

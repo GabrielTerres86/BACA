@@ -260,7 +260,7 @@
 			   
 			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
 						    (Adriano - SD 614408).
-               
+
                19/04/2017 - Removido DSNACION variavel nao utilizada.
                             PRJ339 - CRM (Odirlei-AMcom)  
 
@@ -8164,7 +8164,7 @@ PROCEDURE busca_operacoes:
 
                     ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
-                    ASSIGN w-co-responsavel.vlsdeved = INT(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
                     ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
                     ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
 
@@ -8282,7 +8282,7 @@ PROCEDURE gera_co_responsavel:
     /*Leitura do XML de retorno da proc e criacao dos registros na w-co-responsavel */
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_req = pc_gera_co_responsavel_prog.pr_xml_co_responsavel. 
-    
+
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
     PUT-STRING(ponteiro_xml,1) = xml_req. 
@@ -8307,7 +8307,7 @@ PROCEDURE gera_co_responsavel:
 
                 IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
                     NEXT. 
-
+                    
                 IF xRoot2:NUM-CHILDREN > 0 THEN
                     CREATE w-co-responsavel.
 
@@ -8323,12 +8323,21 @@ PROCEDURE gera_co_responsavel:
                     IF ERROR-STATUS:ERROR             OR  
                        ERROR-STATUS:NUM-MESSAGES > 0  THEN
                                      NEXT.
-
+                                     
                     ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
                     ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
-                    ASSIGN w-co-responsavel.vlsdeved = INT(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
                     ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
                     ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
+                    ASSIGN w-co-responsavel.cdlcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdlcremp". 
+                    ASSIGN w-co-responsavel.vlpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreemp".
+                    
+                    ASSIGN w-co-responsavel.qtmesdec = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtmesdec". 
+                    ASSIGN w-co-responsavel.qtprecal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtprecal". 
+                    ASSIGN w-co-responsavel.qtpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtpreemp". 
+                    
+                    ASSIGN w-co-responsavel.dspreapg =    (xText:NODE-VALUE) WHEN xField:NAME = "dspreapg". 
+                    ASSIGN w-co-responsavel.inprejuz = INT(xText:NODE-VALUE) WHEN xField:NAME = "inprejuz". 
 
                 END. 
 
@@ -8755,7 +8764,7 @@ PROCEDURE valida_impressao:
 
         IF  par_tplcremp <> 2 THEN
             LEAVE Valida.
-
+            
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND 
                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
        
@@ -8827,9 +8836,13 @@ PROCEDURE valida_impressao:
     END.
     
     FIND crawepr WHERE RECID(crawepr) = par_recidepr NO-LOCK NO-ERROR.
-   
+    
     IF  AVAILABLE crawepr   THEN
         DO:
+        
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND 
+                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        
         /* Se ainda nao Enviada ou Enviada mas com Erro Consultas */
         IF  crawepr.insitest < 2 OR crawepr.insitapr = 5 THEN
             DO:
@@ -8838,6 +8851,8 @@ PROCEDURE valida_impressao:
               /* Efetuar a chamada a rotina Oracle */ 
               RUN STORED-PROCEDURE pc_obrigacao_analise_automatic
                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                    INPUT crapass.inpessoa, /* Tipo da Pessoa */
+                                                    INPUT crawepr.cdfinemp, /* Código da finalidade de crédito */
                                                     INPUT crawepr.cdlcremp, /* Código da linha de crédito */
                                                    OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
                                                    OUTPUT 0,            /* Código da crítica */

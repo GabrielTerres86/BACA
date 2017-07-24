@@ -1157,7 +1157,7 @@ function controlaOperacao(operacao) {
 		case 'ACIONAMENTOS': /* Esteira - Acionamentos - Consulta */
             cddopcao = 'C';
         //    numeroProposta = (numeroProposta == 0) ? $("#divEmpres table tr.corSelecao").find("input[id='nrctremp']").val() : numeroProposta;
-			mensagem = 'Carregando Consulta de Acionamentos...';
+			mensagem = 'Carregando Consulta de Detalhes da Proposta...';
             break;
         case 'PORTAB_CRED_I': /*Portabilidade - Insercao*/
             cddopcao = 'I';
@@ -1186,11 +1186,11 @@ function controlaOperacao(operacao) {
         case 'ENV_ESTEIRA':
 			insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
 			dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
-      mensagem = 'Enviando Proposta para An&aacute;lise da Esteira...';
+      mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
 			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
-				showConfirmacao('Confirma envio da Proposta para Esteira de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma j&aacute; foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 			}else{
-            showConfirmacao('Confirma envio da Proposta para Esteira de Credito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'ENV_ESTEIRA\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'manterRotina(\'ENV_ESTEIRA\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 			}
             return false;
             break;
@@ -1355,7 +1355,7 @@ function manterRotina(operacao) {
             mensagem = 'excluindo';
             break;
         case 'ENV_ESTEIRA':
-            mensagem = 'Enviando Proposta para An&aacute;lise da Esteira...';
+            mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
             break;
         default:
             controlaOperacao();
@@ -1734,7 +1734,7 @@ function controlaLayout(operacao) {
         largura = '900px';
 
         var ordemInicial = new Array();
-        ordemInicial = [[1, 0]];
+        //ordemInicial = [[0, 0]];
 
         var arrayLargura = new Array();
         arrayLargura[0] = '55px';
@@ -2210,6 +2210,10 @@ function controlaLayout(operacao) {
             cTodos_2.desabilitaCampo();
             cJustif.desabilitaCampo();
 
+            if (arrayProposta['insitest'] != 3) {
+                carregaDadosPropostaLinhaCredito();
+            }
+
         } else if (operacao == 'A_DADOS_PROP') {
             cTodos.habilitaCampo();
             cTodos_1.habilitaCampo();
@@ -2673,6 +2677,9 @@ function controlaLayout(operacao) {
         nomeForm = 'frmOrgProtCred';
         altura = '220px';
         largura = '495px';
+        
+        // Exibe o Fieldset de GARANTIAS
+        $('#' + nomeForm + ' fieldset:eq(1)').show();
 
         var rRotulo = $('label[for="dtcnsspc"],label[for="dtoutspc"]', '#' + nomeForm);
         var rInfCad = $('label[for="nrinfcad"]', '#' + nomeForm);
@@ -2728,7 +2735,7 @@ function controlaLayout(operacao) {
         cPrej.addClass('moeda_6').css('width', '90px');
         c2Tit_1.css('width', '85px').setMask("DATE", "", "", "divRotina");
         c2TitEndv.addClass('moeda_6').css('width', '90px');
-
+		
         var cTodos_2 = $('input', '#' + nomeForm + ' fieldset:eq(1)');
         var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeForm);
 
@@ -2762,17 +2769,18 @@ function controlaLayout(operacao) {
             cTodos_1.desabilitaCampo();
             cTodos_2.desabilitaCampo();
 
+            if (inobriga == 'S') {
+                $('#' + nomeForm + ' fieldset:eq(1)').hide();
+                altura = '135px';
+            }
+
         } else if (operacao == 'A_PROT_CRED' || operacao == 'I_PROT_CRED') {
             cTodos_1.desabilitaCampo();
             cTodos_2.habilitaCampo();
 
 			if (inobriga == 'S'){
-				if (operacao == 'I_PROT_CRED'){
-					$('#' + nomeForm + ' fieldset:eq(1)').hide();
-					altura = '135px';
-				}else{
-					cTodos_2.desabilitaCampo();
-				}
+                $('#' + nomeForm + ' fieldset:eq(1)').hide();
+                altura = '135px';
 			}
 			
             if (arrayProtCred['flgcentr'] == 'no') {
@@ -5308,12 +5316,12 @@ function validaDados(cdcooper) {
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
 
         var aux_dtmvtolt = dataParaTimestamp(dtmvtolt);
-
+		
 		if (inobriga == 'N'){
-        if (!validaAnaliseProposta()) {
-            return false;
-        }
-    }
+			if (!validaAnaliseProposta()) {
+				return false;
+			}
+		}
     }
     else if (in_array(operacao, ['A_PROTECAO_TIT'])) {
 
@@ -6822,7 +6830,9 @@ function mostraTelaAltera(operacao) {
     exibeRotina($('#divUsoGenerico'));
 
     limpaDivGenerica();
-
+    
+    inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
+    
     // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
@@ -6830,6 +6840,7 @@ function mostraTelaAltera(operacao) {
         url: UrlSite + 'telas/atenda/emprestimos/altera.php',
         data: {
             operacao: operacao,
+            inobriga: inobriga,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -7302,7 +7313,11 @@ function fechaValores(flmudfai) {
 
     fechaRotina($('#divUsoGenerico'), $('#divRotina'));
 
-    exibirMensagens(strValor, 'confirmaConsultas("' + flmudfai + '" , "SVP");');
+	if (flmudfai == 'N'){
+		exibirMensagens(strValor, 'confirmaConsultas("' + flmudfai + '" , "SVP");controlaOperacao("");');
+	}else{
+		exibirMensagens(strValor, 'controlaOperacao("");');
+	}
 
     return false;
 
@@ -8634,6 +8649,7 @@ function carregaDadosPropostaLinhaCredito() {
 
     var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
     var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+    var dsctrliq = $('#dsctrliq', '#frmNovaProp').val();
 
     showMsgAguardo('Aguarde, carregando os dados...');
 
@@ -8643,7 +8659,8 @@ function carregaDadosPropostaLinhaCredito() {
         data: {
             cdfinemp: cdfinemp,
             cdlcremp: cdlcremp,
-            nrdconta: nrdconta,            
+            nrdconta: nrdconta,     
+            dsctrliq: dsctrliq,            
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -9232,6 +9249,6 @@ function abreProtocoloAcionamento(dsprotocolo) {
                 carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
 			}
             return false;
-}
+        }
     });
 }

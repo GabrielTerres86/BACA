@@ -29,6 +29,7 @@
  * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
  * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
  * 021: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 022: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  */
 ?>
 
@@ -299,9 +300,20 @@
            echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';           
            exit;
 		}
-		
-		$oMensagem = $xmlObj->roottag->tags[0]->tags[0];        
-        echo 'showError("inform","'.getByTagName($oMensagem->tags,'dsmensag').'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';        
+
+		$oMensagem = getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dsmensag');
+        $arMessage = explode("###", $oMensagem);
+        $dsmensag1 = '<div style=\"text-align:left;\">'.$arMessage[0].'</div>';
+        $dsmensag2 = '';
+        if (count($arMessage) > 1) {
+            $dsmensag2 = $arMessage[1];
+            $dsmensag2 = str_replace('[DERIVAR]',  '<img src=\"../../../imagens/geral/motor_DERIVAR.png\"  height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[INFORMAR]', '<img src=\"../../../imagens/geral/motor_INFORMAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[REPROVAR]', '<img src=\"../../../imagens/geral/motor_REPROVAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = '<div style=\"text-align:left; height:100px; overflow-x:hidden; padding-right:25px; font-size:11px; font-weight:normal;\">'.$dsmensag2.'</div>';
+        }
+
+        echo 'showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';
         exit;
         
     }

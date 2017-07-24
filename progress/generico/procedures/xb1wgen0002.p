@@ -397,7 +397,7 @@ PROCEDURE valores_entrada:
 
             WHEN "cdcooper" THEN aux_cdcooper = INTE(tt-param.valorCampo).
             WHEN "cdagenci" THEN aux_cdagenci = INTE(tt-param.valorCampo).
-			WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
+			      WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
             WHEN "nrdcaixa" THEN aux_nrdcaixa = INTE(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
@@ -2301,6 +2301,7 @@ PROCEDURE carrega_dados_proposta_linha_credito:
                                                      INPUT aux_nrdconta,
                                                      INPUT aux_cdfinemp,
                                                      INPUT aux_cdlcremp,
+                                                     INPUT aux_dsctrliq,
                                                      OUTPUT TABLE tt-erro,
                                                      OUTPUT aux_dsnivris,
                                                      OUTPUT aux_inobriga).
