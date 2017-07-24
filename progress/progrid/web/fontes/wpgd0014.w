@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------------------
 
-    Ultima Atualizacao : 29/08/2013.
+    Ultima Atualizacao : 14/07/2017.
                         
     Alteracoes: 20/10/2008 - Chamar BO que envia email-s na procedure
 	                           envia-email (Gabriel).
@@ -29,6 +29,10 @@
                      
                 04/05/2016 - Correcao no contato de montagem do array de PA's para 
                              execucao do comando push. (Carlos Rafael Tanholi)
+														 
+						    14/07/2017 - Alteração da leitura da tabela crapedp para desconsiderar
+														 eventos EAD na procedure EnviaPac, SD.710219 (Jean Michel)
+														 
 ------------------------------------------------------------------------------*/
 
 
@@ -748,32 +752,38 @@ PROCEDURE EnviaPac :
     DO:
 
       /* Verifica se os eventos (do PA) a serem enviados já tem o custo "fechado" */
-      FOR EACH crapeap WHERE crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)   AND
-                             crapeap.idevento = INTEGER(ab_unmap.aux_idevento)   AND
-                             crapeap.dtanoage = INTEGER(ab_unmap.aux_dtanoage)   AND 
-                             (crapeap.cdagenci = INTEGER(ab_unmap.aux_cdagenci) OR
-                             INTEGER(ab_unmap.aux_cdagenci) = 0) NO-LOCK:
+      FOR EACH crapeap WHERE crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)   
+                         AND crapeap.idevento = INTEGER(ab_unmap.aux_idevento)   
+                         AND crapeap.dtanoage = INTEGER(ab_unmap.aux_dtanoage)    
+                         AND (crapeap.cdagenci = INTEGER(ab_unmap.aux_cdagenci)
+                          OR INTEGER(ab_unmap.aux_cdagenci) = 0) NO-LOCK:
 
         /* Busca o custo "fechado" */
-        FIND FIRST crapcdp WHERE crapcdp.idevento = crapeap.idevento   AND
-                                 crapcdp.cdcooper = crapeap.cdcooper   AND
-                                 crapcdp.cdagenci = crapeap.cdagenci   AND
-                                 crapcdp.cdevento = crapeap.cdevento   AND
-                                 crapcdp.dtanoage = crapeap.dtanoage   AND
-                                 crapcdp.flgfecha = TRUE NO-LOCK NO-ERROR.
+        FIND FIRST crapcdp WHERE crapcdp.idevento = crapeap.idevento
+                             AND crapcdp.cdcooper = crapeap.cdcooper
+                             AND crapcdp.cdagenci = crapeap.cdagenci
+                             AND crapcdp.cdevento = crapeap.cdevento
+                             AND crapcdp.dtanoage = crapeap.dtanoage
+                             AND crapcdp.flgfecha = TRUE NO-LOCK NO-ERROR.
 
         IF NOT AVAILABLE crapcdp   THEN
           DO:
-            FIND FIRST crapedp WHERE crapedp.cdcooper = crapeap.cdcooper   AND
-                                     crapedp.idevento = crapeap.idevento   AND
-                                     crapedp.dtanoage = crapeap.dtanoage   AND
-                                     crapedp.cdevento = crapeap.cdevento   NO-LOCK NO-ERROR.
-                                     
-            FIND FIRST crapage WHERE crapage.cdcooper = crapeap.cdcooper   AND
-                                     crapage.cdagenci = crapeap.cdagenci  NO-LOCK NO-ERROR.
-                                     
-            msg-erro = "O evento " + STRING(crapedp.nmevento)+ " não possui o custo 'fechado', impossível enviar ao PA " + STRING(crapage.nmresage).
-            RETURN.
+            FIND FIRST crapedp WHERE crapedp.cdcooper = crapeap.cdcooper
+                                 AND crapedp.idevento = crapeap.idevento
+                                 AND crapedp.dtanoage = crapeap.dtanoage
+                                 AND crapedp.cdevento = crapeap.cdevento 
+																 AND (crapedp.tpevento <> 10 						
+																 AND  crapedp.tpevento <> 11)	NO-LOCK NO-ERROR.
+																 
+            IF AVAIL crapedp THEN
+						  DO:
+								FIND FIRST crapage WHERE crapage.cdcooper = crapeap.cdcooper 
+																	   AND crapage.cdagenci = crapeap.cdagenci  NO-LOCK NO-ERROR.
+																				 
+								msg-erro = "O evento " + STRING(crapedp.nmevento)+ " não possui o custo 'fechado', impossível enviar ao PA " + STRING(crapage.nmresage).
+								RETURN.
+							END.
+            
           END.
       END.
         
