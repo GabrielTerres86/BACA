@@ -6464,7 +6464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 06/02/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 18/07/2017
 
        Dados referentes ao programa:
 
@@ -6545,7 +6545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
                                 (Chamado 532712) - (Fabrício)
 
-				           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+                           01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
                                 (Chamado 532712) - (Fabricio)
                                 
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
@@ -6574,6 +6574,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                    17/04/2017 - Tratamento para abrir chamado e enviar email caso ocorra
                                 algum erro na importacao do arquivo ccr3 (Lucas Ranghetti #630298)
+
+                   18/07/2017 - Utilizar o nome do titular do cartão na importação do arquivo CCR3
+                                para atualizar no Ayllos, a fim de manter as informalçoes identicas
+                                com o SIPAG (Douglas - Chamado 709215) 
     ............................................................................ */
 
     DECLARE
@@ -6610,6 +6614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_nrseqcrd   crawcrd.nrseqcrd%TYPE;                             --> Nr. Sequencial do Contrato para o Bancoob
       vr_nrdctitg   NUMBER;
       vr_nmtitcrd   VARCHAR2(50);                                      --> Nome do Titular do cartão
+      vr_nome_plastico VARCHAR2(50);                                   --> Nome embossado no cartão
       vr_dtentr2v   DATE;                                              --> Data de entrada do registro de segunda via
       -- Tratamento de registros do arquivo
       vr_nrctatp1   NUMBER          := 0;                              --> Número da conta do registro Tipo 1
@@ -7413,29 +7418,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END IF;
         
         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-				                     pr_cdoperad => '1',
-													   pr_dscritic => '',
-													   pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
-													   pr_dstransa => 'Alterar Situacao Cartao de Credito',
-													   pr_dttransa => TRUNC(SYSDATE),
-													   pr_flgtrans => 1,
-													   pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
-													   pr_idseqttl => 0,
-													   pr_nmdatela => 'PC_CRPS672',
-													   pr_nrdconta => pr_nrdconta,
-													   pr_nrdrowid => vr_nrdrowid);
+                                     pr_cdoperad => '1',
+                                                       pr_dscritic => '',
+                                                       pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(1)),
+                                                       pr_dstransa => 'Alterar Situacao Cartao de Credito',
+                                                       pr_dttransa => TRUNC(SYSDATE),
+                                                       pr_flgtrans => 1,
+                                                       pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSSSS')),
+                                                       pr_idseqttl => 0,
+                                                       pr_nmdatela => 'PC_CRPS672',
+                                                       pr_nrdconta => pr_nrdconta,
+                                                       pr_nrdrowid => vr_nrdrowid);
 
         -- Numero do Cartao
-			  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-				  												pr_nmdcampo => 'Cartao',
-					  											pr_dsdadant => '',
-						  										pr_dsdadatu => pr_nrcrcard);
+              gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                                                  pr_nmdcampo => 'Cartao',
+                                                                  pr_dsdadant => '',
+                                                                  pr_dsdadatu => pr_nrcrcard);
                                   
         -- Situacao do Cartao
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-				  												pr_nmdcampo => 'Situacao',
-					  											pr_dsdadant => rw_crawcrd.insitcrd,
-						  										pr_dsdadatu => vr_insitcrd);
+                                                                  pr_nmdcampo => 'Situacao',
+                                                                  pr_dsdadant => rw_crawcrd.insitcrd,
+                                                                  pr_dsdadatu => vr_insitcrd);
         
         -- Data de Cancelamento
         IF rw_crawcrd.dtcancel <> vr_dtcancel THEN
@@ -7594,7 +7599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-      			
+                  
       -- buscar informações do arquivo a ser processado
       OPEN cr_crapscb;
       FETCH cr_crapscb INTO rw_crapscb;
@@ -7807,7 +7812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               IF substr(vr_des_text,5,2) = '01'  THEN
 
                  BEGIN 
-  	               vr_tipooper := to_number(substr(vr_des_text,7,2));
+                     vr_tipooper := to_number(substr(vr_des_text,7,2));
                  EXCEPTION 
                    WHEN OTHERS THEN
                    pc_log_dados_arquivo( pr_tipodreg => 1 -- Dados conta cartao
@@ -8564,6 +8569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   vr_vllimcrd := 0;
                   vr_tpdpagto := 0;
                   vr_flgdebcc := 0;
+                  vr_nome_plastico := NULL;
                   
                   -- Busca dados da agencia cooperado
                   OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
@@ -9101,11 +9107,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     
                   -- Se número do Cartão for zerado
                   IF rw_crawcrd.nrcrcard = 0 THEN
+                    
+                    -- Buscar o nome embossado no plastico do cartao 
+                    vr_nome_plastico := TRIM(substr(vr_des_text,57,23));
+                    
                     -- Atualiza registro de proposta de cartão se operação retornada for 01 ou 04
                     BEGIN
-                      UPDATE crawcrd
-                         SET nrcctitg = vr_nrdctitg,
-                             nrcrcard = vr_nrcrcard
+                      UPDATE crawcrd wcrd
+                         SET wcrd.nrcctitg = vr_nrdctitg,
+                             wcrd.nrcrcard = vr_nrcrcard,
+                             wcrd.nmtitcrd = NVL(vr_nome_plastico, wcrd.nmtitcrd)
                        WHERE ROWID = rw_crawcrd.rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -9262,6 +9273,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       ELSE
                         vr_flgdebit := 1;
                       END IF;
+                      
+                      -- Buscar o nome embossado no plastico do cartao 
+                      vr_nome_plastico := TRIM(substr(vr_des_text,57,23));
                   
                       -- cria nova proposta com número do cartão vindo no arquivo
                       BEGIN
@@ -9312,7 +9326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             rw_crawcrd.tpcartao,
                             rw_crawcrd.dtnasccr,
                             rw_crawcrd.nrdoccrd,
-                            rw_crawcrd.nmtitcrd,
+                            NVL(vr_nome_plastico, rw_crawcrd.nmtitcrd),
                             vr_nrctrcrd, --rw_crawcrd.nrctrcrd,
                             rw_crawcrd.cdadmcrd,
                             rw_crawcrd.cdcooper,
@@ -9329,10 +9343,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       END;
                     ELSE
                       
+                      -- Buscar o nome embossado no plastico do cartao 
+                      vr_nome_plastico := TRIM(substr(vr_des_text,57,23));                    
+                      
                       -- Atualiza registro de proposta de cartão se operação retornada for 01 ou 04
                       BEGIN
-                        UPDATE crawcrd
-                           SET nrcrcard = vr_nrcrcard
+                        UPDATE crawcrd wcrd 
+                           SET wcrd.nrcrcard = vr_nrcrcard,
+                               wcrd.nmtitcrd = NVL(vr_nome_plastico, wcrd.nmtitcrd)
                          WHERE ROWID = rw_crawcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
@@ -9428,14 +9446,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- Fecha cursor de proposta de cartão de crédito
                 CLOSE cr_crawcrd;
 
+                -- Buscar o nome embossado no plastico do cartao 
+                vr_nome_plastico := TRIM(substr(vr_des_text,57,23));                    
+
                 -- Atualiza situação da proposta de cartão de crédito
                 BEGIN
-                  UPDATE crawcrd
-                     SET insitcrd = 3 -- Liberado
-                       , dtentreg = NULL
-                       , inanuida = 0
-                       , qtanuida = 0
-                       , dtlibera = trunc(SYSDATE)
+                  UPDATE crawcrd wcrd
+                     SET wcrd.insitcrd = 3 -- Liberado
+                       , wcrd.dtentreg = NULL
+                       , wcrd.inanuida = 0
+                       , wcrd.qtanuida = 0
+                       , wcrd.dtlibera = trunc(SYSDATE)
+                       , wcrd.nmtitcrd = NVL(vr_nome_plastico, wcrd.nmtitcrd)
                        -- cdoperad = pr_cdoperad  -- Não deve sobrescrever o operador ( Renato - Supero )
                    WHERE ROWID = rw_crawcrd.rowid;
                 EXCEPTION
