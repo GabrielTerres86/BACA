@@ -42,6 +42,9 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --	           19/12/2016 - Ajuste incorporação Transulcred (Daniel)
 --
 --			   16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
+--
+--             21/07/2017 - Ajuste na procedure pc_ver_cheque para retornar numero 
+--                          da conta quando tiver critica. (Daniel)
 ---------------------------------------------------------------------------------------------------------------
 
   -- Estruturas de registro
@@ -4934,6 +4937,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         -- Efetuar retorno do erro
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+		-- Retornar conta caso possua valor.
+		pr_nrdconta := vr_nrdconta;
     WHEN OTHERS THEN
       -- Apenas retornar a variável de saida
       pr_cdcritic := 0;
