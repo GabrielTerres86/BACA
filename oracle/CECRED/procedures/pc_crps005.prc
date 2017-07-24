@@ -377,6 +377,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                             
                26/04/2017 - Retirado a geração do arquivo microcredito_coop_59dias
                             (Tiago/Rodrigo #654647).
+				
+			   26/04/2017 - 706774-Tratar relatórios para valores acima de 1 bilhão
+							(Andrey Formigari - Mouts)
      ............................................................................. */
 
      DECLARE
@@ -1574,7 +1577,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                          <vlsddisp>'||to_char(vr_tab_crat055(vr_des_chave).vlsddisp,'fm999g999g990d00')||'</vlsddisp>
                          <vllimcre>'||to_char(vr_tab_crat055(vr_des_chave).vllimcre,'fm999999g999g999')||'</vllimcre>
                          <vlsdbltl>'||to_char(vr_tab_crat055(vr_des_chave).vlsdbltl,'fm999g999g990d00')||'</vlsdbltl>
-                         <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm999g999g990d00')||'</vlstotal>
+                         <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm99g999g999g990d00')||'</vlstotal>
                        </conta>');
 
            --Acumular os totais do PA
@@ -1667,7 +1670,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                          <vlsddisp>'||to_char(vr_tab_crat055(vr_des_chave).vlsddisp,'fm999g999g990d00')||'</vlsddisp>
                          <vllimcre>'||to_char(vr_tab_crat055(vr_des_chave).vllimcre,'fm999999999999')||'</vllimcre>
                          <vlsdbltl>'||to_char(vr_tab_crat055(vr_des_chave).vlsdbltl,'fm999g999g990d00')||'</vlsdbltl>
-                         <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm999g999g990d00')||'</vlstotal>
+                         <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm99g999g999g990d00')||'</vlstotal>
                        </conta>');
            -- Se este for o ultimo registro do vetor, ou da agência
            IF vr_des_chave = vr_tab_crat055.LAST OR vr_tab_crat055(vr_des_chave).cdagenci <> vr_tab_crat055(vr_tab_crat055.NEXT(vr_des_chave)).cdagenci THEN
