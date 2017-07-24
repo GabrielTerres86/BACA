@@ -4453,13 +4453,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      vr_index := pr_typ_tab_chq.first(); -- Posiciona no primeiro registro
      WHILE vr_index IS NOT NULL LOOP
        IF pr_typ_tab_chq(vr_index).nrdocmto = 6 THEN
-        pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
+          pr_literal_autentica := pr_literal_autentica || RPAD('CHEQ. OUTROS BANCOS: '||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).vlcompel,'999G999G999D99') ||
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        END IF;
+       END IF;
+       vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
      END LOOP;
 
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
@@ -6931,8 +6931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        END IF;
+       END IF;
+       vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
      END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
@@ -9556,8 +9556,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            '   ' ||
                                                            TO_CHAR(pr_typ_tab_chq(vr_index).dtlibcom,'DD/MM/RR')
                                                            ,48,' ');
-        vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
-        END IF;
+       END IF;
+       vr_index:= pr_typ_tab_chq.NEXT(vr_index); -- Proximo registro
      END LOOP;
      
      /* Obs: Existe um limitacao do PROGRESS que não suporta a quantidada maxima de uma
