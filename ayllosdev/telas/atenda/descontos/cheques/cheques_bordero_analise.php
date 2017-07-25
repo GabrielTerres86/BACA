@@ -10,6 +10,8 @@
 	                                                                  	 
 	 Alterações: 
     * 001: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero - PRJ300 - Desconto de cheque
+	* 001: [21/07/2017] Lombardi  (CECRED) : Carrega tela com registros, que não estão bloqueados, ja selecionados - PRJ300 - Desconto de cheque
+	
 	************************************************************************/
 	
 	session_start();
@@ -143,7 +145,7 @@
 								<td id="nrcpfcgc" style="width: 100px;"><span><? echo $aux_nrcpfcgc ?></span><? echo $aux_nrcpfcgc ?></td>
 								<td id="vlcheque" style="width: 70px;" ><span><? echo $aux_vlcheque ?></span><? echo $aux_vlcheque ?></td>
 								<td id="dscritic" style="width: 268px;"><span><? echo $aux_dscritic ?></span><? echo $aux_dscritic ?></td>
-								<td><input type="checkbox" id="insitana" name="insitana" style="float: none; margin: 0px" value="<? echo $aux_insitana ?>" <? if ($aux_insitana == '1') echo ' checked'; if ($aux_flbloque == '1') echo ' disabled'; ?>/></td>
+								<td><input type="checkbox" id="insitana" name="insitana" style="float: none; margin: 0px" value="<? if ($aux_flbloque != '1') echo '1' ?>" <? if ($aux_flbloque != '1') echo ' checked'; if ($aux_flbloque == '1') echo ' disabled'; ?>/></td>
 								<input type="hidden" id="dsdocmc7" name="dsdocmc7" value="<? echo $aux_dsdocmc7 ?>"/>
 							</tr>
 							<?
