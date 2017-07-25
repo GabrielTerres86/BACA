@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 03/03/2017
+   Data    : Outubro/94.                     Ultima atualizacao: 29/05/2017
 
    Dados referentes ao programa:
 
@@ -118,6 +118,9 @@
                             
                03/03/2017 - Se não encontrar conta vamos apenas dar um NEXT e não abortar
                             o processo como fazia antes (Lucas Ranghetti #620581)
+                            
+               29/05/2017 - Remover delete do handle quando damos next se nao encontrar
+                            crapass (Lucas Ranghetti #680458)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -261,9 +264,6 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                                 " - " + glb_cdprogra + "' --> '" +
                                 STRING(crapdev.nrdconta,"zzzz,zz9,9") +
                                 " " + glb_dscritic + " >> log/proc_batch.log").
-              
-              IF  VALID-HANDLE(h-b1wgen0153) THEN
-                   DELETE OBJECT h-b1wgen0153. 
               
               NEXT.
                
