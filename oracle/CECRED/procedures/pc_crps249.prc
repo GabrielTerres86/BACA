@@ -565,6 +565,9 @@ CREATE OR REPLACE PROCEDURE pc_crps249 (pr_cdcooper  IN craptab.cdcooper%TYPE  -
                19/06/2017 - Ajuste para enviar apenas cheques em desconto aprovados (insitana = 1)
                             PRJ300-Desconto de cheque(Odirlei-AMcom)
 
+               21/07/2017 - Ajuste na geracao das Entradas de cheques em custodia do dia para 
+			                incluir penas custodias nao descontadas (Daniel)
+
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -773,7 +776,8 @@ CREATE OR REPLACE PROCEDURE pc_crps249 (pr_cdcooper  IN craptab.cdcooper%TYPE  -
            vlcheque
       from crapcst
      where crapcst.cdcooper = pr_cdcooper
-       and crapcst.dtmvtolt = pr_dtmvtolt;
+       and crapcst.dtmvtolt = pr_dtmvtolt
+	   and crapcst.nrborder = 0;
   -- Liberacao de cheques em custodia do dia
   cursor cr_crapcst2 (pr_cdcooper in craptab.cdcooper%type,
                       pr_dtmvtoan in crapcst.dtlibera%type,

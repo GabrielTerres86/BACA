@@ -228,7 +228,9 @@ BEGIN
     vr_blqresg_cc VARCHAR2(1);
 
     -- Parametro de contas que nao podem debitar os emprestimos
-    vr_dsctajud   crapprm.dsvlrprm%TYPE;
+    vr_dsctajud    crapprm.dsvlrprm%TYPE;
+    -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
+    vr_dsctactrjud crapprm.dsvlrprm%TYPE := null;
 
     --Procedure para limpar os dados das tabelas de memoria
     PROCEDURE pc_limpa_tabela IS
@@ -377,7 +379,12 @@ BEGIN
     vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                              pr_cdcooper => pr_cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
-
+                                             
+    -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+    vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
+                                                                                          
     /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
        FOR rw_crappep IN cr_crappep (pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
@@ -489,6 +496,12 @@ BEGIN
 
       -- Trava para nao cobrar as parcelas desta conta pelo motivo de uma acao judicial
       IF INSTR(',' || vr_dsctajud || ',',',' || rw_crappep.nrdconta || ',') > 0 THEN
+        vr_vlsomato_tmp := 0;
+        vr_vlsomato     := 0;
+      END IF;
+      
+      -- Trava para nao cobrar as parcelas desta conta e contrato específico pelo motivo de uma acao judicial SD#618307
+      IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(rw_crappep.nrdconta))||','||trim(to_char(rw_crappep.nrctremp))||')') > 0 THEN
         vr_vlsomato_tmp := 0;
         vr_vlsomato     := 0;
       END IF;

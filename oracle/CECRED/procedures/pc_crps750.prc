@@ -132,19 +132,6 @@ BEGIN
          and c.cdacesso = 'PC_CRPS750-ERRO';
     rw_erro cr_erro%ROWTYPE;
 
-    cursor cr_busca_crapcyc(pr_cdcooper number
-                           ,pr_nrdconta number
-                           ,pr_nrctremp number) is
-
-      select 1 from crapcyc
-       where crapcyc.cdcooper = pr_cdcooper
-       and   crapcyc.nrdconta = pr_nrdconta
-       and   crapcyc.nrctremp = pr_nrctremp
-       and   crapcyc.cdorigem = 3
-       and   crapcyc.flgehvip = 1
-       and   crapcyc.cdmotcin = 1;
-       rw_crapcyc  integer;
-
     --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -153,8 +140,7 @@ BEGIN
 
     --Variaveis Locais
        vr_flgpripr BOOLEAN;
-       vr_primexec boolean;
-
+       
     --Variaveis para retorno de erro
        vr_cdcritic      INTEGER:= 0;
        vr_dscritic      VARCHAR2(4000);
@@ -205,13 +191,6 @@ BEGIN
     vr_dsplsql VARCHAR2(4000);
     -- Job name dos processos criados
     vr_jobname VARCHAR2(30);
-    vr_inexc1 date;
-    vr_inexc2 date;
-    vr_fimexc1 date;
-    vr_fimexc2 date;
-    vr_tpott1 number;
-    vr_tpott2 number;
-    vr_rowid  rowid;
     --Verificar a data do ultimo processamento
     PROCEDURE pc_verifica_processo IS
 
@@ -318,7 +297,7 @@ BEGIN
       CLOSE BTCH0001.cr_crapdat;
     END IF;
     -- define como primeira execucao
-    vr_primexec := true;
+    
 
       /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
     if PR_CDAGENCI = 0
@@ -489,17 +468,6 @@ BEGIN
                   end if;
                end if;
            elsif rw_crappep.idtpprd = 'PP' then
-
-                 rw_crapcyc := 0;
-                 open cr_busca_crapcyc(pr_cdcooper
-                                     , rw_crappep.nrdconta
-                                     , rw_crappep.nrctremp);
-                 fetch cr_busca_crapcyc into rw_crapcyc;
-                 close cr_busca_crapcyc;
-
-                 if nvl(rw_crapcyc,0) = 1 then
-                    continue;
-                 end if;
 
                  PC_CRPS750_2(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
@@ -709,3 +677,4 @@ BEGIN
       END IF;
   END;
 END PC_CRPS750;
+/

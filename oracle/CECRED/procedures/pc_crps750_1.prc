@@ -184,7 +184,6 @@ BEGIN
       vr_nrparcela    tbepr_tr_parcelas.nrparcela%TYPE;
       vr_qtparcela    tbepr_tr_parcelas.qtparcela%TYPE;
       vr_vlparcela    tbepr_tr_parcelas.vlparcela%TYPE;
-      vr_flgacordo    tbepr_tr_parcelas.flgacordo%TYPE;
       vr_dsobservacao tbepr_tr_parcelas.dsobservacao%TYPE;
       vr_flgprocessa  tbepr_tr_parcelas.flgprocessa%TYPE;
       vr_blqresg_cc   VARCHAR2(1);                   --> Parametro de bloqueio de resgate de valores em c/c
@@ -408,27 +407,6 @@ BEGIN
          -- Inicializa variáveis
          vr_dsobservacao := null;
          vr_flgprocessa  := 1;
-         -- Verifica se existe acordo no referido empréstimos
-         BEGIN
-           SELECT DISTINCT 1
-             INTO vr_flgacordo
-             FROM crapcyc C
-            WHERE c.cdcooper = rw_crapepr.cdcooper
-              and c.cdorigem = 3
-              and c.nrdconta = rw_crapepr.nrdconta
-              and c.nrctremp = rw_crapepr.nrctremp
-              and c.flgehvip = 1
-              and c.cdmotcin = 1;
-         EXCEPTION
-           WHEN NO_DATA_FOUND THEN
-              vr_flgacordo := 0;
-           WHEN OTHERS THEN
-           --Variavel de erro recebe erro ocorrido
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Erro ao selecionar tabela crapcyc. Rotina pc_CRPS750_1.pc_gera_tabela_parcelas. '||sqlerrm;
-           --Sair do programa
-           RAISE vr_exc_erro;
-         END;
          -- ******************************************************************************************
          -- **** Bloco de verificação de exceções que impedem o pagamento das parcelas ***************
          -- **** Será utilizado o campo dsobservacao para armazenar os motivos para não pagamento ****
@@ -655,7 +633,7 @@ BEGIN
                  rw_crapdat.dtmvtolt,
                  NULL,
                  SYSDATE,
-                 vr_flgacordo,
+                 0,
                  vr_dsobservacao,
                  vr_txdjuros,
                  vr_vlsdeved,
@@ -2250,3 +2228,4 @@ BEGIN
         ROLLBACK;
   END;
 END PC_CRPS750_1;
+/
