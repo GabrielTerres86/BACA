@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 26/06/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 25/07/2017
 
    Dados referentes ao programa:
 
@@ -250,7 +250,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
-			   07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+			         07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
                             
                12/01/2017 - Limpar crapdev com situacao devolvido, jogar as 
@@ -274,6 +274,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
                             email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
  
+               25/07/2017 - Incluir nova coluna nrctadep no relatorio crrl526 (Lucas Ranghetti #679023)
 ............................................................................. */
 
      DECLARE
@@ -294,6 +295,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
               ,nrseqdig craprej.nrseqdig%TYPE
               ,cdcritic craprej.cdcritic%TYPE
               ,cdpesqbb craprej.cdpesqbb%TYPE
+              ,nrctadep craprej.nrdctitg%TYPE
               ,dscritic VARCHAR2(4000));
 
        -- Definicao do tipo de tabela de rejeicao
@@ -308,7 +310,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
              ,nrdocmto craprej.nrdocmto%TYPE
              ,vllanmto craprej.vllanmto%TYPE
              ,dspesqbb VARCHAR2(100) 
-             ,cdtipdoc NUMBER);
+             ,cdtipdoc NUMBER
+             ,nrctadep NUMBER);
              
        TYPE typ_tab_critica IS TABLE OF typ_reg_critica INDEX BY PLS_INTEGER;
 
@@ -2179,6 +2182,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                     ,rej.nrseqdig
                     ,rej.vllanmto
                     ,rej.dshistor
+                    ,rej.nrdctitg
                 FROM craprej rej
                WHERE rej.cdcooper = pr_cdcooper
                  AND rej.dtrefere = pr_dtrefere
@@ -2714,7 +2718,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,vllanmto
                                               ,nrseqdig
                                               ,cdcritic
-                                              ,cdpesqbb)
+                                              ,cdpesqbb
+                                              ,nrdctitg) -- Conta depositada
                                      VALUES   (pr_cdcooper
                                               ,pr_dtauxili
                                               ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -2722,7 +2727,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_vllanmto,0)
                                               ,nvl(vr_nrseqarq,0)
                                               ,9
-                                              ,nvl(vr_cdpesqbb,' '));
+                                              ,nvl(vr_cdpesqbb,' ')
+                                              ,nvl(vr_nrctadep,0));
 
                         EXCEPTION
                           WHEN OTHERS THEN
@@ -2803,7 +2809,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,vllanmto
                                                 ,nrseqdig
                                                 ,cdcritic
-                                                ,cdpesqbb)
+                                                ,cdpesqbb
+                                                ,nrdctitg) -- Conta depositada
                                        VALUES   (pr_cdcooper
                                                 ,pr_dtauxili
                                                 ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -2811,7 +2818,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,nvl(vr_vllanmto,0)
                                                 ,nvl(vr_nrseqarq,0)
                                                 ,nvl(vr_cdcritic,0)
-                                                ,nvl(vr_cdpesqbb,' '));
+                                                ,nvl(vr_cdpesqbb,' ')
+                                                ,nvl(vr_nrctadep,0));
                           EXCEPTION
                             WHEN OTHERS THEN
                               vr_cdcritic:= 843;
@@ -3078,7 +3086,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nrseqdig
                                               ,cdcritic
                                               ,cdpesqbb
-                                              ,tpintegr)
+                                              ,tpintegr
+                                              ,nrdctitg) -- Conta depositada
                                      VALUES   (pr_cdcooper
                                               ,pr_dtauxili
                                               ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -3087,7 +3096,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrseqarq,0)
                                               ,108
                                               ,nvl(vr_cdpesqbb,' ')
-                                              ,nvl(vr_tpintegr,0));
+                                              ,nvl(vr_tpintegr,0)
+                                              ,nvl(vr_nrctadep,0));
                         EXCEPTION
                           WHEN OTHERS THEN
                             vr_cdcritic:= 843;
@@ -3153,7 +3163,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,nrseqdig
                                                 ,cdcritic
                                                 ,cdpesqbb
-                                                ,tpintegr)
+                                                ,tpintegr
+                                                ,nrdctitg) -- Conta depositada
                                        VALUES   (pr_cdcooper
                                                 ,pr_dtauxili
                                                 ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -3162,7 +3173,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,nvl(vr_nrseqarq,0)
                                                 ,nvl(vr_cdcritic,0)
                                                 ,nvl(vr_cdpesqbb,' ')
-                                                ,nvl(vr_tpintegr,0));
+                                                ,nvl(vr_tpintegr,0)
+                                                ,nvl(vr_nrctadep,0));
                           EXCEPTION
                             WHEN OTHERS THEN
                               vr_cdcritic:= 843;
@@ -3230,7 +3242,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nrseqdig
                                               ,cdcritic
                                               ,cdpesqbb
-                                              ,tpintegr)
+                                              ,tpintegr
+                                              ,nrdctitg) -- Conta depositada
                                      VALUES   (pr_cdcooper
                                               ,pr_dtauxili
                                               ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -3239,7 +3252,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrseqarq,0)
                                               ,97
                                               ,nvl(vr_cdpesqbb,' ')
-                                              ,nvl(vr_tpintegr,0));
+                                              ,nvl(vr_tpintegr,0)
+                                              ,nvl(vr_nrctadep,0));
                         EXCEPTION
                           WHEN OTHERS THEN
                             vr_cdcritic:= 843;
@@ -3315,7 +3329,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,nrseqdig
                                                 ,cdcritic
                                                 ,cdpesqbb
-                                                ,tpintegr)
+                                                ,tpintegr
+                                                ,nrdctitg) -- Conta depositada
                                        VALUES   (pr_cdcooper
                                                 ,pr_dtauxili
                                                 ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -3324,7 +3339,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,nvl(vr_nrseqarq,0)
                                                 ,nvl(vr_cdcritic,0)
                                                 ,nvl(vr_cdpesqbb,' ')
-                                                ,nvl(vr_tpintegr,0));
+                                                ,nvl(vr_tpintegr,0)
+                                                ,nvl(vr_nrctadep,0));
                           EXCEPTION
                             WHEN OTHERS THEN
                               vr_cdcritic:= 843;
@@ -3408,6 +3424,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_tab_craprej(vr_index_craprej).nrseqdig:= vr_nrseqarq;
                           vr_tab_craprej(vr_index_craprej).cdcritic:= vr_cdcritic;
                           vr_tab_craprej(vr_index_craprej).cdpesqbb:= vr_cdpesqbb;
+                          vr_tab_craprej(vr_index_craprej).nrctadep:= to_char(vr_nrctadep);
                           vr_tab_craprej(vr_index_craprej).dscritic:= 'Conta '||rw_crapcst.nrdconta;
                         END IF;
                       END IF;  --cr_crapcst%FOUND
@@ -3448,6 +3465,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_tab_craprej(vr_index_craprej).nrseqdig:= vr_nrseqarq;
                           vr_tab_craprej(vr_index_craprej).cdcritic:= vr_cdcritic;
                           vr_tab_craprej(vr_index_craprej).cdpesqbb:= vr_cdpesqbb;
+                          vr_tab_craprej(vr_index_craprej).nrctadep:= to_char(vr_nrctadep);
                           vr_tab_craprej(vr_index_craprej).dscritic:= 'Conta '||rw_crapcdb.nrdconta;
                         END IF;
                       END IF;
@@ -3471,7 +3489,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nrseqdig
                                               ,cdcritic
                                               ,cdpesqbb
-                                              ,tpintegr)
+                                              ,tpintegr
+                                              ,nrdctitg) -- Conta depositada
                                      VALUES   (pr_cdcooper
                                               ,pr_dtauxili
                                               ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -3480,7 +3499,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrseqarq,0)
                                               ,nvl(vr_cdcritic,0)
                                               ,nvl(vr_cdpesqbb,' ')
-                                              ,nvl(vr_tpintegr,0));
+                                              ,nvl(vr_tpintegr,0)
+                                              ,nvl(vr_nrctadep,0));
                         EXCEPTION
                           WHEN OTHERS THEN
                             vr_cdcritic:= 843;
@@ -3549,7 +3569,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                     ,nrseqdig
                                                     ,cdcritic
                                                     ,cdpesqbb
-                                                    ,tpintegr)
+                                                    ,tpintegr
+                                                    ,nrdctitg) -- Conta depositada
                                            VALUES   (pr_cdcooper
                                                     ,pr_dtauxili
                                                     ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -3558,7 +3579,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                     ,nvl(vr_nrseqarq,0)
                                                     ,nvl(vr_cdcritic,0)
                                                     ,nvl(vr_cdpesqbb,' ')
-                                                    ,nvl(vr_tpintegr,0));
+                                                    ,nvl(vr_tpintegr,0)
+                                                    ,nvl(vr_nrctadep,0));
                               EXCEPTION
                                 WHEN OTHERS THEN
                                   vr_cdcritic:= 843;
@@ -3785,7 +3807,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                         ,nrseqdig
                                                         ,cdcritic
                                                         ,cdpesqbb
-                                                        ,tpintegr)
+                                                        ,tpintegr
+                                                        ,nrdctitg) -- Conta depositada
                                                VALUES   (pr_cdcooper
                                                         ,pr_dtauxili
                                                         ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -3794,7 +3817,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                         ,nvl(vr_nrseqarq,0)
                                                         ,nvl(vr_cdcritic,0)
                                                         ,nvl(vr_cdpesqbb,' ')
-                                                        ,nvl(vr_tpintegr,0));
+                                                        ,nvl(vr_tpintegr,0)
+                                                        ,nvl(vr_nrctadep,0));
                                   EXCEPTION
                                     WHEN OTHERS THEN
                                       vr_cdcritic:= 843;
@@ -4020,7 +4044,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                     ,nrseqdig
                                                     ,cdcritic
                                                     ,cdpesqbb
-                                                    ,tpintegr)
+                                                    ,tpintegr
+                                                    ,nrdctitg) -- Conta depositada
                                            VALUES   (pr_cdcooper
                                                     ,pr_dtauxili
                                                     ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -4029,7 +4054,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                     ,nvl(vr_nrseqarq,0)
                                                     ,nvl(vr_cdcritic_aux,0)
                                                     ,nvl(vr_cdpesqbb,' ')
-                                                    ,nvl(vr_tpintegr,0));
+                                                    ,nvl(vr_tpintegr,0)
+                                                    ,nvl(vr_nrctadep,0));
                               EXCEPTION
                                 WHEN OTHERS THEN
                                   vr_cdcritic:= 843;
@@ -4134,7 +4160,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                   ,nrseqdig
                                                   ,cdcritic
                                                   ,cdpesqbb
-                                                  ,tpintegr)
+                                                  ,tpintegr
+                                                  ,nrdctitg) -- Conta depositada
                                          VALUES   (pr_cdcooper
                                                   ,pr_dtauxili
                                                   ,nvl(vr_nrdconta,0)
@@ -4143,7 +4170,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                   ,nvl(vr_nrseqarq,0)
                                                   ,999
                                                   ,nvl(vr_cdpesqbb,' ')
-                                                  ,nvl(vr_tpintegr,0));
+                                                  ,nvl(vr_tpintegr,0)
+                                                  ,nvl(vr_nrctadep,0));
                             EXCEPTION
                               WHEN OTHERS THEN
                                 vr_cdcritic:= 843;
@@ -4301,7 +4329,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,vllanmto
                                               ,nrseqdig
                                               ,cdcritic
-                                              ,cdpesqbb)
+                                              ,cdpesqbb
+                                              ,nrdctitg) -- Conta depositada
                                      VALUES   (pr_cdcooper
                                               ,pr_dtauxili
                                               ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -4309,7 +4338,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_vllanmto,0)
                                               ,nvl(vr_nrseqarq,0)
                                               ,928
-                                              ,nvl(vr_cdpesqbb,' '));
+                                              ,nvl(vr_cdpesqbb,' ')
+                                              ,nvl(vr_nrctadep,0));
                         EXCEPTION
                           WHEN OTHERS THEN
                           vr_cdcritic:= 843;
@@ -4341,7 +4371,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nrseqdig
                                               ,cdcritic
                                               ,cdpesqbb
-                                              ,tpintegr)
+                                              ,tpintegr
+                                              ,nrdctitg) -- Conta depositada
                                      VALUES   (pr_cdcooper
                                               ,pr_dtauxili
                                               ,nvl(nvl(vr_nrdconta_incorp,vr_nrdconta),0)
@@ -4350,7 +4381,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrseqarq,0)
                                               ,nvl(vr_cdcritic,0)
                                               ,nvl(vr_cdpesqbb,' ')
-                                              ,nvl(vr_tpintegr,0));
+                                              ,nvl(vr_tpintegr,0)
+                                              ,nvl(vr_nrctadep,0));
                         EXCEPTION
                           WHEN OTHERS THEN
                           vr_cdcritic:= 843;
@@ -4492,7 +4524,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nrlotchq
                                               ,sqlotchq
                                               ,cdcoptfn
-                                              ,cdagetfn)
+                                              ,cdagetfn
+                                              ,hrtransa)
                                      VALUES   (pr_cdcooper
                                               ,rw_craplot.dtmvtolt
                                               ,pr_dtleiarq
@@ -4513,7 +4546,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrlotchq,0)
                                               ,nvl(vr_sqlotchq,0)
                                               ,vr_cdcoptfn
-                                              ,vr_cdageapr);
+                                              ,vr_cdageapr
+                                              ,to_char(SYSDATE,'sssss'));
                         EXCEPTION
                           WHEN OTHERS THEN
                             vr_des_erro:= 'Erro ao inserir na tabela craplcm, deposito intercooperativa. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
@@ -4549,7 +4583,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nrctachq
                                               ,nrlotchq
                                               ,sqlotchq
-                                              ,cdcoptfn)
+                                              ,cdcoptfn
+                                              ,hrtransa)
                                      VALUES   (pr_cdcooper
                                               ,rw_craplot.dtmvtolt
                                               ,pr_dtleiarq
@@ -4569,7 +4604,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                               ,nvl(vr_nrctadep,0)
                                               ,nvl(vr_nrlotchq,0)
                                               ,nvl(vr_sqlotchq,0)
-                                              ,0);
+                                              ,0
+                                              ,to_char(SYSDATE,'sssss'));
                         EXCEPTION
                           WHEN OTHERS THEN
                             vr_des_erro:= 'Erro ao inserir na tabela craplcm. Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
@@ -4926,6 +4962,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                        vr_tab_critica(vr_idx_cri).vllanmto := rw_craprej.vllanmto;
                        vr_tab_critica(vr_idx_cri).dspesqbb := vr_rel_dspesqbb;
                        vr_tab_critica(vr_idx_cri).cdtipdoc := vr_rel_cdtipdoc;
+                       vr_tab_critica(vr_idx_cri).nrctadep := rw_craprej.nrdctitg;
                        CONTINUE;
                     END IF;
 
@@ -4935,9 +4972,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                      <nrseqdig>'||gene0002.fn_mask(rw_craprej.nrseqdig,'zzz.zz9')  ||'</nrseqdig>
                                                                      <nrdconta>'||gene0002.fn_mask_conta(rw_craprej.nrdconta)      ||'</nrdconta>
                                                                      <nrdocmto>'||gene0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z')||'</nrdocmto>
+                                                                     <nrctadep>'||to_char(rw_craprej.nrdctitg)                     ||'</nrctadep>
                                                                      <vllanmto>'||rw_craprej.vllanmto                              ||'</vllanmto>
                                                                      <dspesqbb>'||vr_rel_dspesqbb                                  ||'</dspesqbb>
-                                                                     <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                  ||'</cdtipdoc>
+                                                                     <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                 ||'</cdtipdoc>
                                                                      <dscritic>'||vr_dscritic                                      ||'</dscritic>
                                                                   </rejeitados>');
 
@@ -4956,6 +4994,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                        <nrseqdig>'||gene0002.fn_mask(vr_tab_critica(vr_idx_cri).nrseqdig,'zzz.zz9')  ||'</nrseqdig>
                                                                        <nrdconta>'||gene0002.fn_mask_conta(vr_tab_critica(vr_idx_cri).nrdconta)      ||'</nrdconta>
                                                                        <nrdocmto>'||gene0002.fn_mask(vr_tab_critica(vr_idx_cri).nrdocmto,'zzz.zzz.z')||'</nrdocmto>
+                                                                       <nrctadep>'||to_char(vr_tab_critica(vr_idx_cri).nrctadep)                     ||'</nrctadep>
                                                                        <vllanmto>'||vr_tab_critica(vr_idx_cri).vllanmto                              ||'</vllanmto>
                                                                        <dspesqbb>'||vr_tab_critica(vr_idx_cri).dspesqbb                              ||'</dspesqbb>
                                                                        <cdtipdoc>'||To_Char(vr_tab_critica(vr_idx_cri).cdtipdoc,'FM999')             ||'</cdtipdoc>
@@ -5185,9 +5224,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                        <nrseqdig>'||gene0002.fn_mask(rw_craprej.nrseqdig,'zzz.zz9')  ||'</nrseqdig>
                                                                        <nrdconta>'||gene0002.fn_mask_conta(rw_craprej.nrdconta)      ||'</nrdconta>
                                                                        <nrdocmto>'||gene0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z')||'</nrdocmto>
+                                                                       <nrctadep>'||to_char(rw_craprej.nrdctitg)                     ||'</nrctadep>
                                                                        <vllanmto>'||rw_craprej.vllanmto                              ||'</vllanmto>
                                                                        <dspesqbb>'||vr_rel_dspesqbb                                  ||'</dspesqbb>
-                                                                       <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                  ||'</cdtipdoc>
+                                                                       <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                 ||'</cdtipdoc>
                                                                        <dscritic>'||vr_dscritic                                      ||'</dscritic>
                                                                     </rejeitados>');
 
