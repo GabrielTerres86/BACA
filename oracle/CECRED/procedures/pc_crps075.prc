@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps075 (pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps075 (pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -56,11 +55,15 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    20/05/2016 - Incluido nas consultas da craplau
                                 craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
 
-                   22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
+                   22/09/2016 - Alterei a gravacao do log 661 do proc_batch para
                                 o proc_message SD 402979. (Carlos Rafael Tanholi)
-                                
-                   02/03/2017 - Incluido nas consultas da craplau 
+
+                   02/03/2017 - Incluido nas consultas da craplau
                                 craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
+
+                   27/07/2017 - Incluido delete na tbconv_det_agendamento antes de excluir da
+                                CRAPLAU, devido a existencia de FK.
+                                Heitor (Mouts) - Chamado 706691
     ............................................................................ */
 
     DECLARE
@@ -102,7 +105,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
            AND craplot.tplotmov in ( 6 ,
                                      12,  -- Lancamentos Automaticos
                                      17 ) -- Debitos de Cartao de Credito
-        ORDER BY cdcooper, dtmvtopg, cdagenci, 
+        ORDER BY cdcooper, dtmvtopg, cdagenci,
                  cdbccxlt, nrdolote;
 
       -- Busca lancamentos automaticos
@@ -113,6 +116,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                          pr_nrdolote craplot.nrdolote%type) IS
         SELECT insitlau
               ,dtmvtopg
+              ,idlancto
               ,ROWID
           FROM craplau
          WHERE craplau.cdcooper = pr_cdcooper
@@ -129,20 +133,20 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                        ,'DAUT BANCOOB'
                                        ,'TRMULTAJUROS'
                                        ,'ADIOFJUROS');
-                                        
+
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
 
       ------------------------------- VARIAVEIS -------------------------------
-      vr_dstextab   craptab.dstextab%type;  --> desc texto do valor da tabela generica      
+      vr_dstextab   craptab.dstextab%type;  --> desc texto do valor da tabela generica
       vr_qtlaudel   NUMBER:= 0;             --> qtd de registros limpos da tabela craplau
       vr_qtlotdel   NUMBER:= 0;             --> qtd de registros limpos da tabela crapmdp
       vr_dtlimite   DATE;                   --> data limite utilizada para buscar registros
       vr_flgdelet   BOOLEAN;                --> controle se deletou
-      
+
       --------------------------- SUBROTINAS INTERNAS --------------------------
 
-    BEGIN       
-      
+    BEGIN
+
       --------------- VALIDACOES INICIAIS -----------------
 
       -- Incluir nome do módulo logado
@@ -211,52 +215,56 @@ CREATE OR REPLACE PROCEDURE CECRED.
         vr_cdcritic := 177; --> 177 - Limpeza ja rodou este mes.
         raise vr_exc_saida;
       END IF;
-      
+
       /*  Monta data limite para efetuar a limpeza  */
       -- inicio do mês anterior
       vr_dtlimite := trunc(add_months(rw_crapdat.dtmvtolt,-1),'MM');
-            
-      vr_qtlaudel := 0;      
+
+      vr_qtlaudel := 0;
       vr_qtlotdel := 0;
       vr_flgdelet := TRUE;
-      
-      /*  Le os lotes a serem excluidos  */                       
+
+      /*  Le os lotes a serem excluidos  */
       FOR rw_craplot IN cr_craplot (pr_dtlimite => vr_dtlimite) LOOP
-                
+
         -- Limpeza da Tabela de Lancamentos Automaticos
         BEGIN
-          
+
           -- Buscar lançamentos automaticos
           FOR rw_craplau IN cr_craplau ( pr_cdcooper => pr_cdcooper,
                                          pr_dtmvtolt => rw_craplot.dtmvtolt,
                                          pr_cdagenci => rw_craplot.cdagenci,
                                          pr_cdbccxlt => rw_craplot.cdbccxlt,
                                          pr_nrdolote => rw_craplot.nrdolote) LOOP
-          
+
             -- Deletar apenas se for a situação 2,3
-            IF rw_craplau.insitlau in (2,3) AND 
+            IF rw_craplau.insitlau in (2,3) AND
                 (
-                  -- e tipo de movimento 12 ou 17 e 
+                  -- e tipo de movimento 12 ou 17 e
                   -- com a data de pagamento menor que a data limite
                   ( rw_craplot.tplotmov in (12,17) AND
-                    rw_craplau.dtmvtopg < vr_dtlimite) 
+                    rw_craplau.dtmvtopg < vr_dtlimite)
                   -- senao for dos tipos de movimento acima, tbm deleta
                   OR
-                   rw_craplot.tplotmov not in (12,17)         
+                   rw_craplot.tplotmov not in (12,17)
                   ) THEN
+
+              --Deletar detalhe do lancamento automatico
+              delete tbconv_det_agendamento
+               where idlancto = rw_craplau.idlancto;
               
               -- deletar lançamentos automaticos
-              DELETE craplau
-              WHERE rowid = rw_craplau.rowid;
+              delete craplau
+               where rowid = rw_craplau.rowid;
               -- contar registros deletados
-              vr_qtlaudel := vr_qtlaudel + 1;              
+              vr_qtlaudel := vr_qtlaudel + 1;
             ELSE
               -- marcar como não deletado, para não deletar o lote
-              vr_flgdelet := FALSE;  
-            END IF;      
-          
+              vr_flgdelet := FALSE;
+            END IF;
+
           END LOOP;
-          
+
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Não foi possivel efetuar limpeza da tabela craplau: '||SQLerrm;
@@ -280,7 +288,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           -- iniciar variaveis
           vr_flgdelet := TRUE;
         END IF;
-        
+
       END LOOP;  -- Fim loop craplot
 
       /*  Imprime no log do processo os totais das exclusoes   */
@@ -293,7 +301,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic||
                                                      ' LAU = '|| trim(to_char(vr_qtlaudel,'9G999G990'))
-                                 ,pr_nmarqlog     => 'proc_message');                                                      
+                                 ,pr_nmarqlog     => 'proc_message');
 
       /*Mostra CRAPCRD e CRAPLOT*/
       btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
@@ -301,8 +309,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic||
                                                      ' LOT = '|| trim(to_char(vr_qtlotdel,'9G999G990'))
-                                 ,pr_nmarqlog     => 'proc_message');                                                      
-     
+                                 ,pr_nmarqlog     => 'proc_message');
+
 
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
@@ -334,7 +342,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
         -- Efetuar commit
-        COMMIT;        
+        COMMIT;
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
