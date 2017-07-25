@@ -218,6 +218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
                                  
       vr_dsdemail := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SOL_CRED_AUTO');
                    
+      IF TRIM(vr_dsdemail) IS NOT NULL THEN       
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                 ,pr_cdprogra        => 'EMPR0010'
                                 ,pr_des_destino     => vr_dsdemail
@@ -229,6 +230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0010 IS
                                 ,pr_flg_log_batch   => 'N'
                                 ,pr_flg_enviar      => 'S'
                                 ,pr_des_erro        => vr_dscritic);
+	  END IF;
      
       -- Se houver erro
       IF vr_dscritic IS NOT NULL THEN
