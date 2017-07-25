@@ -42,6 +42,9 @@ CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 --	           19/12/2016 - Ajuste incorporação Transulcred (Daniel)
 --
 --			   16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
+--
+--             21/07/2017 - Ajuste na procedure pc_ver_cheque para retornar numero 
+--                          da conta quando tiver critica. (Daniel)
 ---------------------------------------------------------------------------------------------------------------
 
   -- Estruturas de registro
@@ -3156,6 +3159,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                custodia, tarifa será criada no processo batch, para permitir
                                resgatar o cheque no mesmo dia sem cobrar a tarifa.
                                PRJ300-Desconto de cheque(Odirlei-AMcom)
+                               
+                  20/06/2017 - Deleta crítica de cheque pendente de entrega se existir.
+                               PRJ300-Desconto de cheque(Lombardi)
       ............................................................................. */
     
      BEGIN
@@ -3907,6 +3913,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                  
              END;
                
+             -- Deleta crítica de cheque pendente de entrega se existir
+             BEGIN
+               DELETE crapabc abc
+                WHERE abc.cdcooper = pr_cdcooper
+                  AND abc.nrborder = rw_crapdcc_2.nrborder
+                  AND abc.cdcmpchq = rw_crapdcc_2.cdcmpchq
+                  AND abc.cdbanchq = rw_crapdcc_2.cdbanchq
+                  AND abc.cdagechq = rw_crapdcc_2.cdagechq
+                  AND abc.nrctachq = rw_crapdcc_2.nrctachq
+                  AND abc.nrcheque = rw_crapdcc_2.nrcheque
+                  AND abc.cdocorre = 26;
+             EXCEPTION
+               WHEN OTHERS THEN
+                 vr_cdcritic := 0;
+                 vr_dscritic := 'Erro ao excluir críticas do borderô.';
+                 RAISE vr_exc_erro;
+             END;
+             
            END LOOP;      
            
            BEGIN
@@ -4913,6 +4937,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         -- Efetuar retorno do erro
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+		-- Retornar conta caso possua valor.
+		pr_nrdconta := vr_nrdconta;
     WHEN OTHERS THEN
       -- Apenas retornar a variável de saida
       pr_cdcritic := 0;
