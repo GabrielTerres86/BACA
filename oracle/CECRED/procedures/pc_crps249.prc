@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 10/07/2017
+   Data    : Novembro/98                     Ultima atualizacao: 21/07/2017
 
    Dados referentes ao programa:
 
@@ -566,7 +566,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             PRJ300-Desconto de cheque(Odirlei-AMcom)
                             
                10/07/2017 - Ajuste na geração de lançamento contábil de receita de recarga de 
-                            celular - SD 707484 - (Jonatas - Supero)
+                            celular - SD 707484 - (Jonatas - Supero) 
+
+               21/07/2017 - Ajuste na geracao das Entradas de cheques em custodia do dia para
+ 							incluir penas custodias nao descontadas (Daniel)
+
 
 ............................................................................ */
 
@@ -776,7 +780,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            vlcheque
       from crapcst
      where crapcst.cdcooper = pr_cdcooper
-       and crapcst.dtmvtolt = pr_dtmvtolt;
+       and crapcst.dtmvtolt = pr_dtmvtolt
+	   and crapcst.nrborder = 0;
   -- Liberacao de cheques em custodia do dia
   cursor cr_crapcst2 (pr_cdcooper in craptab.cdcooper%type,
                       pr_dtmvtoan in crapcst.dtlibera%type,
