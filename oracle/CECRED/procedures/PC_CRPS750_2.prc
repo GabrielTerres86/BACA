@@ -179,7 +179,7 @@ BEGIN
 
     /* Tabela de Memoria de Calculados */
     vr_tab_calculado empr0001.typ_tab_calculado;
-
+    
     /* Contratos de acordo */
     TYPE typ_tab_acordo   IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
     vr_tab_acordo   typ_tab_acordo;
@@ -228,7 +228,9 @@ BEGIN
     vr_blqresg_cc VARCHAR2(1);
 
     -- Parametro de contas que nao podem debitar os emprestimos
-    vr_dsctajud   crapprm.dsvlrprm%TYPE;
+    vr_dsctajud    crapprm.dsvlrprm%TYPE;
+    -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
+    vr_dsctactrjud crapprm.dsvlrprm%TYPE := null;
 
     --Procedure para limpar os dados das tabelas de memoria
     PROCEDURE pc_limpa_tabela IS
@@ -358,7 +360,7 @@ BEGIN
 
     --Limpar Tabela
     pc_limpa_tabela;
-
+    
       -- Carregar Contratos de Acordos
     FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
       vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
@@ -378,6 +380,11 @@ BEGIN
                                              pr_cdcooper => pr_cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
 
+    -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+    vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
+                                                                                          
     /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
        FOR rw_crappep IN cr_crappep (pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
@@ -493,6 +500,12 @@ BEGIN
         vr_vlsomato     := 0;
       END IF;
 
+      -- Trava para nao cobrar as parcelas desta conta e contrato específico pelo motivo de uma acao judicial SD#618307
+      IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(rw_crappep.nrdconta))||','||trim(to_char(rw_crappep.nrctremp))||')') > 0 THEN
+        vr_vlsomato_tmp := 0;
+        vr_vlsomato     := 0;
+      END IF;
+
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
                                 pr_nmdcampo => 'Saldo',
                                 pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
@@ -583,7 +596,7 @@ BEGIN
           IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
             vr_flgpagpa := FALSE;
           END IF;
-
+          
 
           /* Sem valor suficiente para pagar parcela ou parcela ja liquidada */
           IF NOT vr_flgpagpa THEN
@@ -776,7 +789,7 @@ BEGIN
           END IF;
 
         END IF;
-
+        
         -- verifica acordos
         vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
                        LPAD(rw_crappep.nrctremp,10,'0');
