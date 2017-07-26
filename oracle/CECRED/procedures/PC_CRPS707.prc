@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 27/06/2017
+   Data    : Setembro/2016                        Ultima atualizacao: 26/07/2017
 
    Dados referentes ao programa:
 
@@ -35,6 +35,9 @@ BEGIN
 
 			   27/06/2017 - Ajustes para atender as mudanças do catalago de TED - SPB
 			                (Adriano - SD 698655).
+                      
+         26/07/2017 - #713816 Ajustes para garantir o fechamento do arquivo para que o move
+                      do mesmo ocorra (Carlos)
 
    ............................................................................. */
 
@@ -1086,7 +1089,10 @@ BEGIN
                
              EXCEPTION
                WHEN vr_exc_saida THEN
-                 
+
+                 -- Fechar arquivo para poder move-lo
+                 gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+
                  -- Incrementar quantidade de erros
                  vr_qtrejeit := vr_qtrejeit + 1;
                  
@@ -1226,8 +1232,13 @@ BEGIN
                                           
                WHEN no_data_found THEN
                  -- Finalizou a leitura
+                 gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+                 
                  EXIT;
-               WHEN OTHERS THEN
+               WHEN OTHERS THEN                 
+
+                 cecred.pc_internal_exception;
+                                
                  vr_dscritic := 'Erro nao tratado na leitura do arquivo --> '||sqlerrm;
                  RAISE vr_exc_saida;
              END;
@@ -1297,6 +1308,8 @@ BEGIN
 
            END IF;
 
+           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+
            IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                  ,pr_dtarquiv => vr_dtarquiv
                                  ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
@@ -1305,7 +1318,7 @@ BEGIN
             
              IF trim(vr_dscritic) IS NULL THEN
                vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
-           END IF;
+             END IF;
 
              RAISE vr_exc_saida;
                      
@@ -1323,6 +1336,8 @@ BEGIN
            
          EXCEPTION
            WHEN no_data_found THEN
+
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
              
              -- Arquivo vazio
              ROLLBACK;
@@ -1339,6 +1354,8 @@ BEGIN
              EXIT;
              
            WHEN vr_exc_email THEN
+
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
              
              -- Desfazer alterações
              ROLLBACK;
@@ -1390,6 +1407,8 @@ BEGIN
              END IF;
              
            WHEN vr_exc_saida THEN
+
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
              
              -- Desgravar alterações pendentes
              ROLLBACK;
@@ -1407,6 +1426,10 @@ BEGIN
              
            WHEN OTHERS THEN
              
+             cecred.pc_internal_exception;
+           
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+
              -- Desgravar alterações pendentes
              ROLLBACK;
              
@@ -1515,6 +1538,9 @@ BEGIN
        ROLLBACK;
 
      WHEN OTHERS THEN
+       
+       cecred.pc_internal_exception;
+     
        -- Efetuar retorno do erro não tratado
        pr_cdcritic := 0;
        pr_dscritic := 'Erro na procedure pc_crps707. '||sqlerrm;
