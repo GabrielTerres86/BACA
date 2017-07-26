@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.TELA_CUSTOD IS
+CREATE OR REPLACE PACKAGE TELA_CUSTOD IS
 
   /*-------------------------------------------------------------------------
   --
@@ -212,7 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CUSTOD IS
 	
 END TELA_CUSTOD;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
+CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
   /*-------------------------------------------------------------------------
   --
   --  Programa : TELA_CUSTOD
@@ -2891,7 +2891,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
            AND dcc.inconcil = 1;
       rw_crapdcc cr_crapdcc%ROWTYPE;	
       
-
 	  BEGIN
 		  -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'TELA_CUSTOD'
@@ -3419,6 +3418,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
       vr_dscritic crapcri.dscritic%TYPE;
 			vr_exc_erro EXCEPTION;			
   
+      vr_dstransa      VARCHAR2(100);
+      vr_rowid_log     ROWID;
+      
       -- Variaveis de log
       vr_cdcooper NUMBER;
       vr_cdoperad VARCHAR2(100);
@@ -3431,7 +3433,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;					
 			
-
 			--Selecionar os dados da tabela de Associados
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -3465,14 +3466,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 											 ,pr_nrconven IN craphcc.nrconven%TYPE
 											 ,pr_nrremret IN craphcc.nrremret%TYPE
 											 ,pr_intipmvt IN craphcc.intipmvt%TYPE) IS
-			  SELECT distinct(1)
+        SELECT dcc.nrborder
 				  FROM crapdcc dcc
 				 WHERE dcc.cdcooper = pr_cdcooper
 				   AND dcc.nrdconta = pr_nrdconta
 					 AND dcc.nrconven = pr_nrconven
 					 AND dcc.nrremret = pr_nrremret
 					 AND dcc.intipmvt = pr_intipmvt
-           AND dcc.inconcil = 1;
+           AND (dcc.inconcil = 1
+            OR dcc.nrborder > 0)
+           AND ROWNUM = 1;
       rw_crapdcc cr_crapdcc%ROWTYPE;		
 
 			
@@ -3573,7 +3576,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 				CLOSE cr_crapdcc;
 				-- Data para Deposito invalida
 				vr_cdcritic := 0;
+        IF rw_crapdcc.nrborder > 0 THEN
+          vr_dscritic := 'Remessa possui cheques vinculados à um borderô.';
+        ELSE
 				vr_dscritic := 'Remessa possui cheques conciliados.';
+        END IF;
 				-- Executa RAISE para sair das validações
 				RAISE vr_exc_erro;								
 			END IF;
@@ -3593,6 +3600,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 		   WHERE hcc.rowid = rw_craphcc.rowid;
       -- Efetuar commit
 			COMMIT;
+			
+      
+      vr_dstransa := 'Exclusao da remessa ' || 'Nro.: ' || pr_nrremret;
+          
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => ' '
+                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => trunc(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => ' '
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_rowid_log);
 			
 		EXCEPTION
       WHEN vr_exc_erro THEN
