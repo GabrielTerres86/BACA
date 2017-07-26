@@ -1833,7 +1833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --  Sistema  : CRED
     --  Sigla    : DSCC0001
     --  Autor    : Jaison
-    --  Data     : Setembro/2016                       Ultima atualizacao: 26/05/2017
+    --  Data     : Setembro/2016                       Ultima atualizacao: 21/07/2017
     --
     --  Dados referentes ao programa:
     --
@@ -1850,6 +1850,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --               
     --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
     --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
+    --               
+    --               21/07/2017 - Inclusão do IOF no borderô. 
+    --                            PRJ300 - Desconto de cheque (Lombardi)
+    --               
     -- .........................................................................*/
 
     ----------->>> CURSORES  <<<--------
@@ -1959,6 +1963,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_txcetmes NUMBER;
     
     vr_nrdlotes VARCHAR2(10000) := '';
+    
+    -- IOF
+    vr_qtdiaiof NUMBER;   
+    vr_periofop NUMBER;
+    vr_vliofcal NUMBER;
+    vr_vltotiof NUMBER;
+    vr_dtlibiof DATE;
+    vr_dtiniiof DATE;
+	vr_dtfimiof DATE;
+    vr_txccdiof NUMBER;
+	
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
@@ -2213,6 +2228,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         RAISE vr_exc_erro;
       END IF;
       
+      
+      -- Busca taxa de IOF
+      GENE0005.pc_busca_iof(pr_cdcooper => pr_cdcooper
+                           ,pr_dtmvtolt => pr_dtmvtolt
+                           ,pr_dtiniiof => vr_dtiniiof
+                           ,pr_dtfimiof => vr_dtfimiof
+                           ,pr_txccdiof => vr_txccdiof
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
+    												 
+      -- Se retornou alguma crítica ao buscar IOF
+      IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
       vr_qrcode   := pr_cdcooper ||'_'||
                      vr_cdageqrc ||'_'||
                      TRIM(gene0002.fn_mask_conta(   pr_nrdconta)) ||'_'||
@@ -2251,6 +2281,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                          '<idorigem>'|| pr_idorigem ||'</idorigem>'||
                          '<cheques>');
 
+      vr_vltotiof := 0;
+
       IF vr_tab_chq_bordero.count > 0 THEN
       FOR idx IN vr_tab_chq_bordero.FIRST..vr_tab_chq_bordero.LAST LOOP
         -- se o borderô estiver liberado e o cheque estiver aprovado ou
@@ -2273,6 +2305,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                                                                     
             END IF;
             
+          IF rw_crapbdc.dtlibbdc IS NOT NULL THEN
+            vr_dtlibiof := rw_crapbdc.dtlibbdc;
+          ELSE
+            vr_dtlibiof := pr_dtmvtolt;
+          END IF;
+          
+          -- IOF
+          vr_qtdiaiof := vr_tab_chq_bordero(idx).dtlibera - vr_dtlibiof;
+
+          IF vr_qtdiaiof > 365 THEN
+             vr_qtdiaiof := 365;
+          END IF;    
+                     
+          IF rw_craplim.inpessoa = 1 THEN
+             -- IOF Operacacao PF
+             vr_periofop := vr_qtdiaiof * 0.0082;
+          ELSE
+             -- IOF Operacacao PJ
+             vr_periofop := vr_qtdiaiof * 0.0041;
+          END IF;   
+
+          -- Calculo IOF
+          vr_vliofcal := nvl((vr_tab_chq_bordero(idx).vlliquid * vr_periofop) / 100, 0);
+
+          -- Acumula Total IOF
+          vr_vltotiof := vr_vltotiof + vr_vliofcal;
+          
         -- Seta os totais
         vr_qttotchq := NVL(vr_qttotchq,0) + 1;
         vr_vltotchq := NVL(vr_vltotchq,0) + vr_tab_chq_bordero(idx).vlcheque;
@@ -2340,11 +2399,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         
       END IF;
 
+      pc_escreve_xml('</cheques>'||
+                     '<vltotiof>' || TO_CHAR(ROUND( ( ROUND((vr_vltotliq * vr_txccdiof), 2) + vr_vltotiof),2),'fm999G999G999G990D00') || '</vltotiof>');
+      
       -- Calcula a media
       vr_vlmedchq := APLI0001.fn_round(vr_vltotchq / vr_qttotchq, 2);
 
-      pc_escreve_xml(    '</cheques>'||
-                         '<totais>'||
+      pc_escreve_xml(    '<totais>'||
                              '<total>'||
                              	   '<qttotchq>'|| vr_qttotchq ||'</qttotchq>'||
                                  '<qtrestri>'|| NVL(vr_qtrestri, 0) ||'</qtrestri>'||

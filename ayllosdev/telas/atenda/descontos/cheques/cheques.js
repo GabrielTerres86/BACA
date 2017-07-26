@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de cheques
  * --------------
- * ALTERAÇÕES   : 16/12/2016
+ * ALTERAÇÕES   : 21/07/2017
  * --------------
  * 000: [14/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [21/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -31,6 +31,7 @@
  * 016: [26/05/2017] Odirlei   (AMcom)  : Alterado para tipo de impressao 10 - Analise bordero.
  *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
+ * 017: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -1933,7 +1934,7 @@ function adicionaChequeGrid(){
 	// Limpa campo
 	cDsdocmc7.val('');
 	var cmc7_sem_format  = cmc7.replace(/[^0-9]/g, "").substr(0,30);
-
+/*
 	if ( cmc7 == '' ) {
 		return false;
 	}
@@ -1975,7 +1976,7 @@ function adicionaChequeGrid(){
 		showError('error','A data de emiss&atilde;o deve ser menor que a data atual.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtdcaptu\', \'#frmChequesCustodiaNovo\').focus();');
 		return false;
 	}
-
+*/
 	var idCriar = "id_".concat(cmc7_sem_format);
 
 	var dtlibera = cDtlibera.val();
@@ -3062,4 +3063,292 @@ function confirmaResgateCustodiahj(acao,tipoacao) {
   
   showConfirmacao(msg,'Confirma&ccedil;&atilde;o - Ayllos','flresghj = 1; ' + acao,'flresghj = 0; ' + acao,'sim.gif','nao.gif');
   return false;
+}
+			 
+function validaCheque(){
+	
+	showMsgAguardo('Aguarde, validando cheque ...');
+	
+	var dscheque = "";
+	var data    = $('#dtlibera', '#frmChequesCustodiaNovo').val();
+	var dataEmi = $('#dtdcaptu', '#frmChequesCustodiaNovo').val();
+	var valor   = $('#vlcheque', '#frmChequesCustodiaNovo').val();
+	var cmc7    = $('#dsdocmc7', '#frmChequesCustodiaNovo').val();
+	var cmc7_sem_format  = cmc7.replace(/[^0-9]/g, "").substr(0,30);
+	
+	// Validar se os campos estão preenchidos
+	if ( data == '' ) {
+		showError('error','Data boa inv&aacute;lida.','Alerta - Ayllos','hideMsgAguardo(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtlibera\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+	
+	if ( dataEmi == '' ) {
+		showError('error','Data de emiss&atilde;o inv&aacute;lida.','Alerta - Ayllos','hideMsgAguardo(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtdcaptu\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+	
+	if ( valor == '' || valor == '0,00') {
+		showError('error','Valor inv&aacute;lido.','Alerta - Ayllos','hideMsgAguardo(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#vlcheque\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+	
+	if ( cmc7_sem_format.length < 30 ) {
+		showError('error','CMC-7 inv&aacute;lido.','Alerta - Ayllos','hideMsgAguardo(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dsdocmc7\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+	
+	var aDataBoa = data.split("/"); 
+	var aDataEmi = dataEmi.split("/"); 
+	var aDtmvtolt = aux_dtmvtolt.split("/"); 
+	var dtcompara1 = parseInt(aDataBoa[2].toString() + aDataBoa[1].toString() + aDataBoa[0].toString()); 
+	var dtcompara2 = parseInt(aDataEmi[2].toString() + aDataEmi[1].toString() + aDataEmi[0].toString()); 
+	var dtcompara3 = parseInt(aDtmvtolt[2].toString() + aDtmvtolt[1].toString() + aDtmvtolt[0].toString()); 
+	
+	if ( dtcompara1 <= dtcompara3 ) {
+		showError('error','A data boa deve ser maior que a data atual.','Alerta - Ayllos','hideMsgAguardo(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtlibera\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+	
+	if ( dtcompara2 > dtcompara3 ) {
+		showError('error','A data de emiss&atilde;o deve ser menor que a data atual.','Alerta - Ayllos','hideMsgAguardo(); blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); $(\'#dtdcaptu\', \'#frmChequesCustodiaNovo\').focus();');
+		return false;
+	}
+	/*
+	if (!validaCmc7(cmc7)){
+		showError('error','CMC-7 Inv&aacute;lido!','Alerta - Ayllos','hideMsgAguardo(); cDsdocmc7.limpaFormulario();cDsdocmc7.focus();');
+		return false;
+	}
+	*/
+	dscheque += data + ";" ; // Data Boa
+	dscheque += dataEmi + ";" ; // Data Emissão
+	dscheque += valor.replace(/\./g,'').replace(',','.') + ";" ; // Valor
+	dscheque += cmc7_sem_format; // CMC-7
+	
+	$.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/cheques_bordero_validar_cheque.php', 
+        data: {
+            nrdconta: nrdconta,
+			dscheque: dscheque,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();           
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {						
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+			}
+        }
+    });
+}
+
+// Mostra form cadastro de emitente
+function mostraFormEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq) {
+	
+	showMsgAguardo('Aguarde, carregando cadastro de emitente...');
+
+	// Executa script através de ajax
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/descontos/cheques/cheques_bordero_detalhamento_emitente.php', 
+		data: {			
+			redirect: 'html_ajax'			
+			}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {			
+			$('#divUsoGenerico').css({'height': '400px'});						
+			$('#divUsoGenerico').html(response);				
+            exibeRotina($('#divUsoGenerico'));			
+			buscaFormEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq);
+		}				
+	});
+	
+	return false;
+	
+}
+
+function buscaFormEmitente(cdcmpchq, cdbanchq, cdagechq, nrctachq){
+	
+	if( cdbanchq == 1 ){
+	    nrctachq = mascara(normalizaNumero(nrctachq.toString()),'####.###-#');
+	} else {
+		nrctachq = mascara(normalizaNumero(nrctachq.toString()),'######.###-#');
+	}
+	
+	// Executa script através de ajax
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/descontos/cheques/cheques_bordero_form_cadastra_emitente.php', 
+		data: {			
+			cdcmpchq: cdcmpchq,	
+			cdbanchq: cdbanchq,
+			cdagechq: cdagechq,
+			nrctachq: nrctachq,	
+			redirect: 'html_ajax'			
+			}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {			
+			$('#divDetalhamento').html(response);			
+			formataCadastroEmitente();
+		}				
+	});
+	
+	return false;
+	
+}
+
+function formataCadastroEmitente(){
+	
+	var rCdcmpchq_emi, rCdbanchq_emi, rCdagechq_emi, rNrctachq_emi, 
+		rNrcpfcgc_emi, rDsemiten_emi;
+		
+	var cCdcmpchq_emi, cCdbanchq_emi, cCdagechq_emi, cNrctachq_emi, 
+		cNrcpfcgc_emi, cDsemiten_emi;
+		
+    var btnIncluirEmi = $('#btIncluirEmi', '#divBotoesDetalhe');
+	highlightObjFocus($('#frmCadastraEmitente'));
+	
+    // label
+	rCdcmpchq_emi = $('label[for="cdcmpchq"]', '#frmCadastraEmitente');
+	rCdbanchq_emi = $('label[for="cdbanchq"]', '#frmCadastraEmitente');
+	rCdagechq_emi = $('label[for="cdagechq"]', '#frmCadastraEmitente');
+	rNrctachq_emi = $('label[for="nrctachq"]', '#frmCadastraEmitente');
+	rNrcpfcgc_emi = $('label[for="nrcpfcgc"]', '#frmCadastraEmitente');
+	rDsemiten_emi = $('label[for="dsemiten"]', '#frmCadastraEmitente');
+	
+    rCdcmpchq_emi.css({'width': '61px'}).addClass('rotulo');
+    rCdbanchq_emi.css({'width': '61px'}).addClass('rotulo-linha');
+    rCdagechq_emi.css({'width': '61px'}).addClass('rotulo-linha');
+    rNrctachq_emi.css({'width': '61px'}).addClass('rotulo-linha');
+    rNrcpfcgc_emi.css({'width': '120px'}).addClass('rotulo');
+    rDsemiten_emi.css({'width': '120px'}).addClass('rotulo');
+
+    // input
+    cCdcmpchq_emi = $('#cdcmpchq', '#frmCadastraEmitente');
+    cCdbanchq_emi = $('#cdbanchq', '#frmCadastraEmitente');
+    cCdagechq_emi = $('#cdagechq', '#frmCadastraEmitente');
+    cNrctachq_emi = $('#nrctachq', '#frmCadastraEmitente');
+    cNrcpfcgc_emi = $('#nrcpfcgc', '#frmCadastraEmitente');
+    cDsemiten_emi = $('#dsemiten', '#frmCadastraEmitente');
+	cDsemiten_emi.setMask("STRING",60,charPermitido(),"");
+
+    cCdcmpchq_emi.css({'width': '40px'}).desabilitaCampo();
+    cCdbanchq_emi.css({'width': '40px'}).desabilitaCampo();
+    cCdagechq_emi.css({'width': '50px'}).desabilitaCampo();
+    cNrctachq_emi.css({'width': '98px'}).desabilitaCampo();
+    cNrcpfcgc_emi.css({'width': '150px'}).habilitaCampo();
+    cDsemiten_emi.css({'width': '379px'}).habilitaCampo();
+	cDsemiten_emi.addClass('alphanum');
+	
+	layoutPadrao();
+	
+	cNrcpfcgc_emi.focus();
+	
+	// Data Emissão
+    cNrcpfcgc_emi.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if (e.keyCode == 13) {
+            cDsemiten_emi.focus();
+            return false;
+        }
+
+		mascaraCpfCnpj(this,cpfCnpj);
+		
+    });
+
+	// Data Boa
+    cDsemiten_emi.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if (e.keyCode == 13) {
+            confirmaIncluiEmitente();
+            return false;
+        }
+		
+    });
+		
+    hideMsgAguardo();
+    bloqueiaFundo($('#divUsoGenerico'));
+	return false;
+}
+
+function confirmaIncluiEmitente(){
+	showConfirmacao('Confirma a inclus&atilde;o do emitente?', 'Confirma&ccedil;&atilde;o - Ayllos', 'incluiEmitente();', 'return false;', 'sim.gif', 'nao.gif');
+	return false;
+}
+
+function incluiEmitente(){
+	
+	showMsgAguardo('Aguarde, cadastrando emitente...');
+
+	var cdcmpchq, cdbanchq, cdagechq, nrctachq, nrcpfcgc, dsemiten, dscheque;
+	
+	cdcmpchq = normalizaNumero($('#cdcmpchq', '#frmCadastraEmitente').val());
+	cdbanchq = normalizaNumero($('#cdbanchq', '#frmCadastraEmitente').val());
+	cdagechq = normalizaNumero($('#cdagechq', '#frmCadastraEmitente').val());
+	nrctachq = normalizaNumero($('#nrctachq', '#frmCadastraEmitente').val());
+	nrcpfcgc = normalizaNumero($('#nrcpfcgc', '#frmCadastraEmitente').val());
+	dsemiten = $('#dsemiten', '#frmCadastraEmitente').val();
+				
+	if (nrcpfcgc == ""){
+		showError('error','Preencha todos os campos para continuar.','Alerta - Ayllos','hideMsgAguardo(); $(\'#nrcpfcgc\', \'#frmCadastraEmitente\').focus(); bloqueiaFundo($(\'#divUsoGenerico\'));');
+		return false;
+	}
+	
+	if (dsemiten == ""){
+		showError('error','Preencha todos os campos para continuar.','Alerta - Ayllos','hideMsgAguardo(); $(\'#nrcpfcgc\', \'#frmCadastraEmitente\').focus(); bloqueiaFundo($(\'#divUsoGenerico\'));');
+		return false;
+	}
+
+	dscheque = cdcmpchq + ';' + 
+			   cdbanchq + ';' + 
+			   cdagechq + ';' + 
+			   nrctachq + ';' + 
+			   nrcpfcgc + ';' + 
+			   dsemiten.toUpperCase();
+	$.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/descontos/cheques/cheques_bordero_cadastrar_emitente.php', 
+        data: {
+			dscheque: dscheque,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();           
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+			hideMsgAguardo();
+			try {
+				eval( response );
+			} catch(error) {						
+				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+			}
+        }
+    });
+	
+	return false;
+	
 }

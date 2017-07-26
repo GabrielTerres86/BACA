@@ -1,7 +1,7 @@
 /************************************************************************
  Fonte: descontos.js                                              
  Autor: Guilherme                                                 
- Data : Novembro/2008                Última Alteração: 16/12/2016
+ Data : Novembro/2008                Última Alteração: 21/07/2017
 																  
  Objetivo  : Biblioteca de funções da rotina de Descontos da tela 
 			 ATENDA                                               
@@ -27,6 +27,8 @@
 			
              16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
 
+			 21/07/2017 - Ajuste no cadastro de emitentes. Projeto 300. (Lombardi)
+			 
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -871,7 +873,7 @@ function formataLayout(nomeForm){
 		btnOk.unbind('click').bind('click', function() {
 			if ( divError.css('display') == 'block' ) { return false; }		
 
-			adicionaChequeGrid();
+			validaCheque();
 			return false;
 		});		
 			
