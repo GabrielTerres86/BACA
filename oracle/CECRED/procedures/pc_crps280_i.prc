@@ -1591,7 +1591,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                IF vr_chave_finalidade = 1 THEN
                   vr_origem := 1437;
                   vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO MICROCREDITO CEF"';
-               ELSE
+               ELSIF vr_chave_finalidade = 2 THEN
+                  vr_origem := 1780;  
+                  vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB IMOBILIZADO REFAP"';   
+               ELSIF vr_chave_finalidade = 3 THEN
+                  vr_origem := 5505;  
+                  vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO CCB MAIS CREDITO"';                                       
+               ELSIF vr_chave_finalidade = 4 THEN
                   vr_origem := 1440;  
                   vr_descricao := '"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO MICROCREDITO BNDES"';                  
                END IF;
@@ -1607,7 +1613,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
+               IF vr_chave_finalidade IN (1,4) THEN
                vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);
+               ELSE
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);  
+               END IF;
                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -1620,7 +1630,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_origem := 1437;
                   vr_destino := 7302;
                   vr_descricao := '"AJUSTE CONTABIL REF. JUROS MICROCREDITO CEF"';
-               ELSE
+               ELSIF vr_chave_finalidade = 2 THEN
+                  vr_origem := 1780;  
+                  vr_destino := 7112;                  
+                  vr_descricao := '"AJUSTE CONTABIL - JUROS CCB IMOBILIZADO REFAP (INVESTIMENTOS)"';  
+/*               ELSIF vr_chave_finalidade = 3 THEN
+                  vr_origem := 5505;  
+                  vr_destino := 7011;                  
+                  vr_descricao := '"AJUSTE CONTABIL - JUROS CCB MAIS CREDITO"';                                      
+*/               ELSIF vr_chave_finalidade = 4 THEN
                   vr_origem := 1440;  
                   vr_destino := 7306;                  
                   vr_descricao := '"AJUSTE CONTABIL REF. JUROS MICROCREDITO BNDES"';                  
@@ -1637,7 +1655,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
+               IF vr_chave_finalidade IN (1,4) THEN
                vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
+               ELSE
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
+               END IF;
                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -1654,7 +1676,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
+               IF vr_chave_finalidade IN (1,4) THEN
                vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
+               ELSE
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec); 
+               END IF; 
                
                --Escreve duas vezes a linha gerencial
                FOR i IN 1..2 LOOP
@@ -1672,7 +1698,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   --para reversao
                   vr_origem := 1438;
                   vr_descricao := '"AJUSTE CONTABIL - PROVISAO CEF"';
-               ELSE
+               ELSIF vr_chave_finalidade = 2 THEN
+                  --para provisão
+                  vr_destino := 1702;
+                  --para reversao
+                  vr_origem  := 1702;  
+                  vr_descricao := '"AJUSTE CONTABIL - PROVISAO CCB IMOBILIZADO REFAP"';                   
+               ELSIF vr_chave_finalidade = 4 THEN
                   --para provisão
                   vr_destino := 1441;
                   --para reversao
@@ -1692,7 +1724,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
+               IF vr_chave_finalidade IN (1,4) THEN
                vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
+               ELSE
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);                 
+               END IF;
                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -1709,7 +1745,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
+               IF vr_chave_finalidade IN (1,4) THEN
                vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
+               ELSE
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper); 
+               END IF;
                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -1722,7 +1762,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                IF vr_chave_finalidade = 1 THEN
                   vr_destino := 1437;
                   vr_descricao := '"AJUSTE CONTABIL - PAGTO. MICROCREDITO CEF"';
-               ELSE
+               ELSIF vr_chave_finalidade = 2 THEN
+                  vr_destino := 1780;  
+                  vr_descricao := '"AJUSTE CONTABIL - PAGTO. CCB IMOBILIZADO REFAP"';     
+               ELSIF vr_chave_finalidade = 3 THEN
+                  vr_destino := 5505;  
+                  vr_descricao := '"AJUSTE CONTABIL - PAGTO. CCB MAIS CREDITO"';                                         
+               ELSIF vr_chave_finalidade = 4 THEN
                   vr_destino := 1440;  
                   vr_descricao := '"AJUSTE CONTABIL - PAGTO. MICROCREDITO BNDES"';                  
                END IF;
@@ -1738,7 +1784,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
+               IF vr_chave_finalidade IN (1,4) THEN            
                vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar);
+               ELSE
+                 vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar);   
+               END IF;              
                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -3615,8 +3665,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          --Agupar valores microcrédito das filiadas por finalidade
          IF pr_cdcooper = 3 AND (TRUNC(pr_rw_crapdat.dtmvtolt,'mm') <> TRUNC(pr_rw_crapdat.dtmvtopr,'mm')) THEN
             
-            IF vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) AND
-               vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 1 AND
+            IF ((vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) AND
+                vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 1) OR
+                (vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (2,3)) AND
+                 vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 0) AND
                vr_tab_crapris(vr_des_chave_crapris).dsorgrec <> ' ' THEN
             
                -- Busca valor de parcelas pagas
@@ -3652,10 +3704,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                END IF;
               
                --Agupar valores microcrédito das filiadas por nível de risco
+               IF vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) THEN
                IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
                   vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + vr_vldivida;
                ELSE
                  vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_vldivida;
+               END IF;
                END IF;
                
             END IF;

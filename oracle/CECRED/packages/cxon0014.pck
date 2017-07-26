@@ -546,7 +546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 19/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -612,8 +612,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   --
-  --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174) 
-  -- 
+  --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
+    --            
   --              19/04/2017 - Estornar títulos iptu  - Demetrius Wolff - Mouts	  
   --
   --              22/05/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
@@ -622,6 +622,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
   --                           (Tiago/Fabricio #647174)   
 
+  --              13/06/2017 - Retirado validacao incorreta na procedure pc_retorna_vlr_titulo_iptu
+  --                          (Tiago/Elton #691470)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -4873,6 +4875,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --               25/08/2016 - Caso encontre o parâmetro pagadorvip permite pagar valor menor que o valor do
   --                            documento (M271 - Kelvin)
+  --
+  --               13/06/2017 - Retirado validacao que estava feita de forma incorreta olhando no valor
+  --                            do titulo para nao ocorrer critica 100 (Tiago/Elton #691470)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5600,28 +5605,6 @@ END pc_gera_titulos_iptu_prog;
           END IF;
         END IF;
       ELSE  /* Titulo */
-        IF (to_number(SUBSTR(pr_codigo_barras,16,4)) = 557) AND /* Prefeitura*/
-           (to_number(SUBSTR(pr_codigo_barras,02,1)) = 1)  THEN /* Cod.Segmto*/
-          --Criar erro
-          CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
-                               ,pr_cdagenci => pr_cod_agencia
-                               ,pr_nrdcaixa => vr_nrdcaixa
-                               ,pr_cod_erro => 100
-                               ,pr_dsc_erro => NULL
-                               ,pr_flg_erro => TRUE
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
-          --Se ocorreu erro
-          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          ELSE
-            vr_cdcritic:= 100;
-            vr_dscritic:= NULL;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-        ELSE
           --Selecionar informacoes titulos
           OPEN cr_craptit3 (pr_cdcooper => rw_crapcop.cdcooper
                            ,pr_dtmvtolt => rw_crapdat.dtmvtocd
@@ -5758,7 +5741,6 @@ END pc_gera_titulos_iptu_prog;
             END IF;
           END IF;
         END IF;
-      END IF;
 
       --Nao for IPTU
       IF pr_iptu = 0 THEN
@@ -6514,7 +6496,7 @@ END pc_gera_titulos_iptu_prog;
                     vr_dscritic:= vr_des_erro;
                     --Levantar Excecao
                     RAISE vr_exc_erro;
-                  END IF;
+            END IF;
                   
                 END IF;
                 
@@ -7731,7 +7713,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7752,6 +7734,9 @@ END pc_gera_titulos_iptu_prog;
   --             26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
   --                          (Tiago/Fabricio #647174) 
 
+  --             31/05/2017 - Regra para alertar o usuário quando tentar pagar um GPS na modalidade de 
+  --                          pagamento apresentando a seguinte mensagem: GPS deve ser paga na opção 
+  --                          Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7898,7 +7883,36 @@ END pc_gera_titulos_iptu_prog;
                      RAISE vr_exc_erro;
                  END IF;
             END IF;
-
+    -- Validar se eh GPS      
+      IF to_number(SUBSTR(pr_codigo_barras,16,4)) = 270 AND
+         to_number(SUBSTR(pr_codigo_barras,2,1)) = 5 THEN
+        BEGIN
+          --Criar Erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => 0
+                               ,pr_dsc_erro => 'GPS deve ser paga na opção Transações - GPS do menu de serviços.'
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro chamada Oracle CXON0000 '||sqlerrm;
+            RAISE vr_exc_erro;
+        END;
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'GPS deve ser paga na opção Transações - GPS do menu de serviços.';
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;         
+      END IF;
+      --
       --Selecionar cadastro empresas conveniadas
       OPEN cr_crapcon (pr_cdcooper => rw_crapcop.cdcooper
                       ,pr_cdempcon => to_number(SUBSTR(pr_codigo_barras,16,4))

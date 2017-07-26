@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE pc_crps249 (pr_cdcooper  IN craptab.cdcooper%TYPE  --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%TYPE  --> Cooperativa solicitada
                                               ,pr_flgresta  IN PLS_INTEGER            --> Flag 0/1 para utilizar restart na chamada
                                               ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                               ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação

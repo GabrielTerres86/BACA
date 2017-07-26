@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 12/05/2017
+   Data    : Maio/2015                      Ultima atualizacao: 21/06/2017
 
    Dados referentes ao programa:
 
@@ -490,6 +490,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                30/03/2017 - Ajuste referente a segunda fase da melhoria 342. (Kelvin)
                
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+               
+               21/06/2017 - Incluido razao social da empresa nos relatórios (Kelvin #682260)
 ..............................................................................*/
    -- Arrays
    -- Campos da tela
@@ -9256,7 +9258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : Internet Banking
    --  Sigla    : CRED
    --  Autor    : Jaison
-   --  Data     : Julho/2015.                   Ultima atualizacao: 31/03/2016
+   --  Data     : Julho/2015.                   Ultima atualizacao: 21/06/2017
    --
    -- Dados referentes ao programa:
    --
@@ -9271,8 +9273,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --             16/02/2016 - Inclusao do parametro conta na chamada da
    --                          FOLH0001.fn_valor_tarifa_folha. (Jaison/Marcos)
    --
-   --
    --             31/03/2016 - Incluido novo Tipo Emissao - Individual (tpemissa) (Guilherme/Supero)
+   --
+   --             21/06/2017 - Incluido razao social da empresa nos relatórios (Kelvin #682260)
    ---------------------------------------------------------------------------------------------------------------
 
       -- Busca dados para o cabecalho
@@ -9280,6 +9283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                         pr_nrdconta crapemp.nrdconta%TYPE) IS
          SELECT emp.cdempres
                ,emp.nmresemp
+               ,emp.nmextemp
                ,ass.nrdconta
                ,ass.cdagenci || '-' || age.nmextage nomdopac
                ,ass.nrcpfcgc
@@ -9494,6 +9498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                             nomdopac="' || rw_headtag.nomdopac || '"
                             cdempres="' || rw_headtag.cdempres || '"
                             nmempres="' || rw_headtag.nmresemp || '"
+                            nmextemp="' || rw_headtag.nmextemp || '"
                             nrcpfcgc="' || GENE0002.fn_mask_cpf_cnpj(rw_headtag.nrcpfcgc,2) || '"
                             nrdconta="' || GENE0002.fn_mask_conta(rw_headtag.nrdconta) || '"
                             dsperiod="DE ' || TO_CHAR(pr_dtinisel,'dd/mm/yyyy') || ' A ' || TO_CHAR(pr_dtfimsel,'dd/mm/yyyy') || '"/><body>');

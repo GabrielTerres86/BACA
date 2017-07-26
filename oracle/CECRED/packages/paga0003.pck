@@ -213,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 08/05/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 25/05/2017
   
    Dados referentes ao programa: 
   
@@ -222,10 +222,12 @@ END paga0003;
    Alteracoes: 
 	             
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
-					  - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
-							 								   
+					        - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+                  
        08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
 							 								   
+       25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o 
+                    dia que antecede o final de semana ou feriado nacional(Lucas Ranghetti #671126)
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -286,7 +288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHERE crapcon.cdcooper = pr_cdcooper
     AND   crapcon.cdempcon = pr_cdempcon
     AND   crapcon.cdsegmto = pr_cdsegmto;
-  
+    
     --Selecionar Cadastro Convenios Sicredi
     CURSOR cr_crapstb (pr_cdtribut IN crapstb.cdtribut%type) IS
       SELECT crapstb.cdtribut
@@ -1007,6 +1009,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      Objetivo  : Procedure para validação de pagamento de DARF/DAS
 
      Alteracoes: 08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
+
+     --          31/05/2017 - Regra para alertar o usuário quando tentar pagar um GPS na modalidade de 
+     --                       DARF apresentando a seguinte mensagem: GPS deve ser paga na opção 
+     --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)     
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1294,26 +1300,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
       vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
             
-      -- Busca o convênio na CRAPCON
-      OPEN cr_crapcon(pr_cdcooper => pr_cdcooper
-                     ,pr_cdempcon => vr_cdempcon
-                     ,pr_cdsegmto => vr_cdsegmto);
-      FETCH cr_crapcon
-        INTO rw_crapcon;
-      CLOSE cr_crapcon;
-    
-      --Verifica se o convênio existe
-      IF rw_crapcon.cdempcon IS NULL THEN
-        vr_dscritic := 'Convênio não cadastrado. Procure seu Posto de Atendimento para mais informações.';
-        RAISE vr_exc_erro;
-      END IF;
-    
-      --Verifica se o convênio está liberado para pagamento via internet
-      IF pr_idorigem = 3 AND rw_crapcon.flginter <> 1 THEN
-        vr_dscritic := 'Este convênio não está habilitado para pagamento via internet.';
-        RAISE vr_exc_erro;
-      END IF;
-      
       -- Se não for uma DARF/DAS válida
       IF vr_cdempcon NOT IN (64, 153, 154, 328, 385) OR vr_cdsegmto NOT IN (5) THEN
       
@@ -1335,6 +1321,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         END IF;
       
         --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Busca o convênio na CRAPCON
+      OPEN cr_crapcon(pr_cdcooper => pr_cdcooper
+                     ,pr_cdempcon => vr_cdempcon
+                     ,pr_cdsegmto => vr_cdsegmto);
+      FETCH cr_crapcon
+        INTO rw_crapcon;
+      CLOSE cr_crapcon;
+    
+      --Verifica se o convênio existe
+      IF rw_crapcon.cdempcon IS NULL THEN
+        vr_dscritic := 'Convênio não cadastrado. Procure seu Posto de Atendimento para mais informações.';
+        RAISE vr_exc_erro;
+      END IF;
+    
+      --Verifica se o convênio está liberado para pagamento via internet
+      IF pr_idorigem = 3 AND rw_crapcon.flginter <> 1 THEN
+        vr_dscritic := 'Este convênio não está habilitado para pagamento via internet.';
         RAISE vr_exc_erro;
       END IF;
       
@@ -2530,6 +2536,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
          AND ass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
 	
+    CURSOR cr_craphec(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_cdprogra IN craphec.cdprogra%TYPE) IS
+     SELECT MAX(hec.hriniexe) hriniexe
+       FROM craphec hec
+      WHERE upper(hec.cdprogra) = upper(pr_cdprogra)
+        AND hec.cdcooper = pr_cdcooper;
+     rw_craphec cr_craphec%ROWTYPE;
+  
 		--Tipo de registro de data
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
   
@@ -2569,6 +2583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		vr_dsprotoc  VARCHAR2(500);
 		vr_dslindig  VARCHAR2(200);
 		vr_nrdrowid  ROWID;
+    vr_hriniexe  craphec.hriniexe%TYPE;
 		
 		-- Gerar log
     PROCEDURE pc_proc_geracao_log(pr_flgtrans IN INTEGER) IS
@@ -2884,6 +2899,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
 																							 pr_dtmvtolt => pr_dtmvtopg, 
 																							 pr_tipo     => 'A');
+
+    -- Se for um agendamento vamos verificar se ja esgotou horario DEBSIC
+    IF pr_idagenda = 2 THEN
+    -- busca ultimo horario da debsic
+    OPEN cr_craphec(pr_cdcooper => pr_cdcooper
+                   ,pr_cdprogra => 'DEBSIC');
+    FETCH cr_craphec INTO rw_craphec;
+
+    IF cr_craphec%NOTFOUND THEN
+      CLOSE cr_craphec;
+      vr_hriniexe:= 0;
+    ELSE
+      CLOSE cr_craphec;
+      vr_hriniexe:= rw_craphec.hriniexe;
+    END IF;
+    
+    -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
+    -- que antecede o final de semana ou feriado nacional
+    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
+       rw_crapdat.dtmvtolt = vr_dtmvtopg THEN
+       
+      IF pr_tpdaguia = 1 THEN -- DARF
+        vr_dscritic := 'Agendamento de DARF permitido apenas para o proximo dia util.'; 
+      ELSE -- DAS
+        vr_dscritic := 'Agendamento de DAS permitido apenas para o proximo dia util.'; 
+      END IF;
+      
+      RAISE vr_exc_erro;     
+    END IF;
+    END IF;
 
 		-- Procedure para validar limites para transacoes
     INET0001.pc_verifica_operacao (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa

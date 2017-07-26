@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 15/05/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 27/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -463,6 +463,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --             15/05/2017 - Adicionar tratamento para o convenio CERSAD 9 posicoes na procedure pc_gerandb
   --                          (Lucas Ranghetti #622377)
   --
+  --             07/06/2017 - Adicionar UNIFIQUE POMERODE para completar com 22 zeros a esquerda
+  --                          conforme faz para Sulamerica (Lucas Ranghetti #663781)
+  --             27/06/2017 - Adicionar tratamento para o convenio AGUAS DE JOINVILLE 8 posicoes
+  --                          na pc_gerandb (Tiago/Fabricio #692918)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1611,7 +1615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 29/05/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 07/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1716,6 +1720,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             26/05/2017 - Adicionar tratamento para o convenio AGUAS DE GUARAMIRIM 8 posicoes
   --                          (Tiago/Fabricio #640336)  
+  --
+  --             07/06/2017 - Adicionar UNIFIQUE POMERODE para completar com 22 zeros a esquerda
+  --                          conforme faz para Sulamerica (Lucas Ranghetti #663781)
+  --  
+  --             27/06/2017 - Adicionar tratamento para o convenio AGUAS DE JOINVILLE 8 posicoes
+  --                          (Tiago/Fabricio #692918)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1879,9 +1889,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         -- VERIFICAÇÃO DE HISTÓRICOS
         IF pr_cdhistor IN(31,690)  THEN -- BRASIL TELECOM DB. AUTOMATICO/SAMAE SAO BENTO
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999') || RPAD(' ',15,' ');
-        ELSIF pr_cdhistor IN (48,2284) THEN -- RECEBIMENTO CASAN AUTOMATICO | AGUAS GUARAMIRIM
+        ELSIF pr_cdhistor IN (48,2284,554) THEN -- RECEBIMENTO CASAN AUTOMATICO | AGUAS GUARAMIRIM | AGUAS JOINVILLE
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999') || RPAD(' ',17,' ');
-        ELSIF pr_cdhistor IN(2039 ,1517) THEN -- PREVISC, SULAMERICA
+        ELSIF pr_cdhistor IN(2039,1517,2025) THEN -- PREVISC, SULAMERICA,UNIFIQUE POMERODE
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999999999999999') ||
                                         RPAD(' ',3,' ');
         ELSIF pr_cdhistor IN(834,901,993,1061,1723) THEN -- TIM Celular,HDI,LIBERTY SEGUROS,PORTO SEGURO,PREVISUL

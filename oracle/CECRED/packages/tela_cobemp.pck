@@ -1515,7 +1515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
               ELSE
                 vr_vlatraso := vr_tab_dados_epr(vr_ind_cde).vlprvenc + vr_tab_dados_epr(vr_ind_cde).vlmtapar + vr_tab_dados_epr(vr_ind_cde).vlmrapar;                
               END IF;
-              
+
 							-- Insere as tags
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 							gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'cdlcremp', pr_tag_cont => vr_tab_dados_epr(vr_ind_cde).cdlcremp, pr_des_erro => vr_dscritic);
@@ -1659,6 +1659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp
+                                       ,pr_cdorigem => 3
                                        ,pr_flgativo => vr_flgativo
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic);
@@ -2139,7 +2140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 																									,pr_tipo => 'P');
 			END LOOP;
 
-		  pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><dtprzmax>'
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><dtprzmax>'
 			                              || to_char(vr_dtprzmax, 'DD/MM/RRRR') || '</dtprzmax>');
 
 		EXCEPTION

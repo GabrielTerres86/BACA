@@ -340,6 +340,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             pois a autoconversao do oracle nao convertia de forma adequada
                             (Tiago/Fabricio SD616352).             
                             
+              25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos 
+                           em que o dia que antecede o final de semana ou feriado nacional
+                           (Lucas Ranghetti #671126)      
+                            
                17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
                             e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)
   ---------------------------------------------------------------------------------------------------------------*/
@@ -1481,7 +1485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
     --Tabela de erros
     vr_tab_erro gene0001.typ_tab_erro;
-    
+
     vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
 
   BEGIN
@@ -2067,7 +2071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                        ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
                                        ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo Log
                                        ,pr_des_reto => pr_des_reto -- Saida OK/NOK
-                                       ,pr_dscritic => pr_dscritic); -- Mensagem Erro                                      
+                                       ,pr_dscritic => pr_dscritic); -- Mensagem Erro
 
     IF pr_des_reto <> 'OK'
     OR TRIM(pr_dscritic) IS NOT NULL THEN
@@ -2698,6 +2702,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            FOR UPDATE; -- Lock do registro, para preservar sequencia de NRSEQDIG
      rw_craplot    cr_craplot%ROWTYPE;
 
+     CURSOR cr_craphec(pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_cdprogra IN craphec.cdprogra%TYPE) IS
+     SELECT MAX(hec.hriniexe) hriniexe
+       FROM craphec hec
+      WHERE upper(hec.cdprogra) = upper(pr_cdprogra)
+        AND hec.cdcooper = pr_cdcooper;
+     rw_craphec cr_craphec%ROWTYPE;
+
      -- Variáveis
      rw_crapdat    btch0001.cr_crapdat%ROWTYPE;
 
@@ -2744,6 +2756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_dspesgps   VARCHAR2(15);
      vr_dsprotoc   VARCHAR2(1000);
      vr_dsretorn   VARCHAR2(500) := '';
+     vr_hriniexe   craphec.hriniexe%TYPE;
 
      vr_dslitera   VARCHAR2(500);
      vr_sequenci   NUMBER;
@@ -3131,6 +3144,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END LOOP;
     /******* FIM - BUSCAR DATA EM DIA UTIL *********/
 
+    -- busca ultimo horario da debsic
+    OPEN cr_craphec(pr_cdcooper => pr_cdcooper
+                   ,pr_cdprogra => 'DEBSIC');
+    FETCH cr_craphec INTO rw_craphec;
+
+    IF cr_craphec%NOTFOUND THEN
+      CLOSE cr_craphec;
+      vr_hriniexe:= 0;
+    ELSE
+      CLOSE cr_craphec;
+      vr_hriniexe:= rw_craphec.hriniexe;
+    END IF;
+
+    -- Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o dia
+    -- que antecede o final de semana ou feriado nacional
+    IF to_char(SYSDATE,'sssss') >= vr_hriniexe  AND 
+       rw_crapdat.dtmvtolt = vr_dtdebito THEN
+      pr_dscritic := 'Agendamento de GPS permitido apenas para o proximo dia util.';
+      RAISE vr_exc_saida;     
+    END IF;
 
     vr_sequen_pro := fn_sequence('TBINSS_AGENDAMENTO_GPS','NRSEQAGP',pr_cdcooper||';'||pr_nrdconta);
 

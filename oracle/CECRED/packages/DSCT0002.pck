@@ -12,10 +12,14 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --              titulos.
   --
   --  Alteracoes: 05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
-  --
+  --  
   --              22/12/2016 - Incluidos novos campos para os tipos typ_rec_contrato_limite
   --                           e typ_rec_chq_bordero. Projeto 300 (Lombardi)
   --  
+  --              20/06/2017 - Incluida validacao de tamanho na atribuicao do campo de operador
+  --                           (ID + Nome) pois estava estourando a variavel.
+  --                           Heitor (Mouts) - Chamado 695581
+  --
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Tabela para armazenar parametros para desconto de titulo(antigo b1wgen0030tt.i/tt-dsctit.)
@@ -409,7 +413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --              titulos.
   --
   --  Alteracoes: 05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
-  --              
+  --  
   --              22/12/2016 - Incluidos novos campos para os tipos typ_rec_contrato_limite
   --                           e typ_rec_chq_bordero. Projeto 300 (Lombardi)
   --  
@@ -3031,7 +3035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     IF pr_tpctrlim = 2 THEN
       pr_tab_contrato_limite(vr_idxctlim).nmcidade := pr_nmcidade ||' - '||pr_cdufdcop || ', ';
     ELSE
-      pr_tab_contrato_limite(vr_idxctlim).nmcidade := pr_nmcidade ||' '||pr_cdufdcop||',';
+    pr_tab_contrato_limite(vr_idxctlim).nmcidade := pr_nmcidade ||' '||pr_cdufdcop||',';
     END IF;
     pr_tab_contrato_limite(vr_idxctlim).nrctrlim := pr_nrctrlim;
     pr_tab_contrato_limite(vr_idxctlim).nmextcop := pr_nmextcop;
@@ -3118,9 +3122,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Procedure para efetuar busca dados para montar contratos etc para desconto de titulos
     --
     --   Alteração : 05/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
-	  --
-	  --               24/11/2016 - Ajustes nome do avalista2. (Odirlei-AMcom)
-    --
+	--
+	--               24/11/2016 - Ajustes nome do avalista2. (Odirlei-AMcom)
+    --           
     --               26/12/2016 - Adicionados novos campos para impressao do contrato
     --                            de limite de desconto de cheques. Projeto 300 (Lombardi)
     --
@@ -3640,8 +3644,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
             vr_rel_dscpfav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
                                                          pr_inpessoa => 1 );
           ELSE
-            vr_rel_dscpfav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
-                                                                     pr_inpessoa => 1 );
+          vr_rel_dscpfav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
+                                                                   pr_inpessoa => 1 );
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdocava IS NULL THEN
           vr_rel_dscpfav1 := vr_tab_dados_avais(vr_idxavais).nrdocava;
@@ -3657,8 +3661,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
             vr_rel_dscfcav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
                                                          pr_inpessoa => 1 );
           ELSE
-            vr_rel_dscfcav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
-                                                                     pr_inpessoa => 1 );
+          vr_rel_dscfcav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
+                                                                   pr_inpessoa => 1 );
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdoccjg IS NULL THEN
           vr_rel_dscfcav1 := vr_tab_dados_avais(vr_idxavais).nrdoccjg;
@@ -3692,8 +3696,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
             vr_rel_dscpfav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
                                                          pr_inpessoa => 1 );
           ELSE
-            vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
-                                                                     pr_inpessoa => 1 );
+          vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
+                                                                   pr_inpessoa => 1 );
           END IF;
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdocava IS NULL THEN
           vr_rel_dscpfav2 := vr_tab_dados_avais(vr_idxavais).nrdocava;
@@ -3709,8 +3713,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
           vr_rel_dscfcav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
                                                        pr_inpessoa => 1 );
           ELSE
-            vr_rel_dscfcav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
-                                                                     pr_inpessoa => 1 );
+          vr_rel_dscfcav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
+                                                                   pr_inpessoa => 1 );
           END IF;
           
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdoccjg IS NULL THEN
@@ -3751,13 +3755,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                             rw_crapass.nmcidade ||'/'|| rw_crapass.cdufende ||', CPF '||
                             rw_crapass.nrcepend ||'.';
       ELSE
-        vr_rel_dslinhax := 'Inscrita no CNPJ '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcop.nrdocnpj, 
-                                                                           pr_inpessoa => 2) ||
-                           ', Inscrição Estadual Isenta, estabelecida na '||
-                           rw_crapcop.dsendcop ||', Nr. '||rw_crapcop.nrendcop ||
-                           ', Bairro '|| rw_crapcop.nmbairro ||', '||
-                           rw_crapcop.nmcidade ||', '|| rw_crapcop.cdufdcop;
-        
+      vr_rel_dslinhax := 'Inscrita no CNPJ '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcop.nrdocnpj, 
+                                                                         pr_inpessoa => 2) ||
+                         ', Inscrição Estadual Isenta, estabelecida na '||
+                         rw_crapcop.dsendcop ||', Nr. '||rw_crapcop.nrendcop ||
+                         ', Bairro '|| rw_crapcop.nmbairro ||', '||
+                         rw_crapcop.nmcidade ||', '|| rw_crapcop.cdufdcop;
+    
         vr_rel_dslinhax2 := '';
       END IF;
     
@@ -3897,7 +3901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           12) - 1) * 100,6);
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
-      vr_rel_dsopecoo := vr_tab_dados_border(vr_idxborde).dsopecoo;
+      vr_rel_dsopecoo := substr(vr_tab_dados_border(vr_idxborde).dsopecoo,1,40);
       
      
       --> Informacoes da Carteira de Cobranca
@@ -4010,7 +4014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                 pr_nrctrlim   => vr_tab_dados_limite(vr_idxlimit).nrctrlim,
                                 pr_nmextcop   => rw_crapcop.nmextcop,
                                 pr_cdagenci   => rw_crapass.cdagenci,
-                                pr_dslinha1   => vr_rel_dslinhax,
+                                pr_dslinha1   => vr_rel_dslinhax,                                
                                 pr_dslinha2   => vr_rel_dslinhax2, 
                                 pr_nmprimtl   => rw_crapass.nmprimtl,
                                 pr_nrdconta   => rw_crapass.nrdconta,
@@ -4621,7 +4625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ELSE
       CLOSE cr_crapage;
     END IF;
-
+    
     IF pr_idimpres IN( 1,      --> COMPLETA 
                        2 )THEN --> CONTRATO 
                        
@@ -4697,12 +4701,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       --> titulo  
       ELSIF pr_tpctrlim = 3 THEN
         
-        vr_dscetano := gene0002.fn_valor_extenso( pr_idtipval => 'P', 
-                                                  pr_valor    => vr_txcetano);
-        vr_dscetano := to_char(vr_txcetano,'990D00')||'% ('|| 
-                       lower(vr_dscetano)||') ao ano; ('||
-                       to_char(vr_txcetmes,'990D00')||' % ao mes),';
-        
+      vr_dscetano := gene0002.fn_valor_extenso( pr_idtipval => 'P', 
+                                                pr_valor    => vr_txcetano);
+      vr_dscetano := to_char(vr_txcetano,'990D00')||'% ('|| 
+                     lower(vr_dscetano)||') ao ano; ('||
+                     to_char(vr_txcetmes,'990D00')||' % ao mes),';
+      
         vr_dstitulo := 'CONTRATO DE DESCONTO DE TÍTULOS No:';
       END IF;
       
@@ -4798,7 +4802,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '</aval2>
                       </avalistas>');                              
       ELSE
-        pc_escreve_xml('<avalistas>'||
+      pc_escreve_xml('<avalistas>'||
                          '<aval>'||
                            '<nrsequen>1</nrsequen>'||
                            '<nmdavali>'|| vr_tab_contrato_limite(vr_idxctlim).nmdaval1 ||'</nmdavali>'||
@@ -4813,8 +4817,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            '<cpfavali>'|| vr_tab_contrato_limite(vr_idxctlim).dscpfav2 ||'</cpfavali>'||
                            '<nrcpfcjg>'|| vr_tab_contrato_limite(vr_idxctlim).dscfcav2 ||'</nrcpfcjg>'|| 
                          '</aval>
-                      </avalistas>');
-        
+                      </avalistas>');                              
+    
       END IF;
     
       --> Gerar XML para dados do relatorio de CET   
@@ -4887,8 +4891,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
               vr_rel_cpfavali := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idx).nrcpfcgc,
                                                            pr_inpessoa => 1);
             ELSE
-              vr_rel_cpfavali := 'C.P.F. '|| GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idx).nrcpfcgc,
-                                                                       pr_inpessoa => 1);
+            vr_rel_cpfavali := 'C.P.F. '|| GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idx).nrcpfcgc,
+                                                                     pr_inpessoa => 1);
             END IF;
           ELSE
             vr_rel_cpfavali := NULL;
@@ -4899,8 +4903,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
               vr_rel_nrcpfcjg := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idx).nrcpfcjg,
                                                            pr_inpessoa => 1);
             ELSE
-              vr_rel_nrcpfcjg := 'C.P.F. '|| GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idx).nrcpfcjg,
-                                                                       pr_inpessoa => 1);
+            vr_rel_nrcpfcjg := 'C.P.F. '|| GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idx).nrcpfcjg,
+                                                                     pr_inpessoa => 1);
             END IF;
           ELSE
             vr_rel_nrcpfcjg := NULL;
@@ -5141,10 +5145,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Procedure para gerar impressoes de bordero de tit.
     --
     --   Alteração : 08/09/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
-    --               
+    --
     --               22/12/2016 - Alterado nome do Jasper de "crrl519_bordero"
     --                            para "crrl519_bordero_titulos". PRJ300 (Lombardi)
-    --               
+    --
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -5502,7 +5506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                 IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
                   vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
                 END IF;              
-
+              
               END IF;
             END IF;
           END LOOP;

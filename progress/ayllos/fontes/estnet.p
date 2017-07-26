@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2008                        Ultima atualizacao: 07/11/2016
+   Data    : Abril/2008                        Ultima atualizacao: 30/06/2017
 
    Dados referentes ao programa:
 
@@ -40,6 +40,8 @@
 			   07/11/2016 - Desconsiderar Guias DARF/DAS pois não podem ser
 			                estornadas - Projeto 338 (David)
 							
+               30/06/2017 - Validar saida de critica para as procedures
+                            (Lucas Ranghetti #674894)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -195,9 +197,15 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
          END.
          
     /* Status da transacao */
-    aux_fltransa = IF   RETURN-VALUE = "OK"   THEN
-                        YES
-                   ELSE NO.
+    IF  RETURN-VALUE <> "OK" THEN
+        DO:
+            ASSIGN aux_fltransa = NO.
+            
+            IF  aux_dscritic = "" OR aux_dscritic = ? THEN
+                ASSIGN aux_dscritic = "Nao foi possivel estornar o pagamento. Tente novamente.".
+        END.
+    ELSE
+        aux_fltransa = YES.
 
     /* Log da operacao realizada */         
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
@@ -451,7 +459,7 @@ DO  WHILE TRUE:
                            craplft.nrdolote = 15000 + tel_nrdcaixa   AND
                            craplft.nrdconta = tel_nrdconta
                            NO-LOCK:
-                           
+					
         /* Desconsiderar Guias DARF/DAS */					
 		IF  craplft.tpfatura = 1  OR
 		    craplft.tpfatura = 2  THEN

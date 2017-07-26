@@ -3094,6 +3094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_nrctremp => pr_nrctremp
+                                       ,pr_cdorigem => 3
                                        ,pr_flgativo => vr_flgativo
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic);

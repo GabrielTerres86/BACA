@@ -1201,6 +1201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RECCEL AS
 															,pr_nrcartao => 0
 															,pr_nrsequni => 0
 															,pr_idorigem => vr_idorigem
+                              ,pr_flmobile => 0
 															,pr_nsuopera => vr_dsnsuope
 															,pr_dsprotoc => vr_dsprotoc
 															,pr_cdcritic => vr_cdcritic

@@ -47,6 +47,11 @@
                  10/10/2013 - Inserir coluna EMPRESA no arquivo (Ze).
 
 				 21/11/2016 - Tratar nulo ao criar arquivo na opcao T. (SD 557084 Kelvin)
+                 
+                 29/06/2017 - Alterada busca da opcao INTRANET, para que busque origens
+                              INTRANET e AYLLOS WEB.
+                              Heitor (Mouts) - Chamado 686993
+
 ............................................................................ */
 
 { includes/var_online.i }
@@ -576,8 +581,17 @@ DO WHILE TRUE:
                                         STRING(tel_cdoperad) + "' ".
          
                        IF   tel_dsorige <> "TODOS"  THEN
+                         DO:
+                           IF tel_dsorige <> "INTRANET" THEN
+                             DO:
                             aux_query = aux_query + "AND craplgm.dsorigem = '" +
                                         STRING(tel_dsorige) + "' ".
+                             END.
+                           ELSE
+                             DO:
+                               aux_query = aux_query + "AND CAN-DO('INTRANET,AYLLOS WEB', craplgm.dsorigem)".
+                             END.
+                         END.
 
                        IF   tel_pesquisa <> ""   THEN
                             aux_query = aux_query + "AND craplgm.dstransa

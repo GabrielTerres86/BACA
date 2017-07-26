@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 04/01/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 03/07/2017
     
     Dados referente ao programa:
     
@@ -142,6 +142,8 @@
                  04/01/2017 - Ajustar meio de coleta para codigo '3' quando 
 				              for DARF 0385 paga em canal digital (David).
 							  
+                 03/07/2017 - Incluido condicao para nao pegar convenios com data de cancelamento
+                              no for each da crapscn (Tiago/Fabricio #678625)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1579,7 +1581,7 @@ FOR EACH crapcop NO-LOCK.
 
     /* Para cada convenio */
     /* Convenios diferente de debito automatico */
-    FOR EACH crapscn WHERE crapscn.dsoparre <> "E" NO-LOCK.
+    FOR EACH crapscn WHERE crapscn.dsoparre <> "E" AND crapscn.dtencemp = ? NO-LOCK.
 
         IF  glb_nrctares = 0 THEN
             DO:

@@ -4,6 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
   PROCEDURE pc_verifica_situacao_acordo(pr_cdcooper         IN crapepr.cdcooper%TYPE -- Codigo da Cooperativa
                                        ,pr_nrdconta         IN crapepr.nrdconta%TYPE -- Numero da Conta
                                        ,pr_nrctremp         IN crapepr.nrctremp%TYPE -- Numero do contrato
+                                       ,pr_cdorigem         IN crapepr.cdorigem%TYPE -- Codigo da Origem
                                        ,pr_flgretativo     OUT INTEGER               -- 0 - NAO / 1 - SIM
                                        ,pr_flgretquitado   OUT INTEGER               -- 0 - NAO / 1 - SIM
                                        ,pr_flgretcancelado OUT INTEGER               -- 0 - NAO / 1 - SIM
@@ -14,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
   PROCEDURE pc_verifica_acordo_ativo(pr_cdcooper  IN crapepr.cdcooper%TYPE  -- Código da Cooperativa
                                     ,pr_nrdconta  IN crapepr.nrdconta%TYPE  -- Número da Conta
                                     ,pr_nrctremp  IN crapepr.nrctremp%TYPE  -- Número do contrato
+                                    ,pr_cdorigem  IN crapepr.cdorigem%TYPE -- Codigo da Origem
                                     ,pr_flgativo OUT INTEGER                -- [0 - NAO ATIVO] / [1 - ATIVO]
                                     ,pr_cdcritic OUT INTEGER                -- Código de críticia
                                     ,pr_dscritic OUT VARCHAR2);             -- Descrição da crítica
@@ -331,6 +333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   PROCEDURE pc_verifica_situacao_acordo(pr_cdcooper         IN crapepr.cdcooper%TYPE -- Codigo da Cooperativa
                                        ,pr_nrdconta         IN crapepr.nrdconta%TYPE -- Numero da Conta
                                        ,pr_nrctremp         IN crapepr.nrctremp%TYPE -- Numero do contrato
+                                       ,pr_cdorigem         IN crapepr.cdorigem%TYPE -- Codigo da Origem
                                        ,pr_flgretativo     OUT INTEGER               -- 0 - NAO / 1 - SIM
                                        ,pr_flgretquitado   OUT INTEGER               -- 0 - NAO / 1 - SIM
                                        ,pr_flgretcancelado OUT INTEGER               -- 0 - NAO / 1 - SIM
@@ -339,12 +342,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     -- CURSORES
     CURSOR cr_tbrecup(pr_cdcooper tbrecup_acordo.cdcooper%TYPE
                      ,pr_nrdconta tbrecup_acordo.nrdconta%TYPE
-                     ,pr_nrctremp tbrecup_acordo_contrato.nrctremp%TYPE) IS
+                     ,pr_nrctremp tbrecup_acordo_contrato.nrctremp%TYPE
+                     ,pr_cdorigem tbrecup_acordo_contrato.cdorigem%TYPE) IS
       SELECT tba.cdsituacao
         FROM tbrecup_acordo_contrato tbac
            , tbrecup_acordo tba
        WHERE tba.nracordo = tbac.nracordo
          AND (tbac.nrctremp = pr_nrctremp OR pr_nrctremp = 0)
+         AND (DECODE(tbac.cdorigem,2,3,tbac.cdorigem) = pr_cdorigem OR pr_cdorigem = 0)
          AND tba.nrdconta   = pr_nrdconta
          AND tba.cdcooper   = pr_cdcooper;
 
@@ -355,7 +360,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 
     FOR rw_tbrecup IN cr_tbrecup(pr_cdcooper => pr_cdcooper
                                 ,pr_nrdconta => pr_nrdconta
-                                ,pr_nrctremp => pr_nrctremp) LOOP
+                                ,pr_nrctremp => pr_nrctremp
+                                ,pr_cdorigem => pr_cdorigem) LOOP
 
       -- Se estiver ATIVO
       IF rw_tbrecup.cdsituacao = 1 THEN
@@ -385,6 +391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   PROCEDURE pc_verifica_acordo_ativo(pr_cdcooper  IN crapepr.cdcooper%TYPE -- Código da Cooperativa
                                     ,pr_nrdconta  IN crapepr.nrdconta%TYPE -- Número da Conta
                                     ,pr_nrctremp  IN crapepr.nrctremp%TYPE -- Número do contrato
+                                    ,pr_cdorigem  IN crapepr.cdorigem%TYPE -- Codigo da Origem
                                     ,pr_flgativo OUT INTEGER               -- [0 - NAO ATIVO] / [1 - ATIVO]
                                     ,pr_cdcritic OUT INTEGER               -- Código de críticia
                                     ,pr_dscritic OUT VARCHAR2) IS          -- Descrição da crítica
@@ -398,8 +405,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   BEGIN
     
     RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => pr_cdcooper
-                   ,pr_nrdconta => pr_nrdconta
+                                        ,pr_nrdconta        => pr_nrdconta
                                         ,pr_nrctremp        => pr_nrctremp
+                                        ,pr_cdorigem        => pr_cdorigem
                                         ,pr_flgretativo     => pr_flgativo
                                         ,pr_flgretquitado   => vr_flgretquitado
                                         ,pr_flgretcancelado => vr_flgretcancelado
@@ -657,7 +665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 
     -- Se for liquidação do acordo, deve pagar o valor total do prejuízo
     IF NVL(pr_inliqaco,'N') = 'S' THEN
-      vr_vlpagmto := pr_vlsdprej;
+      vr_vlpagmto := NVL(pr_vlsdprej,0) + NVL(pr_vlttmupr,0) + NVL(pr_vlttjmpr,0);
     END IF;
 
     ------------------------------------------------------------------------------------------------------------

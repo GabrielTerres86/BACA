@@ -909,6 +909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => vr_cdcooper
                                           ,pr_nrdconta        => pr_nrdconta
                                           ,pr_nrctremp        => pr_nrctremp
+                                          ,pr_cdorigem        => 3
                                           ,pr_flgretativo     => vr_flgretativo    
                                           ,pr_flgretquitado   => vr_flgretquitado  
                                          	,pr_flgretcancelado => vr_flgretcancelado

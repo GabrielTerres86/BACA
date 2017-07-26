@@ -25,21 +25,22 @@ DEF VAR xml_req      AS LONGCHAR                     NO-UNDO.
 DEF VAR aux_dsxmlout AS CHAR                         NO-UNDO.
 DEF VAR aux_msgretor AS CHAR                         NO-UNDO.
 
-DEF  INPUT PARAM par_operacao AS INT                 NO-UNDO.
-DEF  INPUT PARAM par_cdcooper    LIKE crapass.cdcooper  NO-UNDO.
-DEF  INPUT PARAM par_nrdconta    LIKE crapass.nrdconta  NO-UNDO.
-DEF  INPUT PARAM par_cdoperadora AS INT                 NO-UNDO.
-DEF  INPUT PARAM par_cdproduto   AS INT                 NO-UNDO.
-DEF  INPUT PARAM par_nrddd       AS INT                            NO-UNDO.
-DEF  INPUT PARAM par_nrcelular   AS INT                            NO-UNDO.
+DEF  INPUT PARAM par_operacao AS INT                   NO-UNDO.
+DEF  INPUT PARAM par_cdcooper    LIKE crapass.cdcooper NO-UNDO.
+DEF  INPUT PARAM par_nrdconta    LIKE crapass.nrdconta NO-UNDO.
+DEF  INPUT PARAM par_cdoperadora AS INT                NO-UNDO.
+DEF  INPUT PARAM par_cdproduto   AS INT                NO-UNDO.
+DEF  INPUT PARAM par_nrddd       AS INT                NO-UNDO.
+DEF  INPUT PARAM par_nrcelular   AS INT                NO-UNDO.
 DEF  INPUT PARAM par_nmcontato   AS CHAR               NO-UNDO.
 DEF  INPUT PARAM par_flgfavori   AS INT                NO-UNDO.
-DEF  INPUT PARAM par_idseqttl    AS INT                            NO-UNDO.
+DEF  INPUT PARAM par_idseqttl    AS INT                NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope    LIKE crapopi.nrcpfope NO-UNDO.
 DEF  INPUT PARAM par_vlrecarga   AS DECIMAL            NO-UNDO.
 DEF  INPUT PARAM aux_cdopcaodt   AS INT                NO-UNDO.
-DEF  INPUT PARAM par_dtrecarga   AS DATE                           NO-UNDO.
-DEF  INPUT PARAM par_qtmesagd    AS INT                            NO-UNDO.
+DEF  INPUT PARAM par_dtrecarga   AS DATE               NO-UNDO.
+DEF  INPUT PARAM par_qtmesagd    AS INT                NO-UNDO.
+DEF  INPUT PARAM par_flmobile    AS LOGI               NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -214,7 +215,7 @@ ELSE IF par_operacao = 6 THEN
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
-    RUN STORED-PROCEDURE pc_confirma_regarca_ib aux_handproc = PROC-HANDLE NO-ERROR
+    RUN STORED-PROCEDURE pc_confirma_recarga_ib aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper
                          ,INPUT par_nrdconta
                          ,INPUT par_idseqttl
@@ -231,20 +232,21 @@ ELSE IF par_operacao = 6 THEN
                          ,INPUT par_qtmesagd
                          ,INPUT 0
                          ,INPUT 0
+						 ,INPUT INT(par_flmobile)
                          ,OUTPUT ""
                          ,OUTPUT 0
                          ,OUTPUT "").
                          
 
-    CLOSE STORED-PROC pc_confirma_regarca_ib aux_statproc = PROC-STATUS 
+    CLOSE STORED-PROC pc_confirma_recarga_ib aux_statproc = PROC-STATUS 
          WHERE PROC-HANDLE = aux_handproc.
     
     ASSIGN aux_dscritic = ""
            aux_msgretor = ""
-           aux_dscritic = pc_confirma_regarca_ib.pr_dscritic 
-                          WHEN pc_confirma_regarca_ib.pr_dscritic <> ?
-           aux_msgretor = pc_confirma_regarca_ib.pr_msg_retor 
-                          WHEN pc_confirma_regarca_ib.pr_msg_retor <> ?.
+           aux_dscritic = pc_confirma_recarga_ib.pr_dscritic 
+                          WHEN pc_confirma_recarga_ib.pr_dscritic <> ?
+           aux_msgretor = pc_confirma_recarga_ib.pr_msg_retor 
+                          WHEN pc_confirma_recarga_ib.pr_msg_retor <> ?.
     
     xml_req = STRING(aux_msgretor).
     

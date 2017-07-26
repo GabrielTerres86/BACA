@@ -1003,6 +1003,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                     aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper    
                                                         ,INPUT crapepr.nrdconta
                                                         ,INPUT crapepr.nrctremp
+														,INPUT 3
                                                         ,0 /* pr_flgretativo */
                                                         ,0 /* pr_flgretquitado */
                                                         ,0 /* pr_flgretcancelado */

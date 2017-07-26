@@ -3,14 +3,17 @@
 	/************************************************************************
 	 Fonte: eventos_em_andamento_busca.php                                             
 	 Autor: Guilherme                                                 
-	 Data : Setembro/2009                &Uacute;ltima Altera&ccedil;&atilde;o: 14/07/2011    
+	 Data : Setembro/2009                &Uacute;ltima Altera&ccedil;&atilde;o: 04/07/2017    
 	
 	 Objetivo  : Buscar eventos em andamento de acordo com o parametro
 				 de observa&ccedil;&atilde;o
 	
-	 Altera&ccedil;&otilde;es:     
-					14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+	 Alteracoes: 14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+				 26/07/2016 - Corrigi o uso de variaveis nao declaradas, indices invalidos
+							  no retorno XML. SD 479874 (Carlos R.)
 	 
+					04/07/2017 - Alterado na campo periodo para pegar a data certa 
+					             na posicao do array detalhesEvento (Tiago/Thiago #699994)	 
 	************************************************************************/
 	session_start();
 
@@ -35,6 +38,7 @@
 	$nrdconta = $_POST["nrdconta"];
 	$rowidedp = $_POST["rowidedp"];
 	$rowidadp = $_POST["rowidadp"];
+	$dsobserv = ( isset($_POST['dsobserv']) ) ? $_POST['dsobserv'] : '';
 
 	// Verifica se n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -69,10 +73,10 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDetalhesEvento = getObjectXML($xmlResult);
 	
-	$detalhesEvento = $xmlObjDetalhesEvento->roottag->tags[0]->tags[0]->tags;
+	$detalhesEvento = ( isset($xmlObjDetalhesEvento->roottag->tags[0]->tags[0]->tags) ) ? $xmlObjDetalhesEvento->roottag->tags[0]->tags[0]->tags : array();
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjDetalhesEvento->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjDetalhesEvento->roottag->tags[0]->name) && strtoupper($xmlObjDetalhesEvento->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjDetalhesEvento->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
@@ -96,7 +100,7 @@
 		<br />
 		
 		<label for="dsperiod">Per&iacute;odo:</label>
-		<input type="text" name="dsperiod" id="dsperiod" value="<?php echo $detalhesEvento[1]->cdata." &agrave; ".$detalhesEvento[1]->cdata; ?>" >
+		<input type="text" name="dsperiod" id="dsperiod" value="<?php echo $detalhesEvento[1]->cdata." &agrave; ".$detalhesEvento[2]->cdata; ?>" >
 
 		<br />
 
@@ -120,7 +124,7 @@
 
 		<br />
 		
-		<textarea name="txtDetalhes" id="txtDetalhes" ><?php for ($i=0;$i<=count($detalhesEvento[7]->tags);$i++){	echo $detalhesEvento[7]->tags[$i]->cdata;	}?></textarea>
+		<textarea name="txtDetalhes" id="txtDetalhes" ><?php for ($i=0;$i<=count($detalhesEvento[7]->tags);$i++){	echo ( isset($detalhesEvento[7]->tags[$i]->cdata) ) ? $detalhesEvento[7]->tags[$i]->cdata : '';	}?></textarea>
 		
 	</fieldset>
 	

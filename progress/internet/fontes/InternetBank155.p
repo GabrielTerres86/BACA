@@ -57,6 +57,7 @@ RUN STORED-PROCEDURE pc_verifica_acordo_ativo
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                         ,INPUT par_nrdconta
                                         ,INPUT par_nrctremp
+										,INPUT 3
                                         ,OUTPUT 0
                                         ,OUTPUT 0
                                         ,OUTPUT "").

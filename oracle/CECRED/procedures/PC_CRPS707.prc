@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 27/06/2017
+   Data    : Setembro/2016                        Ultima atualizacao: 12/01/2017
 
    Dados referentes ao programa:
 
@@ -32,10 +32,14 @@ BEGIN
                12/01/2017 - Ajuste para verificar se cooperado é migrado 
                             (Adriano - SD 592406).
 
+               17/05/2017 - Ajuste para não incluir a validação "3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ"
+                            no proc_message
+                            (Ana - SD 660364 / 663299).
 
-			   27/06/2017 - Ajustes para atender as mudanças do catalago de TED - SPB
-			                (Adriano - SD 698655).
-
+               25/05/2017 - Ajuste para incluir a validação "3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ"
+                            no proc_message, porém, substituir o tempo "ERRO" por "ALERTA".
+                            Alteradas mais algumas mensagens para considerar Alerta e não Erro
+                            (Ana - SD 660364 / 663299).
    ............................................................................. */
 
    DECLARE
@@ -319,7 +323,6 @@ BEGIN
    -- Inicio Bloco Principal pc_crps707
    ---------------------------------------
    BEGIN
-
      --Atribuir o nome do programa que está executando
      vr_cdprogra:= 'CRPS707';
 
@@ -354,33 +357,10 @@ BEGIN
      
      --> Gerar log
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                pr_ind_tipo_log => 2, --> erro tratado
+                                pr_ind_tipo_log => 1, --> Mensagem
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Iniciando processo de TEDs Sicredi',
-                                pr_nmarqlog     => vr_nmarqlog);   
-                                
-     --Limpa a tabela de controle de arquivos. Remove todos os registros do ano anterior.
-     BEGIN 
-       
-       DELETE tbted_control_arq
-        WHERE to_char(tbted_control_arq.dtrefere,'RRRR') = to_char(TRUNC(SYSDATE,'YEAR')-1,'RRRR');
-       
-     EXCEPTION
-       WHEN OTHERS THEN
-         --Descricao do erro recebe mensagam da critica
-         vr_dscritic := 'Nao foi possivel limpar a tabela de controle de arquivos processados.';
-         
-         -- Envio centralizado de log de erro
-         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                   ,pr_ind_tipo_log => 2 -- Erro tratato
-                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || vr_dscritic );
-                                                       
-         --Sair do programa
-         RAISE vr_exc_saida;
-     
-     END;                             
+                                pr_nmarqlog     => vr_nmarqlog);                                
      
      -- Busca diretorio das TEDs para processamento
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
@@ -396,9 +376,9 @@ BEGIN
                                ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
+
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
-       
        -- Envio centralizado de log de erro
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -407,7 +387,6 @@ BEGIN
                                                      || vr_dscritic );
                                                      
        RAISE vr_exc_saida;
-       
      END IF;
 
      -- Se possuir arquivos para serem processados
@@ -436,7 +415,7 @@ BEGIN
          BEGIN
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                      pr_ind_tipo_log => 2, --> erro tratado
+                                      pr_ind_tipo_log => 1, --> Mensagem
                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                          ' - '|| vr_cdprogra ||' --> Iniciando integracao do arquivo '||vr_idxtexto,
                                       pr_nmarqlog     => vr_nmarqlog); 
@@ -494,7 +473,7 @@ BEGIN
              
            END IF;
 
-		       -- Verificar tipo da mensagem
+           -- Verificar tipo da mensagem
            vr_nmevehead := substr(vr_dslinharq,3,3);
            
            IF vr_nmevehead NOT IN('STR','PAG') THEN
@@ -624,14 +603,14 @@ BEGIN
                -- No Trailler, sair do LOOP
                IF substr(vr_dslinharq,1,2) = 'TT' THEN
                  EXIT;
-               END IF;               
-             
+               END IF;
+
                -- Ler ISPB
                BEGIN
                  IF substr(vr_dslinharq,1,2) = '05' THEN
-                   vr_nrispbif := substr(vr_dslinharq,407,8); 
+                   vr_nrispbif := substr(vr_dslinharq,407,8);
                  ELSE
-                   vr_nrispbif := substr(vr_dslinharq,404,8); 
+                   vr_nrispbif := substr(vr_dslinharq,404,8);
                  END IF;
                EXCEPTION
                  WHEN OTHERS THEN
@@ -678,12 +657,7 @@ BEGIN
                  END IF;  
                EXCEPTION
                  WHEN OTHERS THEN
-                   IF substr(vr_dslinharq,1,2) = '05' THEN
-                     vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,43,13);
-                   ELSE
-                     vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,70,13);
-                   END IF; 
-                   
+                   vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,70,13);
                    RAISE vr_exc_saida;
                END;
 
@@ -696,12 +670,7 @@ BEGIN
                  END IF;
                EXCEPTION
                  WHEN OTHERS THEN
-                   IF substr(vr_dslinharq,1,2) = '05' THEN
-                     vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
-                   ELSE
-                     vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,274,14);
-                   END IF;                   
-                   
+                   vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
                    RAISE vr_exc_saida;
                END;
 
@@ -838,7 +807,7 @@ BEGIN
                -- Se não achou nenhuma conta ativa
                IF vr_cdcooper = 0 THEN
                  -- Gerar critica
-                 vr_cdmotivo := '1 - Conta Destinataria  do Credito Encerrada.';
+                 vr_cdmotivo := '1 - Conta Destinataria do Credito Encerrada.';
                  RAISE vr_exc_saida;
                END IF;
 
@@ -865,7 +834,7 @@ BEGIN
                BEGIN
                  -- Separar conforme tipo da mensagem
                  IF substr(vr_dslinharq,1,2) = '05' THEN
-                   vr_cdbandif := substr(vr_dslinharq,56,3); 
+                   vr_cdbandif := substr(vr_dslinharq,56,3);
                    vr_cdagedif := 0;
                    vr_nrctadif := 0;
                    vr_nrcpfdif := substr(vr_dslinharq,339,14);
@@ -996,7 +965,7 @@ BEGIN
                                     ,to_char(SYSDATE,'sssss'));
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_cdmotivo := 'Erro ao criar Trasnferencia em C/C: '||SQLERRM;
+                   vr_cdmotivo := 'Erro ao criar Transferencia em C/C: '||SQLERRM;
                    RAISE vr_exc_saida;
                END;
 
@@ -1074,7 +1043,7 @@ BEGIN
                
                --> Gerar log
                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                          pr_ind_tipo_log => 2, --> erro tratado
+                                          pr_ind_tipo_log => 1, --> Mensagem -- não é erro tratado
                                           pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                              ' - '|| vr_cdprogra ||' --> TED para Conta '||vr_nrdconta_new||' no valor de '
                                                              || to_char(vr_vloperac,'fm999g999g990d00') || ' efetuada com sucesso.',
@@ -1204,11 +1173,15 @@ BEGIN
                                           ,pr_dscritic => vr_dscritic);
                                           
                  --> Gerar log
+                   --Indica que é mensagem e não erro
+                   --Chamado 660364 / 663299
                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                            pr_ind_tipo_log => 2, --> erro tratado
+                                              pr_ind_tipo_log => 1, --> Mensagem
                                             pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                               ' - '|| vr_cdprogra ||' --> TED para conta '||vr_nrdconta||' com erro --> '||vr_cdmotivo,
+                                                                 ' - '|| vr_cdprogra ||' --> '||
+                                                                 'ALERTA: TED para conta '||vr_nrdconta||' com crítica --> '||vr_cdmotivo,
                                             pr_nmarqlog     => vr_nmarqlog);                                
+                                          
                                           
                  IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                        ,pr_dtarquiv => vr_dtarquiv
@@ -1313,7 +1286,7 @@ BEGIN
              
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                      pr_ind_tipo_log => 2, --> erro tratado
+                                      pr_ind_tipo_log => 1, --> Mensagem
                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                          ' - '|| vr_cdprogra ||' --> Encerramento do processo do arquivo '||vr_idxtexto,
                                       pr_nmarqlog     => vr_nmarqlog);                                 
@@ -1457,7 +1430,7 @@ BEGIN
 
      --> Gerar log
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                pr_ind_tipo_log => 2, --> erro tratado
+                                pr_ind_tipo_log => 1, --> Mensagem
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Encerramento do processo de TEDs Sicredi',
                                 pr_nmarqlog     => vr_nmarqlog);                                

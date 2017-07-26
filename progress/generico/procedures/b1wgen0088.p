@@ -3650,6 +3650,9 @@ PROCEDURE inst-cancel-protesto:
 
     DEF INPUT-OUTPUT PARAM TABLE FOR tt-lat-consolidada.
 
+    DEF VAR          aux_flgserasa AS LOGI                          NO-UNDO.
+    
+
     /* Processo de Validacao Recusas Padrao */
     RUN efetua-validacao-recusa-padrao (INPUT par_cdcooper,
                                         INPUT par_nrdconta,
@@ -3685,9 +3688,70 @@ PROCEDURE inst-cancel-protesto:
             RETURN "NOK".
         END.
     
+    /* Verificamos se o boleto possui Negativacao no Serasa */
+    IF bcrapcob.flserasa = TRUE AND 
+       bcrapcob.qtdianeg > 0    THEN
+        DO:
+            /* Sera tratado como Negativacao Serasa */ 
+            ASSIGN aux_flgserasa = TRUE.
+        END.
+        ELSE 
+            DO:
+                /* Sera tratado como Protesto */ 
+                ASSIGN aux_flgserasa = FALSE.
+            END.
+
 
     /***** VALIDACOES PARA RECUSAR ******/
+    /* Verificamos se o boleto possui Negativacao no Serasa */ 
+    IF aux_flgserasa THEN 
+        DO:
+        
+            FIND FIRST crapdat 
+                 WHERE crapdat.cdcooper = par_cdcooper
+               NO-LOCK NO-ERROR.
+        
+            /* Verificacoes para recusar Instrucao de Negativacao do Serasa */
+            IF crapdat.dtmvtolt >= (bcrapcob.dtvencto + bcrapcob.qtdianeg) THEN
+                DO:
+                    RUN prepara-retorno-cooperado
+                                 (INPUT ROWID(bcrapcob),
+                                  INPUT 26,     /* Instrucao Rejeitada */
+                                  INPUT "S1",   /* " Titulo ja enviado para negativacao " */ 
+                                  INPUT 0,      /* Valor Tarifa */
+                                  INPUT crapcop.cdbcoctl,
+                                  INPUT crapcop.cdagectl,
+                                  INPUT par_dtmvtolt,
+                                  INPUT par_cdoperad,
+                                  INPUT par_nrremass).
 
+                    ret_dsinserr = "Excedido prazo cancelamento da instrucao automatica de negativacao! " +
+                                   "Negativacao Serasa nao efetuada!".
+                    RETURN "NOK".   
+                END.
+           
+            /* Verificar se foi enviado ao Serasa */
+            IF  bcrapcob.inserasa <> 0 THEN
+                DO:
+                    RUN prepara-retorno-cooperado
+                                 (INPUT ROWID(bcrapcob),
+                                  INPUT 26,     /* Instrucao Rejeitada */
+                                  INPUT "S1",   /* " Titulo ja enviado para negativacao " */ 
+                                  INPUT 0,      /* Valor Tarifa */
+                                  INPUT crapcop.cdbcoctl,
+                                  INPUT crapcop.cdagectl,
+                                  INPUT par_dtmvtolt,
+                                  INPUT par_cdoperad,
+                                  INPUT par_nrremass).
+
+                    ret_dsinserr = "Titulo ja enviado para Negativacao. " + 
+                                   "Negativacao Serasa nao efetuada!".
+                    RETURN "NOK".   
+                END.
+
+        END. /* Fim das validacoes de negativacao Serasa */
+        ELSE 
+            DO:
     /* Titulos sem confirmacao Instrucao de Protesto*/
     FIND FIRST crapret WHERE crapret.cdcooper = bcrapcob.cdcooper AND
                              crapret.nrcnvcob = bcrapcob.nrcnvcob AND
@@ -3712,7 +3776,6 @@ PROCEDURE inst-cancel-protesto:
                 ret_dsinserr = "Boleto sem Conf Inst. Protesto  - Canc. Protesto nao efetuado!".
                 RETURN "NOK".
         END.
-   
     /** Titulo sem Instrucao Automatica de Protesto **/
     IF  bcrapcob.flgdprot = FALSE THEN
         DO:
@@ -3902,9 +3965,14 @@ PROCEDURE inst-cancel-protesto:
                     RETURN "NOK".
                 END.
         END.
-
+            END.
     /***** FIM - VALIDACOES PARA RECUSAR ******/
 
+    /* Verificar se nao eh Serasa */
+    IF NOT aux_flgserasa THEN
+    DO:
+        /* As informacoes de DDA e Titulos Migrados 
+           sao apenas para Protesto */ 
     IF  bcrapcob.flgcbdda AND
         bcrapcob.cdbandoc = crapcop.cdbcoctl  THEN 
         DO:
@@ -3960,7 +4028,7 @@ PROCEDURE inst-cancel-protesto:
                         END.
                 END.
         END.
-
+    END.
 
     DO TRANSACTION:
         
@@ -3970,6 +4038,49 @@ PROCEDURE inst-cancel-protesto:
         
         ASSIGN bcrapcob.idopeleg = tt-remessa-dda.idopeleg WHEN AVAIL tt-remessa-dda.
 
+        /* Verificamos se o boleto possui Negativacao no Serasa */ 
+        IF aux_flgserasa THEN 
+            DO:
+                /* removido regra da negativacao serasa  */
+                ASSIGN bcrapcob.flserasa = FALSE
+                       bcrapcob.qtdianeg = 0.
+                       
+                /*** LOG de Processo ***/
+                RUN cria-log-cobranca (INPUT ROWID(bcrapcob),
+                                       INPUT par_cdoperad,
+                                       INPUT par_dtmvtolt,
+                                       INPUT "Cancel. Instrucao Negativacao").
+                
+                IF  bcrapcob.cdbandoc = crapcop.cdbcoctl THEN 
+                    DO:
+                
+                        RUN prepara-retorno-cooperado
+                                         (INPUT ROWID(bcrapcob),
+                                          INPUT 94,   /* 94 - Confirmacao de Cancelamento Negativacao Serasa */
+                                          INPUT "S4", /* Motivo */
+                                          INPUT 0,    /* Valor Tarifa */
+                                          INPUT crapcop.cdbcoctl,
+                                          INPUT crapcop.cdagectl,
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_cdoperad,
+                                          INPUT par_nrremass).
+
+                        /* Gerar registro Tarifa */
+                        CREATE tt-lat-consolidada.
+                        ASSIGN tt-lat-consolidada.cdcooper = par_cdcooper
+                               tt-lat-consolidada.nrdconta = par_nrdconta
+                               tt-lat-consolidada.nrdocmto = par_nrdocmto
+                               tt-lat-consolidada.nrcnvcob = par_nrcnvcob
+                               tt-lat-consolidada.dsincide = "RET"
+                               tt-lat-consolidada.cdocorre = 94   /* 94 - Confirmacao de Cancelamento Negativacao Serasa */
+                               tt-lat-consolidada.cdmotivo = "S4" /* Motivo */
+                               tt-lat-consolidada.vllanmto = bcrapcob.vltitulo.
+            
+                    END. /* FIM do IF cdbandoc = 85 */
+
+            END. /* Fim das alteracoes do Serasa */ 
+            ELSE
+                DO:
         /* removido regra da canc de protesto */
         /* permitir boleto de qualquer IF (Rafael) */
         ASSIGN bcrapcob.flgdprot = FALSE
@@ -4049,8 +4160,7 @@ PROCEDURE inst-cancel-protesto:
     
             END. /* FIM do IF cdbandoc = 85 */
         END.
-
-        
+                END.
 
     END. /* END-TRANSACTION */
 
