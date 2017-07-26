@@ -378,7 +378,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                26/04/2017 - Retirado a geração do arquivo microcredito_coop_59dias
                             (Tiago/Rodrigo #654647).
 				
-			   26/04/2017 - 706774-Tratar relatórios para valores acima de 1 bilhão
+			   26/07/2017 - 706774-Tratar relatórios para valores acima de 1 bilhão
 							(Andrey Formigari - Mouts)
      ............................................................................. */
 
@@ -3207,12 +3207,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
              --Escrever as informacoes da conta no XML
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<agencia id="'||vr_cdagenci||'" nmresage="'|| vr_nmresage||'">
-                             <pac_vlsaqmax>'||to_char(vr_pac_vlsaqmax + vr_dem_agpsdmax,'fm9999g999g990d00')||'</pac_vlsaqmax>
-                             <pac_vlsddisp>'||to_char(vr_pac_vlsddisp + vr_dem_agpsddis,'fm9999g999g990d00')||'</pac_vlsddisp>
+                             <pac_vlsaqmax>'||to_char(vr_pac_vlsaqmax + vr_dem_agpsdmax,'fm99g999g999g990d00')||'</pac_vlsaqmax>
+                             <pac_vlsddisp>'||to_char(vr_pac_vlsddisp + vr_dem_agpsddis,'fm99g999g999g990d00')||'</pac_vlsddisp>
                              <pac_vltotlim>'||to_char(vr_pac_vltotlim + vr_dem_agpvllim,'fm999999g999')||'</pac_vltotlim>
                              <pac_vlsdbltl>'||to_char(vr_pac_vlsdbltl + vr_dem_agpsdbtl,'fm9999g999g990d00')||'</pac_vlsdbltl>
                              <pac_vlsdchsl>'||to_char(vr_pac_vlsdchsl + vr_dem_agpsdchs,'fm9999g999g990d00')||'</pac_vlsdchsl>
-                             <pac_vlstotal>'||to_char(vr_pac_vlstotal + vr_dem_agpsdstl,'fm9999g999g990d00')||'</pac_vlstotal>
+                             <pac_vlstotal>'||to_char(vr_pac_vlstotal + vr_dem_agpsdstl,'fm99g999g999g990d00')||'</pac_vlstotal>
                              <pac_vlblqjud>'||to_char(vr_pac_vlblqjud + vr_dem_agpvlbjd,'fm9999g999g990d00')||'</pac_vlblqjud>
                            </agencia>');
            END IF;
@@ -3223,49 +3223,49 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          -- Finaliza agrupador de agencia e inicia o de totais e total geral
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</agencias><totais><geral>');
          --Totais Gerais
-         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<g_vlsaqmax>'||to_char(vr_rel_vlsaqmax,'fm9999g999g990d00')||'</g_vlsaqmax>
-                         <g_vlsddisp>'||to_char(vr_rel_vlsddisp,'fm9999g999g990d00')||'</g_vlsddisp>
+         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<g_vlsaqmax>'||to_char(vr_rel_vlsaqmax,'fm99g999g999g990d00')||'</g_vlsaqmax>
+                         <g_vlsddisp>'||to_char(vr_rel_vlsddisp,'fm99g999g999g990d00')||'</g_vlsddisp>
                          <g_vltotlim>'||to_char(vr_rel_vltotlim,'fm999999g999')||'</g_vltotlim>
                          <g_vlsdbltl>'||to_char(vr_rel_vlsdbltl,'fm9999g999g990d00')||'</g_vlsdbltl>
                          <g_vlsdchsl>'||to_char(vr_rel_vlsdchsl,'fm9999g999g990d00')||'</g_vlsdchsl>
-                         <g_vlstotal>'||to_char(vr_rel_vlstotal,'fm9999g999g990d00')||'</g_vlstotal>
+                         <g_vlstotal>'||to_char(vr_rel_vlstotal,'fm99g999g999g990d00')||'</g_vlstotal>
                          <g_vlblqjud>'||to_char(vr_rel_vlblqjud,'fm9999g999g990d00')||'</g_vlblqjud>');
          --Finaliza agrupador de total geral e inicia o agrupador de pessoa fisica
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</geral><pf>');
          --Totais Pessoa Fisica
-         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<pf_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(1),'fm9999g999g990d00')||'</pf_agpsdmax>
-                         <pf_agpsddis>'||to_char(vr_tab_rel_agpsddis(1),'fm9999g999g990d00')||'</pf_agpsddis>
+         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<pf_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(1),'fm99g999g999g990d00')||'</pf_agpsdmax>
+                         <pf_agpsddis>'||to_char(vr_tab_rel_agpsddis(1),'fm99g999g999g990d00')||'</pf_agpsddis>
                          <pf_agpvllim>'||to_char(vr_tab_rel_agpvllim(1),'fm999999g999')||'</pf_agpvllim>
                          <pf_agpsdbtl>'||to_char(vr_tab_rel_agpsdbtl(1),'fm9999g999g990d00')||'</pf_agpsdbtl>
                          <pf_agpsdchs>'||to_char(vr_tab_rel_agpsdchs(1),'fm9999g999g990d00')||'</pf_agpsdchs>
-                         <pf_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(1),'fm9999g999g990d00')||'</pf_agpsdstl>
+                         <pf_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(1),'fm99g999g999g990d00')||'</pf_agpsdstl>
                          <pf_agpsdbjd>'||to_char(vr_tab_rel_agpsdbjd(1),'fm9999g999g990d00')||'</pf_agpsdbjd>');
          --Finaliza agrupador Totais Pessoa Fisica e Inica Pessoa Juridica
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</pf><pj>');
-         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<pj_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(2),'fm9999g999g990d00')||'</pj_agpsdmax>
-                         <pj_agpsddis>'||to_char(vr_tab_rel_agpsddis(2),'fm9999g999g990d00')||'</pj_agpsddis>
+         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<pj_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(2),'fm99g999g999g990d00')||'</pj_agpsdmax>
+                         <pj_agpsddis>'||to_char(vr_tab_rel_agpsddis(2),'fm99g999g999g990d00')||'</pj_agpsddis>
                          <pj_agpvllim>'||to_char(vr_tab_rel_agpvllim(2),'fm999999g999')||'</pj_agpvllim>
                          <pj_agpsdbtl>'||to_char(vr_tab_rel_agpsdbtl(2),'fm9999g999g990d00')||'</pj_agpsdbtl>
                          <pj_agpsdchs>'||to_char(vr_tab_rel_agpsdchs(2),'fm9999g999g990d00')||'</pj_agpsdchs>
-                         <pj_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(2),'fm9999g999g990d00')||'</pj_agpsdstl>
+                         <pj_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(2),'fm99g999g999g990d00')||'</pj_agpsdstl>
                          <pj_agpsdbjd>'||to_char(vr_tab_rel_agpsdbjd(2),'fm9999g999g990d00')||'</pj_agpsdbjd>');
          --Finaliza agrupador Totais Pessoa Juridica e Inica Cheque Administrativo
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</pj><cheque_adm>');
-         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<ca_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(3),'fm9999g999g990d00')||'</ca_agpsdmax>
-                         <ca_agpsddis>'||to_char(vr_tab_rel_agpsddis(3),'fm9999g999g990d00')||'</ca_agpsddis>
+         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<ca_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(3),'fm99g999g999g990d00')||'</ca_agpsdmax>
+                         <ca_agpsddis>'||to_char(vr_tab_rel_agpsddis(3),'fm99g999g999g990d00')||'</ca_agpsddis>
                          <ca_agpvllim>'||to_char(vr_tab_rel_agpvllim(3),'fm999999g999')||'</ca_agpvllim>
                          <ca_agpsdbtl>'||to_char(vr_tab_rel_agpsdbtl(3),'fm9999g999g990d00')||'</ca_agpsdbtl>
                          <ca_agpsdchs>'||to_char(vr_tab_rel_agpsdchs(3),'fm9999g999g990d00')||'</ca_agpsdchs>
-                         <ca_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(3),'fm9999g999g990d00')||'</ca_agpsdstl>
+                         <ca_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(3),'fm99g999g999g990d00')||'</ca_agpsdstl>
                          <ca_agpsdbjd>'||to_char(vr_tab_rel_agpsdbjd(3),'fm9999g999g990d00')||'</ca_agpsdbjd>');
          --Finaliza agrupador Cheque Administrativo e Inicia Liquidacao
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</cheque_adm><cred_liq>');
-         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<cl_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(4),'fm9999g999g990d00')||'</cl_agpsdmax>
-                         <cl_agpsddis>'||to_char(vr_tab_rel_agpsddis(4),'fm9999g999g990d00')||'</cl_agpsddis>
+         gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<cl_agpsdmax>'||to_char(vr_tab_rel_agpsdmax(4),'fm99g999g999g990d00')||'</cl_agpsdmax>
+                         <cl_agpsddis>'||to_char(vr_tab_rel_agpsddis(4),'fm99g999g999g990d00')||'</cl_agpsddis>
                          <cl_agpvllim>'||to_char(vr_tab_rel_agpvllim(4),'fm999999g999')||'</cl_agpvllim>
                          <cl_agpsdbtl>'||to_char(vr_tab_rel_agpsdbtl(4),'fm9999g999g990d00')||'</cl_agpsdbtl>
                          <cl_agpsdchs>'||to_char(vr_tab_rel_agpsdchs(4),'fm9999g999g990d00')||'</cl_agpsdchs>
-                         <cl_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(4),'fm9999g999g990d00')||'</cl_agpsdstl>
+                         <cl_agpsdstl>'||to_char(vr_tab_rel_agpsdstl(4),'fm99g999g999g990d00')||'</cl_agpsdstl>
                          <cl_agpsdbjd>'||to_char(vr_tab_rel_agpsdbjd(4),'fm9999g999g990d00')||'</cl_agpsdbjd>');
          --Finaliza agrupador Liquidacao e Inicia Medias
          gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</cred_liq><medias>');
