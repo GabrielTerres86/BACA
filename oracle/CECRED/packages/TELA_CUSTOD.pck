@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.TELA_CUSTOD IS
+CREATE OR REPLACE PACKAGE TELA_CUSTOD IS
 
   /*-------------------------------------------------------------------------
   --
@@ -212,7 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CUSTOD IS
 	
 END TELA_CUSTOD;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
+CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
   /*-------------------------------------------------------------------------
   --
   --  Programa : TELA_CUSTOD
@@ -2891,7 +2891,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
            AND dcc.inconcil = 1;
       rw_crapdcc cr_crapdcc%ROWTYPE;	
       
-
 	  BEGIN
 		  -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'TELA_CUSTOD'
@@ -3433,7 +3432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 						
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;					
-
+			
 			--Selecionar os dados da tabela de Associados
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -3601,7 +3600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 		   WHERE hcc.rowid = rw_craphcc.rowid;
       -- Efetuar commit
 			COMMIT;
-      
+			
       
       vr_dstransa := 'Exclusao da remessa ' || 'Nro.: ' || pr_nrremret;
           
