@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl006_999" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl006_999" language="groovy" pageWidth="650" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="650" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
@@ -95,7 +95,7 @@
 	<pageHeader>
 		<band height="8">
 			<subreport>
-				<reportElement uuid="3ec5e745-43e8-4fcd-8cf1-229a6adeca01" x="0" y="0" width="595" height="8"/>
+				<reportElement uuid="3ec5e745-43e8-4fcd-8cf1-229a6adeca01" x="0" y="0" width="650" height="8"/>
 				<subreportParameter name="PR_NMRESCOP">
 					<subreportParameterExpression><![CDATA[$P{PR_NMRESCOP}]]></subreportParameterExpression>
 				</subreportParameter>
@@ -131,7 +131,7 @@
 	<detail>
 		<band height="8" splitType="Stretch">
 			<subreport>
-				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="650" height="8"/>
 				<subreportParameter name="PR_NMRESCOP"/>
 				<subreportParameter name="PR_NMRELATO"/>
 				<subreportParameter name="PR_DTMVTOLT"/>
@@ -146,7 +146,7 @@
 		</band>
 		<band height="8">
 			<subreport>
-				<reportElement uuid="b937cca2-36c8-44fd-a4d0-3dfbc41415d6" x="0" y="0" width="595" height="8"/>
+				<reportElement uuid="b937cca2-36c8-44fd-a4d0-3dfbc41415d6" x="0" y="0" width="650" height="8"/>
 				<subreportParameter name="PR_NMRESCOP"/>
 				<subreportParameter name="PR_NMRELATO"/>
 				<subreportParameter name="PR_DTMVTOLT"/>
@@ -161,7 +161,7 @@
 		</band>
 		<band height="8">
 			<subreport>
-				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="650" height="8"/>
 				<subreportParameter name="PR_SQSOLICI"/>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//totais")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl006_total_composicao.jasper"]]></subreportExpression>
@@ -169,7 +169,7 @@
 		</band>
 		<band height="8">
 			<subreport>
-				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="650" height="8"/>
 				<subreportParameter name="PR_SQSOLICI"/>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//totais/microcreditos/micro/micro_id")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl006_total_micro.jasper"]]></subreportExpression>
@@ -177,7 +177,7 @@
 		</band>
 		<band height="8">
 			<subreport>
-				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8">
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="650" height="8">
 					<printWhenExpression><![CDATA[new Boolean($P{PR_FLGIMP59} == "N")]]></printWhenExpression>
 				</reportElement>
 				<subreportParameter name="PR_NMTITULO">
@@ -190,7 +190,7 @@
 		</band>
 		<band height="8">
 			<subreport>
-				<reportElement uuid="e51fd280-deb9-4948-bbff-940534eb9a70" x="0" y="0" width="595" height="8">
+				<reportElement uuid="e51fd280-deb9-4948-bbff-940534eb9a70" x="0" y="0" width="650" height="8">
 					<printWhenExpression><![CDATA[new Boolean($P{PR_FLGIMP59} == "S")]]></printWhenExpression>
 				</reportElement>
 				<subreportParameter name="PR_NMRESCOP">
@@ -226,7 +226,7 @@
 		</band>
 		<band height="8">
 			<subreport>
-				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="595" height="8"/>
+				<reportElement uuid="baca0323-3fe7-4e2f-bc9b-7477b09298db" x="0" y="0" width="650" height="8"/>
 				<subreportParameter name="PR_SQSOLICI"/>
 				<subreportParameter name="PR_NMARQSAI">
 					<subreportParameterExpression><![CDATA[$P{PR_NMARQSAI}]]></subreportParameterExpression>
