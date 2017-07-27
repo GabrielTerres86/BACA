@@ -222,6 +222,11 @@ BEGIN
                  02/03/2017 - Incluido nas consultas da craplau 
                               craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
 
+                 26/07/2017 - Inclusão na tabela de erros Oracle
+                            - Padronização de logs
+                            - Inclusão parâmetros nas mensagens
+                            - Chamado 709894 (Ana Volles - Envolti)
+
   ............................................................................................*/
   
   DECLARE
@@ -272,6 +277,10 @@ BEGIN
 	  vr_gerandb NUMBER := 1; -- Gera crapndb
 
     vr_dsctajud crapprm.dsvlrprm%TYPE;
+
+    --Chamado 709894
+    vr_dsparam  varchar2(2000);
+    vr_idprglog tbgen_prglog.idprglog%TYPE := 0;      
 
     ------------------------------- CURSORES ---------------------------------
 
@@ -803,12 +812,14 @@ BEGIN
         vr_des_chave_ag      varchar2(8);
         vr_des_chave_det     varchar2(54);
         
-        
-        
       BEGIN
         -- INICIALIZAR O CLOB (XML)
         dbms_lob.createtemporary(vr_clobxml, TRUE);
         dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
+
+        --Inclusão nome do módulo logado - Chamado 709894
+        gene0001.pc_set_modulo(pr_module => 'PC_CRPS123'
+                              ,pr_action => 'pc_gera_relatorio');
 
         -- INICIO DO ARQUIVO XML
         pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
@@ -839,6 +850,12 @@ BEGIN
             -- MONTAR MENSAGEM DE CRITICA
             vr_cdcritic := 60;
             vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            --Chamado 709894
+            vr_dsparam := 'Dtmvtolt='||rw_craprej.dtmvtolt
+                        ||',Cdagenci='||rw_craprej.cdagenci
+                        ||',Cdbccxlt='||rw_craprej.cdbccxlt
+                        ||',Nrdolote='||rw_craprej.nrdolote;
+            
             -- EFETUA RAISE POIS A CRITICA
             RAISE vr_exc_saida;
           ELSE
@@ -867,7 +884,7 @@ BEGIN
             CLOSE cr_craprej_I;
           END IF;
 
-          vr_cdcritic := 0; -- ODIGO DE CRITICA
+          vr_cdcritic := 0; -- CODIGO DE CRITICA
           vr_dsintegr := 'DEBITO EM CONTA'; -- DESCRICAO DA INTEGRACAO
 
           vr_qtdifeln := rw_craplot_II.qtcompln - rw_craplot_II.qtinfoln;
@@ -1072,6 +1089,10 @@ BEGIN
 
         -- VERIFICA SE OCORREU UMA CRITICA
         IF vr_dscritic IS NOT NULL THEN
+          --Chamado 709894
+          vr_dsparam := 'Dtmvtolt='||rw_crapdat.dtmvtolt
+                      ||',Dsarquiv='||vr_dsarquiv
+                      ||',Cdprogra='||vr_cdprogra;
           RAISE vr_exc_saida;
         END IF;
 
@@ -1154,7 +1175,6 @@ BEGIN
     vr_dsarquiv := gene0001.fn_diretorio(pr_tpdireto => 'C',
                                          pr_cdcooper => pr_cdcooper) || vr_dsarquiv;
     
-
     -- ABRE O CURSOR DE LOTE E FAZ A ATRIBUICAO DO CODIGO DO LOTE CONSULTADO
     OPEN cr_craplot(pr_cdcooper => pr_cdcooper,          -- CODIGO DA COOPERATIVA
                     pr_dtmvtopr => rw_crapdat.dtmvtopr); -- DATA PROXIMO DIA UTIL
@@ -1175,7 +1195,7 @@ BEGIN
       vr_nrdolot1 := rw_craplot.nrdolote;
     END IF;
 
-	-- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+	  -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
     vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                              pr_cdcooper => pr_cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
@@ -1183,6 +1203,7 @@ BEGIN
     -- ABRE O CURSOR REFERENTE AOS LANCAMENTOS AUTOMATICOS
     OPEN cr_craplau(pr_cdcooper => pr_cdcooper,          -- CODIGO DA COOPERATIVA
                     pr_dtmvtopr => rw_crapdat.dtmvtopr); -- DATA PROXIMO DIA UTIL
+
     LOOP
       FETCH cr_craplau
         INTO rw_craplau;
@@ -1196,16 +1217,15 @@ BEGIN
       vr_auxcdcri := 0;
       vr_nrdolote := vr_nrdolot1;
       vr_cdcooper := pr_cdcooper;
-      vr_cdagenci := rw_craplau.cdagenci;
+     vr_cdagenci := rw_craplau.cdagenci;
       vr_nrdconta := rw_craplau.nrdconta;
 
-	  -- Condicao para verificar se permite incluir as linhas parametrizadas
+	    -- Condicao para verificar se permite incluir as linhas parametrizadas
       IF INSTR(',' || vr_dsctajud || ',',',' || vr_nrdconta || ',') > 0 THEN
         IF rw_craplau.cdhistor = 38 THEN
 		      CONTINUE;        
 		    END IF;
       END IF; 
-
 
       -- VERIFICA CODIGO DO BANCO / CAIXA
       IF rw_craplau.cdbccxlt = 911 THEN
@@ -1332,6 +1352,11 @@ BEGIN
             -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
             vr_dscritic := 'Problema ao inserir na tabela CRAPLOT: ' ||
                            sqlerrm;
+            --Chamado 709894
+            vr_dsparam := 'Dtmvtolt='||rw_crapdat.dtmvtopr
+                        ||',Cdagenci='||vr_cdagenci
+                        ||',Cdbccxlt='||vr_cdbccxlt
+                        ||',Nrdolote='||vr_nrdolote;
             RAISE vr_exc_saida;
         END;
       ELSE
@@ -1353,6 +1378,9 @@ BEGIN
                         pr_nrdconta => vr_nrdconta);
         FETCH cr_crapass
           INTO rw_crapass;
+
+        --Chamado 709894
+        vr_dsparam := 'Nrdconta='||vr_nrdconta;
 
         -- SE NÃO ENCONTRAR
         IF cr_crapass%NOTFOUND THEN
@@ -1424,6 +1452,9 @@ BEGIN
       FETCH cr_crapsld
         INTO rw_crapsld;
 
+      --Chamado 709894
+      vr_dsparam := 'Nrdconta='||vr_nrdconta;
+
       -- SE NÃO ENCONTRAR
       IF cr_crapsld%NOTFOUND THEN
 
@@ -1445,6 +1476,9 @@ BEGIN
                           pr_cdhistor => rw_craplau.cdhistor); -- CODIGO DO HISTORICO
         FETCH cr_craphis_I
           INTO rw_craphis_I;
+
+          --Chamado 709894
+          vr_dsparam := 'Cdhistor='||rw_craplau.cdhistor;
 
         IF cr_craphis_I%NOTFOUND THEN
           -- FECHAR O CURSOR
@@ -1470,10 +1504,10 @@ BEGIN
 
       -- ATRIBUICAO DE NUMERO DE DOCUMENTO
       vr_nrdocmto := rw_craplau.nrdocmto;
-      
+
       -- TRATAMENTO DÉBITO FÁCIL
       IF vr_cdcritic = 0 AND rw_craplau.flgblqdb = 1 THEN
-        
+
         -- GERAR REGISTROS NA CRAPNDB PARA DEVOLUCAO DE DEBITOS AUTOMATICOS
         CONV0001.pc_gerandb(pr_cdcooper => vr_cdcooper         -- CÓDIGO DA COOPERATIVA
                              ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
@@ -1492,6 +1526,16 @@ BEGIN
 
           -- VERIFICA SE HOUVE ERRO NA PROCEDURE PC_GERANDB
          IF vr_cdcritic > 0 THEN
+          --Chamado 709894
+          vr_dsparam := 'Cdhistor='||rw_craplau.cdhistor
+                      ||',Nrdconta='||rw_craplau.nrdconta
+                      ||',Cdrefere='||rw_crapatr.cdrefere
+                      ||',Vllanaut='||rw_craplau.vllanaut
+                      ||',Cdseqtel='||rw_craplau.cdseqtel
+                      ||',Nrdocmto='||rw_craplau.nrdocmto
+                      ||',Cdagesic='||rw_crapcop.cdagesic
+                      ||',Nrctacns='||rw_crapass.nrctacns
+                      ||',Cdempres='||rw_craplau.cdempres;
             RAISE vr_exc_saida;
          END IF;
         
@@ -1587,6 +1631,9 @@ BEGIN
 
         FETCH cr_crapepr
           INTO rw_crapepr;
+
+        --Chamado 709894
+        vr_dsparam := 'Nrdconta='||rw_craplau.nrdconta;
 
         IF cr_crapepr%NOTFOUND THEN
           -- FECHAR O CURSOR
@@ -1960,6 +2007,9 @@ BEGIN
     -- FUNCAO P/ CRIAR O RELATORIO DA INTEGRACAO
     pc_gera_relatorio(pr_cdcooper => pr_cdcooper);
 
+    -- Incluir nome do módulo logado - Chamado 709894
+    GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action =>  null); 
+
     -- SE HOUVE CONTAS MIGRADAS INCLUI AS CONTAS NO RELATORIO
     IF vr_migracao = 1 THEN
 
@@ -1987,12 +2037,17 @@ BEGIN
       END IF;
 
       -- ENVIO CENTRALIZADO DE LOG DE ERRO
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, -- ERRO TRATATO
-                                 pr_des_log      => to_char(sysdate,
-                                                            'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra ||
-                                                    ' --> ' || vr_dscritic);
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- ERRO TRATATO
+                    					  ,pr_cdprograma   => vr_cdprogra
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: '|| vr_dscritic ||
+                                                   '. Cdcooper=' || pr_cdcooper ||
+                                                   ' ,Flgresta=' || pr_flgresta ||
+                                                   ' ,Stprogra=' || pr_stprogra ||
+                                                   ' ,Infimsol=' || pr_infimsol );
+
 
       -- CHAMAMOS A FIMPRG PARA ENCERRARMOS O PROCESSO SEM PARAR A CADEIA
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
@@ -2009,13 +2064,59 @@ BEGIN
       END IF;
       -- DEVOLVEMOS CÓDIGO E CRITICA ENCONTRADAS DAS VARIAVEIS LOCAIS
       pr_cdcritic := NVL(vr_cdcritic, 0);
-      pr_dscritic := vr_dscritic;
+      pr_dscritic := vr_dscritic||vr_dsparam;
+
+      --Geração de log de erro - Chamado 709894
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' ||vr_dscritic ||
+                             '. Cdcooper=' || pr_cdcooper ||
+                             ','||vr_dsparam;
+
+      --Geração de log de erro - Chamado 709894
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                             pr_idprglog      => vr_idprglog);
+
       -- EFETUAR ROLLBACK
       ROLLBACK;
     WHEN OTHERS THEN
       -- EFETUAR RETORNO DO ERRO NÃO TRATADO
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
+
+      --Geração de log de erro - Chamado 709894
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' ||pr_dscritic ||
+                             '. Cdcooper=' || pr_cdcooper ||
+                             ' ,Flgresta=' || pr_flgresta ||
+                             ' ,Stprogra=' || pr_stprogra ||
+                             ' ,Infimsol=' || pr_infimsol ;
+
+      --Geração de log de erro - Chamado 709894
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                             pr_idprglog      => vr_idprglog);
+
+      --Inclusão na tabela de erros Oracle - Chamado 709894
+      CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                   ,pr_compleme => pr_dscritic );
+
+
+
       -- EFETUAR ROLLBACK
       ROLLBACK;
   END;
