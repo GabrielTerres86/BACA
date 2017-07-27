@@ -45,6 +45,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS139" (pr_cdcooper in craptab.cdcooper
                             em inglês quando executada pela Progress - usar o vetor
                             da gene0001 que possui os meses por extenso (Marcos-Supero)
 
+			  24/07/2017 -  706774-Tratar relatórios para valores acima de 1 bilhão
+							(Andrey Formigari - Mouts)
+
 ............................................................................. */
   -- Data do movimento
   cursor cr_crapdat(pr_cdcooper in craptab.cdcooper%type) is
@@ -258,13 +261,13 @@ begin
                      '<nrmatric>'||to_char(rw_crapsld.nrmatric, 'fm999G990')||'</nrmatric>'||
                      '<nmprimtl>'||substr(rw_crapsld.nmprimtl, 1, 33)||'</nmprimtl>'||
                      '<vlsldmed>'||rw_crapsld.vlsldmed_round||'</vlsldmed>'||
-                     '<vlsldmed_char>'||to_char(rw_crapsld.vlsldmed_round, 'fm99999G999G990D00')||'</vlsldmed_char>'||
+                     '<vlsldmed_char>'||to_char(rw_crapsld.vlsldmed_round, 'fm99g999g999g990d00')||'</vlsldmed_char>'||
                      '<vlprimes>'||rw_crapsld.vlprimes||'</vlprimes>'||
-                     '<vlprimes_char>'||to_char(rw_crapsld.vlprimes, 'fm99999G999G990D00')||'</vlprimes_char>'||
+                     '<vlprimes_char>'||to_char(rw_crapsld.vlprimes, 'fm99g999g999g990d00')||'</vlprimes_char>'||
                      '<vlsegmes>'||rw_crapsld.vlsegmes||'</vlsegmes>'||
-                     '<vlsegmes_char>'||to_char(rw_crapsld.vlsegmes, 'fm99999G999G990D00')||'</vlsegmes_char>'||
+                     '<vlsegmes_char>'||to_char(rw_crapsld.vlsegmes, 'fm99g999g999g990d00')||'</vlsegmes_char>'||
                      '<vltermes>'||rw_crapsld.vltermes||'</vltermes>'||
-                     '<vltermes_char>'||to_char(rw_crapsld.vltermes, 'fm99999G999G990D00')||'</vltermes_char>'||
+                     '<vltermes_char>'||to_char(rw_crapsld.vltermes, 'fm99g999g999g990d00')||'</vltermes_char>'||
                    '</cotista>',
                    vr_escreve_arquivo_2);
   end loop;

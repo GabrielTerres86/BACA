@@ -2828,7 +2828,7 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para custodiar os cheques conciliados na remessa
 
-    Alteracoes: 
+    Alteracoes: Ajuste no no cdoperad informado na geracao da previa (Daniel)
                                                      
   ............................................................................. */
 		DECLARE
@@ -3002,7 +3002,7 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 										,pr_nrdconta => pr_nrdconta  --> Nr. da conta
 										,pr_nrconven => pr_nrconven  --> Número do convênvio
 										,pr_nrremret => pr_nrremret  --> Remessa
-										,pr_cdoperad => pr_intipmvt  --> Operador
+										,pr_cdoperad => vr_cdoperad  --> Operador
 										,pr_cdcritic => vr_cdcritic  --> Cód. da crítica
 										,pr_dscritic => vr_dscritic);--> Desc. da crítica
       

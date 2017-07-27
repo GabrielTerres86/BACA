@@ -7155,7 +7155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_efetiva_desconto_bordero
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao:
+    Data    : Dezembro/2016                 Ultima atualizacao:	26/07/2017
 
     Dados referentes ao programa:
 
@@ -7167,7 +7167,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								cooperado, como também os encargos (IOF e tarifa (se houver)).
 
     Alteracoes: 20/06/2017 - Ajuste na verificação de cheques que estão pendente de entrega.
-                             PRJ300-Desconto de cheque(Lombardi)
+                             PRJ300-Desconto de cheque(Lombardi) 
+                             
+                26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
+                             PRJ300-Desconto de cheque(Lombardi) 
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7201,6 +7204,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   vr_periofop         NUMBER;
   vr_vliofcal         NUMBER;
   vr_vltotiof         NUMBER;
+  
+  vr_dtprzmin         DATE;   -- Data prazo mínimo
+  vr_dtprzmax         DATE;   -- Data prazo máximo
+  vr_przmxcmp         NUMBER; -- Data prazo máximo
   
   -- Buscar Cooperativa
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -7555,6 +7562,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         RAISE vr_exc_erro;
       END IF;
       
+      -- Busca próximo dia útil
+      vr_dtprzmin := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                ,pr_tipo => 'P');
+      -- Atribui prazo máximo
+      vr_dtprzmax := rw_crapdat.dtmvtolt + vr_tab_lim_desconto(rw_crapass.inpessoa).qtprzmax;
+  		
+      vr_przmxcmp := vr_tab_lim_desconto(rw_crapass.inpessoa).Przmxcmp;
+      
+ 	  -- Verificar prazo mínimo excedido
+	  IF rw_crapcdb.dtlibera <= vr_dtprzmin THEN
+	    -- Gerar ocorrencia 5 - 
+		vr_cdcritic := 0;
+        vr_dscritic := 'Existem cheques com data de liberacao fora do limite.';
+        RAISE vr_exc_erro;
+	  END IF;
+			
 			-- Alimentar PlTable com dados do cheque
 			vr_index_cheque := vr_tab_cheques.count;
 			vr_tab_cheques(vr_index_cheque).dtlibera := rw_crapcdb.dtlibera;

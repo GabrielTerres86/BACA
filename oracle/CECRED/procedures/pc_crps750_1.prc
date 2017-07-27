@@ -260,8 +260,7 @@ BEGIN
            -- Se a parcela do mês foi paga
            IF vr_qtprecal_lem >= 1 THEN
              --
-             IF vr_vlsdeved = 0 THEN
-               --
+             IF vr_vlsdeved <= 0 THEN
                vr_inliquid := 1;
                --
                -- Desativar o Rating associado a esta operaçao
@@ -404,6 +403,15 @@ BEGIN
                                                   ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
        --
        FOR rw_crapepr IN cr_crapepr LOOP
+         -- acerto de datas
+         IF to_char(rw_crapepr.dtdpagto,'dd') <> to_char(rw_crapepr.dtdpagto_nova,'dd') THEN
+           rw_crapepr.dtdpagto_nova := rw_crapepr.dtdpagto_nova - 1;
+         END IF;
+         -- se ainda com diferença
+         IF to_char(rw_crapepr.dtdpagto,'dd') <> to_char(rw_crapepr.dtdpagto_nova,'dd') THEN
+           rw_crapepr.dtdpagto_nova := rw_crapepr.dtdpagto_nova - 1;
+         END IF;
+         --
          -- Inicializa variáveis
          vr_dsobservacao := null;
          vr_flgprocessa  := 1;
@@ -571,6 +579,8 @@ BEGIN
                 RAISE vr_exc_erro;
              END IF;
            END IF;
+         ELSIF vr_mesespago < 0 then
+           vr_dtdpagto := add_months(rw_crapepr.dtdpagto_nova,vr_mesespago);
          ELSE
            vr_dtdpagto  := rw_crapepr.dtdpagto_nova;
          END IF;
@@ -583,15 +593,38 @@ BEGIN
            --
            vr_vlparcela := vr_vlsdeved;
            vr_qtparcela := vr_vlparcela / rw_crapepr.vlpreemp;
-           --vr_nrparcela := rw_crapepr.qtpreemp;
+           --
+           -- se for resíduo e a data estiver em mês posterior e não houve pagamento superior ao valor da
+           -- parcela no mês deve trazer a data para mês atual, respeitando o dia de vencimento
+           IF ((vr_dtdpagto > vr_dtcursor) or (vr_qtprecal > rw_crapepr.qtmesdec)) and vr_vlprepag < rw_crapepr.vlpreemp THEN
+              -- respeitará a data de vencimento do empréstimo(dia), para não gerar pagamentos fora do dia correto
+              vr_dtdpagto  := trunc(vr_dtcursor,'MM') + to_char(vr_dtdpagto,'dd') - 1 ;
+              --
+              -- se a data pagamento gerada for para próximo mês, deve definir data como último dia do mês corrente
+              IF  trunc(vr_dtdpagto,'MM') <> trunc(vr_dtcursor,'MM') THEN
+                --
+                vr_dtdpagto := trunc(vr_dtdpagto,'MM') - 1;
+                --
+              END IF;
+              --
+           END IF;           
            --
          ELSE
            -- Andrino/Everton
            -- Se tiver parcelas adiantadas, deve-se gerar tambem o pagamento dentro do mes
            -- valor adiantado deve ser menor que o valor da parcela, pagondo a diferença até 
            -- completar o valor da parcela para o mês em questão.
-           IF vr_dtdpagto > vr_dtcursor and vr_vlprepag < rw_crapepr.vlpreemp THEN
-              vr_dtdpagto  := rw_crapepr.dtdpagto;
+           IF ((vr_dtdpagto > vr_dtcursor) or (vr_qtprecal > rw_crapepr.qtmesdec)) and vr_vlprepag < rw_crapepr.vlpreemp THEN
+              -- respeitará a data de vencimento do empréstimo(dia), para não gerar pagamentos fora do dia correto
+              vr_dtdpagto  := trunc(vr_dtcursor,'MM') + to_char(vr_dtdpagto,'dd') - 1 ;
+              --
+              -- se a data pagamento gerada for para próximo mês, deve definir data como último dia do mês corrente
+              IF  trunc(vr_dtdpagto,'MM') <> trunc(vr_dtcursor,'MM') THEN
+                --
+                vr_dtdpagto := trunc(vr_dtdpagto,'MM') - 1;
+                --
+              END IF;
+              --
               vr_qtparcela := round(vr_vlprepag / rw_crapepr.vlpreemp,4);
               vr_vlparcela := rw_crapepr.vlpreemp - vr_vlprepag;
            END IF;
