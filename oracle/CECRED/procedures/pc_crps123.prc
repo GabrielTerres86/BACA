@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Junho/95.                       Ultima atualizacao: 02/03/2017
+   Data    : Junho/95.                       Ultima atualizacao: 26/07/2017
 
    Dados referentes ao programa:
 
@@ -222,6 +222,9 @@ BEGIN
                  02/03/2017 - Incluido nas consultas da craplau 
                               craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
 
+				 04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				              (Jonata - RKAM M311).
+                 
                  26/07/2017 - Inclusão na tabela de erros Oracle
                             - Padronização de logs
                             - Inclusão parâmetros nas mensagens
@@ -325,25 +328,34 @@ BEGIN
     -- BUSCA LANCAMENTOS AUTOMATICOS
     CURSOR cr_craplau(pr_cdcooper IN crapcop.cdcooper%TYPE,
                       pr_dtmvtopr IN crapdat.dtmvtopr%TYPE) IS
-      SELECT lau.cdagenci
-            ,lau.nrdconta
-            ,lau.cdbccxlt
-            ,lau.cdhistor
-            ,lau.nrcrcard
-            ,lau.nrdocmto
-            ,lau.dscodbar
-            ,lau.dtmvtopg
-            ,lau.vllanaut
-            ,lau.cdseqtel
-            ,lau.nrdctabb
-            ,lau.nrseqdig
-            ,lau.dtmvtolt
-            ,lau.nrdolote
-            ,lau.cdcritic
-            ,lau.cdempres
-            ,lau.rowid
-            ,lau.flgblqdb
-            ,row_number() OVER(PARTITION BY lau.cdagenci, lau.cdbccxlt, lau.cdbccxpg, lau.cdhistor ORDER BY lau.cdagenci, lau.cdbccxlt, lau.cdbccxpg, lau.cdhistor, lau.nrdocmto) AS seqlauto
+      SELECT lau.cdagenci,
+             lau.nrdconta,
+             lau.cdbccxlt,
+             lau.cdhistor,
+             lau.nrcrcard,
+             lau.nrdocmto,
+						 lau.dscodbar,
+						 lau.dtmvtopg,
+             lau.vllanaut,
+             lau.cdseqtel,
+             lau.nrdctabb,
+             lau.nrseqdig,
+             lau.dtmvtolt,
+             lau.nrdolote,
+             lau.cdcritic,
+             lau.cdempres,
+             lau.rowid,
+             lau.flgblqdb,
+             lau.idlancto,            
+             ROW_NUMBER() OVER(PARTITION BY lau.cdagenci,
+                                            lau.cdbccxlt,
+                                            lau.cdbccxpg,
+                                            lau.cdhistor
+                               ORDER BY lau.cdagenci,
+                                        lau.cdbccxlt,
+                                        lau.cdbccxpg,
+                                        lau.cdhistor,
+                                        lau.nrdocmto) AS seqlauto
         FROM craplau lau
        WHERE lau.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
          AND lau.dtmvtopg <= pr_dtmvtopr -- DATA DE PAGAMENTO
@@ -1520,6 +1532,7 @@ BEGIN
                              ,pr_nrctacns => rw_crapass.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_crapass.cdagenci -- CODIGO DO PA
                              ,pr_cdempres => rw_craplau.cdempres -- CODIGO SICREDI
+                             ,pr_idlancto => rw_craplau.idlancto -- CÓDIGO DO LANCAMENTO
                              ,pr_codcriti => vr_auxcdcri         -- CÓDIGO DO ERRO
                              ,pr_cdcritic => vr_cdcritic         -- CÓDIGO DO ERRO
                              ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
