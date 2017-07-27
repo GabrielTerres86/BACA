@@ -333,7 +333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 26/10/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 27/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -363,6 +363,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             26/10/2016 - Gravado em log a execução da rotina procedimento pc_controle_filas_relato apenas
   --                          apenas quando tiverem relatórios pendentes para execução (Carlos)
+  --
+  --             27/07/2017 - #724054 retirada a exclusão da coop 3 do cursor cr_crapcop, rotina 
+  --                          pc_publicar_arq_intranet (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -1307,8 +1310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
              cop.cdcooper
         FROM crapcop cop,
              crapdat dat        
-       WHERE cop.cdcooper <> 3 
-         AND cop.flgativo = 1
+       WHERE cop.flgativo = 1
          AND cop.cdcooper = dat.cdcooper
          AND dat.inproces = 1
          ORDER BY cdcooper DESC;
@@ -1358,6 +1360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --> Buscar coops ativas para verificação dos arquivos pendentes
     FOR rw_crapcop IN cr_crapcop LOOP
       BEGIN
+
         vr_cdcooper := rw_crapcop.cdcooper;
         
         --> Definir nome dos arquivos
