@@ -450,18 +450,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                              ,pr_cdcritic              OUT crapcri.cdcritic%TYPE
                                              ,pr_dscritic              OUT crapcri.dscritic%TYPE) IS
         vr_qtdia_uteis PLS_INTEGER;
+        vr_data_inicial DATE;
         
         -- Variaveis tratamento de erros
         vr_cdcritic    crapcri.cdcritic%TYPE;
         vr_dscritic    crapcri.dscritic%TYPE;
         vr_exc_erro    EXCEPTION;
       BEGIN
+        vr_data_inicial := ADD_MONTHS(pr_dtvencto,-1);
+        -- Condicao para verificar qual data inicial será calculada
+        IF pr_dtefetiv >= vr_data_inicial THEN
+          vr_data_inicial := pr_dtefetiv;	
+      END IF;
+      
         -- Calcula a diferenca entre duas datas e retorna os dias Uteis
         pc_calcula_qtd_dias_uteis(pr_cdcooper    => pr_cdcooper
                                  ,pr_inproces    => pr_inproces
                                  ,pr_dtefetiv    => pr_dtefetiv
-                                 ,pr_datainicial => ADD_MONTHS(pr_dtvencto, - 1) -- Data de vencimento da parcela anterior
-                                 ,pr_datafinal   => last_day(ADD_MONTHS(pr_dtvencto, - 1)) -- Final do mes da parcela anterior
+                                 ,pr_datainicial => vr_data_inicial
+                                 ,pr_datafinal   => last_day(vr_data_inicial)
                                  ,pr_qtdiaute    => vr_qtdia_uteis
                                  ,pr_cdcritic    => vr_cdcritic
                                  ,pr_dscritic    => vr_dscritic);
@@ -507,12 +514,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
       -- Transformar a taxa mensal para taxa diaria
       vr_txdiaria     := POWER(1 + (NVL(pr_txmensal,0) / 100),(1 / 30)) - 1;
+      vr_data_inicial := ADD_MONTHS(pr_dtvencto,-1);
       vr_data_final   := pr_dtvencto;
-      -- Caso a data de vencimento for no mesmo mês do vencimento da parcela, a data inicial será a data da efetivação
-      IF TO_CHAR(pr_dtefetiv,'mmyyyy') = TO_CHAR(pr_dtvencto,'mmyyyy') THEN
+      
+      -- Condicao para verificar qual data inicial será calculada
+      IF pr_dtefetiv >= vr_data_inicial THEN
         vr_data_inicial := pr_dtefetiv;
-      ELSE
-        vr_data_inicial := ADD_MONTHS(pr_dtvencto,-1);
       END IF;
       
       -- Calcular o Fator Price para cada parcela
@@ -934,7 +941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dtvencto               crappep.dtvencto%TYPE;
       vr_txdiaria               craplcr.txdiaria%TYPE;
       vr_nrparepr               crappep.nrparepr%TYPE;
-      vr_qtmeses_carencia       PLS_INTEGER;
+      --vr_qtmeses_carencia       PLS_INTEGER;
       vr_fator_price_total      NUMBER(25,10);
       vr_saldo_projetado        NUMBER(25,10);
       vr_datainicial            DATE;
@@ -988,74 +995,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       rw_craptxi.vlrdtaxa := 7.83;
      
       vr_saldo_projetado    := pr_vlemprst;
-      vr_qtmeses_carencia   := TO_NUMBER(TO_CHAR(pr_dtdpagto,'yyyymm')) - TO_NUMBER(TO_CHAR(vr_dtmvtolt,'yyyymm'));
-      -- Condicao para identificar quantos meses de carencia irá possuir
-      IF vr_qtmeses_carencia > 1 THEN
-        -- Condicao para verificar qual será a data final para fins de calculo (Data do Pagamento ou Ultimo dia do Mes)
-        IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
-          vr_datafinal := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
-        ELSE
-          vr_datafinal := LAST_DAY(vr_dtmvtolt);
-        END IF;      
-        -- Data Inicial será a data de efetivação do contrato
-        vr_datainicial := vr_dtmvtolt;
-        WHILE vr_datafinal < pr_dtdpagto LOOP
-          -- Vencimento da ultima mensal não será calculada 
-          IF LAST_DAY(ADD_MONTHS(pr_dtdpagto,-1)) = vr_datafinal THEN
-            EXIT;
-          END IF;
+      -- Condicao para verificar qual será a data final para fins de calculo (Data do Pagamento ou Ultimo dia do Mes)
+      IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) >= TO_NUMBER(TO_CHAR(vr_dtmvtolt,'DD')) THEN
+        vr_datafinal := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
+      ELSE
+        vr_datafinal := LAST_DAY(vr_dtmvtolt);
+      END IF;      
+      -- Data Inicial será a data de efetivação do contrato
+      vr_datainicial := vr_dtmvtolt;
+      WHILE vr_datafinal < pr_dtdpagto LOOP
+        -- Vencimento da ultima mensal não será calculada 
+        IF LAST_DAY(ADD_MONTHS(pr_dtdpagto,-1)) = vr_datafinal THEN
+          EXIT;
+        END IF;
 
-          -- Procedure para calcular o saldo projetado
-          pc_calcula_saldo_projetado(pr_cdcooper           => pr_cdcooper
-                                    ,pr_inproces           => pr_inproces
-                                    ,pr_dtefetiv           => pr_dtcalcul
-                                    ,pr_datainicial        => vr_datainicial
-                                    ,pr_datafinal          => vr_datafinal
-                                    ,pr_dtcarenc           => pr_dtcarenc
-                                    ,pr_dtdpagto           => pr_dtdpagto
-                                    ,pr_vlrdtaxa           => rw_craptxi.vlrdtaxa
-                                    ,pr_txdiaria           => vr_txdiaria
-                                    ,pr_vlemprst           => pr_vlemprst
-                                    ,pr_tab_price          => vr_tab_price
-                                    ,pr_cdcritic           => vr_cdcritic
-                                    ,pr_dscritic           => vr_dscritic);
+        -- Procedure para calcular o saldo projetado
+        pc_calcula_saldo_projetado(pr_cdcooper           => pr_cdcooper
+                                  ,pr_inproces           => pr_inproces
+                                  ,pr_dtefetiv           => pr_dtcalcul
+                                  ,pr_datainicial        => vr_datainicial
+                                  ,pr_datafinal          => vr_datafinal
+                                  ,pr_dtcarenc           => pr_dtcarenc
+                                  ,pr_dtdpagto           => pr_dtdpagto
+                                  ,pr_vlrdtaxa           => rw_craptxi.vlrdtaxa
+                                  ,pr_txdiaria           => vr_txdiaria
+                                  ,pr_vlemprst           => pr_vlemprst
+                                  ,pr_tab_price          => vr_tab_price
+                                  ,pr_cdcritic           => vr_cdcritic
+                                  ,pr_dscritic           => vr_dscritic);
                                           
-          -- Condicao para verificar se houve erro
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;
-          
-          -- Grava o valor da parcela que sera pago no periodo da carencia
-          IF pr_dtcarenc IS NOT NULL AND TO_CHAR(vr_datafinal,'DD') = TO_CHAR(pr_dtcarenc,'DD') THEN            
-            IF vr_datafinal >= pr_dtcarenc THEN
-              -- Condicao para verificar se foi calculado o price 
-              IF NOT vr_tab_price.EXISTS(vr_tab_price.COUNT) THEN
-                vr_dscritic := 'Nao foi possivel calcular o saldo devedor projetado';
-                RAISE vr_exc_erro;
-              END IF;
-              
-              -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
-              vr_nrparepr := pr_tab_parcelas.COUNT + 1;
-              pr_tab_parcelas(vr_nrparepr).nrparepr := vr_nrparepr;
-              pr_tab_parcelas(vr_nrparepr).vlparepr := vr_tab_price(vr_tab_price.LAST).vlparepr;
-              pr_tab_parcelas(vr_nrparepr).dtvencto := vr_datafinal;
-            END IF;
-          END IF;
-          
-          vr_datainicial := vr_datafinal;
-          IF TO_CHAR(vr_datafinal,'DD') = TO_CHAR(pr_dtdpagto,'DD') AND vr_datafinal <> LAST_DAY(vr_datafinal) THEN
-            vr_datafinal := LAST_DAY(vr_datafinal);
-          ELSE
-            vr_datafinal := ADD_MONTHS(TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||TO_CHAR(vr_datafinal,'/MM/RRRR'),'DD/MM/RRRR'),1);
-          END IF;      
-        END LOOP;
-        
-        -- Condicao para verificar se foi possivel calcular o saldo projetado
-        IF NOT vr_tab_price.EXISTS(vr_tab_price.first) THEN
-          vr_dscritic := 'Nao foi possivel calcular o saldo devedor projetado';
+        -- Condicao para verificar se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
+          
+        -- Grava o valor da parcela que sera pago no periodo da carencia
+        IF pr_dtcarenc IS NOT NULL AND TO_CHAR(vr_datafinal,'DD') = TO_CHAR(pr_dtcarenc,'DD') THEN            
+          IF vr_datafinal >= pr_dtcarenc THEN
+            -- Condicao para verificar se foi calculado o price 
+            IF NOT vr_tab_price.EXISTS(vr_tab_price.COUNT) THEN
+              vr_dscritic := 'Nao foi possivel calcular o saldo devedor projetado';
+              RAISE vr_exc_erro;
+            END IF;
+            
+            -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
+            vr_nrparepr := pr_tab_parcelas.COUNT + 1;
+            pr_tab_parcelas(vr_nrparepr).nrparepr := vr_nrparepr;
+            pr_tab_parcelas(vr_nrparepr).vlparepr := vr_tab_price(vr_tab_price.LAST).vlparepr;
+            pr_tab_parcelas(vr_nrparepr).dtvencto := vr_datafinal;
+          END IF;
+        END IF;
+          
+        vr_datainicial := vr_datafinal;
+        IF TO_CHAR(vr_datafinal,'DD') = TO_CHAR(pr_dtdpagto,'DD') AND vr_datafinal <> LAST_DAY(vr_datafinal) THEN
+          vr_datafinal := LAST_DAY(vr_datafinal);
+        ELSE
+          vr_datafinal := ADD_MONTHS(TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||TO_CHAR(vr_datafinal,'/MM/RRRR'),'DD/MM/RRRR'),1);
+        END IF;
+      END LOOP;
         
+      -- Condicao para verificar se foi possivel calcular o saldo projetado
+      IF vr_tab_price.EXISTS(vr_tab_price.last) THEN
         -- Saldo Devedor Projetado que sera a base para o calculo da parcela
         vr_saldo_projetado := vr_tab_price(vr_tab_price.last).saldo_projetado;
       END IF;
