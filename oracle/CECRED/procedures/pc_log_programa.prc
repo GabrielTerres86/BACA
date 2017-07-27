@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_texto_chamado IN VARCHAR2                                   DEFAULT NULL, -- Texto do chamado
   pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
   pr_flreincidente IN INTEGER                                    DEFAULT 0,    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
-  PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
+  PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                  -- Identificador unico da tabela (sequence)
   ) IS
   PRAGMA AUTONOMOUS_TRANSACTION;  
 BEGIN
@@ -40,6 +40,9 @@ BEGIN
                            (Lucas Ranghetti #678334)
                            
               24/07/2017 - Inclusão validação para leitura modulo/ação do banco
+                           (Ana Volles - Envolti - Chamado 696499)
+
+              27/07/2017 - Inclusão nvl para validação de PR_IDPRGLOG
                            (Ana Volles - Envolti - Chamado 696499)
   .......................................................................................... */
   DECLARE 
@@ -168,7 +171,7 @@ BEGIN
   CASE 
     ----Início----------------------------------------------------------
     WHEN upper(pr_dstiplog) = 'I' THEN
-      IF PR_IDPRGLOG = 0 THEN -- Executa apenas na primeira chamada
+      IF nvl(PR_IDPRGLOG,0) = 0 THEN -- Executa apenas na primeira chamada
 
         -- Verifica a última execução do programa no dia
         OPEN cr_ultima_execucao;
@@ -186,7 +189,7 @@ BEGIN
     ----Fim-------------------------------------------------------------
     WHEN upper(pr_dstiplog) = 'F' THEN
       BEGIN 
-        IF PR_IDPRGLOG = 0 THEN
+        IF nvl(PR_IDPRGLOG,0) = 0 THEN
           -- Verifica a última execução do programa no dia
           OPEN cr_ultima_execucao;
           FETCH cr_ultima_execucao INTO rw_ultima_execucao;
