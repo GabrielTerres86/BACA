@@ -6,6 +6,7 @@
  * --------------
  * ALTERAÇÕES   : 06/01/2016 - Adicionar campo de libera credito pre-aprovado (Anderson).
  *                27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado (Lombardi)
+ *                03/05/2017 - Ajuste na label do campo flgrenli para o projeto 300. (Lombardi)
  * --------------
  */
 // Função para acessar opções da rotina
@@ -186,7 +187,7 @@ function controlaLayout(operacao) {
 		cDtfinal.css('width', '80px').desabilitaCampo();
 		
 		// Formatação dos rotulos
-		rFlgrenli.css('width', '250px');
+		rFlgrenli.css('width', '381px');
 		rFlgcrdpa.css('width', '250px');
 		rDtultatt.css('width', '150px');
 		rMotivo_bloqueio.css('width', '200px');
