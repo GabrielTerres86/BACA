@@ -571,6 +571,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                21/07/2017 - Ajuste na geracao das Entradas de cheques em custodia do dia para
  							incluir penas custodias nao descontadas (Daniel)
 
+               26/07/2017 - Ajuste na geracao das informacoes de cheques em custodia para
+ 							incluir penas custodias nao descontadas (Daniel)
+
 
 ............................................................................ */
 
@@ -793,7 +796,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      where crapcst.cdcooper = pr_cdcooper
        and crapcst.dtlibera > pr_dtmvtoan
        and crapcst.dtlibera <= pr_dtmvtolt
-       and crapcst.dtdevolu is null;
+       and crapcst.dtdevolu is null
+	   and crapcst.nrborder = 0;
   -- Resgates de cheques em custodia do dia / transf. para desconto de cheques
   cursor cr_crapcst3 (pr_cdcooper in craptab.cdcooper%type,
                       pr_dtmvtolt in crapdat.dtmvtolt%type) is
@@ -803,7 +807,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            insitchq
       from crapcst
      where crapcst.cdcooper = pr_cdcooper
-       and crapcst.dtdevolu = pr_dtmvtolt;
+       and crapcst.dtdevolu = pr_dtmvtolt
+	   and crapcst.nrborder = 0;
   -- Títulos compensáveis
   cursor cr_craptit (pr_cdcooper in craptit.cdcooper%type,
                      pr_dtmvtolt in craptit.dtmvtolt%type,

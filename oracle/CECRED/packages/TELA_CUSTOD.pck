@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.TELA_CUSTOD IS
+CREATE OR REPLACE PACKAGE TELA_CUSTOD IS
 
   /*-------------------------------------------------------------------------
   --
@@ -212,7 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CUSTOD IS
 	
 END TELA_CUSTOD;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
+CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
   /*-------------------------------------------------------------------------
   --
   --  Programa : TELA_CUSTOD
@@ -2828,7 +2828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para custodiar os cheques conciliados na remessa
 
-    Alteracoes: 
+    Alteracoes: Ajuste no no cdoperad informado na geracao da previa (Daniel)
                                                      
   ............................................................................. */
 		DECLARE
@@ -3002,7 +3002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 										,pr_nrdconta => pr_nrdconta  --> Nr. da conta
 										,pr_nrconven => pr_nrconven  --> Número do convênvio
 										,pr_nrremret => pr_nrremret  --> Remessa
-										,pr_cdoperad => pr_intipmvt  --> Operador
+										,pr_cdoperad => vr_cdoperad  --> Operador
 										,pr_cdcritic => vr_cdcritic  --> Cód. da crítica
 										,pr_dscritic => vr_dscritic);--> Desc. da crítica
       
@@ -3432,7 +3432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 						
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;					
-			
+
 			--Selecionar os dados da tabela de Associados
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -3600,7 +3600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CUSTOD IS
 		   WHERE hcc.rowid = rw_craphcc.rowid;
       -- Efetuar commit
 			COMMIT;
-			
+      
       
       vr_dstransa := 'Exclusao da remessa ' || 'Nro.: ' || pr_nrremret;
           
