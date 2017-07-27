@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 10/03/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 12/06/2017
 
    Dados referentes ao programa:
 
@@ -496,6 +496,8 @@
                24/04/2017 - Nao considerar valores bloqueados na composicao do saldo disponivel
                             Heitor (Mouts) - Melhoria 440
 
+               12/06/2017 - Nao deixar realizar lancamento do historico 1668 - Estorno de débito indevido               
+                            na viacredi (Tiago/Fabricio #661260)
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -1075,6 +1077,14 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                PAUSE 3 NO-MESSAGE.
                NEXT.
            END.
+   
+      /* 1668 - Estorno de débito indevido. */     
+      IF  glb_cdcooper = 1 AND tel_cdhistor = 1668 THEN
+          DO:
+               MESSAGE "Historico nao permitido. Consulte a sede da cooperativa.".
+               PAUSE 3 NO-MESSAGE.
+               NEXT.
+          END.
    
       IF   CAN-DO ("3,4",STRING(tel_cdhistor))   THEN
            DO:
@@ -4696,6 +4706,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                             aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                                                 ,INPUT tel_nrdctabb
                                                                 ,INPUT his_nrctremp
+																,INPUT 3
                                                                 ,OUTPUT 0
                                                                 ,OUTPUT 0
                                                                 ,OUTPUT "").
