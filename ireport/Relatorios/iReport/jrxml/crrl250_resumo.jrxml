@@ -46,14 +46,14 @@
 	<columnHeader>
 		<band height="40">
 			<staticText>
-				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="337" y="24" width="80" height="8"/>
+				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="337" y="24" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<text><![CDATA[PRESTACAO]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="422" y="24" width="80" height="8"/>
+				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="429" y="24" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -74,11 +74,11 @@
 				<text><![CDATA[---------------------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="337" y="32" width="80" height="8"/>
+				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="337" y="32" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
-				<text><![CDATA[--------------]]></text>
+				<text><![CDATA[-----------------]]></text>
 			</staticText>
 			<staticText>
 				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="220" y="24" width="50" height="8"/>
@@ -95,11 +95,11 @@
 				<text><![CDATA[----------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="422" y="32" width="80" height="8"/>
+				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="429" y="32" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
-				<text><![CDATA[--------------]]></text>
+				<text><![CDATA[-----------------]]></text>
 			</staticText>
 			<staticText>
 				<reportElement uuid="786ef8d8-ea03-4ec6-8f2f-21fcd35f05cc" x="280" y="24" width="50" height="8"/>
@@ -127,14 +127,14 @@
 	<detail>
 		<band height="8">
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
-				<reportElement uuid="2c1b9ac3-4781-446e-9820-53511dcec476" x="337" y="0" width="80" height="8"/>
+				<reportElement uuid="2c1b9ac3-4781-446e-9820-53511dcec476" x="337" y="0" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vltotpla}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
-				<reportElement uuid="d117dcd1-e465-4a47-baf5-40ae3a10ebaa" x="422" y="0" width="80" height="8"/>
+				<reportElement uuid="d117dcd1-e465-4a47-baf5-40ae3a10ebaa" x="429" y="0" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -180,14 +180,14 @@
 				<textFieldExpression><![CDATA[$V{vr_tot_qtdplano}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
-				<reportElement uuid="2c1b9ac3-4781-446e-9820-53511dcec476" x="337" y="0" width="80" height="8"/>
+				<reportElement uuid="2c1b9ac3-4781-446e-9820-53511dcec476" x="337" y="0" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{vr_tot_vltotpla}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
-				<reportElement uuid="2c1b9ac3-4781-446e-9820-53511dcec476" x="422" y="0" width="80" height="8"/>
+				<reportElement uuid="2c1b9ac3-4781-446e-9820-53511dcec476" x="429" y="0" width="85" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>

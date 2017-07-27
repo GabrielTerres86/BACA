@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl006_agencias" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl006_agencias" language="groovy" pageWidth="650" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="650" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
@@ -181,42 +181,42 @@
 	<detail>
 		<band height="96" splitType="Stretch">
 			<staticText>
-				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="52" y="24" width="15" height="8"/>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="50" y="24" width="15" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<text><![CDATA[==>]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="140" y="48" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="156" y="48" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cl_agpsddis}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="418" y="48" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="457" y="48" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cl_agpsdbtl}.trim()]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="52" y="0" width="15" height="8"/>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="50" y="0" width="15" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<text><![CDATA[==>]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="140" y="32" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="156" y="32" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ca_agpsddis}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="418" y="0" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="457" y="0" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -230,7 +230,7 @@
 				<text><![CDATA[CRED. LIQ.   ]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="140" y="16" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="156" y="16" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -251,14 +251,14 @@
 				<text><![CDATA[TOTAL GERAL ]]></text>
 			</staticText>
 			<textField pattern="#,##0;-#,##0">
-				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="210" y="32" width="61" height="8"/>
+				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="246" y="32" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ca_agpvllim}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0;-#,##0">
-				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="210" y="48" width="61" height="8"/>
+				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="246" y="48" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -272,42 +272,42 @@
 				<text><![CDATA[CHEQUE ADM.   ]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="418" y="32" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="457" y="32" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ca_agpsdbtl}.trim()]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="52" y="48" width="15" height="8"/>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="50" y="48" width="15" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<text><![CDATA[==>]]></text>
 			</staticText>
 			<textField pattern="#,##0;-#,##0">
-				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="210" y="0" width="61" height="8"/>
+				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="246" y="0" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{g_vltotlim}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="140" y="24" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="156" y="24" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pj_agpsddis}.trim()]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="52" y="16" width="15" height="8"/>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="50" y="16" width="15" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<text><![CDATA[==>]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="140" y="0" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="156" y="0" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -321,140 +321,140 @@
 				<text><![CDATA[P. FISICA    ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="52" y="32" width="15" height="8"/>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="50" y="32" width="15" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<text><![CDATA[==>]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="418" y="24" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="457" y="24" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pj_agpsdbtl}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0;-#,##0">
-				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="210" y="16" width="61" height="8"/>
+				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="246" y="16" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pf_agpvllim}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="418" y="16" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="457" y="16" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pf_agpsdbtl}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0;-#,##0">
-				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="210" y="24" width="61" height="8"/>
+				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="246" y="24" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pj_agpvllim}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="470" y="0" width="50" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="509" y="0" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{g_vlsdchsl}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="470" y="16" width="50" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="509" y="16" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pf_agpsdchs}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="470" y="24" width="50" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="509" y="24" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pj_agpsdchs}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="470" y="32" width="50" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="509" y="32" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ca_agpsdchs}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="470" y="48" width="50" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="509" y="48" width="50" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cl_agpsdchs}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="527" y="0" width="61" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="566" y="0" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{g_vlstotal}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="527" y="16" width="61" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="566" y="16" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pf_agpsdstl}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="527" y="24" width="61" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="566" y="24" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pj_agpsdstl}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="527" y="32" width="61" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="566" y="32" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ca_agpsdstl}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="527" y="48" width="61" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="566" y="48" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cl_agpsdstl}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="70" y="0" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="71" y="0" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{g_vlsaqmax}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="70" y="16" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="71" y="16" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pf_agpsdmax}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="70" y="24" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="71" y="24" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pj_agpsdmax}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="70" y="32" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="71" y="32" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ca_agpsdmax}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="70" y="48" width="61" height="8"/>
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="71" y="48" width="82" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -468,7 +468,7 @@
 				<textFieldExpression><![CDATA[$F{med_dsparfin}.trim()]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="52" y="64" width="15" height="8"/>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="50" y="64" width="15" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -573,7 +573,7 @@
 				<textFieldExpression><![CDATA[$F{con_vladiant}.trim()]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="57" y="80" width="15" height="8"/>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="55" y="80" width="15" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
@@ -587,35 +587,35 @@
 				<text><![CDATA[CONTABILIZAR]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="363" y="0" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="402" y="0" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{g_vlblqjud}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="363" y="16" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="402" y="16" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pf_agpsdbjd}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="363" y="24" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="402" y="24" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{pj_agpsdbjd}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="363" y="32" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="402" y="32" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{ca_agpsdbjd}.trim()]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="363" y="48" width="45" height="8"/>
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="402" y="48" width="45" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>

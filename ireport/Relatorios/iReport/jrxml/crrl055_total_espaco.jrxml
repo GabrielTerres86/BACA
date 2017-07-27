@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl055_99_espaco" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
-	<property name="ireport.x" value="20"/>
+	<property name="ireport.x" value="520"/>
 	<property name="ireport.y" value="0"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -125,7 +125,7 @@
 					<text><![CDATA[BLOQUEADO]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="79fb0daa-2517-4349-b5b2-8a5fd1c8c3c0" x="512" y="0" width="70" height="8"/>
+					<reportElement uuid="79fb0daa-2517-4349-b5b2-8a5fd1c8c3c0" x="512" y="0" width="80" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
@@ -188,11 +188,11 @@
 					<text><![CDATA[-------------]]></text>
 				</staticText>
 				<staticText>
-					<reportElement uuid="48f453d7-3fdd-4450-9ab1-f0ac02effeab" x="512" y="8" width="70" height="8"/>
+					<reportElement uuid="48f453d7-3fdd-4450-9ab1-f0ac02effeab" x="512" y="8" width="80" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
-					<text><![CDATA[----------------]]></text>
+					<text><![CDATA[------------------]]></text>
 				</staticText>
 			</band>
 		</groupHeader>
@@ -241,7 +241,7 @@
 					<textFieldExpression><![CDATA[$V{tot_vlsdbltl}]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;-#,##0.00">
-					<reportElement uuid="1a105650-9628-41ea-8499-ee0be910fb83" x="512" y="9" width="70" height="8"/>
+					<reportElement uuid="1a105650-9628-41ea-8499-ee0be910fb83" x="512" y="9" width="80" height="8"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="7"/>
 					</textElement>
@@ -346,7 +346,7 @@
 				<textFieldExpression><![CDATA[$F{vlsdbltl}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00">
-				<reportElement uuid="b8c5b8c1-1976-460b-b9df-78e6ede5c1f4" x="512" y="0" width="70" height="8"/>
+				<reportElement uuid="b8c5b8c1-1976-460b-b9df-78e6ede5c1f4" x="512" y="0" width="80" height="8"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="7"/>
 				</textElement>
