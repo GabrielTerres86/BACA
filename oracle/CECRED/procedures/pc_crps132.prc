@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/95.                        Ultima atualizacao: 22/11/2013
+   Data    : Setembro/95.                        Ultima atualizacao: 01/12/2016
 
    Dados referentes ao programa:
 
@@ -60,6 +60,16 @@ BEGIN
                             variaveis vr_vlmensal, vr_vlsaldev, vr_saldodev de
                             crapepr.vlsdeved%type para number(25,2). (Edison-AMcom)
 
+               22/08/2016 - Adicionado operações de financiamento do BNDES 
+							              no relatório 109. (Reinert)
+
+               11/10/2016 - Limpeza e inclusao de valor de emprestimo ou financiamento, 
+                            na tabela TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
+
+
+               01/12/2016 - Ajuste para zerar a vr_tab_financ(vr_idfina).qtfinanc
+							quando nao tem valor. (Jaison/Diego - SD: 534498)
+
 ............................................................................. */
 
   DECLARE
@@ -99,6 +109,23 @@ BEGIN
        WHERE crapepr.cdcooper = pr_cdcooper
          AND crapepr.inliquid = 0
          AND crapepr.vlsdeved > 0;
+
+    -- Financiamentos BNDES
+    CURSOR cr_crapebn(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+		  SELECT ebn.vlaven30 -- Divida a vencer ate 30 dias.
+			      ,ebn.vlaven60 -- Divida a vender de 31 a 60 dias.
+						,ebn.vlaven90 -- Divida a vencer de 61 a 90 dias.
+						,ebn.vlave180 -- Divida a vencer de 91 a 180 dias.
+						,ebn.vlave360 -- Divida a vencer de 181 a 360 dias.
+						,ebn.vlave720 -- Divida a vencer de 361 a 720 dias.
+						,ebn.vlav1080 -- Divida a vencer de 721 a 1080 dias.
+						,ebn.vlav1440 -- Divida a vencer de 1081 a 1440 dias.
+						,ebn.vlav1800 -- Divida a vencer de 1441 a 1800 dias.
+						,ebn.vlav5400 -- Divida a vencer de 1801 a 5400 dias.
+						,ebn.vlaa5400 -- Divida a vencer acima de 5400 dias.
+			  FROM crapebn ebn
+			 WHERE ebn.cdcooper = pr_cdcooper
+			   AND ebn.insitctr IN('N','A');
 
     -- Ler Cadastro de Linhas de Credito
     CURSOR cr_craplcr (pr_cdcooper IN craptab.cdcooper%TYPE,
@@ -159,6 +186,7 @@ BEGIN
     vr_idfina   number;
     vr_nrmes    number;
     vr_desperio varchar2(30);
+    vr_cdprazo  tbfin_fluxo_contas_sysphera.cdprazo%TYPE;
 
     --Valores acumulados para enviar para a contabilidade
     vr_vlacempr NUMBER;
@@ -263,6 +291,7 @@ BEGIN
           IF pr_dsoperac = 'FINANCIAMENTO' THEN
             vr_tab_financ(pr_idfina).retfinan := nvl(vr_tab_financ(pr_idfina).retfinan,0) + vr_vldivida;
             vr_tab_financ(pr_idfina).qtfinanc := nvl(vr_tab_financ(pr_idfina).qtfinanc,0) + 1;
+
           ELSE /* EMPRESTIMO */
             vr_tab_financ(pr_idfina).retempre := nvl(vr_tab_financ(pr_idfina).retempre,0) + vr_vldivida;
             vr_tab_financ(pr_idfina).qtempres := nvl(vr_tab_financ(pr_idfina).qtempres,0) + 1;
@@ -382,6 +411,17 @@ BEGIN
       RAISE vr_exc_erro;
     END IF;
 
+    -- Limpa historico passado da tabela de alimentacao ao BI, ja que eh necessario o mes atual
+    BEGIN
+      DELETE tbfin_fluxo_contas_sysphera
+       WHERE cdcooper = pr_cdcooper
+         AND cdconta = 9;
+    EXCEPTION
+      WHEN OTHERS THEN
+      vr_dscritic := 'Problema ao limpar tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+      RAISE vr_exc_erro;
+    END;
+
     --Inicializar array, com os meses para mesmo se n?o houver valores no periodo exibir no relatorio.
     FOR vr_idx IN 1..19 LOOP
       IF vr_idx <= 4 THEN
@@ -393,7 +433,7 @@ BEGIN
 
     --Ler Cadastro de emprestimos
     FOR rw_crapepr in cr_crapepr(pr_cdcooper => pr_cdcooper) LOOP
-
+      
       -- Verificar se existe Cadastro de Linhas de Credito
       OPEN cr_craplcr( pr_cdcooper => pr_cdcooper
                       ,pr_cdlcremp => rw_crapepr.cdlcremp);
@@ -569,6 +609,82 @@ BEGIN
 
     END LOOP; /*  Fim do FOR --  Leitura dos resgates programados  */
 
+		-- Empréstimos do BNDES
+		FOR rw_crapebn IN cr_crapebn(pr_cdcooper => pr_cdcooper) LOOP
+			
+      -- 90 dias / 3 meses
+			vr_idfina := 1;
+			vr_nrmes := 3;
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlaven30 + rw_crapebn.vlaven60 + rw_crapebn.vlaven90;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN (rw_crapebn.vlaven30 + rw_crapebn.vlaven60 + rw_crapebn.vlaven90) > 0 THEN 1 ELSE 0 END);
+				
+      -- 180 dias / 6 meses
+			vr_idfina := 2;
+			vr_nrmes := 6;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave180;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlave180 > 0 THEN 1 ELSE 0 END);
+
+      -- 360 dias / 12 meses
+			vr_idfina := 4;
+			vr_nrmes := 12;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave360;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlave360 > 0 THEN 1 ELSE 0 END);
+			
+      -- 720 dias / 24 meses
+			vr_idfina := 5;
+			vr_nrmes := 24;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave720;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlave720 > 0 THEN 1 ELSE 0 END);
+			
+      -- 1080 dias / 36 meses
+			vr_idfina := 6;
+			vr_nrmes := 36;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1080;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav1080 > 0 THEN 1 ELSE 0 END);
+
+      -- 1440 dias / 48 meses
+			vr_idfina := 7;
+			vr_nrmes := 48;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1440;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav1440 > 0 THEN 1 ELSE 0 END);
+			
+      -- 1800 dias / 60 meses
+			vr_idfina := 8;
+			vr_nrmes := 60;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1800;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav1800 > 0 THEN 1 ELSE 0 END);
+
+      -- 5400 dias / 180 meses
+			vr_idfina := 18;
+			vr_nrmes := 180;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav5400;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav5400 > 0 THEN 1 ELSE 0 END);
+
+      -- >5400 dias / 181 meses
+			vr_idfina := 19;
+			vr_nrmes := 181;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlaa5400;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlaa5400 > 0 THEN 1 ELSE 0 END);
+		END LOOP;
+
     --Armazenar valores acumulados
     FOR vr_idx in 1..19 LOOP
       -- Se for o primeiro somente atribui
@@ -626,9 +742,58 @@ BEGIN
       -- Montar descricao do periodo
       IF vr_tab_financ(vr_idx).qtdiames > 5400 THEN
         vr_desperio := 'MAIS DE 5400 DIAS';
+        vr_cdprazo  := 5401;
       ELSE
         vr_desperio := 'ATE '||lpad(vr_tab_financ(vr_idx).qtdiames,4,' ')||' DIAS';
+        vr_cdprazo  := vr_tab_financ(vr_idx).qtdiames;
       END IF;
+
+      -- Incluir registro para cada valor por periodo para emprestimo ou financiamento
+      BEGIN
+        IF NVL(vr_tab_financ(vr_idx).retempre,0) > 0 THEN
+          INSERT INTO tbfin_fluxo_contas_sysphera
+                       (cdcooper
+                       ,dtmvtolt
+                       ,cdconta
+                       ,nrseqconta
+                       ,cdprazo
+                       ,vlacumulado
+                       ,cdoperador
+                       ,datalteracao)
+                 VALUES(pr_cdcooper
+                       ,rw_crapdat.dtmvtolt
+                       ,9
+                       ,1 -- Emprestimos
+                       ,vr_cdprazo
+                       ,vr_tab_financ(vr_idx).retempre
+                       ,'1'
+                       ,SYSDATE);
+      END IF;
+
+        IF NVL(vr_tab_financ(vr_idx).retfinan,0) > 0 THEN
+          INSERT INTO tbfin_fluxo_contas_sysphera
+                       (cdcooper
+                       ,dtmvtolt
+                       ,cdconta
+                       ,nrseqconta
+                       ,cdprazo
+                       ,vlacumulado
+                       ,cdoperador
+                       ,datalteracao)
+                 VALUES(pr_cdcooper
+                       ,rw_crapdat.dtmvtolt
+                       ,9
+                       ,2 -- Financiamentos
+                       ,vr_cdprazo
+                       ,vr_tab_financ(vr_idx).retfinan
+                       ,'1'
+                       ,SYSDATE);
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao incluir tbfin_fluxo_contas_sysphera: ' || SQLERRM;
+        RAISE vr_exc_erro;
+      END;
 
       pc_escreve_xml('<detalhes>
                          <desperio>'||vr_desperio                          ||'</desperio>
@@ -867,4 +1032,3 @@ BEGIN
   END;
 END;
 /
-
