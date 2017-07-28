@@ -2152,6 +2152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              tbblqj_ordem_online a
        WHERE a.tpordem = 4 -- Ted
          AND a.instatus = 1 -- Pendente
+		 AND b.idordem = a.idordem
          AND a.dhrequisicao < trunc(SYSDATE) -- Somente buscar as do dia anterior,
                                    -- pois as teds estavam sendo devolvidas (problema com a Caixa Economica)         AND b.idordem = a.idordem
          ORDER BY a.cdcooper,
