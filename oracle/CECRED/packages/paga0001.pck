@@ -2173,7 +2173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2007.                       Ultima atualizacao: 25/05/2016
+   Data    : Abril/2007.                       Ultima atualizacao: 28/07/2017
    
    Dados referentes ao programa:
    
@@ -2252,7 +2252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                             na tag que monta as contas destinos
                             (Adriano - M117).                           
                             
-                            
+               28/07/2017 - Ajustes referente a melhoria 342. (Kelvin)          
     .................................................................................*/                           
                                
     --Cursor para obter os 10 bancos mais utilizados
@@ -2446,6 +2446,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                  '<vldspted>' || to_char(vr_tab_internet(vr_tab_internet.first).vldspted,'FM999G999G999G990D00') || '</vldspted>');
         END IF;
       
+        --Flag para identificar se transferência credito salário está ativo    
+        vr_flghbtrc := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdcooper => pr_cdcooper
+                                                ,pr_cdacesso => 'FOLHAIB_HABILITA_TRANSF');
+        
         gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
                                ,pr_texto_completo => vr_xml_temp                               
                                ,pr_texto_novo     =>
@@ -2453,6 +2458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                  '<dstiptra>TRANSFERENCIA</dstiptra>' ||
 								                 '<qtmesrec>' || vr_tab_limite(vr_tab_limite.first).qtmesrec || '</qtmesrec>' ||
                                  '<qtmesfut>' || vr_tab_limite(vr_tab_limite.first).qtmesfut || '</qtmesfut>' ||
+                                 '<flghbtrf>' || TO_CHAR(vr_flghbtrc)                        || '</flghbtrf>' ||                                               
                                '</LIMITE>');
                                
       END IF;   
@@ -2488,11 +2494,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     
     vr_index_contas_cad := vr_tab_contas_cadastradas.FIRST;
     
-    --Flag para identificar se transferência credito salário está ativo    
-    vr_flghbtrc := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                            ,pr_cdcooper => pr_cdcooper
-                                            ,pr_cdacesso => 'FOLHAIB_HABILITA_TRANSF');
-    
     WHILE vr_index_contas_cad IS NOT NULL LOOP      
       
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao23
@@ -2515,7 +2516,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                 ||   '<dsageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).dsageban)    ||'</dsageban>'
                                                 ||   '<nmageban>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmageban)    ||'</nmageban>'
                                                 ||   '<nmsegntl>'||TO_CHAR(vr_tab_contas_cadastradas(vr_index_contas_cad).nmtitul2)    ||'</nmsegntl>'
-                                                ||   '<flghbtrf>'||TO_CHAR(vr_flghbtrc)                                                ||'</flghbtrf>'                                                
                                                 || '</DADOS>');   
                            
       vr_index_contas_cad := vr_tab_contas_cadastradas.NEXT(vr_index_contas_cad);
