@@ -16,6 +16,10 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --              22/12/2016 - Incluidos novos campos para os tipos typ_rec_contrato_limite
   --                           e typ_rec_chq_bordero. Projeto 300 (Lombardi)
   --  
+  --              20/06/2017 - Incluida validacao de tamanho na atribuicao do campo de operador
+  --                           (ID + Nome) pois estava estourando a variavel.
+  --                           Heitor (Mouts) - Chamado 695581
+  --
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Tabela para armazenar parametros para desconto de titulo(antigo b1wgen0030tt.i/tt-dsctit.)
@@ -3125,7 +3129,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --                            de limite de desconto de cheques. Projeto 300 (Lombardi)
     --
     --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
-    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
+    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 	
+    --
+    --               25/07/2017 - Alteração no cálculo da taxa de juros diária do borderô de 
+    --                            Desconto de Cheques. PRJ300 - Desconto de cheque (Lombardi) 	
+    --               
     -- .........................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -3890,14 +3898,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         RAISE vr_exc_erro;
       END IF;
       
-      vr_rel_txdiaria := apli0001.fn_round((power(1 + (vr_tab_dados_border(vr_idxborde).txmensal / 100),
-                          1 / 30) - 1) * 100,7);
+      vr_rel_txdiaria := apli0001.fn_round(((vr_tab_dados_border(vr_idxborde).txmensal / 100) / 30) * 100,7); 
                           
       vr_rel_txdanual := apli0001.fn_round((power(1 + (vr_tab_dados_border(vr_idxborde).txmensal / 100),
                           12) - 1) * 100,6);
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
-      vr_rel_dsopecoo := vr_tab_dados_border(vr_idxborde).dsopecoo;
+      vr_rel_dsopecoo := substr(vr_tab_dados_border(vr_idxborde).dsopecoo,1,40);
       
      
       --> Informacoes da Carteira de Cobranca
