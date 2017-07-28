@@ -123,6 +123,7 @@ function reabilitaForm() {
     DEF VAR aux_nmarqlog        AS CHAR            NO-UNDO.
     DEF VAR de-valor-bloqueado      AS DEC                    NO-UNDO.
     DEF VAR de-valor-liberado       AS DEC                    NO-UNDO.
+    def var aux_limite-credito as dec              no-undo.
 
 
     DEFINE TEMP-TABLE w-craperr  NO-UNDO
@@ -239,6 +240,61 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                            v_totdepos = v_totdepos + crapmdw.vlcompel.
             
                 FIND CURRENT tt-cheques NO-LOCK.
+                
+                ASSIGN aux_limite-credito = 0
+                       de-valor-liberado  = 0
+                       de-valor-bloqueado = 0.
+               
+                IF GET-VALUE("ok") <> "" THEN 
+                   DO:                     
+                        RUN dbo/b1crap02.p PERSISTENT SET h-b1crap02.
+             
+                        RUN consulta-conta IN h-b1crap02(INPUT v_coop,
+                                                         INPUT int(v_pac),
+                                                         INPUT int(v_caixa),
+                                                         INPUT crapmdw.nrctaaux,
+                                                        OUTPUT TABLE tt-conta).
+                        DELETE PROCEDURE h-b1crap02.
+                         
+                         FIND FIRST tt-conta NO-LOCK NO-ERROR.
+                         IF  AVAIL tt-conta   THEN  
+                             DO:
+                                 IF  tt-conta.cheque-salario = 0   THEN
+                                     DO:
+                                         ASSIGN de-valor-bloqueado = 
+                                                         tt-conta.bloqueado      +
+                                                         tt-conta.bloq-praca     +
+                                                         tt-conta.bloq-fora-praca
+                                                de-valor-liberado = tt-conta.acerto-conta.
+                                     END.
+                                     
+                                 ASSIGN aux_limite-credito = tt-conta.limite-credito.
+                             END.
+                             
+                         ASSIGN aux_nmarqlog = "/usr/coop/" + crapcop.dsdircop + 
+                                                         "/log/caixa_online_"            +
+                                                         STRING(YEAR(TODAY),"9999")      +
+                                                         STRING(MONTH(TODAY),"99")       +
+                                                         STRING(DAY(TODAY),"99") + ".log".    
+                                                         
+                        /* Logar para identificar se cooperado tera saldo para cobrir o deposito */
+                         UNIX SILENT VALUE("echo " +  
+                                         STRING(TIME,"HH:MM:SS") + "' --> '"          +
+                                         "ROTINA: " + CAPS(p-programa) + "/CRAP051c"  +
+                                         " PA: " + STRING(v_pac)                      +
+                                         " CAIXA: " + STRING(v_caixa)                 +
+                                         " OPERADOR: " + STRING(v_operador)           +
+                                         " CONTA DEPOSITADA: " + STRING(v_conta)      +
+                                         " BANCO: " + STRING(crapmdw.cdbanchq)        +
+                                         " AGENCIA: " + STRING(crapmdw.cdagechq)      +                                                 
+                                         " CONTA CHEQUE: " + STRING(crapmdw.nrctabdb) +
+                                         " CHEQUE: " + string(crapmdw.nrcheque)       + 
+                                         " VALOR CHEQUE: " + STRING(crapmdw.vlcompel,"zzzz,zz9.99") +
+                                         " SALDO CONTA CHEQUE: " + STRING(de-valor-liberado,"-zzz,zzz,zz9.99") + 
+                                         " VALOR LIMITE: " + STRING(aux_limite-credito,"zzz,zzz,zz9.99")       + 
+                                         " CMC7: '" + STRING(crapmdw.dsdocmc7)        +
+                                         "' >> " + aux_nmarqlog).  
+                   END.
             END.
             /* Fim da montagem dos dados do resumo */        
              
@@ -431,53 +487,9 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                                    IF  AVAIL crapfdc THEN
                                        ASSIGN aux_achou = true.
                                    
-                                   RUN dbo/b1crap02.p PERSISTENT SET h-b1crap02.
-
-                                   RUN consulta-conta IN h-b1crap02(INPUT v_coop,
-                                                                    INPUT int(v_pac),
-                                                                    INPUT int(v_caixa),
-                                                                    INPUT crapmdw.nrctabdb,
-                                                                   OUTPUT TABLE tt-conta).
-                                   DELETE PROCEDURE h-b1crap02.
-
-                                   IF  RETURN-VALUE <> "OK"   THEN
-                                       RETURN "NOK".
-                                       
-                                    FIND FIRST tt-conta NO-LOCK NO-ERROR.
-                                    IF  AVAIL tt-conta   THEN  
-                                        DO:
-                                            IF  tt-conta.cheque-salario = 0   THEN
-                                                DO:
-                                                    ASSIGN de-valor-bloqueado = 
-                                                                    tt-conta.bloqueado      +
-                                                                    tt-conta.bloq-praca     +
-                                                                    tt-conta.bloq-fora-praca
-                                                           de-valor-liberado = 
-                                                                    tt-conta.acerto-conta   -
-                                                                    de-valor-bloqueado.
-                               END.
-                                        END.
                                    
-                                   ASSIGN aux_nmarqlog = "/usr/coop/" + crapcop.dsdircop + 
-                                                         "/log/caixa_online_"            +
-                                                         STRING(YEAR(TODAY),"9999")      +
-                                                         STRING(MONTH(TODAY),"99")       +
-                                                         STRING(DAY(TODAY),"99") + ".log".    
-                                                         
-                                    /* Logar para identificar se cooperado tera saldo para cobrir o deposito */
-                                     UNIX SILENT VALUE("echo " +  
-                                                     STRING(TIME,"HH:MM:SS") + "' --> '"          +
-                                                     "ROTINA: " + CAPS(p-programa) + "/CRAP051c"  +
-                                                     " PA: " + string(v_pac)                      +
-                                                     " CAIXA: " + string(v_caixa)                 +
-                                                     " OPERADOR: " + STRING(v_operador)           +
-                                                     " CONTA DEPOSITADA: " + STRING(v_conta)      +
-                                                     " CONTA CHEQUE: " + STRING(crapmdw.nrctabdb) +
-                                                     " CHEQUE: " + string(crapmdw.nrcheque)       +
-                                                     " VALOR CHEQUE: " + STRING(v_valor1)         +
-                                                     " SALDO CONTA CHEQUE: " + STRING((de-valor-liberado + 
-                                                     tt-conta.limite-credito),"-zzz,zzz,zz9.99") + 
-                                                     " >> " + aux_nmarqlog).  
+                                   
+                                  
                                                                              
                                END.
                                 
