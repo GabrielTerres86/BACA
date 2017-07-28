@@ -223,7 +223,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 04/04/2017
+     Data    : Abril/2013                       Ultima atualizacao: 17/07/2017
 
      Dados referentes ao programa:
 
@@ -308,6 +308,10 @@ create or replace package body cecred.SICR0001 is
 
 				 04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
 				              (Jonata - RKAM M311).
+                      
+                 17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+                              conta e referencia no mesmo dia(dtmvtolt) porem com valores
+                              diferentes (Lucas Ranghetti #684123)                      
   ..............................................................................*/
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
@@ -1159,7 +1163,7 @@ create or replace package body cecred.SICR0001 is
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Lucas Ranghetti
-    --   Data    : Maio/2014                       Ultima atualizacao: 04/04/2017
+    --   Data    : Maio/2014                       Ultima atualizacao: 17/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -1201,6 +1205,9 @@ create or replace package body cecred.SICR0001 is
 	--             04/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
 	--			               (Jonata - RKAM M311).
 	--
+    --             17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+    --                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
+    --                          diferentes (Lucas Ranghetti #684123)
     --------------------------------------------------------------------------------------------------------------------
   BEGIN
   
@@ -1219,6 +1226,7 @@ create or replace package body cecred.SICR0001 is
       vr_nmconven     crapcon.nmextcon%TYPE;
       vr_flultexe     INTEGER;
       vr_qtdexec      INTEGER;
+      vr_cdrefere     NUMBER;
     
       vr_dsinfor1     crappro.dsinform##1%TYPE;
       vr_dsinfor2     crappro.dsinform##1%TYPE;
@@ -1623,6 +1631,12 @@ create or replace package body cecred.SICR0001 is
           vr_cdcritic := 64; -- Cooperado demitido
         END IF;
       
+        IF vr_cdcritic = 453 THEN
+          vr_cdrefere:= rw_craplau.nrdocmto;
+        ELSE
+          vr_cdrefere:= rw_crapatr.cdrefere;
+        END IF;
+          
         IF vr_cdcritic > 0 THEN
         
           -- Gerar registros na crapndb para devolucao de debitos automaticos
@@ -1632,7 +1646,7 @@ create or replace package body cecred.SICR0001 is
                              ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
                              ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
                              ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
-                             ,pr_nrdocmto => rw_craplau.nrdocmto -- NÚMERO DO DOCUMENTO
+                             ,pr_nrdocmto => vr_cdrefere         -- NÚMERO DO DOCUMENTO
                              ,pr_cdagesic => pr_cdagesic -- AGÊNCIA SICREDI
                              ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
                              ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
@@ -1737,7 +1751,7 @@ create or replace package body cecred.SICR0001 is
                                  ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
                                  ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
                                  ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
-                                 ,pr_nrdocmto => rw_craplau.nrdocmto -- NÚMERO DO DOCUMENTO
+                                 ,pr_nrdocmto => vr_cdrefere         -- NÚMERO DO DOCUMENTO
                                  ,pr_cdagesic => pr_cdagesic         -- AGÊNCIA SICREDI
                                  ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
                                  ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
@@ -1823,7 +1837,7 @@ create or replace package body cecred.SICR0001 is
                                      pr_dtmvtolt => pr_dtmvtolt,
                                      pr_nrdconta => rw_craplau.nrdconta,
                                      pr_cdempres => rw_craplau.cdempres,
-                                     pr_nrdocmto => rw_craplau.nrdocmto,
+                                     pr_nrdocmto => vr_cdrefere,
                                      pr_nrctacns => rw_craplau.nrctacns,
                                      pr_vllanaut => rw_craplau.vllanaut,
                                      pr_cdagenci => vr_cdagenci,
@@ -1892,7 +1906,7 @@ create or replace package body cecred.SICR0001 is
                                      pr_dtmvtolt => pr_dtmvtolt,
                                      pr_nrdconta => rw_craplau.nrdconta,
                                      pr_cdempres => rw_craplau.cdempres,
-                                     pr_nrdocmto => rw_craplau.nrdocmto,
+                                     pr_nrdocmto => vr_cdrefere,
                                      pr_nrctacns => rw_craplau.nrctacns,
                                      pr_vllanaut => rw_craplau.vllanaut,
                                      pr_cdagenci => vr_cdagenci,
@@ -2016,7 +2030,7 @@ create or replace package body cecred.SICR0001 is
                           GENE0002.fn_mask(rw_craplau.cdbccxlt, '999')    || '-' ||
                           GENE0002.fn_mask(rw_craplau.nrdolote, '999999') || '-' ||
                           GENE0002.fn_mask(rw_craplau.nrseqdig, '99999')  || '-' ||
-                          rw_craplau.nrdocmto);
+                          vr_cdrefere);
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir craplcm: ' || SQLERRM;
@@ -2111,7 +2125,7 @@ create or replace package body cecred.SICR0001 is
           OPEN cr_crapatr(pr_cdcooper => rw_craplau.cdcooper,
                           pr_nrdconta => rw_craplau.nrdconta,
                           pr_cdhistor => rw_craplau.cdhistor,
-                          pr_cdrefere => rw_craplau.nrdocmto);
+                          pr_cdrefere => vr_cdrefere);
           FETCH cr_crapatr INTO rw_crapatr;
         
           IF cr_crapatr%NOTFOUND THEN
@@ -2653,7 +2667,7 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Odirlei Busana - AMcom
-  --   Data    : Novembro/2015                       Ultima atualizacao: 19/01/2017
+  --   Data    : Novembro/2015                       Ultima atualizacao: 17/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -2662,6 +2676,9 @@ create or replace package body cecred.SICR0001 is
   --
   --  Alteracoes: 19/01/2017 - Incluir validacao em casos que a DEBNET chamar (Lucas Ranghetti #533520)
   --
+  --             17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+  --                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
+  --                          diferentes (Lucas Ranghetti #684123)
   --------------------------------------------------------------------------------------------------------------------*/
     -------------> CURSOR <--------------
     -- BUSCA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
@@ -2749,7 +2766,7 @@ create or replace package body cecred.SICR0001 is
         END IF;
 
       END LOOP; -- FIM DO LOOP
-    ELSIF pr_cdprogra = 'PAGA0001' THEN
+    ELSIF pr_cdprogra IN( 'PAGA0001', 'SICR0001') THEN
       
       vr_flagatr := 0;
       OPEN cr_crapatr(pr_cdcooper => pr_cdcooper,

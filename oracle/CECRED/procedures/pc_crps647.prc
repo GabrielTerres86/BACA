@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 30/03/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 17/07/2017
 
   Dados referentes ao programa:
 
@@ -141,6 +141,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
               30/03/2017 - Somente enviar e-mail caso nao for a critica de arquivo nao existe (182)
                            e nao for na Cecred, as demais criticas seguem enviando normalmente
                            (Lucas Ranghetti #635894)
+
+			 17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
+                          diferentes (Lucas Ranghetti #684123)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -163,6 +167,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
       FROM crapcop cop
      WHERE cop.cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
+  
+  -- Busca os lancamentos automaticos
+  CURSOR cr_craplau_dup(pr_cdcooper craplau.cdcooper%TYPE,
+                        pr_nrdconta craplau.nrdconta%TYPE,
+                        pr_dtmvtolt craplau.dtmvtolt%TYPE,
+                        pr_dtmvtopg craplau.dtmvtopg%TYPE,
+                        pr_cdhistor craplau.cdhistor%TYPE,
+                        pr_nrdocmto craplau.nrdocmto%TYPE) IS
+    SELECT dtmvtolt,
+           dtmvtopg,
+           cdhistor,
+           nrdconta,
+           nrdocmto,
+           vllanaut,
+           nrseqdig,
+           ROWID
+      FROM craplau
+     WHERE  craplau.cdcooper = pr_cdcooper
+       AND  craplau.nrdconta = pr_nrdconta
+       AND  (craplau.dtmvtolt = pr_dtmvtolt
+        OR  craplau.dtmvtopg = pr_dtmvtopg)
+       AND  craplau.cdhistor = pr_cdhistor
+       AND  craplau.nrdocmto = pr_nrdocmto
+       AND  craplau.insitlau <> 3;
+  rw_craplau_dup cr_craplau_dup%ROWTYPE;
+  
   /* Cursor generico de calendario */
   RW_CRAPDAT BTCH0001.CR_CRAPDAT%ROWTYPE;
   
@@ -198,6 +228,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   vr_critiarq VARCHAR2(2);
   vr_texto_email VARCHAR2(4000);
   vr_emaildst VARCHAR2(1000);
+  vr_nrdocmto_int craplau.nrdocmto%TYPE; 
   
   -- Comandos no OS
   vr_typsaida varchar2(3);
@@ -932,7 +963,8 @@ BEGIN
                    WHERE cdcooper = pr_cdcooper     
                      AND nrdconta  = vr_nrdconta 
                      AND dtmvtolt >= rw_crapdat.dtmvtolt
-                     AND nrdocmto  = rw_crapatr.cdrefere
+                     AND (nrdocmto  = rw_crapatr.cdrefere
+                      OR nrcrcard  = rw_crapatr.cdrefere)
                      AND insitlau  = 1               
                      AND dsorigem NOT IN('INTERNET','TAA','PG555','CARTAOBB','BLOQJUD','DAUT BANCOOB','TRMULTAJUROS');
                 EXCEPTION
@@ -985,10 +1017,55 @@ BEGIN
           ELSE 
             -- Continuar conforme o tipo do movimento 
             IF SUBSTR(vr_dslinharq,158,1) = 0 THEN
+            
+              BEGIN 
+                vr_nrdocmto_int:= vr_cdrefere;
+              EXCEPTION 
+                WHEN OTHERS THEN
+                  vr_cdcritic := 484;
+                  vr_cdcrindb := '30';
+              END;
+              
+              IF nvl(vr_cdcritic,0) = 0 THEN      
+                -- Somente vamos verificar se for deb. aut. sicredi        
+                IF vr_cdhistor = 1019 THEN                
+                  LOOP
+                    -- Busca os lancamentos automaticos
+                    IF cr_craplau_dup%ISOPEN THEN
+                      CLOSE cr_craplau_dup;
+                    END IF;
+                    -- Caso o convenio enviar mais que uma referencia no mesmo dia para a mesma
+                    -- conta e valor do debito ou data de pagamento forem diferentes, vamos
+                    -- incrementar um zero no final para permitir a inclusão do lançamento
+                    OPEN cr_craplau_dup(pr_cdcooper, -- cdcooper
+                                        vr_nrdconta, -- nrdconta
+                                        rw_crapdat.dtmvtolt, -- dtmvtolt
+                                        vr_dtrefere, -- dtmvtopg
+                                        vr_cdhistor, -- cdhistor
+                                        vr_nrdocmto_int); -- nrdocmto
+                    FETCH cr_craplau_dup INTO rw_craplau_dup;
+                         
+                    IF cr_craplau_dup%FOUND THEN
+                                    
+                      IF rw_craplau_dup.dtmvtopg = vr_dtrefere AND
+                         rw_craplau_dup.vllanaut = vr_vllanmto THEN
+                         CLOSE cr_craplau_dup;
+                         EXIT;
+                      ELSE                              
+                        vr_nrdocmto_int :=  to_char(vr_nrdocmto_int) || '0';
+                      END IF;
+                    ELSE
+                      CLOSE cr_craplau_dup;
+                      EXIT;
+                    END IF;
+                    CLOSE cr_craplau_dup;
+                  END LOOP;
+                END IF;
+                
               -- Inclusao deve verificar duplicidade 
               OPEN cr_craplau(pr_nrdconta => vr_nrdconta
                              ,pr_dtrefere => vr_dtrefere
-                             ,pr_cdrefere => vr_cdrefere
+                             ,pr_cdrefere => vr_nrdocmto_int
                              ,pr_cdhistor => vr_cdhistor);
               FETCH cr_craplau 
                INTO vr_exislau;              
@@ -1075,10 +1152,11 @@ BEGIN
                   -- Atualizar o controle indicando que houve criação do lote
                   vr_flgclote := false;
                 END IF;
+                
                 -- Inclusao deve verificar duplicidade 
                 OPEN cr_craplau_dia(pr_nrdconta => vr_nrdconta
                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                   ,pr_cdrefere => vr_cdrefere);
+                                   ,pr_cdrefere => vr_nrdocmto_int);
                 FETCH cr_craplau_dia 
                  INTO vr_exislau;              
                 -- Se encontrar 
@@ -1141,7 +1219,8 @@ BEGIN
                                         ,cdempres
                                         ,dscedent
                                         ,dttransa
-                                        ,hrtransa)
+                                        ,hrtransa
+                                        ,nrcrcard)
                                  VALUES(pr_cdcooper                                          -- cdcooper
                                        ,gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtrefere) -- dtmvtopg
                                        ,rw_craplot.cdagenci                                -- cdagenci
@@ -1156,12 +1235,13 @@ BEGIN
                                        ,rw_craplot.nrseqdig                                -- nrseqdig
                                        ,1                                                  -- tpdvalor
                                        ,vr_vllanmto                                        -- vllanaut
-                                       ,vr_cdrefere                                        -- nrdocmto
+                                       ,vr_nrdocmto_int                                    -- nrdocmto
                                        ,SUBSTR(vr_dslinharq,70,60)                         -- cdseqtel
                                        ,vr_cdempres                                        -- cdempres
                                        ,vr_nmempres                                        -- dscedent
                                        ,rw_crapdat.dtmvtolt                                -- dttransa
-                                       ,to_char(sysdate,'sssss'));                          -- hrtransa
+                                       ,to_char(sysdate,'sssss')                            -- hrtransa
+                                       ,vr_cdrefere);
                   EXCEPTION 
                     WHEN OTHERS THEN 
                       vr_dscritic := ' na inserção do lançamento em CC --> '||sqlerrm;
@@ -1191,6 +1271,7 @@ BEGIN
                   END IF;
                 END IF;
               END IF;
+              END IF;
             ELSE  
               -- Efetuar cancelamento de lançamento agendado 
               BEGIN 
@@ -1200,7 +1281,8 @@ BEGIN
                  WHERE cdcooper = pr_cdcooper       
                    AND dtmvtopg = vr_dtrefere       
                    AND nrdconta = vr_nrdconta       
-                   AND nrdocmto = vr_cdrefere
+                   AND (nrdocmto = vr_cdrefere
+                    OR nrcrcard = vr_cdrefere)
                    AND insitlau = 1;
                 -- Se encontrou registro 
                 IF sql%ROWCOUNT > 0 THEN 
@@ -1219,6 +1301,7 @@ BEGIN
               END;
             END IF;
           END IF;
+
           -- Se chegarmos neste ponto com critica 
           IF vr_cdcrindb IS NOT NULL THEN 
             -- Criar NDB 
