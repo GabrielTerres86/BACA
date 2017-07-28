@@ -9380,8 +9380,13 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
                                     pr_dscritic OUT VARCHAR2) IS           --> Descrição da crítica
     -- Efetua busca nas tabelas de pendencias para verificar se o mesmo possui alguma
     CURSOR cr_crapcbd IS
-      SELECT nvl(SUM(craprpf.vlnegati),0) vlnegati,
-             nvl(SUM(craprpf.qtnegati),0) qtnegati
+      SELECT SUM(NVL(craprpf.vlnegati,0)) vlnegati
+            ,SUM(NVL(craprpf.qtnegati,0)) qtnegati
+            ,SUM(NVL(crapcbd.vlprejui,0)) vlprejuz
+            ,SUM(NVL(DECODE(craprpf.innegati,3,craprpf.qtnegati,0),0)) qtprotest
+            ,SUM(NVL(DECODE(craprpf.innegati,4,craprpf.qtnegati,0),0)) qtacaojud
+            ,SUM(NVL(DECODE(craprpf.innegati,5,craprpf.qtnegati,0),0)) qtfalenci
+            ,SUM(NVL(DECODE(craprpf.innegati,6,craprpf.qtnegati,0),0)) qtchqsemf
         FROM craprpf,
              crapcbd,
              crawepr
@@ -9410,12 +9415,16 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     FETCH cr_crapcbd INTO rw_crapcbd;
     CLOSE cr_crapcbd;
       
-    -- Se possuir ate 3 restricoes com valor de pendencias for inferior a 1000
-    IF (rw_crapcbd.qtnegati BETWEEN 1 AND 3) AND
-        rw_crapcbd.vlnegati < 1000 THEN
-      vr_nrinfcad := 3; -- Ate 3 restricoes com somatoria inferior R$1000.
-    ELSIF rw_crapcbd.qtnegati > 0 THEN
+    -- Alguma restrição relevante    
+    IF rw_crapcbd.vlprejuz + rw_crapcbd.qtprotest +
+          rw_crapcbd.qtacaojud + rw_crapcbd.qtfalenci + rw_crapcbd.qtchqsemf > 0 THEN 
       vr_nrinfcad := 4; -- Restricoes relevantes
+    -- Se possuir ate 3 restricoes com valor de pendencias for inferior a 1000
+    ELSIF (rw_crapcbd.qtnegati BETWEEN 1 AND 3) AND rw_crapcbd.vlnegati <= 1000 THEN
+      vr_nrinfcad := 2; -- Ate 3 restricoes com somatoria inferior R$1000.
+    -- Acima 4 Restrições ou Valores acima 1000 
+    ELSIF rw_crapcbd.qtnegati > 3 OR rw_crapcbd.vlnegati > 1000 THEN 
+      vr_nrinfcad := 3; -- Acima 3 restricoes ou somatoria superior R$1000.
     END IF;
       
     -- Atualiza a tabela de emprestimo com a situacao da informacao cadastral
@@ -9486,8 +9495,13 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
                                     pr_dscritic OUT VARCHAR2) IS           --> Descrição da crítica
     -- Efetua busca nas tabelas de pendencias para verificar se o mesmo possui alguma
     CURSOR cr_crapcbd IS
-      SELECT nvl(SUM(craprpf.vlnegati),0) vlnegati,
-             nvl(SUM(craprpf.qtnegati),0) qtnegati
+      SELECT SUM(NVL(craprpf.vlnegati,0)) vlnegati
+            ,SUM(NVL(craprpf.qtnegati,0)) qtnegati
+            ,SUM(NVL(crapcbd.vlprejui,0)) vlprejuz
+            ,SUM(NVL(DECODE(craprpf.innegati,3,craprpf.qtnegati,0),0)) qtprotest
+            ,SUM(NVL(DECODE(craprpf.innegati,4,craprpf.qtnegati,0),0)) qtacaojud
+            ,SUM(NVL(DECODE(craprpf.innegati,5,craprpf.qtnegati,0),0)) qtfalenci
+            ,SUM(NVL(DECODE(craprpf.innegati,6,craprpf.qtnegati,0),0)) qtchqsemf
         FROM craprpf,
              crapcbd,
              craplim
@@ -9517,12 +9531,16 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     FETCH cr_crapcbd INTO rw_crapcbd;
     CLOSE cr_crapcbd;
       
-    -- Se possuir ate 3 restricoes com valor de pendencias for inferior a 1000
-    IF (rw_crapcbd.qtnegati BETWEEN 1 AND 3) AND
-        rw_crapcbd.vlnegati < 1000 THEN
-      vr_nrinfcad := 3; -- Ate 3 restricoes com somatoria inferior R$1000.
-    ELSIF rw_crapcbd.qtnegati > 0 THEN
+    -- Alguma restrição relevante    
+    IF rw_crapcbd.vlprejuz + rw_crapcbd.qtprotest +
+          rw_crapcbd.qtacaojud + rw_crapcbd.qtfalenci + rw_crapcbd.qtchqsemf > 0 THEN 
       vr_nrinfcad := 4; -- Restricoes relevantes
+    -- Se possuir ate 3 restricoes com valor de pendencias for inferior a 1000
+    ELSIF (rw_crapcbd.qtnegati BETWEEN 1 AND 3) AND rw_crapcbd.vlnegati <= 1000 THEN
+      vr_nrinfcad := 2; -- Ate 3 restricoes com somatoria inferior R$1000.
+    -- Acima 4 Restrições ou Valores acima 1000 
+    ELSIF rw_crapcbd.qtnegati > 3 OR rw_crapcbd.vlnegati > 1000 THEN 
+      vr_nrinfcad := 3; -- Acima 3 restricoes ou somatoria superior R$1000.
     END IF;
       
     -- Atualiza a tabela de emprestimo com a situacao da informacao cadastral
@@ -9621,8 +9639,13 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 
     -- Efetua busca nas tabelas de pendencias para verificar se o mesmo possui alguma
     CURSOR cr_crapcbd IS
-      SELECT nvl(SUM(craprpf.vlnegati),0) vlnegati,
-             nvl(SUM(craprpf.qtnegati),0) qtnegati
+      SELECT SUM(NVL(craprpf.vlnegati,0)) vlnegati
+            ,SUM(NVL(craprpf.qtnegati,0)) qtnegati
+            ,SUM(NVL(crapcbd.vlprejui,0)) vlprejuz
+            ,SUM(NVL(DECODE(craprpf.innegati,3,craprpf.qtnegati,0),0)) qtprotest
+            ,SUM(NVL(DECODE(craprpf.innegati,4,craprpf.qtnegati,0),0)) qtacaojud
+            ,SUM(NVL(DECODE(craprpf.innegati,5,craprpf.qtnegati,0),0)) qtfalenci
+            ,SUM(NVL(DECODE(craprpf.innegati,6,craprpf.qtnegati,0),0)) qtchqsemf
         FROM craprpf,
              crapcbd
        WHERE crapcbd.nrconbir = rw_crapcbd_2.nrconbir
@@ -9652,12 +9675,16 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
     FETCH cr_crapcbd INTO rw_crapcbd;
     CLOSE cr_crapcbd;
       
-    -- Se possuir ate 3 restricoes com valor de pendencias for inferior a 1000
-    IF (rw_crapcbd.qtnegati BETWEEN 1 AND 3) AND
-        rw_crapcbd.vlnegati < 1000 THEN
-      vr_nrinfcad := 3; -- Ate 3 restricoes com somatoria inferior R$1000.
-    ELSIF rw_crapcbd.qtnegati > 0 THEN
+    -- Alguma restrição relevante    
+    IF rw_crapcbd.vlprejuz + rw_crapcbd.qtprotest +
+          rw_crapcbd.qtacaojud + rw_crapcbd.qtfalenci + rw_crapcbd.qtchqsemf > 0 THEN 
       vr_nrinfcad := 4; -- Restricoes relevantes
+    -- Se possuir ate 3 restricoes com valor de pendencias for inferior a 1000
+    ELSIF (rw_crapcbd.qtnegati BETWEEN 1 AND 3) AND rw_crapcbd.vlnegati <= 1000 THEN
+      vr_nrinfcad := 2; -- Ate 3 restricoes com somatoria inferior R$1000.
+    -- Acima 4 Restrições ou Valores acima 1000 
+    ELSIF rw_crapcbd.qtnegati > 3 OR rw_crapcbd.vlnegati > 1000 THEN 
+      vr_nrinfcad := 3; -- Acima 3 restricoes ou somatoria superior R$1000.
     END IF;
           
     BEGIN

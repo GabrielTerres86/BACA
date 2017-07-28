@@ -1859,6 +1859,9 @@ BEGIN
     vr_dsparame     VARCHAR2(4000); 
   BEGIN
     
+    -- Remover arquivo temporário para evitar falta de permissão
+    GENE0001.pc_OScommand(pr_typ_comando => 'SR'
+                         ,pr_des_comando => 'rm /tmp/exec.script.txt');
         
     -- Comando para Execucao
     vr_dscomand := GENE0001.fn_param_sistema('CRED',3,'SCRIPT_GERA_PROP_EMPR');

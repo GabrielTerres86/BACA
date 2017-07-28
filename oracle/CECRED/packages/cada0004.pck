@@ -1863,7 +1863,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_vltotccr := 0;
     
     FOR rw_crawcrd IN cr_crawcrd LOOP
-      -- diferente de bancoob
+      
+	  -- Buscar situação
+      vr_dssitcrd := fn_retorna_situacao_cartao( pr_insitcrd => rw_crawcrd.insitcrd 
+                                                ,pr_dtsol2vi => rw_crawcrd.dtsol2vi
+                                                ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);    
+      
+	  -- diferente de bancoob
       IF fn_verifica_adm(rw_crawcrd.cdadmcrd) <> 2 THEN
       
         /* Se estiver em uso soma o valor total de limite de todos os cartoes */
@@ -1892,14 +1898,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       ELSE
         -- P337 - SOmente zerar se passado via parametro [ZERAR LIMITE CONFORME SD 181559]
         IF pr_flgzerar = 'N' THEN
-          pr_vltotccr := pr_vltotccr + rw_crawcrd.vllimcrd; 
+          -- Somente acumular limite conforme situação cartão
+          IF vr_dssitcrd IN ('Solic.','Liber.','Sol.2v','Prc.BB','Em uso','Sol.2v') THEN 
+            pr_vltotccr := pr_vltotccr + rw_crawcrd.vllimcrd; 
+          END IF;  
         END IF;  
-      END IF;
-      
-      -- Buscar situação
-      vr_dssitcrd := fn_retorna_situacao_cartao( pr_insitcrd => rw_crawcrd.insitcrd 
-                                                ,pr_dtsol2vi => rw_crawcrd.dtsol2vi
-                                                ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);    
+      END IF;  
       
       vr_idx := pr_tab_cartoes.count;
       

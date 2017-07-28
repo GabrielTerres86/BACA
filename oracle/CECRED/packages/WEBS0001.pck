@@ -1266,8 +1266,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         
       END IF; 
       
-      COMMIT; --Garantir log do acionamento
-      
       --vr_nrtransacao := fn_sequence(pr_nmtabela => 'TBWBS_ESTEIRA', pr_nmdcampo => 'NRTRANSACAO',pr_dsdchave => pr_cdcooper);            
       vr_dscritic    := NULL;
       vr_dtdscore    := TO_DATE(pr_dtdscore,'DD/MM/RRRR');
@@ -1532,21 +1530,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			vr_inpessoa     PLS_INTEGER := 0;     --> 1 - PF/ 2 - PJ		
 			vr_insitapr     crawepr.insitapr%TYPE; --> Situacao Aprovacao(0-Em estudo/1-Aprovado/2-Nao aprovado/3-Restricao/4-Refazer)
 			
+      -- Acionamento 
+      CURSOR cr_aciona IS
+        SELECT aci.cdcooper    
+              ,aci.nrdconta    
+              ,aci.nrctrprp    nrctremp
+              ,aci.dsprotocolo dsprotoc
+          FROM tbepr_acionamento aci
+         WHERE aci.dsprotocolo = pr_dsprotoc;
+      rw_aciona cr_aciona%ROWTYPE;
+      
 		  -- Buscar a proposta de empréstimo vinculada ao protocolo
-		  CURSOR cr_crawepr IS
+		  CURSOR cr_crawepr(pr_cdcooper crawepr.cdcooper%TYPE
+                       ,pr_nrdconta crawepr.nrdconta%TYPE
+                       ,pr_nrctremp crawepr.nrctremp%TYPE) IS
 			  SELECT wpr.cdcooper
               ,wpr.nrdconta
               ,wpr.nrctremp
               ,wpr.cdagenci
               ,wpr.cdopeste
+              ,wpr.insitest
               ,decode(wpr.insitapr, 0, 'EM ESTUDO', 1, 'APROVADO', 2, 'NAO APROVADO', 3, 'RESTRICAO', 4, 'REFAZER', 'SITUACAO DESCONHECIDA') dssitapr
+              ,wpr.rowid
           FROM crawepr wpr
-              ,tbepr_acionamento aci
-         WHERE wpr.cdcooper = aci.cdcooper
-           AND wpr.nrdconta = aci.nrdconta
-           AND wpr.nrctremp = aci.nrctrprp
-           AND wpr.dsprotoc = aci.dsprotocolo
-           AND aci.dsprotocolo = pr_dsprotoc;  
+         WHERE wpr.cdcooper = pr_cdcooper
+           AND wpr.nrdconta = pr_nrdconta
+           AND wpr.nrctremp = pr_nrctremp
+           AND wpr.dsprotoc = pr_dsprotoc
+           FOR UPDATE;  
 		  rw_crawepr cr_crawepr%ROWTYPE;
 			
 			-- Buscar o tipo de pessoa que contratou o empréstimo
@@ -1574,6 +1585,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_dsplsql VARCHAR2(4000);
       -- Job name dos processos criados
       vr_jobname VARCHAR2(100);
+           
+      -- Variaveis para DEBUG
+      vr_flgdebug VARCHAR2(100);
+      vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+      
            
  			-- Função para verificar se parâmetro passado é numérico
 			FUNCTION fn_is_number(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
@@ -1614,17 +1630,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       END;
 											 
 		BEGIN
+    
+      -- Se o DEBUG estiver habilitado
+      IF vr_flgdebug = 'S' THEN
+        --> Gravar dados log acionamento
+        este0001.pc_grava_acionamento(pr_cdcooper              => 3,         
+                                      pr_cdagenci              => 1,          
+                                      pr_cdoperad              => '1',          
+                                      pr_cdorigem              => pr_cdorigem,          
+                                      pr_nrctrprp              => 0,      
+                                      pr_nrdconta              => 0,  
+                                      pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                                      pr_dsoperacao            => 'INICIO RETORNO ANALISE',       
+                                      pr_dsuriservico          => pr_namehost,       
+                                      pr_dtmvtolt              => trunc(sysdate),       
+                                      pr_cdstatus_http         => 0,
+                                      pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
+                                      pr_dsresposta_requisicao => null,
+                                      pr_idacionamento         => vr_idaciona,
+                                      pr_dscritic              => vr_dscritic);
+        -- Sem tratamento de exceção para DEBUG                    
+        --IF TRIM(vr_dscritic) IS NOT NULL THEN
+        --  RAISE vr_exc_erro;
+        --END IF;
+      END IF; 
+    
       -- Se o acionamento já foi gravado na origem
       IF nvl(pr_nrtransa,0) > 0 THEN
         vr_nrtransacao := pr_nrtransa;
       END IF;  
     
+      -- Acionamento 
+      OPEN cr_aciona;
+      FETCH cr_aciona
+       INTO rw_aciona;
+      CLOSE cr_aciona; 
+      
 			-- Buscar a proposta de empréstimo a partir do protocolo
-			OPEN cr_crawepr;
+			OPEN cr_crawepr(rw_aciona.cdcooper
+                     ,rw_aciona.nrdconta
+                     ,rw_aciona.nrctremp);
 			FETCH cr_crawepr INTO rw_crawepr;
 			
 			-- Se não encontrou a proposta
 			IF cr_crawepr%NOTFOUND THEN
+        CLOSE cr_crawepr;
 				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
 																	 pr_ind_tipo_log => 2, 
 																	 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
@@ -1706,7 +1756,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           RAISE vr_exc_saida;
         END IF; 
   		      
-        COMMIT; --Garantir log do acionamento
 	    END IF;
       
       -- Condicao para verificar se o processo esta rodando
@@ -1718,6 +1767,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                        || 'CECRED esta em execucao.';
         RAISE vr_exc_saida;
       END IF;			
+			
+      -- Somente se a proposta não foi atualizada ainda
+      IF rw_crawepr.insitest <> 1 THEN
+        -- Montar mensagem de critica
+        vr_status      := 400;
+        vr_cdcritic    := 978;
+        vr_msg_detalhe := 'Situacao da Proposta jah foi alterada - analise nao sera recebida.';
+        RAISE vr_exc_saida;        
+      END IF;		
 			
 			-- Se algum dos parâmetros abaixo não foram informados
 			IF nvl(pr_cdorigem, 0) = 0 OR
@@ -1855,7 +1913,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                     ,pr_msg_detalhe => vr_msg_detalhe --> Mensagem de detalhe
                                     ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
                                     ,pr_retxml      => pr_retxml);    
-      COMMIT;
+      -- Se o DEBUG estiver habilitado
+      IF vr_flgdebug = 'S' THEN
+        --> Gravar dados log acionamento
+        este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+                                      pr_cdagenci              => 1,          
+                                      pr_cdoperad              => 'MOTOR',          
+                                      pr_cdorigem              => pr_cdorigem,          
+                                      pr_nrctrprp              => rw_crawepr.nrctremp,      
+                                      pr_nrdconta              => rw_crawepr.nrdconta,  
+                                      pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                                      pr_dsoperacao            => 'FINAL RETORNO ANALISE',       
+                                      pr_dsuriservico          => pr_namehost,       
+                                      pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
+                                      pr_cdstatus_http         => 0,
+                                      pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
+                                      pr_dsresposta_requisicao => null,
+                                      pr_idacionamento         => vr_idaciona,
+                                      pr_dscritic              => vr_dscritic);
+        -- Sem tratamento de exceção para DEBUG                    
+        --IF TRIM(vr_dscritic) IS NOT NULL THEN
+        --  RAISE vr_exc_erro;
+        --END IF;
+      END IF; 
       
       -- Caso nao tenha havido erro na atualizado 
 			IF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL AND TRIM(pr_dsprotoc) IS NOT NULL THEN 
@@ -1978,8 +2058,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         END IF; 
       END IF;                                       
 			
+      -- Gravar
+      COMMIT;                                 
+			
 		EXCEPTION
 			WHEN vr_exc_saida THEN
+        -- Se ainda nao houve geracao id Acionamento
         IF vr_nrtransacao = 0 AND rw_crawepr.nrdconta IS NOT NULL THEN
           -- Para cada requisicao sera criado um numero de transacao
           ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
@@ -2012,6 +2096,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           END IF;
         END IF;
 
+        -- Mudaremos a situação da analise para encerrada com erro para que possa haver o Re-envio
+        IF rw_crawepr.rowid IS NOT NULL THEN 
+          BEGIN
+            UPDATE crawepr
+               SET crawepr.insitapr = 6 -- Erro
+                  ,crawepr.cdopeapr = 'MOTOR'
+                  ,crawepr.dtaprova = rw_crapdat.dtmvtolt
+                  ,crawepr.hraprova = gene0002.fn_busca_time
+                  ,crawepr.cdcomite = 3
+                  ,crawepr.insitest = 3 -- Finalizada
+             WHERE crawepr.rowid = rw_crawepr.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := vr_dscritic || ' e erro na atualiza Proposta: '||sqlerrm;
+          END; 
+        END IF;  
+
         -- Gera retorno da proposta para a esteira
         pc_gera_retor_proposta_esteira(pr_status      => vr_status      --> Status
                                       ,pr_nrtransacao => vr_nrtransacao --> Numero da transacao
@@ -2020,8 +2121,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                       ,pr_msg_detalhe => vr_msg_detalhe --> Mensagem de detalhe
                                       ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
                                       ,pr_retxml      => pr_retxml);      
+        -- Gravar
+        COMMIT;                                        
       WHEN OTHERS THEN
-        
+        -- Se ainda nao houve geracao id Acionamento
         IF vr_nrtransacao = 0 AND rw_crawepr.nrdconta IS NOT NULL THEN
           -- Para cada requisicao sera criado um numero de transacao
           ESTE0001.pc_grava_acionamento(pr_cdcooper                 => rw_crawepr.cdcooper,
@@ -2054,6 +2157,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           END IF;
         END IF; 
 
+        -- Mudaremos a situação da analise para encerrada com erro para que possa haver o Re-envio
+        IF rw_crawepr.rowid IS NOT NULL THEN 
+          BEGIN
+            UPDATE crawepr
+               SET crawepr.insitapr = 6 -- Erro
+                  ,crawepr.cdopeapr = 'MOTOR'
+                  ,crawepr.dtaprova = rw_crapdat.dtmvtolt
+                  ,crawepr.hraprova = gene0002.fn_busca_time
+                  ,crawepr.cdcomite = 3
+                  ,crawepr.insitest = 3 -- Finalizada
+             WHERE crawepr.rowid = rw_crawepr.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := vr_dscritic || ' e erro na atualiza Proposta: '||sqlerrm;
+          END; 
+        END IF;  
+
         -- Somente se ocorreu encontro da proposta
         pc_gera_retor_proposta_esteira(pr_status      => 500              --> Status
                                       ,pr_nrtransacao => vr_nrtransacao   --> Numero transacao
@@ -2073,7 +2193,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																	 pr_nmarqlog     => gene0001.fn_param_sistema
 																													(pr_nmsistem => 'CRED', 
 																													 pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));        
-      
+       -- Gravar
+       COMMIT;
     END;      
   END pc_retorno_analise_proposta;	                                                     	
 END WEBS0001;
