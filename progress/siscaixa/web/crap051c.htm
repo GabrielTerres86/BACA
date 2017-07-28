@@ -250,9 +250,9 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                     DO:
                         IF  aux_tpdmovto = 2  THEN /* Menor Praca */
                             ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
                                    tt-cheques.nrdocmto = 3
-                                   v_totdepos = v_totdepos + crapmdw.vlcompel.
+                           v_totdepos = v_totdepos + crapmdw.vlcompel.
                         ELSE                       /* Maior Praca */
                             ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
                                    tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
@@ -510,7 +510,7 @@ DEF TEMP-TABLE tt-conta NO-UNDO
                                                      " CONTA CHEQUE: " + STRING(crapmdw.nrctabdb) +
                                                      " CHEQUE: " + string(crapmdw.nrcheque)       +
                                                      " VALOR CHEQUE: " + STRING(v_valor1)         +
-                                                     " SALTO CONTA CHEQUE: " + STRING((de-valor-liberado + 
+                                                     " SALDO CONTA CHEQUE: " + STRING((de-valor-liberado + 
                                                      tt-conta.limite-credito),"-zzz,zzz,zz9.99") + 
                                                      " >> " + aux_nmarqlog).  
                                                                              
