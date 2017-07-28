@@ -223,7 +223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                    COALESCE(e.nmcidade, x.dscidres) nomecidade,
                    COALESCE(e.cdufende, x.dsdufres) siglaestado,
                    COALESCE(e.nrcepend, x.cdcepres) cep,
-                   COALESCE(e.nrdoapto, 0) numeroapto,
+                   COALESCE(e.nrdoapto, x.nrcxpost) numeroapto,
                    COALESCE(e.cddbloco, '') bloco,
                    COALESCE(e.complend, x.dscomres) complemento,
                    COALESCE(y.dsnatura, x.dsnatura) naturalidade,
@@ -246,9 +246,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
          LEFT JOIN crapenc e
                 ON e.cdcooper = t.cdcooper
                AND e.nrdconta = t.nrdconta
+               AND e.tpendass = 10
              WHERE x.cdcooper = pr_cdcooper
-               AND x.nrctamen = pr_nrdconta
-               AND e.tpendass = 10; -- Endereço residencial
+               AND x.nrctamen = pr_nrdconta;
+               
           rw_responsavel cr_responsavel%ROWTYPE;
 
           -- Buscar os dados dos representantes legais da conta
@@ -265,18 +266,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                        ELSE
                         'J'
                      END tipopessoa,
-                     TO_CHAR(COALESCE(x.dtnasttl, t.dtnascto),'DD/MM/YYYY') dtnascimento,
+                     TO_CHAR(COALESCE(x.dtnasctl, t.dtnascto, y.dtnasttl),'DD/MM/YYYY') dtnascimento,
                      COALESCE(x.nmprimtl, t.nmdavali) nomecompleto,
-                     COALESCE(x.dsproftl, t.dsproftl) nomecargo,
-                     COALESCE(x.tpdocttl, t.tpdocava) sigla,
-                     COALESCE(x.nrdocttl, t.nrdocava) nrdocumento,
+                     COALESCE(t.dsproftl, x.dsproftl) nomecargo,
+                     COALESCE(y.tpdocttl, x.tpdocttl, t.tpdocava) sigla,
+                     COALESCE(y.nrdocttl, x.nrdocttl, t.nrdocava) nrdocumento,
                      COALESCE(e.dsendere, t.dsendres##1, t.dsendres##2) logradouro,
                      COALESCE(e.nrendere, t.nrendere) numeroendereco,
                      COALESCE(e.nmbairro, t.nmbairro) nomebairro,
                      COALESCE(e.nmcidade, t.nmcidade) nomecidade,
                      COALESCE(e.cdufende, t.cdufresd) siglaestado,
                      COALESCE(e.nrcepend, t.nrcepend) cep,
-                     COALESCE(e.nrdoapto, 0) numeroapto,
+                     COALESCE(e.nrdoapto, t.nrcxapst) numeroapto,
                      COALESCE(e.cddbloco, '') bloco,
                      COALESCE(e.complend, t.complend) complemento,
                      COALESCE(y.dsnatura, t.dsnatura) naturalidade,
