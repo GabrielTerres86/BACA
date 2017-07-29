@@ -1574,7 +1574,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                          <dsdacstp>'||vr_tab_crat055(vr_des_chave).dsdacstp||'</dsdacstp>
                          <nmprimtl>'||SUBSTR(vr_tab_crat055(vr_des_chave).nmprimtl,0,35)||'</nmprimtl>
                          <nrcpfcgc>'||vr_tab_crat055(vr_des_chave).nrcpfcgc||'</nrcpfcgc>
-                         <vlsddisp>'||to_char(vr_tab_crat055(vr_des_chave).vlsddisp,'fm999g999g990d00')||'</vlsddisp>
+                         <vlsddisp>'||to_char(vr_tab_crat055(vr_des_chave).vlsddisp,'fm99g999g999g990d00')||'</vlsddisp>
                          <vllimcre>'||to_char(vr_tab_crat055(vr_des_chave).vllimcre,'fm999999g999g999')||'</vllimcre>
                          <vlsdbltl>'||to_char(vr_tab_crat055(vr_des_chave).vlsdbltl,'fm999g999g990d00')||'</vlsdbltl>
                          <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm99g999g999g990d00')||'</vlstotal>
@@ -1591,7 +1591,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</depositos>');
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<total id="'||vr_des_chave||'">
                                <pac_agqtdcta>'||to_char(0,'fm999g990')||'</pac_agqtdcta>
-                               <pac_agpsddis>'||to_char(vr_pac_agpsddis,'fm999g999g990d00')||'</pac_agpsddis>
+                               <pac_agpsddis>'||to_char(vr_pac_agpsddis,'fm99g999g999g990d00')||'</pac_agpsddis>
                                <pac_agpvllim>'||to_char(vr_pac_agpvllim,'fm99999g999')||'</pac_agpvllim>
                                <pac_agpsdbtl>'||to_char(vr_pac_agpsdbtl,'fm999g999g990d00')||'</pac_agpsdbtl>
                                <pac_agpsdstl>'||to_char(vr_pac_agpsdstl,'fm9g999g999g990d00')||'</pac_agpsdstl>
@@ -1667,7 +1667,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                          <dsdacstp>'||vr_tab_crat055(vr_des_chave).dsdacstp||'</dsdacstp>
                          <nmprimtl>'||vr_tab_crat055(vr_des_chave).nmprimtl||'</nmprimtl>
                          <nrcpfcgc>'||vr_tab_crat055(vr_des_chave).nrcpfcgc||'</nrcpfcgc>
-                         <vlsddisp>'||to_char(vr_tab_crat055(vr_des_chave).vlsddisp,'fm999g999g990d00')||'</vlsddisp>
+                         <vlsddisp>'||to_char(vr_tab_crat055(vr_des_chave).vlsddisp,'fm99g999g999g990d00')||'</vlsddisp>
                          <vllimcre>'||to_char(vr_tab_crat055(vr_des_chave).vllimcre,'fm999999999999')||'</vllimcre>
                          <vlsdbltl>'||to_char(vr_tab_crat055(vr_des_chave).vlsdbltl,'fm999g999g990d00')||'</vlsdbltl>
                          <vlstotal>'||to_char(vr_tab_crat055(vr_des_chave).vlstotal,'fm99g999g999g990d00')||'</vlstotal>
@@ -2988,13 +2988,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                            <nrdconta>'||LTrim(gene0002.fn_mask_conta(vr_tab_crat006(vr_des_chave).nrdconta))||'</nrdconta>
                            <cdagenci>'||vr_cdagenci||'</cdagenci>
                            <dsdacstp>'||vr_tab_crat006(vr_des_chave).dsdacstp||'</dsdacstp>
-                           <vlsaqmax>'||To_Char(vr_tab_crat006(vr_des_chave).vlsaqmax,'fm999g999g990d00')||'</vlsaqmax>
-                           <vlsddisp>'||to_char(vr_tab_crat006(vr_des_chave).vlsddisp,'fm999g999g990d00mi')||'</vlsddisp>
+                           <vlsaqmax>'||To_Char(vr_tab_crat006(vr_des_chave).vlsaqmax,'fm99g999g999g990d00')||'</vlsaqmax>
+                           <vlsddisp>'||to_char(vr_tab_crat006(vr_des_chave).vlsddisp,'fm99g999g999g990d00')||'</vlsddisp>
                            <vllimcre>'||to_char(vr_tab_crat006(vr_des_chave).vllimcre,'fm999g999g999')||'</vllimcre>
                            <nmprimtl>'||substr(vr_tab_crat006(vr_des_chave).nmprimtl,1,20)||'</nmprimtl>
                            <vlsdbltl>'||to_char(vr_tab_crat006(vr_des_chave).vlsdbltl,'fm999g999g990d00')||'</vlsdbltl>
                            <vlsdchsl>'||to_char(vr_tab_crat006(vr_des_chave).vlsdchsl,'fm999g999g990d00')||'</vlsdchsl>
-                           <vlstotal>'||to_char(vr_tab_crat006(vr_des_chave).vlstotal,'fm999g999g990d00mi')||'</vlstotal>
+                           <vlstotal>'||to_char(vr_tab_crat006(vr_des_chave).vlstotal,'fm99g999g999g990d00')||'</vlstotal>
                            <vlblqjud>'||to_char(nvl(vr_tab_crat006(vr_des_chave).vlblqjud, 0),'fm999g999g990d00')||'</vlblqjud>
                          </conta>');
            --Se for o primeiro registro da agencia
@@ -3026,12 +3026,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              -- Finalizar o agrupador de depositos e de Agencia e inicia totalizador do PAC
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</contas><tot_geral>');
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<total id="1">
-                             <pac_vlsaqmax>'||to_char(vr_tab_pac_vlsaqmax(vr_cdagenci),'fm9999g999g990d00')||'</pac_vlsaqmax>
+                             <pac_vlsaqmax>'||to_char(vr_tab_pac_vlsaqmax(vr_cdagenci),'fm99g999g999g990d00')||'</pac_vlsaqmax>
                              <pac_vltotlim>'||to_char(vr_tab_pac_vllimcre(vr_cdagenci),'fm9999g999g990')||'</pac_vltotlim>
-                             <pac_vlsddisp>'||to_char(vr_tab_pac_vlsddisp(vr_cdagenci),'fm9999g999g990d00')||'</pac_vlsddisp>
+                             <pac_vlsddisp>'||to_char(vr_tab_pac_vlsddisp(vr_cdagenci),'fm99g999g999g990d00')||'</pac_vlsddisp>
                              <pac_vlsdbltl>'||to_char(vr_tab_pac_vlsdbltl(vr_cdagenci),'fm999g999g990d00')||'</pac_vlsdbltl>
                              <pac_vlsdchsl>'||to_char(vr_tab_pac_vlsdchsl(vr_cdagenci),'fm9999g999g990d00')||'</pac_vlsdchsl>
-                             <pac_vlstotal>'||to_char(vr_tab_pac_vlstotal(vr_cdagenci),'fm99999g999g990d00')||'</pac_vlstotal>
+                             <pac_vlstotal>'||to_char(vr_tab_pac_vlstotal(vr_cdagenci),'fm99g999g999g990d00')||'</pac_vlstotal>
                              <pac_vlblqjud>'||to_char(vr_tab_pac_vlblqjud(vr_cdagenci),'fm99999g999g990d00')||'</pac_vlblqjud>
                            </total></tot_geral><tot_demit>');
 
@@ -3060,12 +3060,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
              --Escrever total demitidos no XML
              gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<demit id="2">
-                             <dem_agpsdmax>'||to_char(vr_tab_dem_agpsdmax(vr_cdagenci),'fm9999g999g990d00')||'</dem_agpsdmax>
+                             <dem_agpsdmax>'||to_char(vr_tab_dem_agpsdmax(vr_cdagenci),'fm99g999g999g990d00')||'</dem_agpsdmax>
                              <dem_agpvllim>'||to_char(vr_tab_dem_agpvllim(vr_cdagenci),'fm9999g999g990')||'</dem_agpvllim>
-                             <dem_agpsddis>'||to_char(vr_tab_dem_agpsddis(vr_cdagenci),'fm9999g999g990d00')||'</dem_agpsddis>
+                             <dem_agpsddis>'||to_char(vr_tab_dem_agpsddis(vr_cdagenci),'fm99g999g999g990d00')||'</dem_agpsddis>
                              <dem_agpsdbtl>'||to_char(vr_tab_dem_agpsdbtl(vr_cdagenci),'fm999g999g990d00')||'</dem_agpsdbtl>
                              <dem_agpsdchs>'||to_char(vr_tab_dem_agpsdchs(vr_cdagenci),'fm9999g999g990d00')||'</dem_agpsdchs>
-                             <dem_agpsdstl>'||to_char(vr_tab_dem_agpsdstl(vr_cdagenci),'fm99999g999g990d00')||'</dem_agpsdstl>
+                             <dem_agpsdstl>'||to_char(vr_tab_dem_agpsdstl(vr_cdagenci),'fm99g999g999g990d00')||'</dem_agpsdstl>
                              <dem_agpvlbjd>'||to_char(vr_tab_dem_agpvlbjd(vr_cdagenci),'fm99999g999g990d00')||'</dem_agpvlbjd>
                            </demit></tot_demit></agencia></crrl006>',true);
 
