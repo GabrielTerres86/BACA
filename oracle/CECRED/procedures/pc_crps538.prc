@@ -346,6 +346,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             
                02/05/2017 - Entrega 02 - Prj.307 Automatização Arquivos Contábeis Ayllos (Jonatas-Supero)                            
                
+			   21/06/2017 - Alterado mensagens de LOG da crapcol #696421 (Tiago/Rodrigo).
+
                12/07/2017 - #712635 Inclusão tabela crapcco nos cursores cr_cde e cr_boletos_pagos_acordos 
                             para otimização (Carlos)
                             
@@ -7254,7 +7256,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
-                                                     || 'Inicio Geracao Log Erros Crapcol' );
+                                                     || 'Inicio Geracao Log CRAPCOL' );
 
        --Montar data e hora para log
        vr_dataflog:= SYSDATE;
@@ -7327,7 +7329,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                     || vr_cdprogra || ' --> '
-                                                    || 'Fim Geracao Log Erros Crapcol' );
+                                                    || 'Fim Geracao Log CRAPCOL' );
 
        -- Se há comandos a serem processados
        IF vr_tab_comando.COUNT() > 0 THEN
