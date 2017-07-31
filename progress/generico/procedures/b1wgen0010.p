@@ -424,6 +424,11 @@
 
 			   11/07/2017 - Ajuste nas consultas de boleto referente a
                             consulta de rollout, Prj. 340 - NPC (Jean Michel). 
+
+                21/07/2017 - Ajustes para nao exibr valor cobrado
+                               na segunda via de boleto a vencer.
+                               PRJ340-NPC(Odirlei-AMcom             
+
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -869,6 +874,13 @@ PROCEDURE consulta-boleto-2via.
 				ASSIGN tt-consulta-blt.vldescto = aux_vldescut
 					   tt-consulta-blt.cdmensag = aux_cdmensut.
 		END.
+   ELSE
+     DO:
+       /* Caso nao esteja vencido, enviar o valor 
+          atualizado em branco, para que use o 
+          valor original do documento */
+       ASSIGN aux_vltituut = ?.
+	END.
 			
 	/* Consulta Rollout */
     RUN verifica-rollout(INPUT crapcob.cdcooper,

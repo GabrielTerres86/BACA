@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 12/07/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 28/07/2017
 
    Dados referentes ao programa:
 
@@ -348,6 +348,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                
                12/07/2017 - #712635 Inclusão tabela crapcco nos cursores cr_cde e cr_boletos_pagos_acordos 
                             para otimização (Carlos)
+                            
+               28/07/2017 - Ajustes para Comandar baixa efetiva de boletos pagos no dia fora da cooperativo.
+                            PRJ340 - NPC (Odirlei-AMcom)             
    .............................................................................*/
 
      DECLARE
@@ -6339,6 +6342,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
               RAISE vr_exc_saida;
             END IF;
          END LOOP;
+         
+           
+           --> Comandar baixa efetiva de boletos pagos no dia fora da cooperativo(interbancaria)
+           COBR0010.pc_gera_baixa_eft_interbca (pr_cdcooper => pr_cdcooper,   --> Cooperativa
+                                                pr_dtmvtolt => vr_dtmvtaux,   --> Data
+                                                pr_cdcritic => vr_cdcritic,   --> Codigo da Critica
+                                                pr_dscritic => vr_dscritic);  --> Descricao Critica
+         
+           --> Se ocorreu erro
+           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+             --> Levantar Excecao
+             RAISE vr_exc_saida;
+           END IF;
 
          END IF; -- Fim REPROC
          
