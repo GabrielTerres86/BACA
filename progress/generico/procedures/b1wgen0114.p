@@ -423,8 +423,17 @@ PROCEDURE Valida_Dados:
                   ASSIGN aux_dscritic = "Favor Preencher Inf. Cadastrais na Proposta - tela ATENDA.".
                   LEAVE Valida.
               END.
+              
+              FIND crapass WHERE crapass.cdcooper = par_cdcooper  AND  
+                                 crapass.nrdconta = par_nrdcont1  NO-LOCK NO-ERROR.
+              
+              IF  NOT AVAILABLE crapass  THEN
+                  DO:
+                      ASSIGN aux_dscritic = "Registro de Titular nao encontrado.".
+                      LEAVE Valida.
+                  END.
 
-              IF crapprp.nrperger = 0 THEN
+              IF crapass.inpessoa = 2 AND crapprp.nrperger = 0 THEN
               DO:
                   ASSIGN aux_dscritic = "Favor Preencher a Percep. Geral Empresa na Proposta - tela ATENDA.".
                   LEAVE Valida.
