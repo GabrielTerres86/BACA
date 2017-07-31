@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael Cechet
-    Data    : abril/2017.                     Ultima atualizacao: 20/07/2017
+    Data    : abril/2017.                     Ultima atualizacao: 28/07/2017
  
     Dados referentes ao programa:
  
@@ -23,6 +23,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                              
                 20/07/2017 - Movido procedures da package DDDA0001 para o pc_crps718
                              em função dos erros com o dblink JDNPCBISQL (Rafael).
+                             
+                28/07/2017 - Gerar log de erro no log do boleto (Rafael)
+                           - Ajustado ordenação na busca do processamento do 
+                             boleto DDA nas tabelas da JD. (Rafael)
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps718';     -- Nome do programa
@@ -79,8 +83,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     END IF;
   END pc_controla_log_batch;
   
-  --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
-  PROCEDURE pc_trata_retorno_erro ( pr_cdcooper       IN  crapcob.cdcooper%TYPE   --> Codigo da cooperativa 
+  PROCEDURE pc_trata_retorno_erro ( pr_idtabcob       IN  ROWID                   --> rowid crapcob 
                                    ,pr_tpdopera       IN  VARCHAR2                --> Tipo de operacao
                                    ,pr_idtitleg       IN  crapcob.idtitleg%TYPE   --> Identificador do titulo no legado
                                    ,pr_idopeleg       IN  crapcob.idopeleg%TYPE   --> Identificador da operadao do legado
@@ -123,6 +126,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
      ---------->>> VARIAVEIS <<<-----------   
     vr_dscritic   VARCHAR2(2000);   
     vr_dslogmes crapprm.dsvlrprm%TYPE;   
+    vr_des_erro   VARCHAR2(100);    
        
   BEGIN
     
@@ -137,27 +141,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
         vr_dscritic := 'Operacao';
     END CASE;    
   
-    vr_dscritic := vr_dscritic ||
-                   ' Rejeitada operacao de envio para a CIP ->'||
-                   ' idtitleg: '||pr_idtitleg ||
-                   ' idopeleg: '||pr_idopeleg ;
+    vr_dscritic := vr_dscritic || ' Rejeitada na CIP';
+                   
+    PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_idtabcob
+                                 ,pr_cdoperad => '1'
+                                 ,pr_dtmvtolt => SYSDATE
+                                 ,pr_dsmensag => vr_dscritic
+                                 ,pr_des_erro => vr_des_erro
+                                 ,pr_dscritic => vr_dscritic);
+                   
     
     --> Listar criticas por campo
     FOR rw_optiterr IN cr_optiterr LOOP
-      vr_dscritic := vr_dscritic || chr(10)|| lpad(' ',11,' ')||'DDDA0001 -> ' || 
-                     rw_optiterr.nmcoluna||': '|| 
+      vr_dscritic := rw_optiterr.nmcoluna||': '|| 
                      rw_optiterr.codderro||' - '||rw_optiterr.dsdoerro;    
-    END LOOP;  
-    
-    
-    vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');    
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, 
-                               pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                  ' - DDDA0001 -> ' || vr_dscritic,
-                               pr_nmarqlog     => vr_dslogmes);
+                     
+      PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_idtabcob
+                                   ,pr_cdoperad => '1'
+                                   ,pr_dtmvtolt => SYSDATE
+                                   ,pr_dsmensag => trim(substr(vr_dscritic,1,350))
+                                   ,pr_des_erro => vr_des_erro
+                                   ,pr_dscritic => vr_dscritic);
+                     
+    END LOOP;         
   
-  END pc_trata_retorno_erro;     
+  END pc_trata_retorno_erro;  
   
   --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
   PROCEDURE pc_ret_inclusao_tit_npc ( pr_idtitleg       IN  crapcob.idtitleg%TYPE --> Identificador do titulo no legado
@@ -304,7 +312,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     
     --> Gerar log de rejeicao
     IF pr_cdstiope IN ('EJ','EC') THEN
-      pc_trata_retorno_erro ( pr_cdcooper   => rw_crapcob.cdcooper  --> Codigo da cooperativa 
+      pc_trata_retorno_erro ( pr_idtabcob   => rw_crapcob.rowidcob  --> ROWID crapcob
                              ,pr_tpdopera   => 'I'                  --> Tipo de operacao
                              ,pr_idtitleg   => pr_idtitleg          --> Identificador do titulo no legado
                              ,pr_idopeleg   => pr_idopeleg          --> Identificador da operadao do legado
@@ -430,7 +438,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     
     --> Gerar log de rejeicao
     IF pr_cdstiope IN ('EJ','EC') THEN
-      pc_trata_retorno_erro ( pr_cdcooper   => rw_crapcob.cdcooper  --> Codigo da cooperativa 
+      pc_trata_retorno_erro ( pr_idtabcob   => rw_crapcob.rowidcob  --> ROWID crapcob      
                              ,pr_tpdopera   => 'A'                  --> Tipo de operacao
                              ,pr_idtitleg   => pr_idtitleg          --> Identificador do titulo no legado
                              ,pr_idopeleg   => pr_idopeleg          --> Identificador da operadao do legado
@@ -583,7 +591,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     
     --> Gerar log de rejeicao
     IF pr_cdstiope IN ('EJ','EC') THEN
-      pc_trata_retorno_erro ( pr_cdcooper   => rw_crapcob.cdcooper  --> Codigo da cooperativa 
+      pc_trata_retorno_erro ( pr_idtabcob   => rw_crapcob.rowidcob  --> ROWID crapcob      
                              ,pr_tpdopera   => 'B'                  --> Tipo de operacao
                              ,pr_idtitleg   => pr_idtitleg          --> Identificador do titulo no legado
                              ,pr_idopeleg   => pr_idopeleg          --> Identificador da operadao do legado
@@ -638,7 +646,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
          AND tit."ISPBAdministrado" = pr_nrispbif
          AND tit."IdTituloLeg"      = pr_idtitleg
          AND tit."TpOpJD"           IN ('RI','RA','RB')
-       ORDER BY tit."DtHrOpJD" DESC;
+       ORDER BY tit."DtHrOpJD" ASC;
     rw_retnpc cr_retnpc%ROWTYPE;
       
     CURSOR cr_crapcop IS

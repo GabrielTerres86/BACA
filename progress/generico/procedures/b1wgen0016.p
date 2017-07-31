@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 02/06/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 31/07/2017
     
     Dados referentes ao programa:
 
@@ -493,9 +493,13 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
               20/04/2017 - Ajustes da NPC para o processo de pagamento com multiplas 
                            assitaturas (Renato Darosci - P340)  
               
+              02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
+
               14/06/2017 - Incluido comando TRUNC para cortar o valor de iof em 2 casas
                            decimais, estava falhando comparacao devido ao arredondamento.
                            Heitor (Mouts) - Chamado 688338
+
+			  31/07/2017 - Alterado parametro par_cdcltrcs de INTEGER para CHAR. (Rafael)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -3186,7 +3190,7 @@ PROCEDURE cadastrar-agendamento:
     DEF  INPUT PARAM par_dstransf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dshistor AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_cdctrlcs AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_cdctrlcs AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_msgofatr AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdempcon AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_cdsegmto AS CHAR                           NO-UNDO.
@@ -8399,7 +8403,7 @@ PROCEDURE aprova_trans_pend:
                                                          INPUT tt-tbpagto_trans_pend.cdctrlcs, /* par_cdctlnpc */
                                                         OUTPUT aux_dstransa,
                                                         OUTPUT aux_dscritic,
-                                                        OUTPUT aux_dsprotoc,
+                                                        OUTPUT glb_dsprotoc,
                                                         OUTPUT aux_cdbcoctl,
                                                         OUTPUT aux_cdagectl).
     
@@ -11795,7 +11799,7 @@ PROCEDURE aprova_trans_pend:
                         
                                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                              
-                                RUN STORED-PROCEDURE pc_confirma_regarca_ib aux_handproc = PROC-HANDLE NO-ERROR
+                                RUN STORED-PROCEDURE pc_confirma_recarga_ib aux_handproc = PROC-HANDLE NO-ERROR
                                                      (INPUT par_cdcooper
                                                      ,INPUT par_nrdconta
                                                      ,INPUT par_idseqttl
@@ -11814,18 +11818,19 @@ PROCEDURE aprova_trans_pend:
                                                      ,INPUT IF par_indvalid = 1 AND 
                                                                aux_conttran = 1 THEN 1 
                                                             ELSE  3        /* pr_aprvpend */
+                                                     ,INPUT 0
                                                      ,OUTPUT ""
                                                      ,OUTPUT 0
                                                      ,OUTPUT "").
-                                CLOSE STORED-PROC pc_confirma_regarca_ib 
+                                CLOSE STORED-PROC pc_confirma_recarga_ib 
                                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
                      
                                 ASSIGN aux_cdcritic = 0
                                        aux_dscritic = ""
-                                       aux_cdcritic = pc_confirma_regarca_ib.pr_cdcritic
-                                                      WHEN pc_confirma_regarca_ib.pr_cdcritic <> ?
-                                       aux_dscritic = pc_confirma_regarca_ib.pr_dscritic
-                                                      WHEN pc_confirma_regarca_ib.pr_dscritic <> ?.
+                                       aux_cdcritic = pc_confirma_recarga_ib.pr_cdcritic
+                                                      WHEN pc_confirma_recarga_ib.pr_cdcritic <> ?
+                                       aux_dscritic = pc_confirma_recarga_ib.pr_dscritic
+                                                      WHEN pc_confirma_recarga_ib.pr_dscritic <> ?.
                                        
                                 
                                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
