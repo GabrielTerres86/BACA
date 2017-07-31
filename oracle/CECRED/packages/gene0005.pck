@@ -254,7 +254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --             16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
   --                          novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
   ---------------------------------------------------------------------------------------------------------------
-
+  
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
    vr_nrctaint       crapprm.dsvlrprm%TYPE;
@@ -926,6 +926,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                04/10/2013 - Retirado insitctr = P no Ratinf do BNDES (Renato - Supero)
 
                07/01/2015 - Incluido possibilidade de buscar o saldo atual (Andrino - RKAM)
+
+			   24/07/2017 - Incluido Replace de ';' para ',' na lista de contratos 
+			                a liquidar (Marcos-Supero)
+
      ............................................................................. */
 
      DECLARE
@@ -1066,7 +1070,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
        -- Se nao houver contas para liquidar
        IF Upper(pr_dsctrliq) != Upper('Sem liquidacoes') THEN
          -- Quantidade contas recebe numero entradas da string
-         vr_tab_dsctrliq:= GENE0002.fn_quebra_string(pr_string  => pr_dsctrliq, pr_delimit => ',');
+         vr_tab_dsctrliq:= GENE0002.fn_quebra_string(pr_string  => replace(pr_dsctrliq,';',','), pr_delimit => ',');
 
          -- Se o vetor retornar vazio
          IF vr_tab_dsctrliq.Count=0 THEN
@@ -1116,18 +1120,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                IF UPPER(pr_cdprogra) = 'CRPS405' THEN
                   vr_vlsdeved := rw_crapepr.vlsdevat;
                ELSE
-                 -- Utilizar a pc_calc_saldo_epr
-                 EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
-                                           ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
-                                           ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
-                                           ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
-                                           ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
-                                           ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
-                                           ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
-                                           ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
-                                           ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
-                                           ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
-
+               -- Utilizar a pc_calc_saldo_epr
+               EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
+                                         ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+                                         ,pr_cdprogra   => pr_cdprogra         --> Programa que solicitou o calculo
+                                         ,pr_nrdconta   => vr_index_conta      --> Numero da conta do emprestimo
+                                         ,pr_nrctremp   => rw_crapepr.nrctremp --> Numero do contrato do emprestimo
+                                         ,pr_inusatab   => pr_inusatab         --> Indicador de utilizacão da tabela de juros
+                                         ,pr_vlsdeved   => vr_vlsdeved         --> Saldo devedor do emprestimo
+                                         ,pr_qtprecal   => vr_qtprecal_retorno --> Quantidade de parcelas do emprestimo
+                                         ,pr_cdcritic   => vr_cdcritic         --> Codigo de critica encontrada
+                                         ,pr_des_erro   => vr_des_erro);       --> Retorno de Erro
 
                -- Se ocorreu erro, gerar critica
                IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
@@ -1136,8 +1139,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                  -- Gerar critica
                  RAISE vr_exc_erro;
                END IF;
+
 			 END IF;
-           ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
+             ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr
                EMPR0001.pc_saldo_devedor_epr(pr_cdcooper   => pr_cdcooper           --> Cooperativa conectada
                                             ,pr_cdagenci   => pr_cdagenci         --> Codigo da agencia
@@ -1717,14 +1721,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
           END IF;
       
         END;
-
+    
   END pc_valida_cnpj;
       
   /* Procedure para validar cpf ou cnpj */
   PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
                                ,pr_stsnrcal OUT BOOLEAN     --Situacao
                                ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
-    BEGIN
+  BEGIN
     /* ..........................................................................
     
       Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj

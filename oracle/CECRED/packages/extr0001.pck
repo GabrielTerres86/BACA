@@ -31,7 +31,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
 							
 			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
-							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)                            
 
                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
                             na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
@@ -425,6 +425,22 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Codigo Erro
                                     ,pr_dscritic OUT VARCHAR2);            --> Descricao Erro
 
+  --> Rotina para carregar as medias dos cooperados
+  PROCEDURE pc_carrega_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                               ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                               ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                               ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                               ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                               ,pr_idorigem IN INTEGER                --> Identificador de Origem                               
+                               ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                               ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
+                               ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                               --------> OUT <--------                                   
+                               ,pr_tab_medias      OUT typ_tab_medias      --> Retornar valores das medias
+                               ,pr_tab_comp_medias OUT typ_tab_comp_medias --> Retorna complemento medias
+                               ,pr_cdcritic        OUT PLS_INTEGER         --> Código da crítica
+                               ,pr_dscritic        OUT VARCHAR2);          --> Descrição da crítica
 END EXTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
@@ -705,7 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
               02/06/2016 - Adicionado validações Para melhorar desempenho da 
                            rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
-                           
+                          
               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                            desta package.(Carlos Rafael Tanholi).                              
                            
@@ -722,7 +738,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            pc_obtem_saldo_dia (Carlos)
                29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)
-			    
+
               06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).
 
@@ -798,7 +814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND ( pr_lsthistor_ret = ' ' OR ','||pr_lsthistor_ret||',' LIKE ('%,'||lcm.cdhistor||',%') );     --> Retornar quando passado         
   rw_craplcm_olt cr_craplcm_olt%ROWTYPE;    
           
-
+         
   -- Busca de lançamentos no periodo para a conta do associado
   CURSOR cr_craplcm_ign(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
                    ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Número da conta
@@ -861,7 +877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND epr.nrdconta = pr_nrdconta
        AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
-	
+
 	CURSOR cr_his_recarga(pr_cdhistor IN tbrecarga_operadora.cdhisdeb_cooperado%TYPE) IS
 	  SELECT 1
 		  FROM tbrecarga_operadora tope
@@ -2859,7 +2875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  Depositos Identificados (Alisson - AMcom)
 
                     01/04/2015 - Ajuste na variavel vr_dshistor (Jean Michel).
-
+                    
                     17/05/2016 - Incluido tratamento para historico 1019 exibir o correta
                                  descrição no historico e para caso for um lançamento de 
                                  debito automatico concatenar com historico complementar
@@ -3238,7 +3254,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                               ,pr_tab_extr  => pr_tab_extr
                               ,pr_des_chave => vr_ind_tab
                               ,pr_seq_reg   => vr_nrsequen);
-																														
         -- Finalmente cria o novo registro
         pr_tab_extr(vr_ind_tab).nrdconta := vr_nrdconta;
         pr_tab_extr(vr_ind_tab).dtmvtolt := vr_dtmvtolt;
@@ -6229,7 +6244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
      Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
 
-                 03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
+	             03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
                               Projeto 299/3 - Pre Aprovado (Lombardi)
     ..............................................................................*/
 
@@ -6956,7 +6971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_dscritic:= 'Erro na extr0001.pc_consulta_extrato_car --> '|| SQLERRM;
 
   END pc_consulta_extrato_car;  
-  
+
   --> Rotina para obter as medias dos cooperados
   PROCEDURE pc_obtem_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                              ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -7004,7 +7019,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                        sld.vlsmstre##3,
                        sld.vlsmstre##4,
                        sld.vlsmstre##5,
-                       sld.vlsmstre##6
+                       sld.vlsmstre##6,
+                       sld.vlsmpmes
                 FROM   crapsld sld 
                 WHERE sld.cdcooper = pr_cdcooper
                   AND sld.nrdconta = pr_nrdconta)
@@ -7013,7 +7029,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  vlsmstre##3,
                                  vlsmstre##4,
                                  vlsmstre##5,
-                                 vlsmstre##6));
+                                 vlsmstre##6,
+                                 VLSMPMES));
     
     TYPE typ_tab_vlsmstre IS TABLE OF NUMBER
          INDEX BY PLS_INTEGER;
@@ -7142,13 +7159,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --> Buscar media de saldo do mês
     CURSOR cr_crapsda (pr_cdcooper crapsda.cdcooper%TYPE,
                        pr_nrdconta crapsda.nrdconta%TYPE,
-                       pr_dtmvtolt crapsda.dtmvtolt%TYPE) IS
+                       pr_dtmvtolt crapsda.dtmvtolt%TYPE,
+                       pr_dtmvtoan crapdat.dtmvtoan%TYPE) IS
       SELECT SUM(sda.vlsddisp) / COUNT(sda.nrdconta) vltsddis
             ,COUNT(sda.nrdconta) qtdiauti
         FROM crapsda sda
        WHERE sda.cdcooper = pr_cdcooper
          AND sda.nrdconta = pr_nrdconta
-         AND sda.dtmvtolt BETWEEN trunc(pr_dtmvtolt,'MM') AND last_day(pr_dtmvtolt);
+         AND sda.dtmvtolt BETWEEN trunc(pr_dtmvtolt,'MM') AND pr_dtmvtoan;
     rw_crapsda cr_crapsda%ROWTYPE;
     
          
@@ -7251,7 +7269,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --> Buscar media de saldo do mês
     OPEN cr_crapsda (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
-                     pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                     pr_dtmvtoan => rw_crapdat.dtmvtoan);
     FETCH cr_crapsda INTO rw_crapsda;
     CLOSE cr_crapsda;
     

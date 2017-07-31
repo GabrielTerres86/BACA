@@ -4,7 +4,8 @@
  * DATA CRIAÇÃO : 17/03/2016
  * OBJETIVO     : Biblioteca de funções da tela CONPRO
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 05/07/2017 - P337 - Prever novas situações criadas pela
+ *                             pela implantação da análise automática (Motor)
  * --------------
  */
 
@@ -490,26 +491,27 @@ function buscaAcionamentos() {
     $.ajax({
         type: 'POST',
         async: true,
+		    dataType: 'html',
         url: UrlSite + 'telas/conpro/busca_acionamento.php',
         data: {
             cddopcao: cddopcao,
             nrdconta: nrdconta,
             nrctremp: nrctremp,
-			dtinicio: dtinicio,
-			dtafinal: dtafinal,
-            redirect: 'script_ajax'
+			      dtinicio: dtinicio,
+			      dtafinal: dtafinal,
+            redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+			      showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function(response) {
+			      hideMsgAguardo();
             try {
-                eval(response);
+				        $('#divResultadoAciona').html(response);
                 return false;
-            } catch (error) {
-                hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            } catch (error) {                
+				        showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
             }
         }
     });
@@ -781,7 +783,6 @@ function formataBusca() {
 
     var divRegistro = $('div.divRegistros', '#divResultadoAciona');
     var tabela = $('table', divRegistro);
-//    var linha = $('table > tbody > tr', divRegistro);
 
     divRegistro.css({'height': '250px'});
 
@@ -801,7 +802,7 @@ function formataBusca() {
 
     arrayLargura[0] = '80px';
     arrayLargura[1] = '70px';
-	arrayLargura[2] = '110px';
+	  arrayLargura[2] = '110px';
     arrayLargura[3] = '100px';
     arrayLargura[4] = '280px';
     arrayLargura[5] = '120px';
@@ -823,3 +824,39 @@ function formataBusca() {
 	
     return false;
 }
+
+
+
+function abreProtocoloAcionamento(dsprotocolo) {
+
+    showMsgAguardo('Aguarde, carregando...');
+
+    // Executa script de através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/conpro/tab_acionamento.php',
+        data: {
+            dsprotocolo: dsprotocolo,
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+			      hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();
+			      if (response.substr(0,4) == "hide") {
+				        eval(response);
+			      } else {
+                $('#nmarquiv', '#frmImprimir').val(response);
+                var action = UrlSite + 'telas/conpro/tab_acionamento.php';
+                carregaImpressaoAyllos("frmImprimir",action,"");
+			      }
+            return false;
+        }
+    });
+
+}
+
+

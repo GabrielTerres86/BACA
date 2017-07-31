@@ -19,6 +19,7 @@
  * 009: [15/10/2015] Alteracao do nome do botao "Recalcular" para "Atualizar Data". (Jaison/Oscar)
  * 010: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 011: [22/03/2016] Inclusao da operacao ACIONAMENTOS. PRJ207 Esteira de Credito. (Daniel/Oscar)
+ * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
  */
 ?>
 
@@ -34,9 +35,9 @@
 				<th>Pr</th>
 				<th>Lcr</th>
 				<th>Fin</th>
-				<th><? echo utf8ToHtml('Situação');?></th>
 				<th>Ac</th>
-				<th><? echo utf8ToHtml('Parecer Esteira');?></th></tr>
+				<th><? echo utf8ToHtml('Situação');?></th>
+				<th><? echo utf8ToHtml('Decisão');?></th></tr>
 		</thead>
 		<tbody>
 			<? foreach( $registros as $registro ) {  $tipo = (getByTagName($registro->tags,'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado"   ?>
@@ -57,6 +58,8 @@
                         <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
+						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
+            <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
                     </td>
 
 					<td> <? echo stringTabela($tipo,40,'maiuscula'); ?>  </td>
@@ -67,8 +70,8 @@
 					<td><? echo stringTabela(getByTagName($registro->tags,'qtpreemp'),10,'maiuscula') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdlcremp'),10,'maiuscula') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdfinemp'),10,'maiuscula') ?></td>
-					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdoperad'),10,'maiuscula') ?></td>					
+					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
 					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td></tr>
 			<? } ?>
 		</tbody>
@@ -79,16 +82,15 @@
 	<a href="#" class="botao" id="btVoltar"    onclick="encerraRotina(true); return false;">Voltar</a>
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
 	<a href="#" class="botao" id="btConsultar" onClick="direcionaConsulta();">Consultar</a>
-	<a href="#" class="botao" id="btExcluir"   onClick="controlaOperacao('TE');">Excluir</a>
 	<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
 	<a href="#" class="botao" id="btImprimir"  onClick="controlaOperacao('IMP');">Imprimir</a>
 	<a href="#" class="botao" id="btSimular"   onClick="validaSimulacao();">Simular</a>
+  <a href="#" class="botao" id="btRecalcular" onClick="controlaOperacao('VAL_RECALCULAR_EMPRESTIMO');">Atualizar Data</a>
 	<div style="margin-top:5px;" />
-	<a href="#" class="botao" id="btRecalcular" onClick="controlaOperacao('VAL_RECALCULAR_EMPRESTIMO');">Atualizar Data</a>
 	<a href="#" class="botao" id="btAprovar"   onClick="controlaOperacao('T_EFETIVA');">Efetivar</a>
 	<a href="#" class="botao" id="btGravames"  onClick="controlaOperacao('VAL_GRAVAMES');">Registrar GRV</a>    
 	<a href="#" class="botao" id="btPortabilidade"  onClick="controlaOperacao('PORTAB_CRED_I');">Portabilidade</a>
-	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Enviar Esteira</a>
-	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Acionamentos</a>
+	<a href="#" class="botao" id="btEnvEsteira"  onClick="controlaOperacao('ENV_ESTEIRA')">Analisar</a>
+	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
 	
 </div>

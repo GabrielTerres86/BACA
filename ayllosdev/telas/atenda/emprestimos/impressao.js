@@ -14,6 +14,7 @@
  * 006: [26/06/2015] Jaison (CECRED): Passagem do parametro 'portabil' na funcao 'mostraDivImpressao'.
  * 007: [26/06/2015] Lombardi (CECRED): Inclusão da function 'verificaDadosJDCTCPortabilidade'.
  * 008: [15/03/2016] Odirlei (AMCOM): Alterado rotina mostraEmail para verificar se deve permitir o envio de email para o comite. PRJ207 - Esteira
+ * 009: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
  */
 
 var flmail_comite;
@@ -67,7 +68,7 @@ function mostraDivImpressao( operacao ) {
 function validaImpressao( operacao ){
 	
 	showMsgAguardo('Aguarde, carregando...');
-	
+		
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',
@@ -113,6 +114,11 @@ function validaImpressao( operacao ){
 function verificaImpressao(par_idimpres){
 
 	idimpres = par_idimpres;
+
+	if ((idimpres == 3 || idimpres == 5 || idimpres == 7) && inobriga == 'S'){
+		showError('error','An&aacute;lise de Cr&eacute;dito ainda n&atilde;o foi efetuada! N&atilde;o ser&aacute; poss&iacute;vel gerar \'Proposta\', \'Rating\' ou \'Consultas\'!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
+		return false;
+	}
 	
 	if ( idimpres >= 1 && idimpres <= 9 ) {
 		

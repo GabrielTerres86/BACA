@@ -2,13 +2,13 @@
 
    Programa: b1wgen0195.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 09/03/2016                        Ultima atualizacao: 09/03/2016
+   Data    : 09/03/2016                        Ultima atualizacao: 02/05/2017
 
    Dados referentes ao programa:
 
    Objetivo  : BO - Rotinas para envio de informacoes para a Esteira de Credito
 
-   Alteracoes:
+   Alteracoes: 02/05/2017 - Ajustes PRJ337 - Motor de Credito (Odirlei-Amcom)
 
  ..............................................................................*/
 
@@ -40,7 +40,8 @@ PROCEDURE verifica_regras_esteira:
     
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-    RUN STORED-PROCEDURE pc_verifica_regras_esteira aux_handproc = PROC-HANDLE
+    RUN STORED-PROCEDURE pc_verifica_regras_esteira
+    aux_handproc = PROC-HANDLE
        (INPUT par_cdcooper,   /* pr_cdcooper */
         INPUT par_nrdconta,   /* pr_nrdconta */
         INPUT par_nrctremp,   /* pr_nrctremp*/
@@ -192,12 +193,14 @@ PROCEDURE Enviar_proposta_esteira:
     DEF  INPUT PARAM par_flreiflx AS INTE                           NO-UNDO.
     /* Tipo de envio dos dados para a Esteira 
        I - inclusao Proposta
+       D - Derivacao Proposta
        A - Alteracao Proposta
        N - Alterar Numero Proposta
        C - Cancelar Proposta
        E - Efetivar Proposta */
     DEF  INPUT PARAM par_tpenvest AS CHAR                           NO-UNDO.  
     
+    DEF OUTPUT PARAM par_dsmensag AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
     
@@ -207,28 +210,31 @@ PROCEDURE Enviar_proposta_esteira:
     DEF VAR aux_nmarqpdf          AS CHAR                           NO-UNDO.   
     DEF VAR aux_flcontes          AS CHAR                           NO-UNDO.   
     
-    /* Verificar se é inclusao ou se ja foi enviado 
-	   deve ser considerado como alteracao */
-	IF par_tpenvest = "I" THEN
-	DO:
-		FIND FIRST crawepr 
-		   WHERE crawepr.cdcooper = par_cdcooper
-			 AND crawepr.nrdconta = par_nrdconta
-			 AND crawepr.nrctremp = par_nrctremp
-			 NO-LOCK NO-ERROR.
+    /* Caso a proposta já tenha sido enviada para a Esteira iremos considerar uma Alteracao. 
+       Caso a proposta tenho sido reprovada pelo Motor, iremos considerar envio pois ela
+       ainda nao foi a Esteira  */
+       
+    IF par_tpenvest = "I" THEN
+      DO:
+          FIND FIRST crawepr 
+          WHERE crawepr.cdcooper = par_cdcooper
+            AND crawepr.nrdconta = par_nrdconta
+            AND crawepr.nrctremp = par_nrctremp
+            AND crawepr.insitest >= 2 
+            AND crawepr.cdopeapr <> "MOTOR"
+          NO-LOCK NO-ERROR.
     
-		IF AVAIL crawepr and 
-		   crawepr.dtenvest <> ? then
-			ASSIGN par_tpenvest = "A".
+          IF AVAIL crawepr AND crawepr.dtenvest <> ? then
+              ASSIGN par_tpenvest = "A".
     END.
-	
-	/***** Verificar se a Esteira esta em contigencia *****/
+        
+    /***** Verificar se a Esteira esta em contigencia *****/
     RUN verifica_regras_esteira
              ( INPUT par_cdcooper,
                INPUT par_nrdconta,
                INPUT par_nrctremp,
-			         INPUT par_tpenvest,
-              OUTPUT par_dscritic,
+               INPUT par_tpenvest,
+              OUTPUT par_cdcritic,
               OUTPUT par_dscritic).
    
     IF par_cdcritic > 0 OR 
@@ -239,7 +245,7 @@ PROCEDURE Enviar_proposta_esteira:
     
     
     /* Gerar impressao da proposta em PDF para as opcoes abaixo*/
-    IF CAN-DO("I,A,E",par_tpenvest) THEN
+    IF CAN-DO("I,A,D,E",par_tpenvest) THEN
     DO:
         RUN gerar_proposta_pdf(
                      INPUT par_cdcooper
@@ -252,8 +258,7 @@ PROCEDURE Enviar_proposta_esteira:
                     ,INPUT par_dtmvtolt
                     ,INPUT par_dtmvtopr
                     ,INPUT par_nrctremp
-                    ,INPUT par_dsiduser
-                                       
+                    ,INPUT par_dsiduser                                       
                    ,OUTPUT aux_nmarqpdf
                    ,OUTPUT par_cdcritic
                    ,OUTPUT par_dscritic).
@@ -266,13 +271,13 @@ PROCEDURE Enviar_proposta_esteira:
       IF aux_nmarqpdf = ""  THEN
       DO:
         par_dscritic = "Nao foi possivel gerar impressao da proposta " + 
-                       "para envio a Esteira.".
+                       "para Analise de Credito.".
         RETURN "NOK".
       END.
     END.
       
-    /***** INCLUIR PROPOSTA *****/ 
-    IF par_tpenvest = "I" THEN
+    /***** INCLUIR/DERIVAR PROPOSTA *****/ 
+    IF CAN-DO("I,D",par_tpenvest) THEN
       DO:
         
         /* Chamar rotina de inclusao da proposta na Esteira*/
@@ -287,6 +292,7 @@ PROCEDURE Enviar_proposta_esteira:
             INPUT par_nrctremp,   /* pr_nrctremp */
             INPUT par_dtmvtolt,   /* pr_dtmvtolt */
             INPUT aux_nmarqpdf,   /* pr_nmarquiv */
+            OUTPUT "",            /* pr_dsmensag */
             OUTPUT 0,             /* pr_cdcritic */
             OUTPUT ""             /* pr_dscritic */
             ).        
@@ -294,7 +300,11 @@ PROCEDURE Enviar_proposta_esteira:
         CLOSE STORED-PROCEDURE pc_incluir_proposta_est WHERE PROC-HANDLE = aux_handproc.
         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
         
-        ASSIGN par_cdcritic = 0
+        ASSIGN par_dsmensag = ""
+               par_dsmensag = pc_incluir_proposta_est.pr_dsmensag
+                              WHEN pc_incluir_proposta_est.pr_dsmensag <> ?
+        
+               par_cdcritic = 0
                par_cdcritic = pc_incluir_proposta_est.pr_cdcritic
                               WHEN pc_incluir_proposta_est.pr_cdcritic <> ?
                par_dscritic = ""
@@ -433,10 +443,9 @@ PROCEDURE Enviar_proposta_esteira:
     DO:
       UNIX SILENT VALUE("rm " + aux_nmarqpdf + " 2>/dev/null").
     END.
-    
+
     /* Verifica se retornou critica */
-    IF par_cdcritic > 0 OR 
-       par_dscritic <> "" THEN                       
+    IF par_cdcritic >= 0 AND par_dscritic <> "" THEN                       
     DO:
        RETURN "NOK".
     END.

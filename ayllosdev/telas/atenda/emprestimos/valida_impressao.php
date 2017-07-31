@@ -4,6 +4,7 @@
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/06/2011 
  * OBJETIVO     : Valida dados para a impressão
+ * ALTERAÇÕES   : 25/04/2017 - Incluido retorno da variável inobriga
  */
 ?>
  
@@ -57,7 +58,6 @@
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
 		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
 	}
-	
-	echo 'mostraDivImpressao("'.$operacao.'");';
-				
+	echo "inobriga = '".$xmlObj->roottag->tags[0]->attributes['INOBRIGA']."';";
+	echo 'mostraDivImpressao("'.$operacao.'");';	
 ?>
