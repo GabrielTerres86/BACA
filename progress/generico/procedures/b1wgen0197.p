@@ -586,10 +586,10 @@ PROCEDURE canc_auto_produtos:
                                              INPUT par_idseqttl,
                                              INPUT TRUE, /* LOG */
                                              INPUT par_dtmvtolt,
-                                             INPUT "E",
+                                             INPUT "C",
                                              INPUT 0,
                                              INPUT 0,
-                                             INPUT 0,
+                                             INPUT "N",
                                             OUTPUT TABLE tt-erro, 
                                             OUTPUT TABLE tt-autori).
 
