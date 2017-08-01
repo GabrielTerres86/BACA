@@ -42,7 +42,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0079.p
     Autor     : David
-    Data      : Dezembro/2010                Ultima Atualizacao: 01/12/2014
+    Data      : Dezembro/2010                Ultima Atualizacao: 01/08/2017
     
     Dados referentes ao programa:
 
@@ -100,6 +100,9 @@
 
     20/07/2017 - Ajuste para remover caracteres especiais na listar titulo sacado
                  PRJ340 - NPC (Odirlei-AMcom)                         
+
+	01/08/2017 - Substituir caracter "." por "," na conversao de valores, devido
+				 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
 .............................................................................*/
 
 
@@ -2387,7 +2390,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                          INTE(SUBSTR(hXmlText:NODE-VALUE,7,2)),
                                          INTE(SUBSTR(hXmlText:NODE-VALUE,1,4))).
         WHEN "VlrTit" THEN 
-            ASSIGN aux_vltitulo = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vltitulo = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "NumDocTit" THEN 
             ASSIGN aux_nrdocmto = hXmlText:NODE-VALUE.
         WHEN "CodCartTit" THEN
@@ -2412,7 +2415,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                   ELSE
                                       "".
         WHEN "VlrAbattTit" THEN
-            ASSIGN aux_vlrabati = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlrabati = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         
         WHEN "JurosTit" THEN 
             /** Leitura dos Nodes "multas" - Instrucoes **/
@@ -2443,7 +2446,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                       "".
                                                 
                 ELSE IF hXmlNode3:NAME = "VlrPercJurosTit" THEN
-            ASSIGN aux_vlrdmora = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlrdmora = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
 
             END. /** Fim do DO ... TO **/  
         
@@ -2470,7 +2473,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                                                 "". 
                                                 
                 ELSE IF hXmlNode3:NAME = "VlrPercMultaTit" THEN
-            ASSIGN aux_vlrmulta = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlrmulta = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
                 
               
 
@@ -2538,7 +2541,7 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
                     DO:
         
                         ASSIGN bb-descto-tit-sacado-dda.vldescto = 
-                                             DECI(hXmlText:NODE-VALUE).
+                                             DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
                   END.     
                     END.
 
@@ -2567,13 +2570,13 @@ DEF    VAR       aux_flgxmlok AS LOGICAL                        NO-UNDO.
             
         END.
         WHEN "VlrCalcdDesct" THEN
-            ASSIGN aux_vldsccal = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vldsccal = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "VlrCalcdJuros" THEN
-            ASSIGN aux_vljurcal = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vljurcal = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "VlrCalcdMulta" THEN
-            ASSIGN aux_vlmulcal = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vlmulcal = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
         WHEN "VlrTotCobrar" THEN
-            ASSIGN aux_vltotcob = DECI(hXmlText:NODE-VALUE).
+            ASSIGN aux_vltotcob = DECI(REPLACE(hXmlText:NODE-VALUE,".",",")).
 
         WHEN "CidSacdEletrnc" THEN
             ASSIGN aux_nmcidsac = substituir_caracter(INPUT hXmlText:NODE-VALUE).
