@@ -16,7 +16,7 @@
 	<parameter name="PR_CDAGENCI" class="java.lang.String"/>
 	<parameter name="PR_NMRESAGE" class="java.lang.String"/>
 	<queryString language="xPath">
-		<![CDATA[/crrl007/agencia/diversos/diverso]]>
+		<![CDATA[/crrl007/agencia/diversos/diverso2]]>
 	</queryString>
 	<field name="nrdconta" class="java.lang.String">
 		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
@@ -122,19 +122,12 @@
 				<text><![CDATA[ADIANT.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="9dcb793e-fa89-4397-bc79-b2606469b259" x="171" y="27" width="211" height="8"/>
+				<reportElement uuid="9dcb793e-fa89-4397-bc79-b2606469b259" x="205" y="27" width="163" height="8"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
-				<text><![CDATA[* ADIANTAMENTO A DEPOSITANTES - DIVERSOS (PRIORIDADE) *]]></text>
+				<text><![CDATA[* ADIANTAMENTO A DEPOSITANTES - DIVERSOS *]]></text>
 			</staticText>
-			<textField>
-				<reportElement uuid="11c57d7f-abb0-4240-b15a-d117a89a8abe" x="29" y="14" width="14" height="8"/>
-				<textElement textAlignment="Right">
-					<font fontName="Courier New" size="6"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{PR_CDAGENCI}]]></textFieldExpression>
-			</textField>
 			<staticText>
 				<reportElement uuid="79fb0daa-2517-4349-b5b2-8a5fd1c8c3c0" x="506" y="48" width="80" height="8"/>
 				<textElement>
@@ -142,13 +135,6 @@
 				</textElement>
 				<text><![CDATA[OBSERVACOES]]></text>
 			</staticText>
-			<textField>
-				<reportElement uuid="12ff9125-cf18-48e1-9ec0-98f4a67ec4ec" x="58" y="14" width="110" height="8"/>
-				<textElement>
-					<font fontName="Courier New" size="6"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{PR_NMRESAGE}]]></textFieldExpression>
-			</textField>
 			<staticText>
 				<reportElement uuid="a4488253-d758-4bad-8778-3a1a46bd29f5" x="46" y="14" width="10" height="8"/>
 				<textElement textAlignment="Center">
@@ -170,6 +156,20 @@
 				</textElement>
 				<text><![CDATA[-------------------------------------------------------------------------------------------------------------------------------------------------------------------]]></text>
 			</staticText>
+			<textField>
+				<reportElement uuid="0af0b726-f53d-4a56-8720-84035b2f439a" x="58" y="14" width="110" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{PR_NMRESAGE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="6cb8b146-9995-402f-a391-d49c1ff3bf49" x="30" y="14" width="14" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{PR_CDAGENCI}]]></textFieldExpression>
+			</textField>
 		</band>
 	</columnHeader>
 	<detail>
@@ -239,4 +239,85 @@
 			</staticText>
 		</band>
 	</detail>
+	<summary>
+		<band height="80">
+			<textField pattern="#,##0;-#,##0" isBlankWhenNull="true">
+				<reportElement uuid="18c67a36-634a-4655-ae2e-bc52cfcbc851" x="371" y="10" width="31" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_agnvllim}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="e31f18b1-ae99-4619-af69-18b5c8e6490b" x="409" y="10" width="40" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_agnsdbtl}.trim()]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="b232d110-69c4-4444-9e01-8a38c7dff052" x="308" y="10" width="55" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_agnsddis}.trim()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="10" y="11" width="53" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TOTAIS ==>]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="10" y="29" width="179" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[TOTAIS (Custodia/Desconto/CX) ==> QTD.:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="5333bba1-9649-4e7f-8439-5b59103ddf29" x="190" y="29" width="19" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_qtcstdct}.trim()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="2b86431c-4d25-4678-83bc-fa19f79ef371" x="223" y="29" width="35" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[VALOR:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="5333bba1-9649-4e7f-8439-5b59103ddf29" x="263" y="29" width="52" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tot_vlcstdct}.trim()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="ac94d215-bf0d-4d39-84b2-cdc278a0e248" x="10" y="45" width="290" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[DD        : Dias consecutivos de adiantamento a depositante.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="ac94d215-bf0d-4d39-84b2-cdc278a0e248" x="10" y="54" width="248" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[COMP.     : Cheques compensados em outras IFs.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="ac94d215-bf0d-4d39-84b2-cdc278a0e248" x="10" y="63" width="410" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[CST/DCT/CX: Cheques em custodia, desconto ou trocado na boca do caixa da Cooperativa.]]></text>
+			</staticText>
+		</band>
+	</summary>
 </jasperReport>

@@ -380,6 +380,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 				
 			   26/07/2017 - 706774-Tratar relatórios para valores acima de 1 bilhão
 							(Andrey Formigari - Mouts)
+
+			   01/08/2017 - ajuste no relatorio 007 - inclusão de uma subdivisão 
+
      ............................................................................. */
 
      DECLARE
@@ -2390,6 +2393,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
                -- Flag controle impressao
                vr_flgimpdiv:= 'S';
+               
+               IF vr_tab_crat007(vr_des_chave).qtddsdev > 15   OR
+                  vr_tab_crat007(vr_des_chave).vlestour > 500 THEN
+               
                --Escrever as informacoes da conta no XML
                gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<diverso id="'||vr_des_chave||'">
                              <nrdconta>'||LTrim(gene0002.fn_mask_conta(vr_tab_crat007(vr_des_chave).nrdconta))||'</nrdconta>
@@ -2401,6 +2408,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                              <vlestour>'||to_char(vr_tab_crat007(vr_des_chave).vlestour,'fm99999g990d00')||'</vlestour>
                              <vlsdbltl>'||to_char(vr_tab_crat007(vr_des_chave).vlsdbltl,'fm99999g990d00')||'</vlsdbltl>
                            </diverso>');
+
+               ELSE
+
+                   --Escrever as informacoes da conta no XML
+                   gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'<diverso2 id="'||vr_des_chave||'">
+                                 <nrdconta>'||LTrim(gene0002.fn_mask_conta(vr_tab_crat007(vr_des_chave).nrdconta))||'</nrdconta>
+                                 <nmprimtl>'||substr(vr_tab_crat007(vr_des_chave).nmprimtl,1,29)||'</nmprimtl>
+                                 <nrdofone>'||vr_tab_crat007(vr_des_chave).nrdofone||'</nrdofone>
+                                 <qtddsdev>'||vr_tab_crat007(vr_des_chave).qtddsdev||'</qtddsdev>
+                                 <vlsddisp>'||to_char(vr_tab_crat007(vr_des_chave).vlsddisp,'fm99999g990d00mi')||'</vlsddisp>
+                                 <vllimcre>'||to_char(vr_tab_crat007(vr_des_chave).vllimcre,'fm999999g999')||'</vllimcre>
+                                 <vlestour>'||to_char(vr_tab_crat007(vr_des_chave).vlestour,'fm99999g990d00')||'</vlestour>
+                                 <vlsdbltl>'||to_char(vr_tab_crat007(vr_des_chave).vlsdbltl,'fm99999g990d00')||'</vlsdbltl>
+                               </diverso2>');
+               END IF;
+                             
 
                --Se for uma cooperativa que deve enviar arquivo
                IF vr_dircptxt IS NOT NULL THEN
