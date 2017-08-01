@@ -15,7 +15,8 @@
  *  											   especiais na observação, conforme solicitado
  *												   no chamado 315453.
          17/06/2016 - M181 - Alterar o CDAGENCI para          
-                      passar o CDPACTRA (Rafael Maciel - RKAM) 
+                      passar o CDPACTRA (Rafael Maciel - RKAM)
+		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 
  */
 ?>
@@ -325,10 +326,16 @@
 	// Dados globais rating
 	echo 'tpctrrat = 2;';
 	echo 'nrctrrat = '.$nrctrlim.';';
-
-	// Gravar dados do rating do cooperado
-	echo 'atualizaDadosRating("divOpcoesDaOpcao3");';
 	
+	$mensagens = $xmlObjLimite->roottag->tags[1]->tags;
+	// Mensagens de alerta
+	$msg = Array();
+	foreach( $mensagens as $mensagem ) {
+		$msg[] = getByTagName($mensagem->tags,'dsmensag');
+	}
+	$stringArrayMsg = implode( "|", $msg);
+	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
