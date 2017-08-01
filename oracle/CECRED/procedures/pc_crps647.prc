@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 17/07/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 01/08/2017
 
   Dados referentes ao programa:
 
@@ -142,9 +142,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            e nao for na Cecred, as demais criticas seguem enviando normalmente
                            (Lucas Ranghetti #635894)
 
-			 17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
-                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
-                          diferentes (Lucas Ranghetti #684123)
+              17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+                           conta e referencia no mesmo dia(dtmvtolt) porem com valores
+                           diferentes (Lucas Ranghetti #684123)
+                           
+              01/08/2017 - Incluir tratamento para contas demitidas, exibir critica correta
+                           no relatorio (Lucas Ranghetti #711763)
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -410,20 +413,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
     vr_nrctacns := SUBSTR(vr_dslinharq,31,14);
     -- Se não encontrou ou Encontrou e o associado está inativo 
     IF NOT vr_tab_crapass.EXISTS(vr_nrctacns) OR vr_tab_crapass(vr_nrctacns).dtdemiss IS NOT NULL THEN 
-      -- Se encontrou 
-      IF vr_tab_crapass.EXISTS(vr_nrctacns) THEN 
-        vr_nrdconta := vr_tab_crapass(vr_nrctacns).nrdconta;
-        vr_cdagenci := vr_tab_crapass(vr_nrctacns).cdagenci;
-        -- Gerar critica 9 somente para o Registro 'E' 
-        IF vr_tpregist = 'E' THEN 
-          pr_cdcritic := 9;
-        END IF;
-      ELSE 
-        -- Nao existe conta consorcio
-        pr_cdcritic := 961;
+      
+      -- Se nao existir conta na crapass, vamos criticar com conta errada
+      IF NOT vr_tab_crapass.EXISTS(vr_nrctacns) THEN
         vr_nrdconta := 0;
         vr_cdagenci := 0;
+        IF vr_tpregist = 'E' THEN 
+          pr_cdcritic := 127; -- Conta errada
+        END IF;
+      ELSIF vr_tab_crapass(vr_nrctacns).dtdemiss IS NOT NULL THEN -- se for demitido
+        vr_nrdconta := vr_tab_crapass(vr_nrctacns).nrdconta;
+        vr_cdagenci := vr_tab_crapass(vr_nrctacns).cdagenci;
+        
+        IF vr_tpregist = 'E' THEN 
+          pr_cdcritic := 64; -- Conta encerrada
+        END IF;
       END IF;
+      
       -- Somente no registro "E"
       IF vr_tpregist = 'E' THEN 
         -- Criar NDB
