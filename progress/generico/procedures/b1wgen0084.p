@@ -276,6 +276,9 @@
               17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
                            de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                            liberaçao do projeto (Renato - Supero)
+
+              28/07/2017 - Ajuste na procedure valida_dados_efetivacao_proposta para nao validar
+                           o capital minimo para as cessoes de credito (Anderson).
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -2226,6 +2229,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
     DEF VAR h-b1wgen0110 AS HANDLE  NO-UNDO.
     DEF VAR aux_nrctrliq AS CHAR    NO-UNDO.
     DEF VAR aux_flgativo AS INTEGER NO-UNDO.
+    DEF VAR aux_flgcescr AS LOG INIT FALSE                             NO-UNDO.
 	  /* DEF VAR aux_flimovel AS INTEGER NO-UNDO. 17/02/2017 - Validaçao removida */
 
     DEF BUFFER crabbpr FOR crapbpr.
@@ -2335,32 +2339,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
 
           RETURN "NOK".
 
-       END.
-
-    RUN sistema/generico/procedures/b1wgen0001.p PERSISTENT SET h-b1wgen0001.
-
-    IF  VALID-HANDLE(h-b1wgen0001)   THEN
-        DO:
-            RUN ver_capital IN h-b1wgen0001(INPUT  par_cdcooper,
-                                            INPUT  par_nrdconta,
-                                            INPUT  par_cdagenci,
-                                            INPUT  par_nrdcaixa,
-                                            INPUT  0, /* vllanmto */
-                                            INPUT  par_dtmvtolt,
-                                            INPUT  "lanctri",
-                                            INPUT  1, /* AYLLOS */
-                                            OUTPUT TABLE tt-erro).
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-            IF  AVAILABLE tt-erro   THEN
-                DO.
-                  DELETE PROCEDURE h-b1wgen0001.
-                  RETURN "NOK".
-                END.
-            ELSE
-               DELETE PROCEDURE h-b1wgen0001.
-
-        END.
+       END.    
 
     ASSIGN aux_cdempres = 0.
 
@@ -2625,7 +2604,46 @@ PROCEDURE valida_dados_efetivacao_proposta:
         END.
     END.
 
-    FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
+    /* Condicao para a Finalidade for Cessao de Credito */
+    FOR FIRST crapfin FIELDS(tpfinali)
+                       WHERE crapfin.cdcooper = crawepr.cdcooper AND 
+                             crapfin.cdfinemp = crawepr.cdfinemp
+                             NO-LOCK: END.
+
+    IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
+       ASSIGN aux_flgcescr = TRUE.
+
+    /* Vamos validar o capital minimo apenas se nao for cessao de credito  */
+    IF NOT aux_flgcescr THEN
+       DO:
+          RUN sistema/generico/procedures/b1wgen0001.p PERSISTENT SET h-b1wgen0001.
+
+          IF  VALID-HANDLE(h-b1wgen0001)   THEN
+              DO:
+                  RUN ver_capital IN h-b1wgen0001(INPUT  par_cdcooper,
+                                                  INPUT  par_nrdconta,
+                                                  INPUT  par_cdagenci,
+                                                  INPUT  par_nrdcaixa,
+                                                  INPUT  0, /* vllanmto */
+                                                  INPUT  par_dtmvtolt,
+                                                  INPUT  "lanctri",
+                                                  INPUT  1, /* AYLLOS */
+                                                  OUTPUT TABLE tt-erro).
+                  FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                  IF  AVAILABLE tt-erro   THEN
+                      DO.
+                        DELETE PROCEDURE h-b1wgen0001.
+                        RETURN "NOK".
+                      END.
+                  ELSE
+                     DELETE PROCEDURE h-b1wgen0001.
+
+              END.
+       END.
+	
+	
+	FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
                        craplcr.cdlcremp = crawepr.cdlcremp NO-LOCK NO-ERROR.
 
     IF  NOT AVAIL craplcr   THEN

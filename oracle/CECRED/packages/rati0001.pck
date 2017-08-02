@@ -593,6 +593,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           ,cdlcremp
           ,vlemprst
           ,vlpreemp
+          ,cdfinemp
           ,NRCTRLIQ##1
           ,NRCTRLIQ##2
           ,NRCTRLIQ##3
@@ -647,6 +648,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       FROM craplcr
      WHERE craplcr.cdcooper = pr_cdcooper
        AND craplcr.cdlcremp = pr_cdlcremp;
+       
+  -- Ler Cadastro de Finalidades
+  CURSOR cr_crapfin(pr_cdcooper crapfin.cdcooper%type
+                   ,pr_cdfinemp crapfin.cdfinemp%type) IS
+    SELECT crapfin.tpfinali
+      FROM crapfin
+     WHERE crapfin.cdcooper = pr_cdcooper
+       AND crapfin.cdfinemp = pr_cdfinemp;
 
   -- Ler Contratos de Limite de credito
   CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
@@ -4323,14 +4332,125 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_flexiavt BOOLEAN := FALSE;
       -- Guardar faturamento médio mensal
       vr_vlmedfat NUMBER;
+      vr_flgcescr BOOLEAN := FALSE;
       
       rw_crawepr3 cr_crawepr%ROWTYPE;
       rw_crapprp2 cr_crapprp%ROWTYPE;
       rw_craplcr1 cr_craplcr%rowtype;
       rw_craplim2 cr_craplim%ROWTYPE;
+      rw_crapfin  cr_crapfin%ROWTYPE;
       
     BEGIN
-      -- Busca do Registro da empresa
+      -- Nao validar para calculo do Risco cooperado
+      IF pr_tpctrrat <> 0 AND pr_nrctrrat <> 0  THEN
+        -- Para empréstimos / Financiamentos
+        IF pr_tpctrrat = 90 THEN
+          -- Testar se existe informação complementar do empréstimo
+          OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctrato => pr_nrctrrat);
+          FETCH cr_crawepr
+           INTO rw_crawepr3;
+          -- Se existir
+          IF cr_crawepr%FOUND THEN
+            CLOSE cr_crawepr;
+            -- Ler Cadastro de Linhas de Credito
+            OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
+                           ,pr_cdlcremp => rw_crawepr3.cdlcremp);
+            FETCH cr_craplcr
+             INTO rw_craplcr1;
+            -- Se não encontrar
+            IF cr_craplcr%NOTFOUND THEN
+              CLOSE cr_craplcr;
+              -- Gerar critica 363
+              vr_nrsequen := vr_nrsequen + 1;
+              vr_dscritic := null;
+              gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_nrdcaixa => pr_nrdcaixa
+                                   ,pr_nrsequen => vr_nrsequen
+                                   ,pr_cdcritic => 363
+                                   ,pr_dscritic => vr_dscritic
+                                   ,pr_tab_erro => pr_tab_erro);
+            ELSE
+              CLOSE cr_craplcr;
+            END IF;
+            
+            -- Ler Cadastro de Finalidades
+            OPEN cr_crapfin(pr_cdcooper => pr_cdcooper,
+                            pr_cdfinemp => rw_crawepr3.cdfinemp);
+            FETCH cr_crapfin INTO rw_crapfin;
+            IF cr_crapfin%FOUND AND 
+               rw_crapfin.tpfinali = 1 THEN
+               /* Verifica se eh cessao de credito */
+               vr_flgcescr := TRUE;   
+            END IF;
+            CLOSE cr_crapfin;
+            
+          ELSE
+            CLOSE cr_crawepr;
+            -- Testar se existe a informação da proposta do empréstimo
+            OPEN cr_crapprp(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_tpctrato => pr_tpctrrat
+                           ,pr_nrctrato => pr_nrctrrat);
+            FETCH cr_crapprp
+             INTO rw_crapprp2;
+            -- Se não encontrar
+            IF cr_crapprp%NOTFOUND THEN
+              CLOSE cr_crapprp;
+              -- Gerar critica 356
+              vr_nrsequen := vr_nrsequen + 1;
+              vr_dscritic := null;
+              gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_nrdcaixa => pr_nrdcaixa
+                                   ,pr_nrsequen => vr_nrsequen
+                                   ,pr_cdcritic => 356
+                                   ,pr_dscritic => vr_dscritic
+                                   ,pr_tab_erro => pr_tab_erro);
+            ELSE
+              CLOSE cr_crapprp;
+            END IF;
+          END IF;
+        ELSE
+          -- Busca do valor da tabela de limites
+          OPEN cr_craplim(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_tpctrato => pr_tpctrrat
+                         ,pr_nrctrato => pr_nrctrrat);
+          FETCH cr_craplim
+           INTO rw_craplim2;
+          -- Se não encontrar
+          IF cr_craplim%NOTFOUND THEN
+            CLOSE cr_craplim;
+            -- Gerar erro 484
+            vr_nrsequen := vr_nrsequen + 1;
+            vr_dscritic := null;
+            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_nrsequen => vr_nrsequen
+                                 ,pr_cdcritic => 484
+                                 ,pr_dscritic => vr_dscritic
+                                 ,pr_tab_erro => pr_tab_erro);
+          ELSE
+            CLOSE cr_craplim;
+          END IF;
+        END IF;
+      END IF;  
+    
+      /* Nao validaremos os itens a seguir em caso de cessao de credito */
+      IF vr_flgcescr THEN
+        IF pr_tab_erro.COUNT > 0 THEN
+           pr_des_reto := 'NOK';
+        ELSE
+           pr_des_reto := 'OK';
+        END IF;
+        RETURN;
+      END IF;
+
+     -- Busca do Registro da empresa
       OPEN cr_crapjur;
       FETCH cr_crapjur
        INTO rw_crapjur;
@@ -4534,92 +4654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           vr_flprbcad := TRUE;
         END IF;
       END IF;
-      -- Nao validar para calculo do Risco cooperado
-      IF pr_tpctrrat <> 0 AND pr_nrctrrat <> 0  THEN
-        -- Para empréstimos / Financiamentos
-        IF pr_tpctrrat = 90 THEN
-          -- Testar se existe informação complementar do empréstimo
-          OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta
-                         ,pr_nrctrato => pr_nrctrrat);
-          FETCH cr_crawepr
-           INTO rw_crawepr3;
-          -- Se existir
-          IF cr_crawepr%FOUND THEN
-            CLOSE cr_crawepr;
-            -- Ler Cadastro de Linhas de Credito
-            OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
-                           ,pr_cdlcremp => rw_crawepr3.cdlcremp);
-            FETCH cr_craplcr
-             INTO rw_craplcr1;
-            -- Se não encontrar
-            IF cr_craplcr%NOTFOUND THEN
-              CLOSE cr_craplcr;
-              -- Gerar critica 363
-              vr_nrsequen := vr_nrsequen + 1;
-              vr_dscritic := null;
-              gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                   ,pr_cdagenci => pr_cdagenci
-                                   ,pr_nrdcaixa => pr_nrdcaixa
-                                   ,pr_nrsequen => vr_nrsequen
-                                   ,pr_cdcritic => 363
-                                   ,pr_dscritic => vr_dscritic
-                                   ,pr_tab_erro => pr_tab_erro);
-            ELSE
-              CLOSE cr_craplcr;
-            END IF;
-          ELSE
-            CLOSE cr_crawepr;
-            -- Testar se existe a informação da proposta do empréstimo
-            OPEN cr_crapprp(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => pr_nrdconta
-                           ,pr_tpctrato => pr_tpctrrat
-                           ,pr_nrctrato => pr_nrctrrat);
-            FETCH cr_crapprp
-             INTO rw_crapprp2;
-            -- Se não encontrar
-            IF cr_crapprp%NOTFOUND THEN
-              CLOSE cr_crapprp;
-              -- Gerar critica 356
-              vr_nrsequen := vr_nrsequen + 1;
-              vr_dscritic := null;
-              gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                   ,pr_cdagenci => pr_cdagenci
-                                   ,pr_nrdcaixa => pr_nrdcaixa
-                                   ,pr_nrsequen => vr_nrsequen
-                                   ,pr_cdcritic => 356
-                                   ,pr_dscritic => vr_dscritic
-                                   ,pr_tab_erro => pr_tab_erro);
-            ELSE
-              CLOSE cr_crapprp;
-            END IF;
-          END IF;
-        ELSE
-          -- Busca do valor da tabela de limites
-          OPEN cr_craplim(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta
-                         ,pr_tpctrato => pr_tpctrrat
-                         ,pr_nrctrato => pr_nrctrrat);
-          FETCH cr_craplim
-           INTO rw_craplim2;
-          -- Se não encontrar
-          IF cr_craplim%NOTFOUND THEN
-            CLOSE cr_craplim;
-            -- Gerar erro 484
-            vr_nrsequen := vr_nrsequen + 1;
-            vr_dscritic := null;
-            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdagenci => pr_cdagenci
-                                 ,pr_nrdcaixa => pr_nrdcaixa
-                                 ,pr_nrsequen => vr_nrsequen
-                                 ,pr_cdcritic => 484
-                                 ,pr_dscritic => vr_dscritic
-                                 ,pr_tab_erro => pr_tab_erro);
-          ELSE
-            CLOSE cr_craplim;
-          END IF;
-        END IF;
-      END IF;
+      
       -- Se não gerou nenhum critica
       IF pr_tab_erro.count = 0 THEN
         pr_des_reto := 'OK';
@@ -5082,11 +5117,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     -- 5_3 - Capacidade de geracao de resultados - SET.ECONOMICO     --
     -------------------------------------------------------------------
     -- Conforme setor
-    CASE rw_crapjur.cdseteco
+    CASE nvl(rw_crapjur.cdseteco,0)
+       WHEN 0 THEN vr_nrseqite := 4; --Agronegocio
        WHEN 1 THEN vr_nrseqite := 4; --Agronegocio
        WHEN 2 THEN vr_nrseqite := 2; -- Comercio
        WHEN 3 THEN vr_nrseqite := 3; -- Industria
-       WHEN 4 THEN vr_nrseqite := 1; -- Servicos
+       WHEN 4 THEN vr_nrseqite := 1; -- Servicos       
        ELSE vr_nrseqite := 0;
     END CASE;
 
@@ -5357,22 +5393,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     IF pr_des_reto = 'NOK' THEN
       RETURN;
     END IF;
-    -- Calcular proporação da dívida X faturamento
-    IF nvl(vr_vlmedfat,0) = 0 THEN -- Tratar divisor zero
-      vr_vlendivi := 0;
-    ELSE
+    
+    IF nvl(vr_vlmedfat,0) > 0 THEN
+      -- Calcular proporação da dívida X faturamento
       vr_vlendivi := (nvl(vr_vlendivi,0) / nvl(vr_vlmedfat,0));
-    END IF;
-    -- Verificar valor conforme faixa
-    IF vr_vlendivi <= 3 THEN
-      vr_nrseqite := 1;
-    ELSIF vr_vlendivi <= 8 THEN
-      vr_nrseqite := 2;
-    ELSIF vr_vlendivi <= 20 THEN
-      vr_nrseqite := 3;
+      
+      -- Verificar valor conforme faixa
+      IF vr_vlendivi <= 3 THEN
+        vr_nrseqite := 1;
+      ELSIF vr_vlendivi <= 8 THEN
+        vr_nrseqite := 2;
+      ELSIF vr_vlendivi <= 20 THEN
+        vr_nrseqite := 3;
+      ELSE
+        vr_nrseqite := 4;
+      END IF;
     ELSE
       vr_nrseqite := 4;
     END IF;
+    
     -- Se solicitado o calculo
     IF pr_flgdcalc = 1 THEN
        vr_vldanota := vr_vldanota + vr_vet_nota_008(vr_nrseqite);
@@ -5501,17 +5540,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       RAISE vr_exc_erro;
     END IF;
 
-    -- Gerar média a partir do faturamento
-    vr_vltotpre := vr_vltotpre / vr_vlmedfat;
-    -- Testar intervalo
-    IF vr_vltotpre <= 0.07 THEN
-      -- Ate 7%
-      vr_nrseqite := 1;
-    ELSIF vr_vltotpre <= 0.1 THEN
-      -- Até 10%
-      vr_nrseqite := 2;
+    IF vr_vlmedfat > 0 THEN
+      -- Gerar média a partir do faturamento
+      vr_vltotpre := vr_vltotpre / vr_vlmedfat;
+      -- Testar intervalo
+      IF vr_vltotpre <= 0.07 THEN
+        -- Ate 7%
+        vr_nrseqite := 1;
+      ELSIF vr_vltotpre <= 0.1 THEN
+        -- Até 10%
+        vr_nrseqite := 2;
+      ELSE
+        -- Mais do que 10%
+        vr_nrseqite := 3;
+      END IF;
     ELSE
-      -- Mais do que 10%
       vr_nrseqite := 3;
     END IF;
 
@@ -6397,11 +6440,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_nrsequen NUMBER;
     -- identifica se ja gerou critica 830
     vr_flgcadin BOOLEAN := FALSE;
+    vr_flgcescr BOOLEAN := FALSE;
 
     rw_crawepr7 cr_crawepr%ROWTYPE;
     rw_crapprp5 cr_crapprp%ROWTYPE;
     rw_craplcr4 cr_craplcr%ROWTYPE;
     rw_craplim5 cr_craplim%ROWTYPE;
+    rw_crapfin  cr_crapfin%ROWTYPE;
     
   BEGIN
 
@@ -6472,6 +6517,120 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     END IF;
     CLOSE cr_crapcot;
+
+    /* Nao efetuar validacoes quando for calcular soh a nota cooperado */
+    IF pr_tpctrrat <> 0 AND
+       pr_nrctrrat <> 0 THEN
+      /* Para emprestimos */
+      IF pr_tpctrrat = 90 THEN
+        --ler informações do emprestimo
+        OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctrato => pr_nrctrrat);
+        FETCH cr_crawepr INTO rw_crawepr7;
+
+        -- se localizou
+        IF cr_crawepr%NOTFOUND THEN
+
+          --Ler Cadastros de propostas.
+          OPEN cr_crapprp(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_tpctrato => pr_tpctrrat
+                         ,pr_nrctrato => pr_nrctrrat);
+          FETCH cr_crapprp INTO rw_crapprp5;
+
+          IF cr_crapprp%NOTFOUND THEN
+            vr_dscritic := null;
+            vr_cdcritic := 356; /* Contrato de emprestimo nao encontrado. */
+
+            vr_nrsequen := vr_nrsequen + 1;
+            -- gerar erro na temptable
+            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_nrsequen => vr_nrsequen
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic
+                                 ,pr_tab_erro => pr_tab_erro);
+          END IF;
+          CLOSE cr_crapprp;
+
+        ELSE
+
+          -- Ler Cadastro de Linhas de Credito
+          OPEN cr_craplcr(pr_cdcooper => pr_cdcooper,
+                          pr_cdlcremp => rw_crawepr7.cdlcremp);
+          FETCH cr_craplcr INTO rw_craplcr4;
+          -- se não localizou
+          IF cr_craplcr%NOTFOUND THEN
+            vr_dscritic := null;
+            vr_cdcritic := 363; /* Linha nao cadastrada. */
+
+            vr_nrsequen := vr_nrsequen + 1;
+            -- gerar erro na temptable
+            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_nrsequen => vr_nrsequen
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic
+                                 ,pr_tab_erro => pr_tab_erro);
+          END IF;
+
+          CLOSE cr_craplcr;
+          
+          -- Ler Cadastro de Finalidades
+          OPEN cr_crapfin(pr_cdcooper => pr_cdcooper,
+                          pr_cdfinemp => rw_crawepr7.cdfinemp);
+          FETCH cr_crapfin INTO rw_crapfin;
+          IF cr_crapfin%FOUND AND 
+             rw_crapfin.tpfinali = 1 THEN
+             /* Verifica se eh cessao de credito */
+             vr_flgcescr := TRUE;   
+          END IF;
+          CLOSE cr_crapfin;
+          
+        END IF;
+        CLOSE cr_crawepr;
+
+      ELSE /* Demais operacoes */
+        -- Ler Contratos de Limite de credito
+        OPEN cr_craplim(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_tpctrato => pr_tpctrrat
+                       ,pr_nrctrato => pr_nrctrrat);
+        FETCH cr_craplim INTO rw_craplim5;
+
+        -- se não localizou
+        IF cr_craplim%NOTFOUND THEN
+          vr_dscritic := null;
+          vr_cdcritic := 484; /* Contrato nao encontrado. */
+
+          vr_nrsequen := vr_nrsequen + 1;
+          -- gerar erro na temptable
+          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_nrsequen => vr_nrsequen
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic
+                               ,pr_tab_erro => pr_tab_erro);
+        END IF;
+
+        CLOSE cr_craplim;
+
+      END IF; -- Fim pr_tpctrrat = 90
+    END IF;
+
+    /* Nao validaremos os itens a seguir em caso de cessao de credito */
+    IF vr_flgcescr THEN
+      IF pr_tab_erro.COUNT > 0 THEN
+         pr_des_reto := 'NOK';
+      ELSE
+         pr_des_reto := 'OK';
+      END IF;
+      RETURN;
+    END IF; 
 
     -- verificar rendimentos do titular
     IF rw_crapttl.vlsalari    = 0 AND
@@ -6583,98 +6742,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     END IF;
     CLOSE cr_crapenc;
-
-    /* Nao efetuar validacoes quando for calcular soh a nota cooperado */
-    IF pr_tpctrrat <> 0 AND
-       pr_nrctrrat <> 0 THEN
-      /* Para emprestimos */
-      IF pr_tpctrrat = 90 THEN
-        --ler informações do emprestimo
-        OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_nrctrato => pr_nrctrrat);
-        FETCH cr_crawepr INTO rw_crawepr7;
-
-        -- se localizou
-        IF cr_crawepr%NOTFOUND THEN
-
-          --Ler Cadastros de propostas.
-          OPEN cr_crapprp(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta
-                         ,pr_tpctrato => pr_tpctrrat
-                         ,pr_nrctrato => pr_nrctrrat);
-          FETCH cr_crapprp INTO rw_crapprp5;
-
-          IF cr_crapprp%NOTFOUND THEN
-            vr_dscritic := null;
-            vr_cdcritic := 356; /* Contrato de emprestimo nao encontrado. */
-
-            vr_nrsequen := vr_nrsequen + 1;
-            -- gerar erro na temptable
-            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdagenci => pr_cdagenci
-                                 ,pr_nrdcaixa => pr_nrdcaixa
-                                 ,pr_nrsequen => vr_nrsequen
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic
-                                 ,pr_tab_erro => pr_tab_erro);
-          END IF;
-          CLOSE cr_crapprp;
-
-        ELSE
-
-          -- Ler Cadastro de Linhas de Credito
-          OPEN cr_craplcr(pr_cdcooper => pr_cdcooper,
-                          pr_cdlcremp => rw_crawepr7.cdlcremp);
-          FETCH cr_craplcr INTO rw_craplcr4;
-          -- se não localizou
-          IF cr_craplcr%NOTFOUND THEN
-            vr_dscritic := null;
-            vr_cdcritic := 363; /* Linha nao cadastrada. */
-
-            vr_nrsequen := vr_nrsequen + 1;
-            -- gerar erro na temptable
-            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdagenci => pr_cdagenci
-                                 ,pr_nrdcaixa => pr_nrdcaixa
-                                 ,pr_nrsequen => vr_nrsequen
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic
-                                 ,pr_tab_erro => pr_tab_erro);
-          END IF;
-
-          CLOSE cr_craplcr;
-        END IF;
-        CLOSE cr_crawepr;
-
-      ELSE /* Demais operacoes */
-        -- Ler Contratos de Limite de credito
-        OPEN cr_craplim(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_tpctrato => pr_tpctrrat
-                       ,pr_nrctrato => pr_nrctrrat);
-        FETCH cr_craplim INTO rw_craplim5;
-
-        -- se não localizou
-        IF cr_craplim%NOTFOUND THEN
-          vr_dscritic := null;
-          vr_cdcritic := 484; /* Contrato nao encontrado. */
-
-          vr_nrsequen := vr_nrsequen + 1;
-          -- gerar erro na temptable
-          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagenci
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_nrsequen => vr_nrsequen
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => pr_tab_erro);
-        END IF;
-
-        CLOSE cr_craplim;
-
-      END IF; -- Fim pr_tpctrrat = 90
-    END IF;
 
     IF pr_tab_erro.COUNT > 0 THEN
       pr_des_reto := 'NOK';
@@ -7199,12 +7266,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     -------------------------------------------------------------------
     --               Item 1_6 - Tipo de residencia.                  --
     -------------------------------------------------------------------
-    CASE rw_crapenc.incasprp
+    CASE nvl(rw_crapenc.incasprp,0)
         WHEN 1  THEN vr_nrseqite := 1;  -- Quitado
         WHEN 2  THEN vr_nrseqite := 2;  -- Financiado
         WHEN 4  THEN vr_nrseqite := 3;  -- Familiar
         WHEN 5  THEN vr_nrseqite := 3;  -- Cedido
-        WHEN 3  THEN vr_nrseqite := 4;  --  Alugado
+        WHEN 3  THEN vr_nrseqite := 4;  -- Alugado
+        WHEN 0  then vr_nrseqite := 4;  -- Alugado
     END CASE;
 
     IF pr_flgdcalc = 1 THEN
@@ -7287,18 +7355,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_vlsalari := rw_crapcje.vlsalari;
     END IF;
 
-    /* Dividir pelo ( salario + rendimentos + Salario conjuge ) */
-    vr_vltotpre := nvl(vr_vltotpre,0) /
-                  (rw_crapttl.vlsalari +
-                   rw_crapttl.vldrendi##1 + rw_crapttl.vldrendi##2 +
-                   rw_crapttl.vldrendi##3 + rw_crapttl.vldrendi##4 +
-                   rw_crapttl.vldrendi##5 + rw_crapttl.vldrendi##6 +
-                   nvl(vr_vlsalari,0));
+    IF ((rw_crapttl.vlsalari +
+         rw_crapttl.vldrendi##1 + rw_crapttl.vldrendi##2 +
+         rw_crapttl.vldrendi##3 + rw_crapttl.vldrendi##4 +
+         rw_crapttl.vldrendi##5 + rw_crapttl.vldrendi##6 +
+         nvl(vr_vlsalari,0)) > 0) THEN    
+      /* Dividir pelo ( salario + rendimentos + Salario conjuge ) */
+      vr_vltotpre := nvl(vr_vltotpre,0) /
+                    (rw_crapttl.vlsalari +
+                     rw_crapttl.vldrendi##1 + rw_crapttl.vldrendi##2 +
+                     rw_crapttl.vldrendi##3 + rw_crapttl.vldrendi##4 +
+                     rw_crapttl.vldrendi##5 + rw_crapttl.vldrendi##6 +
+                     nvl(vr_vlsalari,0));
 
-    IF vr_vltotpre <= 0.20 THEN /* Ate 20% */
-      vr_nrseqite := 1;
-    ELSIF vr_vltotpre <= 0.30 THEN /* Ate 30 % */
-      vr_nrseqite := 2;
+      IF vr_vltotpre <= 0.20 THEN /* Ate 20% */
+        vr_nrseqite := 1;
+      ELSIF vr_vltotpre <= 0.30 THEN /* Ate 30 % */
+        vr_nrseqite := 2;
+      ELSE
+        vr_nrseqite := 3;  /* Mais do que 30 % */
+      END IF;
     ELSE
       vr_nrseqite := 3;  /* Mais do que 30 % */
     END IF;
@@ -7506,17 +7582,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     END IF;
 
-    /* Dividir pelo salario mais os rendimentos */
-    vr_vlendivi := (vr_vlendivi /
-                   (rw_crapttl.vlsalari     + rw_crapttl.vldrendi##1 +
-                    rw_crapttl.vldrendi##2 + rw_crapttl.vldrendi##3 +
-                    rw_crapttl.vldrendi##4 + rw_crapttl.vldrendi##5 +
-                    rw_crapttl.vldrendi##6 + nvl(vr_vlsalari,0)));
+    IF ((rw_crapttl.vlsalari    + rw_crapttl.vldrendi##1 +
+         rw_crapttl.vldrendi##2 + rw_crapttl.vldrendi##3 +
+         rw_crapttl.vldrendi##4 + rw_crapttl.vldrendi##5 +
+         rw_crapttl.vldrendi##6 + nvl(vr_vlsalari,0)) > 0) THEN
+      /* Dividir pelo salario mais os rendimentos */
+      vr_vlendivi := (vr_vlendivi /
+                     (rw_crapttl.vlsalari     + rw_crapttl.vldrendi##1 +
+                      rw_crapttl.vldrendi##2 + rw_crapttl.vldrendi##3 +
+                      rw_crapttl.vldrendi##4 + rw_crapttl.vldrendi##5 +
+                      rw_crapttl.vldrendi##6 + nvl(vr_vlsalari,0)));
 
-    IF vr_vlendivi <= 7 THEN
-      vr_nrseqite := 1;
-    ELSIF  vr_vlendivi <= 14 THEN
-      vr_nrseqite := 2;
+      IF vr_vlendivi <= 7 THEN
+        vr_nrseqite := 1;
+      ELSIF  vr_vlendivi <= 14 THEN
+        vr_nrseqite := 2;
+      ELSE
+        vr_nrseqite := 3;
+      END IF;
     ELSE
       vr_nrseqite := 3;
     END IF;
@@ -9221,7 +9304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         END IF;
        
       END IF;
-        
+
       RATI0001.pc_calcula_rating(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
                                 ,pr_cdagenci => pr_cdagenci   --> Codigo Agencia
                                 ,pr_nrdcaixa => pr_nrdcaixa   --> Numero Caixa
@@ -9299,7 +9382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pr_des_reto := 'NOK';
       
       -- Montar descrição de erro não tratado
-      vr_dscritic := 'Erro não tratado na RATI0001.pc_calcula_rating> '||sqlerrm;
+      vr_dscritic := 'Erro não tratado na RATI0001.pc_proc_calcula> '||sqlerrm;
       
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
