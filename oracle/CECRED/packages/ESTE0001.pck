@@ -570,16 +570,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			pr_autori_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                   pr_cdcooper =>  pr_cdcooper,
                                                   pr_cdacesso => 'AUTORIZACAO_IBRATAN');
-			IF pr_autori_este IS NULL THEN      
+      IF pr_autori_este IS NULL THEN      
 				vr_dscritic := 'Parametro AUTORIZACAO_IBRATAN não encontrado.';
 				RAISE vr_exc_erro;      
 			END IF;  
       
-			-- Concatenar o Prefixo
-			pr_autori_este := 'CECRED'||lpad(pr_cdcooper,2,'0')||':'||pr_autori_este;
+      -- Concatenar o Prefixo
+      pr_autori_este := 'CECRED'||lpad(pr_cdcooper,2,'0')||':'||pr_autori_este;
       
-			-- Gerar Base 64
-			pr_autori_este := 'Ibratan '||sspc0001.pc_encode_base64(pr_autori_este);
+      -- Gerar Base 64
+      pr_autori_este := 'Ibratan '||sspc0001.pc_encode_base64(pr_autori_este);
       
 			--> Buscar chave de aplicação do motor
 			pr_chave_aplica := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
@@ -1773,7 +1773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_idaciona tbepr_acionamento.idacionamento%TYPE;
     
   BEGIN    
-  
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -1815,9 +1815,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Se Obrigatorio e ainda não Enviada ou Enviada mas com Erro Conexao
     IF vr_inobriga = 'S' AND (rw_crawepr.insitest = 0 OR rw_crawepr.insitapr = 6) THEN 
       
-      --> Guardar envio da Proposta
-      vr_hrenvest := to_char(SYSDATE,'sssss');
-    
       --> Gerar informações no padrao JSON da proposta de emprestimo
 			ESTE0002.pc_gera_json_analise(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
 													          pr_cdagenci  => rw_crawepr.cdagenci, --> Agência da Proposta
@@ -1902,6 +1899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			END IF;
       
       -- Atualizar a proposta
+      vr_hrenvest := to_char(SYSDATE,'sssss');
 	    BEGIN
 				UPDATE crawepr wpr 
 					 SET wpr.insitest = 1, -->  1 – Enviada para Analise 
@@ -2081,7 +2079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       dbms_lob.createtemporary(vr_obj_proposta_clob, TRUE, dbms_lob.CALL);
       dbms_lob.open(vr_obj_proposta_clob, dbms_lob.lob_readwrite);
       json.to_clob(vr_obj_proposta,vr_obj_proposta_clob);  
-  
+      
       -- Se o DEBUG estiver habilitado
       IF vr_flgdebug = 'S' THEN
         --> Gravar dados log acionamento
@@ -2181,7 +2179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --IF TRIM(vr_dscritic) IS NOT NULL THEN
       --  RAISE vr_exc_erro;
       --END IF;
-    END IF;     
+    END IF;  
     
     COMMIT;   
     
@@ -2383,7 +2381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da Analise de Credito: '||SQLERRM;
         RAISE vr_exc_erro;
-    END;
+    END;         
     
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
@@ -2516,8 +2514,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_idaciona tbepr_acionamento.idacionamento%TYPE;
     
     
-  BEGIN                  
-       
+  BEGIN      
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -2657,8 +2655,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- verificar se retornou critica
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF; 
-  
+    END IF;      
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -2792,7 +2790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     
   BEGIN
-     
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -2888,7 +2886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('PACodigo'            , pr_cdagenci);    
     vr_obj_cancelar.put('operadorCancelamentoPA'   , vr_obj_agencia);    
     vr_obj_cancelar.put('dataHora'              ,fn_DataTempo_ibra(SYSDATE)) ;        
-   
+    
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
       --> Gravar dados log acionamento
@@ -2931,7 +2929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- verificar se retornou critica
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
-    END IF;    
+    END IF;      
     
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
@@ -3610,7 +3608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     --> Retornar valores
     pr_cdstatan := vr_cdstatan;
-    pr_cdsitest := vr_cdsitest;    
+    pr_cdsitest := vr_cdsitest;
     
 
     
@@ -3918,8 +3916,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
          AND wpr.nrdconta = pr_nrdconta
          AND wpr.nrctremp = pr_nrctremp
          AND wpr.dsprotoc = pr_dsprotoc
-         AND wpr.insitest = 1             -- Enviadas para Analise Automática
-         FOR UPDATE;
+         AND wpr.insitest = 1-- Enviadas para Analise Automática
+         /*FOR UPDATE*/;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
@@ -3949,7 +3947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       
       -- Desde que não estejamos com processo em execução ou o dia util
       IF rw_crapdat.inproces = 1 /*AND trunc(SYSDATE) = rw_crapdat.dtmvtolt */ THEN
-      
+        
         -- Buscar DEBUG ativo ou não
         vr_flgdebug := gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'DEBUG_MOTOR_IBRA');
 
@@ -4013,7 +4011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           IF vr_chave_aplica IS NOT NULL THEN 
             vr_request.headers('ApplicationKey') := vr_chave_aplica;
           END IF;
-         
+          
           -- Se o DEBUG estiver habilitado
           IF vr_flgdebug = 'S' THEN
             --> Gravar dados log acionamento
@@ -4193,7 +4191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
               END IF;
               
             END IF;  
-              
+            
             -- Se o DEBUG estiver habilitado
             IF vr_flgdebug = 'S' THEN
               --> Gravar dados log acionamento
@@ -4216,7 +4214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
               --IF TRIM(vr_dscritic) IS NOT NULL THEN
               --  RAISE vr_exc_erro;
               --END IF;
-            END IF;  
+            END IF; 
     				
             -- Gravar o retorno e proceder com o restante do processo pós análise automática
             WEBS0001.pc_retorno_analise_proposta(pr_cdorigem => 5 /*Ayllos*/
@@ -4267,7 +4265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           --IF TRIM(vr_dscritic) IS NOT NULL THEN
           --  RAISE vr_exc_erro;
           --END IF;
-          END IF;  
+        END IF;
       END IF;  
       -- Gravação para liberação do registro
       COMMIT;

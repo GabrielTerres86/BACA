@@ -1537,7 +1537,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
               ,aci.nrctrprp    nrctremp
               ,aci.dsprotocolo dsprotoc
           FROM tbepr_acionamento aci
-         WHERE aci.dsprotocolo = pr_dsprotoc;
+         WHERE aci.dsprotocolo   = pr_dsprotoc
+           AND aci.tpacionamento = 1; /*Envio*/
       rw_aciona cr_aciona%ROWTYPE;
       
 		  -- Buscar a proposta de empréstimo vinculada ao protocolo
@@ -1556,8 +1557,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
          WHERE wpr.cdcooper = pr_cdcooper
            AND wpr.nrdconta = pr_nrdconta
            AND wpr.nrctremp = pr_nrctremp
-           AND wpr.dsprotoc = pr_dsprotoc
-           FOR UPDATE;  
+           AND wpr.dsprotoc = pr_dsprotoc/*
+           FOR UPDATE*/;  
 		  rw_crawepr cr_crawepr%ROWTYPE;
 			
 			-- Buscar o tipo de pessoa que contratou o empréstimo
@@ -1587,7 +1588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_jobname VARCHAR2(100);
            
       -- Variaveis para DEBUG
-      vr_flgdebug VARCHAR2(100);
+      vr_flgdebug VARCHAR2(100) := 'S';
       vr_idaciona tbepr_acionamento.idacionamento%TYPE;
       
            
@@ -1631,30 +1632,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 											 
 		BEGIN
     
-      -- Se o DEBUG estiver habilitado
-      IF vr_flgdebug = 'S' THEN
-        --> Gravar dados log acionamento
-        este0001.pc_grava_acionamento(pr_cdcooper              => 3,         
-                                      pr_cdagenci              => 1,          
-                                      pr_cdoperad              => '1',          
-                                      pr_cdorigem              => pr_cdorigem,          
-                                      pr_nrctrprp              => 0,      
-                                      pr_nrdconta              => 0,  
-                                      pr_tpacionamento         => 0,  /* 0 - DEBUG */      
-                                      pr_dsoperacao            => 'INICIO RETORNO ANALISE',       
-                                      pr_dsuriservico          => pr_namehost,       
-                                      pr_dtmvtolt              => trunc(sysdate),       
-                                      pr_cdstatus_http         => 0,
-                                      pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
-                                      pr_dsresposta_requisicao => null,
-                                      pr_idacionamento         => vr_idaciona,
-                                      pr_dscritic              => vr_dscritic);
-        -- Sem tratamento de exceção para DEBUG                    
-        --IF TRIM(vr_dscritic) IS NOT NULL THEN
-        --  RAISE vr_exc_erro;
-        --END IF;
-      END IF; 
-    
       -- Se o acionamento já foi gravado na origem
       IF nvl(pr_nrtransa,0) > 0 THEN
         vr_nrtransacao := pr_nrtransa;
@@ -1690,6 +1667,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         RAISE vr_exc_saida;
 			END IF;
       CLOSE cr_crawepr;
+      
+      -- Verificar se o DEBUG está ativo
+      vr_flgdebug := gene0001.fn_param_sistema('CRED',rw_crawepr.cdcooper,'DEBUG_MOTOR_IBRA');
+      
+      -- Se o DEBUG estiver habilitado
+      IF vr_flgdebug = 'S' THEN
+        --> Gravar dados log acionamento
+        este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+                                      pr_cdagenci              => 1,          
+                                      pr_cdoperad              => 'MOTOR',          
+                                      pr_cdorigem              => pr_cdorigem,          
+                                      pr_nrctrprp              => rw_crawepr.nrctremp,      
+                                      pr_nrdconta              => rw_crawepr.nrdconta,  
+                                      pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                                      pr_dsoperacao            => 'INICIO RETORNO ANALISE',       
+                                      pr_dsuriservico          => pr_namehost,       
+                                      pr_dtmvtolt              => trunc(sysdate),       
+                                      pr_cdstatus_http         => 0,
+                                      pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
+                                      pr_dsresposta_requisicao => null,
+                                      pr_dsprotocolo           => pr_dsprotoc,
+                                      pr_idacionamento         => vr_idaciona,
+                                      pr_dscritic              => vr_dscritic);
+        -- Sem tratamento de exceção para DEBUG                    
+        --IF TRIM(vr_dscritic) IS NOT NULL THEN
+        --  RAISE vr_exc_erro;
+        --END IF;
+      END IF; 
       
       -- Verifica se a data esta cadastrada
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crawepr.cdcooper);
@@ -1929,6 +1934,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                       pr_cdstatus_http         => 0,
                                       pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
                                       pr_dsresposta_requisicao => null,
+                                      pr_dsprotocolo           => pr_dsprotoc,
                                       pr_idacionamento         => vr_idaciona,
                                       pr_dscritic              => vr_dscritic);
         -- Sem tratamento de exceção para DEBUG                    
@@ -1942,57 +1948,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       
         -- Se resultado da análise não retornou erro
         IF lower(pr_dsresana) <> 'erro' THEN
-          -- Acionar rotina para processamento consultas 
-          -- automatizadas paralelamenteo
-          vr_dsplsql := 'DECLARE'||chr(13)
-                     || '  vr_cdcritic NUMBER;'||chr(13)
-                     || '  vr_dscritic VARCHAR2(4000);'||chr(13)
-                     || 'BEGIN'||chr(13)
-                     || '  SSPC0001.pc_retorna_conaut_esteira('||rw_crawepr.cdcooper||chr(13)
-                     || '                                    ,'||rw_crawepr.nrdconta||chr(13)
-                     || '                                    ,'||rw_crawepr.nrctremp||chr(13)
-                     || '                                    ,'''||pr_dsprotoc||''''||chr(13)
-                     || '                                    ,vr_cdcritic'||chr(13)
-                     || '                                    ,vr_dscritic);'||chr(13)
-                     /*|| '  -- Em caso de erro '||chr(13)
-                     || '  IF vr_dscritic IS NOT NULL THEN '||chr(13)
-                     || '  -- Adicionar ao LOG e continuar o processo'||chr(13)
-                     || '  btch0001.pc_gera_log_batch(pr_cdcooper     => 3,'||chr(13)
-                     || '                             pr_ind_tipo_log => 2,'||chr(13)
-                     || '                             pr_des_log      => '''||to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')||''''||chr(13)
-                     || '                                             || '' - WEBS0001 --> Erro ao solicitor retorno nas '''||chr(13)
-                     || '                                             || ''Consulta Automaticas do Protocolo: '||pr_dsprotoc||''''||chr(13)
-                     || '                                             || '', erro: ''||vr_cdcritic||''-''||vr_dscritic,'||chr(13)
-                     || '                             pr_nmarqlog     => '''||gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE')||''','||chr(13)
-                     || '                             pr_flnovlog     => ''N'','||chr(13)
-                     || '                             pr_flfinmsg     => ''S'','||chr(13)
-                     || '                             pr_dsdirlog     => NULL,'||chr(13)
-                     || '                             pr_dstiplog     => ''O'','||chr(13)
-                     || '                             PR_CDPROGRAMA   => NULL);'||chr(13)
-                     || '  END IF;'||chr(13)*/
-                     || 'END;';
-                     
-          -- Montar o prefixo do código do programa para o jobname
-          vr_jobname := 'JBEPR_CONMOTOR_$';
-          -- Faz a chamada ao programa paralelo atraves de JOB
-          gene0001.pc_submit_job(pr_cdcooper  => rw_crawepr.cdcooper  --> Código da cooperativa
-                                ,pr_cdprogra  => 'ATENDA'     --> Código do programa
-                                ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
-                                ,pr_dthrexe   => SYSTIMESTAMP --> Executar nesta hora
-                                ,pr_interva   => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
-                                ,pr_jobname   => vr_jobname   --> Nome randomico criado
-                                ,pr_des_erro  => vr_dscritic);
-          -- Testar saida com erro
+          -- Acionar rotina para processamento consultas automatizadas
+          SSPC0001.pc_retorna_conaut_esteira(rw_crawepr.cdcooper
+                                            ,rw_crawepr.nrdconta
+                                            ,rw_crawepr.nrctremp
+                                            ,pr_dsprotoc
+                                            ,vr_cdcritic
+                                            ,vr_dscritic);
+          -- Em caso de erro 
           IF vr_dscritic IS NOT NULL THEN
             -- Adicionar ao LOG e continuar o processo
             btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                        pr_ind_tipo_log => 2, 
                                        pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
                                                        || ' - WEBS0001 --> Erro ao solicitor retorno nas '
-                                                       || 'Consultas Automaticas do Protocolo: '||pr_dsprotoc
+                                                       || 'Consulta Automaticas do Protocolo: '||pr_dsprotoc
                                                        || ', erro: '||vr_cdcritic||'-'||vr_dscritic,
-                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                                                    pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                       pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+          END IF;
+          -- Se o DEBUG estiver habilitado
+          IF vr_flgdebug = 'S' THEN
+            --> Gravar dados log acionamento
+            este0001.pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
+                                          pr_cdagenci              => 1,          
+                                          pr_cdoperad              => 'MOTOR',          
+                                          pr_cdorigem              => pr_cdorigem,          
+                                          pr_nrctrprp              => rw_crawepr.nrctremp,      
+                                          pr_nrdconta              => rw_crawepr.nrdconta,  
+                                          pr_tpacionamento         => 0,  /* 0 - DEBUG */      
+                                          pr_dsoperacao            => 'FINAL RETORNO CONAUT',       
+                                          pr_dsuriservico          => pr_namehost,       
+                                          pr_dtmvtolt              => rw_crapdat.dtmvtolt,       
+                                          pr_cdstatus_http         => 0,
+                                          pr_dsconteudo_requisicao => replace(pr_dsrequis,'&quot;','"'),
+                                          pr_dsresposta_requisicao => null,
+                                          pr_dsprotocolo           => pr_dsprotoc,
+                                          pr_idacionamento         => vr_idaciona,
+                                          pr_dscritic              => vr_dscritic);
+            -- Sem tratamento de exceção para DEBUG                    
+            --IF TRIM(vr_dscritic) IS NOT NULL THEN
+            --  RAISE vr_exc_erro;
+            --END IF;
           END IF; 
         END IF;
         
@@ -2034,7 +2030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                      || 'END;';
                      
           -- Montar o prefixo do código do programa para o jobname
-          vr_jobname := 'JBEPR_DERMOTOR_$';
+          vr_jobname := 'JBEPR_DRMT_$';
           -- Faz a chamada ao programa paralelo atraves de JOB
           gene0001.pc_submit_job(pr_cdcooper  => rw_crawepr.cdcooper  --> Código da cooperativa
                                 ,pr_cdprogra  => 'ATENDA'     --> Código do programa
@@ -2111,7 +2107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             WHEN OTHERS THEN
               vr_dscritic := vr_dscritic || ' e erro na atualiza Proposta: '||sqlerrm;
           END; 
-        END IF;
+        END IF;  
 
         -- Gera retorno da proposta para a esteira
         pc_gera_retor_proposta_esteira(pr_status      => vr_status      --> Status
