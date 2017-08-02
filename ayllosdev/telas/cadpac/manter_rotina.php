@@ -88,11 +88,13 @@
     $rowidcxa = (isset($_POST['rowidcxa'])) ? $_POST['rowidcxa'] : '';
     $nmpasite = (isset($_POST['nmpasite'])) ? $_POST['nmpasite'] : '';
     $dstelsit = (isset($_POST['dstelsit'])) ? $_POST['dstelsit'] : '';
-    $dsemasit = (isset($_POST['dsemasit'])) ? $_POST['dsemasit'] : '';
-    $dshorsit = (isset($_POST['dshorsit'])) ? $_POST['dshorsit'] : '';
+    $dsemasit = (isset($_POST['dsemasit'])) ? $_POST['dsemasit'] : '';	
+    $hrinipaa = (isset($_POST['hrinipaa'])) ? $_POST['hrinipaa'] : '';
+    $hrfimpaa = (isset($_POST['hrfimpaa'])) ? $_POST['hrfimpaa'] : '';
+    $indspcxa = (isset($_POST['indspcxa'])) ? $_POST['indspcxa'] : '';	
     $nrlatitu = (isset($_POST['nrlatitu'])) ? $_POST['nrlatitu'] : '';
-    $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';
-
+    $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';	
+	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
         exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
@@ -174,7 +176,9 @@
     $xml .= "   <nmpasite>".utf8_decode($nmpasite)."</nmpasite>";
     $xml .= "   <dstelsit>".$dstelsit."</dstelsit>";
     $xml .= "   <dsemasit>".$dsemasit."</dsemasit>";
-    $xml .= "   <dshorsit><![CDATA[".utf8_decode($dshorsit)."]]></dshorsit>";
+	$xml .= "   <hrinipaa>".$hrinipaa."</hrinipaa>";
+	$xml .= "   <hrfimpaa>".$hrfimpaa."</hrfimpaa>";	
+	$xml .= "   <indspcxa>".$indspcxa."</indspcxa>";
     $xml .= "   <nrlatitu>".$nrlatitu."</nrlatitu>";
     $xml .= "   <nrlongit>".$nrlongit."</nrlongit>";
     $xml .= " </Dados>";
@@ -193,10 +197,10 @@
         $nmdeacao = 'CADPAC_GRAVA';
         $dsmensag = 'PA '.($cddopcao == 'I' ? 'inclu&iacute;do' : 'alterado').' com sucesso!';
     }
-
+		
     $xmlResult = mensageria($xml, "TELA_CADPAC", $nmdeacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
-
+	
     if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){
         $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
         $arrErro = explode("###", $msgErro);
