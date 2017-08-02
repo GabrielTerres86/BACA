@@ -506,11 +506,15 @@
 							 
 				06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
 							 solicitado no chamado 645013. (Kelvin)
-
+                
                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
                 
                 31/05/2017 - Adicao de funcionalidade para armazenagem da tabela de relacionamento
                              entre conta x conta cartao (Anderson).
+
+                19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
 
 ..............................................................................*/
 
@@ -1008,6 +1012,9 @@ PROCEDURE carrega_dados_inclusao:
     DEF VAR aux_dslimite AS CHAR                                    NO-UNDO.
     DEF VAR aux_dslimaux AS CHAR                                    NO-UNDO.
     DEF VAR aux_vlrftbru AS DECIMAL                                 NO-UNDO.
+	DEF VAR aux_nrdocstl LIKE crapttl.nrdocttl                      NO-UNDO.
+	DEF VAR aux_dtnasstl LIKE crapttl.dtnasttl                      NO-UNDO.
+	DEF VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc                      NO-UNDO.
     
     DEF VAR aux_dsrepinc AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrrepinc AS CHAR                                    NO-UNDO.
@@ -1036,11 +1043,11 @@ PROCEDURE carrega_dados_inclusao:
            aux_vlrftbru = 0.
     
     FOR FIRST crapass FIELDS(nrdconta inpessoa nrcpfcgc cdtipcta cdsitdct cdsitdtl dtdemiss 
-                                 vledvmto cdcooper nmsegntl nrcpfstl dtnasstl nrdocstl 
-                                                          nmprimtl dtnasctl nrdocptl)
+                             vledvmto cdcooper nmprimtl dtnasctl nrdocptl)
                      WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta   
-                       NO-LOCK: END.
+                           NO-LOCK: 
+	END.
     
     IF NOT AVAILABLE crapass THEN
        DO:
@@ -1538,12 +1545,27 @@ PROCEDURE carrega_dados_inclusao:
                 crapttl.idseqttl = 1 
                 NO-LOCK:
             END.       
+
             ASSIGN aux_vlsalari = crapttl.vlsalari.
+
+			FOR FIRST crapttl FIELDS(nmextttl nrdocttl dtnasttl nrcpfcgc) 
+			                  WHERE crapttl.cdcooper = crapass.cdcooper AND
+								    crapttl.nrdconta = crapass.nrdconta AND
+                                    crapttl.idseqttl = 2 
+                                    NO-LOCK:
+
+		      ASSIGN aux_nmsegntl = crapttl.nmextttl
+				     aux_nrdocstl = crapttl.nrdocttl
+				     aux_dtnasstl = crapttl.dtnasttl
+				     aux_nrcpfstl = crapttl.nrcpfcgc.
+
+        END.
+
         END.
     ELSE
         ASSIGN aux_vlsalari = 0.
     
-    RUN corrige_segntl(INPUT crapass.nmsegntl,
+    RUN corrige_segntl(INPUT aux_nmsegntl,
                        OUTPUT aux_nmsegntl).
     
     ASSIGN aux_flgfirst = TRUE.
@@ -1682,10 +1704,10 @@ PROCEDURE carrega_dados_inclusao:
            tt-nova_proposta.vlsalari = aux_vlsalari
            tt-nova_proposta.dddebito = aux_dias
            tt-nova_proposta.cdtipcta = crapass.cdtipcta
-           tt-nova_proposta.nrcpfstl = crapass.nrcpfstl
+           tt-nova_proposta.nrcpfstl = aux_nrcpfstl
            tt-nova_proposta.inpessoa = crapass.inpessoa
-           tt-nova_proposta.dtnasstl = crapass.dtnasstl
-           tt-nova_proposta.nrdocstl = crapass.nrdocstl
+           tt-nova_proposta.dtnasstl = aux_dtnasstl
+           tt-nova_proposta.nrdocstl = aux_nrdocstl
            tt-nova_proposta.nmconjug = aux_nmconjug
            tt-nova_proposta.dtnasccj = aux_dtnasccj
            tt-nova_proposta.nmtitcrd = crapass.nmprimtl
@@ -1761,6 +1783,7 @@ PROCEDURE valida_nova_proposta:
     DEF  VAR aux_dsdidade AS CHAR   NO-UNDO.
     DEF  VAR aux_dsoperac AS CHAR   NO-UNDO.
     DEF  VAR aux_nmbandei AS CHAR   NO-UNDO.
+	DEF  VAR aux_inhabmen LIKE crapttl.inhabmen NO-UNDO.
     
     DEF  BUFFER crabcrd FOR crawcrd.
     DEF  BUFFER crabtlc FOR craptlc.
@@ -1774,8 +1797,7 @@ PROCEDURE valida_nova_proposta:
     EMPTY TEMP-TABLE tt-erro.
 
     
-    FOR crapass FIELDS(inpessoa nrdconta nrcpfcgc 
-                       cdcooper cdtipcta nrdctitg flgctitg inhabmen cdsitdct)
+    FOR crapass FIELDS(inpessoa nrdconta nrcpfcgc cdcooper cdtipcta nrdctitg flgctitg cdsitdct)
                     WHERE crapass.cdcooper = par_cdcooper AND
                       crapass.nrdconta = par_nrdconta
                       NO-LOCK: END.
@@ -1795,6 +1817,38 @@ PROCEDURE valida_nova_proposta:
            RETURN "NOK".
         
         END.
+
+	IF crapass.inpessoa = 1 THEN
+	   DO:
+	      FOR FIRST crapttl FIELDS(inhabmen)
+							WHERE crapttl.cdcooper = crapass.cdcooper AND
+								  crapttl.nrdconta = crapass.nrdconta AND
+								  crapttl.idseqttl = 1
+								  NO-LOCK:
+
+		  END.
+
+		  IF NOT AVAIL crapttl THEN
+		     DO:
+			    ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "Registro de associado nao encontrado.".
+
+			    RUN gera_erro (INPUT par_cdcooper,
+				 			   INPUT par_cdagenci,
+				 			   INPUT par_nrdcaixa,
+				 			   INPUT 1,            /** Sequencia **/
+				 			   INPUT aux_cdcritic,
+				 			   INPUT-OUTPUT aux_dscritic).
+                          
+			    RETURN "NOK".
+
+			 END.
+		  ELSE
+		     ASSIGN aux_inhabmen = crapttl.inhabmen.
+
+	   END.
+    ELSE
+	   ASSIGN aux_inhabmen = 0.
 
     FIND FIRST crapadc WHERE crapadc.cdcooper = par_cdcooper   AND
                       UPPER(crapadc.nmresadm) = UPPER(par_dsadmcrd) NO-LOCK NO-ERROR.
@@ -2218,7 +2272,7 @@ PROCEDURE valida_nova_proposta:
                                  DO:
                                  
                                           IF aux_nrdeanos < 18 AND 
-                                                 crapass.inhabmen <> 1 THEN /* Nao Emancipado */
+                                                 aux_inhabmen <> 1 THEN /* Nao Emancipado */
                                           DO:
                                                                 ASSIGN aux_cdcritic = 0
                                                                            aux_dscritic =
@@ -14613,6 +14667,7 @@ PROCEDURE carrega_dados_proposta:
     DEF VAR aux_vlsldrgt AS DEC                                     NO-UNDO.
     DEF VAR aux_vlsldtot AS DEC                                     NO-UNDO.
     DEF VAR aux_vlsldapl AS DEC                                     NO-UNDO.
+	DEF VAR aux_nmsegntl AS CHAR								    NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0002 AS HANDLE                                  NO-UNDO.
@@ -14747,7 +14802,7 @@ PROCEDURE carrega_dados_proposta:
     END. /* Fim leitura outros cartoes */
         
     FOR FIRST crapass FIELDS(nrcpfcgc nrdconta vllimcre vllimdeb cdagenci 
-                           cdcooper inpessoa nrmatric dtadmiss nmsegntl nmprimtl)
+                             cdcooper inpessoa nrmatric dtadmiss  nmprimtl)
                      WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta NO-LOCK:
     END.
@@ -15487,6 +15542,16 @@ PROCEDURE carrega_dados_proposta:
                     RETURN "NOK".
                 END.
                 
+			FOR FIRST crapttl FIELDS(nmextttl) 
+			                   WHERE crapttl.cdcooper = par_cdcooper AND
+							         crapttl.nrdconta = par_nrdconta AND
+    							     crapttl.idseqttl = 2
+							         NO-LOCK:
+
+			  ASSIGN aux_nmsegntl = crapttl.nmextttl.
+
+			END.
+
             ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                   "99999999999"),"xxx.xxx.xxx-xx").
         END.
@@ -15670,7 +15735,7 @@ PROCEDURE carrega_dados_proposta:
            tt-dados_prp_ccr.nmresage = aux_nmresage
            tt-dados_prp_ccr.nmprimtl = crapass.nmprimtl
            tt-dados_prp_ccr.dtadmiss = crapass.dtadmiss
-           tt-dados_prp_ccr.nmsegntl = crapass.nmsegntl
+           tt-dados_prp_ccr.nmsegntl = aux_nmsegntl
            tt-dados_prp_ccr.nmresemp = aux_nmresemp
            tt-dados_prp_ccr.nrdofone = aux_nrdofone
            tt-dados_prp_ccr.dstipcta = aux_dstipcta
@@ -16550,6 +16615,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                     IF  AVAILABLE crabass   THEN
                         DO:
                             IF  crabass.inpessoa = 1 THEN
+							    DO:
                                 ASSIGN tt-avais-ctr.cpfavali =
                                                  STRING(crabass.nrcpfcgc,"99999999999")
                                                  tt-avais-ctr.cpfavali =
@@ -16560,6 +16626,17 @@ PROCEDURE contrato_cecred_bdn_visa:
                                                  STRING(tt-avais-ctr.cpfavali,"x(23)") +
                                                  STRING(crabass.nrdconta,"zzzz,zz9,9").
 
+									FOR FIRST crapttl FIELDS(nrcpfcgc)
+													  WHERE crapttl.cdcooper = par_cdcooper     AND
+															crapttl.nrdconta = crabass.nrdconta AND
+															crapttl.idseqttl = 2
+															NO-LOCK:
+
+									  ASSIGN aux_nrcpfstl = crapttl.nrcpfcgc.
+
+									END.
+
+							    END.
                             ELSE
                                 ASSIGN tt-avais-ctr.cpfavali =
                                                  STRING(crabass.nrcpfcgc,"99999999999999")
@@ -16575,6 +16652,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                                                crapenc.nrdconta = crabass.nrdconta  AND
                                                crapenc.idseqttl = 1                 AND
                                                crapenc.cdseqinc = 1 NO-LOCK NO-ERROR.
+
                             FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                                 crapcje.nrdconta = crabass.nrdconta AND 
                                                 crapcje.idseqttl = 1 USE-INDEX crapcje1 NO-ERROR.
@@ -16587,7 +16665,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                                                            THEN FILL("_",40)
                                                            ELSE aux_nmconjug
                                    tt-avais-ctr.nrcpfcjg = "C.P.F. " +
-                                                           STRING(STRING(crabass.nrcpfstl,
+                                                           STRING(STRING(aux_nrcpfstl,
                                                            "99999999999"),"xxx.xxx.xxx-xx")
                                    tt-avais-ctr.dsendav1 = SUBSTRING(crapenc.dsendere,1,32)
                                                            + " " +
@@ -16622,6 +16700,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                     IF  AVAILABLE crabass   THEN
                         DO:
                            IF  crabass.inpessoa = 1 THEN
+						       DO:
                                ASSIGN tt-avais-ctr.cpfavali =
                                           STRING(crabass.nrcpfcgc,"99999999999")
                                       tt-avais-ctr.cpfavali =
@@ -16632,6 +16711,17 @@ PROCEDURE contrato_cecred_bdn_visa:
                                               STRING(tt-avais-ctr.cpfavali,"x(23)") +
                                               STRING(crabass.nrdconta,"zzzz,zz9,9").
 
+								   FOR FIRST crapttl FIELDS(nrcpfcgc)
+													  WHERE crapttl.cdcooper = par_cdcooper     AND
+															crapttl.nrdconta = crabass.nrdconta AND
+															crapttl.idseqttl = 2
+															NO-LOCK:
+
+                                     ASSIGN aux_nrcpfstl = crapttl.nrcpfcgc.
+
+								   END.
+
+							   END.
                            ELSE
                                ASSIGN tt-avais-ctr.cpfavali =
                                           STRING(crabass.nrcpfcgc,"99999999999999")
@@ -16660,7 +16750,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                                                           THEN FILL("_",40)
                                                           ELSE aux_nmconjug
                                   tt-avais-ctr.nrcpfcjg = "C.P.F. " +
-                                                          STRING(STRING(crabass.nrcpfstl,
+                                                          STRING(STRING(aux_nrcpfstl,
                                                           "99999999999"),"xxx.xxx.xxx-xx")
                                   tt-avais-ctr.dsendav1 = SUBSTRING(crapenc.dsendere,1,32)
                                                           + " " +

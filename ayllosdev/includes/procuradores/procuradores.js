@@ -21,6 +21,10 @@
  *                26/08/2016 - Inclusao da function validaResponsaveis e alteracao controlaOperacaoPoderes, SD 510426 (Jean Michel).
  *				  10/02/2017 - Ajuste realizado para remover caracteres invalidos de "Outros poderes". SD 558355 (Kelvin).
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							  (Adriano - P339).
+
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -609,7 +613,7 @@ function controlaLayoutProc( operacao_proc ) {
 	
 	if(operacao_proc == 'CT'){
 		altura 	= '205px';
-		largura = '670px';
+		largura = '750px';
 	}else if(operacao_proc == 'P'){
 		altura 	= '360px';
 		largura = '570px';
@@ -634,9 +638,9 @@ function controlaLayoutProc( operacao_proc ) {
 		
 		var arrayLargura = new Array();
 		arrayLargura[0] = '70px';
-		arrayLargura[1] = '125px';
-		arrayLargura[2] = '113px';
-		arrayLargura[3] = '75px';
+		arrayLargura[1] = '135px';
+		arrayLargura[2] = '125px';
+		arrayLargura[3] = '100px';
 		arrayLargura[4] = '60px';
 		
 		var arrayAlinha = new Array();
@@ -675,7 +679,7 @@ function controlaLayoutProc( operacao_proc ) {
 		cDthabmen.css('width','76px').addClass('data');
 		cInhabmen.css('width','273px');
 		cTpDocumento.css('width','40px');
-		cDocumento.addClass('alphanum').css('width','84px').attr('maxlength','15');
+		cDocumento.addClass('alphanum').css('width','400px').attr('maxlength','40');
 		cOrgEmissor.addClass('alphanum').css('width','52px').attr('maxlength','5');
 		cEstados.css('width','45px');
 		cDataEmissao.addClass('data').css('width','70px');

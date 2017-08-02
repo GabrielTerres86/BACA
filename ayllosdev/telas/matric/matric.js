@@ -45,6 +45,9 @@
  * 021: [08/02/2017] Kelvin           (CECRED): Ajuste realiazado para tratar o chamado 566462. 
  * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
  * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
+					                        
  */
 
 // Definição de algumas variáveis globais 
@@ -1184,7 +1187,7 @@ function formataPessoaFisica() {
     rNomeTitular.addClass('rotulo').css('width', '72px');
     rDtConsulta.css('width', '58px');
     rSituacao.css('width', '58px');
-    rOrgEmissor.css('width', '58px');
+    rOrgEmissor.addClass('rotulo').css('width', '72px');
     rEstEmissor.css('width', '27px');
     rDtEmissao.css('width', '51px');
 	
@@ -1210,10 +1213,10 @@ function formataPessoaFisica() {
     cDtConsulta.addClass('data').css('width', '75px');
     cSituacao.css('width', '133px');
     cTpDocumento.css('width', '183px');
-    cNrDocumento.addClass('alphanum').css({ 'width': '80px', 'text-align': 'right' }).attr('maxlength', '15');
-    cOrgEmissor.addClass('alphanum').css('width', '55px').attr('maxlength', '5');
-    cEstEmissor.css('width', '45px');
-    cDtEmissao.addClass('data').css('width', '75px');
+    cNrDocumento.addClass('alphanum').css({ 'width': '400px', 'text-align': 'right' }).attr('maxlength', '40');
+    cOrgEmissor.addClass('alphanum').css('width', '60px').attr('maxlength', '5');
+    cEstEmissor.css('width', '55px');
+    cDtEmissao.addClass('data').css('width', '95px');
 	
     if ($.browser.msie) {
         cNomeTitular.css('width', '584px');
@@ -1820,13 +1823,19 @@ function controlaPesquisas() {
         linkNaciona.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	}
     else {
-        linkNaciona.addClass('lupa').css('cursor', 'pointer').unbind('click').bind('click', function () { mostraNacionalidade(); });
-        
+        linkNaciona.addClass('lupa').css('cursor', 'pointer').unbind('click').bind('click', function () { 
+
+			var filtrosPesq = "Código;cdnacion;100px;S;0|Descrição;dsnacion;200px;S;";
+			var colunas = 'Código;cdnacion;25%;right|Descrição;dsnacion;75%;left';
+			mostraPesquisa("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidades", "30", filtrosPesq, colunas);
+			
+			return false;
+			
+		});       
         
         linkNaciona.prev().unbind('change').bind('change', function () {
             
-			filtrosDesc = '';
-            buscaDescricao("CADA0001", "BUSCAR_NACIONALIDADE", "Nacionalidade", $(this).attr('name'), 'dsnacion', $(this).val(), 'dsnacion', filtrosDesc, 'frmFisico');
+            buscaDescricao("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidade", $(this).attr('name'), 'dsnacion', $(this).val(), 'dsnacion', '', 'frmFisico');
 			return false;
 
 		});
@@ -3085,29 +3094,6 @@ function limpaCharEsp(texto) {
 // Somente para nao dar erro quando fechada alguma rotina
 function btnVoltar() {
 	
-}
-
-//mostra a tabela de Nacionalidade
-function mostraNacionalidade() {
-	// Executa script de confirmação através de ajax
-	$.ajax({		
-		type: 'POST', 
-		dataType: 'html',
-		url: UrlSite + 'includes/nacionalidades/form_nacionalidades.php', 
-		data: {
-            nomeForm: 'frmFisico',
-            redirect: 'html_ajax' 
-        }, 
-        error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();	
-            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
-		},
-        success: function (response) {
-			$('#divUsoGenerico').html(response);
-			exibeRotina($('#divUsoGenerico'));
-			
-		}				
-	});
 }
 
 function validaAcessoEexecuta(UrlSite, tipo) {

@@ -7,6 +7,11 @@
  * ALTERAÇÕES   : 24/04/2012 - Ajustes para atender ao Projeto GP - Sócios Menores (Adriano)
  *
  *                18/09/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *	
+ *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							  (Adriano - P339).
+
  */	
 ?>
 
@@ -37,7 +42,7 @@
 							<? echo formataNumericos('999.999.999-10',getByTagName($responsavel->tags,'nrcpfcgc'),'.-'); ?>
 						</td>
 						<td>
-							<? echo getByTagName($responsavel->tags,'nridenti') ?>
+							<? echo stringTabela(getByTagName($responsavel->tags,'nridenti'),15,'maiuscula') ?>
 						</td>
 					</tr>			
 				

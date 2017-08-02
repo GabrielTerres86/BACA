@@ -2,7 +2,7 @@
 /*!
  * FONTE        : imp_termo_pf_html.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 02/09/2015.
+ * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 14/06/2017
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF de Termo da 
  *                rotina Impressões.
  *
@@ -14,6 +14,10 @@
  *
  *                07/01/2016 - Correcao nas informacoes apresentadas no paragrafo 3.a de acordo com cada cooperativa
  *                             Chamado 370421 (Heitor - RKAM)
+ *
+ *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					          (Adriano - P339).
  */	 
 ?>
 <?
@@ -117,7 +121,9 @@
 			
 			$linha = preencheString('',22);
 			$linha .= 'CPF: '.preencheString(getByTagName($titulares->tags,'nrcpfcgc'),14);
-			$linha .= ' , RG: '.preencheString(getByTagName($titulares->tags,'nrdocmto'),26);
+			escreveLinha( $linha );
+			$linha = preencheString('',22);
+			$linha .= 'RG: '.preencheString(getByTagName($titulares->tags,'nrdocmto'),76);
 			escreveLinha( $linha );
 			escreveLinha( '' );
 		} 

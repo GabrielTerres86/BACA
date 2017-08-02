@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 02/06/2017
+   Data    : Marco/2009                     Última atualizacao: 12/06/2017
    
    Dados referentes ao programa:
 
@@ -246,6 +246,7 @@
            05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
                         Projeto 300. (Lombardi)
 
+
           07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
 
            09/09/2016 - Criacao do campo insitblq na tt-desconto_cheques.
@@ -260,7 +261,7 @@
           
 		   09/11/2016 - Alterado campo crapabc.nrseqdig para crapabc.cdocorre.
 		                PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
-
+					      
             12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 					      
            26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
@@ -272,6 +273,10 @@
            02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
                         quando excluir bordero.
                         PRJ300 - Desconto de cheque(Odirlei-AMcom)            
+					                
+           12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			            crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+			 		    (Adriano - P339).      
 					                
 ............................................................................. */
 
@@ -6900,7 +6905,7 @@ PROCEDURE busca_dados_impressao_dscchq:
         END.
         
         IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-             rel_txnrdcid = crapass.tpdocptl + ": " + crapass.nrdocptl.
+             rel_txnrdcid = crapass.tpdocptl + ": " + SUBSTR(TRIM(crapass.nrdocptl),1,15).
         ELSE 
              rel_txnrdcid = "".  
 

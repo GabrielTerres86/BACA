@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Marco/2003.                       Ultima atualizacao: 29/12/2016
+   Data    : Marco/2003.                       Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -132,6 +132,11 @@
                29/12/2016 - Ajuste para utilizar leitura com find ao inves
 						    de can-find
 							(Adriano - SD 585728).
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -151,6 +156,8 @@ DEF VAR aux_nrctachq   AS DEC                                       NO-UNDO.
 
 DEF VAR aux_dtminimo   AS DATE                                      NO-UNDO.
 DEF VAR aux_qtddmini   AS INTEGER                                   NO-UNDO.
+DEF VAR aux_nrcpfcgc1  LIKE crapttl.nrcpfcgc                        NO-UNDO.
+DEF VAR aux_nrcpfcgc2  LIKE crapttl.nrcpfcgc                        NO-UNDO.
 
 FORM
      SKIP(1)
@@ -958,33 +965,44 @@ DO WHILE TRUE:
                           NEXT.
                       END.
 
+			ASSIGN aux_nrcpfcgc1 = 0
+			       aux_nrcpfcgc2 = 0.
+
             /* Verificar Segundo e Terceiro Titular */
             FIND crabass WHERE crabass.cdcooper = glb_cdcooper AND 
                                crabass.nrdconta = fav_nrdconta NO-LOCK NO-ERROR.
 
-            IF  AVAIL crabass AND
-               (crabass.nrcpfstl = crapcec.nrcpfcgc OR
-                crabass.nrcpfttl = crapcec.nrcpfcgc) THEN 
+            IF  AVAIL crabass THEN
                 DO:
-                    glb_cdcritic = 759.
-                    NEXT.
+				   FOR FIRST crapttl FIELDS(nrcpfcgc)
+									 WHERE crapttl.cdcooper = crabass.cdcooper AND
+									       crapttl.nrdconta = crabass.nrdconta AND
+										   crapttl.idseqttl = 2
+										   NO-LOCK:
+
+					  ASSIGN aux_nrcpfcgc1 = crapttl.nrcpfcgc.
+
                 END.
 
-            /* Nao utiliza-se mais segundo, terceiro titular para pessoa 
-               jurídica - Tarefa - 32896  
-            IF   AVAIL crabass       AND
-                 fav_inpessoa > 1   THEN
-                 DO:
-                    IF(SUBSTR(STRING(crabass.nrcpfstl,"99999999999999"),1,8) =
-                      SUBSTR(STRING(crapcec.nrcpfcgc,"99999999999999"),1,8)) OR
-                      (SUBSTR(STRING(crabass.nrcpfttl,"99999999999999"),1,8) =
-                      SUBSTR(STRING(crapcec.nrcpfcgc,"99999999999999"),1,8)) 
-                      THEN DO:
-                         glb_cdcritic = 759.
-                         NEXT.
+				   FOR FIRST crapttl FIELDS(nrcpfcgc)
+									 WHERE crapttl.cdcooper = crabass.cdcooper AND
+									       crapttl.nrdconta = crabass.nrdconta AND
+										   crapttl.idseqttl = 3
+										   NO-LOCK:
+
+					  ASSIGN aux_nrcpfcgc2 = crapttl.nrcpfcgc.
+
                       END.
+
+				   IF (aux_nrcpfcgc1 = crapcec.nrcpfcgc  OR
+					   aux_nrcpfcgc2 = crapcec.nrcpfcgc) THEN 
+					   DO:
+						  glb_cdcritic = 759.
+						  NEXT.
                  END.
-            */
+
+				END. 
+
 
             /*-----------------------------*/
             

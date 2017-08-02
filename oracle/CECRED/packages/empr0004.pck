@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0004 AS
 
     Programa: EMPR0004                     Antigo: sistema/generico/procedures/b1wgen0084.p
     Autor   : Irlan
-    Data    : Fevereiro/2011               ultima Atualizacao: 07/04/2015
+    Data    : Fevereiro/2011               ultima Atualizacao: 25/04/2017
      
     Dados referentes ao programa:
    
@@ -14,6 +14,10 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0004 AS
     Alteracoes: 10/09/2014 - Conversao Progress -> Oracle (Alisson - AMcom) 
     
                 07/04/2015 - Criado procedure pc_obtem_msg_credito_atraso. (Jorge/Rodrigo)            
+
+				25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
 
 ..............................................................................*/
 
@@ -207,7 +211,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0004 AS
       ,nrdconta crapass.nrdconta%type
       ,nmprimtl crapass.nmprimtl%type
       ,cdagenci crapass.cdagenci%type
-      ,nmsegntl crapass.nmsegntl%type
+      ,nmsegntl crapttl.nmextttl%type
       ,dsanoant VARCHAR2(10)
       ,dtrefer1 DATE
       ,vlsdapl1 NUMBER

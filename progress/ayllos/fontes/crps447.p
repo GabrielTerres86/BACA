@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes  
-   Data    : Maio/2005                    Ultima atualizacao: 25/11/2014
+   Data    : Maio/2005                    Ultima atualizacao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -68,6 +68,11 @@
                             
                25/11/2014 - Incluir clausula no craptco flgativo = TRUE
                             (Lucas R./Rodrigo)
+
+			   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................ */
 
 { includes/var_batch.i }  
@@ -317,8 +322,7 @@ FOR EACH crapneg WHERE crapneg.cdcooper = glb_cdcooper AND
                                 FIND FIRST crabttl WHERE 
                                         crabttl.cdcooper = glb_cdcooper     AND
                                         crabttl.nrdconta = crapass.nrdconta AND
-                                        crabttl.idseqttl > 1                AND
-                                        crabttl.flgsittl = TRUE
+                                        crabttl.idseqttl > 1                
                                         NO-LOCK NO-ERROR.
                                        
                                 IF  NOT AVAILABLE crabttl  THEN
@@ -389,8 +393,7 @@ FOR EACH crapneg WHERE crapneg.cdcooper = glb_cdcooper AND
                                 FIND FIRST crabttl WHERE
                                         crabttl.cdcooper = glb_cdcooper     AND
                                         crabttl.nrdconta = crapass.nrdconta AND
-                                        crabttl.idseqttl > 1                AND
-                                        crabttl.flgsittl = TRUE
+                                        crabttl.idseqttl > 1                
                                         NO-LOCK NO-ERROR.
 
                                 IF  NOT AVAILABLE crabttl  THEN

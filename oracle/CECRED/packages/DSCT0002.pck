@@ -412,7 +412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --  
   --              22/12/2016 - Incluidos novos campos para os tipos typ_rec_contrato_limite
   --                           e typ_rec_chq_bordero. Projeto 300 (Lombardi)
-  --
+  --  
   --              17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   --
   --------------------------------------------------------------------------------------------------------------*/
@@ -440,9 +440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              ass.tpdocptl,
              ass.cdufdptl,
              ass.cdcooper,
-             ass.nrcpfstl,
-             ass.cdnacion,
-             ass.nrfonemp
+             ass.cdnacion
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -568,13 +566,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          AND avt.tpctrato = pr_tpctrato
          AND avt.nrdconta = pr_nrdconta
          AND avt.nrctremp = pr_nrctrato;
-       
+    
     --> Busca a Nacionalidade
     CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
       SELECT crapnac.dsnacion
         FROM crapnac
        WHERE crapnac.cdnacion = pr_cdnacion;
-    
+         
          
     --------->> VARIAVEIS <<--------
     -- Variável de críticas
@@ -591,6 +589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_nmconjug        crapcje.nmconjug%TYPE;
     vr_nrcpfcjg        crapcje.nrcpfcjg%TYPE;
     vr_dsnacion        crapnac.dsnacion%TYPE;
+    vr_nrcpfstl        crapttl.nrcpfcgc%TYPE;
     
   BEGIN
   
@@ -631,6 +630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       
       vr_cdgraupr := 0;
       vr_vlrenmes := 0;
+	  vr_nrcpfstl := 0;
       
       --Pessoa fisica
       IF rw_crapass.inpessoa = 1 THEN
@@ -642,6 +642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         FETCH cr_crapttl INTO rw_crapttl;
         IF cr_crapttl%FOUND THEN
           vr_cdgraupr := rw_crapttl.cdgraupr;
+		  vr_nrcpfstl := rw_crapttl.nrcpfcgc;
         END IF;
         CLOSE cr_crapttl;              
         
@@ -716,10 +717,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       
       IF vr_cdgraupr = 1 then
         pr_tab_dados_avais(vr_idxavais).nrdoccjg := 'C.P.F. '|| 
-                                                    gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfstl,
+                                                    gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_nrcpfstl,
                                                                               pr_inpessoa => 1);
       END IF;
-
+      
       -- Busca a Nacionalidade
       vr_dsnacion := '';
       OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
@@ -765,8 +766,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                                                                 pr_inpessoa => 1);
         ELSE 
            pr_tab_dados_avais(vr_idxavais).nrdoccjg := rw_crapavt.nrdoccjg;
-        END IF;
-
+        END IF;  
+        
         -- Busca a Nacionalidade
         vr_dsnacion := '';
         OPEN  cr_crapnac(pr_cdnacion => rw_crapavt.cdnacion);
@@ -1361,6 +1362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   
   
   --> Buscar dados de um determinado limite de desconto de titulos
+  
   PROCEDURE pc_busca_dados_limite ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                    ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
                                    ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador

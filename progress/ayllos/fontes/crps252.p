@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98.                       Ultima atualizacao: 10/03/2015
+   Data    : Novembro/98.                       Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:                                               
 
@@ -138,6 +138,11 @@
                
                10/03/2015 - Alterado para que todos registro entrem na condicao
                             de DOC NAO ACEITO - 798 (SD174586 - Tiago).
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................. */
 
 DEF STREAM str_1.   /*  Para relatorio de criticas  */
@@ -222,6 +227,8 @@ DEF        VAR aux_nrlotchq LIKE craplcm.nrlotchq                    NO-UNDO.
 DEF        VAR aux_sqlotchq LIKE craplcm.sqlotchq                    NO-UNDO.
 DEF        VAR aux_cdpeslcm AS CHAR                                  NO-UNDO.
 DEF        VAR aux_dsinform AS CHAR FORMAT "x(100)"                  NO-UNDO.
+DEF        VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc					 NO-UNDO.
+DEF        VAR aux_nrcpfttl LIKE crapttl.nrcpfcgc                    NO-UNDO.
   
 DEF        VAR rel_cpfdesti AS CHAR FORMAT "x(18)"                   NO-UNDO.
 DEF        VAR rel_dscpfcgc AS CHAR FORMAT "x(18)"                   NO-UNDO.
@@ -604,7 +611,10 @@ DO  i = 1 TO aux_contador:
               aux_cdagechq = INT(SUBSTR(aux_setlinha,124,4))
               aux_nrctachq = DEC(SUBSTR(aux_setlinha,129,13))
               aux_sqlotchq = INT(SUBSTR(aux_setlinha,250,6))
-              rel_cpfdesti = SUBSTR(aux_setlinha,89,14) NO-ERROR.
+              rel_cpfdesti = SUBSTR(aux_setlinha,89,14) 
+			  aux_nrcpfstl = 0
+			  aux_nrcpfttl = 0
+			  NO-ERROR.
               
        IF   ERROR-STATUS:ERROR THEN
             DO:
@@ -655,6 +665,30 @@ DO  i = 1 TO aux_contador:
                        
                 NEXT TRANS_1.    
             END.
+
+	   IF crapass.inpessoa = 1 THEN
+	      DO:
+		     FOR FIRST crapttl FIELDS(nrcpfcgc)
+			                   WHERE crapttl.cdcooper = crapass.cdcooper AND
+							         crapttl.nrdconta = crapass.nrdconta AND
+									 crapttl.idseqttl = 2
+									 NO-LOCK:
+
+			   ASSIGN aux_nrcpfstl = crapttl.nrcpfcgc.
+
+			 END.
+
+			 FOR FIRST crapttl FIELDS(nrcpfcgc)
+			                   WHERE crapttl.cdcooper = crapass.cdcooper AND
+							         crapttl.nrdconta = crapass.nrdconta AND
+									 crapttl.idseqttl = 3
+									 NO-LOCK:
+
+			   ASSIGN aux_nrcpfttl = crapttl.nrcpfcgc.
+
+			 END.
+
+		  END.
 
        IF   glb_cdcooper = 1 OR
             glb_cdcooper = 2 THEN
@@ -735,8 +769,8 @@ DO  i = 1 TO aux_contador:
             DO:
                 ASSIGN aux_cpfdesti = DECIMAL(SUBSTR(aux_setlinha,89,14)).
                 IF  NOT ((aux_cpfdesti = crapass.nrcpfcgc)   OR
-                         (aux_cpfdesti = crapass.nrcpfstl)   OR
-                         (aux_cpfdesti = crapass.nrcpfttl))  THEN   
+                         (aux_cpfdesti = aux_nrcpfstl)      OR
+                         (aux_cpfdesti = aux_nrcpfttl))     THEN   
                          glb_cdcritic = 301.
             END.
             
@@ -748,15 +782,14 @@ DO  i = 1 TO aux_contador:
                 IF   aux_cpfdesti = aux_cpfremet THEN
                      DO:
                          IF   crapass.nrcpfcgc <> aux_cpfdesti  THEN
-                         /**  OR   crapass.nrcpfstl <> 0   THEN  **/       
                               glb_cdcritic = 301.
                      END.
                 ELSE
                      DO:   
                          IF   ((aux_cpfdesti = crapass.nrcpfcgc)   OR
-                               (aux_cpfdesti = crapass.nrcpfstl))  AND
+                               (aux_cpfdesti = aux_nrcpfstl))      AND
                               ((aux_cpfremet = crapass.nrcpfcgc)   OR
-                               (aux_cpfremet = crapass.nrcpfstl))  THEN
+                               (aux_cpfremet = aux_nrcpfstl))      THEN
                               .
                          ELSE     
                               glb_cdcritic = 301.   

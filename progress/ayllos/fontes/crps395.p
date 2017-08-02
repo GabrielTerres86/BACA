@@ -178,6 +178,11 @@
 
 				15/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
 			     		     SD 594718 (Kelvin).
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
               
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)             
@@ -758,7 +763,7 @@ PROCEDURE Busca_Dados:
                  aux_nmmaettl = ""
                  aux_dsestcvl = "".           
 
-      FOR FIRST crapass FIELDS (inpessoa dsdemail)
+      FOR FIRST crapass FIELDS (inpessoa)
           WHERE crapass.cdcooper = glb_cdcooper
             AND crapass.nrdconta = crawcrd.nrdconta NO-LOCK: END.
 
@@ -1035,7 +1040,7 @@ PROCEDURE Busca_Dados:
                  aux_nmmaettl = ""
                  aux_dsestcvl = "".           
 
-      FOR FIRST crapass FIELDS (inpessoa dsdemail)
+      FOR FIRST crapass FIELDS (inpessoa)
           WHERE crapass.cdcooper = glb_cdcooper
             AND crapass.nrdconta = crawcrd.nrdconta NO-LOCK: END.
 

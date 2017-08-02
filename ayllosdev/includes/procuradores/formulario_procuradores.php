@@ -15,6 +15,8 @@
  * 005: [19/02/2015] Incluir campo hidden fltemcrd, para controle de cartões, conforme SD 251759 ( Renato - Supero )
  * 006: [22/09/2015] Reformulacao cadastral (Gabriel-RKAM).
  * 007: [25/04/2017] Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ * 008: [12/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava (Adriano - P339).
  */	
  
 ?>
@@ -67,7 +69,9 @@
 			</select>
 			<input name="nrdocava" id="nrdocava" type="text" value="<? echo $frm_nrdocava; ?>" />
 			
-			<label for="cdoeddoc" class="rotulo-linha">Org.Emi.:</label>
+			<br />
+
+			<label for="cdoeddoc" class="rotulo rotulo-80">Org.Emi.:</label>
 			<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo $frm_cdoeddoc; ?>" />
 			
 			<label for="cdufddoc" class="rotulo-linha">U.F.:</label>

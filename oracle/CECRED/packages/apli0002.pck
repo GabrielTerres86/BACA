@@ -1273,6 +1273,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              procedure pc_cad_resgate_aplica, pois estava validando o bloqueio 
                              judicial antes de validar se o valor a ser resgatado é superior 
                              a disponivel (Lucas Ranghetti #492125)        
+
+                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
                              
                 09/05/2017 - Implementei o tratamento de erro na pc_efetua_resgate_online para o retorno da rotina
                              apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)                             
@@ -1344,7 +1348,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         ,ass.nrcpfcgc
         ,ass.inpessoa
         ,ass.cdcooper
-        ,ass.nrcpfstl
        ,ass.cdagenci
    FROM crapass ass
   WHERE ass.cdcooper = pr_cdcooper
@@ -10546,7 +10549,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                    
                 09/06/2016 - Removido a critica quando nao tiver cadastrado a MXRENDIPOS
                              Quando nao esta cadastrado eh utilizado data inicial e final padrao
-                             (Douglas - Chamado 465207)
+                             (Douglas - Chamado 465207)	 
+
+                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
                              
                 09/05/2017 - Implementei o tratamento de erro para o retorno da rotina
                              apli0001.pc_rendi_apl_pos_com_resgate. (Carlos Rafael Tanholi - SD 631979)
@@ -10776,7 +10783,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             ,ass.nrcpfcgc
             ,ass.inpessoa
             ,ass.cdcooper
-            ,ass.nrcpfstl
             ,ass.cdagenci
             ,ass.idastcjt
         FROM crapass ass

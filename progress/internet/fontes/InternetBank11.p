@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 16/12/2013
+   Data    : Marco/2007                        Ultima atualizacao: 13/04/2017
 
    Dados referentes ao programa:
 
@@ -32,6 +32,10 @@
                             xml_operacao11 para utilizacao da tabela generica.
                             PRJ286.5 - Cecred Mobile (Dionathan)
                             
+			   13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+                            
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -48,6 +52,7 @@ DEF VAR aux_flsenlet AS LOGI                                           NO-UNDO.
 DEF VAR aux_nrctanov AS INTE                                           NO-UNDO.
 DEF VAR aux_qtdiaace AS INTE                                           NO-UNDO.
 DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
+DEF VAR aux_nmsegntl AS CHAR										   NO-UNDO.
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcob.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
@@ -124,6 +129,10 @@ FOR EACH tt-titulares NO-LOCK:
 
     ASSIGN aux_flsenlet = FALSE.
 
+	IF tt-titulares.inpessoa = 1 AND 
+	   tt-titulares.idseqttl = 2 THEN
+	   ASSIGN aux_nmsegntl = tt-titulares.nmtitula.
+	   
     IF  VALID-HANDLE(h-b1wgen0032)  THEN
         RUN verifica-letras-seguranca IN h-b1wgen0032 
                                      (INPUT par_cdcooper,
@@ -173,15 +182,12 @@ ASSIGN xml_operacao.dslinxml = "</TITULARES>".
 IF  VALID-HANDLE(h-b1wgen0032)  THEN
     DELETE PROCEDURE h-b1wgen0032.
 
-/* Verificar se a conta pertence a um PAC sobreposto */
 FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                    crapass.nrdconta = par_nrdconta
                    NO-LOCK NO-ERROR.
 
 CREATE xml_operacao.
-ASSIGN xml_operacao.dslinxml = "<nomconta>" +
-                               STRING(crapass.nmprimtl) + " " + STRING(crapass.nmsegntl) +
-                               "</nomconta>".
+ASSIGN xml_operacao.dslinxml = "<nomconta>" + STRING(crapass.nmprimtl) +  " " + aux_nmsegntl + "</nomconta>".
 
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<qtdiaace>" + STRING(aux_qtdiaace) + "</qtdiaace>".

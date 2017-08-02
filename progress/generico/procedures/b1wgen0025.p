@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 18/11/2016
+    Data    : Novembro/2007                  Ultima Atualizacao: 19/04/2017
     
     Dados referentes ao programa:
 
@@ -336,6 +336,11 @@
                 18/11/2016 - #559508 correção na verificação da existência do cartão
                              magnético de operador. Quando for um cartão de operador,
                              não consultar transferência de conta (Carlos)
+
+			    19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -3676,10 +3681,21 @@ PROCEDURE busca_associado:
             RETURN "NOK".
         END.
 
+	IF crapass.inpessoa = 1 THEN
+	   DO:
+	      FOR FIRST crapttl FIELDS(nmextttl) 
+		                    WHERE crapttl.cdcooper = crapass.cdcooper AND
+		                          crapttl.nrdconta = crapass.nrdconta AND
+							      crapttl.idseqttl = 2
+   							      NO-LOCK:
 
-    ASSIGN par_nmtitula[1] = crapass.nmprimtl
-           par_nmtitula[2] = crapass.nmsegntl.
+		     ASSIGN par_nmtitula[2] = crapttl.nmextttl.
 
+		  END.
+		  
+	   END.
+
+    ASSIGN par_nmtitula[1] = crapass.nmprimtl.
 
     /* agencia da cooperativa do associado */
     RUN verifica_agencia_central ( INPUT par_cdcooper,

@@ -582,6 +582,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                  29/03/2017 - #640389 Alterada a forma como era feito o insert na lcm, na rotina
                               pc_lan_tarifa_conta_corrente, passando a tratar com DUP_VAL_ON_INDEX,
                               dispensando a consulta do mesmo antes da inserção (Carlos)
+
+				 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                  crapass, crapttl, crapjur 
+							  (Adriano - P339).
+
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -609,7 +614,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           ,crapass.nrcpfcgc
           ,crapass.inpessoa
           ,crapass.cdcooper
-          ,crapass.nrcpfstl
           ,crapass.cdsecext
           ,crapass.cdagenci
           ,crapass.dtdemiss

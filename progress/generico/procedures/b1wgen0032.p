@@ -24,7 +24,7 @@
 
     Programa: b1wgen0032.p
     Autor   : Guilherme/David
-    Data    : Agosto/2008                     Ultima Atualizacao: 07/06/2016
+    Data    : Agosto/2008                     Ultima Atualizacao: 19/04/2017
            
     Dados referentes ao programa:
                 
@@ -141,6 +141,11 @@
 
 				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+
+				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ..............................................................................*/
 
 
@@ -1100,9 +1105,19 @@ PROCEDURE obtem-permissao-solicitacao:
                    tt-titular-magnetico.nmtitcrd = aux_nmtitcrd
                    tt-titular-magnetico.flusucar = FALSE.
                            
-            IF  crapass.inpessoa = 1 AND crapass.nmsegntl <> ""  THEN        
+            IF  crapass.inpessoa = 1 THEN			    
                 DO:
-                    RUN corrige_segtl (INPUT crapass.nmsegntl,
+				    FOR FIRST crapttl FIELDS(nmextttl)
+									  WHERE crapttl.cdcooper = crapass.cdcooper AND
+									        crapttl.nrdconta = crapass.nrdconta AND
+											crapttl.idseqttl = 2
+											NO-LOCK:
+
+					END.
+
+					IF AVAIL crapttl THEN
+					   DO:
+						   RUN corrige_segtl (INPUT crapttl.nmextttl,
                                        OUTPUT aux_nmtitcrd).
 
                     RUN abreviar (INPUT aux_nmtitcrd,
@@ -1114,6 +1129,9 @@ PROCEDURE obtem-permissao-solicitacao:
                            tt-titular-magnetico.dsusucar = "(SEGUNDO TITULAR)"
                            tt-titular-magnetico.nmtitcrd = aux_nmtitcrd
                            tt-titular-magnetico.flusucar = FALSE.
+
+					   END.
+
                 END.
         END.
     ELSE

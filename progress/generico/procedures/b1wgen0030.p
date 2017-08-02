@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 05/06/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 12/06/2017
            
     Dados referentes ao programa:
                 
@@ -487,6 +487,10 @@
 
                05/06/2017 - Verificacao de titulo baixado para gravar restricao
                             (Tiago/Ademir #678289)
+
+               12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+			 		       (Adriano - P339). 
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -10093,7 +10097,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                 END.
             
             IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-                 rel_txnrdcid = crapass.tpdocptl + ": " + crapass.nrdocptl.
+                 rel_txnrdcid = crapass.tpdocptl + ": " + SUSBTR(TRIM(crapass.nrdocptl),1,15).
             ELSE 
                  rel_txnrdcid = "".  
 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                       Ultima atualizacao: 19/04/2017
+   Data    : Abril/2006.                       Ultima atualizacao: 20/04/2017
 
    Dados referentes ao programa:
 
@@ -34,6 +34,10 @@
                             
                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                             PRJ339 - CRM (Odirlei-AMcom)
+			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ..............................................................................*/
 
 /* Variaveis genericas da rotina */
@@ -101,7 +105,6 @@ DEF        VAR log_nmtalttl_jur LIKE crapjur.nmtalttl                NO-UNDO.
 /* Variaveis para o log da tela: CONTAS -> REGISTRO (juridica) */
 DEF        VAR log_vlfatano LIKE crapjur.vlfatano                    NO-UNDO.
 DEF        VAR log_nrinsest LIKE crapjur.nrinsest                    NO-UNDO.
-DEF        VAR log_vlcapsoc LIKE crapjur.vlcapsoc                    NO-UNDO.
 DEF        VAR log_vlcaprea LIKE crapjur.vlcaprea                    NO-UNDO.
 DEF        VAR log_dtregemp LIKE crapjur.dtregemp                    NO-UNDO.
 DEF        VAR log_nrregemp LIKE crapjur.nrregemp                    NO-UNDO.
@@ -131,7 +134,6 @@ DEF        VAR log_cdgraupr     LIKE crapttl.cdgraupr                NO-UNDO.
 DEF        VAR log_cdestcvl     LIKE crapttl.cdestcvl                NO-UNDO.
 DEF        VAR log_grescola     LIKE crapttl.grescola                NO-UNDO.
 DEF        VAR log_cdfrmttl     LIKE crapttl.cdfrmttl                NO-UNDO.
-DEF        VAR log_nrcertif     LIKE crapttl.nrcertif                NO-UNDO.
 DEF        VAR log_nmtalttl_ttl LIKE crapttl.nmtalttl                NO-UNDO.
 
 /* Variaveis para o log da tela: CONTAS -> REFERENCIAS (JURIDICA)

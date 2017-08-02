@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 25/11/2014
+   Data    : Marco/2007                        Ultima atualizacao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -42,6 +42,10 @@
                             
                25/11/2014 - Incluir clausula no craptco flgativo = TRUE
                             (Lucas R./Rodrigo)
+
+			   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
 
 ..............................................................................*/
                   
@@ -244,8 +248,7 @@ FOR EACH crapneg WHERE crapneg.cdcooper  = glb_cdcooper          AND
                 /** Manda para CCF o titular que assinou o cheque **/
                 FOR EACH crapttl WHERE 
                                  crapttl.cdcooper = glb_cdcooper     AND
-                                 crapttl.nrdconta = crapass.nrdconta AND
-                                 crapttl.flgsittl = TRUE
+                                 crapttl.nrdconta = crapass.nrdconta 
                                  NO-LOCK BY crapttl.idseqttl:
                     
                     
@@ -257,8 +260,7 @@ FOR EACH crapneg WHERE crapneg.cdcooper  = glb_cdcooper          AND
                             FIND FIRST crabttl WHERE 
                                        crabttl.cdcooper = glb_cdcooper     AND
                                        crabttl.nrdconta = crapass.nrdconta AND
-                                       crabttl.idseqttl > 1                AND
-                                       crabttl.flgsittl = TRUE
+                                       crabttl.idseqttl > 1   
                                        NO-LOCK NO-ERROR.
                                        
                             IF  NOT AVAILABLE crabttl  THEN
@@ -282,8 +284,7 @@ FOR EACH crapneg WHERE crapneg.cdcooper  = glb_cdcooper          AND
                                   FIND FIRST crabttl WHERE 
                                        crabttl.cdcooper = glb_cdcooper     AND
                                        crabttl.nrdconta = crapass.nrdconta AND
-                                       crabttl.idseqttl > 1                AND
-                                       crabttl.flgsittl = TRUE
+                                       crabttl.idseqttl > 1                
                                        NO-LOCK NO-ERROR.
                                        
                                   IF  NOT AVAILABLE crabttl  THEN
@@ -353,8 +354,7 @@ FOR EACH crapneg WHERE crapneg.cdcooper  = glb_cdcooper          AND
                     /** Exclui do CCF o titular que assinou o cheque **/
                     FOR EACH crapttl WHERE 
                                      crapttl.cdcooper = glb_cdcooper     AND
-                                     crapttl.nrdconta = crapass.nrdconta AND
-                                     crapttl.flgsittl = TRUE
+                                     crapttl.nrdconta = crapass.nrdconta 
                                      NO-LOCK BY crapttl.idseqttl:
                         
                         ASSIGN flg_containd = FALSE.
@@ -365,8 +365,7 @@ FOR EACH crapneg WHERE crapneg.cdcooper  = glb_cdcooper          AND
                                FIND FIRST crabttl WHERE 
                                        crabttl.cdcooper = glb_cdcooper     AND
                                        crabttl.nrdconta = crapass.nrdconta AND
-                                       crabttl.idseqttl > 1                AND
-                                       crabttl.flgsittl = TRUE
+                                       crabttl.idseqttl > 1                
                                        NO-LOCK NO-ERROR.
                                        
                                IF  NOT AVAILABLE crabttl  THEN

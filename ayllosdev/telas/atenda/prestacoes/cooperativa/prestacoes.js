@@ -47,6 +47,9 @@
  * 038: [15/03/2016] Odirlei (AMCOM): Alterado rotina mostraEmail para verificar se deve permitir o envio de email para o comite. PRJ207 - Esteira
  * 039: [27/07/2016] Alterado função controlaFoco(Evandro - RKAM)
  * 040: [22/06/2017] Alterado para mostrar frame de portabilidade independente de ter selecionado um contrato ou não. (Projeto 357 - Reinert)
+ * 041: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					 (Adriano - P339).
 
  */
 
@@ -921,7 +924,7 @@ function controlaLayout(operacao) {
 		cCPF.addClass('cpf').css('width','134px');
 		cNome.addClass('alphanum').css('width','255px').attr('maxlength','40');
 		cDoc.css('width','50px');
-		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','37');
+		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','40');
 		cNacio.addClass('alphanum').css('width','114px').attr('maxlength','13');
 		
 		cInpessoa.css('width','20px').setMask('INTEGER','9','',''); // Daniel
@@ -944,7 +947,7 @@ function controlaLayout(operacao) {
 		cConj.addClass('alphanum').css('width','250px').attr('maxlength','40');
 		cCPF_1.addClass('cpf').css('width','134px');
 		cDoc_1.css('width','50px');
-		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','37');
+		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','40');
 
 		var cTodos_2    = $('select,input','#'+nomeForm+' fieldset:eq(2)');
 		var cTodos_3    = $('select,input','#'+nomeForm+' fieldset:eq(3)');
@@ -1270,7 +1273,7 @@ function controlaLayout(operacao) {
 		cCPF.addClass('cpf').css('width','134px');
 		cNome.addClass('alphanum').css('width','255px').attr('maxlength','40');
 		cDoc.css('width','50px');
-		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','37');
+		cNrDoc.addClass('alphanum').css('width','202px').attr('maxlength','40');
 		cNacio.addClass('pesquisa alphanum').css('width','114px').attr('maxlength','13');
 
 		var cTodos_1    = $('input,select','#'+nomeForm+' fieldset:eq(1)');
@@ -1289,7 +1292,7 @@ function controlaLayout(operacao) {
 		cConj.addClass('alphanum').css('width','250px').attr('maxlength','40');
 		cCPF_1.addClass('cpf').css('width','134px');
 		cDoc_1.css('width','50px');
-		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','37');
+		cNrDoc_1.addClass('alphanum').css('width','197px').attr('maxlength','40');
 
 		var cTodos_2    = $('input, select','#'+nomeForm+' fieldset:eq(2)');
 		var cTodos_3    = $('input','#'+nomeForm+' fieldset:eq(3)');

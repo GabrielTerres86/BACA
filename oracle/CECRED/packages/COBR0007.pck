@@ -267,6 +267,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --                          Heitor (Mouts) - Chamado 527557
   --
   --              06/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
+  --  
+  --              25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --			               crapass, crapttl, crapjur 
+  --						  (Adriano - P339).
   --
   --              12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
   --
@@ -383,7 +387,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           ,ass.nrcpfcgc
           ,ass.inpessoa
           ,ass.cdcooper
-          ,ass.nrcpfstl
           ,ass.cdagenci
           ,ass.nrctacns
           ,ass.idastcjt

@@ -11,6 +11,9 @@
  *                16/05/2014 - Ajuste no campo de estado civil (Douglas - Chamado 131253).
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
  *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					          (Adriano - P339).
  *
  * -------------- 
  */  
@@ -67,6 +70,8 @@
 		</select>
 		<input name="nrdocptl" id="nrdocptl" type="text" value="<? echo getByTagName($registro,'nrdocptl') ?>" />
 		
+		<br />
+
 		<label for="cdoedptl">Org. Emi.:</label>
 		<input name="cdoedptl" id="cdoedptl" type="text" value="<? echo getByTagName($registro,'cdoedptl') ?>" />
 					
