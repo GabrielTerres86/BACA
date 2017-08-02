@@ -1707,7 +1707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       
         vr_obj_generic2.put('ddd', rw_craptfc.nrdddtfc);
         vr_obj_generic2.put('numero'
-                           ,REPLACE(REPLACE(rw_craptfc.nrtelefo, '-', '')
+                           ,REPLACE(REPLACE(REPLACE(rw_craptfc.nrtelefo,' ',''), '-', '')
                                    ,'.'
                                    ,''));
         -- Adicionar telefone na lista
@@ -3477,7 +3477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       ELSE
         vr_obj_generic2.put('tipo', 'MOVEL');
       END IF;
-      vr_obj_generic2.put('numero', replace(replace(pr_rw_crapavt.nrfonres,'-',''),'.','')); 
+      vr_obj_generic2.put('numero', replace(replace(replace(pr_rw_crapavt.nrfonres,' ',''),'-',''),'.','')); 
       -- Adicionar telefone na lista
       vr_lst_generic2.append(vr_obj_generic2.to_json_value());
       -- Adicionar o array telefone no objeto
@@ -4210,7 +4210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               vr_obj_generico.put('tipo', 'MOVEL');
             END IF;
             
-            vr_obj_generico.put('numero', replace(replace(rw_crapcje.nrfonemp,'-',''),'.',''));
+            vr_obj_generico.put('numero', replace(replace(REPLACE(rw_crapcje.nrfonemp,' ',''),'-',''),'.',''));
             -- Adicionar telefone na lista
             vr_lst_generic2.append(vr_obj_generico.to_json_value());
             -- Adicionar o array telefone no objeto Conjuge

@@ -1815,9 +1815,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Se Obrigatorio e ainda não Enviada ou Enviada mas com Erro Conexao
     IF vr_inobriga = 'S' AND (rw_crawepr.insitest = 0 OR rw_crawepr.insitapr = 6) THEN 
       
-      --> Guardar envio da Proposta
-      vr_hrenvest := to_char(SYSDATE,'sssss');
-    
       --> Gerar informações no padrao JSON da proposta de emprestimo
 			ESTE0002.pc_gera_json_analise(pr_cdcooper  => pr_cdcooper,  --> Codigo da cooperativa
 													          pr_cdagenci  => rw_crawepr.cdagenci, --> Agência da Proposta
@@ -1902,6 +1899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			END IF;
       
       -- Atualizar a proposta
+      vr_hrenvest := to_char(SYSDATE,'sssss');
 	    BEGIN
 				UPDATE crawepr wpr 
 					 SET wpr.insitest = 1, -->  1 – Enviada para Analise 
@@ -3918,8 +3916,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
          AND wpr.nrdconta = pr_nrdconta
          AND wpr.nrctremp = pr_nrctremp
          AND wpr.dsprotoc = pr_dsprotoc
-         AND wpr.insitest = 1             -- Enviadas para Analise Automática
-         FOR UPDATE;
+         AND wpr.insitest = 1-- Enviadas para Analise Automática
+         /*FOR UPDATE*/;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
@@ -3945,7 +3943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       ELSE
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
-      END IF;        
+      END IF;      
       
       -- Desde que não estejamos com processo em execução ou o dia util
       IF rw_crapdat.inproces = 1 /*AND trunc(SYSDATE) = rw_crapdat.dtmvtolt */ THEN
@@ -4068,7 +4066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
               END CASE;         
             END IF;  
           END IF; 
-
+          
           --> Gravar dados log acionamento
           pc_grava_acionamento(pr_cdcooper              => rw_crawepr.cdcooper,         
                                pr_cdagenci              => rw_crawepr.cdagenci,          
@@ -4268,7 +4266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           --  RAISE vr_exc_erro;
           --END IF;
         END IF;
-      END IF;  
+      END IF; 
       -- Gravação para liberação do registro
       COMMIT;
     END LOOP;  
@@ -4277,7 +4275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 			-- Desfazer alterações
       ROLLBACK;
       -- Gerar log
-			btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+      btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                  pr_ind_tipo_log => 2, 
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
                                                  ||' - ESTE0001 --> Erro ao solicitor retorno Protocolo '
