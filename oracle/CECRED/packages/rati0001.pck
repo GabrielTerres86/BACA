@@ -143,6 +143,9 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                         Ajustada a rotina pc_verifica_atualizacao, que nao estava retornando a mensagem de erro
   --                         corretamente para a tela ATURAT. Heitor (Mouts)
   --
+  --            27/07/2017 - Alterado para ignorar algumas validacoes para os emprestimos de cessao da 
+  --                         fatura de cartao de credito (Anderson).
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -4049,7 +4052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            INTO vr_valorpre;
           CLOSE cr_craplim;
           -- Acumular
-          pr_vltotpre := pr_vltotpre + vr_valorpre;
+          pr_vltotpre := nvl(pr_vltotpre,0) + vr_valorpre;
           -- Se esta efetivando ele ja considera a parcela atual
           OPEN cr_craplim_atual;
           FETCH cr_craplim_atual
