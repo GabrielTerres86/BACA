@@ -105,6 +105,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 														 ,pr_idorigem  IN INTEGER               -- Id. origem (3-IB / 4-TAA)
 														 ,pr_inaprpen  IN NUMBER                -- Indicador de aprovação de transacao pendente
 														 ,pr_idoperac  IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na efetivação do agendamento e aprovação de transação pendente)
+                             ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
                              ,pr_idastcjt OUT INTEGER               -- Se possui assinatura														 
 														 ,pr_dsprotoc OUT VARCHAR2              -- Protocolo
 														 ,pr_dsnsuope OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU Operadora														 
@@ -127,6 +128,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 														 ,pr_nrcartao  IN DECIMAL               -- Nr. do cartão
                              ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único														 
 														 ,pr_idorigem  IN INTEGER -- Id. origem
+                             ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
 														 ,pr_nsuopera  OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU operadora
 														 ,pr_dsprotoc  OUT VARCHAR2                                -- Protocolo
 														 ,pr_cdcritic  OUT PLS_INTEGER -- Cód. crítica
@@ -197,7 +199,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                 ,pr_dscritic OUT VARCHAR2);
   
   -- Confirma recarga de celular
-  PROCEDURE pc_confirma_regarca_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
+  PROCEDURE pc_confirma_recarga_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE
                                   ,pr_idseqttl   IN crapttl.idseqttl%TYPE
                                   ,pr_nrcpfope   IN crapsnh.nrcpfcgc%TYPE
@@ -213,6 +215,7 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
                                   ,pr_qtmesagd   IN INTEGER    
                                   ,pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE
                                   ,pr_inaprpen   IN NUMBER
+                                  ,pr_flmobile   IN NUMBER
                                   ,pr_msg_retor OUT VARCHAR2
                                   ,pr_cdcritic  OUT PLS_INTEGER
                                   ,pr_dscritic  OUT VARCHAR2);
@@ -1214,6 +1217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_idorigem  IN INTEGER               -- Id. origem (3-IB / 4-TAA)
 														 ,pr_inaprpen  IN NUMBER                -- Indicador de aprovação de transacao pendente
 														 ,pr_idoperac  IN tbrecarga_operacao.idoperacao%TYPE -- Id. operação (Somente na efetivação do agendamento e aprovação de transação pendente)
+                             ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
                              ,pr_idastcjt OUT INTEGER               -- Se possui assinatura
 														 ,pr_dsprotoc OUT VARCHAR2              -- Protocolo
 														 ,pr_dsnsuope OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU Operadora
@@ -1384,6 +1388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 													                       ELSE 'TAA' END
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
+
 				-- Operador
 				IF pr_nrcpfope > 0  THEN
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -1446,6 +1451,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																	 ,pr_dsdadant => ' '
 																	 ,pr_dsdadatu =>TO_CHAR(gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc,1)));
 			  END IF;
+        
+        --Origem
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Origem',
+                                  pr_dsdadant => NULL,
+                                  pr_dsdadatu => CASE pr_flmobile
+                                                 WHEN 1 THEN 'MOBILE'
+                                                 ELSE 'INTERNETBANK'
+                                                  END);
+        
 			ELSE
         CASE					
 					WHEN pr_cddopcao = 1 THEN -- Data atual
@@ -1465,6 +1480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			,pr_nrcartao  => pr_nrcartao
 																			,pr_nrsequni  => pr_nrsequni
 																			,pr_idorigem  => pr_idorigem
+																			,pr_flmobile  => pr_flmobile
 																			,pr_nsuopera  => pr_dsnsuope
 																			,pr_dsprotoc  => pr_dsprotoc
 																			,pr_cdcritic  => vr_cdcritic
@@ -1542,6 +1558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 														 ,pr_nrcartao  IN DECIMAL               -- Nr. do cartão
 														 ,pr_nrsequni  IN INTEGER               -- Nr. sequencial único (Apenas TAA)
 														 ,pr_idorigem  IN INTEGER -- Id. origem
+                             ,pr_flmobile  IN NUMBER                -- Indicador se origem é mobile
 														 ,pr_nsuopera  OUT tbrecarga_operacao.dsnsu_operadora%TYPE -- NSU operadora
 														 ,pr_dsprotoc  OUT VARCHAR2                                -- Protocolo
 														 ,pr_cdcritic  OUT PLS_INTEGER -- Cód. crítica
@@ -1554,7 +1571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_efetua_recarga
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Fevereiro/2017                 Ultima atualizacao:
+    Data    : Fevereiro/2017                 Ultima atualizacao: 13/07/2017
 
     Dados referentes ao programa:
 
@@ -1562,8 +1579,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Objetivo  : Rotina para efetuar a recarga de celular
 
-    Alteracoes: 06/06/2017 - Incluir a gravação da data de repasse do valor para 
+    Alteracoes: 31/05/2017 - Adicionados parametros Cooperativa e CNPJ na requisição
+                             RealizarVenda do Aymaru. PRJ 321 - Recarga de Celular (Lombardi)
+
+                06/06/2017 - Incluir a gravação da data de repasse do valor para 
                              a Rede Tendencia(dtrepasse) (Renato Darosci)
+
+		        12/07/2017 - Corrigida ordem dos parâmetros vr_cdcritic e vr_dscritic na
+				             chamada do Aymaru (Diego).
+
+                13/07/2017 - Efetuado tratamento para critica de Timeout na requisicao
+				             de recarga de celular (Diego). 
+							 
     ..............................................................................*/		
 	  DECLARE
 		  -- Variavel de criticas
@@ -1751,7 +1778,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																	 ,pr_nmdcampo => 'Erro'
 																	 ,pr_dsdadant => ' '
-																	 ,pr_dsdadatu => pr_dserrlog);																 
+																	 ,pr_dsdadatu => pr_dserrlog);	
+          
+          --Origem
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Origem',
+                                  pr_dsdadant => NULL,
+                                  pr_dsdadatu => CASE pr_flmobile
+                                                 WHEN 1 THEN 'MOBILE'
+                                                 ELSE 'INTERNETBANK'
+                                                  END);															 
 					-- Efetuar commit;
 					COMMIT;
 				EXCEPTION
@@ -1957,6 +1993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			-- Fechar cursor
 			CLOSE cr_inf_rec;
 			
+      vr_recarga.put('Cooperativa', pr_cdcooper ); -- Codigo da Cooperativa
 			vr_recarga.put('Fornecedor', rw_inf_rec.nmoperadora); -- Nome da operadora
 			vr_recarga.put('TipoProduto', rw_inf_rec.tpoperacao); -- Tipo produto FIXO
 			vr_recarga.put('Produto', rw_inf_rec.nmproduto);      -- Nome do produto
@@ -1969,14 +2006,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,pr_parametros => vr_parametros
 																				 ,pr_conteudo => vr_recarga
 																				 ,pr_resposta => vr_resposta
-																				 ,pr_dscritic => vr_cdcritic
-																				 ,pr_cdcritic => vr_dscritic);
+																				 ,pr_dscritic => vr_dscritic
+																				 ,pr_cdcritic => vr_cdcritic);
 			-- Se retornou alguma crítica														 
 			IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 				-- Gerar crítica
-				vr_dserrlog := vr_dscritic;
 				vr_cdcritic := 0;
 				vr_dscritic := 'Não foi possível efetuar a recarga.';
+
+				     -- saida por TIMEOUT  
+				IF   vr_resposta.status_code = 408  THEN
+				     vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
+			    ELSE
+				     vr_dserrlog := vr_dscritic;
+			    END IF;
 				
 				-- Gerar log
 				pc_gera_log_erro(pr_cdcooper => pr_cdcooper
@@ -2002,8 +2045,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				ELSE
 					vr_dscritic := 'Não foi possível efetuar a recarga.';
 				END IF;
-				-- Descrição do erro da Rede Tendencia
-				vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+
+			    -- Descrição do erro da Rede Tendencia
+			    vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+
 				-- Gerar log
 				pc_gera_log_erro(pr_cdcooper => pr_cdcooper
 												,pr_nrdconta => pr_nrdconta
@@ -2364,6 +2409,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																		pr_dsdadant => ' ', 
 																		pr_dsdadatu =>TO_CHAR(gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc,1)));
         END IF;
+
+        --Origem
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'Origem',
+                                pr_dsdadant => NULL,
+                                pr_dsdadatu => CASE pr_flmobile
+                                               WHEN 1 THEN 'MOBILE'
+                                               ELSE 'INTERNETBANK'
+                                                END);
 				
 				-- Retornar o nsu da operadora
 				pr_nsuopera := vr_nsuoperadora;
@@ -2611,7 +2665,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
    Objetivo  : Enviar requisição para receber e atualizar os produtos e valores 
 	             disponíveis para Recarga de Celular
 
-   Alteracoes: 
+   Alteracoes: 31/05/2017 - Adicionados parametros Cooperativa e CNPJ na requisição
+                            ListarProdutos do Aymaru. PRJ 321 - Recarga de Celular (Lombardi)
   ..........................................................................*/
 	  -- Variáveis auxiliares
 	  vr_cdprogra  VARCHAR2(40) := 'RCEL0001.PC_SOLICITA_PRODUTOS_RECARGA';
@@ -2639,6 +2694,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                     -- Parametros para Ocorrencia
                    ,PR_IDPRGLOG   => vr_idprglog); --> Identificador unico da tabela (sequence)
 									 
+    vr_parametros(1).chave := 'Cooperativa';
+    vr_parametros(1).valor := 3;
+    
 		-- Consumir rest do AYMARU
 		AYMA0001.pc_consumir_ws_rest_aymaru(pr_rota => '/Comercial/Recarga/ListarProdutos'
 																			 ,pr_verbo => WRES0001.GET
@@ -2758,6 +2816,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 							recarga de celular
 	Alteracoes: 30/05/2017 - Ajuste para desprezar o produto "SERCOMTEL FIXO".
                            Projeto 321 - Recarga de Celular (Lombardi)
+                           
+              05/07/2017 - Ajuste para desprezar qualquer produto com "FIXO"
+                           no nome. Projeto 321 - Recarga de Celular (Lombardi)
 	..............................................................................*/
 	
 	-- Variavel de criticas
@@ -2916,7 +2977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				 ,rw_xmlProduto.tpoperacao);
 					ELSE -- Valor pré-fixado
             
-            IF rw_xmlProduto.nmproduto <> 'SERCOMTEL FIXO' THEN
+            IF rw_xmlProduto.nmproduto NOT LIKE '%FIXO%' THEN
               
 						-- Criar novo produto
 						INSERT INTO tbrecarga_produto(cdoperadora
@@ -3582,11 +3643,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela RCEL0001: ' || SQLERRM;
-    END;																			
+    END;
 	END pc_cadastra_favorito;
   
   -- Confirma recarga de celular
-  PROCEDURE pc_confirma_regarca_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
+  PROCEDURE pc_confirma_recarga_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE
                                   ,pr_idseqttl   IN crapttl.idseqttl%TYPE
                                   ,pr_nrcpfope   IN crapsnh.nrcpfcgc%TYPE
@@ -3602,6 +3663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_qtmesagd   IN INTEGER    
                                   ,pr_idoperacao IN tbrecarga_operacao.idoperacao%TYPE
                                   ,pr_inaprpen   IN NUMBER
+                                  ,pr_flmobile   IN NUMBER
                                   ,pr_msg_retor OUT VARCHAR2
                                   ,pr_cdcritic  OUT PLS_INTEGER
                                   ,pr_dscritic  OUT VARCHAR2) IS
@@ -3771,6 +3833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_nrsequni  => 0
                                   ,pr_idorigem  => 3
                                   ,pr_inaprpen  => pr_inaprpen
+                                  ,pr_flmobile  => pr_flmobile
                                   ,pr_idastcjt  => vr_idastcjt
                                   ,pr_idoperac  => pr_idoperacao
                                   ,pr_dsprotoc  => vr_dsprotoc
@@ -3834,7 +3897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela RCEL0001: ' || SQLERRM;
     END;																			
-	END pc_confirma_regarca_ib;
+	END pc_confirma_recarga_ib;
   
   -- Buscar dados da recarga no Progress 
   PROCEDURE pc_busca_recarga_prog(pr_idoperacao IN INTEGER
@@ -4320,6 +4383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_nrcartao  => 0
                                   ,pr_nrsequni  => 0
                                   ,pr_idorigem  => rw_tbrecarga.cdcanal
+                                  ,pr_flmobile  => 0
                                   ,pr_nsuopera  => vr_nsuopera
                                   ,pr_dsprotoc  => vr_dsprotoc
                                   ,pr_cdcritic  => vr_cdcritic
