@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
+create or replace procedure cecred.PC_CRPS217
                    (pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coop conectada
 									 ,pr_flgresta  IN PLS_INTEGER           --> Flag padrão para utilização de restart
                    ,pr_stprogra OUT PLS_INTEGER           --> Saída de termino da execução
@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autor   : Edson
-      Data    : Dezembro/1997.                   Ultima atualizacao: 13/09/2016
+      Data    : Dezembro/1997.                   Ultima atualizacao: 25/01/2016
 
       Dados referentes ao programa:
 
@@ -225,13 +225,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
                    25/01/2016 - Melhoria para alterar proc_batch pelo proc_message
                                 na critica 347. (Jaison/Diego - SD: 365193)
 
-                   03/08/2016 - Retirado processo de geração de arquivo para impressao.
-                                Ajuste leitura CRAPTAB (Daniel)   
-                                
-                   13/09/2016 - Reestruturado o programa para efetuar apenas envio de 
-                                extrato por e-mail, alterado forma de leitura da crapass 
-                                e retirado todas procedures e variaveis não utilizadas (Daniel)                       
-
     -- ............................................................................. **/
       -- Código do programa
       vr_cdprogra crapprg.cdprogra%TYPE;
@@ -240,7 +233,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
       -- Tratamento de erros sem parar a cadeia
       vr_exc_fimprg EXCEPTION;
 
-      -- Busca dos dados da cooperativa
+      /* Busca dos dados da cooperativa */
       CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
         SELECT cop.nmrescop
               ,cop.nrtelura
@@ -250,11 +243,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
           FROM crapcop cop
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
-      
-      -- Cursor genérico de calendário
+      /* Cursor genérico de calendário */
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-      
-      -- Cursor genérico de parametrização
+      /* Cursor genérico de parametrização */
       CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
                        ,pr_nmsistem IN craptab.nmsistem%TYPE
                        ,pr_tptabela IN craptab.tptabela%TYPE
@@ -265,15 +256,92 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
               ,tab.ROWID
           FROM craptab tab
          WHERE tab.cdcooper = pr_cdcooper
-           AND UPPER(tab.nmsistem) = pr_nmsistem
-           AND UPPER(tab.tptabela) = pr_tptabela
+           AND tab.nmsistem = pr_nmsistem
+           AND tab.tptabela = pr_tptabela
            AND tab.cdempres = pr_cdempres
-           AND UPPER(tab.cdacesso) = pr_cdacesso
+           AND tab.cdacesso = pr_cdacesso
            AND tab.tpregist = pr_tpregist;
       rw_craptab cr_craptab%ROWTYPE;
-      
-      
-      -- Lançamentos na conta do associado
+      -- Leitura dos associados cadastrados
+      CURSOR cr_crapass(pr_dtultdma IN crapdat.dtmvtolt%TYPE) IS
+        SELECT ass.nrdconta
+              ,ass.inpessoa
+              ,ass.tpextcta
+              ,ass.cdsitdct
+              ,ass.vllimcre
+              ,ass.nmprimtl
+              ,ass.cdagenci
+              ,ass.cdsecext
+              ,ttl.cdempres
+          FROM crapttl ttl
+              ,crapass ass
+         WHERE ass.cdcooper = ttl.cdcooper
+           AND ass.nrdconta = ttl.nrdconta
+           AND ass.cdcooper = pr_cdcooper
+           AND ass.cdtipcta NOT IN(0,5,6,7,17,18)
+           AND ass.inpessoa = 1 -- Pessoas físicas
+           AND ttl.idseqttl = 1 -- Primeiro titular
+           -- Cooperado ainda esteja ativo OU estava no mês passado OU seja da Cooperativa 3 - Cecred
+           AND(ass.dtdemiss IS NULL OR ass.dtdemiss > pr_dtultdma OR pr_cdcooper = 3)
+         UNION ALL
+         -- Pessoas jurídicas
+        SELECT ass.nrdconta
+              ,ass.inpessoa
+              ,ass.tpextcta
+              ,ass.cdsitdct
+              ,ass.vllimcre
+              ,ass.nmprimtl
+              ,ass.cdagenci
+              ,ass.cdsecext
+              ,jur.cdempres
+          FROM crapjur jur
+              ,crapass ass
+         WHERE ass.cdcooper = jur.cdcooper
+           AND ass.nrdconta = jur.nrdconta
+           AND ass.cdcooper = pr_cdcooper
+           AND ass.cdtipcta NOT IN(0,5,6,7,17,18)
+           AND ass.inpessoa != 1 -- Pessoas jurídicas
+           -- Cooperado ainda esteja ativo OU estava no mês passado OU seja da Cooperativa 3 - Cecred
+           AND(ass.dtdemiss IS NULL OR ass.dtdemiss > pr_dtultdma OR pr_cdcooper = 3);
+      rw_crapass cr_crapass%ROWTYPE;
+      -- Busca do nome da empresa
+      CURSOR cr_crapemp(pr_cdempres IN crapemp.cdempres%TYPE) IS
+        SELECT emp.nmresemp
+          FROM crapemp emp
+         WHERE emp.cdcooper = pr_cdcooper
+           AND emp.cdempres = pr_cdempres;
+      vr_nmresemp crapemp.nmresemp%TYPE;
+      /* Cursor com informações dos empréstimos */
+      CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                       ,pr_inliquid IN crapepr.inliquid%TYPE
+                       ,pr_inprejuz IN crapepr.inprejuz%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT epr.dtmvtolt
+              ,epr.nrdconta
+              ,epr.nrctremp
+              ,epr.vlsdeved
+              ,epr.vljuracu
+              ,epr.dtultpag
+              ,epr.inliquid
+              ,epr.qtprepag
+              ,epr.cdlcremp
+              ,epr.txjuremp
+              ,epr.cdempres
+              ,epr.flgpagto
+              ,epr.dtdpagto
+              ,epr.vlpreemp
+              ,epr.qtprecal
+              ,epr.qtpreemp
+              ,epr.qtmesdec
+          FROM crapepr epr
+         WHERE epr.cdcooper = pr_cdcooper
+           AND epr.inliquid = NVL(pr_inliquid,epr.inliquid)
+           AND epr.inprejuz = NVL(pr_inprejuz,epr.inprejuz)
+           AND epr.nrdconta = nvl(pr_nrdconta,epr.nrdconta)
+           AND epr.nrctremp = nvl(pr_nrctremp,epr.nrctremp);
+      rw_crapepr cr_crapepr%ROWTYPE;
+      /* Lançamentos na conta do associado */
       CURSOR cr_craplcm(pr_cdcooper  IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta  IN crapass.nrdconta%TYPE
                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE  --> Data movimento atual
@@ -303,7 +371,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
       -- Busca de lançamentos no mês para a conta do associado
       rw_craplcm cr_craplcm%ROWTYPE;
       -- Verifica se a conta solicitou este Extrato via EMAIL
-      CURSOR cr_crapcra(pr_nrdconta IN crapass.nrdconta%TYPE) IS--> Se deve validar o período sim ou não
+      CURSOR cr_crapcra(pr_nrdconta IN crapass.nrdconta%TYPE
+                       ,pr_validper IN VARCHAR2) IS--> Se deve validar o período sim ou não
         SELECT cra.cdperiod
               ,cra.cddfrenv
               ,cra.idseqttl
@@ -315,51 +384,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
            AND cra.nrdconta = pr_nrdconta
            AND cra.cdprogra = 217
            AND cra.cdrelato = 171
-           AND cra.cdperiod IN(2,3); --> Nem sempre validará o período
+           AND (pr_validper = 'S' AND cra.cdperiod IN(2,3) OR pr_validper = 'N'); --> Nem sempre validará o período
       rw_crapcra cr_crapcra%ROWTYPE;
-      
-      -- Verifica se a conta solicitou este Extrato via EMAIL
-      CURSOR cr_crapass(pr_dtultdma IN crapdat.dtmvtolt%TYPE) IS--> Se deve validar o período sim ou não
-        SELECT cra.cdperiod
-              ,cra.cddfrenv
-              ,cra.idseqttl
-              ,cra.cdseqinc
-              ,cra.cdprogra
-              ,cra.cdrelato
-              ,ass.nrdconta
-              ,ass.inpessoa
-              ,ass.tpextcta
-              ,ass.cdsitdct
-              ,ass.vllimcre
-              ,ass.nmprimtl
-              ,ass.cdagenci
-              ,ass.cdsecext
-          FROM crapcra cra, crapass ass
-         WHERE cra.cdcooper = pr_cdcooper
-           AND cra.cdprogra = 217
-           AND cra.cdrelato = 171
-           AND ass.cdcooper = cra.cdcooper
-           AND ass.nrdconta = cra.nrdconta
-           AND ass.cdtipcta NOT IN(0,5,6,7,17,18)
-           -- Cooperado ainda esteja ativo OU estava no mês passado OU seja da Cooperativa 3 - Cecred
-           AND(ass.dtdemiss IS NULL OR ass.dtdemiss > pr_dtultdma OR pr_cdcooper = 3);
-      rw_crapass cr_crapass%ROWTYPE;
-      
-      CURSOR cr_crapttl(pr_nrdconta IN crapttl.nrdconta%TYPE) IS
-        SELECT ttl.cdempres
-          FROM crapttl ttl
-         WHERE ttl.cdcooper = pr_cdcooper
-           AND ttl.nrdconta = pr_nrdconta
-           AND ttl.idseqttl = 1; -- Primeiro titular
-      rw_crapttl cr_crapttl%ROWTYPE;
-      
-      CURSOR cr_crapjur(pr_nrdconta IN crapttl.nrdconta%TYPE) IS
-      SELECT jur.cdempres
-          FROM crapjur jur
-         WHERE jur.cdcooper = pr_cdcooper
-           AND jur.nrdconta = pr_nrdconta;
-      rw_crapjur cr_crapjur%ROWTYPE;
-      
       -- Busca de informações e referência do saldo do associado
       CURSOR cr_crapsld(pr_nrdconta IN crapass.nrdconta%TYPE) IS
         SELECT sld.dtsdexes
@@ -387,20 +413,37 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
           FROM crapcot cot
          WHERE cot.cdcooper = pr_cdcooper
            AND cot.nrdconta = pr_nrdconta;
-      
+      -- Busca da descrição da seção do associado
+      CURSOR cr_crapdes(pr_cdagenci IN crapdes.cdagenci%TYPE
+                       ,pr_cdsecext IN crapdes.cdsecext%TYPE) IS
+        SELECT des.nmsecext
+          FROM crapdes des
+         WHERE des.cdcooper = pr_cdcooper
+           AND des.cdagenci = pr_cdagenci
+           AND des.cdsecext = pr_cdsecext;
+      -- Buscar nome da agência
+      CURSOR cr_crapage(pr_cdagenci IN crapage.cdagenci%TYPE) IS
+        SELECT age.nmresage
+          FROM crapage age
+         WHERE age.cdcooper = pr_cdcooper
+           AND age.cdagenci = pr_cdagenci;
+      vr_nmresage crapage.nmresage%TYPE;
       -- Listagem de históricos de movimento de cheques
       vr_lshistor craptab.dstextab%TYPE;
       -- Controle de fechamento mensal
       vr_flgmensa BOOLEAN;
-      
-      vr_impresso_mensal    BOOLEAN;
-      vr_impresso_quinzenal BOOLEAN;
-        
       -- Vetor para armazenar as informações da tabela de extratos por e-mail
       vr_tab_env_extrato EXTR0001.typ_tab_env_extrato;
       -- Indice para o vetor
       vr_ind_env_extrato BINARY_INTEGER;
-
+      /* Vetor para armazenar as informações da tabela para formulários FormPrint */
+      vr_tab_cratext FORM0001.typ_tab_cratext;
+      -- Guardar se o associoado recebe o extrato por e-mail
+      vr_informat BOOLEAN;
+      -- Guardar se haverá impresso mensal
+      vr_impresso_mensal BOOLEAN;
+      -- Guardar se haverá impresso mensal
+      vr_impresso_quinzenal BOOLEAN;
       -- Valores de saldo médio mes, trimestral e capital
       vr_vlsmdmes NUMBER(10,2);
       vr_vlsmtrim NUMBER(10,2);
@@ -408,10 +451,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
       -- Vetor com 5 linhas para montagem de mensagens no informativo
       vr_vet_msg_rodape FORM0001.typ_msg_rodape := FORM0001.typ_msg_rodape('','','','',''); --> declara um vetor com o tipo criado e já o inicializa
 
+      -- Variáveis do extrato
+      vr_chaveext VARCHAR2(18);              --> Chave hash do vetor de extrato (Agencia + Conta + Ordem)
+      vr_nrseqext INTEGER;                   --> Sequenciamento do extrato
+      vr_dsperiod VARCHAR2(100);             --> Período do extrado
+      vr_nmdsecao VARCHAR2(25);              --> Nome da seção
+      vr_nrcontad INTEGER;                   --> Contador auxiliar
+      vr_vlstotal crapsld.vlsdexes%TYPE;     --> Saldo total
+      vr_nrdordem INTEGER;                   --> Numero da páginas
+      vr_nrdocmto VARCHAR2(30);              --> Número do documento
+      vr_dsextrat craphis.dsextrat%TYPE;     --> Descrição do extrado
+      vr_dtmvtolt_ant craplcm.dtmvtolt%TYPE; --> Data do movimento anterior
+      vr_desgener VARCHAR2(20);              --> Descrição genérica para aproveitamento de código
+      vr_nrarquiv INTEGER := 1;              --> Sequencial do arquivo
+      vr_nmarqdat VARCHAR2(30);              --> Nome completo do arquivo dat gerado
+      vr_dsdireto VARCHAR2(200);             --> Diretório padrão cfme a cooperativa
+      vr_nmdatspt VARCHAR2(100);             --> Nome montado do arquivo
+      vr_typ_said VARCHAR2(100);             --> Tipo de saída do comando Host
       vr_cdcritic crapcri.cdcritic%TYPE;     --> Codigo da critica
       vr_dscritic VARCHAR2(2000);            --> Descricao da critica
-
-      vr_cdempres crapttl.cdempres%TYPE;
 
       -- Subprocedimento para envio do extrato por e-mail
       PROCEDURE pc_prepara_envio_extrato(pr_rw_crapass IN cr_crapass%ROWTYPE) IS
@@ -430,8 +488,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
           rw_crapcem cr_crapcem%ROWTYPE;
         BEGIN
           -- Retornar a parametrização de recebimento do extrato do cooperado
-          FOR rw_crapcra IN cr_crapcra(pr_nrdconta => pr_rw_crapass.nrdconta) LOOP
-            
+          FOR rw_crapcra IN cr_crapcra(pr_nrdconta => pr_rw_crapass.nrdconta
+                                      ,pr_validper => 'S') LOOP
             -- Não continuar Se estiver parametrizado para receber somente
             -- no fechamento E não estivermos processando o fechamento
             IF (rw_crapcra.cdperiod = 3 AND vr_flgmensa) OR rw_crapcra.cdperiod <> 3 THEN
@@ -553,6 +611,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
           pr_nrcontador := 6;
         END;
       END pc_cria_crapext;
+
+      -- Procedimento de encerramento da página
+      PROCEDURE pc_final_crapext(pr_nrregid IN VARCHAR2) IS
+      BEGIN
+        BEGIN
+          -- Preencher as posições faltantes até a 79 para evitar erros de leitura
+          FOR vr_ind IN vr_tab_cratext(pr_nrregid).dsintern.COUNT+1..78 LOOP
+            vr_tab_cratext(pr_nrregid).dsintern(vr_ind) := ' ';
+          END LOOP;
+          -- Incluir as mensagens internas faltantes ao relatório
+          vr_tab_cratext(pr_nrregid).dsintern(79) := vr_vet_msg_rodape(1);
+          vr_tab_cratext(pr_nrregid).dsintern(80) := vr_vet_msg_rodape(2);
+          vr_tab_cratext(pr_nrregid).dsintern(81) := vr_vet_msg_rodape(3);
+          vr_tab_cratext(pr_nrregid).dsintern(82) := vr_vet_msg_rodape(4);
+          vr_tab_cratext(pr_nrregid).dsintern(83) := vr_vet_msg_rodape(5);
+          vr_tab_cratext(pr_nrregid).dsintern(84) := '#';
+        END;
+      END pc_final_crapext;
 
       -- Procedimento que adiciona as taxas na mensagem do informativo
       PROCEDURE pc_lista_taxas_mensag(pr_cdcooper       IN crapcop.cdcooper%TYPE --> Cooperativa
@@ -787,17 +863,33 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
       CLOSE cr_gnrlema;
       -- Inicializar variáveis necessárias
       vr_tab_env_extrato.DELETE;
-  
-      FOR rw_crapass IN cr_crapass(pr_dtultdma => rw_crapdat.dtultdma) LOOP  
-        
+      vr_nrseqext := 0;
+      vr_nmarqdat := to_char(pr_cdcooper,'fm00')||'crrl171_'||to_char(rw_crapdat.dtmvtolt,'dd')||to_char(rw_crapdat.dtmvtolt,'mm')||'_';
+      vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Coop
+                                          ,pr_cdcooper => pr_cdcooper);
+      -- Buscar os associados cadastrados
+      FOR rw_crapass IN cr_crapass(pr_dtultdma => rw_crapdat.dtultdma) LOOP
         -- Para cada associoado encontrado, limpar variáveis gerais
+        --vr_cdempres           := NULL;
+        vr_informat           := FALSE;
+        vr_impresso_mensal    := FALSE;
+        vr_impresso_quinzenal := FALSE;
         vr_vltotcap           := 0;
         vr_vlsmtrim           := 0;
         vr_vlsmdmes           := 0;
-        vr_cdempres           := NULL;    
-        vr_impresso_mensal    := FALSE;
-        vr_impresso_quinzenal := FALSE;
-        
+        -- Verifica se a conta solicitou este Extrato via EMAIL
+        OPEN cr_crapcra(pr_nrdconta => rw_crapass.nrdconta
+                       ,pr_validper => 'N'); --> Não necessário validar o perídio
+        FETCH cr_crapcra
+         INTO rw_crapcra;
+        -- Se encontrar solicitação
+        IF cr_crapcra%FOUND THEN
+          -- Ativar variável
+          vr_informat := TRUE;
+        END IF;
+        -- Fechar o cursor
+        CLOSE cr_crapcra;
+        -- Se estamos processando o fechamanto
         -- E o tipo de extrato é mensal ou quinzenal
         IF vr_flgmensa AND rw_crapass.tpextcta IN(1,2) THEN
           -- Ativar impressão mensal
@@ -808,137 +900,372 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
         IF NOT vr_flgmensa AND rw_crapass.tpextcta = 2 THEN
           -- Ativa impressão quinzenal
           vr_impresso_quinzenal := TRUE;
-        END IF;  
-        
-        IF ( NOT vr_impresso_mensal AND NOT vr_impresso_quinzenal)
-            OR ( rw_crapass.cdsitdct = 1 ) THEN
-            -- Se cooperado optou apenas por envio por e-mail deve continuar.
-            NULL;
-        ELSE
-           -- Proximo Registro 
-           CONTINUE;
         END IF;
-                                 
-        IF rw_crapass.inpessoa = 1 THEN
-           
-           OPEN cr_crapttl(pr_nrdconta => rw_crapass.nrdconta);
-           FETCH cr_crapttl
-           INTO rw_crapttl;
-         
-           -- Se encontrar
-           IF cr_crapttl%FOUND THEN
-             vr_cdempres := rw_crapttl.cdempres;
-           END IF;
-        
-           -- Fechar o cursor
-           CLOSE cr_crapttl;
-
-        ELSE
-           OPEN cr_crapjur(pr_nrdconta => rw_crapass.nrdconta);
-           FETCH cr_crapjur
-           INTO rw_crapjur;
-         
-           -- Se encontrar
-           IF cr_crapjur%FOUND THEN
-             vr_cdempres := rw_crapjur.cdempres;
-        END IF;
-        
-           -- Fechar o cursor
-           CLOSE cr_crapjur;
+        -- Só continua se o associonado não possui impressão por
+        -- e-mail OU se ativamos o extrato mensal ou quinzenal
+        IF vr_informat OR vr_impresso_mensal OR vr_impresso_quinzenal THEN
+          -- Validar se o associado teve movimentação no mês
+          -- Primeiramente buscamos informações e referência do saldo do associado
+          rw_crapsld := NULL;
+          OPEN cr_crapsld(pr_nrdconta => rw_crapass.nrdconta);
+          FETCH cr_crapsld
+           INTO rw_crapsld;
+          CLOSE cr_crapsld;
+          -- Verifica se existe lançamento no mês para a conta
+          OPEN cr_craplcm(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_crapass.nrdconta
+                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Data movimento atual
+                         ,pr_dtsdexes => rw_crapsld.dtsdexes); --> Data Referência extrato
+          FETCH cr_craplcm
+           INTO rw_craplcm;
+          -- Somente continuar se o associado teve lancamentos no mes, caso contrario nao imprime o extrato
+          IF cr_craplcm%FOUND THEN
+            -- Fechar o cursor e continuar o processo
+            CLOSE cr_craplcm;
+            -- Para impressão no fechamento mensal
+            IF vr_flgmensa THEN
+              -- Saldo do trimestre e do mês conforme o mês atual do movimento
+              -- Janeiro ou Julho
+              IF to_char(rw_crapdat.dtmvtolt,'mm') IN (1,7) THEN
+                -- Utilizar campos 1,6,5
+                vr_vlsmtrim := (rw_crapsld.vlsmstre##1 + rw_crapsld.vlsmstre##6 + rw_crapsld.vlsmstre##5) / 3;
+                -- Saldo mês está no campo 1
+                vr_vlsmdmes := rw_crapsld.vlsmstre##1;
+              -- Fevereiro ou Agosto
+              ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (2,8) THEN
+                -- Utilizar campos 2,1,6
+                vr_vlsmtrim := (rw_crapsld.vlsmstre##2 + rw_crapsld.vlsmstre##1 + rw_crapsld.vlsmstre##6) / 3;
+                -- Saldo mês está no campo 2
+                vr_vlsmdmes := rw_crapsld.vlsmstre##2;
+              -- Março ou Setembro
+              ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (3,9) THEN
+                -- Utilizar campos 3,2,1
+                vr_vlsmtrim := (rw_crapsld.vlsmstre##3 + rw_crapsld.vlsmstre##2 + rw_crapsld.vlsmstre##1) / 3;
+                -- Saldo mês está no campo 3
+                vr_vlsmdmes := rw_crapsld.vlsmstre##3;
+              -- Abril ou Outubro
+              ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (4,10) THEN
+                -- Utilizar campos 4,3,2
+                vr_vlsmtrim := (rw_crapsld.vlsmstre##4 + rw_crapsld.vlsmstre##3 + rw_crapsld.vlsmstre##2) / 3;
+                -- Saldo mês está no campo 4
+                vr_vlsmdmes := rw_crapsld.vlsmstre##4;
+              -- Maio ou Novembro
+              ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (5,11) THEN
+                -- Utilizar campos 5,4,3
+                vr_vlsmtrim := (rw_crapsld.vlsmstre##5 + rw_crapsld.vlsmstre##4 + rw_crapsld.vlsmstre##3) / 3;
+                -- Saldo mês está no campo 5
+                vr_vlsmdmes := rw_crapsld.vlsmstre##5;
+              ELSE -- Junho ou Dezembro
+                -- Utilizar campos 6,5,4
+                vr_vlsmtrim := (rw_crapsld.vlsmstre##6 + rw_crapsld.vlsmstre##5 + rw_crapsld.vlsmstre##4) / 3;
+                -- Saldo mês está no campo 6
+                vr_vlsmdmes := rw_crapsld.vlsmstre##6;
+              END IF;
+              -- Buscar informações de cotas da conta
+              OPEN cr_crapcot(pr_nrdconta => rw_crapass.nrdconta);
+              FETCH cr_crapcot
+               INTO vr_vltotcap;
+              CLOSE cr_crapcot;
+            ELSE
+              --  Zerar valores de saldo mes, trimestre e capital
+              vr_vltotcap := 0;
+              vr_vlsmtrim := 0;
+              vr_vlsmdmes := 0;
             END IF;
-                                          
-        -- Validar se o associado teve movimentação no mês
-        -- Primeiramente buscamos informações e referência do saldo do associado
-        rw_crapsld := NULL;
-        OPEN cr_crapsld(pr_nrdconta => rw_crapass.nrdconta);
-        FETCH cr_crapsld
-         INTO rw_crapsld;
-        CLOSE cr_crapsld;
-        -- Verifica se existe lançamento no mês para a conta
-        OPEN cr_craplcm(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => rw_crapass.nrdconta
-                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Data movimento atual
-                       ,pr_dtsdexes => rw_crapsld.dtsdexes); --> Data Referência extrato
-        FETCH cr_craplcm
-         INTO rw_craplcm;
-        -- Somente continuar se o associado teve lancamentos no mes, caso contrario nao imprime o extrato
-        IF cr_craplcm%FOUND THEN
-          -- Fechar o cursor e continuar o processo
-          CLOSE cr_craplcm;
-          -- Para impressão no fechamento mensal
-          IF vr_flgmensa THEN
-            -- Saldo do trimestre e do mês conforme o mês atual do movimento
-            -- Janeiro ou Julho
-            IF to_char(rw_crapdat.dtmvtolt,'mm') IN (1,7) THEN
-              -- Utilizar campos 1,6,5
-              vr_vlsmtrim := (rw_crapsld.vlsmstre##1 + rw_crapsld.vlsmstre##6 + rw_crapsld.vlsmstre##5) / 3;
-              -- Saldo mês está no campo 1
-              vr_vlsmdmes := rw_crapsld.vlsmstre##1;
-            -- Fevereiro ou Agosto
-            ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (2,8) THEN
-              -- Utilizar campos 2,1,6
-              vr_vlsmtrim := (rw_crapsld.vlsmstre##2 + rw_crapsld.vlsmstre##1 + rw_crapsld.vlsmstre##6) / 3;
-              -- Saldo mês está no campo 2
-              vr_vlsmdmes := rw_crapsld.vlsmstre##2;
-            -- Março ou Setembro
-            ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (3,9) THEN
-              -- Utilizar campos 3,2,1
-              vr_vlsmtrim := (rw_crapsld.vlsmstre##3 + rw_crapsld.vlsmstre##2 + rw_crapsld.vlsmstre##1) / 3;
-              -- Saldo mês está no campo 3
-              vr_vlsmdmes := rw_crapsld.vlsmstre##3;
-            -- Abril ou Outubro
-            ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (4,10) THEN
-              -- Utilizar campos 4,3,2
-              vr_vlsmtrim := (rw_crapsld.vlsmstre##4 + rw_crapsld.vlsmstre##3 + rw_crapsld.vlsmstre##2) / 3;
-              -- Saldo mês está no campo 4
-              vr_vlsmdmes := rw_crapsld.vlsmstre##4;
-            -- Maio ou Novembro
-            ELSIF to_char(rw_crapdat.dtmvtolt,'mm') IN (5,11) THEN
-              -- Utilizar campos 5,4,3
-              vr_vlsmtrim := (rw_crapsld.vlsmstre##5 + rw_crapsld.vlsmstre##4 + rw_crapsld.vlsmstre##3) / 3;
-              -- Saldo mês está no campo 5
-              vr_vlsmdmes := rw_crapsld.vlsmstre##5;
-            ELSE -- Junho ou Dezembro
-              -- Utilizar campos 6,5,4
-              vr_vlsmtrim := (rw_crapsld.vlsmstre##6 + rw_crapsld.vlsmstre##5 + rw_crapsld.vlsmstre##4) / 3;
-              -- Saldo mês está no campo 6
-              vr_vlsmdmes := rw_crapsld.vlsmstre##6;
+            -- Limpar o vetor de tipos de taxa e de mensagens do informativo
+            vr_vet_msg_rodape := FORM0001.typ_msg_rodape('','','','','');
+            -- Se cooperado optou apenas por envio por e-mail
+            IF ( vr_informat AND NOT vr_impresso_mensal AND NOT vr_impresso_quinzenal)
+            OR ( vr_informat AND rw_crapass.cdsitdct <> 1 ) THEN
+              -- Chamar procedimento que adiciona as taxas na mensagem do informativo
+              pc_lista_taxas_mensag(pr_cdcooper       => pr_cdcooper              --> Cooperativa
+                                   ,pr_dtmvtolt       => rw_crapdat.dtmvtolt      --> Movimento atual
+                                   ,pr_cdprogra       => vr_cdprogra              --> Código do programa
+                                   ,pr_nrdconta       => rw_crapass.nrdconta      --> Conta do associado
+                                   ,pr_dtsdexes       => rw_crapsld.dtsdexes      --> Data fechamento do saldo
+                                   ,pr_flgmensa       => vr_flgmensa              --> Indicador fechamento mensal
+                                   ,pr_vet_msg_rodape => vr_vet_msg_rodape);      --> Vetor em processamento das msg internas
+              -- Adicionar o extrato dessa conta na lista de extratos para envio por e-mail
+              pc_prepara_envio_extrato(pr_rw_crapass => rw_crapass);
+            ELSE
+              /* Cooperado optou por informativo via Email "E" Impresso, "Ou" somente Impresso */
+              -- Somente continuar se situação da conta for 1
+              IF rw_crapass.cdsitdct = 1 THEN
+                -- Incrementar o sequenciamento de extrato
+                vr_nrseqext := vr_nrseqext + 1;
+                -- Montagem do período do extrato a partir da data
+                -- de referencia do extrato até a data atual
+                vr_dsperiod := to_char(rw_crapsld.dtsdexes +1,'dd') || ' A '
+                            || to_char(rw_crapdat.dtmvtolt,'dd') || ' DE '
+                            || gene0001.vr_vet_nmmesano(to_char(rw_crapdat.dtmvtolt,'MM')) || ' DE '
+                            || to_char(rw_crapdat.dtmvtolt,'yyyy');
+                -- Adicionar espaços a esquerda para centralizar o campo na linha
+                FOR vr_aux IN 1..20-ROUND(LENGTH(vr_dsperiod)/2) LOOP
+                  vr_dsperiod := ' '||vr_dsperiod;
+                END LOOP;
+                -- Buscar nome da seção do associado
+                OPEN cr_crapdes(pr_cdagenci => rw_crapass.cdagenci
+                               ,pr_cdsecext => rw_crapass.cdsecext);
+                FETCH cr_crapdes
+                 INTO vr_nmdsecao;
+                -- Se não tiver encontrado
+                IF cr_crapdes%NOTFOUND THEN
+                  -- Usar descrição genérica
+                  vr_nmdsecao := 'SECAO EXCLUIDA';
+                END IF;
+                CLOSE cr_crapdes;
+                -- Buscar nome da empresa
+                vr_nmresemp := NULL;
+                OPEN cr_crapemp(pr_cdempres => rw_crapass.cdempres);
+                FETCH cr_crapemp
+                 INTO vr_nmresemp;
+                CLOSE cr_crapemp;
+                -- Buscar nome da agência
+                vr_nmresage := NULL;
+                OPEN cr_crapage(pr_cdagenci => rw_crapass.cdagenci);
+                FETCH cr_crapage
+                 INTO vr_nmresage;
+                CLOSE cr_crapage;
+                -- Chamar a criação do registro p_criaext
+                pc_cria_crapext(pr_rw_crapass => rw_crapass
+                               ,pr_nrdordem   => 1
+                               ,pr_nrregid    => vr_chaveext
+                               ,pr_nrcontador => vr_nrcontad);
+                -- Acumular o contador para as mensagens do extrado
+                vr_nrcontad := vr_nrcontad + 1;
+                -- Utilizar o saldo da conta como total
+                vr_vlstotal := rw_crapsld.vlsdexes;
+                -- Se o saldo for positivo
+                IF vr_vlstotal >= 0 THEN
+                  -- Preencher para positivo
+                  vr_desgener := 'POSI';
+                ELSE
+                  -- Preencher para negativo
+                  vr_desgener := 'NEGA';
+                END IF;
+                -- Incluir nova linha no registro
+                vr_tab_cratext(vr_chaveext).dsintern(vr_nrcontad) := '   SALDO ANTERIOR'||'         ('||vr_desgener||'TIVO)  '|| to_char(rw_crapsld.vlsdexes, '999g999g990d00');
+                -- Somente para cooperativa 1
+                IF pr_cdcooper = 1 THEN
+                  -- Mostrar mensagem para cancelamento
+                  vr_vet_msg_rodape(4) := 'SE VOCE NAO QUISER MAIS RECEBER ESSE EXTRATO,';
+                  vr_vet_msg_rodape(5) := 'SOLICITE O CANCELAMENTO NO POSTO DE ATENDIMENTO.';
+                ELSE
+                  -- Mostrar mensagem de saldos por telefone
+                  vr_vet_msg_rodape(4) := 'USE SERVICO DE SALDOS POR TELEFONE: '||lpad(rw_crapcop.nrtelura,13,' ');
+                  vr_vet_msg_rodape(5) := 'HABILITE A SUA SENHA NA COOPERATIVA.';
+                END IF;
+                -- Reiniciar contagem de páginas e de lançamentos
+                vr_nrdordem := 1;
+                -- Limpar dia anterior
+                vr_dtmvtolt_ant := NULL;
+                -- Leitura dos lançamentos
+                FOR rw_craplcm IN cr_craplcm(pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta  => rw_crapass.nrdconta
+                                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt   --> Data movimento atual
+                                            ,pr_dtsdexes  => rw_crapsld.dtsdexes   --> Data Referência extrato
+                                            ,pr_lsthistor_ign => '289') LOOP       --> Não trazer 289 - BASE CPMF CSD
+                  -- Se o movimento anterior for de um dia diferente do atual --
+                  IF vr_dtmvtolt_ant <> rw_craplcm.dtmvtolt THEN
+                    -- Adicionar mais uma linha
+                    vr_nrcontad := vr_nrcontad + 1;
+                    -- Gerar Saldo do dia
+                    IF vr_vlstotal >= 0 THEN
+                      -- Preencher para positivo
+                      vr_desgener := 'POSI';
+                    ELSE
+                      -- Preencher para negativo
+                      vr_desgener := 'NEGA';
+                    END IF;
+                    vr_tab_cratext(vr_chaveext).dsintern(vr_nrcontad) := '   SALDO DO DIA'||'           ('||vr_desgener||'TIVO)  '|| to_char(vr_vlstotal, '999g999g990d00');
+                  END IF;
+                  -- Guardar o dia atual para testar no próximo registro
+                  vr_dtmvtolt_ant := rw_craplcm.dtmvtolt;
+                  -- Incrementar o contador
+                  vr_nrcontad := vr_nrcontad + 1;
+                  -- Validar quebra de página, ao passar de 78 linhas de
+                  -- lançamento, deve sempre quebrar
+                  IF vr_nrcontad > 78 THEN
+                    -- Chamar procedimento de encerramento da página
+                    pc_final_crapext(pr_nrregid => vr_chaveext);
+                    -- Acumula número de páginas
+                    vr_nrdordem := vr_nrdordem + 1;
+                    -- Cria nova página
+                    pc_cria_crapext(pr_rw_crapass => rw_crapass
+                                   ,pr_nrdordem   => vr_nrdordem --> Número da página
+                                   ,pr_nrregid    => vr_chaveext
+                                   ,pr_nrcontador => vr_nrcontad);
+                    -- Acumula contador de linhas
+                    vr_nrcontad := vr_nrcontad + 1;
+                  END IF;
+                  -- Chamar funçao para montagem do número do documento para extrato
+                  vr_nrdocmto := extr0001.fn_format_nrdocmto_extr(pr_cdcooper => pr_cdcooper         --> Coop
+                                                                 ,pr_cdhistor => rw_craplcm.cdhistor --> Código do histórico
+                                                                 ,pr_nrdocmto => rw_craplcm.nrdocmto --> Nro documento do registro
+                                                                 ,pr_cdpesqbb => rw_craplcm.cdpesqbb --> Campo de pesquisa
+                                                                 ,pr_nrdctabb => rw_craplcm.nrdctabb --> Conta no BB
+                                                                 ,pr_inpessoa => rw_crapass.inpessoa --> Tipo da pessoa
+                                                                 ,pr_lshistor_cheque => vr_lshistor);
+                  -- Descrição do extrato
+                  vr_dsextrat := rw_craplcm.dsextrat;
+                  -- Para os tipos de movimento abaixo
+                  -- --- ---------------
+                  --  24 CH.DEV.PRC.
+                  --  27 CH.DEV.FPR.
+                  --  47 CHQ.DEVOL.
+                  --  78 CH.DEV.TRF.
+                  -- 156 CHQ.DEVOL.
+                  -- 191 CHQ.DEVOL.
+                  -- 338 CHQ.DEVOL.
+                  -- 351 DEV.CH.DEP.
+                  -- 399 DEV.CH.DESCTO
+                  -- 573 CHQ.DEVOL.
+                  -- 657 CH.DEV.CUST.
+                  IF rw_craplcm.cdhistor IN(24,27,47,78,156,191,338,351,399,573,657) THEN
+                    -- remover espaços na descrição
+                    vr_dsextrat := trim(vr_dsextrat);
+                    -- concatenar o campo cdpesqbb
+                    vr_dsextrat := vr_dsextrat || rw_craplcm.cdpesqbb;
+                  END IF;
+                  -- Se for pagamento de parcela
+                  IF rw_craplcm.nrparepr > 0 THEN
+                    -- Buscar destalhes do empréstimo
+                    rw_crapepr := NULL;
+                    OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
+                                   ,pr_inliquid => NULL
+                                   ,pr_inprejuz => NULL
+                                   ,pr_nrdconta => rw_crapass.nrdconta
+                                   ,pr_nrctremp => TRIM(REPLACE(rw_craplcm.cdpesqbb,'.','')));
+                    FETCH cr_crapepr
+                     INTO rw_crapepr;
+                    CLOSE cr_crapepr;
+                    -- Se tiver encontrado
+                    IF nvl(rw_crapepr.qtpreemp,0) <> 0 THEN
+                      -- Adicionar na descrição a parcela
+                      vr_dsextrat := substr(vr_dsextrat,1,13)||' '||to_char(rw_craplcm.nrparepr,'fm000')||'/'||to_char(rw_crapepr.qtpreemp,'fm000');
+                    END IF;
+                  END IF;
+                  -- Montar a linha
+                  vr_tab_cratext(vr_chaveext).dsintern(vr_nrcontad) := to_char(rw_craplcm.dtmvtolt,'dd') || ' '
+                                                                    || rpad(substr(vr_dsextrat,1,21),21,' ') || ' '
+                                                                    || lpad(substr(vr_nrdocmto,1,11),11,' ') || ' '
+                                                                    || rw_craplcm.indebcre
+                                                                    || to_char(rw_craplcm.vllanmto,'999g999g990d00');
+                  -- De acordo com o tipo do histórico (Entrada ou SAída)
+                  IF rw_craplcm.inhistor >= 1 AND rw_craplcm.inhistor <= 5 THEN
+                    -- Entrada - Acumular saldo
+                    vr_vlstotal := vr_vlstotal + rw_craplcm.vllanmto;
+                  ELSIF rw_craplcm.inhistor >= 11 AND rw_craplcm.inhistor <= 15 THEN
+                    -- Saída - Diminuir saldo
+                    vr_vlstotal := vr_vlstotal - rw_craplcm.vllanmto;
+                  END IF;
+                END LOOP;
+                -- Gerar Saldo do dia após ler os LCMs
+                IF vr_vlstotal >= 0 THEN
+                  -- Preencher para positivo
+                  vr_desgener := 'POSI';
+                ELSE
+                  -- Preencher para negativo
+                  vr_desgener := 'NEGA';
+                END IF;
+                -- Incrementar o contador
+                vr_nrcontad := vr_nrcontad + 1;
+                -- Incluir saldo do dia
+                vr_tab_cratext(vr_chaveext).dsintern(vr_nrcontad) := '   SALDO DO DIA'||'           ('||vr_desgener||'TIVO)  '|| to_char(vr_vlstotal, '999g999g990d00');
+                -- Chamar procedimento que adiciona as taxas na mensagem do informativo
+                pc_lista_taxas_mensag(pr_cdcooper       => pr_cdcooper              --> Cooperativa
+                                     ,pr_dtmvtolt       => rw_crapdat.dtmvtolt      --> Movimento atual
+                                     ,pr_cdprogra       => vr_cdprogra              --> Código do programa
+                                     ,pr_nrdconta       => rw_crapass.nrdconta      --> Conta do associado
+                                     ,pr_dtsdexes       => rw_crapsld.dtsdexes      --> Data fechamento do saldo
+                                     ,pr_flgmensa       => vr_flgmensa              --> Indicador fechamento mensal
+                                     ,pr_vet_msg_rodape => vr_vet_msg_rodape);      --> Vetor em processamento das msg internas
+                -- Chamar procedimento de encerramento da página
+                pc_final_crapext(pr_nrregid => vr_chaveext);
+                -- Adicionar o extrato dessa conta na lista de extratos para envio por e-mail
+                pc_prepara_envio_extrato(pr_rw_crapass => rw_crapass);
+              END IF;
             END IF;
-            -- Buscar informações de cotas da conta
-            OPEN cr_crapcot(pr_nrdconta => rw_crapass.nrdconta);
-            FETCH cr_crapcot
-             INTO vr_vltotcap;
-            CLOSE cr_crapcot;
           ELSE
-            --  Zerar valores de saldo mes, trimestre e capital
-            vr_vltotcap := 0;
-            vr_vlsmtrim := 0;
-            vr_vlsmdmes := 0;
+            -- Apenas fechar
+            CLOSE cr_craplcm;
           END IF;
-            
-          -- Limpar o vetor de tipos de taxa e de mensagens do informativo
-          vr_vet_msg_rodape := FORM0001.typ_msg_rodape('','','','','');
-            
-           
-          -- Chamar procedimento que adiciona as taxas na mensagem do informativo
-          pc_lista_taxas_mensag(pr_cdcooper       => pr_cdcooper              --> Cooperativa
-                               ,pr_dtmvtolt       => rw_crapdat.dtmvtolt      --> Movimento atual
-                               ,pr_cdprogra       => vr_cdprogra              --> Código do programa
-                               ,pr_nrdconta       => rw_crapass.nrdconta      --> Conta do associado
-                               ,pr_dtsdexes       => rw_crapsld.dtsdexes      --> Data fechamento do saldo
-                               ,pr_flgmensa       => vr_flgmensa              --> Indicador fechamento mensal
-                               ,pr_vet_msg_rodape => vr_vet_msg_rodape);      --> Vetor em processamento das msg internas
-          -- Adicionar o extrato dessa conta na lista de extratos para envio por e-mail
-          pc_prepara_envio_extrato(pr_rw_crapass => rw_crapass);
-
-        ELSE
-          -- Apenas fechar
-          CLOSE cr_craplcm;
         END IF;
+      END LOOP;
+      -- Chamar rotina para geração dos dados postmix
+      FORM0001.pc_gera_dados_inform(pr_cdcooper    => pr_cdcooper
+                                   ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
+                                   ,pr_cdacesso    => 'MENSAGEM'
+                                   ,pr_qtmaxarq    => 500
+                                   ,pr_nrarquiv    => vr_nrarquiv
+                                   ,pr_dsdireto    => vr_dsdireto||'/arq'
+                                   ,pr_nmarqdat    => vr_nmarqdat
+                                   ,pr_tab_cratext => vr_tab_cratext
+                                   ,pr_imlogoex    => 'laser/imagens/logo_'||trim(lower(rw_crapcop.nmrescop))||'_externo.pcx'
+                                   ,pr_imlogoin    => 'laser/imagens/logo_'||trim(lower(rw_crapcop.nmrescop))||'_interno.pcx'
+                                   ,pr_des_erro    => vr_dscritic);
+      -- Testar saida com erro
+      IF vr_dscritic IS NOT NULL THEN
+        -- Gerar exceção
+        vr_cdcritic := 0;
+        RAISE vr_exc_saida;
+      END IF;
+      -- Se a quantidade de arquivos estiver zerada
+      IF vr_nrarquiv = 0 THEN
+        -- Iremos remover todos os arquivos
+        gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdireto||'/arq/'||vr_nmarqdat||'*');
+      ELSE
+        -- Processar os arquivos gerados
+        LOOP
+          -- Sair quando a quantidade chegar a zero
+          EXIT WHEN vr_nrarquiv <= 0;
+          -- Montar nome do arquivo cfme a sequencia atual
+          vr_nmdatspt :=  vr_nmarqdat || to_char(vr_nrarquiv,'fm00') || '.dat';
+          -- Mover o arquivo para o diretório salvar
+          gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_dsdireto||'/arq/'||vr_nmdatspt|| ' '||vr_dsdireto||'/salvar/'||vr_nmdatspt
+                                     ,pr_typ_saida   => vr_typ_said
+                                     ,pr_des_saida   => vr_dscritic);
+          -- Testar erro
+          IF vr_typ_said = 'ERR' THEN
+            -- O comando shell executou com erro, gerar log e sair do processo
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao mover o arquivo '||vr_dsdireto||'/arq/'||vr_nmdatspt||' para o diretório salvar: ' || vr_dscritic;
+            RAISE vr_exc_saida;
+          END IF;
+          -- Cooperativas que trabalham com a Engecopy / Blucopy
+          IF pr_cdcooper IN(1,2,4) THEN
+            -- Chamar o envio a Blucopy --
+            FORM0001.pc_envia_dados_blucopy(pr_cdcooper => pr_cdcooper
+                                           ,pr_cdprogra => vr_cdprogra
+                                           ,pr_dslstarq => vr_dsdireto||'/salvar/'||vr_nmdatspt --> Lista de arquivos a enviar
+                                           ,pr_dsasseml => 'Extrato de Conta Corrente '||rw_crapcop.nmrescop||' - Arquivo ['||to_char(vr_nrarquiv,'fm00')||']'
+                                           ,pr_dscoreml => 'Em anexo o arquivo('||SUBSTR(vr_nmdatspt,1,INSTR(vr_nmdatspt,'.')-1)||'.zip) contendo os extratos das contas-correntes da cooperativa '||rw_crapcop.nmrescop||'.'
+                                           ,pr_des_erro => vr_dscritic);
+            -- Testar saída com erro
+            IF vr_dscritic IS NOT NULL THEN
+              -- Levanta exceção
+              vr_cdcritic := 0;
+              RAISE vr_exc_saida;
+            END IF;
+          ELSE
+            -- Chamar o envio dos dados a Postmix
+            FORM0001.pc_envia_dados_postmix(pr_cdcooper => pr_cdcooper
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_nmarqdat => vr_nmarqdat || to_char(vr_nrarquiv,'fm00') || '.dat'
+                                           ,pr_nmarqenv => 'salvar/'||vr_nmdatspt
+                                           ,pr_inaguard => 'N'
+                                           ,pr_des_erro => vr_dscritic);
+            -- Testar saída com erro
+            IF vr_dscritic IS NOT NULL THEN
+              -- Levanta exceção
+              vr_cdcritic := 0;
+              RAISE vr_exc_saida;
+            END IF;
+          END IF;
           -- Decrementar a quantidade de arquivos
           vr_nrarquiv := vr_nrarquiv - 1;
-      END LOOP;
-
+        END LOOP;
+      END IF;
       -- Chamar rotina externa de envio de e-mail aos cooperados
       EXTR0001.pc_envia_extrato_email(pr_cdcooper        => pr_cdcooper
                                      ,pr_rw_crapdat      => rw_crapdat
@@ -961,10 +1288,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
           UPDATE craptab tab
              SET tab.dstextab = '1'
            WHERE tab.cdcooper = pr_cdcooper
-             AND UPPER(tab.nmsistem) = 'CRED'
-             AND UPPER(tab.tptabela) = 'GENERI'
+             AND tab.nmsistem = 'CRED'
+             AND tab.tptabela = 'GENERI'
              AND tab.cdempres = 0
-             AND UPPER(tab.cdacesso) = 'EXEQUINZEN'
+             AND tab.cdacesso = 'EXEQUINZEN'
              AND tab.tpregist = 1
              AND tab.dstextab <> '1'; --> Somente se estiver diferente
         EXCEPTION
@@ -1029,3 +1356,4 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS217
 
   END pc_crps217;
 /
+
