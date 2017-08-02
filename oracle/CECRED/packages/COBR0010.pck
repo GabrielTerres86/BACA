@@ -798,7 +798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
      Frequencia: Sempre que for chamado (On-Line)
      Objetivo  : Comandar baixa efetiva de boletos pagos no dia fora da cooperativo(interbancaria)
          
-     Alteracoes:                   
+     Alteracoes: 01/08/2017 - Ajustado indpagto para "zero" referente aos boletos 085
+	                          pagos fora da cooperativa. (Rafael)                  
     
     .................................................................................*/
   
@@ -809,7 +810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
         FROM crapcob cob
        WHERE cob.cdcooper = pr_cdcooper
          AND cob.dtdpagto = pr_dtmvtolt
-         AND cob.indpagto <> 0
+         AND cob.indpagto = 0
          AND cob.flgcbdda = 1
          AND cob.incobran = 5
          AND cob.nrdident > 0
