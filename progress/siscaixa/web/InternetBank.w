@@ -1533,31 +1533,40 @@ PROCEDURE process-web-request :
 
         IF  GET-VALUE("aux_flmensag") <> ""  THEN
             ASSIGN aux_flmensag = INT(GET-VALUE("aux_flmensag")).
+            
+        IF  GET-VALUE("flcadast") <> ""  THEN
+            ASSIGN aux_flcadast = INT(GET-VALUE("flcadast"))
 
         /* Verificar senha e frase */
         IF  aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao))  OR /** Utiliza criptografia **/
            (
-               NOT aux_flgcript AND 
-               (
-                  /** Nao utiliza criptografia se for confirmacao de pagamento **/
-                  CAN-DO("27",STRING(aux_operacao)) 
-               ) OR
-               (
-                  /** Nao utiliza criptografia se for confirmacao de transferencia/TED **/
-                  CAN-DO("22",STRING(aux_operacao)) AND aux_flgexecu 
-               ) OR
-               (
-                  /** Nao utiliza criptografia se for cancelamento de aplicacao **/
-                  CAN-DO("85",STRING(aux_operacao))
-               ) OR
-               (
-                  /** Nao utiliza criptografia se for confirmacao de resgate de aplicacao **/
-                  CAN-DO("116",STRING(aux_operacao)) AND aux_flmensag = 0
-               )OR
-               (
-                  /** Nao utiliza criptografia se for contratacao de pre-aprovado **/
-                  CAN-DO("100",STRING(aux_operacao))
-               )
+              NOT aux_flgcript AND 
+              (
+                 (
+                    /** Nao utiliza criptografia se for confirmacao de pagamento **/
+                    CAN-DO("27",STRING(aux_operacao)) 
+                 ) OR
+                 (
+                    /** Nao utiliza criptografia se for confirmacao de transferencia/TED **/
+                    CAN-DO("22",STRING(aux_operacao)) AND aux_flgexecu 
+                 ) OR
+                 (
+                    /** Nao utiliza criptografia se for cancelamento de aplicacao **/
+                    CAN-DO("85",STRING(aux_operacao))
+                 ) OR
+                 (
+                    /** Nao utiliza criptografia se for confirmacao de resgate de aplicacao **/
+                    CAN-DO("116",STRING(aux_operacao)) AND aux_flmensag = 0
+                 )OR
+                 (
+                    /** Nao utiliza criptografia se for contratacao de pre-aprovado **/
+                    CAN-DO("100",STRING(aux_operacao))
+                 )OR
+                 (
+                    /** Nao utiliza criptografia se for cadastro de debito automatico **/
+                    CAN-DO("99",STRING(aux_operacao)) AND aux_flmensag = 0
+                 )
+              )
            )
              THEN 
         DO:
@@ -5511,12 +5520,17 @@ PROCEDURE proc_operacao99:
                                           INPUT aux_flcadast,
                                           INPUT aux_cdhistor,
                                           INPUT aux_idmotivo,
-                                         OUTPUT aux_dsmsgerr).
+                                         OUTPUT aux_dsmsgerr,
+                                         OUTPUT TABLE xml_operacao).
 
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO:
-            {&out} aux_dsmsgerr. 
-        END.
+    IF RETURN-VALUE <> "OK" THEN
+        {&out} aux_dsmsgerr.
+
+    FOR EACH xml_operacao NO-LOCK:
+
+        {&out} xml_operacao.dslinxml.
+
+    END.
 
     {&out} aux_tgfimprg.
 

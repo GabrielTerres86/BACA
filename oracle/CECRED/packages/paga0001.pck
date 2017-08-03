@@ -608,6 +608,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                              ,pr_nrterfin IN  INTEGER                 --Numero terminal financeiro
                              ,pr_nrcpfope IN  NUMBER                  --Numero cpf operador
                              ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                             ,pr_flmobile IN INTEGER                  --Indicador Mobile
                              ,pr_dstransa OUT VARCHAR2                --Descricao transacao
                              ,pr_dsprotoc OUT VARCHAR2                --Descricao Protocolo
                              ,pr_cdbcoctl OUT VARCHAR2                --Codigo Banco Centralizador
@@ -634,6 +635,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                    ,pr_cdagetfn IN  INTEGER                 --Codigo Agencia transacao
                                    ,pr_nrterfin IN  INTEGER                 --Numero terminal financeiro
                                    ,pr_nrcpfope IN  NUMBER                  --Numero cpf operador
+                                   ,pr_flmobile IN INTEGER                  --Indicador Mobile
                                    ,pr_dstransa OUT VARCHAR2                --Descricao transacao
                                    ,pr_dsprotoc OUT VARCHAR2                --Descricao Protocolo
                                    ,pr_cdbcoctl OUT VARCHAR2                --Codigo Banco Centralizador
@@ -6022,7 +6024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
-							   ,pr_flmobile IN  INTEGER                 --Indicador Mobile
+							                 ,pr_flmobile IN  INTEGER                 --Indicador Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                ,pr_vlfatura OUT NUMBER                  --Valor fatura
@@ -6773,6 +6775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_nrterfin IN  INTEGER                 --Numero terminal financeiro
                              ,pr_nrcpfope IN  NUMBER                  --Numero cpf operador
                              ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                             ,pr_flmobile IN INTEGER                  --Indicador Mobile
                              ,pr_dstransa OUT VARCHAR2                --Descricao transacao
                              ,pr_dsprotoc OUT VARCHAR2                --Descricao Protocolo
                              ,pr_cdbcoctl OUT VARCHAR2                --Codigo Banco Centralizador
@@ -7427,10 +7430,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         END IF;
 
         IF vr_flgachou THEN
-					pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
-            pr_cdempcon := rw_crapcon.cdempcon;
-		      pr_cdsegmto := TO_CHAR(rw_crapcon.cdsegmto);
+          IF pr_flmobile = 1 THEN
+             pr_msgofatr := 'Deseja incluir sua fatura em débito automático?';
+          ELSE
+             pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
           END IF;
+          
+          pr_cdempcon := rw_crapcon.cdempcon;
+		      pr_cdsegmto := TO_CHAR(rw_crapcon.cdsegmto);
+        END IF;
 
         IF cr_gnconve%ISOPEN THEN
 					CLOSE cr_gnconve;
@@ -10819,6 +10827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                    ,pr_cdagetfn IN  INTEGER                -- Codigo Agencia transacao
                                    ,pr_nrterfin IN  INTEGER                -- Numero terminal financeiro
                                    ,pr_nrcpfope IN  NUMBER                 -- Numero cpf operador
+                                   ,pr_flmobile IN INTEGER                  --Indicador Mobile
                                    ,pr_dstransa OUT VARCHAR2               -- Descricao transacao
                                    ,pr_dsprotoc OUT VARCHAR2               -- Descricao Protocolo
                                    ,pr_cdbcoctl OUT VARCHAR2               -- Codigo Banco Centralizador
@@ -10861,6 +10870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                      ,pr_cdagetfn => pr_cdagetfn            -- Codigo Agencia transacao
                      ,pr_nrterfin => pr_nrterfin            -- Numero terminal financeiro
                      ,pr_nrcpfope => pr_nrcpfope            -- Numero cpf operador
+                     ,pr_flmobile => pr_flmobile            -- Indicador Mobile
                      ,pr_dstransa => pr_dstransa            -- Descricao transacao
                      ,pr_dsprotoc => pr_dsprotoc            -- Descricao Protocolo
                      ,pr_cdbcoctl => pr_cdbcoctl            -- Codigo Banco Centralizador
@@ -11745,6 +11755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_cdagetfn => 0                      --Codigo Agencia transacao
                              ,pr_nrterfin => 0                      --Numero terminal financeiro
                              ,pr_nrcpfope => rw_craplau.nrcpfope    --Numero cpf operador
+                             ,pr_flmobile => 0                      --Indicador Mobile
                              ,pr_dstransa => vr_dstrans1            --Descricao transacao
                              ,pr_dsprotoc => vr_dsprotoc            --Descricao Protocolo
                              ,pr_cdbcoctl => vr_cdbcoctl            --Codigo Banco Centralizador

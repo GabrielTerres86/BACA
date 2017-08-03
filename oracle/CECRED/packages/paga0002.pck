@@ -3322,6 +3322,7 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_nrterfin => vr_nrterfin  --> Numero terminal financeiro
                          ,pr_nrcpfope => pr_nrcpfope  --> Numero cpf operador
                          ,pr_tpcptdoc => pr_tpcptdoc  --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                         ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                          ,pr_dstransa => vr_dstrans1  --> Descricao transacao
                          ,pr_dsprotoc => vr_dsprotoc  --> Descricao Protocolo
                          ,pr_cdbcoctl => vr_cdbcoctl  --> Codigo Banco Centralizador
@@ -3620,15 +3621,22 @@ create or replace package body cecred.PAGA0002 is
                                   ,pr_dscritic => vr_dscritic);--> Descricao critica
       
         -- Se não localizar critica
-        IF TRIM(vr_dscritic) IS NULL THEN
+        IF TRIM(vr_dscritic) IS NULL THEN 
+           
+          -- Se for Mobile
+          IF pr_flmobile = 1 THEN
+             vr_dscritic := 'Agendamento realizado com sucesso!\r\nO pagamento será efetivado no dia programado, mediante saldo disponível em conta.';
+          
+          ELSE
           -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
-          vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper, 
-                                                     pr_dtmvtolt  => vr_dtmvtopg, 
-                                                     pr_tipo      => 'P', 
+          vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
+                                                     pr_dtmvtolt  => vr_dtmvtopg,
+                                                     pr_tipo      => 'P',
                                                      pr_feriado   => TRUE);
           
-          vr_dscritic := 'Pagamento agendado com sucesso '||
-                         'para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||'.';                                           
+            vr_dscritic := 'Pagamento agendado com sucesso '||
+                         'para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||'.';
+          END IF;
           
         -- Se retornou criticapc_cadastrar_agendamento
         ELSE
@@ -6223,8 +6231,12 @@ create or replace package body cecred.PAGA0002 is
               vr_flgachou := cr_crapscn%FOUND;             
             END IF;
             
-            IF vr_flgachou THEN            
-              pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
+            IF vr_flgachou THEN
+              IF pr_flmobile = 1 THEN
+                 pr_msgofatr := 'Deseja incluir sua fatura em débito automático?';
+              ELSE
+                 pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
+              END IF;
               pr_cdempcon := rw_crapcon.cdempcon;
               pr_cdsegmto := rw_crapcon.cdsegmto;
             END IF;
