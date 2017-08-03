@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 20/04/2017
+   Data    : 12/09/2005                     Ultima atualizacao: 02/08/2017
 
    Dados referentes ao programa:
 
@@ -427,8 +427,10 @@
 
                 21/07/2017 - Ajustes para nao exibr valor cobrado
                                na segunda via de boleto a vencer.
-                               PRJ340-NPC(Odirlei-AMcom             
+                            PRJ340-NPC(Odirlei-AMcom)
 
+               02/08/2017 - Ajuste na data de vencimento na emissao de segunda
+ 							via de boleto 085. (Rafael)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -901,7 +903,7 @@ PROCEDURE consulta-boleto-2via.
 
 	IF AVAIL(tt-consulta-blt) THEN
 	   DO:
-			ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
+			ASSIGN tt-consulta-blt.dtvencto            = IF aux_critdata = YES THEN aux_dtvencut ELSE crapcob.dtvencto
 				   tt-consulta-blt.vltitulo            = aux_vltituut
 				   tt-consulta-blt.vlmormul            = aux_vlmormut
 
