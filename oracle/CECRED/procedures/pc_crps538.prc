@@ -1017,7 +1017,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          --se possui código de critica e a descricao da critica está vazia então carrega a descricao
          if nvl(pr_cdcritic,0) <> 0 and trim(pr_dscritic) is null then
            --
-           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
            --
          --se o parametro da descricao da crítica possui conteudo então inicializa a variavael interna
          elsif trim(pr_dscritic) is not null then
