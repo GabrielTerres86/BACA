@@ -2133,7 +2133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			 ,vr_nsutendencia
 																			 ,SYSDATE
 																			 ,trunc(SYSDATE)
-																			 ,pr_idorigem
+																			 ,CASE pr_flmobile WHEN 1 THEN 10 ELSE pr_idorigem END
 																			 ,pr_vlrecarga
 																			 ,2
 																			 ,pr_cdproduto
