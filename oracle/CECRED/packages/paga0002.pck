@@ -820,7 +820,7 @@ create or replace package body cecred.PAGA0002 is
   
   CURSOR cr_craphec(pr_cdcooper IN crapcop.cdcooper%TYPE
                    ,pr_cdprogra IN VARCHAR2) IS
- SELECT MAX(c.hrfimexe) hrfimexe
+ SELECT MAX(c.hriniexe) hriniexe
    FROM craphec c
   WHERE c.cdcooper = pr_cdcooper
     AND upper(c.cdprogra) = upper(pr_cdprogra);
@@ -2043,7 +2043,7 @@ create or replace package body cecred.PAGA0002 is
         -- Fechar cursor
         CLOSE cr_craphec;    
         IF pr_cdtiptra IN(1,5) THEN
-          vr_hrfimpag:= to_char(to_date(rw_craphec.hrfimexe,'sssss'), 'hh24:mi');
+          vr_hrfimpag:= to_char(to_date(rw_craphec.hriniexe,'sssss'), 'hh24:mi');
         ELSE
           vr_hrfimpag:= vr_tab_limite(vr_tab_limite.first).hrfimpag;
         END IF;
