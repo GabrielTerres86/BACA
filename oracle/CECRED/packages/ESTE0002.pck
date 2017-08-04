@@ -1363,7 +1363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND segnov.cdsegura = csg.cdsegura
            AND segnov.cdcooper = pr_cdcooper
            AND segnov.nrdconta = pr_nrdconta
-           AND segnov.flgvigente = 1
+           AND segnov.indsituacao in('A','R','E')
            AND segnov.nrapolice > 0;
     
       -- Verificar se há bloqueio de aplicações na conta
