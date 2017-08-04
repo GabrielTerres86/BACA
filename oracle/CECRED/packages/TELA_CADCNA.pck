@@ -6,22 +6,23 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCNA AS
    Sigla   : CRED
 
    Autor   : Adriano - CECRED
-   Data    : Julho/2017                       Ultima atualizacao: 
+   Data    : Julho/2017                       Ultima atualizacao: 04/08/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela CADCNA para permitir o gerenciamento de CNAE
 
-   Alteracoes: 
+   Alteracoes: 04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
 
    */  
    
   --Busca CNAE cadastrado no sistema
   PROCEDURE pc_busca_cnae(pr_cdcnae IN tbgen_cnae.cdcnae%TYPE  --> Código do CNAE
                          ,pr_dscnae IN tbgen_cnae.dscnae%TYPE  --> Descrição do CNAE
-                         ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                         ,pr_flserasa IN PLS_INTEGER DEFAULT 2  --> 0=Nao negativa, 1=Negativa, 2=Todos
                          ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                         ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -67,28 +68,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCNA AS
    Sigla   : CRED
 
    Autor   : Adriano - CECRED
-   Data    : Julho/2017                       Ultima atualizacao: 
+   Data    : Julho/2017                       Ultima atualizacao: 04/08/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela CADCNA para permitir o gerenciamento de CNAE
 
-   Alteracoes: 
+   Alteracoes: 04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
 			              
   ---------------------------------------------------------------------------------------------------------------*/
   
   --Busca CNAE cadastrado no sistema
   PROCEDURE pc_busca_cnae(pr_cdcnae IN tbgen_cnae.cdcnae%TYPE  --> Código do CNAE
                          ,pr_dscnae IN tbgen_cnae.dscnae%TYPE  --> Descrição do CNAE
-                         ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                         ,pr_flserasa IN PLS_INTEGER DEFAULT 2  --> 0=Nao negativa, 1=Negativa, 2=Todos
                          ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                         ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                          ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                          ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                          ,pr_des_erro OUT VARCHAR2)IS          --> Erros do processo
+                         
   /* .............................................................................
    Programa: pc_busca_cnae
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -107,13 +110,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCNA AS
     CURSOR cr_cnae (pr_cdcnae IN tbgen_cnae.cdcnae%TYPE
                    ,pr_dscnae IN tbgen_cnae.dscnae%TYPE) IS
     SELECT cnae.cdcnae
-          ,cnae.dscnae
+          ,gene0007.fn_caract_acento(dscnae) dscnae
       FROM tbgen_cnae cnae
-     WHERE (pr_cdcnae = 0 
-        OR cnae.cdcnae = pr_cdcnae)
-       AND UPPER(cnae.dscnae) LIKE '%' || pr_dscnae || '%'
-     ORDER BY cnae.dscnae;
-    
+     WHERE cdcnae = decode(nvl(pr_cdcnae,0),0,cdcnae, pr_cdcnae)
+       AND (trim(pr_dscnae) IS NULL
+        OR  UPPER(dscnae) LIKE '%'||UPPER(pr_dscnae)||'%')
+       AND flserasa = decode(nvl(pr_flserasa,2),2,flserasa, pr_flserasa)
+     ORDER BY cdcnae;
+     
     -- Variaveis de log
     vr_cdcooper NUMBER;
     vr_cdoperad VARCHAR2(100);
@@ -159,9 +163,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCNA AS
     END IF;                         
     
     -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
     
-    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'registros',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Dados',pr_posicao => 0,pr_tag_nova => 'CNAE',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
         
     --Loop para buscar registros de CNAE  
     FOR rw_cnae IN cr_cnae(pr_cdcnae => nvl(pr_cdcnae,0)
@@ -180,9 +184,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCNA AS
       --Numero Registros
       IF vr_nrregist > 0 THEN 
       
-        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'registros',pr_posicao => 0,pr_tag_nova => 'cnae',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
-        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'cnae',pr_posicao => vr_auxconta, pr_tag_nova => 'cdcnae', pr_tag_cont => rw_cnae.cdcnae, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'cnae',pr_posicao => vr_auxconta, pr_tag_nova => 'dscnae', pr_tag_cont => rw_cnae.dscnae, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'CNAE',pr_posicao => 0,pr_tag_nova => 'inf',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_auxconta, pr_tag_nova => 'cdcnae', pr_tag_cont => rw_cnae.cdcnae, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_auxconta, pr_tag_nova => 'dscnae', pr_tag_cont => rw_cnae.dscnae, pr_des_erro => vr_dscritic);
        
         -- Incrementa contador p/ posicao no XML
         vr_auxconta := nvl(vr_auxconta,0) + 1;  
@@ -196,7 +200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCNA AS
     
     -- Insere atributo na tag Dados com a quantidade de registros
     gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
-                             ,pr_tag   => 'registros'           --> Nome da TAG XML
+                             ,pr_tag   => 'CNAE'              --> Nome da TAG XML
                              ,pr_atrib => 'qtregist'          --> Nome do atributo
                              ,pr_atval => vr_qtregist         --> Valor do atributo
                              ,pr_numva => 0                   --> Número da localização da TAG na árvore XML

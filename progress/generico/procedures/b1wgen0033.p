@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 21/06/2017
+    Data    : Agosto/2008                     Ultima Atualizacao: 04/08/2017
            
     Dados referentes ao programa:
                 
@@ -223,6 +223,10 @@
 
                 12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							 (Adriano - P339).
+
+				04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
 							 (Adriano - P339).
 
 ..............................................................................*/
@@ -5312,6 +5316,28 @@ PROCEDURE buscar_associados:
         DO:
             CREATE tt-associado.
             BUFFER-COPY crapass TO tt-associado.
+
+			FOR FIRST crapttl FIELDS (nrcpfcgc) 
+			    WHERE crapttl.cdcooper = par_cdcooper AND
+			          crapttl.nrdconta = par_cdcooper AND
+					  crapttl.idseqttl = 2
+			          NO-LOCK:
+
+              ASSIGN tt-associado.nrcpfstl = crapttl.nrcpfcgc.
+
+	        END.
+
+			FOR FIRST craptfc FIELDS(nrdddtfc nrtelefo)
+		        WHERE craptfc.cdcooper = par_cdcooper AND
+			          craptfc.nrdconta = par_nrdconta AND
+				  	  craptfc.idseqttl = 1            AND
+					  craptfc.tptelefo = 1 /*Residencial*/
+					  NO-LOCK:
+				    
+			  ASSIGN tt-associado.nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo).
+				
+		    END.
+
         END.
     ELSE
         ASSIGN aux_cdcritic = 9.

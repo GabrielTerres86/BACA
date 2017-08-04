@@ -16406,6 +16406,7 @@ PROCEDURE contrato_cecred_bdn_visa:
     DEF VAR aux_nmconju2 AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcj2 AS CHAR                                    NO-UNDO.
     DEF VAR aux_vllimglb AS DECI                                    NO-UNDO.
+	DEF VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc                      NO-UNDO.
 
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
     

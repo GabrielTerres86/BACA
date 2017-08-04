@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 08/05/2017
+    Data     : 30/11/2015.                   Ultima atualizacao: 04/08/2017
   
    Dados referentes ao programa:
   
@@ -23,6 +23,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
 
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
+
+               04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
                                            
   ---------------------------------------------------------------------------------------------------------------*?
   
@@ -436,6 +438,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                     
   PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
                          ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
+                         ,pr_flserasa  IN tbgen_cnae.flserasa%TYPE --Negativar SERASA
                          ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
                          ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
                          ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
@@ -443,7 +446,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                          ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
                          ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
                          ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
-                         ,pr_des_erro  OUT VARCHAR2);                                                                                                
+                         ,pr_des_erro  OUT VARCHAR2);                                                                                    
                                                                                                                    
 END ZOOM0001;
 /
@@ -455,7 +458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 08/05/2017
+   Data    : 30/11/2015                       Ultima atualizacao: 04/08/2017
 
    Dados referentes ao programa:
 
@@ -478,7 +481,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
 			                     (Adriano - SD 614408). 
                
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
-                            (Jonata - RKAM).        
+                            (Jonata - RKAM). 
+							
+			   04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).       
                                                     
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -6087,6 +6092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
   
   PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
                          ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
+                         ,pr_flserasa  IN tbgen_cnae.flserasa%TYPE --Negativar SERASA
                          ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
                          ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
                          ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
@@ -6102,14 +6108,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Adriano - CECRED
-  Data     : Junho/2017                           Ultima atualizacao:
+  Data     : Junho/2017                           Ultima atualizacao: 04/08/2017
     
   Dados referentes ao programa:
     
   Frequencia: -----
   Objetivo   : Pesquisa de códigod CNAE
     
-  Alterações : 
+  Alterações : 04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
   -------------------------------------------------------------------------------------------------------------*/    
                         
   --Variaveis de Criticas
@@ -6152,8 +6158,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
 	  
     TELA_CADCNA.pc_busca_cnae(pr_cdcnae => pr_cdcnae
                              ,pr_dscnae => pr_dscnae
-                             ,pr_nrregist => pr_nrregist
+                             ,pr_flserasa => pr_flserasa
                              ,pr_nriniseq => pr_nriniseq
+                             ,pr_nrregist => pr_nrregist
                              ,pr_xmllog   => pr_xmllog
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic

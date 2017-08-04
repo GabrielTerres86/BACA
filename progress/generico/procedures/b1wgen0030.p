@@ -10097,7 +10097,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                 END.
             
             IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-                 rel_txnrdcid = crapass.tpdocptl + ": " + SUSBTR(TRIM(crapass.nrdocptl),1,15).
+                 rel_txnrdcid = crapass.tpdocptl + ": " + SUBSTR(TRIM(crapass.nrdocptl),1,15).
             ELSE 
                  rel_txnrdcid = "".  
 
