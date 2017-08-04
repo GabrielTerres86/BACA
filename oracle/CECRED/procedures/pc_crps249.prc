@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 21/07/2017
+   Data    : Novembro/98                     Ultima atualizacao: 03/08/2017
 
    Dados referentes ao programa:
 
@@ -574,6 +574,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                26/07/2017 - Ajuste na geracao das informacoes de cheques em custodia para
  							incluir penas custodias nao descontadas (Daniel)
 
+			   03/08/2017 - Ajuste nas consultas de recarga de celular para substituir o cálculo
+                            da receita pela totalização do vlrepasse. (Lombardi)
 
 ............................................................................ */
 
@@ -1419,7 +1421,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           ,decode(pr_inpessoa,0,0,ass.inpessoa) inpessoa
           ,ass.cdagenci
           ,sum(vlrecarga) vlrecarga  
-          ,(round((sum(vlrecarga) * (topr.perreceita /100)),2)) vl_receita
+          ,(SUM(vlrecarga) - SUM(tope.vlrepasse)) vl_receita
       FROM tbrecarga_operacao tope
           ,tbrecarga_operadora topr
           ,crapass             ass
@@ -1449,7 +1451,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  ,topr.perreceita
                  ,decode(pr_inpessoa,0,0,ass.inpessoa) inpessoa
                  ,ass.cdagenci
-                 ,(round((sum(vlrecarga) * (topr.perreceita /100)),2)) vl_receita
+                 ,(SUM(vlrecarga) - SUM(tope.vlrepasse)) vl_receita
              FROM tbrecarga_operacao tope
                  ,tbrecarga_operadora topr
 			    ,crapass ass

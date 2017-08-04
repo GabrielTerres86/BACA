@@ -1574,7 +1574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_efetua_recarga
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Fevereiro/2017                 Ultima atualizacao: 13/07/2017
+    Data    : Fevereiro/2017                 Ultima atualizacao: 03/08/2017
 
     Dados referentes ao programa:
 
@@ -1593,6 +1593,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
                 13/07/2017 - Efetuado tratamento para critica de Timeout na requisicao
 				             de recarga de celular (Diego). 
+
+                03/08/2017 - Efetuado ajuste para calcular e gravar o valor do repasse 
+                             na tabela tbrecarga_operacao (Lombardi). 
 							 
     ..............................................................................*/		
 	  DECLARE
@@ -1623,6 +1626,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			vr_dstransa VARCHAR2(500);
 			vr_nrseqdig craplcm.nrseqdig%TYPE;
       vr_dtrepasse tbrecarga_operacao.dtrepasse%TYPE;
+      vr_vrreceita   NUMBER; --> Valor da receita
+      vr_vlrepasse   NUMBER; --> Valor do repasse
 
 			-- Variáveis para utilizar o Aymaru
 			vr_resposta AYMA0001.typ_http_response_aymaru;
@@ -1691,6 +1696,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				 WHERE tfn.cdcooper = pr_cdcoptfn
 					 AND tfn.nrterfin = pr_nrterfin;
 			
+      -- Busca operadora
+      CURSOR cr_operadora (pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE) IS
+        SELECT opr.perreceita
+              ,opr.cdhisdeb_centralizacao
+              ,opr.nmoperadora
+          FROM tbrecarga_operadora opr
+         WHERE opr.cdoperadora = pr_cdoperadora;
+      rw_operadora cr_operadora%ROWTYPE;
+      
 			rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 			rw_craplcm craplcm%ROWTYPE;
 			
@@ -2097,6 +2111,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         vr_dtrepasse := fn_calcula_proximo_repasse(pr_cdcooper => pr_cdcooper
                                                   ,pr_dtrefere => SYSDATE);
         
+        OPEN cr_operadora (pr_cdopetel);
+        FETCH cr_operadora INTO rw_operadora;
+        -- Busca operadora
+        IF cr_operadora%NOTFOUND THEN
+          CLOSE cr_operadora;
+          vr_dscritic := 'Operadora não encontrada.';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_operadora;
+        END IF;
+       
+        -- multiplicar o valor da recarga pelo percentual de receita da operadora
+        vr_vrreceita := pr_vlrecarga * (rw_operadora.perreceita / 100);
+              
+        -- Valor do repasse
+        vr_vlrepasse := pr_vlrecarga - vr_vrreceita;
+      
 				-- Buscar operacao
 				OPEN cr_operacao(pr_idoperacao => pr_idoperac);
 				FETCH cr_operacao INTO rw_operacao;
@@ -2109,6 +2140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 								,insit_operacao  = 2
 								,dtdebito        = rw_crapdat.dtmvtocd
                 ,dtrepasse       = vr_dtrepasse 
+                ,vlrepasse       = vr_vlrepasse
 					 WHERE idoperacao = pr_idoperac;
 				ELSE
 					-- Cria operação de recarga
@@ -2126,7 +2158,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																				,insit_operacao
 																				,cdproduto
 																				,dtdebito
-                                        ,dtrepasse)
+                                        ,dtrepasse
+                                        ,vlrepasse)
 																 VALUES(pr_cdcooper
 																			 ,pr_nrdconta
 																			 ,pr_nrdddtel
@@ -2141,7 +2174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																			 ,2
 																			 ,pr_cdproduto
 																			 ,rw_crapdat.dtmvtocd
-                                       ,vr_dtrepasse)
+                                       ,vr_dtrepasse
+                                       ,vr_vlrepasse)
 															RETURNING idoperacao
 															         ,insit_operacao
 																	 INTO rw_operacao.idoperacao
@@ -4649,7 +4683,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                              maior que a data atual e neste caso calciular o próximo
                              dia útil, com base na data atual. (Renato Darosci - 05/06/2017)
 
-				09/06/2017 - Retirado acentuacao do relatorio. (Lombardi)
+				09/06/2017 - Retirado acentuacao do relatorio. (Lombardi)	 
+
+                03/08/2017 - Efetuado ajuste para usar o valor do repasse salvo na 
+                             tabela tbrecarga_operacao sem precisar calcular o valor
+                             da receita.(Lombardi). 		 
+
     ..............................................................................*/
     DECLARE
       
@@ -4725,6 +4764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                          ,pr_inperiod IN crapdat.dtmvtolt%TYPE
                          ,pr_fiperiod IN crapdat.dtmvtolt%TYPE) IS
         SELECT SUM(ope.vlrecarga) total_vlrecarga
+              ,SUM(ope.vlrepasse) total_vlrepasse
               ,ope.cdoperadora
               ,COUNT(1) qtrecarga
           FROM tbrecarga_operacao ope
@@ -4736,9 +4776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       
       -- Busca operadora
       CURSOR cr_operadora (pr_cdoperadora IN tbrecarga_operadora.cdoperadora%TYPE) IS
-        SELECT opr.perreceita
-              ,opr.cdhisdeb_centralizacao
-              ,opr.nmoperadora
+        SELECT opr.nmoperadora
           FROM tbrecarga_operadora opr
          WHERE opr.cdoperadora = pr_cdoperadora;
       rw_operadora cr_operadora%ROWTYPE;
@@ -4878,12 +4916,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               CLOSE cr_operadora;
             END IF;
             
-            -- multiplicar o valor total de recargas pelo percentual de receita da operadora
-            -- Para deduzir do valor total das recargas que será repassado para a Rede Tendência.
-            vr_vrreceita := round(rw_tbrecarga.total_vlrecarga * (rw_operadora.perreceita / 100), 2);
-            
             -- Soma no valor do repasse
-            vr_vlrepass := vr_vlrepass + (rw_tbrecarga.total_vlrecarga - vr_vrreceita);
+            vr_vlrepass := vr_vlrepass + rw_tbrecarga.total_vlrepasse;
             
             vr_index := rpad(rw_lista_cop.cdcooper,2,'#')||  --dsorigem
                         rw_operadora.nmoperadora;
