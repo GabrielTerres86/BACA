@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 12/05/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 04/08/2017
     
     Dados referentes ao programa:
 
@@ -509,6 +509,11 @@
                 
                 31/05/2017 - Adicao de funcionalidade para armazenagem da tabela de relacionamento
                              entre conta x conta cartao (Anderson).
+
+                04/08/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a 
+                             cooperativa solicite cartao CECRED para ela mesma. 
+                             Por exemplo: Viacredi acessa sua própria conta no Ayllos Web e 
+                             tenta solicitar um cartao Cecred para si mesma. (Douglas - Chamado 712927)
 
 ..............................................................................*/
 
@@ -3016,6 +3021,29 @@ PROCEDURE cadastra_novo_cartao:
                 
              RETURN "NOK".
          END.       
+
+    /* Apenas para cartao Bancoob */
+    IF  f_verifica_adm(par_cdadmcrd) = 2 THEN
+    DO:
+        /* Buscar o CNPJ da cooperativa para nao deixar solicitar o cartao */ 
+        FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+             
+        IF crapass.nrcpfcgc = crapcop.nrdocnpj THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Solicitacao nao permitida. O cliente nao pode " + 
+                                  "ser igual ao CNPJ da instituicao informante.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).                
+                    
+            RETURN "NOK".
+        END.
+    END.
 
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p
