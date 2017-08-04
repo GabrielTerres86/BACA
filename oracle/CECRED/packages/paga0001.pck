@@ -1177,7 +1177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 03/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1527,6 +1527,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     para PM.AGROLANDIA (Tiago/Fabricio #647174)                        
                     
        08/06/2017 - Retirado "OR" por problemas na compilacao(Tiago).
+       
+       03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
+                    4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
+                    processo (Lucas Ranghetti #711123)              
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -10828,7 +10832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      Sistema  : Rotinas Internet
      Sigla    : INET
      Autor    : Alisson C. Berrido - AMcom
-     Data     : Junho/2013.                   Ultima atualizacao: 05/04/2016
+     Data     : Junho/2013.                   Ultima atualizacao: 03/08/2017
 
      Dados referentes ao programa:
 
@@ -10865,7 +10869,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   21/12/2015 - Incluido verificacao de situação de transacao pendente, Prj. Assinatura
                                Conjunta (Jean Michel).             
 
-                  05/04/2016 - Ajustado conforme solicitação do SD 429445 (Jean Michel).            
+                  05/04/2016 - Ajustado conforme solicitação do SD 429445 (Jean Michel).     
+                  
+                  03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
+                               4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
+                               processo (Lucas Ranghetti #711123)       
      ..........................................................................*/
 
   BEGIN
@@ -11505,7 +11513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_idagenda => 1 -- Indicador de agendamento (1-Nesta Data/2-Agendamento)
                                        ,pr_dtagenda => rw_craplau.dtmvtopg -- Data de agendamento
                                        ,pr_indvalid => 2 -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
-									   ,pr_flmobile => 0 --Indicador Mobile
+									                     ,pr_flmobile => 0 --Indicador Mobile
                                        ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                        ,pr_vldocmto => vr_vlrdocum -- Valor da guia
                                        ,pr_nrdigfat => vr_nrdigfat -- Digito do faturamento
@@ -11569,7 +11577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dtagenda => rw_craplau.dtmvtopg   --Data agendamento
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
-							 ,pr_flmobile => 0                     --Indicador Mobile
+   						               ,pr_flmobile => 0                     --Indicador Mobile
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
                              ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
@@ -11653,7 +11661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda => rw_craplau.dtmvtopg    --Data agendamento
                                ,pr_idorigem => pr_idorigem            --Indicador de origem
                                ,pr_indvalid => 2                      --Nao validar horario limite
-							   ,pr_flmobile => 0                    --Indicador Mobile
+							                 ,pr_flmobile => 0                    --Indicador Mobile
                                ,pr_nmextcon => vr_nmconban            --Nome do banco
                                ,pr_cdseqfat => vr_cdseqfat            --Codigo Sequencial fatura
                                ,pr_vlfatura => vr_vlrdocum            --Valor fatura
@@ -11685,7 +11693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dscritic => vr_dscritic            --Descricao critica
                              ,pr_msgofatr => vr_msgofatr
                              ,pr_cdempcon => vr_cdempcon
-							 ,pr_cdsegmto => vr_cdsegmto);        
+							               ,pr_cdsegmto => vr_cdsegmto);        
           END IF;
 
         -- Se for GPS
@@ -11705,12 +11713,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         END IF;
       END IF;
 
-      IF (NVL(vr_cdcritic,0) <> 0 or TRIM(vr_dscritic) is not null ) OR
+      IF (NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL ) OR
          (pr_idorigem = 4 AND vr_flerrtaa) THEN
         --> Se for a ultima execução da DEBNET/CRPS509         
-        IF vr_flultexe = 1 OR 
+        IF (vr_flultexe = 1 OR 
           --> ou não é o ultimo e nao for segundo processo   
-          (vr_flultexe <> 1 AND pr_flsgproc = 0 ) THEN         
+          (vr_flultexe <> 1 AND pr_flsgproc = 0 ) OR 
+          --> ou não é o ultimo e ja arrecadou a fatura
+          (vr_flultexe <> 1 AND upper(vr_dscritic) LIKE 'FATURA JA ARRECADADA DIA%')) THEN
            BEGIN
              UPDATE craplau SET craplau.insitlau = 4 /** NAO EFETIVADO **/
                                ,craplau.dtdebito = craplau.dtmvtopg
