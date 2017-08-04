@@ -339,8 +339,8 @@ function atualizaCartao(nrdconta, nrcrcard, nrcctitg, cdadmcrd, nrcpftit, flgdeb
 }+ '\',' 
 
 function confirmaReenviarSolicitacao(nrdconta, nrcrcard){
-	showConfirmacao('Deseja reenviar a solicitacao do cartao?', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviarSolicitacao(' + nrdconta + ',\'' 																												
-																												             + nrcrcard + '\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
+	showConfirmacao('Deseja reenviar a solicitacao do cartao?', 'Confirma&ccedil;&atilde;o - Ayllos', 'reenviarSolicitacao(' + normalizaNumero(nrdconta) + ',\'' 																												
+																												             + normalizaNumero(nrcrcard) + '\');', 'cNrdconta.focus();', 'sim.gif', 'nao.gif');	
 	
 }
 function reenviarSolicitacao(nrdconta, nrcrcard){
