@@ -49,7 +49,7 @@
 							<?php echo getByTagName($r->tags, 'dssitcrd') ?>
 						</td>	
 						<td>
-						  <img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onClick="mostraDetalhamento(<?php echo getByTagName($r->tags, 'nrdconta') ?>
+						  <img src="<?php echo $UrlImagens; ?>icones/ico_editar.png" onClick="mostraDetalhamento('<?php echo getByTagName($r->tags, 'nrdconta') ?>'
 																											   , '<?php echo getByTagName($r->tags, 'nmprimtl') ?>'
 																											   , '<?php echo getByTagName($r->tags, 'nrcrcard') ?>'
 																											   , <?php echo getByTagName($r->tags, 'nrcctitg') ?>
