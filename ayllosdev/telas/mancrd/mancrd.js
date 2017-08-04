@@ -296,9 +296,9 @@ function confirmaAtualizaCartao(){
 	else
 		aux_flgdebit = 0;
 	
-	showConfirmacao('Deseja atualizar o cart&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'atualizaCartao(' + $("#frmDetalheCartao #nrdconta").val() + ',\'' 
-																												 + $("#nrcrcard").val() + '\',' 
-																												 + $("#nrcctitg").val() + ','
+	showConfirmacao('Deseja atualizar o cart&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'atualizaCartao(' + normalizaNumero($("#frmDetalheCartao #nrdconta").val()) + ',\'' 
+																												 + $("#nrcrcard").val() + '\',\'' 
+																												 + $("#nrcctitg").val() + '\','
 																												 + $("#dsadmcrd").val() + ',\''
 																												 + $("#nrcpftit").val() + '\','
 																												 + aux_flgdebit + ',\'' 

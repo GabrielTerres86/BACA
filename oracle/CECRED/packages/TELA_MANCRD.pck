@@ -118,7 +118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                   WHEN (crd.insitcrd = 4 AND dtsol2vi IS NOT NULL) OR insitcrd = 7 THEN 'Sol.2v'
              END dssitcrd
             ,ass.nmprimtl
-            ,(SELECT sys.stragg(adm.cdadmcrd|| ';' ||adm.nmresadm || '|' )
+            ,(SELECT regexp_replace(sys.stragg(adm.cdadmcrd|| ';' ||adm.nmresadm || '|'),'\|+$','')
                 FROM crapadc adm
                WHERE adm.cdadmcrd BETWEEN 10 AND 80
                  AND adm.cdcooper = crd.cdcooper ) listadm
