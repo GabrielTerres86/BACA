@@ -27,6 +27,27 @@ $nrcpftit = (isset($_POST['nrcpftit'])) ? $_POST['nrcpftit'] : 0;
 $flgdebit = (isset($_POST['flgdebit'])) ? $_POST['flgdebit'] : 0;
 $nmtitcrd = (isset($_POST['nmtitcrd'])) ? $_POST['nmtitcrd'] : "";
 
+if($nrcctitg == ""){
+	exibirErro('error', 'Campo Conta Cartao e de preenchimento obrigatorio!', 'Alerta - Ayllos', "", false);   
+	return;
+}
+
+if(empty($cdadmcrd)){
+	exibirErro('error', 'Campo Administradora e de preenchimento obrigatorio!', 'Alerta - Ayllos', "", false);   
+	return;
+}
+
+if(empty($nrcpftit)){
+	exibirErro('error', 'Campo CPF  e de preenchimento obrigatorio!', 'Alerta - Ayllos', "", false);   
+	return;
+}
+
+if($nmtitcrd  == ""){
+	exibirErro('error', 'Campo Nome  e de preenchimento obrigatorio!', 'Alerta - Ayllos', "", false);   
+	return;
+}
+	
+
 $xml = "<Root>";
 $xml .= " <Dados>";
 $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";

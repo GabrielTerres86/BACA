@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 13/06/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 02/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -69,6 +69,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             13/06/2017 - Tratar para abrir chamado quando ocorrer algum erro no 
   --                          processamento da conciliacao do cartao Bancoob/Cabal (Lucas Ranghetti #680746)
+  --
+  --             02/08/2017 - Incluir validacao na pc_crps670 para o trailer do arquivo CEXT, caso o arquivo 
+  --                          venha incompleto vamos abrir chamado e rejeitar o arquivo (Lucas Ranghetti #727623)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -1925,7 +1928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 04/07/2017
+    Data    : Maio/14.                    Ultima atualizacao: 02/08/2017
 
     Dados referentes ao programa:
 
@@ -2016,7 +2019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 07/12/2016 - Tratamento Incorporacao Transposul. (Fabricio)
                 
                 16/12/2016 - Ajustes para incorporacao/migracao. (Fabricio)
-                             
+
                 03/02/2017 - #601772 Inclusão de verificação e log de erros de execução através do 
                              procedimento pc_internal_exception no procedimento pc_crps670 (Carlos)
 
@@ -2030,9 +2033,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 13/06/2017 - Tratar para abrir chamado quando ocorrer algum erro no 
                              processamento da conciliacao do cartao Bancoob/Cabal (Lucas Ranghetti #680746)
+                
                 04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
                              solicitado no chamado 703589. (Kelvin)
                              
+                02/08/2017 - Incluir validacao para o trailer do arquivo CEXT, caso o arquivo venha 
+                             incompleto vamos abrir chamado e rejeitar o arquivo. (Lucas Ranghetti #727623)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -2104,6 +2110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_conarqui   NUMBER:= 0;                                        
       vr_listarq    VARCHAR2(2000);                                    
       vr_split      gene0002.typ_split := gene0002.typ_split();
+      vr_saida_tail VARCHAR2(1000);
       
       vr_dsdircop crapcop.dsdircop%TYPE;      
       
@@ -2648,12 +2655,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         END LOOP;
 
         -- Fechar as tags e descarregar o buffer        
-         pc_escreve_xml('</agenci>');
+        pc_escreve_xml('</agenci>');
       
 
         -- GERAR RESUMO POR COOPERATIVA
-         pc_resumo_coop;
-         pc_escreve_xml('</cooper>');
+        pc_resumo_coop;
+        pc_escreve_xml('</cooper>');         
 
          
         pc_escreve_xml('</crrl685>',TRUE);
@@ -3065,6 +3072,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             pc_log_batch(true);
            
             CONTINUE;
+          END IF;
+
+          /* o comando abaixo ignora quebras de linha atraves do 'grep -v' e o 'tail -1' retorna
+             a ultima linha do resultado do grep */
+          vr_comando:= 'grep -v '||'''^$'' '||vr_direto_connect||'/'||vr_vet_nmarquiv(i)||'| tail -1';
+
+          --Executar o comando no unix
+          GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                               ,pr_des_comando => vr_comando
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_saida_tail);
+          --Se ocorreu erro dar RAISE
+          IF vr_typ_saida = 'ERR' THEN
+            vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+            RAISE vr_exc_saida;
+          END IF;
+                 
+          --Verificar se a ultima linha é o Trailer
+          IF SUBSTR(vr_saida_tail,1,5) <> 'CEXT9' THEN  
+            vr_dscritic:= 'Arquivo incompleto.';   
+            -- Chamar rotina para enviar E-mail e abrir chamado
+            pc_log_dados_arquivo(pr_tipodreg => 1 -- Conciliacao Cartao Bancoob/Cabal
+                                ,pr_nmdarqui => nvl(vr_nmarqimp,' ')
+                                ,pr_nrdlinha => vr_nrdlinha
+                                ,pr_dscritic => vr_dscritic); 
+            CONTINUE; -- Proximo arquivo
           END IF;
 
           -- criar handle de arquivo de Saldo Disponível dos Associados
@@ -4711,8 +4744,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              que causou os problemas relatados nos chamados 333541 e 333541 ( Renato - Supero )
 
                 02/05/2016 - Adicionado validacao na solicitacao de UPGRADE/DOWNGRADE para nao gerar
-                             solicitacao de cartao adicional nessa situacao (Douglas - Chamado 441407)             
-                
+                             solicitacao de cartao adicional nessa situacao (Douglas - Chamado 441407)
+
                 20/06/2017 - Alterar a ordem que as informações são enviadas no arquivo CCR3.
                              Primeiro vamos enviar as linhas de Alteração Cadastral e depois as linhas
                              de UPGRADE/DOWNGRADE (Douglas - Chamado 662595)
@@ -6384,7 +6417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
           END LOOP;
 
-        END LOOP;
+          END LOOP;
 
         -- monta TRAILER do arquivo
         vr_dstraile := ('CCB3'                         /* Pedido         */      ||
@@ -6940,7 +6973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            -- Se o parametro vir nulo, deve considerar as situações 3 e 4
            AND (pcr.insitcrd = pr_insitcrd OR (pr_insitcrd IS NULL AND pcr.insitcrd IN (3,4)))
            AND (pcr.flgprcrd = pr_flgprcrd OR pr_flgprcrd IS NULL);
-
+      
       -- Buscar o código do grupo de afinidade, ignorando os parametros
       -- que estejam sendo passados como null
       CURSOR cr_crawcrd_em_uso(pr_cdcooper IN crawcrd.cdcooper%TYPE
@@ -7630,14 +7663,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         vr_dstpdreg VARCHAR2(50);
         vr_dstexto VARCHAR2(2000);
         vr_titulo VARCHAR2(1000);
-      BEGIN
+    BEGIN
         -- Texto para utilizar na abertura do chamado e no email enviado
         vr_dstexto:= to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' ||
                      'Arquivo ' || pr_nmdarqui || ' foi recebido incompleto.';
 
         -- Parte inicial do texto do chamado e do email        
         vr_titulo:= '<b>O arquivo de retorno da Solicitacao de Cartao Bancoob CABAL foi recebido incompleto.</b><br>';
-                  
+    
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
                  
@@ -7741,7 +7774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_vet_nmtipsol(50) := 'MODIFICACAO DE PIN';
           vr_vet_nmtipsol(99) := 'EXCLUSAO DE CARTAO';
           
-      
+
       -- buscar caminho de arquivos do Bancoob/CABAL
       vr_direto_connect := rw_crapscb.dsdirarq || '/recebe';
 
@@ -7757,7 +7790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 ,pr_pesq     => vr_nmrquivo  
                                 ,pr_listarq  => vr_listarq 
                                 ,pr_des_erro => vr_des_erro); 
-      
+
       --Ocorreu um erro no lista_arquivos
       IF TRIM(vr_des_erro) IS NOT NULL THEN
         vr_cdcritic := 0;
@@ -7841,7 +7874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           pc_log_message;
           CONTINUE;
         END IF;
-                              
+
         --Verificar se a ultima linha é o Trailer
         IF SUBSTR(vr_saida_tail,001,06) <> 'CCR309' AND   -- Antigo 
            SUBSTR(vr_saida_tail,351,06) <> 'CCR309' THEN  -- Servidor "_AIX"             
@@ -8365,7 +8398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    --Levantar Excecao
                    RAISE vr_exc_saida;
                 END;
-                
+               
                 BEGIN 
                   vr_codrejei := TO_NUMBER(substr(vr_des_text,211,3));
                 EXCEPTION 
@@ -9359,7 +9392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       ELSE
                         vr_flgdebit := 1;
                       END IF;
-                  
+                      
                       -- cria nova proposta com número do cartão vindo no arquivo
                       BEGIN
                         INSERT INTO crawcrd
@@ -9561,7 +9594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                               || ' ARQ.: '   || vr_nmarquiv
                                              ,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
                    CONTINUE;
-              END IF;
+                END IF;
 
               END IF;
             EXCEPTION
@@ -9839,7 +9872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     END;
 
   END pc_crps672;
-  
+
   /*.......................................................................................
 
    Programa: CCDR0003
@@ -10152,7 +10185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Pegar a data de referencia do periodo    
       vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => pr_dtmvtolt - vr_qtddiapg, pr_tipo => 'A');
       vr_dtmvante:= gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_dtmvante - 1, pr_tipo => 'A');
-      
+
       -- Leitura do calendario da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -10567,7 +10600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Alterações: 29/06/2017 - Incluido GENE0001.pc_informa_acesso pois ocasionava
                              problemas de conversao de numericos (Tiago/Fabricio);
   */
-  PROCEDURE pc_debita_fatura_job IS  
+  PROCEDURE pc_debita_fatura_job IS      
   BEGIN
 
     DECLARE 
@@ -10608,7 +10641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END pc_controla_log_batch;
 
     BEGIN
-      
+  
       -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => vr_cdprogra
                                 ,pr_action => NULL);      

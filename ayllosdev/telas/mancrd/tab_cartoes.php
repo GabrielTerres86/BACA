@@ -59,7 +59,7 @@
 																											   , '<?php echo getByTagName($r->tags, 'listadm') ?>'
 																											   , <?php echo getByTagName($r->tags, 'flgdebit') ?> ); return false;" border="0" style="margin-right:5px" title="Editar Cartao"/>
 																											   
-						  <img src="<?php echo $UrlImagens; ?>icones/ico_reenviar.png" onClick="confirmaReenviarSolicitacao(<?php echo getByTagName($r->tags, 'nrdconta') ?>
+						  <img src="<?php echo $UrlImagens; ?>icones/ico_reenviar.png" onClick="confirmaReenviarSolicitacao('<?php echo getByTagName($r->tags, 'nrdconta') ?>'
 																														 , '<?php echo getByTagName($r->tags, 'nrcrcard') ?>'); return false;" border="0" title="Reenviar Solicitacao do Cartao"/>
 						</td>
 					</tr>
