@@ -43,7 +43,11 @@ function acessaOpcaoAba() {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
         },
         success: function (response) {
+			$("#divOpcaoConsulta").css('display', 'none');			
+			$("#divLog").css('display', 'none');			
+			
             $("#divConteudoOpcao").html(response);
+			$("#divConteudoOpcao").css('display', 'block');
             controlaFoco();
         }
     });
@@ -51,12 +55,13 @@ function acessaOpcaoAba() {
 
 //Função para controle de navegação
 function controlaFoco() {
+	/*
     $('#divConteudoOpcao').each(function () {
         $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
         $(this).find("#divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
         $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
     });
-
+*/
     //Se estiver com foco na classe FluxoNavega
     $(".FluxoNavega").focus(function () {
         $(this).bind('keydown', function (e) {
@@ -134,13 +139,119 @@ function confirmaExclusao() {
         return false;
     }
 
-    showConfirmacao('078 - Confirma cancelamento do servi&ccedil;o? (S/N)', "Confirma&ccedil;&atilde;o - Ayllos", 'VerifConvenioAceiteCancel(0);', "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+    showConfirmacao('078 - Confirma cancelamento do servi&ccedil;o? (S/N)', "Confirma&ccedil;&atilde;o - Ayllos", 'cancelar('+nrconven+');', "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
 }
 
+function cancelar(pr_nrconven){
+	showMsgAguardo("Aguarde, efetuando a Altera&ccedil;&atilde;o do convenio ...");
+
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/pagamento_titulo_arq/cancelar_convenio.php",
+		data: {
+			nrdconta: nrdconta,
+			nrconven: pr_nrconven,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			try {
+				hideMsgAguardo();
+				msg = 'Cancelamento do convenio efetuado com sucesso!';
+				showError("inform", msg, "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));acessaOpcaoAba();");
+				eval(response);
+			} catch (error) {
+				hideMsgAguardo();
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+    });	
+}
 
 // Confirma inclusao de convenio
-function confirmaInclusao() {
-    showConfirmacao('078 - Confirma Ades&atilde;o ao servi&ccedil;o? (S/N)', "Confirma&ccedil;&atilde;o - Ayllos", 'VerifConvenioAceiteCancel(1);', "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+function confirmaAlteracao(pr_nrconven, pr_flghomol, pr_cdopehom, pr_idretorn, pr_flgativo) {	
+    showConfirmacao('078 - Confirma Altera&ccedil;&atilde;o do convenio? (S/N)', "Confirma&ccedil;&atilde;o - Ayllos", 'alterar('+pr_nrconven+', '+pr_flghomol+', '+pr_cdopehom+', '+pr_idretorn+', '+pr_flgativo+');', "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+}
+
+function alterar(pr_nrconven, pr_flghomol, pr_cdopehom, pr_idretorn, pr_flgativo){
+	
+	showMsgAguardo("Aguarde, efetuando a Altera&ccedil;&atilde;o do convenio ...");
+
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/pagamento_titulo_arq/alterar_convenio.php",
+		data: {
+			nrdconta: nrdconta,
+			nrconven: pr_nrconven,
+			flghomol: pr_flghomol,
+			cdopehom: pr_cdopehom,
+			idretorn: pr_idretorn,
+			flgativo: pr_flgativo,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			try {
+				hideMsgAguardo();
+				msg = 'Altera&ccedil;&atilde;o do convenio efetuado com sucesso!';
+				showError("inform", msg, "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));acessaOpcaoAba();");
+				eval(response);
+			} catch (error) {
+				hideMsgAguardo();
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+    });
+	
+}
+
+// Confirma inclusao de convenio
+function confirmaInclusao(pr_nrconven, pr_flghomol, pr_cdopehom, pr_idretorn, pr_flgativo) {	
+    showConfirmacao('078 - Confirma Ades&atilde;o ao servi&ccedil;o? (S/N)', "Confirma&ccedil;&atilde;o - Ayllos", 'incluir('+pr_nrconven+', '+pr_flghomol+', '+pr_cdopehom+', '+pr_idretorn+', '+pr_flgativo+');', "blockBackground(parseInt($('#divRotina').css('z-index')))", "sim.gif", "nao.gif");
+}
+
+function incluir(pr_nrconven, pr_flghomol, pr_cdopehom, pr_idretorn, pr_flgativo){
+	
+	showMsgAguardo("Aguarde, efetuando a Ades&atilde;o do Servi&ccedil;o ...");
+
+	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/pagamento_titulo_arq/incluir_convenio.php",
+		data: {
+			nrdconta: nrdconta,
+			nrconven: pr_nrconven,
+			flghomol: pr_flghomol,
+			cdopehom: pr_cdopehom,
+			idretorn: pr_idretorn,
+			flgativo: pr_flgativo,
+			redirect: "script_ajax" // Tipo de retorno do ajax
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			try {
+				hideMsgAguardo();
+				msg = 'Ades&atilde;o do Servi&ccedil;o efetuado com sucesso! <br/>Favor imprimir o Termo de Ades&atilde;o para o cooperado.';
+				showError("inform", msg, "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));acessaOpcaoAba();");
+				eval(response);
+			} catch (error) {
+				hideMsgAguardo();
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}
+    });
+	
 }
 
 
@@ -286,7 +397,7 @@ function impressaoConteudo() {
 
 
 /* Formata a tabela gerada dentro do fonte principal.php */
-function controlaLayout(nomeForm) {
+function controlaLayout(nomeForm, cddopcao) {
 
     if (nomeForm == 'divResultado') {
 
@@ -301,12 +412,12 @@ function controlaLayout(nomeForm) {
         var ordemInicial = new Array();
 
         var arrayLargura = new Array();
-        arrayLargura[0] = '60px';
-        arrayLargura[1] = '83px';
-        arrayLargura[2] = '260px';
-        arrayLargura[3] = '63x';
-        arrayLargura[4] = '53px';
-        arrayLargura[5] = '15px';
+        arrayLargura[0] = '60px'; //convenio
+        arrayLargura[1] = '83px'; //adesao
+        arrayLargura[2] = '70px'; //situacao
+        arrayLargura[3] = '20x';  //homologado
+        arrayLargura[4] = '83px'; //homologaçao
+        arrayLargura[5] = '100px'; //Forma envio
 
         var arrayAlinha = new Array();
         arrayAlinha[0] = 'right';
@@ -314,6 +425,7 @@ function controlaLayout(nomeForm) {
         arrayAlinha[2] = 'left';
         arrayAlinha[3] = 'center';
         arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
 
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 
@@ -322,10 +434,153 @@ function controlaLayout(nomeForm) {
                 $(this).focus();
             }
         });
+		
+        var complemento = $('ul.complemento');
+
+		$('li:eq(0)', complemento).addClass('txtNormalBold');
+        $('li:eq(1)', complemento).addClass('txtNormal').css({ 'width': '35%' });
+		$('li:eq(2)', complemento).addClass('txtNormalBold');
+        $('li:eq(3)', complemento).addClass('txtNormal').css({ 'width': '40%' });
+
 
         ajustarCentralizacao();
 
-    }
+    }else{
+	
+		if (nomeForm == 'frmConsulta') {
+
+			$('#' + nomeForm).addClass('formulario');
+
+			var Lnrconven = $('label[for="nrconven"]', '#' + nomeForm);
+			var Ldtdadesa = $('label[for="dtdadesa"]', '#' + nomeForm);
+			var Lflgativo = $('label[for="flgativo"]', '#' + nomeForm);
+			var Lflghomol = $('label[for="flghomol"]', '#' + nomeForm);
+			var Ldtdhomol = $('label[for="dtdhomol"]', '#' + nomeForm);
+			var Lcdopehom = $('label[for="cdopehom"]', '#' + nomeForm);
+			var Lidretorn = $('label[for="idretorn"]', '#' + nomeForm);
+			var Ldtaltera = $('label[for="dtaltera"]', '#' + nomeForm);
+			var Lcdoperad = $('label[for="cdoperad"]', '#' + nomeForm);
+			var Lnrremret = $('label[for="nrremret"]', '#' + nomeForm);
+
+			var Cnrconven = $('#nrconven', '#' + nomeForm);
+			var Cdtdadesa = $('#dtdadesa', '#' + nomeForm);
+			var Cflgativo = $('#flgativo', '#' + nomeForm);
+			var Cflghomol = $('#flghomol', '#' + nomeForm);
+			var Cdtdhomol = $('#dtdhomol', '#' + nomeForm);
+			var Ccdopehom = $('#cdopehom', '#' + nomeForm);
+			var Cidretorn = $('#idretorn', '#' + nomeForm);
+			var Cdtaltera = $('#dtaltera', '#' + nomeForm);
+			var Ccdoperad = $('#cdoperad', '#' + nomeForm);
+			var Cnrremret = $('#nrremret', '#' + nomeForm);
+			
+			
+			Lnrconven.addClass('rotulo').css('width', '210px');
+			Ldtdadesa.addClass('rotulo').css('width', '210px');
+			Lflgativo.addClass('rotulo').css('width', '210px');
+			Lflghomol.addClass('rotulo').css('width', '210px');
+			Ldtdhomol.addClass('rotulo').css('width', '210px');
+			Lcdopehom.addClass('rotulo').css('width', '210px');
+			Lidretorn.addClass('rotulo').css('width', '210px');
+			Ldtaltera.addClass('rotulo').css('width', '210px');
+			Lcdoperad.addClass('rotulo').css('width', '210px');
+			Lnrremret.addClass('rotulo').css('width', '210px');
+
+			Cnrconven.css({ 'width': '70px' });
+			Cdtdadesa.css({ 'width': '130px' })
+			Cflgativo.css({ 'width': '130px' });
+			Cflghomol.css({ 'width': '130px' });
+			Cdtdhomol.css({ 'width': '130px' });
+			Ccdopehom.css({ 'width': '200px' });
+			Cidretorn.css({ 'width': '130px' });
+			Cdtaltera.css({ 'width': '130px' });
+			Ccdoperad.css({ 'width': '200px' });
+			Cnrremret.css({ 'width': '130px' });
+			
+			//Tratamentos para inclusao
+			if(cddopcao == 'I'){
+				Cflgativo.habilitaCampo();
+				Cflghomol.habilitaCampo();
+				
+				Ldtdhomol.css('display','none');
+				Cdtdhomol.css('display','none');
+				
+				Cidretorn.habilitaCampo();
+				
+				Ldtaltera.css('display','none');
+				Cdtaltera.css('display','none');
+				
+				Lcdoperad.css('display','none');
+				Ccdoperad.css('display','none');
+				
+				Lnrremret.css('display','none');
+				Cnrremret.css('display','none');				
+			}
+			
+			//Tratamentos para alteracao
+			if(cddopcao == 'A'){
+				Cflgativo.habilitaCampo();
+				Cflghomol.habilitaCampo();
+				
+				Ldtdhomol.css('display','none');
+				Cdtdhomol.css('display','none');
+				
+				Cidretorn.habilitaCampo();
+				
+				Ldtaltera.css('display','none');
+				Cdtaltera.css('display','none');
+				
+				Lcdoperad.css('display','none');
+				Ccdoperad.css('display','none');
+				
+				Lnrremret.css('display','none');
+				Cnrremret.css('display','none');				
+			}		
+			
+
+		}else{
+			if (nomeForm == 'frmLog') {
+				var divRegistro = $('div.divRegistros','#'+nomeForm);
+				var tabela = $('table', divRegistro);
+
+				tabela.zebraTabela(0);
+
+				$('#' + nomeForm).css('width', '700px');
+				divRegistro.css('height', '85px');
+
+				var ordemInicial = new Array();
+
+
+				var arrayLargura = new Array();
+				arrayLargura[0] = '100px'; //data|hora
+				arrayLargura[1] = '100px'; //operador
+				arrayLargura[2] = '70px';  //programa
+				arrayLargura[3] = '80x';   //manipulacao
+				arrayLargura[4] = '80px';  //tabela
+				arrayLargura[5] = '80px'; //campo
+				arrayLargura[6] = '80px'; //conteudo anterior
+				arrayLargura[7] = '80px'; //conteudo atual
+
+				var arrayAlinha = new Array();
+				arrayAlinha[0] = 'right';
+				arrayAlinha[1] = 'center';
+				arrayAlinha[2] = 'left';
+				arrayAlinha[3] = 'center';
+				arrayAlinha[4] = 'center';
+				arrayAlinha[5] = 'center';
+				arrayAlinha[6] = 'center';
+				arrayAlinha[7] = 'center';
+
+				tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+				$('tbody > tr', tabela).each(function () {
+					if ($(this).hasClass('corSelecao')) {
+						$(this).focus();
+					}
+				});				
+			}			
+		}
+			
+	}
 
     callafterCobranca = '';
     layoutPadrao();
@@ -334,12 +589,77 @@ function controlaLayout(nomeForm) {
 
 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dtcadast, cdoperad, flgativo, dsorigem) {
+function selecionaConvenio(idLinha, nrconven, dtcadast, cdoperad, flgativo, dsorigem, flghomol, dtdhomol, idretorn) {
 
     $("#nrconven", "#divConteudoOpcao").val(nrconven);
-    $("#dtcadast", "#divConteudoOpcao").val(dtcadast);
-    $("#cdoperad", "#divConteudoOpcao").val(cdoperad);
+	$("#dtcadast", "#divConteudoOpcao").html(dtcadast);
+    $("#cdoperad", "#divConteudoOpcao").html(cdoperad);
     $("#flgativo", "#divConteudoOpcao").val(flgativo);
     $("#dsorigem", "#divConteudoOpcao").val(dsorigem);
+    $("#flghomol", "#divConteudoOpcao").val(flghomol);
+    $("#dtdhomol", "#divConteudoOpcao").val(dtdhomol);
+    $("#idretorn", "#divConteudoOpcao").val(idretorn);
 
 }
+
+function consulta(cddopcao){
+	
+    // Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando ...");
+
+    // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
+ 	$.ajax({
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/pagamento_titulo_arq/consulta.php",
+		data: {			
+            cddopcao: cddopcao,
+			nrdconta: nrdconta,
+			redirect: "script_ajax"
+		},
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+		},
+        success: function (response) {
+			$("#divOpcaoConsulta").html(response);
+            hideMsgAguardo();
+            blockBackground($("#divRotina"));
+		}
+	});	
+}
+
+// Abrir tela de log ceb
+function carregaLog(){
+    
+    var nrconven = $("#nrconven", "#divConteudoOpcao").val();    
+    
+    // Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando ...");
+
+    // Carrega log atraves ajax 	
+    $.ajax({
+		
+		dataType: "html",
+		type: "POST",
+		url: UrlSite + "telas/atenda/pagamento_titulo_arq/log.php",
+		data: {
+            nrdconta: nrdconta,
+			redirect: "script_ajax"
+		},
+        error: function (objAjax, responseError, objExcept) {
+			
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+		},
+        success: function (response) {
+            
+			$("#divLog").html(response);
+            hideMsgAguardo();
+            blockBackground($("#divRotina"));
+		}		
+	});
+        
+}
+
+

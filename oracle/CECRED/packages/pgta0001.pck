@@ -206,6 +206,50 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                                         ,pr_cdcritic     OUT INTEGER                -- Código do erro
                                         ,pr_dscritic     OUT VARCHAR2);             -- Descricao do erro
 
+    PROCEDURE pc_cancela_convenio(pr_nrdconta IN crapcpt.nrdconta%TYPE   --> Numero da conta
+                                 ,pr_nrconven IN crapcpt.nrconven%TYPE   --> Numero convenio
+                                 ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);
+
+    PROCEDURE pc_inserir_convenio(pr_nrdconta IN crapcpt.nrdconta%TYPE   --> Numero da conta
+                                 ,pr_nrconven IN crapcpt.nrconven%TYPE   --> Numero convenio
+                                 ,pr_flghomol IN crapcpt.flghomol%TYPE   --> Homologado
+                                 ,pr_idretorn IN crapcpt.idretorn%TYPE   --> Tipo de transmissao (1=Internet, 2=FTP)
+                                 ,pr_flgativo IN crapcpt.flgativo%TYPE   --> Convenio ativo
+                                 ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);
+                                 
+    PROCEDURE pc_alterar_convenio(pr_nrdconta IN crapcpt.nrdconta%TYPE   --> Numero da conta
+                                 ,pr_nrconven IN crapcpt.nrconven%TYPE   --> Numero convenio
+                                 ,pr_flghomol IN crapcpt.flghomol%TYPE   --> Homologado
+                                 ,pr_idretorn IN crapcpt.idretorn%TYPE   --> Tipo de transmissao (1=Internet, 2=FTP)
+                                 ,pr_flgativo IN crapcpt.flgativo%TYPE   --> Convenio ativo
+                                 ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);
+
+    PROCEDURE pc_consulta_log(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
+                             ,pr_dtiniper IN crapdat.dtmvtolt%TYPE --> Inicio do periodo
+                             ,pr_dtfimper IN crapdat.dtmvtolt%TYPE --> Fim do periodo
+                             ,pr_nmtabela IN tbcobran_cpt_log.nmtabela%TYPE --> Nome da tabela
+                             ,pr_nmdocampo IN tbcobran_cpt_log.nmdcampo%TYPE --> Nome do campo
+                             ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2);
 END PGTA0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
@@ -297,8 +341,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
      SELECT crapcpt.nrconven
            ,crapcpt.dtdadesa
            ,crapcpt.cdoperad ||' - '|| crapope.nmoperad        cdoperad
-           ,DECODE(crapcpt.flgativo,1,'ATIVO','INATIVO')       flgativo
+           ,DECODE(crapcpt.flgativo,1,'ATIVO','INATIVO')       dsflgativo
+           ,crapcpt.flgativo
+           ,DECODE(crapcpt.flghomol,1,'SIM','NAO')             dsflghomol
+           ,crapcpt.flghomol
+           ,crapcpt.dtdhomol
+           ,DECODE(crapcpt.idretorn,1,'INTERNET','FTP')        dsidretorn
+           ,crapcpt.idretorn
            ,DECODE(crapcpt.cdoperad,'996','INTERNET','AYLLOS') dsorigem
+           ,crapcpt.dtaltera
+           ,(SELECT crapope.cdoperad || ' - ' || crapope.nmoperad 
+               FROM crapope ope 
+              WHERE ope.cdcooper = crapcpt.cdcooper 
+                AND ope.cdoperad = crapcpt.cdopehom) cdopehom
        FROM crapcpt crapcpt
            ,crapope crapope
       WHERE crapope.cdcooper = crapcpt.cdcooper
@@ -379,8 +434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        vr_des_erro := 'Para utilização, faça o aceite no Termo de utilização do serviço.';
        RAISE vr_existe_aceit;
      ELSE
-
-       IF rw_crapcpt.flgativo <> 'ATIVO' THEN
+       -- Se nao estiver ativo
+       IF rw_crapcpt.flgativo <> 1 THEN
           pr_dscritic := 'Cooperado com Convênio INATIVO!';
        END IF;
 
@@ -437,6 +492,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                     || '<dsorigem>'||rw_crapcpt.dsorigem||'</dsorigem>'
                                                     || '<hrfimpag>'||vr_hrfimpag        ||'</hrfimpag>'
                                                     || '<nrremret>'||vr_nrremret        ||'</nrremret>'
+                                                    || '<flghomol>'||rw_crapcpt.flghomol||'</flghomol>'
+                                                    || '<dtdhomol>'||TO_CHAR(rw_crapcpt.dtdhomol,'DD/MM/YYYY')||'</dtdhomol>'
+                                                    || '<idretorn>'||rw_crapcpt.idretorn||'</idretorn>'
+                                                    || '<dtaltera>'||TO_CHAR(rw_crapcpt.dtaltera,'DD/MM/YYYY')||'</dtaltera>'
+                                                    || '<cdopehom>'||rw_crapcpt.cdopehom||'</cdopehom>'
+                                                    || '<dsflgativo>'||rw_crapcpt.dsflgativo||'</dsflgativo>'
+                                                    || '<dsflghomol>'||rw_crapcpt.dsflghomol||'</dsflghomol>'
+                                                    || '<dsidretorn>'||rw_crapcpt.dsidretorn||'</dsidretorn>'
                                                     || '</arquivo>');
           FETCH cr_crapcpt INTO rw_crapcpt;
        END LOOP;
@@ -5458,6 +5521,834 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           pr_cdcritic := 0;
           pr_dscritic := 'Erro na Rotina PGTA0001.pc_retorna_titulo_agendado. Erro: ' || SQLERRM;
     END pc_retorna_titulo_agendado;
+
+
+  PROCEDURE pc_gera_log_conv(pr_cdcooper       IN  crapcop.cdcooper%TYPE
+                            ,pr_nrdconta       IN  crapass.nrdconta%TYPE                            
+                            ,pr_nrconven       IN  crapcpt.nrconven%TYPE
+                            ,pr_cdoperad       IN  crapope.cdoperad%TYPE
+                            ,pr_cdprograma     IN  tbcobran_cpt_log.cdprograma%TYPE
+                            ,pr_tpmanipulacao  IN  tbcobran_cpt_log.tpmanipulacao%TYPE
+                            ,pr_nmtabela       IN  tbcobran_cpt_log.nmtabela%TYPE
+                            ,pr_nmdcampo       IN  tbcobran_cpt_log.nmdcampo%TYPE
+                            ,pr_dsinf_anterior IN  tbcobran_cpt_log.dsinf_anterior%TYPE
+                            ,pr_dsinf_atual    IN  tbcobran_cpt_log.dsinf_atual%TYPE
+                            ,pr_cdcritic       OUT PLS_INTEGER                           --> Código da crítica
+                            ,pr_dscritic       OUT VARCHAR2) IS                          --> Descrição da crítica
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_gera_log_conv
+    Sistema : Ayllos Web
+    Autor   : Tiago
+    Data    : Agosto - 2017.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para gerar logs para o convenio de pagto por arquivo
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar os dados do indicador
+			CURSOR cr_crapcpt(pr_cdcooper crapcpt.cdcooper%TYPE
+                       ,pr_nrdconta crapcpt.nrdconta%TYPE
+                       ,pr_nrconven crapcpt.nrconven%TYPE) IS
+			  SELECT * 
+          FROM crapcpt
+         WHERE crapcpt.cdcooper = pr_cdcooper
+           AND crapcpt.nrdconta = pr_nrdconta
+           AND crapcpt.nrconven = pr_nrconven;
+      rw_crapcpt cr_crapcpt%ROWTYPE;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+			
+    BEGIN
+
+      BEGIN
+        INSERT 
+          INTO tbcobran_cpt_log(cdcooper, 
+                                nrdconta, 
+                                nrconven, 
+                                dhgerlog, 
+                                cdoperad, 
+                                cdprograma, 
+                                tpmanipulacao, 
+                                nmtabela, 
+                                nmdcampo, 
+                                dsinf_anterior, 
+                                dsinf_atual)
+        VALUES(pr_cdcooper
+              ,pr_nrdconta
+              ,pr_nrconven
+              ,SYSDATE
+              ,pr_cdoperad
+              ,pr_cdprograma
+              ,pr_tpmanipulacao
+              ,pr_nmtabela
+              ,pr_nmdcampo
+              ,pr_dsinf_anterior
+              ,pr_dsinf_atual);
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := 'Erro geral na rotina PGTA0001.pc_gera_log_conv: Chave duplicada.';          
+          ROLLBACK;
+        WHEN OTHERS THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := 'Erro geral na rotina PGTA0001.pc_gera_log_conv: ' || SQLERRM;
+          
+          ROLLBACK;
+      END; 
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina PGTA0001.pc_gera_log_conv: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_gera_log_conv;
+  
+	PROCEDURE pc_cancela_convenio(pr_nrdconta IN crapcpt.nrdconta%TYPE   --> Numero da conta
+                               ,pr_nrconven IN crapcpt.nrconven%TYPE   --> Numero convenio
+                               ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_cancela_convenio
+    Sistema : Ayllos Web
+    Autor   : Tiago
+    Data    : Agosto - 2017.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para cancelar o convenio de pagto por arquivo
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar os dados do indicador
+			CURSOR cr_crapcpt(pr_cdcooper crapcpt.cdcooper%TYPE
+                       ,pr_nrdconta crapcpt.nrdconta%TYPE
+                       ,pr_nrconven crapcpt.nrconven%TYPE) IS
+			  SELECT * 
+          FROM crapcpt
+         WHERE crapcpt.cdcooper = pr_cdcooper
+           AND crapcpt.nrdconta = pr_nrdconta
+           AND crapcpt.nrconven = pr_nrconven;
+      rw_crapcpt cr_crapcpt%ROWTYPE;
+
+      CURSOR cr_craphpt(pr_cdcooper craphpt.cdcooper%TYPE
+                       ,pr_nrdconta craphpt.nrdconta%TYPE
+                       ,pr_nrconven craphpt.nrconven%TYPE) IS
+        SELECT COUNT(*) quantidade
+          FROM craphpt hpt
+         WHERE hpt.intipmvt = 1 /*remessa*/
+           AND hpt.nrdconta = pr_nrdconta
+           AND hpt.cdcooper = pr_cdcooper
+           AND hpt.nrconven = pr_nrconven;
+      rw_craphpt cr_craphpt%ROWTYPE;
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+			-- Variaveis auxiliares
+      vr_dsorigem VARCHAR2(1000); -- Descrição da origem do ambiente
+			vr_dstransa VARCHAR2(1000) := 'Cancelamento do convenio pagamento por arquivo';
+			vr_nrdrowid ROWID;
+			vr_dsfativo VARCHAR2(10);
+			vr_tpindica VARCHAR2(100);
+			
+    BEGIN
+
+			-- Extrai dados do xml
+			gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+															 pr_cdcooper => vr_cdcooper,
+															 pr_nmdatela => vr_nmdatela,
+															 pr_nmeacao  => vr_nmeacao,
+															 pr_cdagenci => vr_cdagenci,
+															 pr_nrdcaixa => vr_nrdcaixa,
+															 pr_idorigem => vr_idorigem,
+															 pr_cdoperad => vr_cdoperad,
+															 pr_dscritic => vr_dscritic);
+
+			-- Se retornou alguma crítica
+			IF trim(vr_dscritic) IS NOT NULL THEN
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+		  -- Alimenta descrição da origem
+		  vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
+
+		  OPEN cr_crapcpt(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrconven => pr_nrconven);
+			FETCH cr_crapcpt INTO rw_crapcpt;
+
+			-- Se existe
+			IF cr_crapcpt%NOTFOUND THEN
+				-- Fecha cursor
+				CLOSE cr_crapcpt;
+				-- Gera crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Atenção! Convenio nao encontrado!';
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+			-- Fecha cursor
+			CLOSE cr_crapcpt;
+      
+		  OPEN cr_craphpt(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrconven => pr_nrconven);
+			FETCH cr_craphpt INTO rw_craphpt;
+
+			-- Se existe
+			IF cr_craphpt%NOTFOUND THEN
+				-- Fecha cursor
+				CLOSE cr_craphpt;
+				-- Gera crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Atenção! Nao foi possivel consultar as remessas do convenio!';
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+			-- Fecha cursor
+			CLOSE cr_craphpt;      
+
+      IF rw_craphpt.quantidade > 0 THEN 
+         vr_cdcritic := 0;
+				 vr_dscritic := 'Atenção! Convenio com remessa, nao e possivel cancelar!';
+				 -- Levanta exceção
+				 RAISE vr_exc_saida;
+      END IF;       
+
+      BEGIN
+        
+        DELETE 
+          FROM crapcpt
+         WHERE crapcpt.cdcooper = vr_cdcooper
+           AND crapcpt.nrdconta = pr_nrdconta
+           AND crapcpt.nrconven = pr_nrconven;
+           
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Atenção! Houve erro durante a exclusao, detalhes: ' || SQLERRM;
+					RAISE vr_exc_saida;
+			END;
+      
+      pc_gera_log_conv(pr_cdcooper       => vr_cdcooper
+                      ,pr_nrdconta       => pr_nrdconta
+                      ,pr_nrconven       => pr_nrconven
+                      ,pr_cdoperad       => vr_cdoperad
+                      ,pr_cdprograma     => 'PGTA0001.pc_cancela_convenio'
+                      ,pr_tpmanipulacao  => 2 --> Exclusao
+                      ,pr_nmtabela       => 'CRAPCPT'
+                      ,pr_nmdcampo       => NULL
+                      ,pr_dsinf_anterior => NULL
+                      ,pr_dsinf_atual    => 'Exclusao do convênio de agendamento de pagamento'
+                      ,pr_cdcritic       => vr_cdcritic
+                      ,pr_dscritic       => vr_dscritic);
+      
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina PGTA0001.pc_cancela_convenio: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_cancela_convenio;
+
+	PROCEDURE pc_inserir_convenio(pr_nrdconta IN crapcpt.nrdconta%TYPE   --> Numero da conta
+                               ,pr_nrconven IN crapcpt.nrconven%TYPE   --> Numero convenio
+                               ,pr_flghomol IN crapcpt.flghomol%TYPE   --> Homologado
+                               ,pr_idretorn IN crapcpt.idretorn%TYPE   --> Tipo de transmissao (1=Internet, 2=FTP)
+                               ,pr_flgativo IN crapcpt.flgativo%TYPE   --> Convenio ativo
+                               ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_inserir_convenio
+    Sistema : Ayllos Web
+    Autor   : Tiago
+    Data    : Agosto - 2017.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para incluir o convenio de pagto por arquivo
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+			-- Variaveis auxiliares
+      vr_dsorigem VARCHAR2(1000); -- Descrição da origem do ambiente
+			vr_dstransa VARCHAR2(1000) := 'Inclusao do convenio pagamento por arquivo';
+			vr_nrdrowid ROWID;
+			vr_dsfativo VARCHAR2(10);
+			vr_tpindica VARCHAR2(100);
+      
+      CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT crapass.inpessoa
+          FROM crapass
+         WHERE crapass.cdcooper = pr_cdcooper
+           AND crapass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+          
+			
+    BEGIN
+
+			-- Extrai dados do xml
+			gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+															 pr_cdcooper => vr_cdcooper,
+															 pr_nmdatela => vr_nmdatela,
+															 pr_nmeacao  => vr_nmeacao,
+															 pr_cdagenci => vr_cdagenci,
+															 pr_nrdcaixa => vr_nrdcaixa,
+															 pr_idorigem => vr_idorigem,
+															 pr_cdoperad => vr_cdoperad,
+															 pr_dscritic => vr_dscritic);
+
+			-- Se retornou alguma crítica
+			IF trim(vr_dscritic) IS NOT NULL THEN
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+      OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      
+      IF cr_crapass%NOTFOUND THEN
+         CLOSE cr_crapass;         
+         vr_dscritic := 'Atencao! Conta nao encontrada.';
+         RAISE vr_exc_saida;
+      END IF;
+      
+      CLOSE cr_crapass;
+
+      IF rw_crapass.inpessoa <> 2 THEN
+         vr_dscritic := 'Inclusao permitida apenas para Pessoa Jurídica.';
+         RAISE vr_exc_saida;
+      END IF;
+
+		  -- Alimenta descrição da origem
+		  --vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
+
+      BEGIN
+        INSERT 
+          INTO crapcpt(cdcooper
+                      ,nrdconta
+                      ,nrconven
+                      ,dtdadesa
+                      ,nrctrcpt
+                      ,flghomol
+                      ,dtdhomol
+                      ,cdopehom
+                      ,idretorn
+                      ,cdoperad
+                      ,dtaltera
+                      ,flgativo)
+           VALUES(vr_cdcooper
+                 ,pr_nrdconta
+                 ,pr_nrconven
+                 ,TRUNC(SYSDATE)
+                 ,1
+                 ,pr_flghomol
+                 ,DECODE(pr_flghomol,1,TRUNC(SYSDATE),NULL)
+                 ,DECODE(pr_flghomol,1,vr_cdoperad,NULL)
+                 ,pr_idretorn
+                 ,vr_cdoperad
+                 ,TRUNC(SYSDATE)
+                 ,pr_flgativo);
+           
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Atenção! Houve erro durante a inclusao, detalhes: ' || SQLERRM;
+					RAISE vr_exc_saida;
+			END;      
+
+      pc_gera_log_conv(pr_cdcooper       => vr_cdcooper
+                      ,pr_nrdconta       => pr_nrdconta
+                      ,pr_nrconven       => pr_nrconven
+                      ,pr_cdoperad       => vr_cdoperad
+                      ,pr_cdprograma     => 'PGTA0001.pc_inserir_convenio'
+                      ,pr_tpmanipulacao  => 0 --> Inclusao
+                      ,pr_nmtabela       => 'CRAPCPT'
+                      ,pr_nmdcampo       => NULL
+                      ,pr_dsinf_anterior => NULL
+                      ,pr_dsinf_atual    => 'Adesão ao convênio de agendamento de pagamento'
+                      ,pr_cdcritic       => vr_cdcritic
+                      ,pr_dscritic       => vr_dscritic);
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina PGTA0001.pc_inserir_convenio: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_inserir_convenio;
+
+	PROCEDURE pc_alterar_convenio(pr_nrdconta IN crapcpt.nrdconta%TYPE   --> Numero da conta
+                               ,pr_nrconven IN crapcpt.nrconven%TYPE   --> Numero convenio
+                               ,pr_flghomol IN crapcpt.flghomol%TYPE   --> Homologado
+                               ,pr_idretorn IN crapcpt.idretorn%TYPE   --> Tipo de transmissao (1=Internet, 2=FTP)
+                               ,pr_flgativo IN crapcpt.flgativo%TYPE   --> Convenio ativo
+                               ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS           --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_alterar_convenio
+    Sistema : Ayllos Web
+    Autor   : Tiago
+    Data    : Agosto - 2017.                Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para alterar o convenio de pagto por arquivo
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+			-- Variaveis auxiliares
+      vr_dsorigem VARCHAR2(1000); -- Descrição da origem do ambiente
+			vr_dstransa VARCHAR2(1000) := 'Alteracao do convenio pagamento por arquivo';
+			vr_nrdrowid ROWID;
+			vr_dsfativo VARCHAR2(10);
+			vr_tpindica VARCHAR2(100);
+      
+      vr_flghomol crapcpt.flghomol%TYPE;
+      vr_cdopehom crapcpt.cdopehom%TYPE;
+      vr_dtdhomol crapcpt.dtdhomol%TYPE;
+      vr_idretorn crapcpt.idretorn%TYPE;
+      vr_flgativo crapcpt.flgativo%TYPE;
+      
+      CURSOR cr_crapcpt(pr_cdcooper crapcpt.cdcooper%TYPE
+                       ,pr_nrdconta crapcpt.nrdconta%TYPE
+                       ,pr_nrconven crapcpt.nrconven%TYPE) IS
+        SELECT * 
+          FROM crapcpt
+         WHERE crapcpt.cdcooper = pr_cdcooper
+           AND crapcpt.nrdconta = pr_nrdconta
+           AND crapcpt.nrconven = pr_nrconven;
+      rw_crapcpt cr_crapcpt%ROWTYPE;     
+			
+    BEGIN
+
+			-- Extrai dados do xml
+			gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+															 pr_cdcooper => vr_cdcooper,
+															 pr_nmdatela => vr_nmdatela,
+															 pr_nmeacao  => vr_nmeacao,
+															 pr_cdagenci => vr_cdagenci,
+															 pr_nrdcaixa => vr_nrdcaixa,
+															 pr_idorigem => vr_idorigem,
+															 pr_cdoperad => vr_cdoperad,
+															 pr_dscritic => vr_dscritic);
+
+			-- Se retornou alguma crítica
+			IF trim(vr_dscritic) IS NOT NULL THEN
+				-- Levanta exceção
+				RAISE vr_exc_saida;
+			END IF;
+
+		  -- Alimenta descrição da origem
+		  --vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
+
+      OPEN cr_crapcpt(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrconven => pr_nrconven);
+      FETCH cr_crapcpt INTO rw_crapcpt;
+      
+      IF cr_crapcpt%NOTFOUND THEN
+         CLOSE cr_crapcpt;
+         
+				 vr_dscritic := 'Atenção! Nao foi possivel encontrar o convenio.';
+				 RAISE vr_exc_saida;        
+      END IF;              
+
+      CLOSE cr_crapcpt;
+
+      IF pr_flghomol <> rw_crapcpt.flghomol THEN
+         vr_flghomol := pr_flghomol;
+         vr_cdopehom := vr_cdoperad;
+         vr_dtdhomol := TRUNC(SYSDATE);
+      ELSE
+         vr_flghomol := rw_crapcpt.flghomol;
+         vr_cdopehom := rw_crapcpt.cdopehom;
+         vr_dtdhomol := rw_crapcpt.dtdhomol;        
+      END IF;
+
+      IF pr_idretorn <> rw_crapcpt.idretorn THEN
+         vr_idretorn := pr_idretorn;
+      ELSE
+         vr_idretorn := rw_crapcpt.idretorn;  
+      END IF;
+      
+      IF pr_flgativo <> rw_crapcpt.flgativo THEN
+         vr_flgativo := pr_flgativo;
+      ELSE
+         vr_flgativo := rw_crapcpt.flgativo;  
+      END IF;
+      
+
+      BEGIN
+        
+        UPDATE crapcpt
+           SET flghomol = vr_flghomol
+              ,dtdhomol = vr_dtdhomol
+              ,cdopehom = vr_cdopehom
+              ,idretorn = vr_idretorn
+              ,cdoperad = vr_cdoperad
+              ,dtaltera = TRUNC(SYSDATE)
+              ,flgativo = vr_flgativo
+         WHERE crapcpt.cdcooper = vr_cdcooper
+           AND crapcpt.nrconven = pr_nrconven
+           AND crapcpt.nrdconta = pr_nrdconta;
+           
+			EXCEPTION
+				WHEN OTHERS THEN
+					vr_dscritic := 'Atenção! Houve erro durante a alteracao, detalhes: ' || SQLERRM;
+					RAISE vr_exc_saida;
+			END;      
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina PGTA0001.pc_inserir_convenio: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic ||
+                                       '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_alterar_convenio;
+
+  PROCEDURE pc_consulta_log(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
+                             ,pr_dtiniper IN crapdat.dtmvtolt%TYPE --> Inicio do periodo
+                             ,pr_dtfimper IN crapdat.dtmvtolt%TYPE --> Fim do periodo
+                             ,pr_nmtabela IN tbcobran_cpt_log.nmtabela%TYPE --> Nome da tabela
+                             ,pr_nmdocampo IN tbcobran_cpt_log.nmdcampo%TYPE --> Nome do campo
+                             ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_consulta_log
+        Sistema : CECRED
+        Sigla   : COBRAN
+        Autor   : Tiago
+        Data    : Agosto/17.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Retornar lista com os log do convenio 
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+    ---------> CURSORES <--------
+    --> Buscar logs
+    CURSOR cr_tbcobran_cpt_log( pr_cdcooper crapceb.cdcooper%TYPE,
+                                pr_nrdconta crapceb.nrdconta%TYPE) IS
+      SELECT to_char(log.dhgerlog,'DD/MM/RRRR HH24:MI:SS') dhgerlog
+            ,log.cdoperad
+            ,ope.nmoperad
+            ,log.cdprograma
+            ,log.tpmanipulacao
+            ,log.nmtabela
+            ,log.nmdcampo
+            ,log.dsinf_anterior
+            ,log.dsinf_atual
+        FROM tbcobran_cpt_log log
+            ,crapope   ope
+       WHERE log.cdcooper = pr_cdcooper
+         AND log.nrdconta = pr_nrdconta
+         AND ope.cdcooper = log.cdcooper
+         AND ope.cdoperad = log.cdoperad
+         ORDER BY log.dhgerlog DESC;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+      
+    vr_dsmanipulacao  VARCHAR2(40);
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+  BEGIN
+    
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Leitura da PL/Table e geração do arquivo XML
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    vr_texto_completo := NULL;
+    pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
+    
+    --> buscar logs ceb
+    FOR rw_log IN cr_tbcobran_cpt_log ( pr_cdcooper => vr_cdcooper,
+                                        pr_nrdconta => pr_nrdconta ) LOOP
+                                        
+      CASE rw_log.tpmanipulacao
+        WHEN 0 THEN vr_dsmanipulacao := 'INCLUSAO';
+        WHEN 1 THEN vr_dsmanipulacao := 'ALTERACAO';
+        WHEN 2 THEN vr_dsmanipulacao := 'EXCLUSAO';
+        ELSE vr_dsmanipulacao := '';
+      END CASE;
+                                          
+      pc_escreve_xml('<inf>'||
+                        '<dhgerlog>' || rw_log.dhgerlog ||'</dhgerlog>' ||
+                        '<cdoperad>' || rw_log.cdoperad ||'</cdoperad>' ||
+                        '<nmoperad>' || rw_log.nmoperad    ||'</nmoperad>' ||
+                        '<cdprograma>' || rw_log.cdprograma ||'</cdprograma>' ||
+                        '<tpmanipulacao>' || rw_log.tpmanipulacao ||'</tpmanipulacao>' ||
+                        '<dsmanipulacao>' || vr_dsmanipulacao ||'</dsmanipulacao>' ||
+                        '<nmtabela>' || rw_log.nmtabela ||'</nmtabela>' ||
+                        '<nmdcampo>' || rw_log.nmdcampo ||'</nmdcampo>' ||
+                        '<dsdadant>' || rw_log.dsinf_anterior ||'</dsdadant>' ||
+                        '<dsdadatu>' || rw_log.dsinf_atual ||'</dsdadatu>' ||
+                     '</inf>');
+                     
+    END LOOP;
+    
+    pc_escreve_xml('</dados></root>',TRUE);    
+    pr_retxml := XMLType.createXML(vr_des_xml);
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_consulta_log;     
+
+
+
 
 END PGTA0001;
 /

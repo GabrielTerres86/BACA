@@ -17,4 +17,13 @@ DEF TEMP-TABLE tt-arquivos NO-UNDO
     FIELD dtdadesa   AS DATE
     FIELD cdoperad   AS CHAR
     FIELD flgativo   AS CHAR
-    FIELD dsorigem   AS CHAR.
+    FIELD dsorigem   AS CHAR
+    FIELD flghomol   AS CHAR
+    FIELD dtdhomol   AS DATE
+    FIELD idretorn   AS CHAR
+    FIELD cdopehom   AS CHAR
+    FIELD dtaltera   AS DATE 
+    FIELD nrremret   AS INTE
+    FIELD dsflgativo AS CHAR
+    FIELD dsflghomol AS CHAR
+    FIELD dsidretorn AS CHAR.

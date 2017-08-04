@@ -148,6 +148,17 @@ PROCEDURE verif-aceite-conven:
                     ASSIGN tt-arquivos.cdoperad = xText:NODE-VALUE       WHEN xField:NAME = "cdoperad".
                     ASSIGN tt-arquivos.flgativo = xText:NODE-VALUE       WHEN xField:NAME = "flgativo".
                     ASSIGN tt-arquivos.dsorigem = xText:NODE-VALUE       WHEN xField:NAME = "dsorigem".
+                    ASSIGN tt-arquivos.flghomol = xText:NODE-VALUE       WHEN xField:NAME = "flghomol".
+                    ASSIGN tt-arquivos.dtdhomol = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdhomol".
+                    ASSIGN tt-arquivos.idretorn = xText:NODE-VALUE       WHEN xField:NAME = "idretorn".
+                    ASSIGN tt-arquivos.cdopehom = xText:NODE-VALUE       WHEN xField:NAME = "cdopehom".
+                    ASSIGN tt-arquivos.dtaltera = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtaltera".
+                    ASSIGN tt-arquivos.nrremret = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrremret".
+                    ASSIGN tt-arquivos.dsflgativo = xText:NODE-VALUE       WHEN xField:NAME = "dsflgativo".
+                    ASSIGN tt-arquivos.dsflghomol = xText:NODE-VALUE       WHEN xField:NAME = "dsflghomol".
+                    ASSIGN tt-arquivos.dsidretorn = xText:NODE-VALUE       WHEN xField:NAME = "dsidretorn".
+
+
                 END.
             END.
         
