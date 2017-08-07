@@ -18,16 +18,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADORG AS
    */  
    
   --Busca orgão expedidor cadastrado no sistema
-  PROCEDURE pc_busca_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
-                                    ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
-                                    ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
-                                    ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
-                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                    ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
                                      
   --Inclui orgão expedidor
   PROCEDURE pc_incluir_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
@@ -128,19 +128,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADORG AS
    END pc_gera_log;
   
   
-  --Busca orgão expedidor cadastrado no sistema
-  PROCEDURE pc_busca_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
-                                    ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
-                                    ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
-                                    ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
-                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                    ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+  --Consulta orgão expedidor cadastrado no sistema
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                       ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
   /* .............................................................................
-   Programa: pc_busca_orgao_expedidor
+   Programa: pc_consulta_orgao_expedidor
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano - CECRED
@@ -274,14 +274,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADORG AS
     WHEN OTHERS THEN
       
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral (TELA_CADORG.pc_busca_orgao_expedidor).';
+      pr_dscritic := 'Erro geral (TELA_CADORG.pc_consulta_orgao_expedidor).';
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
       
       ROLLBACK;   
   
-  END pc_busca_orgao_expedidor;
+  END pc_consulta_orgao_expedidor;
 
   --Inclui orgão expedidor
   PROCEDURE pc_incluir_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor

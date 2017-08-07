@@ -425,17 +425,17 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                    ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
                                    ,pr_des_erro  OUT VARCHAR2);     
                                    
-  PROCEDURE pc_busca_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
-                                    ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
-                                    ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
-                                    ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
-                                    ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
-                                    ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
-                                    ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
-                                    ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
-                                    ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
-                                    ,pr_des_erro  OUT VARCHAR2);  
-                                    
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2);  
+                                     
   PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
                          ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
                          ,pr_flserasa  IN tbgen_cnae.flserasa%TYPE --Negativar SERASA
@@ -5977,20 +5977,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     
   END pc_busca_nacionalidades;
   
-  PROCEDURE pc_busca_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
-                                    ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
-                                    ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
-                                    ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
-                                    ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
-                                    ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
-                                    ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
-                                    ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
-                                    ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
-                                    ,pr_des_erro  OUT VARCHAR2)IS
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2)IS
   
   /*---------------------------------------------------------------------------------------------------------------
     
-  Programa : pc_busca_orgao_expedidor                            antiga: 
+  Programa : pc_consulta_orgao_expedidor                            antiga: 
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Adriano - CECRED
@@ -6042,23 +6042,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       RAISE vr_exc_erro;
     END IF;
     
-    TELA_CADORG.pc_busca_orgao_expedidor(pr_cdorgao_expedidor => pr_cdorgao_expedidor 
-                                        ,pr_nmorgao_expedidor => pr_nmorgao_expedidor
-                                        ,pr_nrregist => pr_nrregist
-                                        ,pr_nriniseq => pr_nriniseq
-                                        ,pr_xmllog   => pr_xmllog
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic 
-                                        ,pr_retxml   => pr_retxml
-                                        ,pr_nmdcampo => pr_nmdcampo
-                                        ,pr_des_erro => pr_des_erro);
+    TELA_CADORG.pc_consulta_orgao_expedidor(pr_cdorgao_expedidor => pr_cdorgao_expedidor 
+                                           ,pr_nmorgao_expedidor => pr_nmorgao_expedidor
+                                           ,pr_nrregist => pr_nrregist
+                                           ,pr_nriniseq => pr_nriniseq
+                                           ,pr_xmllog   => pr_xmllog
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic 
+                                           ,pr_retxml   => pr_retxml
+                                           ,pr_nmdcampo => pr_nmdcampo
+                                           ,pr_des_erro => pr_des_erro);
                                        
     IF pr_des_erro <> 'OK' THEN
      
       IF nvl(vr_cdcritic,0) = 0    AND
          TRIM(vr_dscritic) IS NULL THEN
       
-        vr_dscritic := 'Erro na chamada da rotina TELA_CADORG.pc_busca_orgao_expedidor.';
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADORG.pc_consulta_orgao_expedidor.';
           
       END IF;
     
@@ -6082,13 +6082,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na ZOOM0001.pc_busca_orgao_expedidor --> '|| SQLERRM;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_consulta_orgao_expedidor --> '|| SQLERRM;
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
     
-  END pc_busca_orgao_expedidor;
+  END pc_consulta_orgao_expedidor;
   
   PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
                          ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
