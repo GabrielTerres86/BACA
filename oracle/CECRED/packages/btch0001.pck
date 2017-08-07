@@ -6,12 +6,18 @@ CREATE OR REPLACE PACKAGE CECRED.btch0001 AS
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: --/--/----
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas do processamento batch
+  --
+  -- Alterações:
+  --             03/07/2017 - Colocada descrição da mensagem de erro no padrão
+  --                        - incluido tratamento de excptions nos cursores para melhorar os erros
+  --                          (Belli - Envolti - Chamado 667957)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Cursor genérico de calendário */
@@ -163,7 +169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: 18/05/2017
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 03/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -187,6 +193,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
   18/05/2017 - No procedimento pc_gera_log_batch, simplificada a lógica de extração do nome do programa da
                mensagem enviada. Se não encontrar a seta '-->' o programa ficará vazio; Mensagem irá
                acrescida de module e action (read_module) para melhorar o rastreio do mesmo (Carlos)  
+  
+  03/07/2017 - Colocada descrição da mensagem de erro no padrão 
+             - incluido tratamento de excptions nos cursores para melhorar os erros
+               (Belli - Envolti - Chamado 667957)
+  
   --------------------------------------------------------------------------------------------------------------- */
 
   -- Tratamento de erros
@@ -604,14 +615,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                              pr_flgsucesso   => pr_flgsucesso,  -- tbgen_prglog
                              pr_nmarqlog     => vr_nmarqlog,
                              PR_IDPRGLOG     => vr_idprglog);
-  
+      
       IF pr_dsdirlog IS NOT NULL THEN
         vr_dircop_log := pr_dsdirlog;
       ELSE
-        -- Buscar o diretório log da cooperativa conectada
-        vr_dircop_log := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                              ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsubdir => 'log');
+      -- Buscar o diretório log da cooperativa conectada
+      vr_dircop_log := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsubdir => 'log');
       END IF;
       -- Se foi enviado nome de arquivo específico
       IF pr_nmarqlog IS NOT NULL THEN
@@ -687,7 +698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --  Sistema  : Processos Batch
     --  Sigla    : BTCH
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2016.                   Ultima atualizacao: 16/05/2016
+    --  Data     : Maio/2016.                   Ultima atualizacao: 03/07/2017
     --
     --  Dados referentes ao programa:
     --
@@ -695,6 +706,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     --   Objetivo  : Gerar log de execução dos jobs
     --
     --   Alteracoes: 
+    --               03/07/2017 - Colocada descrição da mensagem de erro no padrão 
+    --                          - incluido tratamento de excptions nos cursores para melhorar os erros
+    --                            (Belli - Envolti - Chamado 667957)
     --               
     -- .............................................................................
     
@@ -706,22 +720,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
        WHERE cdcooper = pr_cdcooper
          AND upper(cdprogra) = pr_cdprogra;
     rw_crapprg cr_crapprg%ROWTYPE;    
-
+    
     ------------------------------- VARIAVEIS -------------------------------
     vr_dscdolog VARCHAR2(4000);
     vr_dslogmes VARCHAR2(400);
     
+    -- Trata Erro - Chamado 667957 - 034/07/2018
+    vr_exc_saida  EXCEPTION;
+    vr_dscritic   VARCHAR2(4000);
+    
   BEGIN
   
     -- Buscar nome do programa
-    OPEN cr_crapprg;
-    FETCH cr_crapprg INTO rw_crapprg;
-    CLOSE cr_crapprg;
-    
+    BEGIN
+      OPEN cr_crapprg;
+      FETCH cr_crapprg INTO rw_crapprg;
+      CLOSE cr_crapprg;
+      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017            
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+        
+        vr_dscritic := 'cursor cr_crapprg - com erro: ' || SQLERRM;
+        RAISE vr_exc_saida;
+    END;        
+     
     --> Log de inicio de execução
     IF pr_dstiplog = 'I' AND pr_flgerlog = FALSE THEN
       -- Gerar log
-      vr_dscdolog := 'Inicio da execucao: ' || pr_nomdojob;
+      vr_dscdolog := 'Inicio da execucao';
 
       IF trim(rw_crapprg.dsprogra##1) IS NOT NULL THEN
         vr_dscdolog := vr_dscdolog || ' - ' || trim(rw_crapprg.dsprogra##1);
@@ -731,23 +760,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
         vr_dscdolog := vr_dscdolog || ' ' || pr_dscritic;
       END IF;
       
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017      
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - JOB --> '|| vr_dscdolog,
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || nvl(pr_nomdojob,'JOB') || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscdolog,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_nmarqlog     => pr_nmarqlog,
                                  pr_cdprograma   => pr_nomdojob,
                                  pr_tpexecucao   => 2);
       pr_flgerlog := TRUE;
     --> Log de final da execução
-    ELSIF pr_dstiplog = 'F' AND pr_flgerlog THEN    
+    ELSIF pr_dstiplog = 'F' AND pr_flgerlog THEN
+    
+      vr_dscdolog := 'Execucao ok';
 
-      vr_dscdolog := pr_nomdojob ||' --> Execucao ok';
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog,
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ALERTA: ' || vr_dscdolog,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_cdprograma   => pr_nomdojob,
                                  pr_nmarqlog     => pr_nmarqlog,
@@ -755,11 +788,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 
     --> Log Final com erro
     ELSIF pr_dstiplog = 'E' AND pr_flgerlog THEN
-      vr_dscdolog := pr_nomdojob ||' --> PROGRAMA COM ERRO: '||pr_dscritic;
+      
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog,
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || pr_dscritic,
                                  pr_dstiplog     => pr_dstiplog,
                                  pr_cdprograma   => pr_nomdojob,
                                  pr_nmarqlog     => pr_nmarqlog,
@@ -767,13 +802,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 
     --> Caso passado critica e nao caiu em nenhuma situalção acima
     ELSIF pr_dscritic IS NOT NULL THEN
+      
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
     
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := pr_nomdojob ||' --> PROGRAMA COM ALERTA: '||pr_dscritic;
+      vr_dscdolog := 'pr_dstiplog fora do padrão:' || pr_dstiplog || ' - ' ||pr_dscritic;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, 
+                                 pr_ind_tipo_log => 3, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog,
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || vr_dscdolog,
                                  pr_nmarqlog     => vr_dslogmes,
                                  pr_dstiplog     => 'E',
                                  pr_cdprograma   => pr_nomdojob,
@@ -782,15 +820,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     END IF; 
   
   EXCEPTION
-    WHEN OTHERS THEN
+    WHEN vr_exc_saida THEN 
+      -- incluido tratamento de excptions nos cursores para melhorar os erros - Chamado 667957 - 04/07/2017
       vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-      vr_dscdolog := pr_nomdojob ||' --> Erro ao gerar log: '||SQLERRM;
+      vr_dscdolog := pr_dscritic || ' - ' || vr_dscritic;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - '|| vr_dscdolog,
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || vr_dscdolog,
                                  pr_nmarqlog     => vr_dslogmes,
                                  pr_tpexecucao   => 2);
+      
+    WHEN OTHERS THEN
+                                 
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
+      
+      -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017
+      vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+      vr_dscdolog := pr_dscritic || ' - Log com problema: '||SQLERRM ;
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, 
+                                 pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                    ' - ' || pr_nomdojob || ' --> ' || 
+                                                    'ERRO: ' || vr_dscdolog,
+                                 pr_nmarqlog     => vr_dslogmes,
+                                 pr_tpexecucao   => 2);                          
     
   END pc_log_exec_job;
   
