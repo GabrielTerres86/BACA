@@ -11,6 +11,8 @@
 
 				  30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
                                código do departamento ao invés da descrição (Renato Darosci - Supero)
+							   
+                  25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
  */
 ?>
  
@@ -49,7 +51,8 @@
 	$dstempor = $_POST['dstempor'];
 	$dsdispen = $_POST['dsdispen'];
 	$dssittfn = $_POST['dssittfn'];
-	
+	$flgntcem = (isset($_POST['flgntcem'])) ? $_POST['flgntcem']   : 'no' ;
+	           
 	// operacao
 	$dtlimite = $_POST['dtlimite'];
 	
@@ -122,7 +125,8 @@
 		$xml .= "		<dtdfinal>".$dtdfinal."</dtdfinal>";	
 		$xml .= "		<cdsitenv>".$cdsitenv."</cdsitenv>";	
 		$xml .= "		<flsistaa>".$flsistaa."</flsistaa>";	
-		$xml .= "		<mmtramax>".$mmtramax."</mmtramax>";	
+		$xml .= "		<mmtramax>".$mmtramax."</mmtramax>";
+		$xml .= "		<flgntcem>".$flgntcem."</flgntcem>";
 		$xml .= "  </Dados>";
 		$xml .= "</Root>";	
 
@@ -150,7 +154,7 @@
 	if ( $operacao == 'sensores' ) {
 		include('tab_sensores.php');
 
-	} else if ( $operacao == 'configuracao' ) {
+	} else if ( $operacao == 'configuracao' ) {		
 		include('form_configuracao.php');
 	
 	} else if ( $operacao == 'operacao' ) {

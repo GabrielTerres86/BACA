@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 19/05/2017
+      Data: Janeiro/2010                        Ultima alteracao: 25/07/2017
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -297,6 +297,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			19/05/2017 - Necessaria inclusao de novo parametro na chamada da
 			             procedure lista_protocolos para Recarga de Celular
 						 (Diego).
+						 
+            25/07/2017 - #712156 Melhoria 274, criação da rotina verifica_notas_cem,
+                         operacao 75, para verificar se o TAA utiliza notas de cem 
+						 (Carlos)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -395,6 +399,7 @@ DEFINE VARIABLE aux_hrfimnot AS INT                         NO-UNDO. /* fim saqu
 DEFINE VARIABLE aux_vlsaqnot AS DEC                         NO-UNDO. /* valor saque noturno */
 DEFINE VARIABLE aux_nrtempor AS INT                         NO-UNDO. /* temporizador */
 DEFINE VARIABLE aux_flgblsaq AS LOGICAL                     NO-UNDO. /* bloq. de saque */
+DEFINE VARIABLE aux_flgntcem AS LOGICAL                     NO-UNDO. /* usa notas de cem reais */
 
 /* para validacoes de titulos e convenios */
 DEFINE VARIABLE aux_cdbarra1 AS CHAR                        NO-UNDO.
@@ -1674,6 +1679,14 @@ DO:
         IF   aux_operacao = 74   THEN
              DO:               
                  RUN exclui_agendamentos_recarga.
+                 
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+	      ELSE
+        IF   aux_operacao = 75   THEN
+             DO:
+                 RUN verifica_notas_cem.
                  
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
@@ -10302,5 +10315,33 @@ PROCEDURE exclui_agendamentos_recarga:
     RETURN "OK".
 
 END PROCEDURE.
+
+PROCEDURE verifica_notas_cem:
+
+    RUN sistema/generico/procedures/b1wgen0123.p PERSISTENT SET h-b1wgen0123.
+    
+    RUN verifica_notas_cem IN h-b1wgen0123(INPUT crapcop.cdcooper, 
+                                           INPUT craptfn.nrterfin,
+                                           OUTPUT aux_flgntcem).
+    DELETE PROCEDURE h-b1wgen0123.
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"FLGNTCEM","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_flgntcem).
+    xField:APPEND-CHILD(xText).
+
+
+    RETURN "OK".
+
+END PROCEDURE.
+/* Fim 75 - verifica notas cem */
+
+
 /* .......................................................................... */
 

@@ -7,10 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 17/09/2012 - Implementação do novo layout (David Kruger).
  *                13/08/2013 - Alteração da sigla PAC para PA (Carlos).
+ *                25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
  * --------------
  */
 ?>
-
 <form id="frmConfiguracao" name="frmConfiguracao" class="formulario" onSubmit="return false;">
 		
 	<fieldset>	
@@ -47,6 +47,11 @@
 		<input name="qtcasset" id="qtcasset" type="text" value="<? echo $qtcasset ?>" />
 		<br />
 
+		<label for="flgntcem"><? echo utf8ToHtml('Usa Notas 100:') ?></label>		
+		<input name="flgntcem" id="flgntcem" type="checkbox" value="yes"
+		<?php echo ($flgntcem == 'yes')? 'checked="checked"':'' ?> />
+		<br />
+		
 		<label for="dstempor"><? echo utf8ToHtml('Temporizador:') ?></label>
 		<input name="dstempor" id="dstempor" type="text" value="<? echo $dstempor ?>" />
 		<br />
@@ -68,7 +73,7 @@
 		<label for="dsfimno2"><? echo utf8ToHtml('Horas') ?></label>
 		<br />
 
-		<label for="dssaqnot"><? echo utf8ToHtml('Saque Maximo:') ?></label>
+		<label for="dssaqnot"><? echo utf8ToHtml('Saque Máximo:') ?></label>
 		<input name="dssaqnot" id="dssaqnot" type="text" value="<? echo $dssaqnot ?>" />
 
 		<br style="clear:both" />

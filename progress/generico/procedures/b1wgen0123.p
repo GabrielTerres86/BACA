@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0123.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Novembro/2011                     Ultima atualizacao: 27/07/2016
+    Data    : Novembro/2011                     Ultima atualizacao: 25/07/2017
 
     Objetivo  : Tranformacao BO tela CASH
 
@@ -69,6 +69,11 @@
 
 			   06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                             departamento passando a considerar o código (Renato Darosci)
+                            
+               25/07/2017 - #712156 Melhoria 274, criação da rotina verifica_notas_cem,
+                            operacao 75, para verificar se o TAA utiliza notas de cem;
+                            Inclusão do par flgntcem na rotina Grava_Dados e campo 
+							flgntcem na temp-table das opções A e C (Carlos)
 
 ............................................................................*/
 
@@ -118,8 +123,9 @@ DEF VAR tot_vlgerdin AS DECI   FORMAT "z,zzz,zz9.99"                NO-UNDO.
 DEF VAR tot_vlgerchq AS DECI   FORMAT "z,zzz,zz9.99"                NO-UNDO.
 DEF VAR tot_qtsittot AS INTE                                        NO-UNDO.
 
-
 DEF VAR aux_flgblsaq AS LOGICAL                                     NO-UNDO.
+
+DEF VAR aux_dslogtel AS CHAR  INIT ""                               NO-UNDO.
 
 FORM aux_dstitulo       AT 1 NO-LABEL  FORMAT "x(80)"
      SKIP(1)
@@ -367,7 +373,8 @@ PROCEDURE Busca_Dados:
                                                   craptfn.vlnotcas[5]
                             
                            tt-terminal.vltotalP = 0
-                           tt-terminal.flgblsaq = craptfn.flgblsaq.
+                           tt-terminal.flgblsaq = craptfn.flgblsaq
+                           tt-terminal.flgntcem = craptfn.flgntcem.
             
                     /* se o terminal possui sistema antigo, calcula a
                       quantidade de envelopes */
@@ -380,6 +387,7 @@ PROCEDURE Busca_Dados:
                 END. /* par_cddopcao = C */
             WHEN "A" THEN
                 DO:
+
                     FOR FIRST craptfn WHERE 
                               craptfn.cdcooper = par_cdcooper AND
                               craptfn.nrterfin = par_nrterfin NO-LOCK: END.
@@ -433,8 +441,9 @@ PROCEDURE Busca_Dados:
                            tt-terminal.dsfimnot = STRING(craptfn.hrfimnot,
                                                                     "HH:MM:SS")
                            tt-terminal.dssaqnot = "R$ " + TRIM(STRING(
-                                               craptfn.vlsaqnot,"zzz,zz9.99")).
-                    
+                                               craptfn.vlsaqnot,"zzz,zz9.99"))
+                           tt-terminal.flgntcem = craptfn.flgntcem.
+
                 END. /* par_cddopcao = A */
             WHEN "S" THEN
                 DO:
@@ -2637,7 +2646,8 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_nmoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tprecolh AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_qttotalp AS INTE FORMAT "z,zz9"            NO-UNDO.
-    
+    DEF  INPUT PARAM par_flgntcem AS LOGI                           NO-UNDO.
+
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
@@ -2736,21 +2746,44 @@ PROCEDURE Grava_Dados:
                         DO:
                             ASSIGN aux_dscritic = "Cooperativa nao cadastrada.".
                             UNDO Grava, LEAVE Grava.
-                        END.
-
+                    END.
+                    
+                    /* Logar alteracao de PA */
                     IF  craptfn.cdagenci <> par_cdagencx  THEN
-                        UNIX SILENT VALUE("echo "                             +
-                                     STRING(TODAY,"99/99/9999") + " - "   +
-                                     STRING(TIME,"HH:MM:SS") + " - "      +
-                                     "TAA: " + STRING(par_nrterfin) + " " +
-                                     par_dsterfin + " - " + "Operador "   + 
-                                     par_cdoperad + "-" + par_nmoperad    +
-                                     " efetuou alteracao no cadastro. De PA: " +
-                                     STRING(craptfn.cdagenci) + " para PA: " + 
-                                     STRING(par_cdagencx) +
-                                     " >> /usr/coop/" + 
-                                     TRIM(crabcop.dsdircop) + 
-                                     "/log/cash.log").
+                    DO:
+                        ASSIGN aux_dslogtel = aux_dslogtel + 
+                            STRING(TODAY,"99/99/9999") + " - "   +
+                            STRING(TIME,"HH:MM:SS") + " - "      +
+                            "TAA: " + STRING(par_nrterfin) + " " +
+                            par_dsterfin + " - " + "Operador "   + 
+                            par_cdoperad + "-" + par_nmoperad    +
+                            " efetuou alteracao no cadastro. De PA: " +
+                            STRING(craptfn.cdagenci) + " para PA: " + 
+                            STRING(par_cdagencx).
+                    END.
+
+                    /* Logar alteracao de uso de nota de cem */
+                    IF  craptfn.flgntcem <> par_flgntcem  THEN
+                    DO:
+                        IF aux_dslogtel <> "" THEN
+                            ASSIGN aux_dslogtel = aux_dslogtel + "'\r\n'".
+                        ASSIGN aux_dslogtel = aux_dslogtel + 
+                            STRING(TODAY,"99/99/9999") + " - "   +
+                            STRING(TIME,"HH:MM:SS") + " - "      +
+                            "TAA: " + STRING(par_nrterfin) + " " +
+                            par_dsterfin + " - " + "Operador "   + 
+                            par_cdoperad + "-" + par_nmoperad    +
+                            " efetuou alteracao no cadastro. Campo: Usa notas de cem, de: " +
+                            STRING(craptfn.flgntcem,'Sim/Nao') + " para: " + 
+                            STRING(par_flgntcem,'Sim/Nao').
+                    END.
+                    
+                    IF aux_dslogtel <> "" THEN
+                        UNIX SILENT VALUE("echo " +
+                        aux_dslogtel              +
+                        " >> /usr/coop/"          + 
+                        TRIM(crabcop.dsdircop)    + 
+                        "/log/cash.log").
 
                     ASSIGN craptfn.dsfabtfn = CAPS(par_dsfabtfn)
                            craptfn.dsmodelo = CAPS(par_dsmodelo)
@@ -2758,7 +2791,8 @@ PROCEDURE Grava_Dados:
                            craptfn.nmnarede = LC(TRIM(par_nmnarede))
                            craptfn.nrdendip = TRIM(par_nrdendip)
                            craptfn.cdsitfin = par_cdsitfin
-                           craptfn.cdagenci = par_cdagencx.
+                           craptfn.cdagenci = par_cdagencx
+                           craptfn.flgntcem = par_flgntcem.
                     
                     
                 END. /* par_cddopcao = A */
@@ -2831,7 +2865,8 @@ PROCEDURE Grava_Dados:
                            craptfn.dsmodelo = CAPS(par_dsmodelo)
                            craptfn.dsdserie = par_dsdserie
                            craptfn.flsistaa = NO   /* inicial bloqueado */
-                           craptfn.flupdate = YES. /* atualizar */
+                           craptfn.flupdate = YES  /* atualizar */
+                           craptfn.flgntcem = par_flgntcem.
                     VALIDATE craptfn.
                     
                     CREATE crapstf.
@@ -4690,6 +4725,25 @@ PROCEDURE alterar_status_saque:
 
 END. /* fim alterar_status_saque */
 
+/* Verifica se o TAA usa notas de R$100,00. TAA_autorizador, operacao 75 */
+PROCEDURE verifica_notas_cem:
+
+    DEF INPUT   PARAM par_cdcooper AS INTE                          NO-UNDO.
+    DEF INPUT   PARAM par_nrterfin AS INTE                          NO-UNDO.
+    DEF OUTPUT  PARAM par_flgntcem AS LOGICAL                       NO-UNDO.
+
+    FIND FIRST craptfn WHERE craptfn.cdcooper = par_cdcooper
+                         AND craptfn.nrterfin = par_nrterfin
+    NO-LOCK NO-ERROR.
+
+    IF AVAIL craptfn THEN
+        ASSIGN par_flgntcem = craptfn.flgntcem.
+    ELSE
+        ASSIGN par_flgntcem = FALSE.
+
+    RETURN "OK".
+END.
+/* fim verifica_notas_cem */
 
 
 /*.............................. PROCEDURES (FIM) ...........................*/
@@ -4741,4 +4795,3 @@ FUNCTION LockTabela RETURNS CHARACTER PRIVATE
     RETURN aux_mslocktb.   /* Function return value. */
 
 END FUNCTION.
-
