@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 04/08/2017
+    Data    : 07/02/2013                     Ultima atualizacao: 07/08/2017
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -56,6 +56,9 @@
         04/08/2017 - Alterado rotina grava-dados para gerar numero de conta 
                      automaticamente da mesma forma que a matrci faz 
                      (Tiago/Thiago #689996)
+					 
+		07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+				     inclusao, conforme solicitado no chamado 689996. (Kelvin)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -738,12 +741,12 @@ PROCEDURE Grava_Dados:
     DEF OUTPUT PARAM aux_dtcantrf AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM aux_dtadmiss AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM aux_cdsitcta AS CHAR                           NO-UNDO.
+	DEF OUTPUT PARAM aux_nrdconrt LIKE crapass.nrdconta 			NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR h-b1wgen0052 AS HANDLE                                  NO-UNDO.
-    DEF VAR aux_nrdconta LIKE crapass.nrdconta                      NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     
@@ -766,11 +769,11 @@ PROCEDURE Grava_Dados:
              
             RUN Retorna_Conta IN h-b1wgen0052 (INPUT par_cdcooper,
                                                INPUT par_idorigem,
-                                              OUTPUT aux_nrdconta).
+                                              OUTPUT aux_nrdconrt).
                    
             DELETE PROCEDURE h-b1wgen0052.
               
-            IF  aux_nrdconta <= 0  THEN
+            IF  aux_nrdconrt <= 0  THEN
                 DO:
                   ASSIGN aux_cdcritic = 0
                          aux_dscritic = "Nao foi possivel gerar numero de conta".
@@ -787,7 +790,7 @@ PROCEDURE Grava_Dados:
                    crapccs.cdopeadm = par_cdoperad
                    crapccs.cdopecan = ""
                    crapccs.nrdigtrf = par_nrdigtrf
-                   crapccs.nrdconta = aux_nrdconta
+                   crapccs.nrdconta = aux_nrdconrt
                    crapccs.nrctatrf = par_nrctatrf
                    crapccs.nrcpfcgc = par_nrcpfcgc
                    crapccs.nmfuncio = par_nmfuncio
@@ -803,7 +806,7 @@ PROCEDURE Grava_Dados:
         Contador: DO aux_contador = 1 TO 10:
 
             FIND crapccs WHERE crapccs.cdcooper = par_cdcooper  AND
-                               crapccs.nrdconta = aux_nrdconta 
+                               crapccs.nrdconta = par_nrdconta 
                                EXCLUSIVE-LOCK NO-ERROR.
 
             IF  NOT AVAIL crapccs THEN
