@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps700 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Castro (RKAM)
-     Data    : Janeiro/2016                     Ultima atualizacao: 22/03/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 20/06/2017
 
        Dados referentes ao programa:
 
@@ -26,6 +26,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps700 (pr_cdcooper IN crapcop.cdcooper%T
                  22/03/2017 - Processamento da planilha foi movido para a PACKAGE0003
                               para que seja utilizada pelo crps e pela tela PRCINS
                               (Douglas - Chamado 618510)
+
+                   20/06/2017 - não gravar log no retorno da rotina INSS0003.pc_importar_prova_vida
+                                pois esta rotina já faz a gravação.
+                                (Ana - Envolti - Ch 660286)
 
     ............................................................................ */
 
@@ -109,16 +113,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps700 (pr_cdcooper IN crapcop.cdcooper%T
         pc_controla_log_batch(pr_dstiplog => 'E',
                               pr_dscritic => vr_dscritic);
                           
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                    ' - ' || vr_cdprogra ||
-                                                    ' --> ' || pr_dscritic);
-                          
         -- Efetuar rollback
         ROLLBACK;
-
 
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado

@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps517(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : David
-    Data    : Outubro/2008                    Ultima Atualizacao: 21/02/2017
+    Data    : Outubro/2008                    Ultima Atualizacao: 29/06/2018
 
     Dados referente ao programa:
     
@@ -80,6 +80,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps517(pr_cdcooper IN crapcop.cdcooper%TY
 
                21/02/2017 - #551221 Ajuste de padronização do nome do job e log de início 
                             e fim do mesmo no proc_batch (Carlos)
+                            
+               29/06/2018 - Colocado Log no padrão 
+                            (Belli - Envolti - Chamado 660306)
+                            
     ............................................................................ */
 DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -142,9 +146,10 @@ DECLARE
         vr_tempo := to_char(SYSDATE,'SSSSS');             
        
         vr_cdcooper := rw_crapcop.cdcooper;
-
+        
+        -- Colocado Log no padrão - 29/06/2018 - Chamado 660306
         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato 
+                                  ,pr_ind_tipo_log => 1 -- Mensagem tratada
                                   ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
                                                       rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                   ,pr_des_log      => to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_nomdojob ||
@@ -196,6 +201,11 @@ DECLARE
                            ,pr_nmdcampo => vr_nmdcampo
                            ,pr_des_erro => vr_des_erro);
 
+        -- Seta modulo no retorno da pakcage disparada - Chamado 660306 - 29/06/2017                   
+        -- Incluir nome do modulo logado
+        GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                                ,pr_action => null); 
+
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           -- Busca o tipo de Exception em que deve dar RAISE
           vr_tp_excep := gene0007.fn_valor_tag(pr_xml     => vr_xml
@@ -216,21 +226,22 @@ DECLARE
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
         ***************************************************************************************/
-
+        
+        -- Colocado Log no padrão - 29/06/2018 - Chamado 660306
         --> Criar log de fim de execução
         vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_nomdojob ||
                            ' --> Stored Procedure rodou em '|| 
                            -- calcular tempo de execução
                            to_char(to_date(to_char(SYSDATE,'SSSSS') - vr_tempo,'SSSSS'),'HH24:MI:SS');
                        
-        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
-                                                      rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
+         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                                   ,pr_ind_tipo_log => 1
+                                   ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
+                                                       rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                   ,pr_des_log      => vr_desdolog
                                   ,pr_dstiplog     => 'F'
                                   ,pr_cdprograma   => vr_nomdojob);
-
+        
         -- Commitar as alterações
         COMMIT;
       END LOOP;           
@@ -244,14 +255,17 @@ DECLARE
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+
+          -- Colocado Log no padrão - 29/06/2018 - Chamado 660306
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato 
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
                                                         pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_nomdojob || ' --> '
-                                                                      || vr_dscritic
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - ' || vr_nomdojob ||
+                                                                ' --> ' || 
+                                                                'ERRO: ' ||
+                                                                vr_dscritic
                                     ,pr_dstiplog     => 'E'
                                     ,pr_cdprograma   => vr_nomdojob);
         END IF;
@@ -273,14 +287,16 @@ DECLARE
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Colocado Log no padrão - 29/06/2018 - Chamado 660306
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,
                                                                                   'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_nomdojob || ' --> '
-                                                                      || vr_dscritic
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - ' || vr_nomdojob ||
+                                                                ' --> ' || 
+                                                                'ERRO: ' ||
+                                                                vr_dscritic
                                     ,pr_dstiplog     => 'E'
                                     ,pr_cdprograma   => vr_nomdojob);
         END IF;
@@ -291,14 +307,16 @@ DECLARE
      WHEN OTHERS THEN        
 
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Colocado Log no padrão - 29/06/2018 - Chamado 660306
           -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,
                                                                                   'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_nomdojob || ' --> '
-                                                                      || vr_dscritic
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - ' || vr_nomdojob ||
+                                                                ' --> ' || 
+                                                                'ERRO: ' ||
+                                                                vr_dscritic
                                     ,pr_dstiplog     => 'E'
                                     ,pr_cdprograma   => vr_nomdojob);
         END IF;
