@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0123.p
      Autor   : Rogerius Militão
-     Data    : Novembro/2011                      Ultima atualizacao: 27/05/2014
+     Data    : Novembro/2011                      Ultima atualizacao: 14/07/2017
 
      Objetivo  : BO de Comunicacao XML x BO - Tela CASH
 
@@ -18,6 +18,8 @@
 				 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
 				              da descrição do departamento como parametro e 
 							  passar o código (Renato Darosci)
+
+                14/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
 .............................................................................*/
 
 
@@ -76,6 +78,7 @@ DEF VAR aux_tprecolh  AS LOGICAL                                        NO-UNDO.
 DEF VAR aux_qttotalp  AS INTE                                           NO-UNDO.
 DEF VAR aux_flgblsaq  AS LOGICAL                                        NO-UNDO.
 DEF VAR aux_opreldep  AS CHAR                                           NO-UNDO.
+DEF VAR aux_flgntcem  AS LOGICAL                                        NO-UNDO. 
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -144,6 +147,7 @@ DEF VAR aux_opreldep  AS CHAR                                           NO-UNDO.
              WHEN "nmoperad"  THEN aux_nmoperad = tt-param.valorCampo.
              WHEN "tprecolh"  THEN aux_tprecolh = LOGICAL(tt-param.valorCampo).
              WHEN "qttotalp"  THEN aux_qttotalp = INTE(tt-param.valorCampo).
+             WHEN "flgntcem"  THEN aux_flgntcem = LOGICAL(tt-param.valorCampo).
 
          END CASE.
 
@@ -642,6 +646,7 @@ PROCEDURE Grava_Dados:
                     INPUT aux_nmoperad,
                     INPUT aux_tprecolh,
                     INPUT aux_qttotalp,
+                    INPUT aux_flgntcem,
                    OUTPUT TABLE tt-erro).
                  
     IF  RETURN-VALUE = "NOK" THEN

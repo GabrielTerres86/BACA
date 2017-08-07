@@ -17,6 +17,7 @@
  * 14/11/2014 - Jean Reddiga (RKAM) : Ajuste na função FormataData para obedecer ao parametro operação 
  * 22/04/2015 - Jaison/Elton(CECRED): Ajustado o cabecalho da tabela de listagem de depositos
  * 27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
+ * 25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
  * --------------
  */
 
@@ -154,6 +155,8 @@ function manterRotina( operacao ) {
 	var nmnarede = $('#nmnarede', '#frmConfiguracao').val();
 	var nrdendip = $('#nrdendip', '#frmConfiguracao').val();
 	var qtcasset = $('#qtcasset', '#frmConfiguracao').val();
+	var flgntcem = ($('#flgntcem', '#frmConfiguracao').is(':checked')) ? 'yes' : 'no';
+	
 	var flsistaa = cddopcao == 'B' ? $('#flsistaa', '#frmSistemaTAA').val() : $('#flsistaa', '#'+frmDados).val();
 	var dsterfin = cddopcao == 'I' ? cDsterfin.val() : $('#dsterfin', '#'+frmDados).val();
 	var qttotalp = $('#qttotalP', '#'+frmDados).val();
@@ -234,7 +237,7 @@ function manterRotina( operacao ) {
                 nrlatitude    : nrlatitude,
                 nrlongitude   : nrlongitude,
                 dshorario     : dshorario,
-
+				flgntcem      : flgntcem,
 				redirect	: 'script_ajax'
 			}, 
 			error: function(objAjax,responseError,objExcept) {
@@ -784,6 +787,7 @@ function formataConfiguracao() {
 	rDsfimnot = $('label[for="dsfimnot"]', '#frmConfiguracao');
 	rDsfimno2 = $('label[for="dsfimno2"]', '#frmConfiguracao');
 	rDssaqnot = $('label[for="dssaqnot"]', '#frmConfiguracao');
+	rFlgntcem = $('label[for="flgntcem"]', '#frmConfiguracao');
 
 	rCdagenci.addClass('rotulo').css({'width':'135px'});
 	rDsfabtfn.addClass('rotulo').css({'width':'135px'});	
@@ -800,6 +804,7 @@ function formataConfiguracao() {
 	rDsfimnot.addClass('rotulo').css({'width':'175px'});
 	rDsfimno2.addClass('rotulo-linha').css({'width':'35px'});
 	rDssaqnot.addClass('rotulo').css({'width':'175px'});
+	rFlgntcem.addClass('rotulo').css({'width':'135px'});
 	
 	// campos
 	cCdagenci = $('#cdagenci', '#frmConfiguracao');
@@ -817,6 +822,7 @@ function formataConfiguracao() {
 	cDsininot = $('#dsininot', '#frmConfiguracao');
 	cDsfimnot = $('#dsfimnot', '#frmConfiguracao');
 	cDssaqnot = $('#dssaqnot', '#frmConfiguracao');
+	cFlgntcem = $('#flgntcem', '#frmConfiguracao');
 
 	cCdagenci.addClass('inteiro').css({'width':'100px'}).attr('maxlength','3');
 	cDsfabtfn.css({'width':'200px'}).attr('maxlength','25');
@@ -826,13 +832,14 @@ function formataConfiguracao() {
 	cNrdendip.css({'width':'97px'}).attr('maxlength','14');
 	cCdsitfin.addClass('inteiro').css({'width':'40px'}).attr('maxlength','1');
 	cDssittfn.css({'width':'157px'}).attr('maxlength','20');
-	cQtcasset.addClass('inteiro').css({'width':'100px'}).attr('maxlength','1');
+	cQtcasset.addClass('inteiro').css({'width':'200px'}).attr('maxlength','1');
 	cDstempor.css({'width':'200px'}).attr('maxlength','21');
 	cDsdispen.css({'width':'200px'}).attr('maxlength','21');
 	//cNoturno1.css({'width':'120px'});
 	cDsininot.css({'width':'60px'}).attr('maxlength','8');
 	cDsfimnot.css({'width':'60px'}).attr('maxlength','8');
-	cDssaqnot.css({'width':'160px'}).attr('maxlength','25');
+	cDssaqnot.css({'width':'160px'}).attr('maxlength','25');	
+	cFlgntcem.css({'border':'none','margin':'3px','height':'16px','background-color':'transparent'});
 
 	if ( $.browser.msie ) {
 		rDsfimnot.css({'width':'172px'});
@@ -848,6 +855,7 @@ function formataConfiguracao() {
 		cCdsitfin.remove();
 		cDssittfn.remove();
 		$('#btContinuar', '#divRotina').remove();
+		cFlgntcem.desabilitaCampo();
 	
 	} else if ( cddopcao == 'A' ) {
 		legend.html('Alterar Dados do Terminal');
@@ -858,7 +866,8 @@ function formataConfiguracao() {
 		cNmnarede.habilitaCampo();
 		cNrdendip.habilitaCampo();
 		cCdsitfin.habilitaCampo();
-		cCdagenci.focus();
+		cFlgntcem.habilitaCampo();
+		cCdagenci.focus();		
 	
 	} else if ( cddopcao == 'I' ) {
 		legend.html('Incluir Terminal');
@@ -953,6 +962,14 @@ function formataConfiguracao() {
 	});	
 	
 	cCdsitfin.unbind('keypress').bind('keypress', function(e) {
+	    // Se é a tecla ENTER, 
+		if ( e.keyCode == 13 ) {
+		      cFlgntcem.focus();
+			return false;
+		} 
+	});
+	
+	cFlgntcem.unbind('keypress').bind('keypress', function(e) {
 	    // Se é a tecla ENTER, 
 		if ( e.keyCode == 13 ) {
 		      btnContinuar();
@@ -1860,6 +1877,8 @@ function buscaOpcao( operacao ) {
 
 	var mmtramax = normalizaNumero( $('#mmtramax', '#frmMonitorar').val() );
 	
+	var flgntcem = $('#flgntcem', '#'+frmDados).val();
+	
 	switch( operacao ) {
 		case 'monitorar': mensagem = 'Aguarde, analisando log...'; 	break;
 		default			: mensagem = 'Aguarde, buscando ...'; 		break;
@@ -1898,6 +1917,7 @@ function buscaOpcao( operacao ) {
 			flsistaa: flsistaa,
 			mmtramax: mmtramax,
 			nmdireto: nmdireto,
+			flgntcem: flgntcem,
 			redirect: 'script_ajax'			
 			}, 
 		error: function(objAjax,responseError,objExcept) {
