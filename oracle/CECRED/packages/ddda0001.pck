@@ -262,8 +262,8 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
                                ,pr_cdcritic        OUT crapcri.cdcritic%TYPE --Codigo de Erro
                                ,pr_dscritic        OUT VARCHAR2); --Descricao de Erro                                          
 
-  /* Procedure para realizar a liquidacao intrabancaria do DDA */
-  PROCEDURE pc_liquid_intrabancaria_dda(pr_rowid_cob IN ROWID --ROWID da Cobranca
+  /* Procedure para realizar a baixa efetiva NPC */
+  PROCEDURE pc_baixa_efetiva_npc( pr_rowid_cob IN ROWID --ROWID da Cobranca
                                        ,pr_cdcritic  OUT crapcri.cdcritic%TYPE --Codigo de Erro
                                        ,pr_dscritic  OUT VARCHAR2); --Descricao de Erro
 
@@ -549,6 +549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ,crapcob.dtvctori
           ,crapcob.incobran
           ,crapcob.vldpagto
+          ,crapcob.cdbanpag
       FROM crapcob
      WHERE crapcob.ROWID = pr_rowid;
   rw_crapcob cr_crapcob%ROWTYPE;
@@ -1610,6 +1611,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --             12/07/2017 - Ajuste na data de desconto, pois conforme documentação da CIP, a data de desconto 
     --                          só pode ser utilizada quando for menor que a data do vencimento. Portanto,
     --                          não será utilizada. (Rafael)
+    --
+    --             28/07/2017 - Ajuste para nao ler a tabela craptit a partir do codbarras, pois pode gerar segunda via
+    ---                         será lido a crapret, PRJ340-NPC (Odirlei-AMcom)
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1685,6 +1689,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           FROM TBJDDDA_CTRL_ABERTURA@jdnpcsql
          WHERE "ISPBCliente" = 5463212;
       rw_abertura cr_abertura%ROWTYPE;
+      
+      --> Verificar motivo da baixa
+      CURSOR cr_crapret (pr_dtdpagto crapret.dtocorre%TYPE,
+                         pr_cdcooper crapret.cdcooper%TYPE,
+                         pr_nrcnvcob crapret.nrcnvcob%TYPE,
+                         pr_nrdconta crapret.nrdconta%TYPE,
+                         pr_nrdocmto crapret.nrdocmto%TYPE) IS
+        SELECT /*+ index (ret CRAPRET##CRAPRET2) */
+               ret.cdmotivo
+          FROM crapret ret
+        WHERE ret.cdcooper = pr_cdcooper
+          AND ret.nrcnvcob = pr_nrcnvcob
+          AND ret.nrdconta = pr_nrdconta
+          AND ret.nrdocmto = pr_nrdocmto
+          AND ret.cdocorre IN (6,17,76,77)
+          AND ret.dtocorre = pr_dtdpagto
+          AND rownum       = 1;
+      rw_crapret cr_crapret%ROWTYPE;
       
       --Variaveis Locais
       vr_index    INTEGER;
@@ -2045,46 +2067,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       
       --> Se for operacao de baixa
       IF pr_tpoperad = 'B' AND 
-         --> e foi pago na cooperativa(baixa intrabancaria)
-         rw_crapcob.indpagto <> 0 AND 
          rw_crapcob.incobran = 5 THEN 
          
-        rw_craptit := NULL;
-        --> buscar titulo
-        OPEN cr_craptit (pr_cdcooper  => rw_crapcob.cdcooper,
-                         pr_dtmvtolt  => rw_crapcob.dtdpagto,
-                         pr_dscodbar  => vr_cdbarras);
-         
-        FETCH cr_craptit INTO rw_craptit;
-        
-        IF cr_craptit%FOUND THEN
-        
-          IF rw_craptit.flgpgdda = 1 THEN
+        rw_crapret := NULL;
+        --> Verificar motivo da baixa
+        OPEN cr_crapret (pr_dtdpagto => rw_crapcob.dtdpagto,
+                         pr_cdcooper => rw_crapcob.cdcooper,
+                         pr_nrcnvcob => rw_crapcob.nrcnvcob,
+                         pr_nrdconta => rw_crapcob.nrdconta,
+                         pr_nrdocmto => rw_crapcob.nrdocmto);
+        FETCH cr_crapret INTO rw_crapret;
+        CLOSE cr_crapret;
+               
+        CASE rw_crapret.cdmotivo 
+          WHEN '33' THEN vr_cdCanPgt := 8; --> DDA
+          WHEN '03' THEN vr_cdCanPgt := 1; --> Agências- Postos Tradicionais
+          WHEN '32' THEN vr_cdCanPgt := 2; --> Terminal de Auto-Atendimento
+          WHEN '31' THEN vr_cdCanPgt := 1; --> Agências- Postos Tradicionais
+          WHEN '37' THEN vr_cdCanPgt := 1; --> Agências- Postos Tradicionais
+          WHEN '06' THEN vr_cdCanPgt := 3; --> Internet
+        ELSE
             vr_cdCanPgt := 8; --> DDA
-          ELSE
-            CASE rw_craptit.cdagenci 
-              WHEN 90 THEN
-                vr_cdCanPgt := 3; --> Internet            
-              WHEN 91 THEN
-                vr_cdCanPgt := 2; --> Terminal de Auto-Atendimento
-              ELSE
-                vr_cdCanPgt := 1; --> Agências- Postos Tradicionai            
             END CASE;       
-          END IF;
         
-          IF nvl(rw_craptit.nrdconta,0) > 0 THEN
+        IF nvl(vr_cdCanPgt,0) IN (2,3,8) THEN
             vr_cdmeiopg := 2; --> Débito em conta;
           ELSE
             vr_cdmeiopg := 1; --> Espécie
           END IF;
         
-          vr_vlrbaixa := rw_craptit.vldpagto;
+        vr_vlrbaixa := rw_crapcob.vldpagto;
         
         END IF;
-        CLOSE cr_craptit;
-        
-      END IF;
-      
       
       --Pegar proximo indice remessa
       vr_index := pr_tab_remessa_dda.Count + 1;
@@ -4819,14 +4833,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END;
   END;
 
-  /* Procedure para realizar a liquidacao intrabancaria do DDA */
-  PROCEDURE pc_liquid_intrabancaria_dda(pr_rowid_cob IN ROWID --ROWID da Cobranca
+  /* Procedure para realizar a baixa efetiva NPC */
+  PROCEDURE pc_baixa_efetiva_npc( pr_rowid_cob IN ROWID --ROWID da Cobranca
                                        ,pr_cdcritic  OUT crapcri.cdcritic%TYPE --Codigo de Erro
                                        ,pr_dscritic  OUT VARCHAR2) IS --Descricao de Erro
     ---------------------------------------------------------------------------------------------------------------
     --
-    --  Programa : pc_liquid_intrabancaria_dda    Antigo: procedures/b1wgen0088.p/liquidacao-intrabancaria-dda
-    --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
+    --  Programa : pc_baixa_efetiva_npc    Antigo: procedures/b1wgen0088.p/liquidacao-intrabancaria-dda
+    --  Sistema  : 
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
     --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
@@ -4834,8 +4848,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
-    -- Objetivo  : Procedure para realizar a liquidacao intrabancaria do DDA
-  
+    -- Objetivo  : Procedure para realizar realizar a baixa efetiva NPC
+    --
+    -- Alteração : 28/07/2017 - Alterado o nome da rotina de pc_liquid_intrabancaria_dda para pc_baixa_efetiva_npc,
+    --                          pois será utilizada tanto para intra quanto para interbancaria.
+    --                          PRJ340 - NPC (Odirlei-AMcom)
+    -- 
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -4893,7 +4911,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         /* Cria Temp-Table do DDA - JD */
         DDDA0001.pc_cria_remessa_dda(pr_rowid_cob       => pr_rowid_cob --ROWID da Cobranca
                                     ,pr_tpoperad        => 'B' --Tipo operador   /* Baixa */
-                                    ,pr_tpdbaixa        => '1' --Tipo de baixa
+                                    ,pr_tpdbaixa        => CASE WHEN (rw_crapcob.cdbanpag = 85) OR 
+                                                                     (rw_crapcob.cdbanpag = 11 AND rw_crapcob.indpagto <> 0) THEN '1' 
+                                                           ELSE 
+                                                             '0' 
+                                                           END --Tipo de baixa
                                     ,pr_dtvencto        => rw_crapcob.dtvencto --Data vencimento
                                     ,pr_vldescto        => rw_crapcob.vldescto --Valor Desconto
                                     ,pr_vlabatim        => rw_crapcob.vlabatim --Valor Abatimento
@@ -4926,10 +4948,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro na rotina DDDA0001.pc_liquid_intrabancaria_dda. ' ||
+        pr_dscritic := 'Erro na rotina DDDA0001.pc_baixa_efetiva_npc. ' ||
                        SQLERRM;
     END;
-  END pc_liquid_intrabancaria_dda;
+  END pc_baixa_efetiva_npc;
 
   --> Rotina para enviar email de alertas sobre beneficiarios/convenios
   PROCEDURE pc_email_alert_JDBNF( pr_cdcooper  IN crapceb.cdcooper%TYPE, --> Codigo da cooperativa

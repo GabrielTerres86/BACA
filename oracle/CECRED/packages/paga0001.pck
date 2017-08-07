@@ -19540,6 +19540,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para processar solicitação na crapdda e comunicar com a JDDA
+    --   Alteração : 28/07/2017 - Alterado o nome da rotina de pc_liquid_intrabancaria_dda para pc_baixa_efetiva_npc,
+    --                            pois será utilizada tanto para intra quanto para interbancaria.
+    --                            PRJ340 - NPC (Odirlei-AMcom)
+    -- 
+    -- .........................................................................
 
   --buscar solicitações pendentes
   CURSOR cr_crapdda is
@@ -19635,8 +19640,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     FOR rw_crapdda IN cr_crapdda LOOP
       IF rw_crapdda.incobran = 5 THEN
     
-      --Executar Liquidacao Intrabancaria DDA
-      ddda0001.pc_liquid_intrabancaria_dda (pr_rowid_cob => rw_crapdda.cobrowid    -- ROWID da Cobranca
+      --Executar baixa efetiva NPC
+      ddda0001.pc_baixa_efetiva_npc (pr_rowid_cob => rw_crapdda.cobrowid    -- ROWID da Cobranca
                                            ,pr_cdcritic  => vr_cdcritic            -- Codigo de Erro
                                            ,pr_dscritic  => vr_dscritic);          -- Descricao de Erro
 

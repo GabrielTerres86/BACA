@@ -41,6 +41,12 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0010 IS
                                   pr_cdcritic OUT INTEGER,    --> Codigo da Critica
                                   pr_dscritic OUT VARCHAR2);  --> Descricao da Critica
 
+  --> Comandar baixa efetiva de boletos pagos no dia fora da cooperativo(interbancaria)
+  PROCEDURE pc_gera_baixa_eft_interbca( pr_cdcooper IN INTEGER,      --> Cooperativa
+                                        pr_dtmvtolt IN DATE,         --> Data
+                                        pr_cdcritic OUT INTEGER,     --> Codigo da Critica
+                                        pr_dscritic OUT VARCHAR2);   --> Descricao da Critica                                  
+
 END COBR0010;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
@@ -772,6 +778,108 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                      ' - ' || SQLERRM;
     
   END pc_grava_instr_boleto;
+  
+  --> Comandar baixa efetiva de boletos pagos no dia fora da cooperativo(interbancaria)
+  PROCEDURE pc_gera_baixa_eft_interbca( pr_cdcooper IN INTEGER,      --> Cooperativa
+                                        pr_dtmvtolt IN DATE,         --> Data
+                                        pr_cdcritic OUT INTEGER,     --> Codigo da Critica
+                                        pr_dscritic OUT VARCHAR2) IS --> Descricao da Critica
+  
+    /* ..........................................................................
+    
+     Programa : pc_gera_baixa_eft_interbca       
+     Sistema : Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Odirlei Busana - AMcom
+     Data    : Julho/2017
+    
+     Dados referentes ao programa:
+      
+     Frequencia: Sempre que for chamado (On-Line)
+     Objetivo  : Comandar baixa efetiva de boletos pagos no dia fora da cooperativo(interbancaria)
+         
+     Alteracoes: 01/08/2017 - Ajustado indpagto para "zero" referente aos boletos 085
+	                          pagos fora da cooperativa. (Rafael)                  
+    
+    .................................................................................*/
+  
+    ----------------> CURSORES <--------------- 
+    --> Buscar boletos pagos no dia
+    CURSOR cr_crapcob IS 
+      SELECT cob.ROWID rowid_cob            
+        FROM crapcob cob
+       WHERE cob.cdcooper = pr_cdcooper
+         AND cob.dtdpagto = pr_dtmvtolt
+         AND cob.indpagto = 0
+         AND cob.flgcbdda = 1
+         AND cob.incobran = 5
+         AND cob.nrdident > 0
+         ;     
+    
+    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
+    TYPE typ_tab_crapcob IS TABLE OF cr_crapcob%ROWTYPE
+         INDEX BY PLS_INTEGER;
+    vr_tab_crapcob typ_tab_crapcob;
+    
+    ----------------> VARIAVEIS <---------------
+    --Variaveis de Erro
+    vr_cdcritic      crapcri.cdcritic%TYPE;
+    vr_dscritic      VARCHAR2(4000);
+  
+    --Variaveis de Excecao
+    vr_exc_erro EXCEPTION;
+  
+  BEGIN
+  
+    --Inicializa variaveis
+    vr_cdcritic := 0;
+    vr_dscritic := NULL;
+    
+    -- Buscar boletos pagos no dia
+    OPEN cr_crapcob;     
+    FETCH cr_crapcob BULK COLLECT INTO vr_tab_crapcob;     
+    CLOSE cr_crapcob;
+       
+    --> Criar crapdda
+    BEGIN
+      FORALL idx IN INDICES OF vr_tab_crapcob SAVE EXCEPTIONS 
+        INSERT INTO crapdda
+                 (  cdcooper, 
+                    dtsolici, 
+                    dtmvtolt,
+                    flgerado, 
+                    cobrowid)                                
+            VALUES (pr_cdcooper, --> cdcooper
+                    SYSDATE,     --> dtsolici
+                    pr_dtmvtolt, --> dtmvtolt
+                    'N',         --> flgerado
+                    vr_tab_crapcob(idx).rowid_cob);                  
+    EXCEPTION
+       WHEN others THEN
+         -- Gerar erro
+         vr_dscritic := 'Erro ao inserir na tabela crapdda. '||
+                        SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
+        RAISE vr_exc_erro;
+    END;      
+  
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Se possui codigo, porém não possui descrição     
+      IF nvl(vr_cdcritic, 0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        -- Buscar descrição
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+    
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    
+    WHEN OTHERS THEN
+    
+      -- definir retorno
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro inesperado ao pc_gera_baixa_eft_interbca:' || SQLERRM;
+    
+  END pc_gera_baixa_eft_interbca;
 
 END COBR0010;
 /

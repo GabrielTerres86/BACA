@@ -351,6 +351,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                12/07/2017 - #712635 Inclusão tabela crapcco nos cursores cr_cde e cr_boletos_pagos_acordos 
                             para otimização (Carlos)
                             
+               28/07/2017 - Ajustes para Comandar baixa efetiva de boletos pagos no dia fora da cooperativo.
+                            PRJ340 - NPC (Odirlei-AMcom) 
+            
                01/08/2017 - Ajuste para incluir a diferença entre o valor pago e o valor do boleto
                             atualizado com multa e juros no campo de juros pago.
                             Esse ajuste foi feito no change set 11141 e liberado em 05/2017, porém
@@ -6382,6 +6385,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             END IF;
          END LOOP;
          
+           
+           --> Comandar baixa efetiva de boletos pagos no dia fora da cooperativo(interbancaria)
+           COBR0010.pc_gera_baixa_eft_interbca (pr_cdcooper => pr_cdcooper,   --> Cooperativa
+                                                pr_dtmvtolt => vr_dtmvtaux,   --> Data
+                                                pr_cdcritic => vr_cdcritic,   --> Codigo da Critica
+                                                pr_dscritic => vr_dscritic);  --> Descricao Critica
+         
+           --> Se ocorreu erro
+           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+             --> Levantar Excecao
+             RAISE vr_exc_saida;
+           END IF;
+
          END IF; -- Fim REPROC
          
          /*  RETIRADO O PROCESSAMENTO DE LIQUIDAÇÃO INTRABANCÁRIA (Renato Darosci - 11/10/2016)

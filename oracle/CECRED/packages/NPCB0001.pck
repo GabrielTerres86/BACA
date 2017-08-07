@@ -343,13 +343,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 16/12/2016
+      Data     : Dezembro/2016.                   Ultima atualizacao: 31/07/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para verificar rollout da plataforma de cobrança
-      Alteração : 
+      Alteração : 31/07/2017 - Ajustado rotina para buscar a faixa de rollout
+                               completa de todas as datas. (Rafael)            
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -357,6 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_dstextab     craptab.dstextab%TYPE;  
     vr_tab_campos   gene0002.typ_split;  
     vr_cdacesso     craptab.cdacesso%TYPE;
+    vr_index        INTEGER;
     
   BEGIN   
   
@@ -399,19 +401,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       
       vr_tab_campos:= gene0002.fn_quebra_string(vr_dstextab,';');
       
-      --> senao encontrar os parametros do rollout, retornar como nao esta na faixa
-      IF vr_tab_campos.count <> 2 THEN
+      --> senao nao encontrar os parametros do rollout, retornar como nao esta na faixa
+      IF vr_tab_campos.count = 0 THEN
         RETURN 0; 
       END IF;
       
-      --> Validar data
+/*      --> Validar data
       IF pr_dtmvtolt >= to_date(vr_tab_campos(1),'DD/MM/RRRR')  THEN
         --> Validar valor
         IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(2)) THEN
           --> Retornar 1 - ja esta na faixa de rollout
           RETURN 1;
         END IF;
+      END IF; */
+      
+      --> Validar data
+      FOR vr_index IN 1..vr_tab_campos.count LOOP
+        IF vr_index MOD 2 = 0 THEN 
+          IF pr_dtmvtolt >= to_date(vr_tab_campos(vr_index-1),'DD/MM/RRRR')  THEN
+            --> Validar valor
+            IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+              --> Retornar 1 - ja esta na faixa de rollout
+              RETURN 1;
       END IF;
+          END IF;
+        END IF;
+      END LOOP;      
       
       RETURN 0;
       

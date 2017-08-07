@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 02/06/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 31/07/2017
     
     Dados referentes ao programa:
 
@@ -498,6 +498,8 @@
               14/06/2017 - Incluido comando TRUNC para cortar o valor de iof em 2 casas
                            decimais, estava falhando comparacao devido ao arredondamento.
                            Heitor (Mouts) - Chamado 688338
+
+			  31/07/2017 - Alterado parametro par_cdcltrcs de INTEGER para CHAR. (Rafael)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -3188,7 +3190,7 @@ PROCEDURE cadastrar-agendamento:
     DEF  INPUT PARAM par_dstransf AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dshistor AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_iptransa AS CHAR                           NO-UNDO.
-	DEF  INPUT PARAM par_cdctrlcs AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_cdctrlcs AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_msgofatr AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdempcon AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_cdsegmto AS CHAR                           NO-UNDO.

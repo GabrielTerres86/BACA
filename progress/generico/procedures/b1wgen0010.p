@@ -36,13 +36,12 @@
 
 
 
-
 /* .............................................................................
 
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 30/03/2017
+   Data    : 12/09/2005                     Ultima atualizacao: 02/08/2017
 
    Dados referentes ao programa:
 
@@ -401,6 +400,9 @@
 			                de cobrança rotinas consulta-bloqueto e 
 							consulta-boleto-2via (Tiago/Ademir SD573538).  
          
+			   02/01/2017 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+							(Ricardo Linhares)                           
+         
                06/01/2017 - Incluida atribuicao do campo flgdprot na rotina cria_tt-consulta-blt
                             Heitor (Mouts) - Chamado 574161
 
@@ -416,6 +418,19 @@
                             
                30/03/2017 - Adicionado o parametro par_idseqttl na procedure  busca-nome-imp-blt
                             e ajustado as procedures que a utilizam (Douglas - Chamado 637660)
+                            
+               20/04/2017 - Ajuste nas consultas de boleto referente ao 
+                            Projeto 340 - NPC (Rafael).                           
+
+			   11/07/2017 - Ajuste nas consultas de boleto referente a
+                            consulta de rollout, Prj. 340 - NPC (Jean Michel). 
+
+                21/07/2017 - Ajustes para nao exibr valor cobrado
+                               na segunda via de boleto a vencer.
+                            PRJ340-NPC(Odirlei-AMcom)
+
+               02/08/2017 - Ajuste na data de vencimento na emissao de segunda
+ 							via de boleto 085. (Rafael)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -519,6 +534,9 @@ DEF VAR aux_na_nmcidsac AS CHAR                                     NO-UNDO.
 DEF VAR aux_na_cdufsaca AS CHAR                                     NO-UNDO.
 DEF VAR aux_na_nrcepsac AS INTE                                     NO-UNDO.
 
+/* Prj. 340 */
+DEF VAR aux_rollout AS INTE                                     NO-UNDO.
+
 /* Variaveis necessarias na gera_retorno_arq_cobranca */
 DEF STREAM str_1.   /*  Para arquivo de trabalho */
 DEF STREAM str_2.
@@ -577,6 +595,9 @@ PROCEDURE consulta-boleto-2via.
     DEF QUERY q_crapcob FOR crapcob, crapcco.
     DEF VAR   aux_query                AS CHAR             NO-UNDO.
     
+    
+    DEF VAR aux_rollout       AS INTE                       NO-UNDO.        
+
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-consulta-blt. 
 
@@ -854,12 +875,35 @@ PROCEDURE consulta-boleto-2via.
                 crapcob.cdmensag = 0 THEN
                 ASSIGN tt-consulta-blt.vldescto = aux_vldescut
                        tt-consulta-blt.cdmensag = aux_cdmensut.
+		END.
+   ELSE
+     DO:
+       /* Caso nao esteja vencido, enviar o valor 
+          atualizado em branco, para que use o 
+          valor original do documento */
+       ASSIGN aux_vltituut = ?.
+	END.
+			
+	/* Consulta Rollout */
+    RUN verifica-rollout(INPUT crapcob.cdcooper,
+                         INPUT crapdat.dtmvtolt,
+                         INPUT crapcob.vltitulo,
+                         OUTPUT aux_rollout).  
+					
+    IF aux_rollout = 1 THEN 
+	 DO:
+       
+	    /* Se estiver na faixa do rollout, data de vencimento e valor do título devem ser mantidos os originais */
+       
+         ASSIGN aux_dtvencut = IF crapcob.dtvctori = ? THEN crapcob.dtvencto ELSE crapcob.dtvctori
+                aux_vltituut_atualizado = crapcob.vltitulo
+                aux_dtvencut_atualizado = aux_dtvencut.
 
         END.
                                      
 	IF AVAIL(tt-consulta-blt) THEN
        DO:
-    ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
+			ASSIGN tt-consulta-blt.dtvencto            = IF aux_critdata = YES THEN aux_dtvencut ELSE crapcob.dtvencto
            tt-consulta-blt.vltitulo            = aux_vltituut
            tt-consulta-blt.vlmormul            = aux_vlmormut
 
@@ -872,7 +916,8 @@ PROCEDURE consulta-boleto-2via.
            tt-consulta-blt.nrdconta = crapcob.nrdconta
            tt-consulta-blt.vldocmto = crapcob.vltitulo
            tt-consulta-blt.dtvctori = aux_dtvencut
-           tt-consulta-blt.flgaceit = "N".
+				   tt-consulta-blt.flgaceit = "N"
+				   tt-consulta-blt.flgcbdda = (IF aux_rollout = 1 THEN "S" ELSE "N").
 
     VALIDATE tt-consulta-blt.
 	   END.
@@ -930,6 +975,7 @@ PROCEDURE consulta-bloqueto.
     DEF VAR aux_des_erro               AS CHAR             NO-UNDO.
     DEF VAR aux_contaant             LIKE crapass.nrdconta NO-UNDO.
     DEF VAR aux_sqttlant             LIKE crapttl.idseqttl NO-UNDO.
+	DEF VAR aux_rollout               AS INTE             NO-UNDO.
 
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
@@ -1242,7 +1288,7 @@ PROCEDURE consulta-bloqueto.
                                  ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                        tt-consulta-blt.flg2viab            = (IF aux_critdata = YES THEN 1 ELSE 0)
 										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.	    								
                                  END.
                                           
@@ -1328,7 +1374,9 @@ PROCEDURE consulta-bloqueto.
                          END.    
                 END.
          WHEN 3 THEN
-                DO:                                    /* Por Data Emissao */
+                DO:       
+
+				/* Por Data Emissao */
                     IF  p-ini-emissao = ? THEN
                         DO:
                             ASSIGN i-cod-erro = 13 
@@ -1466,7 +1514,7 @@ PROCEDURE consulta-bloqueto.
                              ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
                                     tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                     tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                    tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
+                                    tt-consulta-blt.flg2viab            = (IF aux_critdata = YES THEN 1 ELSE 0)
 									tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
                                  END.
                              END.    
@@ -2218,6 +2266,7 @@ PROCEDURE consulta-bloqueto.
                 END.
          WHEN 8 THEN                      /* Por Conta e Nr Doc Cop */
                 DO:
+				
                     IF  p-dsdoccop = "" THEN
                         DO:
                             ASSIGN i-cod-erro    = 22 
@@ -2722,6 +2771,7 @@ PROCEDURE consulta-bloqueto.
          END.
          WHEN 14 THEN  /* Relatorio Francesa - Com Registro */
                 DO:
+					
                     ASSIGN aux_nrregist = 0.
 
                     FOR EACH crapcco WHERE 
@@ -2771,6 +2821,7 @@ PROCEDURE consulta-bloqueto.
                             
                             IF  crapret.nrdocmto <> 0 THEN
 								DO:              
+
                                 RUN p_grava_bloqueto(INPUT p-cdcooper,
                                                      INPUT p-cod-agencia,
                                                      INPUT p-nro-caixa,
@@ -2794,6 +2845,7 @@ PROCEDURE consulta-bloqueto.
 								END.
                             ELSE
 								DO:                         
+
                                 RUN p_grava_bloqueto_rej (INPUT p-cdcooper,
                                                      INPUT p-cod-agencia,
                                                      INPUT p-nro-caixa,
@@ -2813,6 +2865,7 @@ PROCEDURE consulta-bloqueto.
 										    END.
 											LEAVE.
 									    END.
+										
 								END.
                             ASSIGN aux_nrregist = aux_nrregist + 1.
     
@@ -2821,7 +2874,7 @@ PROCEDURE consulta-bloqueto.
                                    tt-consulta-blt.dsocorre = crapoco.dsocorre
                                    tt-consulta-blt.vloutdes = crapret.vloutdes 
                                    tt-consulta-blt.vloutcre = crapret.vloutcre
-                                   tt-consulta-blt.vltarifa = crapret.vltarass
+                                   /*tt-consulta-blt.vltarifa = crapret.vltarass*/
                                    tt-consulta-blt.cdmotivo = crapret.cdmotivo
                                    tt-consulta-blt.dtocorre = crapret.dtocorre
                                    tt-consulta-blt.vldpagto = crapret.vlrpagto
@@ -2834,6 +2887,11 @@ PROCEDURE consulta-bloqueto.
                                    aux_dsmotivo = ""
                                    aux_cdnrmoti = 0.
     
+							IF STRING(crapret.vltarass) = ? THEN
+								assign tt-consulta-blt.vltarifa = 0.
+							ELSE
+								assign tt-consulta-blt.vltarifa = crapret.vltarass.
+								
                             IF  crapret.nrremass > 0 THEN
                                 tt-consulta-blt.dsorigem = "REM-" + 
                                   STRING(crapret.nrremass).
@@ -3254,6 +3312,7 @@ PROCEDURE p_grava_bloqueto_rej:
     
         IF  aux_nrregis1 > 0 THEN
             DO:
+			
                 RUN cria_tt-consulta-blt_rej( INPUT par_cdcooper,
                                               INPUT par_cdagenci,
                                               INPUT par_nrdcaixa,
@@ -3407,212 +3466,41 @@ PROCEDURE grava_instrucoes:
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    DEF VAR h-b1wgen0088 AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0090 AS HANDLE                                  NO-UNDO.
-
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_returnvl = "NOK".
            
-    Grava: DO TRANSACTION
-        ON ERROR  UNDO Grava, LEAVE Grava
-        ON QUIT   UNDO Grava, LEAVE Grava
-        ON STOP   UNDO Grava, LEAVE Grava
-        ON ENDKEY UNDO Grava, LEAVE Grava:
 
-        IF  NOT VALID-HANDLE(h-b1wgen0088) THEN
-            RUN sistema/generico/procedures/b1wgen0088.p 
-                PERSISTENT SET h-b1wgen0088.
-        
-        CASE par_cdinstru: /* Codigo da Instrucao */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
-            WHEN 2 THEN
-                RUN inst-pedido-baixa IN h-b1wgen0088
-                                    ( INPUT par_cdcooper,
-                                      INPUT par_nrdconta,
-                                      INPUT par_nrcnvcob,
-                                      INPUT par_nrdocmto,
-                                      INPUT par_cdinstru,
-                                      INPUT par_dtmvtolt,
-                                      INPUT par_cdoperad,
-                                      INPUT 0, /* nrremass */
-                                     OUTPUT aux_dscritic,
-                                     INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 4 THEN
-                RUN inst-conc-abatimento IN h-b1wgen0088
-                                       ( INPUT par_cdcooper,
-                                         INPUT par_nrdconta,
-                                         INPUT par_nrcnvcob,
-                                         INPUT par_nrdocmto,
-                                         INPUT par_cdinstru,
-                                         INPUT par_dtmvtolt,
-                                         INPUT par_cdoperad,
-                                         INPUT par_vlabatim,
-                                         INPUT 0, /* nrremass */
-                                        OUTPUT aux_dscritic,
-                                        INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 5 THEN
-                RUN inst-canc-abatimento IN h-b1wgen0088
-                                       ( INPUT par_cdcooper,
-                                         INPUT par_nrdconta,
-                                         INPUT par_nrcnvcob,
-                                         INPUT par_nrdocmto,
-                                         INPUT par_cdinstru,
-                                         INPUT par_dtmvtolt,
-                                         INPUT par_cdoperad,
-                                         INPUT 0, /* nrremass */
-                                        OUTPUT aux_dscritic,
-                                        INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 6 THEN
-                RUN inst-alt-vencto IN h-b1wgen0088
-                                  ( INPUT par_cdcooper,
-                                    INPUT par_nrdconta,
-                                    INPUT par_nrcnvcob,
-                                    INPUT par_nrdocmto,
-                                    INPUT par_cdinstru,
-                                    INPUT par_dtmvtolt,
-                                    INPUT par_cdoperad,
-                                    INPUT par_dtvencto,
-                                    INPUT 0, /* nrremass */
-                                   OUTPUT aux_dscritic,
-                                   INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 7 THEN
-                RUN inst-conc-desconto IN h-b1wgen0088
-                                     ( INPUT par_cdcooper,
-                                       INPUT par_nrdconta,
-                                       INPUT par_nrcnvcob,
-                                       INPUT par_nrdocmto,
-                                       INPUT par_cdinstru,
-                                       INPUT par_dtmvtolt,
-                                       INPUT par_cdoperad,
-                                       INPUT par_vlabatim, /*utilizando var.*/
-                                       INPUT 0, /* nrremass */
-                                      OUTPUT aux_dscritic,
-                                      INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 8 THEN
-                RUN inst-canc-desconto IN h-b1wgen0088
-                                     ( INPUT par_cdcooper,
-                                       INPUT par_nrdconta,
-                                       INPUT par_nrcnvcob,
-                                       INPUT par_nrdocmto,
-                                       INPUT par_cdinstru,
-                                       INPUT par_dtmvtolt,
-                                       INPUT par_cdoperad,
-                                       INPUT 0, /* nrremass */
-                                      OUTPUT aux_dscritic,
-                                      INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 9 THEN
-                RUN inst-protestar IN h-b1wgen0088
-                                 ( INPUT par_cdcooper,
-                                   INPUT par_nrdconta,
-                                   INPUT par_nrcnvcob,
-                                   INPUT par_nrdocmto,
-                                   INPUT par_cdinstru,
-                                   INPUT par_cdtpinsc,
-                                   INPUT par_dtmvtolt,
-                                   INPUT par_cdoperad,
-                                   INPUT 0, /* nrremass */
-                                  OUTPUT aux_dscritic,
-                                  INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 10 THEN
-                RUN inst-sustar-baixar IN h-b1wgen0088
-                                     ( INPUT par_cdcooper,
-                                       INPUT par_nrdconta,
-                                       INPUT par_nrcnvcob,
-                                       INPUT par_nrdocmto,
-                                       INPUT par_dtmvtolt,
-                                       INPUT par_cdoperad,
-                                       INPUT 0, /* nrremass */
-                                      OUTPUT aux_dscritic,
-                                      INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 11 THEN
-                RUN inst-sustar-manter IN h-b1wgen0088
-                                     ( INPUT par_cdcooper,
-                                       INPUT par_nrdconta,
-                                       INPUT par_nrcnvcob,
-                                       INPUT par_nrdocmto,
-                                       INPUT par_cdinstru,
-                                       INPUT par_dtmvtolt,
-                                       INPUT par_cdoperad,
-                                       INPUT 0, /* nrremass */
-                                      OUTPUT aux_dscritic,
-                                      INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 31 THEN
-                RUN inst-alt-outros-dados IN h-b1wgen0088
-                                        ( INPUT par_cdcooper,
-                                          INPUT par_nrdconta,
-                                          INPUT par_nrcnvcob,
-                                          INPUT par_nrdocmto,
-                                          INPUT par_cdinstru,
-                                          INPUT par_dtmvtolt,
-                                          INPUT par_cdoperad,
-                                          INPUT 0, /* nrremass */
-                                         OUTPUT aux_dscritic,
-                                         INPUT-OUTPUT TABLE tt-lat-consolidada ).
-            WHEN 41 THEN
-                RUN inst-cancel-protesto IN h-b1wgen0088
-                                       ( INPUT par_cdcooper,
-                                         INPUT par_nrdconta,
-                                         INPUT par_nrcnvcob,
-                                         INPUT par_nrdocmto,
-                                         INPUT par_cdinstru,
-                                         INPUT par_dtmvtolt,
-                                         INPUT par_cdoperad,
-                                         INPUT 0, /* nrremass */
-                                        OUTPUT aux_dscritic,
-                                        INPUT-OUTPUT TABLE tt-lat-consolidada ).
-			WHEN 93 THEN
-			DO: /* Negativar Serasa */
-                 RUN pc_negativa_serasa IN h-b1wgen0088
-                                      ( INPUT par_cdcooper,
-									    INPUT par_nrcnvcob,
-										INPUT par_nrdconta,
-										INPUT par_nrdocmto,
-                                       OUTPUT aux_cdcritic,
-                                       OUTPUT aux_dscritic ).
-			END.	
-			WHEN 94 THEN
-                RUN pc_cancelar_neg_serasa IN h-b1wgen0088
-                                         ( INPUT par_cdcooper,
-                                           INPUT par_nrcnvcob,
-                                           INPUT par_nrdconta,
-                                           INPUT par_nrdocmto,
-                                          OUTPUT aux_cdcritic,
-                                          OUTPUT aux_dscritic ).									
-            OTHERWISE
-                ASSIGN aux_dscritic = "Instrucao nao liberada para execucao!".
+    RUN STORED-PROCEDURE pc_grava_instr_boleto
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper, /* Cooperativa */ 
+                                  INPUT par_dtmvtolt, /* Data */
+                                  INPUT par_cdoperad, /* Operador */
+                                  INPUT par_cdinstru, /* Instruçao */
+                                  INPUT par_nrdconta, /* Conta */
+                                  INPUT par_nrcnvcob, /* Convenio */
+                                  INPUT par_nrdocmto, /* Boleto */
+                                  INPUT par_vlabatim, /* Valor de Abatimento */
+                                  INPUT par_dtvencto, /* Data de Vencimetno */
+                                 OUTPUT 0,            /* Codigo da Critica */
+                                 OUTPUT "").          /* Descricao da Critica */
+             
+    CLOSE STORED-PROC pc_grava_instr_boleto
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-        END CASE.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        IF  aux_dscritic <> "" THEN
-            UNDO Grava, LEAVE Grava.
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_grava_instr_boleto.pr_cdcritic
+                              WHEN pc_grava_instr_boleto.pr_cdcritic <> ?
+           aux_dscritic = pc_grava_instr_boleto.pr_dscritic
+                              WHEN pc_grava_instr_boleto.pr_dscritic <> ?.
 
-        /* Inicio - Rotina para cobranca tarifa */
-
-        IF  NOT VALID-HANDLE(h-b1wgen0090) THEN
-            RUN sistema/generico/procedures/b1wgen0090.p 
-                PERSISTENT SET h-b1wgen0090.
-
-        /* Cobranca Tarifa de forma consolidada */
-        RUN efetua-lancamento-tarifas-lat IN h-b1wgen0090 (INPUT par_cdcooper,
-                                                           INPUT par_dtmvtolt,
-                                                           INPUT-OUTPUT TABLE tt-lat-consolidada ).
-
-        IF  VALID-HANDLE(h-b1wgen0090) THEN
-            DELETE PROCEDURE h-b1wgen0090.
-    
-        /* Fim - Rotina para cobranca tarifa */
-
-        LEAVE Grava.
-
-    END. /* Grava */
-
-    IF  VALID-HANDLE(h-b1wgen0088) THEN
-        DELETE PROCEDURE h-b1wgen0088.
-
-    IF  aux_dscritic <> "" OR 
-        aux_cdcritic <> 0  OR 
-        TEMP-TABLE tt-erro:HAS-RECORDS THEN
+    IF  aux_cdcritic <> 0  OR
+        aux_dscritic <> "" THEN
         DO:
             ASSIGN aux_returnvl = "NOK".
             
@@ -4037,6 +3925,7 @@ PROCEDURE cria_tt-consulta-blt.
                                            crapcob.dtdpagto
                                         ELSE
                                            crapcob.dtvencto)
+            tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */
             tt-consulta-blt.vltitulo = crapcob.vltitulo
             tt-consulta-blt.nrinssac = crapcob.nrinssac
             tt-consulta-blt.cdtpinsc = crapcob.cdtpinsc
@@ -4482,7 +4371,6 @@ PROCEDURE cria_tt-consulta-blt_rej.
     
    
    DO TRANSACTION:
-
      CREATE tt-consulta-blt.
      
      /*  Verifica no Cadastro de Sacados Cobranca */
@@ -4649,6 +4537,7 @@ PROCEDURE cria_tt-consulta-blt_rej.
      UNIX SILENT VALUE("echo " +  STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.cria_tt-consulta-blt_rej geral ' --> '" + aux_dscritic  +                          
                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) + "/log/proc_message.log").
      RETURN "NOK".
+	 	
    END CATCH.
   
 END PROCEDURE. /* cria_tt-consulta-blt_rej */
@@ -4771,6 +4660,9 @@ PROCEDURE cria_tt-consulta-blt_tdb.
                                              craptdb.dtdpagto
                                           ELSE
                                              craptdb.dtvencto)
+              tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */                                             
+              tt-consulta-blt.flgcbdda = (IF crapcob.flgcbdda = TRUE THEN
+                                          "S" ELSE "N")              
               tt-consulta-blt.vltitulo = crapcob.vltitulo.
    END.
 END PROCEDURE. /* cria_tt-consulta-blt_tdb */ 
@@ -5163,6 +5055,7 @@ PROCEDURE proc_nosso_numero.
                                               crapcob.dtdpagto 
                                            ELSE
                                               crapcob.dtvencto)
+               tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */                                              
                tt-consulta-blt.dtdpagto = crapcob.dtdpagto
                tt-consulta-blt.dtelimin = crapcob.dtelimin
                tt-consulta-blt.vltitulo = crapcob.vltitulo
@@ -8666,6 +8559,37 @@ PROCEDURE verifica_sit_serasa:
             ASSIGN par_proximo = "S".
     END.
   END CASE.
+
+END PROCEDURE.
+
+PROCEDURE verifica-rollout:
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
+    DEF INPUT PARAM par_vltitulo AS DECI NO-UNDO.
+    DEF OUTPUT PARAM par_rollout AS INTE NO-UNDO.
+    
+    DEF VAR aux_ponteiro      AS INTE                       NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+       
+        RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
+                           aux_ponteiro = PROC-HANDLE
+                           ("SELECT npcb0001.fn_verifica_rollout(" + STRING(par_cdcooper) + /* Cooperativa */
+                                                                       ",to_date('" + STRING(par_dtmvtolt) + "', 'DD/MM/RRRR')" + /* Data de movimento */
+                                                                       "," + REPLACE(STRING(par_vltitulo),",",".") + /* Vl. do Título */                                                                      
+                                                                       ",2" +                       /* Tipo de regra de rollout(1-registro,2-pagamento)  */
+                                                                       ") FROM dual").
+        
+        FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+           ASSIGN par_rollout = INT(proc-text).
+        END.
+       
+        CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+           WHERE PROC-HANDLE = aux_ponteiro.
+        
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }    
+
+    RETURN "OK".
 
 END PROCEDURE.
 

@@ -1779,6 +1779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
               ,crapcob.dsinform
               ,crapcob.rowid
               ,crapcob.inemiten
+              ,crapcob.nrdident
         FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.cdbandoc = pr_cdbandoc
@@ -2082,6 +2083,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           --> Abortar programa
           RAISE vr_exc_erro; 
         END IF;
+      --> Se for titulo da cooperativa  
+      ELSIF pr_intitcop = 1 THEN
+        vr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
       END IF;
       
       --Se for iptu
@@ -3311,6 +3315,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
             END IF;
           END IF;
         END IF; --vr_flgdesct
+        
+        --> Se for titulo da cooperativa
+        --> deve armazenar o numero de ident titulo
+        IF TRIM(rw_crapcob.nrdident) > 0 AND  
+           nvl(vr_nridetit,0) = 0 THEN
+          vr_nridetit := rw_crapcob.nrdident;
+        END IF;  
+        
+        
       END IF; --NOT pr_iptu AND pr_intitcop = 1
       --Parametros de retorno
       pr_pg:= FALSE;
@@ -3465,7 +3478,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
 
       /* Atualiza sequencia Autenticacao */
       BEGIN
-        UPDATE craptit SET craptit.nrautdoc = pr_ult_sequencia
+        UPDATE craptit 
+           SET craptit.nrautdoc = pr_ult_sequencia,
+               craptit.nrdident = nvl(vr_nridetit,craptit.nrdident)
         WHERE craptit.ROWID = rw_craptit_rowid;
       EXCEPTION
         WHEN Others THEN
