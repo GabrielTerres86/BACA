@@ -520,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --              19/05/2017 - Alteração da mensagem de retorno do cursor crawepr
   --                         - Inclusão módulo e ação e rotina de log no exception otheres - Chamado 663304
   --                           pc_solicita_consulta_biro (Ana - Envolti)
-  -- 
+--
   --              26/06/2017 - Incluido o campo nrconbir nas pesquisas da crapcbd, melhoria de performance
   --                           (Tiago/Rodrigo #700127).
 --
@@ -3386,6 +3386,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_nmtagbir crapbir.nmtagbir%TYPE; --> Nome da tag do biro de consultas
     vr_nmtagmod crapmbr.nmtagmod%TYPE; --> Nome da tag da modalidade do biro
     vr_nmtagaux VARCHAR2(200);         --> Tag auxiliar para busca das informacoes
+    vr_nmtagau2 VARCHAR2(200);         --> Tag auxiliar para busca das informacoes    
+    vr_flgrechq BOOLEAN;               --> Flag para indicar se eh consulta Recheque    
     vr_nrseqdet crapcbd.nrseqdet%TYPE; --> Numero da sequencia de consulta
     vr_database VARCHAR2(06);          --> Data base para as consultas SCR, no formato AAAAMM
     vr_inlocnac craprsc.inlocnac%TYPE; --> Indicador de SPC local ou nacional
@@ -4082,16 +4084,19 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         
         -- Se for cheque sem fundos
         IF vr_insitchq = 1 THEN 
-          -- monta a tag principal
+          -- monta a tag principal buscando por CHEQUE ou RECHEQUE
           vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_RECHEQUE_SEM_FUNDO/RECHEQUE_SEM_FUNDO['||vr_contador_csf||']/';
+          vr_nmtagau2 := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_CHEQUE_SEM_FUNDO/CHEQUE_SEM_FUNDO['||vr_contador_csf||']/';
         ELSE -- sustado / cancelado
-          -- monta a tag principal
+          -- monta a tag principal buscando por CHEQUE ou RECHEQUE
           vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_RECHEQUE_DEVOLVIDO/RECHEQUE_DEVOLVIDO['||vr_contador_csf||']/';
+          vr_nmtagau2 := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_CHEQUE_DEVOLVIDO/CHEQUE_DEVOLVIDO['||vr_contador_csf||']/';
         END IF;          
 
         -- Verifica se existe dados na consulta do cheque sem fundos
-        IF vr_insitchq = 1 AND -- Se for cheque sem fundo
-          pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 THEN  
+        IF vr_insitchq = 1 -- Se for cheque sem fundo
+        AND pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 
+        AND pr_retxml.existsnode(vr_nmtagau2||'DT_OCORRENCIA') = 0 THEN  
           -- Muda para o sustado / cancelado
           vr_insitchq := 2;   
           vr_contador_csf := 1;
@@ -4099,9 +4104,17 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         END IF;
 
         -- Verifica se existe dados na consulta do cheque sustado / cancelado
-        IF vr_insitchq = 2 AND -- Se for sustado / cancelado
-           pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 THEN  
+        IF vr_insitchq = 2 -- Se for sustado / cancelado
+        AND pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 
+        AND pr_retxml.existsnode(vr_nmtagau2||'DT_OCORRENCIA') = 0 THEN  
           EXIT;        
+        END IF;
+
+        -- Guardar se é Recheque ou não
+        IF pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') <> 0 THEN
+          vr_flgrechq := true;
+        ELSE
+          vr_flgrechq := false;  
         END IF;
 
         -- Limpa a variavel de totais
@@ -4132,6 +4145,9 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           -- Limpa a tabela de memoria
           vr_craprpf := NULL;
         END IF;
+        
+        -- Somente para Recheque
+        IF vr_flgrechq THEN 
         
         BEGIN
           -- Busca as informacoes
@@ -4205,6 +4221,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
             vr_dscritic := 'Erro ao inserir na CRAPCSF (Serasa): '||SQLERRM;
             RAISE vr_exc_saida;
         END;
+        END IF; 
+
         -- Vai para a proxima consulta
         vr_contador_csf := vr_contador_csf + 1;
 
