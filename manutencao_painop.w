@@ -17,6 +17,9 @@ Ultima alteração: 27/08/2015 - Adicionado condicao para verificar se o cartao
 
                   23/01/2017 - #537054 No procedimento menu_manutencao, retirada
                                a opcao FECHAMENTO - E (Carlos)
+                               
+                  07/08/2017 - #712156 Melhoria 274, inclusão do campo flgntcem 
+                               (Carlos)
 
 ............................................................................... */
 
@@ -44,6 +47,8 @@ DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgvolta        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_nmoperad        AS CHAR                     NO-UNDO.
 DEFINE VARIABLE buff                AS CHAR     EXTENT 6        NO-UNDO.
+
+DEFINE VARIABLE aux_flgntcem AS LOGICAL INIT FALSE  NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -1008,6 +1013,37 @@ ON CLOSE OF THIS-PROCEDURE
 
 /* Best default for GUI applications is...                              */
 PAUSE 0 BEFORE-HIDE.
+
+
+
+/* --- VERIFICAR VALOR DA NOTA --- */
+RUN procedures/verifica_valor_nota.p 
+    (OUTPUT aux_flgntcem,
+     OUTPUT aux_flgderro).
+
+IF aux_flgderro THEN
+DO:
+    ASSIGN buff[2] = "           ERRO NA VERIFICACAO"
+           buff[4] = "               DOS DADOS".
+
+    RUN procedures/atualiza_painop.p (INPUT buff).
+    PAUSE 2 NO-MESSAGE.
+    
+    RETURN.
+END.
+ELSE
+DO:
+    IF aux_flgntcem = TRUE THEN
+        ed_vlnotK7D = 100.
+    ELSE
+        ed_vlnotK7D = 50.
+
+    RUN procedures/grava_log.p (INPUT "PAINOP - K7D utiliza notas de " + 
+                                string(ed_vlnotK7D)).
+END.
+/* --- FIM VERIFICAR VALOR DA NOTA --- */
+
+
 
 
 RUN enable_UI.

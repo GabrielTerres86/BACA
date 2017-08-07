@@ -11,6 +11,9 @@ Data     : Janeiro 2010
 
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
+                  07/08/2017 - #712156 Melhoria 274, inclusão do campo flgntcem 
+                               (Carlos)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -37,6 +40,7 @@ DEFINE VARIABLE aux_nmdohost        AS CHAR         NO-UNDO.
 DEFINE VARIABLE aux_ipdohost        AS CHAR         NO-UNDO.
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL      NO-UNDO.
+DEFINE VARIABLE aux_flgntcem AS LOGICAL INIT FALSE  NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -231,56 +235,56 @@ DEFINE FRAME f_manutencao_suprimento
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 80
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
      ed_titulo AT ROW 1.71 COL 50 COLON-ALIGNED NO-LABEL WIDGET-ID 198 NO-TAB-STOP 
-     "R" VIEW-AS TEXT
-          SIZE 6.2 BY 2.1 AT ROW 17.1 COL 26 WIDGET-ID 90
-          FONT 13
-     " Quantidade de Notas" VIEW-AS TEXT
-          SIZE 21.6 BY .62 AT ROW 8.14 COL 36 WIDGET-ID 102
      "=" VIEW-AS TEXT
-          SIZE 3 BY .62 AT ROW 9.76 COL 89.6 WIDGET-ID 136
-          FONT 8
-     "D" VIEW-AS TEXT
-          SIZE 6.2 BY 2.38 AT ROW 14.91 COL 26 WIDGET-ID 88
-          FONT 13
-     " Valor da Nota" VIEW-AS TEXT
-          SIZE 15 BY .62 AT ROW 8.14 COL 74.2 WIDGET-ID 120
-     "x" VIEW-AS TEXT
-          SIZE 2.8 BY .95 AT ROW 9.43 COL 58 WIDGET-ID 104
+          SIZE 3 BY .62 AT ROW 11.67 COL 89.6 WIDGET-ID 138
           FONT 8
      "A" VIEW-AS TEXT
           SIZE 6.2 BY 2.38 AT ROW 9.05 COL 26 WIDGET-ID 92
           FONT 13
-     "=" VIEW-AS TEXT
-          SIZE 3 BY .62 AT ROW 11.67 COL 89.6 WIDGET-ID 138
+     "x" VIEW-AS TEXT
+          SIZE 2.8 BY .95 AT ROW 9.43 COL 58 WIDGET-ID 104
           FONT 8
-     "B" VIEW-AS TEXT
-          SIZE 6.2 BY 2.38 AT ROW 11 COL 26 WIDGET-ID 84
+     " Valor da Nota" VIEW-AS TEXT
+          SIZE 15 BY .62 AT ROW 8.14 COL 74.2 WIDGET-ID 120
+     "D" VIEW-AS TEXT
+          SIZE 6.2 BY 2.38 AT ROW 14.91 COL 26 WIDGET-ID 88
+          FONT 13
+     "=" VIEW-AS TEXT
+          SIZE 3 BY .62 AT ROW 9.76 COL 89.6 WIDGET-ID 136
+          FONT 8
+     " Quantidade de Notas" VIEW-AS TEXT
+          SIZE 21.6 BY .62 AT ROW 8.14 COL 36 WIDGET-ID 102
+     "C" VIEW-AS TEXT
+          SIZE 6.2 BY 2.38 AT ROW 12.95 COL 26 WIDGET-ID 86
+          FONT 13
+     "R" VIEW-AS TEXT
+          SIZE 6.2 BY 2.1 AT ROW 17.1 COL 26 WIDGET-ID 90
           FONT 13
      "x" VIEW-AS TEXT
-          SIZE 2.8 BY .95 AT ROW 15.19 COL 58 WIDGET-ID 110
+          SIZE 2.8 BY .95 AT ROW 11.38 COL 58 WIDGET-ID 106
+          FONT 8
+     "=" VIEW-AS TEXT
+          SIZE 3 BY .62 AT ROW 15.52 COL 89.6 WIDGET-ID 142
+          FONT 8
+     "=" VIEW-AS TEXT
+          SIZE 3 BY .62 AT ROW 17.67 COL 89.6 WIDGET-ID 144
+          FONT 8
+     "TOTAL" VIEW-AS TEXT
+          SIZE 29 BY 2.38 AT ROW 16.81 COL 61 WIDGET-ID 122
+          FONT 10
+     " Valor Total" VIEW-AS TEXT
+          SIZE 12 BY .62 AT ROW 8.14 COL 128 WIDGET-ID 134
+     "x" VIEW-AS TEXT
+          SIZE 2.8 BY .95 AT ROW 13.29 COL 58 WIDGET-ID 108
           FONT 8
      "=" VIEW-AS TEXT
           SIZE 3 BY .62 AT ROW 13.57 COL 89.6 WIDGET-ID 140
           FONT 8
      "x" VIEW-AS TEXT
-          SIZE 2.8 BY .95 AT ROW 13.29 COL 58 WIDGET-ID 108
+          SIZE 2.8 BY .95 AT ROW 15.19 COL 58 WIDGET-ID 110
           FONT 8
-     " Valor Total" VIEW-AS TEXT
-          SIZE 12 BY .62 AT ROW 8.14 COL 128 WIDGET-ID 134
-     "TOTAL" VIEW-AS TEXT
-          SIZE 29 BY 2.38 AT ROW 16.81 COL 61 WIDGET-ID 122
-          FONT 10
-     "=" VIEW-AS TEXT
-          SIZE 3 BY .62 AT ROW 17.67 COL 89.6 WIDGET-ID 144
-          FONT 8
-     "=" VIEW-AS TEXT
-          SIZE 3 BY .62 AT ROW 15.52 COL 89.6 WIDGET-ID 142
-          FONT 8
-     "x" VIEW-AS TEXT
-          SIZE 2.8 BY .95 AT ROW 11.38 COL 58 WIDGET-ID 106
-          FONT 8
-     "C" VIEW-AS TEXT
-          SIZE 6.2 BY 2.38 AT ROW 12.95 COL 26 WIDGET-ID 86
+     "B" VIEW-AS TEXT
+          SIZE 6.2 BY 2.38 AT ROW 11 COL 26 WIDGET-ID 84
           FONT 13
      RECT-33 AT ROW 8.57 COL 24 WIDGET-ID 146
      IMAGE_D AT ROW 24.24 COL 1 WIDGET-ID 148
@@ -816,6 +820,40 @@ PAUSE 0 BEFORE-HIDE.
 MAIN-BLOCK:
 DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     ON END-KEY UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK:
+
+/* verificar valor da nota */
+RUN procedures/verifica_valor_nota.p 
+    (OUTPUT aux_flgntcem,
+     OUTPUT aux_flgderro).
+
+IF aux_flgderro THEN
+DO:
+    RUN mensagem.w (INPUT YES,
+                    INPUT " ATENÇÃO",
+                    INPUT "",
+                    INPUT "",
+                    INPUT "Erro na verificação",
+                    INPUT "dos dados.",
+                    INPUT "").
+    PAUSE 3 NO-MESSAGE.
+    h_mensagem:HIDDEN = YES.
+    
+    /* ativa o controle de foco */
+    RUN procedures/controle_foco.p (INPUT YES).
+
+    RETURN.
+END.
+ELSE
+DO:
+    IF aux_flgntcem = TRUE THEN
+        ed_vlnotK7D = 100.
+    ELSE
+        ed_vlnotK7D = 50.
+
+    RUN procedures/grava_log.p (INPUT "K7D utiliza notas de " + 
+                                string(ed_vlnotK7D)).
+END.
+/* fim verifica_valor_nota */
 
     RUN enable_UI.
 
