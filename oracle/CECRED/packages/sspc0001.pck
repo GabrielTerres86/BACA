@@ -3383,6 +3383,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_nmtagbir crapbir.nmtagbir%TYPE; --> Nome da tag do biro de consultas
     vr_nmtagmod crapmbr.nmtagmod%TYPE; --> Nome da tag da modalidade do biro
     vr_nmtagaux VARCHAR2(200);         --> Tag auxiliar para busca das informacoes
+    vr_nmtagau2 VARCHAR2(200);         --> Tag auxiliar para busca das informacoes    
+    vr_flgrechq BOOLEAN;               --> Flag para indicar se eh consulta Recheque    
     vr_nrseqdet crapcbd.nrseqdet%TYPE; --> Numero da sequencia de consulta
     vr_database VARCHAR2(06);          --> Data base para as consultas SCR, no formato AAAAMM
     vr_inlocnac craprsc.inlocnac%TYPE; --> Indicador de SPC local ou nacional
@@ -4079,16 +4081,19 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         
         -- Se for cheque sem fundos
         IF vr_insitchq = 1 THEN 
-          -- monta a tag principal
+          -- monta a tag principal buscando por CHEQUE ou RECHEQUE
           vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_RECHEQUE_SEM_FUNDO/RECHEQUE_SEM_FUNDO['||vr_contador_csf||']/';
+          vr_nmtagau2 := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_CHEQUE_SEM_FUNDO/CHEQUE_SEM_FUNDO['||vr_contador_csf||']/';
         ELSE -- sustado / cancelado
-          -- monta a tag principal
+          -- monta a tag principal buscando por CHEQUE ou RECHEQUE
           vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_RECHEQUE_DEVOLVIDO/RECHEQUE_DEVOLVIDO['||vr_contador_csf||']/';
+          vr_nmtagau2 := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/APONTAMENTOS/LISTA_CHEQUE_DEVOLVIDO/CHEQUE_DEVOLVIDO['||vr_contador_csf||']/';
         END IF;          
 
         -- Verifica se existe dados na consulta do cheque sem fundos
-        IF vr_insitchq = 1 AND -- Se for cheque sem fundo
-          pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 THEN  
+        IF vr_insitchq = 1 -- Se for cheque sem fundo
+        AND pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 
+        AND pr_retxml.existsnode(vr_nmtagau2||'DT_OCORRENCIA') = 0 THEN  
           -- Muda para o sustado / cancelado
           vr_insitchq := 2;   
           vr_contador_csf := 1;
@@ -4096,9 +4101,17 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         END IF;
 
         -- Verifica se existe dados na consulta do cheque sustado / cancelado
-        IF vr_insitchq = 2 AND -- Se for sustado / cancelado
-           pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 THEN  
+        IF vr_insitchq = 2 -- Se for sustado / cancelado
+        AND pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') = 0 
+        AND pr_retxml.existsnode(vr_nmtagau2||'DT_OCORRENCIA') = 0 THEN  
           EXIT;        
+        END IF;
+        
+        -- Guardar se é Recheque ou não
+        IF pr_retxml.existsnode(vr_nmtagaux||'DT_OCORRENCIA') <> 0 THEN
+          vr_flgrechq := true;
+        ELSE
+          vr_flgrechq := false;  
         END IF;
 
         -- Limpa a variavel de totais
@@ -4130,78 +4143,83 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
           vr_craprpf := NULL;
         END IF;
         
-        BEGIN
-          -- Busca as informacoes
+        -- Somente para Recheque
+        IF vr_flgrechq THEN 
+        
+          BEGIN
+            -- Busca as informacoes
+            -- Chamado 363148
+            pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_OCORRENCIA','D',vr_crapcsf.dtinclus, vr_dscritic);
+            pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'BANCO',        'S',vr_crapcsf.nmbanchq, vr_dscritic);
+            pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'AGENCIA',      'N',vr_crapcsf.cdagechq, vr_dscritic);
+            pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CHEQUE',       'S',vr_crapcsf.nrcheque, vr_dscritic);
+            pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'VL_OCORRENCIA','N',vr_crapcsf.vlcheque, vr_dscritic);
+            pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CIDADE', 		  'S',vr_crapcsf.nmcidade, vr_dscritic);
+            pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'MOTIVO',       'S',vr_txalinea, vr_dscritic);
+          EXCEPTION
+            WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+			  vr_dscritic := 'Erro cheque sem fundo do Serasa-'||vr_contador||'-'||vr_insitchq||'-'||vr_contador_csf||': '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+          
+          -- Verifica se ocorreu algum erro
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          --Chamado 363148
+          begin
+            vr_crapcsf.cdalinea := to_number(vr_txalinea);
+            vr_txalinea := '';
+          exception
+            when value_error then
+              vr_crapcsf.cdalinea := null;
+          end;
+          
+          -- Insere o registro de Cheque sem fundo
           -- Chamado 363148
-          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DT_OCORRENCIA','D',vr_crapcsf.dtinclus, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'BANCO',        'S',vr_crapcsf.nmbanchq, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'AGENCIA',      'N',vr_crapcsf.cdagechq, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CHEQUE',       'S',vr_crapcsf.nrcheque, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'VL_OCORRENCIA','N',vr_crapcsf.vlcheque, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'CIDADE', 		  'S',vr_crapcsf.nmcidade, vr_dscritic);
-          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'MOTIVO',       'S',vr_txalinea, vr_dscritic);
-        EXCEPTION
-          WHEN OTHERS THEN
-            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
-            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
-            vr_dscritic := 'Erro cheque sem fundo do Serasa-'||vr_contador||'-'||vr_insitchq||'-'||vr_contador_csf||': '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-        
-        -- Verifica se ocorreu algum erro
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;
-        END IF;
-        
-        --Chamado 363148
-        begin
-          vr_crapcsf.cdalinea := to_number(vr_txalinea);
-          vr_txalinea := '';
-        exception
-          when value_error then
-            vr_crapcsf.cdalinea := null;
-        end;
-        
-        -- Insere o registro de Cheque sem fundo
-        -- Chamado 363148
-        BEGIN
-          INSERT INTO crapcsf
-            (nrconbir,
-             nrseqdet,
-             nrseqreg,
-             nmbanchq,
-             cdagechq,
-             cdalinea,
-             qtcheque,
-             dtinclus,
-             nrcheque,
-             vlcheque,
-             nmcidade,
-             cdufende,
-             idsitchq,
-             dsmotivo)
-           VALUES
-            (pr_nrconbir,
-             vr_nrseqdet,
-             (SELECT nvl(MAX(nrseqreg),0)+1 FROM crapcsf WHERE nrconbir=pr_nrconbir AND nrseqdet=vr_nrseqdet),
-             vr_crapcsf.nmbanchq,
-             vr_crapcsf.cdagechq,
-             vr_crapcsf.cdalinea,
-             1,
-             vr_crapcsf.dtinclus,
-             vr_crapcsf.nrcheque,
-             vr_crapcsf.vlcheque,
-             fn_separa_cidade_uf(vr_crapcsf.nmcidade,1),
-             fn_separa_cidade_uf(vr_crapcsf.nmcidade,2),
-             vr_insitchq,
-             vr_txalinea);
-        EXCEPTION
-          WHEN OTHERS THEN
-            -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
-            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
-            vr_dscritic := 'Erro ao inserir na CRAPCSF (Serasa): '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
+          BEGIN
+            INSERT INTO crapcsf
+              (nrconbir,
+               nrseqdet,
+               nrseqreg,
+               nmbanchq,
+               cdagechq,
+               cdalinea,
+               qtcheque,
+               dtinclus,
+               nrcheque,
+               vlcheque,
+               nmcidade,
+               cdufende,
+               idsitchq,
+               dsmotivo)
+             VALUES
+              (pr_nrconbir,
+               vr_nrseqdet,
+               (SELECT nvl(MAX(nrseqreg),0)+1 FROM crapcsf WHERE nrconbir=pr_nrconbir AND nrseqdet=vr_nrseqdet),
+               vr_crapcsf.nmbanchq,
+               vr_crapcsf.cdagechq,
+               vr_crapcsf.cdalinea,
+               1,
+               vr_crapcsf.dtinclus,
+               vr_crapcsf.nrcheque,
+               vr_crapcsf.vlcheque,
+               fn_separa_cidade_uf(vr_crapcsf.nmcidade,1),
+               fn_separa_cidade_uf(vr_crapcsf.nmcidade,2),
+               vr_insitchq,
+               vr_txalinea);
+          EXCEPTION
+            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 12/07/2018 - Chamado 663304        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper); 
+              vr_dscritic := 'Erro ao inserir na CRAPCSF (Serasa): '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        END IF; 
+
         -- Vai para a proxima consulta
         vr_contador_csf := vr_contador_csf + 1;
 
@@ -5500,11 +5518,6 @@ PROCEDURE pc_monta_cpf_cnpj_envio(pr_xml  IN OUT XmlType,               --> XML 
     -- Envia o PA e a quantidade de horas de reaproveitamento
     gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'CENTRO_CUSTO',pr_tag_cont => pr_cdpactra, pr_des_erro => pr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'HORA_REAPROVEITAMENTO',pr_tag_cont => pr_qthrsrpv, pr_des_erro => pr_dscritic);
-    
-gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'FLG_REAPROVEITA    ',pr_tag_cont => 'S', pr_des_erro => pr_dscritic);
-    
-    
-
     
   END;
 

@@ -6791,6 +6791,7 @@ PROCEDURE altera-valor-proposta:
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_insitest LIKE crawepr.insitest             NO-UNDO.
     DEF VAR          aux_flcancel AS LOGI                           NO-UNDO.
+    DEF VAR          aux_inobriga AS CHAR                           NO-UNDO.
 
     DEF VAR          h-b1wgen0110 AS HANDLE                         NO-UNDO.
     DEF VAR          h-b1wgen0191 AS HANDLE                         NO-UNDO.
@@ -6809,7 +6810,8 @@ PROCEDURE altera-valor-proposta:
            aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Alterar o valor da proposta de credito"
-           aux_flcancel = FALSE.
+           aux_flcancel = FALSE
+           aux_inobriga = "N".
 
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta
@@ -6937,6 +6939,36 @@ PROCEDURE altera-valor-proposta:
             aux_dscritic <> ""   THEN
             LEAVE.
 
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Verificar se a Proposta possui obrigatoriedade de passar pela analise automatica */ 
+        RUN STORED-PROCEDURE pc_obrigacao_analise_automatic
+         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                              INPUT crapass.inpessoa, /* Tipo da Pessoa */
+                                              INPUT crawepr.cdfinemp, /* Código da finalidade de crédito */
+                                              INPUT crawepr.cdlcremp, /* Código da linha de crédito */
+                                             OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
+                                             OUTPUT 0,            /* Código da crítica */
+                                             OUTPUT "").          /* Descrição da crítica */
+        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_obrigacao_analise_automatic
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+
+        ASSIGN aux_inobriga = pc_obrigacao_analise_automatic.pr_inobriga
+                                 WHEN pc_obrigacao_analise_automatic.pr_inobriga <> ?
+               aux_cdcritic = pc_obrigacao_analise_automatic.pr_cdcritic
+                                 WHEN pc_obrigacao_analise_automatic.pr_cdcritic <> ?
+               aux_dscritic = pc_obrigacao_analise_automatic.pr_dscritic
+                                 WHEN pc_obrigacao_analise_automatic.pr_dscritic <> ?.
+
+        IF aux_cdcritic > 0 OR 
+           aux_dscritic <> '' THEN
+           LEAVE.
+        
         ASSIGN  aux_insitapr = crawepr.insitapr
                 aux_cdopeapr = crawepr.cdopeapr
                 aux_dtaprova = crawepr.dtaprova
@@ -7061,7 +7093,8 @@ PROCEDURE altera-valor-proposta:
                                                              " enviada para Analise de Credito".
 
                                                     /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                                                    IF NOT aux_contigen AND (   crawepr.insitest = 2 
+                                                    IF NOT aux_contigen AND aux_inobriga = "S" 
+                                                                        AND (   crawepr.insitest = 2 
                                                                              OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                                              OR ( crawepr.insitest = 4 ) ) THEN  
                                                     DO:
@@ -7103,7 +7136,8 @@ PROCEDURE altera-valor-proposta:
                                             " enviada para Analise de Credito".
                                             
                                          /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                                         IF NOT aux_contigen AND (   crawepr.insitest = 2 
+                                         IF NOT aux_contigen AND aux_inobriga = "S" 
+                                                             AND (   crawepr.insitest = 2 
                                                                    OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                                    OR ( crawepr.insitest = 4 ) ) THEN 
                                          DO:
@@ -7127,7 +7161,8 @@ PROCEDURE altera-valor-proposta:
                                         DO:
                      
                       /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                      IF NOT aux_contigen AND (   crawepr.insitest = 2 
+                      IF NOT aux_contigen AND aux_inobriga = "S" 
+                                          AND (   crawepr.insitest = 2 
                                                OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                OR ( crawepr.insitest = 4 ) ) THEN 
                       DO:
@@ -7161,7 +7196,8 @@ PROCEDURE altera-valor-proposta:
              DO:
                  
                  /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                 IF NOT aux_contigen AND (   crawepr.insitest = 2 
+                 IF NOT aux_contigen AND aux_inobriga = "S" 
+                                     AND (   crawepr.insitest = 2 
                                          OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                          OR ( crawepr.insitest = 4 ) ) THEN 
                  DO:
@@ -7194,7 +7230,7 @@ PROCEDURE altera-valor-proposta:
               DO:
               
                   /* Se a proposta estava na Esteira */
-                  IF (   crawepr.insitest = 2 
+                  IF aux_inobriga = "S" AND (   crawepr.insitest = 2 
                      OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                      OR ( crawepr.insitest = 4 ) ) THEN 
                       ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
@@ -12631,6 +12667,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
     
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_flcancel AS LOGI                           NO-UNDO.
+    DEF VAR          aux_inobriga AS CHAR                           NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma.
@@ -12639,7 +12676,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
            aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Alterar os avalistas da proposta de credito"
-           aux_flcancel = FALSE.
+           aux_flcancel = FALSE
+           aux_inobriga = "N".
 
     Grava_valor:
     DO WHILE TRUE TRANSACTION
@@ -12802,6 +12840,34 @@ PROCEDURE atualiza_dados_avalista_proposta:
                IF pc_param_sistema.pr_dsvlrprm = "1" then
                   ASSIGN aux_contigen = TRUE.      
                
+               /* Verificar se a Proposta possui obrigatoriedade de passar pela analise automatica */ 
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+               RUN STORED-PROCEDURE pc_obrigacao_analise_automatic
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                     INPUT crapass.inpessoa, /* Tipo da Pessoa */
+                                                     INPUT crawepr.cdfinemp, /* Código da finalidade de crédito */
+                                                     INPUT crawepr.cdlcremp, /* Código da linha de crédito */
+                                                    OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
+                                                    OUTPUT 0,            /* Código da crítica */
+                                                    OUTPUT "").          /* Descrição da crítica */
+               
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_obrigacao_analise_automatic
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+               ASSIGN aux_inobriga = pc_obrigacao_analise_automatic.pr_inobriga
+                                        WHEN pc_obrigacao_analise_automatic.pr_inobriga <> ?
+                      aux_cdcritic = pc_obrigacao_analise_automatic.pr_cdcritic
+                                        WHEN pc_obrigacao_analise_automatic.pr_cdcritic <> ?
+                      aux_dscritic = pc_obrigacao_analise_automatic.pr_dscritic
+                                        WHEN pc_obrigacao_analise_automatic.pr_dscritic <> ?.
+
+               IF aux_cdcritic > 0 OR 
+                  aux_dscritic <> '' THEN
+                  LEAVE.
+               
                /* Incluir checagem para perca da aprovacao devido 
                   mudanca nos avalistas */
                ASSIGN  aux_insitapr = crawepr.insitapr
@@ -12875,7 +12941,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
                          DO:
                          
                            /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                           IF NOT aux_contigen AND (   crawepr.insitest = 2 
+                           IF NOT aux_contigen AND aux_inobriga = "S" 
+                                               AND (   crawepr.insitest = 2 
                                                    OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                    OR ( crawepr.insitest = 4 ) ) THEN 
                            DO:
@@ -12915,7 +12982,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
       RUN sistema/generico/procedures/b1wgen0195.p
                        PERSISTENT SET h-b1wgen0195.
                
-      /* Enviar alteracao do numero para esteira*/
+      /* Enviar Cancelamento na Esteira */
       RUN Enviar_proposta_esteira IN h-b1wgen0195        
                         ( INPUT par_cdcooper,
                           INPUT crapope.cdpactra,
