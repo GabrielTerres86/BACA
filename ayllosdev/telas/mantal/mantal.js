@@ -16,7 +16,6 @@ var operacao 		= ''; // Armazena a operação corrente da tela MANTAL
 var controle		= '';	
 
 var cddopcao		= '';
-var nrdconta 		= 0 ; // Armazena o Número da Conta/dv
 
 var aux_cdagechq	= '';
 var aux_nriniche	= '';
@@ -779,11 +778,18 @@ function continuarCheque( opcao ) {
 
 // botoes
 function btnVoltar() {
-	
 	if ( arrayMantal.length > 0 ) {
 		btnConcluir();
 	} else {
-		estadoInicial();
+		if (executandoImpedimentos){
+			posicao++;
+			showMsgAguardo('Aguarde, carregando tela DCTROR ...');
+			setaParametrosImped('DCTROR','',nrdconta,flgcadas, 'MANTAL');
+			setaImped();
+			direcionaTela('DCTROR','no');
+		}else{
+			estadoInicial();
+		}
 	}
 	
 	return false;
@@ -812,11 +818,13 @@ function btnConcluir() {
 
 // set global
 function setGlobais() {
-
+	
+	if (!executandoImpedimentos){
+		nrdconta 		= 0 ; 	
+	}	
 	operacao 		= ''; 
 	controle		= '';	
-	cddopcao		= '';
-	nrdconta 		= 0 ; 
+	cddopcao		= '';	
 	aux_cdagechq	= '';
 	aux_nriniche	= '';
 	aux_nrfinche	= '';

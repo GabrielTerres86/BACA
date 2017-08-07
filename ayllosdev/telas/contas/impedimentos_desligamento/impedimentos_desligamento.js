@@ -78,9 +78,6 @@ function controlaLayout(operacao) {
 
 function efetuaCancelamentoAuto(){
 	
-    //Mostra mensagem de aguardo
-    showMsgAguardo('Aguarde, efetuando cancelamento autom&aacute;tico ...');
-	
 	var flaceint = 0;
 	var	flaplica = 0;
 	var flfolpag = 0;
@@ -88,10 +85,13 @@ function efetuaCancelamentoAuto(){
 	var fllimint = 0;
 	var flplacot = 0;
     var flpouppr = 0;
+	var checkprd = false;
 	
     $('input[type="checkbox"]', '#frmCancAuto').each(function (i) {
 
         if ($(this).attr('checked')) {
+			// Se checou algum produto atribuir flag
+			checkprd = true;
 			switch ($(this).attr('id')) {
 				//ATENDA -> EMPRESTIMOS/FINANCIAMENTOS
 				case "1":
@@ -119,6 +119,13 @@ function efetuaCancelamentoAuto(){
 		}
 	});
 	
+	if (!checkprd){
+		showError("error", "Nenhum produto foi selecionado.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+		return false;
+	}
+	
+    //Mostra mensagem de aguardo
+    showMsgAguardo('Aguarde, efetuando cancelamento autom&aacute;tico ...');
 	
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
@@ -360,14 +367,15 @@ function efetuaCancelamentoManual(){
 				//CHEQUE -> FOLHAS DE CHEQUE EM USO
 				case "15":
 					
-					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
-										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
-										   'setaImped();' +					
-										   'direcionaTela(\'CHEQUE\',\'no\');';
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela MANTAL ...\'); ' + 
+										   'setaParametrosImped(\'MANTAL\',\'\',nrdconta,flgcadas, \'IMPEDI\'); ' +
+										   'setaImped();' +
+										   'direcionaTela(\'MANTAL\',\'no\');';
 					produtosCancMAtenda[index] = '';
 					produtosCancMContas[index] = '';
-					produtosCancMCheque[index] = 'tppeschq = \'1\';'; // Chq em uso
+					produtosCancMCheque[index] = '';
 					index++;
+
 					
 					break;
 
@@ -384,8 +392,21 @@ function efetuaCancelamentoManual(){
 					
 					break;					
 					
-				//CHEQUE -> CHEQUES DEVOLVIDOS
+				//CHEQUE -> TALONÁRIOS EM ESTOQUE
 				case "17":
+					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
+										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
+										   'setaImped();' +					
+										   'direcionaTela(\'CHEQUE\',\'no\');';
+					produtosCancMAtenda[index] = '';
+					produtosCancMContas[index] = '';
+					produtosCancMCheque[index] = 'tppeschq = \'1\';'; // Chq em uso
+					index++;
+					
+					break;
+					
+				//CHEQUE -> CHEQUES DEVOLVIDOS
+				case "18":
 					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela ESTOUR ...\'); ' + 
 										   'setaParametrosImped(\'ESTOUR\',\'\',nrdconta,flgcadas, \'ESTOUR\');' +
 										   'setaImped();' +					
@@ -396,21 +417,9 @@ function efetuaCancelamentoManual(){
 					index++;
 					
 					break;
-
-				//CHEQUE -> TALONÁRIOS EM ESTOQUE
-				/*case "17":
-					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CHEQUE ...\'); ' + 
-										   'setaParametrosImped(\'CHEQUE\',\'\',nrdconta,flgcadas, \'CHEQUE\');' +
-										   'setaImped();' +					
-										   'direcionaTela(\'CHEQUE\',\'no\');';
-					produtosCancMAtenda[index] = '';
-					produtosCancMContas[index] = '';
-					index++;
-					
-					break;
-				*/
+				
 				//BENEFICIO INSS
-				case "18":
+				case "19":
 
 					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CONTAS ...\'); ' + 
 										   'setaParametrosImped(\'CONTAS\',\'\',nrdconta,flgcadas, \'CONTAS\');' +
@@ -423,8 +432,8 @@ function efetuaCancelamentoManual(){
 
 					break;
 
-				//BENEFICIO INSS
-				case "19":
+				//PRODUTOS BRDE
+				case "20":
 
 					produtosCancM[index] = 'showMsgAguardo(\'Aguarde, carregando tela CONTAS ...\'); ' + 
 										   'setaParametrosImped(\'CONTAS\',\'\',nrdconta,flgcadas, \'CONTAS\');' +

@@ -18,7 +18,6 @@ var controle		= '';
 
 var cddopcao		= '';
 var tptransa 		= 0 ;
-var nrdconta 		= 0 ; // Armazena o Número da Conta/dv
 var idseqttl		= 1 ;
 
 var aux_cdagechq	= ''; // Armazena o retorno verif-agechq da consulta tipo 2 no manter_rotina.php
@@ -1467,7 +1466,12 @@ function btnVoltar() {
 		if ( cConta.hasClass('campoTelaSemBorda') ) {
 			estadoCabecalho();
 		} else {
-			estadoInicial();
+			if (executandoImpedimentos){		
+				sequenciaImpedimentos();
+				return false;
+			} else {
+				estadoInicial();
+			}
 		}
 	}
 	
@@ -1681,4 +1685,11 @@ function validaAgencia() {
 		});
 	
 	return aux_retorno;
+}
+function sequenciaImpedimentos() {
+    if (executandoImpedimentos) {	
+		eval(produtosCancM[posicao - 1]);
+		posicao++;
+		return false;
+    }
 }

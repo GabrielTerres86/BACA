@@ -31,9 +31,9 @@
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
-		<script type="text/javascript" src="../../scripts/menu.js"></script>
+		<script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="mantal.js"></script>
+		<script type="text/javascript" src="mantal.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -112,3 +112,14 @@
 </table>
 </body>
 </html>
+<script type="text/javascript">
+	var nrdconta           	   = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
+	var flgcadas           	   = '<? echo $_POST['flgcadas']; ?>';           // Verificar se esta sendo feito o cadastro da nova conta 
+	var dtmvtolt		   	   = '<? echo $glbvars['dtmvtolt']; ?>';         // Data do sistema
+	var executandoImpedimentos = '<? echo $_POST['executandoImpedimentos']; ?>'; // Se esta sendo rodada a rotina de Impedimentos
+	var produtosCancM 		   = "<? echo $_POST['produtosCancM']; ?>";
+	var produtosCancMAtenda    = "<? echo $_POST['produtosCancMAtenda']; ?>";
+	var produtosCancMContas    = "<? echo $_POST['produtosCancMContas']; ?>";
+	var produtosCancMCheque    = "<? echo $_POST['produtosCancMCheque']; ?>";
+	var posicao 			   = '<? echo $_POST['posicao']; ?>';
+</script>

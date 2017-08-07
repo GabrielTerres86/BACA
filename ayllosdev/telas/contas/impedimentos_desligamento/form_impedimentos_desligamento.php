@@ -262,6 +262,20 @@
 						</tr>						
 						<tr>
 							<td>								
+								<label class="checkbox">Talon&aacute;rios em estoque</label>
+							</td>
+							<td>							
+								<label><? echo getByTagName($regServicos2->tags,'qtreqtal'); ?></label>
+							
+							</td>
+							<td style="vertical-align: middle">
+							<?if (getByTagName($regServicos2->tags,'qtreqtal') > 0){?>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>
+							<?}?>
+							</td>
+						</tr>
+						<tr>
+							<td>								
 								<label class="checkbox">Cheques devolvidos</label>
 							</td>
 							<td>
@@ -269,21 +283,10 @@
 							</td>
 							<td style="vertical-align: middle">
 							<?if (getByTagName($regServicos2->tags,'qtchqdev') > 0){?>
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="18"/>
 							<?}?>
 							</td>
-						</tr>
-						<tr>
-							<td>								
-								<label class="checkbox">Talon&aacute;rios em estoque</label>
-							</td>
-							<td>
-								<label><? echo getByTagName($regServicos2->tags,'qtreqtal'); ?></label>
-							</td>
-							<td style="vertical-align: middle">
-								<!--<input class="checkbox" type="checkbox" style="margin-top: 0px" id="17"/>-->
-							</td>
-						</tr>
+						</tr>						
 						<tr>
 							<td>								
 								<label class="checkbox">Benef&iacute;cio INSS</label>
@@ -293,7 +296,7 @@
 							</td>
 							<td style="vertical-align: middle">
 							<?if (getByTagName($regServicos2->tags,'flgbinss') == 1){?>							
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="18"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="19"/>
 							<?}?>
 							</td>
 						</tr>
@@ -306,7 +309,7 @@
 							</td>
 							<td style="vertical-align: middle">
 							<?if (getByTagName($regServicos2->tags,'flpdbrde') == 1){?>														
-								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="19"/>
+								<input class="checkbox" type="checkbox" style="margin-top: 0px" id="20"/>
 							<?}?>
 							</td>
 						</tr>

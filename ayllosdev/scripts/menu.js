@@ -258,7 +258,7 @@ function setaImped() {
 	var produtosContas = "";
 	var produtosCheque = "";
 	
-	if ($("#nmtelant","#frmMenu").val() == "COBRAN"){		
+	if ($("#nmtelant","#frmMenu").val() == "COBRAN" || $("#nmtelant","#frmMenu").val() == "MANTAL"){		
 		produtos = produtosCancM;
 		produtosAtenda = produtosCancMAtenda;
 		produtosContas = produtosCancMContas;

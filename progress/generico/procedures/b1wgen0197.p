@@ -19,12 +19,13 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgen0002tt.i }
+{ sistema/generico/includes/b1wgen0004tt.i }
+{ sistema/generico/includes/b1wgen0006tt.i }
 { sistema/generico/includes/b1wgen0009tt.i }
 { sistema/generico/includes/b1wgen0019tt.i }
 { sistema/generico/includes/b1wgen0021tt.i }
 { sistema/generico/includes/b1wgen0030tt.i }
 { sistema/generico/includes/b1wgen0033tt.i }
-{ sistema/generico/includes/b1wgen0081tt.i }
 { sistema/generico/includes/b1wgen0082tt.i }
 { sistema/generico/includes/b1wgen0197tt.i }
 
@@ -67,12 +68,15 @@ DEF VAR aux_dsdidade AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlbloque AS DECIMAL                                        NO-UNDO.
 DEF VAR aux_vlresblq AS DECIMAL                                        NO-UNDO.
 DEF VAR aux_vlresapl AS DECIMAL INIT 0                                 NO-UNDO.
+DEF VAR aux_vlsrdrpp AS DECIMAL INIT 0                                 NO-UNDO.
 DEF VAR aux_dsdmesag AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdhistor AS INTE                                           NO-UNDO.
 DEF VAR aux_cdrefere AS INTE                                           NO-UNDO.
 DEF VAR aux_flgsicre AS CHAR                                           NO-UNDO.
+DEF VAR aux_qtregist AS INTEGER                                        NO-UNDO.
+DEF VAR aux_insitlim AS INTEGER                                        NO-UNDO.
 
 /******************************************************************************/
 
@@ -98,7 +102,7 @@ PROCEDURE busca_inf_produtos:
     
     IF AVAILABLE crapope THEN
        DO:
-          FOR FIRST crapass FIELDS(flgrestr)
+          FOR FIRST crapass FIELDS(flgrestr vllimcre)
                              WHERE crapass.cdcooper = par_cdcooper
                                AND crapass.nrdconta = par_nrdconta
                                NO-LOCK:
@@ -140,7 +144,12 @@ PROCEDURE busca_inf_produtos:
                          
           RETURN "NOK".          
        END.
-    
+       
+    /* Buscar data do proximo dia util*/
+    FOR FIRST crapdat FIELDS(dtmvtopr inproces)
+                      WHERE crapdat.cdcooper = par_cdcooper
+                      NO-LOCK:
+    END.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,",")).
 
@@ -157,21 +166,27 @@ PROCEDURE busca_inf_produtos:
 
     RUN sistema/generico/procedures/b1wgen0002.p PERSISTENT SET h-b1wgen0002.
 
-    RUN obtem-propostas-emprestimo IN h-b1wgen0002 (INPUT par_cdcooper,
-                                                    INPUT par_cdagenci,
-                                                    INPUT par_nrdcaixa,
-                                                    INPUT par_cdoperad,
-                                                    INPUT par_nmdatela,
-                                                    INPUT par_idorigem, /* Ayllos */
-                                                    INPUT par_nrdconta,
-                                                    INPUT par_idseqttl,
-                                                    INPUT par_dtmvtolt,
-                                                    INPUT 0,/*Contrato(todos)*/
-                                                    INPUT FALSE,
-                                                    OUTPUT TABLE tt-erro,
-                                                    OUTPUT TABLE tt-proposta-epr,
-                                                    OUTPUT TABLE tt-dados-gerais,
-                                                    OUTPUT aux_dsdidade).
+    RUN obtem-dados-emprestimos IN h-b1wgen0002 (INPUT par_cdcooper,
+                                                 INPUT par_cdagenci,
+                                                 INPUT par_nrdcaixa,
+                                                 INPUT par_cdoperad,
+                                                 INPUT par_nmdatela,
+                                                 INPUT par_idorigem, /* Ayllos */
+                                                 INPUT par_nrdconta,
+                                                 INPUT par_idseqttl,
+                                                 INPUT par_dtmvtolt,
+                                                 INPUT crapdat.dtmvtopr,
+                                                 INPUT ?,
+                                                 INPUT 0,/*Contrato(todos)*/
+                                                 INPUT "CONTAS",
+                                                 INPUT crapdat.inproces,
+                                                 INPUT FALSE,
+                                                 INPUT FALSE,
+                                                 INPUT 0,
+                                                 INPUT 0,
+                                                 OUTPUT aux_qtregist,
+                                                 OUTPUT TABLE tt-erro,
+                                                 OUTPUT TABLE tt-dados-epr-out).
     DELETE PROCEDURE h-b1wgen0002.
 
     CREATE tt-inf-produto.
@@ -196,14 +211,21 @@ PROCEDURE busca_inf_produtos:
            tt-inf-produto.flgbinss = 0
            tt-inf-produto.flpdbrde = 0.
     
-    FOR EACH tt-proposta-epr NO-LOCK:
-      ASSIGN tt-inf-produto.vlemprst = tt-inf-produto.vlemprst + tt-proposta-epr.vlemprst.
+    FOR EACH tt-dados-epr-out NO-LOCK:
+      ASSIGN tt-inf-produto.vlemprst = tt-inf-produto.vlemprst + tt-dados-epr-out.vlsdeved.
     END.
     
-    FOR EACH craplim WHERE craplim.cdcooper = par_cdcooper
-                       AND craplim.nrdconta = par_nrdconta
-                       AND craplim.insitlim = 2 NO-LOCK:
-      ASSIGN tt-inf-produto.vllimpro = tt-inf-produto.vllimpro + craplim.vllimite.
+    IF  crapass.vllimcre > 0  THEN
+        aux_insitlim = 2.
+    ELSE
+        aux_insitlim = 3.
+    
+    FOR LAST craplim WHERE craplim.cdcooper = par_cdcooper AND
+                           craplim.nrdconta = par_nrdconta AND
+                           craplim.tpctrlim = 1            AND
+                           craplim.insitlim = aux_insitlim 
+                           NO-LOCK USE-INDEX craplim2:
+      ASSIGN tt-inf-produto.vllimpro = craplim.vllimite.
     END.
     
     RUN sistema/generico/procedures/b1wgen0009.p PERSISTENT SET h-b1wgen0009.    
@@ -271,50 +293,52 @@ PROCEDURE busca_inf_produtos:
       ASSIGN tt-inf-produto.vllimcar = tt-inf-produto.vllimcar + crawcrd.vllimcrd.
     END.
     
-    RUN sistema/generico/procedures/b1wgen0155.p PERSISTENT SET h-b1wgen0155.
-        
-    RUN retorna-valor-blqjud IN h-b1wgen0155 (INPUT par_cdcooper,
-                                              INPUT par_nrdconta,
-                                              INPUT 0,
-                                              INPUT 0,
-                                              INPUT 0,
-                                              INPUT par_dtmvtolt,
-                                             OUTPUT aux_vlbloque,
-                                             OUTPUT aux_vlresblq).
-    DELETE PROCEDURE h-b1wgen0155.
+    RUN sistema/generico/procedures/b1wgen0081.p PERSISTENT SET h-b1wgen0081.
+
+    RUN obtem-dados-aplicacoes IN h-b1wgen0081 (INPUT par_cdcooper,
+                                                INPUT par_cdagenci,
+                                                INPUT par_nrdcaixa,
+                                                INPUT par_cdoperad,
+                                                INPUT par_nmdatela,
+                                                INPUT par_idorigem,
+                                                INPUT par_nrdconta,
+                                                INPUT par_idseqttl,
+                                                INPUT 0,
+                                                INPUT par_nmdatela,                                                 
+                                                INPUT 0,
+                                                INPUT ?,
+                                                INPUT ?,
+                                               OUTPUT aux_vlresapl,
+                                               OUTPUT TABLE tt-saldo-rdca,
+                                               OUTPUT TABLE tt-erro).
+
+    DELETE PROCEDURE h-b1wgen0081.
+
+    ASSIGN tt-inf-produto.vlresapl = aux_vlresapl.
     
-    /* Percorrer as aplicacoes da conta */
-    FOR EACH craprda WHERE craprda.cdcooper = par_cdcooper
-                       AND craprda.nrdconta = par_nrdconta
-                       AND craprda.insaqtot = 0 NO-LOCK:
-                           
-      RUN sistema/generico/procedures/b1wgen0081.p PERSISTENT SET h-b1wgen0081.
-
-      RUN buscar-dados-aplicacao IN h-b1wgen0081 (INPUT par_cdcooper,
-                                                  INPUT par_cdagenci,
-                                                  INPUT par_nrdcaixa,
-                                                  INPUT par_cdoperad,
-                                                  INPUT par_nmdatela,
-                                                  INPUT par_idorigem,
-                                                  INPUT par_nrdconta,
-                                                  INPUT par_idseqttl,
-                                                  INPUT "E",
-                                                  INPUT par_dtmvtolt,
-                                                  INPUT craprda.nraplica,
-                                                  INPUT FALSE,
-                                                 OUTPUT TABLE tt-tipo-aplicacao,
-                                                 OUTPUT TABLE tt-dados-aplicacao,
-                                                 OUTPUT TABLE tt-erro).
-
-      DELETE PROCEDURE h-b1wgen0081.
-
-      FOR FIRST tt-dados-aplicacao:
-        ASSIGN aux_vlresapl = aux_vlresapl + tt-dados-aplicacao.vllanmto.
-      END.
-
-    END.
+    RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006.      
     
-    ASSIGN tt-inf-produto.vlresapl = aux_vlresapl + aux_vlresblq.
+    RUN consulta-poupanca IN h-b1wgen0006 (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT par_cdoperad,
+                                           INPUT par_nmdatela,
+                                           INPUT par_idorigem,
+                                           INPUT par_nrdconta,
+                                           INPUT par_idseqttl,
+                                           INPUT 0,
+                                           INPUT par_dtmvtolt,
+                                           INPUT crapdat.dtmvtopr,
+                                           INPUT crapdat.inproces,
+                                           INPUT par_nmdatela,
+                                           INPUT FALSE,
+                                          OUTPUT aux_vlsrdrpp,
+                                          OUTPUT TABLE tt-erro,
+                                          OUTPUT TABLE tt-dados-rpp).
+                                          
+    DELETE PROCEDURE h-b1wgen0006.
+    
+    ASSIGN tt-inf-produto.vlsrdrpp = aux_vlsrdrpp.
     
     RUN sistema/generico/procedures/b1wgen0082.p PERSISTENT SET h-b1wgen0082.
     
