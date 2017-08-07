@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Everton (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao:  19/07/2017
+  Data    : Abril/2017.                    Ultima atualizacao:  07/08/2017
 
   Dados referentes ao programa:
 
@@ -27,6 +27,9 @@ BEGIN
   Alteracoes: 12/04/2017 - Criação da rotina (Everton / Mout´S)
   
               19/07/2017 - Adequação para pagamento de empréstimos com adiantamento e acertos gerais
+              
+              07/08/2017 - Correção da execução do relatório 135, que não estava sendo
+                           gerado na execução em paralelo.
 
     ............................................................................. */
 
@@ -1780,7 +1783,8 @@ BEGIN
       
     --Fase processo 3
     --Procedure para gerar o movimento de rejeitados
-    PROCEDURE pc_gera_movimento_rejeitados(pr_cdcooper IN crapcop.cdcooper%TYPE) IS    
+    PROCEDURE pc_gera_movimento_rejeitados(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                           pr_cdagenci IN crapass.cdagenci%TYPE) IS    
 
       -- Buscar o cadastro dos associados da Cooperativa
       CURSOR cr_crapass IS
@@ -1839,6 +1843,7 @@ BEGIN
               ,COUNT (*)  qtparcelas
           FROM craprej
          WHERE cdcooper = pr_cdcooper
+           AND cdagenci = pr_cdagenci
            AND cdbccxlt = 171
            AND cdcritic = 171
         GROUP BY cdagenci
@@ -2180,6 +2185,7 @@ BEGIN
       BEGIN
         DELETE craprej rej
          WHERE rej.cdcooper = pr_cdcooper
+           AND rej.cdagenci = pr_cdagenci
            AND rej.cdbccxlt = 171
            AND rej.cdcritic = 171;
       EXCEPTION
@@ -2236,7 +2242,8 @@ BEGIN
                          ,pr_nrctremp
                          ,pr_nrparepr);
       ELSIF pr_faseprocesso = 3 THEN
-        pc_gera_movimento_rejeitados(pr_cdcooper);
+        pc_gera_movimento_rejeitados(pr_cdcooper,
+                                     pr_cdagenci);
       END IF;
       --
   EXCEPTION
