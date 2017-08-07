@@ -1,17 +1,18 @@
 <?php
 /*!
  * FONTE        : principal.php
- * CRIA«√O      : Rodolpho Telmo (DB1)
- * DATA CRIA«√O : Fevereiro/2010 
- * OBJETIVO     : Mostrar opcao Principal da rotina de IDENTIFICA«√O FÕSICA da tela de CONTAS 
+ * CRIA√á√ÉO      : Rodolpho Telmo (DB1)
+ * DATA CRIA√á√ÉO : Fevereiro/2010 
+ * OBJETIVO     : Mostrar opcao Principal da rotina de IDENTIFICA√á√ÉO F√çSICA da tela de CONTAS 
  * --------------
- * ALTERA«’ES   :
+ * ALTERA√á√ïES   :
  * --------------
- * 001: [25/03/2010] Rodolpho Telmo  (DB1): AdequaÁ„o ao novo padr„o
- * 002: [20/12/2010] Gabriel Capoia  (DB1): Chamada funÁ„o validaPermissao
+ * 001: [25/03/2010] Rodolpho Telmo  (DB1): Adequa√ß√£o ao novo padr√£o
+ * 002: [20/12/2010] Gabriel Capoia  (DB1): Chamada fun√ß√£o validaPermissao
  * 003: [11/06/2012] Adriano			  : Alimentado as variaveis UrlImages, cdhabmen, nrdeanos,estadoCivil.
  * 004: [15/10/2015] Gabriel(RKAM)        : Reformulacao cadastral.
  * 005: [13/07/2016] Carlos R.	: Correcao do uso de variaveis do array $_POST. SD 479874.
+ * 006: [20/07/2017] Andrey F.	: Correcao no "continuar" ap√≥s criar conta na tela MATRIC. SD 715817
  */
 
 	session_start();
@@ -26,7 +27,7 @@
 
 	$glbvars["nmrotina"] = (isset($_POST['nmrotina'])) ? $_POST['nmrotina'] : $glbvars["nmrotina"];
 	
-	// Dependendo da operacao, preencho a vari·vel $cddopcao
+	// Dependendo da operacao, preencho a vari√°vel $cddopcao
 	if ( $operacao == 'CA' || $operacao == 'BA' ) { 
 		$cddopcao = 'A';
 	} else if ( $operacao == 'CI' || $operacao == 'BI' ) { 
@@ -37,36 +38,36 @@
 	
 	$op = ( $cddopcao == 'C' ) ? '@' : $cddopcao ;
 	
-	// Verifica permissıes de acessa a tela
+	// Verifica permiss√µes de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
 		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,false);
 	}
 	
-	// Verifica se o n˙mero da conta foi informado
+	// Verifica se o n√∫mero da conta foi informado
 	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 
 	
-	// Carrega permissıes do operador
+	// Carrega permiss√µes do operador
 	include("../../../includes/carrega_permissoes.php");
 	
 	setVarSession("opcoesTela",$opcoesTela);
 
-	// Carregas as opÁıes da Rotina de Identificacao
+	// Carregas as op√ß√µes da Rotina de Identificacao
 	$flgAlterar  = (in_array("A", $glbvars["opcoesTela"]));
 	$flgIncluir  = (in_array("I", $glbvars["opcoesTela"]));
 	
-	// Recebo os par‚metros do POST em vari·veis	
+	// Recebo os par√¢metros do POST em vari√°veis	
 	$nrcpfcgc = ( isset($_POST['nrcpfcgc']) )   ? $_POST['nrcpfcgc'] : '';	
 	$nrdconta = ( isset($_POST['nrdconta']) )  ? $_POST['nrdconta'] : 0;
 	$idseqttl   = ( isset($_POST['idseqttl']) )    ? $_POST['idseqttl']   : 0;
 	$cdgraupr = ( isset($_POST['cdgraupr']) )  ? $_POST['cdgraupr'] : '';
-	
-	// Verifica se o n˙mero da conta e o titular s„o inteiros v·lidos
+		
+	// Verifica se o n√∫mero da conta e o titular s√£o inteiros v√°lidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq. Titular n&atilde;o foi informada.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
 		
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xml  = '';
 	$xml .= '<Root>';
 	$xml .= '	<Cabecalho>';
@@ -92,12 +93,12 @@
 	$xmlObjeto   = getObjectXML($xmlResult);	
 	$IdentFisica = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 		
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco();',false);
 	}
 	
-	// Se n„o retornou erro, ent„o pegar a mensagem de alerta do Progress na vari·vel msgAlert, para ser utilizada posteriormente
+	// Se n√£o retornou erro, ent√£o pegar a mensagem de alerta do Progress na vari√°vel msgAlert, para ser utilizada posteriormente
 	$msgAlert = trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']);	
 	
 	
@@ -111,7 +112,7 @@
 ?>
 <script type='text/javascript'>
 
-	// Declara os flags para as opÁıes da Rotina de Bens
+	// Declara os flags para as op√ß√µes da Rotina de Bens
 	var flgAlterar   = "<? echo $flgAlterar;   ?>";
 	var flgIncluir   = "<? echo $flgIncluir;   ?>";
 	var flgcadas     = "<? echo $flgcadas;     ?>";
@@ -124,11 +125,7 @@
 	dtmvtolt    = '<?echo $glbvars['dtmvtolt']?>';
 	estadoCivil =  '<? echo getByTagName($IdentFisica,"cdestcvl"); ?>';
 		
-	if (flgcadas == "M") { // Se for chamada da MATRIC (conclusao de matricula)
-		controlaOperacao('CA');
-	}
-	
-	controlaLayout();
+	controlaLayout(operacao);
 	
 	if ( msgAlert != '' ) { 
 		showError('inform',msgAlert,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaFoco(operacao);');

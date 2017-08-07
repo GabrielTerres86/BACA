@@ -3440,6 +3440,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    
                    16/05/2017 - Implementado melhorias para nao ocorrer estouro de chave
                                 qdo inserir a crapsab (Tiago/Rodrigo #663284)
+                                
+                   26/07/2017 - Ajuste no insert da tabela crapsab, onde estava sendo inserido
+                                na coluna nrcelsac o valor do cep e tambem corrigido para inserir a 
+                                situacao como ativo, antes estava assumindo o valor 0 por default 
+                                (Rafael Monteiro - 720045)                                
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3489,7 +3494,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            ,nrcepsac
                            ,cdoperad
                            ,dtmvtolt
-                           ,nrcelsac)
+                           ,nrcelsac
+                           ,cdsitsac)
                     VALUES(vr_sacado.cdcooper
                           ,vr_sacado.nrdconta
                           ,vr_nmdsacad
@@ -3503,7 +3509,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,vr_sacado.nrcepsac
                           ,vr_sacado.cdoperad
                           ,vr_sacado.dtmvtolt
-                          ,nvl(vr_sacado.nrcepsac,0));
+                          ,nvl(vr_sacado.nrcelsac,0)
+                          ,1); -- Ativo
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
           -- Sacado possui registro

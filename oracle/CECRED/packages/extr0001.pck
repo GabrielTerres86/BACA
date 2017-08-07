@@ -31,7 +31,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
 							
 			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
-							com formato invalido. (Carlos Rafael Tanholi - SD 531031)                            
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 
                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
                             na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
@@ -721,7 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
               02/06/2016 - Adicionado validações Para melhorar desempenho da 
                            rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
-                          
+                           
               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                            desta package.(Carlos Rafael Tanholi).                              
                            
@@ -738,7 +738,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            pc_obtem_saldo_dia (Carlos)
                29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
                             atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)
-
+			    
               06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).
 
@@ -763,6 +763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
 			   15/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
 							pc_consulta_extrato. (Reinert)
+
+			   21/07/2017 - Incluído histórico 508 na procedure pc_consulta_extrato. (Andrey - Mouts)
 
 ..............................................................................*/
 
@@ -814,7 +816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND ( pr_lsthistor_ret = ' ' OR ','||pr_lsthistor_ret||',' LIKE ('%,'||lcm.cdhistor||',%') );     --> Retornar quando passado         
   rw_craplcm_olt cr_craplcm_olt%ROWTYPE;    
           
-         
+
   -- Busca de lançamentos no periodo para a conta do associado
   CURSOR cr_craplcm_ign(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
                    ,pr_nrdconta  IN crapass.nrdconta%TYPE  --> Número da conta
@@ -877,7 +879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND epr.nrdconta = pr_nrdconta
        AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
-
+	
 	CURSOR cr_his_recarga(pr_cdhistor IN tbrecarga_operadora.cdhisdeb_cooperado%TYPE) IS
 	  SELECT 1
 		  FROM tbrecarga_operadora tope
@@ -2179,7 +2181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
 				END LOOP;
 
-        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
+        vr_lscdhist_ret := '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope; --> Lista com códigos de histórico a retornar         
         -- Buscar lançamentos no dia apenas dos historicos listados acima
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
@@ -2875,7 +2877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  Depositos Identificados (Alisson - AMcom)
 
                     01/04/2015 - Ajuste na variavel vr_dshistor (Jean Michel).
-                    
+
                     17/05/2016 - Incluido tratamento para historico 1019 exibir o correta
                                  descrição no historico e para caso for um lançamento de 
                                  debito automatico concatenar com historico complementar
@@ -3697,7 +3699,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
-                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
+                                    ,pr_lsthistor_ret => '15,316,375,376,377,450,530,537,538,539,767,771,772,918,920,1109,1110,1009,1011,527,472,478,497,499,501,508,530,108,1060,1070,1071,1072,2139,'||vr_tab_tarifa_transf(vr_tariidx).cdhisint||','||vr_tab_tarifa_transf(vr_tariidx).cdhistaa || vr_cdhishcb || vr_cdhisope) LOOP --> Lista com códigos de histórico a retornar
           -- Se for uma transferencia agendada, nao compor saldo
           IF NOT( (rw_craplcm_olt.cdhistor IN(375,376,377,537,538,539,771,772) AND NVL(SUBSTR(rw_craplcm_olt.cdpesqbb,54,8),' ') = 'AGENDADO')
                  OR
@@ -6244,7 +6246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
      Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
 
-	             03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
+                 03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
                               Projeto 299/3 - Pre Aprovado (Lombardi)
     ..............................................................................*/
 
@@ -6971,7 +6973,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_dscritic:= 'Erro na extr0001.pc_consulta_extrato_car --> '|| SQLERRM;
 
   END pc_consulta_extrato_car;  
-
+  
   --> Rotina para obter as medias dos cooperados
   PROCEDURE pc_obtem_medias ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                              ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
