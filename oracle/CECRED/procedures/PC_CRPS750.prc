@@ -10,11 +10,11 @@ BEGIN
 
   /* .............................................................................
 
-  Programa: PC_CRPS750
+  Programa: PC_CRPS750                      
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 06/06/2017
+  Data    : Abril/2017                      Ultima atualizacao: 07/08/2017
 
   Dados referentes ao programa:
 
@@ -23,6 +23,9 @@ BEGIN
 
   Alteracoes: 22/06/2017 - Correção do tratamento de erros, não deve abortar o programa e
                            sim continuar para o próximo registro - Jean - Mout´S
+
+              07/08/2017 - Correção da execução do relatório 135, que não estava sendo
+                           gerado na execução em paralelo.
     ............................................................................. */
 
   DECLARE
@@ -34,7 +37,7 @@ BEGIN
                          ,pr_dtmvtolt  IN crappep.dtvencto%TYPE
                          ,pr_dtmvtoan  IN crappep.dtvencto%TYPE
                          ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
-        SELECT 'PP' idtpprd -- Tipo de produto de emprestimo, se PP chama a PC_CRPS750_2
+        SELECT 'PP' idtpprd -- Tipo de produto de emprestimo, se PP chama a PC_CRPS750_2          
            , nvl((select 1 from crapbpr
                  where  crapbpr.cdcooper = crappep.cdcooper
                  and    crapbpr.nrdconta = crappep.nrdconta
@@ -53,7 +56,7 @@ BEGIN
            , crappep.dtvencto
            , crappep.vlsdvatu vlsdvpar -- crappep.vlsdvpar
            , crappep.nrparepr
-           , crappep.inliquid
+           , crappep.inliquid 
            , crappep.rowid
         FROM crawepr
            , crapass
@@ -74,9 +77,9 @@ BEGIN
          AND crappep.dtvencto <= pr_dtmvtolt
          AND crappep.inprejuz = 0
          AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan))
-       UNION
-
-       SELECT 'TR' idtpprd
+       UNION 
+       
+       SELECT 'TR' idtpprd             
               , nvl((select 1 from crapbpr
                  where  crapbpr.cdcooper = epr.cdcooper
                  and    crapbpr.nrdconta = epr.nrdconta
@@ -87,7 +90,7 @@ BEGIN
               , nvl((select 1 from crapavl
                     where  crapavl.cdcooper = epr.cdcooper
                     and    crapavl.nrdconta = epr.nrdconta
-                    and     rownum = 1),0) idavalista
+                    and     rownum = 1),0) idavalista                 
               ,epr.cdcooper
               ,epr.nrdconta
               ,epr.nrctremp
@@ -96,7 +99,7 @@ BEGIN
               ,prc.vlparcela vlsdvpar
               ,prc.nrparcela nrparepr
               ,epr.inliquid
-              ,epr.rowid
+              ,epr.rowid        
           FROM crapepr epr,
                tbepr_tr_parcelas prc
          WHERE epr.cdcooper = prc.cdcooper
@@ -116,7 +119,7 @@ BEGIN
           BY dtvencto
            , idgravame  desc
            , idavalista desc
-           , vlsdvpar   desc
+           , vlsdvpar   desc  
            , cdcooper
            , nrdconta
            , nrctremp
@@ -140,12 +143,12 @@ BEGIN
 
     --Variaveis Locais
        vr_flgpripr BOOLEAN;
-
+       
     --Variaveis para retorno de erro
        vr_cdcritic      INTEGER:= 0;
        vr_dscritic      VARCHAR2(4000);
-
-
+       
+     
     --Variaveis de Excecao
        vr_exc_final     EXCEPTION;
        vr_exc_saida     EXCEPTION;
@@ -259,16 +262,16 @@ BEGIN
       --Sair do programa
       RAISE vr_exc_saida;
     END IF;
-
+    
     if pr_cdagenci = 0 then
       begin
         delete crapprm c
          where c.nmsistem = 'CRED'
            and c.cdcooper = pr_cdcooper
            and c.cdacesso = 'PC_CRPS750-ERRO';
-
+        
         commit;
-
+        
       exception
         when others then
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -296,12 +299,12 @@ BEGIN
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
-    -- define como primeira execucao
+    -- define como primeira execucao 
     
-
-      /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
-    if PR_CDAGENCI = 0 then
        
+      /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
+    if PR_CDAGENCI = 0
+    and   rw_crapdat.inproces >= 2 then
        PC_CRPS750_1( pr_faseprocesso => 1
                     ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                     ,pr_nrdconta     => null  --> Número da conta
@@ -312,9 +315,9 @@ BEGIN
                     ,pr_cdcritic     => pr_cdcritic --> Codigo da Critica
                     ,pr_dscritic     => vr_dscritic);
         COMMIT;
-    end if;
-
-
+    end if;         
+             
+    
     /* 229243 Paralelismo visando performance
        Rodar Somente no processo Noturno */
     IF rw_crapdat.inproces > 2 and
@@ -387,7 +390,7 @@ BEGIN
                                     ,pr_qtdproce => vr_qtdjobs --> Máximo de 10 jobs neste processo
                                     ,pr_des_erro => pr_dscritic);
         -- Testar saida com erro
-        IF pr_dscritic IS NOT NULL THEN
+        IF pr_dscritic IS NOT NULL THEN  
           -- Levantar exceçao
           RAISE vr_exc_saida;
         END IF;
@@ -425,11 +428,11 @@ BEGIN
 
       RETURN;
     END IF;
-
+  
     /* 229243 Verifica na crapprm a ultima data de execução */
     pc_verifica_processo;
     /***************************************/
-
+    
    /*IF  TRUNC(SYSDATE) <> rw_crapdat.dtmvtolt
    and rw_crapdat.inproces = 1 THEN
        --> O JOB esta configurado para rodar de Segunda a Sexta
@@ -438,20 +441,21 @@ BEGIN
        RAISE vr_exc_saida;
     END IF;*/
 
-
+  
     FOR rw_crappep IN cr_crappep (pr_cdcooper => pr_cdcooper
                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                     ,pr_dtmvtoan => rw_crapdat.dtmvtoan
                                     ,pr_cdagenci => pr_cdagenci) LOOP
 
-
+         
            /* Verificar tipo de produto, se TR, executar a PC_CRPS750_1, se PP, executar a PC_CRPS750_2 */
            vr_nrdconta := rw_crappep.nrdconta;
            vr_nrctremp := rw_crappep.nrctremp;
            vr_nrparcela := rw_crappep.nrparepr;
            vr_idtpprd := rw_crappep.idtpprd;
-
-           if rw_crappep.idtpprd = 'TR' then
+    
+           if  rw_crappep.idtpprd = 'TR' then
+               if rw_crapdat.inproces >= 2 then
                   PC_CRPS750_1( pr_faseprocesso => 2
                               ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                               ,pr_nrdconta     => rw_crappep.nrdconta  --> Número da conta
@@ -461,23 +465,25 @@ BEGIN
                               ,pr_cdoperad     => user  --> Código do operador
                               ,pr_cdcritic     => pr_cdcritic --> Codigo da Critica
                               ,pr_dscritic     => vr_dscritic);
-                  
-				  
-				  COMMIT;                  
+                              
+                  if vr_dscritic is null then
+                  COMMIT;
+                  end if;
+               end if;
            elsif rw_crappep.idtpprd = 'PP' then
-
+             
                  PC_CRPS750_2(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => rw_crappep.nrdconta --> Número da conta
                              ,pr_nrctremp => rw_crappep.nrctremp --> contrato de emprestimo
                              ,pr_nrparepr => rw_crappep.nrparepr --> numero da parcela
                              ,pr_cdagenci => rw_crappep.cdagenci --> código da agencia
                              ,pr_nmdatela => pr_nmdatela         --> Nome da tela
-                             ,pr_infimsol => pr_infimsol
+                             ,pr_infimsol => pr_infimsol            
                              ,pr_cdcritic => pr_cdcritic   --> Codigo da Critica
-                             ,pr_dscritic => vr_dscritic  );      --> descricao da critica
-
+                             ,pr_dscritic => vr_dscritic  );      --> descricao da critica 
+                   
            end if;
-
+           
            if vr_dscritic is not null then
                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                        pr_ind_tipo_log => 2,
@@ -486,27 +492,28 @@ BEGIN
                                        pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
 
 
-
+         
            end if;
       /***************************************/
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
     /* encerra a execucao da pc_crps750_1 */
-    IF pr_cdagenci = 0 THEN
+    IF pr_cdagenci <> 0
+    and rw_crapdat.inproces >= 2 THEN
         PC_CRPS750_1( pr_faseprocesso => 3
                       ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                       ,pr_nrdconta     => null  --> Número da conta
                       ,pr_nrctremp     => null  --> contrato de emprestimo
                       ,pr_nrparepr     => null  --> numero da parcela
-                      ,pr_cdagenci     => null  --> código da agencia
+                      ,pr_cdagenci     => pr_cdagenci  --> código da agencia
                       ,pr_cdoperad     => null  --> Código do operador
                       ,pr_cdcritic     => pr_cdcritic --> Codigo da Critica
                       ,pr_dscritic     => vr_dscritic);
     END IF;
-
+    
     /* 229243 - Atualizar Processamento na crapprm */
     BEGIN
-
+      
          insert into crapprm a
          (nmsistem
          ,cdcooper
@@ -518,22 +525,22 @@ BEGIN
          ,'CRPS750_DATA_PROCESSO'
          ,'Fim processo'
          ,to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY HH24:MI:SS'));
-
+      
     EXCEPTION
       when dup_val_on_index then
         UPDATE crapprm a
          SET a.dsvlrprm = to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY')
        WHERE a.cdcooper = pr_cdcooper
          AND a.cdacesso = 'CRPS750_DATA_PROCESSO';
-
-
+         
+        
       WHEN OTHERS THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Erro ao atualizar crapprm. ' || SQLERRM;
         --Levantar Excecao
         RAISE vr_exc_saida;
     END;
-
+    
     IF pr_cdagenci = 0 THEN
       -- Processo OK, devemos chamar a fimprg
          btch0001.pc_valida_fimprg (pr_cdcooper => pr_cdcooper
@@ -611,7 +618,7 @@ BEGIN
       END IF;
       -- Efetuar rollback
       ROLLBACK;
-
+      
       IF pr_cdagenci <> 0 THEN
         begin
           insert into crapprm(nmsistem
@@ -652,7 +659,7 @@ BEGIN
       END IF;
       -- Efetuar rollback
       ROLLBACK;
-
+      
       IF pr_cdagenci <> 0 THEN
         begin
           insert into crapprm(nmsistem
