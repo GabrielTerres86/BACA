@@ -140,11 +140,10 @@
 				14/04/2016 - Alterada procedure buscar-cadtar para buscar também
 							 o campo flutlpct. Prj. 218 - Pacotes de Tarifas (Lombardi).
 							        
-                17/04/2017 - Alterar for each com last-off por find last na busca-novo-cdfvlcop
+               17/04/2017 - Alterar for each com last-off por find last na busca-novo-cdfvlcop
                             (Lucas Ranghetti #633002)
-
-				11/07/2017 - Melhoria 150 - Tarifação de operações de crédito por percentual
                            
+				11/07/2017 - Melhoria 150 - Tarifação de operações de crédito por percentual
               
 ............................................................................*/
 
@@ -8759,10 +8758,33 @@ PROCEDURE carrega_dados_tarifa_vigente:
                            INPUT-OUTPUT aux_dscritic).
             RETURN "NOK".
         END.
-            
+
+      /*Retornar valores*/
+      /* TARIFA POR PERCENTUAL*/
+      IF crapfco.tpcobtar = 2 THEN
+        DO:
+		  ASSIGN par_vltarifa = par_vllanmto * (crapfco.vlpertar / 100).
+ 
+          /*VERIFICA LIMITE MÍNIMO*/
+          IF par_vltarifa < crapfco.vlmintar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmintar.
+			END.
+          /*VERIFICA LIMITE MÁXIMO*/
+          IF par_vltarifa > crapfco.vlmaxtar THEN
+            DO:
+			  ASSIGN par_vltarifa = crapfco.vlmaxtar.
+			END.
+		END.
+        /* TARIFA FIXA*/
+      ELSE
+	    DO:
+          ASSIGN par_vltarifa = crapfco.vltarifa.
+		END.
+
+		
     ASSIGN par_cdhistor = crapfvl.cdhistor
            par_cdhisest = crapfvl.cdhisest
-           par_vltarifa = crapfco.vltarifa
            par_dtdivulg = crapfco.dtdivulg
            par_dtvigenc = crapfco.dtvigenc
            par_cdfvlcop = crapfco.cdfvlcop.
