@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcoope
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Dezembro/2009.                      Ultima atualizacao: 29/05/2017
+   Data    : Dezembro/2009.                      Ultima atualizacao: 07/07/2017
 
    Dados referentes ao programa:
 
@@ -71,6 +71,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcoope
 
 			   29/05/2017 - Incluso filtro para buscar apenas arquivos .DV% (Daniel)
 
+         07/07/2017 - Incluido pc_internal_exception para verificacao de 
+                      possiveis erros (Tiago/Rodrigo #681226)
 ............................................................................. */
 
   -- CURSORES
@@ -983,6 +985,9 @@ EXCEPTION
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
+    
+    cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+    
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
