@@ -12,7 +12,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
      Frequencia: Executado via Job
      Objetivo  : Realizar importação do arquivo de faturas atrasadas de cartão de credito.
 
-     Alteracoes:
+     Alteracoes: 27/07/2017 - Adicionado geração do arquivo log para conferencia pela area
+                              de negocio. Adicionado envio de e-mail quando problemas forem
+                              encontrados (Anderson).
 
   ............................................................................ */
 
@@ -27,9 +29,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   vr_exc_erro   EXCEPTION;  
   vr_exc_prox   EXCEPTION;  
   vr_exc_fimcoop EXCEPTION;  
+  vr_exc_email  EXCEPTION;
   vr_cdcritic   PLS_INTEGER;
   vr_dscritic   VARCHAR2(4000);
-
+  vr_dslinha    VARCHAR2(100);
+  vr_qttotal    NUMERIC;
+  vr_qtimport   NUMERIC;
+  vr_dsdirarq   VARCHAR2(500);
+  vr_dscomand   VARCHAR2(2000);
+  vr_typ_saida  VARCHAR2(4000); 
   ------------------------------- CURSORES ---------------------------------
 
   -- Busca dos dados da cooperativa
@@ -74,13 +82,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   vr_nmarqdat     VARCHAR2(500);
   vr_listdarq     VARCHAR2(500);
   vr_nmarqlog     VARCHAR2(500);
+  vr_nmlogtmp     VARCHAR2(500);
 
   vr_cdagebcb     crapcop.cdagebcb%TYPE;
   vr_vlsldfat     crapepr.vlemprst%TYPE;  
   vr_qtdiaatr     INTEGER;  
   vr_nrcartao     NUMBER;
   vr_dtdatual     DATE;
-  
+  vr_flgemail     BOOLEAN;
+
   --------------------------- SUBROTINAS INTERNAS --------------------------
 
   vr_nomdojob    VARCHAR2(40) := 'JBCRD_ARQ_FAT_ATRASO';
@@ -96,6 +106,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
                              ,pr_cdprogra  => vr_nomdojob    --> Codigo do programa
                              ,pr_nomdojob  => vr_nomdojob    --> Nome do job
                              ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                             ,pr_nmarqlog     => vr_nmlogtmp
                              ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                              ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
   END pc_controla_log_batch;
@@ -104,24 +115,42 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   PROCEDURE pc_gerar_log (pr_cdcooper IN crapcop.cdcooper%TYPE,
                           pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
   BEGIN
-  
-    --> se variavel ainda estiver nula
-    IF vr_nmarqlog IS NULL THEN
-      vr_nmarqlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
-                                               pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-    END IF; 
-    
+     
     BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
                                pr_ind_tipo_log => 1, 
                                pr_cdprograma   => vr_nomdojob,
                                pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - '||vr_cdprogra||' --> '|| pr_dscritic, 
-                               pr_nmarqlog     => vr_nmarqlog );
+                                                    ' - '||vr_cdprogra||' --> '|| pr_dscritic,
+                               pr_nmarqlog     => vr_nmlogtmp,
+                               pr_dsdirlog     => vr_dsdirarq);
   
   
   END pc_gerar_log;
 
-
+  --> Envio de e-mail de alerta
+  PROCEDURE pc_envia_email_alerta(pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                  pr_dscritic IN VARCHAR2) IS
+    vr_dscritica_aux VARCHAR2(2000) := '';
+  BEGIN
+    gene0003.pc_solicita_email(pr_cdcooper    => nvl(pr_cdcooper,3)
+                              ,pr_cdprogra    => 'CRPS716'
+                              ,pr_des_destino => gene0001.fn_param_sistema('CRED',nvl(pr_cdcooper,3), 'CRED_EMAIL_FAT_ATRASO')
+                              ,pr_des_assunto => 'Problemas durante a importação de Faturas de Cartão de Crédito em Atraso'
+                              ,pr_des_corpo   => 'Olá, <br><br>'
+                                                 || 'Foram encontrados problemas durante o processo de importação das Faturas '
+                                                 || 'de Cartão de Crédito em Atraso, referente a cooperativa '||nvl(pr_cdcooper,3)||'.<br> '
+                                                 || 'Por favor, verifique o LOG de importação.<br><br>'
+                                                 || 'Situação encontrada: ' || pr_dscritic
+                              ,pr_des_anexo   => ''
+                              ,pr_flg_enviar  => 'N'
+                              ,pr_des_erro    => vr_dscritica_aux);
+    IF TRIM(vr_dscritica_aux) IS NOT NULL THEN
+      pc_gerar_log(nvl(pr_cdcooper,3),vr_dscritic);
+    END IF;
+  EXCEPTION
+    WHEN OTHERS THEN
+        pc_gerar_log(nvl(pr_cdcooper,3),'Não foi possível solicitar o envio do e-mail corretamente! '||SQLERRM);
+  END pc_envia_email_alerta;
 
 BEGIN
 
@@ -139,10 +168,23 @@ BEGIN
   vr_dtdatual := trunc(SYSDATE);
 
   --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
+  
+  vr_dsdirarq := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_cdacesso => 'NMDIRETO_LOG_FAT_ATRASO');
+  IF vr_dsdirarq IS NULL THEN
+    vr_dscritic := 'Diretorio do arquivo de log nao encontrado.';
+    RAISE vr_exc_saida;  
+  END IF;
+  
+  --> Nome do arquivo de log temporario
+  vr_nmlogtmp := to_char(SYSDATE,'RRRRMMDD')||'_ATRASO_temp';  
+  --> Nome do arquivo de log oficial
+  vr_nmarqlog := to_char(SYSDATE,'RRRRMMDD')||'_ATRASO_'||to_char(SYSDATE, 'hh24miss');
+  
   FOR rw_crapcop IN cr_crapcop LOOP
     BEGIN
       vr_flgerlog   := FALSE;
-      
       
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
@@ -157,27 +199,24 @@ BEGIN
       ELSE
         CLOSE btch0001.cr_crapdat;
       END IF;
-      
+
       --Rodar apenas em dias uteis
-      IF rw_crapdat.dtmvtolt <> vr_dtdatual THEN
-        continue;
+      --Se esta rodando o processo, vamos usar a data de amanha na validacao
+      IF rw_crapdat.inproces > 1 THEN 
+        IF rw_crapdat.dtmvtopr <> vr_dtdatual THEN
+          continue;
+      END IF;
+      ELSE
+        IF rw_crapdat.dtmvtolt <> vr_dtdatual THEN
+          continue;
+        END IF;        
       END IF;
       
-      
-      -- Log de fim da execução
+      -- Log de início da execução
       pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
                             pr_dstiplog => 'I');
-     
-      --> Limpar tabela de alerta
-      BEGIN
-        DELETE tbcrd_alerta_atraso alt
-         WHERE alt.cdcooper = rw_crapcop.cdcooper;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Não foi possivel limpar tabela de alerta: '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
       
+      pc_gerar_log(rw_crapcop.cdcooper, 'Início importação do arquivo de faturas em atraso - Cooperativa: '||rw_crapcop.cdcooper);      
       
       -- Busca do diretório do arquivo
       vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'M', --> micros
@@ -194,12 +233,13 @@ BEGIN
                                  pr_des_erro => vr_dscritic);
   
       IF vr_dscritic IS NOT NULL THEN
+        vr_dscritic := 'Erro na busca dos arquivos para importação! Detalhes: ' || vr_dscritic;
         RAISE vr_exc_erro;
       END IF;
       
       IF vr_listdarq IS NULL THEN
-        vr_dscritic := 'Arquivo '||vr_nmarqdat||' não encontrado.';
-        RAISE vr_exc_fimcoop;
+        vr_dscritic := 'Nenhum arquivo '||vr_nmarqdat||' encontrado.';
+        RAISE vr_exc_erro;
       END IF;
       
       --> Quebrar lista em tabela
@@ -208,9 +248,21 @@ BEGIN
       
       IF vr_tab_arquivo.count > 0 THEN
       
+        --> Limpar tabela de alerta
+        BEGIN
+          DELETE tbcrd_alerta_atraso alt
+           WHERE alt.cdcooper = rw_crapcop.cdcooper;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Não foi possivel limpar tabela de alerta: '||SQLERRM;
+            RAISE vr_exc_erro;
+        END; 
+      
         --> Importar arquivos
         FOR i IN vr_tab_arquivo.first..vr_tab_arquivo.last LOOP
           BEGIN
+
+            pc_gerar_log(rw_crapcop.cdcooper, 'Início importação do arquivo '||vr_tab_arquivo(i)||' da Cooperativa: '||rw_crapcop.cdcooper);
           
             --> Importar o arquivo texto
             gene0009.pc_importa_arq_layout(pr_nmlayout   => 'CARTAO_ATRASO', 
@@ -222,17 +274,33 @@ BEGIN
             
             IF vr_tab_linhas.count = 0 THEN
               vr_dscritic := 'Arquivo ' || vr_tab_arquivo(i) || '.csv não possui conteúdo!';    
-              RAISE vr_exc_prox;
+              RAISE vr_exc_email;
             END IF;            
+            
+            vr_qttotal  := 0;
+            vr_qtimport := 0;
             
             --> ler linhas do arquivo
             FOR vr_idx IN vr_tab_linhas.first..vr_tab_linhas.last LOOP
               BEGIN
-                --> Ignorar cabecalho 
-                --> e rodapé
+
+                /* Busca a linha completa para verificar se é o totalizador */
+                vr_dslinha := substr(vr_tab_linhas(vr_idx)('$LINHA$').texto,1,100);
+                IF substr(vr_dslinha,1,18) = 'Total de registros' THEN
+                  BEGIN 
+                    vr_qttotal := cast(trim(substr(vr_dslinha,21,length(vr_dslinha)-21)) as numeric);
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'Erro ao importar linha '|| vr_idx ||' com os totalizadores! '||SQLERRM;
+                      RAISE vr_exc_prox;
+                  END;
+                  CONTINUE;
+                END IF;
+
+                --> Ignorar o cabecalho 
                 IF vr_idx <= 21 OR               
                    nvl(vr_tab_linhas(vr_idx)('CDEMISSOR').NUMERO,0) <> 756 THEN
-                  continue;
+                  CONTINUE;
                 END IF;
                 
                 --Problemas com importacao do layout
@@ -256,7 +324,7 @@ BEGIN
                 
                 IF cr_crapcrd%NOTFOUND THEN
                   CLOSE cr_crapcrd;
-                  vr_dscritic := 'Não foi possivel identificar conta para a conta cartão '||vr_nrcartao;
+                  vr_dscritic := 'Erro ao processar linha '||vr_idx||' - Não foi possivel identificar conta para a conta cartão '||vr_nrcartao;
                   RAISE vr_exc_prox;
                 END IF;
                 
@@ -278,9 +346,10 @@ BEGIN
                                   
                 EXCEPTION
                   WHEN OTHERS THEN 
-                    vr_dscritic := 'Nao foi possivel inserir tbcrd_alerta_atraso: '||SQLERRM;
+                    vr_dscritic := 'Erro ao processar linha '||vr_idx||' - Nao foi possivel inserir tbcrd_alerta_atraso: '||SQLERRM;
                     RAISE vr_exc_prox;
                 END;
+                vr_qtimport := vr_qtimport + 1;
                 
               EXCEPTION
                 WHEN vr_exc_prox THEN
@@ -293,18 +362,39 @@ BEGIN
               END;
             END LOOP; --> Fim loop linhas
             
+            /* Caso não conseguiu contar a qtd. de registros total, vamos enviar um e-mail */
+            IF vr_qttotal = 0 THEN
+              vr_dscritic := 'ATENÇÃO: Não foi possível realizar a conferência da quantidade de registros importados!';
+              RAISE vr_exc_email; 
+            /* Caso não importou todos os registros, vamos enviar um e-mail */
+            ELSIF vr_qtimport <> vr_qttotal THEN
+              vr_dscritic := 'ATENÇÃO: Foram importados apenas '||vr_qtimport||' registros do total de '||vr_qttotal||' registros presente no arquivo de atrasos!';
+              RAISE vr_exc_email; 
+            ELSE
+              pc_gerar_log (pr_cdcooper => rw_crapcop.cdcooper,
+                            pr_dscritic => 'Foram importados '||vr_qtimport||' registros com sucesso do total de '||vr_qttotal|| ' registros do arquivo.');
+            END IF;
+            
           EXCEPTION
             WHEN vr_exc_prox THEN
               pc_gerar_log (pr_cdcooper => rw_crapcop.cdcooper,
-                                pr_dscritic => vr_dscritic);
+                            pr_dscritic => vr_dscritic);
+            WHEN vr_exc_email THEN
+              pc_gerar_log (pr_cdcooper => rw_crapcop.cdcooper,
+                            pr_dscritic => vr_dscritic);
+              pc_envia_email_alerta(rw_crapcop.cdcooper, vr_dscritic);
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao processar arquivo '||vr_tab_arquivo(i)||': '||SQLERRM;
               pc_gerar_log (pr_cdcooper => rw_crapcop.cdcooper,
                             pr_dscritic => vr_dscritic);
+              pc_envia_email_alerta(rw_crapcop.cdcooper, vr_dscritic);
           END;
           
         END LOOP; --> Fim loop arquivos
       
+      ELSE
+        vr_dscritic := 'Nenhum arquivo '||vr_listdarq||' encontrado.';
+        RAISE vr_exc_erro;
       END IF;  
             
       -- Log de fim da execução
@@ -316,44 +406,65 @@ BEGIN
       
       
     EXCEPTION
-    
-      WHEN vr_exc_fimcoop THEN
-        pc_gerar_log (pr_cdcooper => rw_crapcop.cdcooper,
-                      pr_dscritic => vr_dscritic);  
-      
-        -- Log de fim da execução
-        pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
-                              pr_dstiplog =>'F');
-        COMMIT;
-    
       WHEN vr_exc_erro THEN
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
           -- Buscar a descrição
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         END IF;
-
+        
+        pc_gerar_log (pr_cdcooper => rw_crapcop.cdcooper,
+                      pr_dscritic => vr_dscritic);  
+      
+        pc_envia_email_alerta(rw_crapcop.cdcooper, vr_dscritic);
+        
         pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
                               pr_dstiplog => 'E',
                               pr_dscritic => vr_dscritic);
-      
-        vr_dscritic := NULL;  
-        
-                          
-      
+        vr_dscritic := NULL;
+
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel importar arquivo de faturas em atraso: '||SQLERRM;
         pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
                               pr_dstiplog => 'E',
                               pr_dscritic => vr_dscritic);
+        pc_envia_email_alerta(rw_crapcop.cdcooper, vr_dscritic);
         vr_dscritic := NULL;    
        
     END;
-  END LOOP;  
-
+  END LOOP; -- crapcop
   ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
+  --> Converte log temporario para log oficial (DOS)
+  vr_dscomand := 'ux2dos '|| vr_dsdirarq || '/' || vr_nmlogtmp || '.log > '
+                          || vr_dsdirarq || '/' || vr_nmarqlog || '.log';
+
+  -- Converter de UNIX para DOS o arquivo
+  GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                       ,pr_des_comando => vr_dscomand
+                       ,pr_typ_saida   => vr_typ_saida
+                       ,pr_des_saida   => vr_dscritic);
+
+  IF vr_typ_saida = 'ERR' THEN
+     -- O comando shell executou com erro, gerar log e sair do processo
+     vr_dscritic := 'Erro ao converter arquivo de log: ' || vr_dscritic;
+     RAISE vr_exc_saida;
+  END IF;
+
+  --> Remove arquivo de log temporario
+  GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                       ,pr_des_comando => 'rm -f '|| vr_dsdirarq || '/' || vr_nmlogtmp || '.log'
+                       ,pr_typ_saida   => vr_typ_saida
+                       ,pr_des_saida   => vr_dscritic);
   
+  IF vr_typ_saida = 'ERR' THEN
+     -- O comando shell executou com erro, gerar log e sair do processo
+     vr_dscritic := 'Erro ao remover arquivo de log: ' || vr_dscritic;
+     RAISE vr_exc_saida;
+  END IF;
+
+  -- Salvar informações atualizadas
+  COMMIT;
 
 EXCEPTION
   WHEN vr_exc_saida THEN

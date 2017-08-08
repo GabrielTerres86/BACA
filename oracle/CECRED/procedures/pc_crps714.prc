@@ -107,6 +107,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   vr_tab_linhas gene0009.typ_tab_linhas;
   
+  /* Estrutura de-para de código tipo cartão - Bancoob > Ayllos */
+  TYPE typ_tab_tipo_cartao IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER;
+  vr_tab_tipo_cartao typ_tab_tipo_cartao;
   ------------------------------- VARIAVEIS -------------------------------
   
   -- Nome do arquivo para importação
@@ -173,24 +176,60 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
   
   END pc_gera_log;
   
+  /* Carga da tabela de-para com os códigos do tipo de cartão - Bancoob > Ayllos 
+       Codigo 950 => 16 - CECRED MASTERCARD DEBITO BANCOOB 
+       Codigo 951 => 12 - CECRED MASTERCARD CLASSICO BANCOOB
+       Codigo 952 => 13 - CECRED MASTERCARD GOLD BANCOOB
+       Codigo 953 => 15 - CECRED MASTERCARD EMPRESAS BANCOOB
+       Codigo 954 => 17 - CECRED MASTERCARD EMPRESAS DEBITO BANCOOB      
+       Codigo 955 => 14 - CECRED MASTERCARD PLATINUM BANCOOB
+       Codigo 756 => 11 - CECRED CABAL ESSENCIAL BANCOOB                    */
+  PROCEDURE pc_carga_tabela_tipo_cartao(pr_dscritic OUT VARCHAR2) IS
+    vr_dsparam   VARCHAR2(2000);
+    vr_tbdados   gene0002.typ_split;
+    vr_tbdepara  gene0002.typ_split;
+    i            PLS_INTEGER := 0;
+    vr_cdbancoob PLS_INTEGER;
+    vr_cdadmcrd  PLS_INTEGER;
+  BEGIN
+   
+    vr_dsparam := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                            pr_cdcooper => pr_cdcooper,
+                                            pr_cdacesso => 'CRED_DEPARA_TIPOCARTAO');    
+
+    vr_tbdados := gene0002.fn_quebra_string(pr_string  => vr_dsparam,
+                                            pr_delimit => '#');  
+                                            
+    LOOP
+      i := i + 1;
+      EXIT WHEN NOT vr_tbdados.exists(i);
+      EXIT WHEN i = 100;
+      
+      vr_tbdepara := gene0002.fn_quebra_string(pr_string  => vr_tbdados(i),
+                                               pr_delimit => ';');
+      IF (vr_tbdepara.exists(1) AND vr_tbdepara.exists(2)) THEN
+        vr_cdbancoob := CAST(vr_tbdepara(1) as PLS_INTEGER);
+        vr_cdadmcrd  := cast(vr_tbdepara(2) as PLS_INTEGER);
+        vr_tab_tipo_cartao(vr_cdbancoob) := vr_cdadmcrd;
+      END IF;
+    END LOOP;
+  EXCEPTION
+    WHEN OTHERS THEN      
+      pr_dscritic := 'Erro durante a carga de tipo cartao! '|| nvl(pr_dscritic,' ')||' '||SQLERRM;
+  END pc_carga_tabela_tipo_cartao;
+  
   /* Procedimento para o DE-PARA dos codigos de tipo de cartao.
      Avaliar possibilidade de inclusao desses codigos na tela ADMCRD */
   PROCEDURE pc_tipo_cartao(pr_cdtipocartao IN NUMBER
                           ,pr_cdadmcrd    OUT crawcrd.cdadmcrd%TYPE) IS
     vr_cdcartao NUMBER;
   BEGIN    
+    pr_cdadmcrd := 0;
     --> O codigo do tipo do cartao esta nas 3 primeiras posicoes.
     vr_cdcartao := substr(pr_cdtipocartao,0,3);
-    pr_cdadmcrd := case vr_cdcartao      
-                      when 950 then 16 --> CECRED MASTERCARD DEBITO BANCOOB 
-                      when 951 then 12 --> CECRED MASTERCARD CLASSICO BANCOOB
-                      when 952 then 13 --> CECRED MASTERCARD GOLD BANCOOB
-                      when 953 then 15 --> CECRED MASTERCARD EMPRESAS BANCOOB
-                      when 954 then 17 --> CECRED MASTERCARD EMPRESAS DEBITO BANCOOB      
-                      when 955 then 14 --> CECRED MASTERCARD PLATINUM BANCOOB
-                      when 756 then 11 --> CECRED CABAL ESSENCIAL BANCOOB
-                      else 0
-                    end;
+    IF (vr_tab_tipo_cartao.exists(vr_cdcartao)) THEN
+      pr_cdadmcrd := vr_tab_tipo_cartao(vr_cdcartao);
+    END IF;
   EXCEPTION
     WHEN OTHERS THEN
         pr_cdadmcrd := 0;
@@ -284,6 +323,11 @@ BEGIN
   vr_dsscript := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                            pr_cdcooper => pr_cdcooper,
                                            pr_cdacesso => 'SHELL_CRPS714');                                           
+
+  pc_carga_tabela_tipo_cartao(vr_dscritic);
+  IF TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_exc_saida;
+  END IF;
 
   --> Inicializa variaveis totalizadoras
   vr_qtlinha := 0;

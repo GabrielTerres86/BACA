@@ -66,9 +66,11 @@ BEGIN
                11/10/2016 - Limpeza e inclusao de valor de emprestimo ou financiamento, 
                             na tabela TBFIN_FLUXO_CONTAS_SYSPHERA. (Jaison/Marcos SUPERO)
 
-
                01/12/2016 - Ajuste para zerar a vr_tab_financ(vr_idfina).qtfinanc
-							quando nao tem valor. (Jaison/Diego - SD: 534498)
+							              quando nao tem valor. (Jaison/Diego - SD: 534498)
+
+               28/07/2017 - Adicao no relatorio crrl109 das colunas referente a cessao
+                            das faturas de cartao de credito (Anderson).
 
 ............................................................................. */
 
@@ -104,7 +106,12 @@ BEGIN
              qtprecal,
              vlsdeved,
              cdagenci,
-             nrdolote
+             nrdolote,
+             (SELECT 1
+                FROM tbcrd_cessao_credito ces
+               WHERE ces.cdcooper = crapepr.cdcooper
+                 AND ces.nrdconta = crapepr.nrdconta
+                 AND ces.nrctremp = crapepr.nrctremp) flgcescr
         FROM crapepr
        WHERE crapepr.cdcooper = pr_cdcooper
          AND crapepr.inliquid = 0
@@ -159,7 +166,9 @@ BEGIN
                                     retfinan number,
                                     qtfinanc number,
                                     retempre number,
-                                    qtempres number);
+                                    qtempres number,
+                                    retcescr number,
+                                    qtcescrd number);
 
     type typ_tab_reg_financ is table of typ_reg_financ
                            index by binary_integer;
@@ -168,6 +177,7 @@ BEGIN
     --Type para armazenar os valores acumulados de financiamento/emprestimo
     type typ_reg_acumul is record ( vlacufin number,
                                     vlacuemp number,
+                                    vlacuces number,
                                     vltotacu number);
 
     type typ_tab_reg_acumul is table of typ_reg_acumul
@@ -186,6 +196,7 @@ BEGIN
     vr_idfina   number;
     vr_nrmes    number;
     vr_desperio varchar2(30);
+    vr_flgcescr boolean;
     vr_cdprazo  tbfin_fluxo_contas_sysphera.cdprazo%TYPE;
 
     --Valores acumulados para enviar para a contabilidade
@@ -218,6 +229,7 @@ BEGIN
                              pr_nrdmes_ant in number,
                              pr_qtdmes     in number,
                              pr_dsoperac   in craplcr.dsoperac%type,
+                             pr_flgcescr   in boolean, 
                              pr_idfina     in number,
                              pr_qtpreres   in out number,
                              pr_vlmensal   in out number,
@@ -292,9 +304,15 @@ BEGIN
             vr_tab_financ(pr_idfina).retfinan := nvl(vr_tab_financ(pr_idfina).retfinan,0) + vr_vldivida;
             vr_tab_financ(pr_idfina).qtfinanc := nvl(vr_tab_financ(pr_idfina).qtfinanc,0) + 1;
 
-          ELSE /* EMPRESTIMO */
-            vr_tab_financ(pr_idfina).retempre := nvl(vr_tab_financ(pr_idfina).retempre,0) + vr_vldivida;
-            vr_tab_financ(pr_idfina).qtempres := nvl(vr_tab_financ(pr_idfina).qtempres,0) + 1;
+          ELSE 
+            /* CESSAO DE CREDITO */
+            IF pr_flgcescr THEN
+               vr_tab_financ(pr_idfina).retcescr := nvl(vr_tab_financ(pr_idfina).retcescr,0) + vr_vldivida;
+               vr_tab_financ(pr_idfina).qtcescrd := nvl(vr_tab_financ(pr_idfina).qtcescrd,0) + 1;
+            ELSE /* EMPRESTIMO */
+               vr_tab_financ(pr_idfina).retempre := nvl(vr_tab_financ(pr_idfina).retempre,0) + vr_vldivida;
+               vr_tab_financ(pr_idfina).qtempres := nvl(vr_tab_financ(pr_idfina).qtempres,0) + 1;
+            END IF;
 
           END IF;-- FIM  pr_dsoperac
 
@@ -452,6 +470,9 @@ BEGIN
         CLOSE cr_craplcr;
       END IF;
 
+      /* Flag indicativa de cessao de credito */
+      vr_flgcescr := (nvl(rw_crapepr.flgcescr,0) = 1);
+
       vr_qtdiacar := 0;
 
       -- ler primeiro resgistro cadastro de emprestimos
@@ -518,6 +539,7 @@ BEGIN
                      pr_nrdmes_ant => 0,
                      pr_qtdmes     => 3,
                      pr_dsoperac   => rw_craplcr.dsoperac,
+                     pr_flgcescr   => vr_flgcescr,
                      pr_idfina     => vr_idfina,
                      pr_qtpreres   => vr_qtpreres,
                      pr_vlmensal   => vr_vlmensal,
@@ -533,6 +555,7 @@ BEGIN
                      pr_nrdmes_ant => 3,
                      pr_qtdmes     => 3,
                      pr_dsoperac   => rw_craplcr.dsoperac,
+                     pr_flgcescr   => vr_flgcescr,
                      pr_idfina     => vr_idfina,
                      pr_qtpreres   => vr_qtpreres,
                      pr_vlmensal   => vr_vlmensal,
@@ -548,7 +571,8 @@ BEGIN
                      pr_nrdmes_ant => 6,
                      pr_qtdmes     => 3,
                      pr_dsoperac   => rw_craplcr.dsoperac,
-                     pr_idfina         => vr_idfina,
+                     pr_flgcescr   => vr_flgcescr,
+                     pr_idfina     => vr_idfina,
                      pr_qtpreres   => vr_qtpreres,
                      pr_vlmensal   => vr_vlmensal,
                      pr_vlsaldev   => vr_vlsaldev,
@@ -563,6 +587,7 @@ BEGIN
                      pr_nrdmes_ant => 9,
                      pr_qtdmes     => 3,
                      pr_dsoperac   => rw_craplcr.dsoperac,
+                     pr_flgcescr   => vr_flgcescr,
                      pr_idfina     => vr_idfina,
                      pr_qtpreres   => vr_qtpreres,
                      pr_vlmensal   => vr_vlmensal,
@@ -583,6 +608,7 @@ BEGIN
                        pr_nrdmes_ant => vr_nrmes-12,
                        pr_qtdmes     => 12,
                        pr_dsoperac   => rw_craplcr.dsoperac,
+                       pr_flgcescr   => vr_flgcescr,
                        pr_idfina     => vr_idfina,
                        pr_qtpreres   => vr_qtpreres,
                        pr_vlmensal   => vr_vlmensal,
@@ -600,6 +626,7 @@ BEGIN
                      pr_nrdmes_ant => 180,
                      pr_qtdmes     => 12,
                      pr_dsoperac   => rw_craplcr.dsoperac,
+                     pr_flgcescr   => vr_flgcescr,
                      pr_idfina     => vr_idfina,
                      pr_qtpreres   => vr_qtpreres,
                      pr_vlmensal   => vr_vlmensal,
@@ -608,7 +635,7 @@ BEGIN
                      pr_saldoacu   => vr_saldoacu);
 
     END LOOP; /*  Fim do FOR --  Leitura dos resgates programados  */
-		
+
 		-- Empréstimos do BNDES
 		FOR rw_crapebn IN cr_crapebn(pr_cdcooper => pr_cdcooper) LOOP
 			
@@ -691,8 +718,10 @@ BEGIN
       if vr_idx = 1 then
         vr_tab_acumul(vr_idx).vlacuemp  := nvl(vr_tab_financ(vr_idx).retempre,0);
         vr_tab_acumul(vr_idx).vlacufin  := nvl(vr_tab_financ(vr_idx).retfinan,0);
+        vr_tab_acumul(vr_idx).vlacuces  := nvl(vr_tab_financ(vr_idx).retcescr,0);
         vr_tab_acumul(vr_idx).vltotacu  := nvl(vr_tab_financ(vr_idx).retempre,0)
-                                           + nvl(vr_tab_financ(vr_idx).retfinan,0);
+                                           + nvl(vr_tab_financ(vr_idx).retfinan,0)
+                                           + nvl(vr_tab_financ(vr_idx).retcescr,0);
       elsif vr_tab_financ.exists(vr_idx) then
 
         vr_tab_acumul(vr_idx).vlacuemp  := nvl(vr_tab_acumul(vr_idx-1).vlacuemp,0)
@@ -701,9 +730,13 @@ BEGIN
         vr_tab_acumul(vr_idx).vlacufin  := nvl(vr_tab_acumul(vr_idx-1).vlacufin,0)
                                            + nvl(vr_tab_financ(vr_idx).retfinan,0);
 
+        vr_tab_acumul(vr_idx).vlacuces  := nvl(vr_tab_acumul(vr_idx-1).vlacuces,0)
+                                           + nvl(vr_tab_financ(vr_idx).retcescr,0);
+        
         vr_tab_acumul(vr_idx).vltotacu  := nvl(vr_tab_acumul(vr_idx-1).vltotacu,0)
                                            + nvl(vr_tab_financ(vr_idx).retempre,0)
-                                           + nvl(vr_tab_financ(vr_idx).retfinan,0);
+                                           + nvl(vr_tab_financ(vr_idx).retfinan,0)
+                                           + nvl(vr_tab_financ(vr_idx).retcescr,0);
 
       else
         vr_tab_acumul(vr_idx).vlacufin  := 0;
@@ -721,6 +754,11 @@ BEGIN
       if  nvl(vr_tab_financ(vr_idx).retfinan,0) = 0 and
           nvl(vr_tab_financ(vr_idx).qtfinanc,0) = 0 then
         vr_tab_acumul(vr_idx).vlacufin  := 0;
+      end if;
+
+      if  nvl(vr_tab_financ(vr_idx).retcescr,0) = 0 and
+          nvl(vr_tab_financ(vr_idx).qtcescrd,0) = 0 then
+        vr_tab_acumul(vr_idx).vlacuces  := 0;
       end if;
 
       if  nvl(vr_tab_acumul(vr_idx).vlacufin,0) = 0 and
@@ -750,7 +788,7 @@ BEGIN
 
       -- Incluir registro para cada valor por periodo para emprestimo ou financiamento
       BEGIN
-        IF NVL(vr_tab_financ(vr_idx).retempre,0) > 0 THEN
+        IF (NVL(vr_tab_financ(vr_idx).retempre,0) + NVL(vr_tab_financ(vr_idx).retcescr,0)) > 0 THEN
           INSERT INTO tbfin_fluxo_contas_sysphera
                        (cdcooper
                        ,dtmvtolt
@@ -765,10 +803,10 @@ BEGIN
                        ,9
                        ,1 -- Emprestimos
                        ,vr_cdprazo
-                       ,vr_tab_financ(vr_idx).retempre
+                       ,NVL(vr_tab_financ(vr_idx).retempre,0) + NVL(vr_tab_financ(vr_idx).retcescr,0)
                        ,'1'
                        ,SYSDATE);
-        END IF;
+      END IF;
 
         IF NVL(vr_tab_financ(vr_idx).retfinan,0) > 0 THEN
           INSERT INTO tbfin_fluxo_contas_sysphera
@@ -803,6 +841,9 @@ BEGIN
                          <vlacufin>'||nvl(vr_tab_acumul(vr_idx).vlacufin,0)||'</vlacufin>
                          <retfinan>'||nvl(vr_tab_financ(vr_idx).retfinan,0)||'</retfinan>
                          <qtfinanc>'||nvl(vr_tab_financ(vr_idx).qtfinanc,0)||'</qtfinanc>
+                         <retcescr>'||nvl(vr_tab_financ(vr_idx).retcescr,0)||'</retcescr>
+                         <qtcescrd>'||nvl(vr_tab_financ(vr_idx).qtcescrd,0)||'</qtcescrd>
+                         <vlacuces>'||nvl(vr_tab_acumul(vr_idx).vlacuces,0)||'</vlacuces>
                          <vltotacu>'||nvl(vr_tab_acumul(vr_idx).vltotacu,0)||'</vltotacu>
                       </detalhes>');
 
@@ -866,6 +907,7 @@ BEGIN
     END IF; -- Fim informacoes para o BNDES
 
     /* Gera arquivo para a Contabilidade - a ser importado no Radar */
+    /* Ver com Suellen para remover - este arquivo nao eh utilizado apos implantacao Matera */
 
     /* EMPRESTIMOS */
     FOR vr_idx IN REVERSE 1..19 LOOP--percorrer do 19 at? o 1(REVERSE)
