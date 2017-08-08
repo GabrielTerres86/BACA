@@ -169,6 +169,8 @@
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
                            
+              28/03/2017 - Ajustado para utilizar nome resumo se houver. (Ricardo Linhares - 547566)
+                           
               09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
                            esquerda no campo de senha informada pelo usuário
                            Rafael (Mouts) - Chamado 657038
@@ -2310,12 +2312,14 @@ PROCEDURE busca_convenios_codbarras:
     DEF OUTPUT PARAM TABLE FOR tt-convenios-codbarras.
 
     DEF VAR aux_nmempcon AS CHAR NO-UNDO.
+    DEF VAR aux_nmresumi AS CHAR NO-UNDO. 
     
     FOR EACH crapcon WHERE crapcon.cdcooper =  par_cdcooper         AND
                            crapcon.cdempcon >= par_cdempcon         AND
                            crapcon.cdsegmto >= par_cdsegmto         NO-LOCK:
                            
-        ASSIGN aux_nmempcon = "".
+        ASSIGN aux_nmempcon = ""
+               aux_nmresumi = "".
                            
         IF  crapcon.flgcnvsi = TRUE THEN
             DO:
@@ -2328,6 +2332,9 @@ PROCEDURE busca_convenios_codbarras:
                 IF  NOT AVAIL crapscn THEN
                     NEXT.
                 ELSE
+                  IF(crapscn.dsnomres <> "") then
+                      ASSIGN aux_nmempcon = crapscn.dsnomres.
+                  ELSE
                       ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
@@ -2361,13 +2368,16 @@ PROCEDURE busca_convenios_codbarras:
 						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
+         IF aux_nmresumi <> "" THEN
+          ASSIGN aux_nmempcon = aux_nmresumi.    
+
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
                    aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
             
         CREATE tt-convenios-codbarras.
         ASSIGN tt-convenios-codbarras.nmextcon = IF aux_nmempcon = "" THEN crapcon.nmextcon ELSE aux_nmempcon
-               tt-convenios-codbarras.nmrescon = crapcon.nmrescon
+               tt-convenios-codbarras.nmrescon = IF aux_nmresumi = "" THEN crapcon.nmrescon ELSE aux_nmresumi 
                tt-convenios-codbarras.cdempcon = crapcon.cdempcon
                tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto
                tt-convenios-codbarras.cdhistor = IF AVAIL gnconve THEN gnconve.cdhisdeb ELSE crapcon.cdhistor
