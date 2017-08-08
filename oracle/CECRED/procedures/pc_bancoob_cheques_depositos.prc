@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
    JOB: PC_BANCOOB_RECEBE_ARQUIVO_CEXT
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : CARLOS HENRIQUE WEINHOLD
-   Data    : Novembro/2015.                     Ultima atualizacao: 20/02/2017
+   Data    : Novembro/2015.                     Ultima atualizacao: 20/06/2017
 
    Dados referentes ao programa:
 
@@ -21,6 +21,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
                30/11/2015 - #366319 Retirada do programa crps250 do job (Carlos)
 
                20/02/2017 - #551202 Ajuste da nomenclatura do job para JBCOMPE_CRPS252 (Carlos)
+               
+               20/06/2017 - #695774 Aumento do tamanho da variável vr_jobname para 30 chars (Carlos)
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
   vr_cdprogra   crapprg.cdprogra%TYPE;           --> Código do programa
@@ -31,7 +33,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_CHEQUES_DEPOSITOS(pr_cdcooper in c
   vr_dtvalida   DATE;                              --> Variavel que retorna o dia valido 
   vr_dtdiahoje  DATE;
   vr_dsplsql    VARCHAR2(2000);
-  vr_jobname    VARCHAR2(20);
+  vr_jobname    VARCHAR2(30);
   vr_exc_saida  EXCEPTION;
   vr_dirintegra  VARCHAR2(200);
   vr_listadir    VARCHAR2(2000);
