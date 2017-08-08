@@ -2995,7 +2995,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
         IF TRIM(vr_dscritic) IS NOT NULL THEN
           vr_cdcritic := 0;
           RAISE vr_exc_saida;
-          END IF;
+        END IF;
 
         --Nao encontrou nenhuma arquivo para processar
         IF TRIM(vr_listarq) IS NULL THEN
@@ -3011,7 +3011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_cdcritic := 182;
           vr_dscritic := NULL;
           RAISE vr_exc_fimprg;
-          END IF;
+        END IF;
 
         FOR vr_conarqui IN vr_split.FIRST..vr_split.LAST LOOP
           vr_vet_nmarquiv(vr_conarqui) := vr_split(vr_conarqui);    
@@ -4749,6 +4749,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 20/06/2017 - Alterar a ordem que as informações são enviadas no arquivo CCR3.
                              Primeiro vamos enviar as linhas de Alteração Cadastral e depois as linhas
                              de UPGRADE/DOWNGRADE (Douglas - Chamado 662595)
+
+                14/07/2017 - Ajuste na validação de alteração do PA, pois da forma que estava o cooperado
+                             teve alteração nos dados de emprestimo, com a inclusão de um veículo PAMPA
+                             e o programa entendeu que houve troca de PA, enviando um solicitação de cartão
+                             (Douglas - Chamado 708661)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -5813,8 +5818,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
                  upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         OR
               -- procura por alteração de PAC
-                 upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                 upper(rw_crapalt.dsaltera) LIKE '%PA %'              OR
+              -- a alteracao de PA deve ser a primeira, 
+              -- ou separado por virgula
+                 upper(rw_crapalt.dsaltera) LIKE 'PAC %'              OR
+                 upper(rw_crapalt.dsaltera) LIKE 'PA %'               OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PAC %'            OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PA %'             OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PAC %'           OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PA %'            OR
                  -- procura por alteração de telefone
                  upper(rw_crapalt.dsaltera) LIKE '%TELEF.%'
                  THEN
@@ -5861,8 +5872,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   vr_flalttfc := FALSE;
 
                   -- Verificar se houve alteração no grupo de afinidade - por PA
-                  IF upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                     upper(rw_crapalt.dsaltera) LIKE '%PA %'              THEN
+                  -- a alteracao de PA deve ser a primeira, ou separado por virgula
+                  IF upper(rw_crapalt.dsaltera) LIKE 'PAC %'             OR
+                     upper(rw_crapalt.dsaltera) LIKE 'PA %'              OR
+                     upper(rw_crapalt.dsaltera) LIKE '%,PAC %'           OR
+                     upper(rw_crapalt.dsaltera) LIKE '%,PA %'            OR
+                     upper(rw_crapalt.dsaltera) LIKE '%, PAC %'          OR
+                     upper(rw_crapalt.dsaltera) LIKE '%, PA %'           THEN
                     vr_flaltafn := TRUE;
                   END IF;
 
@@ -6650,6 +6666,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    
                    04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
                                 solicitado no chamado 703589. (Kelvin)
+
+                   18/07/2017 - Utilizar o nome do titular do cartão na importação do arquivo CCR3
+                                para atualizar no Ayllos, a fim de manter as informalçoes identicas
+                                com o SIPAG (Douglas - Chamado 709215) 
     ............................................................................ */
 
     DECLARE
@@ -7673,7 +7693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     
         -- Buscar e-mails dos destinatarios do produto cartoes
         vr_destinatario_email:= gene0001.fn_param_sistema('CRED',vr_cdcooper_ori,'CRD_RESPONSAVEL');
-                 
+    
         cecred.pc_log_programa(PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
                               ,PR_CDPROGRAMA    => vr_cdprogra   --> Codigo do programa ou do job
                               ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
