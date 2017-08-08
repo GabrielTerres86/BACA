@@ -908,7 +908,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-
+      
       -- Devolver o protocolo que geramos
       pr_dsprotoc := vr_dsprotoc;
 
@@ -1008,6 +1008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         END IF;
         
       END IF;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
@@ -1086,6 +1087,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                                 ,pr_dsprotoc => pr_dsprotoc   --> Descrição do protocolo
                                 ,pr_dscritic => pr_dscritic   --> Descrição crítica
                                 ,pr_des_erro => pr_des_erro); --> Descrição dos erros de processo
+      
+                                
+      -- O progress aguarda um retorno
+      IF TRIM(pr_des_erro) IS NULL THEN
+        -- Se chegou ate aqui, foi executado com sucesso
+        pr_des_erro := 'OK';
+      END IF;
       
     EXCEPTION
       WHEN OTHERS THEN

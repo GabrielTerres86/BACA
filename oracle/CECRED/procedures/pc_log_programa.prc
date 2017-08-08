@@ -15,20 +15,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
   pr_flreincidente IN INTEGER                                    DEFAULT 0,    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
   PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
-  ) IS          
-  PRAGMA AUTONOMOUS_TRANSACTION;
+  ) IS
+  PRAGMA AUTONOMOUS_TRANSACTION;  
 BEGIN
   /* .......................................................................................
   Programa : pc_log_programa
   Sistema : Todos
   Autor   : Carlos Henrique/CECRED
-  Data    : Março/2017                   Ultima atualizacao: 24/05/2017  
+  Data    : Março/2017                   Ultima atualizacao: 24/07/2017  
 
   Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
               Abrir chamado e enviar e-mail quando necessário.
   
   Alterações: 10/04/2017 - Inclusão do parâmetro pr_nmarlog (Carlos)
-              
+  
               17/04/2017 - Tratamento para abrir chamado quando ocorrer algum erro e 
                            tambem enviar o numero do chamado aberto para o analista 
                            responsavel do produto (Lucas Ranghetti #630298)
@@ -38,6 +38,9 @@ BEGIN
                            
               24/05/2017 - Incluir validacao para nao dar erro ao armazenar o numero do chamado
                            (Lucas Ranghetti #678334)
+                           
+              24/07/2017 - Inclusão validação para leitura modulo/ação do banco
+                           (Ana Volles - Envolti - Chamado 696499)
   .......................................................................................... */
   DECLARE 
   
@@ -59,6 +62,9 @@ BEGIN
   vr_nrchamado NUMBER;
   vr_usuario_sd VARCHAR2(20);
   vr_dtpesquisa DATE := SYSDATE;
+  
+  vr_modulo VARCHAR2(100);
+  vr_acao   VARCHAR2(100);
   
   exc_saida EXCEPTION;
   
@@ -90,7 +96,7 @@ BEGIN
   /* Função para inserir na tabela tbgen_prglog */
   FUNCTION fn_insert_tbgen_prglog(pr2_dhfim      tbgen_prglog.dhfim%type                 DEFAULT NULL,
                                   pr2_flgsucesso tbgen_prglog.flgsucesso%type            DEFAULT 1) 
-                                  RETURN tbgen_prglog.idprglog%TYPE IS    
+                                  RETURN tbgen_prglog.idprglog%TYPE IS
   BEGIN   
     BEGIN
       	    
@@ -125,7 +131,7 @@ BEGIN
     RETURN vr_idprglog;
 
   END fn_insert_tbgen_prglog;
-  
+
   /* Função para inserir na tabela tbgen_prglog_ocorrencia */
   PROCEDURE insert_tbgen_prglog_ocorrencia IS 
   BEGIN   
@@ -214,6 +220,16 @@ BEGIN
     WHEN upper(pr_dstiplog) = 'O' OR upper(pr_dstiplog) = 'E' THEN
       BEGIN           
         
+        --Verifica se o programa que chamou esta rotina informou module
+        --Chamado 696499
+        IF INSTR(vr_dsmensagem, 'Module', 1, 1) = 0 THEN
+
+           --Inclusão leitura modulo/ação do banco
+           DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
+           vr_dsmensagem := vr_dsmensagem || ' - Module: ' || vr_modulo ||
+                                             ' - Action: ' || vr_acao;
+        END IF;
+
         IF nvl(PR_IDPRGLOG, 0) = 0 THEN
           -- Verifica a última execução do programa no dia
           OPEN cr_ultima_execucao;
@@ -221,9 +237,7 @@ BEGIN
           
           -- Se não encontrar a última execuçao, cria tbgen_prglog
           IF cr_ultima_execucao%NOTFOUND THEN
-                     
-            vr_dsmensagem := pr_dsmensagem;
-
+          
             PR_IDPRGLOG := fn_insert_tbgen_prglog(pr2_dhfim      => SYSDATE,
                                                   pr2_flgsucesso => 0);
           ELSE
@@ -302,7 +316,7 @@ BEGIN
                                     ,pr_flg_enviar  => 'N'
                                     ,pr_des_erro    => vr_dscritic); 
           END IF;
-        END IF;        
+        END IF;
 
         -- Cria a ocorrência
         insert_tbgen_prglog_ocorrencia;

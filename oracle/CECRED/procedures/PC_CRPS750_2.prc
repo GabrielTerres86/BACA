@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 06/06/2017
+  Data    : Abril/2017.                    Ultima atualizacao: 08/08/2017
 
   Dados referentes ao programa:
 
@@ -26,6 +26,7 @@ BEGIN
 
   Alteracoes: 10/04/2017 - Criação da rotina (Jean / Mout´S)
 
+              08/08/2017 - #728202 Não logar críticas 995 (Carlos)
     ............................................................................. */
 
   DECLARE
@@ -379,7 +380,7 @@ BEGIN
     vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                              pr_cdcooper => pr_cdcooper,
                                              pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
-
+                                             
     -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
     vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                ,pr_cdcooper => pr_cdcooper
@@ -499,7 +500,7 @@ BEGIN
         vr_vlsomato_tmp := 0;
         vr_vlsomato     := 0;
       END IF;
-
+      
       -- Trava para nao cobrar as parcelas desta conta e contrato específico pelo motivo de uma acao judicial SD#618307
       IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(rw_crappep.nrdconta))||','||trim(to_char(rw_crappep.nrctremp))||')') > 0 THEN
         vr_vlsomato_tmp := 0;
@@ -938,7 +939,8 @@ BEGIN
 
 		  --Desfazer transacao
           ROLLBACK TO SAVEPOINT sav_trans_750;
-          IF vr_tab_erro.count > 0 THEN
+          IF vr_tab_erro.count > 0 AND
+             vr_tab_erro(vr_tab_erro.FIRST).cdcritic <> 995 THEN
             vr_cdcritic := 0;            
             vr_dscritic := 'ERRO coop ' || rw_crappep.cdcooper ||
                            ' nrdconta ' || rw_crappep.nrdconta ||
