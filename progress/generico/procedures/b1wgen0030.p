@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 05/06/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 08/08/2017
            
     Dados referentes ao programa:
                 
@@ -483,8 +483,8 @@
 			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
 					       (Adriano - SD 603451).
 
-               05/06/2017 - Verificacao de titulo baixado para gravar restricao
-                            (Tiago/Ademir #678289)
+ 
+               08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1807,7 +1807,7 @@ PROCEDURE efetua_liber_anali_bordero:
        ASSIGN aux_vldjuros     = aux_vltitulo - craptdb.vltitulo
               craptdb.vlliquid = craptdb.vltitulo - aux_vldjuros
               aux_vlborder     = aux_vlborder + craptdb.vlliquid.
-
+                          
        /* Daniel */
        IF par_cddopcao = "L" THEN 
        DO:
@@ -1964,6 +1964,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                           INPUT par_nrdconta,
                                           INPUT par_cdagenci,
                                           INPUT par_nrdcaixa,
+                                          INPUT aux_vlborder,
                                           OUTPUT aux_vltarifa,
                                           OUTPUT aux_cdfvlcop,
                                           OUTPUT aux_cdhistor).
@@ -15443,28 +15444,6 @@ PROCEDURE analisar-titulo-bordero:
 
                 END.
 
-            /* Verifica se o titulo está baixado */
-            IF  crapcob.incobran = 3 THEN
-                DO:
-                    ASSIGN aux_dsrestri = "Titulo baixado."
-                           aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 53
-                                          ELSE 3.
-
-                    /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
-                    RUN grava-restricao-bordero (INPUT par_cdcooper,
-                                                 INPUT par_cdoperad,
-                                                 INPUT par_nrborder,
-                                                 INPUT aux_nrseqdig,
-                                                 INPUT aux_dsrestri,
-                                                 INPUT " ",   /* dsdetres */
-                                                 INPUT FALSE, /* flaprcoo */
-                                                 OUTPUT TABLE tt-erro).
-
-                    IF  RETURN-VALUE = "NOK" THEN
-                        RETURN "NOK".
-
-                END.
-
             /* Todos os titulos COB. REGISTRADA e S/ REGISTRO desse bordero 
                                                         de um determinado sacado */
             ASSIGN aux_vltotsac_cr = 0
@@ -16158,6 +16137,7 @@ PROCEDURE busca_tarifa_desconto_titulo:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlborder AS DECI                           NO-UNDO.
    
     DEF OUTPUT PARAM par_vltariva AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_cdfvlcop AS INTE                           NO-UNDO.
@@ -16197,7 +16177,7 @@ PROCEDURE busca_tarifa_desconto_titulo:
     RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
                                     (INPUT par_cdcooper,
                                      INPUT  aux_cdbattar,       
-                                     INPUT  1,   
+                                     INPUT  par_vlborder,   
                                      INPUT  "", /* cdprogra */
                                      OUTPUT aux_cdhistor,
                                      OUTPUT aux_cdhisest,
