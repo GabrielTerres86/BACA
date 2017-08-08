@@ -1,3 +1,15 @@
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : vw_parcelado_parcela_ant
+  --  Sistema  : View de parcelas de emprestimos
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado Flor
+  --  Data     : Junho/2017.                   Ultima atualizacao: 13/06/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Alteracoes: 13/06/2017 - Trazendo as parcelas ao inves de apenas o total(Tiago/Thiago #640821).
+  ---------------------------------------------------------------------------------------------------------------
 create or replace force view cecred.vw_parcelado_parcela_ant as
 select
   nrdconta,
@@ -167,11 +179,11 @@ select
   epr.nrctremp as NrCtr,
   --case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end cdproduto,
   fn_busca_modalidade_bacen(case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end , ass.cdcooper, ass.nrdconta, epr.nrctremp, ass.inpessoa, 3, '') as cdproduto,
-  pep.nrparepr as NrPclAnt,
+  lem.nrparepr as NrPclAnt,
   to_char(pep.dtvencto,'YYYYMMDD') as DtVnctPclAnt,
   to_char(pep.vlparepr,'fm9999900V00') as VlPclAnt,
-  to_char(pep.dtultpag,'YYYYMMDD') as DtPgtoPclAnt,
-  to_char(pep.vlpagpar,'fm9999900V00') as VlPgtoPclAnt,
+  to_char(lem.dtpagemp,'YYYYMMDD') as DtPgtoPclAnt,
+  to_char(lem.vllanmto,'fm9999900V00') as VlPgtoPclAnt,
   case
     when pep.dtultpag is null and pep.dtvencto < sysdate then 'I' --vencida
     when pep.dtultpag is not null and pep.inliquid = 1 then 'T' --pagamento total
@@ -180,23 +192,30 @@ select
       else 'X' end as SitPclAnt
 from
   crapass ass,
-	crapcop cop,
-	crapepr epr,
-	crappep pep
-where
-	ass.cdcooper = cop.cdcooper
-	and cop.flgativo = 1
-	and ass.cdcooper = epr.cdcooper
-	and ass.nrdconta = epr.nrdconta
-	and epr.cdcooper = pep.cdcooper
-	and epr.nrdconta = pep.nrdconta
-	and epr.nrctremp = pep.nrctremp
-  and ass.incadpos = 2
+  crapcop cop,
+  crapepr epr,
+  crappep pep,
+  craplem lem
+WHERE ass.cdcooper = cop.cdcooper
+  AND cop.flgativo = 1
+  AND ass.cdcooper = epr.cdcooper
+  AND ass.nrdconta = epr.nrdconta
+  AND epr.cdcooper = pep.cdcooper
+  AND epr.nrdconta = pep.nrdconta
+  AND epr.nrctremp = pep.nrctremp
+  AND lem.cdhistor IN (1039, 1057, 1058, 1044, 1045, 1046)
+  AND lem.cdcooper = epr.cdcooper
+  AND lem.nrdconta = epr.nrdconta
+  AND lem.nrctremp = epr.nrctremp
+  AND pep.cdcooper = lem.cdcooper
+  AND pep.nrdconta = lem.nrdconta
+  AND pep.nrctremp = lem.nrctremp
+  AND pep.nrparepr = lem.nrparepr
+  AND ass.cdcooper = lem.cdcooper
+  AND ass.nrdconta = lem.nrdconta
+  AND ass.incadpos = 2
   --and ass.nrcpfcgc in (03297156902,91596670959,08486610000159,01268248940,18515174000152,05370297703,10381840000103,65468252287,11212502000100,73481289987, 67548610963, 9013972000195, 6130589000129, 97007277934, 59203919953, 82991191000165, 625159934, 43959636920, 86024299915)
-  and epr.tpemprst = 1 --emprestimo NOVO
-  and ((((pep.dtultpag >= (sysdate-366)) and (pep.dtultpag <= (sysdate)))) or
+  AND epr.tpemprst = 1 --emprestimo NOVO
+  AND ((((pep.dtultpag >= (sysdate-366)) and (pep.dtultpag <= (sysdate)))) or
         ((pep.dtvencto >= (sysdate-366)) and (pep.dtvencto <= (sysdate))and (pep.dtultpag is null or pep.dtultpag >= (sysdate-366)) ))  --pagamento ou vencimento superior a Um ano atrás a até hoje e em se tratando apenas de vencimento .... verificar senão está quitada há mais de um ano.
-order by
-  cnpjctrc, idfccli, cdproduto, nrctr
-;
-
+ORDER BY cnpjctrc, idfccli, cdproduto, nrctr, nrpclant
