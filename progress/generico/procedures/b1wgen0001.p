@@ -406,6 +406,8 @@
                 20/12/2016 - obtem-cheques-deposito - Exibir cheque no extrato somente quando
                              cheque da própria cooperativa estiver com agencia destino e
 							 conta destino igual a zero (AJFink) (SD#572650)
+							 
+                10/07/2016 - inclusão do campo vllimcpa na tabela tt-saldos  (M441 - Roberto Holz (Mouts))
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3947,7 +3949,8 @@ PROCEDURE obtem-saldos-anteriores:
            tt-saldos.vlstotal = crapsda.vlsddisp + crapsda.vlsdbloq + 
                                 crapsda.vlsdblpr + crapsda.vlsdblfp + 
                                 crapsda.vlsdchsl + crapsda.vlsdindi
-           tt-saldos.vlblqjud = aux_vlblqjud.
+           tt-saldos.vlblqjud = aux_vlblqjud
+		   tt-saldos.vllimcpa = crapsda.vllimcpa.
 
     IF  par_flgerlog  THEN
         RUN proc_gerar_log (INPUT par_cdcooper,

@@ -34,7 +34,9 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
 							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 
                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
-                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
+                            na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).  
+                            
+               10/07/2017 - Inclusao do campo vllimcpa na procedure pc_obtem_saldos_anteriores  (Roberto Holz - M441)                                         
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -109,7 +111,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
              ,vlipmfpg NUMBER(18,6)
              ,dtultlcr crapass.dtultlcr%TYPE
              ,vlblqjud crapblj.vlbloque%TYPE
-             ,vlblqaco tbrecup_acordo.vlbloqueado%TYPE);
+             ,vlblqaco tbrecup_acordo.vlbloqueado%TYPE
+             ,vllimcpa crapsda.vllimcpa%TYPE);
 
   /* Definição de tabela que compreende os registros acima declarados */
   TYPE typ_tab_saldos IS
@@ -747,6 +750,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
 			   15/05/2017 - Incluído histórico 2139 na variável vr_lscdhist_ret da procedure
 							pc_consulta_extrato. (Reinert)
+              
+         10/07/2017 - Inclusão do leitura do campo vllimcpa
+                      M441 - Melhorias Pré-aprovado (Roberto Holz  Mout´s)
 
 ..............................................................................*/
 
@@ -4550,6 +4556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
              vlsdblfp,
              vlsdindi,
              vllimcre,
+             vllimcpa,
              COUNT(1) OVER (PARTITION BY cdcooper,nrdconta,dtmvtolt
                                 ORDER BY cdcooper,nrdconta,dtmvtolt) QTD_REG
         FROM crapsda
@@ -4689,6 +4696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                       rw_crapsda.vlsdblpr + rw_crapsda.vlsdblfp +
                                       rw_crapsda.vlsdchsl + rw_crapsda.vlsdindi;
     pr_tab_saldos(vr_ind).vlblqjud := vr_vlblqjud;
+    pr_tab_saldos(vr_ind).vllimcpa := rw_crapsda.vllimcpa;
 
     IF pr_flgerlog  THEN
       -- Gerar log

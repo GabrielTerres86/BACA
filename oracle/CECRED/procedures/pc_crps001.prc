@@ -206,6 +206,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
                             (Lucas Ranghetti/Thiago Rodrigues)
+                            
+               12/07/2017 - Inclusão no final do programa para execução da procedure
+                            empr0002.pc_gerar_carga_vig_crapsda com o objetivo de popular o campo
+                            crapsda.vllimcap - Melhoria M441 - Roberto Holz (Mout´s)
      ............................................................................. */
 
      DECLARE
@@ -2904,6 +2908,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        --Fechar cursor
        CLOSE cr_craptab;
 
+       -- M441 - Melhorias Pré-aprovado (Roberto Holz   Mout´s)
+       -- chamada da procedure para calculo do campo crapsda.vllimcpa --
+       empr0002.pc_gerar_carga_vig_crapsda(pr_cdcooper => pr_cdcooper
+                                          ,pr_DTMVTOLT => vr_dtmvtolt
+                                          ,pr_dscritic => vr_dscritic);
+       --Se ocorreu erro
+       IF vr_dscritic IS NOT NULL THEN
+         --Levantar Exceção
+         RAISE vr_exc_saida;
+       END IF;   
+       --                                
+       
        /* Eliminação dos registros de restart */
        BTCH0001.pc_elimina_restart(pr_cdcooper => pr_cdcooper
                                   ,pr_cdprogra => vr_cdprogra
@@ -2920,6 +2936,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                 ,pr_cdprogra => vr_cdprogra
                                 ,pr_infimsol => pr_infimsol
                                 ,pr_stprogra => pr_stprogra);
+
 
        --Salvar Informacoes no banco de dados
        COMMIT;

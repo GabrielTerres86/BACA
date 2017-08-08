@@ -210,8 +210,40 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
 
   -- Gerar tabela de historico dos bens das propostas de emprestimos. - JOB 
   PROCEDURE pc_carga_hist_bpr(pr_cdcooper IN crapcop.cdcooper%TYPE); --> Codigo da cooperativa
-
-                                   
+  
+  -- Gerar a tabela de posição diária do pré-aprovado e contratos. - JOB   (M441)
+  PROCEDURE pc_carga_pos_diaria_epr ( pr_cdcooper       IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                     ,pr_qtddias_blq    IN NUMBER    --> Quantidade de dias bloqueado limite pré-aprovado na TBERP_PARAM_CONTA
+                                     ,pr_qtdias_manter  IN NUMBER);  --> Quantidade de dias para manter a tabela TBEPR_POS_DIARIA_CPA
+  
+  -- Consulta informações da carga vigente do associado para trazer na tela ATENDA/DEP.A VISTA/PRINCIPAL (M441)
+  PROCEDURE pc_consultar_carga_vig_ass      ( pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                             ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Sequencial do titular
+                                             ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --> CPF do operador juridico
+                                             ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+--											                       ,pr_des_reto OUT VARCHAR2             --> retorno (OK/NOK)
+                                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                             ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                             ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                             ,pr_des_erro OUT VARCHAR2);
+ 
+  -- M441 - Melhoria Pré-Aprovado
+  -- Gerar as informações de limite/carga vigente na crapsda
+  -- Esta procedure será chamada no final da geração da crapsda (pc_cprs0001)
+  -- Estas informações serão apresentadas na tela ATENDA > DEPÓSITOS A VISTA > aba "Saldos Anteriores" 
+  PROCEDURE pc_gerar_carga_vig_crapsda ( pr_cdcooper       IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                        ,pr_DTMVTOLT       IN crapsda.dtmvtolt%type --> Data do movimento
+                                        ,pr_dscritic      OUT VARCHAR2); 
+                                    
+   
+    -- M441 - Melhoria Pré-Aprovado
+  -- Procedure para executar pc_crps682.
+  -- Esta procedure será executada via JOB aos domingos.
+  PROCEDURE pc_executar_crps682 (pr_cdcritic OUT PLS_INTEGER     --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2);      --> Descrição da crítica
+                                    
+                           
   END EMPR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
@@ -1370,6 +1402,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                  24/03/2016 - Alteração para trazer apenas as últimas 3 cargas,
                               sendo que entre elas, obrigatoriamente deve estar
                               a carga liberada.
+                 07/07/2017 - Alterado para não buscar as cargas que estiverem
+                              com bloqueio definitivo, isto é, cargas que já estiveram
+                              um dia liberadas porém depois foram bloqueadas.
+                              M441 - Melhorias Pré-aprovado (Roberto Holz).
 
      ..............................................................................*/ 
     DECLARE
@@ -1394,6 +1430,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                         SELECT epr.idcarga
                                           FROM tbepr_carga_pre_aprv epr
                                          WHERE epr.cdcooper = pr_cdcooper
+                                           /* M441v1.1 - somente trazer a carga ativa e
+                                              as bloqueadas que nunca foram liberadas algum dia  */
+                                           and nvl(epr.flgbloq_definitivo,0) = 0
                                       ORDER BY epr.flgcarga_bloqueada, epr.dtcalculo DESC
                                        ) origem
                                    where rownum <= 3);
@@ -1613,19 +1652,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                               excluídas sem que tenham sido importadas no BI.
                               Obs.: Na interface será apresentada apenas as últimas
                               3 cargas. (Anderson Fossa).
+                 10/07/2017 - Alterado para excluir também as cargas manuais pois a
+                              opção de Exclusão de carga foi retirada da tela IMPPPRE.
+                              M441 - Melhorias Pre-aprovado (Roberto Holz - Mouts)
 
      ..............................................................................*/ 
     DECLARE
       -- Selecionar os dados
       CURSOR cr_carga(pr_cdcooper IN tbepr_carga_pre_aprv.cdcooper%TYPE) IS
-        SELECT carga.idcarga
+        SELECT carga.cdcooper,carga.idcarga
           FROM tbepr_carga_pre_aprv carga
          WHERE carga.cdcooper = pr_cdcooper
            /* Vamos apagar apenas os registros que tenham mais do que 20 dias 
               para evitar apagar dados que ainda não foram importados para o BI */
            AND carga.dtcalculo <= trunc(sysdate - 20)
            AND carga.flgcarga_bloqueada = 1
-           AND carga.tpcarga = 2; -- automática
+           AND carga.tpcarga = 2 -- automática
+         UNION ALL
+        SELECT carga.cdcooper,carga.idcarga
+          FROM tbepr_carga_pre_aprv carga
+         WHERE carga.cdcooper = 3 -- carga manual fixa 3
+         -- eliminando cargas que já foram ativas mas que já foram bloqueadas a mais de 90 dias
+           AND carga.dtfinal_vigencia <= trunc(sysdate - 90)
+           AND carga.flgcarga_bloqueada = 1
+           AND carga.flgbloq_definitivo = 1
+           AND carga.tpcarga = 1 -- manual
+         UNION ALL
+        SELECT carga.cdcooper,carga.idcarga
+          FROM tbepr_carga_pre_aprv carga
+         WHERE carga.cdcooper = 3 -- carga manual fixa 3
+         -- eliminando cargas que estão bloqueadas e nunca foram liberadas e cálculo foi a mais de 90 dias
+           AND carga.dtcalculo <= trunc(sysdate - 90)
+           AND carga.flgcarga_bloqueada = 1
+           AND carga.flgbloq_definitivo = 0
+           AND carga.tpcarga = 1; -- manual                    
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -1635,20 +1695,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       -- Percorre todas as cargas bloqueadas
       FOR rw_carga IN cr_carga(pr_cdcooper => pr_cdcooper) LOOP
         BEGIN
+          -- Exclui os detalhes dos não aprovados (M441)
+          DELETE 
+            FROM TBEPR_CARGA_PRE_APRV_DET detalhe
+           WHERE detalhe.cdcooper = rw_carga.cdcooper
+             AND detalhe.idcarga = rw_carga.idcarga;          
           -- Exclui os motivos
           DELETE 
             FROM tbepr_motivo_nao_aprv motivo
-           WHERE motivo.cdcooper = pr_cdcooper
+           WHERE motivo.cdcooper = rw_carga.cdcooper
              AND motivo.idcarga = rw_carga.idcarga;
           -- Exclui os creditos
           DELETE 
             FROM crapcpa 
-           WHERE crapcpa.cdcooper = pr_cdcooper
+           WHERE crapcpa.cdcooper = rw_carga.cdcooper
              AND crapcpa.iddcarga = rw_carga.idcarga;
           -- Exclui a carga
           DELETE 
             FROM tbepr_carga_pre_aprv carga 
-           WHERE carga.cdcooper = pr_cdcooper
+           WHERE carga.cdcooper = rw_carga.cdcooper
              AND carga.idcarga = rw_carga.idcarga;
         EXCEPTION
           WHEN OTHERS THEN
@@ -2318,7 +2383,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
      Objetivo  : Bloquear/Liberar a Carga.
 
-     Alteracoes: 
+     Alteracoes: 10/07/2017 - - Atualizar vigencia da carga e o indicador de 
+                                bloqueio definitivo quando estiver bloqueando uma carga.
+                              - Atualizar vigencia da carga quando estiver liberando uma carga
+                              M441 - Melhorias do Pré-aprovado - Roberto Holz (Mout´s)
 
      ..............................................................................*/ 
     DECLARE
@@ -2330,6 +2398,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           FROM tbepr_carga_pre_aprv carga
          WHERE carga.idcarga = pr_idcarga;
       rw_carga cr_carga%ROWTYPE;
+      
+      CURSOR cr_carga_ant(pr_cdcooper in tbepr_carga_pre_aprv.cdcooper%TYPE
+                         ,pr_idcarga  in tbepr_carga_pre_aprv.idcarga%TYPE ) IS
+         select max(ult.idcarga) idcarga_anterior
+           from tbepr_carga_pre_aprv ult
+          where ult.cdcooper = pr_cdcooper
+            and ult.idcarga <> pr_idcarga
+            and ult.flgcarga_bloqueada = 0
+            and ult.tpcarga = 2;
+      rw_carga_ant cr_carga_ant%ROWTYPE;
 
       -- Variaveis de log
       vr_cdcooper NUMBER;
@@ -2342,6 +2420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
       -- Variaveis
       vr_blnfound BOOLEAN;
+      vr_blnfound_ant BOOLEAN;
       vr_flbloque INTEGER;
 
       -- Tratamento de erros
@@ -2407,14 +2486,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       BEGIN
         -- Se for uma liberacao
         IF pr_acao = 'L' THEN
+           -- pesquisa qual é a carga anterior não bloqueada da cooperativa
+           -- isso porque o update de bloquear está fazendo sobre todas as cargas
+           -- inclusive a atual (M441)
+           OPEN cr_carga_ant( pr_cdcooper => vr_cdcooper
+                             ,pr_idcarga  => rw_carga.idcarga);
+           FETCH cr_carga_ant INTO rw_carga_ant;
+           -- Alimenta a booleana se achou ou nao
+           vr_blnfound_ant := cr_carga_ant%FOUND;
+           -- Fecha cursor
+           CLOSE cr_carga_ant;
+           IF vr_blnfound_ant then
+              -- seta o final de vigencia na carga anterior que no update seguinte será bloqueada
+              UPDATE tbepr_carga_pre_aprv
+                 SET tbepr_carga_pre_aprv.dtfinal_vigencia = 
+                     decode(tbepr_carga_pre_aprv.dtfinal_vigencia,null,sysdate,tbepr_carga_pre_aprv.dtfinal_vigencia)
+                    ,tbepr_carga_pre_aprv.flgbloq_definitivo = 1 -- Bloquear definitivo --
+                    ,tbepr_carga_pre_aprv.flgcarga_bloqueada = 1 -- Bloquear --
+               WHERE tbepr_carga_pre_aprv.cdcooper = vr_cdcooper
+                 and tbepr_carga_pre_aprv.idcarga  = rw_carga_ant.idcarga_anterior;
+           END IF; -- achou carga anterior
+           -- atualizou o fim de vigencia somente na anterior
           -- Bloquear a carga antiga da cooperativa
           UPDATE tbepr_carga_pre_aprv
-             SET tbepr_carga_pre_aprv.flgcarga_bloqueada = 1 -- Bloquear
+             SET tbepr_carga_pre_aprv.flgcarga_bloqueada = 1 
            WHERE tbepr_carga_pre_aprv.cdcooper = vr_cdcooper;
         END IF;
         -- Bloquear/Liberar a carga passada
         UPDATE tbepr_carga_pre_aprv
            SET tbepr_carga_pre_aprv.flgcarga_bloqueada = vr_flbloque
+              ,tbepr_carga_pre_aprv.dtliberacao = decode(vr_flbloque,0,sysdate,tbepr_carga_pre_aprv.dtliberacao)
+              ,tbepr_carga_pre_aprv.dtfinal_vigencia = decode(vr_flbloque,1,sysdate,NULL)
+              ,tbepr_carga_pre_aprv.flgbloq_definitivo = decode(vr_flbloque,1,1,0)
          WHERE tbepr_carga_pre_aprv.idcarga = rw_carga.idcarga;
       EXCEPTION
         WHEN OTHERS THEN
@@ -3499,6 +3602,934 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     raise_application_error(-20501,vr_dscritic); 
                           
   END pc_carga_hist_bpr;
+  
+  
+  PROCEDURE pc_carga_pos_diaria_epr ( pr_cdcooper      IN CRAPCOP.CDCOOPER%TYPE -- código da cooperativa (0-processa todas)
+                                     ,pr_qtddias_blq   IN NUMBER    --> Quantidade de dias bloqueado limite pré-aprovado na TBERP_PARAM_CONTA
+                                     ,pr_qtdias_manter IN NUMBER) IS  --> Quantidade de dias para manter a tabela TBBI_CPA_POSICAO_DIARIA
+ /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_carga_pos_diaria_epr 
+    Sistema  : Emprestimo 
+    Sigla    : EMPR
+    Autor    : Roberto Holz - Mout´s 
+    Data     : Junho/2017                   Ultima atualizacao: 
+  
+    Dados referentes ao programa:
+  
+    Frequencia: -----
+    Objetivo  : Gerar a tabela de posição diária do pré-aprovado e contratos. - JOB 
+               
+               
+    Alteracoes:
+  
+  ---------------------------------------------------------------------------------------------------------------*/    
+  
+    
+    CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.cdcooper = DECODE(pr_cdcooper,0,cop.cdcooper,pr_cdcooper)
+         AND cop.cdcooper <> 3
+         AND cop.flgativo = 1
+       order by cop.cdcooper;
+    
+    CURSOR cr_pos_diaria (pr_cdcooper       IN TBBI_CPA_POSICAO_DIARIA.CDCOOPER%TYPE,
+                          pr_dtbase         IN date,
+                          pr_dias_bloqueado IN number) IS
+     SELECT TAB.CDCOOPER,
+       TAB.NRDCONTA,
+       TAB.TIPO_REG,
+       TAB.IDDCARGA,
+       TAB.VL_LIMITE,
+       TAB.VL_DISPONIVEL,
+       QT_CONTRATOS,
+       TAB.VLEMPRST,
+       TAB.vlsdevat,
+       TAB.VLPREEMP,
+       DTLIBERACAO,
+       FLGLIBERA_PRE_APRV,
+       DTATUALIZA_PRE_APRV
+  FROM (select 9 tipo_reg, -- Busca os emprestimos com finalidade 68 e com saldo
+               epr.cdcooper,
+               epr.nrdconta,
+               0 iddcarga,
+               0 tp_carga,
+               0 vl_limite,
+               0 vl_disponivel,
+               count(*) qt_contratos,
+               sum(epr.vlemprst) vlemprst,
+               sum(epr.vlsdevat) vlsdevat,
+               sum(epr.vlpreemp) vlpreemp,
+               NULL dtliberacao,
+               NULL flglibera_pre_aprv,
+               NULL dtatualiza_pre_aprv
+          from crapepr epr
+         where -- emmprestimos com idcarga > 0 consomem limite do pré-aprovado
+               -- porém esta regra somente começou no final de 2016 e existem
+               -- emprestimos antigos (idcarga = 0) que devem ser selecionados pela finalidade 68  
+              (epr.cdfinemp = 68 or epr.iddcarga > 0)
+           and epr.vlsdevat > 0
+           and epr.inliquid = 0
+           and epr.inprejuz = 0
+         group by epr.cdcooper, epr.nrdconta
+        UNION ALL
+        -- Busca as cargas ativas tanto manual como automática --
+        select 0                      tipo_reg,
+               wt.cdcooper,
+               wt.nrdconta,
+               wt.idcarga,
+               wt.tpcarga,
+               wt.vlcalpre,
+               wt.vllimdis,
+               0                      QT_CONTRATOS,
+               0,
+               0,
+               0,
+               wt.dtliberacao,
+               wt.flglibera_pre_aprv,
+               wt.dtatualiza_pre_aprv
+          from (SELECT carga.tpcarga,
+                       carga.dtcalculo,
+                       carga.cdcooper cdcooper_carga,
+                       carga.idcarga,
+                       nvl(carga.dtliberacao, carga.dtcalculo) dtliberacao,
+                       carga.dtfinal_vigencia,
+                       cpa.cdcooper,
+                       cpa.nrdconta,
+                       cpa.vlcalpre,
+                       cpa.vllimdis,
+                       cpa.vlcalpre - cpa.vllimdis,
+                       param.flglibera_pre_aprv,
+                       param.dtatualiza_pre_aprv
+                  FROM tbepr_carga_pre_aprv carga,
+                       crapcpa              cpa,
+                       tbepr_param_conta    param
+                 WHERE carga.indsituacao_carga = 1 -- Gerada
+                   AND carga.flgcarga_bloqueada = 0 -- Liberada
+                   AND carga.tpcarga = 2 -- Automática
+                   AND (carga.dtfinal_vigencia IS NULL OR
+                       carga.dtfinal_vigencia >= TRUNC(SYSDATE))
+                   and cpa.iddcarga = carga.idcarga
+                   and param.cdcooper(+) = cpa.cdcooper
+                   and param.nrdconta(+) = cpa.nrdconta
+                UNION ALL
+                SELECT carga.tpcarga,
+                       carga.dtcalculo,
+                       carga.cdcooper cdcooper_carga,
+                       carga.idcarga,
+                       nvl(carga.dtliberacao, carga.dtcalculo),
+                       carga.dtfinal_vigencia,
+                       cpa.cdcooper,
+                       cpa.nrdconta,
+                       cpa.vlcalpre,
+                       cpa.vllimdis,
+                       cpa.vlcalpre - cpa.vllimdis,
+                       param.flglibera_pre_aprv,
+                       param.dtatualiza_pre_aprv
+                  FROM tbepr_carga_pre_aprv carga,
+                       crapcpa              cpa,
+                       tbepr_param_conta    param
+                 WHERE carga.cdcooper = 3
+                   AND carga.indsituacao_carga = 1 -- Gerada
+                   AND carga.flgcarga_bloqueada = 0 -- Liberada
+                   AND carga.tpcarga = 1 -- Manual
+                   AND (carga.dtfinal_vigencia IS NULL OR
+                       carga.dtfinal_vigencia >= TRUNC(SYSDATE))
+                   AND cpa.iddcarga = carga.idcarga
+                   and param.cdcooper(+) = cpa.cdcooper
+                   and param.nrdconta(+) = cpa.nrdconta
+                 order by cdcooper, nrdconta, tpcarga, dtcalculo desc) wt
+         where (wt.vllimdis <> 0)
+           and ((wt.flglibera_pre_aprv = 1 or wt.flglibera_pre_aprv is null) or
+               (wt.flglibera_pre_aprv = 0 and
+               wt.dtatualiza_pre_aprv >= trunc(pr_dtbase - pr_dias_bloqueado)))) TAB
+ WHERE TAB.CDCOOPER = pr_cdcooper
+ order by 1, 2, 3;
+  
+    -- Cursor generico de calendario
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE; 
+    
+    vr_flgachou BOOLEAN;
+    
+    -- Variaveis
+    vr_qtdias_manter      NUMBER(3);
+    vr_salvo_cdcooper     CECRED.TBBI_CPA_POSICAO_DIARIA.CDCOOPER%TYPE;
+    vr_salvo_nrdconta     CECRED.TBBI_CPA_POSICAO_DIARIA.NRDCONTA%TYPE;
+    vr_salvo_qtcontratos  CECRED.TBBI_CPA_POSICAO_DIARIA.QTEPR_ATIVOS_PRE_APRV%TYPE;
+    vr_salvo_vlemprst     CECRED.TBBI_CPA_POSICAO_DIARIA.VLEPR_ATIVOS_PRE_APRV%TYPE;
+    vr_salvo_vlsdevat     CECRED.TBBI_CPA_POSICAO_DIARIA.VLSALDO_EPR_ATIVOS_PRE_APRV%TYPE;
+    vr_salvo_vlpreemp     CECRED.TBBI_CPA_POSICAO_DIARIA.VLPREST_EPR_ATIVOS_PRE_APRV%TYPE;
+          
+    vr_salvo_vigente          NUMBER(1);
+    vr_vig_iddcarga           CECRED.TBBI_CPA_POSICAO_DIARIA.IDCARGA%TYPE;        
+    vr_vig_dtliberacao        CECRED.TBBI_CPA_POSICAO_DIARIA.DTLIB_CARGA_PRE_APRV%TYPE;
+    vr_vig_flglibera_pre_aprv CECRED.TBBI_CPA_POSICAO_DIARIA.FLGLIBERA_PRE_APRV%TYPE;
+    vr_vig_dtatualiza_pre_aprv CECRED.TBBI_CPA_POSICAO_DIARIA.DTATUALIZA_PRE_APRV%TYPE;
+    vr_vig_vl_limite          CECRED.TBBI_CPA_POSICAO_DIARIA.VLLIM_PRE_APRV_TOTAL%TYPE;
+    vr_vig_vl_disponivel      CECRED.TBBI_CPA_POSICAO_DIARIA.VLLIM_PRE_APRV_DISPONIVEL%TYPE;
+    
+   
+    -- Variaveis de erro
+
+    vr_exc_erro_diaria exception;
+    vr_cdcritic PLS_INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    vr_cdprogra  CONSTANT VARCHAR2(80) := 'PC_CARGA_POS_DIARIA_EPR';
+    vr_nomdojob  CONSTANT VARCHAR2(80) := 'JBEPR_CARGA_POS_DIARIA_EPR';
+    vr_flgerlog  BOOLEAN := FALSE;
+    
+    PROCEDURE pc_controla_log(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                              pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+
+      --> Controlar geração de log de execução dos jobs
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+
+    END pc_controla_log;
+
+    PROCEDURE pc_limpeza_pos_diaria( pr_tipo_excl     IN NUMBER  -- (0 = elimina data base senão elimina antigos)
+                                    ,pr_qtdias_manter IN NUMBER
+                                    ,pr_cdcooper      IN CRAPCOP.CDCOOPER%TYPE
+                                    ,pr_dtbase        IN CRAPDAT.DTMVTOLT%TYPE) IS
+                                    
+    BEGIN
+        IF  pr_tipo_excl = 0 then
+            DELETE FROM TBBI_CPA_POSICAO_DIARIA
+             WHERE TBBI_CPA_POSICAO_DIARIA.DTMVTOLT = pr_dtbase
+               AND TBBI_CPA_POSICAO_DIARIA.CDCOOPER = pr_cdcooper;
+         ELSE
+            DELETE FROM TBBI_CPA_POSICAO_DIARIA
+             WHERE TBBI_CPA_POSICAO_DIARIA.DTMVTOLT <= pr_dtbase - pr_qtdias_manter
+               AND TBBI_CPA_POSICAO_DIARIA.CDCOOPER = pr_cdcooper;            
+         END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+           vr_dscritic := 'Problema ao excluir Posição Diária Pré-Aprovado: ' || SQLERRM;      
+                   
+    END pc_limpeza_pos_diaria;
+    
+    PROCEDURE PC_GRV_TBBI_CPA_POSICAO_DIARIA IS
+     BEGIN
+      INSERT INTO TBBI_CPA_POSICAO_DIARIA
+         ( DTMVTOLT
+          ,CDCOOPER
+          ,NRDCONTA
+          ,IDCARGA
+          ,VLLIM_PRE_APRV_TOTAL
+          ,VLLIM_PRE_APRV_DISPONIVEL
+          ,QTEPR_ATIVOS_PRE_APRV
+          ,VLEPR_ATIVOS_PRE_APRV
+          ,VLSALDO_EPR_ATIVOS_PRE_APRV
+          ,VLPREST_EPR_ATIVOS_PRE_APRV
+          ,DTLIB_CARGA_PRE_APRV
+          ,FLGLIBERA_PRE_APRV
+          ,DTATUALIZA_PRE_APRV
+         ) VALUES
+         ( rw_crapdat.dtmvtolt
+          ,vr_salvo_cdcooper
+          ,vr_salvo_nrdconta
+          ,vr_vig_iddcarga
+          --  quando o associado está bloqueado não grava os limites, só a carga ativa (M441)
+          ,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,vr_vig_vl_limite)
+          ,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,vr_vig_vl_disponivel)
+          ,vr_salvo_qtcontratos
+          ,vr_salvo_vlemprst
+          ,vr_salvo_vlsdevat
+          ,vr_salvo_vlpreemp
+          ,vr_vig_dtliberacao
+          ,vr_vig_flglibera_pre_aprv
+          ,vr_vig_dtatualiza_pre_aprv
+         );
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Problema ao incluir Posição Diária Pré-Aprovado: ' || SQLERRM;
+        
+    END PC_GRV_TBBI_CPA_POSICAO_DIARIA;
+    
+    BEGIN
+      pc_controla_log(pr_dstiplog => 'I');
+      vr_qtdias_manter := pr_qtdias_manter;
+
+      FOR rw_crapcop IN cr_crapcop(pr_cdcooper => pr_cdcooper) LOOP -- buscando todas as cooperativas
+          --> Buscar a data base da cooperativa
+          OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+          FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+          vr_flgachou := BTCH0001.cr_crapdat%FOUND;
+          CLOSE BTCH0001.cr_crapdat;
+          -- Se nao achou
+          IF NOT vr_flgachou THEN
+             vr_cdcritic := 1;
+             RAISE vr_exc_erro_diaria;
+          END IF;
+
+          -- Validações iniciais do programa
+/*
+          BTCH0001.pc_valida_iniprg(pr_cdcooper => rw_crapcop.cdcooper
+                                   ,pr_flgbatch => 1
+                                   ,pr_cdprogra => vr_cdprogra
+                                   ,pr_infimsol => pr_infimsol
+                                   ,pr_cdcritic => vr_cdcritic);
+          -- Se possui erro
+          IF vr_cdcritic <> 0 THEN
+             RAISE vr_exc_erro_diaria;
+           END IF;   
+*/       
+          ---------------------------------------
+          
+          
+          -- Executar limpeza da TBBI_CPA_POSICAO_DIARIA da data que será gerada;
+          pc_limpeza_pos_diaria( pr_tipo_excl => 0
+                                ,pr_qtdias_manter => vr_qtdias_manter
+                                ,pr_cdcooper => rw_crapcop.cdcooper
+                                ,pr_dtbase   => rw_crapdat.dtmvtolt);
+
+          vr_salvo_cdcooper := 0;
+          vr_salvo_nrdconta := 0;
+          vr_salvo_qtcontratos := 0;
+          vr_salvo_vlemprst := 0;
+          vr_salvo_vlsdevat := 0;
+          vr_salvo_vlpreemp := 0;
+          
+          vr_salvo_vigente := 0;
+          vr_vig_iddcarga := NULL;          
+          vr_vig_dtliberacao :=  NULL;
+          vr_vig_flglibera_pre_aprv := NULL;
+          vr_vig_dtatualiza_pre_aprv := NULL;
+          vr_vig_vl_limite := NULL;
+          vr_vig_vl_disponivel := NULL;
+
+          FOR rw_pos_diaria IN cr_pos_diaria ( pr_cdcooper => rw_crapcop.cdcooper
+                                              ,pr_dtbase   => rw_crapdat.dtmvtolt
+                                              ,pr_dias_bloqueado => pr_qtddias_blq ) LOOP -- busca posição diária
+              if (   rw_pos_diaria.cdcooper <> vr_salvo_cdcooper
+                  or rw_pos_diaria.nrdconta <> vr_salvo_nrdconta)
+              and vr_salvo_cdcooper > 0 then
+                  PC_GRV_TBBI_CPA_POSICAO_DIARIA;
+                  if vr_dscritic is not null then
+                     RAISE vr_exc_erro_diaria;
+                  end if;
+                  vr_salvo_vigente := 0;
+                  vr_vig_iddcarga := NULL;
+                  vr_vig_dtliberacao :=  NULL;
+                  vr_vig_flglibera_pre_aprv := NULL;
+                  vr_vig_dtatualiza_pre_aprv := NULL;
+                  vr_vig_vl_limite := NULL;
+                  vr_vig_vl_disponivel := NULL;
+              END IF; 
+              
+              vr_salvo_cdcooper := rw_pos_diaria.cdcooper;
+              vr_salvo_nrdconta := rw_pos_diaria.nrdconta;
+              
+              -- no primeiro registro tipo = 0 salva os valores da carga vigente
+              -- a partir da segunda carga, despreza pois não é vigente
+              if   rw_pos_diaria.tipo_reg = 0 THEN
+                   if  vr_salvo_vigente = 0 THEN
+                       vr_salvo_vigente := 1;
+                       vr_vig_iddcarga := rw_pos_diaria.iddcarga;
+                       vr_vig_dtliberacao :=  rw_pos_diaria.dtliberacao;
+                       vr_vig_flglibera_pre_aprv := rw_pos_diaria.flglibera_pre_aprv;
+                       vr_vig_dtatualiza_pre_aprv := rw_pos_diaria.dtatualiza_pre_aprv;
+                       vr_vig_vl_limite := rw_pos_diaria.vl_limite;
+                       vr_vig_vl_disponivel := rw_pos_diaria.vl_disponivel;
+                   ELSE
+                       CONTINUE;
+                   END IF;
+              END IF;
+              -- salva valores do tipo de registro 9 que somente
+              -- existe um por conta;
+              vr_salvo_qtcontratos := rw_pos_diaria.qt_contratos;
+              vr_salvo_vlemprst := rw_pos_diaria.vlemprst;
+              vr_salvo_vlsdevat := rw_pos_diaria.vlsdevat;
+              vr_salvo_vlpreemp := rw_pos_diaria.vlpreemp;
+                                              
+          END LOOP; -- busca posição diária
+          
+          IF vr_salvo_cdcooper > 0 then -- gravar o ultimo registro da cooperativa
+             PC_GRV_TBBI_CPA_POSICAO_DIARIA;
+             if  vr_dscritic is not null then
+                 RAISE vr_exc_erro_diaria;
+             end if;
+          END IF;
+          
+          IF vr_qtdias_manter > 0 then
+             -- Executar limpeza da TBBI_CPA_POSICAO_DIARIA retendo n dias
+             pc_limpeza_pos_diaria( pr_tipo_excl => 1
+                                   ,pr_qtdias_manter => vr_qtdias_manter
+                                   ,pr_cdcooper => rw_crapcop.cdcooper
+                                   ,pr_dtbase   => rw_crapdat.dtmvtolt);
+          END IF;                                       
+ 
+      END LOOP; -- buscando todas as cooperativas
+      
+      pc_controla_log(pr_dstiplog => 'F');
+
+      COMMIT;
+    
+    EXCEPTION
+      WHEN vr_exc_erro_diaria THEN
+           ROLLBACK;
+           -- Se foi retornado apenas código
+           IF  vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+             -- Buscar a descrição
+             vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+           END IF;
+           pc_controla_log(pr_dstiplog => 'E',
+                           pr_dscritic => vr_dscritic);
+           btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                            ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+           COMMIT;
+           raise_application_error(-20501,vr_dscritic);          
+
+  END pc_carga_pos_diaria_epr;
+  
+  -- Consulta informações da carga vigente do associado para trazer na tela ATENDA/DEP.A VISTA/PRINCIPAL (M441)
+  PROCEDURE pc_consultar_carga_vig_ass       (pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                             ,pr_idseqttl  IN crapttl.idseqttl%TYPE --> Sequencial do titular
+                                             ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --> CPF do operador juridico
+                                             ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+--											                       ,pr_des_reto OUT VARCHAR2             --> retorno (OK/NOK)
+                                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                             ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                             ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                             ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                             ,pr_des_erro OUT VARCHAR2)  IS
+
+    /* .............................................................................
+
+     Programa: pc_consultar_carga_vig_associado
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Roberto Holz
+     Data    : Julho/2017.                    Ultima atualizacao: 05/07/2017
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina para retornar dados para a tela ATENDA (Depósitos à Vista , aba Principal )
+
+     Observacao: -----
+
+     Alteracoes: 
+     ..............................................................................*/ 
+    ---------------> CURSORES <-----------------
+
+    -- Verifica se esta na tabela do pre-aprovado
+    CURSOR cr_crapcpa (pr_cdcooper IN crapcpa.cdcooper%TYPE,
+                       pr_nrdconta IN crapcpa.nrdconta%TYPE,
+                       pr_idcarga  IN crapcpa.iddcarga%TYPE) IS
+      SELECT cpa.vllimdis
+            ,cpa.vlcalpre
+            ,cpa.vlctrpre
+            ,cpa.cdlcremp
+        FROM crapcpa cpa
+       WHERE cpa.cdcooper = pr_cdcooper
+         AND cpa.nrdconta = pr_nrdconta
+         AND cpa.iddcarga = pr_idcarga;
+    rw_crapcpa cr_crapcpa%rowtype;
+
+    CURSOR cr_carga_con (pr_iddcarga IN crapcpa.iddcarga%TYPE) IS
+      SELECT nvl(carga.dtliberacao,carga.dtcalculo) dtliberacao
+        FROM tbepr_carga_pre_aprv carga 
+       WHERE carga.idcarga = pr_iddcarga;
+    rw_carga_con cr_carga_con%ROWTYPE;
+    
+    CURSOR cr_param_conta (pr_cdcooper IN crapcpa.cdcooper%TYPE
+                          ,pr_nrdconta IN crapcpa.nrdconta%TYPE) IS 
+      SELECT conta.flglibera_pre_aprv
+        FROM tbepr_param_conta conta
+       WHERE conta.cdcooper  = pr_cdcooper
+         AND conta.nrdconta  = pr_nrdconta;
+    rw_param_conta cr_param_conta%ROWTYPE;
+    
+    --> Verifica se o associado pode obter o credido pre-aprovado
+    CURSOR cr_crapass (pr_cdcooper IN crapcpa.cdcooper%TYPE
+                      ,pr_nrdconta IN crapcpa.nrdconta%TYPE) IS
+      SELECT ass.cdcooper
+            ,ass.nrdconta
+            ,ass.inpessoa
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+
+    --> Verifica se esta bloqueado o pre-aprovado 
+    CURSOR cr_crappre (pr_cdcooper IN crappre.cdcooper%TYPE,
+                       pr_inpessoa IN crappre.inpessoa%TYPE)IS
+      SELECT pre.cdcooper
+            ,pre.vllimctr
+        FROM crappre pre
+       WHERE pre.cdcooper = pr_cdcooper
+         AND pre.inpessoa = pr_inpessoa;
+    rw_crappre cr_crappre%ROWTYPE;     
+
+    --> Buscar linha de credito
+    CURSOR cr_craplcr (pr_cdcooper craplcr.cdcooper%TYPE,
+                       pr_cdlcremp craplcr.cdlcremp%TYPE)IS
+      SELECT lcr.txmensal
+        FROM craplcr lcr
+       WHERE lcr.cdcooper = pr_cdcooper
+         AND lcr.cdlcremp = pr_cdlcremp;
+    rw_craplcr cr_craplcr%ROWTYPE;
+    
+    --> Tratamento de erros
+    vr_exc_erro  EXCEPTION;
+    vr_cdcritic  crapcri.cdcritic%TYPE;
+    vr_dscritic  VARCHAR2(4000);
+    
+      -- Variaveis de log
+      vr_cdcooper  NUMBER;
+      vr_cdoperad  VARCHAR2(100);
+      vr_nmdatela  VARCHAR2(100);
+      vr_nmeacao   VARCHAR2(100);
+      vr_cdagenci  VARCHAR2(100);
+      vr_nrdcaixa  VARCHAR2(100);
+      vr_idorigem  VARCHAR2(100);
+
+      -- Variaveis
+      vr_auxconta INTEGER := 0;
+      vr_idcarga  tbepr_carga_pre_aprv.idcarga%type;
+      vr_flgfound BOOLEAN;
+      vr_flgcon   BOOLEAN;
+      vr_vlctrpre crapepr.vlemprst%type;
+      
+    BEGIN
+        GENE0004.pc_extrai_dados(pr_xml      => pr_retxml 
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao 
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => pr_dscritic);
+        -- Incluir nome
+        GENE0001.pc_informa_acesso(pr_module => vr_nmdatela
+                                  ,pr_action => NULL);
+
+        -- Criar cabecalho do XML
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+                          
+    --> Somente o primeiro titular pode contratrar o pre-aprovado e nao 
+    --  pode ser operador de conta juridica 
+    IF pr_idseqttl > 1 OR pr_nrcpfope > 0 THEN
+--      pr_des_reto := 'OK';
+      RETURN;
+    END IF;
+
+    -- Busca a carga ativa
+    EMPR0002.pc_busca_carga_ativa(pr_cdcooper => vr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_idcarga  => vr_idcarga);
+    --  Caso nao possua carga ativa
+    IF vr_idcarga = 0 THEN
+--      pr_des_reto := 'OK';
+      RETURN;
+    END IF;
+
+    --> Verifica se esta na tabela do pre-aprovado
+    OPEN cr_crapcpa(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_idcarga  => vr_idcarga);
+    FETCH cr_crapcpa INTO rw_crapcpa;
+
+    -- caso nao esteja, aborta com ok
+    IF cr_crapcpa%NOTFOUND THEN
+      CLOSE cr_crapcpa;
+--      pr_des_reto := 'OK';
+      RETURN;  
+    ELSE
+      CLOSE cr_crapcpa;
+    END IF; 
+
+    --> Verifica se o associado pode obter o credido pre-aprovado
+    OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
+      vr_cdcritic := 9; --> Associado nao cadastrado
+      vr_dscritic := NULL;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;
+
+          
+      --> Verifica se esta o pre-aprovado esta liberado
+    OPEN cr_param_conta(pr_cdcooper => vr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_param_conta INTO rw_param_conta;
+    vr_flgfound := cr_param_conta%FOUND;
+    CLOSE cr_param_conta;
+      
+    -- Caso nao exista registro, conta como liberado
+    IF vr_flgfound AND
+       rw_param_conta.flglibera_pre_aprv = 0 THEN
+--       pr_des_reto := 'OK';
+       RETURN; 
+    END IF;
+    
+    --> Verifica se esta bloqueado o pre-aprovado 
+    OPEN cr_crappre(pr_cdcooper => rw_crapass.cdcooper,
+                    pr_inpessoa => rw_crapass.inpessoa);
+    FETCH cr_crappre INTO rw_crappre;
+
+    IF cr_crappre%NOTFOUND THEN
+      CLOSE cr_crappre;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Parametros pre-aprovado nao cadastrado';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crappre;
+    END IF;
+
+    --> Buscar linha de credito
+    OPEN cr_craplcr (pr_cdcooper => rw_crappre.cdcooper,
+                     pr_cdlcremp => rw_crapcpa.cdlcremp);
+    FETCH cr_craplcr INTO rw_craplcr;
+
+    IF cr_craplcr%NOTFOUND THEN
+       CLOSE cr_craplcr;
+      vr_cdcritic := 363; --> Linha nao cadastrada.
+      vr_dscritic := NULL;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplcr;
+    END IF;
+
+	--> Buscar data da carga
+    OPEN cr_carga_con (pr_iddcarga => vr_idcarga);
+    FETCH cr_carga_con INTO rw_carga_con;
+    vr_flgcon := cr_carga_con%FOUND;
+    CLOSE cr_carga_con;	
+	
+	  if  NOT vr_flgcon THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Carga Pré-aprovado não encontrada';
+	      RAISE vr_exc_erro;
+    END IF;
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'carga'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'carga'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'idcarga'
+                          ,pr_tag_cont => vr_idcarga
+                          ,pr_des_erro => vr_dscritic);    
+ 	
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'carga'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'vllimdis'
+                          ,pr_tag_cont => rw_crapcpa.vllimdis
+                          ,pr_des_erro => vr_dscritic);
+
+     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'carga'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'dtliberacao'
+                          ,pr_tag_cont => TO_CHAR(rw_carga_con.dtliberacao,'DD/MM/RRRR HH24:MI')
+                          ,pr_des_erro => vr_dscritic);
+                          
+--     pr_des_reto := 'OK';
+						  
+    EXCEPTION
+        WHEN vr_exc_erro THEN
+          pr_cdcritic := 0;
+          pr_dscritic := vr_dscritic;
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          pr_dscritic := vr_dscritic;
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    
+  END pc_consultar_carga_vig_ass;
+
+  -- M441 - Melhoria Pré-Aprovado
+  -- Gerar as informações de limite/carga vigente na crapsda
+  -- Esta procedure será chamada no final da geração da crapsda (pc_cprs0001)
+  -- Estas informações serão apresentadas na tela ATENDA > DEPÓSITOS A VISTA > aba "Saldos Anteriores" 
+  PROCEDURE pc_gerar_carga_vig_crapsda ( pr_cdcooper       IN crapcop.cdcooper%TYPE      --> Código da cooperativa (0-processa todas)
+                                        ,pr_DTMVTOLT       IN crapsda.dtmvtolt%type      --> Data do movimento
+                                        ,pr_dscritic      OUT VARCHAR2) IS               --> Descricao de erro.
+    /* .............................................................................
+
+     Programa: pc_gerar_carga_vig_crapsda
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Roberto Holz
+     Data    : Julho/2017.                    Ultima atualizacao: 07/07/2017
+
+     Dados referentes ao programa:
+
+     Frequencia: Chamado no final do programa pc_cprs0001 (executa na diária)
+
+     Objetivo  : Grava na tabela crapsda as informações de carga e valor de limites disponível 
+                 para o associado no momento da execução.
+
+     Observacao: -----
+
+     Alteracoes: 
+     ..............................................................................*/ 
+
+    ---------------> CURSORES <-----------------  
+    CURSOR cr_limites_vig (pr_cdcooper       IN crapsda.cdcooper%TYPE,
+                           pr_dtmvtolt       IN crapsda.dtmvtolt%TYPE) IS
+    SELECT *
+    FROM
+    (
+    SELECT
+    SDA.DTMVTOLT,
+    SDA.CDCOOPER,
+    SDA.NRDCONTA,
+    TAB.vllimdis,
+    TAB.IDCARGA,
+    TAB.TPCARGA,
+    TAB.DTCALCULO,
+    ROW_NUMBER()
+      OVER (PARTITION BY SDA.CDCOOPER,SDA.NRDCONTA
+            ORDER BY SDA.CDCOOPER,SDA.NRDCONTA) SEQ
+    from
+    CRAPSDA SDA,
+    (
+    SELECT 
+    WT.CDCOOPER,
+    WT.NRDCONTA,
+    WT.VLLIMDIS,
+    WT.IDCARGA,
+    WT.TPCARGA,
+    WT.DTCALCULO
+    FROM
+    (
+                 SELECT carga.tpcarga,
+                        carga.dtcalculo,
+                        carga.idcarga,
+                        cpa.cdcooper,
+                        cpa.nrdconta,
+                        cpa.vllimdis ,
+                        param.flglibera_pre_aprv,
+                        param.dtatualiza_pre_aprv
+                   FROM tbepr_carga_pre_aprv carga,
+                        crapcpa              cpa,
+                        tbepr_param_conta    param
+                  WHERE carga.indsituacao_carga = 1 -- Gerada
+                    AND carga.flgcarga_bloqueada = 0 -- Liberada
+                    AND carga.tpcarga = 2 -- Automática
+                    AND (carga.dtfinal_vigencia IS NULL OR
+                        carga.dtfinal_vigencia >= TRUNC(SYSDATE))
+                    and cpa.iddcarga = carga.idcarga
+                    and param.cdcooper(+) = cpa.cdcooper
+                    and param.nrdconta(+) = cpa.nrdconta
+                 UNION ALL
+                 SELECT carga.tpcarga,
+                        carga.dtcalculo,
+                        carga.idcarga,
+                        cpa.cdcooper,
+                        cpa.nrdconta,
+                        cpa.vllimdis,
+                        param.flglibera_pre_aprv,
+                        param.dtatualiza_pre_aprv
+                   FROM tbepr_carga_pre_aprv carga,
+                        crapcpa              cpa,
+                        tbepr_param_conta    param
+                  WHERE carga.cdcooper = 3
+                    AND carga.indsituacao_carga = 1 -- Gerada
+                    AND carga.flgcarga_bloqueada = 0 -- Liberada
+                    AND carga.tpcarga = 1 -- Manual
+                    AND (carga.dtfinal_vigencia IS NULL OR
+                        carga.dtfinal_vigencia >= TRUNC(SYSDATE))
+                    AND cpa.iddcarga = carga.idcarga
+                    and param.cdcooper(+) = cpa.cdcooper
+                    and param.nrdconta(+) = cpa.nrdconta
+          order by cdcooper, nrdconta , tpcarga , dtcalculo desc ) wt
+    where 
+         (wt.vllimdis <> 0)
+     and (wt.flglibera_pre_aprv = 1 or wt.flglibera_pre_aprv is null) 
+    ) TAB
+    WHERE 
+    SDA.DTMVTOLT = pr_DTMVTOLT   AND
+    SDA.CDCOOPER = pr_cdcooper   AND 
+    TAB.CDCOOPER = SDA.CDCOOPER  AND
+    TAB.NRDCONTA = SDA.NRDCONTA 
+    ORDER BY TAB.TPCARGA, TAB.DTCALCULO DESC
+    ) XXX
+    WHERE XXX.SEQ = 1;
+    
+    -- Variaveis de erro
+
+    vr_exc_erro_diaria exception;
+    vr_cdcritic PLS_INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    vr_cdprogra  CONSTANT VARCHAR2(80) := 'PC_GERAR_CARGA_VIG_CRAPSDA';
+    vr_nomdojob  CONSTANT VARCHAR2(80) := 'JBEPR_GERAR_CARGA_VIG_CRAPSDA';
+    vr_flgerlog  BOOLEAN := FALSE;
+    
+    BEGIN
+                     
+      FOR rw_limites_vig IN cr_limites_vig(pr_cdcooper => pr_cdcooper,
+                                           pr_DTMVTOLT => pr_DTMVTOLT) LOOP -- busca todos os registros em saldo e sua carga vigente
+          UPDATE crapsda
+             set crapsda.vllimcpa  = rw_limites_vig.vllimdis
+           WHERE
+                 crapsda.cdcooper = rw_limites_vig.cdcooper
+             and crapsda.dtmvtolt = rw_limites_vig.dtmvtolt
+             and crapsda.nrdconta = rw_limites_vig.nrdconta;                               
+      end loop; -- busca todos os registros em saldo e sua carga vigente
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+           vr_dscritic := 'Problema ao alterar crapsda (EMPR0002.PC_GERAR_CARGA_VIG_CRAPSDA ) : ' || SQLERRM;
+           pr_dscritic := vr_dscritic;
+  
+  END pc_gerar_carga_vig_crapsda;
+  
+  PROCEDURE pc_executar_crps682 (pr_cdcritic OUT PLS_INTEGER     --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2) IS      --> Descrição da crítica
+    /* .............................................................................
+
+     Programa: pc_executar_crps682
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Roberto Holz
+     Data    : Agosto/2017.                    Ultima atualizacao: 05/08/2017
+
+     Dados referentes ao programa:
+
+     Frequencia: Chamado via JOB que executa aos domingos.
+
+     Objetivo  : fazer execução do pc_crps682
+     Observacao: -----
+
+     Alteracoes: 
+     ..............................................................................*/ 
+    CURSOR cr_crapcop IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.cdcooper <> 3
+         AND cop.flgativo = 1
+       ORDER BY 1;
+    
+    -- Variaveis de erro
+
+    vr_exc_erro_crps682 exception;
+    vr_cdcritic PLS_INTEGER;
+    vr_dscritic VARCHAR2(4000); 
+    
+    -- variaveis                                  
+    vr_stprogra  PLS_INTEGER;
+    vr_infimsol  PLS_INTEGER;
+
+    vr_cdprogra  CONSTANT VARCHAR2(80) := 'PC_EXECUTAR_CRPS682';
+    vr_nomdojob  CONSTANT VARCHAR2(80) := 'JBEPR_EXECUTAR_CRPS682';
+    vr_flgerlog  BOOLEAN := FALSE;
+    
+    PROCEDURE pc_controla_log(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                              pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+
+      --> Controlar geração de log de execução dos jobs
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+
+    END pc_controla_log;
+              
+    BEGIN
+      pc_controla_log(pr_dstiplog => 'I');
+      
+      FOR rw_crapcop IN cr_crapcop LOOP  -- busca as cooperativas <> 3
+        pc_crps682(pr_cdcooper => rw_crapcop.cdcooper,
+                   pr_flgresta => 0,
+                   pr_flgexpor => 0,
+                   pr_stprogra => vr_stprogra,
+                   pr_infimsol => vr_infimsol,
+                   pr_cdcritic => vr_cdcritic,
+                   pr_dscritic => vr_dscritic);
+                   
+        IF  vr_cdcritic IS NOT NULL OR
+           vr_dscritic IS NOT NULL THEN
+           raise vr_exc_erro_crps682;
+        END IF;
+          
+      END LOOP;  
+      
+      pc_controla_log(pr_dstiplog => 'F');
+                                    
+    EXCEPTION
+      WHEN vr_exc_erro_crps682 THEN
+           ROLLBACK;
+           -- Se foi retornado apenas código
+           IF  vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+             -- Buscar a descrição
+             vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+           END IF;
+           pc_controla_log(pr_dstiplog => 'E',
+                           pr_dscritic => vr_dscritic);
+           btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                            ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+           COMMIT;
+           raise_application_error(-20501,vr_dscritic);          
+      
+      WHEN OTHERS THEN
+           vr_dscritic := 'Problema ao executar pc_executar_crps682 : ' || SQLERRM;
+           pr_dscritic := vr_dscritic;
+           ROLLBACK;
+           -- Se foi retornado apenas código
+           IF  vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+             -- Buscar a descrição
+             vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+           END IF;
+           pc_controla_log(pr_dstiplog => 'E',
+                           pr_dscritic => vr_dscritic);
+           btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                            ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+           COMMIT;
+           raise_application_error(-20501,vr_dscritic);          
+                              
+  END pc_executar_crps682;
 
 END EMPR0002;
 /
