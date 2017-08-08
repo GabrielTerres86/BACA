@@ -1,11 +1,13 @@
 <?php
     /*
      * FONTE        : form_importa_carga.php
-     * CRIA«√O      : Lucas Lombardi
-     * DATA CRIA«√O : 19/07/2016
+     * CRIA√á√ÉO      : Lucas Lombardi
+     * DATA CRIA√á√ÉO : 19/07/2016
      * OBJETIVO     : Formulario de Regras.
      * --------------
-     * ALTERA«’ES   : 
+     * ALTERA√á√ïES   : 
+     *
+     * 000: [11/07/2017] Altera√ß√£o no controla de apresenta√ß√£o do cargas bloqueadas na op√ß√£o "A", Melhoria M441. ( Mateus Zimmermann/MoutS )
      * --------------
      */
 	
@@ -17,6 +19,7 @@
 	
 	$cddopcao   = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ;
 	$iddcarga   = (isset($_POST['iddcarga'])) ? $_POST['iddcarga'] : 0 ;
+  $flgbloqu   = (isset($_POST['flgbloqu'])) ? $_POST['flgbloqu'] : 2 ;
 	
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao,false)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',true);
@@ -24,7 +27,7 @@
 	if(strtoupper($cddopcao) == 'A') {
 	
 		if($iddcarga == 0)
-			exibirErro('error','Carga n„o encontrada.','Alerta - Ayllos','acessa_rotina();',true);
+			exibirErro('error','Carga n√£o encontrada.','Alerta - Ayllos','acessa_rotina();',true);
 		
 		// Monta o xml de requisicao
 		$xml  = "";
