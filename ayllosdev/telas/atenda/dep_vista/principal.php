@@ -13,7 +13,8 @@
 				   12/04/2012 - Ajustar leitura das tags do XML (David).
 				   04/06/2013 - Incluir label vlblqjud Bloq. Judicial (Lucas R.)   
 				   06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos,
-								Prj. 302 (Jean Michel).        	   	               
+								Prj. 302 (Jean Michel).
+				   11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
 	
 	 ************************************************************************/
 	
@@ -78,11 +79,35 @@
     // Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlGetDepVista->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlGetDepVista->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 
+	}
+	
+	// Montar o xml de Requisicao M441
+	$xml = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<idseqttl>1</idseqttl>";
+	$xml .= "		<nrcpfope>0</nrcpfope>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";	
+	
+	// Chamada mensageria
+    $xmlResult = mensageria($xml, "ATENDA", "CONSULTA_CARGA_CPA_VIGENTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObjeto = getObjectXML($xmlResult);
+
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+	}
 	
 	$depvista  = $xmlGetDepVista->roottag->tags[0]->tags[0]->tags;
 	$liberaepr = $xmlGetDepVista->roottag->tags[1]->tags;
 	$qtLibEpr  = count($liberaepr);
+	
+	$camposLimData = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 	
 	// Monta mensagem para aviso sobre liberação de empréstimos
 	$msgLibera = "";	
@@ -143,10 +168,16 @@
 		
 		<label for="vlblqjud"><? echo utf8ToHtml('Bloq. Judicial:') ?></label>
 		<input name="vlblqjud" id="vlblqjud" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlblqjud")),2,",","."); ?>" />
+		
+		<label for="vllimdis"><? echo utf8ToHtml('Limite Pré-aprovado disponível:') ?></label>
+		<input name="vllimdis" id="vllimdis" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($camposLimData,"vllimdis")),2,",","."); ?>" />
 		<br />
 		
 		<label for="vlstotal"><? echo utf8ToHtml('Saldo Total:') ?></label>
 		<input name="vlstotal" id="vlstotal" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlstotal")),2,",",".");  ?>" />
+		
+		<label for="dtliberacao"><? echo utf8ToHtml('Última Atu. Lim. Pré-aprovado:') ?></label>
+		<input name="dtliberacao" id="dtliberacao" type="text" value="<?php echo getByTagName($camposLimData,"dtliberacao"); ?>" />
 		<br />
 		
 	</fieldset>
