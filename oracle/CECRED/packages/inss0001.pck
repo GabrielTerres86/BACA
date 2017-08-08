@@ -1091,7 +1091,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 17/03/2017
+   Data    : 27/08/2013                        Ultima atualizacao: 07/08/2017
 
    Dados referentes ao programa:
 
@@ -1173,6 +1173,10 @@ create or replace package body cecred.INSS0001 as
                             campo cdpesqbb, também ajustado cursor cr_tbinss_dcb para listarmos
                             somente o registro mais antigo da tabela junto com o NB
                             na fn_verifica_renovacao_vida (Lucas Ranghetti #626129)
+
+			   07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina de pagamentos para tentarmos
+				            identificar lentidões que estão ocorrendo
+							(Adriano).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -4259,7 +4263,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Douglas Quisinski
-    Data     : Outubro/2015                          Ultima atualizacao: 10/02/2016
+    Data     : Outubro/2015                          Ultima atualizacao: 07/08/2017
     
     Dados referentes ao programa:
     
@@ -4281,6 +4285,10 @@ create or replace package body cecred.INSS0001 as
                               Alterar o numero da conta antiga para a nova. (Aline) 
                               
                  31/01/2017 - Ajuste ref Incorporação Transulcred -> Transpocred (Aline)                                 
+
+				 07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina para tentarmos
+				              identificar lentidões que estão ocorrendo na rotina
+							 (Adriano).
     -------------------------------------------------------------------------------------------------------------*/
 
       -- Busca dos dados da cooperativa
@@ -4388,6 +4396,9 @@ create or replace package body cecred.INSS0001 as
       vr_exc_proximo EXCEPTION;
       vr_exc_diverg  EXCEPTION;
       vr_exc_erro    EXCEPTION; 
+      
+      vr_idprglog NUMBER;
+      
     BEGIN
       
       --Inicializar variaveis
@@ -4395,6 +4406,21 @@ create or replace package body cecred.INSS0001 as
       vr_dscritic:= NULL;
       pr_cod_reto:= 0; -- Sem erros
       
+      -- Enviar detalhamento do erro ao LOG (Temporario)
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                     , pr_cdprograma => pr_cdprogra
+                     , pr_cdcooper => pr_cdcooper
+                     , pr_tpexecucao => 0
+                     , pr_tpocorrencia => 4
+                     , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                          pr_cdprogra || ' --> '||
+                                                   'Identificando cooperativa do beneficio, conta: '||
+                                                    pr_tab_creditos(pr_index_creditos).nrdconta || 
+                                                    ', NB: ' || 
+                                                    pr_tab_creditos(pr_index_creditos).nrrecben)
+                     , pr_idprglog => vr_idprglog);
+                             
+                                                      
       /* Localiza a cooperativa do beneficiario do XML pela Agencia SICREDI */
       -- Verifica se a cooperativa esta cadastrada
       vr_crapcop:= pr_tab_cdagesic.EXISTS(pr_tab_creditos(pr_index_creditos).cdagesic);
@@ -4558,6 +4584,26 @@ create or replace package body cecred.INSS0001 as
                                                           ELSE vr_cdagenci 
                                                        END; 
                                                        
+        
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                            pr_cdprogra || ' --> '||
+                                                     'Identificado a cooperativa do beneficio, conta: '||
+                                                      pr_tab_creditos(pr_index_creditos).nrdconta || 
+                                                      ', NB: ' || 
+                                                      pr_tab_creditos(pr_index_creditos).nrrecben || 
+                                                      ', Coop: ' ||
+                                                      pr_tab_creditos(pr_index_creditos).cdcooper)
+                       , pr_idprglog => vr_idprglog);
+                     
+                                                      
+                                                      
+        
         /*  
         O beneficio cuja cooperativa ainda nao terminou o processo
         batch, ou seja, ainda nao atualizou a data de movimento, 
@@ -4660,6 +4706,22 @@ create or replace package body cecred.INSS0001 as
           pr_tab_creditos(pr_index_creditos).geracred := TRUE;
           pr_tab_creditos(pr_index_creditos).cdagenci := rw_crapass.cdagenci;
                 
+          -- Enviar detalhamento do erro ao LOG (Temporario)
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                         , pr_cdprograma => pr_cdprogra
+                         , pr_cdcooper => pr_cdcooper
+                         , pr_tpexecucao => 0
+                         , pr_tpocorrencia => 4
+                         , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                              pr_cdprogra || ' --> '||
+                                                       'Chamando rotina para gerar o credito: '||
+                                                        pr_tab_creditos(pr_index_creditos).nrdconta || 
+                                                        ', NB: ' || 
+                                                        pr_tab_creditos(pr_index_creditos).nrrecben || 
+                                                        ', Coop: ' ||
+                                                        pr_tab_creditos(pr_index_creditos).cdcooper)
+                         , pr_idprglog => vr_idprglog);
+                         
           --Gerar Credito beneficio INSS
           inss0001.pc_benef_inss_gera_credito (pr_cdcooper => pr_tab_creditos(pr_index_creditos).cdcooper --Codigo Cooperativa 
                                               ,pr_cdagenci => pr_tab_creditos(pr_index_creditos).cdagenci --Codigo Agencia
@@ -4686,9 +4748,43 @@ create or replace package body cecred.INSS0001 as
                                               ,pr_des_reto => vr_des_reto                                 --Saida OK/NOK
                                               ,pr_tab_erro => pr_tab_erro);                               --Tabela de Erros
 
+          
+          -- Enviar detalhamento do erro ao LOG (Temporario)
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                         , pr_cdprograma => pr_cdprogra
+                         , pr_cdcooper => pr_cdcooper
+                         , pr_tpexecucao => 0
+                         , pr_tpocorrencia => 4
+                         , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                              pr_cdprogra || ' --> '||
+                                                       'Retorno da rotina para geracao de credito: '||
+                                                        pr_tab_creditos(pr_index_creditos).nrdconta || 
+                                                        ', NB: ' || 
+                                                        pr_tab_creditos(pr_index_creditos).nrrecben || 
+                                                        ', Coop: ' ||
+                                                        pr_tab_creditos(pr_index_creditos).cdcooper) ||
+                                             ', Retorno: ' || vr_des_reto
+                         , pr_idprglog => vr_idprglog);
+                         
           --Se ocorreu erro
           IF vr_des_reto = 'NOK' THEN
             IF pr_proc_aut = 1 THEN  
+              
+              
+              -- Enviar detalhamento do erro ao LOG (Temporario)
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => pr_cdprogra
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 4
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                                 pr_cdprogra || 
+                                                 '01 - Mover arquivo ' 
+                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ' para ' || vr_nmdireto_salvar)
+                             , pr_idprglog => vr_idprglog);
+                             
+                                                            
               -- Comando para mover arquivo
               vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
                            vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
@@ -4712,6 +4808,23 @@ create or replace package body cecred.INSS0001 as
                 RAISE vr_exc_erro;
                   
               END IF; 
+              
+              -- Enviar detalhamento do erro ao LOG (Temporario)
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => pr_cdprogra
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 4
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                                 pr_cdprogra || 
+                                                 '01 - Arquivo ' 
+                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ' movido para ' || vr_nmdireto_salvar
+                                                            || ' com sucesso.')
+                             , pr_idprglog => vr_idprglog);
+                             
+                                                            
+                                                            
             END IF;
                 
             --Se tem erro na tabela
@@ -4738,6 +4851,21 @@ create or replace package body cecred.INSS0001 as
               
           ELSE
             IF pr_proc_aut = 1 THEN
+                    
+              -- Enviar detalhamento do erro ao LOG (Temporario)
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => pr_cdprogra
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 4
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                                 pr_cdprogra || 
+                                                 '02 - Move o arquivo  ' 
+                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ' para ' || vr_nmdireto_salvar)
+                             , pr_idprglog => vr_idprglog);
+                             
+                                                                     
               -- Comando para mover arquivo
               vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
                            vr_nmdireto_salvar||'/'||'INSS.MQ.RPAG.'||
@@ -4761,6 +4889,21 @@ create or replace package body cecred.INSS0001 as
                 RAISE vr_exc_erro;
                   
               END IF;
+              
+              -- Enviar detalhamento do erro ao LOG (Temporario)
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => pr_cdprogra
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 4
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                                 pr_cdprogra || 
+                                                 '02 - Arquivo ' 
+                                                            ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                            ' movido para ' || vr_nmdireto_salvar
+                                                            || ' com sucesso.')
+                             , pr_idprglog => vr_idprglog);
+                             
             END IF;
           END IF;          
         END IF;  --cr_crapttl2%FOUND
@@ -4794,6 +4937,22 @@ create or replace package body cecred.INSS0001 as
       WHEN vr_exc_diverg THEN
         pr_cod_reto:= 2; -- Divergencia nas informacoes
         
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                            pr_cdprogra || ' --> '||
+                                                     'Vai enviar arquivo de divergencia ao SICREDI: '||
+                                                      pr_tab_creditos(pr_index_creditos).nrdconta || 
+                                                      ', NB: ' || 
+                                                      pr_tab_creditos(pr_index_creditos).nrrecben || 
+                                                      ', Coop: ' ||
+                                                      pr_tab_creditos(pr_index_creditos).cdcooper)
+                       , pr_idprglog => vr_idprglog);
+                       
         --Verificar Divergencias de Pagamento
         inss0001.pc_benef_inss_xml_div_pgto (pr_cdcooper => pr_tab_creditos(pr_index_creditos).cdcooper     --Codigo Cooperativa 
                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt             --Data Movimento
@@ -4841,7 +5000,38 @@ create or replace package body cecred.INSS0001 as
                                                          ' --> ' || vr_dscritic||
                                                          ' Arquivo: '||pr_nmarquiv);
         END IF;                                 
-            
+           
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                            pr_cdprogra || ' --> '||
+                                                     'Arquivo de divergencia enviado ao SICREDI: '||
+                                                      pr_tab_creditos(pr_index_creditos).nrdconta || 
+                                                      ', NB: ' || 
+                                                      pr_tab_creditos(pr_index_creditos).nrrecben || 
+                                                      ', Coop: ' ||
+                                                      pr_tab_creditos(pr_index_creditos).cdcooper)
+                       , pr_idprglog => vr_idprglog);
+        
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           '03 - Move o arquivo ' 
+                                                      ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                      ' para ' || vr_nmdireto_salvar)
+                       , pr_idprglog => vr_idprglog);
+                     
+                     
+                      
         /** 
         Ja esta criptografado, move para o salvar. 
         Esta mensagem nao deve ficar dentro do cecred/integra 
@@ -4877,6 +5067,20 @@ create or replace package body cecred.INSS0001 as
                                                          ' --> ' || vr_dscritic);
         END IF; 
         
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           '03 - Arquivo ' 
+                                                      ||pr_nmdireto_integra||'/'||pr_nmarquiv||
+                                                      ' movido para ' || vr_nmdireto_salvar||
+                                                      ' com sucesso.')
+                       , pr_idprglog => vr_idprglog);
+                       
       
       WHEN vr_exc_erro THEN
         pr_cod_reto:= 1; -- Erro NOK
@@ -4921,7 +5125,7 @@ create or replace package body cecred.INSS0001 as
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Alisson C. Berrido - Amcom
-  Data     : Agosto/2014                           Ultima atualizacao: 21/06/2016
+  Data     : Agosto/2014                           Ultima atualizacao: 07/08/2017
   
   Dados referentes ao programa:
   
@@ -4957,6 +5161,10 @@ create or replace package body cecred.INSS0001 as
                             
                21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                            (Adriano - SD 473539).
+
+               07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina para tentarmos
+				            identificar lentidões que estão ocorrendo na rotina
+							(Adriano).
                                          
   -------------------------------------------------------------------------------------------------------------*/
 
@@ -5059,6 +5267,8 @@ create or replace package body cecred.INSS0001 as
     vr_exc_proximo EXCEPTION;
     vr_exc_diverg  EXCEPTION; 
     
+    vr_idprglog NUMBER;
+    
     --Procedure para limpar tabelas temporarias
     PROCEDURE pc_limpa_tabela IS
     BEGIN
@@ -5142,14 +5352,44 @@ create or replace package body cecred.INSS0001 as
     vr_nmarquiv:= '%msgr_sicredi_cecred%.xml';
       
     /** LER A PASTA INTEGRA BUSCANDO PELOS ARQ. XML DO SICREDI */
-      
+     
+    
+    
+    -- Enviar detalhamento do erro ao LOG (Temporario)
+    CECRED.pc_log_programa(pr_dstiplog => 'O'
+                   , pr_cdprograma => pr_cdprogra
+                   , pr_cdcooper => pr_cdcooper
+                   , pr_tpexecucao => 0
+                   , pr_tpocorrencia => 4
+                   , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                       pr_cdprogra || 
+                                       'Buscando arquivos no diretorio para processamento: ' ||
+                                                 vr_nmdireto_integra)
+                   , pr_idprglog => vr_idprglog);
+                              
+    
     --Buscar a lista de arquivos do diretorio
     gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_crawarq
                               ,pr_path          => vr_nmdireto_integra
                               ,pr_pesq          => vr_nmarquiv);
                               
     --Quantidade de arquivos encontrados
-    vr_qtarqdir:= vr_tab_crawarq.COUNT();  
+    vr_qtarqdir:= vr_tab_crawarq.COUNT();
+    
+    
+    -- Enviar detalhamento do erro ao LOG (Temporario)
+    CECRED.pc_log_programa(pr_dstiplog => 'O'
+                   , pr_cdprograma => pr_cdprogra
+                   , pr_cdcooper => pr_cdcooper
+                   , pr_tpexecucao => 0
+                   , pr_tpocorrencia => 4
+                   , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                       pr_cdprogra || 
+                                       'Quantidade de arquivos encontrados: ' ||
+                                                 NVL(vr_qtarqdir,0))
+                   , pr_idprglog => vr_idprglog);
+                   
+                                                      
                                 
     -- se encontrar arquivos
     IF vr_qtarqdir > 0 THEN
@@ -5188,7 +5428,20 @@ create or replace package body cecred.INSS0001 as
         vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
                      'mqcecred_descriptografa.pl --descriptografa='||
                      chr(39)|| vr_nmdireto_integra ||'/'||vr_tab_crawarq(idx)||chr(39);
-                                                                   
+        
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           'Vai efetuar a descriptografia do arquivo: ' ||
+                                                      vr_tab_crawarq(idx))
+                       , pr_idprglog => vr_idprglog);
+                       
+                                                                                                                    
         --Executar o comando no unix
         GENE0001.pc_OScommand (pr_typ_comando => 'S'
                               ,pr_des_comando => vr_comando
@@ -5204,6 +5457,22 @@ create or replace package body cecred.INSS0001 as
           -- retornando ao programa chamador
           RAISE vr_exc_erro;
         END IF;
+        
+        
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           'Descriptografia efetuada: '||
+                                                      vr_nmarqcri)
+                       , pr_idprglog => vr_idprglog);
+                       
+         
+                                                      
           
         --Retirar caracteres ENTER e LF do nome do arquivo
         vr_nmarqcri:= REPLACE(REPLACE(vr_nmarqcri,chr(10),''),chr(13),'');
@@ -5252,7 +5521,23 @@ create or replace package body cecred.INSS0001 as
           RAISE vr_exc_proximo;
           
         END IF;                               
-                                    
+                  
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           'Coletando informacoes do arquivo: '||
+                                                      vr_nmarqcri)
+                       , pr_idprglog => vr_idprglog);
+                       
+         
+                                                      
+                                                      
+                                                                        
         /**** FIM - DESCRIPTOGRAFA O ARQUIVO ****/
                     
         /* Validacao do Cabecalho - Se eh o DadosBeneficioINSS */
@@ -5464,6 +5749,36 @@ create or replace package body cecred.INSS0001 as
           
         /******************* VALIDACAO DOS DADOS XML *******************/
 
+
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           'Informacoes coletadas: '||
+                                                      vr_nmarqcri)
+                       , pr_idprglog => vr_idprglog);
+                       
+         
+                                                      
+        
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           'Remove arquivo descriptografado: '||
+                                                      vr_nmarqcri)
+                       , pr_idprglog => vr_idprglog);
+                       
+         
+                                                                                                    
         /* Remove o arquivo descriptografado */
         vr_comando:= 'rm '||vr_nmarqcri||' 2> /dev/null';
           
@@ -5482,6 +5797,23 @@ create or replace package body cecred.INSS0001 as
           RAISE vr_exc_erro;
             
         END IF;
+        
+        
+        -- Enviar detalhamento do erro ao LOG (Temporario)
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                       , pr_cdprograma => pr_cdprogra
+                       , pr_cdcooper => pr_cdcooper
+                       , pr_tpexecucao => 0
+                       , pr_tpocorrencia => 4
+                       , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' || 
+                                           pr_cdprogra || 
+                                           'Arquivo descriptografado removido com sucesso: '||
+                                                      vr_nmarqcri)
+                       , pr_idprglog => vr_idprglog);
+                       
+                       
+         
+                                                      
     
         /* Realiza as validações e o pagamento do beneficio */
         --------------
@@ -17656,7 +17988,7 @@ create or replace package body cecred.INSS0001 as
         
         --Criar SavePoint 
         SAVEPOINT save_trans_crawarq;
-                
+        
         --Bloco para permitir pular para proximo arquivo
         BEGIN
           --Montar Indice de Creditos

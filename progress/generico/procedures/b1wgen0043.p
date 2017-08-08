@@ -233,6 +233,9 @@
               22/06/2017 - Alterado rotina obtem-emprestimo-risco, para retornar menor
                            risco como Risco D aux_innivris = 5.
                            PRJ343 - Cessao de cartao de credito (Anderson)
+
+              25/07/2017 - Alterado para ignorar algumas validacoes para os emprestimos de
+                           cessao da fatura de cartao de credito (Anderson).
 .............................................................................*/
   
   
@@ -4966,14 +4969,20 @@ PROCEDURE calcula_rating_fisica:
      Item 1_6 - Tipo de residencia.
     **********************************************************************/ 
      
-    CASE crapenc.incasprp:
-    
-        WHEN 1           THEN   aux_nrseqite = 1.      /* Quitado */
-        WHEN 2           THEN   aux_nrseqite = 2.    /* Financiado */
-        WHEN 4 OR WHEN 5 THEN   aux_nrseqite = 3.  /* Familiar/Cedido */
-        WHEN 3           THEN   aux_nrseqite = 4.    /*  Alugado */
+    IF AVAIL crapenc THEN
+       DO:
+          CASE crapenc.incasprp:
+          
+              WHEN 1           THEN   aux_nrseqite = 1.      /* Quitado */
+              WHEN 2           THEN   aux_nrseqite = 2.    /* Financiado */
+              WHEN 4 OR WHEN 5 THEN   aux_nrseqite = 3.  /* Familiar/Cedido */
+              WHEN 3           THEN   aux_nrseqite = 4.    /*  Alugado */
+			  WHEN 0           THEN   aux_nrseqite = 4.    /*  Alugado */
 
-    END CASE. 
+          END CASE. 
+       END.
+    ELSE
+       ASSIGN aux_nrseqite = 4. /* Alugado */
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5045,21 +5054,30 @@ PROCEDURE calcula_rating_fisica:
     IF    AVAIL crapcje   THEN
           ASSIGN aux_vlsalari = crapcje.vlsalari.
 
-    /* Dividir pelo ( salario + rendimentos + Salario conjuge ) */
-    ASSIGN aux_vltotpre = aux_vltotpre / 
-                          (crapttl.vlsalari + 
-                           crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
-                           crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
-                           crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
-                           aux_vlsalari)
+    IF  (crapttl.vlsalari + 
+         crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
+         crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
+         crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
+         aux_vlsalari) > 0 THEN
+          DO:
+				/* Dividir pelo ( salario + rendimentos + Salario conjuge ) */
+				ASSIGN aux_vltotpre = aux_vltotpre / 
+									  (crapttl.vlsalari + 
+									   crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
+									   crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
+									   crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
+									   aux_vlsalari)
            
-           aux_nrseqite = IF   aux_vltotpre <=  0.20   THEN /* Ate 20% */
-                               1
-                          ELSE
-                          IF   aux_vltotpre <= 0.30   THEN /* Ate 30 % */
-                               2
-                          ELSE 
-                               3.  /* Mais do que 30 % */ 
+					   aux_nrseqite = IF   aux_vltotpre <=  0.20   THEN /* Ate 20% */
+										   1
+									  ELSE
+									  IF   aux_vltotpre <= 0.30   THEN /* Ate 30 % */
+										   2
+									  ELSE 
+										   3.  /* Mais do que 30 % */ 
+          END.
+    ELSE
+          ASSIGN aux_nrseqite = 3.  /* Mais do que 30 % */ 
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5189,21 +5207,29 @@ PROCEDURE calcula_rating_fisica:
         ASSIGN aux_vlendivi = 0.
     END.
 
-
-    /* Dividir pelo salario mais os rendimentos */
-    ASSIGN aux_vlendivi = (aux_vlendivi / 
-                           (crapttl.vlsalari    + crapttl.vldrendi[1] +
-                            crapttl.vldrendi[2] + crapttl.vldrendi[3] + 
-                            crapttl.vldrendi[4] + crapttl.vldrendi[5] + 
-                            crapttl.vldrendi[6] + aux_vlsalari))
+    IF  (crapttl.vlsalari + 
+         crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
+         crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
+         crapttl.vldrendi[5] + crapttl.vldrendi[6] + 
+         aux_vlsalari) > 0 THEN
+          DO:
+				/* Dividir pelo salario mais os rendimentos */
+				ASSIGN aux_vlendivi = (aux_vlendivi / 
+									   (crapttl.vlsalari    + crapttl.vldrendi[1] +
+										crapttl.vldrendi[2] + crapttl.vldrendi[3] + 
+										crapttl.vldrendi[4] + crapttl.vldrendi[5] + 
+										crapttl.vldrendi[6] + aux_vlsalari))
     
-           aux_nrseqite = IF   aux_vlendivi <= 7   THEN
-                               1
-                          ELSE
-                          IF   aux_vlendivi <= 14   THEN
-                               2
-                          ELSE
-                               3.
+					   aux_nrseqite = IF   aux_vlendivi <= 7   THEN
+										   1
+									  ELSE
+									  IF   aux_vlendivi <= 14   THEN
+										   2
+									  ELSE
+										   3.
+          END.
+    ELSE
+          ASSIGN aux_nrseqite = 3.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5259,21 +5285,27 @@ PROCEDURE calcula_rating_fisica:
         ASSIGN aux_vlendivi = 0.
 
   
-    /* aux_vlutiliz vem do saldo utiliza. Dividir pelas cotas */
-    ASSIGN aux_vlendiv2 = (aux_vlendivi / crapcot.vldcotas)
+    IF crapcot.vldcotas > 0 OR 
+	  (aux_vlendivi = 0 AND crapcot.vldcotas = 0) THEN
+       DO:
+			/* aux_vlutiliz vem do saldo utiliza. Dividir pelas cotas */
+			ASSIGN aux_vlendiv2 = (aux_vlendivi / crapcot.vldcotas)
         
-           /* Se sem endividamento e sem cotas considera como 1 */ 
-           aux_nrseqite = IF  (aux_vlendivi = 0 AND crapcot.vldcotas = 0) OR
-                              (aux_vlendiv2 <= 4)  THEN
-                               1
-                          ELSE
-                          IF   aux_vlendiv2 <= 8   THEN
-                               2
-                          ELSE
-                          IF   aux_vlendiv2 <= 12   THEN
-                               3
-                          ELSE 
-                               4.
+				   /* Se sem endividamento e sem cotas considera como 1 */ 
+				   aux_nrseqite = IF  (aux_vlendivi = 0 AND crapcot.vldcotas = 0) OR
+									  (aux_vlendiv2 <= 4)  THEN
+									   1
+								  ELSE
+								  IF   aux_vlendiv2 <= 8   THEN
+									   2
+								  ELSE
+								  IF   aux_vlendiv2 <= 12   THEN
+									   3
+								  ELSE 
+									   4.
+       END.
+    ELSE
+       ASSIGN aux_nrseqite = 4.
     
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5672,7 +5704,8 @@ PROCEDURE calcula_rating_juridica:
 
     CASE crapjur.cdseteco:
 
-       WHEN   1   THEN   ASSIGN   aux_nrseqite = 4. /* Agronegocio*/
+       WHEN   0   THEN   ASSIGN   aux_nrseqite = 4. /* Agronegocio*/
+	   WHEN   1   THEN   ASSIGN   aux_nrseqite = 4. /* Agronegocio*/
        WHEN   2   THEN   ASSIGN   aux_nrseqite = 2. /* Comercio */
        WHEN   3   THEN   ASSIGN   aux_nrseqite = 3. /* Industria */
        WHEN   4   THEN   ASSIGN   aux_nrseqite = 1. /* Servicos */
@@ -5868,18 +5901,23 @@ PROCEDURE calcula_rating_juridica:
                                              OUTPUT aux_vlmedfat).
     DELETE PROCEDURE h-b1wgen9999.
 
-    ASSIGN aux_vlendivi = (aux_vlendivi / aux_vlmedfat)
+    IF aux_vlmedfat > 0 THEN
+       DO:
+			ASSIGN aux_vlendivi = (aux_vlendivi / aux_vlmedfat)
 
-           aux_nrseqite = IF   aux_vlendivi <= 3   THEN
-                               1
-                          ELSE
-                          IF   aux_vlendivi <= 8   THEN
-                               2
-                          ELSE
-                          IF   aux_vlendivi <= 20  THEN
-                               3
-                          ELSE
-                               4. 
+				   aux_nrseqite = IF   aux_vlendivi <= 3   THEN
+									   1
+								  ELSE
+								  IF   aux_vlendivi <= 8   THEN
+									   2
+								  ELSE
+								  IF   aux_vlendivi <= 20  THEN
+									   3
+								  ELSE
+									   4. 
+       END.
+    ELSE
+       ASSIGN aux_nrseqite = 4.
     
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -5981,16 +6019,22 @@ PROCEDURE calcula_rating_juridica:
                                INPUT  par_inproces,
                                OUTPUT aux_vltotpre). 
 
-    /* Divide pelo faturamento medio */
-    ASSIGN aux_vltotpre = (aux_vltotpre / aux_vlmedfat)
+    IF aux_vlmedfat > 0 THEN
+       DO:
+			/* Divide pelo faturamento medio */
+			ASSIGN aux_vltotpre = (aux_vltotpre / aux_vlmedfat)
             
-           aux_nrseqite = IF   aux_vltotpre <= 0.07  THEN
-                               1
-                          ELSE
-                          IF   aux_vltotpre <= 0.1   THEN
-                               2
-                          ELSE
-                               3.
+				   aux_nrseqite = IF   aux_vltotpre <= 0.07  THEN
+									   1
+								  ELSE
+								  IF   aux_vltotpre <= 0.1   THEN
+									   2
+								  ELSE
+									   3.
+       END.
+    ELSE
+       ASSIGN aux_nrseqite = 3.
+
 
     RUN grava_item_rating (INPUT  par_cdcooper,
                            INPUT  par_nrdconta,
@@ -6409,7 +6453,8 @@ PROCEDURE criticas_rating_fis:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
-    DEF  VAR         aux_nrsequen AS INTE                            NO-UNDO.
+    DEF VAR aux_nrsequen          AS INTE                             NO-UNDO.
+	DEF VAR aux_flgcescr          AS LOG INIT FALSE                   NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -6463,6 +6508,97 @@ PROCEDURE criticas_rating_fis:
                             INPUT 169,
                             INPUT-OUTPUT aux_dscritic).            
          END.
+
+	/* Nao efetuar validacoes quando for calcular soh a nota cooperado */
+    IF  par_tpctrrat <> 0  AND
+        par_nrctrrat <> 0  THEN
+    DO:
+        /* Para emprestimos */
+        IF   par_tpctrrat = 90   THEN
+             DO:
+                 FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                                    crawepr.nrdconta = par_nrdconta   AND
+                                    crawepr.nrctremp = par_nrctrrat 
+                                    NO-LOCK NO-ERROR.
+    
+                 IF   NOT AVAILABLE crawepr   THEN
+                      DO: 
+                          FIND crapprp WHERE crapprp.cdcooper = par_cdcooper AND
+                                             crapprp.nrdconta = par_nrdconta AND
+                                             crapprp.tpctrato = par_tpctrrat AND
+                                             crapprp.nrctrato = par_nrctrrat
+                                     NO-LOCK NO-ERROR.
+
+                          IF  NOT AVAILABLE crapprp THEN DO:
+
+                              aux_nrsequen = aux_nrsequen + 1.
+                             
+                              RUN gera_erro (INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT aux_nrsequen,
+                                             INPUT 356,
+                                             INPUT-OUTPUT aux_dscritic).
+                          END.
+
+                      END.
+                 ELSE 
+                      DO:
+                          FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
+                               craplcr.cdlcremp = crawepr.cdlcrem
+                               NO-LOCK NO-ERROR.
+                                    
+                          IF   NOT AVAILABLE craplcr   THEN
+                               DO:
+                                   aux_nrsequen = aux_nrsequen + 1.
+                                 
+                                   RUN gera_erro (INPUT par_cdcooper,
+                                                  INPUT par_cdagenci,
+                                                  INPUT par_nrdcaixa,
+                                                  INPUT aux_nrsequen,
+                                                  INPUT 363,
+                                                  INPUT-OUTPUT aux_dscritic).
+                               END.  
+                               
+                          /* Condicao para caso a Finalidade for Cessao de Credito */
+                          FOR FIRST crapfin FIELDS(tpfinali)
+                                             WHERE crapfin.cdcooper = crawepr.cdcooper AND 
+                                                   crapfin.cdfinemp = crawepr.cdfinemp
+                                                   NO-LOCK: END.
+
+                          IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
+                             ASSIGN aux_flgcescr = TRUE.
+                      END.                   
+             END.
+        ELSE     /* Demais operacoes */
+             DO:
+                 FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                    craplim.nrdconta = par_nrdconta   AND
+                                    craplim.tpctrlim = par_tpctrrat   AND
+                                    craplim.nrctrlim = par_nrctrrat   
+                                    NO-LOCK NO-ERROR.
+           
+                 IF   NOT AVAILABLE craplim   THEN
+                      DO:
+                          aux_nrsequen = aux_nrsequen + 1.
+    
+                          RUN gera_erro (INPUT par_cdcooper,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT aux_nrsequen,
+                                         INPUT 484,
+                                         INPUT-OUTPUT aux_dscritic).
+                      END.                    
+             END.
+    END.
+
+	/* Nao validaremos os itens a seguir em caso de cessao de credito */
+    IF aux_flgcescr THEN
+        DO:
+          IF CAN-FIND (FIRST tt-erro) THEN
+            RETURN "NOK".
+          RETURN "OK".
+        END.
 
     IF   crapttl.vlsalari    = 0   AND
          crapttl.vldrendi[1] = 0   AND
@@ -6549,80 +6685,6 @@ PROCEDURE criticas_rating_fis:
                                      INPUT-OUTPUT aux_dscritic).                 
                   END.             
          END.
-    
-    /* Nao efetuar validacoes quando for calcular soh a nota cooperado */
-    IF  par_tpctrrat <> 0  AND
-        par_nrctrrat <> 0  THEN
-    DO:
-        /* Para emprestimos */
-        IF   par_tpctrrat = 90   THEN
-             DO:
-                 FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
-                                    crawepr.nrdconta = par_nrdconta   AND
-                                    crawepr.nrctremp = par_nrctrrat 
-                                    NO-LOCK NO-ERROR.
-    
-                 IF   NOT AVAILABLE crawepr   THEN
-                      DO: 
-                          FIND crapprp WHERE crapprp.cdcooper = par_cdcooper AND
-                                             crapprp.nrdconta = par_nrdconta AND
-                                             crapprp.tpctrato = par_tpctrrat AND
-                                             crapprp.nrctrato = par_nrctrrat
-                                     NO-LOCK NO-ERROR.
-
-                          IF  NOT AVAILABLE crapprp THEN DO:
-
-                              aux_nrsequen = aux_nrsequen + 1.
-                             
-                              RUN gera_erro (INPUT par_cdcooper,
-                                             INPUT par_cdagenci,
-                                             INPUT par_nrdcaixa,
-                                             INPUT aux_nrsequen,
-                                             INPUT 356,
-                                             INPUT-OUTPUT aux_dscritic).
-                          END.
-
-                      END.
-                 ELSE 
-                      DO:
-                          FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
-                               craplcr.cdlcremp = crawepr.cdlcrem
-                               NO-LOCK NO-ERROR.
-                                    
-                          IF   NOT AVAILABLE craplcr   THEN
-                               DO:
-                                   aux_nrsequen = aux_nrsequen + 1.
-                                 
-                                   RUN gera_erro (INPUT par_cdcooper,
-                                                  INPUT par_cdagenci,
-                                                  INPUT par_nrdcaixa,
-                                                  INPUT aux_nrsequen,
-                                                  INPUT 363,
-                                                  INPUT-OUTPUT aux_dscritic).
-                               END.                     
-                      END.                   
-             END.
-        ELSE     /* Demais operacoes */
-             DO:
-                 FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
-                                    craplim.nrdconta = par_nrdconta   AND
-                                    craplim.tpctrlim = par_tpctrrat   AND
-                                    craplim.nrctrlim = par_nrctrrat   
-                                    NO-LOCK NO-ERROR.
-           
-                 IF   NOT AVAILABLE craplim   THEN
-                      DO:
-                          aux_nrsequen = aux_nrsequen + 1.
-    
-                          RUN gera_erro (INPUT par_cdcooper,
-                                         INPUT par_cdagenci,
-                                         INPUT par_nrdcaixa,
-                                         INPUT aux_nrsequen,
-                                         INPUT 484,
-                                         INPUT-OUTPUT aux_dscritic).
-                      END.                    
-             END.
-    END.
 
     IF   CAN-FIND (FIRST tt-erro) THEN
          RETURN "NOK".
@@ -6653,6 +6715,7 @@ PROCEDURE criticas_rating_jur:
     DEF  VAR         aux_nrsequen AS INTE                            NO-UNDO.
     DEF  VAR         aux_vlmedfat AS DECI                            NO-UNDO.
     DEF  VAR         aux_dtadmsoc AS DATE                            NO-UNDO.
+	DEF  VAR         aux_flgcescr AS LOG INIT FALSE                  NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
@@ -6660,6 +6723,97 @@ PROCEDURE criticas_rating_jur:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
            aux_nrsequen = 0.
+
+    /* Nao validar para calculo do Risco cooperado*/
+    IF  par_tpctrrat <> 0  AND
+        par_nrctrrat <> 0  THEN
+    DO:
+        IF   par_tpctrrat = 90   THEN  /* Emprestimo / Financiamento */
+             DO:
+                 FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                                    crawepr.nrdconta = par_nrdconta   AND
+                                    crawepr.nrctremp = par_nrctrrat   
+                                    NO-LOCK NO-ERROR.
+
+                 IF   NOT AVAILABLE crawepr   THEN
+                      DO: 
+                          FIND crapprp WHERE crapprp.cdcooper = par_cdcooper AND
+                                             crapprp.nrdconta = par_nrdconta AND
+                                             crapprp.tpctrato = par_tpctrrat AND
+                                             crapprp.nrctrato = par_nrctrrat
+                                     NO-LOCK NO-ERROR.
+
+                          IF  NOT AVAILABLE crapprp THEN DO:
+
+                              aux_nrsequen = aux_nrsequen + 1.
+                             
+                              RUN gera_erro (INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT aux_nrsequen,
+                                             INPUT 356,
+                                             INPUT-OUTPUT aux_dscritic).
+                          END.
+
+                      END.
+                 ELSE
+                      DO:
+                          FIND craplcr WHERE 
+                               craplcr.cdcooper = par_cdcooper   AND
+                               craplcr.cdlcremp = crawepr.cdlcrem
+                               NO-LOCK NO-ERROR.
+
+                          IF   NOT AVAILABLE craplcr   THEN
+                               DO:
+                                   aux_nrsequen = aux_nrsequen + 1.
+                                 
+                                   RUN gera_erro (INPUT par_cdcooper,
+                                                  INPUT par_cdagenci,
+                                                  INPUT par_nrdcaixa,
+                                                  INPUT aux_nrsequen,
+                                                  INPUT 363,
+                                                  INPUT-OUTPUT aux_dscritic).
+                               END.
+
+						  /* Condicao para caso a Finalidade for Cessao de Credito */
+                          FOR FIRST crapfin FIELDS(tpfinali)
+                                             WHERE crapfin.cdcooper = crawepr.cdcooper AND 
+                                                   crapfin.cdfinemp = crawepr.cdfinemp
+                                                   NO-LOCK: END.
+
+                          IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
+                             ASSIGN aux_flgcescr = TRUE.
+                      END.
+             END.
+        ELSE
+             DO:                       /* Descontos / Limite rotativo */   
+                 FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                    craplim.nrdconta = par_nrdconta   AND
+                                    craplim.tpctrlim = par_tpctrrat   AND
+                                    craplim.nrctrlim = par_nrctrrat
+                                    NO-LOCK NO-ERROR.
+
+                 IF   NOT AVAILABLE craplim   THEN
+                      DO:
+                          aux_nrsequen = aux_nrsequen + 1.
+
+                          RUN gera_erro (INPUT par_cdcooper,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT aux_nrsequen,
+                                         INPUT 484, 
+                                         INPUT-OUTPUT aux_dscritic).                      
+                      END.      
+             END.
+    END.
+
+	/* Nao validaremos os itens a seguir em caso de cessao de credito */
+    IF aux_flgcescr THEN
+        DO:
+          IF CAN-FIND (FIRST tt-erro) THEN
+            RETURN "NOK".
+          RETURN "OK".
+        END.
 
     /* Registro da empresa */
     FIND crapjur WHERE crapjur.cdcooper = par_cdcooper   AND
@@ -6677,7 +6831,7 @@ PROCEDURE criticas_rating_jur:
                             INPUT-OUTPUT aux_dscritic). 
          END.
     ELSE
-    IF   crapjur.cdseteco = 0   THEN  /* Setor economico */
+    IF   crapjur.cdseteco = 0   THEN
          DO:
              aux_nrsequen = aux_nrsequen + 1.
 
@@ -6705,7 +6859,6 @@ PROCEDURE criticas_rating_jur:
     IF   NOT AVAILABLE crapjfn   THEN
          DO:
              aux_nrsequen = aux_nrsequen + 1.
-
              RUN gera_erro (INPUT par_cdcooper,
                             INPUT par_cdagenci,
                             INPUT par_nrdcaixa,
@@ -6843,80 +6996,6 @@ PROCEDURE criticas_rating_jur:
                       
                   END.
          END.
-    
-    /* Nao validar para calculo do Risco cooperado*/
-    IF  par_tpctrrat <> 0  AND
-        par_nrctrrat <> 0  THEN
-    DO:
-        IF   par_tpctrrat = 90   THEN  /* Emprestimo / Financiamento */
-             DO:
-                 FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
-                                    crawepr.nrdconta = par_nrdconta   AND
-                                    crawepr.nrctremp = par_nrctrrat   
-                                    NO-LOCK NO-ERROR.
-
-                 IF   NOT AVAILABLE crawepr   THEN
-                      DO: 
-                          FIND crapprp WHERE crapprp.cdcooper = par_cdcooper AND
-                                             crapprp.nrdconta = par_nrdconta AND
-                                             crapprp.tpctrato = par_tpctrrat AND
-                                             crapprp.nrctrato = par_nrctrrat
-                                     NO-LOCK NO-ERROR.
-
-                          IF  NOT AVAILABLE crapprp THEN DO:
-
-                              aux_nrsequen = aux_nrsequen + 1.
-                             
-                              RUN gera_erro (INPUT par_cdcooper,
-                                             INPUT par_cdagenci,
-                                             INPUT par_nrdcaixa,
-                                             INPUT aux_nrsequen,
-                                             INPUT 356,
-                                             INPUT-OUTPUT aux_dscritic).
-                          END.
-
-                      END.
-                 ELSE
-                      DO:
-                          FIND craplcr WHERE 
-                               craplcr.cdcooper = par_cdcooper   AND
-                               craplcr.cdlcremp = crawepr.cdlcrem
-                               NO-LOCK NO-ERROR.
-
-                          IF   NOT AVAILABLE craplcr   THEN
-                               DO:
-                                   aux_nrsequen = aux_nrsequen + 1.
-                                 
-                                   RUN gera_erro (INPUT par_cdcooper,
-                                                  INPUT par_cdagenci,
-                                                  INPUT par_nrdcaixa,
-                                                  INPUT aux_nrsequen,
-                                                  INPUT 363,
-                                                  INPUT-OUTPUT aux_dscritic).
-                               END.
-                      END.
-             END.
-        ELSE
-             DO:                       /* Descontos / Limite rotativo */   
-                 FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
-                                    craplim.nrdconta = par_nrdconta   AND
-                                    craplim.tpctrlim = par_tpctrrat   AND
-                                    craplim.nrctrlim = par_nrctrrat
-                                    NO-LOCK NO-ERROR.
-
-                 IF   NOT AVAILABLE craplim   THEN
-                      DO:
-                          aux_nrsequen = aux_nrsequen + 1.
-
-                          RUN gera_erro (INPUT par_cdcooper,
-                                         INPUT par_cdagenci,
-                                         INPUT par_nrdcaixa,
-                                         INPUT aux_nrsequen,
-                                         INPUT 484, 
-                                         INPUT-OUTPUT aux_dscritic).                      
-                      END.      
-             END.
-    END.
 
     IF   CAN-FIND (FIRST tt-erro) THEN
          RETURN "NOK".

@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 12/01/2017
+   Data    : Setembro/2016                        Ultima atualizacao: 26/07/2017
 
    Dados referentes ao programa:
 
@@ -40,6 +40,12 @@ BEGIN
                             no proc_message, porém, substituir o tempo "ERRO" por "ALERTA".
                             Alteradas mais algumas mensagens para considerar Alerta e não Erro
                             (Ana - SD 660364 / 663299).
+			   27/06/2017 - Ajustes para atender as mudanças do catalago de TED - SPB
+			                (Adriano - SD 698655).
+                      
+         26/07/2017 - #713816 Ajustes para garantir o fechamento do arquivo para que o move
+                      do mesmo ocorra (Carlos)
+
    ............................................................................. */
 
    DECLARE
@@ -362,6 +368,29 @@ BEGIN
                                                    ' - '|| vr_cdprogra ||' --> Iniciando processo de TEDs Sicredi',
                                 pr_nmarqlog     => vr_nmarqlog);                                
      
+     --Limpa a tabela de controle de arquivos. Remove todos os registros do ano anterior.
+     BEGIN 
+       
+       DELETE tbted_control_arq
+        WHERE to_char(tbted_control_arq.dtrefere,'RRRR') = to_char(TRUNC(SYSDATE,'YEAR')-1,'RRRR');
+       
+     EXCEPTION
+       WHEN OTHERS THEN
+         --Descricao do erro recebe mensagam da critica
+         vr_dscritic := 'Nao foi possivel limpar a tabela de controle de arquivos processados.';
+         
+         -- Envio centralizado de log de erro
+         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                   ,pr_ind_tipo_log => 2 -- Erro tratato
+                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> '
+                                                       || vr_dscritic );
+                                                       
+         --Sair do programa
+         RAISE vr_exc_saida;
+     
+     END;                             
+     
      -- Busca diretorio das TEDs para processamento
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
      
@@ -376,7 +405,6 @@ BEGIN
                                ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
-
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
        -- Envio centralizado de log de erro
@@ -657,7 +685,12 @@ BEGIN
                  END IF;  
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,70,13);
+                   IF substr(vr_dslinharq,1,2) = '05' THEN
+                     vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,43,13);
+                   ELSE
+                     vr_cdmotivo := 'Conta invalida = ' || substr(vr_dslinharq,70,13);
+                   END IF; 
+                   
                    RAISE vr_exc_saida;
                END;
 
@@ -670,7 +703,12 @@ BEGIN
                  END IF;
                EXCEPTION
                  WHEN OTHERS THEN
-                   vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
+                   IF substr(vr_dslinharq,1,2) = '05' THEN
+                     vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
+                   ELSE
+                     vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,274,14);
+                   END IF;                   
+                   
                    RAISE vr_exc_saida;
                END;
 
@@ -1055,7 +1093,10 @@ BEGIN
                
              EXCEPTION
                WHEN vr_exc_saida THEN
-                 
+
+                 -- Fechar arquivo para poder move-lo
+                 gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+
                  -- Incrementar quantidade de erros
                  vr_qtrejeit := vr_qtrejeit + 1;
                  
@@ -1182,7 +1223,6 @@ BEGIN
                                                                  'ALERTA: TED para conta '||vr_nrdconta||' com crítica --> '||vr_cdmotivo,
                                             pr_nmarqlog     => vr_nmarqlog);                                
                                           
-                                          
                  IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                        ,pr_dtarquiv => vr_dtarquiv
                                        ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
@@ -1199,8 +1239,13 @@ BEGIN
                                           
                WHEN no_data_found THEN
                  -- Finalizou a leitura
+                 gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+                 
                  EXIT;
-               WHEN OTHERS THEN
+               WHEN OTHERS THEN                 
+
+                 cecred.pc_internal_exception;
+                                
                  vr_dscritic := 'Erro nao tratado na leitura do arquivo --> '||sqlerrm;
                  RAISE vr_exc_saida;
              END;
@@ -1270,6 +1315,8 @@ BEGIN
 
            END IF;
 
+           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+
            IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                  ,pr_dtarquiv => vr_dtarquiv
                                  ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
@@ -1296,6 +1343,8 @@ BEGIN
            
          EXCEPTION
            WHEN no_data_found THEN
+
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
              
              -- Arquivo vazio
              ROLLBACK;
@@ -1312,6 +1361,8 @@ BEGIN
              EXIT;
              
            WHEN vr_exc_email THEN
+
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
              
              -- Desfazer alterações
              ROLLBACK;
@@ -1363,6 +1414,8 @@ BEGIN
              END IF;
              
            WHEN vr_exc_saida THEN
+
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
              
              -- Desgravar alterações pendentes
              ROLLBACK;
@@ -1380,6 +1433,10 @@ BEGIN
              
            WHEN OTHERS THEN
              
+             cecred.pc_internal_exception;
+           
+             gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+
              -- Desgravar alterações pendentes
              ROLLBACK;
              
@@ -1488,6 +1545,9 @@ BEGIN
        ROLLBACK;
 
      WHEN OTHERS THEN
+       
+       cecred.pc_internal_exception;
+     
        -- Efetuar retorno do erro não tratado
        pr_cdcritic := 0;
        pr_dscritic := 'Erro na procedure pc_crps707. '||sqlerrm;

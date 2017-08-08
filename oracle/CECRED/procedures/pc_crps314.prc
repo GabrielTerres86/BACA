@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Julho/2001                          Ultima atualizacao: 18/10/2016
+   Data    : Julho/2001                          Ultima atualizacao: 28/07/2017
 
    Dados referentes ao programa:
 
@@ -151,6 +151,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                18/10/2016 - Quando quebrar o loop de emprestimos por troca de filial, se ainda
                             não foram incluídos os aditivos então devem ser incluídos.
                             (AJFink #539415)
+
+               28/07/2017 - Incluso tratativa para nao incluir cheques nao aprovados ao compor valor
+			                do bordero de desconto de cheques (Daniel)
 
  ............................................................................ */
   --
@@ -353,7 +356,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
          and crapbdc.nrdconta = crapass.nrdconta
          and crapcdb.cdcooper = crapbdc.cdcooper
          and crapcdb.nrdconta = crapbdc.nrdconta
-         and crapcdb.nrborder = crapbdc.nrborder;
+         and crapcdb.nrborder = crapbdc.nrborder
+		 and crapcdb.dtlibbdc IS NOT NULL;
     -- Borderos de Desconto de Titulos
     cursor cr_crapbdt is
       select craptdb.nrctrlim,
