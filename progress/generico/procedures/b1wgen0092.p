@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 11/07/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 20/07/2017
     
    Dados referentes ao programa:
    
@@ -185,6 +185,10 @@
                            
               11/07/2017 - Incluir tratamento para permitir a exclusao da autorizaçao somente no 
                            proximo dia util apos o cancelamento na procedure grava-dados (Lucas Ranghetti #703802)
+                           
+              20/07/2017 - Incluido validaçao para nao conseguir incluir debito automatico quando
+                           o primeiro titular da conta é de menor (Tiago/Thiago #652776)
+                           
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1632,6 +1636,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
+    DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1750,6 +1755,26 @@ PROCEDURE grava-dados:
             
         IF  par_cddopcao = "I" THEN
             DO: 
+            
+                /*Validar se o cooperado for menor de idade e nao eh emancipado nao deixar incluir a autorizaçao*/
+                ASSIGN aux_dtamenor = ADD-INTERVAL( TODAY, -18, "YEARS").
+                
+                 FIND crapttl 
+                WHERE crapttl.cdcooper = par_cdcooper 
+                  AND crapttl.nrdconta = par_nrdconta
+                  AND crapttl.idseqttl = 1
+                  AND crapttl.dtnasttl > aux_dtamenor
+                  AND crapttl.dthabmen = ?
+                  NO-LOCK NO-ERROR.
+                
+            
+                IF AVAILABLE(crapttl) THEN
+                   DO:
+                      ASSIGN aux_dscritic = "Nao foi possivel incluir autorizacao de debito, cooperado menor de idade.".
+                      UNDO Grava, LEAVE Grava.
+                   END.
+                /*Fim valida*/
+                
                 ASSIGN aux_vlrcalcu = ""
                        aux_cdempres = "0".
                 
@@ -2177,7 +2202,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                        
+                             
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.

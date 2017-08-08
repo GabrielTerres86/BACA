@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 25/04/2017
+    Data    : 07/02/2013                     Ultima atualizacao: 07/08/2017
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -52,6 +52,13 @@
         
         25/04/2017 - Adicionar conta na menssage da verificacao da conta salario
                      para mais de um cpf (Lucas Ranghetti #654576)
+                     
+        04/08/2017 - Alterado rotina grava-dados para gerar numero de conta 
+                     automaticamente da mesma forma que a matrci faz 
+                     (Tiago/Thiago #689996)
+					 
+		07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+				     inclusao, conforme solicitado no chamado 689996. (Kelvin)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -116,6 +123,8 @@ PROCEDURE Busca_Dados:
         EMPTY TEMP-TABLE tt-crapccs.
         EMPTY TEMP-TABLE tt-erro.
 
+        IF  par_cddopcao <> "I" THEN
+            DO:
         /* Validar o digito da conta */
         IF  NOT ValidaDigFun ( INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -126,8 +135,7 @@ PROCEDURE Busca_Dados:
                        aux_dscritic = "".
                 LEAVE Busca.
             END.
-
-
+            END.
 
         FIND crapccs WHERE crapccs.cdcooper = par_cdcooper AND
                            crapccs.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
@@ -733,10 +741,12 @@ PROCEDURE Grava_Dados:
     DEF OUTPUT PARAM aux_dtcantrf AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM aux_dtadmiss AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM aux_cdsitcta AS CHAR                           NO-UNDO.
+	DEF OUTPUT PARAM aux_nrdconrt LIKE crapass.nrdconta 			NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
+    DEF VAR h-b1wgen0052 AS HANDLE                                  NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     
@@ -755,6 +765,22 @@ PROCEDURE Grava_Dados:
 
         IF  par_cddopcao = "I" THEN DO:
 
+            RUN sistema/generico/procedures/b1wgen0052.p PERSISTENT SET h-b1wgen0052.
+             
+            RUN Retorna_Conta IN h-b1wgen0052 (INPUT par_cdcooper,
+                                               INPUT par_idorigem,
+                                              OUTPUT aux_nrdconrt).
+                   
+            DELETE PROCEDURE h-b1wgen0052.
+              
+            IF  aux_nrdconrt <= 0  THEN
+                DO:
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = "Nao foi possivel gerar numero de conta".
+                          
+                  LEAVE Grava.
+                END.
+
             CREATE crapccs.
             ASSIGN crapccs.cdagenci = par_cdagenca
                    crapccs.cdempres = par_cdempres
@@ -764,7 +790,7 @@ PROCEDURE Grava_Dados:
                    crapccs.cdopeadm = par_cdoperad
                    crapccs.cdopecan = ""
                    crapccs.nrdigtrf = par_nrdigtrf
-                   crapccs.nrdconta = par_nrdconta
+                   crapccs.nrdconta = aux_nrdconrt
                    crapccs.nrctatrf = par_nrctatrf
                    crapccs.nrcpfcgc = par_nrcpfcgc
                    crapccs.nmfuncio = par_nmfuncio

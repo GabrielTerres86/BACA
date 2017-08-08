@@ -1,19 +1,23 @@
 /*!
- * FONTE        : pesqdp.js
- * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 11/01/2013
- * OBJETIVO     : Biblioteca de funções da tela PESQDP
- * --------------
- * ALTERAÇÕES   : 15/08/2013 - Alteração da sigla PAC para PA (Carlos).
- * --------------
- *				  23/04/2015 - Ajustando a tela CTASAL
- *                             Projeto 158 - Servico Folha de Pagto
- *                             (Andre Santos - SUPERO)
- *
- *                23/02/2016 - Inclusao da function retirarAcentuacao para
- *                             validacao do nome dos funcionario (Jean Michel).
- *
- *				  27/07/2016 - Adicionar funcao validaDados() para validar se nome do funcionario esta em branco ou nao (Lucas Ranghetti #457281)
+   FONTE        : pesqdp.js
+   CRIAÇÃO      : Gabriel Capoia (DB1)
+   DATA CRIAÇÃO : 11/01/2013
+   OBJETIVO     : Biblioteca de funções da tela PESQDP
+   --------------
+   ALTERAÇÕES   : 15/08/2013 - Alteração da sigla PAC para PA (Carlos).
+   --------------
+  				  23/04/2015 - Ajustando a tela CTASAL
+                               Projeto 158 - Servico Folha de Pagto
+                               (Andre Santos - SUPERO)
+  
+                  23/02/2016 - Inclusao da function retirarAcentuacao para
+                               validacao do nome dos funcionario (Jean Michel).
+  
+  				  27/07/2016 - Adicionar funcao validaDados() para validar se nome do funcionario esta em branco ou nao (Lucas Ranghetti #457281)
+				  
+				  07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+							   inclusao, conforme solicitado no chamado 689996. (Kelvin)
+  
  */
 
  var nometela;
@@ -111,6 +115,17 @@ function formataCabecalho() {
 		}
 	});
 
+	
+	cCddopcao.unbind('change').bind('change', function(){
+		if(cCddopcao.val() == "I"){			
+		  	cNrdconta.desabilitaCampo();			
+			cNrdconta.val("");
+		}else{
+			cNrdconta.val("");
+			cNrdconta.habilitaCampo();			
+		}		
+	});
+	
 	highlightObjFocus( $('#frmCab') );
 
 	layoutPadrao();
@@ -205,12 +220,19 @@ function controlaLayout() {
 }
 
 // imprimir
-function Gera_Impressao() {
+function Gera_Impressao(nrdconrt) {
 
 	var action = UrlSite + 'telas/ctasal/imprimir_dados.php';
 	var sidlogin = $("#sidlogin", "#frmMenu").val();
+	var nrdconta;
 	
-	$('#frmDados').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + cNrdconta.val() + '" />')
+	if (cCddopcao.val() == 'I') 
+		 nrdconta = nrdconrt;
+	else 
+		nrdconta = cNrdconta.val();
+		
+	
+	$('#frmDados').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + nrdconta + '" />')
 				  .append('<input type="hidden" id="flgsolic" name="flgsolic" value="' + controlaFlag() + '" />')
 				  .append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + sidlogin + '" />');
 
