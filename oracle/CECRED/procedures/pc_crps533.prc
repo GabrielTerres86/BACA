@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 25/07/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 08/08/2017
 
    Dados referentes ao programa:
 
@@ -275,6 +275,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
  
                25/07/2017 - Incluir nova coluna nrctadep no relatorio crrl526 (Lucas Ranghetti #679023)
+               
+               08/08/2017 - Ajustes para criar craplcm para historicos 573 ou 78 caso a critica 96
+                            (Lucas Ranghetti #715027)
 ............................................................................. */
 
      DECLARE
@@ -523,7 +526,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_numlotebco      NUMBER;
        vr_vlsddisp        NUMBER;
        vr_vldeplib        NUMBER;
-       
+       vr_alinea_96       NUMBER;
+              
        -- Código do programa
        vr_cdprogra crapprg.cdprogra%TYPE;
 
@@ -538,6 +542,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_cdagectl_incorp crapcop.cdagectl%TYPE;
        vr_dstextab_vlb    craptab.dstextab%TYPE;
        vr_dstextab_comp   craptab.dstextab%TYPE;
+
        vr_input_file      utl_file.file_type;
 
        --Variaveis para indices
@@ -4694,10 +4699,128 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         RAISE vr_exc_erro;
                       END IF;
 
-                       --Atribuir quantidade e valor integrado para as variaveis
+                      --Atribuir quantidade e valor integrado para as variaveis
                       vr_qtcompln:= nvl(vr_qtcompln,0) + 1;
                       vr_vlcompdb:= nvl(vr_vlcompdb,0) + vr_vllanmto;
-                    END IF; --vr_flgsair
+
+                      -- 096 - Cheque com contra-ordem
+                      IF vr_cdcritic_aux = 96 THEN
+
+                        IF vr_cdalinea <> 0 THEN
+                          vr_alinea_96:= vr_cdalinea;
+                        ELSE
+                          vr_alinea_96:= 21;
+                        END IF;
+                      
+                        BEGIN
+                         INSERT INTO craplcm
+                           (cdcooper,
+                            dtmvtolt,
+                            dtrefere,
+                            cdagenci,
+                            cdbccxlt,
+                            nrdolote,
+                            nrdconta,
+                            nrdctabb,
+                            nrdocmto,
+                            cdhistor,
+                            vllanmto,
+                            nrseqdig,
+                            cdpesqbb,
+                            cdbanchq,
+                            cdcmpchq,
+                            cdagechq,
+                            nrctachq,
+                            nrlotchq,
+                            sqlotchq,
+                            cdcoptfn,
+                            dsidenti,
+                            hrtransa)
+                         VALUES
+                           (pr_cdcooper,
+                            rw_craplot.dtmvtolt,
+                            pr_dtleiarq,
+                            nvl(rw_craplot.cdagenci, 0),
+                            nvl(rw_craplot.cdbccxlt, 0),
+                            nvl(rw_craplot.nrdolote, 0),
+                            nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0),
+                            nvl(nvl(vr_nrdconta_incorp, vr_nrdctabb), 0),
+                            nvl(vr_nrdocmto, 0) + 1000000,
+                            (CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END),
+                            nvl(vr_vllanmto, 0),
+                            nvl(vr_nrseqarq, 0) + 1000000,
+                            vr_alinea_96,
+                            nvl(vr_cdbandep, 0),
+                            nvl(vr_cdcmpdep, 0),
+                            nvl(vr_cdagedep, 0),
+                            nvl(vr_nrctadep, 0),
+                            nvl(vr_nrlotchq, 0),
+                            nvl(vr_sqlotchq, 0),
+                            0,
+                            2, -- dsidenti 
+                            to_char(SYSDATE, 'sssss'));
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             vr_des_erro:= 'Erro ao inserir na tabela craplcm (devolucao). Rotina'
+                                           || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
+                             RAISE vr_exc_erro;
+                        END;
+                        
+                        --Atualizar informacoes dos Lotes
+                        BEGIN
+                          UPDATE craplot
+                             SET craplot.qtinfoln = craplot.qtinfoln + 1,
+                                 craplot.qtcompln = craplot.qtcompln + 1,
+                                 craplot.vlinfocr = craplot.vlinfocr + vr_vllanmto,
+                                 craplot.vlcompcr = craplot.vlcompcr + vr_vllanmto,
+                                 craplot.nrseqdig = vr_nrseqarq
+                           WHERE craplot.rowid = rw_craplot.rowid;
+                        EXCEPTION
+                          WHEN OTHERS THEN
+                            vr_des_erro:= 'Erro ao atualizar a tabela craplot (devolucao). Rotina'
+                                          || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
+                            RAISE vr_exc_erro;
+                         END;
+                         
+                         -- Mudar situacao do cheque contra-ordenado
+                         BEGIN
+                           UPDATE crapfdc
+                              SET crapfdc.dtliqchq = NULL,
+                                  crapfdc.vlcheque = 0,
+                                  crapfdc.cdbandep = 0,
+                                  crapfdc.cdagedep = 0,
+                                  crapfdc.nrctadep = 0,
+                                  crapfdc.cdtpdchq = 0,
+                                  crapfdc.incheque = crapfdc.incheque - 5,
+                                  crapfdc.cdageaco = 0
+                            WHERE crapfdc.rowid = rw_crapfdc.rowid;
+                         EXCEPTION
+                           WHEN OTHERS THEN
+                             vr_des_erro:= 'Erro ao atualizar a tabela crapfdc, devolucao contra-ordem.' 
+                                           ||' Rotina pc_crps533.pc_integra_todas_coop.'||SQLERRM;
+                           RAISE vr_exc_erro;
+                         END;
+                         
+                         -- Atualizar alinea do cheque contra-ordenado
+                         BEGIN
+                           UPDATE gncpchq 
+                              SET gncpchq.cdalinea = vr_alinea_96
+                            WHERE gncpchq.cdcooper = pr_cdcooper 
+                              AND gncpchq.dtmvtolt = rw_craplot.dtmvtolt
+                              AND gncpchq.cdbanchq = nvl(vr_cdbanchq,0)
+                              AND gncpchq.cdagechq = nvl(vr_cdagechq,0)
+                              AND gncpchq.nrctachq = nvl(vr_nrctachq,0)
+                              AND gncpchq.nrcheque = nvl(vr_nrdocmto,0)
+                              AND gncpchq.cdtipreg IN(3,4);
+                         EXCEPTION 
+                           WHEN OTHERS THEN
+                             vr_des_erro:= 'Erro ao atualizar a tabela gncpchq (devolucao). Rotina'
+                                        || ' pc_crps533.pc_integra_todas_coop. '||SQLERRM;
+                            RAISE vr_exc_erro;
+                         END;
+
+                      END IF; -- critica 96
+                    END IF; --vr_flgsai
 
                    EXCEPTION
                     WHEN vr_exc_undo THEN
@@ -4962,7 +5085,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                        vr_tab_critica(vr_idx_cri).vllanmto := rw_craprej.vllanmto;
                        vr_tab_critica(vr_idx_cri).dspesqbb := vr_rel_dspesqbb;
                        vr_tab_critica(vr_idx_cri).cdtipdoc := vr_rel_cdtipdoc;
-                       vr_tab_critica(vr_idx_cri).nrctadep := rw_craprej.nrdctitg;
+                       vr_tab_critica(vr_idx_cri).nrctadep := REPLACE(rw_craprej.nrdctitg,' ',to_number(SUBSTR(rw_craprej.cdpesqbb,67,12)));
                        CONTINUE;
                     END IF;
 
@@ -4972,7 +5095,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                      <nrseqdig>'||gene0002.fn_mask(rw_craprej.nrseqdig,'zzz.zz9')  ||'</nrseqdig>
                                                                      <nrdconta>'||gene0002.fn_mask_conta(rw_craprej.nrdconta)      ||'</nrdconta>
                                                                      <nrdocmto>'||gene0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z')||'</nrdocmto>
-                                                                     <nrctadep>'||to_char(rw_craprej.nrdctitg)                     ||'</nrctadep>
+                                                                     <nrctadep>'||REPLACE(rw_craprej.nrdctitg,' ',to_number(SUBSTR(rw_craprej.cdpesqbb,67,12))) ||'</nrctadep>
                                                                      <vllanmto>'||rw_craprej.vllanmto                              ||'</vllanmto>
                                                                      <dspesqbb>'||vr_rel_dspesqbb                                  ||'</dspesqbb>
                                                                      <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                 ||'</cdtipdoc>
@@ -5224,7 +5347,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                        <nrseqdig>'||gene0002.fn_mask(rw_craprej.nrseqdig,'zzz.zz9')  ||'</nrseqdig>
                                                                        <nrdconta>'||gene0002.fn_mask_conta(rw_craprej.nrdconta)      ||'</nrdconta>
                                                                        <nrdocmto>'||gene0002.fn_mask(rw_craprej.nrdocmto,'zzz.zzz.z')||'</nrdocmto>
-                                                                       <nrctadep>'||to_char(rw_craprej.nrdctitg)                     ||'</nrctadep>
+                                                                       <nrctadep>'||REPLACE(rw_craprej.nrdctitg,' ',to_number(substr(rw_craprej.cdpesqbb,67,12)))||'</nrctadep>
                                                                        <vllanmto>'||rw_craprej.vllanmto                              ||'</vllanmto>
                                                                        <dspesqbb>'||vr_rel_dspesqbb                                  ||'</dspesqbb>
                                                                        <cdtipdoc>'||To_Char(vr_rel_cdtipdoc,'FM999')                 ||'</cdtipdoc>

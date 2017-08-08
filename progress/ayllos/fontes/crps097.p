@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 29/05/2017
+   Data    : Outubro/94.                     Ultima atualizacao: 08/08/2017
 
    Dados referentes ao programa:
 
@@ -121,6 +121,8 @@
                             
                29/05/2017 - Remover delete do handle quando damos next se nao encontrar
                             crapass (Lucas Ranghetti #680458)
+                            
+               08/08/2017 - Tratar historicos 573 ou 78 (Lucas Ranghetti #715027)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -373,8 +375,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
     /*   47 = Devolucao de cheque fora compe
         156 = Devolucao de cheque CEF (Concredi)
         191 = Devolucao de cheque BB
-        338 = Devolucao de cheque BANCOOB       
-         78 = Devolucao de cheque Transferencia    */
+        338 = Devolucao de cheque BANCOOB  */
 
     ASSIGN aux_ctpsqitg = 0
            aux_nrdctitg = crapdev.nrdctitg
@@ -382,7 +383,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                           
     RUN conta_itg_digito_zero.
 
-    IF   CAN-DO("47,78,156,191,338,573",STRING(crapdev.cdhistor)) THEN
+    IF   CAN-DO("47,156,191,338",STRING(crapdev.cdhistor)) THEN
                                     /* Devolucao cheque normal */
          DO:
              RUN trata_cheque.
@@ -465,6 +466,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                     craplcm.cdbanchq = crapdev.cdbanchq
                     craplcm.cdagechq = crapdev.cdagechq
                     craplcm.nrctachq = crapdev.nrctachq
+                    craplcm.hrtransa = TIME
                     craplot.vlinfocr = craplot.vlinfocr + craplcm.vllanmto
                     craplot.vlcompcr = craplot.vlcompcr + craplcm.vllanmto
                     craplot.qtinfoln = craplot.qtinfoln + 1
@@ -652,6 +654,11 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                      
                  END. /* fim do IF taxa bacen */
         END.
+     ELSE
+     IF  crapdev.cdhistor = 78 OR 
+         crapdev.cdhistor = 573 THEN         
+         ASSIGN crapdev.indevarq = 2.         
+         
             
     /*  Cria registro de restart  */
     DO WHILE TRUE:
