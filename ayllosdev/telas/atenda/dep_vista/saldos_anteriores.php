@@ -11,6 +11,7 @@
 	  Alterações: 02/09/2010 - Ajustar nomes dos campos (David).
 				  29/06/2011 - Alterado para layout padrão (Rogerius - DB1).
 				  03/07/2013 - Incluir valor vlblqjud Bloqueio Judicial (Lucas R.)
+				  11/07/2017 - Novo campo Limite Pre Aprovado Disponivel na tela Saldos Anteriores, Melhoria M441. ( Mateus Zimmermann/MoutS )
 	  
 	 ************************************************************************/
 	
@@ -105,6 +106,11 @@
 
 	<label for="vllimcre">Limite Cr&eacute;dito:</label>
 	<input type="text" name="vllimcre" id="vllimcre" />
+	
+	<br />
+
+	<label for="vllimcpa">Limite Pr&eacute;-aprovado dispon&iacute;vel</label>
+	<input type="text" name="vllimcpa" id="vllimcpa" />
 	
 </form>
 
