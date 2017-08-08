@@ -816,6 +816,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_vlpercom NUMBER(25,2);
       vr_vlalugue NUMBER;
       vr_vlrendim NUMBER;*/
+      vr_nrconbir crapcbc.nrconbir%TYPE;
+      vr_nrseqdet crapcbd.nrseqdet%TYPE;
+      vr_cdbircon crapbir.cdbircon%TYPE;
+      vr_dsbircon crapbir.dsbircon%TYPE;
+      vr_cdmodbir crapmbr.cdmodbir%TYPE;
+      vr_dsmodbir crapmbr.dsmodbir%TYPE;
+      vr_flsituac VARCHAR2(100) := 'N';      
 			vr_vlmedfat NUMBER;
 			vr_qtmesest crapprm.dsvlrprm%TYPE;
 			vr_qtmeschq crapprm.dsvlrprm%TYPE;	
@@ -1819,8 +1826,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                          ,NVL(rw_crapass.inadimpl,0)=1);
     
       -- Está no SPC(outras IFs)
-      vr_obj_generic2.put('SPCoutrasIFs'
-                         ,NVL(rw_crapass.inlbacen,0)=1);
+      sspc0001.pc_busca_consulta_biro(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrconbir => vr_nrconbir
+                                     ,pr_nrseqdet => vr_nrseqdet);
+      -- Se encontrar 
+      IF NVL(vr_nrconbir,0) > 0 AND NVL(vr_nrseqdet,0) > 0 THEN 
+        -- Buscar o detalhamento da consulta
+        sspc0001.pc_verifica_situacao(pr_nrconbir => vr_nrconbir
+                                     ,pr_nrseqdet => vr_nrseqdet
+                                     ,pr_cdbircon => vr_cdbircon
+                                     ,pr_dsbircon => vr_dsbircon
+                                     ,pr_cdmodbir => vr_cdmodbir
+                                     ,pr_dsmodbir => vr_dsmodbir
+                                     ,pr_flsituac => vr_flsituac);
+      END IF;
+      vr_obj_generic2.put('SPCoutrasIFs',vr_flsituac='S');
     
       -- CCF
       vr_obj_generic2.put('ccf', NVL(rw_crapass.inccfcop,0)=1);
@@ -1914,7 +1935,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic2.put('conscrOpPrej'
                            ,este0001.fn_decimal_ibra(rw_crapvop.vlopeprj));
         vr_obj_generic2.put('conscrQtOper', rw_crapopf.qtopesfn);
-        vr_obj_generic2.put('conscrqtIFs', rw_crapopf.qtifssfn);
+        vr_obj_generic2.put('conscrQtIFs', rw_crapopf.qtifssfn);
         vr_obj_generic2.put('conscr61a90'
                            ,este0001.fn_decimal_ibra(rw_crapvop.vlvcto130));        
       ELSE         
@@ -1928,7 +1949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic2.put('conscrOpPrej'
                            ,este0001.fn_decimal_ibra(0));
         vr_obj_generic2.put('conscrQtOper', 0);
-        vr_obj_generic2.put('conscrqtIFs', 0);
+        vr_obj_generic2.put('conscrQtIFs', 0);
         vr_obj_generic2.put('conscr61a90'
                            ,este0001.fn_decimal_ibra(0));  
         
