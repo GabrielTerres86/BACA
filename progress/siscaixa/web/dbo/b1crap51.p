@@ -161,6 +161,9 @@
                             de cheques de bancos que nao participam da COMPE
                             Utilizar apenas BANCO e FLAG ativo
                             (Tiago - Chamado 546031)
+
+               01/06/2017 - Incluso tratativa para critica 757 apenas quando 
+			                cheque nao estiver descontado. (Daniel)	
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -1434,6 +1437,8 @@ PROCEDURE valida-deposito-com-captura:
                        crapcst.nrctachq = p-nrctabdb       AND
                        crapcst.nrcheque = p-nro-cheque     AND
                        crapcst.dtdevolu = ?                AND
+					   crapcst.nrborder = 0                AND
+					   crapcst.dtlibera > crapdat.dtmvtoan AND
                        crapcst.insitchq = 0 /* Nao processado */
                        NO-LOCK NO-ERROR.
   
@@ -2353,6 +2358,8 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                        crapcst.nrctachq = p-nrctabdb       AND
                        crapcst.nrcheque = p-nro-cheque     AND
                        crapcst.dtdevolu = ?                AND
+					   crapcst.nrborder = 0                AND 
+					   crapcst.dtlibera > crapdat.dtmvtoan AND
                        crapcst.insitchq = 0 /* Nao processado */
                        NO-LOCK NO-ERROR.
    
@@ -3414,6 +3421,8 @@ PROCEDURE valida-deposito-com-captura-migrado:
                        crapcst.nrctachq = p-nrctabdb       AND
                        crapcst.nrcheque = p-nro-cheque     AND
                        crapcst.dtdevolu = ?                AND
+					   crapcst.nrborder = 0                AND 
+					   crapcst.dtlibera > crapdat.dtmvtoan AND
                        crapcst.insitchq = 0 /* Nao processado */
                        NO-LOCK NO-ERROR.
    

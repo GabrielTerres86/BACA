@@ -1660,7 +1660,6 @@ PROCEDURE calcula_iof:
                                                  INPUT par_vlemprst,
                                                  INPUT par_dtvencto,
                                                  INPUT par_dtmvtolt,
-												 INPUT 1,    /* par_tpemprst */
                                                 OUTPUT 0,
                                                 OUTPUT "").
            

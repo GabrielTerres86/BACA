@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 21/11/2016
+   Data    : Outubro/2011                      Ultima atualizacao: 12/12/2016
 
    Dados referentes ao programa:
 
@@ -119,6 +119,10 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                21/11/2016 - Rotina pc_executa_envio_ted - Inclusao de parametros.
                                    pc_envio_ted - Tratamento para gerar registro de analise de fraude
                             PRJ335 - Analise de fraudes (Odirlei-AMcom) 
+							
+               12/12/2016 - Nao cobrar tarifa de TED quando a origem for do 
+                            BacenJud (Andrino - Mouts). Projeto 341-Bacenjud
+							
 ..............................................................................*/
   --  antigo tt-protocolo-ted 
   TYPE typ_reg_protocolo_ted 
@@ -317,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 20/03/2017 
+    Data     : Junho/2013.                   Ultima atualizacao: 08/06/2017 
   
     Dados referentes ao programa:
   
@@ -349,6 +353,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 
                 20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
                             (Adriano - SD 620221).
+                
+                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+                            
+                08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -741,6 +749,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                  ,pr_cdagenci   => pr_cdageope  -- Agencia do Associado
                                  ,pr_tpoperac   => 4 /* TED */  -- Tipo de Operacao (0=todos)
                                  ,pr_inpessoa   => pr_inpessoa  -- Tipo de Pessoa
+                                 ,pr_idagenda   => 0             --Tipo de agendamento
+                                 ,pr_cdtiptra   => 0             --Tipo de transferencia
                                  ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                  ,pr_cdcritic   => vr_cdcritic    --Código do erro
                                  ,pr_dscritic   => vr_dscritic);  --Descricao do erro
@@ -1699,6 +1709,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     IF pr_flmobile = 1 THEN /* Canal Mobile */
       vr_nrctrlif := vr_nrctrlif ||'M';
+    ELSIF pr_idorigem = 1 THEN /* Origem BacenJud - Ayllos */
+      vr_nrctrlif := vr_nrctrlif ||'A';
     ELSE /* Canal InternetBank */
       vr_nrctrlif := vr_nrctrlif ||'I';
     END IF;
@@ -1930,8 +1942,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     
+    -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
+    IF pr_tpctafav = 9 THEN
+      vr_cdhisted := 1406;
+    ELSE
     -- definir historico de ted
     vr_cdhisted := 555;
+    END IF;
     
     /* Grava uma autenticacao */
     CXON0000.pc_grava_autenticacao_internet 
@@ -2145,8 +2162,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
       END IF;
 
+      IF pr_tpctafav = 9 THEN -- Se for BacenJud nao deve cobrar tarifa
+        NULL;
 	    -- Se não isenta cobrança da tarifa
-      IF vr_fliseope <> 1 THEN
+      ELSIF vr_fliseope <> 1 THEN
 
         IF pr_idagenda = 1 OR
            vr_debtarifa    THEN 
@@ -2530,7 +2549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 08/06/2017
   
       Dados referentes ao programa:
   
@@ -2541,6 +2560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
                   08/10/2015 - Ajustado para gerar o numero da conta no protocolo com "."
                                conforme progress SD341797 (Odirlei-Amcom)
+                               
+                  08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -3045,7 +3066,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       CLOSE cr_crapban;
     END IF;
      
-    
     vr_dsinfor2 := vr_dsinfor2 ||'#'||to_char(pr_cdageban,'fm0000');
     
     --> Obtem dados da agencia do favorecido para Protocolo
@@ -3062,7 +3082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     --> Formata dados do favorecido para Protocolo
     vr_dsinfor2 := vr_dsinfor2||
-                  TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzz.9'))||
+                  TRIM(gene0002.fn_mask(to_char(pr_nrctatrf),'zzzzzzzzzzzzzzzzzzz.9'))||
                   '#'||gene0002.fn_mask(pr_cdispbif,'zzzzzzzzz9');
     vr_dscpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,pr_inpessoa);
     vr_dsinfor3 := TRIM(pr_nmtitula) ||'#'|| vr_dscpfcgc ||'#';

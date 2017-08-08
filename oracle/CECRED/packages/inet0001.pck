@@ -315,6 +315,8 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                 ,pr_cdagenci IN crapage.cdagenci%type  --Agencia do Associado
                                 ,pr_tpoperac IN INTEGER                --Tipo de Operacao (0=todos)
                                 ,pr_inpessoa IN crapass.inpessoa%type  --Tipo de Pessoa
+                                ,pr_idagenda IN INTEGER                --Tipo de agendamento
+                                ,pr_cdtiptra IN INTEGER                --Tipo de transferencia
                                 ,pr_tab_limite OUT INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                                 ,pr_cdcritic   OUT INTEGER     --C¿digo do erro
                                 ,pr_dscritic   OUT VARCHAR2);   --Descricao do erro
@@ -453,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 10/03/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -492,10 +494,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                          e trim() (campo nmtitula) para a consulta de crapcti diretamente na chamada 
   --                          do cursor (Carlos)
   --
-  --            17/05/2016 - Ajuste na mensagem de retorno ao validar o saldo limite
-  --                        (Adriano - M117).   
+  --             17/05/2016 - Ajuste na mensagem de retorno ao validar o saldo limite
+  --                         (Adriano - M117).   
   --
-  --            25/05/2016 - Ajuste realizados:
+  --             25/05/2016 - Ajuste realizados:
   --                         -> Alterado o index utilizado para montar a tabela de faovericos a fim de 
   --                             possibilitar a ordenação por nome de favorecido;
   --                         -> Utilizar rotina genérica para consultar registro da craptab;
@@ -503,29 +505,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                         --> Ajustado tamanhdo do index e tamanho do campo nmitutla na pltable
   --                          (Adriano - M117).
   --
-  --            27/05/2016 - Correção do tamanho do campo nmtitul2 no type typ_reg_contas_cadastradas
-  --                         para ficar do tamanho do campo crapass.nmsentl;
+  --             27/05/2016 - Correção do tamanho do campo nmtitul2 no type typ_reg_contas_cadastradas
+  --                          para ficar do tamanho do campo crapass.nmsentl;
   --                         - Retirada a validação de existência de agência. (Carlos)
   --
-  --			  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
+  --			       31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
   --
-  --            18/07/2016 - Incluido pr_tpoperac = 11 -> DARF, Prj. 338, nas procedure
+  --             18/07/2016 - Incluido pr_tpoperac = 11 -> DARF, Prj. 338, nas procedure
   --                         pc_horario_operacao, pc_busca_limites e pc_verifica_operacao
   --                        (Jean Michel).
   --
-  --			      31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
+  --			       31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
   --
-  --            12/12/2016 - Ajuste realizados:
+  --             12/12/2016 - Ajuste realizados:
   --                          - Não realizar a validação de conta favorecida ativa
-  --                            quando for efetivação de agendamentos de TED 
+  --                          quando for efetivação de agendamentos de TED 
   --                          - Contabilizar corretamente o limite diário de TED
-  --                            (Adriano - SD 563147 / 482831)
+  --                          (Adriano - SD 563147 / 482831)
   --
-	--        22/02/2017 - Ajuste retorno horário estourado pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+	--             22/02/2017 - Ajuste retorno horário estourado pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 	--
   --            10/03/2017 - Ajustes na pc_verifica_operacao para liberar agendamento de TED 
   --                         para o ultimo dia util do ano (Tiago/Elton SD586106).
   --
+  --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -616,6 +619,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                 ,pr_cdagenci IN crapage.cdagenci%type      --Agencia do Associado
                                 ,pr_tpoperac IN INTEGER                    --Tipo de Operacao (0=todos)
                                 ,pr_inpessoa IN crapass.inpessoa%type      --Tipo de Pessoa
+                                ,pr_idagenda IN INTEGER                    --Tipo de agendamento
+                                ,pr_cdtiptra IN INTEGER                    --Tipo de transferencia
                                 ,pr_tab_limite OUT INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                                 ,pr_cdcritic   OUT INTEGER                 --Código do erro
                                 ,pr_dscritic   OUT VARCHAR2) IS            --Descricao do erro
@@ -671,6 +676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_clobxmlc CLOB;
       vr_flgutstr BOOLEAN; 
       vr_flgutpag BOOLEAN;
+      vr_hrlimtrf crapprm.dsvlrprm%TYPE; --Transf no dia (tipo Crédito Salário);
     BEGIN
       --Inicializar varaivel retorno erro
       vr_cdcritic:= NULL;
@@ -822,6 +828,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             vr_hrinipag:= SubStr(vr_dstextab,9,5);
             --Hora Fim
             vr_hrfimpag:= SubStr(vr_dstextab,3,5);
+          END IF;
+
+          IF pr_idagenda = 1  AND  /* pagto dia corrente */
+             pr_tpoperac = 1  AND  /* Transferencia */
+             pr_cdtiptra = 3  AND  /* Credito Salario */
+             pr_cdagenci = 90 THEN /* Internet */
+             
+            vr_hrlimtrf := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                    ,pr_cdcooper => pr_cdcooper
+                                                    ,pr_cdacesso => 'FOLHAIB_HR_LIM_TRF_TPSAL');
+                    
+            vr_hrfimpag := to_number(to_char(to_date(vr_hrlimtrf,'hh24:mi'),'SSSSS'));
           END IF;
 
           --Determinar a hora atual
@@ -1254,6 +1272,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 pr_cdagenci => pr_cdagenci, 
                 pr_tpoperac => pr_tpoperac, 
                 pr_inpessoa => pr_inpessoa, 
+                pr_idagenda => 0,
+                pr_cdtiptra => 0, 
                 pr_tab_limite => vr_tab_limite, 
                 pr_cdcritic => pr_cdcritic, 
                 pr_dscritic => pr_dscritic);        
@@ -2095,6 +2115,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
               10/03/2017 - Ajustes para liberar agendamento de TED para o ultimo dia util
                            do ano (Tiago/Elton SD586106)
+              
+			  13/06/2017 - Alteração na mensagem de "Conta destino nao habilitada para receber valores da transferencia."
+			               para "Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online"
+						   (Rafael Monteiro - Mouts - 690752)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -2267,6 +2291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                           ,pr_cdagenci   => pr_cdagenci  --Agencia do Associado
                           ,pr_tpoperac   => pr_tpoperac  --Tipo de Operacao (0=todos)
                           ,pr_inpessoa   => rw_crapass.inpessoa --Tipo de Pessoa
+                          ,pr_idagenda   => pr_idagenda   --Tipo de agendamento
+                          ,pr_cdtiptra   => pr_cdtiptra   --Tipo de transferencia
                           ,pr_tab_limite => pr_tab_limite --Tabelas de retorno de horarios limite
                           ,pr_cdcritic   => vr_cdcritic   --Codigo do erro
                           ,pr_dscritic   => vr_dscritic); --Descricao do erro
@@ -2610,7 +2636,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF pr_tpoperac IN (5) AND vr_datdodia >= to_date('31/12/2016','dd/mm/RRRR') AND
              vr_cdcopctl = 17 THEN						  
               vr_cdcritic := 0;
-              vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+              --vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+			  vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
@@ -2629,7 +2656,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Se nao encontrou ou a conta naoesta ativa
           IF cr_crapcti%FOUND AND rw_crapcti.insitcta <> 2 THEN  /** Ativa **/
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+            --vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+			vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
             
             --Fechar Cursor
             CLOSE cr_crapcti;
@@ -2677,7 +2705,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             SD 563147 */
           IF cr_crapcti%FOUND AND pr_nmdatela <> 'CRPS705' AND rw_crapcti.insitcta <> 2 THEN  /** Ativa **/
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+            --vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
+			vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
             
             --Fechar Cursor
             CLOSE cr_crapcti;

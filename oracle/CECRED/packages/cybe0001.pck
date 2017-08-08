@@ -1,3 +1,4 @@
+CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -49,6 +50,8 @@
   --              29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
   --                           solicitado no chamado 402159 (Kelvin)
   --
+  --              11/05/2017 - Modificada a pc_importa_arquivo_cyber, para efetuar leituras de tabelas através de cursor
+  --                           atendendo às melhores práticas de programação da Cecred - (Jean / MOut´S)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definir o registro de memória que guardará os dados para atualização
@@ -6458,6 +6461,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
      vr_tab_arqzip gene0002.typ_split;
      vr_tab_arqtxt gene0002.typ_split;
 
+     cursor c_busca_crapcyc(pr_cdcooper number
+                           ,pr_nrdconta number
+                           ,pr_nrctremp number
+                           ,pr_cdorigem number) is
+               select flgjudic
+               ,      flgehvip
+               from   crapcyc
+               where  cdcooper = pr_cdcooper
+               and    cdorigem = decode(pr_cdorigem,2,3,pr_cdorigem)
+               and    nrdconta = pr_nrdconta
+               and    nrctremp = pr_nrctremp;                 
+      
+     cursor c_busca_assessoria(pr_cdassessoria varchar2) is
+           select t.dstexprm
+             from   crapprm t
+             where  NMSISTEM = 'CRED'
+               and  CDACESSO like 'CYBER_CD_SIGLA%'
+               and  t.dsvlrprm = rtrim(pr_cdassessoria);
+
   BEGIN
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
                FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -6726,34 +6748,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                raise vr_exc_erro;
             end if;
 
-           /* begin
-              select cdassessoria
-                into vr_cdassess
-                from tbcobran_assessorias
-               where cdsigla_cyber =  rtrim(vr_cdassessx);
-            exception
-               when no_data_found then
-                    if nvl(vr_cdassessx,'        ') = '        ' then
-                       vr_cdassess := 0;
-                    else
-                       vr_cdassess := 99;
-                    end if;
-            end;*/
-            begin
-               select t.dstexprm
-               into   vr_cdassess
-               from   crapprm t
-               where  NMSISTEM = 'CRED'
-                 and  CDACESSO like 'CYBER_CD_SIGLA%'
-                 and  t.dsvlrprm = rtrim(vr_cdassessx);
-            exception
-               when no_data_found then
-                    if nvl(vr_cdassessx,'        ') = '        ' then
-                       vr_cdassess := 0;
-                    else
-                       vr_cdassess := 99;
-                    end if;
-            end;
+            open c_busca_assessoria(pr_cdassessoria => vr_cdassessx);
+            fetch c_busca_assessoria into vr_cdassess;
+             
+            if c_busca_assessoria%Notfound then
+               
+                if nvl(vr_cdassessx,'        ') = '        ' then
+                   vr_cdassess := 0;
+                else
+                   vr_cdassess := 99;
+              end if;
+              close c_busca_assessoria;
+            else
+              close c_busca_assessoria;
+            end if;
+           
             /*
                Atualizar a tabela CRAPCYC
 
@@ -6769,66 +6778,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             vr_flextjud := 0;
 
             /* Regra 1 - verifica o contrato */
-            begin
-               select flgjudic
-               ,      flgehvip
-               into   vr_flgjudic
-               ,      vr_flgehvip
-               from   crapcyc
-               where  cdcooper = vr_cdcooper
-               and    cdorigem = decode(vr_cdorigem,2,3,vr_cdorigem)
-               and    nrdconta = vr_nrdconta
-               and    nrctremp = vr_cdctremp;
-            exception
-               when no_data_found then
+            
+            open c_busca_crapcyc(pr_cdcooper => vr_cdcooper
+                                ,pr_nrdconta => vr_nrdconta
+                                ,pr_nrctremp => vr_cdctremp
+                                ,pr_cdorigem => vr_cdorigem);
+            fetch c_busca_crapcyc into vr_flgjudic, vr_flgehvip;
+            
+            if c_busca_crapcyc%notfound then
+                 close c_busca_crapcyc;
                  vr_des_log := 'Erro Linha: ' || vr_nrlinha || ' -> Contrato: (Coop:' || vr_cdcooper || ', origem: ' || vr_cdorigem ||
                                                 ', conta:' || vr_nrdconta || ', contrato: ' || vr_cdctremp ||
                                 ') não encontrado! ';
                              -- Grava arquivo de LOG
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                              ,pr_des_text => vr_des_log);
-               vr_gerou_log := true;
-            end;
-
-            -- verifica se contrato não existe na CRAPCYC (se não existir, inclui)
-            BEGIN
-               SELECT 1
-               INTO   vr_existecyc
-               from   crapcyc
-               where  cdcooper  = vr_cdcooper
-               and    cdorigem  = decode(vr_cdorigem,2,3,vr_cdorigem)
-               and    nrdconta  = vr_nrdconta
-               and    nrctremp  = vr_cdctremp;
-
-            EXCEPTION
-               WHEN NO_DATA_FOUND THEN
-                    BEGIN
-                      INSERT INTO CRAPCYC
-                        (CDCOOPER
-                        ,CDORIGEM
-                        ,NRDCONTA
-                        ,NRCTREMP
-                        ,CDOPEINC
-                        ,CDASSESS
-                        ,CDMOTCIN)
-                        VALUES
-                        (VR_CDCOOPER
-                        ,decode(VR_CDORIGEM,2,3,vr_cdorigem)
-                        ,VR_NRDCONTA
-                        ,vr_cdctremp
-                        ,' '
-                        ,0
-                        ,0);
-                    EXCEPTION
-                      WHEN OTHERS THEN
-                           vr_des_erro := 'Erro no INSERT da CRAPCYC: '|| sqlerrm;
-                           raise vr_exc_erro;
-                    END;
-               WHEN OTHERS THEN
-                    vr_des_erro := 'Erro de leitura da CRAPCYC: '|| sqlerrm;
-                    raise vr_exc_erro;
-            END;
-
+               BEGIN
+                  INSERT INTO CRAPCYC
+                    (CDCOOPER
+                    ,CDORIGEM
+                    ,NRDCONTA
+                    ,NRCTREMP
+                    ,CDOPEINC
+                    ,CDASSESS
+                    ,CDMOTCIN)
+                    VALUES
+                    (VR_CDCOOPER
+                    ,decode(VR_CDORIGEM,2,3,vr_cdorigem)
+                    ,VR_NRDCONTA
+                    ,vr_cdctremp
+                    ,' '
+                    ,0
+                    ,0);
+                EXCEPTION
+                  WHEN OTHERS THEN
+                       vr_des_erro := 'Erro no INSERT da CRAPCYC: '|| sqlerrm;
+                       raise vr_exc_erro;
+                END;
+            else 
+               close c_busca_crapcyc;
+            end if;
+    
             /* Regra 2: Se for contrato judicial ou VIP não permite carregar, mas não gera alerta */
             if vr_flgjudic = 1
             or vr_flgehvip = 1 then
@@ -6840,8 +6830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
                -- Busca data de movimento
                 OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-               FETCH btch0001.cr_crapdat INTO rw_crapdat;
-               CLOSE btch0001.cr_crapdat;
+                FETCH btch0001.cr_crapdat INTO rw_crapdat;
+                CLOSE btch0001.cr_crapdat;
 
                -- Grava a CRAPCYC com o codigo de asessoria e com os flags de marcacao de cobranca
                BEGIN
@@ -6950,10 +6940,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
        end if;
 
-	   if utl_file.IS_OPEN(vr_handle_log) then
+       if utl_file.IS_OPEN(vr_handle_log) then
           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
        end if;
-      
+
            -- Retorno não OK
            pr_des_reto := 'NOK';
            -- Montar descrição de erro não tratado

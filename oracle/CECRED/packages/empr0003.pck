@@ -116,7 +116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 20/06/2016
+  --  Data     : agosto/2014.                   Ultima atualizacao: 26/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -140,6 +140,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
   --                          desta package.(Carlos Rafael Tanholi).
   --
+  --             26/06/2017 - Na procedure pc_imprime_contrato_xml foi retirada a chamada pc_XML_para_arquivo
+  --                          pois era desnecessaria (Tiago/Rodrigo).
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -746,7 +748,7 @@ BEGIN
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Castro (RKAM)
-       Data    : Agosto/2014.                         Ultima atualizacao: 26/11/2015
+       Data    : Agosto/2014.                         Ultima atualizacao: 26/06/2017
 
        Dados referentes ao programa:
 
@@ -776,6 +778,8 @@ BEGIN
                                  impressão de novos parágros nos contratos de forma condicional; 
                                  (Ricardo Linhares)             
 
+                   26/06/2017 - Removido chamada pc_XML_para_arquivo pois era desnecessario
+                                (Tiago/Rodrigo).
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
@@ -1627,17 +1631,6 @@ BEGIN
       vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => 'rl');
-
-      --Gerar Arquivo XML Fisico
-      gene0002.pc_XML_para_arquivo(pr_XML      => vr_des_xml     --> Instância do XML Type
-                                  ,pr_caminho  => vr_nom_direto  --> Diretório para saída
-                                  ,pr_arquivo  => '/teste.xml'    --> Nome do arquivo de saída
-                                  ,pr_des_erro => vr_dscritic);  --> Retorno de erro, caso ocorra
-      --Se ocorreu erro
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-
 
       -- Solicita geracao do PDF
       gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper

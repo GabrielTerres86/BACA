@@ -12,6 +12,7 @@
 	* 003: [22/10/2020] David			(CECRED) : Incluir novo parametro para a funcao getDataXML (David).
  * 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
 	* 005: [27/07/2016] Carlos R.	    (CECRED): Corrigi o tratamento para o retorno de erro do XML. SD 479874.
+    * 006: [06/06/2017] Jonata        (Mouts): Ajuste para inclusão da busca de dominios - P408.
  */	
 
 	session_start();
@@ -126,6 +127,10 @@
 	if (count($descricao) == 0) {		
 		// Atribui descrição ao respectivo campo
 		echo '$("input[name=\''.$campoDescricao.'\']").val("");';
+
+		if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
+			echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("");';
+		}
 			
 		if ( $nomeFormulario != '' ) {				
 			echo '$("#'.$campoCodigo.'","#'.$nomeFormulario.'").addClass("campoErro");';
@@ -140,15 +145,33 @@
 	echo '$("input[name=\''.$campoCodigo.'\']").removeClass("campoErro");';
 	// Atribui descrição ao respectivo campo
 	echo '$("input[name=\''.$campoDescricao.'\']").val("'.getByTagName($descricao,$campoRetorno).'");';
-       
-        if ( $campoCodigo == 'cdfinemp' ) {
-            echo '$(\'input[name="tpfinali"]\').val("'.getByTagName($descricao,'tpfinali').'");';
-        }
-        
-        if ( $nomeFormulario == 'frmSimulacao' ) {            
-            echo 'habilitaModalidade("'.getByTagName($descricao,'tpfinali').'");';
-        }
-        
+	    	
+	if( $nomeProcedure == 'BUSCADESCDOMINIOS' ){
+		echo '$("input[id=\'iddominio_'.$campoCodigo.'\']").val("'.getByTagName($descricao,"iddominio").'");';
+		
+		if($campoCodigo == 'idgarantia' || $campoCodigo == 'idconta_cosif'){
+			
+		echo '$("#idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrctacosif").'");';
+		echo '$("#dsconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"dsctacosif").'");';
+		echo '$("#iddominio_idconta_cosif","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"iddominioctacosif").'");';
+			
+		}
+	}
+	
+	if( $nomeProcedure == 'BUSCADESCASSOCIADO' ){
+		echo 'if($("input[id=\'cdclassificacao_produto\']","#'.$nomeFormulario.'").val() != "AA"){ $("select[id=\'cdclassifica_operacao\']","#'.$nomeFormulario.'").prop(\'selected\',true).val("'.getByTagName($descricao,"dsnivris").'");}';
+		echo '$("#nrcpfcgc","#'.$nomeFormulario.'").val("'.getByTagName($descricao,"nrcpfcgc").'");';
+		
+	}
+	
+	if ( $campoCodigo == 'cdfinemp' ) {
+		echo '$(\'input[name="tpfinali"]\').val("'.getByTagName($descricao,'tpfinali').'");';
+	}
+	
+	if ( $nomeFormulario == 'frmSimulacao' ) {            
+		echo 'habilitaModalidade("'.getByTagName($descricao,'tpfinali').'");';
+	}
+	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	echo 'bloqueiaFundo(divRotina);';

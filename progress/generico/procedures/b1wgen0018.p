@@ -2892,9 +2892,12 @@ PROCEDURE valida_dados_desconto:
            tab_qtprzmin = DECIMAL(ENTRY(4,craptab.dstextab," "))
            tab_qtprzmax = DECIMAL(ENTRY(5,craptab.dstextab," "))
            aux_dtminima = par_dtmvtolt + tab_qtprzmin
-           aux_dtmaxima = par_dtmvtolt + tab_qtprzmax
-           aux_dtlimite = craplim.dtinivig +
-                          (craplim.qtdiavig * tab_qtrenova).
+           aux_dtmaxima = par_dtmvtolt + tab_qtprzmax.
+
+    IF craplim.dtfimvig <> ? THEN
+	  ASSIGN aux_dtlimite = craplim.dtfimvig.
+    ELSE
+	  ASSIGN aux_dtlimite = craplim.dtinivig + craplim.qtdiavig.
                           
     IF   par_dtlibera >= aux_dtlimite   THEN
          DO:
@@ -2911,7 +2914,7 @@ PROCEDURE valida_dados_desconto:
 
              RETURN "NOK".
  
-                 END.
+         END.
 
     IF   par_dtlibera <= aux_dtminima    THEN
              DO:
@@ -4539,6 +4542,41 @@ PROCEDURE detalhe_desconto_titulos:
     END. /* Fim do FOR EACH */
 
 END PROCEDURE. /* detalhe_desconto_titulos */
+
+PROCEDURE pc_situacao_canal_recarga:
+    /************************************************************************
+    Objetivo: Consulta a situação da recarga de celular em cada canal
+    ************************************************************************/
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  OUTPUT PARAM par_flgsitrc AS LOGI                          NO-UNDO.
+    
+    RUN STORED-PROCEDURE pc_situacao_canal_recarga
+	  aux_handproc = PROC-HANDLE NO-ERROR
+						 (INPUT par_cdcooper, /* Cooperativa*/
+						  INPUT par_idorigem, /* Id origem*/
+						  OUTPUT 0,           /* Flag situacao recarga (0-INATIVO/1-ATIVO) */
+						  OUTPUT 0,           /* Código da crítica.*/
+						  OUTPUT "").         /* Desc. da crítica */
+	
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_situacao_canal_recarga
+         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    /* Busca parametros retornados */ 
+    ASSIGN par_flgsitrc = FALSE
+           aux_dscritic = ""
+           par_flgsitrc = TRUE
+                          WHEN pc_situacao_canal_recarga.pr_flgsitrc = 1
+           aux_dscritic = pc_situacao_canal_recarga.pr_dscritic
+                          WHEN pc_situacao_canal_recarga.pr_dscritic <> ?.
+    
+    IF aux_dscritic <> "" THEN
+      RETURN "NOK".
+    
+
+END PROCEDURE. 
 
 /************************************************************************/
 
