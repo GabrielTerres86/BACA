@@ -6,6 +6,8 @@
  * OBJETIVO     : Cabeçalho para a tela IMPPRE
  * --------------
  * ALTERAÇÕES   : 
+ *
+ * 000: [11/07/2017] Alteração no controla de apresentação do cargas bloqueadas na opção "A", Melhoria M441. ( Mateus Zimmermann/MoutS )
  *				  
  * --------------
  */
@@ -27,7 +29,7 @@
                     <option value='I'>I - Importar Carga</option>
 					<option value='B'>B - Bloquear Carga</option>
 					<option value='L'>L - Liberar Carga</option>
-					<option value='E'>E - Excluir Carga</option>
+					<!-- <option value='E'>E - Excluir Carga</option> -->
 					<option value='A'>A - Alterar Carga</option>
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>
