@@ -5,7 +5,8 @@
  * OBJETIVO     : Biblioteca de funções da tela IMPPRE
  * --------------
  * ALTERAÇÕES   : 
- *				  
+ *
+ * 000: [11/07/2017] Alteração no controla de apresentação do cargas bloqueadas na opção "A", Melhoria M441. ( Mateus Zimmermann/MoutS )			  
  *				  
  * --------------
  */
@@ -130,7 +131,7 @@ function acessa_rotina() {
 	return false;
 }
 
-function acessaImportaCarga(iddcarga) {
+function acessaImportaCarga(iddcarga, flgbloqu) {
 	
     showMsgAguardo('Aguarde, carregando...');
 
@@ -152,7 +153,7 @@ function acessaImportaCarga(iddcarga) {
         success: function(response) {
             hideMsgAguardo();
             $('#divDetalhes').html(response);
-			formataImportaCarga();
+            formataImportaCarga(flgbloqu);
         }				
     });
     return false;
@@ -218,7 +219,7 @@ function formataCabecalho() {
 
 }
 
-function formataImportaCarga() {
+function formataImportaCarga(flgbloqu) {
 	
 	var cddopcao = $('#cddopcao','#frmCab').val();
 	
@@ -261,7 +262,14 @@ function formataImportaCarga() {
 		cMensagem.val(glbDsmensagem_aviso);
 		cNome_arquivo.val(glbNmarquivo).desabilitaCampo();
 		
-		habilita_vigencia();
+		if (flgbloqu == 2) {
+
+		    cFinal_vigencia.desabilitaCampo();
+		    cIndeterminada.desabilitaCampo();
+		} else {
+
+		    habilita_vigencia();
+		}
 	}
 	
 	cIndeterminada.change(function() {
@@ -419,7 +427,9 @@ function formataManterCarga() {
 
 function confirmar_manter_rotina () {
 	
-	glbIdcarga = $("#divCarga table tr.corSelecao").find("input[id='hdn_idcarga']").val();
+    glbIdcarga = $("#divCarga table tr.corSelecao").find("input[id='hdn_idcarga']").val();
+
+    var flgBloqueio = $("#divCarga table tr.corSelecao").find("input[id='hdn_bloqueio']").val() == 'Sim' ? 1 : 2;
 	
 	var cddopcao = $('#cddopcao','#frmCab').val();
 	var msgConfirm, msgErro;
@@ -437,7 +447,7 @@ function confirmar_manter_rotina () {
 			msgErro = "Selecione uma carga para excluir.";
 			break;
 		case 'A':
-			acessaImportaCarga(glbIdcarga);
+		    acessaImportaCarga(glbIdcarga, flgBloqueio);
 			return false;
 	}
 	
