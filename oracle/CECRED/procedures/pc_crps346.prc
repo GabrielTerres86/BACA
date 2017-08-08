@@ -796,12 +796,7 @@ BEGIN
     --Enviar critica 219 ao LOG
     vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
                            ' --> ' || 'ALERTA: ' ||gene0001.fn_busca_critica(219) ||
-                           ': '||vr_tab_crapcop(vr_idx).nmarquiv||
-                           '. pr_cdcooper=' || pr_cdcooper ||
-                           ' ,flgresta=' || pr_flgresta ||
-                           ' ,nmtelant=' || pr_nmtelant ||
-                           ' ,stprogra=' || pr_stprogra ||
-                           ' ,infimsol=' || pr_infimsol ;
+                           ': '||vr_tab_crapcop(vr_idx).nmarquiv;
 
     cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
                            pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
@@ -1801,12 +1796,7 @@ BEGIN
         --Geração de log de erro - Chamado 696499
         vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
                                ' --> ' || 'ERRO: ' ||gene0001.fn_busca_critica(263) ||
-                               ' Cdcooper='||vr_tab_crapcop(vr_idx).cdcooper||
-                               '. pr_cdcooper=' || pr_cdcooper ||
-                               ' ,flgresta=' || pr_flgresta ||
-                               ' ,nmtelant=' || pr_nmtelant ||
-                               ' ,stprogra=' || pr_stprogra ||
-                               ' ,infimsol=' || pr_infimsol ;
+                               ' Cdcooper='||vr_tab_crapcop(vr_idx).cdcooper;
 
         cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
                                pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
@@ -2036,22 +2026,12 @@ BEGIN
       --Enviar critica 190 ao LOG
       vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
                              ' --> ' || 'ALERTA: ' ||gene0001.fn_busca_critica(190) ||
-                             ': '||vr_tab_crapcop(vr_idx).nmarquiv||
-                             '. pr_cdcooper=' || pr_cdcooper ||
-                             ' ,flgresta=' || pr_flgresta ||
-                             ' ,nmtelant=' || pr_nmtelant ||
-                             ' ,stprogra=' || pr_stprogra ||
-                             ' ,infimsol=' || pr_infimsol ;
+                             ': '||vr_tab_crapcop(vr_idx).nmarquiv;
     ELSE
       --Enviar critica 191 ao LOG
       vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
                              ' --> ' || 'ALERTA: ' ||gene0001.fn_busca_critica(191) ||
-                             ': '||vr_tab_crapcop(vr_idx).nmarquiv||
-                             '. pr_cdcooper=' || pr_cdcooper ||
-                             ' ,flgresta=' || pr_flgresta ||
-                             ' ,nmtelant=' || pr_nmtelant ||
-                             ' ,stprogra=' || pr_stprogra ||
-                             ' ,infimsol=' || pr_infimsol ;
+                             ': '||vr_tab_crapcop(vr_idx).nmarquiv;
     END IF;
 
     cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
@@ -2122,12 +2102,7 @@ EXCEPTION
       --Geração de log de erro - Chamado 696499
       --Enviar critica 258 ao LOG
       vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
-                             ' --> ' || 'ERRO: ' ||vr_dscritic ||
-                             '. pr_cdcooper=' || pr_cdcooper ||
-                             ' ,flgresta=' || pr_flgresta ||
-                             ' ,nmtelant=' || pr_nmtelant ||
-                             ' ,stprogra=' || pr_stprogra ||
-                             ' ,infimsol=' || pr_infimsol ;
+                             ' --> ' || 'ERRO: ' ||vr_dscritic;
 
       cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
                              pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
@@ -2160,12 +2135,7 @@ EXCEPTION
 
     --Geração de log de erro - Chamado 696499
     vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
-                           ' --> ' || 'ERRO: ' ||vr_dscritic ||
-                           '. pr_cdcooper=' || pr_cdcooper ||
-                           ' ,flgresta=' || pr_flgresta ||
-                           ' ,nmtelant=' || pr_nmtelant ||
-                           ' ,stprogra=' || pr_stprogra ||
-                           ' ,infimsol=' || pr_infimsol ;
+                           ' --> ' || 'ERRO: ' ||vr_dscritic;
 
     cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
                            pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
@@ -2187,12 +2157,7 @@ EXCEPTION
 
     --Geração de log de erro - Chamado 696499
     vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
-                           ' --> ' || 'ERRO: ' ||pr_dscritic ||
-                           '. pr_cdcooper=' || pr_cdcooper ||
-                           ' ,flgresta=' || pr_flgresta ||
-                           ' ,nmtelant=' || pr_nmtelant ||
-                           ' ,stprogra=' || pr_stprogra ||
-                           ' ,infimsol=' || pr_infimsol ;
+                           ' --> ' || 'ERRO: ' ||pr_dscritic;
 
     --Geração de log de erro - Chamado 696499
     cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
