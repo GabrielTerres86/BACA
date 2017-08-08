@@ -67,7 +67,7 @@
 						<td width="50px">
 							<?php echo getByTagName($carga->tags,'idcarga'); ?>
 							<input type="hidden" id="hdn_idcarga" value="<?php echo getByTagName($carga->tags,'idcarga'); ?>" />
-              <input type="hidden" id="hdn_bloqueio" value=""<?php echo getByTagName($carga->tags,'bloqueio'); ?>" />
+							<input type="hidden" id="hdn_bloqueio" value="<?php echo getByTagName($carga->tags,'bloqueio'); ?>" />
               </td>
 						<td width="300px"><?php echo getByTagName($carga->tags,'descricao'); ?></td>
 						<td width="70px"><?php echo getByTagName($carga->tags,'bloqueio'); ?></td>
