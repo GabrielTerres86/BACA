@@ -139,6 +139,11 @@
                         <input type="text" id="cdagepac" name="cdagepac" />
                         <br clear="all" />
                         <br clear="all" />
+						<label for="flmajora">Majoração Lim. Cré.:</label>
+                        <select id="flmajora" name="flmajora">
+                            <option value="0">NAO</option>
+                            <option value="1">SIM</option>
+                        </select>
                     </div>
 
                     <div id="divAba1" class="clsAbas">
