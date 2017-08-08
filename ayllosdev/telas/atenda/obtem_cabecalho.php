@@ -602,7 +602,7 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 				$opeProdutos = 1;				
 				break;
 			}
-        case "RECEBE SALARIO": {
+            case "RECEBE SALARIO": {
                 if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                     $nomeRotina = "Recebe Salario";
                     $urlRotina = "";
@@ -615,6 +615,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 
                 break;
             }
+			case "DESABILITAR OPERACOES": {
+			
+				$nomeRotina = "Desabilitar Operacoes";
+                $urlRotina = "liberar_bloquear";
+                $strValue = "";
+				break;
+			}	
 			default: {
 				$nomeRotina = "";    
                 $urlRotina = "";

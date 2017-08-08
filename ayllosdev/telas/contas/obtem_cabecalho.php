@@ -284,11 +284,11 @@
 					$urlRotina  = "impressoes"; 				
 					break;
 				}
-				case "DESABILITAR OPERACOES": {
-					$nomeRotina = "Desabilitar Operações"; 
-					$urlRotina  = "liberar_bloquear";
-					break;
-				}				
+//				case "DESABILITAR OPERACOES": {
+//					$nomeRotina = "Desabilitar Operações"; 
+//					$urlRotina  = "liberar_bloquear";
+//					break;
+//				}				
 				default: {		
 					$nomeRotina = "";    
 					$urlRotina  = "";    				 
@@ -391,11 +391,11 @@
 					$urlRotina = "imunidade_tributaria";
 					break;
 				}
-				case "DESABILITAR OPERACOES": {
-					$nomeRotina = "Desabilitar Operações"; 
-					$urlRotina  = "liberar_bloquear";
-					break;
-				}				
+//				case "DESABILITAR OPERACOES": {
+//					$nomeRotina = "Desabilitar Operações"; 
+//					$urlRotina  = "liberar_bloquear";
+//					break;
+//				}				
 				case "FINANCEIRO-BANCO": { 
 					$nomeRotina = "Banco"; 
 					$urlRotina  = "banco"; 				

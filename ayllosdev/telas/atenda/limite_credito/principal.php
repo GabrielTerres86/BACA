@@ -148,8 +148,25 @@
 	$dslimpro = getByTagName($limite,"dslimpro");	
 	//$dsobserv = removeCaracteresInvalidos($dsobserv);
 	
-	include ("form_principal.php");
+	$xml  = "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA", "LIM_ULTIMA_MAJ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjMaj = getObjectXML($xmlResult);
 	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjMaj->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObjMaj->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	}
+	
+	$majora = $xmlObjMaj->roottag->tags[0]->tags[0]->tags;
+	
+	$dtultmaj = getByTagName($majora,"dtultmaj");	
+	
+	include ("form_principal.php");
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

@@ -44,32 +44,41 @@
 	}
 	
 	// Monta o xml de requisição
-	$xmlGetAlteracoes  = "";
-	$xmlGetAlteracoes .= "<Root>";
-	$xmlGetAlteracoes .= "	<Cabecalho>";
-	$xmlGetAlteracoes .= "		<Bo>b1wgen0019.p</Bo>";
-	$xmlGetAlteracoes .= "		<Proc>obtem-ultimas-alteracoes</Proc>";
-	$xmlGetAlteracoes .= "	</Cabecalho>";
-	$xmlGetAlteracoes .= "	<Dados>";
-	$xmlGetAlteracoes .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlGetAlteracoes .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-	$xmlGetAlteracoes .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlGetAlteracoes .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlGetAlteracoes .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-	$xmlGetAlteracoes .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xmlGetAlteracoes .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlGetAlteracoes .= "		<idseqttl>1</idseqttl>";
-	$xmlGetAlteracoes .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xmlGetAlteracoes .= "		<nrctrlim>0</nrctrlim>";
-	$xmlGetAlteracoes .= "	</Dados>";
-	$xmlGetAlteracoes .= "</Root>";
+	//$xmlGetAlteracoes  = "";
+	//$xmlGetAlteracoes .= "<Root>";
+	//$xmlGetAlteracoes .= "	<Cabecalho>";
+	//$xmlGetAlteracoes .= "		<Bo>b1wgen0019.p</Bo>";
+	//$xmlGetAlteracoes .= "		<Proc>obtem-ultimas-alteracoes</Proc>";
+	//$xmlGetAlteracoes .= "	</Cabecalho>";
+	//$xmlGetAlteracoes .= "	<Dados>";
+	//$xmlGetAlteracoes .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	//$xmlGetAlteracoes .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+	//$xmlGetAlteracoes .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+	//$xmlGetAlteracoes .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+	//$xmlGetAlteracoes .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+	//$xmlGetAlteracoes .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
+	//$xmlGetAlteracoes .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	//$xmlGetAlteracoes .= "		<idseqttl>1</idseqttl>";
+	//$xmlGetAlteracoes .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	//$xmlGetAlteracoes .= "		<nrctrlim>0</nrctrlim>";
+	//$xmlGetAlteracoes .= "	</Dados>";
+	//$xmlGetAlteracoes .= "</Root>";
 		
 	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlGetAlteracoes);
+	//$xmlResult = getDataXML($xmlGetAlteracoes);
 	
 	// Cria objeto para classe de tratamento de XML
-	$xmlObjAlteracoes = getObjectXML($xmlResult);
+	//$xmlObjAlteracoes = getObjectXML($xmlResult);
 	
+	$xml  = "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA", "LIM_ULTIMAS_ALT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjAlteracoes = getObjectXML($xmlResult);
+
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjAlteracoes->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjAlteracoes->roottag->tags[0]->tags[0]->tags[4]->cdata);

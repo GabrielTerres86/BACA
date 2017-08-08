@@ -92,6 +92,7 @@
     $dshorsit = (isset($_POST['dshorsit'])) ? $_POST['dshorsit'] : '';
     $nrlatitu = (isset($_POST['nrlatitu'])) ? $_POST['nrlatitu'] : '';
     $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';
+	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
         exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -177,9 +178,7 @@
     $xml .= "   <dshorsit><![CDATA[".utf8_decode($dshorsit)."]]></dshorsit>";
     $xml .= "   <nrlatitu>".$nrlatitu."</nrlatitu>";
     $xml .= "   <nrlongit>".$nrlongit."</nrlongit>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
-
+	
 	if ($cddopcao == 'B') { // Cadastramento de Caixa
         $nmdeacao = 'CADPAC_CAIXA';
         $dsmensag = 'Caixa gravado com sucesso!';
@@ -190,10 +189,14 @@
         $nmdeacao = 'CADPAC_DADOS_SITE';
         $dsmensag = 'Dados gravados com sucesso!';
 	} else { // Inclusao/Alteracao
+	    $xml .= "   <flmajora>".$flmajora."</flmajora>";
         $nmdeacao = 'CADPAC_GRAVA';
         $dsmensag = 'PA '.($cddopcao == 'I' ? 'inclu&iacute;do' : 'alterado').' com sucesso!';
     }
 
+	$xml .= " </Dados>";
+    $xml .= "</Root>";
+	
     $xmlResult = mensageria($xml, "TELA_CADPAC", $nmdeacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
 

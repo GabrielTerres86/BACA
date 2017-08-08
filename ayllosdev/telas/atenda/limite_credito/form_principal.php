@@ -62,6 +62,10 @@
 		
 		<label for="dssitlli"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>	
 		<input id="dssitlli" name="dssitlli" type="text" value="<?php echo $dssitlli.(trim($dsmotivo) == "" ? "" : " - ".$dsmotivo); ?>" />	
+
+		<label for="dtultmaj"><? echo utf8ToHtml('Ult. Majora&ccedil;&atilde;o:') ?></label>	
+		<input id="dtultmaj" name="dtultmaj" type="text" value="<?php echo $dtultmaj; ?>" />
+
 		<br />
 
 		<label for="nmoperad"><? echo utf8ToHtml('Operador(a):') ?></label>	
