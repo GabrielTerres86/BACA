@@ -20,6 +20,7 @@
  * 011: [29/07/2015] Lucas Ranghetti (CECRED): Alterado logica rotina de procuradores para $cabecalho[6]->cdata > 1(inpessoa > 1).
  * 012: [01/09/2015] Gabriel (RKAM)       : Reformulacao Cadastral. 
  * 013: [14/09/2016] Kelvin (Cecred)      : Ajuste feito para resolver o problema relatado no chamado 506554. 
+ * 014: [08/08/2017] Heitor (Mouts)       : Implementacao da melhoria 438.
  */ 
 
 	session_start();	

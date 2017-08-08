@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Julho/2017
  * OBJETIVO     : Formulário da rotina Liberar/Bloquear da tela ATENDA
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */	
 ?>

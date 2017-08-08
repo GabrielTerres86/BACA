@@ -10,6 +10,7 @@
  *                14/07/2016 - Correcao no acesso ao retorno dos dados XML. SD 479874. Carlos R.
  *				  27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado
  *                             (Lombardi).
+ *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */	
 	session_start();

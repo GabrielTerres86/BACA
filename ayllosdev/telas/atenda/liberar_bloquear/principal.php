@@ -10,6 +10,8 @@
 							   
 				  27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado.
 							   Rotinas convertidas para o oracle (Lombardi)
+
+                  08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */	
 ?>

@@ -4,6 +4,7 @@
  * CRIAÇÃO      : Jaison
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Rotina para buscar os dados
+ * ALTERACOES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  */
 
     session_start();

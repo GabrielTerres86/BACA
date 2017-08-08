@@ -7,6 +7,8 @@
  * --------------
  * ALTERAÇÕES   : 09/02/2017 - Adicionar a funcao utf8_decode para as informacoes do cheque 
  * --------------			   conforme ja faz pro endereço (Lucas Ranghetti #610360)
+ *
+ *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *  
  */
     session_start();

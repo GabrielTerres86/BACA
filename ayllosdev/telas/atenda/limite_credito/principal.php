@@ -51,6 +51,9 @@
 	//***																   ***//
 	//***    		  20/07/2015 - Ajuste no tratamento de caracteres 	   ***//
 	//***                         (Kelvin)	   							   ***//
+	//***                                                                  ***//
+	//***             08/08/2017 - Implementacao da melhoria 438.          ***//
+	//***                          Heitor (Mouts).                         ***//
 	//************************************************************************//
 	
 	session_start();

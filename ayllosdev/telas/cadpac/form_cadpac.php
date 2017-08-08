@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Formulario do cadastro.
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */	
 ?>

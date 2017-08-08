@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 05/01/2016 - Adicionar campo para Liberar credito pre-aprovado, flgcrdpa (Anderson)
  *				  27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado (Lombardi)
  *                03/05/2017 - Ajuste na label do campo flgrenli para o projeto 300. (Lombardi)
+ *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */	
 ?>

@@ -101,6 +101,8 @@
 				18/08/2016  - adicionado parametro labelRot na chamada da rotina acessaRotina
 
                  26/04/2017 - Incluido a tag textarea para mostrar o conteudo da mensagem de alerta (Rafael Monteiro).
+				 
+				 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
 
  * ********************************************************************************** */
 

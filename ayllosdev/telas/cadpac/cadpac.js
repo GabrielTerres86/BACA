@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Biblioteca de funções da tela CADPAC
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */
 $(document).ready(function() {

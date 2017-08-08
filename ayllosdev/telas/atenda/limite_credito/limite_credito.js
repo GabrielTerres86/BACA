@@ -34,6 +34,7 @@
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
+ * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
  */
  
 var callafterLimiteCred = '';

@@ -57,6 +57,8 @@
 			 21/03/2017 - Ajuste para incluir o controle mt_rand na chamada do atenda.css (Adriano - SD 603451).
 
 			 28/03/2017 - Ajuste para incluir o controle mt_rand na chamada do funcoes.js (Jonata - RKAM / M294).   
+			 
+			 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
 
 
 //**************************************************************************/

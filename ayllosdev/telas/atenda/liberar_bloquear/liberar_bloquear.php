@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Janeiro/2015
  * OBJETIVO     : Mostrar rotina de Liberar/Bloquear da tela ATENDA
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  * --------------
  */	
 ?>
