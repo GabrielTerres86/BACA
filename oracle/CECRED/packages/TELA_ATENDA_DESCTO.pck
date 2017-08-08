@@ -2063,7 +2063,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
     Objetivo  : Rotina para manter os borderos de desconto de cheque
 
-    Alteracoes: -----
+    Alteracoes: 02/08/2017 - Ajuste na busca do campo nrcpfcgc do emitente quando popula 
+                             a tabela vr_tab_cheques  PRJ300 - Desconto de Cheques (Lombardi)
   ..............................................................................*/
 	
     -- Variavel de criticas
@@ -2097,6 +2098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		vr_nrremret NUMBER;
 		vr_nrborder NUMBER := pr_nrborder;
 		vr_nrdolote NUMBER := pr_nrdolote;
+    vr_nrcpfcgc NUMBER;
 		
 		vr_tab_cheques dscc0001.typ_tab_cheques;
 		vr_index_cheque NUMBER;
@@ -2105,6 +2107,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 		vr_ret_all_cheques gene0002.typ_split;		
 		vr_ret_all_cheques_exc gene0002.typ_split;
 		
+    --> Buscar cadastro do cooperado emitente
+    CURSOR cr_crapass (pr_cdagectl IN crapcop.cdagectl%TYPE,
+                       pr_nrdconta IN crapass.nrdconta%TYPE)IS
+      SELECT ass.inpessoa
+            ,ass.cdcooper
+            ,ass.nrcpfcgc
+        FROM crapass ass
+            ,crapcop cop
+       WHERE cop.cdagectl = pr_cdagectl
+         AND ass.cdcooper = cop.cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass  cr_crapass%ROWTYPE;
+      
+    --> Buscar primeiro titular da conta
+    CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT ttl.nmtalttl
+            ,ttl.nrcpfcgc
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl = 1;
+    rw_crapttl  cr_crapttl%ROWTYPE;
+    
 		-- Busca informações do emitente
 		CURSOR cr_crapcec (pr_cdcooper IN crapcec.cdcooper%TYPE
 											,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
@@ -2274,6 +2300,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 					vr_nrctachq := to_number(SUBSTR(vr_dsdocmc7,20,10)); 
 				END IF;
 				
+        IF vr_cdbanchq = 85 THEN
+          
+          -- Buscar cadastro do cooperado emitente
+          OPEN cr_crapass (pr_cdagectl => vr_cdagechq
+                          ,pr_nrdconta => vr_nrctachq);
+          FETCH cr_crapass INTO rw_crapass;
+          
+          -- Se encontrar
+          IF cr_crapass%FOUND THEN
+          
+            -- Fechar cursor
+            CLOSE cr_crapass;
+            -- Pessoa Física
+            IF rw_crapass.inpessoa = 1 THEN
+              
+              OPEN cr_crapttl (pr_cdcooper => rw_crapass.cdcooper
+                              ,pr_nrdconta => vr_nrctachq);
+              FETCH cr_crapttl INTO rw_crapttl;
+              -- Se encontrar
+              IF cr_crapttl%FOUND THEN
+              -- Fechar cursor
+              CLOSE cr_crapttl;
+                vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
+              ELSE
+                -- Fechar cursor
+                CLOSE cr_crapttl;
+                -- Atribui crítica
+                vr_cdcritic := 0;
+                vr_dscritic := 'Emitente não cadastrado';
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+              END IF;
+              
+            ELSE -- Pessoa Juridica
+            
+              vr_nrcpfcgc := rw_crapass.nrcpfcgc;
+            
+            END IF;
+            
+          ELSE
+            -- Fechar cursor
+            CLOSE cr_crapass;
+            -- Atribui crítica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Emitente não cadastrado';
+            -- Levantar exceção
+            RAISE vr_exc_erro;
+          END IF;
+        ELSE
+          
 				-- Verificar se possui emitente cadastrado
 				OPEN cr_crapcec(pr_cdcooper => vr_cdcooper
 											 ,pr_cdcmpchq => vr_cdcmpchq
@@ -2281,21 +2357,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 											 ,pr_cdagechq => vr_cdagechq
 											 ,pr_nrctachq => vr_nrctachq);
 				FETCH cr_crapcec INTO rw_crapcec;
-					
-				-- Se não encontrou emitente 
-				IF cr_crapcec%NOTFOUND AND
-           vr_cdbanchq <> 85 THEN
-					-- Fechar cursor
-					CLOSE cr_crapcec;
+                  -- Se encontrou emitente
+                  IF cr_crapcec%FOUND THEN
+            -- Fechar cursor
+            CLOSE cr_crapcec;
+                    vr_nrcpfcgc := rw_crapcec.nrcpfcgc;
+                  ELSE
+            -- Fechar cursor
+            CLOSE cr_crapcec;
 					-- Atribui crítica
 					vr_cdcritic := 0;
 					vr_dscritic := 'Emitente não cadastrado';
 					-- Levantar exceção
 					RAISE vr_exc_erro;
+          END IF;
+          
 				END IF;
-				
-				-- Fechar cursor
-				CLOSE cr_crapcec;
 				
 				-- Carrega as informações do cheque para o bordero
 				vr_index_cheque := vr_tab_cheques.count + 1;  
@@ -2314,7 +2391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 				vr_tab_cheques(vr_index_cheque).cdagechq := vr_cdagechq;
 				vr_tab_cheques(vr_index_cheque).nrctachq := vr_nrctachq;
 				vr_tab_cheques(vr_index_cheque).nrcheque := vr_nrcheque;
-				vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapcec.nrcpfcgc;
+                vr_tab_cheques(vr_index_cheque).nrcpfcgc := vr_nrcpfcgc;
 				vr_tab_cheques(vr_index_cheque).nrremret := vr_nrremret;
 
 			END LOOP;	

@@ -1438,6 +1438,7 @@ PROCEDURE valida-deposito-com-captura:
                        crapcst.nrcheque = p-nro-cheque     AND
                        crapcst.dtdevolu = ?                AND
 					   crapcst.nrborder = 0                AND
+					   crapcst.dtlibera > crapdat.dtmvtoan AND
                        crapcst.insitchq = 0 /* Nao processado */
                        NO-LOCK NO-ERROR.
   
@@ -2358,6 +2359,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                        crapcst.nrcheque = p-nro-cheque     AND
                        crapcst.dtdevolu = ?                AND
 					   crapcst.nrborder = 0                AND 
+					   crapcst.dtlibera > crapdat.dtmvtoan AND
                        crapcst.insitchq = 0 /* Nao processado */
                        NO-LOCK NO-ERROR.
    
@@ -3420,6 +3422,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
                        crapcst.nrcheque = p-nro-cheque     AND
                        crapcst.dtdevolu = ?                AND
 					   crapcst.nrborder = 0                AND 
+					   crapcst.dtlibera > crapdat.dtmvtoan AND
                        crapcst.insitchq = 0 /* Nao processado */
                        NO-LOCK NO-ERROR.
    
