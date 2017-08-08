@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Jaison
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Rotina para buscar os dados
+ * --------------
+ * ALTERAÇÕES   : 08/08/2017 - Adicionado busca de novo campo flgutcrm da tela. (Reinert - Projeto 339)
+ * --------------
  */
 
     session_start();
@@ -59,6 +62,7 @@
         echo "$('#cdagedoc', '#frmCadpac').val('".getByTagName($registros->tags,'CDAGEDOC')."');";
         echo "$('#flgdsede', '#frmCadpac').val('".getByTagName($registros->tags,'FLGDSEDE')."');";
         echo "$('#cdagepac', '#frmCadpac').val('".getByTagName($registros->tags,'CDAGEPAC')."');";
+        echo "$('#flgutcrm', '#frmCadpac').val('".getByTagName($registros->tags,'FLGUTCRM')."');";
         echo "$('#dsendcop', '#frmCadpac').val('".getByTagName($registros->tags,'DSENDCOP')."');";
         echo "$('#nrendere', '#frmCadpac').val('".getByTagName($registros->tags,'NRENDERE')."');";
         echo "$('#nmbairro', '#frmCadpac').val('".getByTagName($registros->tags,'NMBAIRRO')."');";

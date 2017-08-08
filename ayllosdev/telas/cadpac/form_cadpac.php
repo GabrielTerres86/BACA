@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Formulario do cadastro.
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 08/08/2017 - Adicionado novo campo Habilitar Acesso CRM. (Reinert - Projeto 339)
  * --------------
  */	
 ?>
@@ -151,8 +151,13 @@
                             <option value="0">NAO</option>
                             <option value="1">SIM</option>
                         </select>
-                        <label for="cdagepac">Agência do PA:</label>
+                        <label for="cdagepac">Agência do PA:</label>                        
                         <input type="text" id="cdagepac" name="cdagepac" />
+						<label for="flgutcrm">Habilitar Acesso CRM:</label>
+                        <select id="flgutcrm" name="flgutcrm">
+                            <option value="0">N&Atilde;O</option>
+                            <option value="1">SIM</option>
+                        </select>
                         <br clear="all" />
                         <br clear="all" />
                     </div>

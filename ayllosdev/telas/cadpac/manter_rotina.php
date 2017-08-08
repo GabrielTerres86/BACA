@@ -7,7 +7,8 @@
  * --------------
  * ALTERAÇÕES   : 09/02/2017 - Adicionar a funcao utf8_decode para as informacoes do cheque 
  * --------------			   conforme ja faz pro endereço (Lucas Ranghetti #610360)
- *  
+ *
+ *				  08/08/2017 - Adicionado novo parametro flgutcrm para a ação CADPAC_GRAVA. (Reinert - Projeto 339)
  */
     session_start();
 	require_once('../../includes/config.php');
@@ -36,6 +37,7 @@
     $cdagedoc = (isset($_POST['cdagedoc'])) ? $_POST['cdagedoc'] : '';
     $flgdsede = (isset($_POST['flgdsede'])) ? $_POST['flgdsede'] : '';
     $cdagepac = (isset($_POST['cdagepac'])) ? $_POST['cdagepac'] : '';
+    $flgutcrm = (isset($_POST['flgutcrm'])) ? $_POST['flgutcrm'] : '';
     $dsendcop = (isset($_POST['dsendcop'])) ? $_POST['dsendcop'] : '';
     $nrendere = (isset($_POST['nrendere'])) ? $_POST['nrendere'] : '';
     $nmbairro = (isset($_POST['nmbairro'])) ? $_POST['nmbairro'] : '';
@@ -123,6 +125,7 @@
     $xml .= "   <cdagedoc>".$cdagedoc."</cdagedoc>";
     $xml .= "   <flgdsede>".$flgdsede."</flgdsede>";
     $xml .= "   <cdagepac>".$cdagepac."</cdagepac>";
+    $xml .= "   <flgutcrm>".$flgutcrm."</flgutcrm>";
     $xml .= "   <dsendcop>".utf8_decode($dsendcop)."</dsendcop>";
     $xml .= "   <nrendere>".$nrendere."</nrendere>";
     $xml .= "   <nmbairro>".utf8_decode($nmbairro)."</nmbairro>";
