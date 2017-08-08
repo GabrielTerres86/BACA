@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 13/06/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -69,6 +69,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             13/06/2017 - Tratar para abrir chamado quando ocorrer algum erro no 
   --                          processamento da conciliacao do cartao Bancoob/Cabal (Lucas Ranghetti #680746)
+  --             
+  --             08/08/2017 - #724754 Ajuste no procedimento pc_crps672 para filtrar apenas as cooperativas 
+  --                          ativas para não solicitar relatórios para as inativas (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6722,7 +6725,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               ,cop.dsdircop
               ,cop.cdcooper
           FROM crapcop cop
-          WHERE cop.cdcooper <> 3 ;
+         WHERE cop.cdcooper <> 3
+           AND cop.flgativo = 1;
       rw_crapcop_todas cr_crapcop_todas%ROWTYPE;
 
      -- Cursor para retornar cooperativa com base na conta da central
