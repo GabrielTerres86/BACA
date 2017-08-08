@@ -1178,9 +1178,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           FROM crawepr wpr2
          WHERE wpr2.cdcooper = pr_cdcooper
            AND wpr2.nrdconta = pr_nrdconta
-           AND wpr2.nrctremp = pr_nrctremp
-           AND wpr2.cdcooper = pr_cdcooper
-           AND wpr2.nrdconta = pr_nrdconta
            AND pr_nrctremp -- Contrato registro em loop
                IN (wpr2.nrctrliq##1
                   ,wpr2.nrctrliq##2
@@ -3170,7 +3167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         CLOSE cr_dtliquid;
       
         -- Busca atraso
-        OPEN cr_crapris(rw_crapepr.nrctremp, add_months(rw_crapdat.dtmvtolt,-vr_qthisemp));
+        OPEN cr_crapris(rw_crapepr.nrctremp, rw_crapepr.dtmvtolt);
         FETCH cr_crapris
           INTO vr_qtdiaatr;
         CLOSE cr_crapris;
@@ -3430,7 +3427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
        
       IF pr_rw_crapavt.cdsexcto = 1 THEN 
         vr_obj_generico.put('sexo' ,'MASCULINO');
-      ELSE
+      ELSIF pr_rw_crapavt.cdsexcto = 2 THEN 
         vr_obj_generico.put('sexo' ,'FEMININO');
       END IF;  
 
@@ -3439,7 +3436,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Se o Documento for RG
       IF pr_rw_crapavt.tpdocava = 'CI' THEN
         vr_obj_generico.put('rg'  , pr_rw_crapavt.nrdocava);
-        vr_obj_generico.put('ufRg', pr_rw_crapavt.cdufddoc);
+        IF TRIM(pr_rw_crapavt.cdufddoc) IS NOT NULL THEN 
+          vr_obj_generico.put('ufRg', pr_rw_crapavt.cdufddoc); 
+        END IF;  
       END IF;
       
       IF TRIM(replace(pr_rw_crapavt.nmmaecto,'.','')) IS NOT NULL THEN
@@ -3472,11 +3471,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       ELSE 
         vr_obj_generic2.put('especie', 'COMERCIAL'); 
       END IF;
-      IF SUBSTR(pr_rw_crapavt.nrfonres,1,1) < 8 THEN 
+      /*IF SUBSTR(pr_rw_crapavt.nrfonres,1,1) < 8 THEN 
         vr_obj_generic2.put('tipo', 'FIXO');
       ELSE
         vr_obj_generic2.put('tipo', 'MOVEL');
-      END IF;
+      END IF;*/
       vr_obj_generic2.put('numero', replace(replace(replace(pr_rw_crapavt.nrfonres,' ',''),'-',''),'.','')); 
       -- Adicionar telefone na lista
       vr_lst_generic2.append(vr_obj_generic2.to_json_value());
@@ -3539,12 +3538,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
        END IF;
 
        -- Habilitação Menor
-       vr_obj_generic2.put('reponsabiLegal', pr_rw_crapavt.inhabmen);
-       
-       -- Data Emancipação
-       IF pr_rw_crapavt.dthabmen IS NOT NULL THEN 
-         vr_obj_generic2.put('dataEmancipa' ,fn_Data_ibra_motor(pr_rw_crapavt.dthabmen));
-       END IF;
+       IF pr_rw_crapavt.inhabmen > 0 THEN 
+         vr_obj_generic2.put('reponsabiLegal', pr_rw_crapavt.inhabmen);
+         
+         -- Data Emancipação
+         IF pr_rw_crapavt.dthabmen IS NOT NULL THEN 
+           vr_obj_generic2.put('dataEmancipa' ,fn_Data_ibra_motor(pr_rw_crapavt.dthabmen));
+         END IF;
+       END IF;  
        
        -- Data de Vigência Procuração
        IF pr_rw_crapavt.dtvalida IS NOT NULL THEN 
@@ -3557,7 +3558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
        END IF;  
        
        -- Percentual Procuração
-       IF pr_rw_crapavt.persocio IS NOT NULL THEN 
+       IF pr_rw_crapavt.persocio > 0 THEN 
          vr_obj_generic2.put('valorPercentualProcuracao' ,Este0001.fn_Decimal_Ibra(pr_rw_crapavt.persocio));
        END IF;
 
