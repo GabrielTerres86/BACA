@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 13/11/2015
 
    Dados referentes ao programa:
 
@@ -89,9 +89,6 @@
 			   13/11/2015 - Inclusao de verificacao estado de crise. 
                             (Jaison/Andrino)
                             
-			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
 
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -1610,26 +1607,8 @@ PROCEDURE atualiza-outros:
                          NO-LOCK NO-ERROR.
 
                     IF   AVAIL crapass   THEN
-					   DO:
-				          ASSIGN c-nome-titular1 = crapass.nmprimtl.
-
-						  IF crapass.inpessoa = 1 THEN
-						     DO:
-								 FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-								                     WHERE crapttl.cdcooper = crapass.cdcooper AND
-												           crapttl.nrdconta = crapass.nrdconta AND
-							 					           crapttl.idseqttl = 2
-							 						       NO-LOCK:
-
-								 
-								    ASSIGN c-nome-titular2 = crapttl.nmextttl.
-
-								 END.
-
-							 END.
-
-					   END.
-
+                         ASSIGN c-nome-titular1 = crapass.nmprimtl
+                                c-nome-titular2 = crapass.nmsegntl.
                  END.
              ELSE  
                  DO:

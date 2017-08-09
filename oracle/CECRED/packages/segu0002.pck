@@ -174,23 +174,18 @@ END SEGU0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
 
-  /*-------------------------------------------------------------------------------------------------------------
-  
-    Programa : SEGU0002
-    Sistema  : Procedimentos para Seguros
-    Sigla    : CRED
-    Autor    : Marcos Martini - Supero
-    Data     : Junho/2016.                
-  
-   Frequencia: -----                                                        Última alteração: 18/04/2017
-   Objetivo  : Procedimentos para integracao de Seguros via WS
-  
-   Alterações: 18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
-
-  -------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : SEGU0002
+  --  Sistema  : Procedimentos para Seguros
+  --  Sigla    : CRED
+  --  Autor    : Marcos Martini - Supero
+  --  Data     : Junho/2016.                
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Procedimentos para integracao de Seguros via WS
+  --
+  ---------------------------------------------------------------------------------------------------------------
   
   /* Busca da Cooperativa conforme cdagectl */
   CURSOR cr_crapcop(pr_cdagectl crapcop.cdagectl%TYPE) IS
@@ -695,7 +690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
        Sistema : Seguros
        Sigla   : CRED
        Autor   : Marcos Martini - Supero
-       Data    : Junho/2016.                    Ultima atualizacao: 18/04/2017
+       Data    : Junho/2016.                    Ultima atualizacao: 10/10/2016
 
        Dados referentes ao programa:
 
@@ -706,10 +701,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
 
        Alteracoes: 10/10/2016 - P333.1 - Inclusao da TAG de pessoa politicamente exposta
                                 e dos outros rendimentos ao salário dos associados (Marcos-Supero)
-
-				   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                    crapass, crapttl, crapjur 
-							   (Adriano - P339).
 
     ..............................................................................*/
     DECLARE
@@ -742,6 +733,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
           FROM crapttl 
          WHERE cdcooper = pr_cdcooper 
            AND nrdconta = pr_nrdconta --> Oriundo da requisicao
+           AND flgsittl = 1  --> Somente ativos
          ORDER BY idseqttl;
       
       -- BUsca dados de conjugue

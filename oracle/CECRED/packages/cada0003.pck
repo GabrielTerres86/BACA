@@ -473,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 25/04/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 17/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -534,10 +534,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          (Adriano - SD 614408).
   --
   --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
-  --
-  --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  --		                  crapass, crapttl, crapjur 
-  -- 						 (Adriano - P339).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -1707,6 +1703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         SELECT inpessoa,
                nrcpfcgc,
                cdnacion,
+               dtnasttl,
                dsproftl,
                nmprimtl
           FROM crapass
@@ -1923,13 +1920,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            inadimpl,
            inedvmto,
            inlbacen,
+           dsregcas,
+           cdoedrsp,
+           cdufdrsp,
+           nmrespon,
+           inhabmen,
+           nrcpfrsp,
+           nrdocrsp,
+           tpdocrsp,
+           dtemdrsp,
+           qtdepend,
+           dsendcol,
            iniscpmf,
+           cdoedttl,
            tpvincul,
+           nrfonemp,
            dtcnscpf,
            cdsitcpf,
            inccfcop,
            dtccfcop,
            indrisco,
+           dsdemail,
            dtcnsscr,
            nrnotatl,
            inrisctl,
@@ -1980,13 +1991,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                inadimpl,
                inedvmto,
                inlbacen,
+               dsregcas,
+               cdoedrsp,
+               cdufdrsp,
+               nmrespon,
+               inhabmen,
+               nrcpfrsp,
+               nrdocrsp,
+               tpdocrsp,
+               dtemdrsp,
+               qtdepend,
+               dsendcol,
                iniscpmf,
+               cdoedttl,
                tpvincul,
+               nrfonemp,
                dtcnscpf,
                cdsitcpf,
                inccfcop,
                dtccfcop,
                indrisco,
+               dsdemail,
                dtcnsscr,
                nrnotatl,
                inrisctl,
@@ -2340,14 +2365,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              nrcpfemp,
              dtadmemp,
              cdnvlcgo,
+             nrfonemp,
              vlsalari,
+             dtsalari,
              indnivel,
              dtcnscpf,
              cdsitcpf,
              inhabmen,
              dthabmen,
+             nrcertif,
              dtdememp,
              cdturnos,
+             tprendim,
+             vlrendim,
              tpdrendi##1,
              tpdrendi##2,
              tpdrendi##3,
@@ -2400,14 +2430,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  nrcpfemp,
                  dtadmemp,
                  cdnvlcgo,
+                 nrfonemp,
                  vlsalari,
+                 dtsalari,
                  indnivel,
                  dtcnscpf,
                  cdsitcpf,
                  inhabmen,
                  dthabmen,
+                 nrcertif,
                  dtdememp,
                  cdturnos,
+                 tprendim,
+                 vlrendim,
                  tpdrendi##1,
                  tpdrendi##2,
                  tpdrendi##3,
@@ -2517,6 +2552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              qtfilial,
              qtfuncio,
              nmtalttl,
+             vlcapsoc,
              vlcaprea,
              dtregemp,
              nrregemp,
@@ -2545,6 +2581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  qtfilial,
                  qtfuncio,
                  nmtalttl,
+                 vlcapsoc,
                  vlcaprea,
                  dtregemp,
                  nrregemp,

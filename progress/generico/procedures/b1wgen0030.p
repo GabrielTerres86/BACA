@@ -488,11 +488,7 @@
                05/06/2017 - Verificacao de titulo baixado para gravar restricao
                             (Tiago/Ademir #678289)
 
-               12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-			 		       (Adriano - P339). 
- 
-               08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
+			   08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -10100,7 +10096,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                 END.
             
             IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-                 rel_txnrdcid = crapass.tpdocptl + ": " + SUBSTR(TRIM(crapass.nrdocptl),1,15).
+                 rel_txnrdcid = crapass.tpdocptl + ": " + crapass.nrdocptl.
             ELSE 
                  rel_txnrdcid = "".  
 

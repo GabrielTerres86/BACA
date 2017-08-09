@@ -2,7 +2,7 @@
 
     Programa: b1wgen0063.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 12/06/2017
+    Data    : Marco/2010                   Ultima atualizacao: 08/01/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSOES
 
@@ -47,10 +47,6 @@
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                              
                 08/01/2016 - #350828 Criacao da tela PEP (Carlos)
-
-				12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-			 		        (Adriano - P339).
 
 .......................................................................................*/
 
@@ -557,7 +553,7 @@ PROCEDURE Busca_Abertura_PF:
                                                   "zzzz,zzz,9"))
             tt-abert-psfis.nrcpfcgc = STRING(STRING(crapttl.nrcpfcgc,
                                          "99999999999"),"xxx.xxx.xxx-xx")
-            tt-abert-psfis.nrdocmto = TRIM(STRING(crapttl.nrdocttl,"x(40)")) +
+            tt-abert-psfis.nrdocmto = TRIM(STRING(crapttl.nrdocttl,"x(11)")) +
                                       " " +
                                       TRIM(STRING(crapttl.cdoedttl,"x(05)")) +
                                       "/" + STRING(crapttl.cdufdttl,"!(02)").
@@ -628,7 +624,7 @@ PROCEDURE Busca_Abertura_PF:
                                                            "xxx.xxx.xxx-xx")
                            tt-abert-psfis.nrdocrep = TRIM(STRING
                                                          (crabttl.nrdocttl,
-                                                          "x(40)")) + " " +
+                                                          "x(11)")) + " " +
                                                     TRIM(STRING(
                                                         crabttl.cdoedttl,
                                                         "x(05)")) + "/" + 
@@ -648,7 +644,7 @@ PROCEDURE Busca_Abertura_PF:
                                                         "99999999999"),
                                                        "xxx.xxx.xxx-xx")
                        tt-abert-psfis.nrdocmto = TRIM(STRING(crapcrl.nridenti,
-                                                            "x(40)")) + " " +
+                                                            "x(11)")) + " " +
                                                 TRIM(STRING(crapcrl.dsorgemi,
                                                             "x(05)")) + "/" +
                                                 STRING(crapcrl.cdufiden,
@@ -682,7 +678,7 @@ PROCEDURE Busca_Abertura_PF:
                                                            "99999999999"),
                                                     "xxx.xxx.xxx-xx")
                     tt-abert-compf.nrdocmto = TRIM(STRING
-                                                  (crabttl.nrdocttl,"x(40)"))
+                                                  (crabttl.nrdocttl,"x(11)"))
                                              + " " +
                                              TRIM(STRING
                                                   (crabttl.cdoedttl,"x(05)"))
@@ -887,7 +883,7 @@ PROCEDURE Busca_Abertura_PJ:
                                                            "99999999999"),
                                                            "xxx.xxx.xxx-xx")
                            tt-abert-compj.nrdocmto = TRIM(STRING
-                                                    (crabass.nrdocptl,"x(40)"))
+                                                    (crabass.nrdocptl,"x(11)"))
                                                     + " " + 
                                                     TRIM(STRING
                                                     (crabass.cdoedptl,"x(05)"))
@@ -933,7 +929,7 @@ PROCEDURE Busca_Abertura_PJ:
                                                         "99999999999"),
                                                        "xxx.xxx.xxx-xx")
                        tt-abert-compj.nrdocmto = TRIM(STRING
-                                                   (crapavt.nrdocava,"x(40)"))
+                                                   (crapavt.nrdocava,"x(11)"))
                                                  + " " +
                                                  TRIM(STRING
                                                    (crapavt.cdoeddoc,"x(05)"))

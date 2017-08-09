@@ -67,11 +67,6 @@
                             de cheques de bancos que nao participam da COMPE
                             Utilizar apenas BANCO e FLAG ativo
                             (Douglas - Chamado 417655)
-
-			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
 .............................................................................*/                           
  
 DEF TEMP-TABLE w-compel                                                NO-UNDO
@@ -1628,25 +1623,8 @@ PROCEDURE atualiza-pagto-cheque-liberado:
                        NO-LOCK NO-ERROR.
     
     IF   AVAIL crapass   THEN
-	   DO: 
-          ASSIGN c-nome-titular1 = crapass.nmprimtl.
-    
-	      IF crapass.inpessoa = 1 THEN
-		     DO:
-			     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-				                    WHERE crapttl.cdcooper = crapass.cdcooper AND
-                                          crapttl.nrdconta = crapass.nrdconta AND
-                                          crapttl.idseqttl = 2 
-									      NO-LOCK:
-                
-				 
-				    ASSIGN c-nome-titular2 = crapttl.nmextttl.
-
-			     END.
-
-			 END.
-
-       END.
+         ASSIGN c-nome-titular1 = crapass.nmprimtl
+                c-nome-titular2 = crapass.nmsegntl.
        
     IF   flg_ci = YES   THEN
          ASSIGN aux_nrdconta = crapass.nrctainv.

@@ -107,7 +107,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                 ,pr_retxml   IN OUT CLOB              --> Arquivo de retorno do XML
                                 );
-
+  
   /* Imprime o demonstrativo do contrato de emprestimo pre-aprovado */
   PROCEDURE pc_gera_demonst_pre_aprovado(pr_cdcooper IN crawepr.cdcooper%TYPE --> Código da Cooperativa
                                         ,pr_cdagenci IN crawepr.nrdconta%TYPE --> Código da Agencia
@@ -201,45 +201,37 @@ END EMPR0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
 
-  /*---------------------------------------------------------------------------------------------------------------
-  
-    Programa : EMPR0003
-    Sistema  : Impressão de contratos de emprestimos
-    Sigla    : EMPR
-    Autor    : Andrino Carlos de Souza Junior (RKAM)
-    Data     : agosto/2014.                   Ultima atualizacao: 12/06/2017
-  
-   Dados referentes ao programa:
-  
-   Frequencia: -----
-   Objetivo  : Agrupar rotinas para impressão de contratos de emprestimos
-  
-   Alteracoes: 05/11/2014 - Incluir temp-table com os intevenientes garantidores (Andrino-RKAM)
-  
-               05/01/2015 - (Chamado 229247) - Novo relatorio incluido nos contratos de emprestimos (Tiago Castro - RKAM).
-  
-               03/08/2015 - Incluir verificação para que se o documento for de portabilidade então é usado ou o relatório 
-                            'crrl100_18_portab' ou 'crrl100_05_portab'.(Lombardi)
-  
-               26/11/2015 - Adicionado nova validacao de origem "MICROCREDITO PNMPO BNDES CECRED" na procedure 
-                            pc_imprime_contrato_xml conforme solicitado no chamado 360165 (Kelvin)                
-  
-               20/01/2016 - Adicionei o parametro pr_idorigem na chamada da procedure pc_imprime_emprestimos_cet
-                            dentro da procedure pc_imprime_contrato_xml.
-                            (Carlos Rafael Tanholi - Projeto 261 Pré-aprovado fase 2)                          
-  
-               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
-                            desta package.(Carlos Rafael Tanholi).
-  
-               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
-			   12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-							(Adriano - P339).
-
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : EMPR0003
+  --  Sistema  : Impressão de contratos de emprestimos
+  --  Sigla    : EMPR
+  --  Autor    : Andrino Carlos de Souza Junior (RKAM)
+  --  Data     : agosto/2014.                   Ultima atualizacao: 20/06/2016
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Agrupar rotinas para impressão de contratos de emprestimos
+  --
+  -- Alteracoes: 05/11/2014 - Incluir temp-table com os intevenientes garantidores (Andrino-RKAM)
+  --
+  --             05/01/2015 - (Chamado 229247) - Novo relatorio incluido nos contratos de emprestimos (Tiago Castro - RKAM).
+  --
+  --             03/08/2015 - Incluir verificação para que se o documento for de portabilidade então é usado ou o relatório 
+  --                          'crrl100_18_portab' ou 'crrl100_05_portab'.(Lombardi)
+  --
+  --             26/11/2015 - Adicionado nova validacao de origem "MICROCREDITO PNMPO BNDES CECRED" na procedure 
+  --                          pc_imprime_contrato_xml conforme solicitado no chamado 360165 (Kelvin)                
+  --
+  --             20/01/2016 - Adicionei o parametro pr_idorigem na chamada da procedure pc_imprime_emprestimos_cet
+  --                          dentro da procedure pc_imprime_contrato_xml.
+  --                          (Carlos Rafael Tanholi - Projeto 261 Pré-aprovado fase 2)                          
+  --
+  --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
+  --                          desta package.(Carlos Rafael Tanholi).
+  --
+  ---------------------------------------------------------------------------------------------------------------
 
 
    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -341,7 +333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Castro (RKAM)
-       Data    : Agosto/2014.                         Ultima atualizacao: 12/06/2017
+       Data    : Agosto/2014.                         Ultima atualizacao:
 
        Dados referentes ao programa:
 
@@ -350,11 +342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
                    parte do contrato sendo CONTRATANTE OU INTERVENIENTE ANUENTE,
                    retorna os dados do interveniente e conjuge
 
-       Alteracoes: 08/05/2017 - Case When para buscar CPF e CNPJ atraves do tamanho da
-
-                   12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-						    	(Adriano - P339).
+       Alteracoes:
 
     ............................................................................. */
 
@@ -365,13 +353,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     SELECT  'Nome Proprietário (interveniente garantidor): '||crapass.nmprimtl nmprimtl,
             'Dados pessoais: '||decode(crapass.inpessoa,1,'CPF','CNPJ')||
             ' n.º '||gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa)||
-            decode(crapass.inpessoa,1,' RG n.º '||SUBSTR(TRIM(crapass.nrdocptl),1,15)||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
+            decode(crapass.inpessoa,1,' RG n.º '||crapass.nrdocptl||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
                                       gnetcvl.rsestcvl,'') dados_pessoais,
             'Endereço: '||crapenc.dsendere||', nº '||crapenc.nrendere||', bairro '||crapenc.nmbairro ||', da cidade de '||
             crapenc.nmcidade||'/'||crapenc.cdufende||', CEP '||gene0002.fn_mask_cep(crapenc.nrcepend) dsendere,
             DECODE(nvl(crapass_2.nmprimtl,TRIM(crapcje.nmconjug)),NULL,NULL,'Cônjuge: '||nvl(crapass_2.nmprimtl,crapcje.nmconjug)) ||
             DECODE(nvl(crapass_2.nrcpfcgc,NVL(crapcje.nrcpfcjg,0)),0,'',' CPF n.º '||gene0002.fn_mask_cpf_cnpj(nvl(crapass_2.nrcpfcgc,crapcje.nrcpfcjg),1))||
-            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| SUBSTR(TRIM(nvl(crapass_2.nrdocptl,crapcje.nrdoccje)),1,15),'')  nrnmconjug
+            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| nvl(crapass_2.nrdocptl,crapcje.nrdoccje),'')  nrnmconjug
     FROM  crapass crapass_2, -- Dados do conjuge
           crapcje,
           gnetcvl,
@@ -399,13 +387,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     SELECT  'Nome Proprietário (interveniente garantidor): '||crapass.nmprimtl nmprimtl,
             'Dados pessoais: '||decode(crapass.inpessoa,1,'CPF','CNPJ')||
             ' n.º '||gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa)||
-            decode(crapass.inpessoa,1,' RG n.º '||SUBSTR(TRIM(crapass.nrdocptl),1,15)||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
+            decode(crapass.inpessoa,1,' RG n.º '||crapass.nrdocptl||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
                                       gnetcvl.rsestcvl,'') dados_pessoais,
             'Endereço: '||crapenc.dsendere||', nº '||crapenc.nrendere||', bairro '||crapenc.nmbairro ||', da cidade de '||
             crapenc.nmcidade||'/'||crapenc.cdufende||', CEP '||gene0002.fn_mask_cep(crapenc.nrcepend) dsendere,
             DECODE(nvl(crapass_2.nmprimtl,TRIM(crapcje.nmconjug)),NULL,NULL,'Cônjuge: '||nvl(crapass_2.nmprimtl,crapcje.nmconjug)) ||
             DECODE(nvl(crapass_2.nrcpfcgc,NVL(crapcje.nrcpfcjg,0)),0,'',' CPF n.º '||gene0002.fn_mask_cpf_cnpj(nvl(crapass_2.nrcpfcgc,crapcje.nrcpfcjg),1))||
-            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| SUBSTR(TRIM(nvl(crapass_2.nrdocptl,crapcje.nrdoccje)),1,15),'')  nrnmconjug
+            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| nvl(crapass_2.nrdocptl,crapcje.nrdoccje),'')  nrnmconjug
     FROM  crapass crapass_2, -- Dados do conjuge
           crapcje,
           gnetcvl,
@@ -433,19 +421,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     -- busca nome do avalista
     CURSOR cr_crapavt IS
        SELECT 'Nome Proprietário (interveniente garantidor): '||crapavt.nmdavali nmdavali,
-              CASE WHEN crapavt.inpessoa <> 0 THEN /* Se estiver preenchido o inpessoa (1 ou 2) do avalista */
-                  DECODE(NVL(crapavt.inpessoa,1),1,
+              DECODE(NVL(crapass.inpessoa,1),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
-                      ' RG n.º '||SUBSTR(TRIM(crapavt.nrdocava),1,15)||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+                      ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl)),
-                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2))
-              WHEN LENGTH(crapavt.nrcpfcgc) <= 11 THEN /* se não estiver preenchido (0) e for CPF length <= 11 */
-                  'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
-                      ' RG n.º '||SUBSTR(TRIM(crapavt.nrdocava),1,15)||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
-                                  ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
-              ELSE /* Se não estiver preenchido e for CNPJ */
-                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2) 
-              END dados_pessoais,
+                  'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2)) dados_pessoais,
               'Endereço: '||crapavt.dsendres##1||', bairro '||crapavt.dsendres##2||
               ', da cidade de '||crapavt.nmcidade||'/'||crapavt.cdufresd||', CEP '||gene0002.fn_mask_cep(crapavt.nrcepend) dsendere,
               DECODE(TRIM(crapavt.nmconjug),NULL,NULL,'Cônjuge: '||crapavt.nmconjug) ||
@@ -848,7 +828,7 @@ BEGIN
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Castro (RKAM)
-       Data    : Agosto/2014.                         Ultima atualizacao: 12/06/2017
+       Data    : Agosto/2014.                         Ultima atualizacao: 26/11/2015
 
        Dados referentes ao programa:
 
@@ -877,15 +857,6 @@ BEGIN
                                - Adicionada varíavel para verificação de  versão para 
                                  impressão de novos parágros nos contratos de forma condicional; 
                                  (Ricardo Linhares)             
-
-					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                     crapass, crapttl, crapjur 
-							    (Adriano - P339).
-
-					12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                     crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-							    (Adriano - P339).
-
 
     ............................................................................. */
 
@@ -1017,6 +988,7 @@ BEGIN
                crapass.nrcpfcgc,
                crapenc.dsendere ||' no. '||crapenc.nrendere||', bairro ' ||rw_crapenc.nmbairro||
                  ', '||crapenc.nmcidade||'-'||crapenc.cdufende ||'-'||'CEP '||crapenc.nrcepend dsendere,
+               crapass.nrfonemp,
               (SELECT craptfc.nrdddtfc||' '||craptfc.nrtelefo FROM craptfc
                                           WHERE cdcooper = crapass.cdcooper
                                             AND nrdconta = crapass.nrdconta
@@ -1255,7 +1227,7 @@ BEGIN
         CLOSE cr_gnetcvl;
               -- monta descricao para o relatorio com os dados do emitente
         vr_campo_01 := 'inscrito no '||vr_tppessoa||' n.° '|| gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa)||
-                     ' e portador do RG n.° '||SUBSTR(TRIM(rw_crawepr.nrdocptl),1,15)||', com o estado civil '||rw_gnetcvl.rsestcvl||
+                     ' e portador do RG n.° '||rw_crawepr.nrdocptl||', com o estado civil '||rw_gnetcvl.rsestcvl||
                      ', residente e domiciliado na '||rw_crapenc.dsendere||', n.° '||rw_crapenc.nrendere||
                      ', bairro '||rw_crapenc.nmbairro|| ', da cidade de '||rw_crapenc.nmcidade||'/'||rw_crapenc.cdufende||
                      ', CEP '||gene0002.fn_mask_cep(rw_crapenc.nrcepend)||', também  qualificado na proposta de abertura de conta corrente indicada no subitem 1.1, designado Emitente.';
@@ -2499,14 +2471,14 @@ BEGIN
       RAISE vr_exc_erro; 
     END IF;   
     
-      -- Criar documento XML
-      dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
-      dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_xml_co_responsavel, TRUE); 
+    dbms_lob.open(pr_xml_co_responsavel, dbms_lob.lob_readwrite);
         
-      -- Insere o cabeçalho do XML 
-      gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
-                             ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '<root>');
+    -- Insere o cabeçalho do XML 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '<root>');
     --Montar CLOB
     IF vr_tab_co_responsavel.COUNT > 0 THEN
          
@@ -2533,11 +2505,11 @@ BEGIN
       END LOOP;
       
     END IF;  
-      -- Encerrar a tag raiz 
-      gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
-                             ,pr_texto_completo => vr_dstexto 
-                             ,pr_texto_novo     => '</root>' 
-                             ,pr_fecha_xml      => TRUE);
+    -- Encerrar a tag raiz 
+    gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
+                           ,pr_texto_completo => vr_dstexto 
+                           ,pr_texto_novo     => '</root>' 
+                           ,pr_fecha_xml      => TRUE);
       
   EXCEPTION 
     WHEN vr_exc_erro THEN

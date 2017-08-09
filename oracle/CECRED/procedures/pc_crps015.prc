@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/92.                       Ultima atualizacao: 24/04/2017
+   Data    : Fevereiro/92.                       Ultima atualizacao: 13/04/2017
 
    Dados referentes ao programa:
 
@@ -69,13 +69,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
-               
+
                13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
-			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-               
      ............................................................................. */
 
      DECLARE
@@ -145,6 +141,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapass.nrcpfcgc
                ,crapass.inpessoa
                ,crapass.cdcooper
+               ,crapass.nrcpfstl
                ,crapass.cdagenci
                ,crapass.dtadmiss
                ,crapass.nrmatric
@@ -157,7 +154,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE crapass.cdcooper = pr_cdcooper
          AND   crapass.nrdconta = pr_nrdconta;
        rw_crapass cr_crapass%ROWTYPE;
-
+       
        -- Busca a Nacionalidade
        CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
          SELECT crapnac.dsnacion
@@ -432,7 +429,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS015 (pr_cdcooper IN crapcop.cdcooper%T
                          TRIM(gene0002.fn_mask(rw_crapenc.nrendere,'ZZZ.ZZZ'));
          END IF;  
          --Fechar Cursor
-         CLOSE cr_crapenc;                  
+         CLOSE cr_crapenc;
 
          -- Busca a Nacionalidade
          vr_dsnacion := '';

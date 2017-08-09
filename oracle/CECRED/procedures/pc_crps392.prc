@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Abril/2004.                     Ultima atualizacao: 25/04/2017
+   Data    : Abril/2004.                     Ultima atualizacao: 17/09/2013
 
    Dados referentes ao programa:
 
@@ -72,10 +72,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
 
                17/09/2013 - Conversão Progress >> Oracle PL/SQL (Renato - Supero).
               
-			   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-              
 ............................................................................. */
   
   -- CURSORES
@@ -117,6 +113,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
          , crapass.nrcpfcgc
          , crapass.cdcooper
          , crapass.nmprimtl
+         , crapass.nmsegntl
          , crapass.nrctainv
       FROM crapass 
      WHERE crapass.cdcooper = pr_cdcooper
@@ -163,15 +160,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
              , crapass.progress_recid;
 
   -- Buscar a empresa do titular 
-  CURSOR cr_crapttl(pr_cdcooper   crapttl.cdcooper%TYPE
-				   ,pr_nrdconta   crapttl.nrdconta%TYPE
-				   ,pr_idseqttl   crapttl.idseqttl%TYPE) IS
+  CURSOR cr_crapttl(pr_nrdconta   crapttl.nrdconta%TYPE) IS
     SELECT crapttl.cdempres
-	      ,crapttl.nmextttl
+         , crapttl.nmdsecao
       FROM crapttl 
      WHERE crapttl.cdcooper = pr_cdcooper
        AND crapttl.nrdconta = pr_nrdconta   
-       AND crapttl.idseqttl = pr_idseqttl; 
+       AND crapttl.idseqttl = 1; -- Titular 1
   
   -- Buscar dados pessoa juridica
   CURSOR cr_crapjur(pr_nrdconta   crapttl.nrdconta%TYPE) IS
@@ -435,7 +430,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
   -- Tratamento de erros
   vr_exc_saida     EXCEPTION;
   vr_exc_fimprg    EXCEPTION;
-  vr_nmsegntl      crapttl.nmextttl%TYPE;
 
   /***************************** PROCEDIMENTOS INTERNOS *****************************/
   -- Imprimir o destino
@@ -551,7 +545,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS392(pr_cdcooper  IN craptab.cdcooper%T
     vr_tab_cratext(vr_chv_cratext).tpdocmto    := 9;
     vr_tab_cratext(vr_chv_cratext).nrseqint    := vr_qtregarq ;
     vr_tab_cratext(vr_chv_cratext).dsintern(1) := SUBSTR(rw_glb_crapass.nmprimtl,1,40);
-    vr_tab_cratext(vr_chv_cratext).dsintern(2) := SUBSTR(vr_nmsegntl,1,40);
+    vr_tab_cratext(vr_chv_cratext).dsintern(2) := SUBSTR(rw_glb_crapass.nmsegntl,1,40);
     vr_tab_cratext(vr_chv_cratext).dsintern(3) := vr_dscpfcgc ;
     vr_tab_cratext(vr_chv_cratext).dsintern(4) := gene0002.fn_mask(rw_glb_crapass.nrdconta,'zzzz.zz9.9');
     vr_tab_cratext(vr_chv_cratext).dsintern(5) := vr_dsagenci;
@@ -724,45 +718,36 @@ BEGIN
     -- Limpa a variável
     vr_cdempres := NULL;
     vr_nmsecext := NULL;
-  	vr_nmsegntl := NULL;
-  	vr_nmdsecao := NULL;
     
     -- Buscar o cadastro de Destinos de extratos
     OPEN  cr_crapdes(rw_crapass.cdsecext
                     ,rw_crapass.cdagenci);
-
     FETCH cr_crapdes INTO vr_nmsecext; 
-
     CLOSE cr_crapdes;
     
     -- Buscar o código da empresa quando pessoa física
     --> Tipo de pessoa (1 - fisica, 2 - juridica, 3 - cheque adm.).
     IF rw_crapass.inpessoa = 1 THEN
-      
       -- Busca os cadastros dos titulares da conta
-      OPEN  cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
-	                  ,pr_nrdconta => rw_crapass.nrdconta
-					  ,pr_idseqttl => 1);
-      
+      OPEN  cr_crapttl(rw_crapass.nrdconta);
       FETCH cr_crapttl INTO rw_crapttl;
       
-	  CLOSE cr_crapttl;  
-
+      -- Se o código da secao para onde deve ser enviado o extrato é zero
+      IF rw_crapass.cdsecext = 0 THEN 
+        -- Se encontrou registros    
+        IF cr_crapttl%FOUND THEN
+          vr_nmdsecao := rw_crapttl.nmdsecao;
+        ELSE 
+          vr_nmdsecao := NULL;
+        END IF;
+      ELSE 
         vr_nmdsecao := vr_nmsecext;
+      END IF;
       
       -- Guardar empresa
       vr_cdempres := rw_crapttl.cdempres;
       
-      -- Busca os cadastros dos titulares da conta
-      OPEN  cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
-	                  ,pr_nrdconta => rw_crapass.nrdconta
-					  ,pr_idseqttl => 2);
-      
-	  FETCH cr_crapttl INTO rw_crapttl;
-      
       CLOSE cr_crapttl;  
-
-	  vr_nmsegntl := rw_crapttl.nmextttl;
          
     ELSE
       -- Busca os cadastros de pessoas juridicas.
@@ -1280,3 +1265,4 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS392;
 /
+

@@ -220,11 +220,6 @@
 				26/05/2017 - Alteracao no contrato conforme solicitado no chamado 655583. (Kelvin)
 				
 				21/06/2017 - Ajuste emergencial no formato do cnpj do contrato. (Kelvin #655583)
-
-                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-							 (Adriano - P339).
-
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -368,7 +363,6 @@ FORM
     SKIP
     "CPF: " rel_nrcpfcgc  FORMAT "x(18)"
     SPACE(10)
-	SKIP
     "RG: " rel_nrdocttl
     SKIP(1)
     "LOCAL DE RISCO:"

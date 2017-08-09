@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 01/06/2017
+   Data    : Marco/2001                      Ultima atualizacao: 27/10/2016
 
    Dados referentes ao programa:
 
@@ -161,10 +161,6 @@
                             de cheques de bancos que nao participam da COMPE
                             Utilizar apenas BANCO e FLAG ativo
                             (Tiago - Chamado 546031)
-
-               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
 
                01/06/2017 - Incluso tratativa para critica 757 apenas quando 
 			                cheque nao estiver descontado. (Daniel)	
@@ -1810,7 +1806,7 @@ PROCEDURE valida-deposito-com-captura:
               
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
               IF crapmdw.cdhistor = 2433 THEN
-                           ASSIGN crapmdw.nrdocmto = 6.
+                 ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -2686,7 +2682,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
               
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
               IF crapmdw.cdhistor = 2433 THEN
-                           ASSIGN crapmdw.nrdocmto = 6.
+                 ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -3667,7 +3663,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
                           crapmdw.nrposchq = i_posicao.
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
               IF crapmdw.cdhistor = 2433 THEN
-                           ASSIGN crapmdw.nrdocmto = 6.
+                 ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -4144,13 +4140,13 @@ PROCEDURE atualiza-deposito-com-captura:
             ASSIGN  aux_tpdmovto = 2.
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
-        
+
         IF crapmdw.cdhistor = 2433 THEN
             ASSIGN tt-cheques.nrdocmto = 6
                    tt-cheques.dtlibera = crapmdw.dtlibcom
                    tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
                    de-valor = de-valor + crapmdw.vlcompel.
-        
+          
         FIND CURRENT tt-cheques NO-LOCK.
         
     END.    
@@ -4454,17 +4450,17 @@ PROCEDURE atualiza-deposito-com-captura:
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
               crapdpb.cdhistor = 2433
-               crapdpb.nrdocmto = INT(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
-                
-             END.
-       
+              crapdpb.nrdocmto = INT(c-docto)
+              crapdpb.dtmvtolt = crapdat.dtmvtolt
+              crapdpb.cdagenci = p-cod-agencia
+              crapdpb.cdbccxlt = 11
+              crapdpb.nrdolote = i-nro-lote
+              crapdpb.vllanmto = tt-cheques.vlcompel
+              crapdpb.inlibera = 1.
+       VALIDATE crapdpb.
+
+    END.
+    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -4503,7 +4499,7 @@ PROCEDURE atualiza-deposito-com-captura:
         FIND tt-cheques WHERE tt-cheques.dtlibera = crapmdw.dtlibcom AND
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
-
+        
         IF crapmdw.cdhistor = 2433 THEN
            ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
@@ -4702,23 +4698,8 @@ PROCEDURE atualiza-deposito-com-captura:
                        NO-LOCK NO-ERROR.
     
     IF   AVAIL crapass   THEN
-	   DO:
-           ASSIGN c-nome-titular1 = crapass.nmprimtl.
-
-		   IF crapass.inpessoa = 1 THEN
-			  DO:
-				  FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-				                     WHERE crapttl.cdcooper = crapass.cdcooper AND
-									       crapttl.nrdconta = crapass.nrdconta AND
-									       crapttl.idseqttl = 2 
-									       NO-LOCK:
-
-					 ASSIGN c-nome-titular2 = crapttl.nmextttl.
-
-				  END.
-
-			  END.
-	   END.
+         ASSIGN c-nome-titular1 = crapass.nmprimtl
+                c-nome-titular2 = crapass.nmsegntl.
 
     ASSIGN c-literal = " "
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
@@ -4811,7 +4792,7 @@ PROCEDURE atualiza-deposito-com-captura:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-        END.
+    END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)
@@ -5507,13 +5488,13 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                craplcm.nrdctitg = glb_dsdctitg
                
                /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.
+               tt-cheques.nrseqlcm = craplcm.nrseqdig.       
         VALIDATE craplcm.
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
                craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr +  
+               craplot.vlcompcr  = craplot.vlcompcr + 
                                    tt-cheques.vlcompel
                craplot.vlinfocr  = craplot.vlinfocr +  
                                    tt-cheques.vlcompel.
@@ -5522,18 +5503,18 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
               crapdpb.cdhistor = 2433
-               crapdpb.nrdocmto = INT(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
-       
-             END.
-        
+              crapdpb.nrdocmto = INT(c-docto)
+              crapdpb.dtmvtolt = crapdat.dtmvtolt
+              crapdpb.cdagenci = p-cod-agencia
+              crapdpb.cdbccxlt = 11
+              crapdpb.nrdolote = i-nro-lote
+              crapdpb.vllanmto = tt-cheques.vlcompel
+              crapdpb.inlibera = 1.
+       VALIDATE crapdpb.
 
+    END.
+    
+    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -5573,7 +5554,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         FIND tt-cheques WHERE tt-cheques.dtlibera = crapmdw.dtlibcom AND
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
-
+        
         IF  crapmdw.cdhistor = 2433 THEN 
             ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
@@ -5852,23 +5833,8 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                        NO-LOCK NO-ERROR.
     
     IF   AVAIL crapass   THEN
-	   DO:
-           ASSIGN c-nome-titular1 = crapass.nmprimtl.
-
-		   IF crapass.inpessoa = 1 THEN
-			  DO:
-				  FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-				                     WHERE crapttl.cdcooper = crapass.cdcooper AND
-									       crapttl.nrdconta = crapass.nrdconta AND
-									       crapttl.idseqttl = 2 
-									       NO-LOCK:
-				  
-					 ASSIGN c-nome-titular2 = crapttl.nmextttl.
-
-                  END.
-
-			  END.
-	   END.
+         ASSIGN c-nome-titular1 = crapass.nmprimtl
+                c-nome-titular2 = crapass.nmsegntl.
 
     ASSIGN c-literal = " "
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
@@ -5963,7 +5929,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-        END.
+    END.
 
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
@@ -6673,17 +6639,17 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
               crapdpb.cdhistor = 2433
-               crapdpb.nrdocmto = INT(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
-             END.
-       
-
+              crapdpb.nrdocmto = INT(c-docto)
+              crapdpb.dtmvtolt = crapdat.dtmvtolt
+              crapdpb.cdagenci = p-cod-agencia
+              crapdpb.cdbccxlt = 11
+              crapdpb.nrdolote = i-nro-lote
+              crapdpb.vllanmto = tt-cheques.vlcompel
+              crapdpb.inlibera = 1.
+       VALIDATE crapdpb.
+    END.
+    
+    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -7078,23 +7044,8 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                        NO-LOCK NO-ERROR.
     
     IF   AVAIL crapass   THEN
-	   DO:
-           ASSIGN c-nome-titular1 = crapass.nmprimtl.
-
-		   IF crapass.inpessoa = 1 THEN
-			  DO:
-				  FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-				                     WHERE crapttl.cdcooper = crapass.cdcooper AND
-   									       crapttl.nrdconta = crapass.nrdconta AND
-									       crapttl.idseqttl = 2 
-									       NO-LOCK:
-				  
-					 ASSIGN c-nome-titular2 = crapttl.nmextttl.
-
-                  END.
-
-			  END.
-	   END.
+         ASSIGN c-nome-titular1 = crapass.nmprimtl
+                c-nome-titular2 = crapass.nmsegntl.
 
     ASSIGN c-literal = " "
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
@@ -7189,7 +7140,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-        END.
+    END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)

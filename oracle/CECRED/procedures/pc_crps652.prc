@@ -194,10 +194,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 			                                                  não está atualizando corretamente se o contrato for VIP (Jean/Mout´S)
                28/04/2017 - Ajuste nas regras para enviar as baixas dos contratos. (James)             
 
-               28/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-
-
 		 02/05/2017 - Prj 432 - retirar regra de não enviar baixa se contrato VIP, está gerando conflitos no Cyber 
 		                        e esta regra será revista na melhoria 302. (Jean / Mout´s)
 
@@ -235,6 +231,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        ,nrdocptl crapass.nrdocptl%TYPE   -- Número Documento Primeiro Titular
        ,dtemdptl crapass.dtemdptl%TYPE   -- Data de emissao do documento do titular.
        ,cdsexotl crapass.cdsexotl%TYPE   -- Sexo
+       ,inhabmen crapass.inhabmen%TYPE   -- Indicador de habilitacao de menor
        ,cdsitdct crapass.cdsitdct%TYPE   -- Situação da Conta
        ,nrcpfcgc crapass.nrcpfcgc%TYPE   -- CPF
        ,dtadmiss crapass.dtadmiss%TYPE   -- Data de Admissão
@@ -319,6 +316,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapass.tpdocptl
              ,crapass.nrdocptl
              ,crapass.cdsexotl
+             ,crapass.inhabmen
              ,crapass.cdsitdct
              ,crapass.inpessoa
              ,crapass.nrdconta
@@ -471,7 +469,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                ,crapttl.vldrendi##5
                ,crapttl.vldrendi##6
                ,crapttl.grescola
-             ,crapttl.inhabmen 
+
          FROM crapttl
          WHERE crapttl.cdcooper = pr_cdcooper
          AND   crapttl.nrdconta = pr_nrdconta
@@ -2980,8 +2978,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_nmrmativ gnrativ.nmrmativ%TYPE;
            -- Posição Inicial Auxiliar
            vr_posicini_aux INTEGER;
-   		     --Habilitação de menor
-  		     vr_inhabmen crapttl.inhabmen%TYPE;
          BEGIN
            --Limpar parametros erro
            pr_cdcritic:= NULL;
@@ -3046,11 +3042,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                pc_monta_linha(rpad(rw_crapttl.nmmaettl,50,' '),pr_posicini+140,pr_idarquivo);
                --Nome mae tabela titular
                pc_monta_linha(rpad(rw_crapttl.nmpaittl,50,' '),pr_posicini+190,pr_idarquivo);
-
-			         vr_inhabmen:= rw_crapttl.inhabmen;
-
              END IF;
-
            END IF; --avail crapass
 
            --Pessoa Fisica
@@ -3087,9 +3079,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              vr_crapenc:= cr_crapenc%FOUND;
              --Fechar Cursor
              CLOSE cr_crapenc;
-
-			       vr_inhabmen:= 0;
-
            END IF;
            /* Imovel cooperado */
            IF vr_crapenc THEN
@@ -3413,8 +3402,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            END IF;
 
            --Nao habilitado e menor 18 anos
-           IF ((vr_inhabmen = 0 AND vr_nrdeanos < 18) OR
-                vr_inhabmen = 2) THEN
+           IF ((vr_tab_crapass(pr_nrdconta).inhabmen = 0 AND vr_nrdeanos < 18) OR
+               vr_tab_crapass(pr_nrdconta).inhabmen = 2) THEN
+
 
              /* Buscar dados dos Responsaveis Legais do associado */
              CADA0001.pc_busca_dados_72 (pr_cdcooper => pr_cdcooper         --Codigo Cooperativa
@@ -3434,7 +3424,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_cpfprocu => 0                   --Cpf Procurador
                                         ,pr_nmrotina => 'crps652'           --Nome da Rotina
                                         ,pr_dtdenasc => vr_tab_crapass(pr_nrdconta).dtnasctl  --Data Nascimento
-                                        ,pr_cdhabmen => vr_inhabmen         --Codigo Habilitacao
+                                        ,pr_cdhabmen => vr_tab_crapass(pr_nrdconta).inhabmen  --Codigo Habilitacao
                                         ,pr_permalte => FALSE               --Flag Permanece/Altera
                                         ,pr_menorida => vr_menorida         --Flag Menor idade
                                         ,pr_msgconta => vr_msgconta         --Mensagem Conta
@@ -4656,6 +4646,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_tab_crapass(rw_crapass.nrdconta).tpdocptl:= rw_crapass.tpdocptl;
            vr_tab_crapass(rw_crapass.nrdconta).nrdocptl:= rw_crapass.nrdocptl;
            vr_tab_crapass(rw_crapass.nrdconta).cdsexotl:= rw_crapass.cdsexotl;
+           vr_tab_crapass(rw_crapass.nrdconta).inhabmen:= rw_crapass.inhabmen;
            vr_tab_crapass(rw_crapass.nrdconta).cdsitdct:= rw_crapass.cdsitdct;
            vr_tab_crapass(rw_crapass.nrdconta).inpessoa:= rw_crapass.inpessoa;
            vr_tab_crapass(rw_crapass.nrdconta).nrcpfcgc:= rw_crapass.nrcpfcgc;

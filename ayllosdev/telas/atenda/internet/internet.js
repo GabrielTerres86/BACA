@@ -1,7 +1,7 @@
 /*************************************************************************
  Fonte: internet.js                                               
  Autor: David                                                     
- Data : Junho/2008                   Última Alteração: 13/06/2017
+ Data : Junho/2008                   Última Alteração: 26/08/2016
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Internet da tela  
              ATENDA                                               
@@ -65,10 +65,6 @@
 						  
              07/09/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
              26/08/2016 - Alteracao da function validaResponsaveis, SD 510426 (Jean Michel)
-
-             13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-	                      crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-						  (Adriano - P339).
 
 *********************************************************************************/
 
@@ -1958,7 +1954,7 @@ function controlaLayout( nomeForm ){
 		$("#frmDadosTitInternet").hide();
 		$("#divInternetPrincipal").hide();
 		
-		$("#divConteudoOpcao").css("width","930");
+		$("#divConteudoOpcao").css("width","800");
 		
 		ajustarCentralizacao();
 		
@@ -1976,7 +1972,7 @@ function controlaLayout( nomeForm ){
 		arrayLargura[1] = '70px';
 		arrayLargura[2] = '180px';
 		arrayLargura[3] = '80px';
-		arrayLargura[4] = '250px';
+		arrayLargura[4] = '80px';
 		arrayLargura[5] = '70px';
 		
 		var arrayAlinha = new Array();

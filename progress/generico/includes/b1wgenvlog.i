@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                       Ultima atualizacao: 20/04/2017
+   Data    : Abril/2006.                       Ultima atualizacao: 19/04/2017
 
    Dados referentes ao programa:
 
@@ -69,11 +69,6 @@
                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                             PRJ339 - CRM (Odirlei-AMcom)  
                              
-
-			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
 .............................................................................*/
 
 &IF DEFINED(VAR-GERAL) <> 0 &THEN
@@ -146,11 +141,18 @@
        DEF        VAR log_cdsexotl LIKE crapass.cdsexotl              NO-UNDO.
        DEF        VAR log_dsfiliac LIKE crapass.dsfiliac              NO-UNDO.
        DEF        VAR log_nmconjug LIKE crapcje.nmconjug              NO-UNDO.
+       DEF        VAR log_nmsegntl LIKE crapass.nmsegntl              NO-UNDO.
+       DEF        VAR log_tpdocstl LIKE crapass.tpdocstl              NO-UNDO.
+       DEF        VAR log_nrdocstl LIKE crapass.nrdocstl              NO-UNDO.
+       DEF        VAR log_dtnasstl LIKE crapass.dtnasstl              NO-UNDO.
+       DEF        VAR log_dsfilstl LIKE crapass.dsfilstl              NO-UNDO.
+       DEF        VAR log_nrcpfstl LIKE crapass.nrcpfstl              NO-UNDO.
        DEF        VAR log_dtcnscpf LIKE crapass.dtcnscpf              NO-UNDO.
        DEF        VAR log_cdsitcpf LIKE crapass.cdsitcpf              NO-UNDO.
        DEF        VAR log_nrdctitg LIKE crapass.nrdctitg              NO-UNDO.
        DEF        VAR log_nmpaiptl LIKE crapass.nmpaiptl              NO-UNDO.
        DEF        VAR log_nmmaeptl LIKE crapass.nmmaeptl              NO-UNDO.
+
        DEF        VAR log_tpnacion LIKE crapttl.tpnacion              NO-UNDO.
        DEF        VAR log_cdocpttl LIKE crapttl.cdocpttl              NO-UNDO.
 
@@ -191,7 +193,7 @@
        DEF        VAR log_dsendcom LIKE crapcje.dsendcom              NO-UNDO.
        DEF        VAR log_dtadmemp LIKE crapass.dtadmemp              NO-UNDO.
        DEF        VAR log_cdturnos LIKE crapttl.cdturnos              NO-UNDO.
-       DEF        VAR log_nrfonemp LIKE craptfc.nrtelefo              NO-UNDO.
+       DEF        VAR log_nrfonemp LIKE crapass.nrfonemp              NO-UNDO.
        DEF        VAR log_nrramemp LIKE crapass.nrramemp              NO-UNDO.
        DEF        VAR log_nrctacto LIKE crapass.nrctacto              NO-UNDO.
        DEF        VAR log_nrctaprp LIKE crapass.nrctaprp              NO-UNDO.
@@ -206,9 +208,21 @@
        DEF        VAR log_tpextcta LIKE crapass.tpextcta              NO-UNDO.
        DEF        VAR log_cddsenha LIKE crapsnh.cddsenha              NO-UNDO.
        DEF        VAR log_cdoedptl LIKE crapass.cdoedptl              NO-UNDO.
+       DEF        VAR log_cdoedstl LIKE crapass.cdoedstl              NO-UNDO.
+       DEF        VAR log_cdoedrsp LIKE crapass.cdoedrsp              NO-UNDO.
        DEF        VAR log_cdufdptl LIKE crapass.cdufdptl              NO-UNDO.
+       DEF        VAR log_cdufdstl LIKE crapass.cdufdstl              NO-UNDO.
+       DEF        VAR log_cdufdrsp LIKE crapass.cdufdrsp              NO-UNDO.
+       DEF        VAR log_nmrespon LIKE crapass.nmrespon              NO-UNDO.
        DEF        VAR log_inhabmen LIKE crapttl.inhabmen              NO-UNDO.
+       DEF        VAR log_nrcpfrsp LIKE crapass.nrcpfrsp              NO-UNDO.
+       DEF        VAR log_nrdocrsp LIKE crapass.nrdocrsp              NO-UNDO.
+       DEF        VAR log_tpdocrsp LIKE crapass.tpdocrsp              NO-UNDO.
+       DEF        VAR log_dtemdstl LIKE crapass.dtemdstl              NO-UNDO.
        DEF        VAR log_dtemdptl LIKE crapass.dtemdptl              NO-UNDO.
+       DEF        VAR log_dtemdrsp LIKE crapass.dtemdrsp              NO-UNDO.
+       DEF        VAR log_qtdepend LIKE crapass.qtdepend              NO-UNDO.
+       DEF        VAR log_dsendcol LIKE crapass.dsendcol              NO-UNDO.
        DEF        VAR log_vlsalari LIKE crapttl.vlsalari              NO-UNDO.
        DEF        VAR log_cdsitdtl LIKE crapass.cdsitdtl              NO-UNDO.
        DEF        VAR log_tpavsdeb LIKE crapass.tpavsdeb              NO-UNDO.
@@ -300,7 +314,7 @@
         /* Variaveis para o log da tela: CONTAS -> REGISTRO (juridica) */
         DEF        VAR log_vlfatano LIKE crapjur.vlfatano             NO-UNDO.
         DEF        VAR log_nrinsest LIKE crapjur.nrinsest             NO-UNDO.
-      
+        DEF        VAR log_vlcapsoc LIKE crapjur.vlcapsoc             NO-UNDO.
         DEF        VAR log_vlcaprea LIKE crapjur.vlcaprea             NO-UNDO.
         DEF        VAR log_dtregemp LIKE crapjur.dtregemp             NO-UNDO.
         DEF        VAR log_nrregemp LIKE crapjur.nrregemp             NO-UNDO.
@@ -330,6 +344,7 @@
         DEF        VAR log_cdestcvl     LIKE crapttl.cdestcvl         NO-UNDO.
         DEF        VAR log_grescola     LIKE crapttl.grescola         NO-UNDO.
         DEF        VAR log_cdfrmttl     LIKE crapttl.cdfrmttl         NO-UNDO.
+        DEF        VAR log_nrcertif     LIKE crapttl.nrcertif         NO-UNDO.
         DEF        VAR log_nmtalttl_ttl LIKE crapttl.nmtalttl         NO-UNDO.
         DEF        VAR log_inpolexp     LIKE crapttl.inpolexp         NO-UNDO.
         

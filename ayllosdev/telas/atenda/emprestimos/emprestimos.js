@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 13/06/2017
+ * FONTE        : emprestimos.js                            Última alteração: 03/08/2016
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -108,9 +108,6 @@
  * 087: [08/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 088: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
  * 089: [12/06/2017] Retornar o protocolo. (Jaison/Marcos - PRJ337)
- * 090: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-					 (Adriano - P339).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -1748,8 +1745,8 @@ function controlaLayout(operacao) {
         arrayLargura[5] = '25px';
         arrayLargura[6] = '28px';
         arrayLargura[7] = '28px';
-        arrayLargura[8] = '127px';
-        arrayLargura[9] = '50px';
+        arrayLargura[8] = '50px';
+        arrayLargura[9] = '127px';
 
 
         var arrayAlinha = new Array();
@@ -2331,7 +2328,7 @@ function controlaLayout(operacao) {
         cCPF.css('width', '134px');
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
-        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');
+        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
         cInpessoa.css({'width': '100px'});
         cNacio.addClass('codigo pesquisa').css('width', '50px');
         cDsnacio.css('width', '155px');
@@ -2446,7 +2443,7 @@ function controlaLayout(operacao) {
         cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
         cDoc_1.css('width', '50px');
-        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
+        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '37');
 
         var cTodos_2 = $('select,input', '#' + nomeForm + ' fieldset:eq(2)');
 
@@ -2680,7 +2677,7 @@ function controlaLayout(operacao) {
         nomeForm = 'frmOrgProtCred';
         altura = '220px';
         largura = '495px';
-
+        
         // Exibe o Fieldset de GARANTIAS
         $('#' + nomeForm + ' fieldset:eq(1)').show();
 
@@ -2782,9 +2779,9 @@ function controlaLayout(operacao) {
             cTodos_2.habilitaCampo();
 
 			if (inobriga == 'S'){
-					$('#' + nomeForm + ' fieldset:eq(1)').hide();
-					altura = '135px';
-				}
+                $('#' + nomeForm + ' fieldset:eq(1)').hide();
+                altura = '135px';
+			}
 			
             if (arrayProtCred['flgcentr'] == 'no') {
 
@@ -3055,7 +3052,7 @@ function controlaLayout(operacao) {
 
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
-        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');
+        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
         cNacio.addClass('codigo pesquisa').css('width', '50px');
         cDsnacio.css('width', '182px');
 
@@ -3167,7 +3164,7 @@ function controlaLayout(operacao) {
         cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
         cDoc_1.css('width', '50px');
-        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
+        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '37');
 
         var cTodos_2 = $('input,select', '#' + nomeForm + ' fieldset:eq(2)');
 
@@ -5274,7 +5271,7 @@ function validaDados(cdcooper) {
         if (!validaDadosGerais()) {
             return false;
         }
-		
+
 		carregaDadosPropostaLinhaCredito();
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
@@ -6833,7 +6830,7 @@ function mostraTelaAltera(operacao) {
     exibeRotina($('#divUsoGenerico'));
 
     limpaDivGenerica();
-
+    
     inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
     
     // Executa script de confirmação através de ajax
@@ -8662,7 +8659,7 @@ function carregaDadosPropostaLinhaCredito() {
         data: {
             cdfinemp: cdfinemp,
             cdlcremp: cdlcremp,
-            nrdconta: nrdconta,            
+            nrdconta: nrdconta,     
             dsctrliq: dsctrliq,            
             redirect: 'script_ajax'
         },

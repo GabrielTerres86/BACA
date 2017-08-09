@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Fevereiro/95.                   Ultima atualizacao: 24/04/2017 
+   Data    : Fevereiro/95.                   Ultima atualizacao: 27/01/2017
 
    Dados referentes ao programa:
 
@@ -49,11 +49,7 @@
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
                             
 			   27/01/2017 - Criacao do novo vinvulo (AC - Ass. Comercial de Chapeco). 
-							SD 561203 - (Carlos Rafael Tanholi)	 
-
-               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+							SD 561203 - (Carlos Rafael Tanholi)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -64,7 +60,6 @@ DEF        VAR tel_dstipess AS CHAR    FORMAT "x(29)"                NO-UNDO.
 DEF        VAR tel_tpvincul AS CHAR    FORMAT "x(02)"                NO-UNDO.
 DEF        VAR tel_dsvincul AS CHAR    FORMAT "x(25)"                NO-UNDO.
 DEF        VAR tel_dssititg AS CHAR    FORMAT "x(07)"                NO-UNDO.   
-DEF        VAR tel_nmsegntl LIKE crapttl.nmextttl					 NO-UNDO.
 
 DEF        VAR aux_anteslog AS CHAR    FORMAT "x(50)"                NO-UNDO.
 DEF        VAR aux_depoilog AS CHAR    FORMAT "x(50)"                NO-UNDO.
@@ -111,7 +106,7 @@ FORM SKIP(3)
      SKIP(1)
      crapass.nmprimtl COLON 20 LABEL "Titular(es)"
      SKIP
-     tel_nmsegntl     COLON 20 NO-LABEL
+     crapass.nmsegntl COLON 20 NO-LABEL
      SKIP(1)
      tel_inpessoa     COLON 20 LABEL "Tipo de Pessoa"
                             HELP "2 - Juridica ou 3 - Cheque Administrativo."
@@ -328,21 +323,7 @@ DO WHILE TRUE:
                    NEXT.
               END.
 
-			  IF crapass.inpessoa = 1 THEN
-			     DO:
-				    FOR FIRST crapttl FIELDS(nmextttl)
-									  WHERE crapttl.cdcooper = crapass.cdcooper AND
-									        crapttl.nrdconta = crapass.nrdconta AND
-											crapttl.idseqttl = 2
-											NO-LOCK:
-
-				       ASSIGN tel_nmsegntl = crapttl.nmextttl.
-
-					END.
-
-				 END.
-
-              DISPLAY    crapass.nmprimtl    tel_nmsegntl
+              DISPLAY    crapass.nmprimtl    crapass.nmsegntl
                          tel_inpessoa        tel_dstipess  tel_tpvincul
                          tel_dsvincul        crapass.nrdctitg
                          tel_dssititg
@@ -450,24 +431,9 @@ DO WHILE TRUE:
                                   ELSE " ".
 
                    FIND w-vinculos WHERE w-vinculos.sigla = crapass.tpvincul.
-           
                         tel_dsvincul = "- " + w-vinculos.descr.
                    
-			IF crapass.inpessoa = 1 THEN
-			   DO:
-			      FOR FIRST crapttl FIELDS(nmextttl)
-					   			    WHERE crapttl.cdcooper = crapass.cdcooper AND
-									      crapttl.nrdconta = crapass.nrdconta AND
-									      crapttl.idseqttl = 2
-									      NO-LOCK:
-
-				     ASSIGN tel_nmsegntl = crapttl.nmextttl.
-
-			      END.
-
-			   END.
-				        
-            DISPLAY crapass.nmprimtl tel_nmsegntl
+            DISPLAY crapass.nmprimtl crapass.nmsegntl
                     tel_inpessoa     tel_dstipess       tel_tpvincul
                     tel_dsvincul     crapass.nrdctitg   tel_dssititg
                     WITH FRAME f_pessoa.

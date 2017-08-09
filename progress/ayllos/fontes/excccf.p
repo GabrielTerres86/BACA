@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Elton
-   Data    : Marco/2008                         Ultima atualizacao: 18/04/2017
+   Data    : Marco/2008                         Ultima atualizacao: 01/12/2016
    
    Dados referentes ao programa:
 
@@ -22,10 +22,6 @@
                
                01/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
-                            
-               18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
                             
 ..............................................................................*/
 
@@ -297,7 +293,8 @@ DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
                         FIND FIRST crabttl WHERE 
                                    crabttl.cdcooper = glb_cdcooper     AND
                                    crabttl.nrdconta = crapass.nrdconta AND
-                                   crabttl.idseqttl > 1                
+                                   crabttl.idseqttl > 1                AND
+                                   crabttl.flgsittl = TRUE
                                    NO-LOCK NO-ERROR.
                                        
                         IF  NOT AVAILABLE crabttl  THEN

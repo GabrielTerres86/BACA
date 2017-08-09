@@ -288,11 +288,6 @@
 				             confirmar o limite de credito na procedure
 							 confirmar-novo-limite (Tiago/Ademir SD590361).
 
-				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
-							
-
             12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
 ..............................................................................*/
@@ -7368,6 +7363,7 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_nmexcop2 AS CHAR                                    NO-UNDO.
     DEF VAR aux_nmresage AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsempres AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmdsecao AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcgc AS CHAR                                    NO-UNDO.
     DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
     DEF VAR aux_dssitdct AS CHAR                                    NO-UNDO.
@@ -7393,7 +7389,6 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_flpropos AS LOGI                                    NO-UNDO.
     DEF VAR aux_nrcpfcjg AS DECI                                    NO-UNDO.
     DEF VAR aux_nrctacje AS INTE                                    NO-UNDO.
-	DEF VAR aux_nmsegntl AS CHAR								    NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0002 AS HANDLE                                  NO-UNDO.
@@ -7929,20 +7924,10 @@ PROCEDURE obtem-dados-proposta:
                                crapttl.idseqttl = 1            NO-LOCK NO-ERROR.
         
             IF   AVAILABLE crapttl  THEN
-                 ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
+                 ASSIGN aux_nmdsecao = crapttl.nmdsecao
+                        aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                        "99999999999"),"xxx.xxx.xxx-xx")
                         aux_cdempres = crapttl.cdempres.
-
-			FOR FIRST crapttl FIELDS(nmextttl) 
-			                  WHERE crapttl.cdcooper = par_cdcooper AND
-                                    crapttl.nrdconta = par_nrdconta AND
-                                    crapttl.idseqttl = 2
-							        NO-LOCK:
-
-			  ASSIGN aux_nmsegntl = crapttl.nmextttl.
-
-        END.
-        
         END.
     ELSE
         DO:
@@ -7953,7 +7938,8 @@ PROCEDURE obtem-dados-proposta:
             IF   AVAIL crapjur  THEN
                  ASSIGN aux_cdempres = crapjur.cdempres.
                  
-            ASSIGN aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
+            ASSIGN aux_nmdsecao = ""
+                   aux_nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,
                                   "99999999999999"),"xx.xxx.xxx/xxxx-xx").
         END.
         
@@ -8003,7 +7989,7 @@ PROCEDURE obtem-dados-proposta:
            tt-dados-prp.nrmatric = crapass.nrmatric
            tt-dados-prp.nrcpfcgc = aux_nrcpfcgc
            tt-dados-prp.nmprimtl = crapass.nmprimtl  
-           tt-dados-prp.nmsegntl = aux_nmsegntl
+           tt-dados-prp.nmsegntl = crapass.nmsegntl
            tt-dados-prp.dtadmiss = crapass.dtadmiss
            tt-dados-prp.nmresage = aux_nmresage
            tt-dados-prp.dsempres = aux_dsempres      

@@ -149,12 +149,7 @@
                 15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
                              (Lucas Ranghetti #484923)
 				
-                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
-				
-				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
-										
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
 
                 25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
@@ -4267,7 +4262,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.inmatric = 1
                        crabass.tpavsdeb = 0
                        crabass.qtfoltal = 10 
-                       crabass.nmttlrfb = SUBSTR(par_nmttlrfb,1,200) 
+                       crabass.nmttlrfb = SUBSTR(par_nmttlrfb,1,60) 
                        crabass.inconrfb = par_inconrfb 
                        crabass.hrinicad = par_hrinicad 
                        crabass.cdsitdct = 6  /* Normal S/Talao */
@@ -6398,6 +6393,12 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
                                     WHEN 1 THEN DO:
                                         ASSIGN crapass.nmprimtl = UPPER(par_nmextttl).
                                     END.
+                                    WHEN 2 THEN DO:
+                                        ASSIGN crapass.nmsegntl = "E/OU " + UPPER(par_nmextttl).
+                                    END.
+                                    WHEN 3 THEN DO:
+                                        ASSIGN crapass.nmtertl  = "E/OU " + UPPER(par_nmextttl).
+                                    END.
                                 END CASE.
 
                                 LEAVE ContadorAss.
@@ -6477,6 +6478,12 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
                                 CASE crapttl.idseqttl:
                                     WHEN 1 THEN DO:
                                         ASSIGN crapass.nmprimtl = UPPER(par_nmextttl).
+                                    END.
+                                    WHEN 2 THEN DO:
+                                        ASSIGN crapass.nmsegntl = "E/OU " + UPPER(par_nmextttl).
+                                    END.
+                                    WHEN 3 THEN DO:
+                                        ASSIGN crapass.nmtertl  = "E/OU " + UPPER(par_nmextttl).
                                     END.
                                 END CASE.
 

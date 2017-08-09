@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 18/04/2017
+    Data    : Maio/2010                   Ultima atualizacao: 08/03/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -90,11 +90,6 @@
 			   08/03/2017 - Ajuste na rotina Busca_Dados_PPE para pegar o nome completo
 			                da coupacao para as informacoes do PEP
 							(Adriano - SD 614408).
-
-			   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -192,9 +187,9 @@ PROCEDURE Busca_Dados:
             END.
 
         FOR FIRST crapttl FIELDS(cdnatopc cdocpttl tpcttrab cdempres nmextemp
-                                 nrcpfemp dsproftl cdnvlcgo nrcadast dtadmemp
-								 vlsalari tpdrendi vldrendi cdturnos dsjusren 
-								 inpolexp)
+                                 nrcpfemp nmdsecao dsproftl cdnvlcgo nrcadast
+                                 dtadmemp vlsalari tpdrendi vldrendi cdturnos
+                                 dsjusren inpolexp)
                           WHERE crapttl.cdcooper = par_cdcooper AND
                                 crapttl.nrdconta = par_nrdconta AND
                                 crapttl.idseqttl = par_idseqttl NO-LOCK:
@@ -223,6 +218,7 @@ PROCEDURE Busca_Dados:
             tt-comercial.vlsalari = crapttl.vlsalari
             tt-comercial.cdturnos = crapttl.cdturnos
             tt-comercial.dsjusren = crapttl.dsjusren
+            tt-comercial.nmdsecao = crapttl.nmdsecao
             tt-comercial.inpolexp = crapttl.inpolexp.
 
         DO aux_contador = 1 TO EXTENT(tt-comercial.tpdrendi):
@@ -238,6 +234,7 @@ PROCEDURE Busca_Dados:
                 tt-comercial.cdnatopc    = par_cdnatopc
                 tt-comercial.cdocpttl    = par_cdocpttl
                 tt-comercial.tpcttrab    = par_tpcttrab
+                tt-comercial.nmdsecao    = par_nmdsecao
                 tt-comercial.dsproftl    = par_dsproftl
                 tt-comercial.cdnvlcgo    = par_cdnvlcgo
                 tt-comercial.cdturnos    = par_cdturnos
@@ -843,8 +840,8 @@ PROCEDURE Grava_Dados:
     DEF BUFFER b-crapdoc FOR crapdoc.
 
     &SCOPED-DEFINE CAMPOS-TTL cdnatopc cdocpttl tpcttrab nmextemp nrcpfemp~
-                              dsproftl cdnvlcgo dtadmemp vlsalari cdturnos~ 
-							  nrcadast cdempres tpdrendi vldrendi inpolexp
+                              nmdsecao dsproftl cdnvlcgo dtadmemp vlsalari~
+                              cdturnos nrcadast cdempres tpdrendi vldrendi inpolexp
 
     &SCOPED-DEFINE CAMPOS-ENC cdufende nmbairro nmcidade complend dsendere~
                               nrcepend nrcxapst tpendass nrendere
@@ -905,6 +902,7 @@ PROCEDURE Grava_Dados:
                tt-comercial-ant.tpcttrab = crapttl.tpcttrab                	
                tt-comercial-ant.cdempres = crapttl.cdempres                	
                tt-comercial-ant.nrcpfemp = STRING(crapttl.nrcpfemp)              	
+               tt-comercial-ant.nmdsecao = crapttl.nmdsecao              	
                tt-comercial-ant.dsproftl = crapttl.dsproftl		
                tt-comercial-ant.cdnvlcgo = crapttl.cdnvlcgo  		
                tt-comercial-ant.nrcadast = crapttl.nrcadast  	
@@ -1072,6 +1070,7 @@ PROCEDURE Grava_Dados:
             crapttl.tpcttrab    = par_tpcttrab
             crapttl.nmextemp    = CAPS(par_nmextemp)
             crapttl.nrcpfemp    = par_nrcpfemp
+            crapttl.nmdsecao    = CAPS(par_nmdsecao)
             crapttl.dsproftl    = CAPS(par_dsproftl)
             crapttl.cdnvlcgo    = par_cdnvlcgo
             crapttl.dtadmemp    = par_dtadmemp
@@ -1213,7 +1212,7 @@ PROCEDURE Grava_Dados:
         FIND gncdocp WHERE gncdocp.cdocupa = par_cdocpttl NO-LOCK NO-ERROR.
 
         /* Pessoa politicamente exposta se Natureza da ocupacao = 99 */
-        ASSIGN crapttl.inpolexp = INT((gncdocp.cdnatocp = 99)) WHEN AVAIL gncdocp.
+        ASSIGN crapttl.flpolexp = (gncdocp.cdnatocp = 99) WHEN AVAIL gncdocp.
  
         ASSIGN
            crapenc.cdufende = CAPS(par_ufresct1)
@@ -1614,6 +1613,7 @@ PROCEDURE Grava_Dados:
               tt-comercial-atl.tpcttrab = crapttl.tpcttrab                	
               tt-comercial-atl.cdempres = crapttl.cdempres                	
               tt-comercial-atl.nrcpfemp = STRING(crapttl.nrcpfemp)              	
+              tt-comercial-atl.nmdsecao = crapttl.nmdsecao              	
               tt-comercial-atl.dsproftl = crapttl.dsproftl		
               tt-comercial-atl.cdnvlcgo = crapttl.cdnvlcgo  		
               tt-comercial-atl.nrcadast = crapttl.nrcadast  	
@@ -1704,8 +1704,9 @@ PROCEDURE Grava_Rendimentos:
 
 
     &SCOPED-DEFINE CAMPOS-TTL cdnatopc cdocpttl tpcttrab nmextemp nrcpfemp~
-                              dsproftl cdnvlcgo dtadmemp vlsalari cdturnos~
-							  nrcadast cdempres tpdrendi vldrendi
+                              nmdsecao dsproftl cdnvlcgo dtadmemp vlsalari~
+                              cdturnos nrcadast cdempres tpdrendi vldrendi
+
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "A" THEN 

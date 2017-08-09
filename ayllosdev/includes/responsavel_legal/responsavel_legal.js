@@ -9,9 +9,6 @@
  *                28/01/2015 - #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
  *                16/07/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
- *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-							  (Adriano - P339).
  */
 
 var nrcpfcto = "";
@@ -638,9 +635,9 @@ function controlaLayoutResp(operacao_rsp) {
 		$('#dtnascto,#dtemddoc','#frmRespLegal').css({'width':'101px'}).addClass('data');
 		$('#cdoeddoc','#frmRespLegal').css({'width':'101px'}).addClass('alphanum').attr('maxlength','5');
 		$('#tpdocava','#frmRespLegal').css({'width':'57px'});
-		$('#nrdocava', '#frmRespLegal').css({ 'width': '230px' }).addClass('alphanum').attr('maxlength', '40');
-		$('#cdnacion', '#frmRespLegal').css({ 'width': '50px' }).addClass('inteiro pesquisa').attr('maxlength', '16');
-		$('#dsnacion', '#frmRespLegal').css({ 'width': '150px' }).addClass('alphanum').attr('maxlength', '16');
+		$('#nrdocava','#frmRespLegal').css({'width':'230px'}).addClass('alphanum').attr('maxlength','15');
+        $('#cdnacion','#frmRespLegal').css({'width':'50px'}).addClass('inteiro pesquisa').attr('maxlength','16');
+		$('#dsnacion','#frmRespLegal').css({'width':'150px'}).addClass('alphanum').attr('maxlength','16');
 		$('#dsnatura','#frmRespLegal').css({'width':'202px'}).addClass('alphanum pesquisa').attr('maxlength','25');
 		$('#nmpaicto,#nmmaecto','#frmRespLegal').css({'width':'444px'}).addClass('alpha').attr('maxlength','40');
 		$('label[for="nrcpfcto"]','#frmRespLegal').css({'width':'253px'});	

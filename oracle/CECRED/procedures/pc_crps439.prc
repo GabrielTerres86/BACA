@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Marco/2005                       Ultima atualizacao: 12/06/2017
+   Data    : Marco/2005                       Ultima atualizacao: 13/04/2015
 
    Dados referentes ao programa:
 
@@ -155,11 +155,6 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                
                13/04/2015 - Ajuste na validação de daa limite do cancelamento, para que não seja debitado 
                             se o cancelamento ocorrer no mesmo dia da criação do seguro SD-275054 (Odirlei-AMcom)             
-							
-			   12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-							(Adriano - P339).
-							      
                ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -1158,7 +1153,7 @@ begin
     if vr_cratseg(vr_ind_cratseg).tpregist <> 3 then
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_txt,
                      '<nrcpfcgc>'||to_char(vr_cratseg(vr_ind_cratseg).nrcpfcgc)||'</nrcpfcgc>'||
-                     '<nrdocptl>'||SUBSTR(vr_cratseg(vr_ind_cratseg).nrdocptl,1,15)||'</nrdocptl>'||
+                     '<nrdocptl>'||vr_cratseg(vr_ind_cratseg).nrdocptl||'</nrdocptl>'||
                      '<cdoedptl>'||vr_cratseg(vr_ind_cratseg).cdoedptl||'</cdoedptl>'||
                      '<dtnasctl>'||to_char(vr_cratseg(vr_ind_cratseg).dtnasctl, 'dd/mm/yyyy')||'</dtnasctl>'||
                      '<dtemdptl>'||to_char(vr_cratseg(vr_ind_cratseg).dtemdptl, 'dd/mm/yyyy')||'</dtemdptl>'||

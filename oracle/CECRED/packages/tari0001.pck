@@ -57,27 +57,27 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --              16/04/2014 - Incluido a funcao sq_sequencia para buscar o maior valor
   --                           (Andrino/RKAM)
   --
-  --              02/09/2015 - Inclusão da procedure pc_verifica_tarifa_operacao Prj.
-  --                           Tarifas - 218 (Jean Michel)
+  --              02/09/2015 - Inclusão da procedure pc_verifica_tarifa_operacao Prj. 
+  --                           Tarifas - 218 (Jean Michel)             
   --
-  --              26/11/2015 - Alterado parametro pr_dtmvtolt da TARI0001.pc_cria_lan_auto_tarifa
-  --                           dentro da procedure pc_verifica_tarifa_operacao  (Jean Michel).
+  --              26/11/2015 - Alterado parametro pr_dtmvtolt da TARI0001.pc_cria_lan_auto_tarifa 
+  --                           dentro da procedure pc_verifica_tarifa_operacao  (Jean Michel).             
   --
   --              14/12/2015 - Incluido tratamento para inpessoa = 3 na procedure pc_verifica_tarifa_operacao
   --                           (Jean Michel).
-  --
+  --              
   --              05/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
   --                           para passagem do parâmetro pr_tipo_busca, para melhoria
   --                           de performance.
   --                           Chamado 291693 (Heitor - RKAM)
   --              27/01/2016 - Incluido procedure pc_integra_deb_tarifa para debitar tarifas de conta integração
-  --                           rodado por job todo quinto dia útil do mês, conforme solicitado no chamado 381175.
-  --                           (Kelvin)
+  --                           rodado por job todo quinto dia útil do mês, conforme solicitado no chamado 381175. 
+  --                           (Kelvin)   
   --
   --			  10/02/2016 - Alteracao de parametro Fato Gerador(pc_verifica_tarifa_operacao), de rw_crapdat.dtmvtolt para
   --						   pr_dtmvtolt, SD 397975 (Jean Michel).
   --
-  --              07/03/2016 - Alterado na procedure pc_deb_tarifa_online a data passada
+  --              07/03/2016 - Alterado na procedure pc_deb_tarifa_online a data passada 
   --                           no update da tabela craplat no campo dtefetiv para dtmvtolt
   --                           conforme solicitado no chamado 413660 (Kelvin).
   --
@@ -137,10 +137,10 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   /* Tipos de tabela de memoria */
   TYPE typ_tab_tarifas_pend
     IS TABLE OF typ_reg_tarifas_pend INDEX BY PLS_INTEGER;
-
+    
   TYPE typ_tab_conta_ssaldo
-    IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
-
+    IS TABLE OF NUMBER INDEX BY PLS_INTEGER;    
+            
   TYPE typ_tab_coop
     IS TABLE OF typ_reg_coop INDEX BY PLS_INTEGER;
 
@@ -352,11 +352,11 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                           ,pr_des_erro  OUT VARCHAR2                  --Indicador de erro OK/NOK
                                           ,pr_tab_erro  OUT GENE0001.typ_tab_erro);   --Tabela erros
 
-  /* Consulta por:
-      Saques feitos no meu TAA por outras Coops (pr_cdcoptfn <> 0)
+  /* Consulta por:                                       
+      Saques feitos no meu TAA por outras Coops (pr_cdcoptfn <> 0)     
       Saques feitos por meus Assoc. em outras Coops (pr_cdcooper <> 0)  */
-  PROCEDURE  pc_taa_lancamento_tarifas_ext(pr_cdcooper        IN  crapcop.cdcooper%TYPE,
-                                           pr_cdcoptfn        IN  craplcm.cdcoptfn%TYPE,
+  PROCEDURE  pc_taa_lancamento_tarifas_ext(pr_cdcooper        IN  crapcop.cdcooper%TYPE, 
+                                           pr_cdcoptfn        IN  craplcm.cdcoptfn%TYPE, 
                                            pr_tpextrat        IN  crapext.tpextrat%TYPE,
                                            pr_insitext        IN  VARCHAR2,
                                            pr_dtmvtoin        IN  DATE,
@@ -364,8 +364,8 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                            pr_cdtplanc        IN  PLS_INTEGER,
                                            pr_dscritic        OUT VARCHAR2,
                                            pr_tab_lancamentos OUT cada0001.typ_tab_lancamentos);
-
-
+                                           
+  
   PROCEDURE pc_busca_tarifa_pendente(pr_cdcooper        IN  crapcop.cdcooper%TYPE,
                                      pr_cdcopatu        IN  crapcop.cdcooper%TYPE,
                                      pr_cdagenci        IN  crapage.cdagenci%TYPE,
@@ -374,29 +374,29 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                      pr_nrdconta        IN  crapass.nrdconta%TYPE,
                                      pr_cdhistor        IN  craphis.cdhistor%TYPE,
                                      pr_cddgrupo        IN  crapgru.cddgrupo%TYPE,
-                                     pr_cdsubgru        IN  crapsgr.cdsubgru%TYPE,
+                                     pr_cdsubgru        IN  crapsgr.cdsubgru%TYPE,                        
                                      pr_dtinicio        IN  DATE,
-                                     pr_dtafinal        IN  DATE,
+                                     pr_dtafinal        IN  DATE,                                     
                                      pr_dscritic        OUT VARCHAR2,
                                      pr_tab_tari_pend   OUT TARI0001.typ_tab_tarifas_pend);
-
-  PROCEDURE pc_busca_tarifa_pend_web(pr_cdcooper IN  crapcop.cdcooper%TYPE
-                                    ,pr_cdcopatu IN  crapcop.cdcooper%TYPE
+  
+  PROCEDURE pc_busca_tarifa_pend_web(pr_cdcooper IN  crapcop.cdcooper%TYPE 
+                                    ,pr_cdcopatu IN  crapcop.cdcooper%TYPE 
                                     ,pr_cdagenci IN  crapage.cdagenci%TYPE
                                     ,pr_cdoperad IN  crapope.cdoperad%TYPE
                                     ,pr_inpessoa IN  crapass.inpessoa%TYPE
                                     ,pr_nrdconta IN  crapass.nrdconta%TYPE
                                     ,pr_cdhistor IN  craphis.cdhistor%TYPE
                                     ,pr_cddgrupo IN  crapgru.cddgrupo%TYPE
-                                    ,pr_cdsubgru IN  crapsgr.cdsubgru%TYPE
+                                    ,pr_cdsubgru IN  crapsgr.cdsubgru%TYPE                                    
                                     ,pr_dtinicio IN  VARCHAR2
-                                    ,pr_dtafinal IN  VARCHAR2
+                                    ,pr_dtafinal IN  VARCHAR2                                                                          
                                     ,pr_xmllog   IN  VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
                                     ,pr_retxml   IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                                    ,pr_des_erro OUT VARCHAR2);
+                                    ,pr_des_erro OUT VARCHAR2);                                         
 
   PROCEDURE pc_debita_tarifa_online(pr_cdcooper        IN  crapcop.cdcooper%TYPE,
                                     pr_cdoperad        IN  crapope.cdoperad%TYPE,
@@ -407,7 +407,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     pr_nmarqpdf        OUT VARCHAR2,
                                     pr_dscritic        OUT VARCHAR2,
                                     pr_tab_tari_pend   IN OUT TARI0001.typ_tab_tarifas_pend);
-
+                                    
   PROCEDURE pc_deb_tarifa_online_web(pr_listalat IN  CLOB
                                     ,pr_xmllog   IN  VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -418,24 +418,24 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
 
   /* Procedimento para buscar todas as tarifas pendentes de debito e tentar debita-las */
   PROCEDURE pc_deb_tarifa_pend ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                ,pr_dtinicio IN DATE                    --> data de inicio para verificação das tarifas
-                                ,pr_dtafinal IN DATE                    --> data final para verificação das tarifas
+                                ,pr_dtinicio IN DATE                    --> data de inicio para verificação das tarifas               
+                                ,pr_dtafinal IN DATE                    --> data final para verificação das tarifas               
                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                                ,pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada
-
+                                ,pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada                                    
+             
   /*  Procedimento para verificar se a conta possui lançamento de credito no dia
       e se possui saldo */
-  PROCEDURE pc_verifica_credito (pr_cdcooper  IN crapcop.cdcooper%TYPE,      --> Codigo da cooperativa
+  PROCEDURE pc_verifica_credito (pr_cdcooper  IN crapcop.cdcooper%TYPE,      --> Codigo da cooperativa    
                                  pr_nrdconta  IN craplat.nrdconta%TYPE,      --> Numero da conta do cooperaro
                                  pr_vllimcre  IN crapass.vllimcre%TYPE,      --> limite de credito do cooperado
-                                 pr_rcrapdat  IN btch0001.cr_crapdat%ROWTYPE,--> data da cooperativa
-                                 pr_flgvflcm  IN BOOLEAN,                    --> flag de controle se deve verificar lançamentos de credito
+                                 pr_rcrapdat  IN btch0001.cr_crapdat%ROWTYPE,--> data da cooperativa 
+                                 pr_flgvflcm  IN BOOLEAN,                    --> flag de controle se deve verificar lançamentos de credito    
                                  pr_flgvfsld  IN BOOLEAN,                    --> flag de controle se deve verificar saldo do cooperado
                                  pr_fposcred OUT BOOLEAN,                    --> Retorna flag se cooperado possui credito
                                  pr_tab_sald OUT EXTR0001.typ_tab_saldos,    --> Retorna saldo do cooperado
                                  pr_dscritic OUT VARCHAR2                    --> Retorna critica
-                                 );
-
+                                 );                                                      
+                                 
   /* Efetua cobrança de tarifa */
   PROCEDURE pc_cobra_tarifa_imgchq (pr_cdagechq  IN NUMBER
                             ,pr_nrctachq  IN NUMBER
@@ -461,8 +461,8 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                        ,pr_qtacobra OUT INTEGER                 --> Quantidade de registros a cobrar tarifa na operação
                                        ,pr_fliseope OUT INTEGER                 --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo da critica
-                                       ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao da critica
-
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao da critica  
+  
   /* Verificacao agencia da cooperativa */
   PROCEDURE pc_busca_agencia_cop(pr_cdagectl IN crapcop.cdagectl%TYPE
                                  ,pr_xmllog    IN VARCHAR2             --> XML com informac?es de LOG
@@ -471,15 +471,15 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                  ,pr_retxml    IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-
-  PROCEDURE pc_integra_deb_tarifa (pr_cdcooper IN crapcop.cdcooper%TYPE);   --> Cooperativa solicitada
-
+                                 
+  PROCEDURE pc_integra_deb_tarifa (pr_cdcooper IN crapcop.cdcooper%TYPE);   --> Cooperativa solicitada                            
+  
   PROCEDURE pc_gera_log_lote_uso(pr_cdcooper IN craplot.cdcooper%TYPE,
                                  pr_nrdconta IN crapass.nrdconta%TYPE,
                                  pr_nrdolote IN craplot.nrdolote%TYPE,
                                  pr_flgerlog IN OUT VARCHAR2,
-                                 pr_des_log IN VARCHAR2);
-
+                                 pr_des_log IN VARCHAR2);                               
+     
   -- Rotina para verificar pacote de tarifas
   PROCEDURE pc_verifica_pacote_tarifas(pr_cdcooper  IN craprac.cdcooper%TYPE   --> Código da Cooperativa
                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE   --> Numero da Conta
@@ -489,7 +489,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                       ,pr_flservic OUT NUMBER                  --> Flag de Sevico
                                       ,pr_qtopdisp OUT NUMBER                  --> Quantidade de Operacoes Disponiveis
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Código da crítica
-                                      ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição da crítica
+                                      ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição da crítica                                  
 
   -- Rotina para verificar pacote de tarifas via web
   PROCEDURE pc_verifica_pct_tari_web(pr_cdcooper IN craprac.cdcooper%TYPE  --> Código da Cooperativa
@@ -501,7 +501,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
-
+   
   /*****************************************************************************
   Estorno/Baixa de lancamento de tarifas
   ******************************************************************************/
@@ -510,7 +510,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     ,pr_nrdcaixa  IN INTEGER  --> Numero do caixa
                                     ,pr_cdoperad  IN VARCHAR2 --> Codigo Operador
                                     ,pr_dtmvtolt  IN DATE     --> Data Lancamento
-                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela
+                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela       
                                     ,pr_idorigem  IN INTEGER  --> Indicador de origem
                                     ,pr_inproces  IN INTEGER  --> Indicador processo
                                     ,pr_nrdconta  IN INTEGER  --> Numero da Conta
@@ -521,7 +521,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     ,pr_flgerlog  IN VARCHAR2 --> Indicador se deve gerar log (S-sim N-Nao)
                                     ,pr_cdcritic OUT INTEGER      --> Codigo Critica
                                     ,pr_dscritic OUT VARCHAR2);   --> Descricao Critica
-
+                                    
 END TARI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
@@ -541,56 +541,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
   /* Alteracoes: 27/08/2015 - Inclusão da procedure pc_cobra_tarifa
                               Projeto de TARIFAS - Lombardi
+               
+                 02/09/2015 - Inclusão da procedure pc_verifica_tarifa_operacao Prj. Tarifas - 218 (Jean Michel)                            
 
-                 02/09/2015 - Inclusão da procedure pc_verifica_tarifa_operacao Prj. Tarifas - 218 (Jean Michel)
-
-                 26/11/2015 - Alterado parametro pr_dtmvtolt da TARI0001.pc_cria_lan_auto_tarifa
+                 26/11/2015 - Alterado parametro pr_dtmvtolt da TARI0001.pc_cria_lan_auto_tarifa 
                               dentro da procedure pc_verifica_tarifa_operacao  (Jean Michel).
 
                  14/12/2015 - Incluido tratamento para inpessoa = 3 na procedure pc_verifica_tarifa_operacao
-                              (Jean Michel).
-
+                              (Jean Michel). 
+                 
                  05/01/2016 - Alteração na chamada da rotina extr0001.pc_obtem_saldo_dia
                               para passagem do parâmetro pr_tipo_busca, para melhoria
                               de performance.
                               Chamado 291693 (Heitor - RKAM)
 
                  27/01/2016 - Incluido procedure pc_integra_deb_tarifa para debitar tarifas de conta integração
-                              rodado por job todo quinto dia útil do mês, conforme solicitado no chamado 381175.
-                              (Kelvin)
-
+                              rodado por job todo quinto dia útil do mês, conforme solicitado no chamado 381175. 
+                              (Kelvin)            
+                              
                  12/02/2016 - PRJ 213 - Reciprocidade. (Jaison/Marcos)
 
-                 26/02/2016 - Criado rotina pc_gera_log_lote_uso para monitorar a criação dos lotes no TED.(Odirlei-AMcom)
-
-                 07/03/2016 - Alterado na procedure pc_deb_tarifa_online a data passada
+                 26/02/2016 - Criado rotina pc_gera_log_lote_uso para monitorar a criação dos lotes no TED.(Odirlei-AMcom)             
+					   
+                 07/03/2016 - Alterado na procedure pc_deb_tarifa_online a data passada 
                               no update da tabela craplat no campo dtefetiv para dtmvtolt
                               conforme solicitado no chamado 413660 (Kelvin).
-
-                 04/04/2016 - Alteracao de parametros para Prj. Tarifas - 2 na
-                              procedure pc_verifica_tarifa_operacao(Jean Michel).
-
+ 
+                 04/04/2016 - Alteracao de parametros para Prj. Tarifas - 2 na 
+                              procedure pc_verifica_tarifa_operacao(Jean Michel). 
+																
 								 28/04/2016 - Adicionado chamada da procedure pc_verifica_tarifa_operacao
 								              em pc_integra_deb_tarifa. PRJ 218/2 (Reinert).
 
                  03/05/2016 - Retirado verificacao de 5 dia util na pc_deb_tarifa_online e adicionado na rotina
   						                pc_controla_deb_tarifas (Lucas Ranghetti #412789)
-
+                              
                  15/09/2016 - #519899 Criação de log de controle de início, erros e fim de execução
                               do job pc_deb_tarifa_pend (Carlos)
-
+                              
                  29/03/2017 - #640389 Alterada a forma como era feito o insert na lcm, na rotina
                               pc_lan_tarifa_conta_corrente, passando a tratar com DUP_VAL_ON_INDEX,
                               dispensando a consulta do mesmo antes da inserção (Carlos)
 
-				 11/07/2017 - Melhoria 150 - Adicionado calculo de tarifa por faixa percentual			    
-
-				 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                  crapass, crapttl, crapjur 
-							  (Adriano - P339).
+				11/07/2017 - Melhoria 150 - Adicionado calculo de tarifa por faixa percentual			    
 
   */
-
+ 
   ---------------------------------------------------------------------------------------------------------------
 
   /* Cursores da Package */
@@ -616,6 +612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           ,crapass.nrcpfcgc
           ,crapass.inpessoa
           ,crapass.cdcooper
+          ,crapass.nrcpfstl
           ,crapass.cdsecext
           ,crapass.cdagenci
           ,crapass.dtdemiss
@@ -662,7 +659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           ,crapban.nmextbcc
     FROM crapban
     WHERE crapban.cdbccxlt = pr_cdbccxlt;
-  rw_crapban cr_crapban%ROWTYPE;
+  rw_crapban cr_crapban%ROWTYPE;  
 
   --Selecionar faixa valor tarifa
   CURSOR cr_crapfvl (pr_cdtarifa IN crapfvl.cdtarifa%type
@@ -1175,16 +1172,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           END IF;
           --
           vr_vltarids := vr_vltarifa - (vr_vltarifa * (rw_tar_ctc.perdesconto / 100));
-
+          
           --Se foi solicitado para apurar a tarifação
-          IF pr_flaputar = 1 THEN
-
+          IF pr_flaputar = 1 THEN 
+          
             BEGIN
               INSERT INTO tbrecip_apuracao_tarifa
                          (cdcooper
                          ,nrdconta
                          ,cdproduto
-                         ,cdchave_produto
+                         ,cdchave_produto 
                          ,dtocorre
                          ,cdtarifa
                          ,vltarifa_original
@@ -1206,7 +1203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                 vr_dscritic := 'Erro na inclusao da TBRECIP_APURACAO_TARIFA: ' || SQLERRM;
                 RAISE vr_exc_erro;
             END;
-
+                  
             --Verifica se o convenio possui reciprocidade ativa
             OPEN cr_crapceb (pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
@@ -1245,7 +1242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                              (cdcooper
                              ,nrdconta
                              ,cdproduto
-                             ,cdchave_produto
+                             ,cdchave_produto 
                              ,tpreciproci
                              ,idconfig_recipro
                              ,dtinicio_apuracao
@@ -1288,7 +1285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             END IF; -- vr_idrecipr
 
           END IF; -- Se foi solicitado apuracao
-
+        
         END IF; -- cr_tar_ctc
 
       END IF; -- pr_nrdconta
@@ -1297,7 +1294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       pr_cdhistor:= rw_crapfvl.cdhistor;
       pr_cdhisest:= rw_crapfvl.cdhisest;
       -- Ou vem da Reciprocidade com Desconto OU da faixa original
-      pr_vltarifa:= nvl(vr_vltarids,rw_crapfco.vltarifa);
+      pr_vltarifa:= nvl(vr_vltarids,rw_crapfco.vltarifa); 
       pr_dtdivulg:= rw_crapfco.dtdivulg;
       pr_dtvigenc:= rw_crapfco.dtvigenc;
       pr_cdfvlcop:= rw_crapfco.cdfvlcop;
@@ -1421,7 +1418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
       --Limpar tabela erro
-      pr_tab_erro.DELETE;
+      pr_tab_erro.DELETE;     
 
       --Selecionar as tarifas
       OPEN cr_craptar (pr_cdmotivo => pr_cdmotivo
@@ -2034,10 +2031,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       --Limpar tabela erro
       pr_tab_erro.DELETE;
-
+      
       -- Recebe a tarifa passada por parâmetro
       vr_cdtarifa := pr_cdtarifa;
-
+      
       -- Caso não houver tarifa, busca a partir da sigla (CRAPBAT)
       IF vr_cdtarifa IS NULL OR vr_cdtarifa = 0 THEN
       --Selecionar sigla da tarifa
@@ -2063,7 +2060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       --Fechar Cursor
       CLOSE cr_crapbat;
       END IF;
-
+      
       --Selecionar as tarifas
       OPEN cr_craptar (pr_cdtarifa => vr_cdtarifa);
       --Posicionar no proximo registro
@@ -2463,7 +2460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   -- Objetivo  : Procedure para lancar tarifa conta corrente
   --
   -- Alteracoes: 26/02/2016 - Alterado rotina para testar se o lote esta alocado antes de realizar os comandos
-  --                          conforme é no progress, incluido logs de monitoramento (Odirlei-AMcom)
+  --                          conforme é no progress, incluido logs de monitoramento (Odirlei-AMcom)   
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -2491,7 +2488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         AND   craplot.nrdolote = pr_nrdolote
         FOR UPDATE NOWAIT;
       rw_craplot cr_craplot%ROWTYPE;
-
+      
       --Selecionar Historico
       CURSOR cr_craphis (pr_cdcooper IN craphis.cdcooper%type
                         ,pr_cdhistor IN craphis.cdhistor%type) IS
@@ -2550,9 +2547,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
       --Rowid lancamento tarifa
       vr_rowid_craplat ROWID;
-
+      
       vr_flgerlog VARCHAR2(100) := NULL;
-
+      
       ---------------- SUB-ROTINAS ------------------
       -- Procedimento para inserir o lote e não deixar tabela lockada
       PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
@@ -2570,30 +2567,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
         -- Pragma - abre nova sessao para tratar a atualizacao
         PRAGMA AUTONOMOUS_TRANSACTION;
-
+          
         rw_craplot cr_craplot%ROWTYPE;
         vr_nrdolote craplot.nrdolote%TYPE;
-
+          
       BEGIN
         vr_nrdolote := pr_nrdolote;
-
+        
         pc_gera_log_lote_uso(pr_cdcooper => pr_cdcooper,
                              pr_nrdconta => pr_nrdconta,
                              pr_nrdolote => vr_nrdolote,
                              pr_flgerlog => vr_flgerlog,
                              pr_des_log  => 'Alocando lote -> '||
-                                           'cdcooper: '||pr_cdcooper ||' '||
-                                           'dtmvtolt: '|| to_char(pr_dtmvtolt,'DD/MM/RRRR')||' '||
-                                           'cdagenci: '|| pr_cdagenci||' '||
-                                           'cdbccxlt: '|| pr_cdbccxlt||' '||
-                                           'nrdolote: '|| vr_nrdolote||' '||
-                                           'nrdconta: '|| pr_nrdconta||' '||
-                                           'cdhistor: '|| pr_cdhistor||' '||
+                                           'cdcooper: '||pr_cdcooper ||' '||           
+                                           'dtmvtolt: '|| to_char(pr_dtmvtolt,'DD/MM/RRRR')||' '||           
+                                           'cdagenci: '|| pr_cdagenci||' '||           
+                                           'cdbccxlt: '|| pr_cdbccxlt||' '||           
+                                           'nrdolote: '|| vr_nrdolote||' '|| 
+                                           'nrdconta: '|| pr_nrdconta||' '|| 
+                                           'cdhistor: '|| pr_cdhistor||' '|| 
                                            'rotina: TARI0001.pc_lan_tarifa_conta_corrente ');
-
+        
         FOR vr_contador IN 1..100 LOOP
           BEGIN
-
+            
             -- verificar lote
             OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
                              pr_dtmvtolt  => pr_dtmvtolt,
@@ -2602,42 +2599,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                              pr_nrdolote  => vr_nrdolote);
             FETCH cr_craplot INTO rw_craplot;
             -- se não deu erro no fecth é pq o registro não esta em lock
-            EXIT;
-
+            EXIT;           
+              
           EXCEPTION
             WHEN OTHERS THEN
               IF cr_craplot%ISOPEN THEN
                 CLOSE cr_craplot;
               END IF;
-
+              
               pc_gera_log_lote_uso(pr_cdcooper => pr_cdcooper,
                                    pr_nrdconta => pr_nrdconta,
                                    pr_nrdolote => vr_nrdolote,
                                    pr_flgerlog => vr_flgerlog,
                                    pr_des_log  => 'Lote ja alocado('||vr_contador||') -> '||
-                                               'cdcooper: '|| pr_cdcooper||' '||
-                                               'dtmvtolt: '|| to_char(pr_dtmvtolt,'DD/MM/RRRR')||' '||
-                                               'cdagenci: '|| pr_cdagenci||' '||
-                                               'cdbccxlt: '|| pr_cdbccxlt||' '||
-                                               'nrdolote: '|| vr_nrdolote||' '||
-                                               'nrdconta: '|| pr_nrdconta||' '||
-                                               'cdhistor: '|| pr_cdhistor||' '||
+                                               'cdcooper: '|| pr_cdcooper||' '||           
+                                               'dtmvtolt: '|| to_char(pr_dtmvtolt,'DD/MM/RRRR')||' '||           
+                                               'cdagenci: '|| pr_cdagenci||' '||           
+                                               'cdbccxlt: '|| pr_cdbccxlt||' '||           
+                                               'nrdolote: '|| vr_nrdolote||' '|| 
+                                               'nrdconta: '|| pr_nrdconta||' '|| 
+                                               'cdhistor: '|| pr_cdhistor||' '|| 
                                                'rotina: TARI0001.pc_lan_tarifa_conta_corrente ');
-
+              
               -- se for a ultima tentativa, guardar a critica
               IF vr_contador = 100 THEN
-                pr_dscritic := 'Registro de lote '||vr_nrdolote||' em uso. Tente novamente.';
+                pr_dscritic := 'Registro de lote '||vr_nrdolote||' em uso. Tente novamente.';                                
               END IF;
-              sys.dbms_lock.sleep(0.1);
+              sys.dbms_lock.sleep(0.1);  
           END;
         END LOOP;
-
+        
         -- se encontrou erro ao buscar lote, abortar programa
         IF pr_dscritic IS NOT NULL THEN
           ROLLBACK;
           RETURN;
         END IF;
-
+          
         IF cr_craplot%NOTFOUND THEN
           -- criar registros de lote na tabela
           INSERT INTO craplot
@@ -2676,43 +2673,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                        rw_craplot.cdbccxlt,
                        rw_craplot.nrdolote,
                        rw_craplot.nrseqdig;
-
+            
         ELSE
           -- Atualizar lote para reservar nrseqdig
           UPDATE craplot
              SET craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
            WHERE craplot.rowid = rw_craplot.rowid
-          RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-
+          RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig; 
+          
         END IF;
         CLOSE cr_craplot;
         pr_craplot := rw_craplot;
-
+          
         COMMIT;
-
+        
       EXCEPTION
         WHEN OTHERS THEN
           IF cr_craplot%ISOPEN THEN
             CLOSE cr_craplot;
           END IF;
-
-          ROLLBACK;
+          
+          ROLLBACK;        
           -- se ocorreu algum erro durante a criac?o
           pr_dscritic := 'Erro ao inserir/atualizar lote '||rw_craplot.nrdolote||': '||SQLERRM;
       END pc_insere_lote;
-
+      
       --> Procedimento autonomo para atualizar o lote e liberar lock da tabela
       PROCEDURE pc_atualiza_lote(pr_cdcooper   IN crapcop.cdcooper%TYPE,
                                  pr_cdhistor   IN craphis.cdhistor%TYPE,
                                  pr_vltarifa   IN craplat.vltarifa%TYPE,
                                  pr_rw_craplot IN cr_craplot%ROWTYPE,
-                                 pr_cdcritic  OUT INTEGER,
+                                 pr_cdcritic  OUT INTEGER, 
                                  pr_dscritic  OUT VARCHAR2  ) IS
         -- Pragma - abre nova sessao para tratar a atualizacao
         PRAGMA AUTONOMOUS_TRANSACTION;
-
+            
       BEGIN
-
+      
         OPEN cr_craphis (pr_cdcooper => pr_cdcooper
                         ,pr_cdhistor => pr_cdhistor);
         --Posicionar no primeiro registro
@@ -2721,43 +2718,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         IF cr_craphis%FOUND THEN
           --Fechar Cursor
           CLOSE cr_craphis;
-
+          
           pc_gera_log_lote_uso(pr_cdcooper => pr_cdcooper,
                                pr_nrdconta => pr_nrdconta,
                                pr_nrdolote => pr_rw_craplot.nrdolote,
                                pr_flgerlog => vr_flgerlog,
                                pr_des_log  => 'Alocando lote -> '||
-                                               'cdcooper: '|| pr_rw_craplot.cdcooper ||' '||
+                                               'cdcooper: '|| pr_rw_craplot.cdcooper ||' '||           
                                                'dtmvtolt: '|| to_char(pr_rw_craplot.dtmvtolt,'DD/MM/RRRR')||' '||
-                                               'cdagenci: '|| pr_rw_craplot.cdagenci||' '||
-                                               'cdbccxlt: '|| pr_rw_craplot.cdbccxlt||' '||
-                                               'nrdolote: '|| pr_rw_craplot.nrdolote||' '||
-                                               'nrdconta: '|| pr_nrdconta||' '||
-                                               'cdhistor: '|| pr_cdhistor||' '||
+                                               'cdagenci: '|| pr_rw_craplot.cdagenci||' '||           
+                                               'cdbccxlt: '|| pr_rw_craplot.cdbccxlt||' '||           
+                                               'nrdolote: '|| pr_rw_craplot.nrdolote||' '|| 
+                                               'nrdconta: '|| pr_nrdconta||' '|| 
+                                               'cdhistor: '|| pr_cdhistor||' '|| 
                                                'rotina: TARI0001.pc_lan_tarifa_conta_corrente(update final)');
-
+          
           --> Verificar se lote esta lockado antes de realizar o update
           IF CXON0020.fn_verifica_lote_uso(pr_rowid => pr_rw_craplot.rowid ) = 1 THEN
-            vr_dscritic:= 'Registro de lote '||pr_rw_craplot.nrdolote||' em uso. Tente novamente.';
-
+            vr_dscritic:= 'Registro de lote '||pr_rw_craplot.nrdolote||' em uso. Tente novamente.';  
+            
             pc_gera_log_lote_uso(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => pr_nrdconta,
                                  pr_nrdolote => pr_rw_craplot.nrdolote,
                                  pr_flgerlog => vr_flgerlog,
                                  pr_des_log  => 'ERRO: Lote ja alocado -> '||
-                                               'cdcooper: '|| pr_rw_craplot.cdcooper ||' '||
-                                               'dtmvtolt: '|| to_char(pr_rw_craplot.dtmvtolt,'DD/MM/RRRR')||' '||
-                                               'cdagenci: '|| pr_rw_craplot.cdagenci||' '||
-                                               'cdbccxlt: '|| pr_rw_craplot.cdbccxlt||' '||
-                                               'nrdolote: '|| pr_rw_craplot.nrdolote||' '||
-                                               'nrdconta: '|| pr_nrdconta||' '||
-                                               'cdhistor: '|| pr_cdhistor||' '||
+                                               'cdcooper: '|| pr_rw_craplot.cdcooper ||' '||           
+                                               'dtmvtolt: '|| to_char(pr_rw_craplot.dtmvtolt,'DD/MM/RRRR')||' '||           
+                                               'cdagenci: '|| pr_rw_craplot.cdagenci||' '||           
+                                               'cdbccxlt: '|| pr_rw_craplot.cdbccxlt||' '||           
+                                               'nrdolote: '|| pr_rw_craplot.nrdolote||' '|| 
+                                               'nrdconta: '|| pr_nrdconta||' '|| 
+                                               'cdhistor: '|| pr_cdhistor||' '|| 
                                                'rotina: TARI0001.pc_lan_tarifa_conta_corrente(update final)');
-
+            
             -- apensa jogar critica em log
             RAISE vr_exc_erro;
           END IF;
-
+            
           --Debito
           IF  rw_craphis.indebcre = 'D' THEN
             BEGIN
@@ -2790,32 +2787,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           --Mensagem erro
           vr_dscritic:= 'Historico nao encontrado!';
           RAISE vr_exc_erro;
-
+          
         END IF;
         --Fechar Cursor
         IF cr_craphis%ISOPEN THEN
           CLOSE cr_craphis;
-        END IF;
-
+        END IF; 
+        
         -- Commit apensa na sessao autonoma
         COMMIT;
-
+      
       EXCEPTION
         WHEN vr_exc_erro THEN
           -- rollback apenas na sessao autonoma
           ROLLBACK;
           pr_cdcritic := nvl(vr_cdcritic,0);
-          pr_dscritic := vr_dscritic;
-
+          pr_dscritic := vr_dscritic;          
+          
         WHEN OTHERS THEN
           -- rollback apenas na sessao autonoma
           ROLLBACK;
-
+          
           pr_cdcritic := 0;
           pr_dscritic := 'Erro ao atualizar lote. '||sqlerrm;
-
+         
       END pc_atualiza_lote;
-
+      
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
@@ -2831,8 +2828,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       IF pr_vltarifa = 0 THEN
         RETURN;
       END IF;
-
-
+      
+      
       -- Procedimento para inserir o lote e não deixar tabela lockada
       pc_insere_lote (pr_cdcooper => pr_cdcooper,
                       pr_dtmvtolt => pr_dtmvtolt,
@@ -2846,11 +2843,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                       pr_cdopecxa => 0,
                       pr_dscritic => vr_dscritic,
                       pr_craplot  => rw_craplot);
-
+      
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-
+      
       --Selecionar informacoes do lote
      /* OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                       ,pr_dtmvtolt => pr_dtmvtolt
@@ -3065,11 +3062,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                ,rw_craplcm.dtmvtolt
                ,rw_craplcm.vllanmto;
           EXCEPTION
-
+            
           WHEN DUP_VAL_ON_INDEX THEN
           --Se o numero documento igual zero
           IF pr_nrdocmto = 0 THEN
-
+            
             -- Gerar novo nrseqdig que será utilizado como numero de documento
             pc_insere_lote (pr_cdcooper => pr_cdcooper,
                             pr_dtmvtolt => pr_dtmvtolt,
@@ -3083,11 +3080,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                             pr_cdopecxa => 0,
                             pr_dscritic => vr_dscritic,
                             pr_craplot  => rw_craplot);
-
+            
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
             END IF;
-
+            
             --Proximo registro loop
             CONTINUE;
           END IF;
@@ -3112,7 +3109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           END IF;
           --Proximo registro loop
           CONTINUE;
-
+          
           WHEN Others THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro ao inserir lancamento. '||sqlerrm;
@@ -3161,7 +3158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             RAISE vr_exc_erro;
         END;
       END IF;
-
+      
       --> Procedimento autonomo para atualizar o lote e liberar lock da tabela
       pc_atualiza_lote(pr_cdcooper   => pr_cdcooper,
                        pr_cdhistor   => pr_cdhistor,
@@ -3169,13 +3166,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                        pr_rw_craplot => rw_craplot,
                        pr_cdcritic   => vr_cdcritic,
                        pr_dscritic   => vr_dscritic);
-
-      IF TRIM(vr_dscritic) IS NOT NULL OR
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR 
          nvl(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_erro;
       END IF;
-
-
+                       
+      
     EXCEPTION
        WHEN vr_exc_erro THEN
          pr_cdcritic:= vr_cdcritic;
@@ -3774,8 +3771,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   END pc_carrega_par_tarifa_vigente;
 
 
-  PROCEDURE  pc_taa_lancamento_tarifas_ext(pr_cdcooper        IN  crapcop.cdcooper%TYPE,
-                                           pr_cdcoptfn        IN  craplcm.cdcoptfn%TYPE,
+  PROCEDURE  pc_taa_lancamento_tarifas_ext(pr_cdcooper        IN  crapcop.cdcooper%TYPE, 
+                                           pr_cdcoptfn        IN  craplcm.cdcoptfn%TYPE, 
                                            pr_tpextrat        IN  crapext.tpextrat%TYPE,
                                            pr_insitext        IN  VARCHAR2,
                                            pr_dtmvtoin        IN  DATE,
@@ -3794,9 +3791,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Consulta por:
-    --                 Saques feitos no meu TAA por outras Coops (pr_cdcoptfn <> 0)
-    --                 Saques feitos por meus Assoc. em outras Coops (pr_cdcooper <> 0)
+    --   Objetivo  : Consulta por:                                       
+    --                 Saques feitos no meu TAA por outras Coops (pr_cdcoptfn <> 0)     
+    --                 Saques feitos por meus Assoc. em outras Coops (pr_cdcooper <> 0) 
     --
 
     -- Cursor sobre os arquivos de contas que deverao ter seus extratos impressos
@@ -3810,7 +3807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        WHERE crapext.cdcoptfn =  pr_cdcoptfn
          AND crapext.tpextrat =  pr_tpextrat
          AND crapext.insitext =  nvl(pr_insitext,crapext.insitext)
-         AND crapext.dtreffim >= pr_dtmvtoin
+         AND crapext.dtreffim >= pr_dtmvtoin 
          AND crapext.dtreffim <= pr_dtmvtofi
          AND crapext.cdcooper <> crapext.cdcoptfn
        GROUP BY cdcooper,
@@ -3829,7 +3826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        WHERE crapext.cdcooper =  pr_cdcooper
          AND crapext.tpextrat =  pr_tpextrat
          AND crapext.insitext =  nvl(pr_insitext,crapext.insitext)
-         AND crapext.dtreffim >= pr_dtmvtoin
+         AND crapext.dtreffim >= pr_dtmvtoin 
          AND crapext.dtreffim <= pr_dtmvtofi
          AND crapext.cdcooper <> crapext.cdcoptfn
          AND crapext.cdcoptfn <> 0
@@ -3867,7 +3864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     vr_insitext_tmp := pr_insitext;
     LOOP
-      -- Verifica se existe mais de uma situacao de extrato
+      -- Verifica se existe mais de uma situacao de extrato 
       IF instr(vr_insitext_tmp,',') <> 0 THEN
         vr_insitext     := substr(vr_insitext_tmp,1,instr(vr_insitext_tmp,',')-1);
         vr_insitext_tmp := substr(vr_insitext_tmp,instr(vr_insitext_tmp,',')+1);
@@ -3885,7 +3882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           -- Atualiza o indice
           vr_ind := lpad(pr_cdtplanc,3,'0')||lpad(rw_crapext.cdcooper,10,'0')||lpad(rw_crapext.cdcoptfn,10,'0')||
                     lpad(rw_crapext.cdagetfn,5,'0') ||lpad(rw_crapext.nrdconta,10,'0');
-
+              
           -- Atualiza a temp-table de retorno
           pr_tab_lancamentos(vr_ind).cdtplanc := pr_cdtplanc;
           pr_tab_lancamentos(vr_ind).cdcooper := rw_crapext.cdcooper;
@@ -3896,11 +3893,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           pr_tab_lancamentos(vr_ind).dstplanc := vr_dstplanc;
           pr_tab_lancamentos(vr_ind).tpconsul := 'TAA';
           pr_tab_lancamentos(vr_ind).qtdmovto := rw_crapext.qtdmovto;
-
+        
         END LOOP;
-
+         
       END IF; /* END do IF pr_cdcoptfn */
-
+      
       IF pr_cdcooper <> 0 THEN
 
         -- Efetua loop sobre os extratos impressos automaticamente
@@ -3909,7 +3906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           -- Atualiza o indice
           vr_ind := lpad(pr_cdtplanc,3,'0')||lpad(rw_crapext.cdcooper,10,'0')||lpad(rw_crapext.cdcoptfn,10,'0')||
                     lpad(rw_crapext.cdagetfn,5,'0') ||lpad(rw_crapext.nrdconta,10,'0');
-
+              
           -- Atualiza a temp-table de retorno
           pr_tab_lancamentos(vr_ind).cdtplanc := pr_cdtplanc;
           pr_tab_lancamentos(vr_ind).cdcooper := rw_crapext.cdcooper;
@@ -3920,12 +3917,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           pr_tab_lancamentos(vr_ind).dstplanc := vr_dstplanc;
           pr_tab_lancamentos(vr_ind).tpconsul := 'Outras Coop';
           pr_tab_lancamentos(vr_ind).qtdmovto := rw_crapext.qtdmovto;
-
+        
         END LOOP;
-
+         
       END IF; /* END do IF pr_cdcooper */
-
-
+        
+        
       -- Caso nao existir mais situacoes de extrato, sai do loop
       EXIT WHEN vr_insitext_tmp IS NULL;
     END LOOP;
@@ -3943,14 +3940,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                      pr_nrdconta        IN  crapass.nrdconta%TYPE,
                                      pr_cdhistor        IN  craphis.cdhistor%TYPE,
                                      pr_cddgrupo        IN  crapgru.cddgrupo%TYPE,
-                                     pr_cdsubgru        IN  crapsgr.cdsubgru%TYPE,
+                                     pr_cdsubgru        IN  crapsgr.cdsubgru%TYPE,                        
                                      pr_dtinicio        IN  DATE,
-                                     pr_dtafinal        IN  DATE,
+                                     pr_dtafinal        IN  DATE,                                     
                                      pr_dscritic        OUT VARCHAR2,
                                      pr_tab_tari_pend   OUT TARI0001.typ_tab_tarifas_pend)IS
     -- ........................................................................
     --
-    --  Programa : pc_busca_tarifa_pentende
+    --  Programa : pc_busca_tarifa_pentende          
     --  Sistema  : Cred
     --  Sigla    : TARI0001
     --  Autor    : Tiago Machado Flor
@@ -3959,43 +3956,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Consulta por:
+    --   Objetivo  : Consulta por:                                       
     --                 Busca tarifas pendentes de acordo com os parametros passados
     --
     --   Alteracoes: 22/06/2015 - Retirado validacao do DTDEMISS pois ainda deve gerar
     --                            tarifa (Tiago/Rodrigo).
-
+    
     CURSOR cr_craplat(pr_dtinicio DATE,
                       pr_dtafinal DATE,
                       pr_cdcooper crapcop.cdcooper%TYPE,
                       pr_nrdconta craplat.nrdconta%TYPE) IS
-      SELECT craplat.ROWID   , craplat.cdcooper,
+      SELECT craplat.ROWID   , craplat.cdcooper, 
              craplat.nrdconta, craplat.dtmvtolt,
              craptar.cdtarifa, craptar.dstarifa,
              craplat.vltarifa
-        FROM craplat, crapfco,
+        FROM craplat, crapfco,  
              crapfvl, craptar
        WHERE craplat.cdfvlcop = crapfco.cdfvlcop
          AND crapfco.cdfaixav = crapfvl.cdfaixav
          AND crapfvl.cdtarifa = craptar.cdtarifa
          AND craplat.cdcooper = DECODE(pr_cdcooper,0,craplat.cdcooper,pr_cdcooper)
          AND craplat.nrdconta = DECODE(pr_nrdconta,0,craplat.nrdconta,pr_nrdconta)
-         AND craplat.dtmvtolt BETWEEN pr_dtinicio AND pr_dtafinal
+         AND craplat.dtmvtolt BETWEEN pr_dtinicio AND pr_dtafinal         
          AND craplat.insitlat = 1; -- Pendente
-
+    
     -- lista de tarifas pendentes
-    CURSOR cr_craplat_2(pr_tarrowid ROWID,
+    CURSOR cr_craplat_2(pr_tarrowid ROWID,                      
                         pr_cdagenci crapage.cdagenci%TYPE,
-                        pr_inpessoa crapass.inpessoa%TYPE,
+                        pr_inpessoa crapass.inpessoa%TYPE,                      
                         pr_cdhistor craplat.cdhistor%TYPE,
                         pr_cddgrupo crapgru.cddgrupo%TYPE,
                         pr_cdsubgru crapsgr.cdsubgru%TYPE) IS
       SELECT craplat.rowid
-        FROM craplat, crapass,
-             crapfco, crapfvl,
+        FROM craplat, crapass, 
+             crapfco, crapfvl, 
              craptar, crapsgr
-       WHERE craplat.cdcooper = crapass.cdcooper
-         AND craplat.nrdconta = crapass.nrdconta
+       WHERE craplat.cdcooper = crapass.cdcooper         
+         AND craplat.nrdconta = crapass.nrdconta         
          AND craplat.cdfvlcop = crapfco.cdfvlcop
          AND crapfco.cdfaixav = crapfvl.cdfaixav
          AND crapfvl.cdtarifa = craptar.cdtarifa
@@ -4005,8 +4002,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
          AND crapass.inpessoa = DECODE(pr_inpessoa,0,crapass.inpessoa,pr_inpessoa)
          AND crapass.cdagenci = DECODE(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
          AND craplat.cdhistor = DECODE(pr_cdhistor,0,craplat.cdhistor,pr_cdhistor)
-         --AND crapass.dtdemiss IS NULL
-         AND crapsgr.cddgrupo IN ( SELECT crapgru.cddgrupo
+         --AND crapass.dtdemiss IS NULL         
+         AND crapsgr.cddgrupo IN ( SELECT crapgru.cddgrupo 
                                      FROM crapgru
                                     WHERE crapgru.cddgrupo = DECODE(pr_cddgrupo,0,crapgru.cddgrupo,pr_cddgrupo) )
          AND crapsgr.cdsubgru = DECODE(pr_cdsubgru,0,crapsgr.cdsubgru,pr_cdsubgru);
@@ -4016,8 +4013,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     CURSOR cr_crapcop IS
       SELECT crapcop.cdcooper,
              crapcop.nmrescop
-        FROM crapcop;
-
+        FROM crapcop;       
+        
     CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE) IS
       SELECT crapass.vllimcre, crapass.cdagenci,
@@ -4025,8 +4022,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper AND
              crapass.nrdconta = pr_nrdconta;
-
-    rw_crapass cr_crapass%ROWTYPE;
+         
+    rw_crapass cr_crapass%ROWTYPE;    
 
     vr_ind PLS_INTEGER;
     vr_flsalvar BOOLEAN;
@@ -4036,22 +4033,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     -- Cursor genérico de calendário
     TYPE typ_tab_dat IS TABLE OF btch0001.cr_crapdat%ROWTYPE
     INDEX BY PLS_INTEGER;
-
+    
     vr_tab_dat typ_tab_dat;
-
+    
     --Obtem Saldo
     vr_tab_sald EXTR0001.typ_tab_saldos;
-
-  BEGIN
-
+    
+  BEGIN 
+                
         IF btch0001.cr_crapdat%ISOPEN THEN
            CLOSE btch0001.cr_crapdat;
-        END IF;
+        END IF;  
 
         --Carregar pltable com as coops pra nao precisar fazer select na tabela depois
         FOR rw_crapcop IN cr_crapcop LOOP
           vr_tab_coop(rw_crapcop.cdcooper).nmrescop := rw_crapcop.nmrescop;
-
+          
           -- Leitura do calendário da cooperativa
           OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
           FETCH btch0001.cr_crapdat
@@ -4060,122 +4057,122 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           IF btch0001.cr_crapdat%NOTFOUND THEN
             CLOSE btch0001.cr_crapdat;
           END IF;
-
+          
           CLOSE btch0001.cr_crapdat;
-
+          
         END LOOP;
 
         -- zera o indice da tabela de retorno com as tarifas pendentes
         vr_ind := 0;
-
+        
         FOR rw_craplat IN cr_craplat(pr_dtinicio => pr_dtinicio,
                                      pr_dtafinal => pr_dtafinal,
                                      pr_cdcooper => pr_cdcopatu,
                                      pr_nrdconta => pr_nrdconta) LOOP
-
+          
           -- indica se vai salvar registro na pltable tarifas pend(pr_tab_tari_pend)
-          vr_flsalvar := FALSE;
-
+          vr_flsalvar := FALSE; 
+                                   
           -- se nao informou filtros, nao preciso de todas estas condicoes no select da craplat
           IF pr_cdagenci > 0 OR pr_inpessoa > 0 OR
              pr_cddgrupo > 0 OR pr_cdsubgru > 0 OR
              pr_cdhistor > 0 THEN
-
+             
              OPEN cr_craplat_2(pr_tarrowid => rw_craplat.rowid,
                                pr_cdagenci => pr_cdagenci,
                                pr_inpessoa => pr_inpessoa,
                                pr_cdhistor => pr_cdhistor,
                                pr_cddgrupo => pr_cddgrupo,
                                pr_cdsubgru => pr_cdsubgru);
-
+                               
              FETCH cr_craplat_2 INTO rw_craplat_2;
-
+             
              IF cr_craplat_2%NOTFOUND THEN
                 CLOSE cr_craplat_2;
                 CONTINUE;
-             END IF;
-
+             END IF;   
+             
              CLOSE cr_craplat_2;
-
-          END IF;
-
-          IF NOT vr_tab_ass.exists(rw_craplat.nrdconta) THEN
-
+             
+          END IF;   
+          
+          IF NOT vr_tab_ass.exists(rw_craplat.nrdconta) THEN            
+           
             --Busca limite credito do cooperado
-            OPEN cr_crapass(pr_cdcooper => rw_craplat.cdcooper,
+            OPEN cr_crapass(pr_cdcooper => rw_craplat.cdcooper,                          
                             pr_nrdconta => rw_craplat.nrdconta);
-
+               
             FETCH cr_crapass INTO rw_crapass;
-
+               
             IF cr_crapass%NOTFOUND THEN
                CLOSE cr_crapass;
                CONTINUE;
-            END IF;
-
-            CLOSE cr_crapass;
-
+            END IF;   
+               
+            CLOSE cr_crapass;          
+            
             vr_tab_ass(rw_craplat.nrdconta).nrdconta := rw_craplat.nrdconta;
             vr_tab_ass(rw_craplat.nrdconta).cdagenci := rw_crapass.cdagenci;
             vr_tab_ass(rw_craplat.nrdconta).nmprimtl := rw_crapass.nmprimtl;
             vr_tab_ass(rw_craplat.nrdconta).flgsaldo := FALSE;
-
+            
             --verificar se o cooperado possui lançamento de credito e saldo positivo
-            pc_verifica_credito (pr_cdcooper => rw_craplat.cdcooper,                      --> Codigo da cooperativa
+            pc_verifica_credito (pr_cdcooper => rw_craplat.cdcooper,                      --> Codigo da cooperativa    
                                  pr_nrdconta => rw_craplat.nrdconta,                      --> Numero da conta do cooperaro
                                  pr_vllimcre => rw_crapass.vllimcre,                      --> limite de credito do cooperado
-                                 pr_rcrapdat => vr_tab_dat(rw_craplat.cdcooper),          --> data da cooperativa
-                                 pr_flgvflcm => TRUE,                                     --> flag de controle se deve verificar lançamentos de credito
+                                 pr_rcrapdat => vr_tab_dat(rw_craplat.cdcooper),          --> data da cooperativa 
+                                 pr_flgvflcm => TRUE,                                     --> flag de controle se deve verificar lançamentos de credito 
                                  pr_flgvfsld => TRUE,                                     --> flag de controle se deve verificar saldo do cooperado
-                                 --- out ---
+                                 --- out ---                                              
                                  pr_fposcred => vr_tab_ass(rw_craplat.nrdconta).flgsaldo, --> Retorna flag se cooperado possui credito
                                  pr_tab_sald => vr_tab_sald,                              --> Retorna saldo do cooperado
                                  pr_dscritic => vr_dscritic);                             --> Retorna critica
-
+            
             -- atribui valor para a variavel de controle
             vr_flsalvar := vr_tab_ass(rw_craplat.nrdconta).flgsaldo;
-
+                                     
           ELSE
             IF vr_tab_ass(rw_craplat.nrdconta).flgsaldo THEN
                vr_flsalvar := TRUE;
-            END IF;
-          END IF;
+            END IF;   
+          END IF;    
 
           IF vr_flsalvar THEN
             -- Atualiza o indice
             vr_ind := vr_ind + 1;
-
+              
             -- Atualiza a temp-table de retorno
-            pr_tab_tari_pend(vr_ind).cdtarifa := rw_craplat.cdtarifa;
+            pr_tab_tari_pend(vr_ind).cdtarifa := rw_craplat.cdtarifa; 
             pr_tab_tari_pend(vr_ind).cdcooper := rw_craplat.cdcooper;
             pr_tab_tari_pend(vr_ind).nmrescop := vr_tab_coop(rw_craplat.cdcooper).nmrescop;
-            pr_tab_tari_pend(vr_ind).cdagenci := vr_tab_ass(rw_craplat.nrdconta).cdagenci;
+            pr_tab_tari_pend(vr_ind).cdagenci := vr_tab_ass(rw_craplat.nrdconta).cdagenci; 
             pr_tab_tari_pend(vr_ind).nrdconta := rw_craplat.nrdconta;
-            pr_tab_tari_pend(vr_ind).nmprimtl := vr_tab_ass(rw_craplat.nrdconta).nmprimtl;
+            pr_tab_tari_pend(vr_ind).nmprimtl := vr_tab_ass(rw_craplat.nrdconta).nmprimtl; 
             pr_tab_tari_pend(vr_ind).dtmvtolt := rw_craplat.dtmvtolt;
             pr_tab_tari_pend(vr_ind).dstarifa := rw_craplat.dstarifa;
             pr_tab_tari_pend(vr_ind).vltarifa := rw_craplat.vltarifa;
             pr_tab_tari_pend(vr_ind).tarrowid := rw_craplat.rowid;
 
           END IF;
-
-        END LOOP;
+          
+        END LOOP;                             
 
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na TARI0001.pc_busca_tarifa_pendente_v2: '||SQLerrm;
-  END pc_busca_tarifa_pendente;
+  END pc_busca_tarifa_pendente;  
 
-  PROCEDURE pc_busca_tarifa_pend_web(pr_cdcooper IN  crapcop.cdcooper%TYPE
-                                    ,pr_cdcopatu IN  crapcop.cdcooper%TYPE
+  PROCEDURE pc_busca_tarifa_pend_web(pr_cdcooper IN  crapcop.cdcooper%TYPE 
+                                    ,pr_cdcopatu IN  crapcop.cdcooper%TYPE 
                                     ,pr_cdagenci IN  crapage.cdagenci%TYPE
                                     ,pr_cdoperad IN  crapope.cdoperad%TYPE
                                     ,pr_inpessoa IN  crapass.inpessoa%TYPE
                                     ,pr_nrdconta IN  crapass.nrdconta%TYPE
                                     ,pr_cdhistor IN  craphis.cdhistor%TYPE
                                     ,pr_cddgrupo IN  crapgru.cddgrupo%TYPE
-                                    ,pr_cdsubgru IN  crapsgr.cdsubgru%TYPE
+                                    ,pr_cdsubgru IN  crapsgr.cdsubgru%TYPE                                    
                                     ,pr_dtinicio IN  VARCHAR2
-                                    ,pr_dtafinal IN  VARCHAR2
+                                    ,pr_dtafinal IN  VARCHAR2                                                                          
                                     ,pr_xmllog   IN  VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -4186,7 +4183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     -- ........................................................................
     --
-    --  Programa : pc_busca_tarifa_pentende
+    --  Programa : pc_busca_tarifa_pentende          
     --  Sistema  : Cred
     --  Sigla    : TARI0001
     --  Autor    : Tiago Machado Flor
@@ -4195,7 +4192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Consulta por:
+    --   Objetivo  : Consulta por:                                       
     --                 Busca tarifas pendentes de acordo com os parametros passados
     --
     --.............................................................................*/
@@ -4215,15 +4212,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       -- Temp Table
       vr_tab_tari_pend TARI0001.typ_tab_tarifas_pend;
-
+      
       vr_dtinicio DATE;
-      vr_dtafinal DATE;
-  BEGIN
-      vr_dtinicio := to_DATE(pr_dtinicio,'dd/mm/RRRR');
+      vr_dtafinal DATE;            
+  BEGIN 
+      vr_dtinicio := to_DATE(pr_dtinicio,'dd/mm/RRRR');      
       vr_dtafinal := to_DATE(pr_dtafinal,'dd/mm/RRRR');
 
-      -- Leitura
-      TARI0001.pc_busca_tarifa_pendente(pr_cdcooper      =>  pr_cdcooper,
+      -- Leitura 
+      TARI0001.pc_busca_tarifa_pendente(pr_cdcooper      =>  pr_cdcooper, 
                                         pr_cdcopatu      =>  pr_cdcopatu,
                                         pr_cdagenci      =>  pr_cdagenci,
                                         pr_cdoperad      =>  pr_cdoperad,
@@ -4231,22 +4228,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                         pr_nrdconta      =>  pr_nrdconta,
                                         pr_cdhistor      =>  pr_cdhistor,
                                         pr_cddgrupo      =>  pr_cddgrupo,
-                                        pr_cdsubgru      =>  pr_cdsubgru,
+                                        pr_cdsubgru      =>  pr_cdsubgru,                                        
                                         pr_dtinicio      =>  vr_dtinicio,
-                                        pr_dtafinal      =>  vr_dtafinal,
+                                        pr_dtafinal      =>  vr_dtafinal,                                     
                                         pr_dscritic      =>  vr_dscritic,
                                         pr_tab_tari_pend =>  vr_tab_tari_pend);
-
-
+                                        
+      
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-
+      
       IF vr_tab_tari_pend.COUNT() = 0 THEN
          vr_dscritic := 'Nao foram encontradas tarifas pendentes possiveis de debito.';
          RAISE vr_exc_saida;
-      END IF;
-
+      END IF;  
+      
 
       IF vr_tab_tari_pend.count() > 0 THEN
         -- Criar cabeçalho do XML
@@ -4271,7 +4268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           vr_auxconta := vr_auxconta + 1;
           vr_vltottar := vr_vltottar + vr_tab_tari_pend(vr_contador).vltarifa;
         END LOOP;
-
+        
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados',  pr_posicao => 0, pr_tag_nova => 'resumo', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'resumo', pr_posicao => 0, pr_tag_nova => 'vltottar', pr_tag_cont => TO_CHAR(vr_vltottar,'fm999G990D00'), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'resumo', pr_posicao => 0, pr_tag_nova => 'qtregtar', pr_tag_cont => TO_CHAR(vr_auxconta,'fm9G9000'), pr_des_erro => vr_dscritic);
@@ -4302,7 +4299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     END;
 
   END pc_busca_tarifa_pend_web;
-
+  
   -- Rotina para gerar impressao das efetivacoes das tarifas pendentes crrl684
   PROCEDURE pc_imprimir_tarifa_pend(pr_cdcooper        IN crapcop.cdcooper%TYPE
                                    ,pr_tab_tari_pend   IN  TARI0001.typ_tab_tarifas_pend
@@ -4333,7 +4330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_xml           CLOB;            --> CLOB com conteudo do XML do relatório
       vr_xmlbuffer     VARCHAR2(32767); --> Auxiliar para envio do texto ao XML
       vr_strbuffer     VARCHAR2(32767); --> Auxiliar para envio do texto ao XML
-
+      
       -- Variaveis para a geracao do relatorio
       vr_nom_direto    VARCHAR2(500);
       vr_nmarqimp      VARCHAR2(100);
@@ -4362,7 +4359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       dbms_lob.open(vr_xml, dbms_lob.lob_readwrite);
 
       vr_strbuffer := '<?xml version="1.0" encoding="utf-8"?><crrl698><tarifas>';
-
+      
       -- Enviar ao CLOB
       gene0002.pc_escreve_xml(pr_xml            => vr_xml
                              ,pr_texto_completo => vr_xmlbuffer
@@ -4374,13 +4371,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_vltardeb := 0;
       vr_qttarndb := 0;
       vr_vltarndb := 0;
-
+      
       --Percorrer as tarifas encontradas
       WHILE vr_indice IS NOT NULL LOOP
-
+        
         vr_strbuffer := vr_strbuffer
                      || '<registro>'
-                     ||   '<nmrescop>'||pr_tab_tari_pend(vr_indice).nmrescop||'</nmrescop>'
+                     ||   '<nmrescop>'||pr_tab_tari_pend(vr_indice).nmrescop||'</nmrescop>'                     
                      ||   '<cdagenci>'||to_char(pr_tab_tari_pend(vr_indice).cdagenci)||'</cdagenci>'
                      ||   '<nrdconta>'||TRIM(gene0002.fn_mask_conta(pr_tab_tari_pend(vr_indice).nrdconta))||'</nrdconta>'
                      ||   '<nmprimtl>'||pr_tab_tari_pend(vr_indice).nmprimtl||'</nmprimtl>'
@@ -4390,23 +4387,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                      ||   '<dsstatus>'||pr_tab_tari_pend(vr_indice).dsstatus||'</dsstatus>'
                      ||   '<cdoperad>'||pr_tab_tari_pend(vr_indice).cdoperad||'</cdoperad>'
                      || '</registro>';
-
+                
         -- Enviar ao CLOB
         gene0002.pc_escreve_xml(pr_xml            => vr_xml
                                ,pr_texto_completo => vr_xmlbuffer
                                ,pr_texto_novo     => vr_strbuffer);
         -- Limpar a auxiliar
         vr_strbuffer := NULL;
-
+        
         IF pr_tab_tari_pend(vr_indice).dsstatus = 'OK' THEN
            vr_qttardeb := vr_qttardeb + 1;
            vr_vltardeb := vr_vltardeb + pr_tab_tari_pend(vr_indice).vltarifa;
         ELSE
            vr_qttarndb := vr_qttarndb + 1;
            vr_vltarndb := vr_vltarndb + pr_tab_tari_pend(vr_indice).vltarifa;
-        END IF;
-
-        vr_indice  := pr_tab_tari_pend.NEXT(vr_indice);
+        END IF;   
+          
+        vr_indice  := pr_tab_tari_pend.NEXT(vr_indice);        
       END LOOP; -- FIM WHILE
 
       -- Inicializar tag empresa
@@ -4426,7 +4423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       -- Busca do diretório base da cooperativa para PDF
       vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_cdcooper => pr_cdcooper   
                                             ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
 
       -- Definir nome do relatorio
@@ -4489,9 +4486,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_xml);
       dbms_lob.freetemporary(vr_xml);
-
+      
       pr_nmarqpdf := vr_nmarqimp;
-
+      
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
@@ -4505,7 +4502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     END;
 
   END pc_imprimir_tarifa_pend;
-
+  
   PROCEDURE pc_debita_tarifa_online(pr_cdcooper        IN  crapcop.cdcooper%TYPE,
                                     pr_cdoperad        IN  crapope.cdoperad%TYPE,
                                     pr_idorigem        IN  PLS_INTEGER,
@@ -4526,7 +4523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
-    --   Objetivo  :   Realiza os lancamentos das tarifas pendentes
+    --   Objetivo  :   Realiza os lancamentos das tarifas pendentes 
     --                 de acordo com os parametros passados
     -- .......................................................................................
   BEGIN
@@ -4535,14 +4532,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
          SELECT craplat.rowid, craplat.*
            FROM craplat
           WHERE craplat.rowid = pr_rowid;
-
+          
        rw_craplat cr_craplat%ROWTYPE;
-
+       
        CURSOR cr_craptar(pr_rowid IN ROWID) IS
-         SELECT lat.cdcooper, tar.dstarifa,
+         SELECT lat.cdcooper, tar.dstarifa, 
                 lat.vltarifa, tar.cdtarifa,
-                cop.nmrescop
-           FROM craptar tar, craplat lat,
+                cop.nmrescop 
+           FROM craptar tar, craplat lat, 
                 crapfvl fvl, crapfco fco,
                 crapcop cop
           WHERE fvl.cdfaixav = fco.cdfaixav
@@ -4550,52 +4547,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             AND fvl.cdtarifa = tar.cdtarifa
             AND lat.cdcooper = cop.cdcooper
             AND lat.rowid    = pr_rowid;
-
+           
        rw_craptar cr_craptar%ROWTYPE;
-
+       
        rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-
+                     
        vr_tab_sald EXTR0001.typ_tab_saldos;
        vr_tab_erro GENE0001.typ_tab_erro;
        vr_tab_ctassld typ_tab_conta_ssaldo;
-
-       vr_listalat gene0002.typ_split := gene0002.typ_split();
+       
+       vr_listalat gene0002.typ_split := gene0002.typ_split();   
        vr_indice   PLS_INTEGER;
        vr_ind_tari PLS_INTEGER := 0;
        vr_nrdrowid ROWID;
        vr_dsorigem VARCHAR2(500) := 'AYLLOS,CAIXA,INTERNET,TAA,AYLLOS WEB,URA';
        vr_fposcred BOOLEAN;
-
-       vr_dscritic VARCHAR2(4000);
+       
+       vr_dscritic VARCHAR2(4000);       
        vr_cdcritic PLS_INTEGER;
-
+              
        --Variaveis de Excecao
        vr_exc_erro EXCEPTION;
 
     BEGIN
-
+      
       IF pr_listalat IS NOT NULL THEN
         vr_listalat := gene0002.fn_quebra_string(pr_string => pr_listalat, pr_delimit => ';');
       ELSE
         vr_indice := pr_tab_tari_pend.FIRST;
-
-        WHILE vr_indice IS NOT NULL LOOP
-          vr_listalat.EXTEND;
+         
+        WHILE vr_indice IS NOT NULL LOOP   
+          vr_listalat.EXTEND;        
           vr_listalat(vr_indice) :=  pr_tab_tari_pend(vr_indice).tarrowid;
-          vr_indice := pr_tab_tari_pend.NEXT(vr_indice);
+          vr_indice := pr_tab_tari_pend.NEXT(vr_indice);  
         END LOOP;
-
+        
         pr_tab_tari_pend.delete;
-
-      END IF;
-
+        
+      END IF;   
+               
       --Posicionar no primeiro registro da tabela
       vr_indice:= vr_listalat.FIRST;
       vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1;
-
+      
       --Percorrer as tarifas encontradas
       WHILE vr_indice IS NOT NULL LOOP
-
+        
         OPEN cr_craplat(vr_listalat(vr_indice));
         --Posicionar no proximo registro
         FETCH cr_craplat INTO rw_craplat;
@@ -4603,43 +4600,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         IF cr_craplat%NOTFOUND THEN
           --Fechar Cursor
           CLOSE cr_craplat;
-
+          
           --ERRO nao achou rowid
           -- log na lgm nao encontrado
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => pr_cdoperad
                               ,pr_dscritic => 'ERRO ROWID'
                               ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
-                              ,pr_dstransa => ''
+                              ,pr_dstransa => '' 
                               ,pr_dttransa => SYSDATE
                               ,pr_flgtrans => 0
                               ,pr_hrtransa => gene0002.fn_busca_time
                               ,pr_idseqttl => 1
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => 0
+                              ,pr_nmdatela => pr_nmdatela 
+                              ,pr_nrdconta => 0 
                               ,pr_nrdrowid => vr_nrdrowid);
           /*
           pr_tab_tari_pend(vr_ind_tari).cdcooper := rw_craplat.cdcooper;
           pr_tab_tari_pend(vr_ind_tari).tarrowid := rw_craplat.rowid;
           pr_tab_tari_pend(vr_ind_tari).vltarifa := rw_craplat.vltarifa;
           pr_tab_tari_pend(vr_ind_tari).dsstatus := 'ERRO ROWID';
-
+          
           vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1;  erro */
           vr_indice  := vr_listalat.NEXT(vr_indice);
-
+          
           CONTINUE;
         END IF;
 
         --Fechar Cursor
         CLOSE cr_craplat;
-
+        
         -- Se encontrar na lista de contas sem saldo nao continua
         -- o processo
         IF vr_tab_ctassld.exists(rw_craplat.nrdconta) THEN
            vr_indice  := vr_listalat.NEXT(vr_indice);
            CONTINUE;
         END IF;
-
+        
         OPEN cr_craptar(rw_craplat.rowid);
         --Posicionar no proximo registro
         FETCH cr_craptar INTO rw_craptar;
@@ -4648,10 +4645,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           --Fechar Cursor
           CLOSE cr_craptar;
         END IF;
-
+        
         --Fechar Cursor
         CLOSE cr_craptar;
-
+         
         -- jogar dentro de uma pltable
         OPEN BTCH0001.cr_crapdat (pr_cdcooper => rw_craplat.cdcooper);
         --Posicionar primeiro registro
@@ -4659,24 +4656,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         --Se nao encontrou
         IF BTCH0001.cr_crapdat%NOTFOUND THEN
            CLOSE BTCH0001.cr_crapdat;
-
+           
            --ERRO nao encontrou DAT
-
-        END IF;
+           
+        END IF; 
 
         CLOSE BTCH0001.cr_crapdat;
-
-        --------------------------------------
-
+        
+        --------------------------------------        
+             
         OPEN cr_crapass(pr_cdcooper => rw_craplat.cdcooper
                        ,pr_nrdconta => rw_craplat.nrdconta);
-
+                       
         FETCH cr_crapass INTO rw_crapass;
         --Se nao encontrou
         IF cr_crapass%NOTFOUND THEN
            -- log lgm
            CLOSE cr_crapass;
-
+           
            gene0001.pc_gera_log(pr_cdcooper => rw_craplat.cdcooper
                                ,pr_cdoperad => pr_cdoperad
                                ,pr_dscritic => 'ERRO ASSOCIADO'
@@ -4686,7 +4683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                ,pr_flgtrans => 0
                                ,pr_hrtransa => gene0002.fn_busca_time
                                ,pr_idseqttl => 1
-                               ,pr_nmdatela => pr_nmdatela
+                               ,pr_nmdatela => pr_nmdatela 
                                ,pr_nrdconta => rw_craplat.nrdconta
                                ,pr_nrdrowid => vr_nrdrowid);
 
@@ -4702,27 +4699,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
            pr_tab_tari_pend(vr_ind_tari).vltarifa := rw_craplat.vltarifa;
            pr_tab_tari_pend(vr_ind_tari).cdoperad := pr_cdoperad;
            pr_tab_tari_pend(vr_ind_tari).dsstatus := 'ERRO ASSOCIADO';
-
-           vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1;
+          
+           vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1; 
            vr_indice  := vr_listalat.NEXT(vr_indice);
-
+           
            CONTINUE;
-        END IF;
+        END IF; 
 
-        CLOSE cr_crapass;
-
+        CLOSE cr_crapass;                       
+         
         --verificar se o cooperado possui lançamento de credito e saldo positivo
-        pc_verifica_credito (pr_cdcooper => rw_craplat.cdcooper,  --> Codigo da cooperativa
+        pc_verifica_credito (pr_cdcooper => rw_craplat.cdcooper,  --> Codigo da cooperativa    
                              pr_nrdconta => rw_craplat.nrdconta,  --> Numero da conta do cooperaro
                              pr_vllimcre => rw_crapass.vllimcre,                    --> limite de credito do cooperado
-                             pr_rcrapdat => rw_crapdat,           --> data da cooperativa
-                             pr_flgvflcm => FALSE,                --> flag de controle se deve verificar lançamentos de credito
+                             pr_rcrapdat => rw_crapdat,           --> data da cooperativa 
+                             pr_flgvflcm => FALSE,                --> flag de controle se deve verificar lançamentos de credito 
                              pr_flgvfsld => TRUE,                 --> flag de controle se deve verificar saldo do cooperado
-                             --- out ---
+                             --- out ---                                              
                              pr_fposcred => vr_fposcred,          --> Retorna flag se cooperado possui credito
                              pr_tab_sald => vr_tab_sald,          --> Retorna saldo do cooperado
                              pr_dscritic => vr_dscritic);         --> Retorna critica
-
+        
         -- OBTENÇÃO DO SALDO DA CONTA SEM O DIA FECHADO
         /*extr0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_craplat.cdcooper,
                                     pr_rw_crapdat => rw_crapdat,
@@ -4735,14 +4732,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                     pr_des_reto   => vr_des_erro,
                                     pr_tab_sald   => vr_tab_sald,
                                     pr_tab_erro   => vr_tab_erro);*/
-
+      
 
         -- VERIFICA SE HOUVE ERRO NO RETORNO
         --IF vr_des_erro = 'NOK' THEN
           -- ENVIO CENTRALIZADO DE LOG DE ERRO
         --  IF vr_tab_erro.count > 0 THEN
         IF vr_dscritic IS NOT NULL THEN
-            --log lgm 'ERRO SALDO'
+            --log lgm 'ERRO SALDO'  
             gene0001.pc_gera_log(pr_cdcooper => rw_craplat.cdcooper
                                 ,pr_cdoperad => pr_cdoperad
                                 ,pr_dscritic => 'ERRO SALDO'
@@ -4755,14 +4752,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                 ,pr_nmdatela => 'DEBTAR' --deve vir por parametro
                                 ,pr_nrdconta => rw_craplat.nrdconta
                                 ,pr_nrdrowid => vr_nrdrowid);
-
+          
             -- RECEBE DESCRICAO DO ERRO QUE OCORREU NA PC_CARREGA_PAR_TARIFA_VIGENTE
-            --vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            --vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;            
           --END IF;
           --Levantar Excecao
           --RAISE vr_exc_erro;
         END IF;
-
+      
         -- CRIA LANCAMENTO APENAS SE SALDO EM CC FOR MAIOR QUE ZERO
         IF vr_tab_sald.COUNT > 0 THEN
           IF (vr_tab_sald(vr_tab_sald.FIRST).vlsddisp + vr_tab_sald(vr_tab_sald.FIRST).vllimcre) >= rw_craplat.vltarifa THEN
@@ -4815,7 +4812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                   ,pr_nmdatela => 'DEBTAR' --deve vir por parametro
                                   ,pr_nrdconta => rw_craplat.nrdconta
                                   ,pr_nrdrowid => vr_nrdrowid);
-
+            
               pr_tab_tari_pend(vr_ind_tari).cdcooper := rw_craptar.cdcooper;
               pr_tab_tari_pend(vr_ind_tari).cdtarifa := rw_craptar.cdtarifa;
               pr_tab_tari_pend(vr_ind_tari).dstarifa := rw_craptar.dstarifa;
@@ -4828,29 +4825,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
               pr_tab_tari_pend(vr_ind_tari).vltarifa := rw_craplat.vltarifa;
               pr_tab_tari_pend(vr_ind_tari).cdoperad := pr_cdoperad;
               pr_tab_tari_pend(vr_ind_tari).dsstatus := 'ERRO LANCTO';
-
-              vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1;
+              
+              vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1;                                   
               vr_indice := vr_listalat.NEXT(vr_indice);
-
+              
               CONTINUE;
             ELSE
-
+              
               BEGIN
-                UPDATE craplat
+                UPDATE craplat 
                    SET craplat.dtefetiv = rw_crapdat.dtmvtolt,
                        craplat.insitlat = 2 --Efetivado
                  WHERE craplat.rowid    = rw_craplat.rowid;
               EXCEPTION
-                WHEN OTHERS THEN
+                WHEN OTHERS THEN        
                   vr_dscritic := 'Problemas na atualizacao da tarifa pendente.';
                   RAISE vr_exc_erro;
-
+                  
               END;
-
+  
             END IF;
-
+            
           ELSE
-            -- log lgm 'SEM SALDO'
+            -- log lgm 'SEM SALDO'  
             gene0001.pc_gera_log(pr_cdcooper => rw_craplat.cdcooper
                                 ,pr_cdoperad => pr_cdoperad
                                 ,pr_dscritic => 'SEM SALDO'
@@ -4862,11 +4859,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                 ,pr_idseqttl => 1
                                 ,pr_nmdatela => 'DEBTAR' --deve vir por parametro
                                 ,pr_nrdconta => rw_craplat.nrdconta
-                                ,pr_nrdrowid => vr_nrdrowid);
-
+                                ,pr_nrdrowid => vr_nrdrowid);                                               
+                    
             --lista de controle de contas sem saldo
             vr_tab_ctassld(rw_craplat.nrdconta) := rw_craplat.nrdconta;
-
+                        
             pr_tab_tari_pend(vr_ind_tari).cdcooper := rw_craptar.cdcooper;
             pr_tab_tari_pend(vr_ind_tari).cdtarifa := rw_craptar.cdtarifa;
             pr_tab_tari_pend(vr_ind_tari).dstarifa := rw_craptar.dstarifa;
@@ -4879,14 +4876,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             pr_tab_tari_pend(vr_ind_tari).vltarifa := rw_craplat.vltarifa;
             pr_tab_tari_pend(vr_ind_tari).cdoperad := pr_cdoperad;
             pr_tab_tari_pend(vr_ind_tari).dsstatus := 'SEM SALDO';
-
-            vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1;
-
+          
+            vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1; 
+                                
             vr_indice := vr_listalat.NEXT(vr_indice);
-
-            CONTINUE;
+                                
+            CONTINUE;                    
           END IF;
-
+          
         END IF;
 
         pr_tab_tari_pend(vr_ind_tari).cdcooper := rw_craptar.cdcooper;
@@ -4901,22 +4898,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         pr_tab_tari_pend(vr_ind_tari).vltarifa := rw_craplat.vltarifa;
         pr_tab_tari_pend(vr_ind_tari).cdoperad := pr_cdoperad;
         pr_tab_tari_pend(vr_ind_tari).dsstatus := 'OK';
-
+                
         vr_indice  := vr_listalat.NEXT(vr_indice);
-        vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1;
+        vr_ind_tari:= pr_tab_tari_pend.COUNT() + 1; 
       END LOOP; -- FIM WHILE
-
-      IF pr_flimprim = 1 THEN
+ 
+      IF pr_flimprim = 1 THEN     
          TARI0001.pc_imprimir_tarifa_pend(pr_cdcooper      => pr_cdcooper
                                          ,pr_tab_tari_pend => pr_tab_tari_pend
                                          ,pr_nmarqpdf      => pr_nmarqpdf
                                          ,pr_cdcritic      => vr_cdcritic
-                                         ,pr_dscritic      => vr_dscritic);
-      END IF;
-
+                                         ,pr_dscritic      => vr_dscritic);                                         
+      END IF;   
+      
     EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_dscritic:= vr_dscritic;
+      WHEN vr_exc_erro THEN        
+        pr_dscritic:= vr_dscritic;        
       WHEN OTHERS THEN
         pr_dscritic := 'Erro na TARI0001.pc_debita_tarifa_online: '||SQLerrm;
     END;
@@ -4930,7 +4927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                     ,pr_retxml   IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
-  BEGIN
+  BEGIN  
     DECLARE
 
       -- Variável de críticas
@@ -4946,7 +4943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       -- Temp Table
       vr_tab_tari_pend TARI0001.typ_tab_tarifas_pend;
-
+      
       -- Variaveis de log
       vr_cdcooper crapcop.cdcooper%TYPE;
       vr_cdoperad VARCHAR2(100);
@@ -4955,9 +4952,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
-
-    BEGIN
-
+      
+    BEGIN 
+      
       -- Recupera dados de log para consulta posterior
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -4969,12 +4966,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
 
-      -- Verifica se houve erro recuperando informacoes de log
+      -- Verifica se houve erro recuperando informacoes de log                              
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-
-      -- Efetivar
+      
+      -- Efetivar 
       TARI0001.pc_debita_tarifa_online(pr_cdcooper => vr_cdcooper
                                       ,pr_cdoperad => vr_cdoperad
                                       ,pr_idorigem => vr_idorigem
@@ -4984,14 +4981,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                       ,pr_nmarqpdf => vr_nmarqpdf
                                       ,pr_dscritic => vr_dscritic
                                       ,pr_tab_tari_pend => vr_tab_tari_pend);
-
+      
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
 
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
-
+      
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0     , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nmarqpdf', pr_tag_cont => vr_nmarqpdf, pr_des_erro => vr_dscritic);
 
@@ -5014,71 +5011,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         -- Existe para satisfazer exigência da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    END;
+    END;    
   END pc_deb_tarifa_online_web;
-
+  
   /*  Procedimento para verificar se a conta possui lançamento de credito no dia
       e se possui saldo */
-  PROCEDURE pc_verifica_credito (pr_cdcooper  IN crapcop.cdcooper%TYPE,      --> Codigo da cooperativa
+  PROCEDURE pc_verifica_credito (pr_cdcooper  IN crapcop.cdcooper%TYPE,      --> Codigo da cooperativa    
                                  pr_nrdconta  IN craplat.nrdconta%TYPE,      --> Numero da conta do cooperaro
                                  pr_vllimcre  IN crapass.vllimcre%TYPE,      --> limite de credito do cooperado
-                                 pr_rcrapdat  IN btch0001.cr_crapdat%ROWTYPE,--> data da cooperativa
-                                 pr_flgvflcm  IN BOOLEAN,                    --> flag de controle se deve verificar lançamentos de credito
+                                 pr_rcrapdat  IN btch0001.cr_crapdat%ROWTYPE,--> data da cooperativa 
+                                 pr_flgvflcm  IN BOOLEAN,                    --> flag de controle se deve verificar lançamentos de credito    
                                  pr_flgvfsld  IN BOOLEAN,                    --> flag de controle se deve verificar saldo do cooperado
                                  pr_fposcred OUT BOOLEAN,                    --> Retorna flag se cooperado possui credito
                                  pr_tab_sald OUT EXTR0001.typ_tab_saldos,    --> Retorna saldo do cooperado
                                  pr_dscritic OUT VARCHAR2                    --> Retorna critica
-                                 )IS
-
+                                 )IS 
+                 
     ------------------- CURSOR --------------------
     CURSOR cr_craplcm(pr_cdcooper crapcop.cdcooper%TYPE,
                       pr_dtmvtolt crapdat.dtmvtolt%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE) IS
-      SELECT craplcm.rowid
-        FROM craplcm, craphis
+      SELECT craplcm.rowid 
+        FROM craplcm, craphis 
        WHERE craplcm.cdcooper = craphis.cdcooper AND
              craplcm.cdhistor = craphis.cdhistor AND
              craplcm.nrdconta = pr_nrdconta      AND
              craplcm.cdcooper = pr_cdcooper      AND
              craplcm.dtmvtolt = pr_dtmvtolt      AND
              craphis.indebcre = 'C'              AND
-             rownum < 2;
-
+             rownum < 2; 
+             
     rw_craplcm cr_craplcm%ROWTYPE;
-
+    
     ------------------ VARIAVEIS ------------------
     --Obtem Saldo
     vr_des_erro VARCHAR2(100);
     vr_tab_erro GENE0001.typ_tab_erro;
-
-
+    
+    
   BEGIN
     -- Inicializar variavel de possui credito com false
     pr_fposcred := FALSE;
-
+    
     -- verificar se possui novos lançamentos de credito
-    IF pr_flgvflcm THEN
+    IF pr_flgvflcm THEN 
       --Verifica se houve algum credito pra conta no dia
       OPEN cr_craplcm(pr_cdcooper => pr_cdcooper,
                       pr_dtmvtolt => pr_rcrapdat.dtmvtolt,
                       pr_nrdconta => pr_nrdconta);
-
+                 
       FETCH cr_craplcm INTO rw_craplcm;
-
-      -- se encontrou marcar como possui
+      
+      -- se encontrou marcar como possui           
       IF cr_craplcm%FOUND THEN
         pr_fposcred := TRUE;
-      END IF;
+      END IF;                    
       CLOSE cr_craplcm;
     END IF;
-
+    
     -- verificar saldo se estiver marcado como true
     IF pr_flgvfsld AND
        -- e caso a flg de verificar lançamento estiver como true e encontrou algum lançamento
-      ((pr_flgvflcm AND pr_flgvflcm) OR
+      ((pr_flgvflcm AND pr_flgvflcm) OR 
         -- ou se não verificou lançamento de credito
         pr_flgvflcm = FALSE )THEN
-
+        
       -- obtencao do saldo da conta sem o dia fechado
       extr0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper,
                                   pr_rw_crapdat => pr_rcrapdat,
@@ -5087,13 +5084,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                   pr_cdoperad   => 1,
                                   pr_nrdconta   => pr_nrdconta,
                                   pr_vllimcre   => pr_vllimcre,
-                                  pr_flgcrass   => TRUE,
+                                  pr_flgcrass   => TRUE, 
                                   pr_dtrefere   => pr_rcrapdat.dtmvtolt,
                                   pr_tipo_busca => 'A', --Chamado 291693 (Heitor - RKAM)
                                   pr_des_reto   => vr_des_erro,
                                   pr_tab_sald   => pr_tab_sald,
                                   pr_tab_erro   => vr_tab_erro);
-
+              
       -- VERIFICA SE HOUVE ERRO NO RETORNO
       IF vr_des_erro = 'NOK' THEN
         -- se retornou erro, definir como não possui credito
@@ -5104,29 +5101,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
            (pr_tab_sald(pr_tab_sald.FIRST).vlsddisp + pr_tab_sald(pr_tab_sald.FIRST).vllimcre) > 0 THEN
           -- se possuir saldo, marcar como possui credito
           pr_fposcred := TRUE;
-        ELSE
+        ELSE  
           -- se for negativo marcar como false
           pr_fposcred := FALSE;
         END IF;
-
+        
       END IF;
-    END IF;
-
+    END IF;  
+     
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na pc_verifica_credito para conta '||pr_nrdconta||':'||SQLERRM;
   END pc_verifica_credito;
-
-
+  
+  
   /* Procedimento para buscar todas as tarifas pendentes de debito e tentar debita-las */
   PROCEDURE pc_deb_tarifa_pend ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                ,pr_dtinicio IN DATE                    --> data de inicio para verificação das tarifas
-                                ,pr_dtafinal IN DATE                    --> data final para verificação das tarifas
+                                ,pr_dtinicio IN DATE                    --> data de inicio para verificação das tarifas               
+                                ,pr_dtafinal IN DATE                    --> data final para verificação das tarifas               
                                 ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                 ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   /* .............................................................................
 
-     Programa: pc_deb_tarifa_pend
+     Programa: pc_deb_tarifa_pend 
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
@@ -5166,7 +5163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
               cop.flgativo = 1 AND -- Somente coops ativas
               pr_cdcooper IS NULL);
     rw_crapcop cr_crapcop%ROWTYPE;
-
+    
     -- Busca de tarifas pendentes
     CURSOR cr_craplat_pendente (pr_cdcooper craplat.cdcooper%TYPE,
                                 pr_dtinicio crapdat.dtmvtolt%TYPE,
@@ -5174,11 +5171,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       SELECT lat.cdcooper
             ,lat.nrdconta
             ,lat.rowid
-            ,COUNT(*) over (PARTITION BY lat.cdcooper
+            ,COUNT(*) over (PARTITION BY lat.cdcooper 
                                 ORDER BY lat.cdcooper) qtdtotcop
-            ,COUNT(*) over (PARTITION BY lat.cdcooper, lat.nrdconta
+            ,COUNT(*) over (PARTITION BY lat.cdcooper, lat.nrdconta 
                                 ORDER BY lat.cdcooper, lat.nrdconta) qtdreg
-            ,row_number() over(PARTITION BY lat.cdcooper, lat.nrdconta
+            ,row_number() over(PARTITION BY lat.cdcooper, lat.nrdconta 
                                    ORDER BY lat.cdcooper, lat.nrdconta) seqreg
         FROM craplat lat
        WHERE lat.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
@@ -5191,8 +5188,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     vr_tab_tari_pend    TARI0001.typ_tab_tarifas_pend;
     vr_tab_sald         EXTR0001.typ_tab_saldos;
-
-    ------------------------------- VARIAVEIS -------------------------------
+    
+    ------------------------------- VARIAVEIS -------------------------------  
     vr_idxlat   PLS_INTEGER;
     vr_qtretok  NUMBER;
     vr_qttotcop NUMBER;
@@ -5201,10 +5198,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_dtafinal DATE;
     vr_nmarqpdf VARCHAR2(500);
     vr_fposcred BOOLEAN;
-
+       
     vr_nomdojob VARCHAR2(40) := 'JBTAR_DEBITA_TARIFA_PEND';
     vr_flgerlog BOOLEAN      := FALSE;
-
+       
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- procedimento para gerar log da debtar
     PROCEDURE pc_gera_log(pr_ind_tipo_log IN NUMBER DEFAULT 1,
@@ -5218,13 +5215,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                                  || vr_cdprogra || ' --> '
                                                  || pr_des_log );
     END pc_gera_log;
-
+        
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_cdcooper IN crapcop.cdcooper%type,
                                     pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
   BEGIN
-      --> Controlar geração de log de execução dos jobs
+      --> Controlar geração de log de execução dos jobs 
       BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
                                ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
                                ,pr_nomdojob  => vr_nomdojob    --> Nome do job
@@ -5232,7 +5229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                                ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
     END pc_controla_log_batch;
-
+        
   BEGIN
 
     --------------- VALIDACOES INICIAIS -----------------
@@ -5276,21 +5273,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     -- indica que não é um dia util, então deve abortar o programa sem executa-lo
     IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,
                                    pr_dtmvtolt => TRUNC(SYSDATE)) <> TRUNC(SYSDATE) THEN
-      RETURN;
-    END IF;
+      RETURN;                               
+    END IF;                               
 
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
     --Data de inicio poderá vir nula, porém será substituida por uma bem antiga
     -- visto que a rotina de busca necessita de uma data
     vr_dtinicio := pr_dtinicio;
-
+    
     --caso as datas estejam em branco, definir um range de um ano para os filtros
     IF pr_dtafinal IS NULL THEN
-      vr_dtafinal := rw_crapdat.dtmvtoan;
+      vr_dtafinal := rw_crapdat.dtmvtoan; 
     ELSE
-      vr_dtafinal := pr_dtafinal;
+      vr_dtafinal := pr_dtafinal;  
     END IF;
-
+    
     -- Log de inicio de execucao
     pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
                           pr_dstiplog => 'I');
@@ -5302,17 +5299,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                ' periodo inicio ' || nvl(to_char(vr_dtinicio,'DD/MM/RRRR'),'nao definida')||
                                ' final '|| nvl(to_char(vr_dtafinal,'DD/MM/RRRR'),'nao definida')
                              );
-
-
+                                                 
+    
     -- buscar todas as cooperativas caso seja rodado para a cooper Cecred
     FOR rw_crapcop IN cr_crapcop(pr_cdcooper => (CASE pr_cdcooper
                                                   WHEN 3 THEN NULL ELSE pr_cdcooper
                                                   END) ) LOOP
-      --iniciar variaveis
+      --iniciar variaveis   
       vr_tab_tari_pend.delete;
       vr_qtretok := 0;
       vr_qttotcop := 0;
-
+      
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
       FETCH btch0001.cr_crapdat
@@ -5328,34 +5325,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-
+      
       --  Buscar tarifas pendentes da cooperativa
       FOR rw_craplat IN cr_craplat_pendente(pr_cdcooper => rw_crapcop.cdcooper ,
                                             pr_dtinicio => nvl(vr_dtinicio, to_date('22/04/1500','DD/MM/RRRR')),
                                             pr_dtafinal => vr_dtafinal) LOOP
-
+                                            
         -- limpar temptable de armazenamento das cooperativas
         -- a cada conta nova
         IF rw_craplat.seqreg = 1 THEN
           vr_tab_tari_pend.delete;
-        END IF;
-
+        END IF;                                
+               
         -- armazenar tarifas da conta na temptable
-        vr_idxlat := vr_tab_tari_pend.count +1 ;
+        vr_idxlat := vr_tab_tari_pend.count +1 ;        
         vr_tab_tari_pend(vr_idxlat).tarrowid := rw_craplat.rowid;
-
+        
         -- caso seja o ultima tarifa da conta, chamar a rotina para tentar debitar a tariga
         IF rw_craplat.seqreg = rw_craplat.qtdreg THEN
-
+          
           --verificar se o cooperado possui lançamento de credito
           -- sinal que possivelmente possui credito para debitar
-          pc_verifica_credito (pr_cdcooper => rw_craplat.cdcooper,  --> Codigo da cooperativa
+          pc_verifica_credito (pr_cdcooper => rw_craplat.cdcooper,  --> Codigo da cooperativa    
                                pr_nrdconta => rw_craplat.nrdconta,  --> Numero da conta do cooperaro
                                pr_vllimcre => 0,                    --> limite de credito do cooperado
-                               pr_rcrapdat => rw_crapdat,           --> data da cooperativa
-                               pr_flgvflcm => TRUE,                 --> flag de controle se deve verificar lançamentos de credito
+                               pr_rcrapdat => rw_crapdat,           --> data da cooperativa 
+                               pr_flgvflcm => TRUE,                 --> flag de controle se deve verificar lançamentos de credito 
                                pr_flgvfsld => FALSE,                --> flag de controle se deve verificar saldo do cooperado
-                               --- out ---
+                               --- out ---                                              
                                pr_fposcred => vr_fposcred,          --> Retorna flag se cooperado possui credito
                                pr_tab_sald => vr_tab_sald,          --> Retorna saldo do cooperado
                                pr_dscritic => vr_dscritic);         --> Retorna critica
@@ -5372,46 +5369,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                             ,pr_listalat => NULL
                                             ,pr_dscritic => vr_dscritic
                                             ,pr_tab_tari_pend => vr_tab_tari_pend);
-
+            
             IF vr_tab_tari_pend.count > 0 THEN
               -- contar quantas tarifas foram debitadas com sucesso
               FOR idx_ret IN vr_tab_tari_pend.first..vr_tab_tari_pend.last LOOP
                 IF vr_tab_tari_pend(idx_ret).dsstatus = 'OK' THEN
                   vr_qtretok := vr_qtretok + 1;
-
+                  
                 END IF;
               END LOOP;
             END IF;
-
+            
             -- guardar qtd total de tarifas da cooperativa
             vr_qttotcop := rw_craplat.qtdtotcop;
-
+              
             IF vr_dscritic IS NOT NULL THEN
               -- exibir critica no log e ir para o proximo
               pc_gera_log(pr_ind_tipo_log => 2,
-                        pr_des_log => 'Coop. '||rw_crapcop.cdcooper||' conta: '||rw_craplat.nrdconta||
+                        pr_des_log => 'Coop. '||rw_crapcop.cdcooper||' conta: '||rw_craplat.nrdconta|| 
                                       ' Erro: '|| vr_dscritic );
-
+                                                     
               pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
                                     pr_dstiplog => 'E',
-                                    pr_dscritic => ' Conta: ' || rw_craplat.nrdconta ||
+                                    pr_dscritic => ' Conta: ' || rw_craplat.nrdconta || 
                                                    ' Erro: '  || vr_dscritic);
-              CONTINUE;
+              CONTINUE;                                         
             END IF;
-
-          END IF; -- Fim IF vr_tab_sald
+            
+          END IF; -- Fim IF vr_tab_sald 
         END IF; -- fim if controle ultimo registro da conta
-
+        
       END LOOP;
-
+      
       -- Incluir no log totalizador da coop
       pc_gera_log(pr_des_log => 'Coop.:'||to_char(rw_crapcop.cdcooper,90) ||
                                 ' Qtd Tar.Pendente:'||to_char(vr_qttotcop,'99G999G990') ||
                                 ' Qtd Tar.Debitada:'||to_char(vr_qtretok,'99G999G990'));
-
+      
     END LOOP;
-
-    -- informar no log o final do processo
+    
+    -- informar no log o final do processo    
     pc_gera_log(pr_des_log => 'Final da execucao: '||
                               (CASE pr_cdcooper
                                WHEN 3 THEN 'Todas as coop.'
@@ -5442,18 +5439,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                 ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic );
-
+                                                 
       pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
                             pr_dstiplog => 'E');
-
-      pr_dscritic := vr_dscritic;
+                                                 
+      pr_dscritic := vr_dscritic;                                           
       -- Efetuar commit
       COMMIT;
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
-
+      
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -5464,10 +5461,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
                             pr_dstiplog => 'E');
-
+                                                 
       -- Efetuar rollback
       ROLLBACK;
-  END pc_deb_tarifa_pend;
+  END pc_deb_tarifa_pend;   
 
   /* Efetua cobrança de tarifa */
   PROCEDURE pc_cobra_tarifa_imgchq (pr_cdagechq  IN NUMBER
@@ -5496,19 +5493,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   ............................................................................ */
 
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
-
+    
     CURSOR cr_crapass (pr_cdcooper IN crapcop.cdcooper%TYPE
                       ,pr_nrctachq IN crapass.nrdconta%TYPE) IS
       SELECT inpessoa
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrctachq;
-
+    
     rw_crapass cr_crapass%ROWTYPE;
-
+    
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-
+    
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
     -- Variaveis extraídas do log
@@ -5520,14 +5517,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_idorigem VARCHAR2(100);
     vr_cdoperad VARCHAR2(100);
     vr_chegoaki VARCHAR2(100);
-
+    
     -- Tratamento de erros
     vr_exc_saida  EXCEPTION;
     vr_exc_fimprg EXCEPTION;
     vr_cdcritic   PLS_INTEGER;
     vr_dscritic   VARCHAR2(4000);
     vr_hasfound BOOLEAN;
-
+    
     vr_cdhistor      INTEGER;
     vr_cdhisest      NUMBER;
     vr_vltarifa      NUMBER;
@@ -5537,9 +5534,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_tab_erro      GENE0001.typ_tab_erro;
     vr_rowid_craplat ROWID;
     vr_cdbattar      VARCHAR2(10);
-
-  BEGIN
-
+    
+  BEGIN         
+    
     CECRED.GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                                    ,pr_cdcooper => vr_cdcooper
                                    ,pr_nmdatela => vr_nmdatela
@@ -5549,7 +5546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                    ,pr_idorigem => vr_idorigem
                                    ,pr_cdoperad => vr_cdoperad
                                    ,pr_dscritic => vr_dscritic);
-
+    
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
     FETCH btch0001.cr_crapdat
@@ -5565,7 +5562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
-
+    
     OPEN cr_crapass(vr_cdcooper, pr_nrctachq);
     FETCH cr_crapass INTO rw_crapass;
     vr_hasfound := cr_crapass%FOUND;
@@ -5581,7 +5578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
       RAISE vr_exc_saida;
     END IF;
-
+    
     pc_carrega_dados_tar_vigente (pr_cdcooper => vr_cdcooper   --Codigo Cooperativa
                                  ,pr_cdbattar => vr_cdbattar   --Codigo Tarifa
                                  ,pr_vllanmto => 0             --Valor Lancamento
@@ -5595,7 +5592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                  ,pr_cdcritic => vr_cdcritic   --Codigo Critica
                                  ,pr_dscritic => vr_dscritic   --Descricao Critica
                                  ,pr_tab_erro => vr_tab_erro); --Tabela de erros
-
+    
     -- Se ocorreu erro
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
       -- Se possui erro no vetor
@@ -5609,7 +5606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       -- Levantar Excecao
       RAISE vr_exc_saida;
     END IF;
-
+    
     pc_cria_lan_auto_tarifa (pr_cdcooper => vr_cdcooper
                             ,pr_nrdconta => pr_nrctachq
                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -5648,10 +5645,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       -- Levantar Excecao
       RAISE vr_exc_saida;
     END IF;
-
+    
     -- Salvar informações atualizadas
     COMMIT;
-
+    
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml
@@ -5660,27 +5657,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                           ,pr_tag_nova => 'ConfereDados'
                           ,pr_tag_cont => 'Lançamento efetuado com sucesso!'
                           ,pr_des_erro => vr_dscritic);
-
+                          
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-
+        
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
+      ROLLBACK;        
 
     WHEN OTHERS THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'Erro Geral no Lancamento de Tarifa: ' || SQLERRM || ' ' || vr_chegoaki;
-
+        
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
+      ROLLBACK;  
   END pc_cobra_tarifa_imgchq;
-
+  
   /* Efetua verificacao para cobrancas de tarifas sobre operacoes */
   PROCEDURE pc_verifica_tarifa_operacao(pr_cdcooper IN NUMBER                     --> Codigo da Cooperativa
                                        ,pr_cdoperad IN VARCHAR2                   --> Codigo Operador
@@ -5696,7 +5693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                        ,pr_qtacobra OUT INTEGER                   --> Quantidade de registros a cobrar tarifa na operação
                                        ,pr_fliseope OUT INTEGER                   --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
-                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica  
     /* ............................................................................
 
      Programa: pc_verifica_tarifa_operacao
@@ -5710,15 +5707,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
      Frequencia: Sempre que chamado
      Objetivo  : Efetua verificacao de tarifas e efetua cobrança caso necessário
 
-     Alteracoes: 26/11/2015 - Alterado parametro pr_dtmvtolt da
+     Alteracoes: 26/11/2015 - Alterado parametro pr_dtmvtolt da 
                               TARI0001.pc_cria_lan_auto_tarifa (Jean Michel).
-
+                                      
                  14/12/2015 - Incluido tratamento para inpessoa = 3 (Jean Michel).
 
 				 10/02/2016 - Alteracao de parametro Fato Geradorde, rw_crapdat.dtmvtolt para
 							  pr_dtmvtolt, SD 397975 (Jean Michel).
 
-                 04/04/2016 - Inclusão de novos parametros, Prj. 218-2 Tarifas (Jean Michel).
+                 04/04/2016 - Inclusão de novos parametros, Prj. 218-2 Tarifas (Jean Michel).             
 
   ............................................................................ */
 
@@ -5734,7 +5731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             ass.cdcooper = pr_cdcooper
         AND ass.nrdconta = pr_nrdconta;
 
-    rw_crapass cr_crapass%ROWTYPE;
+    rw_crapass cr_crapass%ROWTYPE;    
 
     CURSOR cr_tbcc_operacoes_diarias(pr_tpoperacao tbcc_operacoes_diarias.cdoperacao%TYPE) IS
       SELECT
@@ -5783,23 +5780,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     CURSOR cr_tbtarif_servicos(pr_cdpacote tbtarif_servicos.cdpacote%TYPE
                               ,pr_cdtarif  tbtarif_servicos.cdtarifa%TYPE) IS
-    SELECT tbtarif_servicos.qtdoperacoes
+    SELECT tbtarif_servicos.qtdoperacoes 
       FROM tbtarif_servicos
      WHERE tbtarif_servicos.cdpacote = pr_cdpacote
        AND tbtarif_servicos.cdtarifa = pr_cdtarif;
 
-    rw_tbtarif_servicos cr_tbtarif_servicos%ROWTYPE;
+    rw_tbtarif_servicos cr_tbtarif_servicos%ROWTYPE;   
 
     --Tipo de Dados para cursor data
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
     ------------------ VARIAVEIS ------------------
-
+    
     -- Variaveis de critica
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
     vr_exc_saida  EXCEPTION;
     vr_exc_null  EXCEPTION;
-
+    
     -- Variaveis locais
     vr_cdbattar crapbat.cdbattar%TYPE;
     vr_dsconteu VARCHAR(100); --> Auxiliar para retornar da funcao de busca de parametro
@@ -5845,7 +5842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_cdcritic := 9;
       RAISE vr_exc_saida;
     END IF;
-
+    
     CLOSE cr_crapass;
 
     IF rw_crapass.inpessoa = 3 THEN
@@ -5854,30 +5851,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     pr_fliseope := 0; --- Não isentar tarifa
     pr_qtacobra := 0;
-
-    -- Verificar se existe pacote de tarifas ativo/vigente na tabela tbtarif_contas_pacote:
+      
+    -- Verificar se existe pacote de tarifas ativo/vigente na tabela tbtarif_contas_pacote:   
     OPEN cr_tbtarif_contas_pacote(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
 
     FETCH cr_tbtarif_contas_pacote INTO rw_tbtarif_contas_pacote;
-
+    
     IF cr_tbtarif_contas_pacote%NOTFOUND THEN
       IF pr_tipotari NOT IN(1,2) THEN --- Saque e Consulta
         --Retorna para o programa que chamou, e executa cobrança de tarifa atual.
         CLOSE cr_tbtarif_contas_pacote;
         RAISE vr_exc_null;
-      END IF;
+      END IF;   
     END IF;
-
+    
     IF pr_tipotari = 1 THEN -- SAQUE
-
+      
       IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
         vr_cdparame := 'SAQISENTPF';
-        vr_cdbatsaq := 'SAQUEPACPF';  /* Tarifa do pacote */
+        vr_cdbatsaq := 'SAQUEPACPF';  /* Tarifa do pacote */ 
       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
         vr_cdparame := 'SAQISENTPJ';
-        vr_cdbatsaq := 'SAQUEPACPJ';  /* Tarifa do pacote */
+        vr_cdbatsaq := 'SAQUEPACPJ';  /* Tarifa do pacote */ 
       END IF;
 
       vr_nrdolote := 10137;
@@ -5924,13 +5921,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             ELSE
               -- Origem desconhecida
               vr_dscritic := 'Chamada de origem desconhecida.';
-              RAISE vr_exc_saida;
+              RAISE vr_exc_saida; 
           END CASE;
         ELSE
           -- Origem desconhecida
           vr_dscritic := 'Origem desconhecida.';
           RAISE vr_exc_saida;
-      END CASE;
+      END CASE;      
     ELSIF pr_tipotari = 2 THEN -- Trata tarifa apenas para CONSULTAS com cartão CECRED Bancoob
 
       IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
@@ -5970,9 +5967,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         ELSE
           -- Origem desconhecida
           vr_dscritic := 'Origem desconhecida.';
-          RAISE vr_exc_saida;
+          RAISE vr_exc_saida;   
       END CASE;
-    ELSIF pr_tipotari = 3 THEN -- CUSTODIA DE CHEQUE
+    ELSIF pr_tipotari = 3 THEN -- CUSTODIA DE CHEQUE 
 
       IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
         vr_cdbattar := 'CUSTDCTOPF';
@@ -5992,14 +5989,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         vr_cdbattar := 'FOLHACHQPF';
       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
         vr_cdbattar := 'FOLHACHQPJ';
-      END IF;
+      END IF;    
     ELSIF pr_tipotari = 6 THEN -- EXTRATO MENSAL PRESENCIAL
 
       IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
         vr_cdbattar := 'EXTMEPREPF';
       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
         vr_cdbattar := 'EXTMEPREPJ';
-      END IF;
+      END IF; 
     ELSIF pr_tipotari = 7 THEN -- EXTRATO MENSAL NO TAA
 
       IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
@@ -6062,35 +6059,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         vr_cdbattar := 'TFCTAITGPF';
       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
         vr_cdbattar := 'TFCTAITGPJ';
-      END IF;
+      END IF; 
     ELSIF pr_tipotari = 16 THEN -- DESCONTO DE TITULO
 
       IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
         vr_cdbattar := 'DSTBORDEPF';
       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
         vr_cdbattar := 'DSTBORDEPJ';
-      END IF;
+      END IF;  
     ELSIF pr_tipotari = 17 THEN -- DESCONTO DE CHEQUE
 
 	  IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
         vr_cdbattar := 'DSCCHQBOPF';
       ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
         vr_cdbattar := 'DSCCHQBOPJ';
-      END IF;
-    END IF;
-
+      END IF; 
+    END IF;  
+      
     IF cr_tbtarif_contas_pacote%FOUND THEN
 
       CLOSE cr_tbtarif_contas_pacote;
 
       TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
                                            ,pr_cdbattar => CASE pr_tipotari WHEN 1 THEN vr_cdbatsaq ELSE vr_cdbattar END
-                                           ,pr_vllanmto => 0  --
+                                           ,pr_vllanmto => 0  -- 
                                            ,pr_cdprogra => '' --
-                                           ,pr_cdhistor => vr_cdhistor
-                                           ,pr_cdhisest => vr_cdhisest
-                                           ,pr_vltarifa => vr_vltarifa
-                                           ,pr_dtdivulg => vr_dtdivulg
+                                           ,pr_cdhistor => vr_cdhistor 
+                                           ,pr_cdhisest => vr_cdhisest 
+                                           ,pr_vltarifa => vr_vltarifa 
+                                           ,pr_dtdivulg => vr_dtdivulg 
                                            ,pr_dtvigenc => vr_dtvigenc
                                            ,pr_cdfvlcop => vr_cdfvlcop
                                            ,pr_cdcritic => vr_cdcritic
@@ -6108,7 +6105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         END IF;
         RAISE vr_exc_saida;
       END IF;
-
+      
       OPEN cr_crapfco(pr_cdfvlcop => vr_cdfvlcop);
 
       FETCH cr_crapfco INTO rw_crapfco;
@@ -6116,7 +6113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       IF cr_crapfco%NOTFOUND THEN
         CLOSE cr_crapfco;
         vr_cdcritic := 0;
-        vr_dscritic := 'Registro de ligacao entre faixas de valores das tarifas e cooperativa nao encontrado.';
+        vr_dscritic := 'Registro de ligacao entre faixas de valores das tarifas e cooperativa nao encontrado.';  
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_crapfco;
@@ -6125,11 +6122,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       OPEN cr_crapfvl(pr_cdfaixav => rw_crapfco.cdfaixav);
 
       FETCH cr_crapfvl INTO rw_crapfvl;
-
+      
       IF cr_crapfvl%NOTFOUND THEN
         CLOSE cr_crapfvl;
         vr_cdcritic := 0;
-        vr_dscritic := 'Registro de faixas de tarifa nao encontrado.';
+        vr_dscritic := 'Registro de faixas de tarifa nao encontrado.';  
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_crapfvl;
@@ -6147,7 +6144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         IF pr_tipotari NOT IN(1,2) THEN -- Operação de saque ou consulta
           -- Retorna para o programa que chamou, e efetua cobrança de tarifa atual.
           RAISE vr_exc_null;
-        END IF;
+        END IF;   
       ELSE
         CLOSE cr_tbtarif_servicos;
 
@@ -6157,16 +6154,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
         -- Verifica quantidade de operacoes
         IF pr_qtoperac > 0 THEN
-
+        
           LOOP
             EXIT WHEN pr_qtoperac = vr_qtoperac;
-
+            
             -- Consulta quantidade de saques já efetuados
             OPEN cr_tbcc_operacoes_diarias(pr_tpoperacao => pr_tipotari);
 
             FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
             CLOSE cr_tbcc_operacoes_diarias;
-
+            
             vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
             vr_qtdopera := rw_tbtarif_servicos.qtdoperacoes;
 
@@ -6192,11 +6189,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
                   RAISE vr_exc_saida;
-              END;
-              pr_fliseope := 1; -- Não tarifar
-            ELSE
-              IF pr_tipotari NOT IN(1,2) THEN --- saque e consulta
-
+              END;                 
+              pr_fliseope := 1; -- Não tarifar    
+            ELSE   
+              IF pr_tipotari NOT IN(1,2) THEN --- saque e consulta        
+                
                 -- INSERE NOVO REGISTRO COM TRIBUTACAO
                 BEGIN
                   INSERT
@@ -6213,19 +6210,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                       ,pr_tipotari
                       ,pr_dtmvtolt
                       ,vr_nrsequen
-                      ,1);
+                      ,1);    
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
                     RAISE vr_exc_saida;
-                END;
-
+                END; 
+                  
                 pr_qtacobra := pr_qtacobra + 1;
-                pr_fliseope := 0; -- Tarifar
+                pr_fliseope := 0; -- Tarifar      
               END IF;
     END IF;
 
-            vr_qtoperac := vr_qtoperac + 1;
+            vr_qtoperac := vr_qtoperac + 1;     
 
           END LOOP;
 
@@ -6237,7 +6234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
           FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
           CLOSE cr_tbcc_operacoes_diarias;
-
+            
           vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
           vr_qtdopera := rw_tbtarif_servicos.qtdoperacoes;
 
@@ -6263,14 +6260,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
                 RAISE vr_exc_saida;
-            END;
+            END;                 
 
             pr_fliseope := 1; -- Não tarifar
             --Retornar para rotina que efetuou a chamada
             RAISE vr_exc_null;
-          ELSE
-            IF pr_tipotari NOT IN(1,2) THEN --- saque e consulta
-
+          ELSE   
+            IF pr_tipotari NOT IN(1,2) THEN --- saque e consulta        
+                
               -- INSERE NOVO REGISTRO COM TRIBUTACAO
               BEGIN
                 INSERT
@@ -6287,24 +6284,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                     ,pr_tipotari
                     ,pr_dtmvtolt
                     ,vr_nrsequen
-                    ,1);
+                    ,1);    
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
                   RAISE vr_exc_saida;
-              END;
-
+              END; 
+               
               pr_qtacobra := pr_qtacobra + 1;
-              RAISE vr_exc_null;
+              RAISE vr_exc_null;      
             END IF;
           END IF;
           /**/
         END IF;
       END IF;
-
+    
     ELSE
-      CLOSE cr_tbtarif_contas_pacote;
-    END IF;
+      CLOSE cr_tbtarif_contas_pacote;    
+    END IF;    
 
     -- Verifica quantidade de saques isentos
     TARI0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => pr_cdcooper
@@ -6332,7 +6329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
     CLOSE cr_tbcc_operacoes_diarias;
-
+  
     vr_nrsequen := NVL(rw_tbcc_operacoes_diarias.nrsequen,0) + 1;
 
     -- Se nao possui servico de saque no pacote, verifica parametros de insencao da cooperativa
@@ -6369,7 +6366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       END IF;
 
-    END IF;
+    END IF;  
 
     -- INSERE NOVO REGISTRO COM TRIBUTACAO
     BEGIN
@@ -6417,8 +6414,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
           RAISE vr_exc_saida;
         END IF;
-        RAISE vr_exc_saida;
-      END IF;
+          RAISE vr_exc_saida;
+        END IF;
 
   IF vr_vltarifa > 0  THEN
       TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => pr_cdcooper
@@ -6478,7 +6475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       pr_dscritic := 'Erro na TARI0001.pc_verifica_tarifa_operacao para conta '||pr_nrdconta||':'||SQLERRM;
       ROLLBACK;
   END pc_verifica_tarifa_operacao;
-
+  
   /* Verificacao agencia da cooperativa */
   PROCEDURE pc_busca_agencia_cop(pr_cdagectl IN crapcop.cdagectl%TYPE
                                 ,pr_xmllog    IN VARCHAR2             --> XML com informac?es de LOG
@@ -6498,7 +6495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamado
-     Objetivo  : Verifica se a agencia da cooperativa é a mesma que a que
+     Objetivo  : Verifica se a agencia da cooperativa é a mesma que a que 
                  foi passada por parametro.
 
      Alteracoes: ----
@@ -6515,7 +6512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     rw_crapcop cr_crapcop%ROWTYPE;
     ------------------ VARIAVEIS ------------------
-
+    
     -- Variaveis extraídas do log
     vr_cdcooper INTEGER := 0;
     vr_nmdatela VARCHAR2(100);
@@ -6524,7 +6521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     vr_cdoperad VARCHAR2(100);
-
+    
     --Variaveis de critica
     vr_dscritic crapcri.dscritic%TYPE;
     vr_exc_saida  EXCEPTION;
@@ -6532,9 +6529,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     -- Variaveis locais
     vr_achou_coop crapcop.cdagectl%TYPE;
-
+    
   BEGIN
-
+    
     CECRED.GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                                    ,pr_cdcooper => vr_cdcooper
                                    ,pr_nmdatela => vr_nmdatela
@@ -6547,7 +6544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-
+    
     OPEN cr_crapcop (pr_cdcooper => vr_cdcooper
                     ,pr_cdagectl => pr_cdagectl);
     FETCH cr_crapcop INTO rw_crapcop;
@@ -6558,7 +6555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     END IF;
     CLOSE cr_crapcop;
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados>' || vr_achou_coop || '</Dados>');
-
+    
   EXCEPTION
     WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
@@ -6572,7 +6569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   END pc_busca_agencia_cop;
 
   /*Efetua débitos de tarifas para contas integração*/
-  PROCEDURE pc_integra_deb_tarifa (pr_cdcooper IN crapcop.cdcooper%TYPE) IS   --> Cooperativa solicitada
+  PROCEDURE pc_integra_deb_tarifa (pr_cdcooper IN crapcop.cdcooper%TYPE) IS   --> Cooperativa solicitada             
 
     CURSOR cr_crapcop(pr_cdcooper crapass.cdcooper%TYPE) IS
       SELECT cop.cdcooper
@@ -6583,7 +6580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE) IS
       SELECT ass.nrdconta
-            ,ass.inpessoa
+            ,ass.inpessoa 
         FROM crapass ass
        WHERE ass.flgctitg = 2
          AND ass.cdcooper = pr_cdcooper
@@ -6604,13 +6601,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       -- Código do programa
       vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'TARIFA';
-
+      
       -- Tratamento de erros
       vr_exc_erro   EXCEPTION;
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
-
+      
       -- Variaveis Tarifa
       vr_cdcooper   crapcop.cdcooper%TYPE;
       vr_cdhistpf   craphis.cdhistor%TYPE;
@@ -6623,9 +6620,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_cdfvlcpj   crapfco.cdfvlcop%TYPE;
       vr_dtdivupf   DATE;
       vr_dtdivupj   DATE;
-      vr_dtvigepf   DATE;
-      vr_dtvigepj   DATE;
-
+      vr_dtvigepf   DATE;      
+      vr_dtvigepj   DATE;      
+      
       vr_cdhistor   craphis.cdhistor%TYPE;
       vr_cdhisest   craphis.cdhistor%TYPE;
       vr_dtdivulg   DATE;
@@ -6638,22 +6635,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_contador   NUMBER(6);
 			vr_qtacobra   INTEGER;
 			vr_fliseope   INTEGER;
-
-
+      
+      
       -- Rowid de retorno lançamento de tarifa
       vr_rowid      ROWID;
-
+      
       -------------------------- TABELAS TEMPORARIAS --------------------------
       -- Tabela Temporaria para erros
-      vr_tab_erro GENE0001.typ_tab_erro;
-      vr_tab_tari_pend TARI0001.typ_tab_tarifas_pend;
+      vr_tab_erro GENE0001.typ_tab_erro; 
+      vr_tab_tari_pend TARI0001.typ_tab_tarifas_pend;   
 
   BEGIN
-
+    
       vr_contador := 0;
-
+    
       FOR rw_crapcop IN cr_crapcop(pr_cdcooper) LOOP
-
+        
         vr_cdcooper := rw_crapcop.cdcooper;
         vr_cdhistpf := 0;
         vr_cdhistpj := 0;
@@ -6667,7 +6664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         vr_dtdivupj := NULL;
         vr_dtvigepf := NULL;
         vr_dtvigepj := NULL;
-
+        
         -- Verifica se a data esta cadastrada
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
         FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -6683,7 +6680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           -- Apenas fechar o cursor
           CLOSE BTCH0001.cr_crapdat;
         END IF;
-
+        
         /*Busca as informações das tarifas PF*/
         TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => rw_crapcop.cdcooper
                                              ,pr_cdbattar => 'TFCTAITGPF'
@@ -6698,18 +6695,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic
                                              ,pr_tab_erro => vr_tab_erro);
-
+          
         IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           btch0001.pc_gera_log_batch(pr_cdcooper     =>  rw_crapcop.cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
-                                                     || vr_dscritic
+                                                     || vr_dscritic 
                                     ,pr_nmarqlog     => 'proc_message.log');
           CONTINUE;
         END IF;
-
-        /*Busca as informações das tarifas PJ*/
+        
+        /*Busca as informações das tarifas PJ*/                  
         TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => rw_crapcop.cdcooper
                                              ,pr_cdbattar => 'TFCTAITGPJ'
                                              ,pr_vllanmto => 0 --> faixa de valor 0..999
@@ -6723,19 +6720,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic
                                              ,pr_tab_erro => vr_tab_erro);
-
+            
           IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
             btch0001.pc_gera_log_batch(pr_cdcooper     =>  rw_crapcop.cdcooper
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                        || vr_cdprogra || ' --> '
-                                                       || vr_dscritic
+                                                       || vr_dscritic 
                                       ,pr_nmarqlog     => 'proc_message.log');
             CONTINUE;
           END IF;
-
-        FOR rw_crapass IN cr_crapass(rw_crapcop.cdcooper) LOOP
-
+        
+        FOR rw_crapass IN cr_crapass(rw_crapcop.cdcooper) LOOP         
+          
           IF rw_crapass.inpessoa = 1 THEN
              vr_cdhistor := vr_cdhistpf;
              vr_vlrtarif := vr_vltarfpf;
@@ -6750,13 +6747,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
              vr_cdfvlcop := vr_cdfvlcpj;
              vr_dtdivulg := vr_dtdivupj;
              vr_dtvigenc := vr_dtvigepj;
-             vr_cdfvlcop := vr_cdfvlcpj;
-             vr_cdbattar := 'TFCTAITGPJ';
-          END IF;
-
+             vr_cdfvlcop := vr_cdfvlcpj;  
+             vr_cdbattar := 'TFCTAITGPJ';         
+          END IF;   
+        
 				  -- Zera valor do rowid
 				  vr_rowid := NULL;
-
+				
 					-- Verificar se deve ser isento de tarifa ou não
 					TARI0001.pc_verifica_tarifa_operacao(pr_cdcooper => rw_crapcop.cdcooper  -- Cooperativa
 																											,pr_cdoperad => '1'                  -- Operador
@@ -6766,14 +6763,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 																											,pr_cdprogra => vr_cdprogra          -- Cód. programa
 																											,pr_idorigem => 7                    -- Identificador de origem
 																											,pr_nrdconta => rw_crapass.nrdconta  -- Nr. da conta
-																											,pr_tipotari => 15                   -- Tipo de tarifa
+																											,pr_tipotari => 15                   -- Tipo de tarifa 
 																											,pr_tipostaa => 0                    -- Tipo TAA
 																											,pr_qtoperac => 1                    -- Qtd. de operações
 																											,pr_qtacobra => vr_qtacobra          -- Qtd. de operações cobradas
 																											,pr_fliseope => vr_fliseope          -- Flag de isenção de operações 0 - não isenta/ 1 - isenta
 																											,pr_cdcritic => vr_cdcritic          -- Cód. da crítica
 																											,pr_dscritic => vr_dscritic);        -- Desc. da crítica
-
+        
 					-- Se ocorreu erro
 					IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 						-- gera log do erro ocorrido
@@ -6783,17 +6780,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 																				,pr_ind_tipo_log => 2 -- Erro tratato
 																				,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
 																												 || vr_cdprogra || ' --> '
-																												 || vr_dscritic
+																												 || vr_dscritic 
 																				,pr_nmarqlog     => 'proc_message.log');
 						-- Limpa valores das variaveis de critica
 						vr_cdcritic:= 0;
-						vr_dscritic:= NULL;
+						vr_dscritic:= NULL;                                           
 						CONTINUE;
-					END IF;
-
+					END IF;																								
+					
 					-- Se não isenta tarifa
           IF vr_fliseope <> 1 THEN
-
+				
           -- Criar Lançamento automatico tarifa
           TARI0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => rw_crapcop.cdcooper
                                           , pr_nrdconta     => rw_crapass.nrdconta
@@ -6838,22 +6835,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                       ,pr_ind_tipo_log => 2 -- Erro tratato
                                       ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                        || vr_cdprogra || ' --> '
-                                                       || vr_dscritic
+                                                       || vr_dscritic 
                                       ,pr_nmarqlog     => 'proc_message.log');
             CONTINUE;
           END IF;
-
-          END IF;
-
+          
+          END IF;          
+          
           IF vr_rowid IS NOT NULL THEN
             vr_contador := vr_contador + 1;
             IF vr_listalat IS NULL THEN
-               vr_listalat := to_char(vr_rowid);
+               vr_listalat := to_char(vr_rowid);                               
             ELSE
-              vr_listalat := vr_listalat || ';' || to_char(vr_rowid);
-            END IF;
+              vr_listalat := vr_listalat || ';' || to_char(vr_rowid);         
+            END IF; 
           END IF;
-
+          
           --A cada 1000 registros para não ultrapassar o limite da funcao
           IF vr_contador = 1000  AND
              vr_listalat IS NOT NULL THEN
@@ -6866,27 +6863,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                             ,pr_flimprim => 0
                                             ,pr_nmarqpdf => vr_nmarqpdf
                                             ,pr_dscritic => vr_dscritic
-                                            ,pr_tab_tari_pend => vr_tab_tari_pend);
-
+                                            ,pr_tab_tari_pend => vr_tab_tari_pend);  
+                                            
             vr_contador := 0;
             vr_listalat := NULL;
-
+            
             IF TRIM(vr_dscritic) IS NOT NULL THEN
               btch0001.pc_gera_log_batch(pr_cdcooper     =>  rw_crapcop.cdcooper
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
                                         ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
-                                                         || vr_dscritic
+                                                         || vr_dscritic 
                                         ,pr_nmarqlog     => 'proc_message.log');
               CONTINUE;
             END IF;
-
+                                              
           END IF;
-
-        END LOOP;
-
+          
+        END LOOP;    
+        
         IF vr_listalat IS NOT NULL THEN
-
+         
           TARI0001.pc_debita_tarifa_online(pr_cdcooper => rw_crapcop.cdcooper
                                            ,pr_cdoperad => '1'
                                            ,pr_idorigem => 1
@@ -6896,24 +6893,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                            ,pr_nmarqpdf => vr_nmarqpdf
                                            ,pr_dscritic => vr_dscritic
                                            ,pr_tab_tari_pend => vr_tab_tari_pend);
-
+            
           vr_listalat := NULL;
           vr_contador := 0;
-
+          
         END IF;
-
+        
         IF TRIM(vr_dscritic) IS NOT NULL THEN
           btch0001.pc_gera_log_batch(pr_cdcooper     =>  rw_crapcop.cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
-                                                     || vr_dscritic
+                                                     || vr_dscritic 
                                     ,pr_nmarqlog     => 'proc_message.log');
           CONTINUE;
         END IF;
-
+        
       END LOOP;
-
+      
       COMMIT;
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -6921,70 +6918,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_cdprogra || ' --> '
-                                                    || vr_dscritic
+                                                    || vr_dscritic 
                                 ,pr_nmarqlog     => 'proc_message.log');
-      ROLLBACK;
+      ROLLBACK;                             
     WHEN OTHERS THEN
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                     || vr_cdprogra || ' --> '
-                                                    || vr_dscritic
+                                                    || vr_dscritic 
                                  ,pr_nmarqlog     => 'proc_message.log');
-
+      
       ROLLBACK;
-  END pc_integra_deb_tarifa;
-
-
+  END pc_integra_deb_tarifa;    
+  
+  
   --> Gerar log de monitoração de lote
   PROCEDURE pc_gera_log_lote_uso(pr_cdcooper IN craplot.cdcooper%TYPE,
                                  pr_nrdconta IN crapass.nrdconta%TYPE,
                                  pr_nrdolote IN craplot.nrdolote%TYPE,
                                  pr_flgerlog IN OUT VARCHAR2,
                                  pr_des_log  IN VARCHAR2) IS
-
+                                 
     PRAGMA AUTONOMOUS_TRANSACTION;
     vr_lotmonit VARCHAR2(4000);
-
-
+    
+    
   BEGIN
-
+    
     --> Tratamento para não carregar sempre a variavel
     IF pr_flgerlog IS NULL THEN
-      pr_flgerlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                              pr_cdcooper => pr_cdcooper,
+      pr_flgerlog := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                              pr_cdcooper => pr_cdcooper, 
                                               pr_cdacesso => 'GERA_LOG_LOTE_USO');
     END IF;
-
+    
     --> Verificar se deve gerar o log
     IF pr_flgerlog = 'S' THEN
-
-      vr_lotmonit := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                               pr_cdcooper => pr_cdcooper,
-                                               pr_cdacesso => 'MONIT_LOTE_USO');
-
+    
+      vr_lotmonit := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                               pr_cdcooper => pr_cdcooper, 
+                                               pr_cdacesso => 'MONIT_LOTE_USO'); 
+        
       -- Verificar se deve monitorar o lote em questão
       IF gene0002.fn_existe_valor(vr_lotmonit,pr_nrdolote,',') = 'S' THEN
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                   pr_ind_tipo_log => 1,
-                                   pr_des_log      => to_char(systimestamp,'DD/MM/RRRR HH24:MI:SSFF3')
-                                                      ||' -> '||pr_des_log,
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
+                                   pr_ind_tipo_log => 1, 
+                                   pr_des_log      => to_char(systimestamp,'DD/MM/RRRR HH24:MI:SSFF3') 
+                                                      ||' -> '||pr_des_log, 
                                    pr_nmarqlog     => 'monitlot');
-      END IF;
+      END IF;     
     END IF;
-
-    COMMIT;
-  EXCEPTION
+     
+    COMMIT; 
+  EXCEPTION 
     WHEN OTHERS THEN
-
+         
       ROLLBACK;
       btch0001.pc_gera_log_batch(pr_cdcooper => pr_cdcooper
                                  ,pr_ind_tipo_log => 2
                                  ,pr_des_log      => 'Erro ao gravar log de monitoramento de lote: '|| SQLERRM
                                  ,pr_nmarqlog     => 'proc_message.log');
-
-  END;
-
+      
+  END;                               
+                                 
   -- Rotina para verificar pacote de tarifas
   PROCEDURE pc_verifica_pacote_tarifas(pr_cdcooper  IN craprac.cdcooper%TYPE     --> Código da Cooperativa
                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da Conta
@@ -6994,8 +6991,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                       ,pr_flservic OUT NUMBER                    --> Flag de Sevico
                                       ,pr_qtopdisp OUT NUMBER                    --> Quantidade de Operacoes Disponiveis
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica
-                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição da crítica
-
+                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição da crítica 
+    
     -- Cursores
     CURSOR cr_tbtarif_contas_pacote(pr_cdcooper crapcop.cdcooper%TYPE
                                    ,pr_nrdconta crapass.nrdconta%TYPE
@@ -7008,9 +7005,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
          AND pct.nrdconta = pr_nrdconta
          AND pct.flgsituacao = pr_flgsituacao
          AND pct.dtinicio_vigencia <= pr_dtinicio_vigencia;
-
+    
     rw_tbtarif_contas_pacote cr_tbtarif_contas_pacote%ROWTYPE;
-
+    
     CURSOR cr_tbtarif_servicos(pr_cdpacote tbtarif_servicos.cdpacote%TYPE
                               ,pr_cdtarifa tbtarif_servicos.cdtarifa%TYPE) IS
       SELECT serv.cdtarifa
@@ -7050,19 +7047,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                     ,pr_nrdconta crapass.nrdconta%TYPE
                                     ,pr_tpoperacao tbcc_operacoes_diarias.cdoperacao%TYPE
                                     ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
-    SELECT COUNT(tbc.cdcooper) AS cont
+    SELECT COUNT(tbc.cdcooper) AS cont 
       FROM tbcc_operacoes_diarias tbc
      WHERE tbc.cdcooper = pr_cdcooper
        AND tbc.nrdconta = pr_nrdconta
        AND tbc.cdoperacao = pr_tpoperacao
        AND tbc.flgisencao_tarifa = 0 -- Nao tarifadas
        AND TO_CHAR(tbc.dtoperacao,'MM/RRRR') = TO_CHAR(pr_dtmvtolt,'MM/RRRR');
-
-    rw_tbcc_operacoes_diarias cr_tbcc_operacoes_diarias%ROWTYPE;
+    
+    rw_tbcc_operacoes_diarias cr_tbcc_operacoes_diarias%ROWTYPE;   
 
     --Registro do tipo data
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
-
+        
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
     vr_exc_null EXCEPTION;
@@ -7073,7 +7070,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_dscritic VARCHAR2(4000);
 
     vr_cdbattar VARCHAR2(10);
-    vr_cdhistor craphis.cdhistor%TYPE;
+    vr_cdhistor craphis.cdhistor%TYPE;   
     vr_cdhisest craphis.cdhistor%TYPE;
     vr_vltarifa crapfco.vltarifa%TYPE;
     vr_dtdivulg crapdat.dtmvtolt%TYPE;
@@ -7081,7 +7078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_cdfvlcop crapcop.cdcooper%TYPE;
 
   BEGIN
-
+    
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH btch0001.cr_crapdat
@@ -7102,7 +7099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                    ,pr_nrdconta => pr_nrdconta);
 
     FETCH cr_crapass INTO rw_crapass;
-
+    
     IF cr_crapass%NOTFOUND THEN
       CLOSE cr_crapass;
       vr_dscritic := 'Associado nao cadastrado.';
@@ -7127,7 +7124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     ELSE
       CLOSE cr_tbtarif_contas_pacote;
     END IF;
-
+    
     CASE pr_tpservic
       WHEN 3 THEN
         IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
@@ -7146,13 +7143,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           vr_cdbattar := 'FOLHACHQPF'; -- FORNECIMENTO DE FOLHAS DE CHEQUE PESSOA FISICA
         ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
           vr_cdbattar := 'FOLHACHQPJ'; -- FORNECIMENTO DE FOLHAS DE CHEQUE PESSOA JURIDICA
-        END IF;
+        END IF;    
       WHEN 6 THEN
         IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
           vr_cdbattar := 'EXTMEPREPF'; -- FORNECIMENTO DE EXTRATO MENSAL DE CONTA DE DEPOSITOS A VISTA PESSOA FISICA  PRESENCIAL
         ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
           vr_cdbattar := 'EXTMEPREPJ'; -- FORNECIMENTO DE EXTRATO MENSAL DE CONTA DE DEPOSITOS A VISTA  PESSOA JURIDICA  PRESENCIAL
-        END IF;
+        END IF; 
       WHEN 7 THEN
         IF rw_crapass.inpessoa = 1 THEN -- Pessoa Fisica
           vr_cdbattar := 'EXTMETAAPF'; -- FORNECIMENTO DE EXTRATO MENSAL DE CONTA DE DEPOSITOS A VISTA PESSOA FISICA - TERMINAL DE AUTOATENDIMENTO
@@ -7212,9 +7209,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           vr_cdbattar := 'DSTBORDEPF'; -- EMISSAO BORDERO DESCONTO DE TITULO PESSOA FISICA
         ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Juridica
           vr_cdbattar := 'DSTBORDEPJ'; -- EMISSAO BORDERO DESCONTO DE TITULO PESSOA JURIDICA
-        END IF;
+        END IF;                     
     END CASE;
-
+   
     TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
                                          ,pr_cdbattar => vr_cdbattar
                                          ,pr_vllanmto => 0
@@ -7226,7 +7223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                          ,pr_dtvigenc => vr_dtvigenc
                                          ,pr_cdfvlcop => vr_cdfvlcop
                                          ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic
+                                         ,pr_dscritic => vr_dscritic 
                                          ,pr_tab_erro => vr_tab_erro);
 
     --Se ocorreu erro
@@ -7253,8 +7250,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       RAISE vr_exc_saida;
     ELSE
       CLOSE cr_crapfco;
-    END IF;
-
+    END IF;    
+    
     OPEN cr_crapfvl(pr_cdfaixav => rw_crapfco.cdfaixav);
 
     FETCH cr_crapfvl INTO rw_crapfvl;
@@ -7265,13 +7262,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       RAISE vr_exc_saida;
     ELSE
       CLOSE cr_crapfvl;
-    END IF;
+    END IF;   
 
     OPEN cr_tbtarif_servicos(pr_cdpacote => rw_tbtarif_contas_pacote.cdpacote
                             ,pr_cdtarifa => rw_crapfvl.cdtarifa);
 
     FETCH cr_tbtarif_servicos INTO rw_tbtarif_servicos;
-
+    
     IF cr_tbtarif_servicos%NOTFOUND THEN
       CLOSE cr_tbtarif_servicos;
       pr_flpacote := 1;
@@ -7279,7 +7276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       pr_qtopdisp := 0;
       RAISE vr_exc_null;
     ELSE
-      CLOSE cr_tbtarif_servicos;
+      CLOSE cr_tbtarif_servicos;      
     END IF;
 
     OPEN cr_tbcc_operacoes_diarias(pr_cdcooper   => pr_cdcooper
@@ -7289,19 +7286,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
     FETCH cr_tbcc_operacoes_diarias INTO rw_tbcc_operacoes_diarias;
 
-    CLOSE cr_tbcc_operacoes_diarias;
+    CLOSE cr_tbcc_operacoes_diarias;        
 
     pr_flpacote := 1;
     pr_flservic := 1;
     pr_qtopdisp := rw_tbtarif_servicos.qtdoperacoes - rw_tbcc_operacoes_diarias.cont;
-
+    
     IF pr_qtopdisp < 0 THEN
       pr_qtopdisp := 0;
     END IF;
 
   EXCEPTION
     WHEN vr_exc_null THEN
-      pr_cdcritic := 0;
+      pr_cdcritic := 0;      
       pr_dscritic := '';
     WHEN vr_exc_saida THEN
       IF vr_cdcritic <> 0 THEN
@@ -7371,8 +7368,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                          ,pr_flservic => vr_flservic   --> Flag de Sevico
                                          ,pr_qtopdisp => vr_qtopdisp   --> Quantidade de Operacoes Disponiveis
                                          ,pr_cdcritic => vr_cdcritic   --> Código da crítica
-                                         ,pr_dscritic => vr_dscritic); --> Descrição da crítica
-
+                                         ,pr_dscritic => vr_dscritic); --> Descrição da crítica    
+      
       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_saida;
       END IF;
@@ -7413,7 +7410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                     ,pr_nrdcaixa  IN INTEGER  --> Numero do caixa
                                     ,pr_cdoperad  IN VARCHAR2 --> Codigo Operador
                                     ,pr_dtmvtolt  IN DATE     --> Data Lancamento
-                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela
+                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela       
                                     ,pr_idorigem  IN INTEGER  --> Indicador de origem
                                     ,pr_inproces  IN INTEGER  --> Indicador processo
                                     ,pr_nrdconta  IN INTEGER  --> Numero da Conta
@@ -7425,19 +7422,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                     ,pr_cdcritic OUT INTEGER      --> Codigo Critica
                                     ,pr_dscritic OUT VARCHAR2) IS --> Descricao Critica
     /* ........................................................................
-
+    
       Programa : pc_estorno_baixa_tarifa           Antigo: b1wgen0153.p/estorno-baixa-tarifa
       Sistema  : Cred
       Sigla    : TARI0001
       Autor    : Odirlei Busana - AMcom
       Data     : janeiro/2017.                   Ultima atualizacao: 10/01/2017
-
+    
       Dados referentes ao programa:
-
+    
        Frequencia: Sempre que for chamado
-
+       
        Objetivo  : Estorno/Baixa de lancamento de tarifas
-
+       
        Alterações: 10/01/2017 - Conversão Progress -> Oracle (Odirlei-AMcom)
       ........................................................................ */
 
@@ -7447,23 +7444,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       SELECT lat.rowid,
              lat.cdfvlcop,
              lat.nrdctabb,
-             lat.nrdctitg,
+             lat.nrdctitg,            
              lat.cdpesqbb,
              lat.cdbanchq,
              lat.cdagechq,
              lat.nrctachq,
-             lat.cdagenci,
+             lat.cdagenci,            
              lat.cdbccxlt,
              lat.nrdolote,
              lat.vltarifa,
              lat.nrdocmto,
              lat.cdhistor
-
+             
         FROM craplat lat
        WHERE lat.cdlantar = pr_cdlantar
-         FOR UPDATE NOWAIT;
+         FOR UPDATE NOWAIT; 
     rw_craplat cr_craplat%ROWTYPE;
-
+    
     --> Buscar dados da tarifa
     CURSOR cr_crapfvl (pr_cdfvlcop crapfco.cdfvlcop%TYPE)IS
       SELECT fvl.cdhisest
@@ -7472,16 +7469,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        WHERE fco.cdfvlcop = pr_cdfvlcop
          AND fvl.cdfaixav = fco.cdfaixav;
     rw_crapfvl cr_crapfvl%ROWTYPE;
-
+    
     --> Buscar dados do associado
     CURSOR cr_crapass (pr_nrdconta crapass.nrdconta%TYPE,
                        pr_cdcooper crapass.cdcooper%type) IS
       SELECT ass.cdagenci
         FROM crapass ass
-       WHERE ass.nrdconta = pr_nrdconta
+       WHERE ass.nrdconta = pr_nrdconta 
          AND ass.cdcooper = pr_cdcooper;
     rw_crapass cr_crapass%ROWTYPE;
-
+    
     -----------> VARIAVEIS <----------
     -- Tratamento de erros
     vr_cdcritic        NUMBER;
@@ -7489,31 +7486,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_dscritic_aux    VARCHAR2(4000);
     vr_exc_erro        EXCEPTION;
     vr_tab_erro        gene0001.typ_tab_erro;
-
+    
     vr_dsorigem        craplgm.dsorigem%TYPE;
     vr_dstransa        craplgm.dstransa%TYPE;
-
+    
     vr_tab_cdlantar    gene0002.typ_split;
     vr_tab_cdmotest    gene0002.typ_split;
-
+    
     vr_cont            INTEGER;
     vr_cdlantar        craplat.cdlantar%TYPE;
     vr_cdmotest        craplat.cdmotest%TYPE;
     vr_fcraplat        BOOLEAN;
     vr_fcrapfvl        BOOLEAN;
     vr_fcrapass        BOOLEAN;
-
+    
     --> Gerar log para o cooperado
     PROCEDURE pr_gera_log(pr_dscrilog IN VARCHAR2 DEFAULT NULL,
                           pr_cdlantar IN VARCHAR2 DEFAULT NULL,
                           pr_cdhistor IN VARCHAR2 DEFAULT NULL,
                           pr_cdmotest IN VARCHAR2 DEFAULT NULL) IS
-
+    
       vr_nrdrowid ROWID;
-
+      
     BEGIN
-
-      -- Gerar log ao cooperado
+    
+      -- Gerar log ao cooperado 
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => pr_dscrilog
@@ -7526,57 +7523,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                           ,pr_nmdatela => pr_nmdatela
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
-
+          
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdlantar',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => pr_cdlantar);
-
+       
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdhistor',
                                 pr_dsdadant => NULL,
-                                pr_dsdadatu => pr_cdhistor);
-
+                                pr_dsdadatu => pr_cdhistor);                                
+                                
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'dtdestor',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => pr_dtmvtolt);
-
+      
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdmotest',
                                 pr_dsdadant => NULL,
-                                pr_dsdadatu => pr_cdmotest);
-
+                                pr_dsdadatu => pr_cdmotest);                                                     
+                                
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdopeest',
                                 pr_dsdadant => NULL,
-                                pr_dsdadatu => pr_cdoperad);
+                                pr_dsdadatu => pr_cdoperad);                                                              
     END pr_gera_log;
-
+    
   BEGIN
-
+  
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
-    IF pr_cddopcap = 1 THEN
+    IF pr_cddopcap = 1 THEN 
       vr_dstransa := 'Estorno de tarifa.';
     ELSE
       vr_dstransa := 'Baixa de tarifa.';
     END IF;
-
+    
     --> Codigo Lantar
     vr_tab_cdlantar := gene0002.fn_quebra_string(pr_lscdlant,';');
     --> Motivo Estorno
     vr_tab_cdmotest := gene0002.fn_quebra_string(pr_lscdmote,';');
-
+    
     SAVEPOINT TRANS_ESTTAR;
-    --Buscar lançamentos passados por parametro
+    --Buscar lançamentos passados por parametro  
     FOR idx IN vr_tab_cdlantar.first..vr_tab_cdlantar.last LOOP
-
+    
       vr_cdlantar := vr_tab_cdlantar(idx);
       vr_cdmotest := NULL;
       IF vr_tab_cdmotest.exists(idx) THEN
         vr_cdmotest := vr_tab_cdmotest(idx);
       END IF;
-
+      
       --> Tentar lockar a craplat
       LOOP
         BEGIN
@@ -7584,48 +7581,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           FETCH cr_craplat INTO rw_craplat;
           vr_fcraplat := cr_craplat%FOUND;
           CLOSE cr_craplat;
-
+          
           EXIT;
-        EXCEPTION
+        EXCEPTION  
           WHEN OTHERS THEN
             IF vr_cont = 10 THEN
               CLOSE cr_craplat;
               vr_dscritic := 'Registro de tarifa em uso.';
               RAISE vr_exc_erro;
             ELSE
-              vr_cont := nvl(vr_cont,0) + 1;
+              vr_cont := nvl(vr_cont,0) + 1; 
               CLOSE cr_craplat;
               dbms_lock.sleep(1);
             END IF;
         END;
-
+      
       END LOOP; --> Fim loop lockar craplat
-
+      
       --> Se localizou o lancamento
       IF vr_fcraplat =  TRUE THEN
-
-        --> 1 - Estorno
+      
+        --> 1 - Estorno 
         IF pr_cddopcap = 1 THEN
-
+        
           BEGIN
             UPDATE craplat lat
-               SET lat.insitlat = 4 --> Estornado
-                  ,lat.cdmotest = vr_cdmotest
+               SET lat.insitlat = 4 --> Estornado 
+                  ,lat.cdmotest = vr_cdmotest 
                   ,lat.dtdestor = pr_dtmvtolt
                   ,lat.cdopeest = pr_cdoperad
-             WHERE lat.rowid = rw_craplat.rowid;
+             WHERE lat.rowid = rw_craplat.rowid; 
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar situação tarifa: '||SQLERRM;
-              RAISE vr_exc_erro;
+              RAISE vr_exc_erro;  
           END;
-
+          
           --> Buscar dados da tarifa
           OPEN cr_crapfvl (pr_cdfvlcop => rw_craplat.cdfvlcop );
           FETCH cr_crapfvl INTO rw_crapfvl;
           vr_fcrapfvl := cr_crapfvl%FOUND;
           CLOSE cr_crapfvl;
-
+          
           IF vr_fcrapfvl = TRUE THEN
             --> Buscar dados do associado
             OPEN cr_crapass (pr_nrdconta => pr_nrdconta,
@@ -7633,7 +7630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             FETCH cr_crapass INTO rw_crapass;
             vr_fcrapass := cr_crapass%FOUND;
             CLOSE cr_crapass;
-
+            
             IF vr_fcrapass = TRUE THEN
               -- Gerar Lancamento Estorno CRAPLCM
               pc_lan_tarifa_conta_corrente (pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
@@ -7668,51 +7665,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                            ,pr_cdcritic => vr_cdcritic          --Codigo do erro
                                            ,pr_dscritic => vr_dscritic);        --Descricao do erro
               --Se ocorreu erro
-              IF vr_cdcritic IS NOT NULL OR
+              IF vr_cdcritic IS NOT NULL OR 
                  vr_dscritic IS NOT NULL THEN
                 --Levantar Excecao
                 RAISE vr_exc_erro;
               END IF;
-            END IF;
-          END IF; --crapfvl
-
+            END IF;          
+          END IF; --crapfvl          
+        
         ELSE --> 2 - Baixa
           BEGIN
             UPDATE craplat lat
-               SET lat.insitlat = 3 --> Baixado
-                  ,lat.cdmotest = vr_cdmotest
+               SET lat.insitlat = 3 --> Baixado 
+                  ,lat.cdmotest = vr_cdmotest 
                   ,lat.dtdestor = pr_dtmvtolt
                   ,lat.cdopeest = pr_cdoperad
-             WHERE lat.rowid = rw_craplat.rowid;
+             WHERE lat.rowid = rw_craplat.rowid; 
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar situação tarifa: '||SQLERRM;
-              RAISE vr_exc_erro;
-          END;
+              RAISE vr_exc_erro;  
+          END;          
         END IF;
 
       END IF; --> craplat
-
+      
        --> Gerar log para o cooperado
        pr_gera_log(pr_cdlantar => vr_cdlantar,
                    pr_cdhistor => rw_craplat.cdhistor,
                    pr_cdmotest => vr_cdmotest);
-
-
+      
+      
     END LOOP;
-
-
+    
+  
   EXCEPTION
     WHEN vr_exc_erro THEN
       ROLLBACK TO TRANS_ESTTAR;
-
+      
       --> Buscar critica
-      IF nvl(vr_cdcritic,0) > 0 AND
+      IF nvl(vr_cdcritic,0) > 0 AND 
         TRIM(vr_dscritic) IS NULL THEN
-        -- Busca descricao
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
-
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
 
@@ -7721,18 +7718,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                    pr_cdlantar => vr_cdlantar,
                    pr_cdhistor => rw_craplat.cdhistor,
                    pr_cdmotest => vr_cdmotest);
-
+      
     WHEN OTHERS THEN
       ROLLBACK TO TRANS_ESTTAR;
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na rotina estorno/baixa tarifa: '||SQLERRM;
-
+      
       --> Gerar log para o cooperado
       pr_gera_log(pr_dscrilog => pr_dscritic,
                   pr_cdlantar => vr_cdlantar,
                   pr_cdhistor => rw_craplat.cdhistor,
                   pr_cdmotest => vr_cdmotest);
-
+    
   END pc_estorno_baixa_tarifa;
 
 END TARI0001;

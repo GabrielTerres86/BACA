@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075tt.i
     Autor   : Jose Luis Marchezoni
-    Data    : Maio/2010                   Ultima atualizacao: 18/04/2017
+    Data    : Maio/2010                   Ultima atualizacao: 12/08/2015
 
     Objetivo  : Definicao das Temp-Tables, CONTAS - COMERCIAL
 
@@ -13,10 +13,6 @@
                              
                 12/08/2015 - Projeto Reformulacao cadastral
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
-
-				18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
 
 .............................................................................*/
 
@@ -32,6 +28,7 @@ DEFINE TEMP-TABLE tt-comercial NO-UNDO
     FIELD nmresemp AS CHAR
     FIELD nmextemp AS CHAR
     FIELD nrcpfemp AS CHAR FORMAT "x(14)"
+    FIELD nmdsecao AS CHAR
     FIELD dsproftl AS CHAR
     FIELD cdnvlcgo AS INTE
     FIELD nrcadast AS INTE
@@ -66,6 +63,7 @@ DEFINE TEMP-TABLE tt-comercial NO-UNDO
         FIELD tpcttrab AS INTE
         FIELD cdempres AS INTE
         FIELD nrcpfemp AS CHAR
+        FIELD nmdsecao AS CHAR
         FIELD dsproftl AS CHAR
         FIELD cdnvlcgo AS INTE
         FIELD nrcadast AS INTE

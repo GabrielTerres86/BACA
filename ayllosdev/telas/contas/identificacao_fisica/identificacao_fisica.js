@@ -19,11 +19,7 @@
  * 011: [23/08/2013] David               : Incluir campo UF Naturalidade - cdufnatu 
  * 012: [01/09/2015] Gabriel (RKAM)      : Reformulacao cadastral.
  * 013: [30/05/2016] Kelvin 			 : Incluso a rotina para tratar caracteres invalidos do campo nmextemp. SD (442417)
- * 014: [20/04/2017] Adriano             : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur e 
-    							           ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			                               crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
- * 015: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
-
+ * 014: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
  */
  
   
@@ -456,6 +452,7 @@ function manterRotina() {
 	var nrcpfemp = $('#nrcpfemp','#'+nomeForm).val();
 	var dsproftl = $('#dsproftl','#'+nomeForm).val();
 	var cdnvlcgo = $('#cdnvlcgo','#'+nomeForm).val();
+	var nrfonemp = $('#nrfonemp','#'+nomeForm).val();
 	var cdturnos = $('#cdturnos','#'+nomeForm).val();
 	var dtadmemp = $('#dtadmemp','#'+nomeForm).val();
 	var vlsalari = $('#vlsalari','#'+nomeForm).val();
@@ -490,7 +487,7 @@ function manterRotina() {
 			tpnacion: tpnacion, cdnacion: cdnacion, dtnasttl: dtnasttl,	dsnatura: dsnatura, inhabmen: inhabmen, dthabmen: dthabmen,
 			cdestcvl: cdestcvl, grescola: grescola, cdfrmttl: cdfrmttl,	nmcertif: nmcertif, nmtalttl: nmtalttl, qtfoltal: qtfoltal,
 			cdsexotl: cdsexotl,	operacao: operacao, nrctattl: nrctattl,	cdnatopc: cdnatopc, cdocpttl: cdocpttl, tpcttrab: tpcttrab,
-			nmextemp: nmextemp, nrcpfemp: nrcpfemp, dsproftl: dsproftl,	cdnvlcgo: cdnvlcgo, cdturnos: cdturnos,
+			nmextemp: nmextemp, nrcpfemp: nrcpfemp, dsproftl: dsproftl,	cdnvlcgo: cdnvlcgo, nrfonemp: nrfonemp, cdturnos: cdturnos,
 			dtadmemp: dtadmemp, vlsalari: vlsalari, verrespo: verrespo, permalte: permalte, cdufnatu: cdufnatu, flgcadas: flgcadas,
 			flgContinuar: flgContinuar, arrayFilhos: arrayFilhos,     redirect: 'script_ajax'
 		}, 
@@ -520,7 +517,7 @@ function manterRotina() {
 function controlaLayout() {	
 				
 	$('#divConteudoOpcao').fadeTo(1,0.01);
-	$('#divConteudoOpcao').css('height','400px');
+	$('#divConteudoOpcao').css('height','360px');
 	$('#divConteudoOpcao').css('width','540px');
 	
 	// FIELDSET IDENTIFICAÇÃO
@@ -544,7 +541,7 @@ function controlaLayout() {
 	rCPF.css('width','44px');
 	rDtConsulta.css('width','102px');
 	rNatureza.css('width','71px');
-	rOrgEmissor.css('width','73px');
+	rOrgEmissor.css('width','55px');
 	rDtEmissao.css('width','68px');
 	
 	// var cRelacionamento	= $('select[name=\'cdgraupr\']','#'+nomeForm);
@@ -567,7 +564,7 @@ function controlaLayout() {
 	cDtConsulta.addClass('data').css('width','68px');
 	cNatureza.css('width','73px');	
 	cTpDocumento.css('width','40px');
-	cDocumento.addClass('alphanum').css({'width':'400px','text-align':'right'}).attr('maxlength','40');
+	cDocumento.addClass('alphanum').css({'width':'82px','text-align':'right'}).attr('maxlength','15');
 	cOrgEmissor.addClass('alpha').css('width','46px').attr('maxlength','5');
 	cEstados.css('width','41px');
 	cDataEmissao.addClass('data').css('width','73px');
@@ -603,7 +600,7 @@ function controlaLayout() {
 	
 	cDescricoes.addClass('descricao').css('width','388px');
 	cDesCursoSup.addClass('descricao').css('width','197px');	
-	cDesNacional.addClass('alpha').css('width','388px').attr('maxlength','15');
+	cDesNacional.addClass('alpha').css('width','256px').attr('maxlength','15');
     //cCdNacional.addClass('inteiro').css('width','56px').attr('maxlength','5');
 	cDesNatural.addClass('alpha pesquisa').css('width','182px').attr('maxlength','25');		
 	cDtNascimento.addClass('data').css('width','65px');
@@ -855,12 +852,14 @@ function controlaPesquisas() {
 
 				// Nacionalidade
 				} else if ( campoAnterior == 'cdnacion' ) {
-					
-					var filtrosPesq = "Código;cdnacion;100px;S;0|Descrição;dsnacion;200px;S;";
-                    var colunas = 'Código;cdnacion;25%;right|Descrição;dsnacion;75%;left';
-                    mostraPesquisa("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidade", "30", filtrosPesq, colunas, divRotina);
-                    
-					return false;
+					mostraNacionalidade();
+					/*procedure	= 'busca_nacionalidade';
+					titulo      = 'Nacionalidade';
+					qtReg		= '50';
+					filtros 	= 'Nacionalidade;dsnacion;200px;S;';
+					colunas 	= 'Nacionalidade;dsnacion;100%;left';
+					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
+					return false;*/
 				
 				// Naturalidade
 				} else if ( campoAnterior == 'dsnatura' ) {
@@ -915,10 +914,11 @@ function controlaPesquisas() {
 		
     //  Nacionalidade
 	$('#cdnacion','#'+nomeForm).unbind('change').bind('change',function() {
-		
-		buscaDescricao("ZOOM0001", "BUSCANACIONALIDADES", "Nacionalidade", $(this).attr('name'), 'dsnacion', $(this).val(), 'dsnacion', '', 'frmDadosIdentFisica');
+		procedure	= 'BUSCAR_NACIONALIDADE';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('CADA0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,'frmDadosIdentFisica');        
 		return false;
-		
 	}); 
     
 		

@@ -284,7 +284,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
            ,cdageban crapcti.cdageban%TYPE
            ,nrctatrf crapcti.nrctatrf%TYPE
            ,nmtitula VARCHAR2(200)
-           ,nmtitul2 crapttl.nmextttl%TYPE
+           ,nmtitul2 crapass.nmsegntl%TYPE
            ,nrcpfcgc crapcti.nrcpfcgc%TYPE
            ,dscpfcgc VARCHAR2(20)
            ,dstransa VARCHAR2(255)
@@ -455,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 25/04/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -528,11 +528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --            10/03/2017 - Ajustes na pc_verifica_operacao para liberar agendamento de TED 
   --                         para o ultimo dia util do ano (Tiago/Elton SD586106).
   --
-  --            25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  --		                 crapass, crapttl, crapjur 
-  --						(Adriano - P339).
-  --
-  --
+  --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -571,6 +567,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     SELECT crapass.cdcooper
           ,crapass.nrdconta
           ,crapass.nmprimtl
+          ,crapass.nmsegntl
           ,crapass.inpessoa
           ,crapass.cdagenci
           ,crapass.vllimcre
@@ -1845,30 +1842,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                     ,pr_cddbanco OUT INTEGER               --Codigo banco
                                     ,pr_dscritic OUT VARCHAR2              --Retorno OK/NOK
                                     ,pr_tab_erro OUT GENE0001.typ_tab_erro) IS --Tabela de retorno de erro
-  /*---------------------------------------------------------------------------------------------------------------
-  
-    Programa : pc_valida_conta_destino           Antigo: b1wgen0015.p/valida-conta-destino
-    Sistema  : Procedimentos para validar conta de destino da transferencia
-    Sigla    : CRED
-    Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 25/04/2017
-  
-   Dados referentes ao programa:
-  
-   Frequencia: -----
-   Objetivo  : Procedimentos para validar conta de destino da transferencia
-  
-   Alterações: 28/07/2015 - Ajustar o tratamento de erros para quando executar o raise o erro seja
-                            carregado na tabela de erros e devolvida a rotina que chamou.
-                            (Douglas - Chamado 312756)
-  
-               24/05/2016 - M118 - Correção na checagem de existência da CRAPCTI (Marcos-Supero)
-
-			   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-		                    crapass, crapttl, crapjur 
-							(Adriano - P339).
-   
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_valida_conta_destino           Antigo: b1wgen0015.p/valida-conta-destino
+  --  Sistema  : Procedimentos para validar conta de destino da transferencia
+  --  Sigla    : CRED
+  --  Autor    : Alisson C. Berrido - Amcom
+  --  Data     : Junho/2013.                   Ultima atualizacao: 24/05/2016
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Procedimentos para validar conta de destino da transferencia
+  --
+  -- Alterações: 28/07/2015 - Ajustar o tratamento de erros para quando executar o raise o erro seja
+  --                          carregado na tabela de erros e devolvida a rotina que chamou.
+  --                          (Douglas - Chamado 312756)
+  --
+  --             24/05/2016 - M118 - Correção na checagem de existência da CRAPCTI (Marcos-Supero)
+  -- 
+  ---------------------------------------------------------------------------------------------------------------
 
   BEGIN
     DECLARE
@@ -1890,15 +1883,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               ,crapcop.fimopstr
         FROM crapcop
         WHERE crapcop.cdagectl = pr_cdagectl;
-
-	  CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE,
-                         pr_nrdconta IN crapttl.nrdconta%TYPE) IS
-      SELECT nmextttl
-        FROM crapttl
-       WHERE crapttl.cdcooper = pr_cdcooper
-         AND crapttl.nrdconta = pr_nrdconta
-         AND crapttl.idseqttl = 2;
-      rw_crapttl cr_crapttl%ROWTYPE;
 
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2021,21 +2005,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       CLOSE cr_crapcti;
       --Nome do titular
       pr_nmtitula:= rw_crabass.nmprimtl;
-
-	  OPEN cr_crapttl(pr_cdcooper => rw_crabass.cdcooper
-	                 ,pr_nrdconta => rw_crabass.nrdconta);
-
-	  FETCH cr_crapttl INTO rw_crapttl;
-
-	  IF cr_crapttl%FOUND THEN
-
       --Nome do segundo titular
-        pr_nmtitul2:= rw_crapttl.nmextttl;
-
-	  END IF;
-
-	  CLOSE cr_crapttl;
-
+      pr_nmtitul2:= rw_crabass.nmsegntl;
       --Codigo do Banco
       pr_cddbanco:= rw_crabcop.cdbcoctl;
       --Retornar OK
@@ -3301,34 +3272,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                        ,pr_dscritic OUT VARCHAR2               --> Descrição da critica
                                        ,pr_tab_contas_cadastradas OUT typ_tab_contas_cadastradas --> Retorno XML contas cadastradas
                                        ,pr_dsretorn               OUT VARCHAR2) IS -- Descricao do erro
-  /*---------------------------------------------------------------------------------------------------------------
-  
-    Programa : pc_con_contas_cadastradas     Antigo: b1wgen0015.p.consulta-contas-cadastradas
-    Sistema  : Procedure para consulta de contas de trnsf cadastradas 
-    Sigla    : CRED
-    Autor    : Carlos Henrique
-    Data     : março/2016.                   Ultima atualizacao: 25/04/2017
-  
-   Dados referentes ao programa:
-  
-   Alteracoes: 06/05/2016 - Inclusao do nmsegntl, pesquisa na crapass pelo nome no
-                            cr_crapcti e exibicao das contas bloqueadas para a CECRED.
-                            (Jaison/Marcos - SUPERO)
-  
-               25/05/2016 - Ajuste realizados:
-                            -> Alterado o index utilizado para montar a tabela de faovericos a fim de 
-                               possibilitar a ordenação por nome de favorecido;
-                            -> Utilizar rotina genérica para consultar registro da craptab;
-                            (Adriano - M117).
-  
-               20/02/2017 - Ajuste no problema que não filtrava os favorecidos, conforme
-                            relatado no chamado 605338. (Kelvin)
-
-			   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-  
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_con_contas_cadastradas     Antigo: b1wgen0015.p.consulta-contas-cadastradas
+  --  Sistema  : Procedure para consulta de contas de trnsf cadastradas 
+  --  Sigla    : CRED
+  --  Autor    : Carlos Henrique
+  --  Data     : março/2016.                   Ultima atualizacao: 20/02/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Alteracoes: 06/05/2016 - Inclusao do nmsegntl, pesquisa na crapass pelo nome no
+  --                          cr_crapcti e exibicao das contas bloqueadas para a CECRED.
+  --                          (Jaison/Marcos - SUPERO)
+  --
+  --             25/05/2016 - Ajuste realizados:
+  --                          -> Alterado o index utilizado para montar a tabela de faovericos a fim de 
+  --                             possibilitar a ordenação por nome de favorecido;
+  --                          -> Utilizar rotina genérica para consultar registro da craptab;
+  --                          (Adriano - M117).
+  --
+  --             20/02/2017 - Ajuste no problema que não filtrava os favorecidos, conforme
+  --                          relatado no chamado 605338. (Kelvin)
+  --
+  ---------------------------------------------------------------------------------------------------------------
   -------------------------> VARIAVEIS <-------------------------
     
   BEGIN
@@ -3400,6 +3367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     SELECT dtdemiss
           ,inpessoa
           ,nmprimtl
+          ,nmsegntl
           ,nrcpfcgc
           ,nrdconta
       FROM crapass
@@ -3408,13 +3376,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     rw_crapass cr_crapass%ROWTYPE;
 
     CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE,
-                       pr_nrdconta IN crapass.nrdconta%TYPE,
-					   pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+                       pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT nmextttl
       FROM crapttl
      WHERE crapttl.cdcooper = pr_cdcooper
        AND crapttl.nrdconta = pr_nrdconta
-       AND crapttl.idseqttl = pr_idseqttl;
+       AND crapttl.idseqttl = 1;
     rw_crapttl cr_crapttl%ROWTYPE;
 
     CURSOR cr_crapban (pr_cddbanco IN crapcti.cddbanco%TYPE) IS
@@ -3511,8 +3478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF rw_crapass.inpessoa = 1 THEN
             
             OPEN cr_crapttl(pr_cdcooper => rw_crapcop_cdagectl.cdcooper,
-                            pr_nrdconta => to_number(rw_crapcti.nrctatrf),
-							pr_idseqttl => 1);
+                            pr_nrdconta => to_number(rw_crapcti.nrctatrf));
                             
             FETCH cr_crapttl INTO rw_crapttl;
             
@@ -3524,19 +3490,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             
             CLOSE cr_crapttl;
             
-			OPEN cr_crapttl(pr_cdcooper => rw_crapcop_cdagectl.cdcooper,
-                            pr_nrdconta => to_number(rw_crapcti.nrctatrf),
-							pr_idseqttl => 2);
-                            
-            FETCH cr_crapttl INTO rw_crapttl;
-            
-            IF cr_crapttl%FOUND THEN
-              vr_aux_nmsegntl := rw_crapttl.nmextttl;
-            END IF;
-            
-            CLOSE cr_crapttl;
-            
-            vr_aux_nmprimtl := vr_aux_nmprimtl || ' ' || vr_aux_nmsegntl;
+            vr_aux_nmprimtl := vr_aux_nmprimtl || ' ' || rw_crapass.nmsegntl;
+            vr_aux_nmsegntl := rw_crapass.nmsegntl;
             vr_aux_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc, 1);
             
           ELSE          

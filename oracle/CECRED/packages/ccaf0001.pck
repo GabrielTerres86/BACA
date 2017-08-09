@@ -80,7 +80,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Outubro/2009                      Ultima atualizacao: 25/04/2017
+   Data    : Outubro/2009                      Ultima atualizacao: 22/10/2014
 
    Dados referentes ao programa:
 
@@ -109,9 +109,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                22/10/2014 - Ajuste na procedure pc_verifica_feriado - cursor
                             cr_crapfsf ficava aberto. (Rafael).
                             
-		       25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
 
 ..............................................................................*/
 
@@ -196,10 +193,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT crapass.nrdconta
           ,crapass.nmprimtl
+          ,crapass.nmsegntl
           ,crapass.inpessoa
           ,crapass.cdagenci
           ,crapass.vllimcre
           ,crapass.nrcpfcgc
+          ,crapass.nrcpfstl
       FROM crapass
      WHERE crapass.cdcooper = pr_cdcooper
      AND   crapass.nrdconta = pr_nrdconta;

@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS435(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Fevereiro/2005                  Ultima atualizacao: 24/04/2017
+   Data    : Fevereiro/2005                  Ultima atualizacao: 25/04/2014
 
    Dados referentes ao programa:
 
@@ -79,11 +79,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS435(pr_cdcooper  IN craptab.cdcooper%T
 
                 25/04/2014 - Corrigir alteração realizada pelo Gabriel, pois
                              não estava como implementado no progress.
-
-				24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
-
 ............................................................................. */
 
   -- CURSORES
@@ -116,6 +111,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS435(pr_cdcooper  IN craptab.cdcooper%T
          , crapass.nrcpfcgc
          , crapass.cdcooper
          , crapass.nmprimtl
+         , crapass.nmsegntl
          , crapass.nrctainv
       FROM crapass
      WHERE crapass.cdcooper = pr_cdcooper

@@ -126,10 +126,6 @@
                               para leitura da nova TAB de desconto segmentada por tipo de pessoa.
                               PRJ-300 - Desconto de cheque(Odirlei-AMcom)
                               
-                 19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                  crapass, crapttl, crapjur 
-							 (Adriano - P339).
-                              
                  20/06/2017 - Retirada separaçao de cheques maiores e menores no relatório CRRL308.
                               PRJ367 - Compe Sessao Unica (Lombardi)
                               
@@ -360,21 +356,8 @@ PROCEDURE consulta_alteracoes_tp_conta:
            tt-detalhe-conta.dtabtcct = crapass.dtabtcct
            tt-detalhe-conta.nrdctitg = crapass.nrdctitg
            tt-detalhe-conta.dtatipct = crapass.dtatipct
-           tt-detalhe-conta.nmprimtl = crapass.nmprimtl.
-    
-	IF crapass.inpessoa = 1 THEN
-	   DO:
-	      FOR FIRST crapttl FIELDS(nmextttl)
-		                    WHERE crapttl.cdcooper = crapass.cdcooper AND
-						          crapttl.nrdconta = crapass.nrdconta AND
-							      crapttl.idseqttl = 2
-							      NO-LOCK:
-
-		    ASSIGN tt-detalhe-conta.nmsegntl = crapttl.nmextttl.
-
-		  END.
-
-	   END.
+           tt-detalhe-conta.nmprimtl = crapass.nmprimtl
+           tt-detalhe-conta.nmsegntl = crapass.nmsegntl.
     
     IF   NOT AVAILABLE crapage   THEN
          tt-detalhe-conta.dsagenci = STRING(crapass.cdagenci,"zz9") +

@@ -27,7 +27,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Elton
-   Data    : Outubro/2011                      Ultima atualizacao: 17/04/2017
+   Data    : Outubro/2011                      Ultima atualizacao: 26/04/2016
 
    Dados referentes ao programa:
 
@@ -104,11 +104,6 @@
                             
   			   26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
 			                comprovantes, melhoria 112 (Tiago/Elton)              
-
-			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -563,26 +558,10 @@ PROCEDURE realiza-deposito:
                           NO-LOCK NO-ERROR.
        
        IF AVAIL crapass THEN
-	      DO:
           ASSIGN c-nome-titular1 = crapass.nmprimtl
+                 c-nome-titular2 = crapass.nmsegntl
                  c-pa-titular    = "   PAC: " + STRING(crapass.cdagenci,"99").
        
-			 IF crapass.inpessoa = 1 THEN
-			    DO:
-				   FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-				                      WHERE crapttl.cdcooper = crapass.cdcooper AND
-								            crapttl.nrdconta = crapass.nrdconta AND
-									        crapttl.idseqttl = 2
-									        NO-LOCK:
-
-				      ASSIGN c-nome-titular2 = crapttl.nmextttl.				   
-
-				   END.
-
-				END.
-
-          END.
-
        ASSIGN c-literal = " "
               c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
                               TRIM(crapcop.nmextcop)
@@ -1161,9 +1140,6 @@ PROCEDURE realiza-transferencia:
     DEF VAR aux_cdagetfn                 LIKE craptfn.cdagenci  NO-UNDO.
     DEF VAR aux_cdcritic                 AS INTE                NO-UNDO.
     DEF VAR aux_dscritic                 AS CHAR                NO-UNDO.
-	DEF VAR aux_nmsegntl1				 LIKE crapttl.nmextttl  NO-UNDO.
-	DEF VAR aux_nmsegntl2				 LIKE crapttl.nmextttl  NO-UNDO.
-    DEF VAR aux_nrcpfcgc2				 LIKE crapttl.nrcpfcgc  NO-UNDO.
     
     DEF VAR aux_vltarifa                 AS DECI                NO-UNDO.
     DEF VAR aux_flgtrans                 AS LOGI                NO-UNDO.
@@ -1232,20 +1208,6 @@ PROCEDURE realiza-transferencia:
                 UNDO REAL_TRANS, LEAVE REAL_TRANS.
             END.
            
-	   IF crapass.inpessoa = 1 THEN
-	      DO:
-		     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
-			                    WHERE crapttl.cdcooper = crapass.cdcooper AND
-							       	  crapttl.nrdconta = crapass.nrdconta AND
-								      crapttl.idseqttl = 2
-								      NO-LOCK:
-
-			    ASSIGN aux_nmsegntl1 = crapttl.nmextttl.
-
-			 END.
-
-		  END.
-           
        /** Informacoes da conta de destino **/
        FIND crabass WHERE  crabass.cdcooper = crabcop.cdcooper  AND
                            crabass.nrdconta = p-nrdcontapara NO-LOCK NO-ERROR.
@@ -1257,22 +1219,6 @@ PROCEDURE realiza-transferencia:
                         
                 UNDO REAL_TRANS, LEAVE REAL_TRANS.
             END.
-
-	   IF crabass.inpessoa = 1 THEN
-	      DO:
-		     FOR FIRST crapttl FIELDS(crapttl.nmextttl crapttl.nrcpfcgc)
-			                    WHERE crapttl.cdcooper = crabass.cdcooper AND
-							      	  crapttl.nrdconta = crabass.nrdconta AND
-								      crapttl.idseqttl = 2
-								      NO-LOCK:
-
-			 
-			    ASSIGN aux_nmsegntl2 = crapttl.nmextttl
-					   aux_nrcpfcgc2 = crapttl.nrcpfcgc.
-
-		     END.
-
-		  END.
 
        /* Validar para criar o lancamento ao fim da procedure */
        FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
@@ -1965,7 +1911,7 @@ PROCEDURE realiza-transferencia:
                            NO-LOCK NO-ERROR.
                             
        ASSIGN c-cgc-para-1 = STRING(crabass.nrcpfcgc)
-              c-cgc-para-2 = STRING(aux_nrcpfcgc2).
+              c-cgc-para-2 = STRING(crabass.nrcpfstl).
        
        ASSIGN c-literal  = "". /* Limpa o conteudo do vetor */
        
@@ -2000,7 +1946,7 @@ PROCEDURE realiza-transferencia:
                                    TRIM(STRING(p-nrdcontade,"ZZZZ,ZZ9,9")) 
                                    
               iLnAut = iLnAut + 1  c-literal[iLnAut] = "TITULAR1: "  + crapass.nmprimtl
-              iLnAut = iLnAut + 1  c-literal[iLnAut] = "TITULAR2: "  + aux_nmsegntl1
+              iLnAut = iLnAut + 1  c-literal[iLnAut] = "TITULAR2: "  + crapass.nmsegntl
               iLnAut = iLnAut + 1  c-literal[iLnAut] = ""
               iLnAut = iLnAut + 1  c-literal[iLnAut] = "DESTINATARIO:"  
               iLnAut = iLnAut + 1  c-literal[iLnAut] = "" 
@@ -2016,7 +1962,7 @@ PROCEDURE realiza-transferencia:
               iLnAut = iLnAut + 1  c-literal[iLnAut] = "TITULAR1: "  + 
                                    crabass.nmprimtl
               iLnAut = iLnAut + 1  c-literal[iLnAut] = "TITULAR2: "  + 
-                                   aux_nmsegntl2
+                                   crabass.nmsegntl
               iLnAut = iLnAut + 1  c-literal[iLnAut] = "CPF/CNPJ: " + 
                                    "TITULAR1: " +  c-cgc-para-1  
               iLnAut = iLnAut + 1  c-literal[iLnAut] = "          " + 

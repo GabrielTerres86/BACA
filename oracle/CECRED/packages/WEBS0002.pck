@@ -33,24 +33,22 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0002 IS
 END WEBS0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0002 IS
-  /*---------------------------------------------------------------------------
-  
-    Programa : WEBS0002
-    Sistema  : Rotinas referentes ao WebService de propostas
-    Sigla    : WEBS
-    Autor    : Guilherme/SUPERO
-    Data     : Abril/2016.                   Ultima atualizacao: 18/04/2017
-  
-   Dados referentes ao programa:
-  
-   Frequencia: -----
-   Objetivo  : Centralizar rotinas relacionadas ao WebService de Cooperado
-  
-   Alteracoes: 18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-  
-  -------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : WEBS0002
+  --  Sistema  : Rotinas referentes ao WebService de propostas
+  --  Sigla    : WEBS
+  --  Autor    : Guilherme/SUPERO
+  --  Data     : Abril/2016.                   Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Centralizar rotinas relacionadas ao WebService de Cooperado
+  --
+  -- Alteracoes:
+  --
+  ---------------------------------------------------------------------------
 
   vr_exc_saida    EXCEPTION;
 
@@ -66,7 +64,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0002 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : Guilherme/SUPERO
-     Data    : Abril/16.                    Ultima atualizacao: 18/04/2017
+     Data    : Abril/16.                    Ultima atualizacao: 14/07/2016
 
      Dados referentes ao programa:
 
@@ -78,10 +76,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0002 IS
      
      Alteracoes: 14/07/2016 - SD488098 - Ajustes para retorno de outros titulares
                                        - Retorno da raiz recebendo CNPJ completo (Marcos-Supero)
-     
-				 18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
      
      ..............................................................................*/
     DECLARE
@@ -123,6 +117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0002 IS
                          AND ttl.cdcooper = pr_cdcooper
                          AND ttl.nrcpfcgc = pr_nrcpfcgc
                          AND ass.inpessoa = 1
+                         AND ttl.flgsittl = 1  --> Somente ativos
                          AND ass.dtdemiss IS NULL --> Não podem ser demitidos         
                          
                       UNION
