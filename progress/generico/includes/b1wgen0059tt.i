@@ -2,7 +2,7 @@
 
     Programa: b1wgen0059tt.i
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 02/08/2017
+    Data    : Marco/2010                   Ultima atualizacao: 22/05/2017
 
     Objetivo  : Definicao das Temp-Tables para telas de PESQUISA/ZOOM
                 
@@ -85,10 +85,6 @@
                              
                 17/08/2016 - Incluido campo txmensal na table tt-craplcr (Lombardi)
                              
-				02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							 (Adriano - P339).
-
 ............................................................................*/
 
 &IF DEFINED(VAR-AMB) <> 0 &THEN
@@ -235,6 +231,7 @@ DEFINE TEMP-TABLE tt-titular NO-UNDO
     FIELD idseqttl LIKE crapttl.idseqttl
     FIELD nmpesttl LIKE crapttl.nmextttl
     FIELD dtnasttl LIKE crapttl.dtnasttl
+    FIELD nmdsecao LIKE crapttl.nmdsecao
     FIELD cdempres LIKE crapttl.cdempres
     FIELD dtdemiss LIKE crapass.dtdemiss
     FIELD nrdocttl AS CHAR

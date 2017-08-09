@@ -185,6 +185,7 @@
        DEF        VAR log_cdagenci LIKE crapass.cdagenci              NO-UNDO.
        DEF        VAR log_cdempres LIKE crapttl.cdempres              NO-UNDO.
        DEF        VAR log_nrcadast LIKE crapass.nrcadast              NO-UNDO.
+       DEF        VAR log_nmdsecao LIKE crapttl.nmdsecao              NO-UNDO.
        DEF        VAR log_dtdemiss LIKE crapass.dtdemiss              NO-UNDO.
        DEF        VAR log_dtnasccj LIKE crapcje.dtnasccj              NO-UNDO.
        DEF        VAR log_dsendcom LIKE crapcje.dsendcom              NO-UNDO.
