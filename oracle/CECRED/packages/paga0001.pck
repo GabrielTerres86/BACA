@@ -280,9 +280,11 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --        10/02/2017 - Ajustado parâmetros pr_nrispbpg das procedures pc_processa_liquidacao e
   --                     pc_proc_liquid_apos_baixa para DEFAULT 99999999 (Rafael)
-	--
-	--        22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
-	--
+  --
+  --        22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+  --
+  --        10/05/2017 - Fixar na pc_valores_a_creditar os códigos de histórico 2277 e 2278, para os prejuizos 
+  --                     Projeto 210_2 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -20127,11 +20129,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               IF cr_cde%FOUND THEN
 
                 -- Tipo da parcela (1-Normal/ 2-Total do Atraso/ 3-Parcial do atraso/ 4-Quitacao Contrato
+                --                  5-Saldo Prejuízo/ 6-Parcial Prejuízo/ 7-Saldo Prejuízo Desconto)
                 CASE rw_cde.tpparcela
                   WHEN 1 THEN vr_cdhistor := vr_cdhistor;
                   WHEN 2 THEN vr_cdhistor := 1998;
                   WHEN 3 THEN vr_cdhistor := 1999;
                   WHEN 4 THEN vr_cdhistor := 2000;
+                  WHEN 5 THEN vr_cdhistor := 2278;
+                  WHEN 6 THEN vr_cdhistor := 2277;
+                  WHEN 7 THEN vr_cdhistor := 2278;
                 ELSE
                   vr_cdhistor := vr_cdhistor;
                 END CASE;
