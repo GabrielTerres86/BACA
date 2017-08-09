@@ -5081,7 +5081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     Programa: pc_importa_seg_auto_sicr
     Sistema : Ayllos/JOB
     Autor   : Guilherme/SUPERO
-    Data    : Maio/2016                 Ultima atualizacao: 03/07/2017
+    Data    : Maio/2016                 Ultima atualizacao: 09/08/2017
 
     Dados referentes ao programa:
 
@@ -5099,6 +5099,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 03/07/2017 - Incluido rotina de setar modulo Oracle 
                            - Implementado Log no padrão
                              ( Belli - Envolti - #667957)
+                
+                09/08/2017 - Ajuste realizado para que seja possivel identificar
+                             pelo titulo do email caso o arquivo for processado
+                             com erro, conforme solicitado no chamado 679319. 
+                             (Kelvin)
   
     ..............................................................................*/
 
@@ -6630,12 +6635,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                        ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
+        
+        vr_mailtitu := vr_mailtitu || ' - ' || 'Arquivo COM inconsistências';
                                
         -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
         -- Gera LOG
         pc_controla_log_batch(pr_dstiplog_in => 'E',
                               pr_dscritic_in => 'Envio de Email de Termino com Erro!'); 
-                
+                              
       ELSE -- EMAIL de SUCESSO
         vr_dsdanexo := NULL;
         vr_mailbody := REPLACE(REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_S')
@@ -6643,6 +6650,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                        ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
+        
+        vr_mailtitu := vr_mailtitu || ' - ' || 'Arquivo SEM inconsistências';
                                
         -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
         -- Gera LOG
@@ -6656,7 +6665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       -- ENVIO DE EMAIL DE FIM DE PROCESSO / CONFORME DADOS ACIMA
       vr_maildest := gene0001.fn_param_sistema('CRED', 0, 'AUTO_DEST_FIM_PROC');
-      vr_mailtitu := gene0001.fn_param_sistema('CRED', 0, 'AUTO_TITL_FIM_PROC');
+
       gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                 ,pr_cdprogra        => 'SEGU0001'
                                 ,pr_des_destino     => vr_maildest
