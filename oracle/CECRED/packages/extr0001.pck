@@ -36,7 +36,10 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
                             na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
                             
-               10/07/2017 - Inclusao do campo vllimcpa na procedure pc_obtem_saldos_anteriores  (Roberto Holz - M441)                                         
+               10/07/2017 - Inclusao do campo vllimcpa na procedure pc_obtem_saldos_anteriores  (Roberto Holz - M441)
+			   
+			   09/08/2017 - Ajuste na rotina pc_consulta_extrato para compor o saldo nos finais de semana/feriado
+			                corretamente. (Andrey Formigari - Mouts) SD: #720845                                          
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -2099,7 +2102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       /** que TODAY. Valido somente se par_dtrefere igual ao dia do feriado,**/
       /** sabado ou domingo.                                                **/
       /***********************************************************************/
-      IF vr_dtrefere > pr_rw_crapdat.dtmvtoan AND vr_dtrefere < pr_rw_crapdat.dtmvtocd THEN
+      IF vr_dtrefere > pr_rw_crapdat.dtmvtoan AND vr_dtrefere <= pr_rw_crapdat.dtmvtocd THEN
         -- Busca de dos lançamentos:
         -- --- ---------------------------------
         -- 316 SAQUE CARTAO
@@ -3668,7 +3671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       /** Valido somente se par_dtfimper igual ao dia do feriado, sabado ou **/
       /** domingo.                                                          **/
       /***********************************************************************/
-      IF pr_dtfimper > pr_rw_crapdat.dtmvtoan AND pr_dtfimper < pr_rw_crapdat.dtmvtocd THEN
+      IF pr_dtfimper > pr_rw_crapdat.dtmvtoan AND pr_dtfimper <= pr_rw_crapdat.dtmvtocd THEN
         -- Busca de dos lançamentos:
         -- --- ---------------------------------
         -- 316 SAQUE CARTAO
