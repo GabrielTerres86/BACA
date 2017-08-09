@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_texto_chamado IN VARCHAR2                                   DEFAULT NULL, -- Texto do chamado
   pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
   pr_flreincidente IN INTEGER                                    DEFAULT 0,    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
-  PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
+  PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                  -- Identificador unico da tabela (sequence)
   ) IS
   PRAGMA AUTONOMOUS_TRANSACTION;  
 BEGIN
@@ -28,7 +28,7 @@ BEGIN
               Abrir chamado e enviar e-mail quando necessário.
   
   Alterações: 10/04/2017 - Inclusão do parâmetro pr_nmarlog (Carlos)
-  
+              
               17/04/2017 - Tratamento para abrir chamado quando ocorrer algum erro e 
                            tambem enviar o numero do chamado aberto para o analista 
                            responsavel do produto (Lucas Ranghetti #630298)
@@ -40,6 +40,9 @@ BEGIN
                            (Lucas Ranghetti #678334)
                            
               24/07/2017 - Inclusão validação para leitura modulo/ação do banco
+                           (Ana Volles - Envolti - Chamado 696499)
+
+              27/07/2017 - Inclusão nvl para validação de PR_IDPRGLOG
                            (Ana Volles - Envolti - Chamado 696499)
   .......................................................................................... */
   DECLARE 
@@ -62,7 +65,7 @@ BEGIN
   vr_nrchamado NUMBER;
   vr_usuario_sd VARCHAR2(20);
   vr_dtpesquisa DATE := SYSDATE;
-  
+
   vr_modulo VARCHAR2(100);
   vr_acao   VARCHAR2(100);
   
@@ -168,7 +171,7 @@ BEGIN
   CASE 
     ----Início----------------------------------------------------------
     WHEN upper(pr_dstiplog) = 'I' THEN
-      IF PR_IDPRGLOG = 0 THEN -- Executa apenas na primeira chamada
+      IF nvl(PR_IDPRGLOG,0) = 0 THEN -- Executa apenas na primeira chamada
 
         -- Verifica a última execução do programa no dia
         OPEN cr_ultima_execucao;
@@ -186,7 +189,7 @@ BEGIN
     ----Fim-------------------------------------------------------------
     WHEN upper(pr_dstiplog) = 'F' THEN
       BEGIN 
-        IF PR_IDPRGLOG = 0 THEN
+        IF nvl(PR_IDPRGLOG,0) = 0 THEN
           -- Verifica a última execução do programa no dia
           OPEN cr_ultima_execucao;
           FETCH cr_ultima_execucao INTO rw_ultima_execucao;
@@ -219,7 +222,7 @@ BEGIN
     ----Ocorrência/Erro-------------------------------------------------
     WHEN upper(pr_dstiplog) = 'O' OR upper(pr_dstiplog) = 'E' THEN
       BEGIN           
-        
+
         --Verifica se o programa que chamou esta rotina informou module
         --Chamado 696499
         IF INSTR(vr_dsmensagem, 'Module', 1, 1) = 0 THEN
@@ -237,7 +240,7 @@ BEGIN
           
           -- Se não encontrar a última execuçao, cria tbgen_prglog
           IF cr_ultima_execucao%NOTFOUND THEN
-          
+
             PR_IDPRGLOG := fn_insert_tbgen_prglog(pr2_dhfim      => SYSDATE,
                                                   pr2_flgsucesso => 0);
           ELSE
@@ -316,7 +319,7 @@ BEGIN
                                     ,pr_flg_enviar  => 'N'
                                     ,pr_des_erro    => vr_dscritic); 
           END IF;
-        END IF;
+        END IF;        
 
         -- Cria a ocorrência
         insert_tbgen_prglog_ocorrencia;
