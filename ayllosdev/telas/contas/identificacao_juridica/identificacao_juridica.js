@@ -16,7 +16,6 @@
  * 007: [03/12/2015] Jaison/Andrino  (CECRED)  : Adicao do campo flserasa na pesquisa generica de BUSCA_CNAE.
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
- * 010: [04/08/2017] Adriano (CECRED)          : Ajuste para utilizar a package ZOOM0001 para busca o código cnae.      
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -329,7 +328,7 @@ function controlaPesquisas() {
 					qtReg		= '30';
 					filtros     = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
 					colunas     = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';			
-					mostraPesquisa('ZOOM0001',procedure,titulo,qtReg,filtros,colunas,divRotina);
+					mostraPesquisa('MATRIC',procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;
 				}
 			}
@@ -382,7 +381,7 @@ function controlaPesquisas() {
 		procedure	= 'BUSCA_CNAE';
 		titulo      = 'CNAE';		
 		filtrosDesc = 'flserasa|2';
-		buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dscnae',$(this).val(),'dscnae',filtrosDesc,'frmDadosIdentJuridica');
+		buscaDescricao('MATRIC',procedure,titulo,$(this).attr('name'),'dscnae',$(this).val(),'dscnae',filtrosDesc,'frmDadosIdentJuridica');
 		return false;
 	});	
 	
