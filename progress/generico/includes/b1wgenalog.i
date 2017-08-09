@@ -131,7 +131,8 @@
                 log_cdestcvl = crapttl.cdestcvl
                 log_vlsalari = crapttl.vlsalari.
     ELSE
-         ASSIGN log_cdturnos = 0.
+         ASSIGN log_nmdsecao = ""
+                log_cdturnos = 0.
 
     IF   AVAILABLE crapenc   THEN
          ASSIGN log_nrcepend = crapenc.nrcepend

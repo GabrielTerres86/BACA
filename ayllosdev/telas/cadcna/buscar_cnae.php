@@ -5,7 +5,7 @@
 	* DATA CRIAÇÃO : Julho/2017
 	* OBJETIVO     : Rotina para realizar a busca de CNAE
 	* --------------
-	* ALTERAÇÕES   : 04/08/2017 - Ajuste para chamar package MATRIC (Adriano).
+	* ALTERAÇÕES   : 
 	* -------------- 
 	*/		
  
@@ -36,7 +36,7 @@
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	
-	$xmlResult = mensageria($xml, "MATRIC", "CONSULTA_CNAE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"],
+	$xmlResult = mensageria($xml, "TELA_CADCNA", "CONSULTA_CNAE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"],
 	$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	
 	$xmlObj = getObjectXML($xmlResult);		
@@ -174,5 +174,6 @@
 	});	
 	
 	formataDetalhes();	
-	    	 
+	formataTabelaCnae();	
+    	 
 </script>

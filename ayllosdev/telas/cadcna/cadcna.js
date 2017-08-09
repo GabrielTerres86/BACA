@@ -1,12 +1,11 @@
 /*****************************************************************************************
  Fonte: cadcna.js                                                   
  Autor: Adriano - CECRED                                                   
- Data : Julho/2017             					   Última Alteração: 04/08/2017        
+ Data : Julho/2017             					   Última Alteração:         
                                                                   
  Objetivo  : Biblioteca de funções da tela CADCNA
                                                                   
- Alterações: 04/08/2017 - Ajuste para enviar o parametro flserasa ao buscar o cnae 
-                         (Adriano).
+ Alterações:  
 						  
 ******************************************************************************************/
 
@@ -169,8 +168,8 @@ function controlaPesquisas() {
 				// Código CNAE
                 if (campoAnterior == 'cdcnae') {
 					
-                    var filtrosPesq = "Código;cdcnae;100px;S;0|CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao";
-                    var colunas = 'Código;cdcnae;20%;right|CNAE;dscnae;80%;left';
+					var filtrosPesq = "Código;cdcnae;100px;S;0|Descrição;dscnae;200px;S;";
+                    var colunas = 'Código;cdcnae;25%;right|Descrição;dscnae;75%;left';
                     mostraPesquisa("ZOOM0001", "BUSCA_CNAE", "CNAE", "30", filtrosPesq, colunas, '','','frmFiltro');
                     
 					return false;
@@ -187,8 +186,7 @@ function controlaPesquisas() {
 
 	//CNAE
     $('#cdcnae','#frmFiltro').unbind('blur').bind('blur', function(e) {
-        filtrosDesc = 'flserasa|2'; // 2 - Todos
-        buscaDescricao("ZOOM0001", "BUSCA_CNAE", "CNAE", $(this).attr('name'), 'dscnae', $(this).val(), 'dscnae', filtrosDesc, 'frmFiltro');
+		buscaDescricao("ZOOM0001", "BUSCA_CNAE", "CNAE", $(this).attr('name'), 'dscnae', $(this).val(), 'dscnae', '', 'frmFiltro');
 		return false;
 	});
 	
@@ -239,8 +237,6 @@ function formataDetalhes(){
 	$('#divBotoesDetalhes').css('display','block');
 	$('input','#frmFiltro').desabilitaCampo();
 	layoutPadrao();
-	
-	formataTabelaCnae();
 	
 	$('#dscnae','#frmDetalhes').focus();
 	

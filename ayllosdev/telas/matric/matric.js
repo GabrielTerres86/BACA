@@ -47,7 +47,6 @@
  * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
- * 025: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
 					                        
  */
 
@@ -2122,14 +2121,14 @@ function controlaPesquisas() {
             qtReg = '30';
             filtrosPesq = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
             colunas = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
-            mostraPesquisa('ZOOM0001', procedure, titulo, qtReg, filtrosPesq, colunas);
+            mostraPesquisa('MATRIC', procedure, titulo, qtReg, filtrosPesq, colunas);
 			return false;	
 		});
         linkCnae.prev().unbind('change').bind('change', function () {
             procedure = 'BUSCA_CNAE';
             titulo = 'CNAE';
 			filtrosDesc = 'flserasa|2';
-			buscaDescricao('ZOOM0001', procedure, titulo, $(this).attr('name'), 'dscnae', $(this).val(), 'dscnae', filtrosDesc, 'frmJuridico');
+            buscaDescricao('MATRIC', procedure, titulo, $(this).attr('name'), 'dscnae', $(this).val(), 'dscnae', filtrosDesc, 'frmJuridico');
 			return false;
 		});
 	}
