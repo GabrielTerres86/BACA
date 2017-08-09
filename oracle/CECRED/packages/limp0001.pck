@@ -59,6 +59,7 @@ CREATE OR REPLACE PACKAGE CECRED.limp0001 is
 
 END LIMP0001;
 /
+
 CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -66,17 +67,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
   --  Sistema  : Rotinas para limpeza de microfilmagens
   --  Sigla    : LIMP
   --  Autor    : Alisson C. Berrido  - AMcom
-  --  Data     : Fevereiro/2014.                   Ultima atualizacao: 02/08/2017
+  --  Data     : Fevereiro/2014.                   Ultima atualizacao: --/--/----
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas para Limpeza de dados das microfilmagens	
-  
-  --            02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  --                         crapass, crapttl, crapjur 
-  --           		  				 (Adriano - P339).
-                           
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedure que processa as contas para microfilmagem */
@@ -1532,7 +1528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/92.                   Ultima atualizacao: 02/08/2017
+   Data    : Fevereiro/92.                   Ultima atualizacao: 07/01/2013
 
    Dados referentes ao programa:
 
@@ -1600,11 +1596,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
                07/01/2013 - Alterar RETURN por QUIT (David).
 
                04/02/2013 - Conversao Progress -> Oracle (Alisson - Amcom)
-               
-               02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                            crapass, crapttl, crapjur 
-               						 (Adriano - P339).
-  
 
 
      ............................................................................. */
@@ -1640,6 +1631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
              ,crapass.nrcpfcgc
              ,crapass.inpessoa
              ,crapass.cdcooper
+             ,crapass.nrcpfstl
              ,crapass.cdagenci
              ,crapass.ROWID
        FROM crapass crapass
@@ -3444,3 +3436,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.limp0001 IS
 
 END LIMP0001;
 /
+

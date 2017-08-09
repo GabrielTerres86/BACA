@@ -1179,7 +1179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 02/08/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 10/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1532,10 +1532,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        
        10/07/2017 - Adicionar tratamento para validar o vencimento dos tributos
                     sicredi (Lucas Ranghetti #653552)
-                    
-       02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  		              crapass, crapttl, crapjur 
-       						 (Adriano - P339).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -1578,6 +1574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           ,crapass.nrcpfcgc
           ,crapass.inpessoa
           ,crapass.cdcooper
+          ,crapass.nrcpfstl
           ,crapass.cdagenci
           ,crapass.nrctacns
           ,crapass.dtdemiss
@@ -5137,30 +5134,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : INET
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 02/08/2017
+    --  Data     : Junho/2013.                   Ultima atualizacao: --/--/----
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Verificar qual o historico para a transferencia
-    --
-    --             02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-    --   		                    crapass, crapttl, crapjur 
-    -- 						             (Adriano - P339).
-    --
     -- ..........................................................................
 
   BEGIN
     DECLARE
-      --Cursor para buscar o cpf do segundo titular
-      CURSOR cr_cpf_titular(pr_cdcooper IN crapttl.cdcooper%TYPE
-                           ,pr_nrdconta IN crapttl.nrdconta%TYPE)IS
-      SELECT crapttl.nrcpfcgc
-        FROM crapttl
-       WHERE crapttl.cdcooper = pr_cdcooper
-         AND crapttl.nrdconta = pr_nrdconta
-         AND crapttl.idseqttl = 2; --Segundo titular
-      
       --Tipo de cursor de associados
       rw_crabass  cr_crapass%ROWTYPE;
       --Variaveis de Erro
@@ -5169,18 +5152,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Variaveis de Excecao
       vr_exc_saida EXCEPTION;
       vr_exc_erro  EXCEPTION;
-      
-      --Variáveis locais
-      vr_nrcpfcgc1 crapttl.nrcpfcgc%TYPE;
-      vr_nrcpfcgc2 crapttl.nrcpfcgc%TYPE;      
-      
     BEGIN
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
-      vr_nrcpfcgc1 := 0;
-      vr_nrcpfcgc2 := 0;
-      
       /** Transferencia de credito de salario pela internet **/
       IF pr_cdorigem = 3 AND pr_cdtiptra = 3 THEN
         --determinar historico de debito e credito
@@ -5194,51 +5169,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                      ,pr_nrdconta => pr_nrdconta);
       FETCH cr_crapass INTO rw_crapass;
       CLOSE cr_crapass;
-      
-      --Busca o CPF do segundo titular
-      OPEN cr_cpf_titular(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta);
-                     
-      FETCH cr_cpf_titular INTO vr_nrcpfcgc1;
-      CLOSE cr_cpf_titular;
-      
       --Verificar a conta de destino
       OPEN cr_crapass(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => To_Number(pr_nrctatrf));
       FETCH cr_crapass INTO rw_crabass;
       CLOSE cr_crapass;
-      
-      --Busca o CPF do segundo titular
-      OPEN cr_cpf_titular(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => To_Number(pr_nrctatrf));
-                     
-      FETCH cr_cpf_titular INTO vr_nrcpfcgc2;
-      CLOSE cr_cpf_titular;
-      
       /** Verifica titularidade das contas para ver qual historico utilizar **/
-      IF rw_crapass.nrcpfcgc = rw_crabass.nrcpfcgc AND
-         vr_nrcpfcgc1        = vr_nrcpfcgc2        THEN
+      IF rw_crapass.nrcpfcgc = rw_crabass.nrcpfcgc  AND
+         rw_crapass.nrcpfstl = rw_crabass.nrcpfstl  THEN
         IF pr_cdorigem = 3 THEN
           pr_cdhisdeb:= 538;
         ELSE
           pr_cdhisdeb:= 376;
         END IF;
-      ELSIF vr_nrcpfcgc1        = vr_nrcpfcgc2  AND
-            rw_crapass.nrcpfcgc = vr_nrcpfcgc2  THEN
+      ELSIF rw_crapass.nrcpfstl = rw_crabass.nrcpfcgc  AND
+            rw_crapass.nrcpfcgc = rw_crabass.nrcpfstl  THEN
         IF pr_cdorigem = 3 THEN
           pr_cdhisdeb:= 538;
         ELSE
           pr_cdhisdeb:= 376;
         END IF;
       ELSIF rw_crapass.nrcpfcgc = rw_crabass.nrcpfcgc  AND
-            vr_nrcpfcgc2 = 0                           THEN
+            rw_crabass.nrcpfstl = 0 THEN
         IF pr_cdorigem = 3 THEN
           pr_cdhisdeb:= 538;
         ELSE
           pr_cdhisdeb:= 376;
         END IF;
-      ELSIF vr_nrcpfcgc1 = rw_crabass.nrcpfcgc  AND
-            vr_nrcpfcgc2 = 0                    THEN
+      ELSIF rw_crapass.nrcpfstl = rw_crabass.nrcpfcgc  AND
+            rw_crabass.nrcpfstl = 0 THEN
         IF pr_cdorigem = 3 THEN
           pr_cdhisdeb:= 538;
         ELSE
@@ -6024,7 +5983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
-							                 ,pr_flmobile IN  INTEGER                 --Indicador Mobile
+							   ,pr_flmobile IN  INTEGER                 --Indicador Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                ,pr_vlfatura OUT NUMBER                  --Valor fatura
@@ -7433,12 +7392,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           IF pr_flmobile = 1 THEN
              pr_msgofatr := 'Deseja incluir sua fatura em débito automático?';
           ELSE
-             pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
+					pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
           END IF;
           
-          pr_cdempcon := rw_crapcon.cdempcon;
+            pr_cdempcon := rw_crapcon.cdempcon;
 		      pr_cdsegmto := TO_CHAR(rw_crapcon.cdsegmto);
-        END IF;
+          END IF;
 
         IF cr_gnconve%ISOPEN THEN
 					CLOSE cr_gnconve;

@@ -250,7 +250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
   --    Programa: RCEL0001
   --    Autor   : Lucas Reinert
-  --    Data    : Janeiro/2017                   Ultima Atualizacao: 02/08/2017 
+  --    Data    : Janeiro/2017                   Ultima Atualizacao: 
   --
   --    Dados referentes ao programa:
   --
@@ -259,9 +259,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --    Alteracoes: 06/06/2017 - Inclusão da função de calculo de repasse
   --                           - Alteração para corrigir reagendamento de job  (Renato Darosci)
   --    
-  --                02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  --                             crapass, crapttl, crapjur 
-  --           		  				     (Adriano - P339).
   ---------------------------------------------------------------------------------------------------------------
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
@@ -1593,7 +1590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
                 13/07/2017 - Efetuado tratamento para critica de Timeout na requisicao
 				             de recarga de celular (Diego). 
-
+							 
                 03/08/2017 - Efetuado ajuste para calcular e gravar o valor do repasse 
                              na tabela tbrecarga_operacao (Lombardi). 
 							 
@@ -4222,7 +4219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_proces_agendamentos_recarga
     Sistema : Ayllos Web
     Autor   : Lucas Lombardi
-    Data    : Março/2017                 Ultima atualizacao: 02/08/2017
+    Data    : Março/2017                 Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -4232,11 +4229,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Alteracoes: 30/05/2017 - Retirado acentuação das criticas na efetuação da recarga.
                              PRJ321 - Recarga de Celular (Lombardi)
-                             
-                02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                             crapass, crapttl, crapjur 
-             		  				   (Adriano - P339).
-  
     ..............................................................................*/
     DECLARE
       
@@ -4325,6 +4317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               ,crapass.nrcpfcgc
               ,crapass.inpessoa
               ,crapass.cdcooper
+              ,crapass.nrcpfstl
               ,crapass.cdagenci
               ,crapass.nrctacns
               ,crapass.dtdemiss
@@ -4683,7 +4676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                              maior que a data atual e neste caso calciular o próximo
                              dia útil, com base na data atual. (Renato Darosci - 05/06/2017)
 
-				09/06/2017 - Retirado acentuacao do relatorio. (Lombardi)	 
+				09/06/2017 - Retirado acentuacao do relatorio. (Lombardi)
 
                 03/08/2017 - Efetuado ajuste para usar o valor do repasse salvo na 
                              tabela tbrecarga_operacao sem precisar calcular o valor
