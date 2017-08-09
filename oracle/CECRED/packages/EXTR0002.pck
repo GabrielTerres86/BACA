@@ -74,7 +74,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,dtrefere craplau.dtmvtolt%TYPE);
       
     TYPE typ_tab_lancamento_futuro IS TABLE OF typ_reg_lancamento_futuro INDEX BY PLS_INTEGER;
-    
+
 
     --Tipo de Registro para Extrato de investimento  (b1wgen0020tt.i/tt-extrato_inv) 
     TYPE typ_reg_extrato_inv IS RECORD   
@@ -338,8 +338,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
                                 ,pr_nmarqpdf OUT VARCHAR2              --Nome Arquivo PDF
                                 ,pr_tab_erro OUT GENE0001.typ_tab_erro -- Tabela de Erros
                                 ,pr_des_reto OUT VARCHAR2 );           --Descricao OK/NOK
-    
-    
+
+
 
     PROCEDURE pc_gera_impressao_car( pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
@@ -520,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 01/03/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 05/04/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -637,7 +637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 14/04/2014 - Ajuste para mostrar Aplicacao de Renda Fixa em
                              Inf. Rend. de PJ e bloquear impressao de Inf. Rend.
                              de PF quando for PJ.(Jorge)
-                             
+
                 10/09/2014 - Conversao Progress -> Oracle (Alisson - AMcom) 
 
                 30/10/2014 - Alterado a procedure pc_consulta_lancamento para incluir 
@@ -662,7 +662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 														 
                 26/12/2014 - Alterada procedure pc_gera_impextrda para tratar novos
 								             produtos de captacao. (Reinert)  
-                                                         														 
+
                 06/01/2015 - Alterada procedure pc_gera_impextepr.  Ajuste na chamada do cursor 
                              cr_craplem pra usar o numero do contrato corrente. ( Jean - RKAM )  
 
@@ -762,6 +762,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 					 
 		22/03/2017 - Adicionado tratamento na pc_consulta_lancamento para listar
 				     reacarga de celular. (PRJ321 Reinert)                   
+
+        05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
+                     e nrcpfcgc para não consultar novamente o associado nos packages 
+                     apli0001 e imut0001 (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -1924,10 +1928,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                         ,pr_nrdconta IN craprpp.nrdconta%TYPE
                         ,pr_nrctrrpp IN craprpp.nrctrrpp%TYPE) IS
         SELECT craprpp.nrctrrpp
-        FROM craprpp craprpp
-        WHERE craprpp.cdcooper  = pr_cdcooper
-        AND   craprpp.nrdconta  = pr_nrdconta
-        AND   craprpp.nrctrrpp  = pr_nrctrrpp;
+              ,crapass.inpessoa
+              ,crapass.nrcpfcgc
+          FROM craprpp
+              ,crapass
+         WHERE craprpp.cdcooper = pr_cdcooper
+           AND craprpp.nrdconta = pr_nrdconta
+           AND craprpp.nrctrrpp = pr_nrctrrpp
+           AND craprpp.cdcooper = crapass.cdcooper
+           AND craprpp.nrdconta = crapass.nrdconta;
       rw_craprpp cr_craprpp%ROWTYPE;
       -- Cursor Operador
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
@@ -2059,6 +2068,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       /* Procedure para verificar periodo de imunidade tributaria */
       IMUT0001.pc_verifica_periodo_imune(pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
                                         ,pr_nrdconta => pr_nrdconta  --> Numero da Conta
+                                        ,pr_inpessoa => rw_craprpp.inpessoa
+                                        ,pr_nrcpfcgc => rw_craprpp.nrcpfcgc
                                         ,pr_flgimune => vr_flgimune  --> Identificador se é imune
                                         ,pr_dtinicio => vr_dtiniimu  --> Data de inicio da imunidade
                                         ,pr_dttermin => vr_dtfimimu  --> Data termino da imunidadeValor insento
@@ -3572,7 +3583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 01/03/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 21/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3637,8 +3648,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- 
   --              21/02/2017 - Ajuste na listagem de titulos em bordero de desconto, para considerar
   --                           a data de vencimento util do titulo. (Douglas - Chamado 587261)
+  --
   --              01/03/2017 - Adicionar origem ADIOFJUROS para podermos debitar estes agendamentos
   --                           (Lucas Ranghetti M338.1)
+  --
+  --              21/06/2017 - Mostrar lancamento futuro de cred de cobranca NPC pagos fora do sistema
+  --                           Cecred por baixa operacional (Projeto 340 - Rafael)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4209,6 +4224,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             and crapass.nrdconta = deb.nrdconta(+);
 
            rw_valoresTAA cr_valoresTAA%ROWTYPE;
+
+      -- buscar credito futuro de pagto de boletos NPC
+      -- pagos fora do sistema CECRED (Projeto 340)
+      -- Registros alimentados pelo pc_crps711;
+      CURSOR cr_cred_npc (pr_cdcooper IN crapass.cdcooper%TYPE,
+                          pr_nrdconta IN crapass.nrdconta%TYPE,
+                          pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS     
+        SELECT t.dtcredito
+              ,t.dtmvtolt
+              ,SUM(decode(t.tpoperac_jd,'BO',t.vlbaixa,-t.vlbaixa)) vlcredito
+              ,COUNT(*) qtcredito
+          FROM tbcobran_baixa_operac t
+        WHERE t.cdcooper = pr_cdcooper
+          AND t.nrdconta = pr_nrdconta
+          AND t.dtcredito >= pr_dtmvtolt
+          AND t.tpoperac_jd IN ('BO','CB') -- BO=é um crédito futuro, CB=é um débito futuro
+          GROUP BY t.dtcredito, t.dtmvtolt;
+      rw_cred_npc cr_cred_npc%ROWTYPE;          
+           
       --Variaveis Locais
       vr_cdhistaa INTEGER;
       vr_cdhsetaa INTEGER;
@@ -5339,6 +5373,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                              ,pr_flgrvvlr  => FALSE                --> Identificador se deve gravar valor
                                              ,pr_cdinsenc  => 0                    --> Codigo da isenção
                                              ,pr_vlinsenc  => 0                    --> Valor insento
+                                             ,pr_inpessoa  => rw_crapass.inpessoa  --> Tipo de pessoa
+                                             ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc  --> CPF/CNPJ
                                              ,pr_flgimune  => vr_flgimune          --> Identificador se é imune
                                              ,pr_dsreturn  => vr_des_reto          --> Descricao Critica
                                              ,pr_tab_erro  => pr_tab_erro);        --> Tabela erros
@@ -5831,7 +5867,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Criar Lancamento Futuro na tabela
           pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_crapret.dtcredit;
           pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_crapret.dtcredit,'DD/MM/YYYY');
+          
+          IF rw_crapret.dtcredit = rw_crapdat.dtmvtolt THEN
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - '||to_char(rw_crapret.nrconven,'fm999g999g990') || ' - PREVISAO';
+          ELSE
           pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - '||to_char(rw_crapret.nrconven,'fm999g999g990');
+          END IF;
+          
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(vr_qtdpagto,'fm999g999g990');
           pr_tab_lancamento_futuro(vr_index).indebcre:= 'C';
           pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_vldpagto; 
@@ -5841,6 +5883,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_vllaucre:= nvl(vr_vllaucre,0) + vr_vldpagto;
         END IF;                                                 
         END IF;
+      END LOOP;
+                                                                                        
+      -- mostrar lancto futuro de creditos de cobranca NPC
+      -- pagos fora do sistema Cecred
+      FOR rw_cred_npc IN cr_cred_npc (pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+
+          --Incrementar contador lancamentos na tabela
+          vr_index:= pr_tab_lancamento_futuro.COUNT+1;
+          --Criar Lancamento Futuro na tabela
+          pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_cred_npc.dtcredito;
+          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_cred_npc.dtcredito,'DD/MM/YYYY');
+          
+          IF rw_cred_npc.dtmvtolt = rw_crapdat.dtmvtolt THEN
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - PREVISAO';
+          ELSE
+            pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA';
+          END IF;
+          
+          pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_cred_npc.qtcredito,'fm999g999g990');
+          pr_tab_lancamento_futuro(vr_index).indebcre:= 'C';
+          pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_cred_npc.vlcredito; 
+          --Acumular valor automatico 
+          vr_vllautom:= nvl(vr_vllautom,0) + rw_cred_npc.vlcredito;
+          --Acumular valor Credito 
+          vr_vllaucre:= nvl(vr_vllaucre,0) + rw_cred_npc.vlcredito;
+                                               
       END LOOP;
                                                                                         
       --Selecionar Historico de débito de titulo vencido
@@ -11793,7 +11863,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 08/10/2015
+  --  Data     : Julho/2014                           Ultima atualizacao: 11/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -11811,6 +11881,9 @@ END pc_consulta_ir_pj_trim;
   --                           (Jaison/Diego - SD: 290027)
   --
   --              08/10/2015 - Tratar os históricos de estorno do produto PP (Oscar)                     
+  --
+  --              11/04/2016 - Exibir numero de conta cartão para o emprestimos de cessao de credito.
+  --                           PRJ-343 - Cessao de Credito(Odirlei-AMcom)                   
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -11915,6 +11988,19 @@ END pc_consulta_ir_pj_trim;
            WHERE gnsbmod.cdmodali = pr_cdmodali
              AND gnsbmod.cdsubmod = pr_cdsubmod;
         rw_gnsbmod cr_gnsbmod%ROWTYPE;
+        
+        --> Verificar se é emprestimo de cessao de credito
+        CURSOR cr_tbcessao (pr_cdcooper IN craplem.cdcooper%type
+                           ,pr_nrdconta IN craplem.nrdconta%type
+                           ,pr_nrctremp IN craplem.nrctremp%type) IS
+          SELECT ces.nrconta_cartao
+            FROM tbcrd_cessao_credito ces
+           WHERE ces.cdcooper = pr_cdcooper
+             AND ces.nrdconta = pr_nrdconta
+             AND ces.nrctremp = pr_nrctremp; 
+        rw_tbcessao cr_tbcessao%ROWTYPE;
+        
+        
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);
         vr_tab_extrato_epr_novo typ_tab_extrato_epr_novo;
@@ -12217,6 +12303,15 @@ END pc_consulta_ir_pj_trim;
           --Fechar Cursor
           CLOSE cr_gnsbmod;
 
+          --> Verificar se é emprestimo de cessao de credito
+          rw_tbcessao := NULL;
+          OPEN cr_tbcessao (pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrctremp => rw_crapepr.nrctremp);
+          FETCH cr_tbcessao INTO rw_tbcessao;
+          CLOSE cr_tbcessao;
+          
+
           --Gravar Informacoes do cabecalho no XML
           vr_dstexto:= '<conta tpemprst="1" flgmensag="N" dscmensag=""'                             ||
                        '  nrdconta="' || to_char(pr_nrdconta,'fm9999g999g0')                        ||
@@ -12236,6 +12331,7 @@ END pc_consulta_ir_pj_trim;
                        '" dsmodali="' || rw_gnmodal.dsmodali                                        ||
                        '" cdsubmod="' || rw_gnsbmod.cdsubmod                                        ||
                        '" dssubmod="' || rw_gnsbmod.dssubmod                                        ||
+                       '" nrconta_cartao="' || rw_tbcessao.nrconta_cartao                           ||
                        '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                 ||
                        '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                ||
                        '" qtpreapg="' || to_char(pr_qtpreapg,'fm990d0000')                          ||
