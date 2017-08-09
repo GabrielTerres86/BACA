@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 12/01/2017
+   Data    : Setembro/2016                        Ultima atualizacao: 08/08/2017
 
    Dados referentes ao programa:
 
@@ -40,11 +40,18 @@ BEGIN
                             no proc_message, porém, substituir o tempo "ERRO" por "ALERTA".
                             Alteradas mais algumas mensagens para considerar Alerta e não Erro
                             (Ana - SD 660364 / 663299).
+                            
 			   27/06/2017 - Ajustes para atender as mudanças do catalago de TED - SPB
 			                (Adriano - SD 698655).
                       
          26/07/2017 - #713816 Ajustes para garantir o fechamento do arquivo para que o move
                       do mesmo ocorra (Carlos)
+
+         08/08/2017 - Ajuste para não fechar o arquivo quando for encontrado inconsistências em algum 
+                      registro, pois o arquivo todo deve ser processado e os registros com problema serão
+                      encaminhaoos via e-mail para a área responsável tomar as devidas providências junto ao SICREDI
+                      (Adriano).
+                      
 
    ............................................................................. */
 
@@ -366,8 +373,8 @@ BEGIN
                                 pr_ind_tipo_log => 1, --> Mensagem
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Iniciando processo de TEDs Sicredi',
-                                pr_nmarqlog     => vr_nmarqlog);   
-                                
+                                pr_nmarqlog     => vr_nmarqlog);                                
+     
      --Limpa a tabela de controle de arquivos. Remove todos os registros do ano anterior.
      BEGIN 
        
@@ -502,7 +509,7 @@ BEGIN
              
            END IF;
 
-		       -- Verificar tipo da mensagem
+           -- Verificar tipo da mensagem
            vr_nmevehead := substr(vr_dslinharq,3,3);
            
            IF vr_nmevehead NOT IN('STR','PAG') THEN
@@ -632,14 +639,14 @@ BEGIN
                -- No Trailler, sair do LOOP
                IF substr(vr_dslinharq,1,2) = 'TT' THEN
                  EXIT;
-               END IF;               
-             
+               END IF;
+
                -- Ler ISPB
                BEGIN
                  IF substr(vr_dslinharq,1,2) = '05' THEN
-                   vr_nrispbif := substr(vr_dslinharq,407,8); 
+                   vr_nrispbif := substr(vr_dslinharq,407,8);
                  ELSE
-                   vr_nrispbif := substr(vr_dslinharq,404,8); 
+                   vr_nrispbif := substr(vr_dslinharq,404,8);
                  END IF;
                EXCEPTION
                  WHEN OTHERS THEN
@@ -873,7 +880,7 @@ BEGIN
                BEGIN
                  -- Separar conforme tipo da mensagem
                  IF substr(vr_dslinharq,1,2) = '05' THEN
-                   vr_cdbandif := substr(vr_dslinharq,56,3); 
+                   vr_cdbandif := substr(vr_dslinharq,56,3);
                    vr_cdagedif := 0;
                    vr_nrctadif := 0;
                    vr_nrcpfdif := substr(vr_dslinharq,339,14);
@@ -1095,9 +1102,6 @@ BEGIN
              EXCEPTION
                WHEN vr_exc_saida THEN
 
-                 -- Fechar arquivo para poder move-lo
-                 gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
-
                  -- Incrementar quantidade de erros
                  vr_qtrejeit := vr_qtrejeit + 1;
                  
@@ -1225,20 +1229,6 @@ BEGIN
                                             pr_nmarqlog     => vr_nmarqlog);                                
                                           
                                           
-                 IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
-                                       ,pr_dtarquiv => vr_dtarquiv
-                                       ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
-                                       ,pr_arqcomerro => TRUE
-                                       ,pr_dscritic => vr_dscritic) THEN
-                                       
-                   IF trim(vr_dscritic) IS NULL THEN
-                     vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
-                   END IF;
-                   
-                   RAISE vr_exc_saida;
-                   
-                 END IF;                                                                                          
-                                          
                WHEN no_data_found THEN
                  -- Finalizou a leitura
                  gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
@@ -1278,6 +1268,8 @@ BEGIN
                RAISE vr_exc_saida;
            END;
 
+           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+           
            -- Preparar e enviar email ao Financeiro listando erros na integração do arquivo
            IF vr_fltxterr THEN
              
@@ -1315,10 +1307,21 @@ BEGIN
                RAISE vr_exc_saida;
              END IF;
 
+             IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
+                                   ,pr_dtarquiv => vr_dtarquiv
+                                   ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
+                                   ,pr_arqcomerro => TRUE
+                                   ,pr_dscritic => vr_dscritic) THEN
+                                       
+               IF trim(vr_dscritic) IS NULL THEN
+                 vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
            END IF;
 
-           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandle);
+               RAISE vr_exc_saida;
+                   
+             END IF;
 
+           ELSE
            IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
                                  ,pr_dtarquiv => vr_dtarquiv
                                  ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
@@ -1327,10 +1330,12 @@ BEGIN
             
              IF trim(vr_dscritic) IS NULL THEN
                vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
-             END IF;
+           END IF;
 
              RAISE vr_exc_saida;
                      
+           END IF;
+             
            END IF;
              
            --> Gerar log
