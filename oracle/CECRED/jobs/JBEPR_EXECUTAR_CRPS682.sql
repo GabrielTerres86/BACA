@@ -1,0 +1,34 @@
+begin
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_calendar = ''GREGORIAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_comp = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD-MON-RR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_iso_currency = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_length_semantics = ''BYTE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_nchar_conv_excp = ''FALSE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = ''.,''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_sort = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_territory = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = ''HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
+
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBEPR_EXECUTAR_CRPS682',
+                                job_type            => 'PLSQL_BLOCK',
+                                job_action          => 'declare
+ vr_cdcritic PLS_INTEGER;
+ vr_dscritic VARCHAR2(4000);
+begin
+  empr0002.pc_executar_crps682(pr_cdcritic => vr_cdcritic,pr_dscritic => vr_dscritic);
+end;',
+                                start_date          => to_date('17-07-2017 20:00:00', 'dd-mm-yyyy hh24:mi:ss'),
+                                repeat_interval     => 'Freq=DAILY;ByDay=SUN;ByHour=14;ByMinute=0;BySecond=0',								                       
+                                end_date            => to_date(null),
+                                job_class           => 'DEFAULT_JOB_CLASS',
+                                enabled             => true,
+                                auto_drop           => true,
+                                comments            => '');
+end;
+/
