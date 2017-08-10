@@ -386,7 +386,7 @@ DEF TEMP-TABLE tt-interv-anuentes NO-UNDO
     FIELD nrcpfcgc LIKE crapavt.nrcpfcgc
     FIELD tpdocava LIKE crapavt.tpdocava
     FIELD nrdocava LIKE crapavt.nrdocava
-    FIELD dsnacion LIKE crapnac.dsnacion
+    FIELD dsnacion LIKE crapavt.dsnacion
     FIELD nmconjug LIKE crapavt.nmconjug
     FIELD nrcpfcjg LIKE crapavt.nrcpfcjg
     FIELD tpdoccjg LIKE crapavt.tpdoccjg
