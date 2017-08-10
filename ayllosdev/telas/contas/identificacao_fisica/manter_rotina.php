@@ -13,6 +13,7 @@
  * 004: [23/08/2013] David               : Incluir campo UF Naturalidade - cdufnatu
  * 005: [27/02/2015] Jaison/Gielow       : Substituicao de caracteres especiais. (SD: 257871)
  * 006: [17/09/2015] Gabriel (RKAM)      : Reformulacao cadastral.
+ * 007: [20/04/2017] Adriano             : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur 							
  */
 ?>
  
@@ -61,7 +62,6 @@
 	$nrcpfemp = (isset($_POST['nrcpfemp'])) ? $_POST['nrcpfemp'] : '';	
 	$dsproftl = (isset($_POST['dsproftl'])) ? $_POST['dsproftl'] : '';	
 	$cdnvlcgo = (isset($_POST['cdnvlcgo'])) ? $_POST['cdnvlcgo'] : '';	
-	$nrfonemp = (isset($_POST['nrfonemp'])) ? $_POST['nrfonemp'] : '';	
 	$cdturnos = (isset($_POST['cdturnos'])) ? $_POST['cdturnos'] : '';	
 	$dtadmemp = (isset($_POST['dtadmemp'])) ? $_POST['dtadmemp'] : '';	
 	$vlsalari = (isset($_POST['vlsalari'])) ? $_POST['vlsalari'] : '';
@@ -148,7 +148,6 @@
 	$xml .= '		<nrcpfemp>'.$nrcpfemp.'</nrcpfemp>';
 	$xml .= '		<dsproftl>'.$dsproftl.'</dsproftl>';
 	$xml .= '		<cdnvlcgo>'.$cdnvlcgo.'</cdnvlcgo>';
-	$xml .= '		<nrfonemp>'.$nrfonemp.'</nrfonemp>';
 	$xml .= '		<cdturnos>'.$cdturnos.'</cdturnos>';
 	$xml .= '		<dtadmemp>'.$dtadmemp.'</dtadmemp>';
 	$xml .= '		<vlsalari>'.$vlsalari.'</vlsalari>';

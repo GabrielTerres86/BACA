@@ -19,6 +19,10 @@
 
                 18/05/2016 - Criacao do campo dtlimdeb. (Jaison/Marcos)
 
+				17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-crapemp NO-UNDO 
@@ -81,7 +85,7 @@ DEF TEMP-TABLE tt-dados-ass NO-UNDO
     FIELD nmfansia LIKE crapjur.nmfansia
     FIELD nmcontat LIKE crapass.nmprimtl
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc
-    FIELD dsdemail LIKE crapass.dsdemail 
+    FIELD dsdemail LIKE crapcem.dsdemail 
     FIELD dsendere LIKE crapenc.dsendere 
     FIELD nrendere LIKE crapenc.nrendere 
     FIELD complend LIKE crapenc.complend 

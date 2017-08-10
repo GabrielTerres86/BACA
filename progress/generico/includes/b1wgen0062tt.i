@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062tt.i
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 12/08/2015
+    Data    : Marco/2010                   Ultima atualizacao: 20/04/2017
 
     Objetivo  : Definicao das Temp-Tables para impressao da FICHA CADASTRAL
 
@@ -29,6 +29,10 @@
                              
                 12/08/2015 - Projeto Reformulacao cadastral
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
+				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 .............................................................................*/
 
 
@@ -126,7 +130,6 @@ DEFINE TEMP-TABLE tt-fcad-psfis NO-UNDO
     FIELD dsescola AS CHAR 
     FIELD cdfrmttl AS INTE 
     FIELD rsfrmttl AS CHAR 
-    FIELD nrcertif AS CHAR 
     FIELD nmtalttl AS CHAR 
     FIELD qtfoltal AS INTE
     FIELD nmprimtl AS CHAR

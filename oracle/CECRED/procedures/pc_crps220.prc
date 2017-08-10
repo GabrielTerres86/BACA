@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps220(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Outubro/95.                     Ultima atualizacao: 04/04/2014
+       Data    : Outubro/95.                     Ultima atualizacao: 05/06/2017
 
        Dados referentes ao programa:
 
@@ -108,6 +108,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps220(pr_cdcooper IN crapcop.cdcooper%TY
                                                              
                    20/05/2014 - Correção - não estava populando a tabela de 
                                 memória vr_tab_crapjur (Renato - Supero)
+
+                   05/06/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                    crapass, crapttl, crapjur 
+							    (Adriano - P339).
+
     ............................................................................ */
 
     DECLARE
@@ -212,7 +217,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps220(pr_cdcooper IN crapcop.cdcooper%TY
       CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT crapttl.cdempres
               ,crapttl.nrdconta
-              ,crapttl.nmdsecao
         FROM   crapttl
         WHERE  crapttl.cdcooper = pr_cdcooper
         AND    crapttl.idseqttl = 1;
@@ -301,7 +305,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps220(pr_cdcooper IN crapcop.cdcooper%TY
       --tipo para armazenar a estrutura do cadastro de titulares
       TYPE typ_reg_crapttl IS
         RECORD( cdempres crapttl.cdempres%TYPE
-               ,nmdsecao crapttl.nmdsecao%TYPE
         );
       --estrutura do cadastro de titulares
       TYPE typ_tab_crapttl IS TABLE OF typ_reg_crapttl INDEX BY PLS_INTEGER;
@@ -359,9 +362,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps220(pr_cdcooper IN crapcop.cdcooper%TY
           IF vr_tab_crapass(rw_craprda.nrdconta).inpessoa = 1 THEN
             --se existir informacao no cadastro de pessoa fisica
             IF vr_tab_crapttl.EXISTS(rw_craprda.nrdconta) THEN
-              IF vr_tab_crapass(rw_craprda.nrdconta).cdsecext = 0 THEN
-                vr_nmsecext := vr_tab_crapttl(rw_craprda.nrdconta).nmdsecao;
-              ELSE
+              IF vr_tab_crapass(rw_craprda.nrdconta).cdsecext <> 0 THEN
                 vr_nmsecext := vr_nmdsecao;
               END IF;
               -- codigo da empresa
@@ -535,7 +536,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps220(pr_cdcooper IN crapcop.cdcooper%TY
       --carrega a tabela temporaria de titulares
       FOR rw_crapttl IN cr_crapttl(pr_cdcooper => pr_cdcooper) LOOP
         vr_tab_crapttl(rw_crapttl.nrdconta).cdempres := rw_crapttl.cdempres;
-        vr_tab_crapttl(rw_crapttl.nrdconta).nmdsecao := rw_crapttl.nmdsecao;
       END LOOP;
       
       -- limpa a tabela pessoas juridicas

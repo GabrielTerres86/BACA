@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                      Ultima atualizacao: 29/02/2016
+   Data    : Abril/2006.                      Ultima atualizacao: 20/04/2017
 
    Dados referentes ao programa:
 
@@ -69,6 +69,10 @@
                29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                             solicitado no chamado 402159 (Kelvin).
 
+			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................. */
 &IF DEFINED(TELA-MATRIC) <> 0 &THEN
     /* Variaveis de recadastramento (geram tipo de alteracao 1) */
@@ -86,12 +90,6 @@
            log_nrdocptl = crapass.nrdocptl
            log_cdsexotl = crapass.cdsexotl
            log_dsfiliac = crapass.dsfiliac           
-           log_nmsegntl = crapass.nmsegntl
-           log_tpdocstl = crapass.tpdocstl
-           log_nrdocstl = crapass.nrdocstl
-           log_dtnasstl = crapass.dtnasstl
-           log_dsfilstl = crapass.dsfilstl
-           log_nrcpfstl = crapass.nrcpfstl
            log_dtcnscpf = crapass.dtcnscpf
            log_cdsitcpf = crapass.cdsitcpf
            log_nrdctitg = crapass.nrdctitg
@@ -102,7 +100,6 @@
            log_nrcadast = crapass.nrcadast
            log_dtdemiss = crapass.dtdemiss           
            log_dtadmemp = crapass.dtadmemp
-           log_nrfonemp = crapass.nrfonemp
            log_nrramemp = crapass.nrramemp
            log_nrctacto = crapass.nrctacto
            log_nrctaprp = crapass.nrctaprp
@@ -117,20 +114,8 @@
            log_tpavsdeb = crapass.tpavsdeb
            log_flgiddep = crapass.flgiddep
            log_cdoedptl = crapass.cdoedptl                    
-           log_cdoedstl = crapass.cdoedstl                    
-           log_cdoedrsp = crapass.cdoedrsp                    
            log_cdufdptl = crapass.cdufdptl                    
-           log_cdufdstl = crapass.cdufdstl                    
-           log_cdufdrsp = crapass.cdufdrsp                    
-           log_nmrespon = crapass.nmrespon                    
-           log_nrcpfrsp = crapass.nrcpfrsp                    
-           log_nrdocrsp = crapass.nrdocrsp                    
-           log_tpdocrsp = crapass.tpdocrsp                    
-           log_dtemdstl = crapass.dtemdstl                    
            log_dtemdptl = crapass.dtemdptl                    
-           log_dtemdrsp = crapass.dtemdrsp                    
-           log_qtdepend = crapass.qtdepend                    
-           log_dsendcol = crapass.dsendcol                    
            log_cdsitdtl = crapass.cdsitdtl.
 
     IF   AVAILABLE crapttl   THEN
@@ -143,8 +128,7 @@
                 log_cdestcvl = crapttl.cdestcvl
                 log_vlsalari = crapttl.vlsalari.
     ELSE
-         ASSIGN log_nmdsecao = ""
-                log_cdturnos = 0.
+         ASSIGN log_cdturnos = 0.
 
     IF   AVAILABLE crapenc   THEN
          ASSIGN log_nrcepend = crapenc.nrcepend
@@ -279,7 +263,6 @@
     /* Atribuicoes para o log da tela: CONTAS -> REGISTRO (juridica) */
                 log_vlfatano = crapjur.vlfatano
                 log_nrinsest = crapjur.nrinsest
-                log_vlcapsoc = crapjur.vlcapsoc
                 log_vlcaprea = crapjur.vlcaprea
                 log_dtregemp = crapjur.dtregemp
                 log_nrregemp = crapjur.nrregemp
@@ -310,7 +293,6 @@
                 log_cdestcvl     = crapttl.cdestcvl
                 log_grescola     = crapttl.grescola
                 log_cdfrmttl     = crapttl.cdfrmttl
-                log_nrcertif     = crapttl.nrcertif
                 log_nmtalttl_ttl = crapttl.nmtalttl
                 log_inpolexp     = crapttl.inpolexp 
 

@@ -250,7 +250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
   --    Programa: RCEL0001
   --    Autor   : Lucas Reinert
-  --    Data    : Janeiro/2017                   Ultima Atualizacao: 
+  --    Data    : Janeiro/2017                   Ultima Atualizacao: 02/08/2017 
   --
   --    Dados referentes ao programa:
   --
@@ -259,6 +259,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --    Alteracoes: 06/06/2017 - Inclusão da função de calculo de repasse
   --                           - Alteração para corrigir reagendamento de job  (Renato Darosci)
   --    
+  --                02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --                             crapass, crapttl, crapjur 
+  --           		  				     (Adriano - P339).
   ---------------------------------------------------------------------------------------------------------------
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
@@ -1388,6 +1391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 													                       ELSE 'TAA' END
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
+
 				-- Operador
 				IF pr_nrcpfope > 0  THEN
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -4184,7 +4188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_proces_agendamentos_recarga
     Sistema : Ayllos Web
     Autor   : Lucas Lombardi
-    Data    : Março/2017                 Ultima atualizacao:
+    Data    : Março/2017                 Ultima atualizacao: 02/08/2017
 
     Dados referentes ao programa:
 
@@ -4194,6 +4198,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Alteracoes: 30/05/2017 - Retirado acentuação das criticas na efetuação da recarga.
                              PRJ321 - Recarga de Celular (Lombardi)
+                             
+                02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+             		  				   (Adriano - P339).
+  
     ..............................................................................*/
     DECLARE
       
@@ -4282,7 +4291,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               ,crapass.nrcpfcgc
               ,crapass.inpessoa
               ,crapass.cdcooper
-              ,crapass.nrcpfstl
               ,crapass.cdagenci
               ,crapass.nrctacns
               ,crapass.dtdemiss

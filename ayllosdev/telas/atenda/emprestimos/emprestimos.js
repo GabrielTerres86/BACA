@@ -105,6 +105,9 @@
  * 084: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
  * 085: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
  * 086: [29/03/2017] Ajustado para nao permitir selecionar finalidade de tipo 2 - cessao de credito( PRJ343 - Cessao de credito - Odirlei-AMcom)
+ * 090: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					 (Adriano - P339).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -2314,7 +2317,7 @@ function controlaLayout(operacao) {
         cCPF.css('width', '134px');
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
-        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
+        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');
         cNacio.addClass('pesquisa alphanum').css('width', '114px').attr('maxlength', '13');
 
         // Daniel
@@ -2430,7 +2433,7 @@ function controlaLayout(operacao) {
         cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
         cDoc_1.css('width', '50px');
-        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '37');
+        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
 
         var cTodos_2 = $('select,input', '#' + nomeForm + ' fieldset:eq(2)');
 
@@ -3025,7 +3028,7 @@ function controlaLayout(operacao) {
 
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
-        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
+        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');
         cNacio.addClass('pesquisa alphanum').css('width', '114px').attr('maxlength', '13');
 
         cConta.unbind('change').bind('change', function() {
@@ -3136,7 +3139,7 @@ function controlaLayout(operacao) {
         cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
         cDoc_1.css('width', '50px');
-        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '37');
+        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
 
         var cTodos_2 = $('input,select', '#' + nomeForm + ' fieldset:eq(2)');
 

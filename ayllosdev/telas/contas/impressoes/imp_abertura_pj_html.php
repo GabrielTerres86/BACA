@@ -2,7 +2,7 @@
 /*!
  * FONTE        : imp_termo_pj_html.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
- * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 03/02/2016.
+ * DATA CRIAÇÃO : 15/04/2010 							Ultima Atualizacao: 14/06/2017
  * OBJETIVO     : Responsável por buscar as informações que serão apresentadas no PDF de Termo da 
  *                rotina Impressões.
  *	
@@ -15,6 +15,10 @@
  *                             Chamado 370421 (Heitor - RKAM)
  *                  
  *                03/02/2016 - Adicionado duas novas clausulas ao contrato conforme solicitado no chamado 388719. (Kelvin)
+ *
+ *                14/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					          (Adriano - P339).
  */	 
 ?>
 <?
@@ -113,7 +117,8 @@
 	
 	foreach( $AberCompPJ as $admin ) {
 		echo '<b>';escreveLinha( preencheString( preencheString(getByTagName($admin->tags,'dstitulo'),16).'</b>'.getByTagName($admin->tags,'dsproftl') ,80) );
-		escreveLinha( preencheString( preencheString( '' ,16).'CPF: '.preencheString( getByTagName($admin->tags,'nrcpfcgc') ,14).' , RG: '.getByTagName($admin->tags,'nrdocmto') ,76) );
+		escreveLinha( preencheString( preencheString( '' ,16).'CPF: '.preencheString( getByTagName($admin->tags,'nrcpfcgc') ,14),76) );
+		escreveLinha( preencheString( preencheString( '' ,16).' RG: '.getByTagName($admin->tags,'nrdocmto') ,76) );
 		echo '<b>';escreveLinha( preencheString( '      Endereco:</b> '.getByTagName($admin->tags,'dslinha1'),79) );
 		escreveLinha( preencheString( '                '.getByTagName($admin->tags,'dslinha2'),79) );
 		pulaLinha(1);

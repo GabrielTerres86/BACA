@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 26/09/2016.
+    Data      : Marco/2008                    Ultima Atualizacao: 18/04/2017
     
     Dados referentes ao programa:
 
@@ -264,6 +264,10 @@
                             
                26/09/2016 - Incluir lotes da M211 para nao exclusao (Jonata-RKAM)
                             
+			   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -853,6 +857,7 @@ PROCEDURE lista_avalistas:
     DEF VAR aux_vlrenmes AS DECI                                    NO-UNDO.
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_tpctrato AS INTE                                    NO-UNDO.
+	DEF VAR aux_nrcpfcgc LIKE crapttl.nrcpfcgc					    NO-UNDO.
     
     /* Nome do conjuge */
     DEF VAR aux_nmconjug AS CHAR                                    NO-UNDO.
@@ -949,7 +954,8 @@ PROCEDURE lista_avalistas:
                                           STRING(STRING(crapass.nrcpfcgc,
                                           "99999999999999"),"xx.xxx.xxx/xxxx-xx").
                 ASSIGN aux_cdgraupr = 0
-                       aux_vlrenmes = 0.
+                       aux_vlrenmes = 0
+					   aux_nrcpfcgc = 0.
 
                 IF   crapass.inpessoa = 1 THEN
                      DO:
@@ -957,8 +963,10 @@ PROCEDURE lista_avalistas:
                                            crapttl.nrdconta = crapass.nrdconta AND
                                            crapttl.idseqttl = 2 
                                            NO-LOCK NO-ERROR.
+
                         IF   AVAIL crapttl THEN 
-                             ASSIGN aux_cdgraupr = crapttl.cdgraupr.
+                             ASSIGN aux_cdgraupr = crapttl.cdgraupr
+							        aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                         FIND crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
                                            crapttl.nrdconta = crapass.nrdconta AND
@@ -1040,7 +1048,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                        tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                     "C.P.F. " +
-                                                    STRING(STRING(crapass.nrcpfstl,
+                                                    STRING(STRING(aux_nrcpfcgc,
                                                     "99999999999"),"xxx.xxx.xxx-xx")
                                                  ELSE 
                                                     ""                              
@@ -1107,7 +1115,8 @@ PROCEDURE lista_avalistas:
 
         END. /** Fim do FOR EACH crapavt **/
 
-        ASSIGN aux_cdgraupr = 0.
+        ASSIGN aux_cdgraupr = 0
+		       aux_nrcpfcgc = 0.
 
         IF  craplim.nrctaav2 > 0  THEN
             DO:
@@ -1180,8 +1189,10 @@ PROCEDURE lista_avalistas:
                                        crapttl.nrdconta = crapass.nrdconta AND
                                        crapttl.idseqttl = 2 
                                        NO-LOCK NO-ERROR.
+
                     IF   AVAIL crapttl THEN 
-                         ASSIGN aux_cdgraupr = crapttl.cdgraupr.
+                         ASSIGN aux_cdgraupr = crapttl.cdgraupr
+						        aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                     FIND crapttl WHERE crapttl.cdcooper = crapass.cdcooper AND
                                        crapttl.nrdconta = crapass.nrdconta AND
@@ -1251,7 +1262,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                        tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                     "C.P.F. " +
-                                                    STRING(STRING(crapass.nrcpfstl,
+                                                    STRING(STRING(aux_nrcpfcgc,
                                                     "99999999999"),"xxx.xxx.xxx-xx")
                                                  ELSE 
                                                     ""
@@ -1344,7 +1355,8 @@ PROCEDURE lista_avalistas:
                     END.
 
                 ASSIGN aux_cdgraupr = 0
-                       aux_vlrenmes = 0.
+                       aux_vlrenmes = 0
+					   aux_nrcpfcgc = 0.
 
                 IF   crapass.inpessoa = 1 THEN
                      DO:
@@ -1354,7 +1366,8 @@ PROCEDURE lista_avalistas:
                                            NO-LOCK NO-ERROR.
 
                         IF   AVAIL crapttl THEN 
-                             ASSIGN aux_cdgraupr = crapttl.cdgraupr.
+                             ASSIGN aux_cdgraupr = crapttl.cdgraupr
+							        aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                         FIND crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
                                            crapttl.nrdconta = crapass.nrdconta AND
@@ -1436,7 +1449,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                        tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                     "C.P.F. " +
-                                                    STRING(STRING(crapass.nrcpfstl,
+                                                    STRING(STRING(aux_nrcpfcgc,
                                                     "99999999999"),"xxx.xxx.xxx-xx")
                                                  ELSE 
                                                     ""
@@ -1609,16 +1622,24 @@ PROCEDURE lista_avalistas:
 
                 END. 
 
+                ASSIGN aux_cdgraupr = 0
+                       aux_vlrenmes = 0
+					   aux_nrcpfcgc = 0.
+
                 IF  crapass.inpessoa = 1  THEN
+                   DO:
                     ASSIGN aux_nrdocava = "C.P.F. " +
                                           STRING(STRING(crapass.nrcpfcgc,
                                           "99999999999"),"xxx.xxx.xxx-xx").
-                ELSE
-                    ASSIGN aux_nrdocava = "CNPJ " +
-                                          STRING(STRING(crapass.nrcpfcgc,
-                                          "99999999999999"),"xx.xxx.xxx/xxxx-xx").
 
-                ASSIGN aux_vlrenmes = 0.
+                      FIND crapttl WHERE crapttl.cdcooper = crapass.cdcooper AND
+                                         crapttl.nrdconta = crapass.nrdconta AND
+                                         crapttl.idseqttl = 2 
+                                         NO-LOCK NO-ERROR.
+
+                      IF AVAIL crapttl THEN 
+                         ASSIGN aux_cdgraupr = crapttl.cdgraupr
+						        aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                 FIND crapttl WHERE crapttl.cdcooper = crapass.cdcooper  AND
                                    crapttl.nrdconta = crapass.nrdconta  AND
@@ -1634,6 +1655,12 @@ PROCEDURE lista_avalistas:
                                            crapttl.vldrendi[5]  +
                                            crapttl.vldrendi[6]. 
 
+			       END.
+			    ELSE
+			  	   ASSIGN aux_nrdocava = "CNPJ " +
+                                          STRING(STRING(crapass.nrcpfcgc,
+                                          "99999999999999"),"xx.xxx.xxx/xxxx-xx").				   
+                   
                 FIND FIRST crapcem WHERE crapcem.cdcooper = par_cdcooper     AND
                                          crapcem.nrdconta = crapass.nrdconta AND
                                          crapcem.idseqttl = 1 
@@ -1687,7 +1714,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                        tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                     "C.P.F. " +
-                                                    STRING(STRING(crapass.nrcpfstl,
+                                                    STRING(STRING(aux_nrcpfcgc,
                                                     "99999999999"),"xxx.xxx.xxx-xx")
                                                  ELSE 
                                                     ""
@@ -1784,7 +1811,8 @@ PROCEDURE lista_avalistas:
                                                   STRING(STRING(crapass.nrcpfcgc,
                                                   "99999999999999"),"xx.xxx.xxx/xxxx-xx").
                         ASSIGN aux_cdgraupr = 0
-                               aux_vlrenmes = 0.
+                               aux_vlrenmes = 0
+							   aux_nrcpfcgc = 0.
 
                         IF   crapass.inpessoa = 1 THEN
                              DO:
@@ -1794,7 +1822,8 @@ PROCEDURE lista_avalistas:
                                                    NO-LOCK NO-ERROR.
 
                                 IF   AVAIL crapttl THEN 
-                                     ASSIGN aux_cdgraupr = crapttl.cdgraupr.
+                                     ASSIGN aux_cdgraupr = crapttl.cdgraupr
+									        aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                                 FIND crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
                                                    crapttl.nrdconta = crapass.nrdconta AND
@@ -1877,7 +1906,7 @@ PROCEDURE lista_avalistas:
                                tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                                tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                             "C.P.F. " +
-                                                            STRING(STRING(crapass.nrcpfstl,
+                                                            STRING(STRING(aux_nrcpfcgc,
                                                             "99999999999"),"xxx.xxx.xxx-xx")
                                                          ELSE 
                                                             ""
@@ -1994,16 +2023,24 @@ PROCEDURE lista_avalistas:
 
                         END. 
 
+                        ASSIGN aux_cdgraupr = 0
+							   aux_vlrenmes = 0
+							   aux_nrcpfcgc = 0.
+
                         IF  crapass.inpessoa = 1  THEN
+						   DO:
                             ASSIGN aux_nrdocava = "C.P.F. " +
                                                   STRING(STRING(crapass.nrcpfcgc,
                                                   "99999999999"),"xxx.xxx.xxx-xx").
-                        ELSE
-                            ASSIGN aux_nrdocava = "CNPJ " +
-                                                  STRING(STRING(crapass.nrcpfcgc,
-                                                  "99999999999999"),"xx.xxx.xxx/xxxx-xx").
 
-                        ASSIGN aux_vlrenmes = 0.
+							  FIND crapttl WHERE crapttl.cdcooper = crapass.cdcooper AND
+												 crapttl.nrdconta = crapass.nrdconta AND
+												 crapttl.idseqttl = 2 
+												 NO-LOCK NO-ERROR.
+
+							  IF AVAIL crapttl THEN 
+								 ASSIGN aux_cdgraupr = crapttl.cdgraupr
+										aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                         FIND crapttl WHERE crapttl.cdcooper = crapass.cdcooper  AND
                                            crapttl.nrdconta = crapass.nrdconta  AND
@@ -2018,6 +2055,13 @@ PROCEDURE lista_avalistas:
                                                    crapttl.vldrendi[4]  +
                                                    crapttl.vldrendi[5]  +
                                                    crapttl.vldrendi[6]. 
+
+						   END.
+						ELSE
+			  			   ASSIGN aux_nrdocava = "CNPJ " +
+												  STRING(STRING(crapass.nrcpfcgc,
+												  "99999999999999"),"xx.xxx.xxx/xxxx-xx").	
+
 
                         FIND FIRST crapcem WHERE
                                    crapcem.cdcooper = par_cdcooper     AND
@@ -2073,7 +2117,7 @@ PROCEDURE lista_avalistas:
                                tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                                tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                             "C.P.F. " +
-                                                            STRING(STRING(crapass.nrcpfstl,
+                                                            STRING(STRING(aux_nrcpfcgc,
                                                             "99999999999"),"xxx.xxx.xxx-xx")
                                                          ELSE 
                                                             ""
@@ -2166,7 +2210,8 @@ PROCEDURE lista_avalistas:
                                           STRING(STRING(crapass.nrcpfcgc,
                                           "99999999999999"),"xx.xxx.xxx/xxxx-xx").
                 ASSIGN aux_cdgraupr = 0
-                       aux_vlrenmes = 0.
+                       aux_vlrenmes = 0
+					   aux_nrcpfcgc = 0.
 
                 IF   crapass.inpessoa = 1 THEN
                      DO:
@@ -2176,7 +2221,8 @@ PROCEDURE lista_avalistas:
                                            NO-LOCK NO-ERROR.
 
                         IF   AVAIL crapttl THEN 
-                             ASSIGN aux_cdgraupr = crapttl.cdgraupr.
+                             ASSIGN aux_cdgraupr = crapttl.cdgraupr
+							        aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                         FIND crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
                                            crapttl.nrdconta = crapass.nrdconta AND
@@ -2259,7 +2305,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                        tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                     "C.P.F. " +
-                                                    STRING(STRING(crapass.nrcpfstl,
+                                                    STRING(STRING(aux_nrcpfcgc,
                                                     "99999999999"),"xxx.xxx.xxx-xx")
                                                  ELSE 
                                                     ""
@@ -2376,18 +2422,26 @@ PROCEDURE lista_avalistas:
 
                 END. 
 
+                ASSIGN aux_cdgraupr = 0
+                       aux_vlrenmes = 0
+					   aux_nrcpfcgc = 0.
+
                 IF  crapass.inpessoa = 1  THEN
+                   DO:
                     ASSIGN aux_nrdocava = "C.P.F. " +
                                           STRING(STRING(crapass.nrcpfcgc,
                                           "99999999999"),"xxx.xxx.xxx-xx").
-                ELSE
-                    ASSIGN aux_nrdocava = "CNPJ " +
-                                          STRING(STRING(crapass.nrcpfcgc,
-                                          "99999999999999"),"xx.xxx.xxx/xxxx-xx").
 
-                ASSIGN aux_vlrenmes = 0.
+                      FIND crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
+                                         crapttl.nrdconta = crapass.nrdconta AND
+                                         crapttl.idseqttl = 2 
+                                         NO-LOCK NO-ERROR.
+
+                      IF AVAIL crapttl THEN 
+                         ASSIGN aux_cdgraupr = crapttl.cdgraupr
+						        aux_nrcpfcgc = crapttl.nrcpfcgc.
                 
-                FIND crapttl WHERE crapttl.cdcooper = crapass.cdcooper AND
+                      FIND crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
                                    crapttl.nrdconta = crapass.nrdconta AND
                                    crapttl.idseqttl = 1 
                                    NO-LOCK NO-ERROR.
@@ -2400,6 +2454,11 @@ PROCEDURE lista_avalistas:
                                     crapttl.vldrendi[4]  +
                                     crapttl.vldrendi[5]  +
                                     crapttl.vldrendi[6]. 
+                   END.
+				ELSE
+				   ASSIGN aux_nrdocava = "CNPJ " +
+                                          STRING(STRING(crapass.nrcpfcgc,
+                                          "99999999999999"),"xx.xxx.xxx/xxxx-xx").
 
                 FIND FIRST crapcem WHERE
                            crapcem.cdcooper = par_cdcooper     AND
@@ -2456,7 +2515,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                        tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                                     "C.P.F. " +
-                                                    STRING(STRING(crapass.nrcpfstl,
+                                                    STRING(STRING(aux_nrcpfcgc,
                                                     "99999999999"),"xxx.xxx.xxx-xx")
                                                  ELSE 
                                                     ""
@@ -2532,6 +2591,7 @@ PROCEDURE consulta-avalista:
     DEF VAR aux_vlrenmes AS DECI                                    NO-UNDO.
     DEF VAR aux_vledvmto AS DECI                                    NO-UNDO.
     DEF VAR aux_inhabmen LIKE crapttl.inhabmen                      NO-UNDO.
+	DEF VAR aux_nrcpfcgc LIKE crapttl.nrcpfcgc				        NO-UNDO.
     
     DEF VAR aux_nmconjug AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcjg LIKE crapcje.nrcpfcjg                      NO-UNDO.
@@ -2651,7 +2711,8 @@ PROCEDURE consulta-avalista:
                                        NO-LOCK NO-ERROR.
 
                     IF   AVAIL crapttl THEN 
-                         ASSIGN aux_cdgraupr = crapttl.cdgraupr.
+                         ASSIGN aux_cdgraupr = crapttl.cdgraupr
+						        aux_nrcpfcgc = crapttl.nrcpfcgc.
 
                     FIND crapttl WHERE crapttl.cdcooper = crapass.cdcooper AND
                                        crapttl.nrdconta = crapass.nrdconta AND
@@ -2772,7 +2833,7 @@ PROCEDURE consulta-avalista:
                    tt-dados-avais.nrcpfcjg = aux_nrcpfcjg
                    tt-dados-avais.nrdoccjg = IF aux_cdgraupr = 1 THEN 
                                               "C.P.F. " +
-                                              STRING(STRING(crapass.nrcpfstl,
+                                              STRING(STRING(aux_nrcpfcgc,
                                               "99999999999"),"xxx.xxx.xxx-xx")
                                              ELSE 
                                              ""

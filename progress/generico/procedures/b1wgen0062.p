@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 04/08/2016
+    Data    : Marco/2010                   Ultima atualizacao: 20/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSAO FICHA CADASTRAL
 
@@ -59,6 +59,10 @@
 
                 04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
                              (Jaison/Anderson)
+
+				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
 
 .............................................................................*/
 
@@ -440,9 +444,19 @@ PROCEDURE Busca_PF:
     DEF BUFFER crabttl FOR crapttl.
     DEF BUFFER crabenc FOR crapenc.
 
-    &SCOPED-DEFINE CAMPOS-TTL inpessoa dtcnscpf cdsitcpf tpdocttl nrdocttl                              cdoedttl cdufdttl dtemdttl dtnasttl tpnacion                              dsnacion dsnatura inhabmen dthabmen cdgraupr                              cdestcvl grescola cdfrmttl nmtalttl nrcertif                              nmmaettl nmpaittl cdnatopc cdocpttl tpcttrab                              cdempres nmextemp dsproftl cdnvlcgo cdturnos                              dtadmemp vlsalari tpdrendi vldrendi                              nrcpfemp cdufnatu inpolexp
+    &SCOPED-DEFINE CAMPOS-TTL inpessoa dtcnscpf cdsitcpf tpdocttl nrdocttl~
+						      cdoedttl cdufdttl dtemdttl dtnasttl tpnacion~
+							  dsnacion dsnatura inhabmen dthabmen cdgraupr~
+							  cdestcvl grescola cdfrmttl nmtalttl~
+							  nmmaettl nmpaittl cdnatopc cdocpttl tpcttrab~
+							  cdempres nmextemp dsproftl cdnvlcgo cdturnos~
+							  dtadmemp vlsalari tpdrendi vldrendi~
+							  nrcpfemp cdufnatu inpolexp
 
-    &SCOPED-DEFINE CAMPOS-CJE vlsalari nmconjug dtnasccj tpdoccje nrdoccje                              cdoedcje cdufdcje dtemdcje grescola cdfrmttl                              cdnatopc cdocpcje tpcttrab nmextemp dsproftl                              cdnvlcgo nrfonemp nrramemp cdturnos dtadmemp
+    &SCOPED-DEFINE CAMPOS-CJE vlsalari nmconjug dtnasccj tpdoccje nrdoccje~
+	                          cdoedcje cdufdcje dtemdcje grescola cdfrmttl~
+	                          cdnatopc cdocpcje tpcttrab nmextemp dsproftl~
+	                          cdnvlcgo nrfonemp nrramemp cdturnos dtadmemp
     ASSIGN par_dscritic = ""
            par_cdcritic = 0
            aux_retorno = "NOK".
@@ -780,7 +794,7 @@ PROCEDURE Busca_PF:
                                           grescola cdfrmttl cdnatopc
                                           cdocpttl tpcttrab dsproftl
                                           cdnvlcgo cdturnos cdoedttl
-                                          dtadmemp vlsalari nrfonemp)
+                                          dtadmemp vlsalari )
                      WHERE crapttl.nrdconta = crapcje.nrctacje AND
                            crapttl.cdcooper = par_cdcooper NO-LOCK:
 
@@ -808,8 +822,7 @@ PROCEDURE Busca_PF:
                          tt-fcad-cjuge.cdturnos = crapttl.cdturnos
                          tt-fcad-cjuge.cdoedcje = crapttl.cdoedttl
                          tt-fcad-cjuge.dtadmemp = crapttl.dtadmemp
-                         tt-fcad-cjuge.vlsalari = crapttl.vlsalari
-                         tt-fcad-cjuge.nrfonemp = crapttl.nrfonemp.
+                         tt-fcad-cjuge.vlsalari = crapttl.vlsalari.                         
 
                      /* Telefone Comercial*/
                      FOR FIRST craptfc FIELDS(nrdramal)
@@ -818,7 +831,8 @@ PROCEDURE Busca_PF:
                                craptfc.tptelefo = 3 
                                NO-LOCK:
 
-                         ASSIGN tt-fcad-cjuge.nrramemp = craptfc.nrdramal.
+                         ASSIGN tt-fcad-cjuge.nrfonemp = string(craptfc.nrtelefo)
+						        tt-fcad-cjuge.nrramemp = craptfc.nrdramal.
 
                      END.
                  END.

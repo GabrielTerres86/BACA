@@ -1,35 +1,39 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0004
-  --  Sistema  : Rotinas para detalhes de cadastros
-  --  Sigla    : CADA
-  --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para buscar detalhes de cadastros
-  --
-  -- Alteracoes:   10/11/2015 - Incluido verificacao para impressao de termo de
-  --                            responsabilidade na procedure pc_obtem_mensagens_alerta.
-  --                            (Jean Michel).
-  --
-  --               01/12/2015 - Ajustes para projeto de assinatura multipla PJ.
-  --                            Baseado na condicao da atenda.p em funcao
-  --                            fn_situacao_senha. (Jorge/David)
-  --
-  --               12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
-  --                            Caixa OnLine) 
-  --
-  --               29/09/2019 - Inclusao de verificacao de contratos de acordos de
-  --                            empréstimos na procedure pc_obtem_mensagens_alerta,
-  --                            Prj. 302 (Jean Michel).
-  --
-  --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
-  --
-  ---------------------------------------------------------------------------------------------------------------
+ /* ---------------------------------------------------------------------------------------------------------------
+  
+    Programa : CADA0004
+    Sistema  : Rotinas para detalhes de cadastros
+    Sigla    : CADA
+    Autor    : Odirlei Busana - AMcom
+    Data     : Agosto/2015.                   Ultima atualizacao: 25/04/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para buscar detalhes de cadastros
+  
+   Alteracoes:   10/11/2015 - Incluido verificacao para impressao de termo de
+                              responsabilidade na procedure pc_obtem_mensagens_alerta.
+                              (Jean Michel).
+  
+                 01/12/2015 - Ajustes para projeto de assinatura multipla PJ.
+                              Baseado na condicao da atenda.p em funcao
+                              fn_situacao_senha. (Jorge/David)
+  
+                 12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
+                              Caixa OnLine) 
+  
+                 29/09/2019 - Inclusao de verificacao de contratos de acordos de
+                              empréstimos na procedure pc_obtem_mensagens_alerta,
+                              Prj. 302 (Jean Michel).
+  
+                 14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
+  
+                 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                  crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
+  ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   --TempTable para retornar valores para tela Atenda (Antigo b1wgen0001tt.i/tt-valores_conta)
@@ -190,7 +194,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                nrctainv  crapass.nrctainv%TYPE,
                dtadmemp  crapass.dtadmemp%TYPE,
                nmprimtl  crapass.nmprimtl%TYPE,
-               nmsegntl  crapass.nmsegntl%TYPE,
+               nmsegntl  crapttl.nmextttl%TYPE,
                dtaltera  crapalt.dtaltera%TYPE,
                dsnatopc  VARCHAR2(30),
                nrramfon  VARCHAR2(100),
@@ -733,8 +737,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --       
   --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
   --
-  --               08/12/2016 - Alterado a mensagem de bloqueio judicial na rotina pc_obtem_mensagens_alerta
-  --                            (Andrino - Projeto 341 - Bacenjud)
+  --               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --			                crapass, crapttl, crapjur 
+  --						   (Adriano - P339).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -5526,6 +5531,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              01/12/2015 - Carregar o campo cdclcnae da crapass (Jaison/Andrino)
+	                
+					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                     crapass, crapttl, crapjur 
+							    (Adriano - P339).
+
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -5540,7 +5550,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.nrctainv,
              crapass.dtadmemp,
              crapass.nmprimtl,
-             crapass.nmsegntl,
              crapass.dtdemiss,
              crapass.cdsecext,
              crapass.indnivel,
@@ -5569,7 +5578,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        WHERE crapttl.cdcooper = pr_cdcooper
          AND crapttl.nrdconta = pr_nrdconta; 
     
-    
+	-->Busca informações do segundo titular
+    CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
+	                 ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+	SELECT crapttl.nmextttl
+	  FROM crapttl
+	 WHERE crapttl.cdcooper = pr_cdcooper
+	   AND crapttl.nrdconta = pr_nrdconta
+	   AND crapttl.idseqttl = 2;
+    rw_crapttl cr_crapttl%ROWTYPE;
     
     --------------> VARIAVEIS <----------------
     vr_cdcritic   INTEGER;
@@ -5582,6 +5599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_dsnatura   crapttl.dsnatura%TYPE;
     vr_idxcab     PLS_INTEGER;
     vr_qttitula   INTEGER;
+	vr_nmsegntl   crapttl.nmextttl%TYPE;
     
   BEGIN
     -- Buscar dados do cooperado
@@ -5605,9 +5623,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --> Contar quantidade de titulares da conta
     vr_qttitula := 0;
     IF rw_crapass.inpessoa = 1 THEN      
+
       OPEN cr_crapttl_count;
       FETCH cr_crapttl_count INTO vr_qttitula;
       CLOSE cr_crapttl_count;
+
+	  OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
+	                 ,pr_nrdconta => rw_crapass.nrdconta);
+
+	  FETCH cr_crapttl INTO rw_crapttl;
+
+	  IF cr_crapttl%FOUND THEN
+	    
+        vr_nmsegntl:= rw_crapttl.nmextttl;
+
+	  END IF;
+
+	  CLOSE cr_crapttl;
+
     ELSE
       vr_qttitula := 1;
     END IF;
@@ -5621,7 +5654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).nrctainv := rw_crapass.nrctainv;
     pr_tab_cabec(vr_idxcab).dtadmemp := rw_crapass.dtadmemp;
     pr_tab_cabec(vr_idxcab).nmprimtl := rw_crapass.nmprimtl;
-    pr_tab_cabec(vr_idxcab).nmsegntl := rw_crapass.nmsegntl;
+    pr_tab_cabec(vr_idxcab).nmsegntl := vr_nmsegntl;
     pr_tab_cabec(vr_idxcab).cdclcnae := rw_crapass.cdclcnae;
     
     pr_tab_cabec(vr_idxcab).dtaltera := fn_ult_dtaltera (pr_cdcooper => pr_cdcooper,  --> Codigo da cooperativa

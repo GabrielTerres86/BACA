@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Agosto/93.                          Ultima atualizacao: 13/12/2013
+   Data    : Agosto/93.                          Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -30,6 +30,11 @@
                             
                13/12/2013 - Alterado coluna da variavel rel_nrcpfcgc de 
                             "CPF/CGC" para "CPF/CNPJ". (Reinert)
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
  ............................................................................ */
 
 DEF STREAM str_1.    /*  Para relatorio de controle dos debitos do IPMF  */
@@ -73,6 +78,7 @@ DEF        VAR aux_nrdconta AS INT                                   NO-UNDO.
 
 DEF        VAR aux_flgexist AS LOGICAL                               NO-UNDO.
 DEF        VAR aux_flgimpri AS LOGICAL                               NO-UNDO.
+DEF        VAR aux_nmsegntl LIKE crapttl.nmextttl                    NO-UNDO.
 
 glb_cdprogra = "crps065".
 
@@ -213,7 +219,8 @@ END.  /*  Fim do DO .. TO  */
 FOR EACH crapipm WHERE crapipm.cdcooper = glb_cdcooper  AND
                        crapipm.indebito = 2             NO-LOCK:
 
-    aux_flgexist = FALSE.
+    ASSIGN aux_flgexist = FALSE
+	       aux_nmsegntl = "".
 
     DO aux_contador = 1 TO aux_contamax:
 
@@ -256,19 +263,32 @@ FOR EACH crapipm WHERE crapipm.cdcooper = glb_cdcooper  AND
          END.
 
     IF   crapass.inpessoa = 1   THEN
+	     DO:
          ASSIGN rel_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999")
                 rel_nrcpfcgc = STRING(rel_nrcpfcgc,"xxx.xxx.xxx-xx").
+
+             FOR FIRST crapttl FIELDS(nmextttl) 
+			                   WHERE crapttl.cdcooper = crapass.cdcooper AND
+							         crapttl.nrdconta = crapass.nrdconta AND
+									 crapttl.idseqttl = 2
+									 NO-LOCK:
+
+			   ASSIGN aux_nmsegntl = crapttl.nmextttl.
+
+			 END.
+
+	     END.
     ELSE
          ASSIGN rel_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999999")
                 rel_nrcpfcgc = STRING(rel_nrcpfcgc,"xx.xxx.xxx/xxxx-xx").
 
     IF   aux_nrdconta = crapipm.nrdconta   THEN
          DO:
-             IF   crapass.nmsegntl <> ""                 AND
+             IF   aux_nmsegntl <> "" AND
                   NOT aux_flgimpri                       THEN
                   DO:
                       DISPLAY STREAM str_1
-                              crapass.nmsegntl FORMAT "x(35)" @ crapass.nmprimtl
+                              aux_nmsegntl FORMAT "x(35)" @ crapass.nmprimtl
                               WITH FRAME f_debitos.
 
                       aux_flgimpri = TRUE.

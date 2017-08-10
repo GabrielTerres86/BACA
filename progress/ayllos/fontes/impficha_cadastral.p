@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa 
    Sigla   : CRED
    Autor   : Eduardo   
-   Data    : Junho/2006                        Ultima atualizacao: 19/08/2015
+   Data    : Junho/2006                        Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -72,6 +72,11 @@
                             
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
+                            
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
                             
 ............................................................................. */
 
@@ -266,7 +271,6 @@ PROCEDURE trata_conta_fisica:
            tt-fcad-psfis.dsescola
            tt-fcad-psfis.cdfrmttl 
            tt-fcad-psfis.rsfrmttl 
-           tt-fcad-psfis.nrcertif
            tt-fcad-psfis.nmtalttl 
            tt-fcad-psfis.qtfoltal    
            WITH FRAME f_dados_pf.

@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Marco/96.                       Ultima atualizacao: 20/03/2014
+       Data    : Marco/96.                       Ultima atualizacao: 05/06/2017
 
        Dados referentes ao programa:
 
@@ -100,6 +100,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
 				   24/04/2017 - Nao considerar valores bloqueados para composicao do saldo disponivel
 				                Heitor (Mouts) - Melhoria 440
+
+                   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+         			                  crapass, crapttl, crapjur 
+                  							(Adriano - P339).
 
     ............................................................................. */
 
@@ -190,7 +194,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE) IS 
         SELECT crapttl.cdempres
               ,crapttl.nrdconta
-              ,crapttl.nmdsecao
               ,crapttl.cdturnos
         FROM   crapttl 
         WHERE  crapttl.cdcooper = pr_cdcooper      
@@ -337,7 +340,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --tipo para armazenar a estrutura do cadastro de titulares
       TYPE typ_reg_crapttl IS 
         RECORD( cdempres crapttl.cdempres%TYPE
-               ,nmdsecao crapttl.nmdsecao%TYPE
                ,cdturnos crapttl.cdturnos%TYPE
         );
       --estrutura do cadastro de titulares
@@ -747,7 +749,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --carrega a tabela temporaria de titulares
       FOR rw_crapttl IN cr_crapttl(pr_cdcooper => pr_cdcooper) LOOP
         vr_tab_crapttl(rw_crapttl.nrdconta).cdempres := rw_crapttl.cdempres;
-        vr_tab_crapttl(rw_crapttl.nrdconta).nmdsecao := rw_crapttl.nmdsecao;
         vr_tab_crapttl(rw_crapttl.nrdconta).cdturnos := rw_crapttl.cdturnos;
       END LOOP;  
 
@@ -1499,5 +1500,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
     END;
 
   END pc_crps145;
-/
-

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Julho/94.                       Ultima atualizacao: 12/08/2015
+   Data    : Julho/94.                       Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -130,6 +130,11 @@
                
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+							
 
 .............................................................................*/ 
 
@@ -362,70 +367,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                                 crapalt.dsaltera + log_nmdcampo + ",".
         END.
 
-   IF   crapass.nmsegntl <> log_nmsegntl   THEN
-        DO:
-            ASSIGN log_nmdcampo = "seg.titular"
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera =
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.tpdocstl <> log_tpdocstl   THEN
-        DO:
-            ASSIGN log_nmdcampo = "tipo doc.seg.titular"
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera =
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.nrdocstl <> log_nrdocstl   THEN
-        DO:
-            ASSIGN log_nmdcampo = "doc.seg.titular"
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera =
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.dtnasstl <> log_dtnasstl   THEN
-        DO:
-            ASSIGN log_nmdcampo = "nascto seg.titular"
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera =
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.dsfilstl <> log_dsfilstl   THEN
-        DO:
-            ASSIGN log_nmdcampo = "filiacao seg.titular"
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.nrcpfstl <> log_nrcpfstl   THEN
-        DO:
-            ASSIGN log_nmdcampo = "cpf seg.titular"
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera = 
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-        
    IF   crapass.nrdctitg <> log_nrdctitg   AND
         crapass.cdtipcta =  log_cdtipcta   THEN
         DO:
@@ -439,71 +380,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                         crapalt.dsaltera = 
                                 crapalt.dsaltera + log_nmdcampo + ",".
         END.     
-
-   /* 24/08/2001 - Dados do responsavel como item de recadastramento */
-
-   IF   crapass.cdoedrsp <> log_cdoedrsp   THEN
-        DO:
-            ASSIGN log_nmdcampo = "org.ems.doc.resp."
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
- 
-   IF   crapass.cdufdrsp <> log_cdufdrsp   THEN
-        DO:
-            ASSIGN log_nmdcampo = "uf.ems.doc.resp."
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.nmrespon <> log_nmrespon   THEN
-        DO:
-            ASSIGN log_nmdcampo = "nome resp."
-                   log_flgrecad = TRUE.                         
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.nrcpfrsp <> log_nrcpfrsp   THEN
-        DO:
-            ASSIGN log_nmdcampo = "cpf resp."
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.nrdocrsp <> log_nrdocrsp   THEN
-        DO:
-            ASSIGN log_nmdcampo = "doc.resp."
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.tpdocrsp <> log_tpdocrsp   THEN
-        DO:
-            ASSIGN log_nmdcampo = "tipo doc.resp."
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-   
-   IF   crapass.dtemdrsp <> log_dtemdrsp   THEN
-        DO:
-            ASSIGN log_nmdcampo = "dt.ems.doc.resp."
-                   log_flgrecad = TRUE.
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
 
    /*  Dados para atualizacao (geram tipo de alteracao 2) */
 
@@ -558,16 +434,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
    IF   crapass.dtadmemp <> log_dtadmemp   THEN
         DO:
             log_nmdcampo = "adm.empr.".
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera = 
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.nrfonemp <> log_nrfonemp   THEN
-        DO:
-            log_nmdcampo = "fone empr.".
 
             IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
                  ASSIGN crapalt.flgctitg = log_flgctitg
@@ -692,16 +558,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                                 crapalt.dsaltera + log_nmdcampo + ",".
         END.
    
-   IF   crapass.cdoedstl <> log_cdoedstl   THEN
-        DO:
-            log_nmdcampo = "org.ems.doc.seg.titular".
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera =
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
    IF   crapass.cdufdptl <> log_cdufdptl   THEN
         DO:
             log_nmdcampo = "uf.ems.doc. 1.ttl".
@@ -712,16 +568,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                                 crapalt.dsaltera + log_nmdcampo + ",".
         END.
    
-   IF   crapass.cdufdstl <> log_cdufdstl   THEN
-        DO:
-            log_nmdcampo = "uf.ems.doc.seg.titular".
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera = 
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
    IF   crapass.dtemdptl <> log_dtemdptl   THEN
         DO:
             log_nmdcampo = "dt.ems.doc. 1.ttl".
@@ -730,32 +576,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                  ASSIGN crapalt.flgctitg = log_flgctitg
                         crapalt.dsaltera = 
                                 crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.dtemdstl <> log_dtemdstl   THEN
-        DO:
-            log_nmdcampo = "dt.ems.doc.seg.titular".
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 ASSIGN crapalt.flgctitg = log_flgctitg
-                        crapalt.dsaltera =
-                                crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.qtdepend <> log_qtdepend   THEN
-        DO:
-            log_nmdcampo = "qtd.dependentes".
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
-        END.
-
-   IF   crapass.dsendcol <> log_dsendcol   THEN
-        DO:
-            log_nmdcampo = "end.coml". 
-
-            IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                 crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
         END.
 
    IF   crapass.cdsitdtl <> log_cdsitdtl   THEN

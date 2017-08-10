@@ -1,11 +1,11 @@
 //*********************************************************************************************//
 //*** Fonte: tab097.js                                                 						***//
 //*** Autor: Jaison Fernando                                           						***//
-//*** Data : Novembro/2015                  Última Alteração: --/--/----  					***//
+//*** Data : Novembro/2015                  Última Alteração: 03/08/2017  					***//
 //***                                                                  						***//
 //*** Objetivo  : Biblioteca de funções da tela TAB097                 						***//
 //***                                                                  						***//	 
-//*** Alterações: 																			***//
+//*** Alterações: 03/08/2017 - Ajuste para utilizar a packge ZOOM0001(Adriano).             ***//
 //*********************************************************************************************//
 
 var cCddopcao;
@@ -526,7 +526,7 @@ function mostraPesquisaCNAE() {
     filtros 	= 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;1;N;;descricao';
     colunas 	= 'Código;cdcnae;20%;right|Desc CNAE;dscnae;80%;left';
 
-    mostraPesquisa('MATRIC',procedure,titulo,qtReg,filtros,colunas,$('#divRotina'));
+    mostraPesquisa('ZOOM0001',procedure,titulo,qtReg,filtros,colunas,$('#divRotina'));
 	return false;
 
 }

@@ -20,6 +20,10 @@
  *                03/11/2015 - Incluida a funcao selecionaPoder(), PRJ. 131 - Ass. Conjunta (Jean Michel).
  *                26/08/2016 - Inclusao da function validaResponsaveis e alteracao controlaOperacaoPoderes, SD 510426 (Jean Michel).
  *				  10/02/2017 - Ajuste realizado para remover caracteres invalidos de "Outros poderes". SD 558355 (Kelvin).
+ *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							  (Adriano - P339).
+
  */
 var flgAcessoRotina = true; // Flag para validar acesso as rotinas da tela CONTAS
 var nrcpfcgc_proc = ''; 
@@ -605,7 +609,7 @@ function controlaLayoutProc( operacao_proc ) {
 	
 	if(operacao_proc == 'CT'){
 		altura 	= '205px';
-		largura = '670px';
+		largura = '750px';
 	}else if(operacao_proc == 'P'){
 		altura 	= '360px';
 		largura = '570px';
@@ -630,9 +634,9 @@ function controlaLayoutProc( operacao_proc ) {
 		
 		var arrayLargura = new Array();
 		arrayLargura[0] = '70px';
-		arrayLargura[1] = '125px';
-		arrayLargura[2] = '113px';
-		arrayLargura[3] = '75px';
+		arrayLargura[1] = '135px';
+		arrayLargura[2] = '125px';
+		arrayLargura[3] = '100px';
 		arrayLargura[4] = '60px';
 		
 		var arrayAlinha = new Array();
@@ -670,7 +674,7 @@ function controlaLayoutProc( operacao_proc ) {
 		cDthabmen.css('width','76px').addClass('data');
 		cInhabmen.css('width','273px');
 		cTpDocumento.css('width','40px');
-		cDocumento.addClass('alphanum').css('width','84px').attr('maxlength','15');
+		cDocumento.addClass('alphanum').css('width','400px').attr('maxlength','40');
 		cOrgEmissor.addClass('alphanum').css('width','52px').attr('maxlength','5');
 		cEstados.css('width','45px');
 		cDataEmissao.addClass('data').css('width','70px');
@@ -1158,13 +1162,13 @@ function controlaPesquisasProc() {
 					return false;					
 				
 				// Nacionalidade
-				} else if ( campoAnterior == 'dsnacion' ) {
+				} else if ( campoAnterior == 'cdnacion' ) {
 					bo			= 'b1wgen0059.p';
 					procedure	= 'busca_nacionalidade';
 					titulo      = 'Nacionalidade';
 					qtReg		= '50';
-					filtros 	= 'Nacionalidade;dsnacion;200px;S;';
-					colunas 	= 'Nacionalidade;dsnacion;100%;left';
+					filtros 	= 'Codigo;cdnacion;30px;N;;N|Nacionalidade;dsnacion;200px;S;';
+					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;				
 				// Naturalidade
@@ -1198,6 +1202,15 @@ function controlaPesquisasProc() {
 	
 	// Cep
 	$('#nrcepend','#'+nomeFormProc).buscaCEP(nomeFormProc, camposOrigem, divRotina);
+	
+    //  Nacionalidade
+	$('#cdnacion','#'+nomeFormProc).unbind('change').bind('change',function() {
+		procedure	= 'BUSCAR_NACIONALIDADE';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('CADA0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,nomeFormProc);        
+	return false;
+	});
 	
 	return false;
 }

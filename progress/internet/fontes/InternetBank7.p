@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 24/03/2017
+   Data    : Marco/2007                        Ultima atualizacao: 13/04/2017
 
    Dados referentes ao programa:
 
@@ -57,6 +57,11 @@
 
                24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
 			                sem desconto IR (Marcos-Supero) 
+
+			   13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -118,6 +123,7 @@ DEF VAR aux_dsre3277 AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlrentot AS DECI                                           NO-UNDO.
 DEF VAR aux_vlirfont AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsobras AS DECI                                           NO-UNDO.
+DEF VAR aux_nmsegntl AS CHAR										   NO-UNDO.
 
 /* APLICACOES DE RENDA FIXA */
 DEF VAR sol_vlsdapli AS DECI                                           NO-UNDO.
@@ -250,6 +256,16 @@ RETURN "OK".
 /*................................ PROCEDURES ................................*/
 
 PROCEDURE proc_ir_fisica:
+
+    FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+	                   WHERE crapttl.cdcooper = par_cdcooper AND	
+							 crapttl.nrdconta = par_nrdconta AND
+							 crapttl.idseqttl = 2
+							 NO-LOCK:
+
+	   ASSIGN aux_nmsegntl = crapttl.nmextttl.
+
+	END.
 
     FIND FIRST crapdir WHERE crapdir.cdcooper  = par_cdcooper AND
                              crapdir.nrdconta  = par_nrdconta AND
@@ -454,7 +470,7 @@ PROCEDURE proc_ir_fisica:
                                    "</nmextcop><cdagenci>" + 
                                    TRIM(STRING(crapass.cdagenci,"zz9")) +
                                    "</cdagenci><nmsegntl>" + 
-                                   TRIM(crapass.nmsegntl) + 
+                                   TRIM(aux_nmsegntl) + 
                                    "</nmsegntl><nmprimtl>" + 
                                    TRIM(crapass.nmprimtl) + 
                                    "</nmprimtl><nrcpfcgc>" +
@@ -544,7 +560,7 @@ PROCEDURE proc_ir_juridica:
                                    "</nmextcop><cdagenci>" + 
                                    TRIM(STRING(crapass.cdagenci,"zz9")) +
                                    "</cdagenci><nmsegntl>" + 
-                                   TRIM(crapass.nmsegntl) + 
+                                   TRIM(aux_nmsegntl) + 
                                    "</nmsegntl><nmprimtl>" + 
                                    TRIM(crapass.nmprimtl) + 
                                    "</nmprimtl><nrcpfcgc>" +

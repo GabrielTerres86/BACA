@@ -271,6 +271,10 @@
            02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
                         quando excluir bordero.
                         PRJ300 - Desconto de cheque(Odirlei-AMcom)         
+
+           12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			            crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+			 		    (Adriano - P339).  
 						
 		       14/07/2017 - na exclusao do bordero, gerar registro de LOG - Jean (Mout´s)   
 		       
@@ -6904,7 +6908,7 @@ PROCEDURE busca_dados_impressao_dscchq:
         END.
         
         IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-             rel_txnrdcid = crapass.tpdocptl + ": " + crapass.nrdocptl.
+             rel_txnrdcid = crapass.tpdocptl + ": " + SUBSTR(TRIM(crapass.nrdocptl),1,15).
         ELSE 
              rel_txnrdcid = "".  
 

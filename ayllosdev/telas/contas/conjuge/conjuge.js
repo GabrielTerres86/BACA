@@ -13,6 +13,9 @@
  *											tela quando efetuado busca atraves lupa.
  * 005: [01/09/2015] Gabriel (RKAM)       : Reformulacao cadastral. 
  * 006: [03/03/2017] Adriano              : Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao - SD 614408.
+ * 007: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					 (Adriano - P339).
  */
 
 // Definindo variáveis globais 
@@ -254,7 +257,7 @@ function controlaLayout(operacao) {
 	$('#divConteudoOpcao').css('height',altura);
 	
 	// FIELDSET IDENDIFICAÇÃO 
-	var rotulos_1     = $('label[for="nrctacje"],label[for="nmconjug"],label[for="tpdoccje"]','#'+nomeForm );	
+	var rotulos_1 = $('label[for="nrctacje"],label[for="nmconjug"],label[for="tpdoccje"],label[for="nrdoccje"]', '#' + nomeForm);
 	var rCPF          = $('label[for="nrcpfcjg"]','#'+nomeForm );
 	var rDatas_1      = $('label[for="dtnasccj"],label[for="dtemdcje"]','#'+nomeForm );
 	var rLinha_1      = $('label[for="cdoedcje"],label[for="cdufdcje"]','#'+nomeForm );
@@ -281,7 +284,7 @@ function controlaLayout(operacao) {
 	cNome.addClass('alphanum').css('width','306px').attr('maxlength','40');
 	cDataNasc.addClass('data');	
 	cTpDocumento.css('width','45px');
-	cDocumento.addClass('alphanum').css('width','85px').attr('maxlength','11');
+	cDocumento.addClass('alphanum').css('width','400px').attr('maxlength','40');
 	cOrgEmissor.addClass('alphanum').css('width','45px').attr('maxlength','5');
 	cEstados.css('width','45px');
 	cDataEmissao.addClass('data');
@@ -298,7 +301,7 @@ function controlaLayout(operacao) {
 	cCodigo_2.addClass('codigo pesquisa');
 	
 // FIELDSET INF. PROFISSIONAIS	
-	var rotulos_3	= $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"]','#'+nomeForm );	
+	var rotulos_3 = $('label[for="tpcttrab"],label[for="nrdocnpj"],label[for="cdnvlcgo"],label[for="cdturnos"],label[for="cdoedcje"]', '#' + nomeForm);
 	var rColuna_2	= $('label[for="nmextemp"],label[for="dsproftl"],label[for="nrfonemp"],label[for="dtadmemp"]','#'+nomeForm );
 	var rLinha_3   	= $('label[for="nrramemp"],label[for="vlsalari"]','#'+nomeForm );
 	var cColuna_1  	= $('#tpcttrab,#nrdocnpj,#cdturnos,#cdnvlcgo','#'+nomeForm );

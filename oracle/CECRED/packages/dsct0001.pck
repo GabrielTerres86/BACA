@@ -146,40 +146,44 @@ END  DSCT0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa :  DSCT0001
-  --  Sistema  : Procedimentos envolvendo desconto titulos
-  --  Sigla    : CRED
-  --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 11/10/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Procedimentos envolvendo desconto titulos
-  --
-  -- Alteracoes: 25/03/2015 - Remover o savepoint vr_save_baixa da pc_efetua_baixa_titulo
-  --                          (Douglas - Chamado 267787)
-  --
-  --             26/02/2016 - Criacao das procedures pc_efetua_baixa_tit_car e
-  --                          pc_efetua_baixa_tit_car_job melhoria 116
-  --                          (Tiago/Rodrigo).
-  --             
-  --             25/04/2016 - Ajuste para nao debitar titulos descontados vencidos quando 
-  --                          cooperado estiver com acao judicial. (Rafael)
-  --
-  --             15/09/2016 - #519903 Criação de log de controle de início, erros e fim de execução
-  --                          do job pc_efetua_baixa_tit_car_job (Carlos)
-  --
-  --             11/10/2016 - #497991 Job pc_efetua_baixa_tit_car_job.
-  --                          Validação de dia útil para execução do job. If com a rotina
-  --                          gene0005.fn_valida_dia_util passando sysdate e comparando com sysdate.
-  --                          No sábado como estava com CRAPDAT.INPROCES = 2 a rotina ficava reprogramando
-  --                          final de semana inteiro e executava na segunda-feira por volta de 7h15
-  --                          sendo que o correto é as 11h30 e 17h30 (AJFink)
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa :  DSCT0001
+    Sistema  : Procedimentos envolvendo desconto titulos
+    Sigla    : CRED
+    Autor    : Alisson C. Berrido - Amcom
+    Data     : Julho/2013.                   Ultima atualizacao: 25/04/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Procedimentos envolvendo desconto titulos
+  
+   Alteracoes: 25/03/2015 - Remover o savepoint vr_save_baixa da pc_efetua_baixa_titulo
+                            (Douglas - Chamado 267787)
+  
+               26/02/2016 - Criacao das procedures pc_efetua_baixa_tit_car e
+                            pc_efetua_baixa_tit_car_job melhoria 116
+                            (Tiago/Rodrigo).
+               
+               25/04/2016 - Ajuste para nao debitar titulos descontados vencidos quando 
+                            cooperado estiver com acao judicial. (Rafael)
+  
+               15/09/2016 - #519903 Criação de log de controle de início, erros e fim de execução
+                            do job pc_efetua_baixa_tit_car_job (Carlos)
+  
+               11/10/2016 - #497991 Job pc_efetua_baixa_tit_car_job.
+                            Validação de dia útil para execução do job. If com a rotina
+                            gene0005.fn_valida_dia_util passando sysdate e comparando com sysdate.
+                            No sábado como estava com CRAPDAT.INPROCES = 2 a rotina ficava reprogramando
+                            final de semana inteiro e executava na segunda-feira por volta de 7h15
+                            sendo que o correto é as 11h30 e 17h30 (AJFink)
+  
+               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+  ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
   --Tipo de Tabela de lancamentos de juros dos titulos
@@ -210,7 +214,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           ,crapass.nrcpfcgc
           ,crapass.inpessoa
           ,crapass.cdcooper
-          ,crapass.nrcpfstl
     FROM crapass
     WHERE crapass.cdcooper = pr_cdcooper
     AND   crapass.nrdconta = pr_nrdconta;

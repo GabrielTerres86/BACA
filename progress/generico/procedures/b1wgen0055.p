@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 16/11/2016
+    Data    : Janeiro/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -136,6 +136,10 @@
 
                 16/11/2016 - Criar ttl como nao politicamente exposto ao inves
                              de pendente (Tiago/Thiago SD532690).
+
+				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
 .............................................................................*/
 
 
@@ -199,6 +203,8 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_nrdeanos AS INT                                     NO-UNDO.
     DEF VAR aux_nrdmeses AS INT                                     NO-UNDO.
     DEF VAR aux_dsdidade AS CHAR                                    NO-UNDO.
+	DEF VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc                      NO-UNDO.
+	DEF VAR aux_nrcpfttl LIKE crapttl.nrcpfcgc                      NO-UNDO.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Busca dados da Identificacao"
@@ -213,8 +219,7 @@ PROCEDURE Busca_Dados:
         EMPTY TEMP-TABLE tt-dados-fis.
         EMPTY TEMP-TABLE tt-erro.
 
-        FOR FIRST crapass FIELDS(qtfoltal nrdctitg nrcpfcgc nrcpfstl nrcpfttl
-                                 dtnasctl)
+        FOR FIRST crapass FIELDS(qtfoltal nrdctitg nrcpfcgc dtnasctl inpessoa)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta NO-LOCK:
 
@@ -226,6 +231,23 @@ PROCEDURE Busca_Dados:
                LEAVE Busca.
             END.
 
+	    IF crapass.inpessoa = 1 THEN
+		   DO:
+		      FOR EACH crapttl WHERE crapttl.cdcooper = crapass.cdcooper AND
+								     crapttl.nrdconta = crapass.nrdconta AND
+									 crapttl.idseqttl > 1
+									 NO-LOCK:
+
+
+			     IF crapttl.idseqttl = 2 THEN
+				    ASSIGN aux_nrcpfstl = crapttl.nrcpfcgc.
+				 ELSE IF crapttl.idseqttl = 3 THEN
+				    ASSIGN aux_nrcpfttl = crapttl.nrcpfcgc.
+
+			  END.
+
+		   END.
+		   
         CASE par_cddopcao:
             WHEN "I" THEN DO:
                 
@@ -256,8 +278,8 @@ PROCEDURE Busca_Dados:
                       INPUT par_cdgraupr,
                       INPUT DEC(par_nrcpfcgc),
                       INPUT crapass.nrcpfcgc,
-                      INPUT crapass.nrcpfstl,
-                      INPUT crapass.nrcpfttl,
+                      INPUT aux_nrcpfstl,
+                      INPUT aux_nrcpfttl,
                       INPUT crapass.qtfoltal,
                       INPUT crapass.nrdctitg,
                      OUTPUT par_msgconta,
@@ -301,8 +323,8 @@ PROCEDURE Busca_Dados:
                       INPUT par_cdgraupr,
                       INPUT DEC(par_nrcpfcgc),
                       INPUT crapass.nrcpfcgc,
-                      INPUT crapass.nrcpfstl,
-                      INPUT crapass.nrcpfttl,
+                      INPUT aux_nrcpfstl,
+                      INPUT aux_nrcpfttl,
                       INPUT crapttl.nrcpfcgc,
                       INPUT crapass.qtfoltal,
                       INPUT crapass.nrdctitg,
@@ -641,7 +663,6 @@ PROCEDURE Busca_Inclusao:
                                  tt-dados-fis.nrcpfemp = crapcje.nrdocnpj 
                                  tt-dados-fis.dsproftl = crapcje.dsproftl
                                  tt-dados-fis.cdnvlcgo = crapcje.cdnvlcgo
-                                 tt-dados-fis.nrfonemp = crapcje.nrfonemp
                                  tt-dados-fis.cdturnos = crapcje.cdturnos
                                  tt-dados-fis.dtadmemp = crapcje.dtadmemp
                                  tt-dados-fis.vlsalari = crapcje.vlsalari 
@@ -960,7 +981,6 @@ PROCEDURE Atualiza_Campos:
                tt-dados-fis.cdestcvl = brapttl.cdestcvl  
                tt-dados-fis.cdfrmttl = brapttl.cdfrmttl
                tt-dados-fis.nmtalttl = brapttl.nmtalttl
-               tt-dados-fis.nmcertif = brapttl.nrcertif
                tt-dados-fis.cdnatopc = brapttl.cdnatopc
                tt-dados-fis.cdocpttl = brapttl.cdocpttl 
                tt-dados-fis.tpcttrab = brapttl.tpcttrab
@@ -968,7 +988,6 @@ PROCEDURE Atualiza_Campos:
                tt-dados-fis.nrcpfemp = brapttl.nrcpfemp 
                tt-dados-fis.dsproftl = brapttl.dsproftl
                tt-dados-fis.cdnvlcgo = brapttl.cdnvlcgo
-               tt-dados-fis.nrfonemp = brapttl.nrfonemp
                tt-dados-fis.cdturnos = brapttl.cdturnos
                tt-dados-fis.dtadmemp = brapttl.dtadmemp
                tt-dados-fis.vlsalari = brapttl.vlsalari             
@@ -1032,7 +1051,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dsnatura LIKE crapttl.dsnatura             NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu LIKE crapttl.cdufnatu             NO-UNDO.
     DEF  INPUT PARAM par_dthabmen LIKE crapttl.dthabmen             NO-UNDO.
-    DEF  INPUT PARAM par_nmcertif LIKE crapttl.nrcertif             NO-UNDO.
+    DEF  INPUT PARAM par_nmcertif AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdnatopc LIKE crapttl.cdnatopc             NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl LIKE crapttl.cdocpttl             NO-UNDO.
     DEF  INPUT PARAM par_tpcttrab LIKE crapttl.tpcttrab             NO-UNDO.
@@ -1040,7 +1059,6 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_nrcpfemp LIKE crapttl.nrcpfemp             NO-UNDO.
     DEF  INPUT PARAM par_dsproftl LIKE crapttl.dsproftl             NO-UNDO.
     DEF  INPUT PARAM par_cdnvlcgo LIKE crapttl.cdnvlcgo             NO-UNDO.
-    DEF  INPUT PARAM par_nrfonemp LIKE crapttl.nrfonemp             NO-UNDO.
     DEF  INPUT PARAM par_cdturnos LIKE crapttl.cdturnos             NO-UNDO.
     DEF  INPUT PARAM par_dtadmemp LIKE crapttl.dtadmemp             NO-UNDO.
     DEF  INPUT PARAM par_vlsalari LIKE crapttl.vlsalari             NO-UNDO.
@@ -1272,7 +1290,6 @@ PROCEDURE Grava_Dados:
                 tt-dados-fis-ant.dsnatura = crapttl.dsnatura
                 tt-dados-fis-ant.cdufnatu = crapttl.cdufnatu
                 tt-dados-fis-ant.dthabmen = crapttl.dthabmen
-                tt-dados-fis-ant.nmcertif = crapttl.nrcertif
                 tt-dados-fis-ant.cdnatopc = crapttl.cdnatopc
                 tt-dados-fis-ant.cdocpttl = crapttl.cdocpttl
                 tt-dados-fis-ant.tpcttrab = crapttl.tpcttrab
@@ -1280,7 +1297,6 @@ PROCEDURE Grava_Dados:
                 tt-dados-fis-ant.nrcpfemp = crapttl.nrcpfemp
                 tt-dados-fis-ant.dsproftl = crapttl.dsproftl
                 tt-dados-fis-ant.cdnvlcgo = crapttl.cdnvlcgo
-                tt-dados-fis-ant.nrfonemp = crapttl.nrfonemp
                 tt-dados-fis-ant.cdturnos = crapttl.cdturnos
                 tt-dados-fis-ant.dtadmemp = crapttl.dtadmemp
                 tt-dados-fis-ant.cdnatopc = crapttl.cdnatopc
@@ -1290,9 +1306,7 @@ PROCEDURE Grava_Dados:
                 tt-dados-fis-ant.nrcpfemp = crapttl.nrcpfemp
                 tt-dados-fis-ant.dsproftl = crapttl.dsproftl
                 tt-dados-fis-ant.cdnvlcgo = crapttl.cdnvlcgo
-                tt-dados-fis-ant.nrfonemp = crapttl.nrfonemp
-                tt-dados-fis-ant.cdturnos = crapttl.cdturnos
-                tt-dados-fis-ant.dtadmemp = crapttl.dtadmemp
+                
                 tt-dados-fis-ant.vlsalari = crapttl.vlsalari.
         
         IF  par_inpessoa = 1 THEN
@@ -1440,7 +1454,6 @@ PROCEDURE Grava_Dados:
                crapttl.cdestcvl = par_cdestcvl
                crapttl.grescola = par_grescola
                crapttl.cdfrmttl = par_cdfrmttl
-               crapttl.nrcertif = par_nmcertif 
                crapttl.nmtalttl = CAPS(par_nmtalttl)
                crapttl.cdnatopc = par_cdnatopc
                crapttl.cdocpttl = par_cdocpttl
@@ -1449,7 +1462,6 @@ PROCEDURE Grava_Dados:
                crapttl.nrcpfemp = par_nrcpfemp
                crapttl.dsproftl = par_dsproftl
                crapttl.cdnvlcgo = par_cdnvlcgo
-               crapttl.nrfonemp = par_nrfonemp
                crapttl.cdturnos = par_cdturnos
                crapttl.dtadmemp = par_dtadmemp
                crapttl.vlsalari = par_vlsalari
@@ -1543,7 +1555,6 @@ PROCEDURE Grava_Dados:
                tt-dados-fis-atl.dsnatura = crapttl.dsnatura
                tt-dados-fis-atl.cdufnatu = crapttl.cdufnatu
                tt-dados-fis-atl.dthabmen = crapttl.dthabmen
-               tt-dados-fis-atl.nmcertif = crapttl.nrcertif
                tt-dados-fis-atl.cdnatopc = crapttl.cdnatopc
                tt-dados-fis-atl.cdocpttl = crapttl.cdocpttl
                tt-dados-fis-atl.tpcttrab = crapttl.tpcttrab
@@ -1551,7 +1562,6 @@ PROCEDURE Grava_Dados:
                tt-dados-fis-atl.nrcpfemp = crapttl.nrcpfemp
                tt-dados-fis-atl.dsproftl = crapttl.dsproftl
                tt-dados-fis-atl.cdnvlcgo = crapttl.cdnvlcgo
-               tt-dados-fis-atl.nrfonemp = crapttl.nrfonemp
                tt-dados-fis-atl.cdturnos = crapttl.cdturnos
                tt-dados-fis-atl.dtadmemp = crapttl.dtadmemp
                tt-dados-fis-atl.cdnatopc = crapttl.cdnatopc
@@ -1561,9 +1571,6 @@ PROCEDURE Grava_Dados:
                tt-dados-fis-atl.nrcpfemp = crapttl.nrcpfemp
                tt-dados-fis-atl.dsproftl = crapttl.dsproftl
                tt-dados-fis-atl.cdnvlcgo = crapttl.cdnvlcgo
-               tt-dados-fis-atl.nrfonemp = crapttl.nrfonemp
-               tt-dados-fis-atl.cdturnos = crapttl.cdturnos
-               tt-dados-fis-atl.dtadmemp = crapttl.dtadmemp
                tt-dados-fis-atl.vlsalari = crapttl.vlsalari.
 
         IF  par_cddopcao <> "I" THEN
@@ -1578,48 +1585,6 @@ PROCEDURE Grava_Dados:
             RUN sistema/generico/procedures/b1wgen0060.p 
                 PERSISTENT SET h-b1wgen0060.
 
-        /* atualiza_titulares */
-        CASE par_idseqttl:
-            WHEN 2 THEN DO:
-                ASSIGN crapass.nmsegntl = DYNAMIC-FUNCTION("Trata_eou"
-                                                           IN h-b1wgen0060,
-                                                           crapttl.nmextttl).
-                ASSIGN crapass.tpdocstl = crapttl.tpdocttl
-                       crapass.nrdocstl = crapttl.nrdocttl
-                       crapass.cdoedstl = crapttl.cdoedttl
-                       crapass.cdufdstl = crapttl.cdufdttl
-                       crapass.dtemdstl = crapttl.dtemdttl 
-                       crapass.dtnasstl = crapttl.dtnasttl
-                       /* Removido campo crapass.dsnatstl */
-                       crapass.nrcpfstl = DEC(par_nrcpfcgc) NO-ERROR.
-
-                IF  ERROR-STATUS:ERROR THEN
-                    DO:
-                       ASSIGN aux_dscritic = ERROR-STATUS:GET-MESSAGE(1).
-                       UNDO Grava, LEAVE Grava.
-                    END.
-            END.
-            WHEN 3 THEN DO:
-                ASSIGN crapass.nmtertl  = DYNAMIC-FUNCTION("Trata_eou"
-                                                           IN h-b1wgen0060,
-                                                           crapttl.nmextttl).
-
-                ASSIGN crapass.tpdocttl = crapttl.tpdocttl
-                       crapass.nrdocttl = crapttl.nrdocttl
-                       crapass.cdoedttl = crapttl.cdoedttl
-                       crapass.cdufdttl = crapttl.cdufdttl
-                       crapass.dtemdttl = crapttl.dtemdttl 
-                       crapass.dtnasttl = crapttl.dtnasttl
-                       crapass.nrcpfttl = DEC(par_nrcpfcgc) NO-ERROR.
-
-                IF  ERROR-STATUS:ERROR THEN
-                    DO:
-                       ASSIGN aux_dscritic = ERROR-STATUS:GET-MESSAGE(1).
-                       UNDO Grava, LEAVE Grava.
-                    END.
-            END.
-        END.
-        
         IF  par_idseqttl = 1  THEN
             DO:
                 /*Alteração (Gabriel/DB1)*/
@@ -2484,7 +2449,6 @@ PROCEDURE Grava_Alteracao:
                           crapcje.nrdocnpj = brapttl.nrcpfemp
                           crapcje.dsproftl = brapttl.dsproftl
                           crapcje.cdnvlcgo = brapttl.cdnvlcgo
-                          crapcje.nrfonemp = brapttl.nrfonemp
                           crapcje.cdturnos = brapttl.cdturnos
                           crapcje.dtadmemp = brapttl.dtadmemp
                           crapcje.vlsalari = brapttl.vlsalari.
@@ -2563,7 +2527,6 @@ PROCEDURE Grava_Alteracao:
                                  crapcje.nrdocnpj = craxttl.nrcpfemp
                                  crapcje.dsproftl = craxttl.dsproftl
                                  crapcje.cdnvlcgo = craxttl.cdnvlcgo
-                                 crapcje.nrfonemp = craxttl.nrfonemp
                                  crapcje.cdturnos = craxttl.cdturnos
                                  crapcje.dtadmemp = craxttl.dtadmemp
                                  crapcje.vlsalari = craxttl.vlsalari.
@@ -2713,7 +2676,6 @@ PROCEDURE Grava_Alteracao:
                                  crapcje.nrdocnpj = craxttl.nrcpfemp
                                  crapcje.dsproftl = craxttl.dsproftl
                                  crapcje.cdnvlcgo = craxttl.cdnvlcgo
-                                 crapcje.nrfonemp = craxttl.nrfonemp
                                  crapcje.cdturnos = craxttl.cdturnos
                                  crapcje.dtadmemp = craxttl.dtadmemp
                                  crapcje.vlsalari = craxttl.vlsalari.
@@ -2803,7 +2765,6 @@ PROCEDURE Grava_Alteracao:
                                           crafttl.cdestcvl = brapttl.cdestcvl  
                                           crafttl.grescola = brapttl.grescola
                                           crafttl.cdfrmttl = brapttl.cdfrmttl
-                                          crafttl.nrcertif = brapttl.nrcertif
                                           crafttl.nmtalttl = brapttl.nmtalttl.
 
                                       ContadorCje1: DO aux_contado2 = 1 TO 10:
@@ -2908,7 +2869,6 @@ PROCEDURE Grava_Alteracao:
                                            crapcje.nrdocnpj = brapttl.nrcpfemp
                                            crapcje.dsproftl = brapttl.dsproftl
                                            crapcje.cdnvlcgo = brapttl.cdnvlcgo
-                                           crapcje.nrfonemp = brapttl.nrfonemp
                                            crapcje.cdturnos = brapttl.cdturnos
                                            crapcje.dtadmemp = brapttl.dtadmemp
                                            crapcje.vlsalari = brapttl.vlsalari.
@@ -3028,7 +2988,6 @@ PROCEDURE Atualiza_Conjuge:
                     crapcje.nrdocnpj = brapttl.nrcpfemp
                     crapcje.dsproftl = brapttl.dsproftl
                     crapcje.cdnvlcgo = brapttl.cdnvlcgo
-                    crapcje.nrfonemp = brapttl.nrfonemp
                     crapcje.cdturnos = brapttl.cdturnos
                     crapcje.dtadmemp = brapttl.dtadmemp
                     crapcje.vlsalari = brapttl.vlsalari NO-ERROR.
@@ -3108,7 +3067,6 @@ PROCEDURE Atualiza_Conjuge:
                           crapcje.nrdocnpj = craxttl.nrcpfemp
                           crapcje.dsproftl = craxttl.dsproftl
                           crapcje.cdnvlcgo = craxttl.cdnvlcgo
-                          crapcje.nrfonemp = craxttl.nrfonemp
                           crapcje.cdturnos = craxttl.cdturnos
                           crapcje.dtadmemp = craxttl.dtadmemp
                           crapcje.vlsalari = craxttl.vlsalari NO-ERROR.
@@ -3175,7 +3133,6 @@ PROCEDURE Atualiza_Conjuge:
                                    crapcje.nrdocnpj = craxttl.nrcpfemp
                                    crapcje.dsproftl = craxttl.dsproftl
                                    crapcje.cdnvlcgo = craxttl.cdnvlcgo
-                                   crapcje.nrfonemp = craxttl.nrfonemp
                                    crapcje.cdturnos = craxttl.cdturnos
                                    crapcje.dtadmemp = craxttl.dtadmemp
                                    crapcje.vlsalari = craxttl.vlsalari 
@@ -3242,7 +3199,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_cdestcvl LIKE crapttl.cdestcvl       NO-UNDO.
     DEF  INPUT PARAM par_grescola LIKE crapttl.grescola       NO-UNDO.
     DEF  INPUT PARAM par_cdfrmttl LIKE crapttl.cdfrmttl       NO-UNDO.
-    DEF  INPUT PARAM par_nmcertif LIKE crapttl.nrcertif       NO-UNDO.
+    DEF  INPUT PARAM par_nmcertif AS CHAR                     NO-UNDO.
     DEF  INPUT PARAM par_nmtalttl LIKE crapttl.nmtalttl       NO-UNDO.
     DEF  INPUT PARAM par_qtfoltal LIKE crapass.qtfoltal       NO-UNDO.
     DEF  INPUT PARAM par_verrespo AS LOG                      NO-UNDO.
@@ -3262,6 +3219,8 @@ PROCEDURE Valida_Dados:
     DEF VAR aux_nrcpfcgc AS DECI                              NO-UNDO.
     DEF VAR aux_dtcadass AS DATE                              NO-UNDO.
     DEF VAR aux_geraerro AS LOG                               NO-UNDO.
+	DEF VAR aux_nrcpfstl LIKE crapttl.nrcpfcgc				  NO-UNDO.
+	DEF VAR aux_nrcpfttl LIKE crapttl.nrcpfcgc				  NO-UNDO.
 
 
     DEF VAR h-b1wgen0072 AS HANDLE                            NO-UNDO.
@@ -3458,7 +3417,7 @@ PROCEDURE Valida_Dados:
         
         aux_nrcpfcgc = DEC(REPLACE(REPLACE(par_nrcpfcgc,".",""),"-","")).
         
-        FOR FIRST crapass FIELDS(nrcpfcgc nrcpfstl nrcpfttl dtmvtolt)
+        FOR FIRST crapass FIELDS(nrcpfcgc dtmvtolt inpessoa)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta 
                                 NO-LOCK:
@@ -3472,6 +3431,23 @@ PROCEDURE Valida_Dados:
             END.
         ELSE
             ASSIGN aux_dtcadass = crapass.dtmvtolt.
+
+		IF crapass.inpessoa = 1 THEN
+		   DO:
+		      FOR EACH crapttl WHERE crapttl.cdcooper = crapass.cdcooper AND
+								     crapttl.nrdconta = crapass.nrdconta AND
+									 crapttl.idseqttl > 1
+									 NO-LOCK:
+
+
+			     IF crapttl.idseqttl = 2 THEN
+				    ASSIGN aux_nrcpfstl = crapttl.nrcpfcgc.
+				 ELSE IF crapttl.idseqttl = 3 THEN
+				    ASSIGN aux_nrcpfttl = crapttl.nrcpfcgc.
+
+			  END.
+
+		   END.
 
         /* Validacoes conforme a OPERACAO */
         CASE par_cddopcao:
@@ -3490,8 +3466,8 @@ PROCEDURE Valida_Dados:
                       INPUT par_cdgraupr,
                       INPUT DEC(aux_nrcpfcgc),
                       INPUT crapass.nrcpfcgc,
-                      INPUT crapass.nrcpfstl,
-                      INPUT crapass.nrcpfttl,
+                      INPUT aux_nrcpfstl,
+                      INPUT aux_nrcpfttl,
                       INPUT par_cdestcvl,
                      OUTPUT par_nmdcampo,
                      OUTPUT aux_cdcritic,
@@ -3522,8 +3498,8 @@ PROCEDURE Valida_Dados:
                       INPUT par_cdgraupr,
                       INPUT DEC(aux_nrcpfcgc),
                       INPUT crapass.nrcpfcgc,
-                      INPUT crapass.nrcpfstl,
-                      INPUT crapass.nrcpfttl,
+                      INPUT aux_nrcpfstl,
+                      INPUT aux_nrcpfttl,
                       INPUT crapttl.nrcpfcgc,
                       INPUT par_cdestcvl,
                      OUTPUT par_nmdcampo,

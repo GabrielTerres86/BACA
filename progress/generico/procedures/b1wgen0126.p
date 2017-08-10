@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0126.p
     Autor   : Rogerius Militao (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 15/08/2016
+    Data    : Dezembro/2011                     Ultima atualizacao: 18/04/2017 
 
     Objetivo  : Tranformacao BO tela ALTAVA
 
@@ -75,6 +75,11 @@
                 15/08/2016 - Na PROCEDURE Grava_dados, incluir validacao para 
                              que caso nao exista proposta de emprestimo, continue
                              com o procedimento (Lucas Ranghetti #484366)
+
+			    18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -857,6 +862,7 @@ PROCEDURE Busca_Avalista:
      
      DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
      DEF VAR aux_cdgraupr AS INTE                                    NO-UNDO.
+	 DEF VAR aux_nrcpfcgc LIKE crapttl.nrcpfcgc                      NO-UNDO.
      
      EMPTY TEMP-TABLE tt-avalista.
 
@@ -876,11 +882,17 @@ PROCEDURE Busca_Avalista:
                        ASSIGN aux_cdgraupr = 0.
                        IF crapass.inpessoa = 1 THEN
                        DO:
-                           FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                           FOR FIRST crapttl FIELDS(cdgraupr nrcpfcgc)
+										      WHERE crapttl.cdcooper = par_cdcooper AND
                                               crapttl.nrdconta = crapass.nrdconta AND
-                                              crapttl.idseqttl = 2 NO-LOCK NO-ERROR.
-                           IF AVAIL crapttl THEN
-                               ASSIGN aux_cdgraupr = crapttl.cdgraupr.
+                                                    crapttl.idseqttl = 2 
+													NO-LOCK:
+
+						     ASSIGN aux_cdgraupr = crapttl.cdgraupr
+							        aux_nrcpfcgc = crapttl.nrcpfcgc.
+
+						   END.
+                               
                        END.
 
                        FIND crapenc WHERE 
@@ -901,7 +913,7 @@ PROCEDURE Busca_Avalista:
                               tt-avalista.dsendava[1] = crapenc.dsendere
                               tt-avalista.dscfcava    = IF aux_cdgraupr = 1   
                                                 THEN
-                                                    STRING(crapass.nrcpfstl,
+                                                    STRING(aux_nrcpfcgc,
                                                      "99999999999")
                                                 ELSE ""
                                                    tt-avalista.dscfcava = STRING(tt-avalista.dscfcava,

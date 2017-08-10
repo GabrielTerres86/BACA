@@ -8,6 +8,9 @@
  *                24/04/2012 - Ajustes Projeto GP - Socios Menores (Adriano)
  *                28/01/2015 - #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
  *                16/07/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							  (Adriano - P339).
  */
 
 var nrcpfcto = "";
@@ -632,7 +635,7 @@ function controlaLayoutResp(operacao_rsp) {
 		$('#dtnascto,#dtemddoc','#frmRespLegal').css({'width':'101px'}).addClass('data');
 		$('#cdoeddoc','#frmRespLegal').css({'width':'101px'}).addClass('alphanum').attr('maxlength','5');
 		$('#tpdocava','#frmRespLegal').css({'width':'57px'});
-		$('#nrdocava','#frmRespLegal').css({'width':'230px'}).addClass('alphanum').attr('maxlength','15');
+		$('#nrdocava', '#frmRespLegal').css({ 'width': '230px' }).addClass('alphanum').attr('maxlength', '40');
 		$('#dsnacion','#frmRespLegal').css({'width':'150px'}).addClass('alphanum pesquisa').attr('maxlength','16');
 		$('#dsnatura','#frmRespLegal').css({'width':'202px'}).addClass('alphanum pesquisa').attr('maxlength','25');
 		$('#nmpaicto,#nmmaecto','#frmRespLegal').css({'width':'444px'}).addClass('alpha').attr('maxlength','40');
@@ -869,13 +872,13 @@ function controlaLupasResp() {
 					return false;					
 				
 				// Nacionalidade
-				} else if ( campoAnterior == 'dsnacion' ) {
+				} else if ( campoAnterior == 'cdnacion' ) {
 					bo			= 'b1wgen0059.p';
 					procedure	= 'busca_nacionalidade';
 					titulo      = 'Nacionalidade';
 					qtReg		= '50';
-					filtros 	= 'Nacionalidade;dsnacion;200px;S;';
-					colunas 	= 'Nacionalidade;dsnacion;100%;left';
+					filtros 	= 'Codigo;cdnacion;30px;N;;N|Nacionalidade;dsnacion;200px;S;';
+					colunas 	= 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina,'',nomeFormResp);
 					return false;				
 					
@@ -903,6 +906,15 @@ function controlaLupasResp() {
 	/*   CONTROLE DAS BUSCA DESCRIÇÕES     */
 	/*-------------------------------------*/
 	$('#nrcepend','#'+nomeFormResp).buscaCEP(nomeFormResp, camposOrigem, divRotina);
+	
+    //  Nacionalidade
+	$('#cdnacion','#'+nomeFormResp).unbind('change').bind('change',function() {
+		procedure	= 'BUSCAR_NACIONALIDADE';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('CADA0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,nomeFormResp);        
+	return false;
+	}); 
 	
 	return false;
 }
