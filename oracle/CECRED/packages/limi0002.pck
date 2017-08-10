@@ -6,14 +6,17 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 29/06/2017 
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas genericas refente ao limite de credito
 
-  -- Alteracoes:
+  -- Alteracoes:            
+  --             29/06/2017 - Colocado Log no padrão 
+  --                          Setar modulo
+  --                          (Belli - Envolti - Chamado 660306)
   --
   ---------------------------------------------------------------------------------------------------------------
   -- Rotina referente a consulta da tela de Limite de Saque do TAA
@@ -53,7 +56,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 30/03/2016
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 29/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -66,6 +69,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               Alterar chamada da procedure pc_carrega_dados_tar_vigente
                               para chamar dentro do loop da craplim e passar o valor do
                               limite ao inves de um valor fixo - M214 (Lucas Ranghetti #402276)
+                            
+                 29/06/2017 - Colocado Log no padrão 
+                              Setar modulo
+                              (Belli - Envolti - Chamado 660306)
      
   */
   ---------------------------------------------------------------------------------------------------------------
@@ -83,7 +90,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : James Prust Junior
-     Data    : Julho/15.                    Ultima atualizacao:
+     Data    : Julho/15.                    Ultima atualizacao: 29/06/2017
 
      Dados referentes ao programa:
 
@@ -92,7 +99,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
      Objetivo  : Consultar a tela de limite de saque do TAA
 
      Observacao: -----
-     Alteracoes: 
+     Alteracoes:                             
+                 29/06/2017 - Setar modulo
+                              (Belli - Envolti - Chamado 660306)
      ..............................................................................*/ 
     DECLARE
       
@@ -150,6 +159,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
+
+      -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+      GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'LIMI0002.pc_tela_lim_saque_consultar');  
       
       -- Cursor com os dados do limite de saque
       OPEN cr_tbtaa_limite_saque(pr_cdcooper => vr_cdcooper
@@ -208,6 +220,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN
         
+        -- Colocado Log no padrão - 29/06/2017 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+        
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em LIMI0002.pc_tela_lim_saque_consultar: ' || SQLERRM;
         
@@ -236,7 +251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : James Prust Junior
-     Data    : Julho/15.                    Ultima atualizacao:
+     Data    : Julho/15.                    Ultima atualizacao: 29/06/2017
 
      Dados referentes ao programa:
 
@@ -246,6 +261,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
 
      Observacao: -----
      Alteracoes: 
+                 29/06/2017 - Setar modulo
+                              (Belli - Envolti - Chamado 660306)
      ..............................................................................*/ 
     DECLARE
 
@@ -297,6 +314,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
+                              
+      -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+      GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'LIMI0002.pc_tela_lim_saque_consultar');  
 
       vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
       vr_dstransa := 'Inclusao/Alteracao Limite Saque TAA';
@@ -330,6 +350,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
              AND nrdconta = pr_nrdconta;
         EXCEPTION
           WHEN OTHERS THEN
+            -- Colocado Log no padrão - 29/06/2017 - Chamado 660306        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
             vr_dscritic := 'Erro ao alterar o limite de saque: ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
@@ -354,6 +376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                       ,vr_cdoperad);
         EXCEPTION
           WHEN OTHERS THEN
+            -- Colocado Log no padrão - 29/06/2017 - Chamado 660306        
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
             vr_dscritic := 'Erro ao inserir limite de saque. '||SQLERRM;
             RAISE vr_exc_saida;
         END;         
@@ -410,6 +434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
       WHEN OTHERS THEN
+        -- Colocado Log no padrão - 29/06/2017 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
         
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em LIMI0002.pc_tela_lim_saque_alterar: ' || SQLERRM;
@@ -437,7 +463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : David
-    Data    : Outubro/2008                    Ultima Atualizacao: 30/03/2016
+    Data    : Outubro/2008                    Ultima Atualizacao: 29/06/2017
 
     Dados referente ao programa:
     
@@ -509,6 +535,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                30/03/2016 - Alterar chamada da procedure pc_carrega_dados_tar_vigente
                             para chamar dentro do loop da craplim e passar o valor do
                             limite ao inves de um valor fixo - M214 (Lucas Ranghetti #402276)
+                            
+               29/06/2017 - Colocado Log no padrão 
+                            Setar modulo
+                            (Belli - Envolti - Chamado 660306)
+                            
     ............................................................................ */
 
     DECLARE
@@ -523,6 +554,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      
+      -- Chamado 660306 - 10/07/2017
+      -- Variaveis de inclusão de log 
+      vr_idprglog       tbgen_prglog.idprglog%TYPE := 0;
+      vr_acao           VARCHAR2  (100)            := 'LIMI0002.pc_crps517';
       
       -- Extração dados XML
       vr_cdcooper   NUMBER;
@@ -781,8 +817,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                    ,pr_flg_remete_coop => 'N' --> Se o envio será do e-mail da Cooperativa
                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                    ,pr_des_erro        => vr_des_erro);         
-      END;
-
+      END;   
+  
       --------------- VALIDACOES INICIAIS -----------------
     BEGIN
                                 
@@ -796,6 +832,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
+                              
+      -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+      GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => vr_acao); 
 
       IF vr_dscritic IS NOT NULL THEN 
         RAISE vr_exc_saida;
@@ -872,7 +911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
       FOR rw_craplim IN cr_craplim LOOP
         vr_qtborati := 0;
         vr_flgregis := TRUE;
-    
+
         /** Se nao atingiu limite de renovacoes, renovar limites ativos **/
         IF  rw_craplim.qtrenova < rw_craplim.qtrenctr AND rw_craplim.insitlim = 2  THEN
           
@@ -885,7 +924,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                    dtfimvig = rw_craplim.dtfimvig
              WHERE ROWID = rw_craplim.rowid;
           EXCEPTION
-            WHEN OTHERS THEN
+            WHEN OTHERS THEN              
+              -- Colocado Log no padrão - 29/06/2017 - Chamado 660306        
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+        
               vr_dscritic := '1-Erro ao alterar CRAPLIM: ' ||SQLERRM;
               RAISE vr_exc_saida;
           END;          
@@ -904,6 +946,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                                 pr_cdcritic => vr_cdcritic,
                                                 pr_dscritic => vr_dscritic,
                                                 pr_tab_erro => vr_tt_erro);
+                              
+          -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+          GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => vr_acao); 
 
           -- Se ocorreu erro no processo                                    
           IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
@@ -945,6 +990,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                                 pr_cdcritic => vr_cdcritic,
                                                 pr_dscritic => vr_dscritic,
                                                 pr_tab_erro => vr_tt_erro);
+                              
+          -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+          GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => vr_acao); 
 
           -- Se ocorreu erro no processo                                    
           IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
@@ -1015,6 +1063,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                              pr_tab_erro => vr_tt_erro,
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
+                              
+            -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+            GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => vr_acao); 
 
             -- Se ocorreu erro no processo                                    
             IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
@@ -1023,14 +1074,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                 -- Buscar a descrição
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
               END IF;
-              -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',vr_cdcooper,
-                                                                                      'NOME_ARQ_LOG_MESSAGE')
-                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> '
-                                                         || vr_dscritic || ' - ' ||to_char(rw_craplim.nrdconta,'fm00000000'));
+
+              vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                                     ' --> ' || 
+                                     'ERRO: ' ||
+                                     vr_dscritic ||
+                                     ' pr_cdcooper=' || vr_cdcooper ||
+                                     ' ,pr_nrdconta=' || rw_craplim.nrdconta ||
+                                     ' ,pr_dtmvtolt=' || rw_crapdat.dtmvtolt ||
+                                     ' ,pr_cdhistor=' || vr_cdhistor ||
+                                     ' ,pr_vllanaut=' || vr_vltarrnv ||
+                                     ' ,pr_cdoperad=' || vr_cdoperad ||
+                                     ' ,pr_nrdctabb=' || rw_craplim.nrdconta ||
+                                     ' ,pr_nrdctitg=' || to_char(rw_craplim.nrdconta,'fm00000000') ||
+                                     ' ,pr_cdpesqbb=' || TO_CHAR(rw_craplim.nrctrlim) ||
+                                     ' ,pr_cdfvlcop=' || vr_cdfvlcop ||
+                                     ' ,pr_inproces=' || rw_crapdat.inproces ||
+                                     ' ,pr_rowid_craplat=' || vr_rowid_craplat ||                         
+                                     ' - Module: ' || vr_nmdatela ||
+                                     ' - Action: ' || vr_acao;
+                                            
+              -- Colocado Log no padrão - 29/06/2017 - Chamado 660306
+              -- Envio centralizado de log de erro                     
+              cecred.pc_log_programa(pr_dstiplog      => 'O',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                     pr_cdprograma    => vr_nmdatela,  -- tbgen_prglog
+                                     pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                                     pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                     pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
+                                     pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                     pr_dsmensagem    => vr_dscritic,-- tbgen_prglog_ocorrencia
+                                     pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
+                                     pr_nmarqlog      => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE'),
+                                     pr_idprglog      => vr_idprglog
+                                     );
+                            
             END IF;
           END IF; -- vr_vltarrnv > 0
         ELSE
@@ -1043,7 +1120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
           IF rw_craplim.insitlim = 4  THEN
             vr_flgregis := FALSE;
           END IF;
-            
+
           /** Se foi encontrado um bordero pendente para o limite **/
           IF vr_qtborati > 0 THEN
             IF rw_craplim.insitlim <> 4  THEN
@@ -1052,7 +1129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
           ELSE
             rw_craplim.insitlim := 3; /** Cancelado **/
             rw_craplim.dtcancel := rw_crapdat.dtmvtolt;
-                        
+
             -- Chama rotina para desativar o rating
             rati0001.pc_desativa_rating(pr_cdcooper => vr_cdcooper,
                                         pr_cdagenci => 0,
@@ -1070,6 +1147,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                                         pr_flgerlog => 'S',
                                         pr_des_reto => vr_des_reto,
                                         pr_tab_erro => vr_tt_erro);
+
+           -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+            GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => vr_acao); 
+
             -- Verifica se ocorreu erro
             IF vr_des_reto = 'NOK' THEN
               -- Tenta buscar o erro no vetor de erro
@@ -1084,15 +1165,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
               IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
                 -- Buscar a descrição
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              ELSIF vr_cdcritic = 9999 AND vr_dscritic IS NOT NULL THEN
+                -- Buscar a descrição
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) || vr_dscritic;
+                
               END IF;
-              -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',vr_cdcooper,
-                                                                                      'NOME_ARQ_LOG_MESSAGE')
-                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> '
-                                                         || vr_dscritic );
+
+              vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                                     ' --> ' || 
+                                     'ERRO: ' ||
+                                     vr_dscritic ||
+                                     ' pr_cdcooper=' || vr_cdcooper ||
+                                     ' ,cdoperad=' || vr_cdoperad ||
+                                     ' ,nrdconta=' || rw_craplim.nrdconta ||
+                                     ' ,tpctrrat=' || rw_craplim.tpctrlim ||
+                                     ' ,nrctrrat=' || rw_craplim.nrctrlim ||
+                                     ' ,inusatab=' || sys.diutil.bool_to_int ( vr_inusatab ) ||                         
+                                     ' - Module: ' || vr_nmdatela ||
+                                     ' - Action: ' || vr_acao;
+              
+              -- Colocado Log no padrão - 29/06/2017 - Chamado 660306
+              -- Envio centralizado de log de erro                 
+              cecred.pc_log_programa(pr_dstiplog      => 'O',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                     pr_cdprograma    => vr_nmdatela,  -- tbgen_prglog
+                                     pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                                     pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                     pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
+                                     pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                     pr_dsmensagem    => vr_dscritic,-- tbgen_prglog_ocorrencia
+                                     pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
+                                     pr_nmarqlog      => gene0001.fn_param_sistema('CRED',3,'NOME_ARQ_LOG_MESSAGE'),
+                                     pr_idprglog      => vr_idprglog
+                                     );
               vr_dscritic := NULL;
               vr_cdcritic := 0;
             END IF;
@@ -1105,8 +1209,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                SET insitlim = rw_craplim.insitlim,
                    dtcancel = rw_craplim.dtcancel
              WHERE ROWID = rw_craplim.rowid;
+      
           EXCEPTION
-            WHEN OTHERS THEN
+            WHEN OTHERS THEN        
+              -- Colocado Log no padrão - 29/06/2017 - Chamado 660306
+              CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+        
               vr_dscritic := '2-Erro ao alterar CRAPLIM: ' ||SQLERRM;
               RAISE vr_exc_saida;
           END;
@@ -1446,8 +1554,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
 
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || vr_dscritic || '</Erro><TpException>2</TpException></Root>');
       WHEN OTHERS THEN
+        -- Colocado Log no padrão - 29/06/2017 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+        
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em CRPS517: ' || SQLERRM;
+        pr_dscritic := 'Falha em LIMI0002.pc_crps517, erro: ' || SQLERRM;
 
         -- Desfaz as alterações da base
         ROLLBACK;
