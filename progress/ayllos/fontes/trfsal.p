@@ -24,7 +24,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Dezembro/2006                      Ultima alteracao: 22/09/2016
+   Data    : Dezembro/2006                      Ultima alteracao: 14/06/2017
    
    Dados referentes ao programa:
 
@@ -149,6 +149,8 @@
                             
               22/09/2016 - Alterar para exibir o glb_dscritic ao invés do glb_cdcritic
                            (Lucas Ranghetti #500917)
+						   
+			  14/06/2017 - Criando a opcao M conforme solicitado no chamado 660583. (Kelvin)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -184,6 +186,9 @@ DEF    VAR tel_dscancel     AS CHAR    FORMAT "x(08)" INIT "Cancelar" NO-UNDO.
 DEF    VAR aux_cddopcao     AS CHAR                                   NO-UNDO.
 DEF    VAR flg_doctobb      AS LOG INIT NO                            NO-UNDO.
 DEF    VAR aux_ponteiro     AS INT                                    NO-UNDO.
+DEF    VAR aux_cddopcam     AS CHAR format "!(1)"                     NO-UNDO.
+DEF    VAR aux_cdempres     AS INT                                    NO-UNDO.
+
   
 DEF    VAR aux_cdcritic AS INTE                                  NO-UNDO.
 DEF    VAR aux_dscritic AS CHAR                                  NO-UNDO.
@@ -194,6 +199,22 @@ DEF    VAR aux_nrdcomto     AS INT                                    NO-UNDO.
 DEF    VAR aux_hrlimite     AS INT                                    NO-UNDO.
 DEF    VAR aux_strhrlim     AS CHAR                                   NO-UNDO. 
 DEF    VAR aux_contregi     AS INT                                    NO-UNDO.
+DEF    VAR aux_cdhiscre     AS INT                                    NO-UNDO.
+
+/* Variáveis utilizadas para receber clob da rotina no oracle */
+DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+DEF VAR xRoot2        AS HANDLE   NO-UNDO.
+DEF VAR xRoot3        AS HANDLE   NO-UNDO.   
+DEF VAR xField        AS HANDLE   NO-UNDO.
+DEF VAR xField2       AS HANDLE   NO-UNDO.  
+DEF VAR xText         AS HANDLE   NO-UNDO. 
+DEF VAR xText2        AS HANDLE   NO-UNDO. 
+DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO.
+DEF VAR aux_cont_crit AS INTEGER  NO-UNDO. 
+DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+DEF    VAR xml_req          AS LONGCHAR                               NO-UNDO.
+DEF    VAR ponteiro_xml     AS MEMPTR   							  NO-UNDO.
 
 DEF    VAR h-b1wgen0118     AS HANDLE                                 NO-UNDO.
 DEF    VAR h-b1wgen9999     AS HANDLE                                 NO-UNDO.
@@ -253,13 +274,34 @@ DEF TEMP-TABLE crattem                                                NO-UNDO
        FIELD tppessoa AS INT FORMAT "9"
        INDEX crattem1 cdseqarq nrdolote.
 
+DEF TEMP-TABLE tt_retorno_bacen                                       NO-UNDO
+       FIELD cdempres LIKE craplfp.cdempres
+       FIELD nrdconta LIKE craplcs.nrdconta
+       FIELD cdagenci LIKE craplcs.cdagenci 
+	   FIELD dtmvtolt LIKE craplcs.dtmvtolt
+	   FIELD dttransf LIKE craplcs.dttransf
+	   FIELD vllanmto LIKE craplcs.vllanmto
+	   FIELD cdbantrf LIKE crapccs.cdbantrf
+	   FIELD cdagetrf LIKE crapccs.cdagetrf
+	   FIELD nrctatrf LIKE crapccs.nrctatrf
+	   FIELD nrridlfp LIKE craplcs.nrridlfp
+	   FIELD cdcooper LIKE craplcs.cdcooper
+	   FIELD nrdocmto LIKE craplcs.nrdocmto
+	   FIELD flgenvio LIKE craplcs.flgenvio
+	   FIELD nmfuncio LIKE crapccs.nmfuncio
+	   FIELD nmarqenv LIKE craplcs.nmarqenv
+	   FIELD hrtransf LIKE craplcs.hrtransf
+	   FIELD idopetrf LIKE craplcs.idopetrf
+	   FIELD cdhistor LIKE craplcs.cdhistor
+	   FIELD idseleca AS CHAR.
+       	   
 FORM SPACE(1)
      WITH ROW 4 OVERLAY 16 DOWN WIDTH 80 TITLE glb_tldatela FRAME f_moldura.
 
 FORM glb_cddopcao  AT  3  LABEL "Opcao"
-                          VALIDATE(CAN-DO("B,C,E,R,T,X",glb_cddopcao),
+                          VALIDATE(CAN-DO("B,C,E,R,T,X,M",glb_cddopcao),
                                    "014 - Opcao errada.")
-                          HELP "Informe a opcao desejada (B, C, E, R, T ou X)"
+                          HELP "Informe a opcao desejada (B, C, E, R, T, X ou M)"
      WITH SIDE-LABELS OVERLAY NO-BOX ROW 6 COLUMN 2 FRAME f_trfsal.
 
 FORM "(B) - Gerar arquivos"        SKIP
@@ -268,8 +310,21 @@ FORM "(B) - Gerar arquivos"        SKIP
      "(R) - Relatorio"             SKIP
      "(T) - Extrato"               SKIP
      "(X) - Reenvio de Rejeicoes"  SKIP
-     WITH SIZE 40 BY 8 CENTERED OVERLAY ROW 9
+	 "(M) - Ajuste Manual"  	   SKIP
+     WITH SIZE 40 BY 9 CENTERED OVERLAY ROW 10
           TITLE "Escolha uma das opcoes abaixo:" FRAME f_helpopcao.
+
+FORM aux_cddopcam AT 3  LABEL "Opcao"
+						VALIDATE(CAN-DO("E,T",aux_cddopcam),
+                                   "014 - Opcao errada.")
+						HELP "Informe a opcao desejada (E ou T)" SKIP(1)
+	 "(E) - Estornar e devolver para a empresa" AT 3  	  		    SKIP
+     "(T) - Marcar os registros como transmitidos manualmente" AT 3 SKIP	 
+     WITH SIDE-LABELS SIZE 60 BY 7 CENTERED OVERLAY ROW 10 FRAME f_mopcao.	  
+		  
+FORM aux_cdempres AT 3  LABEL "Empresa"						
+						HELP "Informe o codigo da empresa"  
+     WITH SIDE-LABELS NO-BOX SIZE 71 BY 7 CENTERED OVERLAY ROW 6 FRAME f_empres.
 
 DEF QUERY q_craxlcs_e FOR craxlcs.
   
@@ -284,6 +339,20 @@ DEF BROWSE b_craxlcs_e QUERY q_craxlcs_e
           craxlcs.cdagetrf COLUMN-LABEL "Age"      FORMAT "zzz9"
           craxlcs.nrctatrf COLUMN-LABEL "Conta TRF"
           WITH 12 DOWN.
+          
+DEF QUERY q_craxlcs_m FOR tt_retorno_bacen.
+  
+DEF BROWSE b_craxlcs_m QUERY q_craxlcs_m
+    DISPLAY tt_retorno_bacen.idseleca COLUMN-LABEL ""         FORMAT "x(01)"
+          tt_retorno_bacen.nrdconta COLUMN-LABEL "Conta/dv"
+          tt_retorno_bacen.cdagenci COLUMN-LABEL "PA"       FORMAT "zz9"
+          tt_retorno_bacen.dtmvtolt COLUMN-LABEL "Dt.Credi" FORMAT "99/99/99"
+          tt_retorno_bacen.dttransf COLUMN-LABEL "Dt.Trans" FORMAT "99/99/99"
+          tt_retorno_bacen.vllanmto COLUMN-LABEL "Valor"    FORMAT "zzzz9.99"
+          tt_retorno_bacen.cdbantrf COLUMN-LABEL "Bco"      FORMAT "zzz9"
+          tt_retorno_bacen.cdagetrf COLUMN-LABEL "Age"      FORMAT "zzz9"
+          tt_retorno_bacen.nrctatrf COLUMN-LABEL "Conta TRF"
+          WITH 12 DOWN.		  
           
 DEF QUERY q_craxlcs_x FOR craxlcs.
   
@@ -304,6 +373,9 @@ FORM b_craxlcs_e HELP "ENTER - Selecionar / F5 - Processar / F6 - Processar Todo
 
 FORM b_craxlcs_x HELP "F5 - Executar / F4 - Sair"
     WITH ROW 5 COLUMN 4 OVERLAY NO-BOX FRAME f_browser_x.
+
+FORM b_craxlcs_m HELP "ENTER - Selecionar / F5 - Executar / F4 - Sair"
+    WITH ROW 5 COLUMN 4 OVERLAY NO-BOX FRAME f_browser_m.	
 
 VIEW FRAME f_moldura.
 PAUSE 0.
@@ -447,7 +519,7 @@ ON ANY-KEY OF b_craxlcs_e IN FRAME f_browser_e DO:
                     END.
                   ELSE
                     DO:
-                      RUN efetua_processo_e.
+                      RUN efetua_processo(INPUT "E").
                       
                       IF RETURN-VALUE <> "OK" THEN
                         DO:
@@ -489,7 +561,7 @@ ON ANY-KEY OF b_craxlcs_e IN FRAME f_browser_e DO:
                 END.
               ELSE
                 DO:
-                  RUN efetua_processo_e.
+                  RUN efetua_processo(INPUT "E").
 
                   IF RETURN-VALUE <> "OK" THEN
                     DO:
@@ -508,6 +580,155 @@ ON ANY-KEY OF b_craxlcs_e IN FRAME f_browser_e DO:
           ELSE
             DO:
               EMPTY TEMP-TABLE craxlcs.
+              
+              BELL.
+              MESSAGE "Nao ha registros a serem processados.".
+              PAUSE 2 NO-MESSAGE. 
+              APPLY "GO".
+            END.
+        END.   
+    END.
+END. /* "ENTER" */
+
+/* "ENTER" */
+ON ANY-KEY OF b_craxlcs_m IN FRAME f_browser_m DO:
+    
+  HIDE MESSAGE NO-PAUSE.
+  
+  ASSIGN aux_tipselec = "".
+  
+  IF KEY-FUNCTION(LASTKEY) = "CURSOR-DOWN" THEN
+    DO:
+      RETURN.
+    END.
+  ELSE IF KEY-FUNCTION(LASTKEY) = "CURSOR-UP" THEN
+    DO:
+      RETURN.
+    END.
+  ELSE
+    DO:   
+      
+      IF KEY-FUNCTION(LASTKEY) = "END-ERROR" THEN
+          DO:
+                        
+            CLEAR FRAME f_browser_m.
+            CLEAR FRAME q_craxlcs_m.
+			CLEAR FRAME f_mopcao.
+            
+            HIDE FRAME f_browser_m.
+            HIDE FRAME q_craxlcs_m.
+            HIDE BROWSE b_craxlcs_m.
+			HIDE FRAME f_mopcao.
+            
+            RETURN.
+          END.
+      ELSE IF KEY-FUNCTION(LASTKEY) = "GET" THEN
+        DO:
+          IF TEMP-TABLE tt_retorno_bacen:HAS-RECORDS THEN
+            DO:
+                
+              ASSIGN aux_tipselec = "F5".
+              
+              IF aux_contador <= 0 THEN
+                DO: 
+                  MESSAGE "Favor selecionar pelo menos um registro!".
+                END.
+              ELSE
+                DO:
+                  RUN fontes/confirma.p (INPUT "Confirma processamento dos registros selecionados?",
+                                        OUTPUT aux_confirma).
+                         
+                  IF aux_confirma <> "S" THEN
+					DO:
+                      RETURN.
+                    END.
+                  ELSE
+                    DO:
+					  VIEW FRAME f_mopcao.
+                      
+					  DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+						UPDATE aux_cddopcam WITH FRAME f_mopcao.
+						LEAVE.
+					  END.
+					  
+					  IF aux_cddopcam = "E"   THEN
+					   	DO:
+						  RUN efetua_processo(INPUT "M").  
+						END.
+					  ELSE
+					    DO:
+						  FOR EACH tt_retorno_bacen WHERE tt_retorno_bacen.cdcooper = glb_cdcooper
+										              AND tt_retorno_bacen.idseleca <> "" 
+										              AND tt_retorno_bacen.idseleca <> ? NO-LOCK:
+						  
+						    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+						    RUN STORED-PROCEDURE pc_trfsal_transmitidos aux_handproc = PROC-HANDLE NO-ERROR
+						    					  (INPUT glb_cdcooper,					  
+						    					   INPUT tt_retorno_bacen.nrridlfp,
+						    					  OUTPUT aux_cdcritic,
+						    					  OUTPUT aux_dscritic).
+						    					
+						    CLOSE STORED-PROC pc_trfsal_transmitidos aux_statproc = PROC-STATUS 
+						    	    WHERE PROC-HANDLE = aux_handproc.		
+                            
+						    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+						    
+						    ASSIGN aux_cdcritic = 0
+						    	     aux_dscritic = ""		   
+						    	     aux_cdcritic = pc_trfsal_transmitidos.pr_cdcritic
+						    				  	    WHEN pc_trfsal_transmitidos.pr_cdcritic <> ?
+						    	     aux_dscritic = pc_trfsal_transmitidos.pr_dscritic
+						    					    WHEN pc_trfsal_transmitidos.pr_dscritic <> ?.
+                            
+						    /*TRATAR RETORNO DE ERRO AQUI*/
+							IF aux_cdcritic <> 0  OR
+						      (aux_dscritic <> ? AND
+						       aux_dscritic <> "")THEN
+							  DO:
+							    RUN gera_erro (INPUT glb_cdcooper,
+							  				   INPUT glb_cdagenci,
+							  				   INPUT 1,
+							  				   INPUT 1,          /** Sequencia **/
+							  				   INPUT aux_cdcritic,
+							  				   INPUT-OUTPUT aux_dscritic).
+							    RETURN "NOK".
+							  END.
+							ELSE
+							  DO:
+							    BELL.
+							    MESSAGE "Processo efetuado com sucesso.".
+							    PAUSE 2 NO-MESSAGE.
+								HIDE FRAME f_browser_m.
+								HIDE FRAME q_craxlcs_m.
+								HIDE BROWSE b_craxlcs_m.
+								HIDE FRAME f_mopcao.									
+							    APPLY "GO".
+							  END.
+							
+						  END.
+					    END.
+					  
+                      IF RETURN-VALUE <> "OK" THEN
+                        DO:
+                          RETURN.
+                        END.
+                      ELSE
+                        DO:
+                          BELL.
+                          MESSAGE "Processo efetuado com sucesso.".
+                          PAUSE 2 NO-MESSAGE.                      
+                          HIDE FRAME f_browser_m.
+						  HIDE FRAME q_craxlcs_m.
+						  HIDE BROWSE b_craxlcs_m.
+						  HIDE FRAME f_mopcao.	
+                          APPLY "GO".
+                        END.
+                    END.
+                END.
+            END.
+          ELSE
+            DO:
+              EMPTY TEMP-TABLE tt_retorno_bacen.
               
               BELL.
               MESSAGE "Nao ha registros a serem processados.".
@@ -545,6 +766,39 @@ ON ENTER OF b_craxlcs_e IN FRAME f_browser_e DO:
                aux_contador = aux_contador + 1.
         /* Passa a proxima linha para facilitar a digitacao */
         APPLY "CURSOR-DOWN" TO b_craxlcs_e IN FRAME f_browser_e.
+        
+      END.   
+  
+  RETURN.
+
+END. /* "ENTER" */
+
+/* Pressionar ENTER para selecionar/descelecionar os registros da opcao M */
+ON ENTER OF b_craxlcs_m IN FRAME f_browser_m DO:
+          
+    HIDE MESSAGE NO-PAUSE.
+  
+    /* Procura o registro corrente/selecionado no browse */
+    FIND CURRENT tt_retorno_bacen EXCLUSIVE-LOCK NO-ERROR.
+    
+    IF NOT AVAILABLE tt_retorno_bacen THEN
+      RETURN.
+    
+    /* Seleciona/Desmarca a linha conforme a interacao do usuario */
+    IF tt_retorno_bacen.idseleca:SCREEN-VALUE IN BROWSE b_craxlcs_m = "*" THEN
+      DO:
+          ASSIGN tt_retorno_bacen.idseleca:SCREEN-VALUE IN BROWSE b_craxlcs_m = ""
+                 tt_retorno_bacen.idseleca = "" 
+                 aux_contador = aux_contador - 1.                      
+      END.
+    ELSE 
+      DO:
+        /* atualiza o registro = selecionado! */
+        ASSIGN tt_retorno_bacen.idseleca:SCREEN-VALUE IN BROWSE b_craxlcs_m = "*"
+               tt_retorno_bacen.idseleca = "*"
+               aux_contador = aux_contador + 1.
+        /* Passa a proxima linha para facilitar a digitacao */
+        APPLY "CURSOR-DOWN" TO b_craxlcs_m IN FRAME f_browser_m.
         
       END.   
   
@@ -606,6 +860,9 @@ DO WHILE TRUE:
    ELSE
    IF glb_cddopcao = "E"   THEN
     RUN opcao_e.
+   ELSE
+   IF glb_cddopcao = "M"   THEN
+		RUN opcao_m.
 
 END. /* Fim DO WHILE TRUE */
 
@@ -1309,6 +1566,81 @@ PROCEDURE opcao_t:
 
 END PROCEDURE. /* Fim opcao_t */
 
+PROCEDURE opcao_m:
+      
+  HIDE FRAME f_trfsal.
+  HIDE FRAME f_helpopcao.
+
+  CLEAR FRAME f_browser_m.
+  CLEAR FRAME q_craxlcs_m.
+  
+  VIEW FRAME f_empres.
+                      
+  DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+	UPDATE aux_cdempres WITH FRAME f_empres.
+	LEAVE.
+  END.
+  
+  IF  KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN     /*   F4 OU FIM   */
+	  DO:
+		
+		aux_cdempres = 0.
+	    CLEAR FRAME f_browser_m.
+		CLEAR FRAME q_craxlcs_m.
+		CLEAR FRAME f_mopcao.
+		CLEAR FRAME f_empres.
+		
+		HIDE FRAME f_browser_m.
+		HIDE FRAME q_craxlcs_m.
+		HIDE BROWSE b_craxlcs_m.
+		HIDE FRAME f_mopcao.
+  HIDE FRAME f_empres.
+		RETURN.
+			
+	  END. 
+	  
+	  
+  HIDE FRAME f_empres.
+  CLEAR FRAME f_empres.
+  
+  RUN consulta_registros_m(INPUT aux_cdempres,
+						   OUTPUT TABLE tt_retorno_bacen).
+  
+  
+  OPEN QUERY q_craxlcs_m FOR EACH tt_retorno_bacen NO-LOCK.    
+  
+  REPOSITION q_craxlcs_m TO ROW(1).  
+  
+  DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+    UPDATE b_craxlcs_m WITH FRAME f_browser_m.
+    LEAVE.
+  END. 
+  
+  IF  KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN     /*   F4 OU FIM   */
+	  DO:
+		
+		aux_cdempres = 0.
+	    CLEAR FRAME f_browser_m.
+		CLEAR FRAME q_craxlcs_m.
+		CLEAR FRAME f_mopcao.
+		
+		HIDE FRAME f_browser_m.
+		HIDE FRAME q_craxlcs_m.
+		HIDE BROWSE b_craxlcs_m.
+		HIDE FRAME f_mopcao.
+  END. 
+  
+  EMPTY TEMP-TABLE tt_retorno_bacen.
+        
+  CLEAR FRAME f_browser_m.
+  CLEAR FRAME q_craxlcs_m.
+  
+  HIDE FRAME f_browser_m.
+  HIDE FRAME q_craxlcs_m.
+  HIDE BROWSE b_craxlcs_m.
+  
+END PROCEDURE. /* Fim opcao_e */
+
 /* Verifica se existe o lote, cria e/ou "prende" conforme necessario */
 PROCEDURE verifica_lote:
 
@@ -1399,7 +1731,9 @@ PROCEDURE consulta_registros:
   
 END PROCEDURE.
 
-PROCEDURE efetua_processo_e:
+/*Utilizado pela opcao E e M*/
+PROCEDURE efetua_processo:
+	DEF INPUT PARAM par_cddopcao AS CHAR                              NO-UNDO.
   
   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
   
@@ -1449,6 +1783,26 @@ PROCEDURE efetua_processo_e:
   
   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }  
   
+  /*Processo especifico da opcao M*/
+  IF par_cddopcao = "M" THEN
+	DO:
+	  { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+  
+	  /*** Faz a busca do historico da transação ***/
+	  RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
+	   aux_ponteiro = PROC-HANDLE
+	   ("SELECT gene0001.fn_param_sistema('CRED','" +
+		STRING(glb_cdcooper) + "','FOLHAIB_HIST_REC_TECSAL') FROM DUAL").
+	  
+	  FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+	   ASSIGN aux_cdhiscre = INT(proc-text).
+	  END.
+	  
+	  CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+	   WHERE PROC-HANDLE = aux_ponteiro.
+	  { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }  
+	END.
+	
   Processo: 
   DO TRANSACTION ON ERROR  UNDO Processo, LEAVE Processo
                  ON QUIT   UNDO Processo, LEAVE Processo
@@ -1480,6 +1834,96 @@ PROCEDURE efetua_processo_e:
         END.                   
       END.
     
+    
+	/*Processo especifico da opcao M*/
+	IF par_cddopcao = "M" THEN
+		DO:
+			FOR EACH tt_retorno_bacen WHERE tt_retorno_bacen.cdcooper = glb_cdcooper
+										AND tt_retorno_bacen.idseleca <> "" 
+										AND tt_retorno_bacen.idseleca <> ? NO-LOCK:
+									
+				FIND craplcs WHERE craplcs.cdcooper = glb_cdcooper
+							   AND craplcs.dtmvtolt = glb_dtmvtolt
+							   AND craplcs.nrdconta = tt_retorno_bacen.nrdconta
+							   AND craplcs.cdhistor = aux_cdhiscre
+							   AND craplcs.nrdocmto = tt_retorno_bacen.nrdocmto NO-LOCK NO-ERROR NO-WAIT.  
+				  
+				IF AVAILABLE craplcs THEN
+					ASSIGN aux_nrdcomto = tt_retorno_bacen.nrdocmto + 1000000.
+				ELSE
+					ASSIGN aux_nrdcomto = tt_retorno_bacen.nrdocmto.
+			 
+				CREATE craplcs.
+				ASSIGN craplcs.cdcooper = glb_cdcooper
+					   craplcs.cdopecrd = glb_cdoperad
+					   craplcs.dtmvtolt = glb_dtmvtolt
+					   craplcs.nrdconta = tt_retorno_bacen.nrdconta
+					   craplcs.nrdocmto = aux_nrdcomto
+					   craplcs.vllanmto = tt_retorno_bacen.vllanmto
+					   craplcs.cdhistor = aux_cdhiscre
+					   craplcs.nrdolote = aux_nrdolote
+					   craplcs.cdbccxlt = 100
+					   craplcs.cdagenci = 1
+					   craplcs.flgenvio = TRUE
+					   craplcs.flgopfin = TRUE
+					   craplcs.dttransf = TODAY
+					   craplcs.hrtransf = TIME
+					   craplcs.idopetrf = tt_retorno_bacen.idopetrf
+					   craplcs.cdopetrf = glb_cdoperad
+					   craplcs.cdsitlcs = 1
+					   craplcs.nrridlfp = tt_retorno_bacen.nrridlfp
+					   craplot.qtinfoln = craplot.qtinfoln + 1
+					   craplot.qtcompln = craplot.qtcompln + 1
+					   craplot.vlinfocr = craplot.vlinfocr + tt_retorno_bacen.vllanmto
+					   craplot.vlcompcr = craplot.vlcompcr + tt_retorno_bacen.vllanmto
+					   craplot.nrseqdig = craplot.nrseqdig + 1.
+					   
+					   
+				FIND craplfp WHERE craplfp.cdcooper = glb_cdcooper
+							   AND RECID(craplfp)   = tt_retorno_bacen.nrridlfp EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+				IF AVAILABLE craplfp THEN
+					DO:
+						ASSIGN craplfp.idsitlct = "D"
+							   craplfp.dsobslct = "Registro devolvido a empresa por Rejeição da TEC".
+					END.            
+				  
+				FIND crapemp WHERE crapemp.cdcooper = glb_cdcooper
+							   AND crapemp.cdempres = craplfp.cdempres NO-LOCK NO-ERROR NO-WAIT.
+
+				IF AVAILABLE crapemp THEN
+					DO:
+						FIND cratemp WHERE cratemp.cdempres = crapemp.cdempres NO-LOCK NO-ERROR.
+
+						IF AVAILABLE cratemp THEN
+							DO:
+								FIND CURRENT cratemp EXCLUSIVE-LOCK.
+								ASSIGN cratemp.vllanmto = cratemp.vllanmto + tt_retorno_bacen.vllanmto.
+							END.
+						ELSE
+							DO:
+								CREATE cratemp.
+								ASSIGN cratemp.cdempres = crapemp.cdempres
+									   cratemp.nrdconta = crapemp.nrdconta
+									   cratemp.vllanmto = tt_retorno_bacen.vllanmto.
+							END.
+					END.
+		 
+				FIND craplcs WHERE craplcs.cdcooper = tt_retorno_bacen.cdcooper
+							   AND craplcs.dtmvtolt = tt_retorno_bacen.dtmvtolt
+							   AND craplcs.nrdconta = tt_retorno_bacen.nrdconta
+							   AND craplcs.cdhistor = tt_retorno_bacen.cdhistor
+							   AND craplcs.nrdocmto = tt_retorno_bacen.nrdocmto EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+			  
+				IF AVAILABLE craplcs THEN
+					DO:
+						ASSIGN craplcs.flgenvio = TRUE. 
+					END.
+			
+			END. /*END FOR*/
+		END.
+	ELSE
+		DO:
     FOR EACH craxlcs WHERE craxlcs.cdcooper = glb_cdcooper
                        AND craxlcs.idseleca <> "" 
                        AND craxlcs.idseleca <> ? NO-LOCK:    
@@ -1520,6 +1964,7 @@ PROCEDURE efetua_processo_e:
              craplot.vlcompdb = craplot.vlcompdb + craxlcs.vllanmto
              craplot.nrseqdig = craplot.nrseqdig + 1.
 
+				
       FIND craplfp WHERE craplfp.cdcooper = glb_cdcooper
                      AND RECID(craplfp)   = craxlcs.nrridlfp EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -1561,6 +2006,7 @@ PROCEDURE efetua_processo_e:
           ASSIGN craplcs.flgenvio = TRUE. 
         END.
     END.
+		END.
     
     /* Leitura de registros de empresas */
     FOR EACH cratemp NO-LOCK:
@@ -1622,6 +2068,32 @@ PROCEDURE efetua_processo_e:
     
   END. /* Fim Transacao */
 
+  /*Processo especifico da opcao M*/
+  IF par_cddopcao = "M" THEN
+	DO:
+		{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+		RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+		  (INPUT "O",
+		   INPUT "TRFSAL",
+		   input glb_cdcooper,
+		   input 0,
+		   input 4,
+		   input 0,
+		   input 0,
+		   input STRING(TODAY,"99/99/9999") + " " + STRING(time,"HH:MM:SS") + " - TRFSAL --> Detalhes: AJUSTE MANUAL de TRFSAL - EMP " 
+				 + STRING(craplfp.cdempres) + " - CONTA " + STRING(craplcs.nrdconta) + " – VALOR DE R$ " + STRING(craplcs.vllanmto,"zzz,zzz,zzz,zz9.99") 
+				 + " – REGISTRO MARCADO PARA DEVOLUCAO POR: " + STRING(glb_cdoperad) + " - " + STRING(glb_nmoperad),
+		   input 1,
+		   INPUT "FOLHIB", /* nmarqlog */
+		   input 0,  /* flabrechamado */
+		   input "", /* texto_chamado */
+		   input "", /* destinatario_email */
+		   input 0,  /* flreincidente */
+		   INPUT 0).
+		CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+		{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+	END.
+  
   RETURN "OK".
   
 END PROCEDURE.
@@ -1724,4 +2196,122 @@ PROCEDURE efetua_processo_x:
   RETURN "OK".
     
 END PROCEDURE.
+
+PROCEDURE consulta_registros_m:
+DEFINE INPUT PARAMETER par_cdempres AS INTE				NO-UNDO.
+DEFINE OUTPUT PARAMETER TABLE FOR tt_retorno_bacen.
+	
+	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+	RUN STORED-PROCEDURE pc_trfsal_opcao_m aux_handproc = PROC-HANDLE NO-ERROR
+						(INPUT glb_cdcooper,
+						 INPUT par_cdempres,
+						OUTPUT "",
+						OUTPUT aux_cdcritic,
+						OUTPUT aux_dscritic).
+						
+	CLOSE STORED-PROC pc_trfsal_opcao_m aux_statproc = PROC-STATUS 
+		  WHERE PROC-HANDLE = aux_handproc.		
+
+	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+	
+	ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""		   
+           aux_cdcritic = pc_trfsal_opcao_m.pr_cdcritic
+                          WHEN pc_trfsal_opcao_m.pr_cdcritic <> ?
+           aux_dscritic = pc_trfsal_opcao_m.pr_dscritic
+                          WHEN pc_trfsal_opcao_m.pr_dscritic <> ?.
+
+	/*TRATAR RETORNO DE ERRO AQUI*/
+	IF aux_cdcritic <> 0  OR
+      (aux_dscritic <> ? AND
+       aux_dscritic <> "")THEN
+    DO:
+      RUN gera_erro (INPUT glb_cdcooper,
+                     INPUT glb_cdagenci,
+                     INPUT 1,
+                     INPUT 1,          /** Sequencia **/
+                     INPUT aux_cdcritic,
+                     INPUT-OUTPUT aux_dscritic).
+      RETURN "NOK".
+    END.
+	
+	EMPTY TEMP-TABLE tt_retorno_bacen.
+	
+	/* Buscar o XML na tabela de retorno da procedure Progress */ 
+	ASSIGN xml_req = pc_trfsal_opcao_m.pr_retxml.
+	
+	/* Efetuar a leitura do XML*/ 
+	SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+	PUT-STRING(ponteiro_xml,1) = xml_req. 
+	
+	/* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+	
+	IF ponteiro_xml <> ? THEN
+		DO:
+			xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+			xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+		
+			DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+		
+				xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+		
+				IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+					NEXT. 
+			   
+				IF xRoot2:NUM-CHILDREN > 0 THEN
+					CREATE tt_retorno_bacen.
+		
+				DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+				   
+					xRoot2:GET-CHILD(xField,aux_cont).
+					  
+					IF xField:SUBTYPE <> "ELEMENT" THEN 
+						NEXT. 
+				  
+					xField:GET-CHILD(xText,1).
+				  
+					ASSIGN tt_retorno_bacen.cdempres = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdempres"
+						   tt_retorno_bacen.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta"
+						   tt_retorno_bacen.cdagenci = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci"
+						   tt_retorno_bacen.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt"
+						   tt_retorno_bacen.dttransf = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dttransf"
+						   tt_retorno_bacen.vllanmto = DECIMAL(xText:NODE-VALUE) WHEN xField:NAME = "vllanmto"
+						   tt_retorno_bacen.cdbantrf = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbantrf"
+						   tt_retorno_bacen.cdagetrf = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagetrf"
+						   tt_retorno_bacen.nrctatrf = DECIMAL(xText:NODE-VALUE) WHEN xField:NAME = "nrctatrf"
+						   tt_retorno_bacen.nrridlfp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrridlfp"						   
+						   tt_retorno_bacen.cdcooper = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdcooper"
+						   tt_retorno_bacen.nrdocmto = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdocmto"
+						   tt_retorno_bacen.flgenvio = IF INT(xText:NODE-VALUE) = 0 THEN FALSE ELSE TRUE WHEN xField:NAME = "flgenvio"
+						   tt_retorno_bacen.nmfuncio = STRING(xText:NODE-VALUE) WHEN xField:NAME = "nmfuncio"
+						   tt_retorno_bacen.nmarqenv = STRING(xText:NODE-VALUE) WHEN xField:NAME = "nmarqenv"
+						   tt_retorno_bacen.hrtransf = INT(xText:NODE-VALUE) WHEN xField:NAME = "hrtransf"
+						   tt_retorno_bacen.idopetrf = STRING(xText:NODE-VALUE) WHEN xField:NAME = "idopetrf"
+						   tt_retorno_bacen.cdhistor = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdhistor"						   						   
+						   tt_retorno_bacen.idseleca = "".
+													 
+				END. 
+				
+			END.
+		
+			SET-SIZE(ponteiro_xml) = 0. 
+  
+		END.
+		
+		/*Elimina os objetos criados*/
+		DELETE OBJECT xDoc. 
+		DELETE OBJECT xRoot. 
+		DELETE OBJECT xRoot2. 
+		DELETE OBJECT xField. 
+		DELETE OBJECT xText.
+	
+END PROCEDURE.
+
+
+
 /* ......................................................................... */
