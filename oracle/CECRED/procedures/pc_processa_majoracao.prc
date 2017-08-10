@@ -1,15 +1,17 @@
-create or replace procedure cecred.pc_processa_majoracao is
+create or replace procedure cecred.pc_processa_majoracao(pr_skcarga in number) is
   vr_dserro varchar2(1000);
+  vr_contador_rating number := 0;
 
   cursor c_cargas is
     select x.skcarga
       from INTEGRADADOS.DW_FATOCONTROLECARGA@SASP x
      where x.skprocesso = 118
        and x.qtregistroprocessado > 0
-       and x.qtregistrook = 0
-       and x.qtregistroatencao = 0
-       and x.qtregistroerro = 0
+       and nvl(x.qtregistrook,0) = 0
+       and nvl(x.qtregistroatencao,0) = 0
+       and nvl(x.qtregistroerro,0) = 0
        and x.dthorafiminclusao is not null
+       and x.skcarga = decode(pr_skcarga,0,x.skcarga,pr_skcarga)
      order
         by skcarga asc;
 
@@ -43,7 +45,7 @@ create or replace procedure cecred.pc_processa_majoracao is
     vr_majorado     number(1);
     vr_sqlerrm      varchar2(1000);
     --
-    vr_contador_rating number;
+    vr_limite_rating   number := 100;
     --
     vr_tab_impress_coop     RATI0001.typ_tab_impress_coop;
     vr_tab_impress_rating   RATI0001.typ_tab_impress_rating;
@@ -123,8 +125,6 @@ create or replace procedure cecred.pc_processa_majoracao is
          and a.nrctrlim = pr_nrctrlim
          and a.tpctrlim = 1;
   begin
-    vr_contador_rating := 0;
-    
     begin
       update INTEGRADADOS.DW_FATOCONTROLECARGA@SASP
          set dthorainicioprocesso         = sysdate
@@ -137,7 +137,7 @@ create or replace procedure cecred.pc_processa_majoracao is
         raise;
     end;
 
-    for r1 in c1 loop  
+    for r1 in c1 loop
       begin
         vr_dsmotivo := '';
         vr_dserro := '';
@@ -161,7 +161,7 @@ create or replace procedure cecred.pc_processa_majoracao is
         vr_vldivida := r1.vldivida;
         vr_dtbase   := r1.dtbase;
         
-        if vr_contador_rating > 100 then
+        if vr_contador_rating > vr_limite_rating and r1.idrating = 1 then
           raise er_qtd_rating;
         end if;
 
