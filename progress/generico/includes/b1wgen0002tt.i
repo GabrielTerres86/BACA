@@ -173,9 +173,6 @@
               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
                            
-              19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
-                           PRJ339 - CRM (Odirlei-AMcom)
-              
               07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
                            (Jaison/Marcos Martini - PRJ337)
                            
@@ -389,7 +386,6 @@ DEF TEMP-TABLE tt-interv-anuentes NO-UNDO
     FIELD nrcpfcgc LIKE crapavt.nrcpfcgc
     FIELD tpdocava LIKE crapavt.tpdocava
     FIELD nrdocava LIKE crapavt.nrdocava
-    FIELD cdnacion LIKE crapnac.cdnacion
     FIELD dsnacion LIKE crapnac.dsnacion
     FIELD nmconjug LIKE crapavt.nmconjug
     FIELD nrcpfcjg LIKE crapavt.nrcpfcjg
