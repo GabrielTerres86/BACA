@@ -3583,7 +3583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 21/06/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 09/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -3654,6 +3654,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              21/06/2017 - Mostrar lancamento futuro de cred de cobranca NPC pagos fora do sistema
   --                           Cecred por baixa operacional (Projeto 340 - Rafael)
+  --
+  --              09/08/2017 - Ajuste ao mostrar lançamento futuro de cred de cobranca NPC (Rafael)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4235,12 +4237,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,t.dtmvtolt
               ,SUM(decode(t.tpoperac_jd,'BO',t.vlbaixa,-t.vlbaixa)) vlcredito
               ,COUNT(*) qtcredito
+              ,nvl(t.flgbaixa_efetiva,0) flgefetv
           FROM tbcobran_baixa_operac t
         WHERE t.cdcooper = pr_cdcooper
           AND t.nrdconta = pr_nrdconta
           AND t.dtcredito >= pr_dtmvtolt
           AND t.tpoperac_jd IN ('BO','CB') -- BO=é um crédito futuro, CB=é um débito futuro
-          GROUP BY t.dtcredito, t.dtmvtolt;
+          GROUP BY t.dtcredito, t.dtmvtolt, t.flgbaixa_efetiva;
       rw_cred_npc cr_cred_npc%ROWTYPE;          
            
       --Variaveis Locais
@@ -5890,6 +5893,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       FOR rw_cred_npc IN cr_cred_npc (pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+                                     
+          -- se a data do credito for o dia atual e já foi efetivado
+          -- é porque já foi creditado na conta
+          IF rw_cred_npc.flgefetv = 1 AND 
+             rw_cred_npc.dtcredito = rw_crapdat.dtmvtolt THEN
+             CONTINUE;
+          END IF;                                     
 
           --Incrementar contador lancamentos na tabela
           vr_index:= pr_tab_lancamento_futuro.COUNT+1;
@@ -5897,7 +5907,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_cred_npc.dtcredito;
           pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_cred_npc.dtcredito,'DD/MM/YYYY');
           
-          IF rw_cred_npc.dtmvtolt = rw_crapdat.dtmvtolt THEN
+          IF rw_cred_npc.dtcredito > rw_crapdat.dtmvtolt THEN
             pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA - PREVISAO';
           ELSE
             pr_tab_lancamento_futuro(vr_index).dshistor:= 'CRED.COBRANCA';
