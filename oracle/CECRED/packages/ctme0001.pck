@@ -85,7 +85,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CTME0001 AS
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Odirlei Busana - AMcom
-  --  Data    : Maio/2014.                       Ultima atualizacao: 29/02/2016
+  --  Data    : Maio/2014.                       Ultima atualizacao: 10/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -93,8 +93,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CTME0001 AS
   -- Objetivo  : Agrupar rotinas de Controle de Movimentacao de especie
   --
   -- Alteracoes: 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
-  --                          solicitado no chamado 402159 (Kelvin)
-  --
+                              solicitado no chamado 402159 (Kelvin)
+
+                 10/08/2017 - #694567 Alteração do parâmetro pr_flg_impri para 'N' em pc_solicia_relato 
+                              pois este relatório não vai para a intranet (Carlos)
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   /******************************************************************************
@@ -147,7 +150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CTME0001 AS
                                  ,pr_qtcoluna  => 132                 --> 132 colunas
                                  ,pr_cdrelato  => 1                   --> codigo do relatorio
                                  ,pr_sqcabrel  => 1                   --> Sequencia do Relatorio {includes/cabrel132_5.i}
-                                 ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
+                                 ,pr_flg_impri => 'N'                 --> Chamar a impressão (Imprim.p)
                                  ,pr_nmformul  => '132col'            --> Nome do formulário para impressão
                                  ,pr_nrcopias  => 1                   --> Número de cópias
                                  ,pr_flg_gerar => 'S'                 --> gerar na hora
