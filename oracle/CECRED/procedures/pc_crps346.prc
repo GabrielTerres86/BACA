@@ -178,9 +178,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
              
               14/10/2016 - Conversao Progress >> Oracle PLSQL (Jonata-MOUTs)
 
-              21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
-                           email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
+			  19/01/2017 - Ajuste na gravacao das datas nas tabelas lot e rej.
+			               Quando executava pela COMPEFORA, os registros de lancamento
+						   nao eram encontrados, imprimindo em branco.
+						   Jonata (Mouts) - Chamado 588174
 
+              01/02/2017 - Tratar incorporacao da Transulcred. (Fabricio)	   
+  
               21/06/2017 - Inclusão na tabela de erros Oracle
                          - Padronização de logs
                          - Inclusão validação e log 191 para integrações com críticas
@@ -643,6 +647,8 @@ BEGIN
     vr_tab_crapcop(2).cdcooper := 4;  /* Incorporacao Concredi */
   ELSIF pr_cdcooper = 13 THEN
     vr_tab_crapcop(2).cdcooper := 15; /* Incorporacao Credimilsul */
+  ELSIF pr_cdcooper = 9 THEN
+    vr_tab_crapcop(2).cdcooper := 17; /* Incorporacao Transulcred */
   END IF;
     
   -- inicializar variavel de controle se existe algum arquivo a ser processado
@@ -1422,6 +1428,77 @@ BEGIN
             vr_cdcritic := 0;
             vr_flgentra := FALSE;
           END IF;
+        ELSIF vr_vllanmto >= vr_vlchqvlb THEN
+          -- Critica quando o valor do lancamento for maior que o param 2 do VALORESVLB
+          BEGIN 
+            INSERT INTO CRAPREJ (cdcooper
+                                ,dtmvtolt
+                                ,cdagenci
+                                ,cdbccxlt
+                                ,nrdolote
+                                ,tplotmov
+								,dtrefere
+                                ,nrdconta
+                                ,nrdctabb
+                                ,nrdocmto
+                                ,vllanmto
+                                ,nrseqdig
+                                ,cdcritic
+                                ,cdpesqbb
+                                ,indebcre
+                                ,dshistor
+                                ,tpintegr)
+                         VALUES (pr_cdcooper                              -- cdcooper
+                                ,rw_crapdat.dtmvtolt                      -- dtmvtolt
+                                ,vr_cdagenci                              -- cdagenci
+                                ,vr_cdbccxlt                              -- cdbccxlt
+                                ,vr_nrdolote                              -- nrdolote
+                                ,1                                        -- tplotmov
+                                ,vr_dtrefere                              -- dtrefere
+                                ,vr_nrdconta                              -- nrdconta
+                                ,vr_nrdctabb                              -- nrdctabb
+                                ,vr_nrdocmto                              -- nrdocmto
+                                ,vr_vllanmto                              -- vllanmto
+                                ,vr_nrseqint                              -- nrseqdig
+                                ,929                                      -- cdcritic
+                                ,vr_cdpesqbb                              -- cdpesqbb
+                                ,vr_indebcre                              -- indebcre
+                                ,rpad(vr_dshistor,15,' ') || vr_dsageori  -- dshistor
+                                ,1                      );                -- tpintegr
+          EXCEPTION 
+            WHEN OTHERS THEN 
+              vr_dscritic := ' ao inserir registro de Rejeição --> ' ||sqlerrm;
+              RAISE vr_exc_saida;
+          END;
+          -- Solicita envio de email informando sobre o cheque vlb 
+          vr_conteudo := 'Segue dados do Cheque VLB:<br><br>' ||
+                         'Cooperativa: ' || pr_cdcooper ||
+                         ' - ' || rw_crapcop.nmrescop ||
+                         '<br>PA: ' || rw_crapass.cdagenci ||
+                         '<br>Banco: ' ||
+                         to_char(vr_cdbccxlt,'fm990') || '<br>' ||
+                         'Conta/dv: ' ||
+                         gene0002.fn_mask_conta(vr_nrdconta) ||
+                         '<br>' ||
+                         'Cheque: ' ||
+                         gene0002.fn_mask(vr_nrdocmto, 'zzz.zz9.9') ||
+                         '<br>' ||
+                         'Valor: R$ ' ||
+                         to_char(vr_vllanmto, '999g999g990d00') ||
+                         '<br>' ||
+                         'Data: ' || to_char(vr_dtleiarq, 'dd/mm/rrrr');
+          -- Solicitar envio do email 
+          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => 'PC_'||vr_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS346_EMAIL_CHEQUEVLB')
+                                    ,pr_des_assunto     => 'Cheque VLB ' || to_char(vr_cdbccxlt, 'fm000') || ' - ' || to_char(vr_dtleiarq, 'dd/mm/rrrr')
+                                    ,pr_des_corpo       => vr_conteudo
+                                    ,pr_des_anexo       => null
+                                    ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+            
         END IF;
           
         -- Verifica se há negativação no cheque 
@@ -2024,7 +2101,7 @@ BEGIN
                              ' --> ' || 'ALERTA: ' ||gene0001.fn_busca_critica(191) ||
                              ': '||vr_tab_crapcop(vr_idx).nmarquiv;
     END IF;
-
+      
     cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
                            pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
                            pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog

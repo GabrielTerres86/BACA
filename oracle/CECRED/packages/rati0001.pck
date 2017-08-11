@@ -142,7 +142,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --            01/02/2017 - Incluir busca na central de risco tambem para os limites rotativos.
   --                         Ajustada a rotina pc_verifica_atualizacao, que nao estava retornando a mensagem de erro
   --                         corretamente para a tela ATURAT. Heitor (Mouts)
-	--
+  --
   --            15/05/2017 - Tornado procedure pc_nivel_comprometimento publica. (Reinert)
 	--
   --            28/06/2017 - Acerto da logica procedure pc_param_valor_rating
@@ -270,7 +270,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
               nrseqite NUMBER);
   TYPE typ_tab_crapras IS TABLE OF typ_reg_crapras
     INDEX BY varchar2(15); --nrtopico(5) + nritetop(5) +nrseqite(5)
-		
+
   /* Tipo para retornar uma lista de contrados a liquidar */
   TYPE typ_vet_nrctrliq IS VARRAY(10) OF PLS_INTEGER;		
 
@@ -1084,6 +1084,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+            
         pr_cdcritic:= 0;
         pr_dscritic:= 'Erro na rotina RATI0001.pc_obtem_risco '||SQLERRM;
     END;
@@ -1109,7 +1112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        Objetivo  : Retornar valor parametrizado de rating na TAB036 para a Cooperativa.
 
        Alteracoes: 04/06/2013 - Conversão Progress -> Oracle - Marcos (Supero)
-
+                                      
                    28/06/2017 - Acerto do padrão de retorno das situações de mensagem
                               - Inclusão para setar o modulo de todas procedures da Package
                                 ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -1159,6 +1162,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           -- Adicionar no vetor cmfe a cooperativa do registro e o valor
           -- de rating está nas 11 posições a partir do caracter 15 do parâmetro
           vr_vet_vlrating(rw_craptab.cdcooper) := gene0002.fn_char_para_number(substr(rw_craptab.dstextab,15,11));
+		                        	              
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_param_valor_rating');     
         END LOOP;
       END IF;
       -- Com a temp-table carregada, iremos buscar o valor correspondente a cooperativa solicitada
@@ -1170,6 +1176,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);        
         -- Gerar erro não tratado
         pr_cdcritic := 9999;
         pr_dscritic := 'RATI0001.pc_param_valor_rating. Detalhes: '||sqlerrm;
@@ -1225,6 +1233,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       CLOSE cr_crapcop;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Gerar erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro na rotina RATI0001.pc_valor_maximo_legal. Detalhes: '||sqlerrm;
@@ -1266,6 +1276,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          AND nrdconta = pr_nrdconta;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Gerar erro
         pr_dscritic := 'Erro na rotina RATI0001.pc_limpa_rating_origem. Detalhes: '||sqlerrm;
     END;
@@ -1339,6 +1351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_cdcritic := 0;
         -- Gerar erro
@@ -1417,6 +1431,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            AND nrdconta = rw_crapnrc.nrdconta;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+          CECRED.pc_internal_exception (pr_cdcooper => rw_crapnrc.cdcooper);   
           pr_cdcritic := 0;
           pr_dscritic := 'Erro ao atualizar os dados do Cooperado(CRAPASS), Conta: '||rw_crapnrc.nrdconta||'. Detalhes: '||sqlerrm;
           -- Sair
@@ -1438,6 +1454,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          WHERE rowid = pr_rowidnrc;
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+          CECRED.pc_internal_exception (pr_cdcooper => NULL);   
           pr_cdcritic := 0;
           pr_dscritic := 'Erro ao atualizar o rating(CRAPNRC), Rowid: '||pr_rowidnrc||'. Detalhes: '||sqlerrm;
           -- Sair
@@ -1448,6 +1466,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         -- Concatenar o nome do rotina e retornar
         pr_dscritic := 'Erro na rotina RATI0001.pc_muda_situacao_efetivo. Detalhes: '||pr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => NULL);   
         -- Retorno não OK
         pr_cdcritic := 0;
         -- Gerar erro
@@ -1537,6 +1557,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            WHERE rowid = rw_crapnrc.rowid;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
             pr_cdcritic := 0;
             pr_dscritic := 'Erro ao atualizar o rating(CRAPNRC), Rowid: '||rw_crapnrc.rowid||'. Detalhes: '||sqlerrm;
             -- Sair
@@ -1562,6 +1584,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         -- Concatenar o nome do rotina e retornar
         pr_dscritic := 'Erro na rotina RATI0001.pc_muda_situacao_proposto. Detalhes: '||pr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_cdcritic := 0;
         -- Gerar erro
@@ -1628,6 +1652,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END LOOP;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_cdcritic := 0;
         -- Gerar erro
@@ -1836,6 +1862,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_cdcritic := 0;
         -- Gerar erro
@@ -1944,6 +1972,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            WHERE rowid = vr_ncr_rowid;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);            
             -- Gerar erro
             vr_cdcritic := 0;
             vr_dscritic := 'Erro ao desativar o Rating para o contrato proposto.'
@@ -2196,6 +2226,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
@@ -2367,6 +2399,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         WHERE crapnrc.rowid = rw_crapnrc.ROWID;
       EXCEPTION
         WHEN Others THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
           vr_cdcritic:= 0;
           vr_dscritic:= 'Erro ao atualizar a tabela crapnrc.'||sqlerrm;
           --Levantar Excecao
@@ -2551,6 +2585,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
@@ -2930,6 +2966,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       EXCEPTION
         -- tratar erros
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
           vr_dscritic := 'Não foi possivel gravar item rating (nrdconta='||pr_nrdconta||
                          ' nrctrrat='||pr_nrctrato||'): '||SQLerrm;
          raise vr_exc_erro;
@@ -2948,6 +2986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       pr_dscritic := 'Erro na pc_grava_item_rating: '||SQLErrm;
   END pc_grava_item_rating;
 
@@ -3229,6 +3269,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
     END;
@@ -3362,6 +3404,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_tab_erro => pr_tab_erro);
         END IF;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
@@ -3577,6 +3621,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_tab_erro => pr_tab_erro);
         END IF;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
@@ -3662,6 +3708,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pr_des_reto := 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => NULL);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
     END;
@@ -3691,7 +3739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        Objetivo  : Direcionar a obtenção as descricoes do risco, provisao , etc ...
 
        Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
-
+                   
                    25/10/2016 - Correção do problema relatado no chamado 541414. (Kelvin)
   
                    28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
@@ -3726,10 +3774,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       IF vr_tab_provisao_cl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => '00'
-                                             ,pr_cdacesso => 'PROVISAOCL'
-                                             ,pr_tpregist => null) LOOP
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => '00'
+                                    ,pr_cdacesso => 'PROVISAOCL'
+                                    ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_cl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -3757,10 +3805,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       IF vr_tab_provisao_tl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => '00'
-                                             ,pr_cdacesso => 'PROVISAOTL'
-                                             ,pr_tpregist => null) LOOP
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => '00'
+                                    ,pr_cdacesso => 'PROVISAOTL'
+                                    ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_tl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -3808,6 +3856,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pr_des_reto := 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
     END;
@@ -4181,6 +4231,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           END IF;
         END IF;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
@@ -4432,6 +4484,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       WHEN vr_exc_erro THEN
         NULL; --> Apenas desviar o fluxo e sair
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Montar descrição de erro não tratado
         pr_dscritic := 'Erro não tratado na RATI0001.pc_nivel_comprometimento > '||sqlerrm;
     END;
@@ -4643,6 +4697,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       pr_dscritic := 'Erro na rotina pc_historico_cooperado: '||SQLerrm;
   END pc_historico_cooperado;
 
@@ -4721,8 +4777,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       
     BEGIN
       
-	  -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_jur');       
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_jur');       
       
       -- Nao validar para calculo do Risco cooperado
       IF pr_tpctrrat <> 0 AND pr_nrctrrat <> 0  THEN
@@ -4832,7 +4888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         END IF;
         RETURN;
       END IF;
-
+      
       -- Busca do Registro da empresa
       OPEN cr_crapjur;
       FETCH cr_crapjur
@@ -5050,6 +5106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
@@ -5136,8 +5194,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               Ajuste nos codigos de natureza juridica para o
                               existente na receita federal. (Tiago Castro - RKAM)
 
-		         10/05/2016 - Ajuste para iniciar corretamente a pltable
-							  (Andrei - RKAM).
+		             10/05/2016 - Ajuste para iniciar corretamente a pltable
+							                (Andrei - RKAM).
                  
                  25/10/2016 - Ajuste no calculo da quantidade de anos, permitindo
                               duas posições decimais. (Kelvin)
@@ -6137,6 +6195,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
 
@@ -6480,6 +6540,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Montar descrição de erro não tratado
@@ -6691,6 +6753,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Montar descrição de erro não tratado
@@ -6822,6 +6886,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       pr_dscritic := 'Erro na pc_calcula_singulares: '||SQLErrm;
   END pc_calcula_singulares;
 
@@ -6884,6 +6950,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     END IF;
   EXCEPTION
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => NULL);   
       pr_dscritic := 'Erro na pc_natureza_operacao: '|| SQLErrm;
   END pc_natureza_operacao;
 
@@ -7127,7 +7195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
              rw_crapfin.tpfinali = 1 THEN
              /* Verifica se eh cessao de credito */
              vr_flgcescr := TRUE;   
-          END IF;
+    END IF;
           CLOSE cr_crapfin;
 
     END IF;
@@ -7279,7 +7347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_erro => pr_tab_erro);
         END IF;
-      END IF;
+    END IF;
     END IF;
     CLOSE cr_crapenc;
 
@@ -7290,6 +7358,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     END IF;
   EXCEPTION
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       vr_nrsequen := vr_nrsequen + 1;
@@ -8348,6 +8418,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
 
@@ -8698,6 +8770,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Montar descrição de erro não tratado
@@ -9023,6 +9097,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            CLOSE cr_crapass_lock;
          EXCEPTION
            WHEN OTHERS THEN
+             -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
              vr_cdcritic := 77; --> 077 - Tabela sendo alterada p/ outro terminal.
              IF cr_crapass_lock%ISOPEN THEN
                CLOSE cr_crapass_lock;
@@ -9040,6 +9116,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
             WHERE crapass.rowid = rw_crapass_lock.rowid;
          EXCEPTION 
            WHEN OTHERS THEN
+             -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+             CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
              vr_dscritic := 'Nao foi possivel atualizar associado: '|| SQLERRM;
              CLOSE cr_crapass_lock;
              RAISE vr_exc_erro;
@@ -9104,6 +9182,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                              ,pr_tab_impress_risco_tl(1).dsdrisco);
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
             vr_dscritic := 'Erro ao criar crapnrc: '||SQLERRM;
             RAISE vr_exc_erro;
         END;
@@ -9122,6 +9202,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
             WHERE ROWID = rw_crapnrc3.rowid;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
             vr_dscritic := 'Erro ao atualizar crapnrc: '||SQLERRM;
             RAISE vr_exc_erro;
         END;
@@ -9230,6 +9312,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         ROLLBACK;
       END IF;
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Montar descrição de erro não tratado
@@ -9474,6 +9558,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
      
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Montar descrição de erro não tratado
@@ -9803,6 +9889,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       ROLLBACK;
      
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       
@@ -10076,6 +10164,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
       
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       
       -- Retorno não OK
       pr_des_reto := 'NOK';
@@ -10431,6 +10521,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pr_des_reto := 'OK';
     
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       
@@ -10774,6 +10866,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pr_des_reto := 'OK';
     
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       
@@ -11105,6 +11199,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       pr_des_reto := 'OK';
     
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       
@@ -11373,6 +11469,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
       
     WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/06/2018 - Chamado 660306        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       -- Retorno não OK
       pr_des_reto := 'NOK';
       
@@ -11600,6 +11698,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
             
   END pc_grava_rating;
-
+ 
 END RATI0001;
 /

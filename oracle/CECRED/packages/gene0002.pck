@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
     Sistema  : Rotinas genéricas para mascaras e relatórios
     Sigla    : GENE
     Autor    : Marcos E. Martini - Supero
-    Data     : Novembro/2012.                   Ultima atualizacao: 22/06/2017
+    Data     : Novembro/2012.                   Ultima atualizacao: 04/08/2017
   
    Dados referentes ao programa:
   
@@ -338,7 +338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 22/06/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 04/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -372,6 +372,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --             22/06/2017 - Tratamento de erros                         
   --                        - setado modulo
   --                        - Chamado 660322 - Belli - Envolti
+  --
+  --             04/08/2017 - Retirado pc_set_modulo da procedure fn_quebra_string
+  --                        - Chamado 678813 - Belli - Envolti
   --    
   ---------------------------------------------------------------------------------------------------------------
 
@@ -736,7 +739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
-		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_quebra_string'); 
+    -- Retirado pc_set_modulo da procedure fn_quebra_string - Chamado 678813 04/08/2017
     --Se a string estiver nula retorna count = 0 no vetor
     IF nvl(pr_string,'#') = '#' THEN
       RETURN vr_vlret;
@@ -2817,6 +2820,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                              ,pr_des_comando => vr_des_comando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_des_saida);
+
+                    
+        -- 22/06/2017 - Forçado erro - Ch 660322
+        --vr_des_saida := 'NOK --> com.ximpleware.ParseException: Other Error: XML not terminated properly: by Belli ';
 
         -- Testa se a saída da execução acusou erro
         IF length(trim(vr_des_saida)) > 4 THEN
