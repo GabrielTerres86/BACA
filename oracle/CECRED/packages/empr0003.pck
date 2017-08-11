@@ -1892,7 +1892,7 @@ BEGIN
                 || to_char(pr_dtmvtopr,'mmddrrrr')||';'
                 || pr_nrctremp||';'
                 || pr_dsiduser||';'
-                || pr_nmarqpdf);
+                || pr_nmarqpdf;
     -- Incluir os parametros    
     vr_dscomand := REPLACE(vr_dscomand,'[params]',vr_dsparame);
 
