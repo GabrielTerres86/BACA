@@ -629,6 +629,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         
         IF pr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
 					pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				ELSE 
+          pr_dscritic := vr_dscritic;
 				END IF;
       WHEN OTHERS THEN
         pr_des_reto := 'NOK';
