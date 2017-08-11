@@ -406,7 +406,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_exc_erro  EXCEPTION;
        vr_exc_pula  EXCEPTION;   
 
-
        --Procedure para limpar os dados das tabelas de memoria
        PROCEDURE pc_limpa_tabela IS
        BEGIN
@@ -493,13 +492,13 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          END IF;
    
          if vr_tpocorrencia in (3, 4) then
-            vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
+                vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
             
          elsif vr_tpocorrencia in (1, 2) then
-            vr_dstpocorrencia := 'ERRO: '; -- 1 erro de negócio 
+                vr_dstpocorrencia := 'ERRO: '; -- 1 erro de negócio 
             
          else
-            vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
+                vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
          end if;
          
          DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
@@ -919,6 +918,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                       -- Ignora descrição não tratada pois ela foi montada - ch 665812
                       if vr_cdcritic <> 9999 then
                           vr_des_erro:= vr_tab_erro(vr_tab_erro.LAST).dscritic;
+                      end if;
                    ELSE
                      vr_des_erro:= 'Erro no calculo do bloqueio do cheque.';
                    END IF;
