@@ -1303,7 +1303,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                       0
                    END) vlopevnc
               ,SUM(CASE
-                     WHEN cdvencto BETWEEN 310 AND 310 THEN
+                     WHEN cdvencto BETWEEN 310 AND 330 THEN
                       vlvencto
                      ELSE
                       0

@@ -629,6 +629,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         
         IF pr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
 					pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				ELSE 
+          pr_dscritic := vr_dscritic;
 				END IF;
       WHEN OTHERS THEN
         pr_des_reto := 'NOK';
@@ -1586,7 +1588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_dsplsql VARCHAR2(4000);
       -- Job name dos processos criados
       vr_jobname VARCHAR2(100);
-           
+      
       -- Variaveis para DEBUG
       vr_flgdebug VARCHAR2(100) := 'S';
       vr_idaciona tbepr_acionamento.idacionamento%TYPE;
@@ -1636,7 +1638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       IF nvl(pr_nrtransa,0) > 0 THEN
         vr_nrtransacao := pr_nrtransa;
       END IF;  
-    
+      
       -- Acionamento 
       OPEN cr_aciona;
       FETCH cr_aciona
@@ -1760,7 +1762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                          || 'interno no sistema(3).';
           RAISE vr_exc_saida;
         END IF; 
-  		      
+
 	    END IF;
       
       -- Condicao para verificar se o processo esta rodando
@@ -1771,8 +1773,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         vr_msg_detalhe := 'Retorno Analise Automatica nao foi atualizado, o processo batch '
                        || 'CECRED esta em execucao.';
         RAISE vr_exc_saida;
-      END IF;			
-			
+      END IF;	
+      
       -- Somente se a proposta não foi atualizada ainda
       IF rw_crawepr.insitest <> 1 THEN
         -- Montar mensagem de critica
@@ -1956,11 +1958,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                             ,vr_cdcritic
                                             ,vr_dscritic);
           -- Em caso de erro 
-          IF vr_dscritic IS NOT NULL THEN
+          IF vr_dscritic IS NOT NULL THEN 
             -- Adicionar ao LOG e continuar o processo
             btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                       pr_ind_tipo_log => 2, 
-                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
+                                       pr_ind_tipo_log => 2,
+                                       pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')
                                                        || ' - WEBS0001 --> Erro ao solicitor retorno nas '
                                                        || 'Consulta Automaticas do Protocolo: '||pr_dsprotoc
                                                        || ', erro: '||vr_cdcritic||'-'||vr_dscritic,
@@ -1989,7 +1991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
             --IF TRIM(vr_dscritic) IS NOT NULL THEN
             --  RAISE vr_exc_erro;
             --END IF;
-          END IF; 
+          END IF;
         END IF;
         
         -- Caso seja derivação
@@ -2052,8 +2054,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                                                     pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
           END IF; 
         END IF; 
-      END IF;                                       
-			
+      END IF;      
+      
       -- Gravar
       COMMIT;                                 
 			
@@ -2091,7 +2093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																															 pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
           END IF;
         END IF;
-
+        
         -- Mudaremos a situação da analise para encerrada com erro para que possa haver o Re-envio
         IF rw_crawepr.rowid IS NOT NULL THEN 
           BEGIN
@@ -2116,7 +2118,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                       ,pr_dscritic    => vr_dscritic    --> Descricao critica  
                                       ,pr_msg_detalhe => vr_msg_detalhe --> Mensagem de detalhe
                                       ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
-                                      ,pr_retxml      => pr_retxml);      
+                                      ,pr_retxml      => pr_retxml);    
         -- Gravar
         COMMIT;                                        
       WHEN OTHERS THEN
@@ -2152,7 +2154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																															 pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));                        
           END IF;
         END IF; 
-
+        
         -- Mudaremos a situação da analise para encerrada com erro para que possa haver o Re-envio
         IF rw_crawepr.rowid IS NOT NULL THEN 
           BEGIN
