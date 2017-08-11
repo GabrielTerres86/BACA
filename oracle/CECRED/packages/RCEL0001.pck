@@ -1625,6 +1625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_dtrepasse tbrecarga_operacao.dtrepasse%TYPE;
       vr_vrreceita   NUMBER; --> Valor da receita
       vr_vlrepasse   NUMBER; --> Valor do repasse
+			vr_flgoperac BOOLEAN;
 
 			-- Variáveis para utilizar o Aymaru
 			vr_resposta AYMA0001.typ_http_response_aymaru;
@@ -2007,6 +2008,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			-- Fechar cursor
 			CLOSE cr_inf_rec;
 			
+			-- Buscar operacao
+			OPEN cr_operacao(pr_idoperacao => pr_idoperac);
+			FETCH cr_operacao INTO rw_operacao;
+			-- Flag para verificar se encontrou cursor
+			vr_flgoperac := cr_operacao%FOUND;
+      -- Fechar cursor
+			CLOSE cr_operacao;
+			
       vr_recarga.put('Cooperativa', pr_cdcooper ); -- Codigo da Cooperativa
 			vr_recarga.put('Fornecedor', rw_inf_rec.nmoperadora); -- Nome da operadora
 			vr_recarga.put('TipoProduto', rw_inf_rec.tpoperacao); -- Tipo produto FIXO
@@ -2029,8 +2038,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				vr_dscritic := 'Não foi possível efetuar a recarga.';
 
 				     -- saida por TIMEOUT  
-				IF   vr_resposta.status_code = 408  THEN
-				     vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
+				IF   vr_resposta.status_code = 408  THEN				     
+             vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
+						 
+	           -- Se encontrou operação
+             IF vr_flgoperac THEN
+							 -- Se for agendamento retornar crítica do log
+							 IF rw_operacao.insit_operacao = 1 THEN
+								 vr_dscritic := vr_dserrlog;
+							 END IF;
+						 END IF;
 			    ELSE
 				     vr_dserrlog := vr_dscritic;
 			    END IF;
@@ -2060,9 +2077,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					vr_dscritic := 'Não foi possível efetuar a recarga.';
 				END IF;
 
-			    -- Descrição do erro da Rede Tendencia
-			    vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+	      -- Descrição do erro da Rede Tendencia
+			  vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
 
+        -- Se encontrou operação
+        IF vr_flgoperac THEN
+					-- Se for agendamento retornar crítica do log
+					IF rw_operacao.insit_operacao = 1 THEN
+						vr_dscritic := vr_dserrlog;
+					END IF;
+        END IF;
 				-- Gerar log
 				pc_gera_log_erro(pr_cdcooper => pr_cdcooper
 												,pr_nrdconta => pr_nrdconta
@@ -2085,6 +2109,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				vr_dserrlog := replace(vr_resposta.conteudo.get('Mensagem').to_char(), '"', '');
 				vr_cdcritic := 0;
 				vr_dscritic := 'Não foi possível efetuar a recarga.';
+				
+        -- Se encontrou operação
+				IF vr_flgoperac THEN
+					-- Se for agendamento retornar crítica do log
+					IF rw_operacao.insit_operacao = 1 THEN
+					  vr_dscritic := vr_dserrlog;
+					END IF;
+				END IF;
+				
 				-- Gerar log
 				pc_gera_log_erro(pr_cdcooper => pr_cdcooper
 												,pr_nrdconta => pr_nrdconta
@@ -2125,11 +2158,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         -- Valor do repasse
         vr_vlrepasse := pr_vlrecarga - vr_vrreceita;
       
-				-- Buscar operacao
-				OPEN cr_operacao(pr_idoperacao => pr_idoperac);
-				FETCH cr_operacao INTO rw_operacao;
 				-- Se encontrou
-				IF cr_operacao%FOUND THEN
+				IF vr_flgoperac THEN
 					-- Apenas atualiza operação de recarga
 					UPDATE tbrecarga_operacao
 						 SET dsnsu_operadora = vr_nsuoperadora
@@ -2178,8 +2208,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																	 INTO rw_operacao.idoperacao
 																	     ,rw_operacao.insit_operacao;
 				END IF;
-				-- Fechar cursor
-				CLOSE cr_operacao;
 				
 				-- Buscar sequence
 				vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
@@ -4368,7 +4396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
       END IF;
-      
+
       --> Verificar a execução da DEBNET/DEBSIC 
       SICR0001.pc_controle_exec_deb(pr_cdcooper => pr_cdcooper         --> Código da coopertiva
                                    ,pr_cdtipope => 'C'                 --> Tipo de operacao I-incrementar e C-Consultar
