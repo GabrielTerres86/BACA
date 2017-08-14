@@ -14,8 +14,8 @@ begin
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
-
-  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBLIM_MAJORACAO',
+ 
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBLIMCRE_MAJORACAO',
                                 job_type            => 'PLSQL_BLOCK',
                                 job_action          => 'begin
      pc_processa_majoracao(0);
