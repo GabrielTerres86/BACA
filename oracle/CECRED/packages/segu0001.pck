@@ -5085,7 +5085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 03/07/2017 - Incluido rotina de setar modulo Oracle 
                            - Implementado Log no padrão
                              ( Belli - Envolti - #667957)
-  
+                
                 09/08/2017 - Ajuste realizado para que seja possivel identificar
                              pelo titulo do email caso o arquivo for processado
                              com erro, conforme solicitado no chamado 679319. 
@@ -6608,6 +6608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       END LOOP;  -- LOOP de Linhas do Arquivo
 
+      vr_mailtitu := gene0001.fn_param_sistema('CRED', 0, 'AUTO_TITL_FIM_PROC');
 
       -- FINALIZOU O ARQUIVO, VERIFICAR SE FOI GERADO ARQUIVO DE ERRO
       IF TRIM(vr_nmarqerr) IS NOT NULL THEN -- Arquivo que contem os logs de erros.
@@ -6621,14 +6622,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                        ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
-                               
+        
         vr_mailtitu := vr_mailtitu || ' - ' || 'Arquivo COM inconsistências';
                                
         -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
         -- Gera LOG
         pc_controla_log_batch(pr_dstiplog_in => 'E',
                               pr_dscritic_in => 'Envio de Email de Termino com Erro!'); 
-                
+                              
       ELSE -- EMAIL de SUCESSO
         vr_dsdanexo := NULL;
         vr_mailbody := REPLACE(REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_S')
@@ -6636,7 +6637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                        ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
-                               
+        
         vr_mailtitu := vr_mailtitu || ' - ' || 'Arquivo SEM inconsistências';
                                
         -- Ajuste geracao de LOG de Erro em DB - Chamado 667957 - 05/07/2017
