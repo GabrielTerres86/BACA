@@ -6622,7 +6622,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       END LOOP;  -- LOOP de Linhas do Arquivo
 
-
+      vr_mailtitu := gene0001.fn_param_sistema('CRED', 0, 'AUTO_TITL_FIM_PROC');
+      
       -- FINALIZOU O ARQUIVO, VERIFICAR SE FOI GERADO ARQUIVO DE ERRO
       IF TRIM(vr_nmarqerr) IS NOT NULL THEN -- Arquivo que contem os logs de erros.
         vr_raizcoop := gene0001.fn_diretorio(pr_tpdireto => 'C'
