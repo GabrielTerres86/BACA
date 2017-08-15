@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0030.p
    Autor   : Guilherme
-   Data    : Agosto/2008                     Ultima atualizacao: 27/06/2016
+   Data    : Agosto/2008                     Ultima atualizacao: 28/07/2017
 
    Dados referentes ao programa:
 
@@ -38,6 +38,7 @@
                27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. (Jaison/James)
 
+               28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -785,7 +786,8 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
-                                      OUTPUT TABLE tt-erro).
+                                      OUTPUT TABLE tt-erro,
+                                      OUTPUT TABLE tt-msg-confirma).
                                     
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -804,6 +806,8 @@ PROCEDURE efetua_inclusao_limite:
     ELSE 
         DO:
             RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
+                             INPUT "Mensagens").
             RUN piXmlSave.
         END.
         

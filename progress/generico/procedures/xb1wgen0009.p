@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0009.p
    Autor   : Guilherme
-   Data    : Março/2009                     Ultima atualizacao: 20/06/2016
+   Data    : Março/2009                     Ultima atualizacao: 28/07/2017
 
    Dados referentes ao programa:
 
@@ -38,6 +38,7 @@
                20/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. (Jaison/James)
 
+			   28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro
 ............................................................................ */
 
 
@@ -773,7 +774,9 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_perfatcl,
                                        INPUT aux_nrperger,
                                        INPUT TRUE, /* LOG */
-                                      OUTPUT TABLE tt-erro).
+                                      OUTPUT aux_nrctrlim, 
+                                      OUTPUT TABLE tt-erro,
+                                      OUTPUT TABLE tt-msg-confirma).
                                     
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -791,9 +794,14 @@ PROCEDURE efetua_inclusao_limite:
         END.
     ELSE 
         DO:
+            
             RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "nrctrlim", INPUT STRING(aux_nrctrlim)).            
+            RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
+                             INPUT "Mensagens").
             RUN piXmlSave.
         END.
+        
         
 END PROCEDURE.
 

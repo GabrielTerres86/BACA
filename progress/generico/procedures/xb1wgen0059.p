@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0059.p
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 23/03/2017
+    Data    : Marco/2010                   Ultima atualizacao: 15/07/2017
 
     Objetivo  : BO de Comunicacao XML x BO Generica de Buscas (b1wgen0059.p)
 
@@ -65,6 +65,8 @@
 							 (Adriano - SD 614408).	
 
 				23/03/2017 - Adicionado tratamento na procedure Busca-Agencia. (PRJ321 - Reinert)
+
+				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
 .............................................................................*/
 
                                                                              
@@ -194,6 +196,8 @@ DEF VAR aux_dsperfil AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsarnego AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdmodali AS CHAR                                           NO-UNDO.
+DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
+DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdrelacionamento AS INTE                                   NO-UNDO.
 DEF VAR aux_dsrelacionamento AS CHAR                                   NO-UNDO.
 
@@ -348,6 +352,8 @@ PROCEDURE valores_entrada:
             WHEN "dsarnego" THEN aux_dsarnego = tt-param.valorCampo.
             WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
             WHEN "cdmodali" THEN aux_cdmodali = tt-param.valorCampo.
+            WHEN "inpessoa" THEN aux_inpessoa = INT(tt-param.valorCampo).
+            WHEN "nmprimtl" THEN aux_nmprimtl = tt-param.valorCampo.            
             WHEN "cdrelacionamento" THEN aux_cdrelacionamento = INTE(tt-param.valorCampo).
             WHEN "dsrelacionamento" THEN aux_dsrelacionamento = tt-param.valorCampo.
                 
@@ -2438,5 +2444,42 @@ PROCEDURE busca-produtos:
 
 END PROCEDURE.
 
+PROCEDURE busca_associado:
 
+    RUN busca-crapass IN hBO
+                    ( INPUT aux_cdcooper, 
+                      INPUT aux_inpessoa, 
+                      INPUT aux_nrcpfcgc,
+                      INPUT aux_nrdconta,                      
+                      INPUT aux_nmprimtl,
+                      INPUT aux_nrregist, 
+                      INPUT aux_nriniseq,                       
+                     OUTPUT aux_qtregist, 
+                     OUTPUT TABLE tt-crapass ).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a"
+                                                            + " operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport   (INPUT TEMP-TABLE tt-crapass:HANDLE,
+                               INPUT "Linhas").
+            RUN piXmlAtributo (INPUT "qtregist",INPUT aux_qtregist).
+            RUN piXmlSave.
+           
+        END.
+
+END.
 /* .......................................................................... */

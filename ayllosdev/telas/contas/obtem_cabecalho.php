@@ -20,7 +20,8 @@
  * 011: [29/07/2015] Lucas Ranghetti (CECRED): Alterado logica rotina de procuradores para $cabecalho[6]->cdata > 1(inpessoa > 1).
  * 012: [01/09/2015] Gabriel (RKAM)       : Reformulacao Cadastral. 
  * 013: [14/09/2016] Kelvin (Cecred)      : Ajuste feito para resolver o problema relatado no chamado 506554. 
- * 014: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364).
+ * 014: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico
+ * 015: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364).
  */ 
 
 	session_start();	
@@ -100,7 +101,8 @@
 	//Atribuições
 	$cabecalho  = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
 	$Titulares  = ( isset($xmlObjeto->roottag->tags[2]->tags) ) ? $xmlObjeto->roottag->tags[2]->tags : array();
-	$mensagens  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
+	$mensagens  = ( isset($xmlObjeto->roottag->tags[3]->tags) ) ? $xmlObjeto->roottag->tags[3]->tags : array();
+
 	$tpNatureza = $cabecalho[6]->cdata;
 	
 	// Monta div com os dados de Pessoa Jurídica
@@ -289,6 +291,11 @@
 					$nomeRotina = "Desabilitar Operações"; 
 					$urlRotina  = "liberar_bloquear";
 					break;
+				}
+				case "GRUPO ECONOMICO": {
+					$nomeRotina = "Grupo Econômico"; 
+					$urlRotina  = "grupo_economico";
+					break;
 				}				
 				case "IMPEDIMENTOS DESLIGAMENTO": {
 					$nomeRotina = "Impedimentos Desligamento"; 
@@ -410,6 +417,11 @@
 				case "FINANCEIRO-FATURAMENTO": {  
 					$nomeRotina = "Faturamento"; 
 					$urlRotina  = "faturamento"; 				
+					break;
+				}
+				case "GRUPO ECONOMICO": {
+					$nomeRotina = "Grupo Econômico"; 
+					$urlRotina  = "grupo_economico";
 					break;
 				}
 				case "IMPEDIMENTOS DESLIGAMENTO": {

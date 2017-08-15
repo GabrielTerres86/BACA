@@ -672,7 +672,8 @@
              
 			  12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
                            de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
-				 
+				 			  
+			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -5729,6 +5730,9 @@ PROCEDURE grava-proposta-completa:
     DEF  VAR         aux_dscritic AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dstransa AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dsorigem AS CHAR                           NO-UNDO.  
+    DEF	 VAR 		 aux_nrdconta_grp AS INTEGER  			            NO-UNDO.
+    DEF	 VAR 		 aux_dsvinculo    AS CHAR						            NO-UNDO.
+    DEF  VAR         aux_flgativo     AS INTEGER                    NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
@@ -6426,8 +6430,46 @@ PROCEDURE grava-proposta-completa:
                      UNDO Grava, RETURN "NOK".
              END.
 
-        IF   RETURN-VALUE <> "OK"   THEN
-             UNDO Grava, RETURN "NOK".
+        /* Verificar se a conta pertence ao grupo economico novo */	
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,0
+                                              ,0
+                                              ,""
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_verifica_conta_grp_econ
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic      = 0
+               aux_dscritic     = ""
+               aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
+               aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
+               aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
+               aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
+               aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+                        
+        IF aux_cdcritic > 0 THEN
+           DO:
+               UNDO Grava, LEAVE Grava.
+           END.
+        ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+          DO:
+              UNDO Grava, LEAVE Grava.
+          END.
+                      
+        IF aux_flgativo = 1 THEN
+           DO:
+               CREATE tt-msg-confirma.                        
+               ASSIGN tt-msg-confirma.inconfir = 4
+                      tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+           END.
         
     END. /* Fim Grava- Fim TRANSACTION */
      
