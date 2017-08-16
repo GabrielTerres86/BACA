@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 26/05/2017
+  Data    : Abril/2004                          Ultima atualizacao: 16/08/2017
 
   Dados referentes ao programa:
 
@@ -234,8 +234,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               29/03/2017 - Conversão Progress para PLSQL (Jonata-MOUTs)
 
-			  11/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-				          (Jonata - RKAM M311).
+			        11/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				                   (Jonata - RKAM M311).
 
               18/05/2017 - Ajustes após validação Fabrício (Andrei-MOUTs)
 
@@ -244,6 +244,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            
               26/05/2017 - Incluido tratamento para cdrefere da linha F para
                            AGUAS DE GUARAMIRIM (Tiago/Fabricio #640336)
+                           
+              16/08/2017 - Aumentar o format da referencia para 23 posições (Lucas Ranghetti #681634)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -1482,8 +1484,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
             -- Todos outros casos 
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
-                        ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
-                        ||LPAD(' ',3,' ')
+                        ||to_char(rw_crapatr.cdrefere,'fm00000000000000000000000')
+                        ||LPAD(' ',2,' ')
                         ||to_char(vr_nragenci,'fm0000')
                         ||RPAD(vr_nrdconta,14,' ')
                         ||vr_dtmvtolt
