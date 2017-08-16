@@ -118,7 +118,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                          t.nmpaittl nomepai,
                          t.nmmaettl nomemae,
                          z.cdestcvl codigoestadocivil,
-                         z.rsestcvl dsestadocivil
+                         z.rsestcvl dsestadocivil,
+                         j.nmfansia nomefantasia,
+                         j.cdseteco codigosetoreco,
+                         s.dstextab descricaosetoreco,
+                         j.cdrmativ codigoatividade,
+                         r.nmrmativ descricaoatividade
                     FROM crapass a
                LEFT JOIN crapass x
                       ON x.cdcooper = a.cdcooper
@@ -128,14 +133,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                      AND t.nrdconta = a.nrdconta
                      AND t.idseqttl = 1
                LEFT JOIN crapjur j
-                     ON j.cdcooper = a.cdcooper
-                    AND j.nrdconta = a.nrdconta
+                      ON j.cdcooper = a.cdcooper
+                     AND j.nrdconta = a.nrdconta
                LEFT JOIN crapenc e
                       ON e.cdcooper = a.cdcooper
                      AND e.nrdconta = a.nrdconta
                      AND e.idseqttl = 1               
                LEFT JOIN gnetcvl z
                       ON z.cdestcvl = t.cdestcvl
+               LEFT JOIN craptab s
+                      ON s.cdcooper = j.cdcooper
+                     AND UPPER(s.cdacesso) = 'SETORECONO'
+                     AND s.tpregist = j.cdseteco
+               LEFT JOIN gnrativ r
+                      ON r.cdseteco = j.cdseteco
+                     AND r.cdrmativ = j.cdrmativ
                    WHERE a.cdcooper = pr_cdcooper
                      AND a.nrdconta = pr_nrdconta
                      AND e.tpendass = DECODE(a.inpessoa, 1, 10, 2, 9);
@@ -286,21 +298,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                      Coalesce(d.cdestcvl, z.cdestcvl) codigoestadocivil,
                      Coalesce(d.rsestcvl, z.rsestcvl) dsestadocivil
                 FROM crapavt t
-          INNER JOIN crapenc e
+          LEFT JOIN crapenc e
                   ON e.cdcooper = t.cdcooper
                  AND e.nrdconta = t.nrdctato
                  AND e.idseqttl = 1
-          INNER JOIN crapass x
+          LEFT JOIN crapass x
                   ON x.cdcooper = t.cdcooper
                  AND x.nrdconta = t.nrdctato
-          INNER JOIN crapttl y          
+          LEFT JOIN crapttl y          
                   ON y.cdcooper = t.cdcooper
                  AND y.nrdconta = t.nrdctato
                  AND y.idseqttl = 1
-           LEFT JOIN gnetcvl z
-                  ON z.cdestcvl = t.cdestcvl
-           LEFT JOIN gnetcvl d
-                  ON d.cdestcvl = y.cdestcvl
+          LEFT JOIN gnetcvl z
+                 ON z.cdestcvl = t.cdestcvl
+         
+          LEFT JOIN gnetcvl d
+                 ON d.cdestcvl = y.cdestcvl
+         
                WHERE t.cdcooper = pr_cdcooper
                  AND t.tpctrato = 6 -- Representantes legal
                  AND t.nrdconta = pr_nrdconta -- Número da conta
@@ -349,11 +363,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                 '<tipopessoa>'        || rw_titular.tipopessoa        || '</tipopessoa>' ||
                                 '<dtnascimento>'      || rw_titular.dtnascimento      || '</dtnascimento>' ||
                                 '<nomecompleto>'      || rw_titular.nomecompleto      || '</nomecompleto>' ||
+                                '<nomefantasia>'      || rw_titular.nomefantasia      || '</nomefantasia>' ||
                                 '<nomecargo>'         || rw_titular.nomecargo         || '</nomecargo>' ||
                                 '<tipodocumento>'     ||
                                   '<sigla>'           || rw_titular.sigla             || '</sigla>' ||
                                   '<nrdocumento>'     || rw_titular.nrdocumento       || '</nrdocumento>' ||                                  
                                 '</tipodocumento>'    ||
+                                '<ramoatividade>'     ||
+                                  '<codigoatividade>' || rw_titular.codigoatividade   || '</codigoatividade>' ||
+                                  '<descricaoatividade>'|| rw_titular.descricaoatividade || '</descricaoatividade>' ||                                  
+                                '</ramoatividade>'    ||
+                                '<setoreconomico>'    ||
+                                  '<codigosetoreco>'  || rw_titular.codigosetoreco       || '</codigosetoreco>' ||
+                                  '<descricaosetoreco>' || rw_titular.descricaosetoreco  || '</descricaosetoreco>' ||                                  
+                                '</setoreconomico>'   ||
                                 '<endereco>'          ||
                                   '<logradouro>'      || rw_titular.logradouro     || '</logradouro>'     ||
                                   '<numeroendereco>'  || rw_titular.numeroendereco || '</numeroendereco>' ||
