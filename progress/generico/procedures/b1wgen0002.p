@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 12/04/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 07/07/2017
 
    Dados referentes ao programa:
 
@@ -670,8 +670,26 @@
                      Hoje esta considerando fixo 60 dias nesses casos.
                      Heitor (Mouts) - Chamado 629653.
              
+               11/04/2017 - Alterado rotina carrega_dados_proposta_finalidade para limpar temptable antes
+                            de popular. 
+							Ajustado para exluir tbcrd_cessao_credito quando a proposta for excluida.
+                            PRJ343 - Cessao de credito (Odirlei-AMcom)
+
 			  12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
                            de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
+				 
+              06/06/2017 - Alteraçao na rotina proc_qualif_operacao, pois nao estava considerando as prestacoes 
+                           calculadas nos meses anteriores, apenas do mes atual.
+
+              22/06/2017 - Ajuste na procedure obtem-dados-proposta-emprestimo para nao validar o tempo
+                           minimo para revisao cadastral, nos casos de cessao de cartao de credito. (Anderson)
+
+			  07/07/2017 - Nao permitir utilizar linha 100, quando possuir acordo
+                           de estouro de conta ativo. (Jaison/James)
+
+              27/07/2017 - Alterado para nao validar associado demitido e nem menor de idade para emprestimos
+                           de cessao da fatura do cartao de credito (Anderson).
+
 				 			  
 			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
  ..............................................................................*/
@@ -1362,6 +1380,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                                       ,INPUT par_nrdconta
                                                       ,INPUT par_nrctremp
+													  ,INPUT 3
                                                       ,0
                                                       ,0
                                                       ,"").
@@ -2214,6 +2233,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
     DEF VAR aux_cdfinemp LIKE crawepr.cdfinemp                      NO-UNDO.
     DEF VAR aux_tpemprst LIKE crawepr.tpemprst                      NO-UNDO.
     DEF VAR aux_nrctrliq LIKE crawepr.nrctrliq                      NO-UNDO.
+	DEF VAR aux_flgcescr AS LOG INIT FALSE                          NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
@@ -2241,6 +2261,10 @@ PROCEDURE obtem-dados-proposta-emprestimo:
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter dados da proposta de emprestimo".
 
+	/* Carregar flag de cadasatro de cessao de credito */
+    IF par_nmdatela = "CRPS714" THEN
+       ASSIGN aux_flgcescr = TRUE.
+
     DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
         
        IF  par_cddopcao = "I" THEN
@@ -2253,55 +2277,59 @@ PROCEDURE obtem-dados-proposta-emprestimo:
     
                 IF  AVAIL crapttl THEN
                     DO:
-                        IF  NOT VALID-HANDLE(h-b1wgen0001) THEN
-                            RUN sistema/generico/procedures/b1wgen0001.p 
-                                PERSISTENT SET h-b1wgen0001.
-                        
-                        RUN ver_cadastro IN h-b1wgen0001 (INPUT par_cdcooper,
-                                                          INPUT par_nrdconta,
-                                                          INPUT par_cdagenci, 
-                                                          INPUT par_nrdcaixa, 
-                                                          INPUT par_dtmvtolt,
-                                                          INPUT par_idorigem,
-                                                         OUTPUT TABLE tt-erro).
-    
-                        DELETE PROCEDURE h-b1wgen0001.
-                        
-                        IF  RETURN-VALUE = "NOK"  THEN
-                            RETURN "NOK".
-    
-                        IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
-                            RUN sistema/generico/procedures/b1wgen9999.p
-                                PERSISTENT SET h-b1wgen9999.
-
-                        /*  Rotina que retorna a idade do cooperado */
-                        RUN idade IN h-b1wgen9999(INPUT crapttl.dtnasttl,
-                                                  INPUT par_dtmvtolt,
-                                                  OUTPUT aux_nrdeanos,
-                                                  OUTPUT aux_nrdmeses,
-                                                  OUTPUT aux_dsdidade).
-
-                        IF  VALID-HANDLE(h-b1wgen9999) THEN
-                            DELETE PROCEDURE h-b1wgen9999.
-
-                        IF  par_inconfir = 1     AND
-                            aux_nrdeanos >= 16   AND 
-                            aux_nrdeanos <  18   AND 
-                            crapttl.inhabmen = 0 THEN 
+                        /* validar revisao cadastral e idade minima apenas se nao for cessao de credito */
+                        IF  NOT aux_flgcescr THEN
                             DO:
-                                CREATE tt-msg-confirma.                    
-                                ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-                                       tt-msg-confirma.dsmensag = "Atencao! Cooperado menor de idade. Deseja continuar?".
+                                IF  NOT VALID-HANDLE(h-b1wgen0001) THEN
+                                    RUN sistema/generico/procedures/b1wgen0001.p 
+                                        PERSISTENT SET h-b1wgen0001.
+
+                                RUN ver_cadastro IN h-b1wgen0001 (INPUT par_cdcooper,
+                                                                  INPUT par_nrdconta,
+                                                                  INPUT par_cdagenci, 
+                                                                  INPUT par_nrdcaixa, 
+                                                                  INPUT par_dtmvtolt,
+                                                                  INPUT par_idorigem,
+                                                                 OUTPUT TABLE tt-erro).
             
-                                RETURN "OK".
-                            END.
+                                DELETE PROCEDURE h-b1wgen0001.
+                                
+                                IF  RETURN-VALUE = "NOK"  THEN
+                                    RETURN "NOK".                            
+    
+                                IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
+                                    RUN sistema/generico/procedures/b1wgen9999.p
+                                        PERSISTENT SET h-b1wgen9999.
 
-                        IF  aux_nrdeanos < 16 THEN
-                            DO:
-                               ASSIGN aux_cdcritic = 0
-                                      aux_dscritic = "Cooperado menor de idade, nao"
-                                             +  " e possivel realizar a operacao.".
-                                      LEAVE.
+                                /*  Rotina que retorna a idade do cooperado */
+                                RUN idade IN h-b1wgen9999(INPUT crapttl.dtnasttl,
+                                                          INPUT par_dtmvtolt,
+                                                          OUTPUT aux_nrdeanos,
+                                                          OUTPUT aux_nrdmeses,
+                                                          OUTPUT aux_dsdidade).
+
+                                IF  VALID-HANDLE(h-b1wgen9999) THEN
+                                    DELETE PROCEDURE h-b1wgen9999.
+
+                                IF  par_inconfir = 1     AND
+                                    aux_nrdeanos >= 16   AND 
+                                    aux_nrdeanos <  18   AND 
+                                    crapttl.inhabmen = 0 THEN 
+                                    DO:
+                                        CREATE tt-msg-confirma.                    
+                                        ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+                                               tt-msg-confirma.dsmensag = "Atencao! Cooperado menor de idade. Deseja continuar?".
+                    
+                                        RETURN "OK".
+           END.
+
+                                IF  aux_nrdeanos < 16 THEN
+                                    DO:
+                                       ASSIGN aux_cdcritic = 0
+                                              aux_dscritic = "Cooperado menor de idade, nao"
+                                                     +  " e possivel realizar a operacao.".
+                                              LEAVE.
+                                    END.
                             END.
                     END.
            END.
@@ -2495,20 +2523,24 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                 ELSE
                      aux_lslibemp = craptab.dstextab.
 
-                /* Associado com tempo de sociedade menor que o permitido */
-                IF   (crapass.dtmvtolt + aux_diasmini) > par_dtmvtolt THEN
-                      DO:
-                          IF   NOT CAN-DO   (aux_lslibemp,
-                                      STRING(crapass.nrdconta))  AND
-                               NOT CAN-FIND (craptco WHERE
-                                      craptco.cdcooper = par_cdcooper  AND
-                                      craptco.nrdconta = par_nrdconta  AND
-                                      craptco.tpctatrf <> 3) THEN
-                               DO:
-                                   aux_cdcritic = 674.
-                                   LEAVE.
-                               END.
-                      END.
+                /* validar tempo minimo de sociedade apenas se nao for cessao de credito */
+                IF  NOT aux_flgcescr THEN
+                    DO:
+                        /* Associado com tempo de sociedade menor que o permitido */
+                        IF   (crapass.dtmvtolt + aux_diasmini) > par_dtmvtolt THEN
+                              DO:
+                                  IF   NOT CAN-DO   (aux_lslibemp,
+                                              STRING(crapass.nrdconta))  AND
+                                       NOT CAN-FIND (craptco WHERE
+                                              craptco.cdcooper = par_cdcooper  AND
+                                              craptco.nrdconta = par_nrdconta  AND
+                                              craptco.tpctatrf <> 3) THEN
+                                       DO:
+                                           aux_cdcritic = 674.
+                                           LEAVE.
+                                       END.
+                              END.
+                    END.
             END.
 
        /* Busca valor minimo */
@@ -3486,6 +3518,46 @@ PROCEDURE valida-dados-gerais:
                  LEAVE.
              END.
 
+        /* Nao permitir utilizar linha 100, quando possuir acordo de estouro de conta ativo */
+        IF   par_cdlcremp = 100  THEN
+             DO:
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                 /* Verifica se ha contratos de acordo */
+                 RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                     ,INPUT par_nrdconta
+                                                     ,INPUT par_nrdconta
+                                                     ,INPUT 1
+                                                     ,0
+                                                     ,0
+                                                     ,"").
+
+                 CLOSE STORED-PROC pc_verifica_acordo_ativo
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                 ASSIGN aux_flgativo = 0
+                        aux_cdcritic = 0
+                        aux_dscritic = ""
+                        aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                        aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                        aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo) WHEN pc_verifica_acordo_ativo.pr_flgativo <> ?.
+                                  
+                  IF   aux_cdcritic > 0   OR
+                       (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+                       DO:
+                           LEAVE.
+                       END.
+                                
+                  IF   aux_flgativo = 1  THEN
+                       DO:
+                           ASSIGN aux_dscritic = "Operacao nao permitida, conta corrente esta em acordo.".
+                           LEAVE.
+             END.
+             END.
+
         FIND craplcr WHERE craplcr.cdcooper = par_cdcooper   AND
                            craplcr.cdlcremp = par_cdlcremp
                            NO-LOCK NO-ERROR.
@@ -3527,6 +3599,7 @@ PROCEDURE valida-dados-gerais:
               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                         ,INPUT par_nrdconta
                         ,INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))
+						,INPUT 3
                         ,0
                         ,0
                         ,"").
@@ -3757,7 +3830,7 @@ PROCEDURE valida-dados-gerais:
                  END.
 
            END. /* END IF par_idorigem <> 3 AND par_idorigem <> 4 */
-        
+
         FOR EACH crappre WHERE crappre.cdcooper = par_cdcooper NO-LOCK:
         
             IF par_cdfinemp     = crappre.cdfinemp AND 
@@ -3894,7 +3967,7 @@ PROCEDURE proc_qualif_operacao:
         IF  NOT CAN-DO(par_dsctrliq, aux_nrctremp)   THEN
             NEXT.
 
-        aux_qtprecal = 0.
+        aux_qtprecal = crabepr.qtprecal.
 
         RUN saldo-devedor-epr (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -3916,8 +3989,13 @@ PROCEDURE proc_qualif_operacao:
                                OUTPUT TABLE tt-erro).
 
         /* Prestacoes restantes */
-        ASSIGN aux_qtprecal = aux_qtprecal + par_qtprecal
-               aux_qtpreapg = IF   crabepr.qtpreemp < aux_qtprecal   THEN
+
+        IF   crabepr.tpemprst = 0   THEN
+         DO:
+             ASSIGN aux_qtprecal = aux_qtprecal + par_qtprecal.
+         END.
+
+        ASSIGN aux_qtpreapg = IF   crabepr.qtpreemp < aux_qtprecal   THEN
                                    0
                               ELSE
                                    crabepr.qtpreemp - aux_qtprecal
@@ -5421,9 +5499,9 @@ PROCEDURE verifica-outras-propostas:
 								 ASSIGN aux_contador = aux_contador + 1				  
 										tt-msg-confirma.inconfir = aux_contador
 										tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
-							END.
-
 					END.
+
+			  END.
 			  END.
         
           /* Existe outra proposta de emprestimo */
@@ -8451,6 +8529,18 @@ PROCEDURE excluir-proposta:
              aux_dscritic <> "" THEN
              UNDO, LEAVE.
 
+        
+        /* verificar se existe cessao de credito */
+        FIND FIRST tbcrd_cessao_credito
+            WHERE tbcrd_cessao_credito.cdcooper = par_cdcooper
+              AND tbcrd_cessao_credito.nrdconta = par_nrdconta
+              AND tbcrd_cessao_credito.nrctremp = par_nrctremp
+              EXCLUSIVE-LOCK NO-ERROR.
+        IF AVAILABLE tbcrd_cessao_credito THEN      
+          DO:
+             DELETE tbcrd_cessao_credito.
+          END.
+
         /* Cancelar proposta na Esteira de credito*/
         /* Somente enviar cancelamento da proposta  
            se ja foi enviada para Esteira */
@@ -8600,6 +8690,7 @@ PROCEDURE valida-dados-proposta-completa:
     DEF VAR          aux_qtdias   AS INTE                           NO-UNDO.
     DEF VAR          aux_qtdias2  AS INTE                           NO-UNDO.
     DEF VAR          aux_qtdiacar AS INTE                           NO-UNDO.
+	DEF VAR          aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
 
     DEF BUFFER crablcr FOR craplcr.
 
@@ -8607,6 +8698,15 @@ PROCEDURE valida-dados-proposta-completa:
            aux_dscritic = "".
 
     EMPTY TEMP-TABLE tt-erro.
+
+	/* Condicao para caso a Finalidade for Cessao de Credito */
+    FOR FIRST crapfin FIELDS(tpfinali)
+                       WHERE crapfin.cdcooper = par_cdcooper AND 
+                             crapfin.cdfinemp = par_cdfinemp
+                             NO-LOCK: END.
+
+    IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
+       ASSIGN aux_flgcescr = TRUE.
 
     DO WHILE TRUE:
 
@@ -8621,7 +8721,8 @@ PROCEDURE valida-dados-proposta-completa:
              END.
 
         IF   crapass.dtdemiss <> ?     AND
-             par_cdlcremp     <> 100   THEN
+             par_cdlcremp     <> 100   AND 
+             NOT aux_flgcescr          THEN  /* Nao validar para cessao de credito */
              DO:
                  aux_cdcritic = 75.
                  LEAVE.
@@ -11301,6 +11402,10 @@ PROCEDURE carrega_dados_proposta_finalidade:
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+
+     FOR EACH tt-dados-proposta-fin NO-LOCK:
+          DELETE tt-dados-proposta-fin.
+     END.
 
     CREATE tt-dados-proposta-fin.
 
