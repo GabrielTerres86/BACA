@@ -25,9 +25,9 @@ BEGIN
   Objetivo  : Pagamento de parcelas dos emprestimos TR (Price TR) em substituição ao programa PC_CRPS171.
 
   Alteracoes: 12/04/2017 - Criação da rotina (Everton / Mout´S)
-
+  
               19/07/2017 - Adequação para pagamento de empréstimos com adiantamento e acertos gerais
-
+              
               07/08/2017 - Correção da execução do relatório 135, que não estava sendo
                            gerado na execução em paralelo.
 
@@ -58,7 +58,7 @@ BEGIN
       CURSOR cr_crapepr IS
         SELECT epr.rowid
               ,epr.cdcooper
-              ,epr.cdorigem 
+              ,epr.cdorigem
               ,epr.nrdconta
               ,epr.nrctremp
               ,epr.inliquid
@@ -79,26 +79,29 @@ BEGIN
               ,epr.dtultpag
               ,epr.tpdescto
               ,epr.indpagto
-              ,epr.cdagenci
+              ,ass.cdagenci  --ews
               ,epr.cdfinemp
               ,epr.vlemprst
-          FROM crapepr epr
-         WHERE epr.cdcooper = pr_cdcooper          --> Coop conectada
+          FROM crapepr epr,
+               crapass ass
+         WHERE epr.cdcooper = ass.cdcooper   --ews
+           AND epr.nrdconta = ass.nrdconta
+           AND epr.cdcooper = pr_cdcooper          --> Coop conectada
            AND epr.inliquid = 0                    --> Somente não liquidados
            AND epr.indpagto = 0                    --> Nao pago no mês ainda
            AND epr.flgpagto = 0                    --> Débito em conta
            AND epr.tpemprst = 0                    --> Price
-           AND epr.dtdpagto <= vr_dtcursor 
+           AND epr.dtdpagto <= vr_dtcursor
          ORDER BY epr.nrdconta
                  ,epr.nrctremp;
-                 
+
       -- Busca o cadastro de linhas de crédito
       CURSOR cr_craplcr IS
         SELECT lcr.cdlcremp
               ,lcr.txdiaria
               ,lcr.cdusolcr
           FROM craplcr lcr
-         WHERE lcr.cdcooper = pr_cdcooper; 
+         WHERE lcr.cdcooper = pr_cdcooper;
 
       -- Cursor para verificar se existe algum boleto em aberto
       CURSOR cr_cde (pr_cdcooper IN crapcob.cdcooper%TYPE
@@ -108,14 +111,14 @@ BEGIN
              FROM crapcob cob
             WHERE cob.cdcooper = pr_cdcooper
               AND cob.incobran = 0
-              AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN 
+              AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                   (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
                      FROM tbepr_cobranca cde
                     WHERE cde.cdcooper = pr_cdcooper
                       AND cde.nrdconta = pr_nrdconta
                       AND cde.nrctremp = pr_nrctremp);
       rw_cde cr_cde%ROWTYPE;
-          
+
       -- Cursor para verificar se existe algum boleto pago pendente de processamento
       CURSOR cr_ret (pr_cdcooper IN crapcob.cdcooper%TYPE
                     ,pr_nrdconta IN crapcob.nrdconta%TYPE
@@ -126,7 +129,7 @@ BEGIN
            WHERE cob.cdcooper = pr_cdcooper
              AND cob.incobran = 5
              AND cob.dtdpagto = pr_dtmvtolt
-             AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN 
+             AND (cob.nrdconta, cob.nrcnvcob, cob.nrctasac, cob.nrctremp, cob.nrdocmto) IN
                  (SELECT DISTINCT nrdconta_cob, nrcnvcob, nrdconta, nrctremp, nrboleto
                     FROM tbepr_cobranca cde
                    WHERE cde.cdcooper = pr_cdcooper
@@ -139,7 +142,7 @@ BEGIN
              AND ret.dtocorre = cob.dtdpagto
              AND ret.cdocorre = 6
              AND ret.flcredit = 0;
-      rw_ret cr_ret%ROWTYPE;  
+      rw_ret cr_ret%ROWTYPE;
 
       -- Consulta contratos ativos de acordos
        CURSOR cr_ctr_acordo IS
@@ -153,8 +156,8 @@ BEGIN
         WHERE tbrecup_acordo.cdsituacao = 1
           AND tbrecup_acordo_contrato.cdorigem IN (2,3);
 
-       rw_ctr_acordo cr_ctr_acordo%ROWTYPE;                               
- 
+       rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
+
       -- Definição de tipo para armazenar informações da linha de crédito
       TYPE typ_reg_craplcr IS
         RECORD(txdiaria craplcr.txdiaria%TYPE
@@ -163,10 +166,10 @@ BEGIN
         TABLE OF typ_reg_craplcr
           INDEX BY PLS_INTEGER; -- Cod linha de crédito
       vr_tab_craplcr typ_tab_craplcr;
-      
+
       TYPE typ_tab_acordo   IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
       vr_tab_acordo   typ_tab_acordo;
-                
+
       -- Variáveis para passagem a rotina pc_calcula_lelem
       vr_diapagto     INTEGER;
       vr_qtprepag     crapepr.qtprepag%TYPE;
@@ -178,14 +181,14 @@ BEGIN
       vr_txdjuros     crapepr.txjuremp%TYPE;
       vr_qtprecal     crapepr.qtprecal%TYPE;      --> Quantidade de parcelas do empréstimo
       vr_vlsdeved     NUMBER(14,2);               --> Saldo devedor do empréstimo
-      vr_dtdpagto     crapepr.dtdpagto%TYPE; 
-      
+      vr_dtdpagto     crapepr.dtdpagto%TYPE;
+
       -- Variáveis auxiliares ao processo
       vr_dstextab     craptab.dstextab%TYPE;  --> Busca na craptab
       vr_inusatab     BOOLEAN;                --> Indicador S/N de utilização de tabela de juros
-      vr_tab_vlmindeb NUMBER;                 --> Valor mínimo a debitar por prestações de empréstimo      
+      vr_tab_vlmindeb NUMBER;                 --> Valor mínimo a debitar por prestações de empréstimo
       vr_nrparcela    tbepr_tr_parcelas.nrparcela%TYPE;
-      vr_qtparcela    tbepr_tr_parcelas.qtparcela%TYPE;   
+      vr_qtparcela    tbepr_tr_parcelas.qtparcela%TYPE;
       vr_vlparcela    tbepr_tr_parcelas.vlparcela%TYPE;
       vr_dsobservacao tbepr_tr_parcelas.dsobservacao%TYPE;
       vr_flgprocessa  tbepr_tr_parcelas.flgprocessa%TYPE;
@@ -193,7 +196,7 @@ BEGIN
       vr_dsctajud     crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
       vr_dsctactrjud  crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
       vr_cdindice     VARCHAR2(30) := '';            --> Indice da tabela de acordos
-      vr_mesespago    INTEGER;        
+      vr_mesespago    INTEGER;
       vr_inliquid     crapepr.inliquid%TYPE;
       
       -- Erro em chamadas da pc_gera_erro
@@ -301,7 +304,7 @@ BEGIN
                vr_inliquid := 0;
              END IF;
              --
-       BEGIN
+             BEGIN
                UPDATE crapepr
                   SET dtdpagto  = add_months(rw_crapepr.dtdpagto,1)
                      ,dtultpag  = vr_dtultpag
@@ -332,7 +335,7 @@ BEGIN
               vr_cdcritic:= 0;
               vr_dscritic:= 'Erro ao deletar tabelas de parcelas. Rotina pc_CRPS750_1.pc_gera_tabela_parcelas. '||sqlerrm;
            --Sair do programa
-           RAISE vr_exc_erro;         
+           RAISE vr_exc_erro;
        END;
        --
        -- Carregar Contratos de Acordos
@@ -340,7 +343,7 @@ BEGIN
          vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
                         LPAD(rw_ctr_acordo.nrctremp,10,'0');
          vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
-       END LOOP;       
+       END LOOP;
        --
        -- Leitura do indicador de uso da tabela de taxa de juros
        vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -363,7 +366,7 @@ BEGIN
        ELSE
          -- Não existe
          vr_inusatab := FALSE;
-       END IF; 
+       END IF;
        --
        -- Valor minimo para debito dos atrasos das prestacoes
        vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -379,7 +382,7 @@ BEGIN
        ELSE
          -- Considerar o valor mínimo como zero
          vr_tab_vlmindeb := 0;
-       END IF;    
+       END IF;
        --
        -- Busca do cadastro de linhas de crédito de empréstimo
        FOR rw_craplcr IN cr_craplcr LOOP
@@ -394,7 +397,7 @@ BEGIN
        vr_blqresg_cc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                   pr_cdcooper => pr_cdcooper,
                                                   pr_cdacesso => 'COBEMP_BLQ_RESG_CC');
-      
+
        -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
        vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                 pr_cdcooper => pr_cdcooper,
@@ -403,7 +406,7 @@ BEGIN
        -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
        vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                   ,pr_cdcooper => pr_cdcooper
-                                                  ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');         
+                                                  ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
        --
        FOR rw_crapepr IN cr_crapepr LOOP
          -- acerto de datas
@@ -433,7 +436,7 @@ BEGIN
            vr_dsobservacao := vr_dsobservacao||'Nao cobrar as parcelas desta conta e contrato pelo motivo de uma acao judicial; ';
            vr_flgprocessa  := 0;
          END IF;
-          
+
          -- Condicao para verificar se permite incluir as linhas parametrizadas
          IF INSTR(',' || vr_dsctajud || ',',',' || rw_crapepr.nrdconta || ',') > 0 THEN
            vr_dsobservacao := vr_dsobservacao||'Nao cobrar as parcelas desta conta e contrato pelo motivo de uma acao judicial; ';
@@ -448,12 +451,12 @@ BEGIN
 
          /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
          /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
-         IF vr_blqresg_cc = 'S' THEN   
-                                                       
+         IF vr_blqresg_cc = 'S' THEN
+
             -- inicializar rows de cursores
             rw_cde := NULL;
             rw_ret := NULL;
-              
+
             /* 2º se permitir, verificar se possui boletos em aberto */
             OPEN cr_cde( pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => rw_crapepr.nrdconta
@@ -462,10 +465,10 @@ BEGIN
             CLOSE cr_cde;
 
             /* 3º se existir boleto de contrato em aberto, nao debitar */
-            IF nvl(rw_cde.nrdocmto,0) > 0 THEN           
+            IF nvl(rw_cde.nrdocmto,0) > 0 THEN
                vr_dsobservacao := vr_dsobservacao||'Boleto de contrato em aberto, nao debitar; ';
                vr_flgprocessa  := 0;
-            ELSE              
+            ELSE
                /* 4º cursor para verificar se existe boleto pago pendente de processamento, nao debitar */
                OPEN cr_ret( pr_cdcooper => pr_cdcooper
                            ,pr_nrdconta => rw_crapepr.nrdconta
@@ -475,13 +478,13 @@ BEGIN
                CLOSE cr_ret;
 
                /* 6º se existir boleto de contrato pago pendente de processamento, nao debitar */
-               IF nvl(rw_ret.nrdocmto,0) > 0 THEN           
+               IF nvl(rw_ret.nrdocmto,0) > 0 THEN
                   vr_dsobservacao := vr_dsobservacao||'Boleto de contrato pago pendente de processamento, nao debitar; ';
                   vr_flgprocessa  := 0;
-               END IF;    
-                
+               END IF;
+
             END IF;
-            --                                
+            --
          END IF;
          --
          -- Se não houver cadastro da linha de crédito do empréstimo
@@ -490,14 +493,14 @@ BEGIN
            vr_cdcritic := 363;
            vr_dscritic := gene0001.fn_busca_critica(363) || ' LCR: ' || to_char(rw_crapepr.cdlcremp,'fm9990');
            RAISE vr_exc_erro;
-         END IF;         
+         END IF;
          --
          -- Nao debitar os emprestimos com emissao de boletos
          IF vr_tab_craplcr(rw_crapepr.cdlcremp).cdusolcr = 2 THEN
            -- Ignorá-lo
            vr_dsobservacao := vr_dsobservacao||'Nao debitar os emprestimos com emissao de boletos; ';
            vr_flgprocessa  := 0;
-         END IF;         
+         END IF;
          --
          vr_cdindice := LPAD(rw_crapepr.cdcooper,10,'0') || LPAD(rw_crapepr.nrdconta,10,'0') ||
                         LPAD(rw_crapepr.nrctremp,10,'0');
@@ -505,7 +508,7 @@ BEGIN
          IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
            vr_dsobservacao := vr_dsobservacao||'Nao debitar os emprestimos com Acordo; ';
            vr_flgprocessa  := 0;
-         END IF;         
+         END IF;
          --
          -- Se está setado para utilizarmos a tabela de juros
          IF vr_inusatab THEN
@@ -514,7 +517,7 @@ BEGIN
          ELSE
            -- Usar taxa cadastrada no empréstimo
            vr_txdjuros := rw_crapepr.txjuremp;
-         END IF;         
+         END IF;
          -- Inicializar variaveis para o cálculo
          --vr_flgrejei := FALSE;
          vr_diapagto := 0;
@@ -561,7 +564,7 @@ BEGIN
          ELSE
            -- Utilizar apenas a quantidade de parcelas
            vr_qtprecal := rw_crapepr.qtpreemp;
-         END IF;         
+         END IF;
          --
          vr_mesespago := trunc(vr_qtprecal) - trunc(rw_crapepr.qtprecal);
          --
@@ -572,15 +575,15 @@ BEGIN
              -- Adicionar de quantidade anos
              vr_dtdpagto := add_months(rw_crapepr.dtdpagto_nova,vr_mesespago);
            ELSE
-           -- Adicionar de quantidade meses pago dentro do mês
-           vr_dtdpagto := gene0005.fn_calc_data(pr_dtmvtolt => rw_crapepr.dtdpagto_nova  --> Data do pagamento anterior
-                                               ,pr_qtmesano => vr_mesespago        --> + mês
-                                               ,pr_tpmesano => 'M'
-                                               ,pr_des_erro => vr_dscritic);
-           -- Parar se encontrar erro
-           IF vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro;
-           END IF;
+             -- Adicionar de quantidade meses pago dentro do mês
+             vr_dtdpagto := gene0005.fn_calc_data(pr_dtmvtolt => rw_crapepr.dtdpagto_nova  --> Data do pagamento anterior
+                                                 ,pr_qtmesano => vr_mesespago        --> + mês
+                                                 ,pr_tpmesano => 'M'
+                                                 ,pr_des_erro => vr_dscritic);
+             -- Parar se encontrar erro
+             IF vr_dscritic IS NOT NULL THEN
+                RAISE vr_exc_erro;
+             END IF;
            END IF;
          ELSIF vr_mesespago < 0 then
            vr_dtdpagto := add_months(rw_crapepr.dtdpagto_nova,vr_mesespago);
@@ -591,7 +594,7 @@ BEGIN
          vr_nrparcela := trunc(vr_qtprecal)+1;
          vr_qtparcela := vr_nrparcela - vr_qtprecal;
          vr_vlparcela := vr_qtparcela * rw_crapepr.vlpreemp;
-         -- se saldo devedor menor que parcela ou for a última parcela, paga saldo devedor 
+         -- se saldo devedor menor que parcela ou for a última parcela, paga saldo devedor
          IF (vr_vlparcela > vr_vlsdeved) OR (vr_nrparcela > rw_crapepr.qtpreemp) then
            --
            vr_vlparcela := vr_vlsdeved;
@@ -634,7 +637,7 @@ BEGIN
            --
          END IF;
          --
-         -- Enquanto data de vencimento da parcela for menor que data processamento E houver saldo devedor do emprestimo 
+         -- Enquanto data de vencimento da parcela for menor que data processamento E houver saldo devedor do emprestimo
          WHILE (vr_dtdpagto <= vr_dtcursor) and (vr_vlsdeved > 0) LOOP
            --
            BEGIN
@@ -673,8 +676,8 @@ BEGIN
                  vr_dsobservacao,
                  vr_txdjuros,
                  vr_vlsdeved,
-                 vr_tab_vlmindeb,   
-                 vr_flgprocessa         
+                 vr_tab_vlmindeb,
+                 vr_flgprocessa
                );
            EXCEPTION
              WHEN OTHERS THEN
@@ -682,7 +685,7 @@ BEGIN
                   vr_cdcritic:= 0;
                   vr_dscritic:= 'Erro ao inserir tabelas de parcelas. Rotina pc_CRPS750_1.pc_gera_tabela_parcelas. '||sqlerrm;
                --Sair do programa
-               RAISE vr_exc_erro;         
+               RAISE vr_exc_erro;
            END;
            --
            -- Adicionar de 1 em 1 mês até a data alcançar a data atual
@@ -698,9 +701,9 @@ BEGIN
            vr_vlsdeved  := vr_vlsdeved - vr_vlparcela;
            vr_nrparcela := vr_nrparcela + 1;
            vr_qtparcela := 1;
-           vr_vlparcela := vr_qtparcela * rw_crapepr.vlpreemp;           
+           vr_vlparcela := vr_qtparcela * rw_crapepr.vlpreemp;
            --
-           -- se saldo devedor menor que parcela ou for a última parcela, paga somente saldo devedor 
+           -- se saldo devedor menor que parcela ou for a última parcela, paga somente saldo devedor
            IF (vr_vlparcela > vr_vlsdeved) OR (vr_nrparcela > rw_crapepr.qtpreemp) then
              --
              vr_vlparcela := vr_vlsdeved;
@@ -724,8 +727,8 @@ BEGIN
         --Sair do programa
         RAISE vr_exc_erro;
     END pc_gera_tabela_parcelas;
-    -- 
     --
+    -- 
     --
     --Fase processo 2
     --Procedure para gerar o pagamento das parcelas de empréstimos TR
@@ -799,7 +802,7 @@ BEGIN
               ,epr.dtultpag
               ,epr.tpdescto
               ,epr.indpagto
-              ,epr.cdagenci
+              ,prc.cdagenci --ews
               ,epr.cdfinemp
               ,epr.vlemprst
               ,prc.dtdpagto dtdpagtoprc
@@ -810,7 +813,7 @@ BEGIN
           FROM crapepr epr,
                tbepr_tr_parcelas prc
          WHERE epr.cdcooper = prc.cdcooper
-           AND epr.cdagenci = prc.cdagenci
+         --  AND epr.cdagenci = prc.cdagenci  --ews
            AND epr.nrdconta = prc.nrdconta
            AND epr.nrctremp = prc.nrctremp
            AND epr.cdcooper = pr_cdcooper
@@ -1070,6 +1073,8 @@ BEGIN
       -- de saldo, lançamentos do dia, associados, cpmf
       IF vr_flgprc = 1 THEN
         vr_flgrejei := TRUE;
+        --
+        --
       ELSE
         --
         -- Procedimento padrão de busca de informações de CPMF
@@ -1834,8 +1839,8 @@ BEGIN
               ,nraplica
               ,min(dtmvtolt) dtmvtolt
               ,sum(gene0002.fn_char_para_number(cdpesqbb)) cdpesqbb
-              ,max(vlsdapli) vlsdapli
-              ,sum(vldaviso) vldaviso
+              ,max(vlsdapli)- sum(vllanmto) vlsdapli --ews
+              ,max(vldaviso) vldaviso
               ,sum(vllanmto) vllanmto
               ,ROW_NUMBER () OVER (PARTITION BY cdagenci
                                        ORDER BY cdagenci) sqregpac
