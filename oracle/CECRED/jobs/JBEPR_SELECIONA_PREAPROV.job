@@ -22,10 +22,10 @@ begin
  vr_dscritic VARCHAR2(4000);
 begin
   empr0002.pc_executar_crps682(pr_cdcritic => vr_cdcritic,pr_dscritic => vr_dscritic);
-  -- Testar saida com erro   
-  IF vr_dscritic IS NOT NULL THEN     
-  -- Levantar exceçao     
-    RAISE_application_error(-20500,'Erro: '||vr_dscritic);
+  -- Testar saida com erro
+  IF vr_dscritic IS NOT NULL THEN
+  -- Levantar exceçao
+    RAISE_application_error(-20500,''Erro: ''||vr_dscritic);
 
 end;',
                                 start_date          => to_date('17-07-2017 20:00:00', 'dd-mm-yyyy hh24:mi:ss'),
