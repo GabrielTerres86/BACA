@@ -1160,7 +1160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --   Alteração : 30/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
     --
     --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
-    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
+    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom)
+	--
+	--               15/08/2017 - Ajuste na busca dos dados emitente quando cheque 085 (Daniel) 
     -- .........................................................................*/
     
     ---------->>> CURSORES <<<---------- 
@@ -1239,6 +1241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       SELECT ass.inpessoa
             ,ass.nrcpfcgc
             ,ass.nmprimtl
+            ,ass.cdcooper
         FROM crapass ass
             ,crapcop cop
        WHERE cop.cdagectl = pr_cdagectl
@@ -1325,20 +1328,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       IF rw_crapcdb.cdbanchq = 85 THEN
         -- Buscar cadastro do cooperado emitente
         OPEN cr_crapass_2 (pr_cdagectl => rw_crapcdb.cdagechq
-                        ,pr_nrdconta => rw_crapcdb.nrctachq);
+                          ,pr_nrdconta => rw_crapcdb.nrctachq);
         FETCH cr_crapass_2 INTO rw_crapass_2;
         vr_blnfound := cr_crapass_2%FOUND;
         CLOSE cr_crapass_2;
-        -- Se encontrou
-        IF vr_blnfound THEN
-          vr_rel_nmcheque := rw_crapass_2.nmprimtl; 
-          vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass_2.nrcpfcgc,
-                                                       pr_inpessoa => rw_crapass_2.inpessoa);
-        -- Se NAO encontrar
+        
+        -- Se nao encontrou
+        IF NOT vr_blnfound THEN
+          vr_rel_dscpfcgc := 'NAO CADASTRADO';
+          vr_rel_nmcheque := 'NAO CADASTRADO';
+        -- Se encontrar
         ELSE
           -- Pessoa Física
           IF rw_crapass_2.inpessoa = 1 THEN
-            OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
+            OPEN cr_crapttl (pr_cdcooper => rw_crapass_2.cdcooper
                             ,pr_nrdconta => rw_crapcdb.nrctachq);
             FETCH cr_crapttl INTO rw_crapttl;
             vr_blnfound := cr_crapttl%FOUND;
@@ -1353,7 +1356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
               vr_rel_nmcheque := 'NAO CADASTRADO';
             END IF;
           ELSE -- Pessoa Juridica
-            OPEN cr_crapjur (pr_cdcooper => pr_cdcooper
+            OPEN cr_crapjur (pr_cdcooper => rw_crapass_2.cdcooper
                             ,pr_nrdconta => rw_crapcdb.nrctachq);
             FETCH cr_crapjur INTO rw_crapjur;
             vr_blnfound := cr_crapjur%FOUND;
@@ -2938,6 +2941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       SELECT ass.inpessoa
             ,ass.nrcpfcgc
             ,ass.nmprimtl
+            ,ass.cdcooper
         FROM crapass ass
             ,crapcop cop
        WHERE cop.cdagectl = pr_cdagectl
@@ -3020,33 +3024,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		  
       -- Se for do sistema CECRED
       IF rw_cstdsc.cdbanchq = 85 THEN
+        
         -- Buscar cadastro do cooperado emitente
         OPEN cr_crapass_2 (pr_cdagectl => rw_cstdsc.cdagechq
-                        ,pr_nrdconta => rw_cstdsc.nrctachq);
+                          ,pr_nrdconta => rw_cstdsc.nrctachq);
         FETCH cr_crapass_2 INTO rw_crapass_2;
         vr_blnfound := cr_crapass_2%FOUND;
         CLOSE cr_crapass_2;
-        -- Se NAO encontrar
+        
+        -- Inicializa as variaveis como nao cadastrado
+        vr_nmcheque := 'NAO CADASTRADO';
+        vr_nrcpfcgc := 0;
+        
+        -- Se encontrar
         IF vr_blnfound THEN
+          
           -- Pessoa Física
           IF rw_crapass_2.inpessoa = 1 THEN
-            OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
+            OPEN cr_crapttl (pr_cdcooper => rw_crapass_2.cdcooper
                             ,pr_nrdconta => rw_cstdsc.nrctachq);
             FETCH cr_crapttl INTO rw_crapttl;
             vr_blnfound := cr_crapttl%FOUND;
             CLOSE cr_crapttl;
-            -- Se NAO encontrar
+            
+            -- Se encontrar
             IF vr_blnfound THEN
               vr_nmcheque := rw_crapttl.nmtalttl;
               vr_nrcpfcgc := rw_crapttl.nrcpfcgc;
             END IF;
           ELSE -- Pessoa Juridica
-            OPEN cr_crapjur (pr_cdcooper => pr_cdcooper
+            OPEN cr_crapjur (pr_cdcooper => rw_crapass_2.cdcooper
                             ,pr_nrdconta => rw_cstdsc.nrctachq);
             FETCH cr_crapjur INTO rw_crapjur;
             vr_blnfound := cr_crapjur%FOUND;
             CLOSE cr_crapjur;
-            -- Se NAO encontrar
+            
+            -- Se encontrar
             IF vr_blnfound THEN
               vr_nmcheque := rw_crapjur.nmtalttl;
               vr_nrcpfcgc := rw_crapass_2.nrcpfcgc;
@@ -7155,7 +7168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_efetiva_desconto_bordero
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao:	26/07/2017
+    Data    : Dezembro/2016                 Ultima atualizacao:	14/08/2017
 
     Dados referentes ao programa:
 
@@ -7171,6 +7184,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                              
                 26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
                              PRJ300-Desconto de cheque(Lombardi) 
+
+                14/08/2017 - Ajuste para buscar cheques de custodia sem data de resgate. (Daniel)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7282,7 +7297,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			 AND cst.cdbanchq = pr_cdbanchq
 			 AND cst.cdagechq = pr_cdagechq
 			 AND cst.nrctachq = pr_nrctachq
-			 AND cst.nrcheque = pr_nrcheque;								 
+			 AND cst.nrcheque = pr_nrcheque
+			 AND cst.dtdevolu IS NULL;								 
 	rw_crapcst cr_crapcst%ROWTYPE;
 	
 	-- Buscar informações do lote
@@ -7725,7 +7741,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					CLOSE cr_crapcst;
 					-- Gerar crítica
 					vr_cdcritic := 0;
-					vr_dscritic := 'Custódia de cheque não encontrada.';
+					vr_dscritic := 'Custódia de cheque não encontrada. Conta: '  || to_char(vr_tab_cheques(vr_idx_cheque).nrctachq) ||
+                                   ' Cheque: ' || to_char(vr_tab_cheques(vr_idx_cheque).nrcheque);
 					-- Levantar exceção
 					RAISE vr_exc_erro;
 				END IF;
