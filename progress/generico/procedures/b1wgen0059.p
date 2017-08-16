@@ -193,6 +193,9 @@
                  07/06/2016 - Adicionar validacao para nao exibir o historico 
                               1019 na tela autori (Lucas Ranghetti #464211)
 
+                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
+                             PRJ339 - CRM (Odirlei-AMcom)       
+							         
 			    02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							 (Adriano - P339).	 
@@ -1011,7 +1014,9 @@ PROCEDURE busca-crapnac:
 
             IF  aux_nrregist > 0 THEN
                 DO:
-                   FIND tt-crapnac OF crapnac NO-ERROR.
+                   FIND first tt-crapnac 
+                        where crapnac.cdnacion = tt-crapnac.cdnacion 
+                        NO-ERROR.
     
                    IF   NOT AVAILABLE tt-crapnac THEN
                         DO:
@@ -1047,8 +1052,8 @@ PROCEDURE busca-crapnat:
 
         ASSIGN par_dsnatura = TRIM(par_dsnatura).
 
-        FOR EACH crapnat WHERE
-                         crapnat.dsnatura MATCHES("*" + par_dsnatura + "*")
+        FOR EACH crapmun WHERE
+                         crapmun.dscidade MATCHES("*" + par_dsnatura + "*")
                          NO-LOCK:
 
             ASSIGN par_qtregist = par_qtregist + 1.
@@ -1060,12 +1065,13 @@ PROCEDURE busca-crapnat:
 
             IF  aux_nrregist > 0 THEN
                 DO:
-                   FIND tt-crapnat OF crapnat NO-ERROR.
+                   FIND tt-crapnat 
+                     WHERE tt-crapnat.dsnatura = crapmun.dscidade NO-ERROR.
 
                    IF   NOT AVAILABLE tt-crapnat THEN
                         DO:
                            CREATE tt-crapnat.
-                           BUFFER-COPY crapnat TO tt-crapnat.
+                           ASSIGN tt-crapnat.dsnatura = crapmun.dscidade.
                         END.
                 END.
 
@@ -1164,7 +1170,9 @@ PROCEDURE busca-crapban:
 
             IF  aux_nrregist > 0 THEN
                 DO:
-                   FIND tt-crapban OF crapban NO-ERROR.
+                   FIND first tt-crapban 
+                      where crapban.cdbccxlt = tt-crapban.cdbccxlt
+                      NO-ERROR.
     
                    IF   NOT AVAILABLE tt-crapban THEN
                         DO:

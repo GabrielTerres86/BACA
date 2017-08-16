@@ -180,6 +180,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 							(Adriano - P339).
 
 
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)
 ............................................................................. */
 
   -- Data do movimento
@@ -369,7 +371,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
              nrcpfcgc,
              tpdocptl,
              nrdocptl,
-             cdoedptl,
+             idorgexp,
              cdufdptl,
              dtabtcct,
              dtadmiss
@@ -476,7 +478,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     vr_nrcpfcgc        VARCHAR2(18);
     vr_tpdocptl        crapass.tpdocptl%TYPE;
     vr_nrdocptl        crapass.nrdocptl%TYPE;
-    vr_cdoedptl        crapass.cdoedptl%TYPE;
+    vr_cdorgexp        tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
+    vr_nmorgexp        tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
     vr_cdufdptl        crapass.cdufdptl%TYPE;
     vr_nmprital        crapass.nmprimtl%TYPE;
     vr_nmsegtal        crapttl.nmextttl%TYPE;
@@ -955,7 +958,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 		  -- Inicializa variaveis
           vr_tpdocptl := ' ';
           vr_nrdocptl := ' ';
-          vr_cdoedptl := ' ';
+          vr_cdorgexp := ' ';
           vr_cdufdptl := ' ';
           vr_nmsegtal := ' ';
           vr_literal6 := ' ';
@@ -968,7 +971,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
             vr_nrcpfcgc := gene0002.fn_mask(rw_crapass.nrcpfcgc,'999.999.999-99');
             vr_tpdocptl := rw_crapass.tpdocptl;
             vr_nrdocptl := rw_crapass.nrdocptl;
-            vr_cdoedptl := rw_crapass.cdoedptl;
             vr_cdufdptl := rw_crapass.cdufdptl;
 
             -- Abre o cursor contendo os titulares da conta
@@ -1111,6 +1113,18 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_auxiliar); -- O retorno é ignorado, pois a variável vr_agencia é atualiza pelo programa
           vr_nrdigtc2 := MOD(vr_auxiliar,10);
 
+          --> Buscar orgão expedidor
+          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
+                                            pr_cdorgao_expedidor => vr_cdorgexp, 
+                                            pr_nmorgao_expedidor => vr_nmorgexp, 
+                                            pr_cdcritic          => vr_cdcritic, 
+                                            pr_dscritic          => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR 
+            TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_cdorgexp := 'NAO CADAST.';
+            vr_nmorgexp := NULL; 
+          END IF;  
+
           -- Busca os dados cadastrais do titular
           IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
              rw_crapass.cdtipcta = 13   THEN --ESPECIAL ITG
@@ -1120,7 +1134,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z');
             vr_literal3 := rpad(vr_tpdocptl,3,' ') ||
                            SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
-                           TRIM(vr_cdoedptl)|| ' '||
+                           TRIM(vr_cdorgexp)|| ' '||
                            TRIM(vr_cdufdptl);
             vr_literal4 := '';
           ELSE
@@ -1131,7 +1145,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z');
             vr_literal4 := rpad(vr_tpdocptl,3,' ') ||
                            SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
-                           TRIM(vr_cdoedptl)|| ' '||
+                           TRIM(vr_cdorgexp)|| ' '||
                            TRIM(vr_cdufdptl);
           END IF;
 

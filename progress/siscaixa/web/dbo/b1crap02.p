@@ -78,6 +78,9 @@
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)  
+             
 ........................................................................... */
 
 /*---------------------------------------------------------------*/
@@ -101,6 +104,7 @@ DEF  VAR aux_nrcpfcgc    AS CHAR                               NO-UNDO.
 DEF  VAR aux_vltotrda    AS DEC                                NO-UNDO.    
 
 DEF VAR h-b1wgen0155 AS HANDLE                                 NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                NO-UNDO.
 DEF VAR aux_vlblqjud AS DECI                                   NO-UNDO.
 DEF VAR aux_vlblqpop AS DECI                                   NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                   NO-UNDO.
@@ -174,6 +178,7 @@ PROCEDURE consulta-conta:
     DEF VAR tab_txiofapl   AS DEC FORMAT "zzzzzzzz9,999999" NO-UNDO.
     
     DEF VAR aux_cdempres   AS INT                           NO-UNDO.
+    DEF VAR aux_cdorgexp   AS CHAR                          NO-UNDO.
 
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -432,8 +437,34 @@ PROCEDURE consulta-conta:
 
     END.   /*  FOR EACH */
     
+    
+    /* Retornar orgao expedidor */
+    IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+        RUN sistema/generico/procedures/b1wgen0052b.p 
+            PERSISTENT SET h-b1wgen0052b.
+
+    ASSIGN aux_cdorgexp = "".
+    RUN busca_org_expedidor IN h-b1wgen0052b 
+                       ( INPUT crapass.idorgexp,
+                        OUTPUT aux_cdorgexp,
+                        OUTPUT i-cod-erro, 
+                        OUTPUT c-desc-erro).
+
+    DELETE PROCEDURE h-b1wgen0052b.   
+    
+    IF c-desc-erro <> "" THEN
+    DO:       
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        LEAVE.
+    END.        
+    
     ASSIGN tt-conta.identidade = crapass.nrdocptl
-           tt-conta.orgao      = STRING(crapass.cdoedptl) + " - " + 
+           tt-conta.orgao      = STRING(aux_cdorgexp) + " - " + 
                                  STRING(crapass.dtemdptl,"99/99/9999").
 
     IF  crapass.inpessoa = 1 THEN

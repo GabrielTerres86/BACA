@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0052tt.i
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 04/01/2016
+    Data    : Junho/2010                      Ultima atualizacao: 13/04/2017
   
     Dados referentes ao programa:
   
@@ -60,6 +60,11 @@
                 28/01/2016 - Incluidos campos referentes a origem do endereco
                              e licenca ambiental na tt-crapass
                              Melhoria 147 (Heitor - RKAM)
+
+                13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+               
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                            PRJ339 - CRM (Odirlei-AMcom)  
 .............................................................................*/
 
 /* DEFINICOES PARA MATRIC[N].P */
@@ -115,7 +120,9 @@ DEFINE TEMP-TABLE tt-crapass NO-UNDO LIKE crapass
     FIELD nrtelcel AS DEC
     FIELD cdopetfn AS INTE
     FIELD idorigee AS INTE
-    FIELD nrlicamb AS DECI.
+    FIELD nrlicamb AS DECI
+    FIELD dsnacion LIKE crapnac.dsnacion
+    FIELD cdoedptl AS CHAR	  .
     
 DEFINE TEMP-TABLE tt-crapavt NO-UNDO 
     FIELD cdcooper LIKE crapavt.cdcooper
@@ -135,7 +142,7 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD nmdavali LIKE crapavt.nmdavali
     FIELD tpdocava LIKE crapavt.tpdocava
     FIELD nrdocava LIKE crapavt.nrdocava
-    FIELD cdoeddoc LIKE crapavt.cdoeddoc
+    FIELD cdoeddoc AS CHAR 
     FIELD cdufddoc LIKE crapavt.cdufddoc
     FIELD dtemddoc LIKE crapavt.dtemddoc
     FIELD dsproftl LIKE crapavt.dsproftl
@@ -143,7 +150,7 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD cdsexcto LIKE crapavt.cdsexcto
     FIELD cdestcvl LIKE crapavt.cdestcvl
     FIELD dsestcvl AS CHAR
-    FIELD dsnacion LIKE crapavt.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapavt.dsnatura
     FIELD nmmaecto LIKE crapavt.nmmaecto
     FIELD nmpaicto LIKE crapavt.nmpaicto
@@ -176,7 +183,9 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD vlrdobem LIKE crapavt.vlrdobem
     FIELD tpctrato LIKE crapavt.tpctrato
     FIELD fltemcrd AS INT  /* Indica que o representante possui cartão */
-    FIELD idrspleg AS INT.
+    FIELD idrspleg AS INT
+    FIELD idorgexp LIKE crapavt.idorgexp
+    FIELD cdnacion LIKE crapnac.cdnacion.
 
 /* MENSAGENS DE ALERTA CONF. A CONTA */
 DEFINE TEMP-TABLE tt-alertas NO-UNDO
@@ -227,14 +236,14 @@ DEFINE TEMP-TABLE tt-relat-fis NO-UNDO
     FIELD nmprimtl LIKE crapass.nmprimtl
     FIELD nrcpfcgc AS CHAR FORMAT "x(18)"
     FIELD nrdocptl LIKE crapass.nrdocptl
-    FIELD cdoedptl LIKE crapass.cdoedptl
+    FIELD cdoedptl AS CHAR 
     FIELD cdufdptl LIKE crapass.cdufdptl
     FIELD dtemdptl LIKE crapass.dtemdptl
     FIELD nmmaettl LIKE crapttl.nmmaettl
     FIELD nmpaittl LIKE crapttl.nmpaittl        
     FIELD dtnasctl LIKE crapass.dtnasctl
     FIELD cdsexotl AS CHAR FORMAT "X"
-    FIELD dsnacion LIKE crapass.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapttl.dsnatura 
     FIELD dsendere LIKE crapenc.dsendere
     FIELD nrendere AS CHAR
@@ -249,7 +258,9 @@ DEFINE TEMP-TABLE tt-relat-fis NO-UNDO
     FIELD nrcadast AS CHAR
     FIELD dsestcvl AS CHAR FORMAT "x(30)"
     FIELD nmconjug LIKE crapcje.nmconjug
-    FIELD cdufnatu LIKE crapttl.cdufnatu.
+    FIELD cdufnatu LIKE crapttl.cdufnatu
+    FIELD idorgexp LIKE crapass.idorgexp
+    FIELD cdnacion LIKE crapnac.cdnacion.
 
 DEFINE TEMP-TABLE tt-relat-jur NO-UNDO
     /* f_juridica */

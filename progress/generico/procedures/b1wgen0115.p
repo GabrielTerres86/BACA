@@ -26,7 +26,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0115.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Setembro/2011                     Ultima atualizacao: 03/08/2016
+    Data    : Setembro/2011                     Ultima atualizacao: 19/04/2017
 
     Objetivo  : Tranformacao BO tela ADITIV
 
@@ -148,6 +148,9 @@
                             
                03/08/2016 - Alterar rotina Gera_Impressao para chamar versao convertida 
                             oracle. PRJ314 - Indexacao centralizada (Odirlei-AMcom)
+                            
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)              
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -6624,7 +6627,7 @@ PROCEDURE gera_impressao_antiga:
          rel_nrcpfcgc
          ","
          SKIP
-         crapass.dsnacion
+         crapnac.dsnacion
          ","
          gnetcvl.rsestcvl
          "\033\106, residente  e domiciliado(a)  na  cidade de\033\105"
@@ -7548,6 +7551,11 @@ PROCEDURE gera_impressao_antiga:
                 IF AVAIL crapttl THEN
                     FIND gnetcvl WHERE gnetcvl.cdestcvl = crapttl.cdestcvl NO-LOCK.
 
+                /* Buscar nacionalidade */
+                FIND FIRST crapnac
+                     WHERE crapnac.cdnacion = crapass.cdnacion
+                     NO-LOCK NO-ERROR.
+                
                 ASSIGN rel_nrdconta = par_nrdconta
                        rel_nrctremp = par_nrctremp.
 
@@ -7561,7 +7569,8 @@ PROCEDURE gera_impressao_antiga:
                 DISPLAY STREAM str_1
                     par_nraditiv  par_nrctremp  aux_dtmvtolt
                     crapcop.nmextcop  crapass.nmprimtl  crapass.nrdocptl
-                    rel_nrcpfcgc      crapass.dsnacion
+                    rel_nrcpfcgc      
+                    crapnac.dsnacion WHEN AVAIL crapnac
                     gnetcvl.rsestcvl WHEN AVAIL gnetcvl
                     aux_nmcidade aux_cdufende crapass.nrmatric
                     crapass.nrdconta   tt-aditiv.nmdgaran rel_nrcpfgar

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0072tt.i
     Autor   : Jose Luis Marchezoni
-    Data    : Maio/2010                   Ultima atualizacao: 27/07/2015
+    Data    : Maio/2010                   Ultima atualizacao: 13/04/2017
 
     Objetivo  : Definicao das Temp-Tables, CONTAS - RESPONSAVEL LEGAL
 
@@ -10,6 +10,8 @@
                              (Adriano).
                                                          
                 27/07/2015 - Reformulacao cadastral (Gabriel-RKAM).            
+
+                13/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 .............................................................................*/
 
 
@@ -23,7 +25,9 @@ DEF TEMP-TABLE tt-crapcrl NO-UNDO LIKE crapcrl
      FIELD cddopcao AS CHAR
      FIELD cddctato LIKE crapass.nrdconta
      FIELD dtdenasc AS DATE
-     FIELD cdhabmen AS INT.
+     FIELD cdhabmen AS INT
+     FIELD dsorgemi AS CHAR
+     FIELD dsnacion LIKE crapnac.dsnacion.
 
 DEF TEMP-TABLE tt-cratcrl NO-UNDO LIKE tt-crapcrl.
   

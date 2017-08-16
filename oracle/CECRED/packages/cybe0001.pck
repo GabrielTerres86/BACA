@@ -1254,6 +1254,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
 
                27/10/2015 - Incluido a verificacao do campo crapass.idastcjt, Prj. 131 -
                             Assinatura Conjunta. (Jean Michel).
+
+               17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+               
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)
+
 			   26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 						   (Adriano - P339).
@@ -1578,7 +1584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --Nacionalidade
-            IF rw_crapass.dsnacion <> pr_tab_log(vr_index).crapass(1).dsnacion THEN
+            IF rw_crapass.cdnacion <> pr_tab_log(vr_index).crapass(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacion. 1.ttl';
               vr_log_flgrecad:= TRUE;
@@ -1833,7 +1839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
             /* campos 14/10/98 */
 
             --orgao Emissor Doc. Primeiro titular
-            IF rw_crapass.cdoedptl <> pr_tab_log(vr_index).crapass(1).cdoedptl THEN
+            IF rw_crapass.idorgexp <> pr_tab_log(vr_index).crapass(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org.ems.doc. 1.ttl';
               --Verificar se o campo já estah na alteracao
@@ -3288,7 +3294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --orgao Emissor Documento
-            IF rw_crapttl.cdoedttl <> pr_tab_log(vr_index).crapttl(1).cdoedttl THEN
+            IF rw_crapttl.idorgexp <> pr_tab_log(vr_index).crapttl(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org.ems.doc.';
               --Verificar se o campo já estah na alteracao
@@ -3350,7 +3356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --Nacionalidade
-            IF rw_crapttl.dsnacion <> pr_tab_log(vr_index).crapttl(1).dsnacion THEN
+            IF rw_crapttl.cdnacion <> pr_tab_log(vr_index).crapttl(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacion.';
               --Recadastramento
@@ -4100,7 +4106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --orgao Emissor Documento
-            IF rw_crapcrl.dsorgemi <> pr_tab_log(vr_index).crapcrl(1).dsorgemi THEN
+            IF rw_crapcrl.idorgexp <> pr_tab_log(vr_index).crapcrl(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org emi doc. '||pr_tab_log(vr_index).crapcrl(1).idseqmen||'.ttl';
               --Verificar se o campo já estah na alteracao
@@ -4160,7 +4166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --nacionalidade
-            IF rw_crapcrl.dsnacion <> pr_tab_log(vr_index).crapcrl(1).dsnacion THEN
+            IF rw_crapcrl.cdnacion <> pr_tab_log(vr_index).crapcrl(1).cdnacion THEN
               --Nome do campo
               vr_log_nmdcampo:= 'nacionalidade. '||pr_tab_log(vr_index).crapcrl(1).idseqmen||'.ttl';
               --Verificar se o campo já estah na alteracao
@@ -4364,7 +4370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               END IF;
             END IF;
             --orgao Emissor Conjuge
-            IF rw_crapcje.cdoedcje <> pr_tab_log(vr_index).crapcje(1).cdoedcje THEN
+            IF rw_crapcje.idorgexp <> pr_tab_log(vr_index).crapcje(1).idorgexp THEN
               --Nome do campo
               vr_log_nmdcampo:= 'org.emiss.cje';
               --Verificar se o campo já estah na alteracao

@@ -142,6 +142,10 @@
               12/06/2014 - (Chamado 117414) - Alteraçao das informaçoes do conjuge da crapttl 
                            para utilizar somente crapcje. 
                            (Tiago Castro - RKAM)
+                           
+              19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)  
+                           
 .............................................................................*/
 
 { includes/var_batch.i }  
@@ -175,7 +179,7 @@ DEF     VAR aux_nmtalttl LIKE crapttl.nmtalttl                       NO-UNDO.
 DEF     VAR aux_tpnacion LIKE crapttl.tpnacion                       NO-UNDO.
 DEF     VAR aux_dsnatura LIKE crapttl.dsnatura                       NO-UNDO.
 DEF     VAR aux_nrdocttl LIKE crapttl.nrdocttl                       NO-UNDO.
-DEF     VAR aux_cdoedttl LIKE crapttl.cdoedttl                       NO-UNDO.
+DEF     VAR aux_cdoedttl AS CHAR                                     NO-UNDO.
 DEF     VAR aux_dtemdttl LIKE crapttl.dtemdttl                       NO-UNDO.
 DEF     VAR aux_cdestcvl LIKE crapttl.cdestcvl                       NO-UNDO.
 DEF     VAR aux_cdfrmttl LIKE crapttl.cdfrmttl                       NO-UNDO.
@@ -195,6 +199,7 @@ DEF     VAR aux_nmextemp LIKE crapttl.nmextemp                       NO-UNDO.
 DEF     VAR aux_dsproftl LIKE crapttl.dsproftl                       NO-UNDO.
 DEF     VAR aux_cdnvlcgo LIKE crapttl.cdnvlcgo                       NO-UNDO.
 DEF     VAR aux_incasprp LIKE crapenc.incasprp                       NO-UNDO.
+DEF     VAR h-b1wgen0052b AS HANDLE                                  NO-UNDO.
 
 DEF     VAR rel_dsagenci AS CHAR                                     NO-UNDO.
 DEF     VAR rel_nmempres AS CHAR      FORMAT "x(15)"                 NO-UNDO.
@@ -434,7 +439,6 @@ FOR EACH crapeca WHERE crapeca.cdcooper = glb_cdcooper       AND
                             aux_tpnacion = crapttl.tpnacion
                             aux_dsnatura = crapttl.dsnatura
                             aux_nrdocttl = crapttl.nrdocttl
-                            aux_cdoedttl = crapttl.cdoedttl
                             aux_dtemdttl = crapttl.dtemdttl
                             aux_cdestcvl = crapttl.cdestcvl
                             aux_cdfrmttl = crapttl.cdfrmttl
@@ -450,6 +454,25 @@ FOR EACH crapeca WHERE crapeca.cdcooper = glb_cdcooper       AND
                             aux_nmextemp = crapttl.nmextemp
                             aux_dsproftl = crapttl.dsproftl
                             aux_cdnvlcgo = crapttl.cdnvlcgo.
+                            
+                            /* Retornar orgao expedidor */
+                            IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                                RUN sistema/generico/procedures/b1wgen0052b.p 
+                                    PERSISTENT SET h-b1wgen0052b.
+
+                            ASSIGN aux_cdoedttl = "".
+                            RUN busca_org_expedidor IN h-b1wgen0052b 
+                                               ( INPUT crapttl.idorgexp,
+                                                OUTPUT aux_cdoedttl,
+                                                OUTPUT glb_cdcritic, 
+                                                OUTPUT glb_dscritic).
+
+                            DELETE PROCEDURE h-b1wgen0052b.   
+
+                            IF  RETURN-VALUE = "NOK" THEN
+                            DO:
+                                ASSIGN aux_cdoedttl = 'NAO CADAST'.
+                            END.
                   END.
          END.
     ELSE
@@ -1146,7 +1169,6 @@ FOR EACH  cratalt NO-LOCK,
                aux_tpnacion = crapttl.tpnacion
                aux_dsnatura = crapttl.dsnatura
                aux_nrdocttl = crapttl.nrdocttl
-               aux_cdoedttl = crapttl.cdoedttl
                aux_dtemdttl = crapttl.dtemdttl
                aux_cdestcvl = crapttl.cdestcvl
                aux_cdfrmttl = crapttl.cdfrmttl
@@ -1162,6 +1184,25 @@ FOR EACH  cratalt NO-LOCK,
                aux_nmextemp = crapttl.nmextemp
                aux_dsproftl = crapttl.dsproftl
                aux_cdnvlcgo = crapttl.cdnvlcgo.
+               
+        /* Retornar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+            RUN sistema/generico/procedures/b1wgen0052b.p 
+                PERSISTENT SET h-b1wgen0052b.
+
+        ASSIGN aux_cdoedttl = "".
+        RUN busca_org_expedidor IN h-b1wgen0052b 
+                           ( INPUT crapttl.idorgexp,
+                            OUTPUT aux_cdoedttl,
+                            OUTPUT glb_cdcritic, 
+                            OUTPUT glb_dscritic).
+
+        DELETE PROCEDURE h-b1wgen0052b.   
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            ASSIGN aux_cdoedttl = 'NAO CADAST'.
+        END.       
 
         RUN gera_arquivo.
         

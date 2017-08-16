@@ -45,6 +45,9 @@
                05/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( André Euzébio / SUPERO) 
+                            
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)                             
 ............................................................................ */
 
 FIND crapage WHERE crapage.cdcooper = glb_cdcooper     AND
@@ -343,10 +346,25 @@ IF   glb_cdcritic = 0   THEN
               ASSIGN aux_dschqesp = "CHEQUE ESPECIAL".
                                      
          IF   crapass.inpessoa = 1 THEN
+         DO:
               ASSIGN aux_tpdocptl = crapass.tpdocptl
                      aux_nrdocptl = crapass.nrdocptl
-                     aux_cdoedptl = crapass.cdoedptl
                      aux_cdufdptl = crapass.cdufdptl.
+                     
+              /* Retornar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                      PERSISTENT SET h-b1wgen0052b.
+
+              ASSIGN aux_cdoedptl = "".
+              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 ( INPUT crapass.idorgexp,
+                                  OUTPUT aux_cdoedptl,
+                                  OUTPUT glb_cdcritic, 
+                                  OUTPUT glb_dscritic).
+
+              DELETE PROCEDURE h-b1wgen0052b.               
+         END.
 
          IF   crapass.inpessoa = 1  THEN
               DO:

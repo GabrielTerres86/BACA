@@ -523,6 +523,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
   --                          (Adriano - SD 614408).
+  --
+  --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+  --
   --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   --		                  crapass, crapttl, crapjur 
   -- 						 (Adriano - P339).
@@ -1554,12 +1557,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                             ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
 
+    /* ..........................................................................
+    --
+    --  Programa : pc_duplica_conta
+    --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
+    --  Sigla    : CADA
+    --  Autor    : 
+    --  Data     :                      Ultima atualizacao: 24/07/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Rotina para duplicar informações do cadastro do cooperado.
+    --
+    --  Alteracoes:  24/07/2017 - Alterar cdoedptl para idorgexp.
+    --                            PRJ339-CRM  (Odirlei-AMcom)
+    -- .............................................................................*/
+
       -- Cursor sobre a tabela de associados
       CURSOR cr_crapass IS
         SELECT inpessoa,
                nrcpfcgc,
-               dsnacion,
-               dtnasttl,
+               cdnacion,
                dsproftl,
                nmprimtl
           FROM crapass
@@ -1747,7 +1766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            nrcadast,
            nmprimtl,
            dtnasctl,
-           dsnacion,
+           cdnacion,
            dsproftl,
            dtadmiss,
            dtdemiss,
@@ -1756,7 +1775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            inpessoa,
            tpdocptl,
            nrdocptl,
-           cdoedptl,
+           idorgexp,
            cdufdptl,
            dtemdptl,
            nmpaiptl,
@@ -1804,7 +1823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                nrcadast,
                nmprimtl,
                dtnasctl,
-               dsnacion,
+               cdnacion,
                dsproftl,
                rw_crapdat.dtmvtolt, -- COnforme Sarah, utilizar a data atual para a data de Admissao
                dtdemiss,
@@ -1813,7 +1832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                inpessoa,
                tpdocptl,
                nrdocptl,
-               cdoedptl,
+               idorgexp,
                cdufdptl,
                dtemdptl,
                nmpaiptl,
@@ -1964,7 +1983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            cdufresd,
            dtmvtolt,
            cdcooper,
-           dsnacion,
+           cdnacion,
            nrendere,
            complend,
            nmbairro,
@@ -1975,7 +1994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            cdagenci,
            dsproftl,
            nrdctato,
-           cdoeddoc,
+           idorgexp,
            dtemddoc,
            cdufddoc,
            dtvalida,
@@ -2052,7 +2071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                cdufresd,
                dtmvtolt,
                cdcooper,
-               dsnacion,
+               cdnacion,
                nrendere,
                complend,
                nmbairro,
@@ -2063,7 +2082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                cdagenci,
                dsproftl,
                nrdctato,
-               cdoeddoc,
+               idorgexp,
                dtemddoc,
                cdufddoc,
                dtvalida,
@@ -2165,7 +2184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              nmextttl,
              inpessoa,
              nrcpfcgc,
-             dsnacion,
+             cdnacion,
              dtnasttl,
              cdsexotl,
              cdgraupr,
@@ -2174,7 +2193,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              dsproftl,
              tpdocttl,
              nrdocttl,
-             cdoedttl,
+             idorgexp,
              cdufdttl,
              dtemdttl,
              nmmaettl,
@@ -2225,7 +2244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  nmextttl,
                  rw_crapass.inpessoa,
                  rw_crapass.nrcpfcgc,
-                 rw_crapass.dsnacion,
+                 rw_crapass.cdnacion,
                  dtnasttl,
                  cdsexotl,
                  0,
@@ -2234,7 +2253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  rw_crapass.dsproftl,
                  tpdocttl,
                  nrdocttl,
-                 cdoedttl,
+                 idorgexp,
                  cdufdttl,
                  dtemdttl,
                  nmmaettl,
@@ -2300,7 +2319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              dtnasccj,
              tpdoccje,
              nrdoccje,
-             cdoedcje,
+             idorgexp,
              cdufdcje,
              dtemdcje,
              grescola,
@@ -2327,7 +2346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  dtnasccj,
                  tpdoccje,
                  nrdoccje,
-                 cdoedcje,
+                 idorgexp,
                  cdufdcje,
                  dtemdcje,
                  grescola,
@@ -2686,13 +2705,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            nrdconta,
            nrcpfcgc,
            nmrespon,
-           dsorgemi,
+           idorgexp,
            cdufiden,
            dtemiden,
            dtnascin,
            cddosexo,
            cdestciv,
-           dsnacion,
+           cdnacion,
            dsnatura,
            cdcepres,
            dsendres,
@@ -2716,13 +2735,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                nrdconta,
                nrcpfcgc,
                nmrespon,
-               dsorgemi,
+               idorgexp,
                cdufiden,
                dtemiden,
                dtnascin,
                cddosexo,
                cdestciv,
-               dsnacion,
+               cdnacion,
                dsnatura,
                cdcepres,
                dsendres,

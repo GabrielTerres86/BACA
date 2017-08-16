@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 20/04/2017
+    Data    : Marco/2010                   Ultima atualizacao: 19/07/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -34,6 +34,8 @@
 			                  crapass, crapttl, crapjur 
 							 (Adriano - P339).        
 
+                 19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                              PRJ339 - CRM (Odirlei-AMcom)  
                               
 .............................................................................*/
 
@@ -54,6 +56,7 @@ DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
 DEF VAR aux_retorno  AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                        NO-UNDO.
 
 FUNCTION ValidaCpfCnpj RETURNS LOGICAL 
     ( INPUT par_nrcpfcgc AS CHARACTER ) FORWARD.
@@ -324,9 +327,32 @@ PROCEDURE Busca_Dados_Id:
                tt-crapcje.cdgraupr = crapttl.cdgraupr
                tt-crapcje.nrdrowid = ROWID(crapcje).
 
+
+         IF tt-crapcje.idorgexp <> 0 THEN 
+         DO:
+          /* Retornar orgao expedidor */
+          IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+              RUN sistema/generico/procedures/b1wgen0052b.p 
+                  PERSISTENT SET h-b1wgen0052b.
+
+          ASSIGN tt-crapcje.cdoedcje = "".
+          RUN busca_org_expedidor IN h-b1wgen0052b 
+                             ( INPUT tt-crapcje.idorgexp,
+                              OUTPUT tt-crapcje.cdoedcje,
+                              OUTPUT par_cdcritic, 
+                              OUTPUT par_dscritic).
+
+          DELETE PROCEDURE h-b1wgen0052b.   
+
+          IF  RETURN-VALUE = "NOK" THEN
+          DO:
+              ASSIGN tt-crapcje.cdoedcje = ''.
+              LEAVE Busca.
+          END.            
+        END.
         /* procurar a conta do titular conf. conta do conjuge */
         FOR FIRST crabttl FIELDS(nrcpfcgc nmextttl dtnasttl tpdocttl nrdocttl
-                                 cdoedttl cdufdttl dtemdttl cdfrmttl cdnatopc
+                                 idorgexp cdufdttl dtemdttl cdfrmttl cdnatopc
                                  tpcttrab dsproftl cdnvlcgo cdturnos
                                  dtadmemp vlsalari cdcooper cdempres inpessoa
                                  idseqttl nrdconta grescola nrcpfemp cdocpttl)
@@ -359,7 +385,6 @@ PROCEDURE Busca_Dados_Id:
                   tt-crapcje.dtnasccj = crabttl.dtnasttl
                   tt-crapcje.tpdoccje = crabttl.tpdocttl
                   tt-crapcje.nrdoccje = crabttl.nrdocttl
-                  tt-crapcje.cdoedcje = crabttl.cdoedttl
                   tt-crapcje.cdufdcje = crabttl.cdufdttl
                   tt-crapcje.dtemdcje = crabttl.dtemdttl
                   tt-crapcje.grescola = crabttl.grescola
@@ -373,6 +398,25 @@ PROCEDURE Busca_Dados_Id:
                   tt-crapcje.vlsalari = crabttl.vlsalari
                   tt-crapcje.nrdocnpj = crabttl.nrcpfemp
                   tt-crapcje.cdocpcje = crabttl.cdocpttl.
+
+               /* Retornar orgao expedidor */
+               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                      PERSISTENT SET h-b1wgen0052b.
+
+               ASSIGN tt-crapcje.cdoedcje = "".
+               RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 ( INPUT crabttl.idorgexp,
+                                  OUTPUT tt-crapcje.cdoedcje,
+                                  OUTPUT par_cdcritic, 
+                                  OUTPUT par_dscritic).
+
+               DELETE PROCEDURE h-b1wgen0052b.   
+
+               IF  RETURN-VALUE = "NOK" THEN
+               DO:
+                  LEAVE Busca.
+               END.   
 
                /* Empresa */
                FOR FIRST crapemp FIELDS(nmextemp) 
@@ -534,7 +578,7 @@ PROCEDURE Busca_Dados_Cje:
 
         /* procurar a conta do titular conf. conta do conjuge */
         FOR FIRST crapttl FIELDS(nrcpfcgc nmextttl dtnasttl tpdocttl nrdocttl
-                                 cdoedttl cdufdttl dtemdttl cdfrmttl cdnatopc
+                                 idorgexp cdufdttl dtemdttl cdfrmttl cdnatopc
                                  tpcttrab dsproftl cdnvlcgo cdturnos
                                  dtadmemp vlsalari cdcooper cdempres inpessoa
                                  idseqttl nrdconta grescola nrcpfemp cdocpttl
@@ -578,7 +622,6 @@ PROCEDURE Busca_Dados_Cje:
            tt-crapcje.dtnasccj = crapttl.dtnasttl
            tt-crapcje.tpdoccje = crapttl.tpdocttl
            tt-crapcje.nrdoccje = crapttl.nrdocttl
-           tt-crapcje.cdoedcje = crapttl.cdoedttl
            tt-crapcje.cdufdcje = crapttl.cdufdttl
            tt-crapcje.dtemdcje = crapttl.dtemdttl
            tt-crapcje.grescola = crapttl.grescola
@@ -597,6 +640,25 @@ PROCEDURE Busca_Dados_Cje:
                ASSIGN par_dscritic = ERROR-STATUS:GET-MESSAGE(1).
                LEAVE Busca.
             END.
+
+        /* Retornar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+          RUN sistema/generico/procedures/b1wgen0052b.p 
+              PERSISTENT SET h-b1wgen0052b.
+
+        ASSIGN tt-crapcje.cdoedcje = "".
+        RUN busca_org_expedidor IN h-b1wgen0052b 
+                         ( INPUT crapttl.idorgexp,
+                          OUTPUT tt-crapcje.cdoedcje,
+                          OUTPUT par_cdcritic, 
+                          OUTPUT par_dscritic).
+
+        DELETE PROCEDURE h-b1wgen0052b.   
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+          LEAVE Busca.
+        END.   
 
         /* Empresa */
         FOR FIRST crapemp FIELDS(nmextemp) 
@@ -1035,6 +1097,7 @@ PROCEDURE Grava_Dados:
 
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
+    DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -1191,7 +1254,7 @@ PROCEDURE Grava_Dados:
                       crapcje.dtnasccj = ?
                       crapcje.tpdoccje = ""
                       crapcje.nrdoccje = ""
-                      crapcje.cdoedcje = ""
+                      crapcje.idorgexp = 0
                       crapcje.cdufdcje = ""
                       crapcje.dtemdcje = ?
                       crapcje.grescola = 0
@@ -1211,13 +1274,40 @@ PROCEDURE Grava_Dados:
             END.
         ELSE 
             DO:
+               
+               IF par_cdoedcje <> "" THEN
+               DO:               
+               
+                 /* Identificar orgao expedidor */
+                 IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                      RUN sistema/generico/procedures/b1wgen0052b.p 
+                          PERSISTENT SET h-b1wgen0052b.
+
+                 ASSIGN aux_idorgexp = 0.
+                 RUN identifica_org_expedidor IN h-b1wgen0052b 
+                                   ( INPUT par_cdoedcje,
+                                    OUTPUT aux_idorgexp,
+                                    OUTPUT aux_cdcritic, 
+                                    OUTPUT aux_dscritic).
+
+                 DELETE PROCEDURE h-b1wgen0052b.   
+
+                 IF  RETURN-VALUE = "NOK" THEN
+                 DO:                    
+                      UNDO Grava, LEAVE Grava.
+                 END.
+               END.
+                 ELSE 
+                   ASSIGN aux_idorgexp = 0.
+               
+                        
                ASSIGN crapcje.nrctacje = par_nrctacje     
                       crapcje.nrcpfcjg = par_nrcpfcjg
                       crapcje.nmconjug = UPPER(par_nmconjug)
                       crapcje.dtnasccj = par_dtnasccj
                       crapcje.tpdoccje = par_tpdoccje
                       crapcje.nrdoccje = par_nrdoccje
-                      crapcje.cdoedcje = par_cdoedcje
+                      crapcje.idorgexp = aux_idorgexp
                       crapcje.cdufdcje = par_cdufdcje
                       crapcje.dtemdcje = par_dtemdcje
                       crapcje.grescola = par_gresccje

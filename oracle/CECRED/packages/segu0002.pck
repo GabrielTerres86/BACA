@@ -695,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
        Sistema : Seguros
        Sigla   : CRED
        Autor   : Marcos Martini - Supero
-       Data    : Junho/2016.                    Ultima atualizacao: 18/04/2017
+       Data    : Junho/2016.                    Ultima atualizacao: 24/07/2017
 
        Dados referentes ao programa:
 
@@ -710,6 +710,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
 				   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                    crapass, crapttl, crapjur 
 							   (Adriano - P339).
+
+                   24/07/2017 - Removido cdoedptl campo nao utilizado.
+                                PRJ339-CRM  (Odirlei-AMcom)             
 
     ..............................................................................*/
     DECLARE
@@ -730,7 +733,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
               ,decode(cdgraupr,0,'T',6,'O',2,'P',3,'F','C') cdgraupr
               ,tpdocttl
               ,nrdocttl
-              ,cdoedttl
               ,to_char(dtemdttl,'dd/mm/rrrr') dtemdttl
               ,decode(cdestcvl,12,'U',1,'S',7,'D',6,'P',5,'V','C') cdestcvl
               ,to_char(dtnasttl,'dd/mm/rrrr') dtnasttl

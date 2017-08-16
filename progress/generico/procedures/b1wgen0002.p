@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 07/07/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 10/07/2017
 
    Dados referentes ao programa:
 
@@ -678,6 +678,8 @@
 			  12/04/2017 - Realizado ajuste onde não estava sendo possível lançar contratos 
                            de emprestimos com a linha 70, conforme solicitado no chamado 644168. (Kelvin)
 				 
+              02/05/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)              
+
               06/06/2017 - Alteraçao na rotina proc_qualif_operacao, pois nao estava considerando as prestacoes 
                            calculadas nos meses anteriores, apenas do mes atual.
 
@@ -2868,7 +2870,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                    tt-interv-anuentes.nrcpfcgc = crapavt.nrcpfcgc
                                    tt-interv-anuentes.tpdocava = crapavt.tpdocava
                                    tt-interv-anuentes.nrdocava = crapavt.nrdocava
-                                   tt-interv-anuentes.dsnacion = crapavt.dsnacion
+                                   tt-interv-anuentes.cdnacion = crapavt.cdnacion
                                    tt-interv-anuentes.nmconjug = crapavt.nmconjug
                                    tt-interv-anuentes.nrcpfcjg = crapavt.nrcpfcjg
                                    tt-interv-anuentes.tpdoccjg = crapavt.tpdoccjg
@@ -2889,6 +2891,15 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                               crapavt.dsendres[2]
                                    tt-interv-anuentes.dsendlog =
                                               crapavt.dsendres[1].
+
+                            /* Buscar a Nacionalidade */
+                            FOR FIRST crapnac FIELDS(dsnacion)
+                                              WHERE crapnac.cdnacion = crapavt.cdnacion
+                                                    NO-LOCK:
+
+                                ASSIGN tt-interv-anuentes.dsnacion = crapnac.dsnacion.
+
+                            END.
 
                         END. /** Fim do FOR EACH crapavt **/
 
@@ -5727,7 +5738,7 @@ PROCEDURE grava-proposta-completa:
     DEF  INPUT PARAM par_nmcidav1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufava1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepav1 AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacio1 AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vledvmt1 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrender1 AS INTE                           NO-UNDO.
@@ -5753,7 +5764,7 @@ PROCEDURE grava-proposta-completa:
     DEF  INPUT PARAM par_nmcidav2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufava2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepav2 AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacio2 AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vledvmt2 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrender2 AS INTE                           NO-UNDO.
@@ -6262,7 +6273,7 @@ PROCEDURE grava-proposta-completa:
                                        INPUT par_nmcidav1,
                                        INPUT par_cdufava1,
                                        INPUT par_nrcepav1,
-                                       INPUT par_dsnacio1,
+                                       INPUT par_cdnacio1,
                                        INPUT par_vledvmt1,
                                        INPUT par_vlrenme1,
                                        INPUT par_nrender1,
@@ -6285,7 +6296,7 @@ PROCEDURE grava-proposta-completa:
                                        INPUT par_nmcidav2,
                                        INPUT par_cdufava2,
                                        INPUT par_nrcepav2,
-                                       INPUT par_dsnacio2,
+                                       INPUT par_cdnacio2,
                                        INPUT par_vledvmt2,
                                        INPUT par_vlrenme2,
                                        INPUT par_nrender2,
@@ -10011,7 +10022,7 @@ PROCEDURE grava-alienacao-hipoteca:
                  crapavt.nmcidade    = ENTRY(13,reg_dsdregis,";")
                  crapavt.cdufresd    = ENTRY(14,reg_dsdregis,";")
                  crapavt.nrcepend    = INTE(ENTRY(15,reg_dsdregis,";"))
-                 crapavt.dsnacion    = ENTRY(16,reg_dsdregis,";")
+                 crapavt.cdnacion    = INTE(ENTRY(16,reg_dsdregis,";"))
                  crapavt.nrendere    = INTE(ENTRY(17,reg_dsdregis,";"))
                  crapavt.complend    = ENTRY(18,reg_dsdregis,";")
                  crapavt.nrcxapst    = INTE(ENTRY(19,reg_dsdregis,";")).
@@ -10637,7 +10648,7 @@ PROCEDURE valida-interv:
     DEF INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
     DEF INPUT PARAM par_tpdocava AS CHAR                           NO-UNDO.
     DEF INPUT PARAM par_nrdocava AS CHAR                           NO-UNDO.
-    DEF INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_nmconjug AS CHAR                           NO-UNDO.
     DEF INPUT PARAM par_nrcpfcjg AS DECI                           NO-UNDO.
     DEF INPUT PARAM par_tpdoccjg AS CHAR                           NO-UNDO.
@@ -11178,7 +11189,7 @@ PROCEDURE monta_registros_proposta:
                                         tt-interv-anuentes.nmcidade    + ";" +
                                         tt-interv-anuentes.cdufresd    + ";" +
                                  STRING(tt-interv-anuentes.nrcepend)   + ";" +
-                                        tt-interv-anuentes.dsnacion    + ";" +
+                                 STRING(tt-interv-anuentes.cdnacion)   + ";" +
                                  STRING(tt-interv-anuentes.nrendere)   + ";" +
                                         tt-interv-anuentes.complend    + ";" +
                                  STRING(tt-interv-anuentes.nrcxapst).
@@ -12385,7 +12396,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
     DEF  INPUT PARAM par_nmcidav1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufava1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepav1 AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacio1 AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vledvmt1 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrender1 AS INTE                           NO-UNDO.
@@ -12410,7 +12421,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
     DEF  INPUT PARAM par_nmcidav2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufava2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepav2 AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacio2 AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacio2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vledvmt2 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrender2 AS INTE                           NO-UNDO.
@@ -12532,7 +12543,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                               INPUT par_nmcidav1,
                                               INPUT par_cdufava1,
                                               INPUT par_nrcepav1,
-                                              INPUT par_dsnacio1,
+                                              INPUT par_cdnacio1,
                                               INPUT par_vledvmt1,
                                               INPUT par_vlrenme1,
                                               INPUT par_nrender1,
@@ -12556,7 +12567,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                               INPUT par_nmcidav2,
                                               INPUT par_cdufava2,
                                               INPUT par_nrcepav2,
-                                              INPUT par_dsnacio2,
+                                              INPUT par_cdnacio2,
                                               INPUT par_vledvmt2,
                                               INPUT par_vlrenme2,
                                               INPUT par_nrender2,
@@ -12705,3 +12716,4 @@ PROCEDURE leitura_lem:
     RETURN "OK".
     
 END PROCEDURE.
+

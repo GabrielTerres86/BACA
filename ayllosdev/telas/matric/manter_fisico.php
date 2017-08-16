@@ -12,6 +12,7 @@
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
+ *                12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */
 ?> 
 
@@ -36,7 +37,7 @@
 	$cdufdptl = (isset($_POST['cdufdptl'])) ? $_POST['cdufdptl'] : '' ;
 	$dtemdptl = (isset($_POST['dtemdptl'])) ? $_POST['dtemdptl'] : '' ;
 	$tpnacion = (isset($_POST['tpnacion'])) ? $_POST['tpnacion'] : '' ;
-	$dsnacion = (isset($_POST['dsnacion'])) ? $_POST['dsnacion'] : '' ;
+	$cdnacion = (isset($_POST['cdnacion'])) ? $_POST['cdnacion'] : '' ;
 	$dsnatura = (isset($_POST['dsnatura'])) ? $_POST['dsnatura'] : '' ;
 	$cdufnatu = (isset($_POST['cdufnatu'])) ? $_POST['cdufnatu'] : '' ;
 	$cdsexotl = (isset($_POST['cdsexotl'])) ? $_POST['cdsexotl'] : '' ;
@@ -264,7 +265,7 @@
 		if ( $GLOBALS['tpnacion'] == ''  ) exibirErro('error','Tipo de nacionalidade deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'tpnacion\',\'frmFisico\');',false);
 		
 		//Nacionalidade
-		if ( $GLOBALS['dsnacion'] == ''  ) exibirErro('error','Nacionalidade deve ser preeenchida.','Alerta - Ayllos','focaCampoErro(\'dsnacion\',\'frmFisico\');',false);
+		if ( $GLOBALS['cdnacion'] == ''  ) exibirErro('error','Nacionalidade deve ser preeenchida.','Alerta - Ayllos','focaCampoErro(\'cdnacion\',\'frmFisico\');',false);
 		
 		//Data de nascimento
 		if ( !validaData( $GLOBALS['dtnasctl'] ) || ( $GLOBALS['dtnasctl'] == '' ) ) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos','focaCampoErro(\'dtnasctl\',\'frmFisico\');',false);

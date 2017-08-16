@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0052.p
     Autor   : Jose Luis Marchezoni
-    Data    : Junho/2010                   Ultima atualizacao: 13/07/2015
+    Data    : Junho/2010                   Ultima atualizacao: 27/04/2017
 
     Objetivo  : BO de Comunicacao XML x BO - Tela MATRIC
 
@@ -24,6 +24,8 @@
 
                 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				             Transferencia entre PAs (Heitor - RKAM)				
+
+                27/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 .............................................................................*/
 
                                                                              
@@ -57,7 +59,7 @@ DEF VAR aux_cdtipcta AS INTE                                           NO-UNDO.
 DEF VAR aux_dtcnscpf AS DATE                                           NO-UNDO.
 DEF VAR aux_dtnasctl AS DATE                                           NO-UNDO.
 DEF VAR aux_tpnacion AS INTE                                           NO-UNDO.
-DEF VAR aux_dsnacion AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdnacion AS INTE                                           NO-UNDO.
 DEF VAR aux_dsnatura AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdufnatu AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdocpttl AS INTE                                           NO-UNDO.
@@ -166,7 +168,7 @@ PROCEDURE valores_entrada:
             WHEN "dtcnscpf" THEN aux_dtcnscpf = DATE(tt-param.valorCampo).
             WHEN "dtnasctl" THEN aux_dtnasctl = DATE(tt-param.valorCampo).
             WHEN "tpnacion" THEN aux_tpnacion = INTE(tt-param.valorCampo).
-            WHEN "dsnacion" THEN aux_dsnacion = tt-param.valorCampo.
+            WHEN "cdnacion" THEN aux_cdnacion = INTE(tt-param.valorCampo).
             WHEN "dsnatura" THEN aux_dsnatura = tt-param.valorCampo.
             WHEN "cdufnatu" THEN aux_cdufnatu = tt-param.valorCampo.
             WHEN "cdocpttl" THEN aux_cdocpttl = INTE(tt-param.valorCampo).
@@ -286,8 +288,8 @@ PROCEDURE valores_entrada:
                          tt-crapavt.dsestcvl = tt-param-i.valorCampo.
                     WHEN "nrdeanos" THEN
                          tt-crapavt.nrdeanos = INT(tt-param-i.valorCampo).
-                    WHEN "dsnacion" THEN
-                         tt-crapavt.dsnacion = tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                         tt-crapavt.cdnacion = INT(tt-param-i.valorCampo).
                     WHEN "dsnatura" THEN
                          tt-crapavt.dsnatura = tt-param-i.valorCampo.
                     WHEN "nmmaecto" THEN
@@ -489,9 +491,9 @@ PROCEDURE valores_entrada:
                     WHEN "cdestciv" THEN
                         ASSIGN tt-crapcrl.cdestciv = 
                             INTE(tt-param-i.valorCampo).
-                    WHEN "dsnacion" THEN
-                        ASSIGN tt-crapcrl.dsnacion = 
-                            tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                        ASSIGN tt-crapcrl.cdnacion = 
+                            INTE(tt-param-i.valorCampo).
                     WHEN "dsnatura" THEN
                         ASSIGN tt-crapcrl.dsnatura = 
                             tt-param-i.valorCampo.
@@ -801,7 +803,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_dtcnscpf,
                              INPUT aux_dtnasctl,
                              INPUT aux_tpnacion,
-                             INPUT aux_dsnacion,
+                             INPUT aux_cdnacion,
                              INPUT aux_dsnatura,
                              INPUT aux_cdufnatu,
                              INPUT aux_cdocpttl,
@@ -989,7 +991,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_dtcnscpf,
                             INPUT aux_dtnasctl,
                             INPUT aux_tpnacion,
-                            INPUT aux_dsnacion,
+                            INPUT aux_cdnacion,
                             INPUT aux_dsnatura,
                             INPUT aux_cdufnatu,
                             INPUT aux_cdocpttl,

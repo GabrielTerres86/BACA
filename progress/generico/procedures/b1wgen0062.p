@@ -60,10 +60,15 @@
                 04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
                              (Jaison/Anderson)
 
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)  
+                             
 				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)                              
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -80,6 +85,7 @@ DEF VAR aux_dsorigem AS CHAR                                        NO-UNDO.
 DEF VAR aux_retorno  AS CHAR                                        NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                       NO-UNDO.
 DEF VAR aux_contador AS INTE                                        NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                     NO-UNDO.
 
 /*............................. PROCEDURES ..................................*/
 PROCEDURE Busca_Impressao:
@@ -445,8 +451,8 @@ PROCEDURE Busca_PF:
     DEF BUFFER crabenc FOR crapenc.
 
     &SCOPED-DEFINE CAMPOS-TTL inpessoa dtcnscpf cdsitcpf tpdocttl nrdocttl~
-						      cdoedttl cdufdttl dtemdttl dtnasttl tpnacion~
-							  dsnacion dsnatura inhabmen dthabmen cdgraupr~
+						      idorgexp cdufdttl dtemdttl dtnasttl tpnacion~
+							  cdnacion dsnatura inhabmen dthabmen cdgraupr~
 							  cdestcvl grescola cdfrmttl nmtalttl~
 							  nmmaettl nmpaittl cdnatopc cdocpttl tpcttrab~
 							  cdempres nmextemp dsproftl cdnvlcgo cdturnos~
@@ -454,7 +460,7 @@ PROCEDURE Busca_PF:
 							  nrcpfemp cdufnatu inpolexp
 
     &SCOPED-DEFINE CAMPOS-CJE vlsalari nmconjug dtnasccj tpdoccje nrdoccje~
-	                          cdoedcje cdufdcje dtemdcje grescola cdfrmttl~
+	                          idorgexp cdufdcje dtemdcje grescola cdfrmttl~
 	                          cdnatopc cdocpcje tpcttrab nmextemp dsproftl~
 	                          cdnvlcgo nrfonemp nrramemp cdturnos dtadmemp
     ASSIGN par_dscritic = ""
@@ -513,6 +519,25 @@ PROCEDURE Busca_PF:
                ASSIGN par_dscritic = ERROR-STATUS:GET-MESSAGE(1).
                LEAVE BuscaPf.
             END.
+
+        /* Retornar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+            RUN sistema/generico/procedures/b1wgen0052b.p 
+                PERSISTENT SET h-b1wgen0052b.
+
+        ASSIGN tt-fcad-psfis.cdoedttl = "".
+        RUN busca_org_expedidor IN h-b1wgen0052b 
+                           ( INPUT crabttl.idorgexp,
+                            OUTPUT tt-fcad-psfis.cdoedttl,
+                            OUTPUT par_cdcritic, 
+                            OUTPUT par_dscritic).
+
+        DELETE PROCEDURE h-b1wgen0052b.   
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            tt-fcad-psfis.cdoedttl = 'NAO CADAST.'.
+        END.    
 
         /* deve mostrar o primeiro titular */
         IF  crabttl.idseqttl <> 1 THEN
@@ -786,6 +811,26 @@ PROCEDURE Busca_PF:
                                                              "xxx.xxx.xxx-xx")
                             tt-fcad-cjuge.gresccje = crapcje.grescola
                             tt-fcad-cjuge.cdocpttl = crapcje.cdocpcje.
+                 
+                     /* Retornar orgao expedidor */
+                     IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                        RUN sistema/generico/procedures/b1wgen0052b.p 
+                            PERSISTENT SET h-b1wgen0052b.
+
+                     ASSIGN tt-fcad-cjuge.cdoedcje = "".
+                     RUN busca_org_expedidor IN h-b1wgen0052b 
+                                       ( INPUT crapcje.idorgexp,
+                                        OUTPUT tt-fcad-cjuge.cdoedcje,
+                                        OUTPUT aux_cdcritic, 
+                                        OUTPUT aux_dscritic).
+
+                     DELETE PROCEDURE h-b1wgen0052b.   
+
+                     IF  RETURN-VALUE = "NOK" THEN
+                     DO:
+                        tt-fcad-cjuge.cdoedcje = 'NAO CADAST'.
+                 END.
+                 
                  END.
 
                  FOR FIRST crapttl FIELDS(nrdconta nrcpfcgc nrcpfemp
@@ -793,7 +838,7 @@ PROCEDURE Busca_PF:
                                           nrdocttl cdufdttl dtemdttl
                                           grescola cdfrmttl cdnatopc
                                           cdocpttl tpcttrab dsproftl
-                                          cdnvlcgo cdturnos cdoedttl
+                                          cdnvlcgo cdturnos idorgexp
                                           dtadmemp vlsalari )
                      WHERE crapttl.nrdconta = crapcje.nrctacje AND
                            crapttl.cdcooper = par_cdcooper NO-LOCK:
@@ -820,9 +865,27 @@ PROCEDURE Busca_PF:
                          tt-fcad-cjuge.dsproftl = crapttl.dsproftl
                          tt-fcad-cjuge.cdnvlcgo = crapttl.cdnvlcgo
                          tt-fcad-cjuge.cdturnos = crapttl.cdturnos
-                         tt-fcad-cjuge.cdoedcje = crapttl.cdoedttl
                          tt-fcad-cjuge.dtadmemp = crapttl.dtadmemp
                          tt-fcad-cjuge.vlsalari = crapttl.vlsalari.                         
+
+                     /* Retornar orgao expedidor */
+                     IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                        RUN sistema/generico/procedures/b1wgen0052b.p 
+                            PERSISTENT SET h-b1wgen0052b.
+
+                     ASSIGN tt-fcad-cjuge.cdoedcje = "".
+                     RUN busca_org_expedidor IN h-b1wgen0052b 
+                                       (INPUT crapttl.idorgexp,
+                                        OUTPUT tt-fcad-cjuge.cdoedcje,
+                                        OUTPUT aux_cdcritic, 
+                                        OUTPUT aux_dscritic).
+
+                     DELETE PROCEDURE h-b1wgen0052b.   
+
+                     IF  RETURN-VALUE = "NOK" THEN
+                     DO:
+                         tt-fcad-cjuge.cdoedcje = "NAO CADAST.".
+                     END.
 
                      /* Telefone Comercial*/
                      FOR FIRST craptfc FIELDS(nrdramal)
@@ -1016,12 +1079,11 @@ PROCEDURE Busca_PF:
                   tt-fcad-procu.nmdavali = crapavt.nmdavali
                   tt-fcad-procu.tpdocava = crapavt.tpdocava
                   tt-fcad-procu.nrdocava = crapavt.nrdocava
-                  tt-fcad-procu.cdoeddoc = crapavt.cdoeddoc
                   tt-fcad-procu.cdufddoc = crapavt.cdufddoc
                   tt-fcad-procu.dtemddoc = crapavt.dtemddoc
                   tt-fcad-procu.dtnascto = crapavt.dtnascto
                   tt-fcad-procu.cdestcvl = crapavt.cdestcvl
-                  tt-fcad-procu.dsnacion = crapavt.dsnacion
+                  tt-fcad-procu.cdnacion = crapavt.cdnacion
                   tt-fcad-procu.dsnatura = crapavt.dsnatura
                   tt-fcad-procu.nmmaecto = crapavt.nmmaecto
                   tt-fcad-procu.nmpaicto = crapavt.nmpaicto
@@ -1037,6 +1099,25 @@ PROCEDURE Busca_PF:
                   tt-fcad-procu.dthabmen = crapavt.dthabmen
                   tt-fcad-procu.cpfprocu = crapavt.nrcpfcgc.
                     
+                  /* Retornar orgao expedidor */
+                   IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                      RUN sistema/generico/procedures/b1wgen0052b.p 
+                          PERSISTENT SET h-b1wgen0052b.
+
+                   ASSIGN tt-fcad-procu.cdoeddoc = "".
+                   RUN busca_org_expedidor IN h-b1wgen0052b 
+                                     (INPUT crapavt.idorgexp,
+                                      OUTPUT tt-fcad-procu.cdoeddoc,
+                                      OUTPUT aux_cdcritic, 
+                                      OUTPUT aux_dscritic).
+
+                   DELETE PROCEDURE h-b1wgen0052b.   
+
+                   IF  RETURN-VALUE = "NOK" THEN
+                   DO:
+                       tt-fcad-procu.cdoeddoc = "NAO CADAST.".
+                   END.
+                  
                   FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper     AND
                                          crappod.nrdconta = par_nrdconta     AND
                                          crappod.nrctapro = crapavt.nrdctato AND
@@ -1085,8 +1166,8 @@ PROCEDURE Busca_PF:
            */
            /* buscar dados do contato */
            FOR FIRST crabass FIELDS(cdsexotl nmprimtl tpdocptl nrdocptl
-                                    cdoedptl cdufdptl dtemdptl dsproftl
-                                    dtnasctl dsnacion
+                                    idorgexp cdufdptl dtemdptl dsproftl
+                                    dtnasctl cdnacion
                                     nmmaeptl nmpaiptl nrdconta)
                               WHERE crabass.cdcooper = par_cdcooper     AND
                                     crabass.nrdconta = crapavt.nrdctato 
@@ -1110,11 +1191,29 @@ PROCEDURE Busca_PF:
                       tt-fcad-procu.nmdavali = crabass.nmprimtl
                       tt-fcad-procu.tpdocava = crabass.tpdocptl
                       tt-fcad-procu.nrdocava = crabass.nrdocptl
-                      tt-fcad-procu.cdoeddoc = crabass.cdoedptl
                       tt-fcad-procu.cdufddoc = crabass.cdufdptl
                       tt-fcad-procu.dtemddoc = crabass.dtemdptl
                       tt-fcad-procu.dtnascto = crabass.dtnasctl
-                      tt-fcad-procu.dsnacion = crabass.dsnacion.
+                      tt-fcad-procu.cdnacion = crabass.cdnacion.
+
+               /* Retornar orgao expedidor */
+               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                      PERSISTENT SET h-b1wgen0052b.
+
+               ASSIGN tt-fcad-procu.cdoeddoc = "".
+               RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 (INPUT crabass.idorgexp,
+                                  OUTPUT tt-fcad-procu.cdoeddoc,
+                                  OUTPUT aux_cdcritic, 
+                                  OUTPUT aux_dscritic).
+
+               DELETE PROCEDURE h-b1wgen0052b.   
+
+               IF  RETURN-VALUE = "NOK" THEN
+               DO:
+                   tt-fcad-procu.cdoeddoc = "NAO CADAST.".
+               END. 
 
                /* Filiaçao e naturalidade, pegos da crapttl */
                            FOR FIRST crabttl FIELDS(dsnatura nmmaettl nmpaittl cdestcvl)
@@ -1206,9 +1305,9 @@ PROCEDURE Busca_PF:
                DO:
                   /* 1o. Titular */
                   FOR FIRST crabttl FIELDS(nrcpfcgc nmextttl tpdocttl 
-                                           nrdocttl cdoedttl cdufdttl 
+                                           nrdocttl idorgexp cdufdttl 
                                            dtemdttl dtnasttl cdsexotl 
-                                           cdestcvl dsnacion dsnatura
+                                           cdestcvl cdnacion dsnatura
                                            nmmaettl nmpaittl)
                                     WHERE crabttl.cdcooper = par_cdcooper     AND
                                           crabttl.nrdconta = crapcrl.nrdconta AND
@@ -1218,14 +1317,13 @@ PROCEDURE Busca_PF:
                       ASSIGN tt-fcad-respl.nmrespon = crabttl.nmextttl
                              tt-fcad-respl.tpdeiden = crabttl.tpdocttl
                              tt-fcad-respl.nridenti = crabttl.nrdocttl
-                             tt-fcad-respl.dsorgemi = crabttl.cdoedttl
                              tt-fcad-respl.cdufiden = crabttl.cdufdttl
                              tt-fcad-respl.dtemiden = crabttl.dtemdttl
                              tt-fcad-respl.dtnascin = crabttl.dtnasttl
                              tt-fcad-respl.cddosexo = IF crabttl.cdsexotl = 1 
                                                       THEN "M" ELSE "F"
                              tt-fcad-respl.cdestciv = crabttl.cdestcvl
-                             tt-fcad-respl.dsnacion = crabttl.dsnacion
+                             tt-fcad-respl.cdnacion = crabttl.cdnacion
                              tt-fcad-respl.dsnatura = crabttl.dsnatura
                              tt-fcad-respl.nmmaersp = crabttl.nmmaettl
                              tt-fcad-respl.nmpairsp = crabttl.nmpaittl
@@ -1234,6 +1332,25 @@ PROCEDURE Busca_PF:
                                                               "99999999999"),
                                                              "xxx.xxx.xxx-xx")
                              tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen.
+
+                     /* Retornar orgao expedidor */
+                     IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                        RUN sistema/generico/procedures/b1wgen0052b.p 
+                            PERSISTENT SET h-b1wgen0052b.
+
+                     ASSIGN tt-fcad-respl.dsorgemi = "".
+                     RUN busca_org_expedidor IN h-b1wgen0052b 
+                                       (INPUT crabttl.idorgexp,
+                                        INPUT tt-fcad-respl.dsorgemi,
+                                        INPUT aux_cdcritic, 
+                                        INPUT aux_dscritic).
+
+                     DELETE PROCEDURE h-b1wgen0052b.   
+
+                     IF  RETURN-VALUE = "NOK" THEN
+                     DO:
+                         tt-fcad-respl.dsorgemi = "NAO CADAST.".
+                  END.
 
                   END.
        
@@ -1269,14 +1386,13 @@ PROCEDURE Busca_PF:
                   ASSIGN tt-fcad-respl.nmrespon = crapcrl.nmrespon    
                          tt-fcad-respl.tpdeiden = crapcrl.tpdeiden    
                          tt-fcad-respl.nridenti = crapcrl.nridenti    
-                         tt-fcad-respl.dsorgemi = crapcrl.dsorgemi    
                          tt-fcad-respl.cdufiden = crapcrl.cdufiden    
                          tt-fcad-respl.dtemiden = crapcrl.dtemiden    
                          tt-fcad-respl.dtnascin = crapcrl.dtnascin    
                          tt-fcad-respl.cddosexo = IF crapcrl.cddosexo = 1 
                                                   THEN "M" ELSE "F"
                          tt-fcad-respl.cdestciv = crapcrl.cdestciv    
-                         tt-fcad-respl.dsnacion = crapcrl.dsnacion    
+                         tt-fcad-respl.cdnacion = crapcrl.cdnacion    
                          tt-fcad-respl.dsnatura = crapcrl.dsnatura    
                          tt-fcad-respl.dsendres = crapcrl.dsendres 
                          tt-fcad-respl.nrendres = crapcrl.nrendres    
@@ -1292,6 +1408,25 @@ PROCEDURE Busca_PF:
                                                   "99999999999"),
                                                   "xxx.xxx.xxx-xx")
                          tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen.
+
+                  /* Retornar orgao expedidor */
+                  IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                      RUN sistema/generico/procedures/b1wgen0052b.p 
+                          PERSISTENT SET h-b1wgen0052b.
+
+                  ASSIGN tt-fcad-respl.dsorgemi = "".
+                  RUN busca_org_expedidor IN h-b1wgen0052b 
+                                     (INPUT crapcrl.idorgexp,
+                                      INPUT tt-fcad-respl.dsorgemi,
+                                      INPUT aux_cdcritic, 
+                                      INPUT aux_dscritic).
+
+                  DELETE PROCEDURE h-b1wgen0052b.   
+
+                  IF  RETURN-VALUE = "NOK" THEN
+                  DO:
+                       tt-fcad-respl.dsorgemi = "NAO CADAST.".
+                  END.     
 
                   IF crapcrl.cdcepres <> 0 THEN
                      ASSIGN tt-fcad-respl.cdcepres = STRING(crapcrl.cdcepres,
@@ -1464,13 +1599,12 @@ PROCEDURE Busca_PJ:
                   tt-fcad-procu.nmdavali = crapavt.nmdavali
                   tt-fcad-procu.tpdocava = crapavt.tpdocava
                   tt-fcad-procu.nrdocava = crapavt.nrdocava
-                  tt-fcad-procu.cdoeddoc = crapavt.cdoeddoc
                   tt-fcad-procu.cdufddoc = crapavt.cdufddoc
                   tt-fcad-procu.dtemddoc = crapavt.dtemddoc
                   tt-fcad-procu.dsproftl = crapavt.dsproftl
                   tt-fcad-procu.dtnascto = crapavt.dtnascto
                   tt-fcad-procu.cdestcvl = crapavt.cdestcvl
-                  tt-fcad-procu.dsnacion = crapavt.dsnacion
+                  tt-fcad-procu.cdnacion = crapavt.cdnacion
                   tt-fcad-procu.dsnatura = crapavt.dsnatura
                   tt-fcad-procu.nmmaecto = crapavt.nmmaecto
                   tt-fcad-procu.nmpaicto = crapavt.nmpaicto
@@ -1487,6 +1621,25 @@ PROCEDURE Busca_PJ:
                   tt-fcad-procu.flgdepec = crapavt.flgdepec
                   tt-fcad-procu.persocio = crapavt.persocio
                   tt-fcad-procu.cpfprocu = crapass.nrcpfcgc.
+
+                  /* Retornar orgao expedidor */
+                  IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                      RUN sistema/generico/procedures/b1wgen0052b.p 
+                          PERSISTENT SET h-b1wgen0052b.
+
+                  ASSIGN tt-fcad-procu.cdoeddoc = "".
+                  RUN busca_org_expedidor IN h-b1wgen0052b 
+                                     (INPUT crapavt.idorgexp,
+                                      OUTPUT tt-fcad-procu.cdoeddoc,
+                                      OUTPUT aux_cdcritic, 
+                                      OUTPUT aux_dscritic).
+
+                  DELETE PROCEDURE h-b1wgen0052b.   
+
+                  IF  RETURN-VALUE = "NOK" THEN
+                  DO:
+                       tt-fcad-procu.cdoeddoc = "NAO CADAST.".
+                  END.  
 
                   FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper     AND
                                          crappod.nrdconta = par_nrdconta     AND
@@ -1536,8 +1689,8 @@ PROCEDURE Busca_PJ:
 
            /* buscar dados do contato */
            FOR FIRST crabass FIELDS(cdsexotl nmprimtl tpdocptl nrdocptl
-                                    cdoedptl cdufdptl dtemdptl dsproftl
-                                    dtnasctl dsnacion
+                                    idorgexp cdufdptl dtemdptl dsproftl
+                                    dtnasctl cdnacion
                                     nmmaeptl nmpaiptl nrdconta)
                               WHERE crabass.cdcooper = par_cdcooper     AND
                                     crabass.nrdconta = crapavt.nrdctato 
@@ -1561,12 +1714,30 @@ PROCEDURE Busca_PJ:
                       tt-fcad-procu.nmdavali = crabass.nmprimtl
                       tt-fcad-procu.tpdocava = crabass.tpdocptl
                       tt-fcad-procu.nrdocava = crabass.nrdocptl
-                      tt-fcad-procu.cdoeddoc = crabass.cdoedptl
                       tt-fcad-procu.cdufddoc = crabass.cdufdptl
                       tt-fcad-procu.dtemddoc = crabass.dtemdptl
                       tt-fcad-procu.dsproftl = crapavt.dsproftl
                       tt-fcad-procu.dtnascto = crabass.dtnasctl
-                      tt-fcad-procu.dsnacion = crabass.dsnacion.
+                      tt-fcad-procu.cdnacion = crabass.cdnacion.
+
+                /* Retornar orgao expedidor */
+                IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                    RUN sistema/generico/procedures/b1wgen0052b.p 
+                        PERSISTENT SET h-b1wgen0052b.
+
+                ASSIGN tt-fcad-procu.cdoeddoc = "".
+                RUN busca_org_expedidor IN h-b1wgen0052b 
+                                   (INPUT crabass.idorgexp,
+                                    OUTPUT tt-fcad-procu.cdoeddoc,
+                                    OUTPUT aux_cdcritic, 
+                                    OUTPUT aux_dscritic).
+
+                DELETE PROCEDURE h-b1wgen0052b.   
+
+                IF  RETURN-VALUE = "NOK" THEN
+                DO:
+                     tt-fcad-procu.cdoeddoc = "NAO CADAST.".
+                END.               
 
                /* Filiaçao, pega da crapttl */
                FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
@@ -1660,8 +1831,8 @@ PROCEDURE Busca_PJ:
                      /* 1o. Titular */
                      FOR FIRST cracttl 
                                FIELDS(nrcpfcgc nmextttl tpdocttl nrdocttl 
-                                      cdoedttl cdufdttl dtemdttl dtnasttl 
-                                      cdsexotl cdestcvl dsnacion dsnatura
+                                      idorgexp cdufdttl dtemdttl dtnasttl 
+                                      cdsexotl cdestcvl cdnacion dsnatura
                                       nmmaettl nmpaittl)
                                WHERE cracttl.cdcooper = par_cdcooper     AND
                                      cracttl.nrdconta = crapcrl.nrdconta AND
@@ -1671,14 +1842,13 @@ PROCEDURE Busca_PJ:
                          ASSIGN tt-fcad-respl.nmrespon = cracttl.nmextttl
                                 tt-fcad-respl.tpdeiden = cracttl.tpdocttl
                                 tt-fcad-respl.nridenti = cracttl.nrdocttl
-                                tt-fcad-respl.dsorgemi = cracttl.cdoedttl
                                 tt-fcad-respl.cdufiden = cracttl.cdufdttl
                                 tt-fcad-respl.dtemiden = cracttl.dtemdttl
                                 tt-fcad-respl.dtnascin = cracttl.dtnasttl
                                 tt-fcad-respl.cddosexo = IF cracttl.cdsexotl = 1
                                                          THEN "M" ELSE "F"
                                 tt-fcad-respl.cdestciv = cracttl.cdestcvl
-                                tt-fcad-respl.dsnacion = cracttl.dsnacion
+                                tt-fcad-respl.cdnacion = cracttl.cdnacion
                                 tt-fcad-respl.dsnatura = cracttl.dsnatura
                                 tt-fcad-respl.nmmaersp = cracttl.nmmaettl
                                 tt-fcad-respl.nmpairsp = cracttl.nmpaittl
@@ -1689,6 +1859,24 @@ PROCEDURE Busca_PJ:
                                 tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen
                                 tt-fcad-respl.nrctamen = crapcrl.nrctamen.
                             
+                         /* Retornar orgao expedidor */
+                        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                            RUN sistema/generico/procedures/b1wgen0052b.p 
+                                PERSISTENT SET h-b1wgen0052b.
+
+                        ASSIGN tt-fcad-respl.dsorgemi = "".
+                        RUN busca_org_expedidor IN h-b1wgen0052b 
+                                           (INPUT cracttl.idorgexp,
+                                            INPUT tt-fcad-respl.dsorgemi,
+                                            INPUT aux_cdcritic, 
+                                            INPUT aux_dscritic).
+
+                        DELETE PROCEDURE h-b1wgen0052b.   
+
+                        IF  RETURN-VALUE = "NOK" THEN
+                        DO:
+                             tt-fcad-respl.dsorgemi = "NAO CADAST.".
+                     END.
 
                      END.
            
@@ -1724,14 +1912,13 @@ PROCEDURE Busca_PJ:
                      ASSIGN tt-fcad-respl.nmrespon = crapcrl.nmrespon    
                             tt-fcad-respl.tpdeiden = crapcrl.tpdeiden    
                             tt-fcad-respl.nridenti = crapcrl.nridenti    
-                            tt-fcad-respl.dsorgemi = crapcrl.dsorgemi    
                             tt-fcad-respl.cdufiden = crapcrl.cdufiden    
                             tt-fcad-respl.dtemiden = crapcrl.dtemiden    
                             tt-fcad-respl.dtnascin = crapcrl.dtnascin    
                             tt-fcad-respl.cddosexo = IF crapcrl.cddosexo = 1 
                                                      THEN "M" ELSE "F"
                             tt-fcad-respl.cdestciv = crapcrl.cdestciv    
-                            tt-fcad-respl.dsnacion = crapcrl.dsnacion    
+                            tt-fcad-respl.cdnacion = crapcrl.cdnacion    
                             tt-fcad-respl.dsnatura = crapcrl.dsnatura    
                             tt-fcad-respl.dsendres = crapcrl.dsendres 
                             tt-fcad-respl.nrendres = crapcrl.nrendres    
@@ -1748,6 +1935,25 @@ PROCEDURE Busca_PJ:
                                                      "xxx.xxx.xxx-xx")
                             tt-fcad-respl.nrcpfmen = crapcrl.nrcpfmen
                             tt-fcad-respl.nrctamen = crapcrl.nrctamen.
+           
+                     /* Retornar orgao expedidor */
+                     IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                          RUN sistema/generico/procedures/b1wgen0052b.p 
+                              PERSISTENT SET h-b1wgen0052b.
+
+                     ASSIGN tt-fcad-respl.dsorgemi = "".
+                     RUN busca_org_expedidor IN h-b1wgen0052b 
+                                         (INPUT crapcrl.idorgexp,
+                                          INPUT tt-fcad-respl.dsorgemi,
+                                          INPUT aux_cdcritic, 
+                                          INPUT aux_dscritic).
+
+                     DELETE PROCEDURE h-b1wgen0052b.   
+
+                     IF  RETURN-VALUE = "NOK" THEN
+                     DO:
+                           tt-fcad-respl.dsorgemi = "NAO CADAST.".
+                     END.   
            
                      IF crapcrl.cdcepres <> 0 THEN
                         ASSIGN tt-fcad-respl.cdcepres = 

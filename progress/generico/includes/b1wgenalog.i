@@ -69,10 +69,15 @@
                29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                             solicitado no chamado 402159 (Kelvin).
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)             
+                             
 			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                            PRJ339 - CRM (Odirlei-AMcom)                                           
 ............................................................................. */
 &IF DEFINED(TELA-MATRIC) <> 0 &THEN
     /* Variaveis de recadastramento (geram tipo de alteracao 1) */
@@ -84,7 +89,7 @@
     ASSIGN log_nmprimtl = crapass.nmprimtl
            log_dtnasctl = crapass.dtnasctl
            log_nrcpfcgc = crapass.nrcpfcgc
-           log_dsnacion = crapass.dsnacion
+           log_cdnacion = crapass.cdnacion
            log_dsproftl = crapass.dsproftl
            log_tpdocptl = crapass.tpdocptl
            log_nrdocptl = crapass.nrdocptl
@@ -113,7 +118,7 @@
            log_tpextcta = crapass.tpextcta
            log_tpavsdeb = crapass.tpavsdeb
            log_flgiddep = crapass.flgiddep
-           log_cdoedptl = crapass.cdoedptl                    
+           log_idorgexp_ass = crapass.idorgexp
            log_cdufdptl = crapass.cdufdptl                    
            log_dtemdptl = crapass.dtemdptl                    
            log_cdsitdtl = crapass.cdsitdtl.
@@ -278,13 +283,13 @@
                 log_cdsitcpf     = crapttl.cdsitcpf
                 log_tpdocttl     = crapttl.tpdocttl
                 log_nrdocttl     = crapttl.nrdocttl
-                log_cdoedttl     = crapttl.cdoedttl
+                log_idorgexp_ttl = crapttl.idorgexp
                 log_cdufdttl     = crapttl.cdufdttl
                 log_dtemdttl     = crapttl.dtemdttl
                 log_dtnasttl     = crapttl.dtnasttl
                 log_cdsexotl     = crapttl.cdsexotl
                 log_tpnacion     = crapttl.tpnacion
-                log_dsnacion     = crapttl.dsnacion
+                log_cdnacion     = crapttl.cdnacion
                 log_dsnatura     = crapttl.dsnatura
                 log_cdufnatu     = crapttl.cdufnatu
                 log_inhabmen     = crapttl.inhabmen
@@ -345,13 +350,13 @@
                 log_endemail     = crapavt.dsdemail
                 log_tpdocava     = crapavt.tpdocava
                 log_nrdocava     = crapavt.nrdocava
-                log_cdoeddoc     = crapavt.cdoeddoc
+                log_idorgexp_avt = crapavt.idorgexp
                 log_cdufddoc     = crapavt.cdufddoc
                 log_dtemddoc     = crapavt.dtemddoc
                 log_dtnascto     = crapavt.dtnascto
                 log_cdsexcto     = crapavt.cdsexcto
                 log_cdestcvl_avt = crapavt.cdestcvl
-                log_dsnacion_avt = crapavt.dsnacion
+                log_cdnacion_avt = crapavt.cdnacion
                 log_dsnatura_avt = crapavt.dsnatura
                 log_nmmaecto     = crapavt.nmmaecto
                 log_nmpaicto     = crapavt.nmpaicto.
@@ -367,13 +372,13 @@
               log_nmrespon_crl = crapcrl.nmrespon
               log_nridenti_crl = crapcrl.nridenti
               log_tpdeiden_crl = crapcrl.tpdeiden
-              log_dsorgemi_crl = crapcrl.dsorgemi
+              log_idorgexp_crl = crapcrl.idorgexp
               log_cdufiden_crl = crapcrl.cdufiden
               log_dtemiden_crl = crapcrl.dtemiden
               log_dtnascin_crl = crapcrl.dtnascin
               log_cddosexo_crl = crapcrl.cddosexo
               log_cdestciv_crl = crapcrl.cdestciv
-              log_dsnacion_crl = crapcrl.dsnacion
+              log_cdnacion_crl = crapcrl.cdnacion
               log_dsnatura_crl = crapcrl.dsnatura
               log_cdcepres_crl = crapcrl.cdcepres
               log_dsendres_crl = crapcrl.dsendres
@@ -394,7 +399,7 @@
                 log_dtnasccj = crapcje.dtnasccj
                 log_tpdoccje = crapcje.tpdoccje
                 log_nrdoccje = crapcje.nrdoccje
-                log_cdoedcje = crapcje.cdoedcje
+                log_idorgexp_cje = crapcje.idorgexp
                 log_cdufdcje = crapcje.cdufdcje                       
                 log_dtemdcje = crapcje.dtemdcje
                 log_gresccjg = crapcje.grescola

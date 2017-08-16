@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                     Ultima atualizacao: 22/09/2014
+   Data    : Setembro/2004.                     Ultima atualizacao: 19/07/2017
 
    Dados referentes ao programa:
 
@@ -99,6 +99,9 @@
               22/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
+                           
+              19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)               
 ............................................................................. */
 
 DEF STREAM str_1.     /*  Para relatorio de Aceitos      */
@@ -191,6 +194,7 @@ DEF        VAR par_dsdevice AS CHAR                                  NO-UNDO.
 DEF        VAR par_dtconnec AS CHAR                                  NO-UNDO.
 DEF        VAR par_numipusr AS CHAR                                  NO-UNDO.
 DEF        VAR h-b1wgen9999 AS HANDLE                                NO-UNDO.
+DEF        VAR h-b1wgen0052b AS HANDLE                               NO-UNDO.
 
 /* para o controle da crapeca */
 DEFINE VARIABLE aux_nrseqarq AS INT                                  NO-UNDO.
@@ -422,7 +426,7 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper  AND
                          NEXT.
                       END.
    
-                 IF   crapttl.cdoedttl = "" THEN
+                 IF   crapttl.idorgexp = 0 THEN
                       DO TRANSACTION:
 
                          CREATE crapeca.
@@ -647,7 +651,6 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper  AND
                                       STRING(YEAR(crapttl.dtnasttl),"9999")
                        aux_nmextass = f_tiraponto(crapttl.nmextttl)
                        aux_idseqttl = crapttl.idseqttl
-                       aux_cdoedttl = TRIM(crapttl.cdoedttl,"/.-[](){}")
                        aux_dtemdttl = STRING(DAY(crapttl.dtemdttl),"99") +
                                       STRING(MONTH(crapttl.dtemdttl),"99") +
                                       STRING(YEAR(crapttl.dtemdttl),"9999")
@@ -662,6 +665,26 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper  AND
                        aux_cdnatopc = crapttl.cdnatopc
                        aux_cdocpttl = crapttl.cdocpttl
                        aux_vlsalari = 100.
+                
+                /* Retornar orgao expedidor */
+                IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                    RUN sistema/generico/procedures/b1wgen0052b.p 
+                        PERSISTENT SET h-b1wgen0052b.
+
+                ASSIGN aux_cdoedttl = "".
+                RUN busca_org_expedidor IN h-b1wgen0052b 
+                                   ( INPUT crapttl.idorgexp,
+                                    OUTPUT aux_cdoedttl,
+                                    OUTPUT glb_cdcritic, 
+                                    OUTPUT glb_dscritic).
+
+                ASSIGN aux_cdoedttl = TRIM(aux_cdoedttl,"/.-[](){}").
+                DELETE PROCEDURE h-b1wgen0052b.   
+
+                IF  RETURN-VALUE = "NOK" THEN
+                DO:
+                    ASSIGN aux_cdoedttl = 'NAO CADAST'.
+                END.
                 
                 IF   crapttl.nmtalttl = "" THEN
                      RUN fontes/abreviar.p (INPUT  crapttl.nmextttl, INPUT 25,

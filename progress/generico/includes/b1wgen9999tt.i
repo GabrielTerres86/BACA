@@ -58,7 +58,8 @@ DEF TEMP-TABLE tt-dados-avais NO-UNDO
     FIELD nrcxapst AS INTE
     FIELD dsendre3 AS CHAR
     FIELD inpessoa AS INTE
-    FIELD dtnascto AS DATE.
+    FIELD dtnascto AS DATE
+    FIELD cdnacion AS INTE.
     
 DEF TEMP-TABLE tt-cabrel NO-UNDO
     FIELD nmrescop LIKE crapcop.nmrescop

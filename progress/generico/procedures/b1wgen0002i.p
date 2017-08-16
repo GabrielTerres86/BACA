@@ -239,6 +239,10 @@
 			   
 			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
 						    (Adriano - SD 614408).
+
+               19/04/2017 - Removido DSNACION variavel nao utilizada.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -366,7 +370,6 @@ DEF VAR rel_dsliqant AS CHAR                                           NO-UNDO.
 DEF VAR rel_nmcidade AS CHAR                                           NO-UNDO.
 DEF VAR rel_nmbairro AS CHAR                                           NO-UNDO.
 DEF VAR rel_cdufresd AS CHAR                                           NO-UNDO.
-DEF VAR rel_dsnacion AS CHAR                                           NO-UNDO.
                                                                        
 DEF VAR rel_dsfinemp AS CHAR                                           NO-UNDO.
 DEF VAR rel_dslcremp AS CHAR                                           NO-UNDO.
@@ -2313,8 +2316,8 @@ PROCEDURE trata-impressao-modelo2:
           rel_nmbairro    = crapenc.nmbairro
           rel_nmcidade    = crapenc.nmcidade
           rel_cdufresd    = crapenc.cdufende
-          rel_nrcepend    = crapenc.nrcepend
-          rel_dsnacion    = crapass.dsnacion.
+          rel_nrcepend    = crapenc.nrcepend.            
+                
    
    IF   crapass.inpessoa = 1 THEN
         ASSIGN rel_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999")
