@@ -179,65 +179,68 @@ IF aux_cdcritic <> 0   OR
      RETURN "NOK".
   END.
   ELSE DO:
-  
-    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper
-						  NO-LOCK NO-ERROR.
-
-    IF AVAIL crapcop THEN
-      ASSIGN aux_nrtelsac = crapcop.nrtelsac.
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "<TERMO>".
-        
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "<TITULO>Termo de Autorização de Débito Automático</TITULO>".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "<DESCRICAO>".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "De acordo com o Contrato de Abertura de Conta Corrente que dispõe sobre a contratação dos serviços de Débitos " +
-    "Automáticos, e com o Termo de Responsabilidade para Acesso e Movimentação da Conta por Meio dos Canais de " +
-    "Autoatendimento, autorizo a realização dos débitos em minha conta, provenientes da empresa conveniada " +
-    "devidamente selecionada por mim indicada neste ato.\r\n\r\n".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "- Realizado o cadastro e a confirmação do débito automático, o primeiro pagamento ocorrerá apenas após o " +
-    "agendamento do débito pela empresa conveniada, o qual pode ser acompanhado pela conta corrente;\r\n".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "- É de minha responsabilidade o acompanhamento, bem como a confirmação dos débitos automáticos cadastrados. " +
-    "Constatando a não ocorrência do primeiro débito, deverei entrar em contato com o meu Posto de Atendimento ou " +
-    "ainda com o SAC (Serviço de Atendimento ao Cooperado), através do telefone " + aux_nrtelsac + ";\r\n".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "- Os valores e datas de vencimentos das faturas são de responsabilidade da empresa prestadora do serviço, por " +
-    "mim indicada neste ato;\r\n".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "- Os valores das faturas apenas serão debitados caso a conta corrente apresente saldo suficiente no dia de " +
-    "vencimento, e desde que o valor por mim definido como limite máximo para débitos não seja ultrapassado, " +
-    "ficando sob minha responsabilidade o pagamento das faturas por outros meios;\r\n".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "- A solicitação de débito automático autorizada diretamente na Cooperativa, poderá ser cancelada de forma " +
-    "presencial, por meio da conta online ou pelos terminais de autoatendimento, por solicitação da empresa " +
-    "conveniada ou ainda, pela Cooperativa por falta de movimentação de débito;\r\n".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "- Caso a solicitação de débito automático seja autorizada diretamente na empresa conveniada, essa somente " +
-    "poderá ser cancelada, mediante solicitação a própria empresa.\r\n\r\n".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "Esta autorização surtirá efeitos a partir da data da confirmação, por meio de digitação de minha senha de " +
-    "uso pessoal e intransferível, e vigorará por prazo indeterminado.".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "</DESCRICAO>".
     
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "</TERMO>".
+    IF par_flcadast = 0 THEN /* validar */
+    DO:
+      
+      FIND crapcop WHERE crapcop.cdcooper = par_cdcooper
+                NO-LOCK NO-ERROR.
 
+      IF AVAIL crapcop THEN
+        ASSIGN aux_nrtelsac = crapcop.nrtelsac.
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "<TERMO>".
+          
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "<TITULO>Termo de Autorização de Débito Automático</TITULO>".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "<DESCRICAO>".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "De acordo com o Contrato de Abertura de Conta Corrente que dispõe sobre a contratação dos serviços de Débitos " +
+      "Automáticos, e com o Termo de Responsabilidade para Acesso e Movimentação da Conta por Meio dos Canais de " +
+      "Autoatendimento, autorizo a realização dos débitos em minha conta, provenientes da empresa conveniada " +
+      "devidamente selecionada por mim indicada neste ato.\r\n\r\n".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "- Realizado o cadastro e a confirmação do débito automático, o primeiro pagamento ocorrerá apenas após o " +
+      "agendamento do débito pela empresa conveniada, o qual pode ser acompanhado pela conta corrente;\r\n".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "- É de minha responsabilidade o acompanhamento, bem como a confirmação dos débitos automáticos cadastrados. " +
+      "Constatando a não ocorrência do primeiro débito, deverei entrar em contato com o meu Posto de Atendimento ou " +
+      "ainda com o SAC (Serviço de Atendimento ao Cooperado), através do telefone " + aux_nrtelsac + ";\r\n".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "- Os valores e datas de vencimentos das faturas são de responsabilidade da empresa prestadora do serviço, por " +
+      "mim indicada neste ato;\r\n".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "- Os valores das faturas apenas serão debitados caso a conta corrente apresente saldo suficiente no dia de " +
+      "vencimento, e desde que o valor por mim definido como limite máximo para débitos não seja ultrapassado, " +
+      "ficando sob minha responsabilidade o pagamento das faturas por outros meios;\r\n".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "- A solicitação de débito automático autorizada diretamente na Cooperativa, poderá ser cancelada de forma " +
+      "presencial, por meio da conta online ou pelos terminais de autoatendimento, por solicitação da empresa " +
+      "conveniada ou ainda, pela Cooperativa por falta de movimentação de débito;\r\n".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "- Caso a solicitação de débito automático seja autorizada diretamente na empresa conveniada, essa somente " +
+      "poderá ser cancelada, mediante solicitação a própria empresa.\r\n\r\n".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "Esta autorização surtirá efeitos a partir da data da confirmação, por meio de digitação de minha senha de " +
+      "uso pessoal e intransferível, e vigorará por prazo indeterminado.".
+
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "</DESCRICAO>".
+      
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "</TERMO>".
+    END.
   END.
 
 

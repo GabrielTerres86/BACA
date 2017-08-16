@@ -1535,7 +1535,7 @@ PROCEDURE process-web-request :
             ASSIGN aux_flmensag = INT(GET-VALUE("aux_flmensag")).
             
         IF  GET-VALUE("flcadast") <> ""  THEN
-            ASSIGN aux_flcadast = INT(GET-VALUE("flcadast"))
+            ASSIGN aux_flcadast = INT(GET-VALUE("flcadast")).
 
         /* Verificar senha e frase */
         IF  aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao))  OR /** Utiliza criptografia **/
@@ -1564,7 +1564,7 @@ PROCEDURE process-web-request :
                  )OR
                  (
                     /** Nao utiliza criptografia se for cadastro de debito automatico **/
-                    CAN-DO("99",STRING(aux_operacao)) AND aux_flmensag = 0
+                    CAN-DO("99",STRING(aux_operacao)) AND aux_flcadast = 1
                  )
               )
            )
