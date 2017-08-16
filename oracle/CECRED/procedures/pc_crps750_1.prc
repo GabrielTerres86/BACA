@@ -79,11 +79,14 @@ BEGIN
               ,epr.dtultpag
               ,epr.tpdescto
               ,epr.indpagto
-              ,epr.cdagenci
+              ,ass.cdagenci  --ews
               ,epr.cdfinemp
               ,epr.vlemprst
-          FROM crapepr epr
-         WHERE epr.cdcooper = pr_cdcooper          --> Coop conectada
+          FROM crapepr epr,
+               crapass ass
+         WHERE epr.cdcooper = ass.cdcooper   --ews
+           AND epr.nrdconta = ass.nrdconta
+           AND epr.cdcooper = pr_cdcooper          --> Coop conectada
            AND epr.inliquid = 0                    --> Somente não liquidados
            AND epr.indpagto = 0                    --> Nao pago no mês ainda
            AND epr.flgpagto = 0                    --> Débito em conta
@@ -799,7 +802,7 @@ BEGIN
               ,epr.dtultpag
               ,epr.tpdescto
               ,epr.indpagto
-              ,epr.cdagenci
+              ,prc.cdagenci --ews
               ,epr.cdfinemp
               ,epr.vlemprst
               ,prc.dtdpagto dtdpagtoprc
@@ -810,7 +813,7 @@ BEGIN
           FROM crapepr epr,
                tbepr_tr_parcelas prc
          WHERE epr.cdcooper = prc.cdcooper
-           AND epr.cdagenci = prc.cdagenci
+         --  AND epr.cdagenci = prc.cdagenci  --ews
            AND epr.nrdconta = prc.nrdconta
            AND epr.nrctremp = prc.nrctremp
            AND epr.cdcooper = pr_cdcooper
@@ -1070,6 +1073,8 @@ BEGIN
       -- de saldo, lançamentos do dia, associados, cpmf
       IF vr_flgprc = 1 THEN
         vr_flgrejei := TRUE;
+        --
+        --
       ELSE
         --
         -- Procedimento padrão de busca de informações de CPMF
@@ -1834,8 +1839,8 @@ BEGIN
               ,nraplica
               ,min(dtmvtolt) dtmvtolt
               ,sum(gene0002.fn_char_para_number(cdpesqbb)) cdpesqbb
-              ,max(vlsdapli) vlsdapli
-              ,sum(vldaviso) vldaviso
+              ,max(vlsdapli)- sum(vllanmto) vlsdapli --ews
+              ,max(vldaviso) vldaviso
               ,sum(vllanmto) vllanmto
               ,ROW_NUMBER () OVER (PARTITION BY cdagenci
                                        ORDER BY cdagenci) sqregpac
