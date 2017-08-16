@@ -191,7 +191,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
       IS
         -- Padronização do log - 26/07/2017 - Chamado 721285  
       BEGIN
-
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
           
           -- Ajustada chamada para buscar a descrição da critica - 31/07/2017 - Chamado 721285
@@ -211,6 +210,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
             vr_dscritic := '';
           end if;
         END IF;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 31/07/2017 - Chamado 721285        
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
       END pc_log_batch;
     
   BEGIN			
@@ -261,7 +264,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
       -- Envio centralizado de log de erro
       RAISE vr_exc_saida;
     END IF;
-
+    
     -- buscar informações do arquivo a ser processado
     OPEN cr_crapscb;
     FETCH cr_crapscb INTO rw_crapscb;
@@ -717,7 +720,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS673 (pr_cdcooper IN crapcop.cdcooper%T
 
     COMMIT;
           
-  EXCEPTION      
+  EXCEPTION
     WHEN vr_exc_fimprg THEN
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
