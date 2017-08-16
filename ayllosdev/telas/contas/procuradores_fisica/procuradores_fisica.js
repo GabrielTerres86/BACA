@@ -9,6 +9,8 @@
  *				  04/07/2013 - Inclusão das opções refentes aos poderes (Jean Michel).
  *				  25/09/2013 - Alteração da função de salvar poderes (Jean Michel).
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *				  25/08/2016 - Inclusao da validaResponsaveis e alteração da controlaOperacaoPoderes, SD 510426(Jean Michel).
+ *				  01/12/2016 - Retirada da function validaResponsaveis, SD.564025 (Jean Michel).
  */
 
 var nrcpfcgc = '';
@@ -1332,16 +1334,17 @@ function controlaLayoutPoder() {
 	$('.divRegistros > table > thead').remove();
 }
 
-function controlaOperacaoPoderes(operacao){
-	switch (operacao) {
+function controlaOperacaoPoderes(operacao) {
+
+    switch (operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
-			showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
+		    showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 	}
-}
+        }
 
 function salvarPoderes(){
 	
