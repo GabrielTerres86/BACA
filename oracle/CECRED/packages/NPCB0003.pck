@@ -1455,6 +1455,7 @@ END;
              decode(tit.flgconti,1,'S','N') flgconti,
              tit.nrdconta,
              tit.flgpgdda,
+             tit.intitcop,
              tit.rowid
         FROM craptit tit
        WHERE tit.cdcooper        = pr_cdcooper
@@ -1463,11 +1464,19 @@ END;
          AND UPPER(tit.cdctrlcs) = UPPER(pr_cdctrlcs);
     rw_craptit cr_craptit%ROWTYPE;
     
+    --> Buscar boleto pelo nrdident
+    CURSOR cr_crapcob (pr_nrdident crapcob.nrdident%TYPE )IS
+      SELECT cob.nratutit
+        FROM crapcob cob
+       WHERE cob.nrdident = pr_nrdident;
+    rw_crapcob cr_crapcob%ROWTYPE;   
+    
     vr_tbcampos      NPCB0003.typ_tab_campos_soap;
     vr_cdctrbxo      VARCHAR2(100);
     vr_cdCanPgt      INTEGER;
     vr_cdmeiopg      INTEGER;
     vr_dssrdom       VARCHAR2(1000); -- Var para retorno do Service Domain
+    vr_nratutit      crapcob.nratutit%TYPE;
     vr_cdcritic      NUMBER;
     vr_dscritic      VARCHAR2(1000);
     
@@ -1486,6 +1495,22 @@ END;
     
     -- Fechar o cursor
     CLOSE cr_craptit;
+  
+    vr_nratutit := NULL;
+    
+    --Se for titulo da propria cooperativa
+    IF rw_craptit.intitcop = 1 THEN
+      --> Buscar boleto pelo nrdident
+      OPEN cr_crapcob (pr_nrdident => rw_craptit.nrdident);
+      FETCH cr_crapcob INTO rw_crapcob;
+      IF cr_crapcob%FOUND THEN
+        vr_nratutit := rw_crapcob.nratutit;
+      END IF;
+      CLOSE cr_crapcob;            
+      
+    ELSE
+      vr_nratutit := pr_tituloCIP.NumRefAtlCadTit; 
+    END IF;
   
     -- Limpa a tab de campos
     vr_tbcampos.DELETE();
@@ -1514,7 +1539,7 @@ END;
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumRefCadTitBaixaOperac';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := pr_tituloCIP.NumRefAtlCadTit;
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := vr_nratutit;
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'int';
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'TpBaixaOperac';
