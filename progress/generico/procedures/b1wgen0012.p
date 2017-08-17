@@ -188,22 +188,24 @@
                07/03/2016 - #407136 - Incluido novo filtro ao verificar se o operador
                             pertence a forca tarefa da VIACREDI. Estava considerando de forma
                             parcial (Ex: Operador 294 e 2941). (Heitor - RKAM)
-                            
+
                30/05/2016 - Adicionado campo de codigo identificador no layout do BB
                             nas procedures gerar_compel_prcctl, gerar_compel_dscchq,
                             gerar_compel_custodia, gerar_compel, gerar_digita e 
-                            gerar_compel_altoVale (Douglas - Chamado 445731)
+                            gerar_compel_altoVale (Douglas - Chamado 445731) 
 
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
 							SD 476097. Carlos Rafael Tanholi.
-              
+
                04/11/2016 - Cheques custodiados deverao ter o numero do bordero
-                            igual a zero. (Projeto 300 - Rafael) 
-							
-               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)             
+                            igual a zero. (Projeto 300 - Rafael) 							
 
                12/12/2016 - Ajuste gerar_titulo Nova Plataforma de Cobrana. PRJ340 - NPC (Odirlei-AMcom)
+               
+               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)                            
+               
+               31/05/2017 - Ajustado código da agencia do PA ao enviar arquivo COB605. (Rafael)
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -1271,7 +1273,7 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_contador AS INT                                        NO-UNDO.
    DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
    DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
-
+   
    
 
    ASSIGN aux_qttitcxa = 0
@@ -1421,7 +1423,7 @@ PROCEDURE gerar_titulo:
                   aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIAL 1 */
                   SKIP.
                   */
-
+                  
 
           END.
 
@@ -1531,7 +1533,7 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"
+              aux_tpdocmto           FORMAT "x(3)"              
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
@@ -1556,7 +1558,8 @@ PROCEDURE gerar_titulo:
               "0001"                 FORMAT "x(4)"     /* VERSAO */
               aux_nrsqarhd           FORMAT "9999999999"
               aux_tpdocmto           FORMAT "x(3)"
-              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */                           aux_nrseqarq           FORMAT "9999999999"
+              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */
+              aux_nrseqarq           FORMAT "9999999999"
               SKIP.*/
        ELSE
           PUT STREAM str_1
@@ -1565,7 +1568,7 @@ PROCEDURE gerar_titulo:
               crapage.cdcomchq       FORMAT "999"
               aux_tpcaptur           FORMAT "9"             /* Tipo de captura */ 
               " "                    FORMAT "x(6)"          /* Filler */    
-              crapcop.cdagectl       FORMAT "9999"
+              crapage.cdagepac       FORMAT "9999"          /* Agencia remetente */
               aux_nrdolote           FORMAT "9999999"       /* NUMERO LOTE */
               aux_nrseqdig           FORMAT "999"           /* SEQ NO LOTE */
               YEAR(par_dtmvtolt)     FORMAT "9999"          /* DATA FORMATO */
@@ -1576,10 +1579,10 @@ PROCEDURE gerar_titulo:
               "0000001"              FORMAT "x(7)"       /* VERSAO */
               aux_nrsqarhd           FORMAT "9999999999" /* SEQ. do arquivo troca */
               " "                    FORMAT "x(18)"         /* Filler */    
-              aux_nrispbif_rem       FORMAT "99999999"   /* ISPB recebedor   */
-              aux_nrispbif           FORMAT "99999999"    /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"
-			  aux_nrseqarq           FORMAT "9999999999"
+              aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
+              aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
+              aux_tpdocmto           FORMAT "x(3)"              
+              aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
           
@@ -1660,7 +1663,8 @@ PROCEDURE gerar_titulo:
                   YEAR(par_dtmvtolt)   FORMAT "9999"   /* DATA FORMATO */
                   MONTH(par_dtmvtolt)  FORMAT "99"     /* YYYYMMDD*/
                   DAY(par_dtmvtolt)    FORMAT "99"
-                  aux_vltotarq * 100   FORMAT "99999999999999999" /* VL Arq */                    FILL(" ",41)         FORMAT "x(41)"  /* FILLER */
+                  aux_vltotarq * 100   FORMAT "99999999999999999" /* VL Arq */
+                  FILL(" ",41)         FORMAT "x(41)"  /* FILLER */
                   aux_nrispbif_rem     FORMAT "99999999"   /* ISPB Remetente*/  
                   FILL(" ",11)         FORMAT "x(11)"  /* FILLER */
                   aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIA */
@@ -3220,7 +3224,6 @@ PROCEDURE gerar_compel_custodia:
                               crapcst.cdagenci  = par_cdagenci AND
                               crapcst.insitprv  = 0            AND
                               crapcst.nrdolote  = par_nrdolote AND
-                              crapcst.nrborder  = 0            AND
                              (crapcst.insitchq  = 0            OR
                               crapcst.insitchq  = 2)
                               NO-LOCK BREAK BY crapcst.dtmvtolt:
@@ -3467,7 +3470,6 @@ PROCEDURE gerar_compel_custodia:
                                crapcst.cdagenci = par_cdagenci AND
                                crapcst.insitprv = 0            AND
                                crapcst.nrdolote = par_nrdolote AND
-                               crapcst.nrborder = 0            AND
                               (crapcst.insitchq = 0            OR
                                crapcst.insitchq = 2)
                                NO-LOCK:
