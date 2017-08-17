@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Maio/2013                       Ultima Atualizacao : 04/07/2017
+    Data    : Maio/2013                       Ultima Atualizacao : 17/08/2017
     
     Dados referente ao programa:
     
@@ -29,6 +29,11 @@
                               
                  04/07/2017 - Tratamento para enviar por e-mail os arquivos DE* para 
                               o convenios@cecred (Lucas Ranghetti #679608)
+                              
+                 17/08/2017 - Alterar o nome do arquivo DI* e OS* pelo dsdircop pois se 
+                              usar o nmrescop, para casos que nem da Viacredi AV nao
+                              iriamos enviar o arquivo em anexo pelo fato de quebrar o 
+                              script pelo espaco entre viacredi e av (Lucas Ranghetti #735360)
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO COMPACTADO  */
@@ -266,7 +271,7 @@ FOR EACH crapcop NO-LOCK.
         ASSIGN aux_contador = aux_contador + 1
                aux_nmarqema = aux_nmarqema + " " + ENTRY(6,aux_nmarquiv,"/")
                aux_nmrelato = "crrl649_" + STRING(aux_contador) +
-                              "_" + CAPS(crapcop.nmrescop) + ".lst"
+                              "_" + CAPS(crapcop.dsdircop) + ".lst"
                aux_nmarqrel = "/usr/coop/cecred" +
                               "/rl/" + aux_nmrelato
                aux_nmrelsnv = "/usr/coop/cecred" +
@@ -367,7 +372,7 @@ FOR EACH crapcop NO-LOCK.
         ASSIGN aux_contador = aux_contador + 1
                aux_nmarqema = aux_nmarqema + " " + ENTRY(6,aux_nmarquiv,"/")
                aux_nmrelato = "crrl650_" + STRING(aux_contador) +
-                              "_" + CAPS(crapcop.nmrescop) + ".lst"
+                              "_" + CAPS(crapcop.dsdircop) + ".lst"
                aux_nmarqrel = "/usr/coop/cecred" +
                               "/rl/" + aux_nmrelato
                aux_nmrelsnv = "/usr/coop/cecred" +
