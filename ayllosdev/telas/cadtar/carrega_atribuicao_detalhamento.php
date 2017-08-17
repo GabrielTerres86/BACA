@@ -222,5 +222,5 @@
 		carregaAtribuicaoDetalhamento($('#cdfaixav','#frmDetalhaTarifa').val(), <? echo "'".($nriniseq + $nrregist)."'"; ?>, true);
 	});	
 	
-	$('#divPesquisaRodape').formataRodapePesquisa();
+	$('#divPesquisaRodape', '#divTabDetalhamento').formataRodapePesquisa();
 </script>
