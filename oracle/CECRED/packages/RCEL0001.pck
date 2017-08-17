@@ -259,6 +259,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --    Alteracoes: 06/06/2017 - Inclusão da função de calculo de repasse
   --                           - Alteração para corrigir reagendamento de job  (Renato Darosci)
   --    
+	--                17/08/2017 - Alteração para ajustar relatório de agendamentos e mensagem do InternetBank 
+	--                             para recargas agendadas. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
   
   FUNCTION fn_calcula_proximo_repasse(pr_cdcooper IN NUMBER
@@ -2048,8 +2050,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 						 
 	           -- Se encontrou operação
              IF vr_flgoperac THEN
-							 -- Se for agendamento retornar crítica do log
+							 -- Se for agendamento retornar crítica do log para o relatório de agendamentos
 							 IF rw_operacao.insit_operacao = 1 THEN
+								 vr_cdcritic := 888; --> Alimentar cód da crítica como 888 para identificar que erro provém da rede tendencia
 								 vr_dscritic := vr_dserrlog;
 							 END IF;
 						 END IF;
@@ -2087,8 +2090,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
         -- Se encontrou operação
         IF vr_flgoperac THEN
-					-- Se for agendamento retornar crítica do log
+					-- Se for agendamento retornar crítica do log para o relatório de agendamentos
 					IF rw_operacao.insit_operacao = 1 THEN
+					  vr_cdcritic := 888; --> Alimentar cód da crítica como 888 para identificar que erro provém da rede tendencia						
 						vr_dscritic := vr_dserrlog;
 					END IF;
         END IF;
@@ -2117,8 +2121,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				
         -- Se encontrou operação
 				IF vr_flgoperac THEN
-					-- Se for agendamento retornar crítica do log
+					-- Se for agendamento retornar crítica do log para o relatório de agendamentos
 					IF rw_operacao.insit_operacao = 1 THEN
+					  vr_cdcritic := 888; --> Alimentar cód da crítica como 888 para identificar que erro provém da rede tendencia												
 					  vr_dscritic := vr_dserrlog;
 					END IF;
 				END IF;
@@ -2497,7 +2502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			COMMIT;
     EXCEPTION
       WHEN vr_exc_erro THEN
-        IF vr_cdcritic <> 0 THEN
+        IF vr_cdcritic <> 0 AND vr_cdcritic <> 888 THEN
           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         END IF;
 		    -- Retornar erro
@@ -4477,8 +4482,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         IF nvl(vr_cdcritic,0) > 0 OR
            vr_dscritic IS NOT NULL THEN
           
-          -- Verifica se tem codigo da critica
-          IF vr_cdcritic <> 0 THEN
+          -- Verifica se tem codigo da critica e se a mesma não provém da rede tendencia
+          IF vr_cdcritic <> 0 AND vr_cdcritic <> 888 THEN
             vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           END IF;
           
@@ -4525,14 +4530,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                 vr_dscritic := 'Erro ao atualizar registro de recarga. ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
-            
-            vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
-                           '#DDD#='      ||rw_tbrecarga.nrddd||';'||
-                           '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
-                           '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
-                           '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
-                           '#Motivo#='   ||vr_dscritic;
-              
+						
+						-- Crítica 888 é erro retornado da rede tendencia
+						IF vr_cdcritic = 888 THEN
+							-- Se erro retornado é 'CODIGO DE TELEFONE INVALIDO'
+							IF UPPER(trim(vr_dscritic)) = 'CODIGO DE TELEFONE INVALIDO' THEN
+								-- Erros validados pelo sistema da CECRED
+								vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+															 '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+															 '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+															 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+															 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
+															 '#Motivo#=Número de telefone inválido.';
+
+							ELSE -- Senão tratar erro genérico
+								-- Erros validados pelo sistema da CECRED
+								vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+															 '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+															 '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+															 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+															 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
+															 '#Motivo#=Não foi possível efetuar a recarga.';
+							END IF;
+						ELSE
+							-- Erros validados pelo sistema da CECRED
+							vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+														 '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+														 '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+														 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+														 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
+														 '#Motivo#='   ||vr_dscritic;
+            END IF;          
+						
             --> buscar mensagem 
             vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
                                                       ,pr_cdproduto         => 32
@@ -4541,8 +4570,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                                       ,pr_valores_dinamicos => vr_vldinami); -- Máscara #Cooperativa#=1;#Convenio#=123    
              
           END IF;
-          
-          vr_dscritic := '';
           
           IF vr_dscritic <> 'Não há saldo suficiente para a operação.' OR
              vr_flultexe <> 1 THEN
