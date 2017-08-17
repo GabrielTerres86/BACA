@@ -48,7 +48,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                               ,pr_dscritic   OUT VARCHAR2);
                               
   PROCEDURE pc_calcula_prox_parcela_pos(pr_cdcooper     IN  crapepr.cdcooper%TYPE --> Codigo da Cooperativa
-                                       ,pr_inproces     IN  crapdat.inproces%TYPE     --> Flag de controle para identificar se o processo estah rodando
+                                       ,pr_flgbatch     IN  BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
                                        ,pr_dtcalcul     IN  crapdat.dtmvtolt%TYPE --> Data do cálculo
                                        ,pr_dtefetiv     IN  crapepr.dtmvtolt%TYPE --> Data de efetivação da proposta
                                        ,pr_txmensal     IN  crapepr.txmensal%TYPE --> Taxa Mensal do Contrato
@@ -62,7 +62,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                        ,pr_dscritic     OUT crapcri.dscritic%TYPE);
 
   PROCEDURE pc_calcula_parcelas_pos_fixado(pr_cdcooper     IN crapcop.cdcooper%TYPE      --> Codigo da Cooperativa
-                                          ,pr_inproces     IN crapdat.inproces%TYPE     --> Flag de controle para identificar se o processo estah rodando
+                                          ,pr_flgbatch     IN  BOOLEAN DEFAULT FALSE     --> Indica se o processo noturno estah rodando
                                           ,pr_dtcalcul     IN crapdat.dtmvtolt%TYPE      --> Data de Calculo
                                           ,pr_cdlcremp     IN craplcr.cdlcremp%TYPE      --> Codigo da Linha de Credito
                                           ,pr_dtcarenc     IN crawepr.dtcarenc%TYPE      --> Data da Carencia do Contrato
@@ -88,7 +88,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE);
 
   PROCEDURE pc_calcula_desconto_pos_web(pr_dtcalcul     IN VARCHAR2              --> Data do calculo
-                                       ,pr_inproces     IN crapdat.inproces%TYPE --> Flag de Controle para identificar se o processo esta rodando
                                        ,pr_cdcooper     IN crapepr.cdcooper%TYPE --> Codigo da Cooperativa
                                        ,pr_nrdconta     IN crapepr.nrdconta%TYPE --> Numero da Conta
                                        ,pr_nrctremp     IN crapepr.nrctremp%TYPE --> Numero do Contrato                                          
@@ -102,7 +101,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                        ,pr_des_erro    OUT VARCHAR2);            --> Erros do processo
                                            
   PROCEDURE pc_busca_pagto_parc_pos(pr_cdcooper     IN  crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
-                                   ,pr_inproces     IN  crapdat.inproces%TYPE     --> Flag para identificar se o processo esta rodando
+                                   ,pr_flgbatch     IN BOOLEAN DEFAULT FALSE      --> Indica se o processo noturno estah rodando
                                    ,pr_dtcalcul     IN  crapdat.dtmvtolt%TYPE     --> Data de calculo das parcelas
                                    ,pr_nrdconta     IN  crapepr.nrdconta%TYPE     --> Numero da Conta Corrente
                                    ,pr_nrctremp     IN  crapepr.nrctremp%TYPE     --> Numero do Contrato
@@ -111,7 +110,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                    ,pr_dscritic     OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
   PROCEDURE pc_busca_pagto_parc_pos_prog(pr_cdcooper  IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
-                                        ,pr_inproces  IN crapdat.inproces%TYPE     --> Flag para identificar se o processo esta rodando
                                         ,pr_dtcalcul  IN VARCHAR2                  --> Data de calculo das parcelas
                                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE     --> Numero da Conta Corrente
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do Contrato
@@ -124,7 +122,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
   PROCEDURE pc_busca_pagto_parc_pos_web(pr_cdcooper     IN crapepr.cdcooper%TYPE      --> Codigo da Cooperativa
-                                       ,pr_inproces     IN crapdat.inproces%TYPE      --> Flag para identificar se o processo esta rodando
                                        ,pr_dtcalcul     IN VARCHAR2                   --> Data de calculo das parcelas
                                        ,pr_nrdconta     IN crapepr.nrdconta%TYPE      --> Numero da Conta Corrente
                                        ,pr_nrctremp     IN crapepr.nrctremp%TYPE      --> Numero do Contrato
@@ -152,7 +149,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
   PROCEDURE pc_grava_parcel_pos_fixado(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
-                                      ,pr_inproces  IN crapdat.inproces%TYPE     --> Flag de controle para identificar se o processo estah rodando
                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da Conta
                                       ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE     --> Data de Calculo
                                       ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do contrato
@@ -168,7 +164,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);
 
   PROCEDURE pc_busca_vl_prest_pos_prog(pr_cdcooper  IN crapepr.cdcooper%TYPE   --> Codigo da Cooperativa
-                                      ,pr_inproces  IN crapdat.inproces%TYPE   --> Flag de controle para identificar se o processo esta rodando
                                       ,pr_dtcalcul  IN crapdat.dtmvtoan%TYPE   --> Data de Calculo
                                       ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE   --> Codigo da linha de credito
                                       ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE   --> Quantidade de prestacoes
@@ -239,7 +234,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_cdpactra IN  crapage.cdagenci%TYPE     --> Codigo da Agencia Trabalho
                                         ,pr_cdoperad IN  crapope.cdoperad%TYPE     --> Codigo do Operador
                                         ,pr_cdorigem IN  NUMBER                    --> Codigo da Origem
-                                        ,pr_inproces IN  crapdat.inproces%TYPE     --> Indica se o processo noturno estah rodando
+                                        ,pr_flgbatch IN  BOOLEAN DEFAULT FALSE     --> Indica se o processo noturno estah rodando
                                         ,pr_nrdconta IN  crapepr.nrdconta%TYPE     --> Numero da Conta Corrente                                        
                                         ,pr_nrctremp IN  crapepr.nrctremp%TYPE     --> Numero do Contrato
                                         ,pr_dtlibera IN  crawepr.dtlibera%TYPE     --> Data de liberacao do Contrato
@@ -356,7 +351,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                  ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Numero do contrato
                                  ,pr_idseqttl   IN crapttl.idseqttl%TYPE --> Sequencia do titular
                                  ,pr_cdpactra   IN crapage.cdagenci%TYPE --> Codigo da Agencia Trabalho
-                                 ,pr_inproces   IN crapdat.inproces%TYPE --> Indica se o processo noturno estah rodando
                                  ,pr_nrseqava   IN PLS_INTEGER           --> Sequencia de pagamento de avalista
                                  ,pr_dadosprc   IN CLOB                  --> Dados das parcelas selecionadas
                                  ,pr_xmllog     IN VARCHAR2              --> XML com informacoes de LOG
@@ -407,7 +401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   --
   ---------------------------------------------------------------------------
   PROCEDURE pc_calcula_qtd_dias_uteis(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
-                                     ,pr_inproces     IN crapdat.inproces%TYPE --> Flag de controle para identificar se o processo estah rodando
+                                     ,pr_flgbatch     IN BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
                                      ,pr_dtefetiv     IN crapepr.dtmvtolt%TYPE --> Data de Efetivação da Proposta
                                      ,pr_datainicial  IN DATE                  --> Data Inicial
                                      ,pr_datafinal    IN DATE                  --> Data Final
@@ -451,7 +445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
         
         -- Condicao para verificar se está sendo calculado no processo noturno
-        IF pr_inproces >= 2 THEN
+        IF pr_flgbatch THEN
           IF NOT vr_tab_feriado.EXISTS(lpad(pr_cdcooper,10,'0')||LPAD(TO_CHAR(vr_dtmvtolt,'RRRRMMDD'),10,'0')) THEN
             -- Buscar todos os associados
             FOR rw_crapfer IN cr_crapfer (pr_cdcooper => pr_cdcooper
@@ -466,7 +460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         WHILE vr_dtmvtolt <= pr_datafinal LOOP
           vr_dtferiado := NULL;          
           -- Condicao para verificar se estah rodando o processo noturno
-          IF pr_inproces >= 2 THEN
+          IF pr_flgbatch THEN
             -- Indixe para procurar na temp-table
             vr_indx := lpad(pr_cdcooper,10,'0')||LPAD(TO_CHAR(vr_dtmvtolt,'RRRRMMDD'),10,'0');
             -- Condicao para verificar se a data é um feriado
@@ -545,7 +539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_dias360;
 
   PROCEDURE pc_calcula_fator_price(pr_cdcooper          IN crapepr.cdcooper%TYPE  --> Codigo da Cooperativa
-                                  ,pr_inproces          IN crapdat.inproces%TYPE  --> Flg de controle para identificar se o processo esta rodando
+                                  ,pr_flgbatch          IN BOOLEAN DEFAULT FALSE  --> Indica se o processo noturno estah rodando
                                   ,pr_dtcalcul          IN crapdat.dtmvtolt%TYPE  --> Data do cálculo
                                   ,pr_dtefetiv          IN crapepr.dtmvtolt%TYPE  --> Data de Efetivação da Proposta
                                   ,pr_dtvencto          IN crappep.dtvencto%TYPE  --> Data de Vencimento
@@ -601,7 +595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       -- Procedure para calcular a taxa no periodo no mês anterior
       PROCEDURE pc_calc_taxa_periodo_mensal (pr_cdcooper              IN  crapdat.cdcooper%TYPE
-                                            ,pr_inproces              IN  crapdat.inproces%TYPE
+                                            ,pr_flgbatch              IN  BOOLEAN DEFAULT FALSE
                                             ,pr_dtefetiv              IN  crapepr.dtmvtolt%TYPE
                                             ,pr_vlrdtaxa              IN  craptxi.vlrdtaxa%TYPE
                                             ,pr_dtvencto              IN  crappep.dtvencto%TYPE
@@ -624,7 +618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
         -- Calcula a diferenca entre duas datas e retorna os dias Uteis
         pc_calcula_qtd_dias_uteis(pr_cdcooper    => pr_cdcooper
-                                 ,pr_inproces    => pr_inproces
+                                 ,pr_flgbatch    => pr_flgbatch
                                  ,pr_dtefetiv    => pr_dtefetiv
                                  ,pr_datainicial => vr_data_inicial
                                  ,pr_datafinal   => last_day(vr_data_inicial)
@@ -701,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         IF TO_CHAR(pr_dtefetiv,'mmyyyy') = TO_CHAR(pr_dtvencto,'mmyyyy') AND NOT pr_tab_price.EXISTS(vr_indice - 1) THEN
           -- Calcula a diferenca entre duas datas e retorna os dias Uteis
           pc_calcula_qtd_dias_uteis(pr_cdcooper    => pr_cdcooper
-                                   ,pr_inproces    => pr_inproces
+                                   ,pr_flgbatch    => pr_flgbatch
                                    ,pr_dtefetiv    => pr_dtefetiv
                                    ,pr_datainicial => vr_data_inicial
                                    ,pr_datafinal   => vr_data_final 
@@ -715,7 +709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         ELSE
           -- Calcula a diferenca entre duas datas e retorna os dias Uteis
           pc_calcula_qtd_dias_uteis(pr_cdcooper    => pr_cdcooper
-                                   ,pr_inproces    => pr_inproces
+                                   ,pr_flgbatch    => pr_flgbatch
                                    ,pr_dtefetiv    => pr_dtefetiv
                                    ,pr_datainicial => last_day(vr_data_inicial)
                                    ,pr_datafinal   => vr_data_final
@@ -729,7 +723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           
           -- Procedure para calcular a taxa no periodo no mes anterior
           pc_calc_taxa_periodo_mensal(pr_cdcooper              => pr_cdcooper
-                                     ,pr_inproces              => pr_inproces
+                                     ,pr_flgbatch              => pr_flgbatch
                                      ,pr_dtefetiv              => pr_dtefetiv
                                      ,pr_vlrdtaxa              => rw_craptxi.vlrdtaxa
                                      ,pr_dtvencto              => vr_data_final
@@ -795,7 +789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_fator_price;
 
   PROCEDURE pc_calcula_saldo_projetado(pr_cdcooper     IN  crapepr.cdcooper%TYPE  --> Codigo da Cooperativa
-                                      ,pr_inproces     IN  crapdat.inproces%TYPE  --> Flag de controle para identificar se o processo esta rodando
+                                      ,pr_flgbatch     IN  BOOLEAN DEFAULT FALSE  --> Indica se o processo noturno estah rodando
                                       ,pr_dtefetiv     IN  crapepr.dtmvtolt%TYPE  --> Data de Efetivação da Proposta
                                       ,pr_datainicial  IN  DATE                   --> Data Inicial
                                       ,pr_datafinal    IN  DATE                   --> Data Calculo
@@ -809,7 +803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                       ,pr_dscritic     OUT crapcri.dscritic%TYPE) IS
   BEGIN                                      
     /* .............................................................................
-       Programa: pc_calcula_prox_parcela
+       Programa: pc_calcula_saldo_projetado
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
@@ -852,7 +846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
       -- Calcula a diferenca entre duas datas e retorna os dias Uteis
       pc_calcula_qtd_dias_uteis(pr_cdcooper    => pr_cdcooper
-                               ,pr_inproces    => pr_inproces
+                               ,pr_flgbatch    => pr_flgbatch
                                ,pr_dtefetiv    => pr_dtefetiv
                                ,pr_datainicial => pr_datainicial
                                ,pr_datafinal   => pr_datafinal
@@ -947,7 +941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_saldo_projetado;
       
   PROCEDURE pc_calcula_prox_parcela_pos(pr_cdcooper     IN  crapepr.cdcooper%TYPE --> Codigo da Cooperativa
-                                       ,pr_inproces     IN  crapdat.inproces%TYPE     --> Flag de controle para identificar se o processo estah rodando
+                                       ,pr_flgbatch     IN  BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
                                        ,pr_dtcalcul     IN  crapdat.dtmvtolt%TYPE --> Data do cálculo
                                        ,pr_dtefetiv     IN  crapepr.dtmvtolt%TYPE --> Data de efetivação da proposta
                                        ,pr_txmensal     IN  crapepr.txmensal%TYPE --> Taxa Mensal do Contrato
@@ -995,7 +989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
       -- Calcula o fator price para as parcelas
       pc_calcula_fator_price(pr_cdcooper          => pr_cdcooper
-                            ,pr_inproces          => pr_inproces
+                            ,pr_flgbatch          => pr_flgbatch
                             ,pr_dtcalcul          => pr_dtcalcul
                             ,pr_dtefetiv          => pr_dtefetiv
                             ,pr_dtvencto          => pr_dtvencto                            
@@ -1043,7 +1037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_prox_parcela_pos;
   
   PROCEDURE pc_calcula_parcelas_pos_fixado(pr_cdcooper     IN crapcop.cdcooper%TYPE      --> Codigo da Cooperativa
-                                          ,pr_inproces     IN crapdat.inproces%TYPE      --> Flag de controle para identificar se o processo esta rodando
+                                          ,pr_flgbatch     IN  BOOLEAN DEFAULT FALSE     --> Indica se o processo noturno estah rodando
                                           ,pr_dtcalcul     IN crapdat.dtmvtolt%TYPE      --> Data de Calculo
                                           ,pr_cdlcremp     IN craplcr.cdlcremp%TYPE      --> Codigo da Linha de Credito
                                           ,pr_dtcarenc     IN crawepr.dtcarenc%TYPE      --> Data da Carencia do Contrato
@@ -1164,7 +1158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
         -- Procedure para calcular o saldo projetado
         pc_calcula_saldo_projetado(pr_cdcooper           => pr_cdcooper
-                                  ,pr_inproces           => pr_inproces
+                                  ,pr_flgbatch           => pr_flgbatch
                                   ,pr_dtefetiv           => pr_dtcalcul
                                   ,pr_datainicial        => vr_datainicial
                                   ,pr_datafinal          => vr_datafinal
@@ -1216,7 +1210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
       -- Procedure para calcular o Fator Price 
       pc_calcula_fator_price(pr_cdcooper          => pr_cdcooper
-                            ,pr_inproces          => pr_inproces
+                            ,pr_flgbatch          => pr_flgbatch
                             ,pr_dtcalcul          => pr_dtcalcul
                             ,pr_dtefetiv          => pr_dtcalcul
                             ,pr_dtvencto          => pr_dtdpagto
@@ -1391,7 +1385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_atraso_pos_fixado;      
       
   PROCEDURE pc_calcula_desconto_pos(pr_dtcalcul IN  crapdat.dtmvtolt%TYPE --> Data do cálculo
-                                   ,pr_inproces IN  crapdat.inproces%TYPE --> Flag de Controle para identificar se o processo esta rodando
+                                   ,pr_flgbatch IN  BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
                                    ,pr_cdcooper IN  crapepr.cdcooper%TYPE --> Codigo da Cooperativa
                                    ,pr_nrdconta IN  crapepr.nrdconta%TYPE --> Numero da Conta
                                    ,pr_nrctremp IN  crapepr.nrctremp%TYPE --> Numero do Contrato                                          
@@ -1540,7 +1534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dtvencto := ADD_MONTHS(rw_crappep.dtvencto,-vr_qtparcel);
       -- Rotina para calcular o price da parcela que sera antecipada
       pc_calcula_fator_price(pr_cdcooper          => pr_cdcooper
-                            ,pr_inproces          => pr_inproces
+                            ,pr_flgbatch          => pr_flgbatch
                             ,pr_dtcalcul          => vr_dtmvtolt
                             ,pr_dtefetiv          => rw_crapepr.dtmvtolt
                             ,pr_dtvencto          => ADD_MONTHS(vr_dtvencto,1)
@@ -1600,7 +1594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         
       -- Quantidade de dias uteis entre a data atual e o lancamento de juros remuneratorio
       pc_calcula_qtd_dias_uteis(pr_cdcooper    => pr_cdcooper
-                               ,pr_inproces    => pr_inproces
+                               ,pr_flgbatch    => pr_flgbatch
                                ,pr_dtefetiv    => rw_crapepr.dtmvtolt
                                ,pr_datainicial => vr_dtvencto
                                ,pr_datafinal   => vr_dtmvtolt
@@ -1641,7 +1635,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_desconto_pos;
 
   PROCEDURE pc_calcula_desconto_pos_web(pr_dtcalcul     IN VARCHAR2              --> Data do calculo
-                                       ,pr_inproces     IN crapdat.inproces%TYPE --> Flag de Controle para identificar se o processo esta rodando
                                        ,pr_cdcooper     IN crapepr.cdcooper%TYPE --> Codigo da Cooperativa
                                        ,pr_nrdconta     IN crapepr.nrdconta%TYPE --> Numero da Conta
                                        ,pr_nrctremp     IN crapepr.nrctremp%TYPE --> Numero do Contrato                                          
@@ -1691,7 +1684,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       -- Busca ao desconto
       pc_calcula_desconto_pos(pr_dtcalcul => vr_dtcalcul
-                             ,pr_inproces => pr_inproces
                              ,pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => pr_nrdconta
                              ,pr_nrctremp => pr_nrctremp
@@ -1754,7 +1746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_calcula_desconto_pos_web;
 
   PROCEDURE pc_busca_pagto_parc_pos(pr_cdcooper     IN crapepr.cdcooper%TYPE      --> Codigo da Cooperativa
-                                   ,pr_inproces     IN crapdat.inproces%TYPE      --> Flag para identificar se o processo esta rodando
+                                   ,pr_flgbatch     IN BOOLEAN DEFAULT FALSE      --> Indica se o processo noturno estah rodando
                                    ,pr_dtcalcul     IN crapdat.dtmvtolt%TYPE      --> Data de calculo das parcelas
                                    ,pr_nrdconta     IN crapepr.nrdconta%TYPE      --> Numero da Conta Corrente
                                    ,pr_nrctremp     IN crapepr.nrctremp%TYPE      --> Numero do Contrato
@@ -1968,7 +1960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         ELSIF rw_crappep.dtvencto > pr_dtcalcul THEN
           -- Calcula o desconto da parcela
           pc_calcula_desconto_pos(pr_dtcalcul => pr_dtcalcul
-                                 ,pr_inproces => pr_inproces
+                                 ,pr_flgbatch => pr_flgbatch
                                  ,pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_nrctremp => pr_nrctremp
@@ -2006,7 +1998,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_busca_pagto_parc_pos;
 
   PROCEDURE pc_busca_pagto_parc_pos_prog(pr_cdcooper  IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
-                                        ,pr_inproces  IN crapdat.inproces%TYPE     --> Flag para identificar se o processo esta rodando
                                         ,pr_dtcalcul  IN VARCHAR2                  --> Data de calculo das parcelas
                                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE     --> Numero da Conta Corrente
                                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do Contrato
@@ -2056,7 +2047,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       -- Busca as parcelas para pagamento
       pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
-                             ,pr_inproces => pr_inproces
                              ,pr_dtcalcul => vr_dtcalcul
                              ,pr_nrdconta => pr_nrdconta
                              ,pr_nrctremp => pr_nrctremp
@@ -2109,7 +2099,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_busca_pagto_parc_pos_prog;
 
   PROCEDURE pc_busca_pagto_parc_pos_web(pr_cdcooper     IN crapepr.cdcooper%TYPE      --> Codigo da Cooperativa
-                                       ,pr_inproces     IN crapdat.inproces%TYPE      --> Flag para identificar se o processo esta rodando
                                        ,pr_dtcalcul     IN VARCHAR2                   --> Data de calculo das parcelas
                                        ,pr_nrdconta     IN crapepr.nrdconta%TYPE      --> Numero da Conta Corrente
                                        ,pr_nrctremp     IN crapepr.nrctremp%TYPE      --> Numero do Contrato
@@ -2158,7 +2147,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       -- Busca as parcelas para pagamento
       pc_busca_pagto_parc_pos(pr_cdcooper => pr_cdcooper
-                             ,pr_inproces => pr_inproces
                              ,pr_dtcalcul => vr_dtcalcul
                              ,pr_nrdconta => pr_nrdconta
                              ,pr_nrctremp => pr_nrctremp
@@ -2509,7 +2497,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_valida_dados_pos_fixado;
 
   PROCEDURE pc_grava_parcel_pos_fixado(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
-                                      ,pr_inproces  IN crapdat.inproces%TYPE     --> Flag de controle para identificar se o processo estah rodando
                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da Conta
                                       ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE     --> Data de Calculo
                                       ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do contrato
@@ -2577,7 +2564,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       -- Chama o calculo das parcelas
       pc_calcula_parcelas_pos_fixado(pr_cdcooper     => pr_cdcooper
-                                    ,pr_inproces     => pr_inproces
                                     ,pr_dtcalcul     => pr_dtcalcul
                                     ,pr_cdlcremp     => pr_cdlcremp
                                     ,pr_dtcarenc     => pr_dtcarenc
@@ -2677,7 +2663,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
   END pc_grava_parcel_pos_fixado;
 
   PROCEDURE pc_busca_vl_prest_pos_prog(pr_cdcooper  IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
-                                      ,pr_inproces  IN crapdat.inproces%TYPE     --> Flag de controle para identificar se o processo esta rodando
                                       ,pr_dtcalcul  IN crapdat.dtmvtoan%TYPE     --> Data do movimento anterior
                                       ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
                                       ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE     --> Quantidade de prestacoes
@@ -2717,7 +2702,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
     BEGIN
       -- Chama o calculo da parcela
       pc_calcula_parcelas_pos_fixado(pr_cdcooper     => pr_cdcooper
-                                    ,pr_inproces     => pr_inproces
                                     ,pr_dtcalcul     => pr_dtcalcul
                                     ,pr_cdlcremp     => pr_cdlcremp
                                     ,pr_dtcarenc     => pr_dtcarenc
@@ -4027,7 +4011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                         ,pr_cdpactra IN  crapage.cdagenci%TYPE     --> Codigo da Agencia Trabalho
                                         ,pr_cdoperad IN  crapope.cdoperad%TYPE     --> Codigo do Operador
                                         ,pr_cdorigem IN  NUMBER                    --> Codigo da Origem
-                                        ,pr_inproces IN  crapdat.inproces%TYPE     --> Indica se o processo noturno estah rodando
+                                        ,pr_flgbatch IN  BOOLEAN DEFAULT FALSE     --> Indica se o processo noturno estah rodando
                                         ,pr_nrdconta IN  crapepr.nrdconta%TYPE     --> Numero da Conta Corrente                                        
                                         ,pr_nrctremp IN  crapepr.nrctremp%TYPE     --> Numero do Contrato
                                         ,pr_dtlibera IN  crawepr.dtlibera%TYPE     --> Data de liberacao do Contrato
@@ -4112,7 +4096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
       -- Calcula a diferenca entre duas datas e retorna os dias Uteis
       pc_calcula_qtd_dias_uteis(pr_cdcooper    => pr_cdcooper
-                               ,pr_inproces    => pr_inproces
+                               ,pr_flgbatch    => pr_flgbatch
                                ,pr_dtefetiv    => pr_dtlibera
                                ,pr_datainicial => vr_data_inicial
                                ,pr_datafinal   => vr_data_final
@@ -4287,7 +4271,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Variaveis Padrao
       vr_cdhistor craphis.cdhistor%TYPE;
       vr_inliquid crappep.inliquid%TYPE;
-      --vr_dtultpag crapepr.dtultpag%TYPE;
       vr_vljura60 crappep.vljura60%TYPE;
       vr_vlsdvatu NUMBER;
       vr_qtprepag NUMBER;
@@ -4348,7 +4331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                   ,pr_cdpactra => pr_cdpactra
                                   ,pr_cdoperad => pr_cdoperad
                                   ,pr_cdorigem => pr_cdorigem
-                                  ,pr_inproces => 3           --  JFF - JPP
+                                  ,pr_flgbatch => pr_flgbatch
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_nrctremp => pr_nrctremp
                                   ,pr_dtlibera => pr_dtlibera
@@ -4371,7 +4354,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Condicao para verificar se a parcela foi paga total
       IF NVL(pr_vlsdvpar,0) - NVL(vr_vlpagpar,0) <= 0 THEN
         vr_inliquid := 1;
-        --vr_dtultpag := pr_dtcalcul;
         vr_vljura60 := 0;
         -- Saldo Devedor da Parcela
         vr_vlsdvatu := 0;
@@ -4381,7 +4363,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_qtprecal := NVL(pr_qtprecal,0) + 1;
       ELSE
         vr_inliquid := 0;
-        --vr_dtultpag := pr_dtcalcul;
         vr_vljura60 := pr_vljura60;
         -- Saldo Devedor da Parcela
         vr_vlsdvatu := pr_vlsdvatu;
@@ -4410,8 +4391,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_vlpagpar := 0;
       END IF;   
         
-      -- Se estiver On-line ou no Batch e tem Saldo Disponivel
+      -- Se possui valor a pagar
       IF vr_vlpagpar > 0 THEN
+
         -- Verificar se o pagamento foi feito por um avalista
         IF NVL(pr_nrseqava,0) = 0 THEN
           -- Se for Financiamento
@@ -4522,23 +4504,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           END IF;
           RAISE vr_exc_erro;
         END IF;
-        
-      END IF; -- pr_inproces = 1 OR (pr_inproces >= 2 AND pr_vlsldisp > 0)
 
-      -- Condicao para verificar se foi calculado Juros Remuneratorio e Juros de Correcao
-      /*
-      IF NVL(vr_vljuremu,0) > 0 OR NVL(vr_vljurcor,0) > 0 THEN
-        vr_dtrefjur := pr_dtcalcul;
-      ELSE
-        vr_dtrefjur := pr_dtrefjur;
-      END IF;
-      */
+      END IF; -- vr_vlpagpar > 0
 
       -- Atualizar Emprestimo
       BEGIN
         UPDATE crapepr
            SET crapepr.dtrefjur = pr_dtrefjur
-              --,crapepr.dtultpag = vr_dtultpag
               ,crapepr.qtprepag = vr_qtprepag
               ,crapepr.qtprecal = vr_qtprecal
               ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0) - NVL(vr_vlpagpar,0)
@@ -5267,22 +5239,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
-    
+
       -- Registro tipo Data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
-    
+
       -- Variaveis Locais
-      vr_flgcrass BOOLEAN;
       vr_crapope  BOOLEAN;
       vr_blnachou BOOLEAN;
       vr_vlsldisp NUMBER;
       vr_difpagto NUMBER;
       vr_flgativo INTEGER := 0;
-    
+
       -- Variaveis Erro
       vr_cdcritic INTEGER;
       vr_dscritic VARCHAR2(4000);
-    
+
       -- Variaveis Excecao
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
@@ -5350,17 +5321,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         RAISE vr_exc_erro;
       END IF;
 
-      -- Verificar se o BATCH esta rodando
-      IF rw_crapdat.inproces <> 1 THEN
-        -- Se estiver no BATCH, utiliza a verificacao da conta a partir do vetor de contas
-        -- que se nao estiver carregado fara a leitura de todas as contas da cooperativa
-        -- Quando eh BATCH mantem o padrao TRUE
-        vr_flgcrass := TRUE;
-      ELSE 
-        -- Se nao estiver no BATCH, busca apenas a informacao da conta que esta sendo passada
-        vr_flgcrass := FALSE;
-      END IF;
-
       -- Chama validacao generica
       pc_valida_pagamentos_pos(pr_cdcooper => vr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
@@ -5371,7 +5331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                               ,pr_tpemprst => rw_crawepr.tpemprst
                               ,pr_dtlibera => rw_crawepr.dtlibera
                               ,pr_vllimcre => rw_crapass.vllimcre
-                              ,pr_flgcrass => vr_flgcrass
+                              ,pr_flgcrass => FALSE
                               ,pr_nrctrliq_1 => rw_crawepr.nrctrliq##1
                               ,pr_nrctrliq_2 => rw_crawepr.nrctrliq##2
                               ,pr_nrctrliq_3 => rw_crawepr.nrctrliq##3
@@ -5462,7 +5422,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                  ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Numero do contrato
                                  ,pr_idseqttl   IN crapttl.idseqttl%TYPE --> Sequencia do titular
                                  ,pr_cdpactra   IN crapage.cdagenci%TYPE --> Codigo da Agencia Trabalho
-                                 ,pr_inproces   IN crapdat.inproces%TYPE --> Indica se o processo noturno estah rodando
                                  ,pr_nrseqava   IN PLS_INTEGER           --> Sequencia de pagamento de avalista
                                  ,pr_dadosprc   IN CLOB                  --> Dados das parcelas selecionadas
                                  ,pr_xmllog     IN VARCHAR2              --> XML com informacoes de LOG
