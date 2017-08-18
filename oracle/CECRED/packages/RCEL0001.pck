@@ -4971,6 +4971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               CLOSE cr_operadora;
             END IF;
             
+            vr_vrreceita := rw_tbrecarga.total_vlrecarga - rw_tbrecarga.total_vlrepasse;
+            
             -- Soma no valor do repasse
             vr_vlrepass := vr_vlrepass + rw_tbrecarga.total_vlrepasse;
             
