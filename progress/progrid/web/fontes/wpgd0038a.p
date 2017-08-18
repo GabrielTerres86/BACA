@@ -1,6 +1,6 @@
 /*****************************************************************************
  Programa wpgd0038a.p - Listagem de fechamento (chamado a partir dos dados de wpgd0038)
-
+ 
  Alterações: 23/02/2007 - cfe tarefa 10307
  
              17/12/2007 - Modificado For Each da tabela crapidp para melhorar
@@ -288,7 +288,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                 
                totalVagas           = totalVagas + ttCrapadp.MaximoPorTurma
                geralVagas           = geralVagas + ttCrapadp.MaximoPorTurma.
-        
+               
                If ttcrapadp.idstaeve <> 2 Then
                  ASSIGN totalDeEventosDoPac  = totalDeEventosDoPac + 1
                  totalDeEventosDaCoop = totalDeEventosDaCoop + 1.
@@ -339,7 +339,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                   TotalEventosRealizados = totalEventosRealizados + 1.
                           
                ASSIGN totalVagasReal         = totalVagasReal + ttCrapadp.MaximoPorTurma
-                        geralVagasReal         = geralVagasReal + ttCrapadp.MaximoPorTurma.  
+                      geralVagasReal         = geralVagasReal + ttCrapadp.MaximoPorTurma.  
             END.
 
         ASSIGN aux_contador = aux_contador + 1.
@@ -991,7 +991,7 @@ ELSE DO:
        END. /* FOR EACH */
    END. /* idEvento = 2 */ 
    /*****************************************************************************************************/
-                                                                      
+                                                                         
    ASSIGN conta = 0. 
 
    FOR EACH ttCrapadp:
@@ -1162,7 +1162,7 @@ ELSE DO:
                    ASSIGN ttCrapadp.InscComu[Crapidp.IdStaIns] = ttCrapadp.InscComu[Crapidp.IdStaIns] + 1.
            END.
 
-           /* *** Se incricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
+           /* *** Se inscricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
            IF Crapidp.IdStaIns = 2  AND Crapidp.QtFalEve > 0 AND ttCrapadp.idstaeve <> 2 /*Cancelado*/ THEN DO:
               IF ((crapidp.qtfaleve * 100) / ttCrapadp.QtDiaEve) > (100 - frequenciaMinima) THEN DO:
                   ASSIGN ttCrapadp.Inscritos[6] = ttCrapadp.Inscritos[6] + 1.
@@ -1199,7 +1199,7 @@ ELSE DO:
                        ASSIGN ttCrapadp.InscComu[Crapidp.IdStaIns] = ttCrapadp.InscComu[Crapidp.IdStaIns] + 1.
                END.
 
-               /* *** Se incricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
+               /* *** Se inscricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
                IF Crapidp.IdStaIns = 2  AND Crapidp.QtFalEve > 0 AND ttCrapadp.idstaeve <> 2 /*Cancelado*/ THEN DO:
                   IF ((crapidp.qtfaleve * 100) / ttCrapadp.QtDiaEve) > (100 - frequenciaMinima) THEN DO:
                       ASSIGN ttCrapadp.Inscritos[6] = ttCrapadp.Inscritos[6] + 1.
@@ -1277,11 +1277,11 @@ ELSE DO:
    ELSE IF tipoDeRelatorio = 2 THEN
       ASSIGN nomeDoRelatorio = " - Quantidade de Eventos por PA ". 
    ELSE
-      ASSIGN nomeDoRelatorio = " - Incrições nos Eventos por PA". 
+      ASSIGN nomeDoRelatorio = " - Inscrições nos Eventos por PA". 
   
    montaTela(). 
 END.
-          
+  
 PROCEDURE PermissaoDeAcesso :
-    {includes/wpgd0009.i} 
+  {includes/wpgd0009.i} 
 END PROCEDURE.
