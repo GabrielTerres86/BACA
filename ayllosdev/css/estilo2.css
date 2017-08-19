@@ -208,6 +208,9 @@ table.tituloRegistros thead tr {border-bottom:1px dotted #999;}
 table.tituloRegistros thead tr th{font-size:12px;height:22px;padding:0px 5px;cursor:pointer;border-right:1px dotted #999;background-color:#f7d3ce;}
 table.tituloRegistros thead tr th.ordemInicial{background-image:url(../imagens/geral/ordem_inicial.gif);background-repeat:no-repeat;background-position:center;background-color:#f7d3ce;border:0px;width:16px;padding:0px;}
 
+table.fixed { table-layout:fixed; }
+table.fixed td { overflow: hidden; }
+
 div.divRegistros {height:150px;width:100%;overflow-x:hidden;overflow-y:scroll;}
 div.divRegistros table {width:100%;border-collapse:collapse;}
 div.divRegistros table thead {display:none;}

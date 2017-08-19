@@ -26,7 +26,7 @@
 			<legend><?= utf8ToHtml('Integrantes Grupo Econômico') ?></legend>
 		
 			<label for="listarTodos">Apresentar Todos:</label>
-			<input type="checkbox" name="listarTodos" id="listarTodos" class="campo"/>
+			<input type="checkbox" name="listarTodos" id="listarTodos" class="clsCheckbox"/>
 				
 			<label for="nrdconta">Conta:</label>
 			<input type="text" id="nrdconta" name="nrdconta" class="campo" />
@@ -38,12 +38,15 @@
 			<div id="divIntegrantesGrupoEconomico"></div>		
 		</fieldset>
 		
-		<label for="dsobservacao"><?= utf8ToHtml('Observaçâo:') ?></label>
-		<textarea name="dsobservacao" id="dsobservacao" class="campo"></textarea>
+		<label for="dsobservacao"><?= utf8ToHtml('Observação:') ?></label>
+		<br /> 
+		<textarea name="dsobservacao" id="dsobservacao" class="textarea"></textarea>
 	</fieldset>
 </form>
 <div id="divBotoes">
 	<a href="#" class="botao" id="btVoltar" onclick="fechaRotina(divRotina); return false;">Voltar</a>
+	<a href="#" class="botao" id="btIncluirIntegrante" onclick="abreTelaInclusaoIntegrante(); return false;">Incluir Integrante</a>
+	<a href="#" class="botao" id="btExcluirGrupo"      onclick="solicitaExclusaoIntegrante(); return false;">Excluir Integrante</a>
 	<? if (getByTagName($xmlObjeto->roottag->tags[0]->tags,'idgrupo') > 0){ ?>	
 			<a href="#" class="botao" id="btIncluirGrupo" onclick="manterRotina('AlterarGrupo','frmGrupoEconomico'); return false;">Alterar Grupo</a>
 	<? }else{ ?>

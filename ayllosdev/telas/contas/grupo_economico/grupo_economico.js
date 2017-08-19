@@ -339,7 +339,7 @@ function controlaLayout() {
 	rNmgrupo.addClass('rotulo-linha').css({'width':'80px'});	
 	rDataInclusao.addClass('rotulo-linha').css({'width':'110px'});
 	rListarTodos.addClass('rotulo').css({'width':'114px'});
-	rDsobservacao.addClass('rotulo').css({'width':'114px'});
+	rDsobservacao.addClass('rotulo').css({'width':'auto','padding-left':'3px'});
 	rNrdconta.addClass('rotulo-linha').css({'width':'80px'});
 	
 	var cIdGrupo      = $('#idgrupo', '#frmGrupoEconomico');
@@ -358,8 +358,9 @@ function controlaLayout() {
 	cDataInclusao.desabilitaCampo();
 	
 	cNrdconta.addClass('conta pesquisa').css({'width':'80px'});
-	cDsobservacao.addClass('alphanum').css({'width':'562px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
-
+	cDsobservacao.addClass('alphanum').css({'width':'951px','height':'80px','float':'left','margin':'-5px 0px 3px 3px','padding-right':'1px'});
+    cListarTodos.css({'margin':'5px 3px 0px 3px','*margin':'7px 0px 0px 0px','height':'16px'});
+	
 	// Evento onKeyDown no campo "nrdconta"
     cNrdconta.bind("keydown", function (e) {
         // Captura código da tecla pressionada
@@ -413,28 +414,30 @@ function formataTabIntegrantes() {
     ordemInicial = [[0,0]];
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '18px';
-    arrayLargura[1] = '80px';
-    arrayLargura[2] = '90px';
-    arrayLargura[3] = '110px';
-    arrayLargura[4] = '110px';
-    arrayLargura[5] = '80px';
-    arrayLargura[6] = '70px';
-    arrayLargura[7] = '110px';
-    arrayLargura[8] = '70px';
-         
+    arrayLargura[0] = '18px'; //Checkbox
+    arrayLargura[1] = '50px'; //Tipo Pessoa
+    arrayLargura[2] = '70px'; //Conta
+    arrayLargura[3] = '100px'; //Documento
+    arrayLargura[4] = '110px'; //Nome
+    arrayLargura[5] = '60px'; //Tipo Vinculo
+    arrayLargura[6] = '70px'; //%Participacao
+    arrayLargura[7] = '70px'; //Data Inclusao
+    arrayLargura[8] = '95px'; //Operador Inclusao
+	arrayLargura[9] = '70px'; //Data Exclusao
+
 	var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'left';
+    arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'right';
     arrayAlinha[3] = 'left';
     arrayAlinha[4] = 'left';
-    arrayAlinha[5] = 'right';
-    arrayAlinha[6] = 'left';
+    arrayAlinha[5] = 'left';
+    arrayAlinha[6] = 'right';
     arrayAlinha[7] = 'left';
     arrayAlinha[8] = 'left';
     arrayAlinha[9] = 'left';
-         
+    arrayAlinha[10] = 'left';
+	
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
     return false;
 }

@@ -286,15 +286,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                    tbcc_grupo_economico_integ.nrcpfcgc,
                    tbcc_grupo_economico_integ.nrdconta,
                    tbcc_grupo_economico_integ.tppessoa,
-                   CASE WHEN tbcc_grupo_economico_integ.tppessoa = 1 THEN 'Fisica' else 'Juridica' end as tppessoa_desc,
+                   CASE WHEN tbcc_grupo_economico_integ.tppessoa = 1 THEN 'PF' else 'PJ' end as tppessoa_desc,
                    tbcc_grupo_economico_integ.tpvinculo,
                    tbcc_grupo_economico_integ.peparticipacao,
-                   tbcc_grupo_economico_integ.cdoperad_inclusao,
-                   ope_inc.nmoperad as nmoperad_inclusao,
-                   tbcc_grupo_economico_integ.dtinclusao,               
+                   decode(tbcc_grupo_economico_integ.tpcarga,1,'Carga Inicial'
+                                                            ,2,gene0007.fn_acento_xml('Carga Manutenção')
+                                                            ,tbcc_grupo_economico_integ.cdoperad_inclusao) cdoperad_inclusao,
+                   decode(tbcc_grupo_economico_integ.tpcarga,1,'Carga Inicial'
+                                                            ,2,gene0007.fn_acento_xml('Carga Manutenção')
+                                                            ,ope_inc.nmoperad) as nmoperad_inclusao,
+                   tbcc_grupo_economico_integ.dtinclusao,
                    tbcc_grupo_economico_integ.cdoperad_exclusao,
                    ope_exc.nmoperad as nmoperad_exclusao,
-                   tbcc_grupo_economico_integ.dtexclusao
+                   tbcc_grupo_economico_integ.dtexclusao,
+                   tbcc_grupo_economico_integ.nmintegrante
               FROM tbcc_grupo_economico_integ
          LEFT JOIN crapope ope_inc
                 ON ope_inc.cdcooper = tbcc_grupo_economico_integ.cdcooper
@@ -355,7 +360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                               ,pr_tag_nova => 'nrcpfcgc'
                               ,pr_tag_cont => gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbcc_grupo_economico_integ.nrcpfcgc, 
                                                                         pr_inpessoa => rw_tbcc_grupo_economico_integ.tppessoa)
-                              ,pr_des_erro => vr_dscritic);        
+                              ,pr_des_erro => vr_dscritic);
 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(pr_nrdconta => rw_tbcc_grupo_economico_integ.nrdconta), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'tppessoa_desc', pr_tag_cont => rw_tbcc_grupo_economico_integ.tppessoa_desc, pr_des_erro => vr_dscritic);
@@ -375,6 +380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdoperad_exclusao', pr_tag_cont => rw_tbcc_grupo_economico_integ.cdoperad_exclusao, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmoperad_exclusao', pr_tag_cont => rw_tbcc_grupo_economico_integ.nmoperad_exclusao, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtexclusao', pr_tag_cont => TO_CHAR(rw_tbcc_grupo_economico_integ.dtexclusao,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmintegrante', pr_tag_cont => rw_tbcc_grupo_economico_integ.nmintegrante, pr_des_erro => vr_dscritic);
         vr_contador := vr_contador + 1;
       END LOOP; /* END FOR rw_tbcc_grupo_economico_integ */
       
@@ -476,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       
       -- Condicao para verificar se foi informado o nome do grupo
       IF TRIM(pr_nmgrupo) IS NULL THEN
-        vr_dscritic := 'O campo Nome do Grupo nao foi informado';
+        vr_dscritic := gene0007.fn_acento_xml('O campo Nome do Grupo não foi informado');
         RAISE vr_exc_saida;
       END IF;
 
@@ -502,7 +508,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                       ,pr_dsobservacao);
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possivel inserir o grupo economico. '||SQLERRM;
+            vr_dscritic := gene0007.fn_acento_xml('Não foi possível inserir o grupo econômico. '||SQLERRM);
             RAISE vr_exc_saida;
         END; 
         
@@ -517,7 +523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
            WHERE idgrupo      = rw_tbcc_grupo_economico.idgrupo;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Nao foi possivel atualizar o grupo economico. '||SQLERRM;
+            vr_dscritic := gene0007.fn_acento_xml('Não foi possível atualizar o grupo econômico. '||SQLERRM);
             RAISE vr_exc_saida;
         END;
       END IF;
@@ -654,7 +660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       -- Verifica se a retornou registro
       IF cr_tbcc_grupo_economico%NOTFOUND THEN
         CLOSE cr_tbcc_grupo_economico;
-        vr_dscritic := 'Operacao nao permitida, favor incluir primeiro o grupo economico!';
+        vr_dscritic := gene0007.fn_acento_xml('Operação não permitida, favor incluir primeiro o grupo econômico!');
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_tbcc_grupo_economico;
@@ -787,19 +793,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       -- Verifica se a retornou registro
       IF cr_tbcc_grupo_economico%NOTFOUND THEN
         CLOSE cr_tbcc_grupo_economico;
-        vr_dscritic := 'Grupo Economico nao encontrato. Codigo: ' || TO_CHAR(pr_idgrupo);
+        vr_dscritic := gene0007.fn_acento_xml('Grupo Econômico não encontrado. Código: ' || TO_CHAR(pr_idgrupo));
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_tbcc_grupo_economico;
       END IF;
       
       IF TRIM(pr_nrcpfcgc) IS NULL THEN
-        vr_dscritic := 'O campo CPF/CNPJ nao foi informado';
+        vr_dscritic := gene0007.fn_acento_xml('O campo CPF/CNPJ não foi informado');
         RAISE vr_exc_saida;
       END IF;
       
       IF TRIM(pr_nmintegrante) IS NULL THEN
-        vr_dscritic := 'O campo Nome nao foi informado';
+        vr_dscritic := gene0007.fn_acento_xml('O campo Nome não foi informado');
         RAISE vr_exc_saida;
       END IF;
       
@@ -808,7 +814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                                   pr_inpessoa => vr_inpessoa);
       -- Verifica se o CPF/CNPJ esta correto
       IF NOT vr_stsnrcal THEN
-        vr_dscritic := 'O campo CPF/CNPJ informado esta incorreto.';
+        vr_dscritic := gene0007.fn_acento_xml('O campo CPF/CNPJ informado está incorreto.');
         RAISE vr_exc_saida;
       END IF;
       
@@ -820,7 +826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       CLOSE cr_tbcc_grupo_economico_integ;
       -- Condicao para verificar se o integrante jah possui cadastro
       IF NVL(vr_exist_cadastro,0) > 0 THEN
-        vr_dscritic := 'Integrante ja cadastrado neste grupo economico.';
+        vr_dscritic := gene0007.fn_acento_xml('Integrante já cadastrado neste grupo econômico.');
         RAISE vr_exc_saida;
       END IF;        
       
@@ -850,7 +856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                       ,pr_nmintegrante);
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Não foi possivel inserir integrante do grupo economico. '||SQLERRM;
+          vr_dscritic := gene0007.fn_acento_xml('Não foi possível inserir integrante do grupo econômico. '||SQLERRM);
           RAISE vr_exc_saida;
       END; 
       
@@ -990,7 +996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       -- Verifica se a retornou registro
       IF cr_tbcc_grupo_economico%NOTFOUND THEN
         CLOSE cr_tbcc_grupo_economico;
-        vr_dscritic := 'Grupo Economico nao encontrato. Codigo: ' || TO_CHAR(pr_idgrupo);
+        vr_dscritic := gene0007.fn_acento_xml('Grupo Econômico não encontrado. Código: ' || TO_CHAR(pr_idgrupo));
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_tbcc_grupo_economico;
@@ -1002,7 +1008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       -- Verifica se a retornou registro
       IF cr_tbcc_grupo_economico_integ%NOTFOUND THEN
         CLOSE cr_tbcc_grupo_economico_integ;
-        vr_dscritic := 'Integrante nao encontrato. Codigo: ' || TO_CHAR(pr_idintegrante);
+        vr_dscritic := gene0007.fn_acento_xml('Integrante não encontrado. Código: ' || TO_CHAR(pr_idintegrante));
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_tbcc_grupo_economico_integ;
@@ -1010,7 +1016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
 
       -- Condicao para verificar se o registro estah ativo
       IF rw_tbcc_grupo_economico_integ.dtexclusao IS NOT NULL THEN
-        vr_dscritic := 'Integrante ja esta excluido, operacao nao permitida.';
+        vr_dscritic := gene0007.fn_acento_xml('Integrante já está excluído, operação não permitida.');
         RAISE vr_exc_saida;
       END IF;
       
@@ -1022,7 +1028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
          WHERE idintegrante = pr_idintegrante;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Nao foi possivel excluir integrante do grupo economico. '||SQLERRM;
+          vr_dscritic := gene0007.fn_caract_acento('Não foi possível excluir integrante do grupo econômico. '||SQLERRM);
           RAISE vr_exc_saida;
       END;
         
@@ -1381,7 +1387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
     -- Verifica se a retornou registro
     IF cr_tbcc_grupo_economico%NOTFOUND THEN
       CLOSE cr_tbcc_grupo_economico;
-      vr_dscritic := 'Grupo Economico nao encontrato. Codigo: ' || TO_CHAR(pr_idgrupo);
+      vr_dscritic := gene0007.fn_acento_xml('Grupo Economico não encontrado. Código: ' || TO_CHAR(pr_idgrupo));
       RAISE vr_exc_erro;
     ELSE
       -- Apenas Fecha o Cursor
@@ -1430,7 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                          ,pr_des_saida   => vr_dscritic);
     --Se ocorreu erro dar RAISE
     IF vr_typsaida = 'ERR' THEN
-      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+      vr_dscritic:= gene0007.fn_acento_xml('Não foi possível remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic);
       RAISE vr_exc_erro;
     END IF;
       

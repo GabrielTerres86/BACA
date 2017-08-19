@@ -7,16 +7,15 @@
  */
 ?>
 <div>
-	<fieldset>
-			
 		<div id="divIntegrantes" class="divRegistros">
-			<table width="100%">
+			<table width="100%" class="fixed">
 				<thead>
 					<tr>
 					    <th>&nbsp;</th>
 						<th>Tipo Pessoa</th>
 						<th>Conta</th>
 						<th>Documento</th>
+						<th>Nome</th>
 						<th><?= utf8ToHtml('Tipo de Vínculo') ?></th>
 						<th><?= utf8ToHtml('% Participação') ?></th>
 						<th><?= utf8ToHtml('Data Inclusão') ?></th>                    
@@ -34,6 +33,7 @@
 						<td><?= getByTagName($oIntegrante->tags,'tppessoa_desc') ?></td>
 						<td><?= getByTagName($oIntegrante->tags,'nrdconta') ?></td>
 						<td><?= getByTagName($oIntegrante->tags,'nrcpfcgc') ?></td>
+						<td><?= getByTagName($oIntegrante->tags,'nmintegrante') ?></td>
 						<td><?= getByTagName($oIntegrante->tags,'tpvinculo_desc') ?></td>
 						<td><?= getByTagName($oIntegrante->tags,'peparticipacao') ?></td>
 						<td><?= getByTagName($oIntegrante->tags,'dtinclusao') ?></td>
@@ -47,10 +47,4 @@
 				</tbody>
 			</table>
 		</div>
-		
-	</fieldset>
-</div>
-<div id="divBotoes">
-	<a href="#" class="botao" id="btIncluirIntegrante" style="padding:3px 6px;" onclick="abreTelaInclusaoIntegrante(); return false;">Incluir Integrante</a>
-	<a href="#" class="botao" id="btExcluirGrupo"      style="padding:3px 6px;" onclick="solicitaExclusaoIntegrante(); return false;">Excluir Integrante</a>	
 </div>
