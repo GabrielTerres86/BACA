@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla  : CRED
    Autor  : Lucas         
-   Data   : Fevereiro/2012                       Ultima alteracao: 07/12/2016
+   Data   : Fevereiro/2012                       Ultima alteracao: 21/08/2017
 
    Dados referentes ao programa:
 
@@ -21,6 +21,8 @@
 
                07/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+                                                        
+               21/08/2017 - Adicionado log de alteracoes. (Rafael Faria-Supero')                        
                             
 ............................................................................. */
 
@@ -36,6 +38,7 @@ DEF VAR aux_nmrescop AS CHAR FORMAT "x(18)" NO-UNDO.
 DEF VAR aux_regrepet AS CHAR                NO-UNDO.
 DEF VAR aux_regindis AS CHAR                NO-UNDO.
 DEF VAR aux_confirma AS CHAR FORMAT "!(1)"  NO-UNDO.
+DEF VAR aux_msgdelog AS CHAR                NO-UNDO.
 
 FORM SPACE(1)
      WITH ROW 4 OVERLAY 16 DOWN WIDTH 80 TITLE glb_tldatela FRAME f_moldura.
@@ -134,12 +137,21 @@ DO WHILE TRUE:
                    aux_dstextab = ""
                    glb_cddopcao = "C"
                    aux_ano = "".
-       
+
             DISP aux_desccoop WITH FRAME f_desccoop.
             DISP aux_dstextab aux_ano aux_nmrescop WITH FRAME f_ctab092.
        
             UPDATE  aux_desccoop WITH FRAME f_desccoop.
             UPDATE  aux_ano      WITH FRAME f_ctab092.
+			
+            ASSIGN aux_msgdelog = "Operador " + STRING(glb_cdoperad) + 
+                                  ", Operacao " + glb_cddopcao +
+								  ", Coop " + STRING(aux_cdcooper) +
+								  ", Ano " + STRING(aux_ano).
+
+            UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " + 
+			                   STRING(TIME,"HH:MM:SS") + " - " +
+							   aux_msgdelog + " >> log/TAB092.log").			
        
             FIND craptab WHERE    craptab.cdcooper = aux_cdcooper  AND         
                                   craptab.nmsistem = "CRED"        AND         
@@ -160,6 +172,7 @@ DO WHILE TRUE:
                    MESSAGE "Registro de " + aux_ano + " não cadastrado.".
                    CLEAR FRAME f_ctab092.
             END.
+
         END. /* Caso C */
    ELSE 
         DO: 
@@ -172,7 +185,12 @@ DO WHILE TRUE:
           
             UPDATE aux_desccoop WITH FRAME f_desccoop.
             UPDATE aux_ano WITH FRAME f_itab092.    
-          
+           
+		    ASSIGN aux_msgdelog = "Operador " + STRING(glb_cdoperad) + 
+                                  ", Operacao " + glb_cddopcao +
+								  ", Coop " + STRING(aux_cdcooper) +
+								  ", Ano " + STRING(aux_ano).
+		   
             /* Não TODOS */
             IF aux_cdcooper <> 0 THEN
                DO:
@@ -223,6 +241,10 @@ DO WHILE TRUE:
                                                  craptab.tpregist = 1            
                                                  craptab.dstextab = aux_dstextab.
                                          VALIDATE craptab.
+										 
+										 UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " +
+                                                            STRING(TIME,"HH:MM:SS") + " - " +
+                                                            aux_msgdelog + " >> log/TAB092.log").
 
                                          MESSAGE "Registro de " + aux_ano + " criado com sucesso.".
                                          CLEAR FRAME f_itab092.
@@ -301,6 +323,11 @@ DO WHILE TRUE:
                                  END.
                           
                          END.
+						 
+						 UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") + " - " +
+                                           STRING(TIME,"HH:MM:SS") + " - " +
+                                           aux_msgdelog + " >> log/TAB092.log").
+						 
                          MESSAGE "Operação finalizada.".
                          PAUSE 3 NO-MESSAGE.
                           
@@ -311,6 +338,7 @@ DO WHILE TRUE:
                    ELSE
                       CLEAR FRAME f_itab092.
                END.
+                        
         END. /* END opcao I */
 END.
 

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 18/01/2017
+   Data    : Marco/2007                        Ultima atualizacao: 18/08/2017
 
    Dados referentes ao programa:
 
@@ -55,7 +55,11 @@
                18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
                             (Marcos-Supero)             
 
+               24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
+			                sem desconto IR (Marcos-Supero)
 
+               18/08/2017 - Incluida validacao de IR para pessoa juridica
+                            (Rafael Faria-Supero)
 ............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -227,19 +231,19 @@ IF  crapass.inpessoa = 1  THEN
 ELSE
 IF  crapass.inpessoa = 2  THEN DO:
 
-    IF  par_tpinform = 0 THEN
-        RUN proc_ir_juridica.
-    ELSE
-        RUN proc_ir_juridica_trimestral.
+		IF  par_tpinform = 0 THEN
+			RUN proc_ir_juridica.
+		ELSE
+			RUN proc_ir_juridica_trimestral.
 
-    IF  RETURN-VALUE = "NOK"  THEN DO:
-                ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                                      "</dsmsgerr>".
-                                 
-                RUN proc_geracao_log (INPUT FALSE).                      
-                
-                RETURN "NOK".
-            END.
+		IF  RETURN-VALUE = "NOK"  THEN DO:
+				ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+									  "</dsmsgerr>".
+									 
+				RUN proc_geracao_log (INPUT FALSE).                      
+					
+				RETURN "NOK".
+			END.
     END.
                 
 RUN proc_geracao_log (INPUT TRUE).
@@ -519,7 +523,7 @@ PROCEDURE proc_ir_fisica:
 END PROCEDURE. 
 
 PROCEDURE proc_ir_juridica:
-       
+
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<IRJURIDICA><anorefer>" +
                                    STRING(par_anorefer,"9999") +
@@ -587,12 +591,22 @@ PROCEDURE proc_ir_juridica:
     /* se for ano vigente */
     IF  par_anorefer = YEAR(par_dtmvtolt)  THEN
         DO:
-            ASSIGN aux_nrmesref = MONTH(par_dtmvtolt - DAY(par_dtmvtolt)).
+
+			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+
+			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+							   craptab.nmsistem = "CRED"       AND
+							   craptab.tptabela = "GENERI"     AND
+							   craptab.cdempres = 0            AND
+							   craptab.cdacesso = aux_cdacesso AND
+							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
+
+			ASSIGN aux_nrmesref = MONTH(par_dtmvtolt - DAY(par_dtmvtolt)).
             FIND crapcot WHERE crapcot.cdcooper = par_cdcooper AND
                                crapcot.nrdconta = par_nrdconta 
                                NO-LOCK NO-ERROR.
  
-            IF  NOT AVAILABLE crapcot  THEN
+            IF  NOT AVAILABLE crapcot or NOT AVAILABLE craptab THEN
                 DO:
                     aux_dscritic = "Nao ha dados para imposto de renda " +
                                    "referente ao ano de " + 
@@ -685,7 +699,16 @@ PROCEDURE proc_ir_juridica:
                        YEAR(crapdir.dtmvtolt) = par_anorefer
                        USE-INDEX crapdir1 NO-LOCK NO-ERROR.
 
-            IF NOT AVAILABLE crapdir THEN
+			ASSIGN aux_cdacesso = "IRENDA" + STRING(par_anorefer,"9999").
+			
+			FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
+							   craptab.nmsistem = "CRED"       AND
+							   craptab.tptabela = "GENERI"     AND
+							   craptab.cdempres = 0            AND
+							   craptab.cdacesso = aux_cdacesso AND
+							   craptab.tpregist = 1            NO-LOCK NO-ERROR.
+
+            IF NOT AVAILABLE crapdir or NOT AVAILABLE craptab THEN
                DO:
                    ASSIGN aux_dscritic = "Conta/dv: " + STRING(par_nrdconta) +
                                          " - Nao ha dados para imposto de " +
