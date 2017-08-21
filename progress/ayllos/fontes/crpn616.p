@@ -26,15 +26,13 @@
 
 .............................................................................*/
 
-{ includes/var_batch.i "new"}
+{ includes/var_batch.i }
 { sistema/generico/includes/var_oracle.i }
 
-ASSIGN glb_cdcooper = 16
-       glb_flgresta = FALSE
-       glb_cdprogra = "crpn616"
+ASSIGN glb_cdprogra = "crpn616"
        glb_cdcritic = 0
        glb_dscritic = "".
-/*       
+       
 RUN fontes/iniprg.p.
                                                                         
 IF  glb_cdcritic > 0 THEN DO:
@@ -43,7 +41,7 @@ IF  glb_cdcritic > 0 THEN DO:
                       "Erro ao rodar: " + STRING(glb_cdcritic) + " " + 
                       "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
     RETURN.
-END. */
+END.
 
 
 /* ============== Rodar CRPS616_NEW (rollback + export) ================== */
