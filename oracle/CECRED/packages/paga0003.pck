@@ -774,9 +774,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                         ,pr_vlrecbru IN NUMBER                 -- Valor da receita bruta acumulada da guia
                                         ,pr_vlpercen IN NUMBER                 -- Valor do percentual da guia
                                         ,pr_flgagend IN BOOLEAN                -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
-					                              ,pr_cdtransa IN VARCHAR2               -- Código da transação por meio de arrecadação do SICREDI
-                                        ,pr_dtagenda IN DATE DEFAULT NULL      -- Data do agendamento
-           					                    ,pr_dssigemp IN VARCHAR2               -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
+					                    ,pr_cdtransa IN VARCHAR2               -- Código da transação por meio de arrecadação do SICREDI
+					                    ,pr_dssigemp IN VARCHAR2               -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
                                         ,pr_dsprotoc OUT crappro.dsprotoc%TYPE -- Descrição do protocolo do comprovante
                                         ,pr_cdcritic OUT INTEGER               -- Código do erro
                                         ,pr_dscritic OUT VARCHAR2              -- Descriçao do erro
@@ -930,11 +929,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			  vr_dsinfor3 := vr_dsinfor3 || '#Autenticação Sicredi: ' || vr_dsautsic;
 				
 		END IF;
-    
-    IF pr_cdtippro IN(16,17,18,19) THEN
-      -- Gravar a data do agendamento
-      vr_dsinfor3 := vr_dsinfor3 || '#Data do Agendamento: ' || nvl(to_char(pr_dtagenda,'DD/MM/YYYY'),' ');
-    END IF;
     
     --################## FIM DOS DADOS DO COMPROVANTE ##################
     
@@ -3294,9 +3288,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   PROCEDURE pc_cria_agend_darf_das(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código da cooperativa
                                   ,pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
                                   ,pr_idseqttl IN crapttl.idseqttl%TYPE -- Sequencial de titularidade
-								                  ,pr_cdagenci IN INTEGER               -- PA
-                								  ,pr_nrdcaixa IN NUMBER                -- Numero do Caixa
-								                  ,pr_cdoperad IN VARCHAR2              -- Cd Operador
+								  ,pr_cdagenci IN INTEGER               -- PA
+								  ,pr_nrdcaixa IN NUMBER                -- Numero do Caixa
+								  ,pr_cdoperad IN VARCHAR2              -- Cd Operador
                                   ,pr_nrcpfope IN NUMBER -- CPF do operador PJ
                                   ,pr_idorigem IN INTEGER -- Canal de origem da operação
                                   ,pr_tpdaguia IN INTEGER -- Tipo da guia (1 – DARF / 2 – DAS)
@@ -3322,8 +3316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_vlpercen IN NUMBER -- Valor do percentual da guia
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
-                								  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
-								                  ,pr_dsprotoc OUT VARCHAR2 -- Protocolo
+								  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+								,pr_dsprotoc OUT VARCHAR2 -- Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    ) IS
@@ -3865,8 +3859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																					 ,pr_flgagend => vr_flgagend         -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
 																					 ,pr_cdtransa => vr_cdtransa         -- Código da transação por meio de arrecadação do SICREDI
 																					 ,pr_dssigemp => vr_dssigemp         -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
-																					 ,pr_dtagenda => pr_dtagenda         -- Data do Agendamento
-                                           ,pr_dsprotoc => vr_dsprotoc         -- Descrição do protocolo do comprovante
+																					 ,pr_dsprotoc => vr_dsprotoc         -- Descrição do protocolo do comprovante
 																					 ,pr_cdcritic => vr_cdcritic         -- Código do erro
 																					 ,pr_dscritic => vr_dscritic         -- Descriçao do erro
 																					 );	    
