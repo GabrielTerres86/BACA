@@ -3625,7 +3625,7 @@ create or replace package body cecred.PAGA0002 is
            
           -- Se for Mobile
           IF pr_flmobile = 1 THEN
-             vr_dscritic := 'Agendamento realizado com sucesso!\r\nO pagamento será efetivado no dia programado, mediante saldo disponível em conta.';
+             vr_dscritic := 'Agendamento realizado com sucesso!'||chr(13)||chr(10)||'O pagamento será efetivado no dia programado, mediante saldo disponível em conta.';
           
           ELSE
           -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
