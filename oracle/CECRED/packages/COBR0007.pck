@@ -3662,7 +3662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 03/08/2017
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 21/08/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3679,6 +3679,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --          03/08/2017 - Fixado valor '4' para baixa por decurso de prazo na CIP.
     --                       A JD está utilizando códigos diferentes da CIP para baixa. (Rafael)
+    --
+    --          21/08/2017 - Conforme conversado com o Victor/Cobrança, será fixado valor '2' 
+    --                       para baixa por decurso de prazo na CIP. (Rafael)    
     -- ...........................................................................................
   BEGIN
     DECLARE
@@ -3855,7 +3858,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         -- Executa procedimentos do DDA-JD
         DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid         --ROWID da Cobranca
                                          ,pr_tpoperad => 'B'                       --Tipo Operacao
-                                         ,pr_tpdbaixa => '4'                       --Baixa por decurso de prazo na CIP
+                                         ,pr_tpdbaixa => '2'                       --Baixa por decurso de prazo na CIP
                                          ,pr_dtvencto => rw_crapcob.dtvencto       --Data Vencimento
                                          ,pr_vldescto => rw_crapcob.vldescto       --Valor Desconto
                                          ,pr_vlabatim => rw_crapcob.vlabatim       --Valor Abatimento
