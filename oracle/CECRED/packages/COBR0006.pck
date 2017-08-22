@@ -1946,7 +1946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 14/07/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 21/08/2017
 
        Dados referentes ao programa:
 
@@ -1967,6 +1967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                   14/07/2017 - Retirado verificação de pagador DDA e ROLLOUT. Essa verificação é
                                feita no pc_crps618. (Rafael)
+
+                  21/08/2017 - Incluir vencto original (dtvctori) ao registrar o boleto. (Rafael)
 
     ............................................................................ */   
     
@@ -2142,7 +2144,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vlminimo,
                 inpagdiv,                
                 inenvcip,
-                inregcip
+                inregcip,
+                dtvctori
                 )
         VALUES (pr_tab_crapcob(vr_idx_cob).cdcooper,
                 pr_tab_crapcob(vr_idx_cob).dtmvtolt,
@@ -2203,7 +2206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).vlminimo,
                 pr_tab_crapcob(vr_idx_cob).inpagdiv,
                 pr_tab_crapcob(vr_idx_cob).inenvcip,
-                vr_inregcip)
+                vr_inregcip,
+                pr_tab_crapcob(vr_idx_cob).dtvencto)
         RETURNING ROWID INTO vr_new_rowid;
       
       IF pr_tab_crapcob(vr_idx_cob).flgregis = 1 THEN      

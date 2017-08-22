@@ -1594,7 +1594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 12/07/2017
+    --  Data     : Julho/2013.                   Ultima atualizacao: 21/08/2017
     --
     -- Dados referentes ao programa:
     --
@@ -1613,7 +1613,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                          não será utilizada. (Rafael)
     --
     --             28/07/2017 - Ajuste para nao ler a tabela craptit a partir do codbarras, pois pode gerar segunda via
-    ---                         será lido a crapret, PRJ340-NPC (Odirlei-AMcom)
+    --                          será lido a crapret, PRJ340-NPC (Odirlei-AMcom)
+    -- 
+    --             21/08/2017 - Fechar cursor cr_abertura após abri-lo. (Rafael)
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1740,6 +1742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       OPEN cr_abertura;
       FETCH cr_abertura
        INTO rw_abertura;
+      CLOSE cr_abertura;
       
       --Selecionar registro cobranca
       OPEN cr_crapcob(pr_rowid => pr_rowid_cob);
@@ -2170,7 +2173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_tab_remessa_dda(vr_index).cdespeci := vr_cddespec;
       
       -- Ajuste devido ao erro EDDA0395 - Data de emissao > Data de referencia
-      IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > rw_abertura.datamov THEN
+      IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > to_number(nvl(rw_abertura.datamov,to_char(SYSDATE,'YYYYMMDD'))) THEN
         pr_tab_remessa_dda(vr_index).dtemissa := rw_abertura.datamov;
       ELSE
       pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
@@ -5484,6 +5487,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                        pr_nrcpfcgc => rw_crapass.nrcpfcgc);
     FETCH cr_DDA_Benef INTO rw_DDA_Benef;
     IF cr_DDA_Benef%NOTFOUND THEN
+      IF cr_DDA_Benef%ISOPEN THEN
+        CLOSE cr_DDA_Benef;
+      END IF;
       IF rw_crapass.inpessoa = 2 THEN
         --> Buscar dados pessoa juridica
         OPEN cr_crapjur (pr_cdcooper => pr_cdcooper,
@@ -5517,6 +5523,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
 
     ELSE    
     
+      IF cr_DDA_Benef%ISOPEN THEN
+        CLOSE cr_DDA_Benef;
+      END IF;
+    
       -- Atualizar convenio na CIP  
       BEGIN      
         vr_nrconven := to_char(pr_nrconven);
@@ -5539,7 +5549,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       
     END IF;
     
+    IF cr_DDA_Benef%ISOPEN THEN
     CLOSE cr_DDA_Benef;
+    END IF;
     
     --> Verificar se ja existe o convenio na cip
     OPEN cr_DDA_Conven (pr_dspessoa => rw_crapass.dspessoa,
@@ -5547,6 +5559,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                         pr_nrconven => to_char(pr_nrconven));
     FETCH cr_DDA_Conven INTO rw_DDA_Conven;
     IF cr_DDA_Conven%NOTFOUND THEN
+      
+      IF cr_DDA_Conven%ISOPEN THEN
+        CLOSE cr_DDA_Conven;
+      END IF;
+
       --> Gerar informação de adesão de convênio ao JDBNF                            
       BEGIN
         INSERT INTO cecredleg.TBJDDDABNF_Convenio@jdnpcsql
@@ -5585,6 +5602,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       END;
     ELSE
       BEGIN
+        
+        IF cr_DDA_Conven%ISOPEN THEN
+          CLOSE cr_DDA_Conven;
+        END IF;
+        
         UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql a
            SET a."SitConvBenfcrioPar" = vr_sitifcnv
               ,a."DtInicRelctConv"    = vr_dtativac
@@ -5599,7 +5621,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             RAISE vr_exc_saida;              
         END;            
     END IF;
+    
+    IF cr_DDA_Conven%ISOPEN THEN
     CLOSE cr_DDA_Conven;      
+    END IF;
     
   EXCEPTION    
     WHEN vr_exc_saida THEN      
