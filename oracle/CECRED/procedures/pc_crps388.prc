@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 16/08/2017
+  Data    : Abril/2004                          Ultima atualizacao: 26/06/2017
 
   Dados referentes ao programa:
 
@@ -244,7 +244,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            
               26/05/2017 - Incluido tratamento para cdrefere da linha F para
                            AGUAS DE GUARAMIRIM (Tiago/Fabricio #640336)
-              
+              									 
+              26/06/2017 - Incluido tratamento para cdrefere da linha F para
+                           SANEPAR (Tiago/Fabricio #640336)                           
+
               04/07/2017 - Incluir nvl para a varial vr_vrlanmto pois se o valor estivesse
                            vazio ia dar pau no programa (Lucas Ranghetti #706349)
              
@@ -1169,7 +1172,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,108) THEN  
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,101,108) THEN  
 
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1357,7 +1361,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* 53 - Foz do Brasil */
           /* 54 - AGUAS DE MASSARANDUBA */  
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,108) THEN        
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,101,108) THEN        
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
                         ||to_char(rw_crapatr.cdrefere,'fm00000000')
