@@ -384,7 +384,7 @@ PROCEDURE Enviar_proposta_esteira:
         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
  
-        ASSIGN par_dsmensag = "Proposta Enviada para Esteira com Sucesso."
+        ASSIGN par_dsmensag = "Proposta Enviada Analise Manual de Credito."
                
                par_cdcritic = 0
                par_cdcritic = pc_alterar_proposta_est.pr_cdcritic
