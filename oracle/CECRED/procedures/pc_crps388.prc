@@ -244,7 +244,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            
               26/05/2017 - Incluido tratamento para cdrefere da linha F para
                            AGUAS DE GUARAMIRIM (Tiago/Fabricio #640336)
-                           
+              
+              04/07/2017 - Incluir nvl para a varial vr_vrlanmto pois se o valor estivesse
+                           vazio ia dar pau no programa (Lucas Ranghetti #706349)
+             
               16/08/2017 - Aumentar o format da referencia para 23 posições (Lucas Ranghetti #681634)
   ..............................................................................*/
 
@@ -1651,7 +1654,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
         
         -- Acumular totalizadores
         vr_nrseqndb := vr_nrseqndb + 1;
-        vr_vllanmto := to_number(SUBSTR(rw_crapndb.dstexarq,53,15));
+        vr_vllanmto := nvl(to_number(TRIM(SUBSTR(rw_crapndb.dstexarq,53,15))),0);
         vr_vllanmto := vr_vllanmto / 100;
         vr_vlfatndb := vr_vlfatndb + vr_vllanmto;        
       
