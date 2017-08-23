@@ -214,26 +214,24 @@ PROCEDURE Enviar_proposta_esteira:
        Caso a proposta tenho sido reprovada pelo Motor, iremos considerar envio pois ela
        ainda nao foi a Esteira  */
        
-    IF par_tpenvest = "I" THEN
-      DO:
-          FIND FIRST crawepr 
-          WHERE crawepr.cdcooper = par_cdcooper
-            AND crawepr.nrdconta = par_nrdconta
-            AND crawepr.nrctremp = par_nrctremp
-            AND crawepr.insitest >= 2 
-            AND crawepr.cdopeapr <> "MOTOR"
-          NO-LOCK NO-ERROR.
+	IF par_tpenvest = "I" THEN
+	DO:
+		FIND FIRST crawepr 
+		   WHERE crawepr.cdcooper = par_cdcooper
+			 AND crawepr.nrdconta = par_nrdconta
+			 AND crawepr.nrctremp = par_nrctremp
+			 NO-LOCK NO-ERROR.
     
-          IF AVAIL crawepr AND crawepr.dtenvest <> ? then
-              ASSIGN par_tpenvest = "A".
+		  IF AVAIL crawepr AND crawepr.dtenvest <> ? then
+			ASSIGN par_tpenvest = "A".
     END.
-        
-    /***** Verificar se a Esteira esta em contigencia *****/
+	
+	/***** Verificar se a Esteira esta em contigencia *****/
     RUN verifica_regras_esteira
              ( INPUT par_cdcooper,
                INPUT par_nrdconta,
                INPUT par_nrctremp,
-               INPUT par_tpenvest,
+			         INPUT par_tpenvest,
               OUTPUT par_cdcritic,
               OUTPUT par_dscritic).
    
@@ -258,7 +256,7 @@ PROCEDURE Enviar_proposta_esteira:
                     ,INPUT par_dtmvtolt
                     ,INPUT par_dtmvtopr
                     ,INPUT par_nrctremp
-                    ,INPUT par_dsiduser                                       
+                    ,INPUT par_dsiduser
                    ,OUTPUT aux_nmarqpdf
                    ,OUTPUT par_cdcritic
                    ,OUTPUT par_dscritic).
@@ -336,7 +334,10 @@ PROCEDURE Enviar_proposta_esteira:
         CLOSE STORED-PROCEDURE pc_alterar_proposta_est WHERE PROC-HANDLE = aux_handproc.
         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
         
-        ASSIGN par_cdcritic = 0
+ 
+        ASSIGN par_dsmensag = "Proposta Enviada para Esteira com Sucesso."
+               
+               par_cdcritic = 0
                par_cdcritic = pc_alterar_proposta_est.pr_cdcritic
                               WHEN pc_alterar_proposta_est.pr_cdcritic <> ?
                par_dscritic = ""
@@ -443,7 +444,7 @@ PROCEDURE Enviar_proposta_esteira:
     DO:
       UNIX SILENT VALUE("rm " + aux_nmarqpdf + " 2>/dev/null").
     END.
-
+    
     /* Verifica se retornou critica */
     IF par_cdcritic >= 0 AND par_dscritic <> "" THEN                       
     DO:
