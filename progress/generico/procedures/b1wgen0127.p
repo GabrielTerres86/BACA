@@ -11,7 +11,9 @@
                              
                 06/10/2015 - Incluindo validacao de protocolo MD5 - Sicredi
                             (Andre Santos - SUPERO)
-   
+
+                29/05/2017 - Ajuste para utilizar a procedure Oracle para 
+                             validar o protocolo (Douglas - Chamado 663312)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -75,168 +77,53 @@ PROCEDURE Valida_Protocolo:
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Validar Protocolo de Transacoes".
 
-    Valida: DO ON ERROR UNDO Valida, LEAVE Valida:
-        EMPTY TEMP-TABLE tt-erro.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-        IF  NOT CAN-DO("C",par_cddopcao) THEN
-            DO:
-                ASSIGN aux_cdcritic = 14
-                       par_nmdcampo = "cddopcao".
-                LEAVE Valida.
-            END.
+    /* GENE0006 */
+    RUN STORED-PROCEDURE pc_valida_protocolo aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,
+                          INPUT par_cddopcao,
+                          INPUT par_nrdconta,
+                          INPUT par_nrdocmto,
+                          INPUT par_dtmvtolx,
+                          INPUT par_horproto,
+                          INPUT par_minproto,
+                          INPUT par_segproto,
+                          INPUT par_vlprotoc,
+                          INPUT par_dsprotoc,
+                          INPUT par_nrseqaut,
+                          OUTPUT "",  /* nmdcampo */
+                          OUTPUT "",  /* returnvl */
+                          OUTPUT "",  /* msgretur */
+                          OUTPUT "",  /* msgerror */
+                          OUTPUT 0,   /* cdcritic */ 
+                          OUTPUT ""). /* dscritic */
+                          
+    CLOSE STORED-PROC pc_valida_protocolo aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
 
-        IF  NOT CAN-FIND (FIRST crapass WHERE
-                                crapass.cdcooper = par_cdcooper  AND
-                                crapass.nrdconta = par_nrdconta) THEN
-            DO:
-                ASSIGN aux_cdcritic = 9
-                       par_nmdcampo = "nrdconta".
-                LEAVE Valida.
-            END.
-
-        IF  par_nrdocmto = 0 THEN
-            DO:
-                ASSIGN aux_dscritic = "Numero documento invalido"
-                       par_nmdcampo = "nrdocmto".
-                LEAVE Valida.
-            END.
-
-        IF  par_dtmvtolx = ? THEN
-            DO:
-                ASSIGN aux_dscritic = "Data incorreta"
-                       par_nmdcampo = "dtmvtolt".
-                LEAVE Valida.
-            END.
-
-        IF  par_horproto >= 24 THEN
-            DO:
-                ASSIGN aux_dscritic = "Horas estao incorretas."
-                       par_nmdcampo = "horproto".
-                LEAVE Valida.
-            END.
-
-        IF  par_minproto >= 60 THEN
-            DO:
-                ASSIGN aux_dscritic = "Minutos estao incorretos."
-                       par_nmdcampo = "minproto".
-                LEAVE Valida.
-            END.
-
-        IF  par_segproto >= 60 THEN
-            DO:
-                ASSIGN aux_dscritic = "Segundos estao incorretos."
-                       par_nmdcampo = "segproto".
-                LEAVE Valida.
-            END.
-
-        IF  par_vlprotoc = 0 THEN
-            DO:
-                ASSIGN aux_dscritic = "Valor incorreto"
-                       par_nmdcampo = "vlprotoc".
-                LEAVE Valida.
-            END.
-
-        ASSIGN aux_tempotot = STRING(par_segproto + 
-                                    (par_minproto * 60)  + 
-                                    (par_horproto * 3600)).
-
-        IF  NOT VALID-HANDLE(h-bo_algoritmo_seguranca) THEN
-            RUN sistema/generico/procedures/bo_algoritmo_seguranca.p
-                PERSISTENT SET h-bo_algoritmo_seguranca.
-        
-        RUN gera_protocolo IN h-bo_algoritmo_seguranca
-                         ( INPUT par_cdcooper,
-                           INPUT par_dtmvtolx,
-                           INPUT aux_tempotot,
-                           INPUT par_nrdconta,
-                           INPUT par_nrdocmto,
-                           INPUT par_nrseqaut,
-                           INPUT par_vlprotoc,
-                           INPUT 900, /* par_nrdcaixa   */
-                           INPUT NO,  /* Gravar crappro */
-                           INPUT 0,   /* Transferencia  */
-                           INPUT " ", /* aux_dsinform   */
-                           INPUT " ",
-                           INPUT " ",
-                           INPUT " ", /* Cedente        */
-                           INPUT NO,  /* Agendamento    */
-                           INPUT 0, /* nrcpfope */
-                           INPUT 0, /* nrcpfpre */
-                           INPUT 0, /* nmprepos */
-                          OUTPUT aux_dsprotoc,
-                          OUTPUT aux_dscritic).
-
-        IF  VALID-HANDLE(h-bo_algoritmo_seguranca) THEN
-            DELETE PROCEDURE h-bo_algoritmo_seguranca.
-
-        IF  RETURN-VALUE <> "OK"  THEN
-            LEAVE Valida.
-
-        IF  aux_dsprotoc = par_dsprotoc  AND
-            aux_dsprotoc <> ""           THEN
-            ASSIGN aux_msgretur = "Protocolo informado esta correto.".
-        ELSE
-            DO:
-                /* Verifica se eh uma conta migrada, e se for, valida novamente
-                   com a cooperativa e conta antiga, pois o comprovante tambem
-                   pode ter sido migrado */
-                FIND craptco WHERE craptco.cdcooper = par_cdcooper AND
-                                   craptco.nrdconta = par_nrdconta AND
-                                   craptco.tpctatrf = 1
-                                   NO-LOCK NO-ERROR.
-
-                IF  NOT AVAIL craptco  THEN
-                    ASSIGN aux_msgerror = "Protocolo informado esta incorreto.".
-                ELSE
-                    DO:
-                        IF  NOT VALID-HANDLE(h-bo_algoritmo_seguranca) THEN
-                            RUN sistema/generico/procedures/bo_algoritmo_seguranca.p
-                                PERSISTENT SET h-bo_algoritmo_seguranca.
-                        
-                        RUN gera_protocolo IN h-bo_algoritmo_seguranca
-                                         ( INPUT craptco.cdcopant,
-                                           INPUT par_dtmvtolx,
-                                           INPUT aux_tempotot,
-                                           INPUT craptco.nrctaant,
-                                           INPUT par_nrdocmto,
-                                           INPUT par_nrseqaut,
-                                           INPUT par_vlprotoc,
-                                           INPUT 900, /* par_nrdcaixa   */
-                                           INPUT NO,  /* Gravar crappro */
-                                           INPUT 0,   /* Transferencia  */
-                                           INPUT " ", /* aux_dsinform   */
-                                           INPUT " ",
-                                           INPUT " ",
-                                           INPUT " ", /* Cedente        */
-                                           INPUT NO,  /* Agendamento    */
-                                           INPUT 0, /* nrcpfope */
-                                           INPUT 0, /* nrcpfpre */
-                                           INPUT 0, /* nmprepos */
-                                          OUTPUT aux_dsprotoc,
-                                          OUTPUT aux_dscritic).
-                
-                        IF  VALID-HANDLE(h-bo_algoritmo_seguranca) THEN
-                            DELETE PROCEDURE h-bo_algoritmo_seguranca.
-                
-                        IF  RETURN-VALUE <> "OK"  THEN
-                            LEAVE Valida.
-
-                        IF  aux_dsprotoc = par_dsprotoc  AND 
-                            aux_dsprotoc <> ""           THEN
-                            ASSIGN aux_msgretur = "Protocolo informado esta correto.".
-                        ELSE
-                            ASSIGN aux_msgerror = "Protocolo informado esta incorreto.".
-                    END.
-            END.                                                                
-        
-        LEAVE Valida.
-        
-    END. /* Valida */
-
+    ASSIGN par_nmdcampo = ""
+           aux_msgretur = ""
+           aux_msgerror = ""
+           aux_returnvl = ""
+           par_nmdcampo = pc_valida_protocolo.pr_nmdcampo
+                          WHEN pc_valida_protocolo.pr_nmdcampo <> ?
+           aux_msgretur = pc_valida_protocolo.pr_msgretur
+                          WHEN pc_valida_protocolo.pr_msgretur <> ?
+           aux_msgerror = pc_valida_protocolo.pr_msgerror
+                          WHEN pc_valida_protocolo.pr_msgerror <> ?
+           aux_returnvl = pc_valida_protocolo.pr_returnvl
+                          WHEN pc_valida_protocolo.pr_returnvl <> ?
+           aux_cdcritic = pc_valida_protocolo.pr_cdcritic
+                          WHEN pc_valida_protocolo.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_protocolo.pr_dscritic
+                          WHEN pc_valida_protocolo.pr_dscritic <> ?.
+ 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
     IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
         DO:
-            ASSIGN aux_returnvl = "NOK".
-
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
@@ -244,8 +131,6 @@ PROCEDURE Valida_Protocolo:
                            INPUT aux_cdcritic,
                            INPUT-OUTPUT aux_dscritic).
         END.
-    ELSE
-        ASSIGN aux_returnvl = "OK".
     
     RETURN aux_returnvl.
 
@@ -405,19 +290,19 @@ PROCEDURE pc_valida_protocolo:
                  
                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
                     
-                IF  aux_msgerror <> "" THEN DO:
-                    ASSIGN aux_cdcritic = 0
-                            aux_dscritic = aux_msgerror
-                            par_msgerror = aux_msgerror
-                            par_nmdcampo = aux_nmdcampo
-                            par_msgretur = "".
+    IF  aux_msgerror <> "" THEN DO:
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = aux_msgerror
+               par_msgerror = aux_msgerror
+               par_nmdcampo = aux_nmdcampo
+               par_msgretur = "".
 
-                    RUN gera_erro (INPUT par_cdcooper,
-                                    INPUT par_cdagenci,
-                                    INPUT par_nrdcaixa,
-                                    INPUT 1,
-                                    INPUT aux_cdcritic,
-                                    INPUT-OUTPUT aux_dscritic).
+        RUN gera_erro (INPUT par_cdcooper,
+                       INPUT par_cdagenci,
+                       INPUT par_nrdcaixa,
+                       INPUT 1,
+                       INPUT aux_cdcritic,
+                       INPUT-OUTPUT aux_dscritic).
                 END.        
             END.        
     END.

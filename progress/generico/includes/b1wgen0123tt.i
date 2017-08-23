@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0123tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Novembro/2011                      Ultima atualizacao: 27/05/2014
+    Data    : Novembro/2011                      Ultima atualizacao: 14/07/2017
   
     Dados referentes ao programa:
   
@@ -16,6 +16,9 @@
                 
                 27/05/2014 - Incluido a informação de espécie de deposito e
                             relatório do mesmo. (Andre Santos - SUPERO)
+                            
+                14/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem
+                             (Carlos)
     
 .............................................................................*/ 
 
@@ -49,7 +52,8 @@ DEF TEMP-TABLE tt-terminal NO-UNDO
     FIELD dsterfin AS CHAR
     FIELD flsistaa AS LOGI
     FIELD dstempor AS CHAR
-    FIELD flgblsaq LIKE craptfn.flgblsaq.
+    FIELD flgblsaq LIKE craptfn.flgblsaq
+    FIELD flgntcem LIKE craptfn.flgntcem.
 
 DEF TEMP-TABLE crattfn NO-UNDO
     FIELD cdcoptfn LIKE craptfn.cdcooper
@@ -59,6 +63,7 @@ DEF TEMP-TABLE crattfn NO-UNDO
     FIELD dstransa AS CHAR
     FIELD nmnarede LIKE craptfn.nmnarede
     FIELD dsdoping AS CHAR
+    FIELD flgntcem LIKE craptfn.flgntcem
     INDEX crattfn1 cdcoptfn nrterfin.
 
 DEF TEMP-TABLE tt-transacao NO-UNDO

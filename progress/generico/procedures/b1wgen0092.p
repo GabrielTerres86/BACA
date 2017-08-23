@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 25/05/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 20/07/2017
     
    Dados referentes ao programa:
    
@@ -169,6 +169,8 @@
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
                            
+              28/03/2017 - Ajustado para utilizar nome resumo se houver. (Ricardo Linhares - 547566)
+                           
               09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
                            esquerda no campo de senha informada pelo usuário
                            Rafael (Mouts) - Chamado 657038
@@ -182,6 +184,13 @@
                            
               25/05/2017 - Incluir vr_dstransa atualizada apos a chamada do bloqueia_lancamento
                            (Lucas Ranghetti #671626).
+                           
+              11/07/2017 - Incluir tratamento para permitir a exclusao da autorizaçao somente no 
+                           proximo dia util apos o cancelamento na procedure grava-dados (Lucas Ranghetti #703802)
+                           
+              20/07/2017 - Incluido validaçao para nao conseguir incluir debito automatico quando
+                           o primeiro titular da conta é de menor (Tiago/Thiago #652776)
+                           
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1629,6 +1638,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
+    DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1747,6 +1757,26 @@ PROCEDURE grava-dados:
             
         IF  par_cddopcao = "I" THEN
             DO: 
+            
+                /*Validar se o cooperado for menor de idade e nao eh emancipado nao deixar incluir a autorizaçao*/
+                ASSIGN aux_dtamenor = ADD-INTERVAL( TODAY, -18, "YEARS").
+                
+                 FIND crapttl 
+                WHERE crapttl.cdcooper = par_cdcooper 
+                  AND crapttl.nrdconta = par_nrdconta
+                  AND crapttl.idseqttl = 1
+                  AND crapttl.dtnasttl > aux_dtamenor
+                  AND crapttl.dthabmen = ?
+                  NO-LOCK NO-ERROR.
+                
+            
+                IF AVAILABLE(crapttl) THEN
+                   DO:
+                      ASSIGN aux_dscritic = "Nao foi possivel incluir autorizacao de debito, cooperado menor de idade.".
+                      UNDO Grava, LEAVE Grava.
+                   END.
+                /*Fim valida*/
+                
                 ASSIGN aux_vlrcalcu = ""
                        aux_cdempres = "0".
                 
@@ -2160,7 +2190,21 @@ PROCEDURE grava-dados:
                 ELSE
                 IF  par_cddopcao = "E" THEN
                     DO:
-                        
+                        IF  crapatr.dtiniatr = par_dtmvtolt THEN
+                            DO: 
+                                ASSIGN aux_dscritic = "Esta alteracao podera" +
+                                                      " ser efetuada no proximo dia util.".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                            
+                         /* Permitir a exclusao do debito somente no proximo dia util apos 
+                            o cancelamento */
+                         IF  crapatr.dtfimatr = par_dtmvtolt THEN
+                             DO:
+                                ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
+                                UNDO Grava, LEAVE Grava.
+                             END.
+                             
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2268,12 +2312,14 @@ PROCEDURE busca_convenios_codbarras:
     DEF OUTPUT PARAM TABLE FOR tt-convenios-codbarras.
 
     DEF VAR aux_nmempcon AS CHAR NO-UNDO.
+    DEF VAR aux_nmresumi AS CHAR NO-UNDO. 
     
     FOR EACH crapcon WHERE crapcon.cdcooper =  par_cdcooper         AND
                            crapcon.cdempcon >= par_cdempcon         AND
                            crapcon.cdsegmto >= par_cdsegmto         NO-LOCK:
                            
-        ASSIGN aux_nmempcon = "".
+        ASSIGN aux_nmempcon = ""
+               aux_nmresumi = "".
                            
         IF  crapcon.flgcnvsi = TRUE THEN
             DO:
@@ -2286,10 +2332,13 @@ PROCEDURE busca_convenios_codbarras:
                 IF  NOT AVAIL crapscn THEN
                     NEXT.
                 ELSE
-                    ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                  IF(crapscn.dsnomres <> "") then
+                      ASSIGN aux_nmempcon = crapscn.dsnomres.
+                  ELSE
+                      ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
-            DO:      
+            DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
@@ -2308,16 +2357,19 @@ PROCEDURE busca_convenios_codbarras:
                            gnconve.nmarqatu <> ""               AND
                            gnconve.cdhisdeb <> 0                AND 
                            crapcon.cdempcon = 1085)                           
-                           NO-LOCK NO-ERROR.                           
+                           NO-LOCK NO-ERROR.
                            
-                                         
+
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
                     IF gnconve.cdconven <> 87  AND
 					   gnconve.cdconven <> 108 THEN
-                       ASSIGN aux_nmempcon = gnconve.nmempres.
+						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
+
+         IF aux_nmresumi <> "" THEN
+          ASSIGN aux_nmempcon = aux_nmresumi.    
 
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
@@ -2325,7 +2377,7 @@ PROCEDURE busca_convenios_codbarras:
             
         CREATE tt-convenios-codbarras.
         ASSIGN tt-convenios-codbarras.nmextcon = IF aux_nmempcon = "" THEN crapcon.nmextcon ELSE aux_nmempcon
-               tt-convenios-codbarras.nmrescon = crapcon.nmrescon
+               tt-convenios-codbarras.nmrescon = IF aux_nmresumi = "" THEN crapcon.nmrescon ELSE aux_nmresumi 
                tt-convenios-codbarras.cdempcon = crapcon.cdempcon
                tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto
                tt-convenios-codbarras.cdhistor = IF AVAIL gnconve THEN gnconve.cdhisdeb ELSE crapcon.cdhistor

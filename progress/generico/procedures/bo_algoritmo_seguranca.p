@@ -104,6 +104,9 @@
                              ser filtrado por uma lista fixa de protocolos. PR354.1
                              (Dionathan)
 							 
+                30/05/2017 - Ajustado a chamada de procedures Oracle para gerar
+                             o protocolo (Douglas - Chamado 663312)
+			 
 				05/06/2017 - Pesquisar comprovantes filtrando somente pela data 
 				             da transação (David).
 							 
@@ -111,7 +114,7 @@
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/bo_algoritmo_seguranca.i }
-
+{ sistema/generico/includes/var_oracle.i   }
 
 /* Rotina para gerar um codigo identificador de sessao para ser usado na
    validacao de parametros na URL */
@@ -272,109 +275,50 @@ PROCEDURE gera_protocolo:
     DEF OUTPUT PARAM par_dsprotoc LIKE crappro.dsprotoc              NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                            NO-UNDO.
 
-    /* multiplicador - somente para nao ser o proprio numero em hexa */
-    DEF          VAR aux_multipli AS INTE INIT 4                     NO-UNDO.
-    DEF          VAR aux_nrprotoc AS DECI                            NO-UNDO.
-    DEF          VAR aux_dsprotoc LIKE crappro.dsprotoc              NO-UNDO.
-    DEF          VAR aux_contador AS INTE                            NO-UNDO.
+    DEF VAR          aux_des_erro AS CHAR                            NO-UNDO.
 
-    DEFINE VARIABLE aux_flgtrans AS LOGICAL     NO-UNDO.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
    
-    /* Conta */
-    aux_nrprotoc = aux_nrprotoc + par_nrdconta * aux_multipli.
+    /* GENE0006 */
+    RUN STORED-PROCEDURE pc_gera_protocolo_car aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper, /* Código da cooperativa */
+                          INPUT par_dtmvtolt, /* Data movimento */
+                          INPUT par_hrtransa, /* Hora da Transacao */
+                          INPUT par_nrdconta, /* Numero da Conta */  
+                          INPUT par_nrdocmto, /* Número do documento */ 
+                          INPUT par_nrseqaut, /* Número da sequencia */ 
+                          INPUT par_vllanmto, /* Valor lançamento */ 
+                          INPUT par_nrdcaixa, /* Número do caixa */ 
+                          INPUT INTE(STRING(par_gravapro,"1/0")), /* Controle de gravaçao (0-Nao/1-Sim)*/
+                          INPUT par_cdtippro, /* Código de operaçao */ 
+                          INPUT par_dsinfor1, /* Descriçao 1 */
+                          INPUT par_dsinfor2, /* Descriçao 2 */
+                          INPUT par_dsinfor3, /* Descriçao 3 */
+                          INPUT par_dscedent, /* Descritivo */ 
+                          INPUT INTE(STRING(par_flgagend,"1/0")), /* Controle de agenda (0-Nao/1-Sim) */
+                          INPUT par_nrcpfope, /* Número de operaçao */
+                          INPUT par_nrcpfpre, /* Número pré operaçao */
+                          INPUT par_nmprepos, /* Nome */
+                         OUTPUT "",  /* pr_dsprotoc */
+                         OUTPUT "",  /* pr_dscritic */
+                         OUTPUT ""). /* pr_des_erro */
     
-    /* Documento */
-    aux_nrprotoc = aux_nrprotoc + par_nrdocmto * aux_multipli.
+    CLOSE STORED-PROC pc_gera_protocolo_car aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
 
-    /* Autenticacao */
-    IF  par_nrseqaut > 0  THEN
-        aux_nrprotoc = aux_nrprotoc + par_nrseqaut * aux_multipli.
+    ASSIGN par_dsprotoc = ""
+           par_dscritic = ""
+           aux_des_erro = ""
+           par_dsprotoc = pc_gera_protocolo_car.pr_dsprotoc
+                          WHEN pc_gera_protocolo_car.pr_dsprotoc <> ?
+           par_dscritic = pc_gera_protocolo_car.pr_dscritic
+                          WHEN pc_gera_protocolo_car.pr_dscritic <> ?
+           aux_des_erro = pc_gera_protocolo_car.pr_des_erro
+                          WHEN pc_gera_protocolo_car.pr_des_erro <> ?.
     
-    /* Valor */
-    aux_nrprotoc = aux_nrprotoc + (par_vllanmto * 100 * aux_multipli).
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     
-    /* Caixa */
-    aux_nrprotoc = aux_nrprotoc + par_nrdcaixa * aux_multipli.
-    
-    aux_dsprotoc = STRING(aux_nrprotoc) +
-
-                   /* Cooperativa */
-                   STRING(par_cdcooper,"999") +
-                   
-                   /* Data */
-                   STRING(par_dtmvtolt,"99999999") + 
-                   
-                   /* Horario */
-                   STRING(par_hrtransa,"99999").
-     
-    /* Deixa um numero PAR de caracteres */
-    IF   LENGTH(aux_dsprotoc) MOD 2 <> 0   THEN
-         aux_dsprotoc = "0" + aux_dsprotoc.
-
-    /* Converte em HEXADECIMAL de 2 em 2 caracteres */
-    DO aux_contador = 1 TO LENGTH(aux_dsprotoc) - 1 BY 2:
-    
-       par_dsprotoc = par_dsprotoc +
-                      converte_hex(SUBSTRING(aux_dsprotoc,aux_contador,2)).
-    END.
-    
-    ASSIGN aux_dsprotoc = par_dsprotoc
-           par_dsprotoc = "".
-    
-    DO aux_contador = 1 TO LENGTH(aux_dsprotoc) BY 4:
-    
-       par_dsprotoc = par_dsprotoc + TRIM(SUBSTR(aux_dsprotoc,aux_contador,4)).
-       
-       IF  (aux_contador + 4) < LENGTH(aux_dsprotoc)  THEN
-            par_dsprotoc = par_dsprotoc + ".".
-    
-    END.
-
-    IF  par_gravapro  THEN
-    DO:
-        ASSIGN aux_flgtrans = FALSE.
-        
-        TRANSACAO:
-        DO TRANSACTION ON ERROR  UNDO TRANSACAO, LEAVE TRANSACAO
-                       ON ENDKEY UNDO TRANSACAO, LEAVE TRANSACAO:
-                 
-            CREATE crappro.
-            ASSIGN crappro.cdcooper    = par_cdcooper
-                   crappro.cdtippro    = par_cdtippro
-                   crappro.dscedent    = CAPS(par_dscedent)
-                   crappro.dsinform[1] = par_dsinfor1
-                   crappro.dsinform[2] = par_dsinfor2
-                   crappro.dsinform[3] = par_dsinfor3
-                   crappro.dsprotoc    = par_dsprotoc
-                   crappro.dtmvtolt    = par_dtmvtolt
-                   crappro.dttransa    = aux_datdodia
-                   crappro.flgagend    = par_flgagend
-                   crappro.hrautent    = par_hrtransa
-                   crappro.nrdconta    = par_nrdconta
-                   crappro.nrdocmto    = par_nrdocmto
-                   crappro.nrseqaut    = par_nrseqaut
-                   crappro.vldocmto    = par_vllanmto
-                   crappro.nrcpfope    = par_nrcpfope
-                   crappro.nrcpfpre    = par_nrcpfpre
-                   crappro.nmprepos    = par_nmprepos NO-ERROR.
-            
-            VALIDATE crappro.
-            
-            IF  ERROR-STATUS:ERROR THEN
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-
-            ASSIGN aux_flgtrans = TRUE.
-        END.
-
-        IF  NOT aux_flgtrans  THEN
-        DO:
-            par_dscritic = "Nao foi possivel gerar o protocolo." +
-                           " Tente novamente.".
-            RETURN "NOK".
-        END.
-    END.
-
-    RETURN "OK".
+    RETURN aux_des_erro.
 
 END PROCEDURE. /* Fim gera_protocolo */
 
@@ -550,7 +494,7 @@ PROCEDURE lista_protocolo:
        crabpro.cdtippro = 1 AND
        SUBSTR(crabpro.dsinform[3],1,3) <> "TAA" THEN
            NEXT.
-               
+
         IF par_cdorigem = 3 AND /* InternetBank */
            crabpro.cdtippro = 20 AND
            SUBSTR(crabpro.dsinform[3],1,3) = "TAA" THEN

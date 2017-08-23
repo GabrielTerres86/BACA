@@ -2,7 +2,7 @@
 
   Programa: b1wgen0191.p
   Autor   : Jonata-RKAM
-  Data    : Agosto/2014                       Ultima Atualizacao: 19/05/2016
+  Data    : Agosto/2014                       Ultima Atualizacao: 07/07/2017
                                                                       
   Dados referentes ao programa:
   
@@ -22,10 +22,15 @@
                             PRJ207 - Esteira (Odirlei/AMcom)              
 
                19/05/2016 - Alterado a variavel xml_req de CHAR para LONGCHAR
-			                pois o retorno do xml estava estourando a variavel
-							ocasionando problemas na tela CONTAS e na 
-							imressão da proposta de emprestimo (Tiago/Thiago)
-							SD 453764.
+                            pois o retorno do xml estava estourando a variavel
+                            ocasionando problemas na tela CONTAS e na 
+                            imressão da proposta de emprestimo (Tiago/Thiago)
+                            SD 453764.
+                            
+               07/07/2017 - P337 - Ajustada Imprime_Consulta para nao mais buscar 
+                            fixo o nrseqdet = 1 pois quando a consulta foi efetuada
+                            na Esteira o Titular nem sempre eh o primeiro a ser 
+                            retornado (Marcos-Supero)
 ............................................................................ */  
 
 { sistema/generico/includes/var_internet.i } 
@@ -1083,6 +1088,16 @@ PROCEDURE Imprime_Consulta:
                                 aux_nrctaav1 = crawepr.nrctaav1
                                 aux_nrctaav2 = crawepr.nrctaav2
                                 aux_nrconbir = crawepr.nrconbir.
+ 
+                         /* Buscar NRSEQDET  */
+                         RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
+                                                 INPUT par_nrdconta,
+                                                 INPUT par_inprodut,
+                                                 INPUT par_nrctrato,
+                                                 INPUT 0,
+                                                 INPUT crapass.nrcpfcgc,
+                                                 OUTPUT aux_nrconbir,
+                                                 OUTPUT aux_nrseqdet). 
 
                      END.
                 ELSE       /* Limite */
@@ -1106,17 +1121,19 @@ PROCEDURE Imprime_Consulta:
                           ASSIGN aux_inconcje = craplim.inconcje
                                  aux_nrctaav1 = craplim.nrctaav1
                                  aux_nrctaav2 = craplim.nrctaav2
-                                 aux_nrconbir = craplim.nrconbir.
+                                 aux_nrconbir = craplim.nrconbir
+                                 aux_nrseqdet = 1.
 
-                     END.
-
+                     END.             
+                
+                
                 RUN Trata_Pessoa (INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctrato,
                                   INPUT crapass.inpessoa,
                                   INPUT "Titular",
                                   INPUT aux_nrconbir,
-                                  INPUT 1).
+                                  INPUT aux_nrseqdet).
 
                 IF   aux_inconcje = 1   THEN /* Consulta ao Conjuge */
                      DO:
@@ -1131,16 +1148,46 @@ PROCEDURE Imprime_Consulta:
                                   ASSIGN aux_cdcritic = 610.
                                   LEAVE.
                               END.
+
+                         IF crapcje.nrcpfcjg = 0 THEN
+                         DO:
+                           FIND crabass WHERE 
+                                crabass.cdcooper = par_cdcooper   AND
+                                crabass.nrdconta = crapcje.nrctacje
+                                NO-LOCK NO-ERROR.
+
+                            IF   NOT AVAIL crabass   THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 9.
+                                LEAVE.
+                            END.                              
  
-                         /* Dados do conjuge */
+                            /* Dados do conjuge pela conta e CPF da CRAPASS */
+                            RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
+                                                    INPUT par_nrdconta,
+                                                    INPUT par_inprodut,
+                                                    INPUT par_nrctrato,
+                                                    INPUT crapcje.nrctacje,
+                                                    INPUT crabass.nrcpfcgc,
+                                                   OUTPUT aux_nrconbir,
+                                                   OUTPUT aux_nrseqdet).
+                            
+                            
+                          END.
+                          ELSE
+                          DO:
+                            /* Dados do conjuge direto da tabela de Conjuge */
                          RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
                                                  INPUT par_nrdconta,
-                                                 INPUT par_inprodut,                                                  INPUT par_nrctrato,
+                                                 INPUT par_inprodut,
+                                                 INPUT par_nrctrato,
                                                  INPUT crapcje.nrctacje,
                                                  INPUT crapcje.nrcpfcjg,
                                                 OUTPUT aux_nrconbir,
                                                 OUTPUT aux_nrseqdet).
                                   
+                          END.                      
+                                                
                          RUN Trata_Pessoa (INPUT par_cdcooper,
                                            INPUT crapcje.nrctacje,
                                            INPUT 0,
@@ -1167,7 +1214,8 @@ PROCEDURE Imprime_Consulta:
 
                           RUN Busca_Biro_Emp_Lim (INPUT par_cdcooper,
                                                   INPUT par_nrdconta,
-                                                  INPUT par_inprodut,                                                   INPUT par_nrctrato,
+                                                  INPUT par_inprodut,                                                   
+                                                  INPUT par_nrctrato,
                                                   INPUT crabass.nrdconta,
                                                   INPUT crabass.nrcpfcgc,
                                                  OUTPUT aux_nrconbir,

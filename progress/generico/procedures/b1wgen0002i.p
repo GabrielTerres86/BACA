@@ -1,8 +1,29 @@
+/******************************************************************************
+                           ATENCAO!    CONVERSAO PROGRESS - ORACLE
+            ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
+  +-------------------------------------+--------------------------------------+
+  | Rotina Progress                     | Rotina Oracle PLSQL                  |
+  +-------------------------------------+--------------------------------------+
+  | b1wgen0002.p                        | EMPR0003                             |
+  | busca_operacoes                     | EMPR0003.pc_busca_operacoes          |
+  | gera_co_responsavel                 | EMPR0003.pc_gera_co_responsavel      |
+  +-------------------------------------+--------------------------------------+
+
+  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
+  SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
+
+  PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
+  PESSOAS:
+   - GUILHERME STRUBE    (CECRED)
+   - MARCOS MARTINI      (SUPERO)
+
+*******************************************************************************/
+
 /*.............................................................................
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 07/03/2017
+   Data    : 23/03/2011                        Ultima atualizacao: 27/04/2017
     
    Dados referentes ao programa:
 
@@ -239,6 +260,15 @@
 			   
 			   07/03/2017 - Ajuste na rotina impressao-prnf devido a conversao da busca-gncdocp
 						    (Adriano - SD 614408).
+               
+			         25/04/2017 - Adicionado chamada para a procedure pc_obrigacao_analise_automatic
+						                e novo parametro de saida na procedure valida_impressao. 
+						                Projeto 337 - Motor de crédito. (Reinert)
+                            
+               27/04/2017 - Alterado rotinas gera_co_responsavel e busca_operacoes
+                            para chamar respectiva versao oracle
+						                Projeto 337 - Motor de crédito. (Odirlei-AMcom)             
+
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -2314,7 +2344,8 @@ PROCEDURE trata-impressao-modelo2:
           rel_nmcidade    = crapenc.nmcidade
           rel_cdufresd    = crapenc.cdufende
           rel_nrcepend    = crapenc.nrcepend
-          rel_dsnacion    = crapass.dsnacion.
+          rel_dsnacion    = crapass.dsnacion.            
+                
    
    IF   crapass.inpessoa = 1 THEN
         ASSIGN rel_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999")
@@ -8031,101 +8062,125 @@ PROCEDURE busca_operacoes:
    DEF INPUT PARAM par_vldctitu AS DECI                             NO-UNDO.
    DEF INPUT PARAM par_vlutitit AS DECI                             NO-UNDO.
    DEF INPUT-OUTPUT PARAM TABLE FOR w-co-responsavel.
+   
+   DEF VAR xml_req      AS CHAR                                      NO-UNDO.
+   DEF VAR xDoc         AS HANDLE                                    NO-UNDO.  
+   DEF VAR xRoot        AS HANDLE                                    NO-UNDO. 
+   DEF VAR xRoot2       AS HANDLE                                    NO-UNDO. 
+   DEF VAR xRoot3       AS HANDLE                                    NO-UNDO. 
+   DEF VAR xRoot4       AS HANDLE                                    NO-UNDO. 
+   DEF VAR xText        AS HANDLE                                    NO-UNDO.
+   DEF VAR xField       AS HANDLE                                    NO-UNDO.
+   DEF VAR ponteiro_xml AS MEMPTR                                    NO-UNDO.
+   DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
+   DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
       
-   FOR EACH crapavl WHERE crapavl.cdcooper = par_cdcooper   AND
-                          crapavl.nrdconta = par_nrdconta   NO-LOCK:
-   
-       FIND craplim WHERE craplim.cdcooper = par_cdcooper       AND
-                          craplim.nrdconta = crapavl.nrctaavd   AND
-                          craplim.nrctrlim = crapavl.nrctravd   
-                          NO-LOCK NO-ERROR.
+      
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-       IF AVAIL craplim THEN
-   
-          IF  craplim.tpctrlim = 2 THEN   /** Desconto de Cheque **/
-              DO:
-                 IF  craplim.insitlim  = 2 THEN
-                     par_vldscchq = par_vldscchq + craplim.vllimite.
-             
-                 ASSIGN par_vlutlchq = 0.
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_busca_operacoes_prog
+     aux_handproc = PROC-HANDLE NO-ERROR 
+                 ( INPUT par_cdcooper        /* pr_cdcooper --> Codigo da cooperativa  */
+                  ,INPUT par_nrdconta        /* pr_nrdconta --> Numero da conta        */
+                  ,INPUT par_dtmvtolt        /* pr_dtmvtolt --> Data de movimento      */
+                  ,INPUT-OUTPUT par_vldscchq /* pr_vldscchq --> Valor de cheque        */  
+                  ,INPUT-OUTPUT par_vlutlchq /* pr_vlutlchq --> Valor do ultimo cheque */                              
+                  ,INPUT-OUTPUT par_vldctitu /* pr_vldctitu --> Valor de titulo de descont */
+                  ,INPUT-OUTPUT par_vlutitit /* pr_vlutitit --> Valor do ultimo titulo de desconto */                  
+                  /* --------- OUT --------- */
+                  ,OUTPUT ""       /* pr_xml      --> Retorna dados        */
+                  ,OUTPUT ""       /* pr_dscritic --> Descriçao da critica */
+                  ,OUTPUT 0).      /* pr_cdcritic --> Codigo da critica    */
+                  
+                  
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_busca_operacoes_prog
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-                 FOR EACH crapbdc WHERE 
-                                  crapbdc.cdcooper = par_cdcooper          AND 
-                                  crapbdc.nrdconta = craplim.nrdconta      AND
-                                  crapbdc.nrctrlim = craplim.nrctrlim NO-LOCK,
-                      EACH crapcdb WHERE 
-                                   crapcdb.cdcooper = par_cdcooper     AND
-                                   crapcdb.nrdconta = crapbdc.nrdconta AND
-                                   crapcdb.nrborder = crapbdc.nrborder AND
-                                   crapcdb.nrctrlim = crapbdc.nrctrlim AND
-                                   crapcdb.insitchq = 2                AND
-                                   crapcdb.dtlibera > par_dtmvtolt
-                                   NO-LOCK  USE-INDEX crapcdb7:
-                        
-                         ASSIGN par_vlutlchq = par_vlutlchq + crapcdb.vlcheque.
-                 END.
-             
-                 IF  par_vlutlchq > 0 THEN 
-                     DO:
-                        FIND crapldc WHERE 
-                             crapldc.cdcooper = par_cdcooper       AND
-                             crapldc.cddlinha = craplim.cddlinha   AND
-                             crapldc.tpdescto = 2 NO-LOCK NO-ERROR.
-                        
-                        CREATE w-co-responsavel.
-                        ASSIGN 
-                           w-co-responsavel.nrdconta = craplim.nrdconta 
-                           w-co-responsavel.nrctremp = craplim.nrctrlim
-                           w-co-responsavel.vlsdeved = par_vlutlchq   
-                           w-co-responsavel.dsfinemp = "   DESCONTO CHEQUES" 
-                           w-co-responsavel.dslcremp = 
-                                           STRING(crapldc.cddlinha) + "-" +
-                                           crapldc.dsdlinha WHEN AVAIL crapldc.
-                     END.
-   
-              END. /** fim if tpctrlim = 2  **/
-          ELSE     /** Desconto de Titulo - tpctrlim = 3 **/ 
-             DO: 
-                IF  craplim.insitlim  = 2 THEN
-                    par_vldctitu = craplim.vllimite.
-             
-                par_vlutitit = 0.
-              
-                FOR EACH craptdb WHERE(craptdb.cdcooper = par_cdcooper      AND
-                                       craptdb.nrdconta = craplim.nrdconta  AND
-                                       craptdb.nrctrlim = craplim.nrctrlim  AND
-                                       craptdb.insittit =  4)   OR
-                                      (craptdb.cdcooper = par_cdcooper      AND
-                                       craptdb.nrdconta = craplim.nrdconta  AND
-                                       craptdb.nrctrlim = craplim.nrctrlim  AND
-                                       craptdb.insittit = 2                 AND
-                                       craptdb.dtdpagto = par_dtmvtolt)  
-                                       NO-LOCK:
-     
-                    par_vlutitit = par_vlutitit + craptdb.vltitulo.
-             
-                END.   /* Fim FOR EACH craptdb */
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                IF  par_vlutitit > 0 THEN
-                    DO:
-                        FIND crapldc WHERE
-                             crapldc.cdcooper = par_cdcooper       AND
-                             crapldc.cddlinha = craplim.cddlinha   AND
-                             crapldc.tpdescto = 3 NO-LOCK NO-ERROR.
+    /* Rotina original nao trata critica */
+    ASSIGN aux_cdcritic = pc_busca_operacoes_prog.pr_cdcritic
+                             WHEN pc_busca_operacoes_prog.pr_cdcritic <> ?
+           aux_dscritic = pc_busca_operacoes_prog.pr_dscritic
+                             WHEN pc_busca_operacoes_prog.pr_dscritic <> ?.
 
-                        CREATE w-co-responsavel.
-                        ASSIGN 
-                             w-co-responsavel.nrdconta = craplim.nrdconta 
-                             w-co-responsavel.nrctremp = craplim.nrctrlim
-                             w-co-responsavel.vlsdeved = par_vlutitit
-                             w-co-responsavel.dsfinemp = "   DESCONTO TITULOS"
-                             w-co-responsavel.dslcremp =
-                                  STRING(craplim.cddlinha) + "-" +
-                                         crapldc.dsdlinha
-                                                WHEN AVAIL crapldc.
-                    END.
-             END. /** Fim  else - Desconto de titulo / tpctrlim = 3 **/
-   END.  /* Fim do FOR EACH crapavl */
+
+     ASSIGN par_vldscchq = pc_busca_operacoes_prog.pr_vldscchq
+                             WHEN pc_busca_operacoes_prog.pr_vldscchq <> ?
+            par_vlutlchq = pc_busca_operacoes_prog.pr_vlutlchq
+                             WHEN pc_busca_operacoes_prog.pr_vlutlchq <> ?
+            par_vldctitu = pc_busca_operacoes_prog.pr_vldctitu
+                             WHEN pc_busca_operacoes_prog.pr_vldctitu <> ?
+            par_vlutitit = pc_busca_operacoes_prog.pr_vlutitit
+                             WHEN pc_busca_operacoes_prog.pr_vlutitit <> ?.
+
+    /*Leitura do XML de retorno da proc e criacao dos registros na w-co-responsavel */
+
+    /* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_busca_operacoes_prog.pr_xml_co_responsavel. 
+
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+    IF ponteiro_xml <> ? THEN
+        DO:
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+            DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+                xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+
+                IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                    NEXT. 
+
+                IF xRoot2:NUM-CHILDREN > 0 THEN
+                    CREATE w-co-responsavel.
+
+                DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+                    xRoot2:GET-CHILD(xField,aux_cont).
+
+                    IF xField:SUBTYPE <> "ELEMENT" THEN 
+                        NEXT. 
+
+                    xField:GET-CHILD(xText,1) NO-ERROR. 
+
+                    /* Se nao vier conteudo na TAG */ 
+                    IF ERROR-STATUS:ERROR             OR  
+                       ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                                     NEXT.
+
+                    ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
+                    ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
+                    ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
+                    ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
+
+                END. 
+
+            END.
+
+            SET-SIZE(ponteiro_xml) = 0. 
+
+        END.
+
+    /*Elimina os objetos criados*/
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
          
 END PROCEDURE.
 
@@ -8139,7 +8194,7 @@ PROCEDURE gera_co_responsavel:
    DEF INPUT PARAM par_vlutlchq AS DECI                             NO-UNDO.
    DEF INPUT PARAM par_dtmvtolt AS DATE                             NO-UNDO.
    DEF INPUT PARAM par_vldctitu AS DECI                             NO-UNDO.
-   DEF INPUT PARAM par_vlutitit AS DATE                             NO-UNDO.
+   DEF INPUT PARAM par_vlutitit AS DECI                             NO-UNDO.
    DEF INPUT PARAM par_dtmvtopr AS DATE                             NO-UNDO.
    DEF INPUT PARAM par_cdprogra AS CHAR                             NO-UNDO.
    DEF INPUT PARAM par_inproces AS INTE                             NO-UNDO.
@@ -8153,94 +8208,152 @@ PROCEDURE gera_co_responsavel:
    DEF OUTPUT PARAM TABLE FOR tt-erro.
    DEF OUTPUT PARAM TABLE FOR w-co-responsavel.
 
-   DEF BUFFER crabepr FOR crapepr.
+   DEF VAR xml_req      AS CHAR                                      NO-UNDO.
+   DEF VAR xDoc         AS HANDLE                                    NO-UNDO.  
+   DEF VAR xRoot        AS HANDLE                                    NO-UNDO. 
+   DEF VAR xRoot2       AS HANDLE                                    NO-UNDO. 
+   DEF VAR xRoot3       AS HANDLE                                    NO-UNDO. 
+   DEF VAR xRoot4       AS HANDLE                                    NO-UNDO. 
+   DEF VAR xText        AS HANDLE                                    NO-UNDO.
+   DEF VAR xField       AS HANDLE                                    NO-UNDO.
+   DEF VAR ponteiro_xml AS MEMPTR                                    NO-UNDO.
+   DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
+   DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
 
-   DEF VAR inc_nrdconta   AS INT     FORMAT "zzzz,zzz,9"            NO-UNDO.
-   DEF VAR inc_nrctremp   LIKE crapepr.nrctremp                     NO-UNDO.
-   DEF VAR aux_qtregist   AS INTE                                   NO-UNDO.
+ { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-   FOR EACH crapavl WHERE  crapavl.cdcooper = par_cdcooper     AND
-                           crapavl.nrdconta = crapass.nrdconta
-                           NO-LOCK:
-                                   
-       FIND crabepr WHERE crabepr.cdcooper = par_cdcooper      AND
-                          crabepr.nrdconta = crapavl.nrctaavd  AND
-                          crabepr.nrctremp = crapavl.nrctravd
-                          NO-LOCK NO-ERROR.
-       IF  AVAIL crabepr THEN
-           DO:           
-                ASSIGN inc_nrdconta = crabepr.nrdconta
-                       inc_nrctremp = crabepr.nrctremp.
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_gera_co_responsavel_prog 
+     aux_handproc = PROC-HANDLE NO-ERROR 
+                 ( INPUT par_cdcooper /* pr_cdcooper -> Codigo da cooperativa */
+                  ,INPUT par_cdagenci /* pr_cdagenci -> Codigo de agencia */
+                  ,INPUT par_nrdcaixa /* pr_nrdcaixa -> Numero do caixa */
+                  ,INPUT par_cdoperad /* pr_cdoperad -> Codigo do operador */
+                  ,INPUT par_nmdatela /* pr_nmdatela -> Nome da tela */
+                  ,INPUT par_idorigem /* pr_idorigem -> Identificado de oriem */
+                  ,INPUT par_cdprogra /* pr_cdprogra -> Codigo do programa */
+                  ,INPUT crapass.nrdconta /* pr_nrdconta -> Numero da conta */
+                  ,INPUT par_idseqttl /* pr_idseqttl -> Sequencial do titular */
+                  ,INPUT par_dtcalcul /* pr_dtcalcul -> Data do calculo       */                                                    
+                  ,INPUT (IF par_flgerlog THEN  "S" ELSE "N") /* pr_flgerlog -> identificador se deve gerar log S-Sim e N-Nao */
+                  ,INPUT-OUTPUT par_vldscchq /* pr_vldscchq -> Valor de cheque */
+                  ,INPUT-OUTPUT par_vlutlchq /* pr_vlutlchq -> Valor do ultimo cheque                        */
+                  ,INPUT-OUTPUT par_vldctitu /* pr_vldctitu -> Valor de titulo de descont */ 
+                  ,INPUT-OUTPUT par_vlutitit /* pr_vlutitit -> Valor do ultimo titulo de desconto */                  
+                  /* --------- OUT --------- */
+                  ,OUTPUT ""       /* pr_xml      --> Retorna dados        */
+                  ,OUTPUT ""       /* pr_dscritic --> Descriçao da critica */
+                  ,OUTPUT 0).      /* pr_cdcritic --> Codigo da critica    */
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_gera_co_responsavel_prog
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-                  IF  VALID-HANDLE(h-b1wgen0002) THEN
-                      DELETE PROCEDURE h-b1wgen0002.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = pc_gera_co_responsavel_prog.pr_cdcritic
+                             WHEN pc_gera_co_responsavel_prog.pr_cdcritic <> ?
+           aux_dscritic = pc_gera_co_responsavel_prog.pr_dscritic
+                             WHEN pc_gera_co_responsavel_prog.pr_dscritic <> ?.
 
-                  RUN sistema/generico/procedures/b1wgen0002.p PERSISTENT 
-                      SET h-b1wgen0002.
+     
+    IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+      DO:
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1, /*sequencia*/
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic). 
+          RETURN "NOK".
+      END.   
+      
+     ASSIGN par_vldscchq = pc_gera_co_responsavel_prog.pr_vldscchq
+                             WHEN pc_gera_co_responsavel_prog.pr_vldscchq <> ?
+            par_vlutlchq = pc_gera_co_responsavel_prog.pr_vlutlchq
+                             WHEN pc_gera_co_responsavel_prog.pr_vlutlchq <> ?
+            par_vldctitu = pc_gera_co_responsavel_prog.pr_vldctitu
+                             WHEN pc_gera_co_responsavel_prog.pr_vldctitu <> ?
+            par_vlutitit = pc_gera_co_responsavel_prog.pr_vlutitit
+                             WHEN pc_gera_co_responsavel_prog.pr_vlutitit <> ?. 
 
-                  IF  NOT VALID-HANDLE(h-b1wgen0002)  THEN
-                     DO:
-                         ASSIGN aux_dscritic = "Handle invalido para BO " +
-                                               "b1wgen0002.".
-                         LEAVE.
-                     END.
-                
-                RUN obtem-dados-emprestimos IN h-b1wgen0002
-                                            (INPUT par_cdcooper, 
-                                             INPUT par_cdagenci, 
-                                             INPUT par_nrdcaixa, 
-                                             INPUT par_cdoperad, 
-                                             INPUT par_nmdatela, 
-                                             INPUT par_idorigem, 
-                                             INPUT inc_nrdconta, 
-                                             INPUT par_idseqttl, 
-                                             INPUT par_dtmvtolt, 
-                                             INPUT par_dtmvtopr, 
-                                             INPUT par_dtcalcul, 
-                                             INPUT inc_nrctremp, 
-                                             INPUT par_cdprogra, 
-                                             INPUT par_inproces, 
-                                             INPUT par_flgerlog, 
-                                             INPUT TRUE,
-                                             INPUT 0, /** nriniseq **/
-                                             INPUT 0, /** nrregist **/
-                                            OUTPUT aux_qtregist,
-                                            OUTPUT TABLE tt-erro,
-                                            OUTPUT TABLE tt-dados-epr).
 
-                IF  VALID-HANDLE(h-b1wgen0002) THEN
-                    DELETE PROCEDURE h-b1wgen0002.
+    /*Leitura do XML de retorno da proc e criacao dos registros na w-co-responsavel */
+    /* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_gera_co_responsavel_prog.pr_xml_co_responsavel. 
+    
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req. 
 
-                IF RETURN-VALUE <> "OK" THEN
-                    RETURN "NOK".
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
-                FOR EACH tt-dados-epr NO-LOCK:
+    IF ponteiro_xml <> ? THEN
+        DO:
 
-                    FIND w-co-responsavel WHERE 
-                         w-co-responsavel.nrdconta = tt-dados-epr.nrdconta AND
-                         w-co-responsavel.nrctremp = tt-dados-epr.nrctremp 
-                                                     NO-LOCK NO-ERROR.
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
 
-                    IF NOT AVAIL w-co-responsavel THEN
-                        DO:
-                            CREATE w-co-responsavel.
-                            BUFFER-COPY tt-dados-epr TO w-co-responsavel.
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 
-                        END.
-                END.
+            DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
 
-           END. 
-   END.  
+                xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
 
-   /*** Verifica se tem desconto de cheque ou titulo ***/
-   RUN busca_operacoes(INPUT crapass.nrdconta,
-                       INPUT par_cdcooper,
-                       INPUT par_vldscchq,
-                       INPUT par_vlutlchq,
-                       INPUT par_dtmvtolt,
-                       INPUT par_vldctitu,
-                       INPUT par_vlutitit,
-                       INPUT-OUTPUT TABLE w-co-responsavel).
+                IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                    NEXT. 
+
+                IF xRoot2:NUM-CHILDREN > 0 THEN
+                    CREATE w-co-responsavel.
+
+                DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+                    xRoot2:GET-CHILD(xField,aux_cont).
+
+                    IF xField:SUBTYPE <> "ELEMENT" THEN 
+                        NEXT. 
+
+                    xField:GET-CHILD(xText,1) NO-ERROR. 
+                    /* Se nao vier conteudo na TAG */ 
+                    IF ERROR-STATUS:ERROR             OR  
+                       ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                                     NEXT.
+                                     
+                    ASSIGN w-co-responsavel.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta". 
+                    ASSIGN w-co-responsavel.nrctremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp". 
+                    ASSIGN w-co-responsavel.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved". 
+                    ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
+                    ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
+                    ASSIGN w-co-responsavel.cdlcremp = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdlcremp". 
+                    ASSIGN w-co-responsavel.vlpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlpreemp".
+                    
+                    ASSIGN w-co-responsavel.qtmesdec = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtmesdec". 
+                    ASSIGN w-co-responsavel.qtprecal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtprecal". 
+                    ASSIGN w-co-responsavel.qtpreemp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "qtpreemp". 
+
+                    ASSIGN w-co-responsavel.dspreapg =    (xText:NODE-VALUE) WHEN xField:NAME = "dspreapg". 
+                    ASSIGN w-co-responsavel.inprejuz = INT(xText:NODE-VALUE) WHEN xField:NAME = "inprejuz". 
+
+                END. 
+
+            END.
+
+            SET-SIZE(ponteiro_xml) = 0. 
+
+        END.
+
+    /*Elimina os objetos criados*/
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
+
+
 
 END PROCEDURE.
 
@@ -8634,6 +8747,7 @@ PROCEDURE valida_impressao:
     DEF  INPUT PARAM par_recidepr AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_tplcremp AS INTE                              NO-UNDO.
     
+    DEF OUTPUT PARAM par_inobriga AS CHAR                              NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_cdagenci AS INTE                                       NO-UNDO.
@@ -8641,7 +8755,8 @@ PROCEDURE valida_impressao:
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Valida impressao."
-           aux_returnvl = "OK".
+           aux_returnvl = "OK"
+           par_inobriga = "N".
 
     Valida: DO ON ERROR UNDO Valida, LEAVE Valida:
         EMPTY TEMP-TABLE tt-erro.
@@ -8718,6 +8833,55 @@ PROCEDURE valida_impressao:
         END.
 
     END.
+    
+    FIND crawepr WHERE RECID(crawepr) = par_recidepr NO-LOCK NO-ERROR.
+    
+    IF  AVAILABLE crawepr   THEN
+        DO:
+        
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND 
+                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        
+        /* Se ainda nao Enviada ou Enviada mas com Erro Consultas */
+        IF  crawepr.insitest < 2 OR crawepr.insitapr = 5 THEN
+            DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Efetuar a chamada a rotina Oracle */ 
+              RUN STORED-PROCEDURE pc_obrigacao_analise_automatic
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                    INPUT crapass.inpessoa, /* Tipo da Pessoa */
+                                                    INPUT crawepr.cdfinemp, /* Código da finalidade de crédito */
+                                                    INPUT crawepr.cdlcremp, /* Código da linha de crédito */
+                                                   OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
+                                                   OUTPUT 0,            /* Código da crítica */
+                                                   OUTPUT "").          /* Descriçao da crítica */
+              
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_obrigacao_analise_automatic
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN par_inobriga = pc_obrigacao_analise_automatic.pr_inobriga
+                                       WHEN pc_obrigacao_analise_automatic.pr_inobriga <> ?
+                     aux_cdcritic = pc_obrigacao_analise_automatic.pr_cdcritic
+                                       WHEN pc_obrigacao_analise_automatic.pr_cdcritic <> ?
+                     aux_dscritic = pc_obrigacao_analise_automatic.pr_dscritic
+                                       WHEN pc_obrigacao_analise_automatic.pr_dscritic <> ?.
+
+              IF aux_cdcritic > 0 OR 
+                 aux_dscritic <> '' THEN
+                 DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.cdcritic = aux_cdcritic
+                           tt-erro.dscritic = aux_dscritic.
+
+                    ASSIGN aux_returnvl = "NOK".
+
+                 END.
+            END.
+        END.    
 
     IF  aux_returnvl = "NOK" THEN
         RUN proc_gerar_log (INPUT par_cdcooper,

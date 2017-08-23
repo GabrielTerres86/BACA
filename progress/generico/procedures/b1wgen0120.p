@@ -109,6 +109,9 @@
 
 				13/04/2017 - Inserido o campo nrsequen no create da tt-estorno
 				             #625135 (Tiago/Elton)
+				
+                26/06/2017 - Incluido parametro de etapa com valor 0 para procedure Busca_Dados e valor 1 para procedure imprime_caixa_cofre
+            				 Chamado 660322 - (Belli Envolti)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -711,6 +714,7 @@ PROCEDURE Busca_Dados:
                                              INPUT par_cdoperad,
                                              INPUT par_cdprogra,
                                              INPUT par_dtmvtolt,
+                                             INPUT "0", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                                             OUTPUT aux_saldot,
                                             OUTPUT aux_nmarqimp,
                                             OUTPUT TABLE tt-erro,
@@ -728,6 +732,8 @@ PROCEDURE Busca_Dados:
                                              INPUT par_cdagencx,
                                              INPUT par_nrdcaixa,
                                              INPUT par_dtmvtolt,
+                                             INPUT par_cdprogra, /* Chamado 660322 23/06/2017 */
+                                             INPUT "0",          /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                                             OUTPUT aux_saldot,
                                             OUTPUT aux_nmarqimp,
                                             OUTPUT TABLE tt-erro,
@@ -747,6 +753,7 @@ PROCEDURE Busca_Dados:
                                              INPUT par_cdoperad,
                                              INPUT par_cdprogra,
                                              INPUT par_dtmvtolt,
+                                             INPUT "0", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                                             OUTPUT aux_saldot,
                                             OUTPUT aux_nmarqimp,
                                             OUTPUT TABLE tt-erro,
@@ -5899,6 +5906,7 @@ PROCEDURE imprime_caixa_cofre:
                              INPUT par_cdoperad,
                              INPUT par_cdprogra,
                              INPUT par_dtmvtolt,
+                             INPUT "1", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                             OUTPUT aux_vlrsaldo,
                             OUTPUT aux_nmendter,
                             OUTPUT TABLE tt-erro,
@@ -5915,6 +5923,8 @@ PROCEDURE imprime_caixa_cofre:
                              INPUT par_cdagenci,
                              INPUT 0, /* nrdcaixa */
                              INPUT par_dtmvtolt,
+                             INPUT par_cdprogra, /* Chamado 660322 23/06/2017 */
+                             INPUT "1",          /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                             OUTPUT aux_vlrsaldo,
                             OUTPUT aux_nmendter,
                             OUTPUT TABLE tt-erro,
@@ -5934,6 +5944,7 @@ PROCEDURE imprime_caixa_cofre:
                              INPUT par_cdoperad,
                              INPUT par_cdprogra,
                              INPUT par_dtmvtolt,
+                             INPUT "1", /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                             OUTPUT aux_vlrsaldo,
                             OUTPUT aux_nmendter,
                             OUTPUT TABLE tt-erro,
@@ -6002,6 +6013,7 @@ PROCEDURE SaldoCaixas:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_inetapa  AS CHAR                           NO-UNDO. /* Indica a etapa do processo Chamado 660322 26/06/2017 */
     DEF OUTPUT PARAM par_saldotot AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -6040,6 +6052,7 @@ PROCEDURE SaldoCaixas:
                         INPUT par_cdoperad,
                         INPUT par_cdprogra,
                         INPUT par_dtmvtolt,
+                        INPUT par_inetapa, /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                        OUTPUT "", /* nmarqimp */
                        OUTPUT 0,  /* saldotot */
                        OUTPUT "", /* critica */
@@ -6132,6 +6145,8 @@ PROCEDURE SaldoCofre:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO. /* Chamado 660322 26/06/2017 */
+    DEF  INPUT PARAM par_inetapa  AS CHAR                           NO-UNDO. /* Chamado 660322 26/06/2017 */
     DEF OUTPUT PARAM par_saldotot AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -6167,6 +6182,8 @@ PROCEDURE SaldoCofre:
                         INPUT par_cdagenci,
                         INPUT par_nrdcaixa,
                         INPUT par_dtmvtolt,
+                        INPUT par_cdprogra, /* Chamado 660322 26/06/2017 */
+                        INPUT par_inetapa,  /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                        OUTPUT "", /* nmarqimp */
                        OUTPUT 0,  /* saldotot */
                        OUTPUT "", /* critica */
@@ -6256,6 +6273,7 @@ PROCEDURE SaldoTotal:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_inetapa  AS CHAR                           NO-UNDO. /* Indica a etapa do processo Chamado 660322 26/06/2017 */
     DEF OUTPUT PARAM par_saldotot AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -6294,6 +6312,7 @@ PROCEDURE SaldoTotal:
                         INPUT par_cdoperad,
                         INPUT par_cdprogra,
                         INPUT par_dtmvtolt,
+                        INPUT par_inetapa, /* Indica a etapa do processo Chamado 660322 26/06/2017 */
                        OUTPUT "", /* nmarqimp */
                        OUTPUT 0,  /* saldotot */
                        OUTPUT "", /* critica */

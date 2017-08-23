@@ -15,7 +15,7 @@
    Alteracoes : 20/09/2016 - Atualizacao da data de envio da efetivação da esteira foi 
                 movida para o Oracle estava gerando erro no Progress (Oscar).
    
-
+               02/05/2017 - Ajustes PRJ337 - Motor de Credito (Odirlei-Amcom)
    
 .............................................................................*/   
 
@@ -23,6 +23,7 @@
 DEF VAR aux_cdcooper AS INTEGER                                    NO-UNDO.
 DEF VAR aux_cdcritic AS INTEGER                                    NO-UNDO.
 DEF VAR aux_dscritic AS CHARACTER                                  NO-UNDO.
+DEF VAR aux_dsmensag AS CHARACTER                                  NO-UNDO.
 DEF VAR aux_qtsucess AS INTEGER                                    NO-UNDO.
 DEF VAR aux_qtderros AS INTEGER                                    NO-UNDO.
 
@@ -130,6 +131,8 @@ FOR EACH crapcop FIELDS (cdcooper)
        AND crawepr.insitest = 3      
        AND crawepr.dtenefes = ?
        AND crawepr.dtenvest <> ?
+       /* Ignorar propostas aprovadas na análise automática */
+       AND crawepr.cdopeapr <> "MOTOR"
        NO-LOCK,
       EACH crapepr FIELDS(cdagenci)
      WHERE crapepr.cdcooper = crawepr.cdcooper
@@ -160,6 +163,7 @@ FOR EACH crapcop FIELDS (cdcooper)
                            INPUT crawepr.nrctremp, /* dsiduser */
                            INPUT 0,                /* flreiflx */
                            INPUT "E",              /* tpenvest */
+                          OUTPUT aux_dsmensag,  
                           OUTPUT aux_cdcritic, 
                           OUTPUT aux_dscritic).
        

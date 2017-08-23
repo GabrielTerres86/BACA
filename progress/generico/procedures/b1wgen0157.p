@@ -300,6 +300,7 @@ PROCEDURE validar-rating-bndes:
                                     INPUT par_inconfir,
                                     INPUT 0,
                                     INPUT par_inconfi2,
+									INPUT "N",
 
                                     OUTPUT TABLE tt-erro,
                                     OUTPUT TABLE tt-msg-confirma,

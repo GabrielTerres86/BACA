@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 23/09/2016
+   Data    : Agosto/2007                      Ultima atualizacao: 10/07/2017
 
    Dados referentes ao programa:
 
@@ -172,6 +172,9 @@
                            
               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
+                           
+              07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
+                           (Jaison/Marcos Martini - PRJ337)
                            
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -353,7 +356,9 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD insitapr LIKE crawepr.insitapr
     FIELD err_efet AS INTE
 	FIELD dssitest AS CHAR
-	FIELD dssitapr AS CHAR.
+    FIELD dssitapr AS CHAR
+    FIELD insitest LIKE crawepr.insitest
+    FIELD inobriga AS CHAR.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

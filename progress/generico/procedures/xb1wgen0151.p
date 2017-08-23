@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0151.p
      Autor   : Gabriel Capoia
-     Data    : 26/01/2013                    Ultima atualizacao: 13/01/2017
+     Data    : 26/01/2013                    Ultima atualizacao: 07/08/2017
 
      Objetivo  : BO de Comunicacao XML x BO - Tela CTASAL
 
@@ -13,6 +13,9 @@
                  13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
 				              esta estourando o format pois deixa digitar
 							  maior que INTE na tela (Tiago/Thiago 581315).
+						
+			     07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+							  inclusao, conforme solicitado no chamado 689996. (Kelvin)
 ............................................................................*/
 
 
@@ -47,6 +50,7 @@ DEF VAR aux_msgconfi  AS CHAR                                        NO-UNDO.
 DEF VAR aux_dtcantrf  AS DATE                                        NO-UNDO.
 DEF VAR aux_dtadmiss  AS DATE                                        NO-UNDO.
 DEF VAR aux_cdsitcta  AS CHAR                                        NO-UNDO.
+DEF VAR aux_nrdconrt  AS INTE                                        NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -221,6 +225,7 @@ PROCEDURE Grava_Dados:
                    OUTPUT aux_dtcantrf,
                    OUTPUT aux_dtadmiss,
                    OUTPUT aux_cdsitcta,
+				   OUTPUT aux_nrdconrt,
                    OUTPUT TABLE tt-erro).
     
     IF  RETURN-VALUE = "NOK" THEN
@@ -247,6 +252,7 @@ PROCEDURE Grava_Dados:
            RUN piXmlAtributo (INPUT "dtcantrf", INPUT aux_dtcantrf).
            RUN piXmlAtributo (INPUT "dtadmiss", INPUT aux_dtadmiss).
            RUN piXmlAtributo (INPUT "cdsitcta", INPUT aux_cdsitcta).
+		   RUN piXmlAtributo (INPUT "nrdconrt", INPUT aux_nrdconrt).
            RUN piXmlSave.
         END.
 
