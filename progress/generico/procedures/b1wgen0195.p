@@ -221,9 +221,9 @@ PROCEDURE Enviar_proposta_esteira:
             AND crawepr.nrdconta = par_nrdconta
             AND crawepr.nrctremp = par_nrctremp
           NO-LOCK NO-ERROR.
-    
-          IF AVAIL crawepr AND crawepr.dtenvest <> ? then
-              ASSIGN par_tpenvest = "A".
+
+		  IF AVAIL crawepr AND crawepr.dtenvest <> ? then
+                  ASSIGN par_tpenvest = "A".  
     END.
         
     /***** Verificar se a Esteira esta em contigencia *****/
@@ -333,8 +333,11 @@ PROCEDURE Enviar_proposta_esteira:
 
         CLOSE STORED-PROCEDURE pc_alterar_proposta_est WHERE PROC-HANDLE = aux_handproc.
         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-        
-        ASSIGN par_cdcritic = 0
+
+ 
+        ASSIGN par_dsmensag = "Proposta Enviada para Esteira com Sucesso."
+               
+               par_cdcritic = 0
                par_cdcritic = pc_alterar_proposta_est.pr_cdcritic
                               WHEN pc_alterar_proposta_est.pr_cdcritic <> ?
                par_dscritic = ""
