@@ -18,7 +18,7 @@
  * 24/09/2013 - Carlos       (CECRED) : Inclusão da data na function btnImprimir.
  * 20/02/2015 - Lucas R.     (CECRED) : Ajustes na opcao "T" da Tela, Incluir opcao TOTAL (#245838)
  * 10/06/2016 - Kelvin       (CECRED) : Liberando letras no campo de operador conforme solicitado no chamado 461538.
-								
+ * 15/08/2017 - Lucas Ranghetti (CECRED): Incluir operauto(Operador do coordenado) na chamada do fonte mantar_rotina.php (#665982)
  */
 
 //Formulários e Tabela
@@ -32,6 +32,7 @@ var flgsemhi		= '' ;
 var nrJanelas		= 0  ;
 var cdoplanc		= '' ;
 var msgretor		= '' ;
+var operauto        = '' ;
 
 //Labels/Campos do cabeçalho
 var rCddopcao, rDtmvtolt, rCdagenci, rNrdcaixa, rCdopecxa, rTpcaicof,
@@ -139,6 +140,7 @@ function manterRotina( operacao ) {
 				cdhistor: cdhistor,
 				nrdocmto: nrdocmto,
 				nrseqdig: nrseqdig,
+				operauto: operauto,
 				redirect: 'script_ajax'
 			}, 
 			error: function(objAjax,responseError,objExcept) {

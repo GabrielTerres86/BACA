@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0120.p
      Autor   : Rogerius Militão
-     Data    : Novembro/2011                    Ultima atualizacao: 28/08/2013
+     Data    : Novembro/2011                    Ultima atualizacao: 15/08/2017
 
      Objetivo  : BO de Comunicacao XML x BO - Tela BCAIXA
 
@@ -13,6 +13,8 @@
                  28/08/2013 - Incluido o parametro dtrefere na procedure 
                               Busca_Dados e imprime_caixa_cofre (Carlos)
 
+                 15/08/2017 - Incluir parametros de entrada dtmvtolx e operauto
+                              na procedure Grava_Dados (Lucas Ranghetti #665982)
 ............................................................................*/
 
 
@@ -70,6 +72,7 @@ DEF VAR aux_nmarqimp  AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmarqpdf  AS CHAR                                        NO-UNDO.
 
 DEF VAR aux_tpcaicof AS CHAR                                         NO-UNDO.
+DEF VAR aux_operauto AS CHAR                                         NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -132,6 +135,7 @@ DEF VAR aux_tpcaicof AS CHAR                                         NO-UNDO.
              WHEN "nmarqpdf"  THEN aux_nmarqpdf = tt-param.valorCampo.
 
              WHEN "tpcaicof"  THEN aux_tpcaicof = tt-param.valorCampo.
+             WHEN "operauto"  THEN aux_operauto = tt-param.valorCampo.
              
          END CASE.
 
@@ -499,6 +503,8 @@ PROCEDURE Grava_Dados:
                      INPUT aux_dsdcompl,
                      INPUT aux_vldocmto,
                      INPUT YES,
+                     INPUT aux_dtmvtolx,
+                     INPUT aux_operauto,
                     OUTPUT aux_ndrrecid, 
                     OUTPUT aux_nrdlacre,
                     OUTPUT TABLE tt-erro).

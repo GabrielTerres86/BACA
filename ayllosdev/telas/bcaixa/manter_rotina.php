@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para manter as operações da tela BCAIXA
  * --------------
  * ALTERAÇÕES   : 28/08/2013 - Incluido o parametro dtrefere para a procedure Busca_Dados (Carlos)
+ *
+ *                15/08/2017 - Chamar rotina de senha do coordenador caso a data referencia seja difrente
+ *                             da data atual (Lucas Ranghetti #665982)
  * -------------- 
  */
 ?> 
@@ -42,6 +45,7 @@
 	$cdhistor = (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : 0 ;
 	$nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0 ;
 	$nrseqdig = (isset($_POST['nrseqdig'])) ? $_POST['nrseqdig'] : 0 ;
+	$operauto = (isset($_POST['operauto'])) ? $_POST['operauto'] : '';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -95,6 +99,7 @@
 	$xml .= '		<cdhistor>'.$cdhistor.'</cdhistor>';
 	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
 	$xml .= '		<nrseqdig>'.$nrseqdig.'</nrseqdig>';
+	$xml .= '       <operauto>'.$operauto.'</operauto>';
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";	
 
@@ -143,8 +148,14 @@
 		
 			echo "flgsemhi='".$flgsemhi."';";
 
-			if (!empty($msgsenha)) {
-				exibirErro('inform',$msgsenha,'Alerta - Ayllos','mostraSenha();',false);
+			// Caso seja retornado alguma mensagem de alerta/critica ou a data de referencia
+			// for diferente do dia atual, vamos solicitar a senha do coordenador
+			if (!empty($msgsenha) || ($dtrefere != $glbvars['dtmvtolt'])){
+				if($dtrefere != $glbvars['dtmvtolt']) {
+					echo "mostraSenha();";
+				}else{
+					exibirErro('inform',$msgsenha,'Alerta - Ayllos','mostraSenha();',false);
+				}				
 			} else {
 				echo "controlaLayout('BD');";
 			}

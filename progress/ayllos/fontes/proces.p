@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Junho/2004.                     Ultima atualizacao: 01/02/2017
+   Data    : Junho/2004.                     Ultima atualizacao: 15/08/2017
 
    Dados referentes ao programa:
 
@@ -43,6 +43,9 @@
                
                01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
                             (Lucas Ranghetti #491624)
+                           
+               15/08/2017 - Exibir a quantidade de pendencias quando solicitar o processo
+                            (Lucas Ranghetti #665982)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -321,6 +324,58 @@ REPEAT:
 
                             MESSAGE "Processo solicitado!!".
                          END.
+                     ELSE /* aux_nrsequen <> 0 */
+                         DO: 
+                             DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
+
+                                 ASSIGN aux_confirma = "N"
+                                        glb_dscritic = "Existem " + STRING(aux_nrsequen) + 
+                                                       " criticas pendentes. Confirma operacao?".
+
+                                 MESSAGE COLOR NORMAL glb_dscritic
+                                 UPDATE aux_confirma.
+                                 ASSIGN glb_cdcritic = 0.
+
+                                 LEAVE.
+
+                             END. /* Fim do DO WHILE TRUE */
+
+                             IF  KEYFUNCTION(LASTKEY) = "END-ERROR" OR
+                                 aux_confirma <> "S" THEN
+                                 DO:
+                                     ASSIGN glb_cdcritic = 79.
+                                     RUN fontes/critic.p.
+                                     BELL.
+                                     MESSAGE glb_dscritic "--> SISTEMA CANCELADO!".
+                                     PAUSE MESSAGE "Tecle <entra> para voltar `a tela de identificacao!".
+                                     BELL.
+                                     UNDO.
+                                 END.
+                                
+                             RUN fontes/proces1.p.
+
+                             IF  glb_cdcritic <> 0 THEN
+                                 DO:
+                                     RUN fontes/critic.p.
+                                     BELL.
+                                     MESSAGE glb_dscritic "--> SISTEMA CANCELADO!".
+                                     PAUSE MESSAGE "Tecle <entra> para voltar `a tela de identificacao!".
+                                     BELL.
+                                     QUIT.
+                                 END.
+                                 
+                             /** Move arquivos dos diretorios controles e compbb **/ 
+                             RUN sistema/generico/procedures/b1wgen9998.p
+                                 PERSISTENT SET h-b1wgen9998.
+
+                             RUN limpa_arquivos_proces IN h-b1wgen9998
+                                                      (INPUT glb_cdcooper,
+                                                       INPUT glb_cdprogra,
+                                                       INPUT glb_dtmvtolt).
+                             DELETE PROCEDURE h-b1wgen9998.
+                                 
+                             MESSAGE "Processo solicitado!!".
+                         END. /* aux_nrsequen <> 0 */
                  END.
                  ELSE
                      DO:  
