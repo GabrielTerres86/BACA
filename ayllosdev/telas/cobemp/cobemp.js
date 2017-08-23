@@ -2465,7 +2465,7 @@ function efetuaGeracaoBoleto(tpemprst) {
             totalPagar = $('#vlrpgto2', '#frmGerarBoletoTR').val();
 			tpparepr = 3; // 3 = Parcial do atraso
 			
-			if ( $('#vlrpgto2', '#frmGerarBoletoTR').val() >= $('#vlrpgto1', '#frmGerarBoletoTR').val() ) {
+			if (parseFloat($('#vlrpgto2', '#frmGerarBoletoTR').val()) >= parseFloat($('#vlrpgto1', '#frmGerarBoletoTR').val())) {
 				showError("error", "Valor Parcial do Atraso deve ser menor que o Valor do Atraso.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 				return false;
 			}
