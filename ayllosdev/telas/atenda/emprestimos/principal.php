@@ -35,6 +35,7 @@
  * 025: [23/03/2016] PRJ Esteira de Credito. (Daniel/Oscar)
  * 026: [14/07/2016] Correcao na forma de recuperacao dos dados do array $_POST. SD 479874 (Carlos Rafael Tanholi).
  * 026: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel)
+ * 027: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
  */
 
 	session_start();
@@ -251,6 +252,7 @@
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
 			arrayProposta['nrseqrrq'] = '<? echo getByTagName($proposta,'nrseqrrq'); ?>';
 			arrayProposta['flgcescr'] = '<? echo ((getByTagName($proposta,'flgcescr') == 'yes') ? true : false); ?>';
+			arrayProposta['insitest'] = '<? echo getByTagName($proposta,'insitest'); ?>';
 
 			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];

@@ -101,7 +101,9 @@
  * 081: [08/02/2017] Kelvin		      (CECRED) : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
  * 086: [24/03/2017] JOnata           (RKAM)   : Ajuste devido a inclusão da include para soliticar senha do cartão magnético (M294).
  * 086: [12/04/2017] Reinert				   : Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".												 
- */ 	 
+ * 090: [13/03/2017] Jaison/Daniel    (CECRED) : Criada a funcao retornaDateDiff.
+ * 091: [05/04/2017] Lombardi         (CECRED) : Criadas as funcoes lpad e rpad.
+*/ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
 var UrlImagens	= UrlSite + "imagens/"; // Url para imagens     
@@ -2892,4 +2894,72 @@ function validaSenhaMagnetico() {
     });
 
     return false;
+}
+
+/*! OBJETIVO: Calcular a diferenca entre datas em: Dias, Semanas, Meses e Anos */
+function retornaDateDiff(tipo, dtini, dtfim) {
+
+    var DateDiff = {
+
+        inDays: function (d1, d2) {
+            var t2 = d2.getTime();
+            var t1 = d1.getTime();
+
+            return parseInt((t2 - t1) / (24 * 3600 * 1000));
+        },
+
+        inWeeks: function (d1, d2) {
+            var t2 = d2.getTime();
+            var t1 = d1.getTime();
+
+            return parseInt((t2 - t1) / (24 * 3600 * 1000 * 7));
+        },
+
+        inMonths: function (d1, d2) {
+            var d1Y = d1.getFullYear();
+            var d2Y = d2.getFullYear();
+            var d1M = d1.getMonth();
+            var d2M = d2.getMonth();
+
+            return (d2M + 12 * d2Y) - (d1M + 12 * d1Y);
+        },
+
+        inYears: function (d1, d2) {
+            return d2.getFullYear() - d1.getFullYear();
+        }
+    }
+
+    var dt_s1 = dtini.split('/');
+    var d1 = new Date(dt_s1.slice(0, 3).reverse().join('/'));
+    var dt_s2 = dtfim.split('/');
+    var d2 = new Date(dt_s2.slice(0, 3).reverse().join('/'));
+
+    switch (tipo.toUpperCase()) {
+        case 'D': // Days
+            return DateDiff.inDays(d1, d2);
+            break;
+        case 'W': // Weeks
+            return DateDiff.inWeeks(d1, d2);
+            break;
+        case 'M': // Months
+            return DateDiff.inMonths(d1, d2);
+            break;
+        case 'Y': // Years
+            return DateDiff.inYears(d1, d2);
+            break;
+    }
+}
+
+/*! OBJETIVO: completar string a esquesrda com carcater passado por parametro */
+function lpad(numero, tamanho, caracter) {
+  caracter = caracter || '0';
+  numero = numero + '';
+  return numero.length >= tamanho ? numero : new Array(tamanho - numero.length + 1).join(caracter) + numero;
+}
+
+/*! OBJETIVO: completar string a direita com carcater passado por parametro */
+function rpad(numero, tamanho, caracter) {
+  caracter = caracter || '0';
+  numero = numero + '';
+  return numero.length >= tamanho ? numero : numero + new Array(tamanho - numero.length + 1).join(caracter);
 }

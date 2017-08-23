@@ -8,9 +8,13 @@
  * ALTERAÇÕES   : 02/08/2013 - Incluso tratamento para registros
  *							   de cobranca (Daniel).
  *				  22/08/2013 - Incluso novo parametro cdlcremp (Daniel).	
- 
-				  20/11/2015 - Ajustando mensagem de sucesso para que seja
-				               exibida corretamente (Andre Santos - SUPERO)
+ *
+ *				  20/11/2015 - Ajustando mensagem de sucesso para que seja
+ *				               exibida corretamente (Andre Santos - SUPERO)
+ *				               
+ *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e 
+ *                             "Valor Maximo" (Mateus - MoutS)
+ *
  * -------------- 
  */
 ?> 
@@ -38,14 +42,22 @@
 	$dtdivulg		= (isset($_POST['dtdivulg'])) ? $_POST['dtdivulg'] : 0  ;	
 	$dtvigenc		= (isset($_POST['dtvigenc'])) ? $_POST['dtvigenc'] : 0  ;	
 	$vltarifa		= (isset($_POST['vltarifa'])) ? $_POST['vltarifa'] : 0  ;	
-	$vlrepass		= (isset($_POST['vlrepass'])) ? $_POST['vlrepass'] : 0  ;	
+	$vlrepass		= (isset($_POST['vlrepass'])) ? $_POST['vlrepass'] : 0  ;
+	$tpcobtar		= (isset($_POST['tpcobtar'])) ? $_POST['tpcobtar'] : 0  ;
+	$vlpertar		= (isset($_POST['vlpertar'])) ? $_POST['vlpertar'] : 0  ;
+	$vlmintar		= (isset($_POST['vlmintar'])) ? $_POST['vlmintar'] : 0  ;
+	$vlmaxtar		= (isset($_POST['vlmaxtar'])) ? $_POST['vlmaxtar'] : 0  ;
 	
 	$lstcdfvl		= (isset($_POST['lstcdfvl'])) ? $_POST['lstcdfvl'] : '' ;	
 	$lstcdcop		= (isset($_POST['lstcdcop'])) ? $_POST['lstcdcop'] : '' ;	
 	$lstdtdiv		= (isset($_POST['lstdtdiv'])) ? $_POST['lstdtdiv'] : '' ;	
 	$lstdtvig		= (isset($_POST['lstdtvig'])) ? $_POST['lstdtvig'] : '' ;	
 	$lstvltar		= (isset($_POST['lstvltar'])) ? $_POST['lstvltar'] : '' ;	
-	$lstvlrep		= (isset($_POST['lstvlrep'])) ? $_POST['lstvlrep'] : '' ;	
+	$lstvlrep		= (isset($_POST['lstvlrep'])) ? $_POST['lstvlrep'] : '' ;
+	$lsttptar		= (isset($_POST['lsttptar'])) ? $_POST['lsttptar'] : '' ;
+	$lstvlper		= (isset($_POST['lstvlper'])) ? $_POST['lstvlper'] : '' ;
+	$lstvlmin		= (isset($_POST['lstvlmin'])) ? $_POST['lstvlmin'] : '' ;
+	$lstvlmax		= (isset($_POST['lstvlmax'])) ? $_POST['lstvlmax'] : '' ;
 	
 	$nrconven		= (isset($_POST['nrconven'])) ? $_POST['nrconven'] : 0  ;	
 	
@@ -56,6 +68,18 @@
 	$cdlcremp 		= (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : 0  ;	/* Daniel */
 	$lstlcrem		= (isset($_POST['lstlcrem'])) ? $_POST['lstlcrem'] : '' ;	
 	$cdinctar		= (isset($_POST['cdinctar'])) ? $_POST['cdinctar'] : '' ;
+
+	$cdtipcat		= (isset($_POST['cdtipcat'])) ? $_POST['cdtipcat'] : 0 ;
+
+	/*if ($cdtipcat == 3 ) {  3 - Credito 
+
+		$vltarifa = 0  ;
+		$vlrepass = 0  ;
+		$vlpertar = 0  ;
+		$vlmintar = 0  ;
+		$vlmaxtar = 0  ;
+
+	}*/
 								
 	// Dependendo da operação, chamo uma procedure diferente
 	switch($cddopfco) {
@@ -97,14 +121,22 @@
 	$xml .= '		<lstcdcop>'.$lstcdcop.'</lstcdcop>';	
 	$xml .= '		<lstdtdiv>'.$lstdtdiv.'</lstdtdiv>';	
 	$xml .= '		<lstdtvig>'.$lstdtvig.'</lstdtvig>';	
-	$xml .= '		<lstvltar>'.$lstvltar.'</lstvltar>';	
-	$xml .= '		<lstvlrep>'.$lstvlrep.'</lstvlrep>';
+	$xml .= '		<lstvltar>'.$lstvltar.'</lstvltar>';
+	$xml .= '		<lstvlrep>'.$lstvlrep.'</lstvlrep>';	
+	$xml .= '		<lsttptar>'.$lsttptar.'</lsttptar>';
+	$xml .= '		<lstvlper>'.$lstvlper.'</lstvlper>';
+	$xml .= '		<lstvlmin>'.$lstvlmin.'</lstvlmin>';
+	$xml .= '		<lstvlmax>'.$lstvlmax.'</lstvlmax>';
 	$xml .= '		<nrconven>'.$nrconven.'</nrconven>';	
 	$xml .= '		<lstconve>'.$lstconve.'</lstconve>';
 	$xml .= '		<cdocorre>'.$cdocorre.'</cdocorre>';
 	$xml .= '		<cdlcremp>'.$cdlcremp.'</cdlcremp>';
 	$xml .= '		<lstlcrem>'.$lstlcrem.'</lstlcrem>';
 	$xml .= '		<cdinctar>'.$cdinctar.'</cdinctar>';
+	$xml .= '		<tpcobtar>'.$tpcobtar.'</tpcobtar>';
+	$xml .= '		<vlpertar>'.$vlpertar.'</vlpertar>';
+	$xml .= '		<vlmintar>'.$vlmintar.'</vlmintar>';
+	$xml .= '		<vlmaxtar>'.$vlmaxtar.'</vlmaxtar>';
 	$xml .= '		<flgerlog>YES</flgerlog>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';

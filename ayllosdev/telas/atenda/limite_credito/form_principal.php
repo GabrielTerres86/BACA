@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 22/12/2015 - Variável para alteração do número da proposta de limite de crédito. (Lunelli - SD 360072 [M175])
  *                10/10/2016 - Remover verificacao de digitalizaco para o botao de consultar imagem (Lucas Ranghetti #510032)
  *                15/12/2016 - Alterado tag do botão consultar imagem href para Onclick adaptando-se a função controlaFoco() (Evandro Guaranha-Mout's TI #562864)
+ *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *
  */	
 ?>
@@ -62,6 +63,10 @@
 		
 		<label for="dssitlli"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>	
 		<input id="dssitlli" name="dssitlli" type="text" value="<?php echo $dssitlli.(trim($dsmotivo) == "" ? "" : " - ".$dsmotivo); ?>" />	
+
+		<label for="dtultmaj"><? echo utf8ToHtml('Ult. Majora&ccedil;&atilde;o:') ?></label>	
+		<input id="dtultmaj" name="dtultmaj" type="text" value="<?php echo $dtultmaj; ?>" />
+
 		<br />
 
 		<label for="nmoperad"><? echo utf8ToHtml('Operador(a):') ?></label>	

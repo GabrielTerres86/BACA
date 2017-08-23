@@ -13,6 +13,10 @@
  *
  *                26/11/2015 - Ajustado para buscar os convenios de folha de pagamento
  *                             (Andre Santos - SUPERO)
+ *
+ *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e 
+ *                             "Valor Maximo" (Mateus - MoutS)
+ *
  * -------------- 
  */
 ?> 
@@ -34,6 +38,10 @@
 	$flgtodos		= (isset($_POST['flgtodos'])) ? $_POST['flgtodos'] : 'FALSE'  ; 
 	$cddopcao		= (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '' ; 
 	$cdtipcat		= (isset($_POST['cdtipcat'])) ? $_POST['cdtipcat'] : 0  ;
+
+	$flgtodos 	= TRUE;
+	$nrregist	= 250;
+	$nriniseq	= (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1;
 
 	// Dependendo da operação, chamo uma procedure diferente
 	$procedure = 'carrega-atribuicao-detalhamento';
@@ -59,7 +67,9 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '		<cdfaixav>'.$cdfaixav.'</cdfaixav>';
     $xml .= '		<cdtipcat>'.$cdtipcat.'</cdtipcat>';	
-	$xml .= '		<flgtodos>'.$flgtodos.'</flgtodos>';	
+	$xml .= '		<flgtodos>'.$flgtodos.'</flgtodos>';
+	$xml .= '       <nrregist>'.$nrregist.'</nrregist>';
+	$xml .= '       <nriniseq>'.$nriniseq.'</nriniseq>';	
 	$xml .= '		<flgerlog>YES</flgerlog>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
@@ -78,7 +88,7 @@
 	$atribdet = $xmlObjeto->roottag->tags[0]->tags; 
 	
 	echo '	<div class="divRegistros" style="height: 105px">';
-	echo '		<table>';
+	echo '		<table id="tituloRegistros">';
 	echo '			<thead>';
 	echo '				<tr>';	
 	echo '					<th>'.utf8ToHtml('Cooperativa').'</th>';
@@ -87,6 +97,10 @@
 	echo '					<th>'.utf8ToHtml('Divulga&ccedil;ao').'</th>';
 	echo '					<th>'.utf8ToHtml('Inicio Vigencia').'</th>';
 	echo '					<th>'.utf8ToHtml('Valor').'</th>';
+	echo '					<th style="display: none">'.utf8ToHtml('Tipo de Tarifa').'</th>';
+	echo '					<th>'.utf8ToHtml('Perc').'</th>';
+	echo '					<th>'.utf8ToHtml('Vl.Min').'</th>';
+	echo '					<th>'.utf8ToHtml('Vl.Max').'</th>';
 	echo '					<th>'.utf8ToHtml('Custo').'</th>';
 	echo '					<th>'.utf8ToHtml('Operador').'</th>';
 	echo '				</tr>';
@@ -120,6 +134,17 @@
 		echo	"<td id='vltarifa'><span>".converteFloat(getByTagName($r->tags,'vltarifa'),'MOEDA')."</span>";
         echo                 formataMoeda(getByTagName($r->tags,'vltarifa'));
 		echo	'</td>';
+		echo	"<td id='tpcobtar' style='display: none'><span>".getByTagName($r->tags,'tpcobtar')."</span>";
+		echo	'</td>';
+		echo	"<td id='vlpertar'><span>".converteFloat(getByTagName($r->tags,'vlpertar'),'MOEDA')."</span>";
+        echo                 formataMoeda(getByTagName($r->tags,'vlpertar'));
+		echo	'</td>';
+		echo	"<td id='vlmintar'><span>".converteFloat(getByTagName($r->tags,'vlmintar'),'MOEDA')."</span>";
+        echo                 formataMoeda(getByTagName($r->tags,'vlmintar'));
+		echo	'</td>';
+		echo	"<td id='vlmaxtar'><span>".converteFloat(getByTagName($r->tags,'vlmaxtar'),'MOEDA')."</span>";
+        echo                 formataMoeda(getByTagName($r->tags,'vlmaxtar'));
+		echo	'</td>';
 		echo	"<td id='vlrepass'><span>".converteFloat(getByTagName($r->tags,'vlrepass'),'MOEDA')."</span>";
         echo                 formataMoeda(getByTagName($r->tags,'vlrepass'));
 		echo	'</td>';		
@@ -134,17 +159,68 @@
 	echo '		</table>';
 	echo '	</div>';
 
+	echo '  <div id="divPesquisaRodape" class="divPesquisaRodape">';
+	echo '     <table>';	
+	echo '       <tr>';
+	echo '          <td>';
+
+	$qtregist = $xmlObjeto->roottag->tags[0]->attributes["QTREGIST"];
+
+	if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
+	// Se a paginação não está na primeira, exibe botão voltar
+	if ($nriniseq > 1) { 
+		echo '<a class=\'paginacaoAnt\'><<< Anterior</a>';
+	}
+
+	echo '          </td>';
+	echo '          <td>';
+
+	if (isset($nriniseq)) { 
+		if (($nriniseq + $nrregist) > $qtregist) { 
+			echo 'Exibindo ' . $nriniseq . ' at&eacute; ' .  $qtregist . ' de ' .  $qtregist . '';	
+		} else {  
+			echo 'Exibindo ' . $nriniseq . ' at&eacute; ' .  ($nriniseq + $nrregist - 1) . ' de ' .  $qtregist . '';	
+		} 
+	}
+
+	echo '          </td>';
+	echo '          <td>';
+
+	// Se a paginação não está na &uacute;ltima página, exibe botão proximo
+	if ($qtregist > ($nriniseq + $nrregist - 1)) {
+		echo '<a class=\'paginacaoProx\'>Pr&oacute;ximo >>></a>';
+	}
+
+	echo '        </td>';
+	echo '      </tr>';
+	echo '    </table>';
+	echo '  </div>';
+
 	echo '<div id="divBotoesDetalhaTarifa" style="text-align:center; display:block">';
 	echo '<br style="clear:both" />';
-	echo 	'<a href="#" class="botao" id="btIncluir"   onclick="mostraAtribuicaoDetalhamento(\'I\'); return false;" style="margin-left:115px">Incluir</a>';
+	echo 	'<a href="#" class="botao" id="btIncluir"   onclick="mostraAtribuicaoDetalhamento(\'I\'); return false;">Incluir</a>';
 	echo 	'<a href="#" class="botao" id="btAlterar"   onClick="mostraAtribuicaoDetalhamento(\'A\'); return false;">Alterar</a>';
 	echo 	'<a href="#" class="botao" id="btExcluir"   onClick="excluirDetAtribuicao()">Excluir</a>';
 	if ( $glbvars['cdcooper'] == 3) {
 		echo 	'<a href="#" class="botao" id="btReplicar"  onClick="mostraAtribuicaoDetalhamento(\'R\'); return false;">Replicar</a>';		
 	}
-	echo 	'<label class="txtNormalBold" style="margin-left:20px;margin-right:3px;" for="flgtodos">Lista Todos?:</label>';
-	echo 	'<input type="checkbox" id="flgtodos" name="flgtodos" value="<? echo $flgtodos <> \'TRUE\' ? \'FALSE\' : \'TRUE\' ?>" />';	
+	//echo 	'<label class="txtNormalBold" style="margin-left:20px;margin-right:3px;" for="flgtodos">Lista Todos?:</label>';
+	//echo 	'<input type="checkbox" id="flgtodos" name="flgtodos" value="<? echo $flgtodos <> \'TRUE\' ? \'FALSE\' : \'TRUE\' " />';
 	echo '<br style="clear:both" />';
 	echo '</div>';	
 
 ?>
+
+<script type="text/javascript">
+	
+	$('a.paginacaoAnt').unbind('click').bind('click', function() {
+
+		carregaAtribuicaoDetalhamento($('#cdfaixav','#frmDetalhaTarifa').val(), <? echo "'".($nriniseq - $nrregist)."'"; ?>, true);
+	});
+	$('a.paginacaoProx').unbind('click').bind('click', function() {
+
+		carregaAtribuicaoDetalhamento($('#cdfaixav','#frmDetalhaTarifa').val(), <? echo "'".($nriniseq + $nrregist)."'"; ?>, true);
+	});	
+	
+	$('#divPesquisaRodape', '#divTabDetalhamento').formataRodapePesquisa();
+</script>

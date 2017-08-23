@@ -6,12 +6,9 @@
  * OBJETIVO     : Mostrar tela CASH
  * --------------
  * ALTERAÇÕES   : 14/09/2012 - Implementação do novo layout (David Kruger).
- *                
+ *                25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos) 
  * --------------
  */
-?>
-
-<? 
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');	
@@ -34,7 +31,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="cash.js"></script>
+		<script type="text/javascript" src="cash.js?<?php echo mt_rand();?>"></script>
 		<script>
 			var dtmvtolt = '<?php echo $glbvars['dtmvtolt'] ?>';
 		</script>

@@ -47,7 +47,7 @@ function exibeErroNew($msgErro) {
 		<option value="A"><? echo utf8ToHtml(' A - Alterar Parâmetros da Esteira') ?></option>
     </select>
 		
-	<label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
+	  <label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
     <select id="tlcooper" name="tlcooper">
 		<option value="0"><? echo utf8ToHtml(' Todas') ?></option> 
 		<?php

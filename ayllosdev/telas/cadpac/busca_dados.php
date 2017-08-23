@@ -4,6 +4,7 @@
  * CRIAÇÃO      : Jaison
  * DATA CRIAÇÃO : 05/07/2016
  * OBJETIVO     : Rotina para buscar os dados
+ * ALTERACOES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  */
 
     session_start();
@@ -106,6 +107,7 @@
         echo "$('#cdorgins', '#frmCadpac').val('".getByTagName($registros->tags,'CDORGINS')."');";
         echo "$('#vlminsgr', '#frmCadpac').val('".getByTagName($registros->tags,'VLMINSGR')."');";
         echo "$('#vlmaxsgr', '#frmCadpac').val('".getByTagName($registros->tags,'VLMAXSGR')."');";
+		echo "$('#flmajora', '#frmCadpac').val('".getByTagName($registros->tags,'FLMAJORA')."');";
     }
 
     if ($cddopcao == 'C') {

@@ -1,11 +1,13 @@
 <?php
     /*
      * FONTE        : form_manter_carga.php
-     * CRIA��O      : Lucas Lombardi
-     * DATA CRIA��O : 25/07/2016
+     * CRIAÇÃO      : Lucas Lombardi
+     * DATA CRIAÇÃO : 25/07/2016
      * OBJETIVO     : Tela Bloquear Carga.
      * --------------
-     * ALTERA��ES   : 
+     * ALTERAÇÕES   : 
+     *
+     * 000: [11/07/2017] Alteração no controla de apresentação do cargas bloqueadas na opção "A", Melhoria M441. ( Mateus Zimmermann/MoutS )
      * --------------
      */
 	
@@ -65,7 +67,8 @@
 						<td width="50px">
 							<?php echo getByTagName($carga->tags,'idcarga'); ?>
 							<input type="hidden" id="hdn_idcarga" value="<?php echo getByTagName($carga->tags,'idcarga'); ?>" />
-						</td>
+							<input type="hidden" id="hdn_bloqueio" value="<?php echo getByTagName($carga->tags,'bloqueio'); ?>" />
+              </td>
 						<td width="300px"><?php echo getByTagName($carga->tags,'descricao'); ?></td>
 						<td width="70px"><?php echo getByTagName($carga->tags,'bloqueio'); ?></td>
 						<td width="60px"><?php echo getByTagName($carga->tags,'situacao'); ?></td>

@@ -13,11 +13,10 @@
  *
  *                30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
  *                             código do departamento ao invés da descrição (Renato Darosci - Supero)
+ *
+ *                25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
  * -------------- 
- */
-?> 
-
-<?	
+ */	
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -70,6 +69,8 @@
 	$nrlatitude     = (isset($_POST['nrlatitude']))    ? $_POST['nrlatitude']    : '' ;
 	$nrlongitude    = (isset($_POST['nrlongitude']))   ? $_POST['nrlongitude']   : '' ;
 	$dshorario      = (isset($_POST['dshorario']))     ? $_POST['dshorario']     : '' ;
+	
+	$flgntcem       = (isset($_POST['flgntcem']))      ? $_POST['flgntcem']   : 'no' ;
 
 	switch( $operacao ) {
 		case 'bloquear'	       : $procedure = 'Opcao_Transacao';  $cddoptrs = 'B'; break;
@@ -138,7 +139,7 @@
 	$xml .= '		<nmoperad>'.$glbvars['nmoperad'].'</nmoperad>';
 	$xml .= '		<cdprogra>'.$glbvars['cdprogra'].'</cdprogra>';	
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
-        $xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';	
+    $xml .= '       <cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';
@@ -165,6 +166,7 @@
 	$xml .= '		<lgagetfn>'.$lgagetfn.'</lgagetfn>';
 	$xml .= '		<dtmvtini>'.$dtmvtini.'</dtmvtini>';
 	$xml .= '		<dtmvtfim>'.$dtmvtfim.'</dtmvtfim>';
+	$xml .= '		<flgntcem>'.$flgntcem.'</flgntcem>';
 	$xml .= '		<tiprelat>'.$tiprelat.'</tiprelat>';
 	$xml .= '		<nmarqimp>'.$nmarqimp.'</nmarqimp>';
 	$xml .= '	</Dados>';

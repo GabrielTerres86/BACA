@@ -8,6 +8,8 @@
  * ALTERAÇÕES   : 17/09/2012 - Implementação do novo layout (David Kruger).
  *
  *				  18/11/2013 - Adicioando campo flgblsaq (Jorge).
+ *
+ *                25/07/2017 - #712156 Melhoria 274, inclusão do campo flgntcem (Carlos)
  *                
  * --------------
  */	
@@ -33,6 +35,7 @@
 	<input name="flsistaa" id="flsistaa" type="hidden" value="<? echo getByTagName($terminal,'flsistaa') ?>" />
 	<input name="dsterfin" id="dsterfin" type="hidden" value="<? echo getByTagName($terminal,'dsterfin') ?>" />
 	<input name="flgblsaq" id="flgblsaq" type="hidden" value="<? echo getByTagName($terminal,'flgblsaq') ?>" />
+	<input name="flgntcem" id="flgntcem" type="hidden" value="<? echo getByTagName($terminal,'flgntcem') ?>" />
 
 	<fieldset>
 	

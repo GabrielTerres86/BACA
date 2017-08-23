@@ -107,6 +107,7 @@ $(document).ready(function() {
 </div>	
 
 <div id="divBotoesfrmDetalhaTarifa" style="margin-bottom: 5px; text-align:center;" >
+	<br style="clear:both">
 	<a href="#" class="botao" id="btVoltar"  	onClick="<? echo 'fechaRotina($(\'#divRotina\')); carregaDetalhamento();'; ?> return false;">Voltar</a>
 	<a href="#" class="botao" id="btSalvar"  	onClick="<? echo 'fechaRotina($(\'#divRotina\')); carregaDetalhamento();'; ?> return false;">Concluir</a>
 	<a href="#" class="botao" id="btContinuar"  onClick="verificaLancLat(cddopdet);">Prosseguir</a>
