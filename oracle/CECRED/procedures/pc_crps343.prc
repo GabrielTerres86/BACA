@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS343(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Abril/2003.                     Ultima atualizacao: 19/12/2013
+   Data    : Abril/2003.                     Ultima atualizacao: 27/07/2017
 
    Dados referentes ao programa:
 
@@ -31,6 +31,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS343(pr_cdcooper  IN crapcop.cdcooper%T
                20/03/2007 - Corrigir atualizacao crapchd.nrctachq (Magui).
 
                19/12/2013 - Conversão Progress -> Oracle (Gabriel).
+               
+               27/07/2017 - #704386 Logar informações da chave única da tabela 
+                            crapchd ao falhar o insert e não interromper o 
+                            programa (Carlos)
 ............................................................................. */
   -- Variaveis de uso no programa
   vr_cdprogra crapprg.cdprogra%TYPE := 'CRPS343';  -- Codigo do presente programa
@@ -44,6 +48,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS343(pr_cdcooper  IN crapcop.cdcooper%T
   vr_lsdigctr        VARCHAR2(200);                -- Lista digitos do cmc7
   vr_cdcritic        crapcri.cdcritic%TYPE;        -- Codigo da critica
   vr_dscritic        VARCHAR2(2000);               -- Descricao da critica
+  vr_idprglog        NUMBER := 0;
   vr_exc_saida       EXCEPTION;                    -- Exeption parar cadeia
   vr_exc_fimprg      EXCEPTION;                    -- Exception para rodar fimprf
 
@@ -258,9 +263,21 @@ BEGIN
 
       -- Tratamento de erro na inserção
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro na inserção da crapchd. ' || sqlerrm;
-        RAISE vr_exc_saida;
-      END;
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E', 
+                               PR_CDPROGRAMA    => vr_cdprogra, 
+                               pr_cdcooper      => pr_cdcooper, 
+                               pr_tpocorrencia  => 2, 
+                               pr_cdcriticidade => 1, 
+                               pr_dsmensagem => 'Erro na inserção da crapchd. ' || sqlerrm ||
+                                                ' cdcooper: ' || pr_cdcooper         ||
+                                                ' dtmvtopr: ' || vr_dtmvtopr         ||
+                                                ' cdcmpchq: ' || rw_crapcdb.cdcmpchq ||
+                                                ' cdbanchq: ' || rw_crapcdb.cdbanchq ||
+                                                ' cdagechq: ' || rw_crapcdb.cdagechq ||
+                                                ' nrctachq: ' || vr_nrctachq         ||
+                                                ' nrcheque: ' || rw_crapcdb.nrcheque,
+                               PR_IDPRGLOG => vr_idprglog);
+    END;
 
   END LOOP;
 
@@ -314,4 +331,3 @@ EXCEPTION
 
 END PC_CRPS343;
 /
-

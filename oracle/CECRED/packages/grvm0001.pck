@@ -36,6 +36,24 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   -- 
   --              17/05/2017 - SD660300 - Ajuste nos parâmetros dos logs referente
   --						   ao GRAVAM. (Andrey Formigari - Mouts)
+  --
+  --              24/05/2017 - pc_gravames_baixa_manual - Ajuste mensagens: neste rotina são todas consideradas tpocorrencia = 4,
+  --                         - Substituição do termo "ERRO" por "ALERTA",
+  --                         - Padronização das mensagens para a tabela tbgen_prglog,
+  --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+  --                           (Ana - Envolti) - SD: 660319
+  --
+  --              29/05/2017 - pc_gravames_baixa_manual - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
+  --                         - Apresentar apenas nas exceptions (e na gravação da tabela TBGEN_PRGLOG)
+  --                           (Ana - Envolti) - SD: 660319
+  --
+  --              29/05/2017 - Alteração das demais rotinas da pck:
+  --                         - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+  --                         - Substituição do termo "ERRO" por "ALERTA",
+  --                         - Padronização das mensagens para a tabela tbgen_prglog,
+  --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+  --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+  --                           (Ana - Envolti) - SD: 660356 e 660394
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -328,9 +346,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
   --                           (Ana - Envolti) - SD: 660319
   --
-  --              29/05/2017 - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
+  --              29/05/2017 - pc_gravames_baixa_manual - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
   --                         - Apresentar apenas nas exceptions (e na gravação da tabela TBGEN_PRGLOG)
-  --                         (Ana - Envolti) - SD: 660319
+  --                           (Ana - Envolti) - SD: 660319
+  --
+  --              29/05/2017 - Alteração das demais rotinas da pck:
+  --                         - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+  --                         - Substituição do termo "ERRO" por "ALERTA",
+  --                         - Padronização das mensagens para a tabela tbgen_prglog,
+  --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+  --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+  --                           (Ana - Envolti) - SD: 660356 e 660394
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -371,7 +397,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     TYPE typ_tab_char_invalido IS TABLE OF VARCHAR2(1) INDEX BY VARCHAR2(1);
     vr_tab_char_invalido typ_tab_char_invalido;
             
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+  
   BEGIN
+ 	  --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.fn_valida_caracteres');
       
     vr_dsvalida := REPLACE(UPPER(pr_dsvalida),' ','');
     
@@ -436,7 +467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --  Sistema  : Rotinas genericas para GRAVAMES
     --  Sigla    : GRVM
     --  Autor    : Douglas Pagel
-    --  Data     : Dezembro/2013.                   Ultima atualizacao: 28/07/2016
+    --  Data     : Dezembro/2013.                   Ultima atualizacao: 29/05/2017
     --
     --  Dados referentes ao programa:
     --
@@ -447,6 +478,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --               28/07/2016 - Ajuste para retirar validação que verifica se contrato
     --                            esta em prejuízo
     --                            (Adriano - SD  495514)                         
+    --
+    --              29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+    --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+    --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+    --                         - Incluir nome do módulo logado em variável
+    --                         - Substituição da chamada da rotina gene0001.pc_gera_erro pela btch0001.pc_gera_log_batch
+    --                         - Retorno do erro para o parâmetro pr_dscritic 
+    --                         - Inclusão exception tratada vr_exc_erro
+    --                         - Substituída rotina gene0001.pc_gera_erro por raise vr_exec_erro
+    --                           (Ana - Envolti) - SD: 660356 e 660394
     -- .............................................................................
     -- CURSORES
 
@@ -493,7 +534,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     -- VARIÁVEIS
     vr_cdcritic PLS_INTEGER := 0; -- Variavel interna para erros
     vr_dscritic varchar2(4000) := ''; -- Variavel interna para erros
+
+    --Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION; 
+
+    -- Código do programa
+	  vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
     BEGIN
+  	  --Incluir nome do módulo logado - Chamado 660394
+	    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_valida_alienacao_fiduciaria');
+
       -- Verifica cooperativa
       OPEN cr_crapcop (pr_cdcooper);
       FETCH cr_crapcop
@@ -501,15 +552,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       IF cr_crapcop%NOTFOUND THEN
         pr_des_reto := 'NOK';
         vr_cdcritic := 794;
-        gene0001.pc_gera_erro(pr_cdcooper => 3
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
         CLOSE cr_crapcop;
-        RETURN;
+        RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapcop;
 
@@ -517,14 +561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       IF pr_nrdconta = 0 THEN
         pr_des_reto := 'NOK';
         vr_cdcritic := 0;
-        vr_dscritic := ' Informar o numero da Conta" ';
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        vr_dscritic := 'Informar o numero da Conta';
+        RAISE vr_exc_erro;
       END IF;
 
       OPEN cr_crapass (pr_cdcooper,
@@ -533,16 +571,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         INTO rw_crapass;
       IF cr_crapass%NOTFOUND THEN
         pr_des_reto := 'NOK';
-        vr_cdcritic := 9;
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        vr_cdcritic := 9;                 --009 - Associado nao cadastrado.
         CLOSE cr_crapass;
-        RETURN;
+        RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapass;
 
@@ -554,15 +585,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         vr_cdcritic := 356;
         vr_dscritic := '';
         pr_des_reto := 'NOK';
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
         CLOSE cr_crawepr;
-        RETURN;
+        RAISE vr_exc_erro;
       END IF;
 
       -- Verifica a linha de credito
@@ -574,15 +598,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         vr_cdcritic := 0;
         vr_dscritic := ' Linha de Credito invalida para essa operacao! ';
         pr_des_reto := 'NOK';
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
         CLOSE cr_craplcr;
-        RETURN;
+        RAISE vr_exc_erro;
       END IF;
       CLOSE cr_craplcr;
       
@@ -596,18 +613,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         vr_cdcritic := 0;
         vr_dscritic := ' Proposta sem Bem valido ou Bem nao encontado! ';
         pr_des_reto := 'NOK';
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
         CLOSE cr_crapbpr;
-        RETURN;
+        RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapbpr;
-
 
       CLOSE cr_crawepr;
       -- Se não ocorreram criticas anteriores, retorna OK e volta para o programa chamador
@@ -615,9 +624,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RETURN;
 
     EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Erro
+        --pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+
+        -- Se foi retornado apenas código
+        IF vr_cdcritic > 0 AND pr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+        --Padronização - Chamado 660394
+        --Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Mensagem
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ALERTA: '|| pr_dscritic ||
+                                                      ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                      ',Nrctrpro:'||pr_nrctrpro);
+
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro nao tratado na grvm0001.pc_valida_alienacao_fiduciaria';
+        pr_dscritic := 'Erro nao tratado na grvm0001.pc_valida_alienacao_fiduciaria --> '|| SQLERRM;
         pr_des_reto := 'NOK';
+
+        --Inclusão gravação erro nas tabelas 
+        --Padronização - Chamado 660394
+        --Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: ' || pr_dscritic  ||
+                                                      ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                      ',Nrctrpro:'||pr_nrctrpro);
+
+        --Inclusão na tabela de erros Oracle
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                     ,pr_compleme => pr_dscritic );
+
+
         RETURN;
     END; --  pc_valida_alienacao_fiduciaria
 
@@ -638,7 +688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --  Sistema  : Rotinas genericas para GRAVAMES
     --  Sigla    : GRVM
     --  Autor    : Douglas Pagel
-    --  Data    : Dezembro/2013                     Ultima Atualizacao: 02/04/2015
+    --  Data    : Dezembro/2013                     Ultima Atualizacao: 29/05/2017
     --
     --  Dados referentes ao programa:
     --
@@ -659,6 +709,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --
     --              02/04/2015 - (Chamado 271753) - Não enviar baixas de bens ao Gravames quando 
     --                           o contrato está em prejuízo (Tiago Castro - RKAM).
+    -- 
+    --              29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+    --                         - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+    --                         - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+    --                         - Incluir nome do módulo logado em variável
+    --                           (Ana - Envolti) - SD: 660356 e 660394
     -- .............................................................................
 
     -- VARIÁVEIS
@@ -667,6 +723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_dscritic VARCHAR2(4000);
     vr_tab_erro gene0001.typ_tab_erro;
 
+    -- Código do programa
+	  vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
 
   BEGIN
 /*
@@ -678,6 +736,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         RETURN;
     END IF;
 */
+
+	  --Incluir nome do módulo logado - Chamado 660394
+   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_solicita_baixa_automatica');
+
     -- Valida se eh alienacao fiduciaria
     pc_valida_alienacao_fiduciaria( pr_cdcooper => pr_cdcooper   -- Código da cooperativa
                                    ,pr_nrdconta => pr_nrdconta   -- Numero da conta do associado
@@ -688,10 +750,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     /** OBS: Sempre retornara OK pois a chamada da solicita_baixa_automatica
              nos CRPS171,CRPS078,CRPS120_1,B1WGEN0136, nesses casos nao pode
              impedir de seguir para demais contratos. **/
+
     IF vr_des_reto <> 'OK' THEN
       pr_des_reto := 'OK'; -- PASSA ok para o parametro de retorno
       RETURN; -- Retorna para o programa chamador.
     END IF;
+
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_solicita_baixa_automatica');
 
     -- Para cada bem da proposta
     OPEN cr_crapbpr(pr_cdcooper,
@@ -725,13 +791,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     END LOOP;
     CLOSE cr_crapbpr;
     pr_des_reto := 'OK';
+
     RETURN;
 
   EXCEPTION
       WHEN others THEN
+
         -- Gerar erro
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro na pc_solicita_baixa_automatica';
+        pr_dscritic := 'Erro na pc_solicita_baixa_automatica --> '|| SQLERRM;
+
+        --Inclusão gravação erro nas tabelas 
+        --Padronização - Chamado 660394
+        --Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: ' || pr_dscritic  ||
+                                                      ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                      ',Nrctrpro:'||pr_nrctrpro||',Dtmvtolt:'||pr_dtmvtolt);
+
+        --Inclusão na tabela de erros Oracle
+        CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                     ,pr_compleme => pr_dscritic );
+                       
         RETURN;
   END; -- pc_solicita_baixa_automatica;
 
@@ -742,13 +827,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                           ,pr_clobaux         IN OUT NOCOPY VARCHAR2           --> Varchar2 de Buffer para o arquivo
                                           ,pr_clobarq         IN OUT NOCOPY CLOB               --> CLOB para as informações do arquivo
                                           ,pr_nrseqreg        IN OUT NUMBER                    --> Sequncial das informações
+                                          ,pr_cdcooper        IN crapcob.cdcooper%type         --> Codigo da cooperativa
                                           ,pr_dscritic         OUT VARCHAR2) IS                 --> Saida de erro
   /* .............................................................................
      Programa: pc_gravames_gerac_arqs_bxa_cnc          Antigos: b1wgen0171.p/gravames_geracao_arquivo_baixa e gravames_geracao_arquivo_cancelamento
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  05/11/2014
+     Data    : Agosto/2013                     Ultima atualizacao:  29/05/2017
 
      Dados referentes ao programa:
 
@@ -756,11 +842,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Objetivo  : Gerar arquivos GRAVAMES - Baixa e Cancelamento
 
      Alteracoes: 05/11/2014 - Conversão Progress para Oracle (Marcos-Supero)
+     
+                 29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+                            - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                            - Incluir nome do módulo logado em variável
+                            - Inclusão do parâmetro pr_cdcooper para não gravar 0 na gera_log_batch
+                              (Ana - Envolti) - SD: 660356 e 660394
     ............................................................................. */
   BEGIN
     DECLARE
       vr_set_linha VARCHAR2(32767); --> Auxiliar para montagem da linha
+
+      -- Código do programa
+      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
     BEGIN
+	    --Incluir nome do módulo logado - Chamado 660394
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_gerac_arqs_bxa_cnc');
+
       -- Para o primeiro registro
       IF pr_flgfirst THEN
         -- Inicializar contador registros
@@ -899,9 +999,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Envio ao clob
         gene0002.pc_escreve_xml(pr_clobarq,pr_clobaux,vr_set_linha);
       END IF;
+
     EXCEPTION
       WHEN OTHERS THEN
         pr_dscritic := 'Erro na rotina GRVM0001.pc_gravames_gerac_arq_baixa -> '||SQLERRM;
+
+        --Padronização - Chamado 660394
+        -- Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: ' || pr_dscritic);
+
+        --Inclusão na tabela de erros Oracle
+        CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+
     END;
   END pc_gravames_gerac_arqs_bxa_cnc;
 
@@ -912,13 +1026,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                         ,pr_clobaux         IN OUT NOCOPY VARCHAR2           --> Varchar2 de Buffer para o arquivo
                                         ,pr_clobarq         IN OUT NOCOPY CLOB               --> CLOB para as informações do arquivo
                                         ,pr_nrseqreg        IN OUT NUMBER                    --> Sequncial das informações
+                                        ,pr_cdcooper        IN crapcob.cdcooper%type         --> Codigo da cooperativa
                                         ,pr_dscritic         OUT VARCHAR2) IS                 --> Saida de erro
   /* .............................................................................
      Programa: pc_gravames_gerac_arq_inclus          Antigo: b1wgen0171.p/gravames_geracao_arquivo_inclusao
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  28/11/2016
+     Data    : Agosto/2013                     Ultima atualizacao:  29/05/2017
 
      Dados referentes ao programa:
 
@@ -930,11 +1045,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                  28/11/2016 - Complemento do endereço da cooperativa nulo gera problema com layout
                               na Credicomin. Incluído NVL na geração do registro (SD#563418 - AJFink).
 
+                 29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+                            - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                            - Incluir nome do módulo logado em variável
+                            - Inclusão do parâmetro pr_cdcooper para não gravar 0 na gera_log_batch
+                              (Ana - Envolti) - SD: 660356 e 660394
     ............................................................................. */
   BEGIN
     DECLARE
       vr_set_linha VARCHAR2(32767); --> Auxiliar para montagem da linha
+
+      -- Código do programa
+      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
     BEGIN
+	    --Incluir nome do módulo logado - Chamado 660394
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_gerac_arq_inclus');
+
       -- Para o primeiro registro
       IF pr_flgfirst THEN
         -- Inicializar contador
@@ -1139,9 +1267,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Envio ao clob
         gene0002.pc_escreve_xml(pr_clobarq,pr_clobaux,vr_set_linha);
       END IF;
+
     EXCEPTION
       WHEN OTHERS THEN
         pr_dscritic := 'Erro na rotina GRVM0001.pc_gravames_gerac_arq_inclus -> '||SQLERRM;
+
+        --Padronização - Chamado 660394
+        -- Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: ' || pr_dscritic );
+
+        --Inclusão na tabela de erros Oracle
+        CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+
     END;
   END pc_gravames_gerac_arq_inclus;
 
@@ -1218,6 +1360,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               pois em alguns casos ele foi gravado em minusculo e outros em maisculo
                               (Adriano - SD 527336)
              
+                 29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+                            - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                            - Incluir nome do módulo logado em variável
+                            - Inclusão do parâmetro pr_cdcooper na chamada das rotinas gerac_arq_inlcus 
+                              e gerac_arqs_bxa_cnc, para não gravar 0 na gera_log_batch
+                              (Ana - Envolti) - SD: 660356 / 660394 / 664309
     ............................................................................. */
     DECLARE
 
@@ -1445,6 +1594,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           INDEX BY PLS_INTEGER;
       vr_tab_qtregarq typ_tab_qtregarq;
 
+      -- Código do programa
+      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
+      --Variável para complementar msg erro na exception
+      vr_dsparam VARCHAR2(1000);
+      
       -- Variaveis auxiliares
       vr_tab_dados_arquivo typ_tab_dados_arquivo; -- Tabela com as informações do arquivo
       vr_dsdchave VARCHAR2(20);          -- Chave da tabela composta por Cooper(5)+TpArquivo(1)+Sequencia(14)
@@ -1474,6 +1629,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       vr_exc_erro EXCEPTION;             -- Tratamento de exceção
 
     BEGIN
+	    --Incluir nome do módulo logado - Chamado 660394
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_geracao_arquivo');
+
       -- Validar existencia da cooperativa informada
       IF pr_cdcoptel <> 0 THEN
         OPEN cr_crapcop(pr_cdcoptel);
@@ -1490,10 +1648,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           -- Continuaremos
         END IF;
       END IF;
+
       -- Validar opção informada
       IF pr_tparquiv NOT IN('TODAS','INCLUSAO','BAIXA','CANCELAMENTO') THEN
         pr_cdcritic := 0;
-        pr_dscritic := ' Tipo invalido para Geracao do Arquivo! ';
+        pr_dscritic := 'Tipo invalido para Geracao do Arquivo! ';
         RAISE vr_exc_erro;
       END IF;
 
@@ -1523,6 +1682,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
 
       -- Buscar todas as informações de alienação e bens
       FOR rw_bpr IN cr_crapbpr LOOP
+        
+        --Guarda variáveis para complementar msg erro na exception
+        vr_dsparam := 'Nrdconta:'||rw_bpr.nrdconta||',Nrctremp:'||rw_bpr.nrctremp||
+                      'Nrcpfcgc:'||rw_bpr.nrcpfbem||',Inpessoa:'||rw_bpr.inpessoa;
+
         -- Quando escolhido todas, temos que avaliar o registro atual pra definir sua operação
         IF pr_tparquiv = 'TODAS' THEN
           -- Inclusão
@@ -1742,10 +1906,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         END;
 
       END LOOP;
-
       -- Se não gerou nenhuma informação
       IF vr_tab_dados_arquivo.count = 0 THEN
-        pr_dscritic := ' Dados nao encontrados! Arquivo nao gerado! ';
+        pr_dscritic := 'Dados nao encontrados! Arquivo nao gerado! ';
         RAISE vr_exc_erro;
       END IF;
 
@@ -1875,6 +2038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                         ,pr_clobaux         => vr_clobaux                        --> Varchar2 de Buffer para o arquivo
                                         ,pr_clobarq         => vr_clobarq                        --> CLOB para as informações do arquivo
                                         ,pr_nrseqreg        => vr_nrseqreg                       --> Quantidade total
+                                        ,pr_cdcooper        => pr_cdcooper                       --> Codigo da cooperativa
                                         ,pr_dscritic        => pr_dscritic);                     --> Saida de erro
         ELSIF vr_tab_dados_arquivo(vr_dsdchave).tparquiv = 'INCLUSAO' THEN
           pc_gravames_gerac_arq_inclus(pr_flgfirst        => vr_flgfirst                       --> Flag de primeiro registro
@@ -1883,6 +2047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                       ,pr_clobaux         => vr_clobaux                        --> Varchar2 de Buffer para o arquivo
                                       ,pr_clobarq         => vr_clobarq                        --> CLOB para as informações do arquivo
                                       ,pr_nrseqreg        => vr_nrseqreg                       --> Quantidade total
+                                      ,pr_cdcooper        => pr_cdcooper                       --> Codigo da cooperativa
                                       ,pr_dscritic        => pr_dscritic);                     --> Saida de erro
         END IF;
         -- Sair se houve erro
@@ -1892,7 +2057,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           -- Sair
           RAISE vr_exc_erro;
         END IF;
-
 
         -- Buscar o GRV para atualização
         OPEN cr_crapgrv (pr_cdcooper => vr_tab_dados_arquivo(vr_dsdchave).cdcooper
@@ -2029,12 +2193,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       END LOOP; -- Fim geração dos arquivos
       -- Fim da rotina, efetuamos gravação das informações alteradas
       COMMIT;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
-        
         -- Desfazer alterações
         ROLLBACK;
-        
         -- Se foi retornado apenas código
         IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
           -- Buscar a descrição
@@ -2044,12 +2207,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Incrementar a mensagem de erro
         pr_dscritic := pr_dscritic;
         
+        --Inclusão dos parâmetros apenas na exception, para não mostrar na tela - Chamado 660356
+        --Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Mensagem
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ALERTA: '|| pr_dscritic ||
+                                                      ',Cdcooper:'||pr_cdcooper||',Cdcoptel:'||pr_cdcoptel||
+                                                      ',Tparquiv:'||pr_tparquiv||',Dtmvtolt:'||pr_dtmvtolt||
+                                                      ','||vr_dsparam);
+        
       WHEN OTHERS THEN
         -- Desfazer alterações
         ROLLBACK;
         -- Retornar erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro GRVM0001.pc_gravames_geracao_arquivo -> '||SQLERRM;
+
+        --Padronização - Chamado 660394
+        -- Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: ' || pr_dscritic  ||
+                                                      ',Cdcooper:'||pr_cdcooper||',Cdcoptel:'||pr_cdcoptel||
+                                                      ',Tparquiv:'||pr_tparquiv||',Dtmvtolt:'||pr_dtmvtolt||
+                                                      ','||vr_dsparam);
+
+        --Inclusão na tabela de erros Oracle
+        CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+
     END;
   END pc_gravames_geracao_arquivo;
   
@@ -2066,13 +2257,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --  Sistema  : Rotinas genericas para GRAVAMES
     --  Sigla    : GRVM
     --  Autor    : Lucas Reinert
-    --  Data     : Agosto/2015.                   Ultima atualizacao: --/--/----
+    --  Data     : Agosto/2015.                   Ultima atualizacao: 29/05/2017
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Desfazer a solicitação de baixa automatica  do gravames
     --
-    --   Alteracoes: 
+    --   Alteracoes: 29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+    --                          - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+    --                          - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+    --                          - Incluir nome do módulo logado em variável
+    --                            (Ana - Envolti) - SD: 660356 e 660394
     -- .............................................................................
     DECLARE
        
@@ -2094,7 +2289,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            AND epr.nrctremp = pr_nrctrpro;
       rw_crapepr cr_crapepr%ROWTYPE;
       
+      -- Código do programa
+      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
     BEGIN
+	    --Incluir nome do módulo logado - Chamado 660394
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_desfazer_baixa_automatica');
+
       -- Verifica se existe contrato de emprestimo
       OPEN cr_crapepr;
       FETCH cr_crapepr INTO rw_crapepr;
@@ -2123,6 +2324,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Levanta crítica
         RAISE vr_exc_saida;
       END IF;
+            
+      --Incluir nome do módulo logado - Chamado 660394
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_desfazer_baixa_automatica');
             
       -- Atualiza a tabela de bens para desfazer a baixa
       UPDATE crapbpr bpr
@@ -2154,6 +2358,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
+
+        --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+        --Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Mensagem
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ALERTA: '|| vr_dscritic ||
+                                                      ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                      ',Nrctrpro:'||pr_nrctrpro);
+
         ROLLBACK;
       -- Críticas nao tratadas
       WHEN OTHERS THEN                                      
@@ -2169,13 +2385,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
                              
+
+        --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+        --Padronização - Chamado 660394
+        --Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratado
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: '|| vr_dscritic ||
+                                                      ',Cdcooper:'||pr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                      ',Nrctrpro:'||pr_nrctrpro);
+
+        --Inclusão na tabela de erros Oracle
+        CECRED.pc_internal_exception( pr_compleme => vr_dscritic );
+
         ROLLBACK;
 
     END;
   END pc_desfazer_baixa_automatica;
 
-  
-  
   PROCEDURE pc_busca_valida_contrato(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --Data de movimento
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta
                                     ,pr_cddopcao IN VARCHAR2              --Opção
@@ -2197,14 +2427,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao:
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Busca contratos
     
-    Alterações : 
+    --   Alteracoes: 29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+    --                          - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+    --                          - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+    --                          - Incluir nome do módulo logado em variável
+    --                            (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     CURSOR cr_propostas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -2255,13 +2489,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
-  BEGIN
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
     
+  BEGIN
     vr_nrregist := pr_nrregist;
     
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_busca_valida_contrato');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2355,6 +2590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     dbms_lob.createtemporary(vr_clob, TRUE);
     dbms_lob.open(vr_clob, dbms_lob.lob_readwrite); 
     
+   
     IF pr_nrctrpro <> 0 THEN
       
       pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
@@ -2379,6 +2615,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         --Levantar Excecao  
         RAISE vr_exc_erro;
         
+        --Incluir nome do módulo logado - Chamado 660394
+        GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_busca_valida_contrato');
+
       END IF; 
       
     ELSE
@@ -2393,17 +2632,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' -->  Operador '|| vr_cdoperad || ' - ' ||
-                                                      'ERRO: ' || vr_cdcritic || ' - ' ||
-                                                      '"' || vr_dscritic || '"' ||
-                                                      ' [gravames_busca_valida_contrato]' );
-       
-      
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: ' || vr_cdcritic || ' - ' ||'"' || vr_dscritic || '"' ||
+                                                    ',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Nrdconta:'||pr_nrdconta||
+                                                    ',Cddopcao:'||pr_cddopcao||',Cdagesel:'||pr_cdagesel);
         RAISE vr_exc_erro;
       
       END IF;
       
-    
     END IF;
                         
     pr_des_erro := 'OK';
@@ -2420,6 +2658,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
+
+        --Inclusão dos parâmetros apenas na exception, para não mostrar na tela - Chamado 660356
+        -- Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Mensagem
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: ' ||pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Nrdconta:'||pr_nrdconta||
+                                                    ',Cddopcao:'||pr_cddopcao||',Cdagesel:'||pr_cdagesel);
+
     WHEN OTHERS THEN   
       
       pr_des_erro := 'NOK';
@@ -2432,6 +2683,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
     
+      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+      --Padronização - Chamado 660394
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'gravam.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Nrdconta:'||pr_nrdconta||
+                                                    ',Cddopcao:'||pr_cddopcao||',Cdagesel:'||pr_cdagesel);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+   
   END pc_busca_valida_contrato;  
 
   PROCEDURE pc_gravames_consultar_bens(pr_nrdconta IN crapass.nrdconta%TYPE --Número da conta
@@ -2453,14 +2720,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao:
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Busca contratos
     
-    Alterações : 
+    --   Alteracoes: 29/05/2017 - Padronização das mensagens para a tabela tbgen_prglog,
+    --                          - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+    --                          - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+    --                          - Incluir nome do módulo logado em variável
+    --                            (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     --Cursor para encontrar os bens
@@ -2613,13 +2884,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
-  BEGIN
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
     
+  BEGIN
     vr_nrregist := pr_nrregist;
   
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_consultar_bens');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -2660,6 +2932,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
         
     END IF; 
+      
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_consultar_bens');
       
     IF pr_cddopcao = 'A' OR 
        pr_cddopcao = 'S' THEN
@@ -2707,7 +2982,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><Bens ' || vr_crapepr || '>');     
             
-                       
       --Busca as propostas
       FOR rw_propostas IN cr_propostas(pr_cdcooper => vr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta
@@ -2993,7 +3267,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       dbms_lob.createtemporary(vr_clob, TRUE);
       dbms_lob.open(vr_clob, dbms_lob.lob_readwrite); 
         
-      
     END IF;
                
     pr_des_erro := 'OK';
@@ -3010,6 +3283,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
+
+      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela - Chamado 660356
+      --Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 1 -- Mensagem
+                                ,pr_nmarqlog     => 'gravam.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Cddopcao:'||pr_cddopcao||',Nrctrpro:'||pr_nrctrpro||
+                                                    ',Nrgravam:'||pr_nrgravam||',Nrregist:'||pr_nrregist||
+                                                    ',Nriniseq:'||pr_nriniseq);
+
     WHEN OTHERS THEN   
       
       pr_des_erro := 'NOK';
@@ -3021,6 +3308,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
+    
+      --Padronização - Chamado 660394
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'gravam.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Cddopcao:'||pr_cddopcao||',Nrctrpro:'||pr_nrctrpro||
+                                                    ',Nrgravam:'||pr_nrgravam||',Nrregist:'||pr_nrregist||
+                                                    ',Nriniseq:'||pr_nriniseq);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
     
   END pc_gravames_consultar_bens;  
 
@@ -3051,7 +3354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 22/09/2016
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
@@ -3068,6 +3371,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               pois em alguns casos ele foi gravado em minusculo e outros em maisculo
                              (Adriano - SD 527336)
 
+                 29/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                            - Substituição do termo "ERRO" por "ALERTA",
+                            - Padronização das mensagens para a tabela tbgen_prglog,
+                            - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                            - Incluir nome do módulo logado em variável
+                              (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
@@ -3134,13 +3444,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+  
   BEGIN
-    
     vr_dstransa := 'Alterar o valor do gravames';
     
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_alterar_gravame');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -3219,6 +3530,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         
     END IF; 
       
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_alterar_gravame');
+      
     IF trim(pr_dschassi) IS NULL THEN
       
       vr_cdcritic:= 0;
@@ -3245,6 +3559,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               
     END IF;
     
+    --Retorna o módulo que está executando
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_alterar_gravame');
+
     IF trim(pr_nrdplaca) IS NULL THEN
       
       vr_cdcritic:= 0;
@@ -3538,14 +3855,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_alterar].');
-                 
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cddopcao:'||pr_cddopcao);
                                            
     WHEN OTHERS THEN   
       
@@ -3559,13 +3879,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
       
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_alterar].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
         
   END pc_alterar_gravame;  
 
@@ -3588,14 +3915,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao:
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realizar o cancelamento de gravames
     
-    Alterações : 
+    Alteracoes: 29/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                           - Substituição do termo "ERRO" por "ALERTA",
+                           - Padronização das mensagens para a tabela tbgen_prglog,
+                           - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                           - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                           - Incluir nome do módulo logado em variável
+                             (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
@@ -3657,11 +3990,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
   BEGIN
-    
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_cancelar');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -3703,6 +4037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                    ,pr_dscritic => vr_dscritic  -- Retorno da descricao da critica do erro
                                    ,pr_tab_erro => vr_tab_erro  -- Retorno da PlTable de erros
                                    );
+
     --Se ocorreu erro
     IF vr_des_reto <> 'OK' THEN
         
@@ -3720,6 +4055,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         
     END IF; 
       
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_cancelar');
+
     OPEN cr_crapbpr(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => pr_nrdconta
                    ,pr_tpctrpro => pr_tpctrpro
@@ -3806,14 +4144,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_cancelar].');
-                 
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cddopcao:'||pr_cddopcao);
                                            
     WHEN OTHERS THEN   
       
@@ -3821,19 +4162,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_alterar_gravame --> '|| SQLERRM;
+      pr_dscritic:= 'Erro na pc_gravames_cancelar --> '|| SQLERRM;
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
       
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_cancelar].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
         
   END pc_gravames_cancelar;  
 
@@ -3860,14 +4208,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao:
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realizar o bloqueio judicial do gravame
     
-    Alterações : 
+    Alteracoes: 29/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                           - Substituição do termo "ERRO" por "ALERTA",
+                           - Padronização das mensagens para a tabela tbgen_prglog,
+                           - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                           - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                           - Incluir nome do módulo logado em variável
+                             (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
@@ -3916,13 +4270,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
   BEGIN
-    
     vr_dstransa := 'Bloqueio ou Liberacao judicial do bem no gravames';
     
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_blqjud');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -3964,6 +4319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                    ,pr_dscritic => vr_dscritic  -- Retorno da descricao da critica do erro
                                    ,pr_tab_erro => vr_tab_erro  -- Retorno da PlTable de erros
                                    );
+
     --Se ocorreu erro
     IF vr_des_reto <> 'OK' THEN
         
@@ -3980,6 +4336,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
         
     END IF; 
+      
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_blqjud');
       
     IF TRIM(pr_dschassi) IS NULL OR 
        TRIM(pr_nrdplaca) IS NULL OR
@@ -4087,14 +4446,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_alterar].');
-                 
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cddopcao:'||pr_cddopcao);
                                            
     WHEN OTHERS THEN   
       
@@ -4107,14 +4469,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
-      
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_alterar].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cddopcao:'||pr_cddopcao);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
         
   END pc_gravames_blqjud;  
 
@@ -4132,7 +4500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                     ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                     ,pr_des_erro OUT VARCHAR2)IS          --Saida OK/NOK
                             
-  /*---------------------------------------------------------------------------------------------------------------
+  /*-------------------------------------------------------------------------------------------------------------------
     
     Programa : pc_gravames_baixa_manual                            antiga: b1wgen0171.gravames_baixa_manual
     Sistema  : Conta-Corrente - Cooperativa de Credito
@@ -4150,7 +4518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                            - Padronização das mensagens para a tabela tbgen_prglog,
                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
                            (Ana - Envolti) - SD: 660319
-  
+
                 29/05/2017 - Alteração para não apresentar os parâmetros nas mensagens exibidas em tela.
                            - Apresentar apenas nas exceptions (e na gravação da tabela TBGEN_PRGLOG)
                            (Ana - Envolti) - SD: 660319
@@ -4185,6 +4553,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crapepr.nrctremp = pr_nrctremp;
     rw_crapepr cr_crapepr%ROWTYPE;
       
+    -- Código do programa
+	  vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(4000);
@@ -4198,8 +4569,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-
-	vr_cdprogra VARCHAR2(50);
     
     vr_tab_erro gene0001.typ_tab_erro;
         
@@ -4210,11 +4579,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_exc_erro  EXCEPTION; 
   
   BEGIN
-	vr_cdprogra := 'GRAVAM';
-    
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => vr_cdprogra
-                              ,pr_action => 'pc_gravames_baixa_manual'); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_baixa_manual');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -4256,6 +4622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                    ,pr_dscritic => vr_dscritic  -- Retorno da descricao da critica do erro
                                    ,pr_tab_erro => vr_tab_erro  -- Retorno da PlTable de erros
                                    );
+
     --Se ocorreu erro
     IF vr_des_reto <> 'OK' THEN
         
@@ -4272,6 +4639,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
         
     END IF; 
+    
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_baixa_automatica');
     
     OPEN cr_crapbpr(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => pr_nrdconta
@@ -4331,11 +4701,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       --Levantar Excecao  
       RAISE vr_exc_erro;   
-      
     END IF;
       
     BEGIN
-        
       UPDATE crapbpr
          SET crapbpr.cdsitgrv = 4 -- Baixado
             ,crapbpr.flgbaixa = 1
@@ -4347,7 +4715,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       WHEN OTHERS THEN
         vr_cdcritic:= 0;
         vr_dscritic:= 'Nao foi possivel alterar o bem.';
-          
         --Levantar Excecao  
         RAISE vr_exc_erro; 
     END;
@@ -4367,8 +4734,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
-      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
-      --Ana - 29/05/2017
+      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela - Chamado 660356
       --Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 1 -- Mensagem
@@ -4378,8 +4744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                     'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
                                                     ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
                                                     ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
-                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv||
-                                                    ' [gravames_baixa_manual].');
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv);
                                            
     WHEN OTHERS THEN   
       
@@ -4393,6 +4758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
       
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -4402,9 +4768,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                     'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
                                                     ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
                                                     ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
-                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv||
-                                                    ' [gravames_baixa_manual].');
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv);
 
+      --Inclusão na tabela de erros Oracle
       CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
                        
         
@@ -4431,14 +4797,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao:
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realizar a inclusao manual do gravame
     
-    Alterações : 
+    Alteracoes: 29/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                           - Substituição do termo "ERRO" por "ALERTA",
+                           - Padronização das mensagens para a tabela tbgen_prglog,
+                           - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                           - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                           - Incluir nome do módulo logado em variável
+                             (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
@@ -4475,6 +4847,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crawepr.nrctremp = pr_nrctrpro;
     rw_crawepr cr_crawepr%rowtype;
     
+    -- Código do programa
+	  vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+   
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(4000);
@@ -4500,10 +4875,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     vr_exc_erro  EXCEPTION; 
   
   BEGIN
-    
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_inclusao_manual');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -4600,6 +4973,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         
     END IF; 
     
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_inclusao_manual');
+    
     OPEN cr_crapbpr(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => pr_nrdconta
                    ,pr_nrctrpro => pr_nrctrpro
@@ -4666,7 +5042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       ELSIF rw_crapbpr.cdsitgrv = 2 THEN
         
-        vr_dscritic := 'Contrato jao foi alienado' || vr_dsmensag || ' Verifique!'; 
+        vr_dscritic := 'Contrato ja foi alienado' || vr_dsmensag || ' Verifique!'; 
       
       ELSE
         
@@ -4728,14 +5104,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
+      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela - Chamado 660356
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_inclusao_manual].');
-                 
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv);
                                            
     WHEN OTHERS THEN   
       
@@ -4750,12 +5129,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
       
       -- Gera log
+      --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+      --Padronização - Chamado 660394
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_inclusao_manual].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: ' || pr_dscritic  ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Tpctrpro:'||pr_tpctrpro||
+                                                    ',Idseqbem:'||pr_idseqbem||',Cdsitgrv:'||rw_crapbpr.cdsitgrv);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
         
   END pc_gravames_inclusao_manual;  
 
@@ -4776,7 +5163,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 14/07/2016
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
@@ -4786,6 +5173,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Alterações : 14/07/2016 - Ajuste para ler a crapdat e enviar corretamente para a rotina
                               de geração do relatório
                               (Andrei - RKAM).
+
+                 29/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                           - Substituição do termo "ERRO" por "ALERTA",
+                           - Padronização das mensagens para a tabela tbgen_prglog,
+                           - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                           - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                           - Incluir nome do módulo logado em variável
+                             (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para encontrar o bem
@@ -4839,11 +5234,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+  
   BEGIN
-    
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_historico');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -5028,13 +5424,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_inclusao_manual].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Cdcoptel:'||pr_cdcoptel||
+                                                    ',Cddopcao:'||pr_cddopcao);
                  
                                            
     WHEN OTHERS THEN   
@@ -5048,14 +5448,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
-      
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_inclusao_manual].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: '|| pr_dscritic ||',Cdoperad:'||vr_cdoperad||
+                                                    ',Cdcooper:'||vr_cdcooper||',Nrdconta:'||pr_nrdconta||
+                                                    ',Nrctrpro:'||pr_nrctrpro||',Cdcoptel:'||pr_cdcoptel||
+                                                    ',Cddopcao:'||pr_cddopcao);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
         
   END pc_gravames_historico;  
 
@@ -5077,7 +5483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 22/09/2016
+    Data     : Maio/2016                         Ultima atualizacao: 29/05/2017
     
     Dados referentes ao programa:
     
@@ -5092,6 +5498,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               pois em alguns casos ele foi gravado em minusculo e outros em maisculo
                               (Adriano - SD 527336)
 
+                 29/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                            - Substituição do termo "ERRO" por "ALERTA",
+                            - Padronização das mensagens para a tabela tbgen_prglog,
+                            - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                            - Incluir nome do módulo logado em variável
+                            - Setar nome módulo no início do programa
+                              (Ana - Envolti) - SD: 660356 e 660394
     -------------------------------------------------------------------------------------------------------------*/                               
   
     -- Cursor para validacao da cooperativa conectada
@@ -5290,11 +5704,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --Variaveis de Excecoes
     vr_exc_erro  EXCEPTION; 
   
+    -- Código do programa
+    vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+  
   BEGIN
-    
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'GRAVAM'
-                              ,pr_action => null); 
+    --Incluir nome do módulo logado - Chamado 660394
+    GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_imp_relatorio');
     
     -- Recupera dados de log para consulta posterior
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -5432,19 +5847,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       IF cr_crapbpr%NOTFOUND THEN
         
+        --Padronização - Chamado 660394
         -- Gera log
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' -->  GRAVAM - ERRO: 0 - Erro na localizacao do Bem [' || 
-                                                      'Cop:' || to_char(rw_crapgrv_sem_retorno.cdcooper) || 
-                                                      'Cta:' || to_char(rw_crapgrv_sem_retorno.nrdconta) || 
-                                                      'Tip:' || to_char(rw_crapgrv_sem_retorno.tpctrpro) || 
-                                                      'Ctr:' || to_char(rw_crapgrv_sem_retorno.nrctrpro) || 
-                                                      'Chassi:' || to_char(rw_crapgrv_sem_retorno.dschassi) || 
-                                                      '][BPR_1] [pc_imprimir_relatorio_criticas]');  
-          
+                                                     ' - '||vr_cdprogra||' --> '|| 
+                                                     'ERRO: Erro na localizacao do Bem [' || 
+                                                     'Cop:' || to_char(rw_crapgrv_sem_retorno.cdcooper) || 
+                                                     'Cta:' || to_char(rw_crapgrv_sem_retorno.nrdconta) || 
+                                                     'Tip:' || to_char(rw_crapgrv_sem_retorno.tpctrpro) || 
+                                                     'Ctr:' || to_char(rw_crapgrv_sem_retorno.nrctrpro) || 
+                                                     'Chassi:' || to_char(rw_crapgrv_sem_retorno.dschassi)||'][BPR_1]');  
       END IF;                  
       
       --Fechar o cursor
@@ -5503,18 +5918,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       IF cr_crapbpr%NOTFOUND THEN
         
+        --Padronização - Chamado 660394
         -- Gera log
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' -->  GRAVAM - ERRO: 0 - Erro na localizacao do Bem [' || 
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: Erro na localizacao do Bem [' ||
                                                       'Cop:' || to_char(rw_crapgrv_sucesso.cdcooper) || 
                                                       'Cta:' || to_char(rw_crapgrv_sucesso.nrdconta) || 
                                                       'Tip:' || to_char(rw_crapgrv_sucesso.tpctrpro) || 
                                                       'Ctr:' || to_char(rw_crapgrv_sucesso.nrctrpro) || 
-                                                      'Chassi:' || to_char(rw_crapgrv_sucesso.dschassi) || 
-                                                      '][BPR_2] [pc_imprimir_relatorio_criticas]');  
+                                                      'Chassi:' || to_char(rw_crapgrv_sucesso.dschassi)||'][BPR_2]');  
           
       END IF;                   
       
@@ -5578,19 +5994,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       IF cr_crapbpr%NOTFOUND THEN
         
+        --Padronização - Chamado 660394
         -- Gera log
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_nmarqlog     => 'gravam.log'
                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' -->  GRAVAM - ERRO: 0 - Erro na localizacao do Bem [' || 
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: Erro na localizacao do Bem [' ||
                                                       'Cop:' || to_char(rw_crapgrv_erro.cdcooper) || 
                                                       'Cta:' || to_char(rw_crapgrv_erro.nrdconta) || 
                                                       'Tip:' || to_char(rw_crapgrv_erro.tpctrpro) || 
                                                       'Ctr:' || to_char(rw_crapgrv_erro.nrctrpro) || 
-                                                      'Chassi:' || to_char(rw_crapgrv_erro.dschassi) || 
-                                                      '][BPR_3] [pc_imprimir_relatorio_criticas]');  
-          
+                                                      'Chassi:' || to_char(rw_crapgrv_erro.dschassi)||'][BPR_3]');          
       END IF;                  
       
       --Fechar o cursor
@@ -5752,7 +6168,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       RAISE vr_exc_erro;
     END IF; 
 
-        
     --Fechar Clob e Liberar Memoria  
     dbms_lob.close(vr_clobxml);
     dbms_lob.freetemporary(vr_clobxml);  
@@ -5839,13 +6254,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
                                      
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- Mensagem
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_impressao_relatorio].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ALERTA: '|| pr_dscritic ||
+                                                    ',Cdcooper:'||vr_cdcooper||',Dtrefere:'||pr_dtrefere||
+                                                    ',Cdcoptel:'||pr_cdcoptel||',Nrseqlot:'||pr_nrseqlot||
+                                                    ',Tparquiv:'||pr_tparquiv||',Cddopcao:'||pr_cddopcao);
                  
                                            
     WHEN OTHERS THEN   
@@ -5860,13 +6279,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');     
       
+      --Padronização - Chamado 660394
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_nmarqlog     => 'gravam.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  GRAVAM '|| vr_cdoperad || ' - ' ||
-                                                    'ERRO: ' || pr_dscritic || ' [gravames_impressao_relatorio].');
+                                                    ' - '||vr_cdprogra||' --> '|| 
+                                                    'ERRO: '|| pr_dscritic ||
+                                                    ',Cdcooper:'||vr_cdcooper||',Dtrefere:'||pr_dtrefere||
+                                                    ',Cdcoptel:'||pr_cdcoptel||',Nrseqlot:'||pr_nrseqlot||
+                                                    ',Tparquiv:'||pr_tparquiv||',Cddopcao:'||pr_cddopcao);
+
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
         
   END pc_gravames_imp_relatorio;  
 
@@ -5884,7 +6310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Andrei/RKAM
-     Data    : Maio/2016                     Ultima atualizacao: 22/09/2016
+     Data    : Maio/2016                     Ultima atualizacao: 29/05/2017
 
      Dados referentes ao programa:
 
@@ -5908,6 +6334,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               pois em alguns casos ele foi gravado em minusculo e outros em maisculo
                               (Adriano - SD 527336)                              
                               
+                 29/05/2017 - Ajuste das mensagens: neste caso são todas consideradas tpocorrencia = 4,
+                            - Substituição do termo "ERRO" por "ALERTA",
+                            - Padronização das mensagens para a tabela tbgen_prglog,
+                            - Inclusão dos parâmetros na mensagem na gravação da tabela TBGEN_PRGLOG
+                            - Chamada da rotina CECRED.pc_internal_exception para inclusão do erro da exception OTHERS
+                            - Incluir nome do módulo logado em variável
+                              (Ana - Envolti) - SD: 660356 e 660394
     ............................................................................. */
     DECLARE
 
@@ -6027,7 +6460,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       vr_typ_saida VARCHAR2(100);
       vr_index_gravames VARCHAR2(70);
       
+      -- Código do programa
+      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'GRVM0001';
+      
     BEGIN
+	    --Incluir nome do módulo logado - Chamado 660394
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => 'GRVM0001.pc_gravames_processa_retorno');
       
       -- Validar opção informada
       IF pr_tparquiv NOT IN('TODAS','INCLUSAO','BAIXA','CANCELAMENTO') THEN
@@ -6205,13 +6643,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                     vr_cdcritic := 0;
                     vr_dscritic := 'ERRO na integracao do arquivo ' || vr_tab_crawarq(idx) || ' !';
                     
+                    --Padronização - Chamado 660394
                     -- Gera log
                     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                               ,pr_ind_tipo_log => 2 -- Erro tratato
                                               ,pr_nmarqlog     => 'gravam.log'
                                               ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                  ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                  'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');
+                                                                  ' - '||vr_cdprogra||' --> '|| 
+                                                                  'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                  ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                  ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
+                    --Inclusão na tabela de erros Oracle
+                    CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
                                                                                                                       
                     RAISE vr_proximo_arq;
                                      
@@ -6235,13 +6679,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                   vr_cdcritic := 0;
                   vr_dscritic := 'ERRO na integracao do arquivo ' || vr_tab_crawarq(idx) || ' ! [COOP/15]';
                   
+                  --Padronização - Chamado 660394
                   -- Gera log
                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                             ,pr_ind_tipo_log => 2 -- Erro tratato
                                             ,pr_nmarqlog     => 'gravam.log'
                                             ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');
+                                                                ' - '||vr_cdprogra||' --> '|| 
+                                                                'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
                      
                   
                   RAISE vr_proximo_arq;
@@ -6410,16 +6857,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         EXCEPTION
                           WHEN OTHERS THEN
                              vr_cdcritic := 0;
-                             vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr].';                                      
+                             vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr] -> '||SQLERRM;
                   
+                             --Padronização - Chamado 660394
                              -- Gera log
                              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                        ,pr_ind_tipo_log => 2 -- Erro tratato
                                                        ,pr_nmarqlog     => 'gravam.log'
                                                        ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                           ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                           'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');
+                                                                           ' - '||vr_cdprogra||' --> '|| 
+                                                                           'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                           ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                           ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
                   
+                             --Inclusão na tabela de erros Oracle
+                             CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
                         END;       
                       
                       END IF;
@@ -6436,15 +6888,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                       EXCEPTION
                         WHEN OTHERS THEN
                           vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr].';                                      
+                          vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr] -> '||SQLERRM;
                   
+                          --Padronização - Chamado 660394
                           -- Gera log
                           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                                     ,pr_nmarqlog     => 'gravam.log'
                                                     ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                        ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                        'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');   
+                                                                        ' - '||vr_cdprogra||' --> '|| 
+                                                                        'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                        ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                        ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
+                          --Inclusão na tabela de erros Oracle
+                          CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
                       END;       
                       
                     ELSIF vr_nmtiparq = 'C' THEN
@@ -6459,15 +6917,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                       EXCEPTION
                         WHEN OTHERS THEN
                           vr_cdcritic := 0;
-                          vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr].';                                      
+                          vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr] -> '||SQLERRM;                                      
                   
+                          --Padronização - Chamado 660394
                           -- Gera log
                           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                                     ,pr_nmarqlog     => 'gravam.log'
                                                     ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                        ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                        'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');       
+                                                                        ' - '||vr_cdprogra||' --> '|| 
+                                                                        'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                        ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                        ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
+                          --Inclusão na tabela de erros Oracle
+                          CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
                       END;       
                     
                     END IF;  
@@ -6484,15 +6948,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_cdcritic := 0;
-                        vr_dscritic := 'Erro ao atualizar o registro de gravame [crapgrv].';                                      
+                        vr_dscritic := 'Erro ao atualizar o registro de gravame [crapgrv] -> '||SQLERRM;                                      
                   
+                        --Padronização - Chamado 660394
                         -- Gera log
                         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                                   ,pr_nmarqlog     => 'gravam.log'
                                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                      ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                      'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');         
+                                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                                      'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                      ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                      ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
+                        --Inclusão na tabela de erros Oracle
+                        CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+
                     END;                     
                   
                   ELSE
@@ -6506,15 +6977,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_cdcritic := 0;
-                        vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr].';                                      
+                        vr_dscritic := 'Erro ao atualizar o registro de bens da prospota [crapbpr] -> '||SQLERRM; 
                   
+                        --Padronização - Chamado 660394
                         -- Gera log
                         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                                   ,pr_nmarqlog     => 'gravam.log'
                                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                      ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                      'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');       
+                                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                                      'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                      ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                      ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
+                        --Inclusão na tabela de erros Oracle
+                        CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+
                     END; 
                       
                     BEGIN
@@ -6529,15 +7007,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_cdcritic := 0;
-                        vr_dscritic := 'Erro ao atualizar o registro de gravame [crapgrv].';                                      
+                        vr_dscritic := 'Erro ao atualizar o registro de gravame [crapgrv] -> '||SQLERRM;                                      
                   
+                        --Padronização - Chamado 660394
                         -- Gera log
                         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                                   ,pr_nmarqlog     => 'gravam.log'
                                                   ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                      ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                      'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');         
+                                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                                      'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                      ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                      ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
+                        --Inclusão na tabela de erros Oracle
+                        CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
+
                     END;    
                          
                   END IF; 
@@ -6553,13 +7038,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                  ' Chassi: ' || vr_dschassi           ||
                                  ' nao Integrado! [BPR]';                                      
                     
+                  --Padronização - Chamado 660394
                   -- Gera log
                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                             ,pr_ind_tipo_log => 2 -- Erro tratato
                                             ,pr_nmarqlog     => 'gravam.log'
                                             ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                                ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                                'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');
+                                                                ' - '||vr_cdprogra||' --> '|| 
+                                                                'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                                ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                                ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
                     
                   
                 END IF;
@@ -6573,13 +7061,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                ' Chassi: ' || vr_dschassi           ||
                                ' nao Integrado! [GRV]';                                      
                   
+                --Padronização - Chamado 660394
                 -- Gera log
                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                           ,pr_ind_tipo_log => 2 -- Erro tratato
                                           ,pr_nmarqlog     => 'gravam.log'
                                           ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                              ' -->  GRAVAM '|| pr_cdoperad || ' - ' ||
-                                                              'ERRO: ' || vr_dscritic || ' [gravames_processamento_retorno].');
+                                                              ' - '||vr_cdprogra||' --> '|| 
+                                                              'ERRO: '|| vr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                              ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                              ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
                   
               END IF;
               
@@ -6651,6 +7142,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
 
+        --Inclusão dos parâmetros apenas na exception, para não mostrar na tela
+        --Padronização - Chamado 660394
+        -- Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Mensagem
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: '|| pr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                      ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                      ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
 		ROLLBACK;
         
       WHEN OTHERS THEN
@@ -6658,6 +7161,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         -- Retornar erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro GRVM0001.pc_gravames_processa_retorno -> '||SQLERRM;
+
+        --Padronização - Chamado 660394
+        -- Gera log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_nmarqlog     => 'gravam.log'
+                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                      ' - '||vr_cdprogra||' --> '|| 
+                                                      'ERRO: '|| pr_dscritic ||',Cdoperad:'||pr_cdoperad||
+                                                      ',Cdcooper:'||vr_cdcooper||',Dtmvtolt:'||pr_dtmvtolt||
+                                                      ',Cdcoptel:'||pr_cdcoptel||',Tparquiv:'||pr_tparquiv);
+
+        --Inclusão na tabela de erros Oracle
+        CECRED.pc_internal_exception( pr_compleme => pr_dscritic );
 
 		ROLLBACK;
 

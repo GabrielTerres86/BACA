@@ -18,6 +18,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   --
   --                 17/08/2016 - Inclusão de rotina para renovação de limite de cheque.
   --                 (Linhares - Projeto 300)
+  --                 
+  --                 08/08/2017 - Melhoria 438 - Majoracao automatica de limite de credito
+  --                              Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------
   --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
   TYPE typ_rec_dados_ctr 
@@ -196,6 +199,21 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
 
+  -- Rotina referente a consulta de ultimas alteracoes da tela ATENDA
+  PROCEDURE pc_ultimas_alteracoes(pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+  PROCEDURE pc_ultima_majoracao(pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                               ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 END LIMI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
@@ -3075,5 +3093,213 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   
     END pc_desblq_inclusao_bordero;
   
+    -- Rotina referente a consulta de ultimas alteracoes da tela ATENDA
+    PROCEDURE pc_ultimas_alteracoes(pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+      cursor c_ultimas_alteracoes(pr_cdcooper in crapcop.cdcooper%TYPE
+                                 ,pr_nrdconta in crapass.nrdconta%TYPE) is
+        select x.*
+             , COUNT(*) OVER (PARTITION BY cdcooper) qtdregis
+          from (
+        select c.cdcooper
+             , c.nrctrlim
+             , c.dtinivig
+             , c.dtfimvig
+             , c.vllimite
+             , 'CANCELADO' dssitlli
+             , case c.cdmotcan when 1 then 'ALT. DE LIMITE'
+                               when 2 then 'PELO ASSOCIADO'
+                               when 3 then 'PELA COOPERATIVA'
+                               when 4 then 'TRANSFERENCIA C/C'
+                               else 'DIFERENTE' end dsmotivo
+             , null dhalteracao
+          from craplim c
+         where c.cdcooper = pr_cdcooper
+           and c.nrdconta = pr_nrdconta
+           and c.tpctrlim = 1            
+           and c.insitlim = 3            
+           and c.nrctrlim <> 0
+        union
+        select t.cdcooper
+             , t.nrctrlim
+             , x.dtinivig
+             , x.dtfimvig
+             , x.vllimite
+             , 'MAJORACAO' dssitlli
+             , ('Limite - '||t.dsvalor_anterior||' --> '||t.dsvalor_novo) dsmotivo
+             , t.dhalteracao
+          from craplim x
+             , tblimcre_historico t
+         where x.cdcooper = t.cdcooper
+           and x.nrdconta = t.nrdconta
+           and x.nrctrlim = t.nrctrlim
+           and x.tpctrlim = t.tpctrlim
+           and t.nmcampo  = 'vllimite'
+           and t.cdcooper = pr_cdcooper
+           and t.nrdconta = pr_nrdconta
+           and t.tpctrlim = 1
+           and t.nrctrlim <> 0
+        union
+        select t.cdcooper
+             , t.nrctrlim
+             , x.dtinivig
+             , x.dtfimvig
+             , x.vllimite
+             , 'RENOVACAO' dssitlli
+             , ('Renovacao '||' - '||to_char(t.dhalteracao,'DD/MM/RRRR')) dsmotivo
+             , t.dhalteracao
+          from craplim x
+             , tblimcre_historico t
+         where x.cdcooper = t.cdcooper
+           and x.nrdconta = t.nrdconta
+           and x.nrctrlim = t.nrctrlim
+           and x.tpctrlim = t.tpctrlim
+           and t.nmcampo  = 'dtrenova'
+           and t.cdcooper = pr_cdcooper
+           and t.nrdconta = pr_nrdconta
+           and t.tpctrlim = 1
+           and t.nrctrlim <> 0
+        union
+        select x.cdcooper
+             , x.nrctrlim
+             , x.dtinivig
+             , NULL dtfimvig
+             , x.vllimite
+             , 'LIMITE ATIVO' dssitlli
+             , (' ') dsmotivo
+             , null dhalteracao
+          from craplim x
+         where x.cdcooper = pr_cdcooper
+           and x.nrdconta = pr_nrdconta
+           and x.tpctrlim = 1
+           and x.nrctrlim <> 0
+           and x.insitlim = 2) x
+        order
+           by dtfimvig desc, dhalteracao desc;
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(1000);
+      vr_contador      NUMBER(5) := 0;
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+    begin
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+      for r_ultimas_alteracoes in c_ultimas_alteracoes(vr_cdcooper, pr_nrdconta) loop
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => null, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrctrlim', pr_tag_cont => r_ultimas_alteracoes.nrctrlim, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtinivig', pr_tag_cont => to_char(r_ultimas_alteracoes.dtinivig,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtfimvig', pr_tag_cont => to_char(r_ultimas_alteracoes.dtfimvig,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vllimite', pr_tag_cont => r_ultimas_alteracoes.vllimite, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dssitlli', pr_tag_cont => r_ultimas_alteracoes.dssitlli, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsmotivo', pr_tag_cont => r_ultimas_alteracoes.dsmotivo, pr_des_erro => vr_dscritic);
+        vr_contador := vr_contador + 1;
+      end loop;
+    exception
+      when others then
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina Ultimas Alteracoes: ' || SQLERRM;
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    end pc_ultimas_alteracoes;
+    -- Rotina referente a consulta de ultimas alteracoes da tela ATENDA
+    PROCEDURE pc_ultima_majoracao(pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
+                                 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+      cursor c_ultima_majoracao(pr_cdcooper in crapcop.cdcooper%TYPE
+                               ,pr_nrdconta in crapass.nrdconta%TYPE) is
+        select trunc(t.dhalteracao) dtultmaj
+          from craplim x
+             , tblimcre_historico t
+         where x.cdcooper = t.cdcooper
+           and x.nrdconta = t.nrdconta
+           and x.nrctrlim = t.nrctrlim
+           and x.tpctrlim = t.tpctrlim
+           and t.nmcampo  = 'vllimite'
+           and t.cdcooper = pr_cdcooper
+           and t.nrdconta = pr_nrdconta
+           and t.tpctrlim = 1
+           and t.nrctrlim <> 0
+         order
+            by t.dhalteracao desc;
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(1000);
+      vr_contador      NUMBER(5) := 0;
+      vr_dtultmaj      DATE;
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+    begin
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => null, pr_des_erro => vr_dscritic);
+      open c_ultima_majoracao(vr_cdcooper, pr_nrdconta);
+      fetch c_ultima_majoracao into vr_dtultmaj;
+      if c_ultima_majoracao%notfound then
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtultmaj', pr_tag_cont => ' ', pr_des_erro => vr_dscritic);
+      else
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtultmaj', pr_tag_cont => to_char(vr_dtultmaj,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
+      end if;
+      close c_ultima_majoracao;
+    exception
+      when others then
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da Ultima Majoracao: ' || SQLERRM;
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    end pc_ultima_majoracao;
 END LIMI0001;
 /

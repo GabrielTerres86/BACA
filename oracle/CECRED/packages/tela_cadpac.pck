@@ -75,6 +75,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         ,pr_cdorgins     IN crapage.cdorgins%TYPE --> Codigo identificador do orgao pagador junto ao INSS-SICREDI
                         ,pr_vlminsgr     IN crapage.vlminsgr%TYPE --> Contem o valor minimo para efetuar a sangria de caixa
                         ,pr_vlmaxsgr     IN crapage.vlmaxsgr%TYPE --> Contem o valor maximo para efetuar a sangria de caixa
+                        ,pr_flmajora     IN crapage.flmajora%TYPE --> Contem o identificador de Majoracao habilitada
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -141,7 +142,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela CADPAC
   --
-  -- Alteracoes:
+  -- Alteracoes: 08/08/2017 - Inclusao de flag de majoracao, melhoria 438
+  --                          Heitor (Mouts)
   --
   ---------------------------------------------------------------------------
   
@@ -217,7 +219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,dsemasit crapage.dsemasit%TYPE
          ,dshorsit crapage.dshorsit%TYPE
          ,nrlatitu crapage.nrlatitu%TYPE
-         ,nrlongit crapage.nrlongit%TYPE);
+         ,nrlongit crapage.nrlongit%TYPE
+         ,flmajora crapage.flmajora%TYPE);
 
   -- Definicao do tipo de tabela registro
   TYPE typ_tab_crapage IS TABLE OF typ_reg_crapage INDEX BY PLS_INTEGER;
@@ -321,6 +324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.dshorsit
               ,crapage.nrlatitu
               ,crapage.nrlongit
+              ,crapage.flmajora
           FROM crapage
          WHERE crapage.cdcooper = pr_cdcooper
            AND crapage.cdagenci = pr_cdagenci;
@@ -559,6 +563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).dshorsit := rw_crapage.dshorsit;
         pr_tab_crapage(pr_cdagenci).nrlatitu := rw_crapage.nrlatitu;
         pr_tab_crapage(pr_cdagenci).nrlongit := rw_crapage.nrlongit;
+        pr_tab_crapage(pr_cdagenci).flmajora := rw_crapage.flmajora;
 
       END IF;
 
@@ -1181,6 +1186,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_nova => 'nrlongit'
                               ,pr_tag_cont => (CASE WHEN vr_tab_crapage(pr_cdagenci).nrlongit <> 0 THEN REPLACE(vr_tab_crapage(pr_cdagenci).nrlongit,',','.') ELSE '' END)
                               ,pr_des_erro => vr_dscritic);
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
+                              ,pr_tag_nova => 'flmajora'
+                              ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).flmajora
+                              ,pr_des_erro => vr_dscritic);
       END IF;
 
     EXCEPTION
@@ -1350,6 +1361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         ,pr_cdorgins     IN crapage.cdorgins%TYPE --> Codigo identificador do orgao pagador junto ao INSS-SICREDI
                         ,pr_vlminsgr     IN crapage.vlminsgr%TYPE --> Contem o valor minimo para efetuar a sangria de caixa
                         ,pr_vlmaxsgr     IN crapage.vlmaxsgr%TYPE --> Contem o valor maximo para efetuar a sangria de caixa
+                        ,pr_flmajora     IN crapage.flmajora%TYPE --> Contem o identificador de Majoracao habilitada
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -2573,6 +2585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.cdorgins = pr_cdorgins
                 ,crapage.vlminsgr = pr_vlminsgr
                 ,crapage.vlmaxsgr = pr_vlmaxsgr
+                ,crapage.flmajora = pr_flmajora
            WHERE crapage.cdcooper = vr_cdcooper
              AND crapage.cdagenci = pr_cdagenci;
 
@@ -2758,7 +2771,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,vlmaxsgr
                      ,nrordage
                      ,cddsenha
-                     ,dtaltsnh)
+                     ,dtaltsnh
+                     ,flmajora)
                VALUES(vr_cdcooper
                      ,pr_cdagenci
                      ,pr_nmextage
@@ -2809,7 +2823,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,pr_vlmaxsgr
                      ,pr_cdagenci
                      ,pr_cdagenci
-                     ,TRUNC(SYSDATE));
+                     ,TRUNC(SYSDATE)
+                     ,pr_flmajora);
 
         EXCEPTION
           WHEN OTHERS THEN
@@ -3410,6 +3425,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).vlmaxsgr,'FM999G999G999G990D00') ELSE '-' END)
                  ,pr_vldepois => TO_CHAR(pr_vlmaxsgr,'FM999G999G999G990D00'));
 
+      pc_item_log(pr_cdcooper => vr_cdcooper
+                 ,pr_cddopcao => pr_cddopcao
+                 ,pr_cdoperad => vr_cdoperad
+                 ,pr_cdagenci => pr_cdagenci
+                 ,pr_dsdcampo => 'Flag Majoracao'
+                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).flmajora) ELSE '-' END)
+                 ,pr_vldepois => TO_CHAR(pr_flmajora));
       -- Se NAO encontrou registro, cria um vazio
       IF NOT vr_tab_crapage.EXISTS(pr_cdagenci) THEN
         vr_tab_crapage(pr_cdagenci).nmresage := ' ';

@@ -63,12 +63,19 @@ BEGIN
                  16/02/2016 - Inclusão da coluna "Bloqueado" no relatorio de carga do pre-aprovado.
                               Alterado para no somatório de limites de cartão de crédito da adm. Bancoob,
                               considerar apenas os cartões cuja situação esteja [4 - em uso] (Anderson)
-                              
+
                  12/07/2016 - Pre-Aprovado fase III. (Lombardi)
 
-				 03/02/2017 - Inclusao de mais um digito no campo de telefone do arquivo de pre-aprovado.
-				              Andrey (Mouts) - Chamado 577203
-                              
+         03/02/2017 - Inclusao de mais um digito no campo de telefone do arquivo de pre-aprovado.
+                      Andrey (Mouts) - Chamado 577203
+
+                 19/06/2017 - Melhoria 441
+                      - Nova regra de validação : verificar se a conta corrente do cooperado possui
+                        uma carga manual vigente e liberada. (crítica 51-Carga Manual).
+                      - Armazenamento de atributos de decisão. Todas as críticas deverão ser feitas e as
+                        informações utilizadas deverão ser armazenadas para consultas posteriores.
+
+
   ............................................................................ */
 
   DECLARE
@@ -128,7 +135,7 @@ BEGIN
                   else 'NAO'
              end bloqueado
             ,cdsitdtl
-        FROM crapass ass        
+        FROM crapass ass
    LEFT JOIN tbepr_param_conta par
           ON par.cdcooper = ass.cdcooper
          AND par.nrdconta = ass.nrdconta
@@ -147,11 +154,11 @@ BEGIN
              qtmesemp, qtctaatr, qtepratr, qtestour, qtdiaest,
              dslstali, qtdevolu, qtdiadev, qtavlatr, vlavlatr,
              qtavlope, qtcjgatr, vlcjgatr, qtcjgope, qtdiaver
-        FROM crappre                      
-       WHERE cdcooper = pr_cdcooper       
-         AND inpessoa = pr_inpessoa;      
-    rw_crappre_pf cr_crappre%ROWTYPE;     
-    rw_crappre_pj cr_crappre%ROWTYPE;     
+        FROM crappre
+       WHERE cdcooper = pr_cdcooper
+         AND inpessoa = pr_inpessoa;
+    rw_crappre_pf cr_crappre%ROWTYPE;
+    rw_crappre_pj cr_crappre%ROWTYPE;
 
     -- Risco com divida (Valor Arrasto)
     CURSOR cr_ris_comdiv(pr_cdcooper IN crapris.cdcooper%TYPE
@@ -379,7 +386,7 @@ BEGIN
                       pr_nrdconta IN crapcyb.nrdconta%TYPE,
                       pr_cdorigem VARCHAR2,
                       pr_qtdiaatr IN crapcyb.qtdiaatr%TYPE) IS
-      SELECT qtdiaatr
+      SELECT qtdiaatr,vlpreapg
         FROM crapcyb
        WHERE crapcyb.cdcooper = pr_cdcooper
          AND crapcyb.nrdconta = pr_nrdconta
@@ -429,7 +436,7 @@ BEGIN
          AND crapneg.dtiniest >= pr_dtiniest
          AND (pr_cdobserv = '0'
           OR ','||pr_cdobserv||',' LIKE ('%,'||crapneg.cdobserv||',%'));
-    
+
     -- Buscar informacoes de operacoes como avalista
     CURSOR cr_avalist_qtd (pr_cdcooper crapneg.cdcooper%TYPE
                           ,pr_nrdconta crapneg.nrdconta%TYPE) IS
@@ -466,7 +473,7 @@ BEGIN
          AND cyb.cdorigem IN (2,3)
          AND cyb.dtdbaixa IS NULL;
     rw_conjuge_qtd cr_conjuge_qtd%ROWTYPE;
-    
+
     -- Busca operacoes inclusas
     CURSOR cr_opera_inclusas (pr_cdcooper crapneg.cdcooper%TYPE
                              ,pr_nrdconta crapneg.nrdconta%TYPE
@@ -478,7 +485,7 @@ BEGIN
          AND epr.dtmvtolt >= trunc(SYSDATE) - pr_qtdiaver
          AND epr.inliquid = 0;
     rw_opera_inclusas cr_opera_inclusas%ROWTYPE;
-    
+
     -- Buscar dados dos riscos do pre-aprovado
     CURSOR cr_riscos IS
       SELECT epr.cdcooper
@@ -496,7 +503,7 @@ BEGIN
          JOIN tbepr_linha_pre_aprv epr
            ON epr.cdrisco = ris.cdrisco
         ORDER BY epr.cdcooper, epr.inpessoa, ris.dsrisco;
-    
+
     -- Busca dados do cooperado de todas as agencias pelo cpf/cnpj
     CURSOR cr_crapass_cpfcnpj (pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
       select ass.cdcooper
@@ -507,16 +514,36 @@ BEGIN
         from crapass ass
        where ass.nrcpfcgc = pr_nrcpfcgc
          and ass.cdsitdct in (1,3,5,6,9);
-    
+
     -- Verifica se pre aprovado esta liberado
     CURSOR cr_param_conta (pr_cdcooper crapneg.cdcooper%TYPE
                           ,pr_nrdconta crapneg.nrdconta%TYPE) IS
       SELECT flglibera_pre_aprv
-        FROM tbepr_param_conta 
+        FROM tbepr_param_conta
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta;
     rw_param_conta cr_param_conta%ROWTYPE;
-    
+
+  -- Verifica se existe uma carga manual vigente e liberada
+    CURSOR cr_crapcap_manual (pr_cdcooper crapneg.cdcooper%TYPE
+                             ,pr_nrdconta crapneg.nrdconta%TYPE) IS
+          SELECT 1
+          FROM tbepr_carga_pre_aprv carga
+         WHERE carga.cdcooper           = 3
+           AND carga.indsituacao_carga  = 1 -- Gerada
+           AND carga.flgcarga_bloqueada = 0 -- Liberada
+           AND carga.tpcarga            = 1 -- Manual
+           AND (carga.dtfinal_vigencia IS NULL
+            OR  carga.dtfinal_vigencia >= TRUNC(SYSDATE))
+           AND EXISTS (SELECT 1 -- Cargas que a conta está relacionada
+                         FROM crapcpa cpa
+                        WHERE cpa.cdcooper = pr_cdcooper
+                          AND cpa.nrdconta = pr_nrdconta
+                          AND cpa.iddcarga = carga.idcarga);
+
+    rw_crapcap_manual cr_crapcap_manual%ROWTYPE;
+
+
     -- Verifica se cooperado esta inserido na tela Alerta
     CURSOR cr_crapcrt (pr_nrcpfcgc crapcrt.nrcpfcgc%TYPE) IS
       SELECT 1
@@ -525,7 +552,7 @@ BEGIN
          AND cdsitreg = 1 /* Inserido */
          AND ROWNUM = 1;
     rw_crapcrt cr_crapcrt%ROWTYPE;
-    
+
     -- Busca titular da conta com operação em Prejuízo
     CURSOR cr_titopepre (pr_cdcooper crapneg.cdcooper%TYPE
                         ,pr_nrdconta crapneg.nrdconta%TYPE) IS
@@ -533,11 +560,11 @@ BEGIN
         from crapepr epr
        where epr.cdcooper = pr_cdcooper
          and epr.nrdconta = pr_nrdconta
-         and epr.vlsdprej > 0 
+         and epr.vlsdprej > 0
          and epr.inprejuz = 1
          and rownum = 1;
     rw_titopepre cr_titopepre%ROWTYPE;
-    
+
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     -- Tabela temporaria para os tipos de risco
     TYPE typ_reg_craptab IS RECORD(dsdrisco craptab.dstextab%TYPE);
@@ -551,14 +578,14 @@ BEGIN
     TYPE typ_tab_cpfcnpj IS TABLE OF typ_reg_cpfcnpj INDEX BY VARCHAR2(14);
     -- Vetor para armazenar os CPF/CNPJ
     vr_tab_cpfcnpj typ_tab_cpfcnpj;
-    
+
     -- Tabela temporaria para os Riscos
     TYPE typ_reg_risco IS RECORD(vllimite tbepr_linha_pre_aprv.vllimite%TYPE
                                 ,cdlcremp tbepr_linha_pre_aprv.cdlcremp%TYPE);
     TYPE typ_tab_risco IS TABLE OF typ_reg_risco INDEX BY VARCHAR2(10);
     -- Vetor para armazenar os Riscos
     vr_tab_risco typ_tab_risco;
-    
+
     ------------------------------- VARIAVEIS -------------------------------
     vr_tipessoa    VARCHAR2(2);           --> Sigla Tipo de pessoa
     vr_cdsitdct    crappre.dssitdop%TYPE; --> Situacoes das contas
@@ -655,6 +682,14 @@ BEGIN
     vr_tab_erro    GENE0001.typ_tab_erro;
     vr_tab_crapras RATI0001.typ_tab_crapras;
 
+    --- Melhoria 441 - Melhorias Pré-aprovado (21/06/2017 - Holz)
+    vr_tab_det tbepr_carga_pre_aprv_det%ROWTYPE;
+    vr_cpa_com_erro  varchar2(1);
+    vr_dtnasttl      date;
+    vr_vlsalari      crapttl.vlsalari%TYPE;
+    vr_vlparcav_tit  number;
+    ---
+
     --------------------------- SUBROTINAS INTERNAS --------------------------
     -- Calcula os Rendimentos do Associado
     PROCEDURE pc_consulta_rendimentos(pr_cdcooper IN crapttl.cdcooper%TYPE
@@ -663,7 +698,9 @@ BEGIN
                                      ,pr_flgmaior OUT BOOLEAN
                                      ,pr_vltotren OUT NUMBER
                                      ,pr_dtadmemp OUT DATE
-                                     ,pr_tpcttrab OUT NUMBER) IS
+                                     ,pr_tpcttrab OUT NUMBER
+                                     ,pr_dtnasttl OUT DATE
+                                     ,pr_vlsalari OUT crapttl.vlsalari%TYPE) IS
     BEGIN
 
       DECLARE
@@ -679,12 +716,17 @@ BEGIN
         vr_flgachou := cr_crapttl%FOUND;
         CLOSE cr_crapttl;
         -- Se nao achou
+
         IF NOT vr_flgachou THEN
           pr_flgmaior := FALSE;
           pr_vltotren := 0;
           pr_dtadmemp := NULL;
           pr_tpcttrab := 0;
+          pr_dtnasttl := null;
+          pr_vlsalari := 0;
         ELSE
+          pr_dtnasttl := rw_crapttl.dtnasttl;
+          pr_vlsalari := rw_crapttl.vlsalari;
           vr_numdanos := TRUNC((SYSDATE - rw_crapttl.dtnasttl) / 365, 0);
           IF vr_numdanos >= 18 AND vr_numdanos <= 69 THEN
             pr_flgmaior := TRUE;
@@ -711,7 +753,7 @@ BEGIN
                                  pr_insitcar IN tbepr_carga_pre_aprv.indsituacao_carga%TYPE,
                                  pr_flgexpor IN PLS_INTEGER) IS --> Flag de controle de exportacao para SPC/Serasa
     BEGIN
-    	-- Caso NAO seja uma exportacao para SPC/Serasa
+      -- Caso NAO seja uma exportacao para SPC/Serasa
       IF pr_flgexpor = 0 THEN
         BEGIN
           UPDATE tbepr_carga_pre_aprv
@@ -733,7 +775,7 @@ BEGIN
                                pr_dsvalor  IN tbepr_motivo_nao_aprv.dsvalor%TYPE) IS
     BEGIN
 
-    	-- Seta como Bloqueado o Credito Pre Aprovado e Zera o Total Calculado
+      -- Seta como Bloqueado o Credito Pre Aprovado e Zera o Total Calculado
       BEGIN
         INSERT INTO tbepr_motivo_nao_aprv (cdcooper,nrdconta,idcarga,idmotivo,dsvalor)
              VALUES (pr_cdcooper,pr_nrdconta,pr_idcarga,pr_idmotivo,pr_dsvalor);
@@ -766,13 +808,13 @@ BEGIN
       vr_dscritic := 'Data Base Bacen nao encontrada!';
       RAISE vr_exc_saida;
     END IF;
-    
+
     -- Carrega os riscos
     FOR rw_riscos IN cr_riscos LOOP
       vr_tab_risco(rw_riscos.cdcooper || rw_riscos.inpessoa || rw_riscos.dsrisco).vllimite := rw_riscos.vllimite;
       vr_tab_risco(rw_riscos.cdcooper || rw_riscos.inpessoa || rw_riscos.dsrisco).cdlcremp := rw_riscos.cdlcremp;
     END LOOP;
-    
+
     -- Listagem de cooperativas
     FOR rw_crapcop IN cr_crapcop(pr_cdcooper => pr_cdcooper) LOOP
 
@@ -813,7 +855,7 @@ BEGIN
             vr_dscritic := 'Parametrizacao PF nao encontrada!';
             RAISE vr_exc_saida;
           END IF;
-          
+
           -- Listagem de parametros PJ
           OPEN cr_crappre(pr_cdcooper => rw_crapcop.cdcooper
                          ,pr_inpessoa => 2);
@@ -826,7 +868,7 @@ BEGIN
             vr_dscritic := 'Parametrizacao PJ nao encontrada!';
             RAISE vr_exc_saida;
           END IF;
-          
+
           -- Caso NAO seja uma exportacao para SPC/Serasa
           IF pr_flgexpor = 0 THEN
             -- Exclui as cargas bloqueadas
@@ -851,7 +893,7 @@ BEGIN
                               ,pr_insitcar => 3 -- Executando
                               ,pr_flgexpor => pr_flgexpor);
             COMMIT;
-            
+
             -- Habilitar contas suspensas PF
             EMPR0002.pc_habilita_contas_suspensas (pr_cdcooper => rw_crapcop.cdcooper
                                                   ,pr_inpessoa => 1
@@ -861,7 +903,7 @@ BEGIN
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
-            
+
             -- Habilitar contas suspensas PJ
             EMPR0002.pc_habilita_contas_suspensas (pr_cdcooper => rw_crapcop.cdcooper
                                                   ,pr_inpessoa => 2
@@ -872,7 +914,7 @@ BEGIN
               RAISE vr_exc_saida;
             END IF;
           END IF;
-          
+
           -- Caso NAO seja uma exportacao para SPC/Serasa
           IF pr_flgexpor = 0 THEN
             -- Busca do diretorio base da cooperativa e a subpasta de relatorios
@@ -1060,8 +1102,20 @@ BEGIN
               FOR rw_crapass IN cr_crapass(pr_cdcooper => rw_crapcop.cdcooper
                                           ,pr_inpessoa => vr_inpessoa
                                           ,pr_cdsitdct => vr_cdsitdct) LOOP
-                
-	              -- Cooperativa Libera Crédito Pré-Aprovado
+                -- inicializando as variaveis para controle de gravação da tbepr_carga_pre_aprv_det (M441-Holz)
+--                if rw_crapass.nrdconta = 199494 then
+--                   dbms_output.put_line('Talvez');
+--                end if;
+--                dbms_output.put_line(to_char(rw_crapass.nrdconta));
+                vr_tab_det := null;
+                vr_cpa_com_erro := 'N';
+                vr_tab_det.cdcooper := rw_crapass.cdcooper;
+                vr_tab_det.nrdconta := rw_crapass.nrdconta;
+                vr_tab_det.idcarga := vr_idcarga;
+                --
+
+                -- Cooperativa Libera Crédito Pré-Aprovado
+                rw_param_conta.flglibera_pre_aprv := NULL;  -- anulando para gravar correto na detalhes quando não acha
                 OPEN cr_param_conta (rw_crapcop.cdcooper, rw_crapass.nrdconta);
                 FETCH cr_param_conta INTO rw_param_conta;
                 vr_flgachou := cr_param_conta%FOUND;
@@ -1076,14 +1130,38 @@ BEGIN
                                     ,pr_idmotivo => 35 -- Bloqueio da Cooperativa
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+                vr_tab_det.flglibera_pre_aprv := rw_param_conta.flglibera_pre_aprv;
+
+        -- Cooperado possui carga manual vigente e liberada
+                OPEN cr_crapcap_manual (rw_crapcop.cdcooper, rw_crapass.nrdconta);
+                FETCH cr_crapcap_manual INTO rw_crapcap_manual;
+                vr_flgachou := cr_crapcap_manual%FOUND;
+                CLOSE cr_crapcap_manual;
+                -- se cooperado possui carga manual vigente e liberada
+                vr_tab_det.flgcarga_manual_ativa := 0;
+                IF vr_flgachou THEN
+                  -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
+                  IF pr_flgexpor = 0 THEN
+                    pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
+                                    ,pr_nrdconta => rw_crapass.nrdconta
+                                    ,pr_idcarga  => vr_idcarga
+                                    ,pr_idmotivo => 51 -- Carga Manual
+                                    ,pr_dsvalor  => '');
+                  END IF;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
+                  vr_tab_det.flgcarga_manual_ativa := 1;
+                END IF;
+
                 -- Titular cadastrado na tela ALERTA
                 OPEN cr_crapcrt (rw_crapass.nrcpfcgc);
                 FETCH cr_crapcrt INTO rw_crapcrt;
                 vr_flgachou := cr_crapcrt%FOUND;
                 CLOSE cr_crapcrt;
+                vr_tab_det.FLGCAD_ALERTA := 0;
                 -- se conter o codigo da situacao do registro restritivo = 1-Inserido
                 IF vr_flgachou THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
@@ -1094,17 +1172,20 @@ BEGIN
                                     ,pr_idmotivo => 36 -- Titular cadastrado na ALERTA
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
+                  vr_tab_det.FLGCAD_ALERTA := 1;
                 END IF;
-                
+
                 --Titular bloqueado na tela DCTROR
-                --Se a situação do titular for 
+                --Se a situação do titular for
                 --2 - NORMAL C/BLOQ
                 --4 - DEMITIDO C/BLOQ
                 --6 - NORMAL BLQ.PREJ
                 --8 - DEM. BLOQ.PREJ
                 --Essas situações indicam que a conta está bloqueada na tela DCTROR
-                IF rw_crapass.cdsitdtl IN (2,4,6,8) THEN 
+                vr_tab_det.FLGCAD_DCTROR := 0;
+                IF rw_crapass.cdsitdtl IN (2,4,6,8) THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
                     pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
@@ -1113,10 +1194,13 @@ BEGIN
                                     ,pr_idmotivo => 37 -- Conta bloqueada na DCTROR
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
+                  vr_tab_det.FLGCAD_DCTROR := 1;
                 END IF;
-                
+
                 -- Data de admissao do associado na CCOH for maior que a data calculada
+                vr_tab_det.DTABERTURA_CC := rw_crapass.dtadmiss;
                 IF rw_crapass.dtadmiss > vr_dtadmiss THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
@@ -1126,10 +1210,12 @@ BEGIN
                                     ,pr_idmotivo => 10 -- Tempo de Conta
                                     ,pr_dsvalor  => TO_CHAR(rw_crapass.dtadmiss,'DD/MM/RRRR'));
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Se NAO for exportacao para SPC/Serasa e Estiver marcado como Restricao(1)
+                vr_tab_det.inserasa := rw_crapass.inserasa;
                 IF pr_flgexpor = 0 AND rw_crapass.inserasa = 1 THEN
                   -- Grava o motivo
                   pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
@@ -1137,7 +1223,8 @@ BEGIN
                                   ,pr_idcarga  => vr_idcarga
                                   ,pr_idmotivo => 1 -- Restricao no Serasa
                                   ,pr_dsvalor  => '');
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Buscar qtd de estouro de conta
@@ -1149,6 +1236,7 @@ BEGIN
                 FETCH cr_crapneg_qtd INTO vr_qtnegati;
                 CLOSE cr_crapneg_qtd;
                 -- Se qtd de negativos for maior que qtd de estouros
+                vr_tab_det.QTESTOUROS_CC := vr_qtnegati;
                 IF vr_qtnegati > vr_qtestour THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
@@ -1158,16 +1246,18 @@ BEGIN
                                     ,pr_idmotivo => 16 -- Estouro de Conta
                                     ,pr_dsvalor  => vr_qtnegati || ' estouro(s)');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+
                 -- Buscar informacoes de operacoes como avalista
                 OPEN cr_avalist_qtd (pr_cdcooper => rw_crapcop.cdcooper
                                     ,pr_nrdconta => rw_crapass.nrdconta);
                 FETCH cr_avalist_qtd INTO rw_avalist_qtd;
                 CLOSE cr_avalist_qtd;
-                
+
                 -- Se qtd de dias em atraso for maior que o estipulado
+                vr_tab_det.QTDIAS_ATRASO_AVALISTA := rw_avalist_qtd.dias_atraso;
                 IF rw_avalist_qtd.dias_atraso > vr_qtavlatr THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
@@ -1177,35 +1267,40 @@ BEGIN
                                     ,pr_idmotivo => 33 -- Avalista de Operações em Atraso
                                     ,pr_dsvalor  => 'Qtd. dias: ' || rw_avalist_qtd.dias_atraso);
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+
                 -- Se total do valor em atraso for maior que o estipulado
+                vr_tab_det.VLTOT_ATRASO_AVALISTA := rw_avalist_qtd.total_atraso;
                 IF rw_avalist_qtd.total_atraso  > vr_vlavlatr THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
                     pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
                                     ,pr_nrdconta => rw_crapass.nrdconta
                                     ,pr_idcarga  => vr_idcarga
-                                    ,pr_idmotivo => 33 -- Avalista de Operações em Atraso
+                                    ,pr_idmotivo => 52 -- Avalista de Operações em Atraso
                                     ,pr_dsvalor  => 'Valor total: ' || rw_avalist_qtd.total_atraso);
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+
                 -- Se qtd de operacoes em atraso for maior que o estipulado
+                vr_tab_det.QTOPERAC_ATRASO_AVALISTA := rw_avalist_qtd.qtd_operacoes;
                 IF rw_avalist_qtd.qtd_operacoes > vr_qtavlope THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
                     pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
                                     ,pr_nrdconta => rw_crapass.nrdconta
                                     ,pr_idcarga  => vr_idcarga
-                                    ,pr_idmotivo => 33 -- Avalista de Operações em Atraso
+                                    ,pr_idmotivo => 53 -- Avalista de Operações em Atraso
                                     ,pr_dsvalor  => 'Qtd. operações: ' || rw_avalist_qtd.qtd_operacoes);
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+
                 -- Buscar qtd de devolucao de cheque
                 OPEN cr_crapneg_qtd (pr_cdcooper => rw_crapcop.cdcooper
                                     ,pr_nrdconta => rw_crapass.nrdconta
@@ -1215,6 +1310,7 @@ BEGIN
                 FETCH cr_crapneg_qtd INTO vr_qtnegati;
                 CLOSE cr_crapneg_qtd;
                 -- Se qtd de negativos for maior que qtd de devolucoes
+                vr_tab_det.qtcheques_devolvidos := vr_qtnegati;
                 IF vr_qtnegati > vr_qtdevolu THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
@@ -1224,16 +1320,17 @@ BEGIN
                                     ,pr_idmotivo => 13 -- Devolucao Cheques
                                     ,pr_dsvalor  => vr_qtnegati || ' cheque(s)');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+
                 --Limpa o campo de risco
                 vr_riscoope := ' ';
                 vr_nivrisco := ' ';
-                
+
                 --Limpa o campo de controle
                 vr_proxregi := FALSE;
-                
+
                 FOR rw_crapass_cpfcnpj IN cr_crapass_cpfcnpj(rw_crapass.nrcpfcgc) LOOP
 
                   --Titular da conta com operação em Prejuízo
@@ -1244,6 +1341,7 @@ BEGIN
                   CLOSE cr_titopepre;
                   --Se estive em prejuízo
                   IF vr_flgachou THEN
+                    vr_tab_det.CDCOOPER_PREJUIZO := rw_titopepre.cdcooper;
                     -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                     IF pr_flgexpor = 0 THEN
                       pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
@@ -1255,10 +1353,10 @@ BEGIN
                     vr_proxregi := TRUE;
                     EXIT;
                   END IF;
-                  
+
                   -- Risco Cooperado
                   vr_riscoass := rw_crapass_cpfcnpj.inrisctl;
-                  
+
                   -- Calcula o Risco Cooperado caso nao esteja calculado
                   IF vr_riscoass = ' ' THEN
                     -- Busca data da cooperativa da conta atual
@@ -1271,7 +1369,7 @@ BEGIN
                       vr_cdcritic := 1;
                       RAISE vr_exc_saida;
                     END IF;
-                    
+
                     IF vr_inpessoa = 1 THEN
                       RATI0001.pc_risco_cooperado_pf(pr_flgdcalc    => 1,
                                                      pr_cdcooper    => rw_crapass_cpfcnpj.cdcooper,
@@ -1314,7 +1412,7 @@ BEGIN
                                                      pr_tab_erro    => vr_tab_erro,
                                                      pr_des_reto    => vr_des_reto);
                     END IF;
-                    
+
                     IF vr_des_reto = 'OK' THEN
                       -- Atualiza o Risco Cooperado calculado
                       UPDATE crapass
@@ -1333,31 +1431,31 @@ BEGIN
                                       ,pr_dsvalor  => 'Conta: ' || rw_crapass_cpfcnpj.cdcooper ||
                                                       '-' || rw_crapass_cpfcnpj.nrdconta ||' ' ||
                                                        SUBSTR(vr_tab_erro(0).dscritic,1,79));
-                      
+
                       vr_proxregi := TRUE;
                       EXIT;
                     END IF;
-                    
+
                   END IF; -- vr_riscoass = ' '
-                  
+
                   -- Caso seja uma classificacao antiga
                   IF vr_riscoass = 'AA' THEN
                     vr_riscoass := 'A';
                   END IF;
-                  
+
                   IF vr_riscoass = 'HH' THEN
                     vr_riscoass := 'H';
                   END IF;
-                  
+
                   -- Pega o pior risco
                   IF vr_riscoope = ' ' THEN
                     vr_riscoope := vr_riscoass;
-                  ELSE 
+                  ELSE
                     IF vr_riscoope < vr_riscoass THEN
                        vr_riscoope := vr_riscoass;
                     END IF;
                   END IF;
-                  
+
                   -- Risco com divida (Valor Arrasto)
                   OPEN cr_ris_comdiv(pr_cdcooper => rw_crapass_cpfcnpj.cdcooper
                                     ,pr_nrdconta => rw_crapass_cpfcnpj.nrdconta
@@ -1394,27 +1492,28 @@ BEGIN
                   IF vr_riscodiv = 'AA' THEN
                     vr_riscodiv := 'A';
                   END IF;
-                  
+
                   IF vr_riscodiv = 'HH' THEN
                     vr_riscodiv := 'H';
                   END IF;
-                  
+
                   -- Pega o pior risco
                   IF vr_nivrisco = ' ' THEN
                     vr_nivrisco := vr_riscodiv;
-                  ELSE 
+                  ELSE
                     IF vr_nivrisco < vr_riscodiv THEN
                        vr_nivrisco := vr_riscodiv;
                     END IF;
                   END IF;
-                  
+
                 END LOOP; --rw_crapass_cpfcnpj
-                
+
                 -- Caso não seja aprovado
                 IF vr_proxregi THEN
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+
                 -- Volta para a data da cooperativa atual
                 OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
                 FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -1425,16 +1524,17 @@ BEGIN
                   vr_cdcritic := 1;
                   RAISE vr_exc_saida;
                 END IF;
-                
+
                 -- Caso o Risco Cooperado seja uma classificacao maior que o Risco
                 IF vr_riscoope > vr_nivrisco THEN
                   vr_nivrisco := vr_riscoope;
                 END IF;
-                
+
                 -- Constroi chave para o risco na temp-table
                 vr_chave_risco := rw_crapcop.cdcooper || rw_crapass.inpessoa || vr_riscoope;
-                
+
                 -- Se o Risco Cooperado NAO estiver no parametro vai para o proximo
+                vr_tab_det.CDRISCO_COOPERADO := vr_riscoope;
                 IF NOT vr_tab_risco .EXISTS(vr_chave_risco) THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
@@ -1444,9 +1544,27 @@ BEGIN
                                     ,pr_idmotivo => 2 -- Risco do Cooperado
                                     ,pr_dsvalor  => 'Risco ' || vr_riscoope);
                   END IF;
+                  -- abaixo está sendo feita a gravação da tabela de detalhes porque
+                  -- o erro motivo 2 não continua o processo pois como não busca as taxas
+                  -- não calculará certo os outros critérios. ( M441 - Roberto Holz (Mout´s) )
+                  IF  pr_flgexpor = 0 THEN  -- Caso NAO seja uma exportacao para SPC/Serasa
+                       vr_tab_det.CDSIT_CONTA := rw_crapass.cdsitdct;
+                       vr_tab_det.dtalteracao := sysdate;
+                       -- gerar tabela de detalhes
+                       BEGIN
+                           INSERT INTO tbepr_carga_pre_aprv_det VALUES vr_tab_det;
+                       EXCEPTION
+                           WHEN OTHERS THEN
+                              vr_dscritic := 'Problema ao incluir dados na tabela tbepr_carga_pre_aprv_det: ' || sqlerrm;
+                              RAISE vr_exc_saida;
+                       END;
+                   END IF;
+
                   CONTINUE;
+                   vr_cpa_com_erro := 'S'; -- foi deixado para caso alguém um dia comente o CONTINUE
+
                 END IF;
-                
+
                 -- Dados da Linha de Credito PF
                 OPEN cr_craplcr(pr_cdcooper => rw_crapcop.cdcooper
                                ,pr_cdlcremp => vr_tab_risco(vr_chave_risco).cdlcremp);
@@ -1471,9 +1589,10 @@ BEGIN
                     vr_qtpar_pj := rw_craplcr.nrfimpre;
                   END IF;
                 END IF;
-                
+
                 -- Se o Risco Cooperado NAO estiver no parametro vai para o proximo
                 IF NOT vr_tab_risco.EXISTS(rw_crapcop.cdcooper || rw_crapass.inpessoa || vr_nivrisco) THEN
+                  vr_tab_det.CDRISCO_COOPERADO := vr_nivrisco;
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
                     pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
@@ -1482,15 +1601,20 @@ BEGIN
                                     ,pr_idmotivo => 3 -- Risco Operacoes de Credito
                                     ,pr_dsvalor  => 'Risco ' || vr_nivrisco);
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
-                
+
                 -- Constroi chave para o risco na temp-table
                 vr_chave_risco := rw_crapcop.cdcooper || rw_crapass.inpessoa || vr_nivrisco;
-                
+
                 -- Grava o codigo da linha de credito para a carga
+                IF NOT vr_tab_risco.EXISTS(vr_chave_risco) then   -- m441 --
+                   vr_cdlcremp := 0;
+                ELSE
                 vr_cdlcremp := vr_tab_risco(vr_chave_risco).cdlcremp;
-                
+                END IF;
+
                 -- Revisao Cadastral
                 OPEN cr_crapalt(pr_cdcooper => rw_crapass.cdcooper
                                ,pr_nrdconta => rw_crapass.nrdconta
@@ -1499,6 +1623,7 @@ BEGIN
                 vr_flgachou := cr_crapalt%FOUND;
                 CLOSE cr_crapalt;
                 -- Se NAO encontrar alteracao passa para o proximo registro
+                vr_tab_det.DTREVISAO_CADASTRAL := rw_crapalt.dtaltera;
                 IF NOT vr_flgachou THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
@@ -1508,7 +1633,8 @@ BEGIN
                                     ,pr_idmotivo => 4 -- Revisao Cadastral
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Endividamento SFN
@@ -1527,14 +1653,21 @@ BEGIN
                                     ,pr_idmotivo => 5 -- Endiv. Vencido/Prejuizo
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Limite maximo por tipo de pessoa e classificacao
+                IF NOT vr_tab_risco.EXISTS(rw_crapcop.cdcooper ||
+                                            vr_inpessoa ||
+                                            vr_nivrisco) THEN
+                   vr_vllimmax := 0; -- M441 --
+                ELSE
                 vr_vllimmax := vr_tab_risco(rw_crapcop.cdcooper ||
                                             vr_inpessoa ||
                                             vr_nivrisco).vllimite;
-                
+                END IF;
+
                 IF rw_crapdat.inproces >= 3 THEN
                   vr_dtmvtolt := rw_crapdat.dtmvtolt;
                 ELSE
@@ -1558,7 +1691,8 @@ BEGIN
                                     ,pr_idmotivo => 17 -- Inconsistencia de Dados
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 ELSE
                   -- Saldo de cotas multiplicado pelo numero de vezes do parametro
                   vr_vlsdcota := rw_crapsda.vlsdcota * vr_nrmcotas;
@@ -1627,6 +1761,8 @@ BEGIN
                 vr_vlimcota := vr_vlimcota - vr_vlsldcpa;
 
                 -- O limite da cota NAO pode ser menor que valor minimo ofertado
+                --vr_tab_det.VLSALDO_COTAS := vr_vlimcota;
+                vr_tab_det.VLSALDO_COTAS := rw_crapsda.vlsdcota;
                 IF vr_vlimcota < vr_vllimmin THEN
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
@@ -1636,7 +1772,8 @@ BEGIN
                                     ,pr_idmotivo => 6 -- Limite de cotas
                                     ,pr_dsvalor  => 'R$ ' || TO_CHAR(vr_vlimcota,'fm999g999g999g990d00'));
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Verifica se o cooperado possui conta em atraso no CYBER
@@ -1649,6 +1786,8 @@ BEGIN
                 CLOSE cr_crapcyb;
                 -- Se encontrar registro no CYBER vai para o proximo
                 IF vr_flgachou THEN
+                  vr_tab_det.QTDIAS_ATRASO_CC := rw_crapcyb.qtdiaatr;
+                  vr_tab_det.VLATRASO_CC := rw_crapcyb.vlpreapg;
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
                     pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
@@ -1657,7 +1796,8 @@ BEGIN
                                     ,pr_idmotivo => 14 -- Conta em Atraso
                                     ,pr_dsvalor  => rw_crapcyb.qtdiaatr || ' dia(s)');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Verifica se o cooperado possui algum emprestimo em atraso no CYBER
@@ -1670,6 +1810,8 @@ BEGIN
                 CLOSE cr_crapcyb;
                 -- Se encontrar registro no CYBER vai para o proximo
                 IF vr_flgachou THEN
+                  vr_tab_det.QTDIAS_ATRASO_EPR := rw_crapcyb.qtdiaatr;
+                  vr_tab_det.VLATRASO_EPR := rw_crapcyb.vlpreapg;
                   -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                   IF pr_flgexpor = 0 THEN
                     pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
@@ -1678,12 +1820,12 @@ BEGIN
                                     ,pr_idmotivo => 15 -- Emprestimo em Atraso
                                     ,pr_dsvalor  => rw_crapcyb.qtdiaatr || ' dia(s)');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Valor maximo da prestacao mensal
                 IF vr_inpessoa = 1 THEN
-
                   -- PF
                   pc_consulta_rendimentos(pr_cdcooper => rw_crapass.cdcooper
                                          ,pr_nrdconta => rw_crapass.nrdconta
@@ -1691,11 +1833,16 @@ BEGIN
                                          ,pr_flgmaior => vr_flgmaior
                                          ,pr_vltotren => vr_vlrendim
                                          ,pr_dtadmemp => vr_dtadmemp
-                                         ,pr_tpcttrab => vr_tpcttrab);
+                                         ,pr_tpcttrab => vr_tpcttrab
+                                         ,pr_dtnasttl => vr_dtnasttl
+                                         ,pr_vlsalari => vr_vlsalari);
+                  vr_tab_det.DTNASCIMENTO := vr_dtnasttl;
+                  vr_tab_det.VLSALARIO := vr_vlsalari;
                   -- Soma os Rendimentos
                   vr_vltotren := vr_vltotren + vr_vlrendim;
 
                   -- Caso seja um menor de idade vai para o proximo
+
                   IF vr_flgmaior = FALSE THEN
                     -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                     IF pr_flgexpor = 0 THEN
@@ -1705,22 +1852,25 @@ BEGIN
                                       ,pr_idmotivo => 7 -- Menor de Idade
                                       ,pr_dsvalor  => '');
                     END IF;
-                    CONTINUE;
+                    --CONTINUE;
+                    vr_cpa_com_erro := 'S';
                   END IF;
 
                   -- Ignorar esta regra quando Tipo Contrato Trabalho: Sem Vinculo(3) ou Autonomo(4)
+                  vr_tab_det.DTADMISSAO_EMPRESA := vr_dtadmemp;
                   IF vr_tpcttrab NOT IN (3,4) THEN
                     -- Data de admissao do emprego for maior que a data calculada ou nula
                     IF vr_dtadmemp > vr_dtiniemp OR vr_dtadmemp IS NULL THEN
                       -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
-	                    IF pr_flgexpor = 0 THEN
+                      IF pr_flgexpor = 0 THEN
                         pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
                                         ,pr_nrdconta => rw_crapass.nrdconta
                                         ,pr_idcarga  => vr_idcarga
                                         ,pr_idmotivo => 12 -- Tempo Admissao Emprego
                                         ,pr_dsvalor  => TO_CHAR(vr_dtadmemp,'DD/MM/RRRR'));
                       END IF;
-                      CONTINUE;
+                      --CONTINUE;
+                      vr_cpa_com_erro := 'S';
                     END IF;
                   END IF;
 
@@ -1773,7 +1923,10 @@ BEGIN
                                                ,pr_flgmaior => vr_flgmaior
                                                ,pr_vltotren => vr_vlrendim
                                                ,pr_dtadmemp => vr_dtadmemp
-                                               ,pr_tpcttrab => vr_tpcttrab);
+                                               ,pr_tpcttrab => vr_tpcttrab
+                                               ,pr_dtnasttl => vr_dtnasttl
+                                               ,pr_vlsalari => vr_vlsalari);
+                        vr_tab_det.VLSALARIO_CONJUGE := vr_vlsalari;
                         -- Soma os rendimentos do conjuge
                         vr_vltotren := vr_vltotren + vr_vlrendim;
                       END IF;
@@ -1787,11 +1940,14 @@ BEGIN
                                              ,pr_flgmaior => vr_flgmaior
                                              ,pr_vltotren => vr_vlrendim
                                              ,pr_dtadmemp => vr_dtadmemp
-                                             ,pr_tpcttrab => vr_tpcttrab);
+                                             ,pr_tpcttrab => vr_tpcttrab
+                                             ,pr_dtnasttl => vr_dtnasttl
+                                             ,pr_vlsalari => vr_vlsalari);
+                      vr_tab_det.VLSALARIO_CONJUGE := vr_vlsalari;
                       -- Soma os rendimentos do conjuge
                       vr_vltotren := vr_vltotren + vr_vlrendim;
                     END IF; -- rw_crapcje.nrctacje = 0 OR rw_crapcje.nrctacje IS NULL
-                    
+
                     -- Se nao encontrou nenhuma conta
                     IF vr_nrdconta > 0 THEN
                       -- Buscar informacoes de operacoes de conjuge
@@ -1799,8 +1955,9 @@ BEGIN
                                           ,pr_nrdconta => vr_nrdconta);
                       FETCH cr_conjuge_qtd INTO rw_conjuge_qtd;
                       CLOSE cr_conjuge_qtd;
-                      
+
                       -- Se qtd de dias em atraso for maior que o estipulado
+                      vr_tab_det.QTDIAS_ATRASO_CONJUGE := rw_conjuge_qtd.dias_atraso;
                       IF rw_conjuge_qtd.dias_atraso > vr_qtcjgatr THEN
                         -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                         IF pr_flgexpor = 0 THEN
@@ -1810,36 +1967,41 @@ BEGIN
                                           ,pr_idmotivo => 34 -- Cônjuge com Operações em Atraso
                                           ,pr_dsvalor  => 'Qtd. dias: ' || rw_conjuge_qtd.dias_atraso);
                         END IF;
-                        CONTINUE;
+                        --CONTINUE;
+                        vr_cpa_com_erro := 'S';
                       END IF;
-                      
+
                       -- Se total do valor em atraso for maior que o estipulado
+                      vr_tab_det.VLTOT_ATRASO_CONJUGE := rw_conjuge_qtd.total_atraso;
                       IF rw_conjuge_qtd.total_atraso  > vr_vlcjgatr THEN
                         -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                         IF pr_flgexpor = 0 THEN
                           pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
                                           ,pr_nrdconta => rw_crapass.nrdconta
                                           ,pr_idcarga  => vr_idcarga
-                                          ,pr_idmotivo => 34 -- Cônjuge com Operações em Atraso
+                                          ,pr_idmotivo => 54 -- Cônjuge com Operações em Atraso
                                           ,pr_dsvalor  => 'Valor total: ' || rw_conjuge_qtd.total_atraso);
                         END IF;
-                        CONTINUE;
+                        --CONTINUE;
+                        vr_cpa_com_erro := 'S';
                       END IF;
-                      
+
                       -- Se qtd de operacoes em atraso for maior que o estipulado
+                      vr_tab_det.QTOPERAC_ATRASO_CONJUGE := rw_conjuge_qtd.qtd_operacoes;
                       IF rw_conjuge_qtd.qtd_operacoes > vr_qtcjgope THEN
                         -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                         IF pr_flgexpor = 0 THEN
                           pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
                                           ,pr_nrdconta => rw_crapass.nrdconta
                                           ,pr_idcarga  => vr_idcarga
-                                          ,pr_idmotivo => 34 -- Cônjuge com Operações em Atraso
+                                          ,pr_idmotivo => 55 -- Cônjuge com Operações em Atraso
                                           ,pr_dsvalor  => 'Qtd. operações: ' || rw_conjuge_qtd.qtd_operacoes);
                         END IF;
-                        CONTINUE;
+                        --CONTINUE;
+                        vr_cpa_com_erro := 'S';
                       END IF;
                     END IF; -- nrdconta > 0
-                    
+
                     -- Parcelas a vencer de 60 a 90 dias
                     FOR rw_crapvop_avc IN cr_crapvop_avc(pr_nrcpfcgc => rw_crapcje.nrcpfcjg
                                                         ,pr_dtrefere => rw_max_opf.dtrefere) LOOP
@@ -1853,6 +2015,8 @@ BEGIN
                   vr_txjurmes := vr_txjur_pf / 100;
                   vr_qtmaxpar := vr_qtpar_pf;
 
+                  vr_tab_det.VLTOT_OUTRAS_RENDAS := vr_vltotren;
+
                 ELSE
 
                   -- Consulta os dados de PJ
@@ -1861,6 +2025,7 @@ BEGIN
                   FETCH cr_crapjur INTO vr_dtiniatv;
                   CLOSE cr_crapjur;
                   -- Se Data da Fundacao da Empresa for maior que a data calculada ou nula
+                  vr_tab_det.DTFUNDACAO_EMPRESA := vr_dtiniatv;
                   IF vr_dtiniatv > vr_dtiniemp OR vr_dtiniatv IS NULL THEN
                     -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                     IF pr_flgexpor = 0 THEN
@@ -1870,7 +2035,8 @@ BEGIN
                                       ,pr_idmotivo => 11 -- Tempo Fund. Empresa
                                       ,pr_dsvalor  => TO_CHAR(vr_dtiniatv,'DD/MM/RRRR'));
                     END IF;
-                    CONTINUE;
+                    --CONTINUE;
+                    vr_cpa_com_erro := 'S';
                   END IF;
 
                   -- Rendimentos de PJ
@@ -1903,12 +2069,16 @@ BEGIN
                       END IF;
                     END LOOP;
 
+                    -- salva dados nas variaveis da tabela de detalhes antes da divisão por meses
+                    vr_tab_det.VLTOT_OUTRAS_RENDAS := vr_vltotren;
                     -- Se número de meses for igual a zero
                     IF NVL(vr_nummeses,0) = 0 THEN
                       vr_vltotren := 0;
+                      vr_tab_det.VLMED_FATURAMENTOS := 0;
                     ELSE
                       -- Calcula a Media de Rendimento
                       vr_vltotren := vr_vltotren / vr_nummeses;
+                      vr_tab_det.VLMED_FATURAMENTOS := vr_vltotren;
                     END IF;
                   END IF;
                   CLOSE cr_crapjfn;
@@ -1929,30 +2099,42 @@ BEGIN
                                     ,pr_idmotivo => 8 -- Nao possui Rendimentos
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Parcelas a vencer de 60 a 90 dias
+                -- a variavel vr_vlparcav_tit tem com o objetivo guardar só os valores do titular
+                -- pois na variavel vr_vlparcav já estão os valores do conjuge (ver cr_crapvop_avc anterior)
+                vr_tab_det.VLAVENCER_CONJUGE := vr_vlparcav;
+                vr_vlparcav_tit := 0;
                 FOR rw_crapvop_avc IN cr_crapvop_avc(pr_nrcpfcgc => rw_crapass.nrcpfcgc
                                                     ,pr_dtrefere => rw_max_opf.dtrefere) LOOP
                   -- Soma as Parcelas a Vencer
                   vr_vlparcav := vr_vlparcav + rw_crapvop_avc.vlvencto;
+                  vr_vlparcav_tit := vr_vlparcav_tit + rw_crapvop_avc.vlvencto;
                 END LOOP;
-                
+
+                -- salva na variavel de tabela de detalhes
+                vr_tab_det.VLAVENCER := vr_vlparcav_tit;
+
                 OPEN cr_opera_inclusas (pr_cdcooper => rw_crapcop.cdcooper
                                        ,pr_nrdconta => rw_crapass.nrdconta
                                        ,pr_qtdiaver => vr_qtdiaver);
                 FETCH cr_opera_inclusas INTO rw_opera_inclusas;
                 CLOSE cr_opera_inclusas;
-                
+
+                vr_tab_det.VLPRESTACAO_EPR := rw_opera_inclusas.vlpreemp;
                 vr_vlparcav := vr_vlparcav + rw_opera_inclusas.vlpreemp;
-                
+
                 -- Verifica se tem aluguel
                 OPEN cr_crapenc (pr_cdcooper => rw_crapass.cdcooper
                                 ,pr_nrdconta => rw_crapass.nrdconta
                                 ,pr_idseqttl => 1);
                 FETCH cr_crapenc INTO vr_vlalugue;
                 CLOSE cr_crapenc;
+
+                vr_tab_det.VLALUGUEL := vr_vlalugue;
 
                 -- % de comprometimento de renda
                 vr_vlpercom := CASE WHEN vr_inpessoa = 1 THEN rw_crappre_pf.vlpercom ELSE rw_crappre_pj.vlpercom END;
@@ -1971,7 +2153,8 @@ BEGIN
                                     ,pr_idmotivo => 9 -- Sem Parcela Disponivel
                                     ,pr_dsvalor  => '');
                   END IF;
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
 
                 -- Calcula o Valor Presente com a formula da HP financeira, ou seja, qual eh o valor a ser emprestado
@@ -1983,20 +2166,25 @@ BEGIN
                   vr_vlimcota := vr_vlpresen;
 
                   -- O limite da cota NAO pode ser menor que valor minimo ofertado
+                  --vr_tab_det.VLSALDO_COTAS := vr_vlimcota;
+                  vr_tab_det.VLSALDO_COTAS := rw_crapsda.vlsdcota;
+                  
                   IF vr_vlimcota < vr_vllimmin THEN
                     -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                     IF pr_flgexpor = 0 THEN
                       pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
                                       ,pr_nrdconta => rw_crapass.nrdconta
                                       ,pr_idcarga  => vr_idcarga
-                                      ,pr_idmotivo => 6 -- Limite de cotas
+                                      ,pr_idmotivo => 56 -- Limite de cotas
                                       ,pr_dsvalor  => 'R$ ' || TO_CHAR(vr_vlimcota,'fm999g999g999g990d00'));
                     END IF;
-                    CONTINUE;
+                    --CONTINUE;
+                    vr_cpa_com_erro := 'S';
                   END IF;
                 END IF;
 
                 -- Se NAO for exportacao para SPC/Serasa e NAO foi consultado(0)
+                vr_tab_det.inserasa := rw_crapass.inserasa;
                 IF pr_flgexpor = 0 AND rw_crapass.inserasa = 0 THEN
                   -- Grava o motivo
                   pc_inclui_motivo(pr_cdcooper => rw_crapass.cdcooper
@@ -2004,8 +2192,29 @@ BEGIN
                                   ,pr_idcarga  => vr_idcarga
                                   ,pr_idmotivo => 19 -- Sem Consulta no Serasa
                                   ,pr_dsvalor  => '');
-                  CONTINUE;
+                  --CONTINUE;
+                  vr_cpa_com_erro := 'S';
                 END IF;
+
+                -- Gerar tabela de detalhes independente se o associado teve crítica ou não (M441 - HOLZ)
+
+                IF  pr_flgexpor = 0 THEN  -- Caso NAO seja uma exportacao para SPC/Serasa
+                    vr_tab_det.CDSIT_CONTA := rw_crapass.cdsitdct;
+                    vr_tab_det.dtalteracao := sysdate;
+                    -- gerar tabela de detalhes
+                    BEGIN
+                        INSERT INTO tbepr_carga_pre_aprv_det VALUES vr_tab_det;
+                    EXCEPTION
+                        WHEN OTHERS THEN
+                           vr_dscritic := 'Problema ao incluir dados na tabela tbepr_carga_pre_aprv_det: ' || sqlerrm;
+                           RAISE vr_exc_saida;
+                    END;
+                END IF;
+                -- novas críticas devem ser implementadas antes do if abaixo (M441)
+                IF  vr_cpa_com_erro = 'S' THEN
+                    CONTINUE; -- manda para o próximo associado (M441 - holz)
+                END IF;
+                --
 
                 -- Caso NAO seja uma exportacao para SPC/Serasa
                 IF pr_flgexpor = 0 THEN

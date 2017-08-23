@@ -137,7 +137,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para incluir carga manual pre aprovado via Ayllos Web
     
-    Alteracoes: 
+    Alteracoes: 10/07/2017 - Alterado para quando incluir uma carga setar o horário
+                             23:59:59 na data final de vigencia
+                             M441 - Melhoria Pré-aprovado - Roberto Holz (Mout´s)
     ............................................................................. */
     
     -- Busca Carga Solicitada/Executando
@@ -239,6 +241,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
       vr_dscritic := 'Data final da vigencia não pode ser menor que a data de hoje.';
       RAISE vr_exc_erro;
     END IF;
+    
+    -- Acrescenta 235959 na data de final de vigencia (M441);
+    IF vr_final_vigencia is not null THEN
+       vr_final_vigencia := to_date( to_char(vr_final_vigencia,'DDMMRRRR')||'235959','DDMMRRRRHH24MISS');
+    END IF;
+    --
     
     IF pr_iddcarga IS NULL OR pr_iddcarga = 0 THEN
       BEGIN-- Se idcarga for nulo cria novo registro
@@ -830,7 +838,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para buscar cargas manuais do pre aprovado
     
-    Alteracoes: 
+    Alteracoes: 10/07/2017 - Nas opções Alteração e Bloqueio alterado para não selecionar 
+                             as cargas bloqueadas definitivamente, isto é , cargas que um
+                             dia foram vigentes mas depois foram bloqueadas.
+                             M441 - Melhoria Pré-aprovado - Roberto Holz (Mout´s)
     ..............................................................................*/ 
     DECLARE
       
@@ -848,13 +859,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
            AND ((upper(pr_cddopcao) = 'B'
            AND  flgcarga_bloqueada = 0)
            OR  (upper(pr_cddopcao) = 'L'
-           AND  flgcarga_bloqueada = 1)
+           AND  flgcarga_bloqueada = 1
+           AND  flgbloq_definitivo <> 1)
            OR  (upper(pr_cddopcao) = 'E'
            AND  flgcarga_bloqueada = 1
            AND  indsituacao_carga  = 1)
            OR  (upper(pr_cddopcao) = 'A'
-           AND  flgcarga_bloqueada = 1
-           AND  indsituacao_carga  = 1))
+--           AND  flgcarga_bloqueada = 1  -- M441 -- (Roberto Holz - Mouts)
+           AND  indsituacao_carga  = 1
+           AND  flgbloq_definitivo <> 1))
            ORDER BY idcarga DESC;
       
       CURSOR cr_carga (pr_iddcarga INTEGER) IS
@@ -1092,7 +1105,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para bloquear/liberar/excluir cargas manuais do pre aprovado
     
-    Alteracoes: 
+    Alteracoes: 10/07/2017 - alterado para setar a data final de vigencia e
+                             o indicador de bloqueio definitivo 
+                             (M441 - Melhoria Pré-aprovado )  Roberto Holz (Mouts)
     ..............................................................................*/ 
     DECLARE
       
@@ -1194,6 +1209,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
             WHEN 'B' THEN -- Bloquear carga
               UPDATE tbepr_carga_pre_aprv
                  SET flgcarga_bloqueada = 1
+                    ,dtfinal_vigencia = sysdate -- M441 --
+                    ,flgbloq_definitivo = 1
                WHERE idcarga = pr_iddcarga;
             WHEN 'L' THEN -- Liberar carga
               UPDATE tbepr_carga_pre_aprv

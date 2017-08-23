@@ -331,7 +331,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
   em PLSQL através da rotina Progress via DataServer */
   PROCEDURE pc_remessa_titulos_dda(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                   ,pr_dscritic OUT VARCHAR2);
- 
+
   /* Procedure para Executar retorno da remessa da títulos da DDA diretamente do ORACLE
   --> Foi criado uma rotina para fazer o meio de campo pois não é permitido ter 
       sobrecarga de método, pois estraga o schema holder    */
@@ -942,7 +942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_des_erro = 'NOK' THEN
         RAISE vr_exc_erro;
-      END IF;     
+      END IF; 
     
       -- Enviar requisição para webservice
       soap0001.pc_cliente_webservice(pr_endpoint    => NPCB0003.fn_url_SendSoapNPC(pr_idservic => 3)
@@ -956,8 +956,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;      
-    
+      END IF;
+      
       -- Verifica se ocorreu retorno com erro no XML
       pc_obtem_fault_packet(pr_xml      => vr_xml_res
                            ,pr_dsderror => ''
@@ -1594,7 +1594,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --  Sistema  : Procedure para atualizar situacao do titulo do sacado eletronico
     --  Sigla    : CRED
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 12/07/2017
+    --  Data     : Julho/2013.                   Ultima atualizacao: 21/08/2017
     --
     -- Dados referentes ao programa:
     --
@@ -1613,7 +1613,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --                          não será utilizada. (Rafael)
     --
     --             28/07/2017 - Ajuste para nao ler a tabela craptit a partir do codbarras, pois pode gerar segunda via
-    ---                         será lido a crapret, PRJ340-NPC (Odirlei-AMcom)
+    --                          será lido a crapret, PRJ340-NPC (Odirlei-AMcom)
+    -- 
+    --             21/08/2017 - Fechar cursor cr_abertura após abri-lo. (Rafael)
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1740,7 +1742,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       OPEN cr_abertura;
       FETCH cr_abertura
        INTO rw_abertura;
-          
+      CLOSE cr_abertura;
+      
       --Selecionar registro cobranca
       OPEN cr_crapcob(pr_rowid => pr_rowid_cob);
       --Posicionar no proximo registro
@@ -2087,18 +2090,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           WHEN '37' THEN vr_cdCanPgt := 1; --> Agências- Postos Tradicionais
           WHEN '06' THEN vr_cdCanPgt := 3; --> Internet
         ELSE
-          vr_cdCanPgt := 8; --> DDA
-        END CASE;       
+            vr_cdCanPgt := 8; --> DDA
+            END CASE;       
         
         IF nvl(vr_cdCanPgt,0) IN (2,3,8) THEN
-          vr_cdmeiopg := 2; --> Débito em conta;
-        ELSE
-          vr_cdmeiopg := 1; --> Espécie
-        END IF;        
-
+            vr_cdmeiopg := 2; --> Débito em conta;
+          ELSE
+            vr_cdmeiopg := 1; --> Espécie
+          END IF;
+        
         vr_vlrbaixa := rw_crapcob.vldpagto;
         
-      END IF;
+        END IF;
       
       --Pegar proximo indice remessa
       vr_index := pr_tab_remessa_dda.Count + 1;
@@ -2170,11 +2173,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_tab_remessa_dda(vr_index).cdespeci := vr_cddespec;
       
       -- Ajuste devido ao erro EDDA0395 - Data de emissao > Data de referencia
-      IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > rw_abertura.datamov THEN
+      IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > to_number(nvl(rw_abertura.datamov,to_char(SYSDATE,'YYYYMMDD'))) THEN
         pr_tab_remessa_dda(vr_index).dtemissa := rw_abertura.datamov;
       ELSE
-        pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
-                                                                  ,'YYYYMMDD')); 
+      pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
+                                                                ,'YYYYMMDD'));
       END IF;
       
       IF pr_flgdprot = TRUE THEN
@@ -2231,7 +2234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- conforme documentação da CIP, a data de desconto só pode ser utilizada
       -- quando for menor que a data do vencimento
       -- Portanto, não será utilizada
-      pr_tab_remessa_dda(vr_index).dtddesct := NULL;
+          pr_tab_remessa_dda(vr_index).dtddesct := NULL;
       
       IF pr_vldescto > 0 THEN
         pr_tab_remessa_dda(vr_index).cdddesct := '1';
@@ -2458,7 +2461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --
     --             14/07/2017 - Retirado Autonomous Transacion por orientação dos DBAs. (Rafael)
     ---------------------------------------------------------------------------------------------------------------
-    
+  
     --Selecionar dados saque
 /*    CURSOR cr_dadosaque(pr_cnpjcpfpagdr IN NUMBER,
                         pr_tppessoa     IN VARCHAR2) IS
@@ -2476,7 +2479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         ,tbj."QtdAdesao"      QtdAdesao
         FROM VWJDNPCPAG_PAGADOR_ELETRONICO@jdnpcbisql tbj
        WHERE tbj."CNPJCPFPagdr"  = pr_cnpjcpfpagdr
-         AND tbj."TpPessoaPagdr" = pr_tppessoa;          
+         AND tbj."TpPessoaPagdr" = pr_tppessoa;
            
     rw_dadosaque cr_dadosaque%ROWTYPE;
   
@@ -2509,7 +2512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     IF cr_dadosaque%ISOPEN THEN
       CLOSE cr_dadosaque;
     END IF;
-        
+    
   EXCEPTION
     WHEN OTHERS THEN
       
@@ -5484,6 +5487,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                        pr_nrcpfcgc => rw_crapass.nrcpfcgc);
     FETCH cr_DDA_Benef INTO rw_DDA_Benef;
     IF cr_DDA_Benef%NOTFOUND THEN
+      IF cr_DDA_Benef%ISOPEN THEN
+        CLOSE cr_DDA_Benef;
+      END IF;
       IF rw_crapass.inpessoa = 2 THEN
         --> Buscar dados pessoa juridica
         OPEN cr_crapjur (pr_cdcooper => pr_cdcooper,
@@ -5517,6 +5523,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
 
     ELSE    
     
+      IF cr_DDA_Benef%ISOPEN THEN
+        CLOSE cr_DDA_Benef;
+      END IF;
+    
       -- Atualizar convenio na CIP  
       BEGIN      
         vr_nrconven := to_char(pr_nrconven);
@@ -5539,7 +5549,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       
     END IF;
     
+    IF cr_DDA_Benef%ISOPEN THEN
     CLOSE cr_DDA_Benef;
+    END IF;
     
     --> Verificar se ja existe o convenio na cip
     OPEN cr_DDA_Conven (pr_dspessoa => rw_crapass.dspessoa,
@@ -5547,6 +5559,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                         pr_nrconven => to_char(pr_nrconven));
     FETCH cr_DDA_Conven INTO rw_DDA_Conven;
     IF cr_DDA_Conven%NOTFOUND THEN
+      
+      IF cr_DDA_Conven%ISOPEN THEN
+        CLOSE cr_DDA_Conven;
+      END IF;
+
       --> Gerar informação de adesão de convênio ao JDBNF                            
       BEGIN
         INSERT INTO cecredleg.TBJDDDABNF_Convenio@jdnpcsql
@@ -5585,6 +5602,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       END;
     ELSE
       BEGIN
+        
+        IF cr_DDA_Conven%ISOPEN THEN
+          CLOSE cr_DDA_Conven;
+        END IF;
+        
         UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql a
            SET a."SitConvBenfcrioPar" = vr_sitifcnv
               ,a."DtInicRelctConv"    = vr_dtativac
@@ -5599,7 +5621,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             RAISE vr_exc_saida;              
         END;            
     END IF;
+    
+    IF cr_DDA_Conven%ISOPEN THEN
     CLOSE cr_DDA_Conven;      
+    END IF;
     
   EXCEPTION    
     WHEN vr_exc_saida THEN      
@@ -5696,7 +5721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;     
+      END IF;
     
       -- Verifica se ocorreu retorno com erro no XML
       pc_obtem_fault_packet(pr_xml      => vr_xml_res

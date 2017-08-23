@@ -36,7 +36,12 @@ CREATE OR REPLACE PACKAGE CECRED.CCAF0001 AS
                             (Reinert)
 
                02/04/2014 - Tratamento para nao receber cheques de determinados
-                            Bancos (Elton).
+                            Bancos (Elton). 
+                              
+               06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
+                            Incluido set de modulo
+                            Incluidos códigos de critica 1027 e 9999 ( Belli Envolti ) - Ch 665812
+                            
 ..............................................................................*/
 
   /* Procedure para verificar se a data de vencimento do titulo caiu em um
@@ -80,7 +85,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Outubro/2009                      Ultima atualizacao: 22/10/2014
+   Data    : Outubro/2009                      Ultima atualizacao: 06/06/2017
 
    Dados referentes ao programa:
 
@@ -107,8 +112,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                             Bancos (Elton).
                             
                22/10/2014 - Ajuste na procedure pc_verifica_feriado - cursor
-                            cr_crapfsf ficava aberto. (Rafael).
-                            
+                            cr_crapfsf ficava aberto. (Rafael). 
+               
+               06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
+                            Incluido set de modulo
+                            Incluidos códigos de critica 1027 e 9999 ( Belli Envolti ) - Ch 665812
 
 ..............................................................................*/
 
@@ -272,6 +280,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       --Tipo de Dados para cursor data
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 665812 06/06/2017
+		  GENE0001.pc_set_modulo(pr_module => 'CCAF0001', pr_action => 'CCAF0001.pc_verifica_feriado');
+      
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
@@ -451,7 +462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       END IF;
     EXCEPTION
        WHEN vr_exc_erro THEN
-         pr_cdcritic:= vr_cdcritic;
+         pr_cdcritic:= vr_cdcritic; 
          pr_dscritic:= vr_dscritic;
        WHEN OTHERS THEN
          pr_cdcritic:= 0;
@@ -485,6 +496,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                22/06/2016 - Adicionado dscritic = 'Nenhuma agencia ativa no banco.' para quando
                             nao encontrar agencias ativas para o Banco. A mensagem esta no Progress
                             e nao foi convertida no Oracle (Douglas - 417655)
+               
+               06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
+                            Incluido set de modulo
+                            Incluidos códigos de critica 1027 e 9999 ( Belli Envolti ) - Ch 665812
+                            
   ............................................................................. */
   BEGIN
     DECLARE
@@ -497,11 +513,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       rw_crapagb_ativa cr_crapagb_ativa%ROWTYPE;
 
       --Variaveis de erro
-      vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 665812 06/06/2017
+		  GENE0001.pc_set_modulo(pr_module => 'CCAF0001', pr_action => 'CCAF0001.pc_valida_banco_agencia');
+      
       --Inicializar retorno erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
@@ -518,13 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         --Fechar Cursor
         CLOSE cr_crapban;
         --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => 57
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        pr_cdcritic := 57;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -534,13 +546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       -- Tratamento para nao receber cheques de determinados bancos
       IF rw_crapban.cdbccxlt IN (8,347,353,356/** Banco Real **/,409,453) THEN
         --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => 57
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        pr_cdcritic := 57;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -556,13 +562,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         --Fechar Cursor
         CLOSE cr_crapagb;
         --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => 15
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+                                     
+        pr_cdcritic := 15;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -580,15 +581,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
           --Fechar Cursor
           CLOSE cr_crapagb_ativa;
           -- Mensagem que esta no Progress e nao foi convertida
-          vr_dscritic := 'Nenhuma agencia ativa no banco.';
-          --Gerar erro
-          GENE0001.pc_gera_erro(pr_cdcooper => 0
-                               ,pr_cdagenci => 0
-                               ,pr_nrdcaixa => 0
-                               ,pr_nrsequen => 1 /** Sequencia **/
-                               ,pr_cdcritic => 0
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => pr_tab_erro);
+          -- vr_dscritic := 'Nenhuma agencia ativa no banco.';
+          
+          pr_cdcritic := 1027;
+                    
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
@@ -597,11 +593,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       END IF;
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
+        
+        GENE0001.pc_gera_erro(pr_cdcooper => 0
+                             ,pr_cdagenci => 0
+                             ,pr_nrdcaixa => 0
+                             ,pr_nrsequen => 1 -- Sequencia 
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+                             
+        pr_dscritic := vr_dscritic;
+                             
       WHEN OTHERS THEN
-        pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro ao executar rotina CCAF0001.pc_valida_banco_agencia. '||sqlerrm;
+          
+        pr_cdcritic := 9999;
+        
+        GENE0001.pc_gera_erro(pr_cdcooper => 0
+                             ,pr_cdagenci => 0
+                             ,pr_nrdcaixa => 0
+                             ,pr_nrsequen => 1 -- Sequencia 
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+           
+        pr_dscritic := vr_dscritic || ' CCAF0001.pc_valida_banco_agencia - ' ||sqlerrm;
     END;
   END pc_valida_banco_agencia;
 
@@ -650,6 +665,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
    Alteracoes: 09/08/2013 - Convers¿o Progress >> Oracle (PLSQL) (Alisson-Amcom)
 
                20/03/2014 - Incluido upper na leitura do campo rw_crapagb.cdsitagb (Odirlei-AMcom)
+               
+               06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
+                            Incluido set de modulo
+                            Incluido código de critica 9999 ( Belli Envolti ) - Ch 665812
 
   ............................................................................. */
   BEGIN
@@ -665,7 +684,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+      
+      -- Chamado 665812 06/06/2017 
+      vr_ja_tem_tab_erro VARCHAR2(3) := null;
+      
     BEGIN
+	    -- Incluir nome do módulo logado - Chamado 665812 06/06/2017
+		  GENE0001.pc_set_modulo(pr_module => 'CCAF0001', pr_action => 'CCAF0001.pc_calcula_bloqueio_cheque');
+      
       --Inicializar retorno erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
@@ -680,16 +706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         -- Fechar o cursor pois haver¿ raise
         CLOSE cr_crapcop;
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 794;
-        --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        pr_cdcritic:= 794;
         --Levantar Excecao
         RAISE vr_exc_erro;
       ELSE
@@ -708,16 +725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         --Fechar Cursor
         CLOSE cr_crapage;
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 962;
-        --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        pr_cdcritic:= 962;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -732,16 +740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         -- Fechar o cursor pois haver¿ raise
         CLOSE BTCH0001.cr_crapdat;
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 1;
-        --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        pr_cdcritic:= 1;
         --Levantar Excecao
         RAISE vr_exc_erro;
       ELSE
@@ -759,16 +758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       /* Validacao do cheque */
       IF pr_vlcheque <= 0 THEN
         --Mensagem de erro
-        vr_dscritic:= NULL;
-        vr_cdcritic:= 269;
-        --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        pr_cdcritic:= 269;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -782,6 +772,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       --Se Ocorreu erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
+        vr_ja_tem_tab_erro := 'sim';
+        pr_dscritic:= vr_dscritic;
+        pr_cdcritic:= vr_cdcritic;
         RAISE vr_exc_erro;
       END IF;
 
@@ -824,15 +817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
         CLOSE cr_crapcaf;
         --Mensagem de erro
         vr_dscritic:= 'Cidade nao cadastrada.';
-        vr_cdcritic:= 0;
-        --Gerar erro
-        GENE0001.pc_gera_erro(pr_cdcooper => 0
-                             ,pr_cdagenci => 0
-                             ,pr_nrdcaixa => 0
-                             ,pr_nrsequen => 1 /** Sequencia **/
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
+        pr_cdcritic:= 0;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -926,14 +911,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
           vr_tmp_qtdiasut:= vr_tmp_qtdiasut + 1;
           pr_dtblqchq:= pr_dtblqchq + 1;
         END IF;
-      END LOOP;
+      END LOOP;   
     EXCEPTION
       WHEN vr_exc_erro THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_dscritic;
+        
+        if vr_ja_tem_tab_erro is null then
+            GENE0001.pc_gera_erro(
+                              pr_cdcooper => 0
+                             ,pr_cdagenci => 0
+                             ,pr_nrdcaixa => 0
+                             ,pr_nrsequen => 1 /** Sequencia **/
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+                             
+             pr_dscritic := vr_dscritic;
+          
+        end if;
+                 
       WHEN OTHERS THEN
-        pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro ao executar rotina CCAF0001.pc_calcula_bloqueio_cheque. '||sqlerrm;
+        
+        pr_cdcritic := 9999;
+                
+        GENE0001.pc_gera_erro(pr_cdcooper => 0
+                             ,pr_cdagenci => 0
+                             ,pr_nrdcaixa => 0
+                             ,pr_nrsequen => 1 -- Sequencia 
+                             ,pr_cdcritic => pr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro);
+                                            
+        pr_dscritic:= vr_dscritic || ' CCAF0001.pc_calcula_bloqueio_cheque - '  || sqlerrm;
     END;
   END pc_calcula_bloqueio_cheque;
 

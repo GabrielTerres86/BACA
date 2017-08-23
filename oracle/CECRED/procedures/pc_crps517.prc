@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps517(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : David
-    Data    : Outubro/2008                    Ultima Atualizacao: 21/02/2017
+    Data    : Outubro/2008                    Ultima Atualizacao: 29/06/2017
 
     Dados referente ao programa:
     
@@ -80,6 +80,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps517(pr_cdcooper IN crapcop.cdcooper%TY
 
                21/02/2017 - #551221 Ajuste de padronização do nome do job e log de início 
                             e fim do mesmo no proc_batch (Carlos)
+                            
+               29/06/2017 - Colocado Log no padrão
+                            tratado Others
+                            (Belli - Envolti - Chamado 660306)
+                            
     ............................................................................ */
 DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -96,11 +101,14 @@ DECLARE
       vr_dscritic   VARCHAR2(4000);
 			vr_tp_excep   VARCHAR2(1000);
 
-      vr_desdolog     VARCHAR2(500);
       vr_tempo        NUMBER;
             
       vr_nomdojob CONSTANT VARCHAR2(26) := 'jbdsct_limite_desconto';
       vr_cdcooper crapcop.cdcooper%TYPE := 3;
+      
+      -- Chamado 660306 - 10/07/2017
+      -- Variaveis de inclusão de log 
+      vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;      
       
       ------------------------------- CURSORES ---------------------------------
       -- Busca dos dados da cooperativa
@@ -143,14 +151,20 @@ DECLARE
        
         vr_cdcooper := rw_crapcop.cdcooper;
 
-        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato 
-                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
-                                                      rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                  ,pr_des_log      => to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_nomdojob ||
-                                                      ' --> Inicio da execucao: '|| vr_nomdojob
-                                  ,pr_dstiplog     => 'I'
-                                  ,pr_cdprograma   => vr_nomdojob);
+        -- Mensagem de inicio não é gravafa pela rotina de log - 29/06/2017 - Chamado 660306
+        vr_dscritic := null;        
+        -- Colocado Log no padrão - 29/06/2017 - Chamado 660306                
+        cecred.pc_log_programa(pr_dstiplog      => 'I',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                               pr_cdprograma    => vr_nomdojob,  -- tbgen_prglog
+                               pr_cdcooper      => rw_crapcop.cdcooper,  -- tbgen_prglog
+                               pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               pr_tpocorrencia  => 4,            -- tbgen_prglog_ocorrencia - 4 MENSAGEM TRATADA
+                               pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                               pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                               pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                               pr_nmarqlog      => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                               pr_idprglog      => vr_idprglog
+                               ); 
 
         -- Leitura do calendario da cooperativa
         OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
@@ -196,11 +210,17 @@ DECLARE
                            ,pr_nmdcampo => vr_nmdcampo
                            ,pr_des_erro => vr_des_erro);
 
+        -- Seta modulo no retorno da package disparada - Chamado 660306 - 29/06/2017                   
+        -- Incluir nome do modulo logado, action = null porque não tem subrotina mnessa procedure
+        GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                                  ,pr_action => null); 
+
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           -- Busca o tipo de Exception em que deve dar RAISE
           vr_tp_excep := gene0007.fn_valor_tag(pr_xml     => vr_xml
                                               ,pr_pos_exc => 0
                                               ,pr_nomtag  => 'TpException');
+
           -- Define a Exception a ser levantada
           CASE vr_tp_excep
             WHEN 1 THEN RAISE vr_exc_saida;
@@ -216,21 +236,23 @@ DECLARE
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
         ***************************************************************************************/
-
-        --> Criar log de fim de execução
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_nomdojob ||
-                           ' --> Stored Procedure rodou em '|| 
-                           -- calcular tempo de execução
-                           to_char(to_date(to_char(SYSDATE,'SSSSS') - vr_tempo,'SSSSS'),'HH24:MI:SS');
+        
                        
-        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
-                                                      rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                  ,pr_des_log      => vr_desdolog
-                                  ,pr_dstiplog     => 'F'
-                                  ,pr_cdprograma   => vr_nomdojob);
-
+        -- Mensagem de inicio não é gravafa pela rotina de log - 29/06/2017 - Chamado 660306
+        vr_dscritic := null;        
+        -- Colocado Log no padrão - 29/06/2017 - Chamado 660306                                                  
+        cecred.pc_log_programa(pr_dstiplog      => 'F',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                               pr_cdprograma    => vr_nomdojob,  -- tbgen_prglog
+                               pr_cdcooper      => rw_crapcop.cdcooper,  -- tbgen_prglog
+                               pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               pr_tpocorrencia  => 4,            -- tbgen_prglog_ocorrencia - 4 MENSAGEM TRATADA
+                               pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                               pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                               pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                               pr_nmarqlog      => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                               pr_idprglog      => vr_idprglog
+                               ); 
+        
         -- Commitar as alterações
         COMMIT;
       END LOOP;           
@@ -244,16 +266,26 @@ DECLARE
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+
+          -- Colocado Log no padrão - 29/06/2017 - Chamado 660306          
+          vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || 
+                                 ' --> ' || 
+                                 'ERRO: ' ||
+                                 vr_dscritic ||
+                                 ' pr_cdcooper=' || vr_cdcooper ||                     
+                                 ' - Module: ' || vr_nomdojob;
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato 
-                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',
-                                                        pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_nomdojob || ' --> '
-                                                                      || vr_dscritic
-                                    ,pr_dstiplog     => 'E'
-                                    ,pr_cdprograma   => vr_nomdojob);
+          cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                 pr_cdprograma    => vr_nomdojob,  -- tbgen_prglog
+                                 pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                                 pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                 pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                                 pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                 pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                                 pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                                 pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_idprglog      => vr_idprglog
+                                 ); 
         END IF;
 
 			  /****************************************************************************************
@@ -273,16 +305,25 @@ DECLARE
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Colocado Log no padrão - 29/06/2017 - Chamado 660306         
+          vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || 
+                                 ' --> ' || 
+                                 'ERRO: ' ||
+                                 vr_dscritic ||
+                                 ' pr_cdcooper=' || vr_cdcooper ||                     
+                                 ' - Module: ' || vr_nomdojob;
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,
-                                                                                  'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_nomdojob || ' --> '
-                                                                      || vr_dscritic
-                                    ,pr_dstiplog     => 'E'
-                                    ,pr_cdprograma   => vr_nomdojob);
+          cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                 pr_cdprograma    => vr_nomdojob,  -- tbgen_prglog
+                                 pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                                 pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                 pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                                 pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                 pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                                 pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                                 pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_idprglog      => vr_idprglog
+                                 );
         END IF;
 
         -- Efetuar rollback
@@ -290,17 +331,29 @@ DECLARE
 
      WHEN OTHERS THEN        
 
+        -- No caso de erro de programa gravar tabela especifica de log - 29/06/2017 - Chamado 660306        
+        CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);       
+
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Colocado Log no padrão - 29/06/2017 - Chamado 660306        
+          vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || 
+                                 ' --> ' || 
+                                 'ERRO: ' ||
+                                 vr_dscritic ||
+                                 ' pr_cdcooper=' || vr_cdcooper ||                     
+                                 ' - Module: ' || vr_nomdojob;
           -- Envio centralizado de log de erro
-          btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,
-                                                                                  'NOME_ARQ_LOG_MESSAGE')
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
-                                                                      || vr_nomdojob || ' --> '
-                                                                      || vr_dscritic
-                                    ,pr_dstiplog     => 'E'
-                                    ,pr_cdprograma   => vr_nomdojob);
+          cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                 pr_cdprograma    => vr_nomdojob,  -- tbgen_prglog
+                                 pr_cdcooper      => vr_cdcooper,  -- tbgen_prglog
+                                 pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                 pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                                 pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                 pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                                 pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                                 pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'),
+                                 pr_idprglog      => vr_idprglog
+                                 );
         END IF;
 
         -- Efetuar rollback

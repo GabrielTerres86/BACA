@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 13/06/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -69,6 +69,12 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             13/06/2017 - Tratar para abrir chamado quando ocorrer algum erro no 
   --                          processamento da conciliacao do cartao Bancoob/Cabal (Lucas Ranghetti #680746)
+  --
+  --             02/08/2017 - Incluir validacao na pc_crps670 para o trailer do arquivo CEXT, caso o arquivo 
+  --                          venha incompleto vamos abrir chamado e rejeitar o arquivo (Lucas Ranghetti #727623)
+  --             
+  --             08/08/2017 - #724754 Ajuste no procedimento pc_crps672 para filtrar apenas as cooperativas 
+  --                          ativas para não solicitar relatórios para as inativas (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -1925,7 +1931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 04/07/2017
+    Data    : Maio/14.                    Ultima atualizacao: 02/08/2017
 
     Dados referentes ao programa:
 
@@ -2030,9 +2036,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 13/06/2017 - Tratar para abrir chamado quando ocorrer algum erro no 
                              processamento da conciliacao do cartao Bancoob/Cabal (Lucas Ranghetti #680746)
+                
                 04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
                              solicitado no chamado 703589. (Kelvin)
                              
+                02/08/2017 - Incluir validacao para o trailer do arquivo CEXT, caso o arquivo venha 
+                             incompleto vamos abrir chamado e rejeitar o arquivo. (Lucas Ranghetti #727623)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -2104,6 +2113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_conarqui   NUMBER:= 0;                                        
       vr_listarq    VARCHAR2(2000);                                    
       vr_split      gene0002.typ_split := gene0002.typ_split();
+      vr_saida_tail VARCHAR2(1000);
       
       vr_dsdircop crapcop.dsdircop%TYPE;      
       
@@ -3065,6 +3075,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             pc_log_batch(true);
            
             CONTINUE;
+          END IF;
+
+          /* o comando abaixo ignora quebras de linha atraves do 'grep -v' e o 'tail -1' retorna
+             a ultima linha do resultado do grep */
+          vr_comando:= 'grep -v '||'''^$'' '||vr_direto_connect||'/'||vr_vet_nmarquiv(i)||'| tail -1';
+
+          --Executar o comando no unix
+          GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                               ,pr_des_comando => vr_comando
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_saida_tail);
+          --Se ocorreu erro dar RAISE
+          IF vr_typ_saida = 'ERR' THEN
+            vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+            RAISE vr_exc_saida;
+          END IF;
+                 
+          --Verificar se a ultima linha é o Trailer
+          IF SUBSTR(vr_saida_tail,1,5) <> 'CEXT9' THEN  
+            vr_dscritic:= 'Arquivo incompleto.';   
+            -- Chamar rotina para enviar E-mail e abrir chamado
+            pc_log_dados_arquivo(pr_tipodreg => 1 -- Conciliacao Cartao Bancoob/Cabal
+                                ,pr_nmdarqui => nvl(vr_nmarqimp,' ')
+                                ,pr_nrdlinha => vr_nrdlinha
+                                ,pr_dscritic => vr_dscritic); 
+            CONTINUE; -- Proximo arquivo
           END IF;
 
           -- criar handle de arquivo de Saldo Disponível dos Associados
@@ -4716,6 +4752,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 20/06/2017 - Alterar a ordem que as informações são enviadas no arquivo CCR3.
                              Primeiro vamos enviar as linhas de Alteração Cadastral e depois as linhas
                              de UPGRADE/DOWNGRADE (Douglas - Chamado 662595)
+
+                14/07/2017 - Ajuste na validação de alteração do PA, pois da forma que estava o cooperado
+                             teve alteração nos dados de emprestimo, com a inclusão de um veículo PAMPA
+                             e o programa entendeu que houve troca de PA, enviando um solicitação de cartão
+                             (Douglas - Chamado 708661)
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -5780,8 +5821,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  upper(rw_crapalt.dsaltera) LIKE '%CIDADE COM.,%'     OR
                  upper(rw_crapalt.dsaltera) LIKE '%UF COM.,%'         OR
               -- procura por alteração de PAC
-                 upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                 upper(rw_crapalt.dsaltera) LIKE '%PA %'              OR
+              -- a alteracao de PA deve ser a primeira, 
+              -- ou separado por virgula
+                 upper(rw_crapalt.dsaltera) LIKE 'PAC %'              OR
+                 upper(rw_crapalt.dsaltera) LIKE 'PA %'               OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PAC %'            OR
+                 upper(rw_crapalt.dsaltera) LIKE '%,PA %'             OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PAC %'           OR
+                 upper(rw_crapalt.dsaltera) LIKE '%, PA %'            OR
                  -- procura por alteração de telefone
                  upper(rw_crapalt.dsaltera) LIKE '%TELEF.%'
                  THEN
@@ -5828,8 +5875,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   vr_flalttfc := FALSE;
 
                   -- Verificar se houve alteração no grupo de afinidade - por PA
-                  IF upper(rw_crapalt.dsaltera) LIKE '%PAC %'             OR
-                     upper(rw_crapalt.dsaltera) LIKE '%PA %'              THEN
+                  -- a alteracao de PA deve ser a primeira, ou separado por virgula
+                  IF upper(rw_crapalt.dsaltera) LIKE 'PAC %'             OR
+                     upper(rw_crapalt.dsaltera) LIKE 'PA %'              OR
+                     upper(rw_crapalt.dsaltera) LIKE '%,PAC %'           OR
+                     upper(rw_crapalt.dsaltera) LIKE '%,PA %'            OR
+                     upper(rw_crapalt.dsaltera) LIKE '%, PAC %'          OR
+                     upper(rw_crapalt.dsaltera) LIKE '%, PA %'           THEN
                     vr_flaltafn := TRUE;
                   END IF;
 
@@ -6617,6 +6669,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    
                    04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
                                 solicitado no chamado 703589. (Kelvin)
+
+                   18/07/2017 - Utilizar o nome do titular do cartão na importação do arquivo CCR3
+                                para atualizar no Ayllos, a fim de manter as informalçoes identicas
+                                com o SIPAG (Douglas - Chamado 709215) 
     ............................................................................ */
 
     DECLARE
@@ -6723,7 +6779,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
               ,cop.dsdircop
               ,cop.cdcooper
           FROM crapcop cop
-          WHERE cop.cdcooper <> 3 ;
+         WHERE cop.cdcooper <> 3
+           AND cop.flgativo = 1;
       rw_crapcop_todas cr_crapcop_todas%ROWTYPE;
 
      -- Cursor para retornar cooperativa com base na conta da central

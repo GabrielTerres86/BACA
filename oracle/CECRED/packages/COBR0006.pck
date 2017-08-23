@@ -452,7 +452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+    Data     : Novembro/2015.                   Ultima atualizacao: 30/05/2017
   
    Dados referentes ao programa:
   
@@ -1946,7 +1946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 14/07/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 21/08/2017
 
        Dados referentes ao programa:
 
@@ -1967,6 +1967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                   14/07/2017 - Retirado verificação de pagador DDA e ROLLOUT. Essa verificação é
                                feita no pc_crps618. (Rafael)
+
+                  21/08/2017 - Incluir vencto original (dtvctori) ao registrar o boleto. (Rafael)
 
     ............................................................................ */   
     
@@ -2142,7 +2144,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vlminimo,
                 inpagdiv,                
                 inenvcip,
-                inregcip
+                inregcip,
+                dtvctori
                 )
         VALUES (pr_tab_crapcob(vr_idx_cob).cdcooper,
                 pr_tab_crapcob(vr_idx_cob).dtmvtolt,
@@ -2203,7 +2206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).vlminimo,
                 pr_tab_crapcob(vr_idx_cob).inpagdiv,
                 pr_tab_crapcob(vr_idx_cob).inenvcip,
-                vr_inregcip)
+                vr_inregcip,
+                pr_tab_crapcob(vr_idx_cob).dtvencto)
         RETURNING ROWID INTO vr_new_rowid;
       
       IF pr_tab_crapcob(vr_idx_cob).flgregis = 1 THEN      
@@ -11858,6 +11862,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Realiza a validação do arquivo cnab240_01
 
        Alteracoes: 
+                   24/07/2017 - Arquivo recebido com problema de layout é rejeitado por
+                                erro na gene0009.pc_importa_arq_layout. Guardar mensagem
+                                de retorno com a cobr0006.pc_cria_rejeitado e no tratamento
+                                de exceção carregar o parâmetro pr_rec_rejeita, que é
+                                tratado no pc_crps778. A falta do retorno estava interrompendo
+                                a execução da carga de arquivos por FTP. (SD#718122-AJFink)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -11970,7 +11980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
       COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
                                 ,pr_nrlinseq => '99999'
-                                ,pr_cdseqcri => 1
+                                ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
                                 ,pr_dscritic => 'Arquivo nao encontrado.'
                                 ,pr_tab_rejeita => vr_tab_rejeita 
                                 ,pr_critica => vr_critica      
@@ -11994,6 +12004,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Se ocorrer erro ao recuperar lista de arquivos, registra no log
     IF TRIM(vr_dscritic) IS NOT NULL THEN 
       vr_dscritic := 'Nao foi possivel localizar arquivo '||pr_nmarqint||': '||vr_dscritic;
+
+      COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                ,pr_nrlinseq => '99999'
+                                ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
+                                ,pr_dscritic => vr_dscritic
+                                ,pr_tab_rejeita => vr_tab_rejeita 
+                                ,pr_critica => vr_critica      
+                                ,pr_des_reto => vr_des_reto);
+
       RAISE vr_exc_erro;
     END IF;
     
@@ -12015,6 +12034,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     ,pr_tab_linhas => vr_tab_linhas);    --> Retorna as linhas/campos do arquivo na temptable
                                       
       IF TRIM(vr_dscritic) IS NOT NULL THEN
+
+        COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                  ,pr_nrlinseq => '99999'
+                                  ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
+                                  ,pr_dscritic => vr_dscritic
+                                  ,pr_tab_rejeita => vr_tab_rejeita 
+                                  ,pr_critica => vr_critica      
+                                  ,pr_des_reto => vr_des_reto);
+
         RAISE vr_exc_erro;
       END IF;
       
@@ -12022,6 +12050,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
         vr_cdcritic := 999;
         vr_dscritic := 'Arquivo vazio.';
+
+        COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                  ,pr_nrlinseq => '99999'
+                                  ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
+                                  ,pr_dscritic => vr_dscritic
+                                  ,pr_tab_rejeita => vr_tab_rejeita 
+                                  ,pr_critica => vr_critica      
+                                  ,pr_des_reto => vr_des_reto);
 
         RAISE vr_exc_erro; 
          
@@ -13045,9 +13081,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
   EXCEPTION  
     WHEN vr_exc_erro THEN         
+    begin
+      if nvl(pr_rec_rejeita.count(),0) = 0 and nvl(vr_tab_rejeita.count(),0) > 0 then
+
+        vr_contaerr := 0;
+        vr_tpcritic := 0;
+        
+        -- Percorrer todos os registros rejeitados
+        FOR vr_idx IN 1..vr_tab_rejeita.COUNT() LOOP
+                
+          vr_contaerr := vr_contaerr + 1;
+                
+          IF vr_tpcritic <>  vr_tab_rejeita(vr_idx).tpcritic THEN -- vr_tab_rejeita(vr_idx).tpcritic THEN
+            
+            CASE vr_tab_rejeita(vr_idx).tpcritic
+              WHEN 1 THEN
+                vr_dslocali := 'Header do Arquivo';
+              WHEN 2 THEN
+                vr_dslocali := 'Header do Lote';  
+              WHEN 3 THEN
+                vr_dslocali := 'Detalhe do Arquivo';
+              WHEN 4 THEN
+                vr_dslocali := 'Trailer do Lote';
+              ELSE
+                vr_dslocali := 'Trailer do Arquivo';  
+              
+            END CASE;   
+            
+            COBR0006.pc_cria_rejeitado(pr_tpcritic => vr_tab_rejeita(vr_idx).tpcritic
+                                      ,pr_cdseqcri => vr_contaerr
+                                      ,pr_dscritic => '==>  ' ||  vr_dslocali
+                                      ,pr_tab_rejeita => pr_rec_rejeita 
+                                      ,pr_critica => vr_critica      
+                                      ,pr_des_reto => vr_des_reto);
+
+            vr_contaerr := vr_contaerr + 1;
+            vr_tab_rejeita(vr_idx).cdseqcri := vr_contaerr; 
+            vr_tpcritic := vr_tab_rejeita(vr_idx).tpcritic;
+            
+            COBR0006.pc_cria_rejeitado(pr_tpcritic => vr_tab_rejeita(vr_idx).tpcritic
+                                      ,pr_nrlinseq => vr_tab_rejeita(vr_idx).nrlinseq        
+                                      ,pr_cdseqcri => vr_contaerr
+                                      ,pr_seqdetal => vr_tab_rejeita(vr_idx).seqdetal                                  
+                                      ,pr_dscritic => vr_tab_rejeita(vr_idx).dscritic
+                                      ,pr_tab_rejeita => pr_rec_rejeita 
+                                      ,pr_critica => vr_critica      
+                                      ,pr_des_reto => vr_des_reto);
+            
+          ELSE
+            
+            vr_tab_rejeita(vr_idx).cdseqcri := vr_contaerr;  
+            
+            COBR0006.pc_cria_rejeitado(pr_tpcritic => vr_tab_rejeita(vr_idx).tpcritic
+                                      ,pr_nrlinseq => vr_tab_rejeita(vr_idx).nrlinseq        
+                                      ,pr_cdseqcri => vr_contaerr
+                                      ,pr_seqdetal => vr_tab_rejeita(vr_idx).seqdetal                                  
+                                      ,pr_dscritic => vr_tab_rejeita(vr_idx).dscritic
+                                      ,pr_tab_rejeita => pr_rec_rejeita 
+                                      ,pr_critica => vr_critica      
+                                      ,pr_des_reto => vr_des_reto);
+                                      
+          END IF;
+            
+        END LOOP;
+
+      end if;
 
       pr_des_reto := 'NOK';
 
+    end;
+       
     WHEN OTHERS THEN
       
       pr_des_reto := 'NOK';
@@ -13077,6 +13180,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Alteracoes: 17/08/2016 - Ajuste para retirar tratementos do Trailer de Lote e
                                 efetuar tratamento para os segmentos R,S
                                 (Andrei - RKAM).
+                   24/07/2017 - Arquivo recebido com problema de layout é rejeitado por
+                                erro na gene0009.pc_importa_arq_layout. Guardar mensagem
+                                de retorno com a cobr0006.pc_cria_rejeitado e no tratamento
+                                de exceção carregar o parâmetro pr_rec_rejeita, que é
+                                tratado no pc_crps778. A falta do retorno estava interrompendo
+                                a execução da carga de arquivos por FTP. (SD#718122-AJFink)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -13195,8 +13304,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
                                 ,pr_nrlinseq => '99999'
-                                ,pr_cdseqcri => 1
-                                ,pr_dscritic => 'Arquivo nao encontrado)'
+                                ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
+                                ,pr_dscritic => 'Arquivo nao encontrado.'
                                 ,pr_tab_rejeita => vr_tab_rejeita 
                                 ,pr_critica => vr_critica      
                                 ,pr_des_reto => vr_des_reto);
@@ -13219,6 +13328,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Se ocorrer erro ao recuperar lista de arquivos, registra no log
     IF TRIM(vr_dscritic) IS NOT NULL THEN 
       vr_dscritic := 'Nao foi possivel localizar arquivo '||pr_nmarqint||': '||vr_dscritic;
+
+      COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                ,pr_nrlinseq => '99999'
+                                ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
+                                ,pr_dscritic => vr_dscritic
+                                ,pr_tab_rejeita => vr_tab_rejeita 
+                                ,pr_critica => vr_critica      
+                                ,pr_des_reto => vr_des_reto);
+
       RAISE vr_exc_erro;
     END IF;
     
@@ -13240,6 +13358,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     ,pr_tab_linhas => vr_tab_linhas);    --> Retorna as linhas/campos do arquivo na temptable
                                       
       IF TRIM(vr_dscritic) IS NOT NULL THEN
+
+        COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                  ,pr_nrlinseq => '99999'
+                                  ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
+                                  ,pr_dscritic => vr_dscritic
+                                  ,pr_tab_rejeita => vr_tab_rejeita 
+                                  ,pr_critica => vr_critica      
+                                  ,pr_des_reto => vr_des_reto);
+
         RAISE vr_exc_erro;
       END IF;
       
@@ -13247,6 +13374,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
         vr_cdcritic := 999;
         vr_dscritic := 'Arquivo vazio.';
+
+        COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
+                                  ,pr_nrlinseq => '99999'
+                                  ,pr_cdseqcri => (nvl(vr_tab_rejeita.count(),0)+1)
+                                  ,pr_dscritic => vr_dscritic
+                                  ,pr_tab_rejeita => vr_tab_rejeita 
+                                  ,pr_critica => vr_critica      
+                                  ,pr_des_reto => vr_des_reto);
 
         RAISE vr_exc_erro; 
          
@@ -14365,7 +14500,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     vr_contaerr := 0;
     vr_tpcritic := 0;
-    vr_tpcritic := 0;
     
     -- Percorrer todos os registros rejeitados
     FOR vr_idx IN 1..vr_tab_rejeita.COUNT() LOOP
@@ -14429,9 +14563,75 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
   EXCEPTION  
     WHEN vr_exc_erro THEN         
+    begin
+      if nvl(pr_rec_rejeita.count(),0) = 0 and nvl(vr_tab_rejeita.count(),0) > 0 then
+
+        vr_contaerr := 0;
+        vr_tpcritic := 0;
+        
+        -- Percorrer todos os registros rejeitados
+        FOR vr_idx IN 1..vr_tab_rejeita.COUNT() LOOP
+                
+          vr_contaerr := vr_contaerr + 1;
+                
+          IF vr_tpcritic <>  vr_tab_rejeita(vr_idx).tpcritic THEN -- vr_tab_rejeita(vr_idx).tpcritic THEN
+            
+            CASE vr_tab_rejeita(vr_idx).tpcritic
+              WHEN 1 THEN
+                vr_dslocali := 'Header do Arquivo';
+              WHEN 2 THEN
+                vr_dslocali := 'Header do Lote';  
+              WHEN 3 THEN
+                vr_dslocali := 'Detalhe do Arquivo';
+              WHEN 4 THEN
+                vr_dslocali := 'Trailer do Lote';
+              ELSE
+                vr_dslocali := 'Trailer do Arquivo';  
+              
+            END CASE;   
+            
+            COBR0006.pc_cria_rejeitado(pr_tpcritic => vr_tab_rejeita(vr_idx).tpcritic
+                                      ,pr_cdseqcri => vr_contaerr
+                                      ,pr_dscritic => '==>  ' ||  vr_dslocali
+                                      ,pr_tab_rejeita => pr_rec_rejeita 
+                                      ,pr_critica => vr_critica      
+                                      ,pr_des_reto => vr_des_reto);
+
+            vr_contaerr := vr_contaerr + 1;
+            vr_tab_rejeita(vr_idx).cdseqcri := vr_contaerr; 
+            vr_tpcritic := vr_tab_rejeita(vr_idx).tpcritic;
+            
+            COBR0006.pc_cria_rejeitado(pr_tpcritic => vr_tab_rejeita(vr_idx).tpcritic
+                                      ,pr_nrlinseq => vr_tab_rejeita(vr_idx).nrlinseq
+                                      ,pr_cdseqcri => vr_contaerr
+                                      ,pr_seqdetal => vr_tab_rejeita(vr_idx).seqdetal                                  
+                                      ,pr_dscritic => vr_tab_rejeita(vr_idx).dscritic
+                                      ,pr_tab_rejeita => pr_rec_rejeita 
+                                      ,pr_critica => vr_critica      
+                                      ,pr_des_reto => vr_des_reto);
+            
+          ELSE
+            
+            vr_tab_rejeita(vr_idx).cdseqcri := vr_contaerr;  
+            
+            COBR0006.pc_cria_rejeitado(pr_tpcritic => vr_tab_rejeita(vr_idx).tpcritic
+                                      ,pr_nrlinseq => vr_tab_rejeita(vr_idx).nrlinseq        
+                                      ,pr_cdseqcri => vr_contaerr
+                                      ,pr_seqdetal => vr_tab_rejeita(vr_idx).seqdetal                                  
+                                      ,pr_dscritic => vr_tab_rejeita(vr_idx).dscritic
+                                      ,pr_tab_rejeita => pr_rec_rejeita 
+                                      ,pr_critica => vr_critica      
+                                      ,pr_des_reto => vr_des_reto);
+                                      
+          END IF;
+            
+        END LOOP;
+      end if;
 
       pr_des_reto := 'NOK';
 
+    end;
+       
     WHEN OTHERS THEN
       
       pr_des_reto := 'NOK';

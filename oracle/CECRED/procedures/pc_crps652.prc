@@ -197,6 +197,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 		 02/05/2017 - Prj 432 - retirar regra de não enviar baixa se contrato VIP, está gerando conflitos no Cyber 
 		                        e esta regra será revista na melhoria 302. (Jean / Mout´s)
 
+               16/05/2017 - Inclusão de identificação das origens de pagamento "Boletagem Massiva", "Pagto. por avalista", 
+                            "Pagto. Boleto Prejuízo", "Descto. Boleto Prejuízo" e "Pagto. de Boleto".
+                            Inclusão de verificação dos historicos 2277, 2278 e 2279. Prj. 210.2 (Lombardi)
 
      ............................................................................. */
 
@@ -247,9 +250,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        ,nmconjug crapcje.nmconjug%TYPE   -- Nome Conjugue
        ,dtnasccj crapcje.dtnasccj%TYPE); -- Data Nascimento Conjugue
 
+     TYPE typ_reg_boleto IS RECORD
+       -- Campos da crapass
+       (idarquivo tbepr_cobranca.idarquivo%TYPE   -- Id do arquivo
+       ,nrcpfava  tbepr_cobranca.nrcpfava%TYPE    -- CPF Avalista
+       ,tpparcela tbepr_cobranca.tpparcela%TYPE); -- Tipo de parcela
+
      /* Tipos de Dados para vetores e tabelas de memoria */
      TYPE typ_tab_crapass  IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
      TYPE typ_tab_crapctt  IS TABLE OF typ_reg_crapctt INDEX BY PLS_INTEGER;
+     TYPE typ_tab_boleto   IS TABLE OF typ_reg_boleto  INDEX BY VARCHAR2(30);
      TYPE typ_tab_crapjur  IS TABLE OF crapjur%ROWTYPE INDEX BY PLS_INTEGER;
      TYPE typ_tab_categ    IS TABLE OF VARCHAR2(30) INDEX BY VARCHAR2(30);
      TYPE typ_tab_idatribu IS VARRAY(10) OF PLS_INTEGER;
@@ -266,6 +276,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
      vr_tab_nmclob   typ_tab_nmclob:= typ_tab_nmclob(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
      vr_tab_linha    typ_tab_linha:= typ_tab_linha (NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
      vr_tab_crapctt  typ_tab_crapctt;
+     vr_tab_boleto   typ_tab_boleto;
      vr_tab_crapass  typ_tab_crapass;
      vr_tab_crapjur  typ_tab_crapjur;
      vr_tab_categ    typ_tab_categ;
@@ -564,6 +575,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
             AND craphis.cdhistor in (1070, 1060, 1071, 1072)
+         GROUP BY craplcm.cdhistor,craphis.dshistor
+         UNION
+         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
+               SUM(craplcm.vllanmto) vllanmto
+               ,craplcm.cdhistor
+               ,craphis.dshistor
+           FROM craplcm, craphis, crapepr
+          WHERE crapepr.cdcooper = craplcm.cdcooper
+            AND crapepr.nrdconta = craplcm.nrdconta
+            AND craphis.cdcooper = craplcm.cdcooper
+            AND craphis.cdhistor = craplcm.cdhistor
+            AND craplcm.cdcooper = pr_cdcooper
+            AND craplcm.nrdconta = pr_nrdconta
+            AND crapepr.nrctremp = pr_nrctremp
+            AND craplcm.dtmvtolt = pr_dtmvtolt
+            AND craphis.cdhistor in (2277, 2278, 2279)
          GROUP BY craplcm.cdhistor,craphis.dshistor;
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -590,6 +617,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                    crawepr.nrctrliq##8 ,
                    crawepr.nrctrliq##9 ,
                    crawepr.nrctrliq##10 );
+   
+       
+       CURSOR cr_boleto (pr_cdcooper IN crapcyb.cdcooper%TYPE
+                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+         SELECT epr.cdcooper
+               ,epr.nrdconta
+               ,epr.nrctremp
+               ,epr.idarquivo
+               ,epr.nrcpfava
+               ,epr.tpparcela
+           FROM tbepr_cobranca epr
+          WHERE epr.cdcooper = pr_cdcooper
+            AND EXISTS (SELECT 1 
+                          FROM crapcob cob
+                         WHERE cob.cdcooper = epr.cdcooper
+                          AND cob.nrdconta = epr.nrdconta_cob
+                          AND cob.nrcnvcob = epr.nrcnvcob
+                          AND cob.nrdocmto = epr.nrboleto
+                          AND cob.incobran = 5
+                          AND cob.dtdpagto = pr_dtmvtolt)
+          ORDER BY epr.cdcooper, epr.nrdconta, epr.nrctremp;
         
          vr_cdtrscyb VARCHAR2(6);
                                 
@@ -641,6 +689,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        vr_flgbatch        INTEGER:= 0;
        vr_index           INTEGER;
        vr_idindice        VARCHAR2(40) := ''; -- Indice da tabela de acordos
+       vr_idboleto        VARCHAR2(40) := '';
 
        --Tabela de Erros
        vr_tab_erro       gene0001.typ_tab_erro;
@@ -4686,6 +4735,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_tab_acordo(vr_idindice) := rw_ctr_acordo.nracordo;
          END LOOP;
 
+         FOR rw_boleto IN cr_boleto (pr_cdcooper => rw_crapcop.cdcooper
+                                    ,pr_dtmvtolt => vr_dtatual) LOOP
+           
+           vr_idboleto := rw_boleto.cdcooper || LPAD(rw_boleto.nrdconta,10,0) || LPAD(rw_boleto.nrctremp,10,0);
+           
+           vr_tab_boleto(vr_idboleto).idarquivo := rw_boleto.idarquivo;
+           vr_tab_boleto(vr_idboleto).nrcpfava  := rw_boleto.nrcpfava;
+           vr_tab_boleto(vr_idboleto).tpparcela  := rw_boleto.tpparcela;
+           
+         END LOOP;
+         
          --Selecionar Contratos em Cobranca no Cyber
          FOR rw_crapcyb IN cr_crapcyb (pr_cdcooper => rw_crapcop.cdcooper) LOOP
            
@@ -4924,6 +4984,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                  IF vr_cdtrscyb IS NULL THEN
                     vr_cdtrscyb := 'PA'; --rw_valor_pago_emprestimo.cdhistor;
                  END IF;                      
+                 
+                 vr_idboleto := rw_crapcyb.cdcooper || LPAD(rw_crapcyb.nrdconta,10,0) || LPAD(rw_crapcyb.nrctremp,10,0);
+                   
+                 IF vr_tab_boleto.exists(vr_idboleto) THEN
+                   -- Pagto. de Boleto
+                   vr_cdtrscyb := 'PB';
+                   -- Boletagem Massiva
+                   IF vr_tab_boleto(vr_idboleto).idarquivo > 0 THEN
+                     vr_cdtrscyb := 'BM';
+                   -- Pagto. por Avalista                             "Pagto. Boleto Prejuizo
+                   ELSIF vr_tab_boleto(vr_idboleto).nrcpfava  <> 0 OR vr_tab_boleto(vr_idboleto).tpparcela IN (5,6) THEN
+                     vr_cdtrscyb := 'PB';
+                   -- Descto. Boleto Prejuizo
+                   ELSIF vr_tab_boleto(vr_idboleto).tpparcela = 7 THEN
+                     vr_cdtrscyb := 'DB';
+                   END IF;
+                 END IF;
                  
                  --Gerar Carga Pagamentos
                  pc_gera_carga_pagamentos (pr_cdcooper => rw_crapcyb.cdcooper    --Codigo Cooperativa

@@ -16,6 +16,7 @@ CREATE OR REPLACE PACKAGE CECRED.json0001 IS
   
   TYPE typ_http_response IS RECORD(status_code    NUMBER -- Código do status da resposta do servidor
                                   ,status_message VARCHAR2(4000) -- Mensagem da resposta do servidor
+                                  ,headers        CLOB DEFAULT NULL -- Headers da resposta do servidor
                                   ,content        CLOB DEFAULT NULL -- Content da resposta do servidor
                                   );
 
@@ -42,6 +43,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.json0001 IS
   --
   -- Alterações: 15/03/2016 - Inclusao do parametro para informar se comunicacao exige proxy (Odirlei-AMcom)
   --
+  --             09/06/2017 - P337 - Leitura e armazenagem dos headers da resposta (Marcos-Supero)
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_executa_ws_json(pr_request           IN typ_http_request -- Conteúdo da requisição
                               ,pr_response          OUT typ_http_response -- Conteúdo da resposta do servidor
@@ -180,7 +182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.json0001 IS
                                  ,pr_des_erro => vr_dscritic);
                              
     IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
+      RAISE vr_exc_saida;
     END IF;
     
     -- Gera comando para executar script Perl
@@ -202,8 +204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.json0001 IS
     END IF;
     
     -- Obtem o arquivo com o JSON de resposta e popula um CLOB
-    vr_clob_response := gene0002.fn_arq_para_clob(pr_diretorio_log, vr_file_response);
-    
+    vr_clob_response := DBMS_XSLPROCESSOR.read2clob(pr_diretorio_log, vr_file_response, 0);
+
     -- Converte CLOB para JSON
     vr_json_response := json(vr_clob_response);
     
@@ -213,6 +215,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.json0001 IS
     
     dbms_lob.createtemporary(pr_response.content, TRUE);
     vr_json_response.get('Content').to_clob(pr_response.content);
+    
+    dbms_lob.createtemporary(pr_response.headers, TRUE);
+    vr_json_response.get('Headers').to_clob(pr_response.headers);    
+    
   
   EXCEPTION
     WHEN vr_exc_saida THEN

@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PRCINS AS
 --
 --    Programa: TELA_PRCINS
 --    Autor   : Douglas Quisinski
---    Data    : Setembro/2015                   Ultima Atualizacao: 29/02/2016 
+--    Data    : Setembro/2015                   Ultima Atualizacao: 20/06/2017 
 --
 --    Dados referentes ao programa:
 --
@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PRCINS AS
 --								             e não o encontra, pois ele é gravado com o nome da tela.
 --								            (Adriano - SD 409943)
 --    
+-- 20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta) - (Belli Envolti) - Chamado 660286
 --    
 ---------------------------------------------------------------------------------------------------------------
 
@@ -118,7 +119,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
 --                             pela WEB (Douglas - Chamado 424716)
 
 --				  07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
-
+--    
+--          20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta)
+--                     - (Belli Envolti) - Chamado 660286
+--    
 ---------------------------------------------------------------------------------------------------------------
   /* Rotina para buscar as cooperativas */
   PROCEDURE pc_buscar_cooperativas(pr_cddopcao   IN VARCHAR2           -->Codigo Opcao
@@ -1506,6 +1510,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
     Objetivo  : Rotina para processar a planilha de prova de vida dos beneficiaros do INSS
 
     Alteracoes: 
+    
+          20/06/2017 - Colocar no padrão erro tratado ou mensagem(alerta)
+                     - (Belli Envolti) - Chamado 660286
+                     
     ............................................................................. */
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic crapcri.dscritic%TYPE;
@@ -1522,11 +1530,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
       
       vr_exc_erro EXCEPTION;
       
-    BEGIN
+      -- Variavel para gerar LOG 20/06/2017 Chamado 660286
+      vr_indicador_gera_log  VARCHAR2(3) := 'Sim';
       
-      -- Incluir nome do módulo logado
-      GENE0001.pc_informa_acesso(pr_module => 'PRCINS'
-                                ,pr_action => null);
+    BEGIN      
+	    -- Incluir nome do módulo logado -- Belli 20/06/2017
+      GENE0001.pc_informa_acesso(pr_module => 'TELA_PRCINS',pr_action => 'TELA_PRCINS.pc_importar_prova_vida');
+      
+      pr_nmdcampo := NULL;
+      pr_des_erro := NULL;
 
       /* Extrai os dados */
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -1543,7 +1555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF; 
-      
+            
       --Buscar Diretorio Micros da Cooperativa
       vr_nmdireto:= gene0001.fn_diretorio (pr_tpdireto => 'M' --> Usr/micros
                                           ,pr_cdcooper => 3
@@ -1551,11 +1563,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
       
       --Escrever No LOG
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_ind_tipo_log => 1 -- mensagem tratada
                                 ,pr_nmarqlog     => 'prcins.log'
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
-                                                    ' --> INICIO DO PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
-                                                    ' - Operador: ' || vr_cdoperad); 
+                                                   ' - ' || pr_nmdatela ||  ' --> ' ||
+                                                   'ALERTA: ' ||
+                                                    'INICIO DO PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
+                                                    ' - Operador: ' || vr_cdoperad
+                                ,pr_cdprograma   => pr_nmdatela
+                                                    ); 
       
       INSS0003.pc_importar_prova_vida(pr_cdprogra => pr_nmdatela
                                      ,pr_dsdireto => vr_nmdireto
@@ -1563,16 +1579,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
                                      ,pr_dscritic => vr_dscritic);
       
       IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
+        
+          -- Variavel para gerar LOG 20/06/2017 Chamado 660286
+          vr_indicador_gera_log := 'Não';
+          RAISE vr_exc_erro;
       END IF;
 
       --Escrever No LOG
-      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_nmarqlog     => 'prcins.log'
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
-                                                    ' --> FIM DO PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
-                                                    ' - Operador: ' || vr_cdoperad); 
+      btch0001.pc_gera_log_batch(
+          pr_cdcooper     => vr_cdcooper
+         ,pr_ind_tipo_log => 1 -- mensagem tratada
+         ,pr_nmarqlog     => 'prcins.log'
+         ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
+                            ' - ' || pr_nmdatela ||  ' --> ' ||
+                            'ALERTA: ' ||
+                             'FIM DO PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
+                             ' - Operador: ' || vr_cdoperad
+         ,pr_cdprograma   => pr_nmdatela
+                             ); 
       
       -- Retorna o nome do cooperado      
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -1583,14 +1607,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PRCINS AS
       WHEN vr_exc_erro THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-        --Escrever No LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_nmarqlog     => 'prcins.log'
-                                  ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
-                                                      ' --> ERRO DURANTE O PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
-                                                      ' - Erro: ' || vr_dscritic ||
-                                                      ' - Operador: ' || vr_cdoperad); 
+        
+        -- Variavel para gerar LOG 20/06/2017 Chamado 660286
+        if ( vr_indicador_gera_log = 'Sim' ) then
+          
+             --Escrever No LOG
+              btch0001.pc_gera_log_batch(
+               pr_cdcooper     => vr_cdcooper
+              ,pr_ind_tipo_log => 2 -- Erro tratato
+              ,pr_nmarqlog     => 'prcins.log'
+              ,pr_des_log      => to_char(SYSDATE,'DD/MM/YYYY hh24:mi:ss') ||
+                               ' - ' || pr_nmdatela ||  ' --> ' ||
+                               'ERRO: ' ||
+                               'DURANTE O PROCESSO DE IMPORTACAO DA PROVA DE VIDA DO INSS' ||
+                               ' - Erro: ' || vr_dscritic ||
+                               ' - Operador: ' || vr_cdoperad
+              ,pr_cdprograma   => pr_nmdatela
+                               ); 
+        end if;
         
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.

@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --  Programa:  DSCT0002                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : Odirlei Busana - AMcom 
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 22/12/2016
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 20/06/2017
   --
   --  Dados referentes ao programa:
   --
@@ -15,6 +15,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --              22/12/2016 - Incluidos novos campos para os tipos typ_rec_contrato_limite
   --                           e typ_rec_chq_bordero. Projeto 300 (Lombardi)
+  --  
+  --              02/03/2017 - Tornar a pc_lista_avalistas publica. (P210.2 - Jaison/Daniel)
   --  
   --              20/06/2017 - Incluida validacao de tamanho na atribuicao do campo de operador
   --                           (ID + Nome) pois estava estourando a variavel.
@@ -317,6 +319,24 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   
   TYPE typ_tab_restri_apr_coo IS TABLE OF VARCHAR2(100)
        INDEX BY VARCHAR2(100);
+                 
+  --> listar avalistas de contratos
+  PROCEDURE pc_lista_avalistas ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                                ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                                ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta do cooperado
+                                ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                                ,pr_tpctrato IN INTEGER                --> Tipo de contrado
+                                ,pr_nrctrato IN crapepr.nrctremp%TYPE  --> Numero do contrato
+                                ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Numero da conta do primeiro avalista
+                                ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Numero da conta do segundo avalista
+                                 --------> OUT <--------                                   
+                                ,pr_tab_dados_avais   OUT typ_tab_dados_avais   --> retorna dados do avalista
+                                ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic          OUT VARCHAR2);            --> Descrição da crítica
                  
   --> Buscar dados para montar contratos etc para desconto de titulos
   PROCEDURE pc_busca_dados_imp_descont( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
@@ -3129,7 +3149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --                            de limite de desconto de cheques. Projeto 300 (Lombardi)
     --
     --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
-    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 	
+    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
     --
     --               25/07/2017 - Alteração no cálculo da taxa de juros diária do borderô de 
     --                            Desconto de Cheques. PRJ300 - Desconto de cheque (Lombardi) 	
