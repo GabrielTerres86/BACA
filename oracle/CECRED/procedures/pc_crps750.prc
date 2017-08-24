@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 06/06/2017
+  Data    : Abril/2017                      Ultima atualizacao: 07/08/2017
 
   Dados referentes ao programa:
 
@@ -23,6 +23,9 @@ BEGIN
 
   Alteracoes: 22/06/2017 - Correção do tratamento de erros, não deve abortar o programa e
                            sim continuar para o próximo registro - Jean - Mout´S
+
+              07/08/2017 - Correção da execução do relatório 135, que não estava sendo
+                           gerado na execução em paralelo.
     ............................................................................. */
 
   DECLARE
@@ -495,14 +498,14 @@ BEGIN
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
     /* encerra a execucao da pc_crps750_1 */
-    IF pr_cdagenci = 0
+    IF pr_cdagenci <> 0
     and rw_crapdat.inproces >= 2 THEN
         PC_CRPS750_1( pr_faseprocesso => 3
                       ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                       ,pr_nrdconta     => null  --> Número da conta
                       ,pr_nrctremp     => null  --> contrato de emprestimo
                       ,pr_nrparepr     => null  --> numero da parcela
-                      ,pr_cdagenci     => null  --> código da agencia
+                      ,pr_cdagenci     => pr_cdagenci  --> código da agencia
                       ,pr_cdoperad     => null  --> Código do operador
                       ,pr_cdcritic     => pr_cdcritic --> Codigo da Critica
                       ,pr_dscritic     => vr_dscritic);
