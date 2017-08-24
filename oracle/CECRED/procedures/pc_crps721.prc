@@ -59,9 +59,8 @@ BEGIN
             ,crapepr.cdfinemp
             ,crapepr.cdlcremp
             ,crapepr.qttolatr
-            ,crawepr.dtlibera
+            ,TO_CHAR(crapepr.dtdpagto, 'DD') diapagto
             ,crawepr.cddindex
-            ,TO_CHAR(crawepr.dtdpagto, 'DD') diapagto
         FROM crapepr
         JOIN crawepr
           ON crawepr.cdcooper = crapepr.cdcooper
@@ -70,7 +69,22 @@ BEGIN
        WHERE crapepr.cdcooper = pr_cdcooper
          AND crapepr.tpemprst = 2 -- Pos-Fixado
          AND crapepr.inliquid = 0;
-
+    
+    -- Busca a parcela que sera lancado o Juros na Mensal
+    CURSOR cr_crappep_mensal(pr_cdcooper IN crapepr.cdcooper%TYPE
+                            ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                            ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+        SELECT MIN(nrparepr) nrparepr,
+               vltaxatu
+          FROM crappep
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND nrctremp = pr_nrctremp
+           AND dtvencto >= pr_dtmvtolt
+      GROUP BY vltaxatu;
+    rw_crappep_mensal cr_crappep_mensal%ROWTYPE;
+    
     -- Busca as parcelas atrasadas
     CURSOR cr_crappep(pr_cdcooper IN crappep.cdcooper%TYPE
                      ,pr_nrdconta IN crappep.nrdconta%TYPE
@@ -96,14 +110,8 @@ BEGIN
             ,perjurmo
             ,flgcobmu
         FROM craplcr
-       WHERE cdcooper = pr_cdcooper;
-
-    -- Buscar a taxa acumulada do CDI
-    CURSOR cr_craptxi(pr_dtiniper IN craptxi.dtiniper%TYPE) IS
-      SELECT cddindex
-            ,vlrdtaxa
-        FROM craptxi
-       WHERE dtiniper = pr_dtiniper;
+       WHERE cdcooper = pr_cdcooper
+         AND tpprodut = 2;
 
     -- Buscar a valor da moeda fixa
     CURSOR cr_crapmfx(pr_cdcooper IN crapmfx.cdcooper%TYPE
@@ -164,22 +172,22 @@ BEGIN
     vr_tab_craplcr typ_tab_craplcr;
 
     vr_tab_flg_lcr CADA0001.typ_tab_number;
-    vr_tab_craptxi CADA0001.typ_tab_number;
     vr_tab_crapmfx CADA0001.typ_tab_number;
 
     ------------------------------- VARIAVEIS -------------------------------
-    vr_flgachou BOOLEAN;
-    vr_floperac BOOLEAN;
-    vr_txdiaria craplcr.txdiaria%TYPE;
-    vr_vljuremu NUMBER;
-    vr_vljurcor NUMBER;
-    vr_vlmtapar NUMBER;
-    vr_vlmrapar NUMBER;
-    vr_vltotmra NUMBER;
-    vr_dtvencto DATE;
-    vr_percmult NUMBER(25,2);
-    vr_cdhistor craphis.cdhistor%TYPE;
-    vr_dstextab craptab.dstextab%TYPE;
+    vr_flgachou          BOOLEAN;
+    vr_flg_lancar_mensal BOOLEAN;
+    vr_floperac          BOOLEAN;
+    vr_txdiaria          craplcr.txdiaria%TYPE;
+    vr_vljuremu          NUMBER;
+    vr_vljurcor          NUMBER;
+    vr_vlmtapar          NUMBER;
+    vr_vlmrapar          NUMBER;
+    vr_vltotmra          NUMBER;
+    vr_dtvencto          DATE;
+    vr_percmult          NUMBER(25,2);
+    vr_cdhistor          craphis.cdhistor%TYPE;
+    vr_dstextab          craptab.dstextab%TYPE;
 
   BEGIN
 
@@ -216,7 +224,6 @@ BEGIN
     -- Limpar tabela de memoria
     vr_tab_craplcr.DELETE;
     vr_tab_flg_lcr.DELETE;
-    vr_tab_craptxi.DELETE;
     vr_tab_crapmfx.DELETE;
 
     -- Obter o % de multa da CECRED - TAB090
@@ -239,11 +246,6 @@ BEGIN
       vr_tab_flg_lcr(rw_craplcr.cdlcremp) := 0;
     END LOOP;
 
-    -- Carregar taxas
-    FOR rw_craptxi IN cr_craptxi(pr_dtiniper => rw_crapdat.dtmvtoan) LOOP
-      vr_tab_craptxi(rw_craptxi.cddindex) := rw_craptxi.vlrdtaxa;
-    END LOOP;
-
     -- Carregar moedas fixas
     FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
@@ -258,99 +260,106 @@ BEGIN
         vr_cdcritic := 363;
         RAISE vr_exc_saida;
       END IF;
-
-      -- Se NAO achou a taxa
-      IF NOT vr_tab_craptxi.EXISTS(rw_crapepr.cddindex) THEN
-        vr_dscritic := 'Taxa do CDI nao cadastrada. Data: ' || TO_CHAR(rw_crapdat.dtmvtoan,'DD/MM/RRRR');
-        RAISE vr_exc_saida;
-      END IF;
-
-      -- Se for Financiamento
-      vr_floperac := (vr_tab_craplcr(rw_crapepr.cdlcremp).dsoperac = 'FINANCIAMENTO');
-
-      -- Calcula a taxa diaria
-      vr_txdiaria := POWER(1 + (NVL(rw_crapepr.txmensal,0) / 100),(1 / 30)) - 1;
-
-      -- Monta data de vencimento
-      vr_dtvencto := TO_DATE(rw_crapepr.diapagto || '/' || TO_CHAR(rw_crapdat.dtmvtolt, 'MM/RRRR'),'DD/MM/RRRR');
-
-      -- Efetuar o lancamento de Juros Remuneratorio
-      EMPR0011.pc_efetua_lcto_juros_remun(pr_cdcooper => pr_cdcooper
-                                         ,pr_dtcalcul => rw_crapdat.dtmvtolt
-                                         ,pr_cdagenci => rw_crapepr.cdagenci
-                                         ,pr_cdpactra => rw_crapepr.cdagenci
-                                         ,pr_cdoperad => 1
-                                         ,pr_cdorigem => 7 -- BATCH
-                                         ,pr_nrdconta => rw_crapepr.nrdconta
-                                         ,pr_nrctremp => rw_crapepr.nrctremp
-                                         ,pr_txjuremp => rw_crapepr.txjuremp
-                                         ,pr_vlpreemp => rw_crapepr.vlpreemp
-                                         ,pr_dtlibera => rw_crapepr.dtlibera
-                                         ,pr_dtrefjur => rw_crapepr.dtrefjur
-                                         ,pr_floperac => vr_floperac
-                                         ,pr_dtvencto => vr_dtvencto
-                                         ,pr_vlsprojt => rw_crapepr.vlsprojt
-                                         ,pr_ehmensal => TRUE
-                                         ,pr_txdiaria => vr_txdiaria
-                                         ,pr_vljuremu => vr_vljuremu
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-      -- Se houve erro
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-
-      -- Efetuar o lancameto de Juros de Correcao
-      EMPR0011.pc_efetua_lcto_juros_correc(pr_cdcooper => pr_cdcooper
-                                          ,pr_dtcalcul => rw_crapdat.dtmvtolt
-                                          ,pr_cdagenci => rw_crapepr.cdagenci
-                                          ,pr_cdpactra => rw_crapepr.cdagenci
-                                          ,pr_cdoperad => 1
-                                          ,pr_cdorigem => 7 -- BATCH
-                                          ,pr_flgbatch => TRUE
-                                          ,pr_nrdconta => rw_crapepr.nrdconta
-                                          ,pr_nrctremp => rw_crapepr.nrctremp
-                                          ,pr_dtlibera => rw_crapepr.dtlibera
-                                          ,pr_dtrefjur => rw_crapepr.dtrefjur
-                                          ,pr_vlrdtaxa => vr_tab_craptxi(rw_crapepr.cddindex)
-                                          ,pr_txjuremp => rw_crapepr.txjuremp
-                                          ,pr_vlpreemp => rw_crapepr.vlpreemp
-                                          ,pr_dtvencto => vr_dtvencto
-                                          ,pr_vlsprojt => rw_crapepr.vlsprojt
-                                          ,pr_ehmensal => TRUE
-                                          ,pr_floperac => vr_floperac
-                                          ,pr_vljurcor => vr_vljurcor
-                                          ,pr_cdcritic => vr_cdcritic
-                                          ,pr_dscritic => vr_dscritic);
-      -- Se houve erro
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-
-      -- Soma os valores lancados dentro do mes
-      OPEN cr_craplem_sum(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => rw_crapepr.nrdconta
-                         ,pr_nrctremp => rw_crapepr.nrctremp
-                         ,pr_dtamvini => TO_DATE('01' || TO_CHAR(rw_crapdat.dtmvtolt,'/MM/RRRR'), 'DD/MM/RRRR')
-                         ,pr_dtamvfin => LAST_DAY(rw_crapdat.dtmvtolt));
-      FETCH cr_craplem_sum INTO vr_vllanmto;
-      CLOSE cr_craplem_sum;
       
-      -- Se teve juros pra lancar
-      IF NVL(vr_vllanmto,0) > 0 THEN
-        -- Atualizar tabela cotas
-        BEGIN
-          UPDATE crapcot 
-             SET crapcot.qtjurmfx = NVL(crapcot.qtjurmfx,0) + ROUND(vr_vllanmto / vr_tab_crapmfx(rw_crapepr.cddindex),4)
-           WHERE crapcot.cdcooper = pr_cdcooper
-             AND crapcot.nrdconta = rw_crapepr.nrdconta;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao atualizar tabela crapcot. ' || SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-      END IF;
+      -- Cursor para buscar a parcela que sera calculado o Juros
+      OPEN cr_crappep_mensal(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => rw_crapepr.nrdconta
+                            ,pr_nrctremp => rw_crapepr.nrctremp
+                            ,pr_dtmvtolt => last_day(rw_crapdat.dtmvtolt));
+      FETCH cr_crappep_mensal INTO rw_crappep_mensal;
+      vr_flg_lancar_mensal := cr_crappep_mensal%FOUND;
+      CLOSE cr_crappep_mensal;
+      
+      -- Condicao para verificar se havera lancamento na mensal
+      IF vr_flg_lancar_mensal THEN
+        -- Se for Financiamento
+        vr_floperac := (vr_tab_craplcr(rw_crapepr.cdlcremp).dsoperac = 'FINANCIAMENTO');
+        -- Calcula a taxa diaria
+        vr_txdiaria := POWER(1 + (NVL(rw_crapepr.txmensal,0) / 100),(1 / 30)) - 1;
+        -- Monta data de vencimento
+        vr_dtvencto := TO_DATE(rw_crapepr.diapagto || '/' || TO_CHAR(rw_crapdat.dtmvtolt, 'MM/RRRR'),'DD/MM/RRRR');
+        -- Efetuar o lancamento de Juros Remuneratorio
+        EMPR0011.pc_efetua_lcto_juros_remun(pr_cdcooper => pr_cdcooper
+                                           ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                           ,pr_cdagenci => rw_crapepr.cdagenci
+                                           ,pr_cdpactra => rw_crapepr.cdagenci
+                                           ,pr_cdoperad => 1
+                                           ,pr_cdorigem => 7 -- BATCH
+                                           ,pr_nrdconta => rw_crapepr.nrdconta
+                                           ,pr_nrctremp => rw_crapepr.nrctremp
+                                           ,pr_txjuremp => rw_crapepr.txjuremp
+                                           ,pr_vlpreemp => rw_crapepr.vlpreemp
+                                           ,pr_dtlibera => rw_crapepr.dtmvtolt
+                                           ,pr_dtrefjur => rw_crapepr.dtrefjur
+                                           ,pr_floperac => vr_floperac
+                                           ,pr_dtvencto => vr_dtvencto
+                                           ,pr_vlsprojt => rw_crapepr.vlsprojt
+                                           ,pr_ehmensal => TRUE
+                                           ,pr_txdiaria => vr_txdiaria
+                                           ,pr_nrparepr => rw_crappep_mensal.nrparepr
+                                           ,pr_vljuremu => vr_vljuremu
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
+        -- Efetuar o lancameto de Juros de Correcao
+        EMPR0011.pc_efetua_lcto_juros_correc(pr_cdcooper => pr_cdcooper
+                                            ,pr_dtcalcul => rw_crapdat.dtmvtolt
+                                            ,pr_cdagenci => rw_crapepr.cdagenci
+                                            ,pr_cdpactra => rw_crapepr.cdagenci
+                                            ,pr_cdoperad => 1
+                                            ,pr_cdorigem => 7 -- BATCH
+                                            ,pr_flgbatch => TRUE
+                                            ,pr_nrdconta => rw_crapepr.nrdconta
+                                            ,pr_nrctremp => rw_crapepr.nrctremp
+                                            ,pr_dtlibera => rw_crapepr.dtmvtolt
+                                            ,pr_dtrefjur => rw_crapepr.dtrefjur
+                                            ,pr_vlrdtaxa => rw_crappep_mensal.vltaxatu
+                                            ,pr_txjuremp => rw_crapepr.txjuremp
+                                            ,pr_vlpreemp => rw_crapepr.vlpreemp
+                                            ,pr_dtvencto => vr_dtvencto
+                                            ,pr_vlsprojt => rw_crapepr.vlsprojt
+                                            ,pr_ehmensal => TRUE
+                                            ,pr_floperac => vr_floperac
+                                            ,pr_nrparepr => rw_crappep_mensal.nrparepr
+                                            ,pr_vljurcor => vr_vljurcor
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+        -- Se houve erro
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
+        vr_vllanmto := 0;
+        -- Soma os valores lancados dentro do mes
+        OPEN cr_craplem_sum(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => rw_crapepr.nrdconta
+                           ,pr_nrctremp => rw_crapepr.nrctremp
+                           ,pr_dtamvini => TO_DATE('01' || TO_CHAR(rw_crapdat.dtmvtolt,'/MM/RRRR'), 'DD/MM/RRRR')
+                           ,pr_dtamvfin => LAST_DAY(rw_crapdat.dtmvtolt));
+        FETCH cr_craplem_sum INTO vr_vllanmto;
+        CLOSE cr_craplem_sum;
+        
+        -- Se teve juros pra lancar
+        IF NVL(vr_vllanmto,0) > 0 THEN
+          -- Atualizar tabela cotas
+          BEGIN
+            UPDATE crapcot 
+               SET crapcot.qtjurmfx = NVL(crapcot.qtjurmfx,0) + ROUND(vr_vllanmto / vr_tab_crapmfx(rw_crapepr.cddindex),4)
+             WHERE crapcot.cdcooper = pr_cdcooper
+               AND crapcot.nrdconta = rw_crapepr.nrdconta;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar tabela crapcot. ' || SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        END IF;
+        
+      END IF;  -- -- Condicao para verificar se havera lancamento na mensal
 
       --  Inicializa os meses decorridos para os contratos do mes
       IF TO_CHAR(rw_crapepr.dtmvtolt,'YYYYMM') = TO_CHAR(rw_crapdat.dtmvtolt,'YYYYMM') THEN
@@ -525,6 +534,7 @@ BEGIN
               RAISE vr_exc_saida;
             END IF;
 
+/*
             -- Atualizar parcela do emprestimo
             BEGIN
               UPDATE crappep
@@ -538,7 +548,7 @@ BEGIN
                 vr_dscritic := 'Erro ao atualizar o registro na crappep. ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
-
+*/
           END IF; -- NVL(vr_vlmrapar, 0) > 0
            
          END LOOP;

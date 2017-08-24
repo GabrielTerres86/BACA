@@ -12,7 +12,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
       ,vlsdvpar  crappep.vlsdvpar%TYPE
       ,vldescto  crappep.vldespar%TYPE
       ,vlatupar  NUMBER(25,2)
-      ,flcarenc  PLS_INTEGER);
+      ,flcarenc  PLS_INTEGER
+      ,vlrdtaxa  craptxi.vlrdtaxa%TYPE
+      ,juros_correcao NUMBER(25,2));
     
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_parcelas IS TABLE OF typ_reg_tab_parcelas INDEX BY BINARY_INTEGER;
@@ -28,7 +30,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
       ,juros_correcao       NUMBER(25,2)          := 0
       ,juros_remuneratorio  NUMBER(25,2)          := 0
       ,saldo_projetado      NUMBER(25,2)          := 0
-      ,saldo_devedor        NUMBER(25,2)          := 0);
+      ,saldo_devedor        NUMBER(25,2)          := 0
+      ,vlrdtaxa             craptxi.vlrdtaxa%TYPE);
         
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_price IS TABLE OF typ_reg_tab_price INDEX BY BINARY_INTEGER;
@@ -40,13 +43,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
   -- Vetor para armazenamento
   vr_tab_feriado typ_tab_feriado;  
 
-  PROCEDURE pc_calcula_dias360(pr_dtvencto   IN crappep.dtvencto%TYPE  --> Data de Vencimento
-                              ,pr_dtrefjur   IN DATE                   --> Data de Referencia do lancamento de juros
-                              ,pr_data_final IN DATE                   --> Data Final
-                              ,pr_qtdedias   OUT PLS_INTEGER            --> Quantidade de Dias entre duas Datas
-                              ,pr_cdcritic   OUT PLS_INTEGER           --> Codigo da critica
-                              ,pr_dscritic   OUT VARCHAR2);
-                              
   PROCEDURE pc_calcula_prox_parcela_pos(pr_cdcooper     IN  crapepr.cdcooper%TYPE --> Codigo da Cooperativa
                                        ,pr_flgbatch     IN  BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
                                        ,pr_dtcalcul     IN  crapdat.dtmvtolt%TYPE --> Data do cálculo
@@ -224,6 +220,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                       ,pr_vlsprojt IN  crapepr.vlsdeved%TYPE     --> Valor do Saldo Devedor Projetado
                                       ,pr_ehmensal IN  BOOLEAN                   --> Indicador se estah rodando a mensal
                                       ,pr_txdiaria IN  NUMBER                    --> Taxa Diaria do Contrato
+                                      ,pr_nrparepr IN  crappep.nrparepr%TYPE     --> Numero da Parcela do Emprestimo
                                       ,pr_vljuremu OUT NUMBER                    --> Juros Remuneratorios
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
@@ -246,6 +243,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                         ,pr_vlsprojt IN  NUMBER                    --> Saldo Devedor Projetado
                                         ,pr_ehmensal IN  BOOLEAN                   --> Indicador se estah rodando a mensal
                                         ,pr_floperac IN  BOOLEAN                   --> Indicador se a Operacao eh Financiamento
+                                        ,pr_nrparepr IN  crappep.nrparepr%TYPE     --> Numero da Parcela do Emprestimo
                                         ,pr_vljurcor OUT NUMBER                    --> Juros de Correcao
                                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                         ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
@@ -488,7 +486,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
   END pc_calcula_qtd_dias_uteis;
   
-  PROCEDURE pc_calcula_dias360(pr_dtvencto   IN crappep.dtvencto%TYPE  --> Data de Vencimento
+  PROCEDURE pc_calcula_dias360(pr_ehmensal   IN BOOLEAN                -- Indica se juros esta rodando na mensal
+                              ,pr_dtvencto   IN crappep.dtvencto%TYPE  --> Data de Vencimento
                               ,pr_dtrefjur   IN DATE                   --> Data de Referencia do lancamento de juros
                               ,pr_data_final IN DATE                   --> Data Final
                               ,pr_qtdedias   OUT PLS_INTEGER            --> Quantidade de Dias entre duas Datas
@@ -510,25 +509,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       Alteracoes: 
       .................................................................................*/
       DECLARE
-        vr_dia_data_final INTEGER; --> Dia de vencimento
-        vr_mes_data_final INTEGER; --> Mes de vencimento
-        vr_ano_data_final INTEGER; --> Ano de vencimento
+        vr_dia_data_inicial INTEGER; --> Dia do lancamento de Juros
+        vr_mes_data_inicial INTEGER; --> Mes do lancamento de Juros
+        vr_ano_data_inicial INTEGER; --> Ano do lancamento de Juros
+        
+        vr_dia_data_final   INTEGER; --> Dia de vencimento
+        vr_mes_data_final   INTEGER; --> Mes de vencimento
+        vr_ano_data_final   INTEGER; --> Ano de vencimento
       BEGIN
+        vr_dia_data_inicial := to_char(pr_dtrefjur,'DD');
+        vr_mes_data_inicial := to_char(pr_dtrefjur,'MM');
+        vr_ano_data_inicial := to_char(pr_dtrefjur,'RRRR');
+      
+        -- Condicao para verificar se eh Mensal
+        --IF pr_ehmensal THEN          
+          IF vr_dia_data_inicial >= 28 THEN
+            vr_dia_data_inicial := 30;
+          END IF;
+        --END IF;
+      
         -- Guardar dia, mes e ano separamente do vencimento
-        vr_dia_data_final := to_char(pr_data_final, 'dd');
-        vr_mes_data_final := to_char(pr_data_final, 'mm');
-        vr_ano_data_final := to_char(pr_data_final, 'yyyy');
+        vr_dia_data_final := to_char(pr_data_final, 'DD');
+        vr_mes_data_final := to_char(pr_data_final, 'MM');
+        vr_ano_data_final := to_char(pr_data_final, 'RRRR');
         
         -- Calcula a diferenca entre duas datas e retorna os dias corridos
-        EMPR0001.pc_calc_dias360(pr_ehmensal => FALSE
-                                ,pr_dtdpagto => to_char(pr_dtvencto,'dd')   -- Dia do primeiro vencimento do emprestimo
-                                ,pr_diarefju => to_char(pr_dtrefjur,'dd')   -- Dia da data de referência da última vez que rodou juros
-                                ,pr_mesrefju => to_char(pr_dtrefjur,'mm')   -- Mes da data de referência da última vez que rodou juros
-                                ,pr_anorefju => to_char(pr_dtrefjur,'yyyy') -- Ano da data de referência da última vez que rodou juros
-                                ,pr_diafinal => vr_dia_data_final           -- Dia data final
-                                ,pr_mesfinal => vr_mes_data_final           -- Mes data final
-                                ,pr_anofinal => vr_ano_data_final           -- Ano data final
-                                ,pr_qtdedias => pr_qtdedias);               -- Quantidade de dias calculada
+        EMPR0001.pc_calc_dias360(pr_ehmensal => pr_ehmensal
+                                ,pr_dtdpagto => to_char(pr_dtvencto,'DD') -- Dia do primeiro vencimento do emprestimo
+                                ,pr_diarefju => vr_dia_data_inicial       -- Dia da data de referência da última vez que rodou juros
+                                ,pr_mesrefju => vr_mes_data_inicial       -- Mes da data de referência da última vez que rodou juros
+                                ,pr_anorefju => vr_ano_data_inicial       -- Ano da data de referência da última vez que rodou juros
+                                ,pr_diafinal => vr_dia_data_final         -- Dia data final
+                                ,pr_mesfinal => vr_mes_data_final         -- Mes data final
+                                ,pr_anofinal => vr_ano_data_final         -- Ano data final
+                                ,pr_qtdedias => pr_qtdedias);             -- Quantidade de dias calculada
 
       EXCEPTION
         WHEN OTHERS THEN
@@ -577,7 +591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_qtdia_corridos        PLS_INTEGER;
       vr_qtdia_uteis           PLS_INTEGER;
       vr_data_inicial          DATE;
-      vr_data_final            DATE;    --> Data Final
+      vr_data_final            DATE;
       
       -- Variaveis tratamento de erros
       vr_cdcritic              crapcri.cdcritic%TYPE;
@@ -675,7 +689,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- Calcular o Fator Price para cada parcela
       FOR vr_indice IN 1..pr_qtparcel LOOP
         -- Calcula a diferenca entre duas datas e retorna os dias corridos
-        pc_calcula_dias360(pr_dtvencto   => pr_dtvencto
+        pc_calcula_dias360(pr_ehmensal   => FALSE
+                          ,pr_dtvencto   => pr_dtvencto
                           ,pr_dtrefjur   => vr_data_inicial
                           ,pr_data_final => vr_data_final
                           ,pr_qtdedias   => vr_qtdia_corridos
@@ -738,7 +753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
         
         -- Calculo da taxa no Periodo
-        pr_tab_price(vr_indice).taxa_periodo         := POWER((1 + (rw_craptxi.vlrdtaxa / 100)),(vr_qtdia_uteis / 252)) - 1;      
+        pr_tab_price(vr_indice).taxa_periodo := POWER((1 + (rw_craptxi.vlrdtaxa / 100)),(vr_qtdia_uteis / 252)) - 1;      
         -- Condicao para verificar se a parcela anterior já foi calculada, pois o juros nominais é acumulativo
         IF pr_tab_price.EXISTS(vr_indice - 1) THEN
                                                           -- Fator Acumulado da parcela Anterior
@@ -757,7 +772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Calculo do Fator Juros Nominais 
           pr_tab_price(vr_indice).fator_juros_nominais := POWER(1 + vr_txdiaria,vr_qtdia_corridos);           
           -- Calculo do Fator Correcao Monetaria
-          pr_tab_price(vr_indice).fator_correcao       := (1 + vr_taxa_periodo_anterior) * (1 + pr_tab_price(vr_indice).taxa_periodo);
+          pr_tab_price(vr_indice).fator_correcao := (1 + vr_taxa_periodo_anterior) * (1 + pr_tab_price(vr_indice).taxa_periodo);
         END IF;
 
         -- Calculo do Fator Acumulado
@@ -765,6 +780,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                                    pr_tab_price(vr_indice).fator_correcao - 1;
         -- Calculo fator Price
         pr_tab_price(vr_indice).fator_price := 1 / pr_tab_price(vr_indice).fator_acumulado;
+        pr_tab_price(vr_indice).vlrdtaxa    := rw_craptxi.vlrdtaxa;
+        
         pr_fator_price_total                := NVL(pr_fator_price_total,0) + pr_tab_price(vr_indice).fator_price;
         -- Incrementar a data de pagamento para o proximo mês
         vr_data_inicial := vr_data_final;
@@ -825,14 +842,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_saldo_juros_correcao       NUMBER(25,2);
       vr_saldo_juros_remuneratorio  NUMBER(25,2);
       vr_saldo_projetado            NUMBER(25,2);
+      vr_ehmensal                   BOOLEAN := FALSE;
       
       -- Variaveis tratamento de erros
       vr_cdcritic                   crapcri.cdcritic%TYPE;
       vr_dscritic                   VARCHAR2(4000);
       vr_exc_erro                   EXCEPTION;
     BEGIN
+      -- Condicao para verificar se estamos calculando a mensal
+      IF TO_CHAR(pr_datafinal,'DD') = TO_CHAR(LAST_DAY(pr_datafinal),'DD') THEN
+        vr_ehmensal := TRUE;
+      END IF;
+      
       -- Quantidade de dias corridos entre a data atual e o lancamento de juros remuneratorio
-      pc_calcula_dias360(pr_dtvencto   => pr_dtdpagto
+      pc_calcula_dias360(pr_ehmensal   => vr_ehmensal
+                        ,pr_dtvencto   => pr_dtdpagto
                         ,pr_dtrefjur   => pr_datainicial
                         ,pr_data_final => pr_datafinal
                         ,pr_qtdedias   => vr_qtdias_corridos
@@ -979,6 +1003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_tab_price             typ_tab_price;
       vr_qtparcel              PLS_INTEGER := 1;
       vr_nrparepr              crappep.nrparepr%TYPE;
+      vr_vlrdtaxa              craptxi.vlrdtaxa%TYPE;
       vr_fator_price_total     NUMBER(25,10);
     BEGIN
       vr_tab_price.DELETE;
@@ -1012,11 +1037,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         RAISE vr_exc_erro;
       END IF;
       
+      -- Valor da taxa de calculo
+      vr_vlrdtaxa := vr_tab_price(vr_tab_price.first).vlrdtaxa;
+      
       -- Loop para calcular os valores das parcelas
       vr_nrparepr := NVL(pr_nrparepr,0);
-      FOR vr_indice IN 1..pr_qtpreemp LOOP
+      FOR vr_indice IN 1..vr_qtparcel LOOP
         pr_tab_parcelas(vr_nrparepr).nrparepr := vr_nrparepr;
         pr_tab_parcelas(vr_nrparepr).vlparepr := NVL(pr_vlsprojt,0) / vr_fator_price_total;
+        pr_tab_parcelas(vr_nrparepr).vlrdtaxa := vr_vlrdtaxa;       
         vr_nrparepr := vr_nrparepr + 1;
       END LOOP;
       
@@ -1094,6 +1123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       --vr_qtmeses_carencia       PLS_INTEGER;
       vr_fator_price_total      NUMBER(25,10);
       vr_saldo_projetado        NUMBER(25,10);
+      vr_juros_correcao         NUMBER(25,2) := 0;
       vr_datainicial            DATE;
       vr_datafinal              DATE;
             
@@ -1108,7 +1138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_dtmvtolt := pr_dtcalcul;
       -- Função para retornar o dia anterior
       vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,       --> Cooperativa conectada
-                                                 pr_dtmvtolt  => vr_dtmvtolt,       --> Data do movimento
+                                                 pr_dtmvtolt  => vr_dtmvtolt - 1,       --> Data do movimento
                                                  pr_tipo      => 'A');
       
       -- Buscar a taxa de juros
@@ -1157,19 +1187,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
 
         -- Procedure para calcular o saldo projetado
-        pc_calcula_saldo_projetado(pr_cdcooper           => pr_cdcooper
-                                  ,pr_flgbatch           => pr_flgbatch
-                                  ,pr_dtefetiv           => pr_dtcalcul
-                                  ,pr_datainicial        => vr_datainicial
-                                  ,pr_datafinal          => vr_datafinal
-                                  ,pr_dtcarenc           => pr_dtcarenc
-                                  ,pr_dtdpagto           => pr_dtdpagto
-                                  ,pr_vlrdtaxa           => rw_craptxi.vlrdtaxa
-                                  ,pr_txdiaria           => vr_txdiaria
-                                  ,pr_vlemprst           => pr_vlemprst
-                                  ,pr_tab_price          => vr_tab_price
-                                  ,pr_cdcritic           => vr_cdcritic
-                                  ,pr_dscritic           => vr_dscritic);
+        pc_calcula_saldo_projetado(pr_cdcooper    => pr_cdcooper
+                                  ,pr_flgbatch    => pr_flgbatch
+                                  ,pr_dtefetiv    => pr_dtcalcul
+                                  ,pr_datainicial => vr_datainicial
+                                  ,pr_datafinal   => vr_datafinal
+                                  ,pr_dtcarenc    => pr_dtcarenc
+                                  ,pr_dtdpagto    => pr_dtdpagto
+                                  ,pr_vlrdtaxa    => rw_craptxi.vlrdtaxa
+                                  ,pr_txdiaria    => vr_txdiaria
+                                  ,pr_vlemprst    => pr_vlemprst
+                                  ,pr_tab_price   => vr_tab_price
+                                  ,pr_cdcritic    => vr_cdcritic
+                                  ,pr_dscritic    => vr_dscritic);
                                           
         -- Condicao para verificar se houve erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
@@ -1191,6 +1221,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
             pr_tab_parcelas(vr_nrparepr).vlparepr := vr_tab_price(vr_tab_price.LAST).vlparepr;
             pr_tab_parcelas(vr_nrparepr).dtvencto := vr_datafinal;
             pr_tab_parcelas(vr_nrparepr).flcarenc := 1;
+            pr_tab_parcelas(vr_nrparepr).vlrdtaxa := rw_craptxi.vlrdtaxa;
           END IF;
         END IF;
           
@@ -1206,6 +1237,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       IF vr_tab_price.EXISTS(vr_tab_price.last) THEN
         -- Saldo Devedor Projetado que sera a base para o calculo da parcela
         vr_saldo_projetado := vr_tab_price(vr_tab_price.last).saldo_projetado;
+        -- Saldo do Juros Correcao
+        vr_juros_correcao  := vr_tab_price(vr_tab_price.last).juros_correcao;
       END IF;
       
       -- Procedure para calcular o Fator Price 
@@ -1245,10 +1278,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       
       -- Loop para calcular os valores das parcelas
       FOR vr_indice IN 1..pr_qtpreemp LOOP
-        pr_tab_parcelas(vr_nrparepr).nrparepr := vr_nrparepr;
-        pr_tab_parcelas(vr_nrparepr).vlparepr := NVL(vr_saldo_projetado,0) / vr_fator_price_total;
-        pr_tab_parcelas(vr_nrparepr).dtvencto := vr_dtvencto;
-        pr_tab_parcelas(vr_nrparepr).flcarenc := 0;
+        pr_tab_parcelas(vr_nrparepr).nrparepr       := vr_nrparepr;
+        pr_tab_parcelas(vr_nrparepr).vlparepr       := NVL(vr_saldo_projetado,0) / vr_fator_price_total;
+        pr_tab_parcelas(vr_nrparepr).dtvencto       := vr_dtvencto;
+        pr_tab_parcelas(vr_nrparepr).flcarenc       := 0;
+        pr_tab_parcelas(vr_nrparepr).vlrdtaxa       := vr_tab_price(vr_indice).vlrdtaxa;
+        pr_tab_parcelas(vr_nrparepr).juros_correcao := (vr_juros_correcao + vr_saldo_projetado) * vr_tab_price(vr_indice).taxa_periodo;
+        
         -- Avança para o próximo mês
         vr_nrparepr := vr_nrparepr + 1;
         vr_dtvencto := ADD_MONTHS(vr_dtvencto,1);        
@@ -1342,19 +1378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         vr_dtjurmora := pr_dtultpag;
       END IF;
       
-      -- Quantidade de dias corridos entre a data atual e o lancamento de juros remuneratorio
-      pc_calcula_dias360(pr_dtvencto   => pr_dtvencto
-                        ,pr_dtrefjur   => vr_dtjurmora
-                        ,pr_data_final => pr_dtcalcul
-                        ,pr_qtdedias   => vr_qtdiamor
-                        ,pr_cdcritic   => vr_cdcritic
-                        ,pr_dscritic   => vr_dscritic);
-      
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;    
-      
-      -- vr_qtdiamor := pr_dtcalcul - vr_dtjurmora;
+      vr_qtdiamor := pr_dtcalcul - vr_dtjurmora;
       -- Se a quantidade de dias está dentro da tolerancia de juros de mora
       IF vr_qtdiamor <= pr_qttolatr THEN
         -- Zerar o percentual de mora
@@ -1581,7 +1605,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;        
               
       -- Quantidade de dias corridos entre a data atual e o lancamento de juros remuneratorio
-      pc_calcula_dias360(pr_dtvencto   => rw_crappep.dtvencto
+      pc_calcula_dias360(pr_ehmensal   => FALSE
+                        ,pr_dtvencto   => rw_crappep.dtvencto
                         ,pr_dtrefjur   => vr_dtvencto
                         ,pr_data_final => vr_dtmvtolt
                         ,pr_qtdedias   => vr_qtdias_juros_remun
@@ -2599,7 +2624,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                      ,vlparepr
                      ,vlsdvpar
                      ,dtvencto
-                     ,inliquid)
+                     ,inliquid
+                     ,vltaxatu)
                VALUES(pr_cdcooper
                      ,pr_nrdconta
                      ,pr_nrctremp
@@ -2607,7 +2633,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                      ,vr_tab_parcelas(vr_ind_parcelas).vlparepr
                      ,vr_tab_parcelas(vr_ind_parcelas).vlparepr
                      ,vr_tab_parcelas(vr_ind_parcelas).dtvencto
-                     ,0);
+                     ,0
+                     ,vr_tab_parcelas(vr_ind_parcelas).vlrdtaxa);                     
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao incluir dados na crappep: ' || SQLERRM;
@@ -3817,6 +3844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                       ,pr_vlsprojt IN  crapepr.vlsdeved%TYPE     --> Valor do Saldo Devedor Projetado
                                       ,pr_ehmensal IN  BOOLEAN                   --> Indicador se estah rodando na mensal
                                       ,pr_txdiaria IN  NUMBER                    --> Taxa Diaria do Contrato
+                                      ,pr_nrparepr IN  crappep.nrparepr%TYPE     --> Numero da Parcela do Emprestimo
                                       ,pr_vljuremu OUT NUMBER                    --> Juros Remuneratorios
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
@@ -3889,7 +3917,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;  
     
       -- Procedure para calcular os dias corridos
-      pc_calcula_dias360(pr_dtvencto   => pr_dtvencto
+      pc_calcula_dias360(pr_ehmensal   => pr_ehmensal
+                        ,pr_dtvencto   => pr_dtvencto
                         ,pr_dtrefjur   => vr_data_inicial
                         ,pr_data_final => vr_data_final
                         ,pr_qtdedias   => vr_qtdedias
@@ -3955,7 +3984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                        ,pr_txjurepr => pr_txjuremp         --Taxa Juros Emprestimo
                                        ,pr_vlpreemp => pr_vlpreemp         --Valor Emprestimo
                                        ,pr_nrsequni => 0                   --Numero Sequencia
-                                       ,pr_nrparepr => 0                   --Numero Parcelas Emprestimo
+                                       ,pr_nrparepr => pr_nrparepr         --Numero Parcelas Emprestimo
                                        ,pr_flgincre => TRUE                --Indicador Credito
                                        ,pr_flgcredi => TRUE                --Credito
                                        ,pr_nrseqava => 0                   --Pagamento: Sequencia do avalista
@@ -4023,6 +4052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                         ,pr_vlsprojt IN  NUMBER                    --> Saldo Devedor Projetado
                                         ,pr_ehmensal IN  BOOLEAN                   --> Indicador se estah rodando a mensal
                                         ,pr_floperac IN  BOOLEAN                   --> Indicador se a Operacao eh Financiamento
+                                        ,pr_nrparepr IN  crappep.nrparepr%TYPE     --> Numero da Parcela do Emprestimo
                                         ,pr_vljurcor OUT NUMBER                    --> Juros de Correcao
                                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                         ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
@@ -4091,7 +4121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       IF pr_ehmensal THEN
         vr_data_final := last_day(pr_dtcalcul);
       ELSE
-        vr_data_final := pr_dtcalcul;
+        vr_data_final := pr_dtvencto;
       END IF;
       
       -- Calcula a diferenca entre duas datas e retorna os dias Uteis
@@ -4168,7 +4198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                        ,pr_txjurepr => pr_txjuremp         --Taxa Juros Emprestimo
                                        ,pr_vlpreemp => pr_vlpreemp         --Valor Emprestimo
                                        ,pr_nrsequni => 0                   --Numero Sequencia
-                                       ,pr_nrparepr => 0                   --Numero Parcelas Emprestimo
+                                       ,pr_nrparepr => pr_nrparepr         --Numero Parcelas Emprestimo
                                        ,pr_flgincre => TRUE                --Indicador Credito
                                        ,pr_flgcredi => TRUE                --Credito
                                        ,pr_nrseqava => 0                   --Pagamento: Sequencia do avalista
@@ -4316,6 +4346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                 ,pr_vlsprojt => pr_vlsprojt
                                 ,pr_ehmensal => pr_ehmensal
                                 ,pr_txdiaria => pr_txdiaria
+                                ,pr_nrparepr => pr_nrparepr
                                	,pr_vljuremu => vr_vljuremu
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
@@ -4343,6 +4374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                   ,pr_vlsprojt => pr_vlsprojt
                                   ,pr_ehmensal => pr_ehmensal
                                   ,pr_floperac => pr_floperac
+                                  ,pr_nrparepr => pr_nrparepr
                                   ,pr_vljurcor => vr_vljurcor
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
@@ -4448,7 +4480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                 ,crappep.vlsdvpar = NVL(crappep.vlsdvpar,0) - NVL(vr_vlpagpar,0)
                 ,crappep.inliquid = vr_inliquid
                 ,crappep.vlsdvatu = vr_vlsdvatu
-                ,crappep.vljura60 = vr_vljura60              
+                ,crappep.vljura60 = vr_vljura60
            WHERE crappep.cdcooper = pr_cdcooper
              AND crappep.nrdconta = pr_nrdconta
              AND crappep.nrctremp = pr_nrctremp
@@ -4506,6 +4538,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         END IF;
 
       END IF; -- vr_vlpagpar > 0
+      
+      -- Somente sera atualizado o saldo projetado caso nao possuir nenhum valor pago da parcela
+      
+--      NVL(crapepr.vlsprojt,0) - NVL(pr_vlpreemp,0)
+
 
       -- Atualizar Emprestimo
       BEGIN
@@ -4516,7 +4553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
               ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0) - NVL(vr_vlpagpar,0)
               ,crapepr.vljuratu = NVL(crapepr.vljuratu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
               ,crapepr.vljuracu = NVL(crapepr.vljuracu,0) + NVL(vr_vljuremu,0) + NVL(vr_vljurcor,0)
-              ,crapepr.vlsprojt = NVL(crapepr.vlsprojt,0) - NVL(pr_vlpreemp,0)
+             -- ,crapepr.vlsprojt = NVL(crapepr.vlsprojt,0) - NVL([VARIAVEL],0)
          WHERE crapepr.cdcooper = pr_cdcooper
            AND crapepr.nrdconta = pr_nrdconta
            AND crapepr.nrctremp = pr_nrctremp;
@@ -5508,6 +5545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
               ,crappep.dtultpag
               ,crappep.vlparepr
               ,crappep.vlpagmta
+              ,crappep.vltaxatu
           FROM crappep
          WHERE crappep.cdcooper = pr_cdcooper
            AND crappep.nrdconta = pr_nrdconta
@@ -5739,7 +5777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                     ,pr_qtprecal => rw_crapepr.qtprecal
                                     ,pr_dtlibera => rw_crapepr.dtlibera
                                     ,pr_dtrefjur => rw_crapepr.dtrefjur
-                                    ,pr_vlrdtaxa => rw_craptxi.vlrdtaxa
+                                    ,pr_vlrdtaxa => rw_crappep.vltaxatu
                                     ,pr_txdiaria => vr_txdiaria
                                     ,pr_txjuremp => rw_crapepr.txjuremp
                                     ,pr_vlsprojt => rw_crapepr.vlsprojt

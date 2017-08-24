@@ -50,8 +50,7 @@ BEGIN
                       WHERE crappep.cdcooper = crapepr.cdcooper
                         AND crappep.nrdconta = crapepr.nrdconta
                         AND crappep.nrctremp = crapepr.nrctremp
-                        AND crappep.inliquid = 0 -- Pendente 
-                        AND crappep.dtvencto <= pr_dtmvtolt)
+                        AND crappep.inliquid = 0)
     GROUP BY crapepr.cdagenci;
 
     ------------------------------- VARIAVEIS -------------------------------
