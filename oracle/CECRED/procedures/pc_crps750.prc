@@ -103,7 +103,7 @@ BEGIN
           FROM crapepr epr,
                tbepr_tr_parcelas prc
          WHERE epr.cdcooper = prc.cdcooper
-           AND epr.cdagenci = prc.cdagenci
+      --   AND epr.cdagenci = prc.cdagenci
            AND epr.nrdconta = prc.nrdconta
            AND epr.nrctremp = prc.nrctremp
            AND epr.cdcooper = pr_cdcooper          --> Coop conectada
