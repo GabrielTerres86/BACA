@@ -18,6 +18,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
        Objetivo  : Efetuar lançamento na conta das filiadas na CENTRAL, referente ao 
                    valor total de débitos de recarga de celular efetuado na conta dos 
                    cooperados.
+                   
+      Alterações : 23/08/2017 - Efetuado ajuste para usar o valor do repasse salvo na 
+                                tabela tbrecarga_operacao sem precisar calcular o valor
+                                da receita.(Lombardi). 
     ............................................................................ */
 
     DECLARE
@@ -32,9 +36,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
-      
-      -- Auxiliares
-      vr_vrreceita NUMBER;         --> Valor da receita
       
       ------------------------------- CURSORES ---------------------------------
       -- Busca dos dados da cooperativa
@@ -51,7 +52,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
       -- Totalizar o valor das recargas de celular por operadora
       CURSOR cr_tbrecarga(pr_cdcooper IN crapcyb.cdcooper%TYPE
                          ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-        SELECT SUM(ope.vlrecarga) total_vlrecarga  
+        SELECT SUM(ope.vlrepasse) total_vlrepasse
               ,ope.cdoperadora
           FROM tbrecarga_operacao ope
          WHERE ope.cdcooper = pr_cdcooper
@@ -141,10 +142,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
             CLOSE cr_operadora;
           END IF;
           
-          -- multiplicar o valor total de recargas pelo percentual de receita da operadora
-          -- Para deduzir do valor a ser lançado na conta da filiada. 
-          vr_vrreceita :=  round(rw_tbrecarga.total_vlrecarga * (rw_operadora.perreceita / 100),2);
-          
           --Verificar se o lote existe
           OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -214,7 +211,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps712 (pr_cdcooper IN crapcop.cdcooper%T
                               ,rw_operadora.cdhisdeb_centralizacao
                               ,Nvl(rw_craplot.nrseqdig,0) + 1
                               ,Nvl(rw_craplot.nrseqdig,0) + 1
-                              ,(rw_tbrecarga.total_vlrecarga - vr_vrreceita) -- valor total – percentual de receita
+                              ,rw_tbrecarga.total_vlrepasse -- valor do repasse
                               ,to_char(SYSDATE, 'SSSSS')
                               ,rw_operadora.nmoperadora)
                       RETURNING vllanmto
