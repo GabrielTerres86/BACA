@@ -26,6 +26,7 @@
  *                                                estava em maisculo.
  * 014: [21/11/2016] - Guilherme/SUPERO         : P341 - Validacao Departamento - Inclusao da variavel CDDEPART
  */
+ 
 ?> 
 <?php	
 	session_start();	
