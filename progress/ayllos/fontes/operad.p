@@ -350,7 +350,7 @@ FORM SKIP
      SKIP
      tel_vlapvcap AT 02 LABEL "Valor da Alcada de Captacao"
          HELP "Informe o valor da alcada de captacao."
-     tel_flgutcrm AT 46 LABEL "Acesso ao CRM" HELP "Informe SIM para liberar o acesso ao CRM."        
+     tel_flgutcrm AT 46 LABEL "Habilitar Acesso CRM" HELP "Informe SIM para liberar o acesso ao CRM."        
      WITH ROW 5 COLUMN 2 OVERLAY NO-BOX SIDE-LABELS FRAME f_operad.
 
 FORM SKIP(1)
