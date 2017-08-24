@@ -64,6 +64,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
                    05/08/2015 - Alteracao para gravar o valor do lancamento na
                                 craplot como debito e nao como credito. (Jaison)
+					
+                   23/08/2016 - Aplicado atualização na FLGATUPL, flag atualiza Plano,
+                                essa melhoria foi aplicado no Progress mãs não foi 
+                                replicado para o fonte do Oracle. (Mauro - Mouts).
+                                Abaixo melhoria do progress.
+                                ####27/03/2014 - Atualizacao do campo crappla.flgatupl 
+                                (identificador de necessidade de correcao do valor
+                                do plano de capital). (Fabricio)#####
 
     ............................................................................ */
 
@@ -90,6 +98,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                dtultpag,
                nrctrpla,
                dtdpagto,
+			   cdtipcor,
+               dtultcor,
                rowid
           FROM crappla
          WHERE crappla.cdcooper = pr_cdcooper
@@ -145,6 +155,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_vllanmto crappla.vlpagmes%TYPE;
       vr_indcance INTEGER := 0;
       vr_dtdpagto crappla.dtdpagto%TYPE;
+	   -- data de 1 ano atrás
+      vr_dtultcor_year DATE := pr_crapdat.dtmvtolt - INTERVAL '1' YEAR;
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
 
@@ -393,6 +405,20 @@ CREATE OR REPLACE PROCEDURE CECRED.
       END;
 
       pr_vldebito := vr_vllanmto;
+
+	        -- Atualiza valor do plano
+      BEGIN
+        IF(rw_crappla.dtultcor <= vr_dtultcor_year AND rw_crappla.cdtipcor>0)THEN
+           UPDATE crappla
+           SET crappla.flgatupl = 1
+           WHERE ROWID = rw_crappla.rowid;
+         END IF; 
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Não foi possivel atualizar Plano de capitalizacao(crappla)'
+                         ||' CTA: '|| gene0002.fn_mask_conta(pr_nrdconta)||' :'||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
       
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
