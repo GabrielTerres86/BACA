@@ -1527,10 +1527,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     para PM.AGROLANDIA (Tiago/Fabricio #647174)                        
                     
        08/06/2017 - Retirado "OR" por problemas na compilacao(Tiago).
-       
+       															 
+       10/07/2017 - Adicionar tratamento para validar o vencimento dos tributos
+                    sicredi (Lucas Ranghetti #653552)
+
        03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                     4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
-                    processo (Lucas Ranghetti #711123)              
+                    processo (Lucas Ranghetti #711123)        
+      
        02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
   		              crapass, crapttl, crapjur 
        						 (Adriano - P339).
@@ -10163,9 +10167,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               26/05/2017 - Incluido validacao para nao agendar faturas vencidas
     --                            para PM.AGROLANDIA (Tiago/Fabricio #647174)    
     --
+    --               10/07/2017 - Adicionar tratamento para validar o vencimento dos tributos
+    --                            sicredi (Lucas Ranghetti #653552)    
+    --
     --               28/07/2017 - Alterar a verificacao de vencimento das faturas de convenio, para que 
     --                             seja feito atraves de parametrizacao na crapprm (Douglas - Chamado 711440)
-    --
+    --												   
     -- ..........................................................................
 
   BEGIN
@@ -10275,6 +10282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_dtferiado DATE;
       vr_datdodia  DATE;
       vr_nmoperad  VARCHAR2(100);
+      vr_dttolera  DATE;
 
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -10618,7 +10626,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       END IF;
 
       IF pr_idagenda = 2 THEN /** Agendamento **/
-      
+      									 
+        -- Se for convenio sicredi
+        IF rw_crapcon.flgcnvsi = 1 THEN 
+          /* Validação referente aos dias de tolerancia */
+          cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
+                                               ,pr_cdagenci      => vr_cdagenci
+                                               ,pr_cdempcon      => rw_crapcon.cdempcon
+                                               ,pr_cdsegmto      => rw_crapcon.cdsegmto
+                                               ,pr_codigo_barras => pr_cdbarras
+                                               ,pr_dtmvtopg      => pr_dtagenda
+                                               ,pr_flnrtole      => TRUE                                    
+                                               ,pr_dttolera      => vr_dttolera
+                                               ,pr_cdcritic      => vr_cdcritic
+                                               ,pr_dscritic      => vr_dscritic);
+          
+          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
+
         -- Montar a chave de acesso para buscar os dias de tolerando do convenio
         -- e identificar se o Convenio pode ser pago vencido
         vr_cdacesso:= 'VALIDA_PAGTO_' ||
