@@ -7176,8 +7176,7 @@ PROCEDURE altera-valor-proposta:
                                                            crawepr.cdopeapr = ""
                                                            crawepr.dtaprova = ?
                                                            crawepr.hraprova = 0
-                                                           crawepr.insitest = 0
-                                                           crawepr.dsprotoc = "".
+                                                           crawepr.insitest = 0.
                                                 END.
                                         END.                        
                                     ELSE
@@ -7219,8 +7218,7 @@ PROCEDURE altera-valor-proposta:
                                           crawepr.cdopeapr = ""
                                           crawepr.dtaprova = ?
                                           crawepr.hraprova = 0
-                                          crawepr.insitest = 0
-                                          crawepr.dsprotoc = "".
+                                          crawepr.insitest = 0.
                                END.                
                        END. /* IF AVAIL crapfin AND crapfin.tpfinali = 2 THEN */
         ELSE            
@@ -7243,9 +7241,8 @@ PROCEDURE altera-valor-proposta:
                       ASSIGN crawepr.insitapr = 0
                              crawepr.cdopeapr = ""
                              crawepr.dtaprova = ?
-                                                  crawepr.hraprova = 0
-                             crawepr.insitest = 0
-                             crawepr.dsprotoc = "".
+                             crawepr.hraprova = 0
+                             crawepr.insitest = 0.
 
                                    CREATE tt-msg-confirma.
                                    ASSIGN tt-msg-confirma.inconfir = 1
@@ -7278,9 +7275,8 @@ PROCEDURE altera-valor-proposta:
                  ASSIGN crawepr.insitapr = 0
                         crawepr.cdopeapr = ""
                         crawepr.dtaprova = ?
-                                                      crawepr.hraprova = 0
-                        crawepr.insitest = 0
-                        crawepr.dsprotoc = "".
+                        crawepr.hraprova = 0
+                        crawepr.insitest = 0.
 
                                    CREATE tt-msg-confirma.
                                    ASSIGN tt-msg-confirma.inconfir = 1
@@ -7306,12 +7302,11 @@ PROCEDURE altera-valor-proposta:
                      OR ( crawepr.insitest = 4 ) ) THEN 
                       ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
                   
-                                                                   ASSIGN crawepr.insitapr = 0
+                                   ASSIGN crawepr.insitapr = 0
                                           crawepr.cdopeapr = ""
                                           crawepr.dtaprova = ?
                                           crawepr.hraprova = 0
-                                          crawepr.insitest = 0
-                                          crawepr.dsprotoc = "".
+                                          crawepr.insitest = 0.
 
                                    CREATE tt-msg-confirma.
                                    ASSIGN tt-msg-confirma.inconfir = 1
@@ -12967,103 +12962,105 @@ PROCEDURE atualiza_dados_avalista_proposta:
                   LEAVE.
                
                /* Incluir checagem para perca da aprovacao devido 
-                  mudanca nos avalistas */
-               ASSIGN  aux_insitapr = crawepr.insitapr
-                       aux_cdopeapr = crawepr.cdopeapr
-                       aux_dtaprova = crawepr.dtaprova
-                       aux_hraprova = crawepr.hraprova
-                       aux_insitest = crawepr.insitest.            
-                   
-               FOR crappre FIELDS(cdfinemp) 
-                  WHERE crappre.cdcooper = par_cdcooper     
-                    AND crappre.inpessoa = crapass.inpessoa  NO-LOCK: END.
-            
-               /* Verifica se o emprestimo eh pre-aprovado */
-               IF AVAIL crappre AND crawepr.cdfinemp = crappre.cdfinemp THEN
-                  DO:
-                      IF NOT VALID-HANDLE(h-b1wgen0188) THEN
-                         RUN sistema/generico/procedures/b1wgen0188.p 
-                             PERSISTENT SET h-b1wgen0188.
+                  mudanca nos avalistas, somente se analise auto obrigatoria */
+               IF aux_inobriga = "S" THEN
+                 DO:                
+                   ASSIGN  aux_insitapr = crawepr.insitapr
+                           aux_cdopeapr = crawepr.cdopeapr
+                           aux_dtaprova = crawepr.dtaprova
+                           aux_hraprova = crawepr.hraprova
+                           aux_insitest = crawepr.insitest.            
+                       
+                   FOR crappre FIELDS(cdfinemp) 
+                      WHERE crappre.cdcooper = par_cdcooper     
+                        AND crappre.inpessoa = crapass.inpessoa  NO-LOCK: END.
+                
+                   /* Verifica se o emprestimo eh pre-aprovado */
+                   IF AVAIL crappre AND crawepr.cdfinemp = crappre.cdfinemp THEN
+                      DO:
+                          IF NOT VALID-HANDLE(h-b1wgen0188) THEN
+                             RUN sistema/generico/procedures/b1wgen0188.p 
+                                 PERSISTENT SET h-b1wgen0188.
 
-                      /* Busca a carga ativa */
-                      RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
-                                                            INPUT par_nrdconta,
-                                                           OUTPUT aux_idcarga).
-            
-                      IF VALID-HANDLE(h-b1wgen0188) THEN
-                         DELETE PROCEDURE(h-b1wgen0188).
+                          /* Busca a carga ativa */
+                          RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                                INPUT par_nrdconta,
+                                                               OUTPUT aux_idcarga).
+                
+                          IF VALID-HANDLE(h-b1wgen0188) THEN
+                             DELETE PROCEDURE(h-b1wgen0188).
 
-                      FOR crapcpa FIELDS(vlcalpre)
-                                  WHERE crapcpa.cdcooper = par_cdcooper AND
-                                        crapcpa.nrdconta = par_nrdconta AND
-                                        crapcpa.iddcarga = aux_idcarga
-                                        NO-LOCK: END.
-            
-                      IF AVAIL crapcpa THEN
-                         DO:
-                            ASSIGN crawepr.insitapr =  1
-                                   crawepr.cdopeapr = par_cdoperad
-                                   crawepr.dtaprova = par_dtmvtolt
-                                   crawepr.hraprova = TIME
-                                   crawepr.insitest = 3.
-           
-                            CREATE tt-msg-confirma.
-                            ASSIGN tt-msg-confirma.inconfir = 1
-                                   tt-msg-confirma.dsmensag = "Essa proposta foi aprovada automaticamente.".
-           
-                         END. /* END  IF AVAIL crapcpa THEN */
-            
-                  END. /* END IF par_cdfinemp = crappre.cdfinemp */
-               ELSE
-                  DO:
-                      /* Verificar se a linha aprova automaticamente */
-                      FIND FIRST craplcr
-                          WHERE craplcr.cdcooper = crawepr.cdcooper AND
-                                craplcr.cdlcremp = crawepr.cdlcremp
-                                                        NO-LOCK NO-ERROR.
-                      IF AVAIL craplcr AND craplcr.flgdisap THEN
-                         DO:
-                            ASSIGN crawepr.insitapr = 1
-                                   crawepr.cdopeapr = par_cdoperad
-                                   crawepr.dtaprova = par_dtmvtolt
-                                   crawepr.hraprova = TIME
-                                   crawepr.insitest = 3.
+                          FOR crapcpa FIELDS(vlcalpre)
+                                      WHERE crapcpa.cdcooper = par_cdcooper AND
+                                            crapcpa.nrdconta = par_nrdconta AND
+                                            crapcpa.iddcarga = aux_idcarga
+                                            NO-LOCK: END.
+                
+                          IF AVAIL crapcpa THEN
+                             DO:
+                                ASSIGN crawepr.insitapr =  1
+                                       crawepr.cdopeapr = par_cdoperad
+                                       crawepr.dtaprova = par_dtmvtolt
+                                       crawepr.hraprova = TIME
+                                       crawepr.insitest = 3.
+               
+                                CREATE tt-msg-confirma.
+                                ASSIGN tt-msg-confirma.inconfir = 1
+                                       tt-msg-confirma.dsmensag = "Essa proposta foi aprovada automaticamente.".
+               
+                             END. /* END  IF AVAIL crapcpa THEN */
+                
+                      END. /* END IF par_cdfinemp = crappre.cdfinemp */
+                   ELSE
+                      DO:
+                          /* Verificar se a linha aprova automaticamente */
+                          FIND FIRST craplcr
+                              WHERE craplcr.cdcooper = crawepr.cdcooper AND
+                                    craplcr.cdlcremp = crawepr.cdlcremp
+                                                            NO-LOCK NO-ERROR.
+                          IF AVAIL craplcr AND craplcr.flgdisap THEN
+                             DO:
+                                ASSIGN crawepr.insitapr = 1
+                                       crawepr.cdopeapr = par_cdoperad
+                                       crawepr.dtaprova = par_dtmvtolt
+                                       crawepr.hraprova = TIME
+                                       crawepr.insitest = 3.
 
-                            CREATE tt-msg-confirma.
-                            ASSIGN tt-msg-confirma.inconfir = 1
-                                   tt-msg-confirma.dsmensag =
-                                              "Essa proposta foi aprovada automaticamente.".
-                         END. /* IF AVAIL craplcr AND craplcr.flgdisap THEN */
-                         
-                      ELSE            
-                         DO:
-                         
-                           /* Se nao estiver em contigencia e a proposta estava na Esteira */
-                           IF NOT aux_contigen AND aux_inobriga = "S" 
-                                               AND (   crawepr.insitest = 2 
-                                                   OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
-                                                   OR ( crawepr.insitest = 4 ) ) THEN 
-                           DO:
-                              ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
-                           END.
-                         
-                           ASSIGN crawepr.insitapr = 0
-                                  crawepr.cdopeapr = ""
-                                  crawepr.dtaprova = ?
-                                  crawepr.hraprova = 0
-                                  crawepr.insitest = 0
-                                  crawepr.dsprotoc = "".
+                                CREATE tt-msg-confirma.
+                                ASSIGN tt-msg-confirma.inconfir = 1
+                                       tt-msg-confirma.dsmensag =
+                                                  "Essa proposta foi aprovada automaticamente.".
+                             END. /* IF AVAIL craplcr AND craplcr.flgdisap THEN */
+                             
+                          ELSE            
+                             DO:
+                             
+                               /* Se nao estiver em contigencia e a proposta estava na Esteira */
+                               IF NOT aux_contigen AND aux_inobriga = "S" 
+                                                   AND (   crawepr.insitest = 2 
+                                                       OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
+                                                       OR ( crawepr.insitest = 4 ) ) THEN 
+                               DO:
+                                  ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
+                               END.
+                             
+                               ASSIGN crawepr.insitapr = 0
+                                      crawepr.cdopeapr = ""
+                                      crawepr.dtaprova = ?
+                                      crawepr.hraprova = 0
+                                      crawepr.insitest = 0.
 
-                           CREATE tt-msg-confirma.
-                           ASSIGN tt-msg-confirma.inconfir = 1
-                           tt-msg-confirma.dsmensag = IF aux_contigen THEN
-                                                        "Avalistas Alterados - A proposta deve ser" +
-                                                        " aprovada na tela CMAPRV"
-                                                      ELSE
-                                                        "Avalistas Alterados - A proposta devera ser " +
-                                                        " enviada para Analise de Credito".      
-                         END.
-                  END.       
+                               CREATE tt-msg-confirma.
+                               ASSIGN tt-msg-confirma.inconfir = 1
+                               tt-msg-confirma.dsmensag = IF aux_contigen THEN
+                                                            "Avalistas Alterados - A proposta deve ser" +
+                                                            " aprovada na tela CMAPRV"
+                                                          ELSE
+                                                            "Avalistas Alterados - A proposta devera ser " +
+                                                            " enviada para Analise de Credito".      
+                             END.
+                      END. 
+                 END.  
         LEAVE.
 
     END. /* DO WHILE TRUE TRANSACTION */

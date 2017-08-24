@@ -209,29 +209,78 @@ PROCEDURE Enviar_proposta_esteira:
     DEF VAR aux_nmarqimp          AS CHAR                           NO-UNDO.    
     DEF VAR aux_nmarqpdf          AS CHAR                           NO-UNDO.   
     DEF VAR aux_flcontes          AS CHAR                           NO-UNDO.   
+    DEF VAR aux_inobriga          AS CHAR                           NO-UNDO.    
+    DEF VAR aux_dscritic          AS CHAR                           NO-UNDO.
+    DEF VAR aux_cdcritic          AS INTE                           NO-UNDO.    
     
     /* Caso a proposta já tenha sido enviada para a Esteira iremos considerar uma Alteracao. 
        Caso a proposta tenho sido reprovada pelo Motor, iremos considerar envio pois ela
        ainda nao foi a Esteira  */
        
-	IF par_tpenvest = "I" THEN
-	DO:
-		FIND FIRST crawepr 
-		   WHERE crawepr.cdcooper = par_cdcooper
-			 AND crawepr.nrdconta = par_nrdconta
-			 AND crawepr.nrctremp = par_nrctremp
-			 NO-LOCK NO-ERROR.
-    
-		  IF AVAIL crawepr AND crawepr.dtenvest <> ? then
-			ASSIGN par_tpenvest = "A".
+    IF par_tpenvest = "I" THEN
+      DO:
+          FIND FIRST crawepr 
+          WHERE crawepr.cdcooper = par_cdcooper
+            AND crawepr.nrdconta = par_nrdconta
+            AND crawepr.nrctremp = par_nrctremp
+          NO-LOCK NO-ERROR.
+
+          FIND FIRST crapass
+          WHERE crapass.cdcooper = par_cdcooper
+            AND crapass.nrdconta = par_nrdconta
+          NO-LOCK NO-ERROR.
+          
+          aux_inobriga = "N".
+          
+          /* Se encontrar WPR E ASS */
+          IF AVAIL crawepr AND AVAIL crapass THEN
+            DO TRANSACTION:
+          
+              /* Verificar se a proposta devera passar por analise automatica */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+              RUN STORED-PROCEDURE pc_obrigacao_analise_automatic
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                    INPUT crapass.inpessoa, /* Tipo de Pessoa */
+                                                    INPUT crawepr.cdfinemp, /* Código da ~ Finalidade de crédito */
+                                                    INPUT crawepr.cdlcremp, /* Código da ~ linha de crédito */
+                                                    OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
+                                                    OUTPUT 0,            /* Código da crítica */
+                                                    OUTPUT "").          /* Descrição da crítica */
+          
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_obrigacao_analise_automatic
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_inobriga = pc_obrigacao_analise_automatic.pr_inobriga
+                       WHEN pc_obrigacao_analise_automatic.pr_inobriga <> ?
+                     aux_cdcritic = pc_obrigacao_analise_automatic.pr_cdcritic
+                       WHEN pc_obrigacao_analise_automatic.pr_cdcritic <> ?
+                     aux_dscritic = pc_obrigacao_analise_automatic.pr_dscritic
+                       WHEN pc_obrigacao_analise_automatic.pr_dscritic <> ?.
+              
+              /* Se:                                               */
+              /*    1 - Jah houve envio para a Esteira             */
+              /*    2 - Nao precisar passar por Analise Automatica */
+              /*    3 - Nao existir protocolo gravado              */
+              
+              IF (     crawepr.dtenvest <> ? AND aux_inobriga <> "S" 
+                   AND ( crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) ) THEN                    
+                DO:    
+                    /* Significa que a proposta jah foi para a Esteira, */
+                    /* entao devemos mandar um reinicio de Fluxo        */
+                    ASSIGN par_tpenvest = "A".  
+                END.
+            END.      
     END.
-	
-	/***** Verificar se a Esteira esta em contigencia *****/
+        
+    /***** Verificar se a Esteira esta em contigencia *****/
     RUN verifica_regras_esteira
              ( INPUT par_cdcooper,
                INPUT par_nrdconta,
                INPUT par_nrctremp,
-			         INPUT par_tpenvest,
+               INPUT par_tpenvest,
               OUTPUT par_cdcritic,
               OUTPUT par_dscritic).
    
@@ -256,7 +305,7 @@ PROCEDURE Enviar_proposta_esteira:
                     ,INPUT par_dtmvtolt
                     ,INPUT par_dtmvtopr
                     ,INPUT par_nrctremp
-                    ,INPUT par_dsiduser
+                    ,INPUT par_dsiduser                                       
                    ,OUTPUT aux_nmarqpdf
                    ,OUTPUT par_cdcritic
                    ,OUTPUT par_dscritic).
@@ -333,9 +382,9 @@ PROCEDURE Enviar_proposta_esteira:
 
         CLOSE STORED-PROCEDURE pc_alterar_proposta_est WHERE PROC-HANDLE = aux_handproc.
         { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-        
+
  
-        ASSIGN par_dsmensag = "Proposta Enviada para Esteira com Sucesso."
+        ASSIGN par_dsmensag = "Proposta Enviada Analise Manual de Credito."
                
                par_cdcritic = 0
                par_cdcritic = pc_alterar_proposta_est.pr_cdcritic
@@ -444,7 +493,7 @@ PROCEDURE Enviar_proposta_esteira:
     DO:
       UNIX SILENT VALUE("rm " + aux_nmarqpdf + " 2>/dev/null").
     END.
-    
+
     /* Verifica se retornou critica */
     IF par_cdcritic >= 0 AND par_dscritic <> "" THEN                       
     DO:
