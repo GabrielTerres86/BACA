@@ -1080,7 +1080,7 @@ BEGIN
                 -- Fechar cursor e gerar critica 92
                 CLOSE cr_craplau;
                 vr_flgdupli := TRUE;
-                vr_cdcrindb := '04';
+                vr_cdcrindb := '13';
                 vr_cdcritic := 92;
               ELSE 
                 -- Fechar cursor e continuar para a gravação 
@@ -1170,7 +1170,7 @@ BEGIN
                   -- Fechar cursor e gerar critica 103 no relatório NDB 04
                   CLOSE cr_craplau_dia;
                   vr_cdcritic := 103;
-                  vr_cdcrindb := '04';
+                  vr_cdcrindb := '13';
                   vr_flgdupli := TRUE;
                 ELSE 
                   -- Fechar cursor e continuar com a inserção da LAU 
