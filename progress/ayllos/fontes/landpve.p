@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 29/05/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 17/07/2017
 
    Dados referentes ao programa:
 
@@ -312,6 +312,10 @@
                             
                29/05/2017 - Alterar chamada da procedure pc_gerandb por pc_gerandb_car
                             (Lucas Ranghetti #681579)
+                            
+               17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+                            conta e referencia no mesmo dia(dtmvtolt) porem com valores
+                            diferentes (Lucas Ranghetti #684123)    
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1234,6 +1238,15 @@ DO WHILE TRUE:
 					             ASSIGN aux_cdrefere = crapatr.cdrefere WHEN AVAIL crapatr.
 
                     END.
+               ELSE 
+                    DO:
+                        IF  craplcm.cdhistor = 1230 OR  
+                            craplcm.cdhistor = 1231 OR
+                            craplcm.cdhistor = 1232 OR
+                            craplcm.cdhistor = 1233 OR
+                            craplcm.cdhistor = 1234 THEN                             
+                            ASSIGN aux_cdrefere = craplau.nrdocmto.
+                    END.
 
                IF   aux_flgerros  THEN
                     DO:  
@@ -1254,7 +1267,7 @@ DO WHILE TRUE:
                                                     ,INPUT STRING(aux_cdrefere)
                                                     ,INPUT craplau.vllanaut                                                    
                                                     ,INPUT craplau.cdseqtel
-                                                    ,INPUT STRING(craplau.nrdocmto)
+                                                    ,INPUT STRING(aux_cdrefere)
                                                     ,INPUT crapcop.cdagesic
                                                     ,INPUT crapass.nrctacns
 												                          	,INPUT crapass.cdagenci
