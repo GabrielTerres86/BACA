@@ -1179,7 +1179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 03/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -10615,7 +10615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR  --P.M. PRES GETULIO 
             (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. GUARAMIRIM 
           (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TIMBO 
-            (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
+          (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
             (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TROMBUDO CENTRAL
             (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
           (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR  -- DEFESA CIVIL TIMBO 
@@ -10880,7 +10880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      Sistema  : Rotinas Internet
      Sigla    : INET
      Autor    : Alisson C. Berrido - AMcom
-     Data     : Junho/2013.                   Ultima atualizacao: 05/04/2016
+     Data     : Junho/2013.                   Ultima atualizacao: 03/08/2017
 
      Dados referentes ao programa:
 
@@ -10918,6 +10918,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                Conjunta (Jean Michel).             
 
                   05/04/2016 - Ajustado conforme solicitação do SD 429445 (Jean Michel).            
+                  
+                  03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
+                               4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
+                               processo (Lucas Ranghetti #711123)       
      ..........................................................................*/
 
   BEGIN
@@ -11757,12 +11761,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         END IF;
       END IF;
 
-      IF (NVL(vr_cdcritic,0) <> 0 or TRIM(vr_dscritic) is not null ) OR
+      IF (NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL ) OR
          (pr_idorigem = 4 AND vr_flerrtaa) THEN
         --> Se for a ultima execução da DEBNET/CRPS509         
-        IF vr_flultexe = 1 OR 
+        IF (vr_flultexe = 1 OR 
           --> ou não é o ultimo e nao for segundo processo   
-          (vr_flultexe <> 1 AND pr_flsgproc = 0 ) THEN         
+          (vr_flultexe <> 1 AND pr_flsgproc = 0 ) OR 
+          --> ou não é o ultimo e ja arrecadou a fatura
+          (vr_flultexe <> 1 AND upper(vr_dscritic) LIKE 'FATURA JA ARRECADADA DIA%')) THEN
            BEGIN
              UPDATE craplau SET craplau.insitlau = 4 /** NAO EFETIVADO **/
                                ,craplau.dtdebito = craplau.dtmvtopg
