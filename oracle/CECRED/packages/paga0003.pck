@@ -213,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 25/05/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 22/08/2017
   
    Dados referentes ao programa: 
   
@@ -222,12 +222,16 @@ END paga0003;
    Alteracoes: 
 	             
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
-					        - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
-                  
+					  - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+							 								   
        08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
 							 								   
        25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o 
                     dia que antecede o final de semana ou feriado nacional(Lucas Ranghetti #671126)
+                    
+       22/08/2017 - Adicionar parametro para data de agendamento na pc_cria_comprovante_darf_das
+                    para tambem gravar este campo no protocolo de agendamentos de DARF/DAS 
+                    (Lucas Ranghetti #705465)
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -288,7 +292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHERE crapcon.cdcooper = pr_cdcooper
     AND   crapcon.cdempcon = pr_cdempcon
     AND   crapcon.cdsegmto = pr_cdsegmto;
-    
+  
     --Selecionar Cadastro Convenios Sicredi
     CURSOR cr_crapstb (pr_cdtribut IN crapstb.cdtribut%type) IS
       SELECT crapstb.cdtribut
@@ -776,6 +780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                         ,pr_flgagend IN BOOLEAN                -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
 					                    ,pr_cdtransa IN VARCHAR2               -- Código da transação por meio de arrecadação do SICREDI
 					                    ,pr_dssigemp IN VARCHAR2               -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
+                                        ,pr_dtagenda IN DATE DEFAULT NULL      -- Data do agendamento
                                         ,pr_dsprotoc OUT crappro.dsprotoc%TYPE -- Descrição do protocolo do comprovante
                                         ,pr_cdcritic OUT INTEGER               -- Código do erro
                                         ,pr_dscritic OUT VARCHAR2              -- Descriçao do erro
@@ -784,11 +789,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_cria_comprovante_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+     Data    : Julho/2016.                    Ultima atualizacao: 22/08/2017
 
      Objetivo  : Procedure para criação de comprovantes de pagamento de DARF/DAS
 
-     Alteracoes: 
+     Alteracoes:  22/08/2017 - Adicionar parametro para data de agendamento na pc_cria_comprovante_darf_das
+                               para tambem gravar este campo no protocolo de agendamentos de DARF/DAS 
+                               (Lucas Ranghetti #705465)
     ..............................................................................*/
     
     CURSOR cr_arrec(pr_cddbanco crapagb.cddbanco%TYPE
@@ -929,6 +936,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			  vr_dsinfor3 := vr_dsinfor3 || '#Autenticação Sicredi: ' || vr_dsautsic;
 				
 		END IF;
+    
+    -- Caso for agendamento de DARF ou DAS
+    IF pr_cdtippro IN(18,19) THEN
+      -- Gravar a data do agendamento
+      vr_dsinfor3 := vr_dsinfor3 || '#Data do Agendamento: ' || nvl(to_char(pr_dtagenda,'DD/MM/YYYY'),' ');
+    END IF;
     
     --################## FIM DOS DADOS DO COMPROVANTE ##################
     
@@ -1931,7 +1944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-    
+   
     -- tipo de guia
 		IF pr_tpdaguia = 1 THEN
 			
@@ -2371,7 +2384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         CLOSE lote0001.cr_craplot_rowid;
         vr_dscritic := NULL;
         EXIT;
-      EXCEPTION
+  EXCEPTION
         WHEN OTHERS THEN
            IF lote0001.cr_craplot_rowid%ISOPEN THEN
              CLOSE lote0001.cr_craplot_rowid;
@@ -3319,9 +3332,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 								  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
 								,pr_dsprotoc OUT VARCHAR2 -- Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
-                                  ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
-                                   ) IS
+                                  ,pr_dscritic OUT VARCHAR2) IS -- Descriçao do erro                                   
+		/* .............................................................................
+
+     Programa: pc_cria_agend_darf_das
+     Autor   : Dionathan
+     Data    : Julho/2016.                    Ultima atualizacao: 22/08/2017
+
+     Objetivo  : Procedure para criação dos agendamentos de pagamento de DARF/DAS
 																	 
+     Alteracoes:  22/08/2017 - Adicionar parametro para data de agendamento na pc_cria_comprovante_darf_das
+                               para tambem gravar este campo no protocolo de agendamentos de DARF/DAS 
+                               (Lucas Ranghetti #705465)
+    ..............................................................................*/															 
 		rw_craplot LOTE0001.cr_craplot%ROWTYPE;
 		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 		rw_craplau craplau%ROWTYPE;
@@ -3859,10 +3882,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																					 ,pr_flgagend => vr_flgagend         -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
 																					 ,pr_cdtransa => vr_cdtransa         -- Código da transação por meio de arrecadação do SICREDI
 																					 ,pr_dssigemp => vr_dssigemp         -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
+                                             ,pr_dtagenda => pr_dtagenda         -- Data do Agendamento
 																					 ,pr_dsprotoc => vr_dsprotoc         -- Descrição do protocolo do comprovante
 																					 ,pr_cdcritic => vr_cdcritic         -- Código do erro
-																					 ,pr_dscritic => vr_dscritic         -- Descriçao do erro
-																					 );	    
+                                             ,pr_dscritic => vr_dscritic);       -- Descriçao do erro
+																					 	    
 			--Se ocorreu erro
 			IF nvl(vr_cdcritic,0) > 0 OR
 				 TRIM(vr_dscritic) IS NOT NULL THEN

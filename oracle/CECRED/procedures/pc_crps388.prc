@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 26/05/2017
+  Data    : Abril/2004                          Ultima atualizacao: 26/06/2017
 
   Dados referentes ao programa:
 
@@ -234,8 +234,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
 
               29/03/2017 - Conversão Progress para PLSQL (Jonata-MOUTs)
 
-			  11/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
-				          (Jonata - RKAM M311).
+			        11/04/2017 - Ajuste para integracao de arquivos com layout na versao 5
+				                   (Jonata - RKAM M311).
 
               18/05/2017 - Ajustes após validação Fabrício (Andrei-MOUTs)
 
@@ -244,6 +244,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                            
               26/05/2017 - Incluido tratamento para cdrefere da linha F para
                            AGUAS DE GUARAMIRIM (Tiago/Fabricio #640336)
+              									 
+              26/06/2017 - Incluido tratamento para cdrefere da linha F para
+                           SANEPAR (Tiago/Fabricio #640336)                           
+
+              04/07/2017 - Incluir nvl para a varial vr_vrlanmto pois se o valor estivesse
+                           vazio ia dar pau no programa (Lucas Ranghetti #706349)
+             
+              16/08/2017 - Aumentar o format da referencia para 23 posições (Lucas Ranghetti #681634)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -947,22 +955,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
             -- Se não encontrar 
             IF cr_craplau%NOTFOUND THEN 
               CLOSE cr_craplau;
-            -- Gerar critica 501 no proc_message
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> ' || gene0001.fn_busca_critica(501) 
-                                                       || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
-                                                       || ' Documento = ' || rw_craplcm.nrdocmto);
-            -- Ir ao próximo registro (Ignorar LCM)
+              -- Gerar critica 501 no proc_message
+              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratato
+                                        ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                         || vr_cdprogra || ' --> ' || gene0001.fn_busca_critica(501) 
+                                                         || ' Conta = '|| gene0002.fn_mask_conta(rw_craplcm.nrdconta)
+                                                         || ' Documento = ' || rw_craplcm.nrdocmto);
+              -- Ir ao próximo registro (Ignorar LCM)
               CONTINUE;   
 
             ELSE
               CLOSE cr_craplau;
-          END IF;
+            END IF;
 
-        ELSE 
+          ELSE
 
             -- Gerar critica 501 no proc_message
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -1164,7 +1172,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,108) THEN  
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,101,108) THEN  
 
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1352,7 +1361,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* 53 - Foz do Brasil */
           /* 54 - AGUAS DE MASSARANDUBA */  
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,108) THEN        
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,101,108) THEN        
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
                         ||to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1482,8 +1492,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
             -- Todos outros casos 
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
-                        ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
-                        ||LPAD(' ',3,' ')
+                        ||to_char(rw_crapatr.cdrefere,'fm00000000000000000000000')
+                        ||LPAD(' ',2,' ')
                         ||to_char(vr_nragenci,'fm0000')
                         ||RPAD(vr_nrdconta,14,' ')
                         ||vr_dtmvtolt
@@ -1649,7 +1659,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
         
         -- Acumular totalizadores
         vr_nrseqndb := vr_nrseqndb + 1;
-        vr_vllanmto := to_number(SUBSTR(rw_crapndb.dstexarq,53,15));
+        vr_vllanmto := nvl(to_number(TRIM(SUBSTR(rw_crapndb.dstexarq,53,15))),0);
         vr_vllanmto := vr_vllanmto / 100;
         vr_vlfatndb := vr_vlfatndb + vr_vllanmto;        
       
