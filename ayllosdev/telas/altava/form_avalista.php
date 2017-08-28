@@ -9,6 +9,8 @@
  *				  campo <a>, removido tag <span> (Daniel).
  *
  *				  15/07/2014 - Incluso novos campos (inpessoa e dtnascto). (Daniel) 	
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
  ?>
 
@@ -81,11 +83,13 @@
 												<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="<?php echo $avalista[$i]['nrcpfcgc'] ?>" alt="Entre com o CPF do <?php echo $posicao ?>  avalista." />
 														
 												<label for="tpdocava">Doc.:</label>
-												<select name="tpdocava" id="tpdocava" alt="Entre com CH, CI, CP, CT, TE.">
+												<select name="tpdocava" id="tpdocava" alt="Entre com CI, CN, CH, RE, PP, CT.">
 													<option value=""  > - </option> 
-													<option value="CH" <?php echo $avalista[$i]['tpdocava'] == 'CH' ? 'selected' : '' ?>>CH</option>
 													<option value="CI" <?php echo $avalista[$i]['tpdocava'] == 'CI' ? 'selected' : '' ?>>CI</option>
-													<option value="CP" <?php echo $avalista[$i]['tpdocava'] == 'CP' ? 'selected' : '' ?>>CP</option>
+													<option value="CN" <?php echo $avalista[$i]['tpdocava'] == 'CN' ? 'selected' : '' ?>>CN</option>
+													<option value="CH" <?php echo $avalista[$i]['tpdocava'] == 'CH' ? 'selected' : '' ?>>CH</option>
+													<option value="RE" <?php echo $avalista[$i]['tpdocava'] == 'RE' ? 'selected' : '' ?>>RE</option>
+													<option value="PP" <?php echo $avalista[$i]['tpdocava'] == 'PP' ? 'selected' : '' ?>>PP</option>
 													<option value="CT" <?php echo $avalista[$i]['tpdocava'] == 'CT' ? 'selected' : '' ?>>CT</option>
 												</select>
 												<input name="nrdocava" id="nrdocava" type="text" value="<?php echo $avalista[$i]['dscpfcgc'] ?>" alt="Entre com o Docto do <?php echo $posicao ?> avalista/fiador." />
@@ -112,11 +116,13 @@
 												<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="<?php echo $avalista[$i]['nrcpfcjg'] ?>" alt="Entre com o CPF do conjuge do <?php echo $posicao ?>  avalista/fiador." />
 													
 												<label for="tpdoccjg">Doc.:</label>
-												<select name="tpdoccjg" id="tpdoccjg" alt="Entre com CH, CI, CP, CT, TE.">
+												<select name="tpdoccjg" id="tpdoccjg" alt="Entre com CI, CN, CH, RE, PP, CT.">
 													<option value=""  > - </option> 
-													<option value="CH" <?php echo $avalista[$i]['tpdoccjg'] == 'CH' ? 'selected' : '' ?>>CH</option>
 													<option value="CI" <?php echo $avalista[$i]['tpdoccjg'] == 'CI' ? 'selected' : '' ?>>CI</option>
-													<option value="CP" <?php echo $avalista[$i]['tpdoccjg'] == 'CP' ? 'selected' : '' ?>>CP</option>
+													<option value="CN" <?php echo $avalista[$i]['tpdoccjg'] == 'CN' ? 'selected' : '' ?>>CN</option>
+													<option value="CH" <?php echo $avalista[$i]['tpdoccjg'] == 'CH' ? 'selected' : '' ?>>CH</option>
+													<option value="RE" <?php echo $avalista[$i]['tpdoccjg'] == 'RE' ? 'selected' : '' ?>>RE</option>
+													<option value="PP" <?php echo $avalista[$i]['tpdoccjg'] == 'PP' ? 'selected' : '' ?>>PP</option>
 													<option value="CT" <?php echo $avalista[$i]['tpdoccjg'] == 'CT' ? 'selected' : '' ?>>CT</option>
 												</select>
 												<input name="nrdoccjg" id="nrdoccjg" type="text" value="<?php echo $avalista[$i]['dscpfcjg'] ?>" alt="Entre com o Docto do conjuge do <?php echo $posicao ?> avalista/fiador." />

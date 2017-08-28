@@ -99,6 +99,10 @@
               22/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
+
+		      28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+						   CH, RE, PP E CT. (PRJ339 - Reinert)
+
 ............................................................................. */
 
 DEF STREAM str_1.     /*  Para relatorio de Aceitos      */
@@ -405,7 +409,7 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper  AND
                          NEXT.
                       END.
                 
-                 IF   NOT CAN-DO("CH,CI,CT,CP",crapttl.tpdocttl) THEN
+                 IF   NOT CAN-DO("CI,CN,CH,RE,PP,CT",crapttl.tpdocttl) THEN
                       DO TRANSACTION:
 
                          CREATE crapeca.

@@ -9,6 +9,9 @@
  * 				  24/04/2012 : Ajustes referente ao projeto GP - Sócios Menores (Adriano).
  *                
  *				  16/07/2015 : Reformulacao cadastral (Gabriel-RKAM).
+ *
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
 ?>
 	
@@ -36,9 +39,11 @@
 		<label for="tpdocava" class="rotulo rotulo-70">Documento:</label>
 		<select name="tpdocava" id="tpdocava">
 			<option value="" <? if (getByTagName($IdentFisica,'tpdocava') == ""){ echo " selected"; } ?>> - </option>
-			<option value="CH" <? if ($frm_tpdeiden == "CH"){ echo " selected"; } ?>>CH</option>
 			<option value="CI" <? if ($frm_tpdeiden == "CI"){ echo " selected"; } ?>>CI</option>
-			<option value="CP" <? if ($frm_tpdeiden == "CP"){ echo " selected"; } ?>>CP</option>
+			<option value="CN" <? if ($frm_tpdeiden == "CN"){ echo " selected"; } ?>>CN</option>
+			<option value="CH" <? if ($frm_tpdeiden == "CH"){ echo " selected"; } ?>>CH</option>
+			<option value="RE" <? if ($frm_tpdeiden == "RE"){ echo " selected"; } ?>>RE</option>
+			<option value="PP" <? if ($frm_tpdeiden == "PP"){ echo " selected"; } ?>>PP</option>
 			<option value="CT" <? if ($frm_tpdocava == "CT"){ echo " selected"; } ?>>CT</option>
 		</select>
 		<input name="nrdocava" id="nrdocava" type="text" value="<? echo $frm_nridenti; ?>" />

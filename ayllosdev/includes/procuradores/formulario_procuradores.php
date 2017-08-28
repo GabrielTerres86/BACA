@@ -14,6 +14,7 @@
  * 004: [01/06/2012] Ajustes referente ao projeto GP - Sócios Menores. ( Adriano).
  * 005: [19/02/2015] Incluir campo hidden fltemcrd, para controle de cartões, conforme SD 251759 ( Renato - Supero )
  * 006: [22/09/2015] Reformulacao cadastral (Gabriel-RKAM).
+ * 007: [28/08/2017] Alterado tipos de documento para utilizarem CI, CN, CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
  
 ?>
@@ -59,9 +60,11 @@
 			<label for="tpdocava" class="rotulo rotulo-80">Documento:</label>
 			<select name="tpdocava" id="tpdocava">
 				<option value="" <? if ($frm_tpdocava == ""){ echo " selected"; } ?>> - </option>
-				<option value="CH" <? if ($frm_tpdocava == "CH"){ echo " selected"; } ?>>CH</option>
 				<option value="CI" <? if ($frm_tpdocava == "CI"){ echo " selected"; } ?>>CI</option>
-				<option value="CP" <? if ($frm_tpdocava == "CP"){ echo " selected"; } ?>>CP</option>
+				<option value="CN" <? if ($frm_tpdocava == "CN"){ echo " selected"; } ?>>CN</option>
+				<option value="CH" <? if ($frm_tpdocava == "CH"){ echo " selected"; } ?>>CH</option>
+				<option value="RE" <? if ($frm_tpdocava == "RE"){ echo " selected"; } ?>>RE</option>
+				<option value="PP" <? if ($frm_tpdocava == "PP"){ echo " selected"; } ?>>PP</option>
 				<option value="CT" <? if ($frm_tpdocava == "CT"){ echo " selected"; } ?>>CT</option>
 			</select>
 			<input name="nrdocava" id="nrdocava" type="text" value="<? echo $frm_nrdocava; ?>" />

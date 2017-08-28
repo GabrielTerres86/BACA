@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 12/08/2015
+    Data    : Marco/2010                   Ultima atualizacao: 28/08/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -29,7 +29,9 @@
                               crapcje. (Tiago Castro - RKAM)
                               
                  12/08/2015 - Reformulacao cadastral (Gabriel-RKAM).             
-                              
+
+				 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							  CH, RE, PP E CT. (PRJ339 - Reinert)                              
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -829,7 +831,7 @@ PROCEDURE Valida_Dados:
            DO:
                
                /* tipo de documento - ultima posicao eh o vazio */
-               IF  LOOKUP(par_tpdoccje,"CI,CH,CP,CT,") = 0 THEN
+               IF  LOOKUP(par_tpdoccje,"CI,CN,CH,RE,PP,CT,") = 0 THEN
                    DO:
                       ASSIGN aux_cdcritic = 21.
                       LEAVE Valida.

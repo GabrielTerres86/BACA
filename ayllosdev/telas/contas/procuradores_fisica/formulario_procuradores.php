@@ -10,6 +10,8 @@
  *
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
 ?>
 	
@@ -52,9 +54,11 @@
 			<label for="tpdocava" class="rotulo rotulo-70">Documento:</label>
 			<select name="tpdocava" id="tpdocava">
 				<option value="" <? if (getByTagName($IdentFisica,'tpdocava') == ""){ echo " selected"; } ?>> - </option>
-				<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
 				<option value="CI" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CI"){ echo " selected"; } ?>>CI</option>
-				<option value="CP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CP"){ echo " selected"; } ?>>CP</option>
+				<option value="CN" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CN"){ echo " selected"; } ?>>CN</option>
+				<option value="CH" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CH"){ echo " selected"; } ?>>CH</option>
+				<option value="RE" <? if (getByTagName($registros[0]->tags,'tpdocava') == "RE"){ echo " selected"; } ?>>RE</option>
+				<option value="PP" <? if (getByTagName($registros[0]->tags,'tpdocava') == "PP"){ echo " selected"; } ?>>PP</option>
 				<option value="CT" <? if (getByTagName($registros[0]->tags,'tpdocava') == "CT"){ echo " selected"; } ?>>CT</option>
 			</select>
 			<input name="nrdocava" id="nrdocava" type="text" value="<? echo getByTagName($registros[0]->tags,'nrdocava') ?>" />

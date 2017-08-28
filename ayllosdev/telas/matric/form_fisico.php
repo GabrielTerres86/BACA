@@ -10,7 +10,9 @@
  * 				  09/08/2013 - Incluido campo UF de naturalidade (Reinert).
  *                16/05/2014 - Ajuste no campo de estado civil (Douglas - Chamado 131253).
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
- *
+ *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+ *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+
  * -------------- 
  */  
 ?>
@@ -59,9 +61,11 @@
 		<label for="tpdocptl">Documento:</label>
 		<select name="tpdocptl" id="tpdocptl">
 			<option value=""   <? if (getByTagName($registro,'tpdocptl') == ""  ){ echo " selected"; } ?>> - </option> 
-			<option value="CH" <? if (getByTagName($registro,'tpdocptl') == "CH"){ echo " selected"; } ?>>CH - Carteira de Habilitacao</option>
 			<option value="CI" <? if (getByTagName($registro,'tpdocptl') == "CI"){ echo " selected"; } ?>>CI - Carteira de Identidade </option>
-			<option value="CP" <? if (getByTagName($registro,'tpdocptl') == "CP"){ echo " selected"; } ?>>CP - Carteira Profissional</option>
+			<option value="CN" <? if (getByTagName($registro,'tpdocptl') == "CN"){ echo " selected"; } ?>>CN - Certid&atilde;o de Nascimento</option>
+			<option value="CH" <? if (getByTagName($registro,'tpdocptl') == "CH"){ echo " selected"; } ?>>CH - Carteira de Habilitacao</option>
+			<option value="RE" <? if (getByTagName($registro,'tpdocptl') == "RE"){ echo " selected"; } ?>>RE - Registro Nacional de Estrangeiro</option>
+			<option value="PP" <? if (getByTagName($registro,'tpdocptl') == "PP"){ echo " selected"; } ?>>PP - Passaporte</option>
 			<option value="CT" <? if (getByTagName($registro,'tpdocptl') == "CT"){ echo " selected"; } ?>>CT - Carteira de Trabalho</option>
 		</select>
 		<input name="nrdocptl" id="nrdocptl" type="text" value="<? echo getByTagName($registro,'nrdocptl') ?>" />

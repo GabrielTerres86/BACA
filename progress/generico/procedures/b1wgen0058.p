@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 26/04/2017
+    Data    : Marco/2010                   Ultima atualizacao: 28/08/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -162,6 +162,9 @@
 
 				 26/04/2017 - Ajustado o problema que não carregava os procuradores na tela contas,
 							  conforme solicitado no chamado 659095. (Kelvin)	
+
+				 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+							  CH, RE, PP E CT. (PRJ339 - Reinert)
 
 .....................................................................................*/
 
@@ -1284,7 +1287,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  LOOKUP(par_tpdocava,"CI,CH,CP,CT") = 0 THEN
+        IF  LOOKUP(par_tpdocava,"CI,CN,CH,RE,PP,CT") = 0 THEN
             DO:
                ASSIGN aux_cdcritic = 21.
                LEAVE Valida.
