@@ -144,9 +144,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
 
               11/04/2017 - Busca o nome resumido (Ricardo Linhares #547566)                           
 
-			 17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
-                          conta e referencia no mesmo dia(dtmvtolt) porem com valores
-                          diferentes (Lucas Ranghetti #684123)
+              17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
+                           conta e referencia no mesmo dia(dtmvtolt) porem com valores
+                           diferentes (Lucas Ranghetti #684123)
                            
               01/08/2017 - Incluir tratamento para contas demitidas, exibir critica correta
                            no relatorio (Lucas Ranghetti #711763)
@@ -1088,7 +1088,7 @@ BEGIN
                 -- Fechar cursor e gerar critica 92
                 CLOSE cr_craplau;
                 vr_flgdupli := TRUE;
-                vr_cdcrindb := '04';
+                vr_cdcrindb := '13';
                 vr_cdcritic := 92;
               ELSE 
                 -- Fechar cursor e continuar para a gravação 
@@ -1178,7 +1178,7 @@ BEGIN
                   -- Fechar cursor e gerar critica 103 no relatório NDB 04
                   CLOSE cr_craplau_dia;
                   vr_cdcritic := 103;
-                  vr_cdcrindb := '04';
+                  vr_cdcrindb := '13';
                   vr_flgdupli := TRUE;
                 ELSE 
                   -- Fechar cursor e continuar com a inserção da LAU 
