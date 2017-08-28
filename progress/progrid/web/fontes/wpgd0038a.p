@@ -1162,7 +1162,7 @@ ELSE DO:
                    ASSIGN ttCrapadp.InscComu[Crapidp.IdStaIns] = ttCrapadp.InscComu[Crapidp.IdStaIns] + 1.
            END.
 
-           /* *** Se incricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
+           /* *** Se inscricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
            IF Crapidp.IdStaIns = 2  AND Crapidp.QtFalEve > 0 AND ttCrapadp.idstaeve <> 2 /*Cancelado*/ THEN DO:
               IF ((crapidp.qtfaleve * 100) / ttCrapadp.QtDiaEve) > (100 - frequenciaMinima) THEN DO:
                   ASSIGN ttCrapadp.Inscritos[6] = ttCrapadp.Inscritos[6] + 1.
@@ -1199,7 +1199,7 @@ ELSE DO:
                        ASSIGN ttCrapadp.InscComu[Crapidp.IdStaIns] = ttCrapadp.InscComu[Crapidp.IdStaIns] + 1.
                END.
 
-               /* *** Se incricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
+               /* *** Se inscricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
                IF Crapidp.IdStaIns = 2  AND Crapidp.QtFalEve > 0 AND ttCrapadp.idstaeve <> 2 /*Cancelado*/ THEN DO:
                   IF ((crapidp.qtfaleve * 100) / ttCrapadp.QtDiaEve) > (100 - frequenciaMinima) THEN DO:
                       ASSIGN ttCrapadp.Inscritos[6] = ttCrapadp.Inscritos[6] + 1.
@@ -1277,7 +1277,7 @@ ELSE DO:
    ELSE IF tipoDeRelatorio = 2 THEN
       ASSIGN nomeDoRelatorio = " - Quantidade de Eventos por PA ". 
    ELSE
-      ASSIGN nomeDoRelatorio = " - Incrições nos Eventos por PA". 
+      ASSIGN nomeDoRelatorio = " - Inscrições nos Eventos por PA". 
   
    montaTela(). 
 END.
