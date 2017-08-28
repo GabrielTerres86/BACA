@@ -7728,7 +7728,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 28/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7748,10 +7748,13 @@ END pc_gera_titulos_iptu_prog;
   --
   --             26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
   --                          (Tiago/Fabricio #647174) 
-
+  --
   --             31/05/2017 - Regra para alertar o usuário quando tentar pagar um GPS na modalidade de 
   --                          pagamento apresentando a seguinte mensagem: GPS deve ser paga na opção 
   --                          Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)
+  --
+  --             28/07/2017 - Alterar a verificacao de vencimento das faturas de convenio, para que 
+  --                          seja feito atraves de parametrizacao na crapprm (Douglas - Chamado 711440)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7785,6 +7788,18 @@ END pc_gera_titulos_iptu_prog;
         AND   craplft.nrdolote = pr_nrdolote
         AND   craplft.cdseqfat = pr_cdseqfat;
       rw_craplft cr_craplft%ROWTYPE;
+
+      -- Efetuar a busca do valor na tabela
+      CURSOR cr_crapprm_dias_tolera (pr_cdacesso IN VARCHAR) IS
+        SELECT to_number(prm.dsvlrprm) dsvlrprm
+          FROM crapprm prm
+         WHERE prm.nmsistem = 'CRED'
+           AND prm.cdcooper = 0 --> Busca tanto da passada, quanto da geral (se existir)
+           AND prm.cdacesso = pr_cdacesso; --> Trará a cooperativa passada primeiro, e caso não encontre nela, trará da 0(zero)
+
+      -- Acesso a quantidade de dias de tolerancia
+      vr_cdacesso      VARCHAR2(24);
+      vr_qtdias_tolera INTEGER;
 
       --Variaveis Locais
       vr_nrdcaixa INTEGER;
@@ -8099,45 +8114,25 @@ END pc_gera_titulos_iptu_prog;
         END IF;
       END IF;
       
-      IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. ITAJAI */
-          (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
-          (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. GUARAMIRIM */
-          (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TIMBO */
-          (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TROMBUDO CENTRAL */
-          (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. AGROLANDIA */
-          (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
-          (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
-          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR   /* TRANSITO DE TIMBO */
-          (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)       /* F.M.S TROMBUDO CENTRAL */
-         ) THEN 
-        --Data movimento anterior
-        vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan,'YYYYMMDD');
-        IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
-          --Criar Erro
-          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cod_agencia
-                               ,pr_nrdcaixa => vr_nrdcaixa
-                               ,pr_cod_erro => 0
-                               ,pr_dsc_erro => 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.'
-                               ,pr_flg_erro => TRUE
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
-          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          ELSE
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.';
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-        END IF;
-      END IF;
+      -- Montar a chave de acesso para buscar os dias de tolerando do convenio
+      -- e identificar se o Convenio pode ser pago vencido
+      vr_cdacesso:= 'VALIDA_PAGTO_' ||
+                    to_char(rw_crapcon.cdempcon) || '_' ||
+                    to_char(rw_crapcon.cdsegmto);
 
-      /* SANEPAR */
-      IF rw_crapcon.cdempcon = 0109 AND rw_crapcon.cdsegmto = 2 THEN
+      -- Buscar os dias de tolerancia
+      OPEN cr_crapprm_dias_tolera(pr_cdacesso => vr_cdacesso);
+      FETCH cr_crapprm_dias_tolera INTO vr_qtdias_tolera;
+        
+      -- Identifica se existe a chave para validar o vencimento do convenio
+      -- Validar se fatura esta vencida
+      IF cr_crapprm_dias_tolera%FOUND THEN
+
+        -- Apenas fecha o cursor
+        CLOSE cr_crapprm_dias_tolera;
+
         --Data movimento anterior
-        vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtocd - 25,'YYYYMMDD');
+        vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan - vr_qtdias_tolera,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
           --Criar Erro
           CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
@@ -8158,6 +8153,11 @@ END pc_gera_titulos_iptu_prog;
             RAISE vr_exc_erro;
           END IF;
         END IF;
+
+          ELSE
+        -- Como essa chave nao existe, nao validamos o vencimento
+        -- Apenas fecha o cursor
+        CLOSE cr_crapprm_dias_tolera;
       END IF;
       
       /* Buscar Sequencial da fatura */

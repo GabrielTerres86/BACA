@@ -1529,13 +1529,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     para PM.AGROLANDIA (Tiago/Fabricio #647174)                        
                     
        08/06/2017 - Retirado "OR" por problemas na compilacao(Tiago).
-       															 
+       
        10/07/2017 - Adicionar tratamento para validar o vencimento dos tributos
                     sicredi (Lucas Ranghetti #653552)
 
        03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                     4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
-                    processo (Lucas Ranghetti #711123)        
+                    processo (Lucas Ranghetti #711123)              
       
        02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
   		              crapass, crapttl, crapjur 
@@ -10109,7 +10109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 26/05/2017
+    --  Data     : Junho/2013.                   Ultima atualizacao: 28/07/2017
     --
     --  Dados referentes ao programa:
     --
@@ -10221,6 +10221,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         AND   craplau.nrdolote = pr_nrdolote
         AND   craplau.insitlau IN (1,2)
         AND   LENGTH(craplau.dslindig) = 55;
+        
+      -- Efetuar a busca do valor na tabela
+      CURSOR cr_crapprm_dias_tolera (pr_cdacesso IN VARCHAR) IS
+        SELECT to_number(prm.dsvlrprm) dsvlrprm
+          FROM crapprm prm
+         WHERE prm.nmsistem = 'CRED'
+           AND prm.cdcooper = 0 --> Busca tanto da passada, quanto da geral (se existir)
+           AND prm.cdacesso = pr_cdacesso; --> Trará a cooperativa passada primeiro, e caso não encontre nela, trará da 0(zero)
+
+      -- Acesso a quantidade de dias de tolerancia
+      vr_cdacesso      VARCHAR2(24);
+      vr_qtdias_tolera INTEGER;
+        
       --Variaveis Locais
       vr_flagiptu  BOOLEAN;
       vr_lindigit  NUMBER;
@@ -10611,36 +10624,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         
         -- Identifica se existe a chave para validar o vencimento do convenio
         -- Validar se fatura esta vencida
-        IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. ITAJAI 
-            (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR  --P.M. PRES GETULIO 
-            (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. GUARAMIRIM 
-          (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TIMBO 
-          (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
-            (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. TROMBUDO CENTRAL
-            (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR  -- P.M. AGROLANDIA
-          (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR  -- DEFESA CIVIL TIMBO 
-          (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR  -- MEIO AMBIENTE DE TIMBO 
-            (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR  -- TRANSITO DE TIMBO 
-            (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)      -- F.M.S. TROMBUDO CENTRAL
-            ) THEN 
+        IF cr_crapprm_dias_tolera%FOUND THEN
 
-          IF To_Number(SUBSTR(pr_cdbarras,20,8)) < To_Number(To_Char(pr_dtagenda,'YYYYMMDD')) THEN            
+          -- Apenas fecha o cursor
+          CLOSE cr_crapprm_dias_tolera;
+
+          -- Validar vencimento - DIAS DE TOLERANCIA dias
+          IF To_Number(SUBSTR(pr_cdbarras,20,8)) < To_Number(To_Char(pr_dtagenda - vr_qtdias_tolera,'YYYYMMDD')) THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Agendamento nao permitido apos o vencimento.';
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-        END IF;
 
-        -- SANEPAR
-        IF rw_crapcon.cdempcon = 0109 AND rw_crapcon.cdsegmto = 2 THEN
-          -- Validar vencimento - 25 dias
-          IF To_Number(SUBSTR(pr_cdbarras,20,8)) < To_Number(To_Char(pr_dtagenda - 25,'YYYYMMDD')) THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Agendamento nao permitido apos o vencimento.';
-            --Levantar Excecao
-            RAISE vr_exc_erro;            
-          END IF;
+        ELSE
+          -- Como essa chave nao existe, nao validamos o vencimento
+          -- Apenas fecha o cursor
+          CLOSE cr_crapprm_dias_tolera;
         END IF;
         
         --Selecionar lancamentos automaticos
@@ -10917,7 +10917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   21/12/2015 - Incluido verificacao de situação de transacao pendente, Prj. Assinatura
                                Conjunta (Jean Michel).             
 
-                  05/04/2016 - Ajustado conforme solicitação do SD 429445 (Jean Michel).            
+                  05/04/2016 - Ajustado conforme solicitação do SD 429445 (Jean Michel).     
                   
                   03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                                4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
@@ -11561,7 +11561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_idagenda => 1 -- Indicador de agendamento (1-Nesta Data/2-Agendamento)
                                        ,pr_dtagenda => rw_craplau.dtmvtopg -- Data de agendamento
                                        ,pr_indvalid => 2 -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
-									   ,pr_flmobile => 0 --Indicador Mobile
+									                     ,pr_flmobile => 0 --Indicador Mobile
                                        ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                        ,pr_vldocmto => vr_vlrdocum -- Valor da guia
                                        ,pr_nrdigfat => vr_nrdigfat -- Digito do faturamento
@@ -11625,7 +11625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dtagenda => rw_craplau.dtmvtopg   --Data agendamento
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
-							 ,pr_flmobile => 0                     --Indicador Mobile
+   						               ,pr_flmobile => 0                     --Indicador Mobile
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
                              ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
@@ -11709,7 +11709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda => rw_craplau.dtmvtopg    --Data agendamento
                                ,pr_idorigem => pr_idorigem            --Indicador de origem
                                ,pr_indvalid => 2                      --Nao validar horario limite
-							   ,pr_flmobile => 0                    --Indicador Mobile
+							                 ,pr_flmobile => 0                    --Indicador Mobile
                                ,pr_nmextcon => vr_nmconban            --Nome do banco
                                ,pr_cdseqfat => vr_cdseqfat            --Codigo Sequencial fatura
                                ,pr_vlfatura => vr_vlrdocum            --Valor fatura
@@ -11741,7 +11741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dscritic => vr_dscritic            --Descricao critica
                              ,pr_msgofatr => vr_msgofatr
                              ,pr_cdempcon => vr_cdempcon
-							 ,pr_cdsegmto => vr_cdsegmto);        
+							               ,pr_cdsegmto => vr_cdsegmto);        
           END IF;
 
         -- Se for GPS
