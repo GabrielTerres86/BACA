@@ -84,7 +84,6 @@ DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
-DEFINE VARIABLE vetorevento           AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE vetorpac              AS CHAR                           NO-UNDO.
 
 DEFINE TEMP-TABLE ttEventos 
@@ -293,17 +292,15 @@ DEFINE FRAME Web-Frame
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEventos w-html 
 PROCEDURE CriaListaEventos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+
     DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
     DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
     DEFINE VARIABLE vetormes     AS CHAR EXTENT 12
            INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                     "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
 
+  RUN RodaJavaScript("var mevento=new Array();").
+  
     FOR EACH crapeap WHERE crapeap.idevento       = INT(ab_unmap.aux_idevento)  AND
                            crapeap.cdcooper       = INT(ab_unmap.cdcooper)      AND
                           (crapeap.cdagenci       = INT(ab_unmap.cdagenci)   OR
@@ -356,20 +353,11 @@ PROCEDURE CriaListaEventos :
                      aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
              END.
     
-        IF  vetorevento = "" THEN
-            vetorevento = "~{" +
-                "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
-        ELSE
-            vetorevento = vetorevento + "," + "~{" +
-                "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
+      RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci)
+                                             + "',cdcooper:'" +  STRING(crapeap.cdcooper) 
+                                             + "',cdevento:'" +  STRING(crapeap.cdevento) 
+                                             + "',nmevento:'" +  STRING(aux_nmevento)     
+                                             + "',nrseqeve:'" +  STRING(aux_nrseqeve) + "'~});").
 
         /* Monta a opção de todos os eventos quando tiver mais de uma ocorrencia do mesmo evento */
         IF   LAST-OF(crapedp.nmevento)        AND
@@ -377,17 +365,14 @@ PROCEDURE CriaListaEventos :
              DO:
                  aux_nmevento = crapedp.nmevento + " (TODOS)".
 
-                 vetorevento = vetorevento + "," + "~{" +
-                               "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                               "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                               "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                               "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                               "nrseqeve:'" +  STRING(0)                + "'"  + "~}".
+               RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci)
+                                             + "',cdcooper:'" +  STRING(crapeap.cdcooper) 
+                                             + "',cdevento:'" +  STRING(crapeap.cdevento) 
+                                             + "',nmevento:'" +  STRING(aux_nmevento)     
+                                             + "',nrseqeve:'" +  STRING(0) + "'~});").
              END.
 
     END.
-
-    RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
 
 END PROCEDURE.
 

@@ -1,11 +1,9 @@
-/*
- * Programa wpgd0038a.p - Listagem de fechamento (chamado a partir dos dados de wpgd0038)
- */
 /*****************************************************************************
+ Programa wpgd0038a.p - Listagem de fechamento (chamado a partir dos dados de wpgd0038)
 
- Alterações: 23/02/07 - cfe tarefa 10307
+ Alterações: 23/02/2007 - cfe tarefa 10307
  
-             17/12/07 - Modificado For Each da tabela crapidp para melhorar
+             17/12/2007 - Modificado For Each da tabela crapidp para melhorar
                                     performance (Diego).   
                                                                  
              03/11/2008 - Inclusao widget-pool (martin)
@@ -57,6 +55,10 @@
 
              06/06/2016 - Ajustado somatorio total ocorrido na quebra por PA.
                           PRJ229 - Melhorias OQS (Odirlei-AMcom)
+                          
+             31/01/2017 - Ajustes no totalizadores de eventos, máscaras de valores e datas,
+                          Prj. 229-5 (Jean Michel).
+                          
 **************************************************************************** */
 
 CREATE WIDGET-POOL.
@@ -285,9 +287,11 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                gerCoopPorPac[8] = gerCoopPorPac[8] + ttCrapadp.InscCoop[1] + ttCrapadp.InscCoop[2] + ttCrapadp.InscCoop[3]
                 
                totalVagas           = totalVagas + ttCrapadp.MaximoPorTurma
-               totalDeEventosDoPac  = totalDeEventosDoPac + 1
-               totalDeEventosDaCoop = totalDeEventosDaCoop + 1
                geralVagas           = geralVagas + ttCrapadp.MaximoPorTurma.
+        
+               If ttcrapadp.idstaeve <> 2 Then
+                 ASSIGN totalDeEventosDoPac  = totalDeEventosDoPac + 1
+                 totalDeEventosDaCoop = totalDeEventosDaCoop + 1.
         
         IF  ttcrapadp.idstaeve = 2 THEN  /**Cancelados**/
             DO:
@@ -328,11 +332,13 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                         geralPorPacReal[3] = geralPorPacReal[3] + ttCrapadp.Inscritos[3]
                         geralPorPacReal[6] = geralPorPacReal[6] + ttCrapadp.Inscritos[6]
                         geralPorPacReal[7] = geralPorPacReal[7] + ttCrapadp.Inscritos[7]
-                        geralPorPacReal[8] = geralPorPacReal[8] + ttCrapadp.Inscritos[1] + ttCrapadp.Inscritos[2] + ttCrapadp.Inscritos[3]
+                        geralPorPacReal[8] = geralPorPacReal[8] + ttCrapadp.Inscritos[1] + ttCrapadp.Inscritos[2] + ttCrapadp.Inscritos[3].
 
-                        qtdevenRealizadosPac   = qtdevenRealizadosPac + 1
-                        TotalEventosRealizados = totalEventosRealizados + 1
-                        totalVagasReal         = totalVagasReal + ttCrapadp.MaximoPorTurma
+                If ttcrapadp.idstaeve = 4 Then
+                 assign qtdevenRealizadosPac   = qtdevenRealizadosPac + 1                          
+                  TotalEventosRealizados = totalEventosRealizados + 1.
+                          
+               ASSIGN totalVagasReal         = totalVagasReal + ttCrapadp.MaximoPorTurma
                         geralVagasReal         = geralVagasReal + ttCrapadp.MaximoPorTurma.  
             END.
 
@@ -441,13 +447,13 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                {&out} '         <td align="center" title="Período de realização do evento">&nbsp;</td>' SKIP
                       '         <td align="center" title="Tipo"> &nbsp; </td>' SKIP
                       '         <td align="center" title="Situação do evento"> &nbsp; </td>' SKIP
-                      '         <td align="center" title="Vagas ofertadas no evento">' totalVagas FORMAT "-zzzzz9" ' </td>' SKIP
-                      '         <td align="center" title="Pré-Inscritos">' inscricoesPorPac[8] FORMAT "zzzz9" '</td>' SKIP
-                      '         <td align="center" title="Pendentes de confirmação">' inscricoesPorPac[1] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Desistentes">' inscricoesPorPac[3] FORMAT "zz9" '</td>' SKIP   
-                      '         <td align="center" title="Confirmadas">' inscricoesPorPac[2] FORMAT "zzz9" '</td>' SKIP
-                      '         <td align="center" title="Faltantes">' inscricoesPorPac[6] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Compareceram">' inscricoesPorPac[7] FORMAT "zzzz9" '</td>' SKIP
+                      '         <td align="center" title="Vagas ofertadas no evento">' totalVagas FORMAT "zzzzz9" ' </td>' SKIP
+                      '         <td align="center" title="Pré-Inscritos">' inscricoesPorPac[8] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Pendentes de confirmação">' inscricoesPorPac[1] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Desistentes">' inscricoesPorPac[3] FORMAT "zzzzz9" '</td>' SKIP   
+                      '         <td align="center" title="Confirmadas">' inscricoesPorPac[2] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Faltantes">' inscricoesPorPac[6] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Compareceram">' inscricoesPorPac[7] FORMAT "zzzzz9" '</td>' SKIP
                       '      </tr>' SKIP.
                
                /** Eventos Cancelados **/
@@ -458,13 +464,13 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
-                      '         <td align="center" title="Vagas ofertadas no evento">' totalVagasCanc FORMAT "-zzzzz9" ' </td>' SKIP 
-                      '         <td align="center" title="Pré-Inscritos">' inscCancPorPac[8] FORMAT "zzzz9" '</td>' SKIP
-                      '         <td align="center" title="Pendentes de confirmação">' inscCancPorPac[1] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Desistentes">' inscCancPorPac[3] FORMAT "zz9" '</td>' SKIP   
-                      '         <td align="center" title="Confirmadas">' inscCancPorPac[2] FORMAT "zzz9" '</td>' SKIP
-                      '         <td align="center" title="Faltantes">' inscCancPorPac[6] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Compareceram">' inscCancPorPac[7] FORMAT "zzzz9" '</td>' SKIP.
+                      '         <td align="center" title="Vagas ofertadas no evento">' totalVagasCanc FORMAT "zzzzz9" ' </td>' SKIP 
+                      '         <td align="center" title="Pré-Inscritos">' inscCancPorPac[8] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Pendentes de confirmação">' inscCancPorPac[1] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Desistentes">' inscCancPorPac[3] FORMAT "zzzzz9" '</td>' SKIP   
+                      '         <td align="center" title="Confirmadas">' inscCancPorPac[2] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Faltantes">' inscCancPorPac[6] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Compareceram">' inscCancPorPac[7] FORMAT "zzzzz9" '</td>' SKIP.
                
                /** Eventos Realizados **/
                {&out} '      <tr class="tdCab3">' SKIP
@@ -474,13 +480,13 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
-                      '         <td align="center" title="Vagas ofertadas no evento">' totalVagasReal FORMAT "-zzzzz9" ' </td>' SKIP 
-                      '         <td align="center" title="Pré-Inscritos">' inscRealPorPac[8] FORMAT "zzzz9" '</td>' SKIP
-                      '         <td align="center" title="Pendentes de confirmação">' inscRealPorPac[1] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Desistentes">' inscRealPorPac[3] FORMAT "zz9" '</td>' SKIP   
-                      '         <td align="center" title="Confirmadas">' inscRealPorPac[2] FORMAT "zzz9" '</td>' SKIP
-                      '         <td align="center" title="Faltantes">' inscRealPorPac[6] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Compareceram">' inscRealPorPac[7] FORMAT "zzzz9" '</td>' SKIP.
+                      '         <td align="center" title="Vagas ofertadas no evento">' totalVagasReal FORMAT "zzzzz9" ' </td>' SKIP 
+                      '         <td align="center" title="Pré-Inscritos">' inscRealPorPac[8] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Pendentes de confirmação">' inscRealPorPac[1] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Desistentes">' inscRealPorPac[3] FORMAT "zzzzz9" '</td>' SKIP   
+                      '         <td align="center" title="Confirmadas">' inscRealPorPac[2] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Faltantes">' inscRealPorPac[6] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Compareceram">' inscRealPorPac[7] FORMAT "zzzzz9" '</td>' SKIP.
                
                /** COOPERADOS **/
                {&out} '      <tr class="tdCab3">' SKIP
@@ -489,12 +495,12 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
-                      '         <td align="center" title="Pré-Inscritos">' inscCoopPorPac[8] FORMAT "zzzz9" '</td>' SKIP
-                      '         <td align="center" title="Pendentes de confirmação">' inscCoopPorPac[1] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Desistentes">' inscCoopPorPac[3] FORMAT "zz9" '</td>' SKIP   
-                      '         <td align="center" title="Confirmadas">' inscCoopPorPac[2] FORMAT "zzz9" '</td>' SKIP
-                      '         <td align="center" title="Faltantes">' inscCoopPorPac[6] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Compareceram">' inscCoopPorPac[7] FORMAT "zzzz9" '</td>' SKIP
+                      '         <td align="center" title="Pré-Inscritos">' inscCoopPorPac[8] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Pendentes de confirmação">' inscCoopPorPac[1] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Desistentes">' inscCoopPorPac[3] FORMAT "zzzzz9" '</td>' SKIP   
+                      '         <td align="center" title="Confirmadas">' inscCoopPorPac[2] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Faltantes">' inscCoopPorPac[6] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Compareceram">' inscCoopPorPac[7] FORMAT "zzzzz9" '</td>' SKIP
                       '      </tr>' SKIP.
                
                /** COMUNIDADE **/
@@ -504,12 +510,12 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
                       '         <td align="center">&nbsp;</td>' SKIP
-                      '         <td align="center" title="Pré-Inscritos">' inscComuPorPac[8] FORMAT "zzzz9" '</td>' SKIP
-                      '         <td align="center" title="Pendentes de confirmação">' inscComuPorPac[1] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Desistentes">' inscComuPorPac[3] FORMAT "zz9" '</td>' SKIP   
-                      '         <td align="center" title="Confirmadas">' inscComuPorPac[2] FORMAT "zzz9" '</td>' SKIP
-                      '         <td align="center" title="Faltantes">' inscComuPorPac[6] FORMAT "zz9" '</td>' SKIP
-                      '         <td align="center" title="Compareceram">' inscComuPorPac[7] FORMAT "zzzz9" '</td>' SKIP
+                      '         <td align="center" title="Pré-Inscritos">' inscComuPorPac[8] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Pendentes de confirmação">' inscComuPorPac[1] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Desistentes">' inscComuPorPac[3] FORMAT "zzzzz9" '</td>' SKIP   
+                      '         <td align="center" title="Confirmadas">' inscComuPorPac[2] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Faltantes">' inscComuPorPac[6] FORMAT "zzzzz9" '</td>' SKIP
+                      '         <td align="center" title="Compareceram">' inscComuPorPac[7] FORMAT "zzzzz9" '</td>' SKIP
                       '      </tr>' SKIP.
                
                {&out} '      <tr class="tdCab3"><td colspan="11" align="Left">Questionários devolvidos: ' iQtQstDevolvido FORMAT ">>>,>>9" '</td></tr>' SKIP.
@@ -591,7 +597,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                   '         <td align="center" title="Tipo">&nbsp;</td>' SKIP
                   '         <td align="center" title="Período de realização do evento">&nbsp;</td>' SKIP
                   '         <td align="center" title="Situação do evento"> &nbsp; </td>' SKIP
-                  '         <td align="center" title="Vagas ofertadas no evento">' geralVagas FORMAT "-zzzzz9" ' </td>' SKIP
+                  '         <td align="center" title="Vagas ofertadas no evento">' geralVagas FORMAT "zzzzz9" ' </td>' SKIP
                   '         <td align="center" title="Pré-Inscritos">'geralPorPac[8] FORMAT "zzzzz9" '</td>' SKIP
                   '         <td align="center" title="Pendentes de confirmação">'geralPorPac[1] FORMAT "zzzzz9" '</td>' SKIP
                   '         <td align="center" title="Desistentes">' geralPorPac[3] FORMAT "zzzzz9" '</td>' SKIP   
@@ -605,7 +611,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                   '         <td align="center">&nbsp;</td>' SKIP
                   '         <td align="center">&nbsp;</td>' SKIP
                   '         <td align="center">&nbsp;</td>' SKIP
-                  '         <td align="center" title="Vagas ofertadas no evento">' geralVagasCanc FORMAT "-zzzzz9" ' </td>' SKIP
+                  '         <td align="center" title="Vagas ofertadas no evento">' geralVagasCanc FORMAT "zzzzz9" ' </td>' SKIP
                   '         <td align="center" title="Pré-Inscritos">'geralPorPacCanc[8] FORMAT "zzzzz9" '</td>'             SKIP
                   '         <td align="center" title="Pendentes de confirmação">'geralPorPacCanc[1] FORMAT "zzzzz9" '</td>'   SKIP
                   '         <td align="center" title="Desistentes">' geralPorPacCanc[3] FORMAT "zzzzz9" '</td>'               SKIP   
@@ -619,7 +625,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                   '         <td align="center">&nbsp;</td>' SKIP
                   '         <td align="center">&nbsp;</td>' SKIP
                   '         <td align="center">&nbsp;</td>' SKIP
-                  '         <td align="center" title="Vagas ofertadas no evento">' geralVagasReal FORMAT "-zzzzz9" ' </td>' SKIP
+                  '         <td align="center" title="Vagas ofertadas no evento">' geralVagasReal FORMAT "zzzzz9" ' </td>' SKIP
                   '         <td align="center" title="Pré-Inscritos">'geralPorPacReal[8] FORMAT "zzzzz9" '</td>'             SKIP
                   '         <td align="center" title="Pendentes de confirmação">'geralPorPacReal[1] FORMAT "zzzzz9" '</td>'   SKIP
                   '         <td align="center" title="Desistentes">' geralPorPacReal[3] FORMAT "zzzzz9" '</td>'               SKIP   
@@ -944,7 +950,6 @@ ELSE DO:
                         bfCraptab.TpRegist = 0               NO-LOCK NO-ERROR.
 
    /*****************************************************************************************************/
-   /*****************************************************************************************************/
 
    /* Assembleia Geral - devera aparecer agrupado por Agencia de Inscricao - Joao(RKAM) - 30/11/2010 */
    IF idEvento = 2  THEN
@@ -985,7 +990,6 @@ ELSE DO:
            END.
        END. /* FOR EACH */
    END. /* idEvento = 2 */ 
-   /*****************************************************************************************************/
    /*****************************************************************************************************/
                                                                       
    ASSIGN conta = 0. 
@@ -1158,7 +1162,7 @@ ELSE DO:
                    ASSIGN ttCrapadp.InscComu[Crapidp.IdStaIns] = ttCrapadp.InscComu[Crapidp.IdStaIns] + 1.
            END.
 
-           /* *** Se incricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
+           /* *** Se inscricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
            IF Crapidp.IdStaIns = 2  AND Crapidp.QtFalEve > 0 AND ttCrapadp.idstaeve <> 2 /*Cancelado*/ THEN DO:
               IF ((crapidp.qtfaleve * 100) / ttCrapadp.QtDiaEve) > (100 - frequenciaMinima) THEN DO:
                   ASSIGN ttCrapadp.Inscritos[6] = ttCrapadp.Inscritos[6] + 1.
@@ -1195,7 +1199,7 @@ ELSE DO:
                        ASSIGN ttCrapadp.InscComu[Crapidp.IdStaIns] = ttCrapadp.InscComu[Crapidp.IdStaIns] + 1.
                END.
 
-               /* *** Se incricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
+               /* *** Se inscricao cofirmada e inscricoes encerradas e evento NAO CANCELADO, verifica faltas ****/
                IF Crapidp.IdStaIns = 2  AND Crapidp.QtFalEve > 0 AND ttCrapadp.idstaeve <> 2 /*Cancelado*/ THEN DO:
                   IF ((crapidp.qtfaleve * 100) / ttCrapadp.QtDiaEve) > (100 - frequenciaMinima) THEN DO:
                       ASSIGN ttCrapadp.Inscritos[6] = ttCrapadp.Inscritos[6] + 1.
@@ -1220,13 +1224,13 @@ ELSE DO:
        /* *** Complemento para o nome do evento *** */
        IF (ttCrapadp.DtFinEve - ttCrapadp.DtIniEve) = 0 THEN
           ASSIGN ttCrapadp.SobreNomeDoEvento1 = ' (' + STRING(ttCrapadp.DtIniEve,"99/99/9999") + ')'
-                 ttCrapadp.SobreNomeDoEvento2 = ' (' + STRING(ttCrapadp.DtIniEve,"99/99/99") + ')'
+                 ttCrapadp.SobreNomeDoEvento2 = ' (' + STRING(ttCrapadp.DtIniEve,"99/99/9999") + ')'
                  ttCrapadp.Periodo            = STRING(ttCrapadp.DtIniEve,"99/99/9999").
        ELSE
           IF (ttCrapadp.DtFinEve - ttCrapadp.DtIniEve) > 0 THEN
               ASSIGN ttCrapadp.SobreNomeDoEvento1 = ' (período de ' + STRING(ttCrapadp.DtIniEve,"99/99/9999") + ' a ' + STRING(ttCrapadp.DtFinEve,"99/99/9999") + ')'
-                     ttCrapadp.SobreNomeDoEvento2 = ' (' + STRING(ttCrapadp.DtIniEve,"99/99/99") + ' a ' + STRING(ttCrapadp.DtFinEve,"99/99/99") + ')'
-                     ttCrapadp.Periodo            = STRING(ttCrapadp.DtIniEve,"99/99/99") + ' a ' + STRING(ttCrapadp.DtFinEve,"99/99/99").
+                     ttCrapadp.SobreNomeDoEvento2 = ' (' + STRING(ttCrapadp.DtIniEve,"99/99/9999") + ' a ' + STRING(ttCrapadp.DtFinEve,"99/99/9999") + ')'
+                     ttCrapadp.Periodo            = STRING(ttCrapadp.DtIniEve,"99/99/9999") + ' a ' + STRING(ttCrapadp.DtFinEve,"99/99/9999").
           ELSE DO:
               IF ttCrapadp.NrMesEve > 0 AND ttCrapadp.NrMesEve < 13 THEN
                  ASSIGN ttCrapadp.SobreNomeDoEvento1 = ' (mês de ' + ENTRY(ttCrapadp.NrMesEve,mes) + ')'
@@ -1243,7 +1247,7 @@ ELSE DO:
 
    /* *** Cria valor auxiliar1 para faciliar break by da impressão baseado na data*** */
    FOR EACH ttCrapadp WHERE ttCrapadp.DtIniEve <> ?:
-       ASSIGN ttCrapadp.Auxiliar1 = STRING(ttCrapadp.CdEvento,"9999") + STRING(YEAR(ttCrapadp.DtIniEve),"9999") + STRING(MONTH(ttCrapadp.DtIniEve),"99") + STRING(DAY(ttCrapadp.DtIniEve),"99")
+       ASSIGN ttCrapadp.Auxiliar1 = STRING(ttCrapadp.CdEvento,"99999") + STRING(YEAR(ttCrapadp.DtIniEve),"9999") + STRING(MONTH(ttCrapadp.DtIniEve),"99") + STRING(DAY(ttCrapadp.DtIniEve),"99")
               ttCrapadp.Ano       = YEAR(ttCrapadp.DtIniEve).
    END.
    FIND FIRST ttCrapadp NO-LOCK NO-ERROR.
@@ -1273,19 +1277,11 @@ ELSE DO:
    ELSE IF tipoDeRelatorio = 2 THEN
       ASSIGN nomeDoRelatorio = " - Quantidade de Eventos por PA ". 
    ELSE
-      ASSIGN nomeDoRelatorio = " - Incrições nos Eventos por PA". 
+      ASSIGN nomeDoRelatorio = " - Inscrições nos Eventos por PA". 
   
    montaTela(). 
 END.
           
-/*****************************************************************************/
-/*                                                                           */
-/*   Bloco de procdures                                                      */
-/*                                                                           */
-/*****************************************************************************/
-
 PROCEDURE PermissaoDeAcesso :
-
     {includes/wpgd0009.i} 
-
 END PROCEDURE.

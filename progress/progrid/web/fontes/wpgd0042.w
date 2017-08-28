@@ -8,9 +8,11 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
 						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
                                   
+			09/11/2016 - inclusao de LOG. (Jean Michel)
 
-...............................................................................*/
+......................................................................... */
 
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -304,6 +306,8 @@ PROCEDURE CriaListaEventos :
         INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
 
+  RUN RodaJavaScript("var mevento = new Array();").
+  
     FOR EACH crapeap WHERE crapeap.idevento = INT(ab_unmap.aux_idevento)  AND
                            crapeap.cdcooper = INT(ab_unmap.cdcooper)      AND
                            crapeap.cdagenci = INT(ab_unmap.cdagenci)      AND 
@@ -342,24 +346,15 @@ PROCEDURE CriaListaEventos :
         IF  crapadp.dshroeve <> "" THEN
             aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
     
-        IF  vetorevento = "" THEN
-            vetorevento = "~{" +
-                "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
-        ELSE
-            vetorevento = vetorevento + "," + "~{" +
-                 "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                 "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                 "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                 "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                 "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
+        
+        RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci)
+                                      + "',cdcooper:'" +  STRING(crapeap.cdcooper)
+                                      + "',cdevento:'" +  STRING(crapeap.cdevento)
+                                      + "',nmevento:'" +  STRING(aux_nmevento)
+                                      + "',nrseqeve:'" +  STRING(aux_nrseqeve) + "'~});").
+        
     END.
   
-RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
-
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -538,7 +533,7 @@ RUN outputHeader.
 IF   INT(ab_unmap.cdcooper) = 0   THEN
      ab_unmap.cdcooper = STRING(gnapses.cdcooper).
 
-/* Se o PAC ainda não foi escolhido, pega o da sessão do usuário */
+/* Se o PA ainda não foi escolhido, pega o da sessão do usuário */
 IF   INT(ab_unmap.cdagenci) = 0   AND
      ab_unmap.cdagenci      = ""  THEN
      ab_unmap.cdagenci = STRING(gnapses.cdagenci).
@@ -582,7 +577,7 @@ ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_crapcop.
 /* PROGRID */
 IF   INT(ab_unmap.aux_idevento) = 1   THEN
      DO:
-         /* gera lista de pac´s */
+         /* gera lista de pa´s */
          {includes/wpgd0099.i ab_unmap.aux_dtanoage}         
 
          /* gera lista de eventos */
@@ -602,7 +597,7 @@ ELSE
         RUN CriaListaEventosAssemb. 
     END.
 
-/* Cria o array com os pacs */
+/* Cria o array com os pa's */
 RUN RodaJavaScript("var mpac=new Array();mpac=["  + vetorpac + "]").
 
 
@@ -617,6 +612,9 @@ FIND FIRST craptab WHERE craptab.cdcooper = 0               AND
 
 ASSIGN ab_unmap.aux_dsstatus:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = craptab.dstextab.
 
+RUN insere_log_progrid("WPGD0042.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_dtanoage) + "|" + STRING(ab_unmap.cdagenci) + "|" +
+					  STRING(ab_unmap.cdcooper) + "|" + STRING(ab_unmap.aux_flginter)).
    
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
