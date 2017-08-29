@@ -205,7 +205,7 @@ IF aux_cdcritic <> 0   OR
       "devidamente selecionada por mim indicada neste ato.\r\n\r\n".
 
       CREATE xml_operacao.
-      ASSIGN xml_operacao.dslinxml = "- Realizado o cadastro e a confirmação do débito automático, o primeiro pagamento ocorrerá apenas após o " +
+      ASSIGN xml_operacao.dslinxml = "- Realizado o cadastro e a confirmação do Débito Automático, o primeiro pagamento ocorrerá apenas após o " +
       "agendamento do débito pela empresa conveniada, o qual pode ser acompanhado pela conta corrente;\r\n".
 
       CREATE xml_operacao.
@@ -223,12 +223,12 @@ IF aux_cdcritic <> 0   OR
       "ficando sob minha responsabilidade o pagamento das faturas por outros meios;\r\n".
 
       CREATE xml_operacao.
-      ASSIGN xml_operacao.dslinxml = "- A solicitação de débito automático autorizada diretamente na Cooperativa, poderá ser cancelada de forma " +
+      ASSIGN xml_operacao.dslinxml = "- A solicitação de Débito Automático autorizada diretamente na Cooperativa, poderá ser cancelada de forma " +
       "presencial, por meio da conta online ou pelos terminais de autoatendimento, por solicitação da empresa " +
       "conveniada ou ainda, pela Cooperativa por falta de movimentação de débito;\r\n".
 
       CREATE xml_operacao.
-      ASSIGN xml_operacao.dslinxml = "- Caso a solicitação de débito automático seja autorizada diretamente na empresa conveniada, essa somente " +
+      ASSIGN xml_operacao.dslinxml = "- Caso a solicitação de Débito Automático seja autorizada diretamente na empresa conveniada, essa somente " +
       "poderá ser cancelada, mediante solicitação a própria empresa.\r\n\r\n".
 
       CREATE xml_operacao.

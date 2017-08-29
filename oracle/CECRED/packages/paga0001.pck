@@ -5983,7 +5983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda IN OUT DATE                 --Data agendamento
                                ,pr_idorigem IN  INTEGER                 --Indicador de origem
                                ,pr_indvalid IN  INTEGER                 --Indicador se ja foi feito
-							   ,pr_flmobile IN  INTEGER                 --Indicador Mobile
+							                 ,pr_flmobile IN  INTEGER                 --Indicador Mobile
                                ,pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                ,pr_nmextbcc OUT VARCHAR2                --Nome do banco
                                ,pr_vlfatura OUT NUMBER                  --Valor fatura
@@ -7390,14 +7390,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
         IF vr_flgachou THEN
           IF pr_flmobile = 1 THEN
-             pr_msgofatr := 'Deseja incluir sua fatura em débito automático?';
+             pr_msgofatr := 'Deseja incluir sua fatura em Débito Automático?';
           ELSE
-					pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
+             pr_msgofatr := 'Deseja efetuar o cadastro do Debito Automático?';
           END IF;
           
-            pr_cdempcon := rw_crapcon.cdempcon;
+          pr_cdempcon := rw_crapcon.cdempcon;
 		      pr_cdsegmto := TO_CHAR(rw_crapcon.cdsegmto);
-          END IF;
+        END IF;
 
         IF cr_gnconve%ISOPEN THEN
 					CLOSE cr_gnconve;

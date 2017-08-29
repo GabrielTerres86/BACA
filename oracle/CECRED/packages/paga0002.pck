@@ -6233,9 +6233,9 @@ create or replace package body cecred.PAGA0002 is
             
             IF vr_flgachou THEN
               IF pr_flmobile = 1 THEN
-                 pr_msgofatr := 'Deseja incluir sua fatura em débito automático?';
+                 pr_msgofatr := 'Deseja incluir sua fatura em Débito Automático?';
               ELSE
-                 pr_msgofatr := 'Deseja efetuar o cadastro do debito automático?';
+                 pr_msgofatr := 'Deseja efetuar o cadastro do Debito Automático?';
               END IF;
               pr_cdempcon := rw_crapcon.cdempcon;
               pr_cdsegmto := rw_crapcon.cdsegmto;
