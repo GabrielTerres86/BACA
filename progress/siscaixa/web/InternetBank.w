@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 22/02/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 04/05/2017
 
    Dados referentes ao programa:
 
@@ -660,21 +660,19 @@
                             - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
                             (Lucas Lunelli)
                             
-				 13/03/2017 - Adicionando paginacao na tela de folha, conforme 
-			        	      solicitado no chamado 626091 (Kelvin). 
-
-                 17/03/2017 - Incluido IP da transacao na proc_operacao75.
-                              PRJ335 - OFSAA (Odirlei-AMcom)
-
                  17/03/2017 - Ajustes operacao 189 - Servico de SMS de cobranca
                               PRJ319.2 - SMS Cobrança(Odirlei-AMcom)    
+				 13/03/2017 - Adicionando paginacao na tela de folha, conforme 
+			        	      solicitado no chamado 626091 (Kelvin). 
+                 17/03/2017 - Incluido IP da transacao na proc_operacao75.
+                              PRJ335 - OFSAA (Odirlei-AMcom)
+				 04/05/2017 - Alterado parametro dtmvtolt para dtmvtocd na operacao 176 - 
+							  Integralizacao de cotas. (Reinert)
+
                               
                  21/03/2017 - Segunda fase projeto Boleto SMS
                               PRJ319.2 - SMS Cobrança(Ricardo Linhares)                             
 
-				 04/05/2017 - Alterado parametro dtmvtolt para dtmvtocd na operacao 176 - 
-							  Integralizacao de cotas. (Reinert)
-                              
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1616,7 +1614,7 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for confirmacao de resgate de aplicacao **/
                   CAN-DO("116",STRING(aux_operacao)) AND aux_flmensag = 0
-               )OR
+               ) OR
                (
                   /** Nao utiliza criptografia se for contratacao de pre-aprovado **/
                   CAN-DO("100",STRING(aux_operacao))
@@ -1628,6 +1626,10 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for pagamento de DARF e DAS **/
                   CAN-DO("188",STRING(aux_operacao)) AND aux_idefetiv = 1
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for confirmação de recarga de celular **/
+                  CAN-DO("181",STRING(aux_operacao)) AND INT(GET-VALUE("aux_operacao")) = 6
                )
            )
              THEN 
@@ -8062,6 +8064,7 @@ PROCEDURE proc_operacao181:
                                                        INPUT aux_cdopcaodt,
                                                        INPUT aux_dtrecarga,
                                                        INPUT aux_qtmesagd,
+													   INPUT aux_flmobile,
                                                       OUTPUT aux_dsmsgerr,
                                                       OUTPUT TABLE xml_operacao).
 
