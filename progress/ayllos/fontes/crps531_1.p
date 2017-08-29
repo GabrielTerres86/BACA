@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 14/07/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 29/08/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -205,6 +205,10 @@
                
                14/07/2017 - Ajustar a procedure deleta_objetos para validar se o handle do objeto eh 
                             valido para que seja excluido (Douglas - Chamado 524133)
+               
+			   29/08/2017 - Conversao Progress >> PLSQL - Andrei - Mouts
+                            (Rotina será mantida no TFS apenas para caso ocorra algum 
+                             problema na convertida e decida-se retornar versao)
 
 
              #######################################################

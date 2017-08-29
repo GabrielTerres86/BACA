@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 20/05/2014
+   Data    : Setembro/2009.                     Ultima atualizacao: 29/08/2017
 
    Dados referentes ao programa:
 
@@ -67,217 +67,76 @@
                             em virtude do 531_1 rodar em paralelo).
                             (Chamado 158826) - (Fabricio)
                             
+               04/07/2017 - Adicionar o ID paralelo na mensagem de log
+                            (Douglas - Chamado 524133)
+                            
+               29/08/2017 - Conversao Progress >> PLSQL - Andrei - Mouts
+                          - Rotina 531_1 sera mantida no TFS apenas para 
+                          - caso ocorra algum problema na convertida e 
+                          - decida-se retornar versao
                             
 ............................................................................ */
 
 { includes/var_batch.i  "NEW" }
-{ sistema/generico/includes/b1wgen0046tt.i } 
-
-DEF STREAM str_1.
-DEF STREAM str_mp.      /*  Stream para monitoramento do programas paralelos  */
-
-
-DEF VAR aux_idparale  AS INT                                          NO-UNDO.
-DEF VAR aux_dspidprg  AS CHAR                                         NO-UNDO.
-                                                                      
-DEF VAR aux_nmarquiv  AS CHAR                                         NO-UNDO.
-DEF VAR aux_contador  AS INT                                          NO-UNDO.
-DEF VAR aux_arqdelog  AS CHAR                                         NO-UNDO.                                                                      
-
-DEF VAR b1wgen0046    AS HANDLE                                       NO-UNDO.
-DEF VAR h_paralelo    AS HANDLE                                       NO-UNDO.
-
-DEF VAR aux_contlock AS INTE                                          NO-UNDO.
-
-DEF BUFFER crabcop FOR crapcop.
-DEF BUFFER crabdat FOR crapdat.
-                                                                      
-
-DEFINE TEMP-TABLE crawarq                                             NO-UNDO
-       FIELD nrsequen AS INTEGER
-       FIELD nmarquiv AS CHAR
-       INDEX crawarq1 AS PRIMARY
-             nrsequen nmarquiv.
+{ sistema/generico/includes/var_oracle.i }
              
 ASSIGN glb_cdprogra = "crps531"
+       glb_cdcritic = 0
+       glb_dscritic = ""
       /* Script mqcecred_processa passa como parametro cooperativa '3' */
        glb_cdcooper = INT(SESSION:PARAMETER).
 
-/* Busca dados da cooperativa */
-FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
+ETIME(TRUE).
 
-IF   NOT AVAILABLE crapcop THEN
-     DO:
-         ASSIGN glb_cdcritic = 651.
-         RUN fontes/critic.p.
-         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                           " - " + glb_cdprogra + "' --> '"  +
-                           glb_dscritic + " >> log/proc_batch.log").
-         QUIT.
-     END.     
-     
-/* Busca data do sistema */ 
-FIND FIRST crapdat WHERE crapdat.cdcooper = glb_cdcooper  NO-LOCK NO-ERROR.
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-IF   NOT AVAIL crapdat THEN 
-     DO:
-         ASSIGN glb_cdcritic = 1.
-         RUN fontes/critic.p.
-         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                           " - " + glb_cdprogra + "' --> '"  +
-                           glb_dscritic + " >> log/proc_batch.log").
-         QUIT.
-     END.
+RUN STORED-PROCEDURE pc_crps531 aux_handproc = PROC-HANDLE
+   (INPUT glb_cdcooper,   
+    INPUT INT(STRING(glb_flgresta,"1/0")),
+    OUTPUT 0,
+    OUTPUT 0,                                        
+    OUTPUT 0, 
+    OUTPUT "").
 
-/* Setar variavel de ambiente MONPROC para executar em paralelo */
-UNIX SILENT VALUE("export MONPROC=SIM").
-
-/* Mover arquivo de log do dia anterior para o /salvar */
-INPUT THROUGH VALUE("ls /usr/coop/" + crapcop.dsdircop + 
-                    "/log/crps531_*.log 2>/dev/null") NO-ECHO.
-
-DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-
-   IMPORT UNFORMATTED aux_arqdelog.
-
-   IF  DATE(INTE(SUBSTR(aux_arqdelog,32,2)),
-            INTE(SUBSTR(aux_arqdelog,30,2)),
-            INTE(SUBSTR(aux_arqdelog,34,4))) < crapdat.dtmvtolt  THEN
-       UNIX SILENT VALUE ("mv " + aux_arqdelog + " /usr/coop/" + 
-                          crapcop.dsdircop + "/salvar 2>/dev/null").
-
+IF  ERROR-STATUS:ERROR  THEN DO:
+    DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+        ASSIGN aux_msgerora = aux_msgerora + 
+                              ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+    END.
+        
+    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                      " - " + glb_cdprogra + "' --> '"  +
+                      "Erro ao executar Stored Procedure: '" +
+                      aux_msgerora + "' >> log/proc_batch.log").
+    RETURN.
 END.
+        
+CLOSE STORED-PROCEDURE pc_crps531 WHERE PROC-HANDLE = aux_handproc.
 
-/* As mensagens estarao no diretorio /usr/coop/cecred/integra e 
-   o script ira executar com a variavel de ambiente CECRED */ 
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
-ASSIGN aux_nmarquiv = "/usr/coop/" + crapcop.dsdircop +
-                      "/integra/msgr_cecred_*.xml"  
-       aux_contador = 0.
-                      
-
-INPUT STREAM str_1 THROUGH VALUE( "ls " + aux_nmarquiv + " 2> /dev/null")
-                   NO-ECHO.
-                   
-DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
-
-   IMPORT STREAM str_1 UNFORMATTED aux_nmarquiv.
-
-   ASSIGN aux_contador = aux_contador + 1.
-   
-   CREATE crawarq.
-   ASSIGN crawarq.nrsequen = aux_contador
-          crawarq.nmarquiv = aux_nmarquiv.
-          
-END.  /*  Fim do DO WHILE TRUE  */
-
-INPUT STREAM str_1 CLOSE.
-
-/* Cria registro de lote (para todas as singulares) que sera lido e atualizado
-   pelo 531_1. */
-FOR EACH crabcop NO-LOCK:
-
-    FIND FIRST crabdat WHERE crabdat.cdcooper = crabcop.cdcooper
-         NO-LOCK NO-ERROR.
-
-    IF NOT AVAIL crabdat THEN
+ASSIGN glb_cdcritic = 0
+       glb_dscritic = ""
+       glb_cdcritic = pc_crps531.pr_cdcritic WHEN pc_crps531.pr_cdcritic <> ?
+       glb_dscritic = pc_crps531.pr_dscritic WHEN pc_crps531.pr_dscritic <> ?
+       glb_stprogra = IF  pc_crps531.pr_stprogra = 1 THEN
+                          TRUE
+                      ELSE
+                          FALSE
+       glb_infimsol = IF  pc_crps531.pr_infimsol = 1 THEN
+                          TRUE
+                      ELSE
+                          FALSE.
+       
+IF  glb_cdcritic <> 0   OR
+    glb_dscritic <> ""  THEN
     DO:
-        ASSIGN glb_cdcritic = 1.
-        RUN fontes/critic.p.
         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                           " - " + glb_cdprogra + "' --> '"  +
-                          glb_dscritic + " >> log/proc_batch.log").
-        QUIT.
+                          "Erro ao rodar: " + STRING(glb_cdcritic) + " " + 
+                          "'" + glb_dscritic + "'" + " >> log/proc_batch.log").
+
+        RETURN.
     END.
-
-    DO aux_contlock = 1 TO 10:
-
-        FIND craplot WHERE craplot.cdcooper = crabcop.cdcooper  AND
-                           craplot.dtmvtolt = crabdat.dtmvtolt  AND
-                           craplot.cdagenci = 1                 AND
-                           craplot.cdbccxlt = crabcop.cdbcoctl  AND
-                           craplot.nrdolote = 10115
-                           EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-             
-        IF NOT AVAIL craplot THEN
-            IF LOCKED craplot THEN
-            DO:
-                PAUSE 1 NO-MESSAGE.
-                NEXT.
-            END.
-            ELSE
-            DO:
-                CREATE craplot.
-                ASSIGN craplot.cdcooper = crabcop.cdcooper
-                       craplot.dtmvtolt = crabdat.dtmvtolt
-                       craplot.cdagenci = 1
-                       craplot.cdbccxlt = crabcop.cdbcoctl
-                       craplot.nrdolote = 10115
-                       craplot.tplotmov = 1.
-
-                VALIDATE craplot.
-            END.
-                 
-        LEAVE.
-    END.
-
-    IF NOT AVAIL craplot THEN
-    DO:
-        ASSIGN glb_dscritic = "Tabela CRAPLOT esta em uso.".
-
-        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                          " - " + glb_cdprogra + "' --> '"  +
-                          glb_dscritic + " >> log/proc_batch.log").
-        QUIT.
-    END.
-END.
-
-RUN sistema/generico/procedures/bo_paralelo.p PERSISTENT SET h_paralelo.
-
-RUN gera_ID IN h_paralelo (OUTPUT aux_idparale).
-    
-FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
-
-    /* cadastra programa paralelo */
-    RUN ativa_paralelo IN h_paralelo (INPUT aux_idparale,
-                                      INPUT crawarq.nrsequen).
-                                      
-    /* faz a chamada do programa em paralelo passando o
-       ID,  o numero sequencial e o nome da mensagem */
-    
-    INPUT STREAM str_mp THROUGH VALUE
-                     ("cecred_mbpro" +
-                      " -pf arquivos/PROC_cron.pf " +
-                      "-p fontes/crps531_1.p " +
-                      "-param '" +
-                      STRING(aux_idparale)     + "," + 
-                      STRING(crawarq.nrsequen) + "," + 
-                      crawarq.nmarquiv + "'") NO-ECHO.
-                      
-    SET STREAM str_mp aux_dspidprg FORMAT "x(30)" WITH FRAME f_monproc1.
-    INPUT STREAM str_mp CLOSE.                    
-
-    UNIX SILENT VALUE("echo " + 
-                      STRING(TODAY,"99/99/9999") + " - " +
-                      STRING(TIME,"HH:MM:SS") +
-                      " - " + glb_cdprogra + "' --> '" +
-                      "Inicio da Execucao Paralela - PID: " + aux_dspidprg +
-                      " Seq.: " + STRING(crawarq.nrsequen,"zzzz9") +
-                      " Mensagem: " + crawarq.nmarquiv + 
-                      " >> /usr/coop/" + crapcop.dsdircop + "/log/crps531_" + 
-                      STRING(crapdat.dtmvtolt,"99999999") + ".log").
-
-    /* Mantem 10 programas executando em paralelo */
-    RUN aguarda_paralelos IN h_paralelo (INPUT aux_idparale,
-                                         INPUT 10).  
-                                           
-                                              
-END.
-
-/* Aguarda a finalizacao de todos os paralelos */
-RUN aguarda_paralelos IN h_paralelo (INPUT aux_idparale,
-                                     INPUT 0).    
-
-DELETE PROCEDURE h_paralelo.
 
 /* .......................................................................... */
