@@ -9,7 +9,7 @@
  *				  04/06/2012 - Ajustes refente ao projeto GP - Sócios Menores (Adriano).
  *				  04/07/2013 - Inclusão de poderes (Jean Michel).
  *                04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
- *
+ *				  22/08/2017 - Tratamento de indice inexistente (SD 732024 - Carlos Tanholi).
  */	
 ?>
 <?	
@@ -20,8 +20,8 @@
 	$flgIncluir   = (in_array('I', $glbvars['opcoesTela']));
 	$flgExcluir   = (in_array('E', $glbvars['opcoesTela']));
 	$flgPoderes   = (in_array('P', $glbvars['opcoesTela']));
-	$nmdatela     = $_POST['nmdatela'];
-	$flgcadas     = $_POST['flgcadas'];
+	$nmdatela     = ( isset($_POST['nmdatela']) ) ? $_POST['nmdatela'] : '';
+	$flgcadas     = ( isset($_POST['flgcadas']) ) ? $_POST['flgcadas'] : '';
 	
 			
 	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Representantes/Procuradores.','Alerta - Ayllos','');

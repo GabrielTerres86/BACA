@@ -7,7 +7,9 @@
  *
  * ALTERACOES   : 25/09/2013 - Mudança de layout referente ao tipo de poder (Jean Michel)
  *
- *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).	
+ *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *
+ *				  22/08/2017 - Correcao no uso de indices invalidos. (SD 732024 - Carlos Tanholi)	
  *
  */
  
@@ -65,11 +67,11 @@
 			</tbody>
 		</table>
 		<div style="width:100%; text-align:right;">
-			<input type="text" id="dsoutpod1" name="dsoutpod1" value="<?php echo $dsdoutpod[0]; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
-			<input type="text" id="dsoutpod2" name="dsoutpod2" value="<?php echo $dsdoutpod[1]; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
-			<input type="text" id="dsoutpod3" name="dsoutpod3" value="<?php echo $dsdoutpod[2]; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
-			<input type="text" id="dsoutpod4" name="dsoutpod4" value="<?php echo $dsdoutpod[3]; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
-			<input type="text" id="dsoutpod5" name="dsoutpod5" value="<?php echo $dsdoutpod[4]; ?>" style="border:1px solid gray; width:340px;" maxlength="48" />
+			<input type="text" id="dsoutpod1" name="dsoutpod1" value="<?php echo (isset($dsdoutpod[0]) ) ? $dsdoutpod[0] : ''; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
+			<input type="text" id="dsoutpod2" name="dsoutpod2" value="<?php echo (isset($dsdoutpod[1]) ) ? $dsdoutpod[1] : ''; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
+			<input type="text" id="dsoutpod3" name="dsoutpod3" value="<?php echo (isset($dsdoutpod[2]) ) ? $dsdoutpod[2] : ''; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
+			<input type="text" id="dsoutpod4" name="dsoutpod4" value="<?php echo (isset($dsdoutpod[3]) ) ? $dsdoutpod[3] : ''; ?>" style="border:1px solid gray; width:340px;" maxlength="48" /><br>
+			<input type="text" id="dsoutpod5" name="dsoutpod5" value="<?php echo (isset($dsdoutpod[4]) ) ? $dsdoutpod[4] : ''; ?>" style="border:1px solid gray; width:340px;" maxlength="48" />
 		</div>
 	<br>
 	<div id="divBotoes">
