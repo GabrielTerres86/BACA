@@ -1183,9 +1183,9 @@ function controlaOperacao(operacao) {
             mensagem = 'Carregando Altera&ccedil;&atilde;o de Portabilidade...';
             break;
         case 'ENV_ESTEIRA':
-			insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
-			dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
-      mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
+			      insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
+			      dssitest = $("#divEmpres table tr.corSelecao").find("input[id='dssitest']").val();
+            mensagem = 'Enviando Proposta para An&aacute;lise de Cr&eacute;dito...';
 			if (dssitest == 'Analise Finalizada' && insitapr == 2){				
 				showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'manterRotina("ENV_ESTEIRA")\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
 			}else{
@@ -2681,7 +2681,7 @@ function controlaLayout(operacao) {
         nomeForm = 'frmOrgProtCred';
         altura = '220px';
         largura = '495px';
-
+        
         // Exibe o Fieldset de GARANTIAS
         $('#' + nomeForm + ' fieldset:eq(1)').show();
 
@@ -2739,7 +2739,7 @@ function controlaLayout(operacao) {
         cPrej.addClass('moeda_6').css('width', '90px');
         c2Tit_1.css('width', '85px').setMask("DATE", "", "", "divRotina");
         c2TitEndv.addClass('moeda_6').css('width', '90px');
-
+		
         var cTodos_2 = $('input', '#' + nomeForm + ' fieldset:eq(1)');
         var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeForm);
 
@@ -2773,7 +2773,7 @@ function controlaLayout(operacao) {
             cTodos_1.desabilitaCampo();
             cTodos_2.desabilitaCampo();
 
-            if (inobriga == 'S') {
+            if (inobriga == 'S' && arrayProposta['insitest'] < 2) {
                 $('#' + nomeForm + ' fieldset:eq(1)').hide();
                 altura = '135px';
             }
@@ -5266,7 +5266,7 @@ function validaDados(cdcooper) {
         if (!validaDadosGerais()) {
             return false;
         }
-
+		
 		carregaDadosPropostaLinhaCredito();
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
@@ -5311,12 +5311,12 @@ function validaDados(cdcooper) {
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
 
         var aux_dtmvtolt = dataParaTimestamp(dtmvtolt);
-
+		
 		if (inobriga == 'N'){
-        if (!validaAnaliseProposta()) {
-            return false;
-        }
-    }
+			if (!validaAnaliseProposta()) {
+				return false;
+			}
+		}
     }
     else if (in_array(operacao, ['A_PROTECAO_TIT'])) {
 
@@ -6825,7 +6825,7 @@ function mostraTelaAltera(operacao) {
     exibeRotina($('#divUsoGenerico'));
 
     limpaDivGenerica();
-
+    
     inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
     
     // Executa script de confirmação através de ajax
@@ -8653,7 +8653,7 @@ function carregaDadosPropostaLinhaCredito() {
         data: {
             cdfinemp: cdfinemp,
             cdlcremp: cdlcremp,
-            nrdconta: nrdconta,            
+            nrdconta: nrdconta,     
             dsctrliq: dsctrliq,            
             redirect: 'script_ajax'
         },
@@ -9163,7 +9163,7 @@ function formataAcionamento() {
     var arrayLargura = new Array();
 
     arrayLargura[0] = '80px';
-	arrayLargura[1] = '110px';
+	  arrayLargura[1] = '110px';
     arrayLargura[2] = '100px';
     arrayLargura[3] = '196px';
     arrayLargura[4] = '120px';
