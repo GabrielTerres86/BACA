@@ -87,8 +87,9 @@ BEGIN
 
     -- Tratamento de erros
     vr_exc_saida  EXCEPTION;
-    vr_cdcritic PLS_INTEGER;
-    vr_dscritic VARCHAR2(4000);
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000);
+    vr_idprglog   NUMBER;
 
     ------------------------------- CURSORES ---------------------------------
 
@@ -2168,7 +2169,7 @@ BEGIN
                   -- O limite da cota NAO pode ser menor que valor minimo ofertado
                   --vr_tab_det.VLSALDO_COTAS := vr_vlimcota;
                   vr_tab_det.VLSALDO_COTAS := rw_crapsda.vlsdcota;
-                  
+
                   IF vr_vlimcota < vr_vllimmin THEN
                     -- Caso NAO seja uma exportacao para SPC/Serasa grava o motivo
                     IF pr_flgexpor = 0 THEN
@@ -2352,6 +2353,9 @@ BEGIN
               END LOOP;
 
             END IF;
+            
+            --Commit nos dados antes de iniciar a manipulacao de arquivos
+            COMMIT;
 
           END IF; -- rw_crapcop.vllimmes > 0
 
@@ -2505,6 +2509,15 @@ BEGIN
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := nvl(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic;
+      
+      pc_log_programa(PR_DSTIPLOG           => 'O',
+                      PR_CDPROGRAMA         => 'CRPS682',
+                      pr_cdcooper           => pr_cdcooper,
+                      pr_tpexecucao         => 2,
+                      pr_tpocorrencia       => 2,
+                      pr_dsmensagem         => '1-Erro JOB pc_crps682: '||pr_cdcritic||'-'||pr_dscritic,
+                      PR_IDPRGLOG           => vr_idprglog);
+      
       -- Efetuar rollback
       ROLLBACK;
 
@@ -2517,6 +2530,9 @@ BEGIN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
+      
+      pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- Efetuar rollback
       ROLLBACK;
 
