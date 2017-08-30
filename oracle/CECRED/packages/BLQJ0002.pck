@@ -13,6 +13,10 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
     Alteracoes: 26/06/2017 - Ajustes no nome do favorecido da TED e no select de busca
                              de TEDs pendentes (Andrino - Mouts)
 
+                30/08/2017 - Ajustada rotina pc_processa_ted para realizar count
+                             considerando nr da conta tambem.
+                             Heitor (Mouts) - BACENJUD
+
   .............................................................................*/
 
   -- Efetuar o recebimento das solicitacoes de consulta de conta
@@ -2138,6 +2142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              b.cdtransf_bacenjud,
              COUNT(1) OVER (PARTITION BY a.cdcooper,
                                          a.nrcpfcnpj,
+										 b.nrdconta, -- Heitor
                                          b.dsoficio) qtreg,
              ROW_NUMBER() OVER (PARTITION BY a.cdcooper,
                                              a.nrcpfcnpj,
