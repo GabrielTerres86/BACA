@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 29/08/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 30/08/2017
 
    Dados referentes ao programa:
 
@@ -281,7 +281,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                29/08/2017 - Ajuste para gravar corretamente os dados do cheque, quando for contra-ordem (critica 96),
                             ao gerar o registro de lancamento na tabela craplcm
-                            (Adriano). 
+                            (Adriano - SD 746815). 
+                            
+               30/08/2017 - Ajuste para utilizar o lote 76000 e gravar o campo cdcmpchq ao criar o lançamento referente
+                            a contra-ordem (critica 96)
+                            (Adriano - SD 746815). 
+                            
 ............................................................................. */
 
      DECLARE
@@ -4825,7 +4830,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                          ,pr_dtmvtolt => pr_dtmvtolt
                                          ,pr_cdagenci => 1
                                          ,pr_cdbccxlt => 100
-                                         ,pr_nrdolote => 8600);  
+                                         ,pr_nrdolote => 7600);  
                                         
                         --Posicionar no proximo registro
                         FETCH cr_craplot2 INTO rw_craplot2;
@@ -4845,7 +4850,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,pr_dtmvtolt
                                                 ,1
                                                 ,100
-                                                ,8600
+                                                ,7600
                                                 ,1)
                                       RETURNING dtmvtolt
                                                ,cdagenci
@@ -4892,6 +4897,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             cdpesqbb,
                             cdbanchq,
                             cdagechq,
+                            cdcmpchq,
                             nrctachq,
                             nrlotchq,
                             sqlotchq,
@@ -4914,6 +4920,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             vr_alinea_96,
                             rw_crapfdc.cdbanchq,
                             rw_crapfdc.cdagechq,
+                            rw_crapfdc.cdcmpchq,
                             rw_crapfdc.nrctachq,
                             nvl(vr_nrlotchq, 0),
                             nvl(vr_sqlotchq, 0),

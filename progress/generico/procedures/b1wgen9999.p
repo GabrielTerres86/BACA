@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 26/09/2016.
+    Data      : Marco/2008                    Ultima Atualizacao: 30/08/2017
     
     Dados referentes ao programa:
 
@@ -263,6 +263,9 @@
                             (Lucas Ranghetti #340156)
                             
                26/09/2016 - Incluir lotes da M211 para nao exclusao (Jonata-RKAM)
+
+			   30/08/2017 - Ajuste para incluir o lote 7600
+					        (Adriano - SD 746815).
                             
 .............................................................................*/
 
@@ -4768,6 +4771,7 @@ PROCEDURE critica_numero_lote:
         (par_nrdolote > 7099   AND   /* Transf. de cheque salario p/vala */
          par_nrdolote < 7200)  OR
          par_nrdolote = 7200   OR    /* Baixa de saldo de c/c dos demitidos */
+		 par_nrdolote = 7600   OR    /* Lote devolucao contra-ordem */
          par_nrdolote = 8001   OR    /* Capital Inicial */
          par_nrdolote = 8002   OR    /* Transferencia de capital */
          par_nrdolote = 8003   OR    /* Correcao monetaria */
