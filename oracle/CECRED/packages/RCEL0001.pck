@@ -1575,7 +1575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_efetua_recarga
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Fevereiro/2017                 Ultima atualizacao: 03/08/2017
+    Data    : Fevereiro/2017                 Ultima atualizacao: 31/08/2017
 
     Dados referentes ao programa:
 
@@ -1597,6 +1597,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 							 
                 03/08/2017 - Efetuado ajuste para calcular e gravar o valor do repasse 
                              na tabela tbrecarga_operacao (Lombardi). 
+
+				31/08/2017 - Solicitar geracao do relatorio utilizando a data
+				             vr_dtmvtolt (Diego).
 							 
     ..............................................................................*/		
 	  DECLARE
@@ -5255,7 +5258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           -- Efetuar solicitacao de geracao de relatorio --
           gene0002.pc_solicita_relato (pr_cdcooper  => 3                   --> Cooperativa conectada
                                       ,pr_cdprogra  => 'JBRCEL_REP'          --> Programa chamador
-                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                      ,pr_dtmvtolt  => vr_dtmvtolt			 --> Data do movimento atual
                                       ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
                                       ,pr_dsxmlnode => '/crrl732/contas/coop/conta'       --> No base do XML para leitura dos dados
                                       ,pr_dsjasper  => 'crrl732.jasper'    --> Arquivo de layout do iReport
