@@ -89,7 +89,10 @@
                              
 			   08/03/2017 - Ajuste na rotina Busca_Dados_PPE para pegar o nome completo
 			                da coupacao para as informacoes do PEP
-							(Adriano - SD 614408).
+							(Adriano - SD 614408).			    	
+
+               11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                            Projeto 339 - CRM. (Lombardi)		 
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1019,7 +1022,8 @@ PROCEDURE Grava_Dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 5            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl                    
+                                       crapdoc.idseqttl = par_idseqttl AND 
+                                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1045,7 +1049,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 5
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc5.
                                 END.
@@ -1132,7 +1137,8 @@ PROCEDURE Grava_Dados:
                       crapdoc.nrdconta = par_nrdconta AND
                       crapdoc.tpdocmto = 37           AND
                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                      crapdoc.idseqttl = par_idseqttl 
+                      crapdoc.idseqttl = par_idseqttl AND 
+                      crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                       NO-LOCK: END.
 
             IF NOT AVAILABLE crapdoc THEN
@@ -1144,7 +1150,8 @@ PROCEDURE Grava_Dados:
                        crapdoc.dtmvtolt = par_dtmvtolt
                        crapdoc.tpdocmto = 37
                        crapdoc.idseqttl = par_idseqttl
-                       crapdoc.cdoperad = par_cdoperad.
+                       crapdoc.cdoperad = par_cdoperad
+                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                 VALIDATE crapdoc.
             END.
 
@@ -2603,7 +2610,8 @@ PROCEDURE Grava_Dados_Ppe:
                 crapdoc.nrdconta = crapttl.nrdconta AND
                 crapdoc.tpdocmto = 37               AND
                 crapdoc.dtmvtolt = par_dtmvtolt     AND
-                crapdoc.idseqttl = crapttl.idseqttl 
+                crapdoc.idseqttl = crapttl.idseqttl AND
+                crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                 NO-LOCK NO-ERROR.
 
             IF NOT AVAILABLE crapdoc THEN
@@ -2615,7 +2623,8 @@ PROCEDURE Grava_Dados_Ppe:
                        crapdoc.dtmvtolt = par_dtmvtolt
                        crapdoc.tpdocmto = 37
                        crapdoc.idseqttl = crapttl.idseqttl
-                       crapdoc.cdoperad = par_cdoperad.
+                       crapdoc.cdoperad = par_cdoperad
+                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                 VALIDATE crapdoc.
             END.
 

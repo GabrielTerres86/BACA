@@ -531,7 +531,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
-  --                          (Adriano - SD 614408).
+  --                          (Adriano - SD 614408).		    	
+  --
+  --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)		 
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -2310,14 +2313,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              flgdigit,
              dtmvtolt,
              tpdocmto,
-             idseqttl)
+             idseqttl,
+             nrcpfcgc)
            VALUES
             (pr_cdcooper,
              pr_nrdconta_dst,
              0,
              rw_crapdat.dtmvtolt,
              x,
-             1);
+             1,
+             rw_crapass.nrcpfcgc);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;

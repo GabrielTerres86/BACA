@@ -21,7 +21,10 @@
                 
                 03/08/2015 - Adicionado validacao para nao permitir faturamento anterior
                              a data inicial das atividades conforme solicitado no chamado
-                             304923 (Kelvin).
+                             304923 (Kelvin).		 		    	
+
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)		 
                                        
 .............................................................................*/
 
@@ -371,6 +374,17 @@ PROCEDURE Grava_Dados:
             ELSE LEAVE ContadorJfn.
         END.
         
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                           crapass.nrdconta = par_nrdconta 
+                           NO-LOCK NO-ERROR.
+        
+        IF  NOT AVAIL crapass  THEN
+            DO:
+                ASSIGN aux_cdcritic = 9
+                       aux_dscritic = "".
+                UNDO Grava, LEAVE Grava.
+            END.
+            
         IF  par_cddopcao = "I" OR
             par_cddopcao = "A" THEN
             DO:
@@ -380,7 +394,8 @@ PROCEDURE Grava_Dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 12            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl
+                                       crapdoc.idseqttl = par_idseqttl AND
+                                       crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         
                     IF NOT AVAILABLE crapdoc THEN
@@ -406,7 +421,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 12
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.nrcpfcgc = crapass.nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc12.
                                 END.

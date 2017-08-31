@@ -137,6 +137,9 @@
                 16/11/2016 - Criar ttl como nao politicamente exposto ao inves
                              de pendente (Tiago/Thiago SD532690).
 
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)		 
+
 				28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
 							 CH, RE, PP E CT. (PRJ339 - Reinert)
 .............................................................................*/
@@ -1103,6 +1106,7 @@ PROCEDURE Grava_Dados:
                                             INPUT par_dtmvtolt, 
                                             INPUT 1, 
                                             INPUT par_idseqttl,
+                                            INPUT par_nrcpfcgc,
                                            OUTPUT aux_cdcritic).
 
                 /* Gerar pendencia de carteira de identificacao */
@@ -1112,6 +1116,7 @@ PROCEDURE Grava_Dados:
                                             INPUT par_dtmvtolt, 
                                             INPUT 2, 
                                             INPUT par_idseqttl,
+                                            INPUT par_nrcpfcgc,
                                            OUTPUT aux_cdcritic).
 
                 /* Gerar pendencia de comprovante de endereço */
@@ -1120,6 +1125,7 @@ PROCEDURE Grava_Dados:
                                             INPUT par_dtmvtolt, 
                                             INPUT 3, 
                                             INPUT par_idseqttl,
+                                            INPUT par_nrcpfcgc,
                                            OUTPUT aux_cdcritic).
 
                 /* Gerar pendencia de estado civil */
@@ -1130,6 +1136,7 @@ PROCEDURE Grava_Dados:
                                                 INPUT par_dtmvtolt, 
                                                 INPUT 4, 
                                                 INPUT par_idseqttl,
+                                                INPUT par_nrcpfcgc,
                                                OUTPUT aux_cdcritic).
                 
                 /* Gerar pendencia de comprovante de renda */
@@ -1139,6 +1146,7 @@ PROCEDURE Grava_Dados:
                                             INPUT par_dtmvtolt, 
                                             INPUT 5,
                                             INPUT par_idseqttl,
+                                            INPUT par_nrcpfcgc,
                                            OUTPUT aux_cdcritic).
 
                 /* Gerar pendencia de cartao assinatura */
@@ -1147,6 +1155,7 @@ PROCEDURE Grava_Dados:
                                             INPUT par_dtmvtolt, 
                                             INPUT 6,
                                             INPUT par_idseqttl,
+                                            INPUT par_nrcpfcgc,
                                            OUTPUT aux_cdcritic).
 
                 /* Removido a criação da doc conforme solicitado no chamado 372880*/
@@ -1312,7 +1321,8 @@ PROCEDURE Grava_Dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 2            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl
+                                       crapdoc.idseqttl = par_idseqttl AND
+                                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1339,7 +1349,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 2
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc2.
                                 END.
@@ -1367,7 +1378,8 @@ PROCEDURE Grava_Dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 4            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl
+                                       crapdoc.idseqttl = par_idseqttl AND 
+                                       crapdoc.nrcpfcgc = crapttl.nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1394,7 +1406,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.idseqttl = par_idseqttl
-                                           crapdoc.tpdocmto = 4.
+                                           crapdoc.tpdocmto = 4
+                                           crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
                                     VALIDATE crapdoc.
                                     LEAVE ContadorDoc4.
                                 END.
@@ -4226,6 +4239,7 @@ PROCEDURE cria_pendencia_digidoc:
     DEF INPUT  PARAM par_dtmvtolt AS DATE                        NO-UNDO.
     DEF INPUT  PARAM par_tpdocmto AS INTE                        NO-UNDO.
     DEF INPUT  PARAM par_idseqttl AS INTE                        NO-UNDO.
+    DEF INPUT  PARAM par_nrcpfcgc AS DECI                        NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                        NO-UNDO.
 
     DEF VAR aux_contador AS INTEGER                              NO-UNDO.
@@ -4237,7 +4251,8 @@ PROCEDURE cria_pendencia_digidoc:
                    crapdoc.nrdconta = par_nrdconta AND
                    crapdoc.tpdocmto = par_tpdocmto AND
                    crapdoc.dtmvtolt = par_dtmvtolt AND
-                   crapdoc.idseqttl = par_idseqttl 
+                   crapdoc.idseqttl = par_idseqttl AND 
+                   crapdoc.nrcpfcgc = par_nrcpfcgc
                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
            
            
@@ -4264,7 +4279,8 @@ PROCEDURE cria_pendencia_digidoc:
                                crapdoc.flgdigit = FALSE
                                crapdoc.dtmvtolt = par_dtmvtolt
                                crapdoc.tpdocmto = par_tpdocmto
-                               crapdoc.idseqttl = par_idseqttl.
+                               crapdoc.idseqttl = par_idseqttl
+                               crapdoc.nrcpfcgc = par_nrcpfcgc.
                         VALIDATE crapdoc.
                     END.
            END.

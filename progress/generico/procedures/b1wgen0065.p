@@ -12,7 +12,10 @@
                              
                 13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)  
                 
-                05/05/2014 - Alterar tpdocmto de 16 para 11 (Lucas R.)
+                05/05/2014 - Alterar tpdocmto de 16 para 11 (Lucas R.)			    	
+
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)		 
                 
 .............................................................................*/
 
@@ -340,7 +343,7 @@ PROCEDURE Grava_Dados:
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                            crapass.nrdconta = par_nrdconta 
                            NO-LOCK NO-ERROR.
-
+        
         { sistema/generico/includes/b1wgenalog.i }
 
         EMPTY TEMP-TABLE tt-registro-ant.
@@ -367,7 +370,8 @@ PROCEDURE Grava_Dados:
                                crapdoc.nrdconta = par_nrdconta AND
                                crapdoc.tpdocmto = 11           AND
                                crapdoc.dtmvtolt = par_dtmvtolt AND
-                               crapdoc.idseqttl = par_idseqttl
+                               crapdoc.idseqttl = par_idseqttl AND
+                               crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         
                     IF NOT AVAILABLE crapdoc THEN
@@ -393,7 +397,8 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 11
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.nrcpfcgc = crapass.nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc11.
                                 END.

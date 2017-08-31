@@ -17,6 +17,8 @@
  * 008: [23/08/2013] David                : Incluir campo UF Naturalidade - cdufnatu
  * 009: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 010: [12/08/2015] Gabriel (RKAM)       : Reformulacao cadastral
+ * 011: [12/08/2015] Lombardi             : Alterado botão “Dossiê Digidoc” para abrir uma outra tela contendo os botões 
+ *                                          Documentos Cadastrais e Documentos de Conta.   
  * 011: [28/08/2017] Lucas Reinert		  : Alterado tipos de documento para utilizarem CI, CN, 
  *										    CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
@@ -176,7 +178,7 @@
 	<input type="image" id="btVoltar"  class="opConsulta" src="<? echo $UrlImagens; ?>botoes/voltar.gif"  onClick="fechaRotina(divRotina)" />
 	<input type="image" id="btAlterar" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/alterar.gif" onClick="aux_operacao = 'CA'; controlaOperacao('CA')" />
 	<input type="image" id="btIncluir" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/incluir.gif" onClick="aux_operacao = 'CI'; controlaOperacao('CI')" />		
-	<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="window.open('http://<?php echo $GEDServidor; ?>/smartshare/Clientes/ViewerExterno.aspx?pkey=iSQlN&conta=<? echo str_replace("-",".",formataContaDV($_POST['nrdconta'])); ?>&cooperativa=<? echo $glbvars['cdcooper']; ?>','_blank');"/>
+	<input type="image" id="btDosie" class="opConsulta" src="<? echo $UrlImagens; ?>botoes/dossie.gif" onClick="dossieDigidoc();"/>
 
 	<?  if ($flgcadas != 'M')  { ?>
 		<input type="image" id="btCancelarAlt"   class="opAlteracao opAlterar" src="<? echo $UrlImagens; ?>botoes/cancelar.gif"	  onClick="controlaOperacao('AC')" />		

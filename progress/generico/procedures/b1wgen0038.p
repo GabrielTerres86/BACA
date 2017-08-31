@@ -99,7 +99,10 @@
                              departamento passando a considerar o código (Renato Darosci)      
                
                17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                            endereco para o CDC. (Reinert Prj 289)
+                            endereco para o CDC. (Reinert Prj 289)		
+
+               11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                            Projeto 339 - CRM. (Lombardi)
                             
 .............................................................................*/
 
@@ -1569,6 +1572,7 @@ PROCEDURE alterar-endereco:
     DEF VAR aux_chavealt AS CHAR                                    NO-UNDO.
     DEF VAR aux_msgrvcad AS CHAR                                    NO-UNDO.
     DEF VAR aux_persemon AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
 
     DEF VAR h-b1wgen0056 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
@@ -1600,7 +1604,24 @@ PROCEDURE alterar-endereco:
 
                 UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
             END.
+        
+        IF   crapass.inpessoa = 1 THEN DO:
+            FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                               crapttl.nrdconta = par_nrdconta AND 
+                               crapttl.idseqttl = par_idseqttl NO-LOCK NO-ERROR.
+            IF  NOT AVAILABLE crapttl  THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Titular nao cadastrado.".
 
+                    UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
+                END.
+            
+            aux_nrcpfcgc = crapttl.nrcpfcgc.
+          END.
+        ELSE 
+            aux_nrcpfcgc = crapass.nrcpfcgc.
+        
         ASSIGN aux_tpendass = IF   par_tpendass <> 0    THEN 
                                    par_tpendass
                               ELSE 
@@ -1735,7 +1756,7 @@ PROCEDURE alterar-endereco:
                                                     OUTPUT TABLE tt-erro).
 
                 DELETE PROCEDURE h-b1wgen0056.
-
+                
                 IF  RETURN-VALUE = "NOK"  THEN
                     UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
             END.
@@ -1804,7 +1825,8 @@ PROCEDURE alterar-endereco:
                                              crapdoc.nrdconta = par_nrdconta AND
                                              crapdoc.tpdocmto = 3            AND
                                              crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = par_idseqttl
+                                             crapdoc.idseqttl = par_idseqttl AND
+                                             crapdoc.nrcpfcgc = aux_nrcpfcgc
                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
                     IF NOT AVAILABLE crapdoc THEN
@@ -1830,7 +1852,8 @@ PROCEDURE alterar-endereco:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = par_idseqttl.
+                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.nrcpfcgc = aux_nrcpfcgc.
                                     VALIDATE crapdoc.
                                             
                                     LEAVE ContadorDoc3.

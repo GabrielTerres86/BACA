@@ -149,7 +149,10 @@
                 15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
                              (Lucas Ranghetti #484923)
 				
-                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)	  	
+
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)			
 .............................................................................*/
                                                      
 
@@ -1030,6 +1033,7 @@ PROCEDURE Altera PRIVATE :
                       INPUT par_nrdddtfc,
                       INPUT par_nrtelefo,
                       INPUT par_nrlicamb,
+                      INPUT par_nrcpfcgc,
                      OUTPUT par_cdcritic,
                      OUTPUT par_dscritic ) NO-ERROR.
 
@@ -2584,6 +2588,7 @@ PROCEDURE Altera_Jur PRIVATE :
     DEF  INPUT PARAM par_nrdddtfc AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrtelefo AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -2655,7 +2660,8 @@ PROCEDURE Altera_Jur PRIVATE :
         					   crapdoc.nrdconta = crabjur.nrdconta AND
         					   crapdoc.tpdocmto = 10               AND
         					   crapdoc.dtmvtolt = par_dtmvtolt     AND
-        					   crapdoc.idseqttl = 1 
+        					   crapdoc.idseqttl = 1                AND
+                     crapdoc.nrcpfcgc = par_nrcpfcgc
         					   EXCLUSIVE NO-ERROR.
         
         			IF  NOT AVAILABLE crapdoc THEN
@@ -2681,7 +2687,8 @@ PROCEDURE Altera_Jur PRIVATE :
         								   crapdoc.flgdigit = FALSE
         								   crapdoc.dtmvtolt = par_dtmvtolt
         								   crapdoc.tpdocmto = 10
-        								   crapdoc.idseqttl = 1.
+        								   crapdoc.idseqttl = 1
+                           crapdoc.nrcpfcgc = par_nrcpfcgc.
         							VALIDATE crapdoc.
         						END.
         				END.

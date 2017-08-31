@@ -62,6 +62,7 @@ DEF TEMP-TABLE tt-documento-digitalizado NO-UNDO
     FIELD vllanmto AS DECI
     FIELD nrdolote AS INTE
     FIELD cdbccxlt AS INTE
+    FIELD nrcpfcgc AS DECI
     INDEX tt-documento-digitalizado1
           AS PRIMARY cdcooper tpdocmto nrdconta nrctrato nrborder
     INDEX tt-documento-digitalizado2 flgencon
@@ -108,6 +109,7 @@ DEF TEMP-TABLE tt-contr_ndigi_cadastro                                  NO-UNDO
     FIELD dtmvtolt AS DATE
     FIELD idseqite AS INT
     FIELD tpctrdig AS INT
+    FIELD nrcpfcgc AS DECI
     INDEX tt-contr_ndigi_cadastro1 AS PRIMARY cdcooper nrdconta dtmvtolt
     INDEX tt-contr_ndigi_cadastro2 cdcooper nrdconta dtmvtolt cdagenci tpctrdig.
 
@@ -125,7 +127,8 @@ DEF  TEMP-TABLE tt-documentos-matric                                    NO-UNDO
      FIELD nmprimtl AS CHAR FORMAT "x(40)"
      FIELD cdoperad AS CHAR FORMAT "x(10)"
      FIELD inpessoa AS CHAR FORMAT "x(4)"
-     FIELD dtmvtolt AS DATE FORMAT "99/99/9999".
+     FIELD dtmvtolt AS DATE FORMAT "99/99/9999"
+     FIELD nrcpfcgc AS CHAR.
 
 DEF TEMP-TABLE tt-documentos-liberados NO-UNDO
     FIELD cdcooper AS INTE
@@ -141,6 +144,7 @@ DEF TEMP-TABLE tt-documentos-liberados NO-UNDO
     FIELD vllanmto AS DECI
     FIELD nrdolote AS INTE
     FIELD cdbccxlt AS INTE
+    FIELD nrcpfcgc AS DECI
     INDEX tt-documento-digitalizado1
           AS PRIMARY cdcooper tpdocmto nrdconta nrctrato nrborder
     INDEX tt-documento-digitalizado3 cdcooper nrdconta.
