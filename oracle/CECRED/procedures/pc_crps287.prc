@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Maio/2000.                      Ultima atualizacao: 06/06/2017
+   Data    : Maio/2000.                      Ultima atualizacao: 21/08/2017
 
    Dados referentes ao programa:
 
@@ -97,6 +97,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão
                             tratada exceção 9999 ( Belli Envolti ) - Ch 665812
                
+			   21/08/2016 - Ajustes na geração do saldo contabil no relatorio crrl234,
+                            para que exiba todos os cheques recebidos e para que os saldos entre
+                            os dias sejam gerados corretamente(Odirlei-AMcom)
      ............................................................................. */
 
      DECLARE
@@ -221,7 +224,24 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          WHERE crapcst.cdcooper  = pr_cdcooper
          AND   crapcst.dtlibera  > pr_dtmvtolt
          AND   crapcst.dtlibera  <= pr_dtmvtopr
-         AND   crapcst.nrborder = 0; -- cheque nao descontado 
+         AND  (crapcst.dtdevolu IS NOT NULL OR
+                (crapcst.dtdevolu IS NULL  AND
+                   --Ignorar cheques descontados 
+                   NOT EXISTS (SELECT 1
+                                 FROM crapcdb cdb
+                                WHERE cdb.cdcooper = crapcst.cdcooper
+                                  AND cdb.nrdconta = crapcst.nrdconta
+                                  AND cdb.dtlibera = crapcst.dtlibera
+                                  --> Casos que não tem o numero do bordero gravado
+                                  --AND cdb.nrborder = crapcst.nrborder
+                                  AND cdb.dtlibbdc IS NOT NULL
+                                  AND cdb.cdcmpchq = crapcst.cdcmpchq
+                                  AND cdb.cdbanchq = crapcst.cdbanchq
+                                  AND cdb.cdagechq = crapcst.cdagechq
+                                  AND cdb.nrctachq = crapcst.nrctachq
+                                  AND cdb.nrcheque = crapcst.nrcheque                               
+                                  AND cdb.dtdevolu IS NULL)));         
+         
        rw_crapcst cr_crapcst%ROWTYPE;
 
        --Selecionar informacoes Custodia para relatório
@@ -236,9 +256,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                ,crapcst.dtdevolu
                ,crapcst.dtlibera
                ,crapcst.dtmvtolt
+               ,crapcst.cdcooper
+               ,crapcst.nrborder
+               ,crapcst.cdagenci
+               ,crapcst.cdbccxlt
+               ,crapcst.nrdolote
+               ,crapcst.cdcmpchq
+               ,crapcst.cdbanchq
+               ,crapcst.cdagechq
+               ,crapcst.nrctachq
+               ,crapcst.nrcheque               
          FROM crapcst crapcst
          WHERE crapcst.cdcooper  = pr_cdcooper
-          AND  crapcst.nrborder  = 0 -- cheque nao descontado 
+            --Ignorar cheques descontados antes do dia atual
+            AND NOT EXISTS (SELECT 1
+                              FROM crapcdb cdb
+                             WHERE cdb.cdcooper = crapcst.cdcooper
+                               AND cdb.nrdconta = crapcst.nrdconta
+                               AND cdb.nrborder = crapcst.nrborder
+                               AND cdb.dtlibbdc < pr_dtmvtolt
+                               AND cdb.cdcmpchq = crapcst.cdcmpchq
+                               AND cdb.cdbanchq = crapcst.cdbanchq
+                               AND cdb.cdagechq = crapcst.cdagechq
+                               AND cdb.nrctachq = crapcst.nrctachq
+                               AND cdb.nrcheque = crapcst.nrcheque                               
+                               AND cdb.dtdevolu IS NULL)
           AND (crapcst.dtdevolu >= pr_dtmvtolt OR
                crapcst.dtlibera >  pr_dtmvtoan OR
                crapcst.dtmvtolt <= pr_dtmvtolt);
@@ -293,6 +335,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          AND   UPPER(craptab.tptabela) = pr_tptabela
          AND   craptab.cdempres = pr_cdempres
          AND   craptab.tpregist = pr_tpregist;
+
+       -- buscar valor total dos cheques do borderô 
+       CURSOR cr_crapcdb( pr_cdcooper IN crapcdb.cdcooper%type,
+                          pr_nrdconta IN crapcdb.nrdconta%type,
+                          pr_nrborder IN crapcdb.nrborder%TYPE,                          
+                          pr_cdcmpchq IN crapcdb.cdcmpchq%TYPE,
+                          pr_cdbanchq IN crapcdb.cdbanchq%TYPE,
+                          pr_cdagechq IN crapcdb.cdagechq%TYPE,
+                          pr_nrctachq IN crapcdb.nrctachq%TYPE,
+                          pr_nrcheque IN crapcdb.nrcheque%TYPE,
+                          pr_dtmvtolt IN DATE) is
+         SELECT cdb.nrborder
+               ,cdb.dtlibbdc
+           FROM crapcdb cdb
+          WHERE cdb.cdcooper = pr_cdcooper
+            AND cdb.nrdconta = pr_nrdconta
+            AND cdb.nrborder = pr_nrborder
+            AND cdb.dtlibbdc = pr_dtmvtolt            
+            AND cdb.cdcmpchq = pr_cdcmpchq
+            AND cdb.cdbanchq = pr_cdbanchq
+            AND cdb.cdagechq = pr_cdagechq
+            AND cdb.nrctachq = pr_nrctachq
+            AND cdb.nrcheque = pr_nrcheque            
+            AND cdb.dtdevolu IS NULL;
+       rw_crapcdb cr_crapcdb%rowtype;
 
        --Registro do tipo lancamento
        rw_craplcm craplcm%ROWTYPE;
@@ -1482,7 +1549,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              vr_tot_vlcheque:= Nvl(vr_tot_vlcheque,0) + rw_crapcst.vlcheque;
 
              /*  Verifica se foi devolvido no mesmo dia  */
-             IF  rw_crapcst.dtdevolu IS NOT NULL THEN
+             IF  rw_crapcst.dtdevolu IS NOT NULL AND
+                 rw_crapcst.dtdevolu = rw_crapdat.dtmvtolt THEN
                --Diminuir cheques devolvidos
                vr_cop_qtchqdev:= Nvl(vr_cop_qtchqdev,0) - 1;
                --Diminuir quantidade total cheque devolvido
@@ -1491,18 +1559,26 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                vr_cop_vlchqdev:= Nvl(vr_cop_vlchqdev,0) - rw_crapcst.vlcheque;
                --Diminuir valor total cheque devolvido
                vr_tot_vlchqdev:= Nvl(vr_tot_vlchqdev,0) - rw_crapcst.vlcheque;
+               --Proximo registro loop
+               CONTINUE;
              END IF;
-             --Proximo registro loop
-             CONTINUE;
+             
+           ELSE
+             --> Considerar como saldo anterior caso nao esteja como devolvido
+             --> ou se a data de devolução for maior ou igual a data atual(para casos de reproc)
+             IF rw_crapcst.dtdevolu IS NULL OR 
+                rw_crapcst.dtdevolu >= rw_crapdat.dtmvtolt THEN
+               --Incrementar quantidade saldo anterior cooperativa
+               vr_cop_qtsldant:= Nvl(vr_cop_qtsldant,0) + 1;
+               --Incrementar quantidade saldo anterior total
+               vr_tot_qtsldant:= Nvl(vr_tot_qtsldant,0) + 1;
+               --Acumular valor saldo anterior cooperativa
+               vr_cop_vlsldant:= Nvl(vr_cop_vlsldant,0) + rw_crapcst.vlcheque;
+               --Acumular valor saldo anterior total
+               vr_tot_vlsldant:= Nvl(vr_tot_vlsldant,0) + rw_crapcst.vlcheque;
+             END IF;
            END IF;
-           --Incrementar quantidade saldo anterior cooperativa
-           vr_cop_qtsldant:= Nvl(vr_cop_qtsldant,0) + 1;
-           --Incrementar quantidade saldo anterior total
-           vr_tot_qtsldant:= Nvl(vr_tot_qtsldant,0) + 1;
-           --Acumular valor saldo anterior cooperativa
-           vr_cop_vlsldant:= Nvl(vr_cop_vlsldant,0) + rw_crapcst.vlcheque;
-           --Acumular valor saldo anterior total
-           vr_tot_vlsldant:= Nvl(vr_tot_vlsldant,0) + rw_crapcst.vlcheque;
+           
            --Data Liberacao maior ultimo movimento e menor igual movimento e
            -- nao tiver sido devolvido
            IF  rw_crapcst.dtlibera > rw_crapdat.dtmvtoan   AND
@@ -1517,19 +1593,42 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              --Diminuir valor liberado total
              vr_tot_vllibera:= Nvl(vr_tot_vllibera,0) - rw_crapcst.vlcheque;
            END IF;
+           
            --Cheques Descontados
-           IF rw_crapcst.insitchq = 5 THEN
-             --Diminuir quantidade descontados cooperativa
-             vr_cop_qtdeschq:= Nvl(vr_cop_qtdeschq,0) - 1;
-             --Diminuir quantidade descontados total
-             vr_tot_qtdeschq:= Nvl(vr_tot_qtdeschq,0) - 1;
-             --Diminuir valor descontado cooperativa
-             vr_cop_vldeschq:= Nvl(vr_cop_vldeschq,0) - rw_crapcst.vlcheque;
-             --Diminuir valor descontado total
-             vr_tot_vldeschq:= Nvl(vr_tot_vldeschq,0) - rw_crapcst.vlcheque;
-             --Proximo registro
-             CONTINUE;
+           IF rw_crapcst.nrborder > 0 AND rw_crapcst.dtdevolu IS NULL THEN
+                 
+             -- Verificar cheques do borderô
+             OPEN cr_crapcdb(pr_cdcooper => rw_crapcst.cdcooper,
+                             pr_nrdconta => rw_crapcst.nrdconta,
+                             pr_nrborder => rw_crapcst.nrborder,                             
+                             pr_cdcmpchq => rw_crapcst.cdcmpchq,
+                             pr_cdbanchq => rw_crapcst.cdbanchq,
+                             pr_cdagechq => rw_crapcst.cdagechq,
+                             pr_nrctachq => rw_crapcst.nrctachq,
+                             pr_nrcheque => rw_crapcst.nrcheque,                             
+                             pr_dtmvtolt => rw_crapdat.dtmvtolt);
+             FETCH  cr_crapcdb INTO rw_crapcdb;
+              
+             IF cr_crapcdb%FOUND THEN       
+               CLOSE cr_crapcdb;
+                
+               --Diminuir quantidade descontados associados
+               vr_ass_qtdeschq:= Nvl(vr_ass_qtdeschq,0) - 1;
+               --Diminuir quantidade descontados total
+               vr_tot_qtdeschq:= Nvl(vr_tot_qtdeschq,0) - 1;
+               --Diminuir valor descontado cooperativa
+               vr_cop_vldeschq:= Nvl(vr_cop_vldeschq,0) - rw_crapcst.vlcheque;
+               --Diminuir valor descontado total
+               vr_tot_vldeschq:= Nvl(vr_tot_vldeschq,0) - rw_crapcst.vlcheque;
+
+               --Proximo registro
+               CONTINUE;
+             ELSE
+               CLOSE cr_crapcdb; 
+             END IF;
+            
            END IF;
+           
            --Cheques Devolvidos e data devolucao igual movimento
            IF rw_crapcst.dtdevolu IS NOT NULL AND
               rw_crapcst.dtdevolu = rw_crapdat.dtmvtolt THEN
@@ -1568,6 +1667,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                vr_tot_vlchqban:= Nvl(vr_tot_vlchqban,0) + rw_crapcst.vlcheque;
              END IF;
            END IF;
+           
            --Data Deposito igual Data Movimento
            IF rw_crapcst.dtmvtolt = rw_crapdat.dtmvtolt THEN
              --Incrementar Quantidade Cheque associados
@@ -1579,7 +1679,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              --Acumular valor total cheque
              vr_tot_vlcheque:= Nvl(vr_tot_vlcheque,0) + rw_crapcst.vlcheque;
              /*  Verifica se foi devolvido no mesmo dia  */
-             IF  rw_crapcst.dtdevolu IS NOT NULL THEN
+             IF  rw_crapcst.dtdevolu IS NOT NULL AND             
+                 --> apenas para garantir que ira ignorar apenas os devolvidos no dia atual
+                 rw_crapcst.dtdevolu = rw_crapdat.dtmvtolt THEN
                --Diminuir cheques devolvidos associados
                vr_ass_qtchqdev:= Nvl(vr_ass_qtchqdev,0) - 1;
                --Diminuir quantidade total cheque devolvido
@@ -1588,18 +1690,28 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                vr_ass_vlchqdev:= Nvl(vr_ass_vlchqdev,0) - rw_crapcst.vlcheque;
                --Diminuir valor total cheque devolvido
                vr_tot_vlchqdev:= Nvl(vr_tot_vlchqdev,0) - rw_crapcst.vlcheque;
-             END IF;
-             --Proximo registro loop
-             CONTINUE;
+               --Proximo registro loop
+               CONTINUE;
            END IF;
-           --Incrementar quantidade saldo anterior associados
-           vr_ass_qtsldant:= Nvl(vr_ass_qtsldant,0) + 1;
-           --Incrementar quantidade saldo anterior total
-           vr_tot_qtsldant:= Nvl(vr_tot_qtsldant,0) + 1;
-           --Acumular valor saldo anterior associados
-           vr_ass_vlsldant:= Nvl(vr_ass_vlsldant,0) + rw_crapcst.vlcheque;
-           --Acumular valor saldo anterior total
-           vr_tot_vlsldant:= Nvl(vr_tot_vlsldant,0) + rw_crapcst.vlcheque;
+           
+           --> Senao é dia atual, considerar saldo anterior  
+           ELSE
+             --> Considerar como saldo anterior caso nao esteja como devolvido
+             --> ou se a data de devolução for maior ou igual a data atual(para casos de reproc)
+             IF rw_crapcst.dtdevolu IS NULL OR 
+                rw_crapcst.dtdevolu >= rw_crapdat.dtmvtolt THEN
+                
+               --Incrementar quantidade saldo anterior associados
+               vr_ass_qtsldant:= Nvl(vr_ass_qtsldant,0) + 1;
+               --Incrementar quantidade saldo anterior total
+               vr_tot_qtsldant:= Nvl(vr_tot_qtsldant,0) + 1;
+               --Acumular valor saldo anterior associados
+               vr_ass_vlsldant:= Nvl(vr_ass_vlsldant,0) + rw_crapcst.vlcheque;
+               --Acumular valor saldo anterior total
+               vr_tot_vlsldant:= Nvl(vr_tot_vlsldant,0) + rw_crapcst.vlcheque;
+             END IF;
+           END IF;
+           
            --Data liberacao maior que movimento anterior e menor igual movimento atual
            --e se devolucao
            IF  rw_crapcst.dtlibera > rw_crapdat.dtmvtoan   AND
@@ -1614,19 +1726,42 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              --Diminuir valor liberado total
              vr_tot_vllibera:= Nvl(vr_tot_vllibera,0) - rw_crapcst.vlcheque;
            END IF;
+           
            --Cheques Descontados
-           IF rw_crapcst.insitchq = 5 THEN
-             --Diminuir quantidade descontados associados
-             vr_ass_qtdeschq:= Nvl(vr_ass_qtdeschq,0) - 1;
-             --Diminuir quantidade descontados total
-             vr_tot_qtdeschq:= Nvl(vr_tot_qtdeschq,0) - 1;
-             --Diminuir valor descontado associados
-             vr_ass_vldeschq:= Nvl(vr_ass_vldeschq,0) - rw_crapcst.vlcheque;
-             --Diminuir valor descontado total
-             vr_tot_vldeschq:= Nvl(vr_tot_vldeschq,0) - rw_crapcst.vlcheque;
-             --Proximo registro
-             CONTINUE;
-           END IF;
+           IF rw_crapcst.nrborder > 0 AND rw_crapcst.dtdevolu IS NULL THEN
+                 
+             -- Verificar cheques do borderô
+             OPEN cr_crapcdb( pr_cdcooper => rw_crapcst.cdcooper,
+                              pr_nrdconta => rw_crapcst.nrdconta,
+                              pr_nrborder => rw_crapcst.nrborder,                             
+                              pr_cdcmpchq => rw_crapcst.cdcmpchq,
+                              pr_cdbanchq => rw_crapcst.cdbanchq,
+                              pr_cdagechq => rw_crapcst.cdagechq,
+                              pr_nrctachq => rw_crapcst.nrctachq,
+                              pr_nrcheque => rw_crapcst.nrcheque,
+                              pr_dtmvtolt => rw_crapdat.dtmvtolt);
+             FETCH  cr_crapcdb INTO rw_crapcdb;
+              
+             IF cr_crapcdb%FOUND THEN       
+               CLOSE cr_crapcdb;
+                
+               --Diminuir quantidade descontados associados
+               vr_ass_qtdeschq:= Nvl(vr_ass_qtdeschq,0) - 1;
+               --Diminuir quantidade descontados total
+               vr_tot_qtdeschq:= Nvl(vr_tot_qtdeschq,0) - 1;
+               --Diminuir valor descontado associados
+               vr_ass_vldeschq:= Nvl(vr_ass_vldeschq,0) - rw_crapcst.vlcheque;
+               --Diminuir valor descontado total
+               vr_tot_vldeschq:= Nvl(vr_tot_vldeschq,0) - rw_crapcst.vlcheque;
+
+               --Proximo registro
+               CONTINUE;
+             ELSE
+               CLOSE cr_crapcdb; 
+             END IF;
+            
+           END IF;           
+           
            --Cheques Devolvidos e devolvidos no dia do movimento
            IF rw_crapcst.dtdevolu IS NOT NULL AND
               rw_crapcst.dtdevolu = rw_crapdat.dtmvtolt THEN
