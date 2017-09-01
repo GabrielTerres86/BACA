@@ -2,7 +2,7 @@
 
    Programa: b1wgen0039.p
    Autor   : Gabriel
-   Data    : Maio/2009                  Ultima Atualizacao: 28/06/2016
+   Data    : Maio/2009                  Ultima Atualizacao: 31/08/2017
 
    Dados referentes ao programa:
 
@@ -67,11 +67,13 @@
                             Na procedure obtem-historico adicionado condicao para
                             ignorar eventos cancelados na listagem (Lucas Ranghetti #395793)
                             
-                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                 
-				28/06/2016 - Alterado rotina grava-nova-situacao para quando for alterado a situaçao
-                             para excluido, chamar a rotina para excluir o registro.
-                             PRJ229 - Melhorias OQS (Odirlei-AMcom)
+               28/06/2016 - Alterado rotina grava-nova-situacao para quando for alterado a situaçao
+                            para excluido, chamar a rotina para excluir o registro.
+                            PRJ229 - Melhorias OQS (Odirlei-AMcom)
+                            
+               31/08/2017 - Incluida procedure quantidade-turma, SD-743136 (Jean Michel).
                             
 ..............................................................................*/
 
@@ -331,6 +333,7 @@ PROCEDURE obtem-eventos-andamento:
     DEF  VAR    aux_dsrestri       AS CHAR                           NO-UNDO.
     DEF  VAR    aux_dsexclus       AS CHAR                           NO-UNDO. 
     DEF  VAR    aux_qthispar       AS INTE                           NO-UNDO.
+    DEF  VAR    aux_qtmaxtur       AS INTE                           NO-UNDO.
     
     DEF BUFFER crabadp FOR crapadp.
     
@@ -553,12 +556,19 @@ PROCEDURE obtem-eventos-andamento:
                                    STRING(crapadp.dtfineve)
                               ELSE
                                    ENTRY(crapadp.nrmeseve,aux_dsmesref).
-                                           
+         
+        RUN quantidade-turma(INPUT crapadp.cdcooper
+                            ,INPUT crapadp.idevento
+                            ,INPUT crapadp.cdevento
+                            ,INPUT crapadp.dtanoage
+                            ,INPUT crapadp.cdagenci
+                           ,OUTPUT aux_qtmaxtur).
+                                
         CREATE tt-eventos-andamento.
         ASSIGN tt-eventos-andamento.cdevento = crapedp.cdevento
                tt-eventos-andamento.idevento = crapedp.idevento
                tt-eventos-andamento.nmevento = crapedp.nmevento
-               tt-eventos-andamento.qtmaxtur = crapedp.qtmaxtur
+               tt-eventos-andamento.qtmaxtur = aux_qtmaxtur /*crapedp.qtmaxtur*/
                tt-eventos-andamento.qtpenden = aux_qtpenden
                tt-eventos-andamento.qtconfir = aux_qtconfir
                tt-eventos-andamento.dtinieve = aux_dtinieve
@@ -2678,6 +2688,90 @@ PROCEDURE verifica-frequencia:
 
 END PROCEDURE.
 
+PROCEDURE quantidade-turma:
+
+  DEF  INPUT PARAM par_cdcooper AS INTEGER NO-UNDO.  
+  DEF  INPUT PARAM par_idevento AS INTEGER NO-UNDO.
+  DEF  INPUT PARAM par_cdevento AS INTEGER NO-UNDO.
+  DEF  INPUT PARAM par_dtanoage AS INTEGER NO-UNDO.
+  DEF  INPUT PARAM par_cdagenci AS INTEGER NO-UNDO.
+  DEF OUTPUT PARAM par_qtmaxtur AS INTEGER NO-UNDO.
+
+  DEF VAR aux_qtmaxtur AS INTEGER NO-UNDO.
+  
+  FIND FIRST crapeap WHERE crapeap.cdcooper = par_cdcooper 
+                       AND crapeap.idevento = par_idevento                                      
+                       AND crapeap.cdevento = par_cdevento 
+                       AND crapeap.dtanoage = par_dtanoage 
+                       AND crapeap.cdagenci = par_cdagenci NO-LOCK.
+   
+  IF AVAILABLE crapeap THEN
+    DO:
+      IF crapeap.qtmaxtur > 0 THEN
+        ASSIGN aux_qtmaxtur = aux_qtmaxtur + crapeap.qtmaxtur.
+      ELSE
+        DO:
+          /* para a frequencia minima */
+          FIND FIRST crapedp WHERE crapedp.idevento = par_idevento 
+                               AND crapedp.cdcooper = par_cdcooper
+                               AND crapedp.dtanoage = par_dtanoage 
+                               AND crapedp.cdevento = par_cdevento NO-LOCK. 
+                                  
+          IF AVAILABLE crapedp THEN
+            DO:
+              IF crapedp.qtmaxtur > 0 THEN
+                ASSIGN aux_qtmaxtur = crapedp.qtmaxtur.
+              ELSE
+                DO:
+                  FIND FIRST crapedp WHERE crapedp.idevento = par_idevento
+                                       AND crapedp.cdcooper = 0
+                                       AND crapedp.dtanoage = 0
+                                       AND crapedp.cdevento = par_cdevento NO-LOCK.
+                                      
+                  IF AVAILABLE crapedp THEN
+                    ASSIGN aux_qtmaxtur = crapedp.qtmaxtur. 
+                END.
+            END.
+          ELSE 
+            DO:
+              FIND FIRST crapedp WHERE crapedp.idevento = par_idevento
+                                   AND crapedp.cdcooper = 0
+                                   AND crapedp.dtanoage = 0
+                                   AND crapedp.cdevento = par_cdevento NO-LOCK.
+                                  
+              IF AVAILABLE crapedp THEN
+                ASSIGN aux_qtmaxtur = crapedp.qtmaxtur. 
+            END.
+        END.
+    END.
+  ELSE
+    DO:
+      /* para a frequencia minima */
+      FIND FIRST crapedp WHERE crapedp.idevento = par_idevento 
+                           AND crapedp.cdcooper = par_cdcooper
+                           AND crapedp.dtanoage = par_dtanoage 
+                           AND crapedp.cdevento = par_cdevento NO-LOCK. 
+                              
+      IF AVAILABLE crapedp THEN
+        DO:
+          IF crapedp.qtmaxtur > 0 THEN
+            ASSIGN aux_qtmaxtur = crapedp.qtmaxtur.
+          ELSE
+            DO:
+              FIND FIRST crapedp WHERE crapedp.idevento = par_idevento AND 
+                                       crapedp.cdcooper = 0 AND
+                                       crapedp.dtanoage = 0 AND 
+                                       crapedp.cdevento = par_cdevento  NO-LOCK.
+                                  
+              IF AVAILABLE crapedp THEN
+                ASSIGN aux_qtmaxtur = crapedp.qtmaxtur.
+            END.
+        END.
+    END.
+        
+  ASSIGN par_qtmaxtur = aux_qtmaxtur.
+  
+END PROCEDURE.
 
 /*...........................................................................*/
 
