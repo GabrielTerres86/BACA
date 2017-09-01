@@ -34,7 +34,11 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                                (Douglas - Melhoria 271)
                                
                           20/01/2017 - Exibir nome do beneficiario e ajustes NPC.
-                                       PRJ340 - NPC (Odirlei-AMcom)             
+                                       PRJ340 - NPC (Odirlei-AMcom)
+                                       
+                  28/08/2017 - #720031 Ajuste na rotina extrai_valor_codbar para nao
+                               aceitar valor zerado e tambem nao permitir editar o 
+                               campo valor caso seja uma fatura (Carlos)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -1702,7 +1706,29 @@ PROCEDURE extrai_valor_codbar :
            DO:
               
               ASSIGN aux_valor = SUBSTR(aux_sfcodbar,5,11).
-              
+
+              /* Validar valor zerado */
+              IF DECIMAL(aux_valor) = 0 THEN
+              DO:
+                RUN mensagem.w (INPUT YES,
+                                INPUT "    ATENÇÃO",
+                                INPUT "",
+                                INPUT "",
+                                INPUT "Documento Inválido",
+                                INPUT "Valor Incorreto",
+                                INPUT "").
+                PAUSE 3 NO-MESSAGE.
+                h_mensagem:HIDDEN = YES.
+                aux_flgderro = YES.
+               
+                RETURN NO-APPLY.
+              END.
+
+              /* Pular campo valor pois o mesmo nao sera alterado*/
+              ASSIGN aux_flblqval          = 1
+                     ed_vldpagto:READ-ONLY = YES
+                     ed_vldpagto:BGCOLOR   = 8.
+
            END. /* Titulos */
            ELSE IF ed_idtpdpag:SCREEN-VALUE = "2"  THEN
            DO:
@@ -1743,24 +1769,28 @@ PROCEDURE extrai_valor_codbar :
                 /* CONVENIO*/
                IF ed_idtpdpag:SCREEN-VALUE = "1" THEN
                DO:                  
-                  ASSIGN aux_valor = SUBSTR(aux_sfcodbar,5,7) + SUBSTR(aux_sfcodbar,13,4).
+                 ASSIGN aux_valor = SUBSTR(aux_sfcodbar,5,7) + SUBSTR(aux_sfcodbar,13,4).
                   
-                  IF DECIMAL(aux_valor) = 0 THEN
-                  DO:
-                      RUN mensagem.w (INPUT YES,
-                                      INPUT "    ATENÇÃO",
-                                      INPUT "",
-                                      INPUT "",
-                                      INPUT "Documento Inválido",
-                                      INPUT "Valor Incorreto",
-                                      INPUT "").
-                      PAUSE 3 NO-MESSAGE.
-                      h_mensagem:HIDDEN = YES.
-                      aux_flgderro = YES.
+                 IF DECIMAL(aux_valor) = 0 THEN
+                 DO:
+                     RUN mensagem.w (INPUT YES,
+                                     INPUT "    ATENÇÃO",
+                                     INPUT "",
+                                     INPUT "",
+                                     INPUT "Documento Inválido",
+                                     INPUT "Valor Incorreto",
+                                     INPUT "").
+                     PAUSE 3 NO-MESSAGE.
+                     h_mensagem:HIDDEN = YES.
+                     aux_flgderro = YES.
+                     
+                     RETURN NO-APPLY.
+                 END.
 
-                      /*APPLY "CHOOSE" TO Btn_C.*/
-                      RETURN NO-APPLY.
-                  END.
+                 /* Pular campo valor pois o mesmo nao sera alterado*/
+                 ASSIGN aux_flblqval          = 1
+                        ed_vldpagto:READ-ONLY = YES
+                        ed_vldpagto:BGCOLOR   = 8.
 
                END. /* Titulos */
                ELSE IF ed_idtpdpag:SCREEN-VALUE = "2"  THEN
