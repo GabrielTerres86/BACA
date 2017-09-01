@@ -419,7 +419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
 
     Objetivo  : Rotina para renovar limite de desconto de cheques.
 
-    Alteracoes: 
+    Alteracoes: 24/08/2017 - Ajuste para gravar log. (Lombardi)
     ..............................................................................*/
     DECLARE
     
@@ -556,6 +556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
       vr_nrdolote     craplot.nrdolote%TYPE;
       vr_vlutilizado  VARCHAR2(100) := '';
       vr_vlexcedido   VARCHAR2(100) := '';
+      vr_rowid_log    ROWID;
       
       --PL tables  
       vr_tab_impress_coop     RATI0001.typ_tab_impress_coop;
@@ -1026,6 +1027,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
           RETURN;
           
         END IF;
+        
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => ' '
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                            ,pr_dstransa => 'Confirmar Novo limite de desconto de cheques.'
+                            ,pr_dttransa => trunc(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'ATENDA'
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_rowid_log);
+        
         -- Criar cabecalho do XML
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados>OK</Dados></Root>');
       END IF;
@@ -3206,7 +3222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para rejeitar bordero de desconto de cheques
 
-    Alteracoes: 
+    Alteracoes: 24/08/2017 - Ajuste para gravar log. (Lombardi) 
                                                      
   ............................................................................. */
 	
@@ -3226,6 +3242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
 		
+    vr_rowid_log ROWID;
+    
     CURSOR cr_crapbdc (pr_cdcooper IN crapcop.cdcooper%TYPE
                       ,pr_nrdconta IN crapbdc.nrdconta%TYPE 
                       ,pr_nrborder IN crapbdc.nrborder%TYPE) IS
@@ -3321,6 +3339,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
          AND nrdconta = pr_nrdconta
          AND nrborder = pr_nrborder;
     END;
+    
+    -- Efetua os inserts para apresentacao na tela VERLOG
+    gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => 'Rejeicao do bordero de cheques Nro.: ' || pr_nrborder
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
     
 		-- Efetuar commit
 		COMMIT;
