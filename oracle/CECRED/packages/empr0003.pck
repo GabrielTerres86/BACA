@@ -31,6 +31,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --                          impressão de novos parágros nos contratos de forma condicional; 
   --                          (Ricardo Linhares)    
   --
+  --             01/09/2017 - Imprimir conta quando o avalista for cooperado
+  --                          Heitor (Mouts) - Chamado 735958
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Verifica da TAB016 se o interveniente esta habilitado
@@ -554,7 +557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
 
   CURSOR cr_crawepr_av IS
     SELECT nvl(crapass.nmprimtl,crawepr.nmdaval1) nmdaval1,
-           gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa) dscpfav1,
+           gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa)||' '||gene0002.fn_mask_conta(crapass.nrdconta) dscpfav1,
            decode(crapass.nrdconta,NULL,
               crawepr.dsendav1##1||', '||crawepr.dsendav1##2,
               crapenc.dsendere||', nº '||crapenc.nrendere||', bairro '||crapenc.nmbairro ||', da cidade de '||
@@ -571,7 +574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
            nvl(nvl(crapass_cje.nmprimtl,crapcje.nmconjug),crawepr.nmcjgav1) nmcjgav1,
            gene0002.fn_mask_cpf_cnpj(nvl(crapass_cje.nrcpfcgc,crapcje.nrcpfcjg),1) nrcpfcjg_1,
            nvl(crapass_2.nmprimtl,crawepr.nmdaval2) nmdaval2,
-           gene0002.fn_mask_cpf_cnpj(crapass_2.nrcpfcgc, crapass_2.inpessoa) dscpfav2,
+           gene0002.fn_mask_cpf_cnpj(crapass_2.nrcpfcgc, crapass_2.inpessoa)||' '||gene0002.fn_mask_conta(crapass_2.nrdconta) dscpfav2,
            decode(crapass_2.nrdconta,NULL,
               crawepr.dsendav2##1||', '||crawepr.dsendav2##2,
               crapenc_2.dsendere||', nº '||crapenc_2.nrendere||', bairro '||crapenc_2.nmbairro ||', da cidade de '||
