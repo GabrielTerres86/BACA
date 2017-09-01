@@ -52,6 +52,7 @@
 				<option value="4" >TED</option> 
 				<option value="5" >Transfer&ecirc;ncia Intercooperativa</option> 
 				<option value="10" >Pagamentos DARF/DAS</option> 
+				<option value="11" id="opt_recarga">Recarga de celular</option>
 			</select>
 
 			<label for="dtiniper">Data Inicial:</label>
