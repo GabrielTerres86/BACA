@@ -80,6 +80,30 @@ DO:
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "</CONVENIOS_ACEITOS>".
             
+    /*Cria o nó de segmentos*/
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<SEGMENTOS>".
+    CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>0</cdsegmto><dssegmto>Todos</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>1</cdsegmto><dssegmto>Prefeituras</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>2</cdsegmto><dssegmto>Saneamento</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>3</cdsegmto><dssegmto>Energia Elétrica e Gás</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>4</cdsegmto><dssegmto>Telecomunicações</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>5</cdsegmto><dssegmto>Órgãos Governamentais</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>6</cdsegmto><dssegmto>Órgãos Identificados pelo CNPJ</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>7</cdsegmto><dssegmto>Multas de Trânsito</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>8</cdsegmto><dssegmto>Uso Exclusivo do Banco</dssegmto></SEGMENTO>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "</SEGMENTOS>".
+            
     RUN proc_geracao_log (INPUT TRUE).
 END.
     

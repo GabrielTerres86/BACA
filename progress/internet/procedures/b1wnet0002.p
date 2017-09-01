@@ -137,7 +137,7 @@
                             permissoes do menu do Mobile. Projeto 286/3 - Mobile (Lombardi)
                
                11/05/2016 - Remocao de logica para somente mostrar Comprovantes Salariais
-			                      quanto houver. Esta busca estava honerando o processo (Marcos-Supero)	
+			                quanto houver. Esta busca estava honerando o processo (Marcos-Supero)
                
                18/08/2016 - Adicionada a propriedade qtdiaace na carrega-tutulares
                             PRJ286.5 - Cecred Mobile (Dionathan)
@@ -2694,7 +2694,7 @@ PROCEDURE permissoes-menu-mobile:
     
     RUN sistema/generico/procedures/b1wgen0188.p PERSISTENT SET h-b1wgen0188.
     RUN sistema/generico/procedures/b1wgen0018.p PERSISTENT SET h-b1wgen0018.
-    
+            
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
 
@@ -2721,7 +2721,7 @@ PROCEDURE permissoes-menu-mobile:
       DO:
           ASSIGN aux_flgsittp = TRUE.
     END.
-      
+            
     /*CRÉDITO PRE-APROVADO*/
     IF  VALID-HANDLE(h-b1wgen0188)  THEN
         DO:
@@ -2747,7 +2747,7 @@ PROCEDURE permissoes-menu-mobile:
             IF AVAIL tt-dados-cpa AND tt-dados-cpa.vldiscrd > 0 THEN DO:
               ASSIGN aux_flgaprov = TRUE.
             END.
-    END.
+            END.
     
     /*RECARGA DE CELULAR*/
     IF  VALID-HANDLE(h-b1wgen0018)  THEN
@@ -2758,7 +2758,7 @@ PROCEDURE permissoes-menu-mobile:
                                                            OUTPUT aux_flgsitrc).
             
             DELETE PROCEDURE h-b1wgen0018.
-    END.
+        END.
     
     
     CREATE tt-itens-menu-mobile.
@@ -2767,19 +2767,11 @@ PROCEDURE permissoes-menu-mobile:
     
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 700. /*PRÉ-APROVADO*/
-           tt-itens-menu-mobile.flcreate = aux_flgaprov. 
-    
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 900. /*CONVENIÊNCIA*/
-           tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
+           tt-itens-menu-mobile.flcreate = aux_flgaprov.
            
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 901. /*RECARGA DE CELULAR*/
-           tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
-    
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇÕES PENDENTES*/
-           tt-itens-menu-mobile.flcreate = FALSE.
+           tt-itens-menu-mobile.flcreate = aux_flgsitrc.
     
     FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
 							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
@@ -2949,7 +2941,7 @@ PROCEDURE permissoes-menu:
             IF AVAIL tt-dados-cpa AND tt-dados-cpa.vldiscrd > 0 THEN
                ASSIGN aux_flgaprov = TRUE.
         END.
-    
+
     /* Verifica se possui limite de desconto de cheque */
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
                              craplim.nrdconta = par_nrdconta AND
@@ -3280,7 +3272,7 @@ PROCEDURE permissoes-menu:
                     IF crabmni.cditemmn = 4 AND crabmni.cdsubitm = 2 AND
                        NOT aux_flgaprov THEN
                        NEXT.
-                    
+
                     /* Verifica permissao para custodia de cheque */
                     IF crabmni.cditemmn = 4 AND crabmni.cdsubitm = 5 AND
                        NOT aux_flgdesct THEN
