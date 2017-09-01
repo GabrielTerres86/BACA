@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                         Ultima atualizacao: 07/01/2016
+   Data    : Novembro/98                         Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -70,6 +70,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
 
                07/01/2016 - Ajuste para verificar pr_cdhistor para contabilizar
                             portabilidade de credito. (Jaison/Diego - SD: 382779)
+                            
+               03/04/2017 - Ajuste para segregar lançamentos em pessoa fisica e juridica
+                            P307 - (Jonatas - Supero)	
+
+               01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
 
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
@@ -77,7 +82,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
                      pr_nrdconta in crapepr.nrdconta%type,
                      pr_nrdocmto in crapepr.nrctremp%type) is
     select crapepr.cdfinemp,
-           crapepr.cdlcremp
+           crapepr.cdlcremp,
+           decode(crapepr.tpemprst,0,'TR','PP') tpemprst     --Tipo do emprestimo 0 - TR e 1 - PP
       from crapepr
      where crapepr.cdcooper = pr_cdcooper
        and crapepr.nrdconta = pr_nrdconta
@@ -96,7 +102,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
                      pr_cdlcremp in craplcr.cdlcremp%type) is
     select craplcr.flgcrcta,
            craplcr.dsoperac,
-           craplcr.cdhistor
+           craplcr.cdhistor,
+           craplcr.dsorgrec,  
+           craplcr.cdusolcr
       from craplcr
      where craplcr.cdcooper = pr_cdcooper
        and craplcr.cdlcremp = pr_cdlcremp;
@@ -138,6 +146,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
   vr_nmcolsql      VARCHAR2(100);
   -- Variável lógica que define se credita em conta corrente
   vr_flgcrcta      boolean;
+  
+  vr_ind_microcred     varchar2(100);
+  vr_ind_microcred_999 varchar2(100); 
+  
   /* Registro para acumular os valores por agência */
   type typ_agencia is record (vr_vlccuage      craprej.vllanmto%type,
                               vr_vlcxaage      craprej.vllanmto%type,
@@ -188,6 +200,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
   type typ_tab_agencia_hist_no is table of typ_agencia_hist_no index by VARCHAR2(10);
   /* Instância da tabela */
   vr_tab_agencia_hist_no   typ_tab_agencia_hist_no;
+  
+  
+  type typ_agencia_microcredito is record (vr_cdagenci craprej.cdagenci%type,
+                                           vr_cdhistor craprej.cdhistor%type,
+                                           vr_dshistor craprej.dshistor%type,
+                                           vr_vlccuage craprej.vllanmto%type,
+                                           vr_qtccuage craprej.nrseqdig%type,
+                                           vr_vlccagpf craprej.vllanmto%type,
+                                           vr_qtccagpf craprej.nrseqdig%type,
+                                           vr_vlccagpj craprej.vllanmto%type,
+                                           vr_qtccagpj craprej.nrseqdig%type);                              
+  /* Tabela onde serão armazenados os registros da agência */
+  /* O índice da tabela será o código do histórico + código da agência + tipo do empréstimo (TR ou PP) + Origem de Recursos (DIM, PNMPO DIM, PNMPO BRDE,etc).*/
+  type typ_tab_age_microcredito is table of typ_agencia_microcredito index by varchar2(100);
+  /* Instância da tabela */
+  vr_tab_age_microcredito   typ_tab_age_microcredito;  
+  
   -- Índice para leitura das informações da tabela
   vr_indice_agencia_hist_no      VARCHAR(10);
   vr_indice_agencia_hist_no_999  VARCHAR(10);
@@ -247,12 +276,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
     END IF;
   end;
   
+  procedure pc_cria_age_microcredito (pr_chave in varchar2) is
+  BEGIN
+    -- Se o registro de memória para a agencia ainda não existe
+    if not vr_tab_age_microcredito.exists(pr_chave) then
+      vr_tab_age_microcredito(pr_chave).vr_vlccuage      := 0;
+      vr_tab_age_microcredito(pr_chave).vr_qtccuage      := 0;
+      vr_tab_age_microcredito(pr_chave).vr_vlccagpf      := 0;
+      vr_tab_age_microcredito(pr_chave).vr_qtccagpf      := 0;
+      vr_tab_age_microcredito(pr_chave).vr_vlccagpj      := 0;
+      vr_tab_age_microcredito(pr_chave).vr_qtccagpj      := 0;
+    end if;
+  end;
+  
+  
   --
   /* Procedimento para validar as regras de negócio e criar
   os registro na tabela CRAPREJ */
   PROCEDURE pc_cria_craprej(pr_cdhistor craphis.cdhistor%TYPE,
                             pr_dtrefere craprej.dtrefere%TYPE) IS
 
+    vr_ind_age_microcred VARCHAR2(100);
+  
   BEGIN
 
     IF vr_tab_agencia.exists(999) AND vr_tab_agencia(999).vr_vlccuage > 0 THEN
@@ -544,6 +589,94 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
         END IF;
       END IF;
     END IF;
+    
+    
+    vr_ind_age_microcred := vr_tab_age_microcredito.first;
+    -- Percorre todas as agencias\históricos
+    WHILE vr_ind_age_microcred IS NOT NULL LOOP
+      
+      IF vr_tab_age_microcredito(vr_ind_age_microcred).vr_vlccuage > 0 THEN
+        -- Tipo de aplicacao 0 - Totalizador separado por agencia
+        INSERT INTO craprej(cdpesqbb
+                           ,cdagenci
+                           ,cdhistor
+                           ,dtmvtolt
+                           ,vllanmto
+                           ,nrseqdig
+                           ,dtrefere
+                           ,cdcooper
+                           ,nraplica
+                           ,vlsdapli
+                           ,dshistor)
+                     VALUES(vr_cdprogra
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_cdagenci
+                           ,pr_cdhistor /*{2}*/
+                           ,pr_dtmvtolt
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_vlccuage
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_qtccuage
+                           ,pr_dtrefere
+                           ,pr_cdcooper
+                           ,0       --> Tipo de totalizador
+                           ,0.00    --> Valor para totalizador
+                           ,LTRIM(vr_tab_age_microcredito(vr_ind_age_microcred).vr_dshistor));
+
+          -- Tipo de aplicacao 1 - Totalizador de pessoa fisica separado por agencia
+        INSERT INTO craprej(cdpesqbb
+                           ,cdagenci
+                           ,cdhistor
+                           ,dtmvtolt
+                           ,vllanmto
+                           ,nrseqdig
+                           ,dtrefere
+                           ,cdcooper
+                           ,nraplica
+                           ,vlsdapli
+                           ,dshistor)
+                     VALUES(vr_cdprogra
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_cdagenci
+                           ,pr_cdhistor /*{2}*/
+                           ,pr_dtmvtolt
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_vlccuage
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_qtccuage
+                           ,pr_dtrefere
+                           ,pr_cdcooper
+                           ,1 --> Tipo de totalizador para pessoa fisica
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_vlccagpf --> Valor para totalizador
+                           ,LTRIM(vr_tab_age_microcredito(vr_ind_age_microcred).vr_dshistor));  
+
+
+
+        -- Tipo de aplicacao 2 - Totalizador de pessoa juridica separado por agencia
+        INSERT INTO craprej(cdpesqbb
+                           ,cdagenci
+                           ,cdhistor
+                           ,dtmvtolt
+                           ,vllanmto
+                           ,nrseqdig
+                           ,dtrefere
+                           ,cdcooper
+                           ,nraplica
+                           ,vlsdapli
+                           ,dshistor)
+                     VALUES(vr_cdprogra
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_cdagenci
+                           ,pr_cdhistor /*{2}*/
+                           ,pr_dtmvtolt
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_vlccuage
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_qtccuage
+                           ,pr_dtrefere
+                           ,pr_cdcooper
+                           ,2       --> Tipo de totalizador para pessoa juridica
+                           ,vr_tab_age_microcredito(vr_ind_age_microcred).vr_vlccagpj
+                           ,LTRIM(vr_tab_age_microcredito(vr_ind_age_microcred).vr_dshistor));  --> Valor para totalizador
+      END IF;
+
+        
+      vr_ind_age_microcred := vr_tab_age_microcredito.next(vr_ind_age_microcred);
+    
+    END LOOP;
+    vr_tab_age_microcredito.DELETE;
+    
   END pc_cria_craprej;
 
   --
@@ -558,6 +691,10 @@ BEGIN
   IF pr_nmestrut = 'CRAPLEM' THEN
     vr_nmcolsql := ' ,x.nrctremp ';    
   END IF;  
+  
+  IF pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719) THEN
+    vr_nmcolsql := ' ,trim(replace(x.cdpesqbb,''.'','''')) ';
+  END IF;
 
   -- Define a query do cursor dinâmico
   vr_cursor := 'select x.cdagenci,'||
@@ -589,7 +726,8 @@ BEGIN
   dbms_sql.define_column(vr_num_cursor, 7, vr_ass_cdagenci);
   dbms_sql.define_column(vr_num_cursor, 8, vr_inpessoa);
   
-  IF upper(pr_nmestrut) = 'CRAPLEM' THEN
+  IF upper(pr_nmestrut) = 'CRAPLEM' OR 
+     (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719)) THEN
     dbms_sql.define_column(vr_num_cursor, 9, vr_nrctremp);
   END IF;
       
@@ -618,7 +756,8 @@ BEGIN
       dbms_sql.column_value(vr_num_cursor, 7, vr_ass_cdagenci);
       dbms_sql.column_value(vr_num_cursor, 8, vr_inpessoa);
       
-      IF upper(pr_nmestrut) = 'CRAPLEM' THEN
+      IF upper(pr_nmestrut) = 'CRAPLEM' OR 
+        (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719)) THEN
         dbms_sql.column_value(vr_num_cursor, 9, vr_nrctremp);
       END IF;
       
@@ -729,9 +868,8 @@ BEGIN
 
       ELSE
         -- Verifica a estrutura e se o historico for
-        --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS
-        if upper(pr_nmestrut) = 'CRAPLEM' and
-           pr_cdhistor in (98, 277) THEN
+        --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
+        if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (98, 277, 1038) THEN
           -- Verifica se tem empréstimo. Se não tiver, descarta.
           open cr_crapepr (pr_cdcooper,
                            vr_nrdconta,
@@ -753,18 +891,160 @@ BEGIN
           close cr_craplcr;
           -- Separar juros de empréstimos e juros de financiamento
           IF rw_craplcr.dsoperac = 'FINANCIAMENTO' THEN
+            
+            IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
+
+              ---Agrupar valores na PL Table vr_tab_age_microcredito com index sendo a seguinte chave:
+              vr_ind_microcred     := pr_cdhistor ||vr_ass_cdagenci || rw_crapepr.tpemprst || REPLACE(rw_craplcr.dsorgrec,'MICROCREDITO','');
+              vr_ind_microcred_999 := pr_cdhistor ||'999'       || rw_crapepr.tpemprst || REPLACE(rw_craplcr.dsorgrec,'MICROCREDITO','');
+              
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage + 1;
+              ELSE
+                pc_cria_age_microcredito(vr_ind_microcred_999);
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdagenci := 0;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdhistor := pr_cdhistor;     
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := 1;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_dshistor := REPLACE(rw_craplcr.dsorgrec, 'MICROCREDITO','');                           
+              END IF;
+
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage + 1; 
+              ELSE
+                pc_cria_age_microcredito(vr_ind_microcred);
+                vr_tab_age_microcredito(vr_ind_microcred).vr_cdhistor := pr_cdhistor;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_dshistor := REPLACE(rw_craplcr.dsorgrec, 'MICROCREDITO','');
+                vr_tab_age_microcredito(vr_ind_microcred).vr_cdagenci := vr_ass_cdagenci;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := 1; 
+              END IF;                
+
+                          
+              -- Segregando as informacoes por tipo de pessoa
+              IF vr_inpessoa = 1 THEN
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := 1;
+                END IF;
+                
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= 1;
+                END IF;
+
+              ELSE
+
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := 1;
+                END IF;
+                
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj:= vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj:= 1;
+                END IF;
+                 
+              END IF;
+
+            ELSE
+
+              ---Agrupar valores na PL Table vr_tab_age_microcredito com index sendo a seguinte chave:
+              vr_ind_microcred     := pr_cdhistor ||vr_ass_cdagenci || 'OPERACAO_NORMAL';
+              vr_ind_microcred_999 := pr_cdhistor ||'999'       || 'OPERACAO_NORMAL';
+              
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage + 1;
+              ELSE
+                pc_cria_age_microcredito(vr_ind_microcred_999);
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdagenci := 0;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdhistor := pr_cdhistor;     
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := 1;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_dshistor := 'OPERACAO_NORMAL';                           
+              END IF;
+
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage + 1; 
+              ELSE
+                pc_cria_age_microcredito(vr_ind_microcred);
+                vr_tab_age_microcredito(vr_ind_microcred).vr_cdhistor := pr_cdhistor;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_dshistor := 'OPERACAO_NORMAL';
+                vr_tab_age_microcredito(vr_ind_microcred).vr_cdagenci := vr_ass_cdagenci;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := 1; 
+              END IF;                
+
+                          
+              -- Segregando as informacoes por tipo de pessoa
+              IF vr_inpessoa = 1 THEN
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := 1;
+                END IF;
+                
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= 1;
+                END IF;
+
+              ELSE
+
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := 1;
+                END IF;
+                
+                IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj + vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj + 1;
+                ELSE
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj:= vr_vllanmto;
+                  vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj:= 1;
+                END IF;
+                 
+              END IF;
+
+              
+            END IF;            
+
             vr_tab_agencia(999).vr_vlccuage_499 := vr_tab_agencia(999).vr_vlccuage_499 + vr_vllanmto;
             vr_tab_agencia(999).vr_qtccuage_499 := vr_tab_agencia(999).vr_qtccuage_499 + 1;
             vr_tab_agencia(vr_cdagenci).vr_vlcxaage_499 := vr_tab_agencia(vr_cdagenci).vr_vlcxaage_499 + vr_vllanmto;
             vr_tab_agencia(vr_cdagenci).vr_qtcxaage_499 := vr_tab_agencia(vr_cdagenci).vr_qtcxaage_499 + 1;
             vr_tab_agencia(vr_ass_cdagenci).vr_vlccuage_499 := vr_tab_agencia(vr_ass_cdagenci).vr_vlccuage_499 + vr_vllanmto;
             vr_tab_agencia(vr_ass_cdagenci).vr_qtccuage_499 := vr_tab_agencia(vr_ass_cdagenci).vr_qtccuage_499 + 1;
-            
+              
             -- Segregando as informacoes por tipo de pessoa
             IF vr_inpessoa = 1 THEN
                vr_tab_agencia(999).vr_vlccagpf_499 := vr_tab_agencia(999).vr_vlccagpf_499 + vr_vllanmto;
                vr_tab_agencia(999).vr_qtccagpf_499 := vr_tab_agencia(999).vr_qtccagpf_499 + 1;
-               
+                 
                vr_tab_agencia(vr_cdagenci).vr_vlcxagpf_499 := vr_tab_agencia(vr_cdagenci).vr_vlcxagpf_499 + vr_vllanmto;
                vr_tab_agencia(vr_cdagenci).vr_qtcxagpf_499 := vr_tab_agencia(vr_cdagenci).vr_qtcxagpf_499 + 1;
                vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpf_499 := vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpf_499 + vr_vllanmto;
@@ -772,14 +1052,15 @@ BEGIN
             ELSE
                vr_tab_agencia(999).vr_vlccagpj_499 := vr_tab_agencia(999).vr_vlccagpj_499 + vr_vllanmto;
                vr_tab_agencia(999).vr_qtccagpj_499 := vr_tab_agencia(999).vr_qtccagpj_499 + 1;
-               
+                 
                vr_tab_agencia(vr_cdagenci).vr_vlcxagpj_499 := vr_tab_agencia(vr_cdagenci).vr_vlcxagpj_499 + vr_vllanmto;
                vr_tab_agencia(vr_cdagenci).vr_qtcxagpj_499 := vr_tab_agencia(vr_cdagenci).vr_qtcxagpj_499 + 1;
                vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpj_499 := vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpj_499 + vr_vllanmto;
                vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj_499 := vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj_499 + 1;               
             END IF;
-            
+
           ELSE /* Emprestimo */
+
             vr_tab_agencia(999).vr_vlccuage := vr_tab_agencia(999).vr_vlccuage + vr_vllanmto;
             vr_tab_agencia(999).vr_qtccuage := vr_tab_agencia(999).vr_qtccuage + 1;
             vr_tab_agencia(vr_cdagenci).vr_vlcxaage := vr_tab_agencia(vr_cdagenci).vr_vlcxaage + vr_vllanmto;
@@ -807,7 +1088,199 @@ BEGIN
             END IF;
 
           END IF;
-        ELSE
+        ELSIF pr_cdhistor in (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719) THEN
+              
+          -- Verifica se tem empréstimo. Se não tiver, descarta.
+          open cr_crapepr (pr_cdcooper,
+                           vr_nrdconta,
+                           vr_nrctremp);
+            fetch cr_crapepr into rw_crapepr;
+            if cr_crapepr%notfound THEN
+              CLOSE cr_crapepr;
+              continue;
+            end if;
+          close cr_crapepr;
+          
+          -- Verifica se a linha de crédito existe. Se não existe, descarta.
+          open cr_craplcr (pr_cdcooper,
+                           rw_crapepr.cdlcremp);
+            fetch cr_craplcr into rw_craplcr;
+            if cr_craplcr%notfound THEN
+              CLOSE cr_craplcr;
+              CONTINUE;
+            end if;
+          close cr_craplcr;
+          
+          -- Separar juros de empréstimos e juros de financiamento
+          IF rw_craplcr.dsoperac = 'FINANCIAMENTO' AND rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
+          
+            ---Agrupar valores na PL Table vr_tab_age_microcredito com index sendo a seguinte chave:
+            vr_ind_microcred     := pr_cdhistor ||vr_cdagenci || rw_crapepr.tpemprst || REPLACE(rw_craplcr.dsorgrec,'MICROCREDITO','');
+            vr_ind_microcred_999 := pr_cdhistor ||'999'       || rw_crapepr.tpemprst || REPLACE(rw_craplcr.dsorgrec,'MICROCREDITO','');
+              
+            IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage + vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage + 1;
+            ELSE
+              pc_cria_age_microcredito(vr_ind_microcred_999);
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdagenci := 0;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdhistor := pr_cdhistor;     
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := 1;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_dshistor := REPLACE(rw_craplcr.dsorgrec, 'MICROCREDITO','');                           
+            END IF;
+
+            IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN
+              vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage + vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage + 1; 
+            ELSE
+              pc_cria_age_microcredito(vr_ind_microcred);
+              vr_tab_age_microcredito(vr_ind_microcred).vr_cdhistor := pr_cdhistor;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_dshistor := REPLACE(rw_craplcr.dsorgrec, 'MICROCREDITO','');
+              vr_tab_age_microcredito(vr_ind_microcred).vr_cdagenci := vr_ass_cdagenci;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := 1; 
+            END IF;                
+
+                          
+            -- Segregando as informacoes por tipo de pessoa
+            IF vr_inpessoa = 1 THEN
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := 1;
+              END IF;
+                
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= 1;
+              END IF;
+
+            ELSE
+
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := 1;
+              END IF;
+                
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj:= vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj:= 1;
+              END IF;
+                 
+            END IF;
+
+          ELSE
+
+            ---Agrupar valores na PL Table vr_tab_age_microcredito com index sendo a seguinte chave:
+            vr_ind_microcred     := pr_cdhistor ||vr_cdagenci || 'OPERACAO_NORMAL';
+            vr_ind_microcred_999 := pr_cdhistor ||'999'       || 'OPERACAO_NORMAL';
+              
+            IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage + vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage + 1;
+            ELSE
+              pc_cria_age_microcredito(vr_ind_microcred_999);
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdagenci := 0;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_cdhistor := pr_cdhistor;     
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccuage := vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccuage := 1;
+              vr_tab_age_microcredito(vr_ind_microcred_999).vr_dshistor := 'OPERACAO_NORMAL';                           
+            END IF;
+
+            IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN
+              vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage + vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage + 1; 
+            ELSE
+              pc_cria_age_microcredito(vr_ind_microcred);
+              vr_tab_age_microcredito(vr_ind_microcred).vr_cdhistor := pr_cdhistor;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_dshistor := 'OPERACAO_NORMAL';
+              vr_tab_age_microcredito(vr_ind_microcred).vr_cdagenci := vr_ass_cdagenci;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_vlccuage := vr_vllanmto;
+              vr_tab_age_microcredito(vr_ind_microcred).vr_qtccuage := 1; 
+            END IF;                
+
+                          
+            -- Segregando as informacoes por tipo de pessoa
+            IF vr_inpessoa = 1 THEN
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpf := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpf := 1;
+              END IF;
+                
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpf:= vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpf:= 1;
+              END IF;
+
+            ELSE
+
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred_999) THEN
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_vlccagpj := vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred_999).vr_qtccagpj := 1;
+              END IF;
+                
+              IF vr_tab_age_microcredito.exists(vr_ind_microcred) THEN                
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj + vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj := vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj + 1;
+              ELSE
+                vr_tab_age_microcredito(vr_ind_microcred).vr_vlccagpj:= vr_vllanmto;
+                vr_tab_age_microcredito(vr_ind_microcred).vr_qtccagpj:= 1;
+              END IF;
+                 
+            END IF;
+
+              
+          END IF;            
+
+          vr_tab_agencia(999).vr_vlccuage := vr_tab_agencia(999).vr_vlccuage + vr_vllanmto;
+          vr_tab_agencia(999).vr_qtccuage := vr_tab_agencia(999).vr_qtccuage + 1;
+          vr_tab_agencia(vr_cdagenci).vr_vlcxaage := vr_tab_agencia(vr_cdagenci).vr_vlcxaage + vr_vllanmto;
+          vr_tab_agencia(vr_cdagenci).vr_qtcxaage := vr_tab_agencia(vr_cdagenci).vr_qtcxaage + 1;
+          vr_tab_agencia(vr_ass_cdagenci).vr_vlccuage := vr_tab_agencia(vr_ass_cdagenci).vr_vlccuage + vr_vllanmto;
+          vr_tab_agencia(vr_ass_cdagenci).vr_qtccuage := vr_tab_agencia(vr_ass_cdagenci).vr_qtccuage + 1;
+            
+          -- Segregando as informacoes por tipo de pessoa
+          IF vr_inpessoa = 1 THEN
+             vr_tab_agencia(999).vr_vlccagpf := vr_tab_agencia(999).vr_vlccagpf + vr_vllanmto;
+             vr_tab_agencia(999).vr_qtccagpf := vr_tab_agencia(999).vr_qtccagpf + 1;
+
+             vr_tab_agencia(vr_cdagenci).vr_vlcxagpf := vr_tab_agencia(vr_cdagenci).vr_vlcxagpf + vr_vllanmto;
+             vr_tab_agencia(vr_cdagenci).vr_qtcxagpf := vr_tab_agencia(vr_cdagenci).vr_qtcxagpf + 1;
+             vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpf := vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpf + vr_vllanmto;
+             vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpf := vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpf + 1;
+          ELSE
+             vr_tab_agencia(999).vr_vlccagpj := vr_tab_agencia(999).vr_vlccagpj + vr_vllanmto;
+             vr_tab_agencia(999).vr_qtccagpj := vr_tab_agencia(999).vr_qtccagpj + 1;
+
+             vr_tab_agencia(vr_cdagenci).vr_vlcxagpj := vr_tab_agencia(vr_cdagenci).vr_vlcxagpj + vr_vllanmto;
+             vr_tab_agencia(vr_cdagenci).vr_qtcxagpj := vr_tab_agencia(vr_cdagenci).vr_qtcxagpj + 1;
+             vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpj := vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpj + vr_vllanmto;
+             vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj := vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj + 1;
+          END IF;
+
+        ELSE  
+        
           vr_tab_agencia(999).vr_vlccuage := vr_tab_agencia(999).vr_vlccuage + vr_vllanmto;
           vr_tab_agencia(999).vr_qtccuage := vr_tab_agencia(999).vr_qtccuage + 1;
           vr_tab_agencia(vr_cdagenci).vr_vlcxaage := vr_tab_agencia(vr_cdagenci).vr_vlcxaage + vr_vllanmto;
@@ -847,9 +1320,9 @@ BEGIN
   pc_cria_craprej(pr_cdhistor => pr_cdhistor,
                   pr_dtrefere => pr_nmestrut);
   -- Verifica a estrutura e se o historico for
-  --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS
+  --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
   if upper(pr_nmestrut) = 'CRAPLEM' and
-     pr_cdhistor in (98, 277) then
+     pr_cdhistor in (98, 277, 1038) then
     --
     vr_indice_agencia := vr_tab_agencia.first;
     -- Percorre todas as agencias
@@ -876,6 +1349,8 @@ BEGIN
       vr_dtrefere := 'craplem_499';
     ELSIF pr_cdhistor = '277' THEN
       vr_dtrefere := 'craplem_estfin';
+    ELSIF pr_cdhistor = '1038' THEN
+      vr_dtrefere := 'craplem';
     END IF;
 
     pc_cria_craprej(pr_cdhistor => pr_cdhistor,
@@ -936,4 +1411,3 @@ exception
     pr_dscritic := 'Erro PC_CRPS249_1: '||SQLERRM;
 END PC_CRPS249_1;
 /
-
