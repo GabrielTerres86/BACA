@@ -683,7 +683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                                 
           ELSIF rw_craplau.cdtiptra = 11 THEN -- Recarga de Celular
             
-            vr_dstiptra := 'RECARGA CELULAR';
+            vr_dstiptra := 'RECARGA CEL';
             
             vr_dstransa := '(' || rw_craplau.nrddd || ') ' || 
                            TRIM(TO_CHAR(TRIM(gene0002.fn_mask(rw_craplau.nrcelular,'zzzzz-zzzz')))) || ' - ' || 
