@@ -490,7 +490,9 @@
                             
                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-			 		       (Adriano - P339). 
+			 		       (Adriano - P339).
+
+			   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
 ..............................................................................*/
@@ -4256,12 +4258,16 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_perfatcl AS DECI                           NO-UNDO.
                                        
     DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
         
     DEF VAR h-b1wgen0021 AS HANDLE  NO-UNDO.
     DEF VAR h-b1wgen9999 AS HANDLE  NO-UNDO.
     DEF VAR aux_contador AS INTE    NO-UNDO.
     DEF VAR aux_lscontas AS CHAR    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
+    DEF VAR aux_flgativo     AS INT                                 NO-UNDO.
+    DEF VAR aux_nrdconta_grp LIKE crapass.nrdconta                  NO-UNDO. 
+    DEF VAR aux_dsvinculo    AS CHAR                                NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -4665,6 +4671,64 @@ PROCEDURE efetua_inclusao_limite:
                crapprp.cdcooper    = par_cdcooper
                crapprp.dtmvtolt    = par_dtmvtolt.
         VALIDATE crapprp.                   
+        
+        /* Verificar se a conta pertence ao grupo economico novo */	
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,0
+                                              ,0
+                                              ,""
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_verifica_conta_grp_econ
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic      = 0
+               aux_dscritic     = ""
+               aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
+               aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
+               aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
+               aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
+               aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+                        
+        IF aux_cdcritic > 0 THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1, /*sequencia*/
+                              INPUT aux_cdcritic,
+                              INPUT-OUTPUT aux_dscritic).
+                              
+               ASSIGN aux_flgderro = TRUE.
+               UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+           END.
+        ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+          DO:
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1, /*sequencia*/
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
+                             
+              ASSIGN aux_flgderro = TRUE.
+              UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+          END.
+                      
+        IF aux_flgativo = 1 THEN
+           DO:
+               CREATE tt-msg-confirma.                        
+               ASSIGN tt-msg-confirma.inconfir = 1
+                      tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+           END.    
+        
     END. /* Final da TRANSACAO */
     
     IF  aux_flgderro  THEN

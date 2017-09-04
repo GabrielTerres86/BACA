@@ -4115,6 +4115,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              12/04/2017 - Exibir mensagem de fatura de cartão atrasado.
     --                           PRJ343 - Cessao de credito(Odirlei-AMcom)    
+	--
+	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
+    --   
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4616,6 +4619,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_vlblqjud     NUMBER := 0;
     vr_vlresblq     NUMBER := 0;
 		vr_flgpvida     INTEGER;
+    
+    vr_nrdconta_grp tbcc_grupo_economico.nrdconta%TYPE;
+    vr_dsvinculo    VARCHAR(2000);                                                           
     
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
@@ -5696,6 +5702,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;
     END LOOP;
 
+	-- Verifica se a conta possui algum grupo economico novo
+    TELA_CONTAS_GRUPO_ECONOMICO.pc_verifica_conta_grp_econ(pr_cdcooper => pr_cdcooper, 
+                                                           pr_nrdconta => pr_nrdconta, 
+                                                           pr_flgativo => vr_flgativo, 
+                                                           pr_nrdconta_grp => vr_nrdconta_grp, 
+                                                           pr_dsvinculo => vr_dsvinculo, 
+                                                           pr_cdcritic => vr_cdcritic, 
+                                                           pr_dscritic => vr_dscritic);
+    
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_flgativo = 1 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Grupo Economico Novo. Conta: ' || TRIM(gene0002.fn_mask_conta(vr_nrdconta_grp)) || '. Vinculo: ' || vr_dsvinculo,
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
     pr_des_reto := 'OK';
     
   EXCEPTION    

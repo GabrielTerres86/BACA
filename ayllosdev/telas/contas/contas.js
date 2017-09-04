@@ -23,6 +23,8 @@
  * 016: [05/01/2016] Carlos (CECRED)         : #350828 Impressao de declaração de pessoa exposta politicamente.
  * 017: [14/09/2016] Kelvin (CECRED) 		 : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 018: [27/03/2017] Reinert			  	 : Incluido function "dossieDigidoc". (Projeto 357)
+ * 019: [11/07/2017] Andrino (MOUTS) 		 : Desenvolvimento da melhoria 364 - Grupo Economico
+ * 020: [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
  */
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela CONTAS
@@ -369,7 +371,7 @@ function limparDadosCampos() {
     }
 
     // Limpa campos com saldos da conta
-    for (i = 0; i < 23; i++) {
+    for (i = 0; i < 24; i++) {
         $("#labelRot" + i).html("&nbsp;").unbind("click");
 
     }
@@ -625,7 +627,7 @@ function trataCadastramento() {
 }
 
 function dossieDigdoc(cdproduto){
-
+	
 	var mensagem = 'Aguarde, acessando dossie...';
 	showMsgAguardo( mensagem );
 

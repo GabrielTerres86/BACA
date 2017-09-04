@@ -84,7 +84,9 @@
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-relacionamento2 (Oscar).                
                              
                 17/08/2016 - Incluido campo txmensal na table tt-craplcr (Lombardi)
-                                        						 
+                             
+				15/07/2017 - Incluido a temp-table tt-crapass. (Mauro)             
+   
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)                        
   
@@ -353,8 +355,14 @@ DEF TEMP-TABLE tt-relacionamento NO-UNDO
     FIELD cdcooper  AS INTE
     FIELD codigo    AS INTE
     FIELD descricao AS CHAR.
-DEF TEMP-TABLE tt-relacionamento2  NO-UNDO LIKE tt-relacionamento.
-    
+
+DEF TEMP-TABLE tt-crapass NO-UNDO
+    FIELD cdcooper AS INTE
+    FIELD nrdconta AS INTE
+    FIELD nmprimtl AS CHAR
+    FIELD inpessoa AS INTE
+    FIELD nrcpfcgc AS CHAR.
+
 /*
 DEFINE TEMP-TABLE tt-crappfo NO-UNDO LIKE crappfo.
                                               

@@ -18,6 +18,8 @@
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
  *006: [26/05/2017] Odirlei Busana       (AMcom) : Incluido retorno do nrctrlim que será gerado na inclusao
  *                                                 do ctr de limite. PRJ300 - Descto cheque.  
+		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+
  */
 ?>
 
@@ -329,8 +331,14 @@
 	echo 'tpctrrat = 2;';
 	echo 'nrctrrat = '.$nrctrlim.';';
 
-	// Gravar dados do rating do cooperado
-	echo 'atualizaDadosRating("divOpcoesDaOpcao3");';
+	$mensagens = $xmlObjLimite->roottag->tags[1]->tags;
+	// Mensagens de alerta
+	$msg = Array();
+	foreach( $mensagens as $mensagem ) {
+		$msg[] = getByTagName($mensagem->tags,'dsmensag');
+	}
+	$stringArrayMsg = implode( "|", $msg);
+	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

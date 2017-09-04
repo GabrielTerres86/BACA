@@ -198,7 +198,9 @@
 							         
 			    02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
-							 (Adriano - P339).	 
+							 (Adriano - P339).
+
+				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
 
 .............................................................................*/
 
@@ -4210,3 +4212,199 @@ PROCEDURE busca-produtos:
 
 END PROCEDURE.
 
+PROCEDURE busca-crapass:
+    
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmprimtl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-crapass.
+
+    DEFINE VARIABLE aux_nrregist AS INTEGER     NO-UNDO.
+
+    ASSIGN aux_nrregist = par_nrregist.
+    
+    DO ON ERROR UNDO, RETURN:
+       
+       EMPTY TEMP-TABLE tt-crapass.
+       
+       IF par_nrcpfcgc > 0 AND par_nrdconta = 0 THEN
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper              AND
+                       crapass.inpessoa = par_inpessoa              AND
+                       crapass.nrcpfcgc = par_nrcpfcgc              AND
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  
+                       NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.
+       ELSE
+       IF par_nrdconta > 0 AND par_nrcpfcgc = 0 THEN
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper AND
+                       crapass.inpessoa = par_inpessoa AND
+                       crapass.nrdconta = par_nrdconta AND                       
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.    
+       ELSE
+       IF par_nrdconta > 0 AND par_nrcpfcgc > 0 THEN
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper AND
+                       crapass.inpessoa = par_inpessoa AND
+                       crapass.nrdconta = par_nrdconta AND   
+                       crapass.nrcpfcgc = par_nrcpfcgc AND
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.              
+       ELSE
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper              AND
+                       crapass.inpessoa = par_inpessoa              AND
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.
+    END.
+
+    RETURN "OK".
+
+END PROCEDURE.
