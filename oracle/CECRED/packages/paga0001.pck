@@ -2004,6 +2004,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
   --Tabela de Memoria para desconto titulo
   vr_tab_descontar typ_tab_titulos;
+  --
+  vr_assin_conjunta NUMBER(1);
 
   /* Funcao para buscar a data do dia */
   FUNCTION fn_busca_datdodia (pr_cdcooper IN crapcop.cdcooper%type) RETURN DATE IS
@@ -2418,7 +2420,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                     pr_tab_limite => vr_tab_limite, 
                                     pr_tab_internet => vr_tab_internet, 
                                     pr_cdcritic => vr_cdcritic, 
-                                    pr_dscritic => vr_dscritic);                                    
+                                    pr_dscritic => vr_dscritic
+                                   ,pr_assin_conjunta => vr_assin_conjunta);                                    
       IF (nvl(vr_cdcritic,0) <> 0 OR 
         TRIM(vr_dscritic) IS NOT NULL) THEN
         RAISE vr_exc_erro;
@@ -5677,7 +5680,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
                                        ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                        ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                                       ,pr_dscritic => vr_dscritic);        --Descricao do erro;
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
 
          IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           /* Se for a primeira execução da DEBNET/CRPS509 */
@@ -11385,7 +11389,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                       ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
                                       ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                       ,pr_cdcritic => vr_cdcritic          --Código do erro
-                                      ,pr_dscritic => vr_dscritic);        --Descricao do erro;
+                                      ,pr_dscritic => vr_dscritic
+                                      ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
 
         IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           --> Se for a primeira execução da DEBNET/CRPS509 DEBSIC/CRPS642
@@ -13067,7 +13072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
         IF vr_idagenda = 1  THEN /* Debito nesta data */
           --Se data pagamento menor data movimento
-          IF Trunc(vr_dtmvtopg) <= Trunc(pr_dtmvtolt)  AND
+          IF Trunc(vr_dtmvtopg) < Trunc(pr_dtmvtolt)  AND
              (Trunc(vr_dtmvtopg) < Trunc(SYSDATE) OR vr_hratual > vr_hrlimite) THEN
             --Atualiza flag alterar para true
             vr_flgalter := TRUE;
@@ -13099,9 +13104,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
 																											,pr_dtmvtolt => TRUNC(SYSDATE) --> Data do movimento
 																											,pr_tipo     => 'P');
-						IF Trunc(vr_dtmvtopg) <= Trunc(SYSDATE) OR
+						IF Trunc(vr_dtmvtopg) < Trunc(SYSDATE) OR
 							 (Trunc(pr_dtmvtolt) > Trunc(SYSDATE)      AND
-								Trunc(vr_dtmvtopg) <= Trunc(pr_dtmvtolt) AND
+								Trunc(vr_dtmvtopg) < Trunc(pr_dtmvtolt) AND
 								vr_dtmvtopg <> vr_dtauxili               AND --Verificarcao de final de semana ou feriado
 											pr_dssgproc = 'NAO') THEN
 							--Atualizar flag para true
@@ -22925,7 +22930,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
                                        ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                        ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                                       ,pr_dscritic => vr_dscritic);        --Descricao do erro;
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
    
         IF vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
            
