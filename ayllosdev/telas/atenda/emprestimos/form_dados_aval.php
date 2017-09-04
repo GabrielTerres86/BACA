@@ -9,6 +9,7 @@
  *                001: [15/07/2014] Incluso novos campos inpessoa e dtnascto (Daniel).
  *                002: [09/09/2014] Projeto Automatização de Consultas em Propostas de Crédito(Jonata-RKAM).
  *                003: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
+ *                004: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */	
  ?>
 
@@ -42,10 +43,6 @@
 			<option value="CT">CT</option>
 		</select>
 		<input name="nrdocava" id="nrdocava" type="text" value="" />
-		
-		<label for="dsnacion">Nacio.:</label>
-		<input name="dsnacion" id="dsnacion" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />	
 		
         <label for="inpessoa">Tp Nat.:</label>
@@ -54,6 +51,13 @@
 			<option value="1" >1 - Fisica</option>
 			<option value="2" >2 - Juridica</option>
 		</select>	
+        <br />
+        
+		<label for="cdnacion">Nacio.:</label>
+        <input name="cdnacion" id="cdnacion" type="text" />
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsnacion" id="dsnacion" type="text" value="" />
+
 		<label for="dtnascto">Data Nasc.:</label>
 		<input name="dtnascto" id="dtnascto" type="text" value="" />
 		<br />		

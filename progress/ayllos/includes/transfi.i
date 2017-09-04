@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah
-   Data    : Outubro/91                        Ultima atualizacao: 12/08/2015
+   Data    : Outubro/91                        Ultima atualizacao: 17/07/2017
 
    Dados referentes ao programa:
 
@@ -159,6 +159,12 @@
               12/08/2015 - Projeto Reformulacao cadastral
                            Eliminado o campo nmdsecao (Tiago Castro - RKAM).
 
+              19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                           PRJ339 - CRM (Odirlei-AMcom)  
+                           
+              17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)               
+                           
 .............................................................................*/
 
 /* Handle para a BO */
@@ -885,7 +891,7 @@ PROCEDURE proc_duplica:
                crapass.nrcadast = crabass.nrcadast
                crapass.nmprimtl = crabass.nmprimtl
                crapass.dtnasctl = crabass.dtnasctl
-               crapass.dsnacion = crabass.dsnacion
+               crapass.cdnacion = crabass.cdnacion
                crapass.dsproftl = crabass.dsproftl
                crapass.dtadmiss = crabass.dtadmiss
                crapass.dtdemiss = crabass.dtdemiss
@@ -894,7 +900,7 @@ PROCEDURE proc_duplica:
                crapass.inpessoa = crabass.inpessoa
                crapass.tpdocptl = crabass.tpdocptl
                crapass.nrdocptl = crabass.nrdocptl
-               crapass.cdoedptl = crabass.cdoedptl
+               crapass.idorgexp = crabass.idorgexp
                crapass.cdufdptl = crabass.cdufdptl
                crapass.dtemdptl = crabass.dtemdptl
                crapass.nmpaiptl = crabass.nmpaiptl
@@ -973,7 +979,7 @@ PROCEDURE proc_duplica:
                    crapavt.cdufresd    = crabavt.cdufresd
                    crapavt.dtmvtolt    = crabavt.dtmvtolt
                    crapavt.cdcooper    = crabavt.cdcooper
-                   crapavt.dsnacion    = crabavt.dsnacion
+                   crapavt.cdnacion    = crabavt.cdnacion
                    crapavt.nrendere    = crabavt.nrendere
                    crapavt.complend    = crabavt.complend
                    crapavt.nmbairro    = crabavt.nmbairro
@@ -984,7 +990,7 @@ PROCEDURE proc_duplica:
                    crapavt.cdagenci    = crabavt.cdagenci
                    crapavt.dsproftl    = crabavt.dsproftl
                    crapavt.nrdctato    = crabavt.nrdctato
-                   crapavt.cdoeddoc    = crabavt.cdoeddoc
+                   crapavt.idorgexp    = crabavt.idorgexp
                    crapavt.dtemddoc    = crabavt.dtemddoc
                    crapavt.cdufddoc    = crabavt.cdufddoc
                    crapavt.dtvalida    = crabavt.dtvalida
@@ -1007,7 +1013,7 @@ PROCEDURE proc_duplica:
                         crapttl.nmextttl = crapass.nmprimtl
                         crapttl.inpessoa = crapass.inpessoa
                         crapttl.nrcpfcgc = crapass.nrcpfcgc
-                        crapttl.dsnacion = crapass.dsnacion 
+                        crapttl.cdnacion = crapass.cdnacion 
                         crapttl.dtnasttl = crapass.dtnasctl
                         crapttl.cdsexotl = crabttl.cdsexotl
                         crapttl.cdgraupr = 0
@@ -1016,7 +1022,7 @@ PROCEDURE proc_duplica:
                         crapttl.dsproftl = crapass.dsproftl
                         crapttl.tpdocttl = crabttl.tpdocttl
                         crapttl.nrdocttl = crabttl.nrdocttl
-                        crapttl.cdoedttl = crabttl.cdoedttl
+                        crapttl.idorgexp = crabttl.idorgexp
                         crapttl.cdufdttl = crabttl.cdufdttl
                         crapttl.dtemdttl = crabttl.dtemdttl
                         crapttl.nmmaettl = crabttl.nmmaettl
@@ -1039,7 +1045,7 @@ PROCEDURE proc_duplica:
                                  crapcje.dtnasccj = crabcje.dtnasccj
                                  crapcje.tpdoccje = crabcje.tpdoccje
                                  crapcje.nrdoccje = crabcje.nrdoccje
-                                 crapcje.cdoedcje = crabcje.cdoedcje
+                                 crapcje.idorgexp = crabcje.idorgexp
                                  crapcje.cdufdcje = crabcje.cdufdcje
                                  crapcje.dtemdcje = crabcje.dtemdcje
                                  crapcje.grescola = crabcje.grescola

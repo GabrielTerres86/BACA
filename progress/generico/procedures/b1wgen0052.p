@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 16/03/2016
+    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
   
     Dados referentes ao programa:
   
@@ -100,6 +100,8 @@
                              tipo 2 (Lucas Ranghetti #391492)
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                   - Inclusão do parametro CDAGENCI para a funcao GRAVA_DADOS
+
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
                 07/07/2017 - Opcao D nao estava funcionando corretamente, sempre retornava erro na
                              gravacao dos dados. Foi incluida opcao D novamente na rotina e tratado
@@ -513,7 +515,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
@@ -725,7 +727,7 @@ PROCEDURE Valida_Dados:
               INPUT par_dtnasctl,
               INPUT par_cdsexotl,
               INPUT par_tpnacion,
-              INPUT par_dsnacion,
+              INPUT par_cdnacion,
               INPUT par_dsnatura,
               INPUT par_cdufnatu,
               INPUT par_cdestcvl,
@@ -848,7 +850,7 @@ PROCEDURE Valida_Dados:
                                        INPUT tt-crapavt.dtnascto,
                                        INPUT tt-crapavt.cdsexcto,
                                        INPUT tt-crapavt.cdestcvl,
-                                       INPUT tt-crapavt.dsnacion,
+                                       INPUT tt-crapavt.cdnacion,
                                        INPUT tt-crapavt.dsnatura,
                                        INPUT tt-crapavt.nrcepend,
                                        INPUT tt-crapavt.dsendres[1],
@@ -1000,7 +1002,7 @@ PROCEDURE Valida_Dados:
                                          INPUT tt-resp.dtnascin,
                                          INPUT tt-resp.cddosexo,
                                          INPUT tt-resp.cdestciv,
-                                         INPUT tt-resp.dsnacion,
+                                         INPUT tt-resp.cdnacion,
                                          INPUT tt-resp.dsnatura,
                                          INPUT tt-resp.cdcepres,
                                          INPUT tt-resp.dsendres,
@@ -1546,7 +1548,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
@@ -2555,7 +2557,7 @@ PROCEDURE Grava_Dados:
                  INPUT par_dtcnscpf,
                  INPUT par_dtnasctl,
                  INPUT par_tpnacion,
-                 INPUT par_dsnacion,
+                 INPUT par_cdnacion,
                  INPUT par_dsnatura,
                  INPUT par_cdufnatu,
                  INPUT par_cdocpttl,
@@ -2642,7 +2644,7 @@ PROCEDURE Grava_Dados:
               INPUT par_dtcnscpf,
               INPUT par_dtnasctl,
               INPUT par_tpnacion,
-              INPUT par_dsnacion,
+              INPUT par_cdnacion,
               INPUT par_dsnatura,
               INPUT par_cdufnatu,
               INPUT par_cdocpttl,
@@ -2758,7 +2760,7 @@ PROCEDURE Grava_Dados:
                              INPUT tt-resp.dtnascin,
                              INPUT tt-resp.cddosexo,
                              INPUT tt-resp.cdestciv,
-                             INPUT tt-resp.dsnacion,
+                             INPUT tt-resp.cdnacion,
                              INPUT tt-resp.dsnatura,
                              INPUT INT(tt-resp.cdcepres),
                              INPUT tt-resp.dsendres,

@@ -145,7 +145,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
     ,nrcadast  crapass.nrcadast%type
     ,nmprimtl  crapass.nmprimtl%type
     ,dtnasctl  crapass.dtnasctl%type
-    ,dsnacion  crapass.dsnacion%type
+    ,dsnacion  crapnac.dsnacion%type
     ,dsproftl  crapass.dsproftl%type
     ,dtadmiss  crapass.dtadmiss%type
     ,dtdemiss  crapass.dtdemiss%TYPE
@@ -195,9 +195,9 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
     ,dtedvmto  crapass.dtedvmto%type
     ,qtfolmes  crapass.qtfolmes%type
     ,tpextcta  crapass.tpextcta%type
-    ,cdoedptl  crapass.cdoedptl%type
-    ,cdoedstl  crapttl.cdoedttl%type
-    ,cdoedrsp  crapcrl.dsorgemi%type
+    ,cdoedptl  tbgen_orgao_expedidor.cdorgao_expedidor%TYPE
+    ,cdoedstl  tbgen_orgao_expedidor.cdorgao_expedidor%TYPE
+    ,cdoedrsp  tbgen_orgao_expedidor.cdorgao_expedidor%TYPE
     ,cdufdptl  crapass.cdufdptl%type
     ,cdufdstl  crapttl.cdufdttl%type
     ,cdufdrsp  crapcrl.cdufiden%type
@@ -212,7 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
     ,tpavsdeb  crapass.tpavsdeb%type
     ,iniscpmf  crapass.iniscpmf%type
     ,nrctaprp  crapass.nrctaprp%type
-    ,cdoedttl  crapttl.cdoedttl%type
+    ,cdoedttl  tbgen_orgao_expedidor.cdorgao_expedidor%TYPE
     ,cdufdttl  crapttl.cdufdttl%type
     ,dsfilttl  VARCHAR2(134)
     ,dtnasttl  crapttl.dtnasttl%type
@@ -1311,6 +1311,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                          ( Belli - Envolti - #667957)
   --
+  --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+  --
+  --             24/07/2017 - Alterar cdoedptl para idorgexp.
+  --                          PRJ339-CRM  (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
     DECLARE
 
@@ -1334,7 +1338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             ,crapttl.dtnasttl
             ,crapttl.nmpaittl
             ,crapttl.nrcpfcgc
-            ,crapttl.cdoedttl
+            ,crapttl.idorgexp
             ,crapttl.cdufdttl
             ,crapttl.nmmaettl
             ,crapttl.dtemdttl
@@ -1358,7 +1362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       CURSOR cr_crapcrl(pr_cdcooper IN rw_crapass.cdcooper%TYPE
                        ,pr_nrctamen IN rw_crapass.nrdconta%TYPE)IS
-      SELECT crapcrl.dsorgemi
+      SELECT crapcrl.idorgexp
             ,crapcrl.cdufiden
             ,crapcrl.nmrespon
             ,crapcrl.nrcpfmen
@@ -1402,6 +1406,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_dstransa VARCHAR2(1000);
       vr_nrdrowid ROWID;
       vr_index    PLS_INTEGER;
+      vr_dsnacion crapnac.dsnacion%TYPE;
+      vr_cdorgexp tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
+      vr_nmorgexp tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
+
 
       --Variaveis de Erro
       vr_cdcritic integer;
@@ -1512,6 +1520,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         CLOSE cr_crapcem;
 
         vr_index:= pr_tab_associado.COUNT + 1;
+
+        -- Busca a Nacionalidade
+        vr_dsnacion := '';
+        OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
+        FETCH cr_crapnac INTO vr_dsnacion;
+        CLOSE cr_crapnac;
+
+        --> Buscar orgão expedidor
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
+        END IF;                                     
+
         pr_tab_associado(vr_index).nrmatric:= rw_crapass.nrmatric;
         pr_tab_associado(vr_index).indnivel:= rw_crapass.indnivel;
         pr_tab_associado(vr_index).nrdconta:= rw_crapass.nrdconta;
@@ -1519,7 +1546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_tab_associado(vr_index).nrcadast:= rw_crapass.nrcadast;
         pr_tab_associado(vr_index).nmprimtl:= rw_crapass.nmprimtl;
         pr_tab_associado(vr_index).dtnasctl:= rw_crapass.dtnasctl;
-        pr_tab_associado(vr_index).dsnacion:= rw_crapass.dsnacion;
+        pr_tab_associado(vr_index).dsnacion:= vr_dsnacion;
         pr_tab_associado(vr_index).dsproftl:= rw_crapass.dsproftl;
         pr_tab_associado(vr_index).dtadmiss:= rw_crapass.dtadmiss;
         pr_tab_associado(vr_index).dtdemiss:= rw_crapass.dtdemiss;
@@ -1569,9 +1596,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_tab_associado(vr_index).dtedvmto:= rw_crapass.dtedvmto;
         pr_tab_associado(vr_index).qtfolmes:= rw_crapass.qtfolmes;
         pr_tab_associado(vr_index).tpextcta:= rw_crapass.tpextcta;
-        pr_tab_associado(vr_index).cdoedptl:= rw_crapass.cdoedptl;
-        pr_tab_associado(vr_index).cdoedstl:= rw_crapttl2.cdoedttl;
-        pr_tab_associado(vr_index).cdoedrsp:= rw_crapcrl.dsorgemi;
+        pr_tab_associado(vr_index).cdoedptl:= vr_cdorgexp;
+        
+        vr_cdorgexp := NULL;
+        vr_nmorgexp := NULL;
+        --> Buscar orgão expedidor
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl2.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
+        END IF; 
+        
+        pr_tab_associado(vr_index).cdoedstl:= vr_cdorgexp;
+        
+        vr_cdorgexp := NULL;
+        vr_nmorgexp := NULL;
+        --> Buscar orgão expedidor
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapcrl.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
+        END IF; 
+        
+        pr_tab_associado(vr_index).cdoedrsp:= vr_cdorgexp;
+        
         pr_tab_associado(vr_index).cdufdptl:= rw_crapass.cdufdptl;
         pr_tab_associado(vr_index).cdufdstl:= rw_crapttl2.cdufdttl;
         pr_tab_associado(vr_index).cdufdrsp:= rw_crapcrl.cdufiden;
@@ -1586,7 +1644,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_tab_associado(vr_index).tpavsdeb:= rw_crapass.tpavsdeb;
         pr_tab_associado(vr_index).iniscpmf:= rw_crapass.iniscpmf;
         pr_tab_associado(vr_index).nrctaprp:= rw_crapass.nrctaprp;
-        pr_tab_associado(vr_index).cdoedttl:= rw_crapttl3.cdoedttl;
+        
+        vr_cdorgexp := NULL;
+        vr_nmorgexp := NULL;
+        --> Buscar orgão expedidor
+        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl3.idorgexp, 
+                                          pr_cdorgao_expedidor => vr_cdorgexp, 
+                                          pr_nmorgao_expedidor => vr_nmorgexp, 
+                                          pr_cdcritic          => vr_cdcritic, 
+                                          pr_dscritic          => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdorgexp := NULL;
+          vr_nmorgexp := NULL; 
+        END IF; 
+        
+        pr_tab_associado(vr_index).cdoedttl:= vr_cdorgexp;
+        
         pr_tab_associado(vr_index).cdufdttl:= rw_crapttl3.cdufdttl;
         pr_tab_associado(vr_index).dsfilttl:= rw_crapttl3.nmpaittl || ' - ' || rw_crapttl3.nmmaettl;
         pr_tab_associado(vr_index).dtnasttl:= rw_crapttl3.dtnasttl;

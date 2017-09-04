@@ -84,10 +84,15 @@
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                           PRJ339 - CRM (Odirlei-AMcom)
+                           
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)              
 ............................................................................. */
 
 /* Variaveis genericas da rotina */
@@ -107,7 +112,8 @@ DEF        VAR aux_inhabmen LIKE crapttl.cdgraupr                    NO-UNDO.
 DEF        VAR log_nmprimtl LIKE crapass.nmprimtl                    NO-UNDO.
 DEF        VAR log_dtnasctl LIKE crapass.dtnasctl                    NO-UNDO.
 DEF        VAR log_nrcpfcgc LIKE crapass.nrcpfcgc                    NO-UNDO.
-DEF        VAR log_dsnacion LIKE crapass.dsnacion                    NO-UNDO.
+DEF        VAR log_cdnacion LIKE crapnac.cdnacion                    NO-UNDO.
+DEF        VAR log_dsnacion LIKE crapnac.dsnacion                    NO-UNDO.
 DEF        VAR log_cdestcvl LIKE crapttl.cdestcvl                    NO-UNDO.
 DEF        VAR log_dsproftl LIKE crapass.dsproftl                    NO-UNDO.
 DEF        VAR log_tpdocptl LIKE crapass.tpdocptl                    NO-UNDO.
@@ -174,8 +180,11 @@ DEF        VAR log_inadimpl LIKE crapass.inadimpl                    NO-UNDO.
 DEF        VAR log_inlbacen LIKE crapass.inlbacen                    NO-UNDO.
 DEF        VAR log_tpextcta LIKE crapass.tpextcta                    NO-UNDO.
 DEF        VAR log_cddsenha LIKE crapsnh.cddsenha                    NO-UNDO.
-DEF        VAR log_cdoedptl LIKE crapass.cdoedptl                    NO-UNDO.
+DEF        VAR log_cdoedptl AS CHARACTER                             NO-UNDO.
 DEF        VAR log_cdufdptl LIKE crapass.cdufdptl                    NO-UNDO.
+DEF        VAR log_cdufdstl LIKE crapass.cdufdstl                    NO-UNDO.
+DEF        VAR log_cdufdrsp LIKE crapass.cdufdrsp                    NO-UNDO.
+DEF        VAR log_nmrespon LIKE crapass.nmrespon                    NO-UNDO.
 DEF        VAR log_inhabmen LIKE crapttl.inhabmen                    NO-UNDO.
 DEF        VAR log_dtemdptl LIKE crapass.dtemdptl                    NO-UNDO.
 DEF        VAR log_vlsalari LIKE crapttl.vlsalari                    NO-UNDO.

@@ -21,6 +21,9 @@
                             
                27/07/2015 - Reformulacao cadastral (Gabriel-RKAM).             
                
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom) 
+               
 			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).          
@@ -229,6 +232,9 @@ PROCEDURE valores_entrada:
                     WHEN "dsnacion" THEN
                         ASSIGN tt-resp.dsnacion = 
                             tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                        ASSIGN tt-resp.cdnacion = 
+                            INTE(tt-param-i.valorCampo).        
                     WHEN "dsnatura" THEN
                         ASSIGN tt-resp.dsnatura = 
                             tt-param-i.valorCampo.
@@ -370,7 +376,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_dtnasttl, 
                              INPUT aux_cdsexotl, 
                              INPUT aux_tpnacion, 
-                             INPUT aux_dsnacion, 
+                             INPUT aux_cdnacion, 
                              INPUT aux_dsnatura,
                              INPUT aux_cdufnatu, 
                              INPUT aux_inhabmen, 
@@ -460,7 +466,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_tpdocttl,
                             INPUT aux_cdufdttl,
                             INPUT aux_cdsexotl,
-                            INPUT aux_dsnacion,
+                            INPUT aux_cdnacion,
                             INPUT aux_cdestcvl,
                             INPUT aux_grescola,
                             INPUT aux_inpessoa,

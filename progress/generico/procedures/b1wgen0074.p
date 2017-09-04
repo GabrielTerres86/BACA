@@ -193,10 +193,15 @@
 				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
 				             (Incorporacao Transposul). (Fabricio)
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+                             
 				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -4803,9 +4808,9 @@ PROCEDURE Critica_Cadastro_Pf:
     CriticaPf: DO ON ERROR UNDO CriticaPf, LEAVE CriticaPf:
 
         FOR EACH craxttl FIELDS(cdcooper idseqttl nrdconta nmextttl nrcpfcgc 
-                                dtcnscpf cdsitcpf tpdocttl nrdocttl cdoedttl 
+                                dtcnscpf cdsitcpf tpdocttl nrdocttl idorgexp 
                                 cdufdttl dtemdttl dtnasttl cdsexotl tpnacion 
-                                dsnacion dsnatura inhabmen dthabmen cdgraupr 
+                                cdnacion dsnatura inhabmen dthabmen cdgraupr 
                                 cdestcvl grescola nmtalttl nmmaettl nmpaittl 
                                 cdnatopc cdocpttl tpcttrab cdempres nmextemp 
                                 dsproftl cdnvlcgo cdfrmttl cdufnatu)
@@ -4850,7 +4855,7 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Documento", 
                       INPUT {&TT-IDENT} ).
 
-            IF  craxttl.cdoedttl = "" THEN
+            IF  craxttl.idorgexp = 0 THEN
                 RUN Trata_Critica
                     ( INPUT craxttl.idseqttl,
                       INPUT "Orgao Emissor do Documento",
@@ -4886,7 +4891,7 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Tipo Nacionalidade", 
                       INPUT {&TT-IDENT} ).
 
-            IF  craxttl.dsnacion = "" THEN
+            IF  craxttl.cdnacion = 0 THEN
                 RUN Trata_Critica
                     ( INPUT craxttl.idseqttl,
                       INPUT "Nacionalidade", 
@@ -5288,8 +5293,8 @@ PROCEDURE Critica_Cadastro_Pj:
                   INPUT "Orgao de Registro",
                   INPUT {&TT-REGIS} ).
 
-        FOR FIRST crabavt FIELDS(nrcpfcgc nmdavali tpdocava nrdocava cdoeddoc
-                                 cdufddoc dtemddoc dtnascto dsnacion dsnatura 
+        FOR FIRST crabavt FIELDS(nrcpfcgc nmdavali tpdocava nrdocava idorgexp
+                                 cdufddoc dtemddoc dtnascto cdnacion dsnatura 
                                  nrcepend dsendres nmbairro nmcidade cdufresd 
                                  nmmaecto dsproftl dtvalida)
                           WHERE crabavt.cdcooper = par_cdcooper   AND
@@ -5321,7 +5326,7 @@ PROCEDURE Critica_Cadastro_Pj:
                       INPUT "Documento do Representante/Procurador",
                       INPUT {&TT-PROCU} ).
 
-            IF  crabavt.cdoeddoc = "" THEN
+            IF  crabavt.idorgexp = 0 THEN
                 RUN Trata_Critica
                     ( INPUT 0,
                       INPUT "Orgao Emissor do Documento",
@@ -5345,7 +5350,7 @@ PROCEDURE Critica_Cadastro_Pj:
                       INPUT "Data de Nascimento do Representante/Procurador",
                       INPUT {&TT-PROCU} ).
 
-            IF  crabavt.dsnacion = "" THEN
+            IF  crabavt.cdnacion = 0 THEN
                 RUN Trata_Critica
                     ( INPUT 0,
                       INPUT "Nacionalidade do Representante/Procurador",

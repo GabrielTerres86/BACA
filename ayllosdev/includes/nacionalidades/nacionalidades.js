@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 13/05/2016
  * OBJETIVO     : Biblioteca de funções da tela nacionalidades
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * --------------
  */
 
@@ -270,8 +270,13 @@ function selecionaNacionalidade(){
 	if ( $('table > tbody > tr', 'div#divConteudo div.divRegistros').hasClass('corSelecao') ) {
 		$('table > tbody > tr', 'div#divConteudo div.divRegistros').each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
-				$("#dsnacion","#frmFisico").val($(this).text().trim());	
+                if (glb_nomeForm != '') {
+                    $("#cdnacion","#" + glb_nomeForm).val($(this).attr('cdnacion'));
+                    $("#dsnacion","#" + glb_nomeForm).val($(this).text().trim());
+                } else {
+                    $("#cdnacion").val($(this).attr('cdnacion'));
 				$("#dsnacion").val($(this).text().trim());	
+                }
 				fechaRotina($('#divUsoGenerico'));
 			}
 		});

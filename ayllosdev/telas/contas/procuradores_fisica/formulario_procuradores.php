@@ -9,6 +9,8 @@
  *							   dshabment (Adriano).
  *
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *                31/07/2017 - Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
  *
  */	
 ?>
@@ -80,12 +82,14 @@
 			<label for="sexoFem" class="radio">Fem.</label>
 			<br />
 				
-			<label for="dsnacion" class="rotulo rotulo-70">Nacional.:</label>
-			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo getByTagName($registros[0]->tags,'dsnacion') ?>" />
+			<label for="cdnacion" class="rotulo rotulo-70">Nacional.:</label>
+			<input name="cdnacion" id="cdnacion" type="text" class="pesquisa" maxlength="15" value="<? echo getByTagName($registros[0]->tags,'cdnacion') ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="dsnacion" id="dsnacion" type="text" class="alphanum pesquisa" maxlength="15" value="<? echo getByTagName($registros[0]->tags,'dsnacion') ?>" />
+			<br />
 			
-			<label for="dsnatura" style="margin-left:5px;">Natural de:</label>
-			<input name="dsnatura" id="dsnatura" type="text" class="alphanum pesquisa" maxlength="25" value="<? echo getByTagName($registros[0]->tags,'dsnatura') ?>" />
+			<label for="dsnatura" class="rotulo rotulo-70">Natural de:</label>
+			<input name="dsnatura" id="dsnatura" type="text" class="alphanum pesquisa" maxlength="50" value="<? echo getByTagName($registros[0]->tags,'dsnatura') ?>" />
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		</fieldset>
 		

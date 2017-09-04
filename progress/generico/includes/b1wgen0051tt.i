@@ -2,7 +2,7 @@
 
     Programa: b1wgen0051tt.i
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 24/11/2015   
+    Data    : Janeiro/2010                   Ultima atualizacao: 21/07/2017
 
     Objetivo  : Definicao das Temp-Tables
 
@@ -18,6 +18,13 @@
                 
                 24/11/2015 - Incluido campo idrspleg na tt-crapavt, 
                              PRJ. Ass. Conjunta (Jean Michel).        
+                             
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)             
+                             
+                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)               
+                             
 ..............................................................................*/
 
 
@@ -83,7 +90,7 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD nmdavali LIKE crapavt.nmdavali
     FIELD tpdocava LIKE crapavt.tpdocava
     FIELD nrdocava LIKE crapavt.nrdocava
-    FIELD cdoeddoc LIKE crapavt.cdoeddoc
+    FIELD cdoeddoc AS CHAR 
     FIELD cdufddoc LIKE crapavt.cdufddoc
     FIELD dtemddoc LIKE crapavt.dtemddoc
     FIELD dsproftl LIKE crapavt.dsproftl
@@ -91,7 +98,7 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD cdsexcto LIKE crapavt.cdsexcto
     FIELD cdestcvl LIKE crapavt.cdestcvl
     FIELD dsestcvl AS CHAR
-    FIELD dsnacion LIKE crapavt.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapavt.dsnatura
     FIELD nmmaecto LIKE crapavt.nmmaecto
     FIELD nmpaicto LIKE crapavt.nmpaicto
@@ -124,7 +131,9 @@ DEFINE TEMP-TABLE tt-crapavt NO-UNDO
     FIELD vlrdobem LIKE crapavt.vlrdobem
     FIELD tpctrato LIKE crapavt.tpctrato
     FIELD fltemcrd AS INT  /* Indica que o representante possui cartão */
-    FIELD idrspleg AS INT.
+    FIELD idrspleg AS INT
+    FIELD idorgexp AS CHAR 
+    FIELD cdnacion LIKE crapavt.cdnacion.
 
 DEF TEMP-TABLE tt-bens 
     FIELD dsrelbem LIKE crapbem.dsrelbem

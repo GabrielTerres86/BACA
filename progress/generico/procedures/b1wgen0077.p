@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0077.p                  
     Autor(a): Jose Luis Marchezoni, Gabriel Capoia (DB1)
-    Data    : Setembro/2010                      Ultima atualizacao: 25/02/2016
+    Data    : Setembro/2010                      Ultima atualizacao: 19/04/2017
   
     Dados referentes ao programa:
   
@@ -43,6 +43,10 @@
                              para que gere mensagem apenas para contas que nao
                              tenham revisao cadastral a um ano conforme solicitado
                              no chamado 393002 (Kelvin).    
+                             
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)      
+                             
 .............................................................................*/
 
 
@@ -297,7 +301,7 @@ PROCEDURE Recebe_Dados:
     DEF  VAR aux_dtnascto AS DATE                          NO-UNDO.
     DEF  VAR aux_cdsexcto AS INTE                          NO-UNDO.
     DEF  VAR aux_cdestcvl AS INTE                          NO-UNDO.
-    DEF  VAR aux_dsnacion AS CHAR                          NO-UNDO.
+    DEF  VAR aux_cdnacion AS INTE                          NO-UNDO.
     DEF  VAR aux_dsnatura AS CHAR                          NO-UNDO.
     DEF  VAR aux_nrcepend AS INTE                          NO-UNDO.
     DEF  VAR aux_dsendere AS CHAR                          NO-UNDO.
@@ -894,7 +898,7 @@ PROCEDURE Recebe_Dados:
                               aux_dtnascto = tt-aux-crapcrl.dtnascin
                               aux_cdsexcto = tt-aux-crapcrl.cddosexo 
                               aux_cdestcvl = tt-aux-crapcrl.cdestciv 
-                              aux_dsnacion = tt-aux-crapcrl.dsnacion 
+                              aux_cdnacion = tt-aux-crapcrl.cdnacion 
                               aux_dsnatura = tt-aux-crapcrl.dsnatura 
                               aux_nrcepend = tt-aux-crapcrl.cdcepres
                               aux_dsendere = tt-aux-crapcrl.dsendres
@@ -925,7 +929,7 @@ PROCEDURE Recebe_Dados:
                           aux_dtnascto = tt-crapcrl.dtnascin 
                           aux_cdsexcto = tt-crapcrl.cddosexo 
                           aux_cdestcvl = tt-crapcrl.cdestciv 
-                          aux_dsnacion = tt-crapcrl.dsnacion 
+                          aux_cdnacion = tt-crapcrl.cdnacion 
                           aux_dsnatura = tt-crapcrl.dsnatura 
                           aux_nrcepend = tt-crapcrl.cdcepres 
                           aux_dsendere = tt-crapcrl.dsendres 
@@ -968,7 +972,7 @@ PROCEDURE Recebe_Dados:
                   INPUT aux_dtnascto,
                   INPUT aux_cdsexcto,
                   INPUT aux_cdestcvl,
-                  INPUT aux_dsnacion,
+                  INPUT aux_cdnacion,
                   INPUT aux_dsnatura,
                   INPUT aux_nrcepend,
                   INPUT aux_dsendere,
@@ -3100,7 +3104,7 @@ PROCEDURE Replica_Responsavel:
     DEF  VAR aux_dtnascto AS DATE                                   NO-UNDO.
     DEF  VAR aux_cdsexcto AS INTE                                   NO-UNDO.
     DEF  VAR aux_cdestcvl AS INTE                                   NO-UNDO.
-    DEF  VAR aux_dsnacion AS CHAR                                   NO-UNDO.
+    DEF  VAR aux_cdnacion AS INTE                                   NO-UNDO.
     DEF  VAR aux_dsnatura AS CHAR                                   NO-UNDO.
     DEF  VAR aux_nrcepend AS INTE                                   NO-UNDO.
     DEF  VAR aux_dsendere AS CHAR                                   NO-UNDO.
@@ -3179,7 +3183,7 @@ PROCEDURE Replica_Responsavel:
                                aux_dtnascto = tt-aux-crapcrl.dtnascin 
                                aux_cdsexcto = tt-aux-crapcrl.cddosexo 
                                aux_cdestcvl = tt-aux-crapcrl.cdestciv 
-                               aux_dsnacion = tt-aux-crapcrl.dsnacion 
+                               aux_cdnacion = tt-aux-crapcrl.cdnacion 
                                aux_dsnatura = tt-aux-crapcrl.dsnatura 
                                aux_nrcepend = tt-aux-crapcrl.cdcepres 
                                aux_dsendere = tt-aux-crapcrl.dsendres 
@@ -3209,7 +3213,7 @@ PROCEDURE Replica_Responsavel:
                           aux_dtnascto = tta-crapcrl.dtnascin 
                           aux_cdsexcto = tta-crapcrl.cddosexo 
                           aux_cdestcvl = tta-crapcrl.cdestciv 
-                          aux_dsnacion = tta-crapcrl.dsnacion 
+                          aux_cdnacion = tta-crapcrl.cdnacion 
                           aux_dsnatura = tta-crapcrl.dsnatura 
                           aux_nrcepend = tta-crapcrl.cdcepres 
                           aux_dsendere = tta-crapcrl.dsendres 
@@ -3259,7 +3263,7 @@ PROCEDURE Replica_Responsavel:
                   INPUT aux_dtnascto,                 
                   INPUT aux_cdsexcto,                 
                   INPUT aux_cdestcvl,                 
-                  INPUT aux_dsnacion,                 
+                  INPUT aux_cdnacion,                 
                   INPUT aux_dsnatura,                 
                   INPUT aux_nrcepend,                 
                   INPUT aux_dsendere,                 
@@ -3329,7 +3333,7 @@ PROCEDURE Replica_Responsavel:
                   INPUT aux_dtnascto,    
                   INPUT aux_cdsexcto,    
                   INPUT aux_cdestcvl,    
-                  INPUT aux_dsnacion,    
+                  INPUT aux_cdnacion,    
                   INPUT aux_dsnatura,    
                   INPUT aux_nrcepend,    
                   INPUT aux_dsendere,    

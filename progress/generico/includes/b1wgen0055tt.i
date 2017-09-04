@@ -18,6 +18,13 @@
 				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).             
+                
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)    
+
+                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)          
+
 ..............................................................................*/
 
                                                                              
@@ -28,7 +35,7 @@ DEFINE TEMP-TABLE tt-dados-fis NO-UNDO
     FIELD nrcpfcgc LIKE crapttl.nrcpfcgc
     FIELD dspessoa AS CHARACTER              
     FIELD dssitcpf AS CHARACTER              
-    FIELD cdoedttl LIKE crapttl.cdoedttl     
+    FIELD cdoedttl AS CHARACTER              
     FIELD dtnasttl LIKE crapttl.dtnasttl     
     FIELD destpnac AS CHARACTER              
     FIELD inhabmen LIKE crapttl.inhabmen    
@@ -69,7 +76,9 @@ DEFINE TEMP-TABLE tt-dados-fis NO-UNDO
     FIELD msgconta AS CHARACTER
     FIELD nrdeanos AS INT
     FIELD nrdmeses AS INT
-    FIELD dsdidade AS CHAR.
+    FIELD dsdidade AS CHAR
+    FIELD idorgexp AS INT 
+    FIELD cdnacion AS INTEGER.
                 
 &IF DEFINED(TT-LOG) <> 0 &THEN
 

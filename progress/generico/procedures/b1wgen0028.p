@@ -507,6 +507,8 @@
 				06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
 							 solicitado no chamado 645013. (Kelvin)
                 
+                12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+                
                 31/05/2017 - Adicao de funcionalidade para armazenagem da tabela de relacionamento
                              entre conta x conta cartao (Anderson).
 
@@ -3061,15 +3063,15 @@ PROCEDURE cadastra_novo_cartao:
              ASSIGN aux_cdcritic = 9
                     aux_dscritic = "".
 
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).                
-                    
-            RETURN "NOK".
-        END.
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,            /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).                
+                
+             RETURN "NOK".
+         END.       
 
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p
@@ -3484,7 +3486,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT par_nmcidav1,
                                                             INPUT par_cdufava1,
                                                             INPUT par_nrcepav1,
-                                                            INPUT "", /* Nacao */
+                                                            INPUT 0, /* Nacao */
                                                             INPUT 0,  /* Vl.Endiv*/
                                                             INPUT 0,  /* Vl.Rend */
                                                             INPUT par_nrender1, 
@@ -3509,7 +3511,7 @@ PROCEDURE cadastra_novo_cartao:
                                                             INPUT par_nmcidav2, 
                                                             INPUT par_cdufava2, 
                                                             INPUT par_nrcepav2,                                                    
-                                                            INPUT "", /* Nacao */
+                                                            INPUT 0, /* Nacao */
                                                             INPUT 0,  /* Vl.Endiv*/
                                                             INPUT 0,  /* Vl.Rend */
                                                             INPUT par_nrender2, 
@@ -8613,7 +8615,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nmcidav1,
                                  INPUT par_cdufava1,
                                  INPUT par_nrcepav1,
-                                 INPUT "", /* Nacao */
+                                 INPUT 0, /* Nacao */
                                  INPUT 0,  /* Vl.Endiv*/
                                  INPUT 0,  /* Vl.Rend */
                                  INPUT par_nrender1, 
@@ -8638,7 +8640,7 @@ PROCEDURE altera_limcred_cartao:
                                  INPUT par_nmcidav2,
                                  INPUT par_cdufava2,
                                  INPUT par_nrcepav2,
-                                 INPUT "", /* Nacao */
+                                 INPUT 0, /* Nacao */
                                  INPUT 0,  /* Vl.Endiv*/
                                  INPUT 0,  /* Vl.Rend */
                                  INPUT par_nrender2, 
@@ -10991,7 +10993,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "", /* Nacao */
+                                                    INPUT 0, /* Nacao */
                                                     INPUT 0,  /* Vl.Endiv*/
                                                     INPUT 0,  /* Vl.Rend */
                                                     INPUT par_nrender1, 
@@ -11016,7 +11018,7 @@ PROCEDURE efetua_entrega2via_cartao:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,                                                    
-                                                    INPUT "", /* Nacao */
+                                                    INPUT 0, /* Nacao */
                                                     INPUT 0,  /* Vl.Endiv*/
                                                     INPUT 0,  /* Vl.Rend */
                                                     INPUT par_nrender2, 
@@ -12143,7 +12145,7 @@ PROCEDURE renova_cartao:
                                             INPUT par_nmcidav1,
                                             INPUT par_cdufava1,
                                             INPUT par_nrcepav1,
-                                            INPUT "", /* Nacao */
+                                            INPUT 0, /* Nacao */
                                             INPUT 0,  /* Vl.Endiv*/
                                             INPUT 0,  /* Vl.Rend */
                                             INPUT par_nrender1, 
@@ -12168,7 +12170,7 @@ PROCEDURE renova_cartao:
                                             INPUT par_nmcidav2,
                                             INPUT par_cdufava2,
                                             INPUT par_nrcepav2,
-                                            INPUT "", /* Nacao */
+                                            INPUT 0, /* Nacao */
                                             INPUT 0,  /* Vl.Endiv*/
                                             INPUT 0,  /* Vl.Rend */
                                             INPUT par_nrender2, 
@@ -18367,7 +18369,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nmcidav1,
                                                       INPUT par_cdufava1,
                                                       INPUT par_nrcepav1,
-                                                      INPUT "", /* Nacao */
+                                                      INPUT 0, /* Nacao */
                                                       INPUT 0,  /* Vl.Endiv*/
                                                       INPUT 0,  /* Vl.Rend */
                                                       INPUT par_nrender1, 
@@ -18392,7 +18394,7 @@ PROCEDURE grava_dados_habilitacao:
                                                       INPUT par_nmcidav2, 
                                                       INPUT par_cdufava2, 
                                                       INPUT par_nrcepav2,
-                                                      INPUT "", /* Nacao */
+                                                      INPUT 0, /* Nacao */
                                                       INPUT 0,  /* Vl.Endiv*/
                                                       INPUT 0,  /* Vl.Rend */
                                                       INPUT par_nrender2, 
@@ -18445,7 +18447,7 @@ PROCEDURE grava_dados_habilitacao:
                                                          INPUT par_nmcidav1,
                                                          INPUT par_cdufava1,                                                         
                                                          INPUT par_nrcepav1,
-                                                         INPUT "", /* Nacao */
+                                                         INPUT 0, /* Nacao */
                                                          INPUT 0,  /* Vl.Endiv*/
                                                          INPUT 0,  /* Vl.Rend */
                                                          INPUT par_nrender1, 
@@ -18470,7 +18472,7 @@ PROCEDURE grava_dados_habilitacao:
                                                          INPUT par_nmcidav2, 
                                                          INPUT par_cdufava2, 
                                                          INPUT par_nrcepav2,
-                                                         INPUT "", /* Nacao */
+                                                         INPUT 0, /* Nacao */
                                                          INPUT 0,  /* Vl.Endiv*/
                                                          INPUT 0,  /* Vl.Rend */
                                                          INPUT par_nrender2, 

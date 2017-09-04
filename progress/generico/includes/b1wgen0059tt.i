@@ -84,7 +84,10 @@
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-relacionamento2 (Oscar).                
                              
                 17/08/2016 - Incluido campo txmensal na table tt-craplcr (Lombardi)
-                             
+                                        						 
+                31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
+                             PRJ339 - CRM (Odirlei-AMcom)                        
+  
 				02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							 (Adriano - P339).
@@ -169,7 +172,8 @@ DEFINE TEMP-TABLE tt-crapenc NO-UNDO LIKE crapenc.
 
 DEFINE TEMP-TABLE tt-crapnac NO-UNDO LIKE crapnac.
 
-DEFINE TEMP-TABLE tt-crapnat NO-UNDO LIKE crapnat.
+DEFINE TEMP-TABLE tt-crapnat 
+    FIELD dsnatura AS CHARACTER.
 
 DEFINE TEMP-TABLE tt-crapban NO-UNDO LIKE crapban.
 
@@ -350,7 +354,7 @@ DEF TEMP-TABLE tt-relacionamento NO-UNDO
     FIELD codigo    AS INTE
     FIELD descricao AS CHAR.
 DEF TEMP-TABLE tt-relacionamento2  NO-UNDO LIKE tt-relacionamento.
-
+    
 /*
 DEFINE TEMP-TABLE tt-crappfo NO-UNDO LIKE crappfo.
                                               

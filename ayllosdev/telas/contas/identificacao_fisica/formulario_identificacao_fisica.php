@@ -21,6 +21,7 @@
  * 012: [20/04/0217] Adriano	          : Ajuste para retirar o uso de campos removidos da tabela crapass, crapttl, crapjur e 
     							            ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
+ * 013: [25/04/2017] Odirlei(AMcom)	      : Alterado campo dsnacion para cdnacion. (Projeto 339)
  */	
 ?>
 <form name="frmDadosIdentFisica" id="frmDadosIdentFisica" class="formulario condensado">
@@ -111,10 +112,12 @@
 		<input name="destpnac" id="destpnac" type="text" value="<? echo getByTagName($IdentFisica,'destpnac') ?>" />
 		<br />
 		
-		<label for="dsnacion">Nacional.:</label>
-		<input name="dsnacion" id="dsnacion" type="text" maxlength="15" value="<? echo getByTagName($IdentFisica,'dsnacion') ?>" />
+        <label for="cdnacion">Nacional.:</label>
+        <input name="cdnacion" id="cdnacion" type="text" maxlength="5" class="codigo pesquisa" value="<? echo getByTagName($IdentFisica,'cdnacion') ?>" />        
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<input name="dsnacion" id="dsnacion" type="text" maxlength="15" value="<? echo getByTagName($IdentFisica,'dsnacion') ?>" />
 		
+		<br />
 		<label for="cdsexotl">Sexo:</label>
 		<input name="cdsexotl" type="radio" class="radio" value="1" <? if (getByTagName($IdentFisica,'cdsexotl') == '1') { echo ' checked'; } ?> />
 		<label for="sexoMas" class="radio">Masculino</label>

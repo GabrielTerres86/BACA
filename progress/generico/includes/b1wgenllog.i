@@ -112,9 +112,15 @@
                29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                             solicitado no chamado 402159 (Kelvin).
 
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+
 			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                            PRJ339 - CRM (Odirlei-AMcom)             
 
 .............................................................................*/ 
 
@@ -253,7 +259,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                      crapalt.dsaltera = crapalt.dsaltera + log_nmdcampo + ",".
             END.
     
-       IF   crapass.dsnacion <> log_dsnacion   THEN
+       IF   crapass.cdnacion <> log_cdnacion   THEN
             DO:
                 ASSIGN log_nmdcampo = "nacion. 1.ttl"
                        log_flgrecad = TRUE.
@@ -507,7 +513,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
     
        /* campos 14/10/98 */
     
-       IF   crapass.cdoedptl <> log_cdoedptl   THEN
+       IF   crapass.idorgexp <> log_idorgexp_ass   THEN
             DO:
                 log_nmdcampo = "org.ems.doc. 1.ttl".
     
@@ -1616,7 +1622,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                              RUN atualiza_crapalt.
                     END.
                
-               IF   crapttl.cdoedttl <> log_cdoedttl   THEN
+               IF   crapttl.idorgexp <> log_idorgexp_ttl   THEN
                     DO:
                         ASSIGN log_nmdcampo = "org.ems.doc.".
     
@@ -1664,7 +1670,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                              RUN atualiza_crapalt.
                     END.
     
-               IF   crapttl.dsnacion <> log_dsnacion   THEN
+               IF   crapttl.cdnacion <> log_cdnacion   THEN
                     DO:
                         ASSIGN log_nmdcampo = "nacion.".
     
@@ -2246,7 +2252,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                        RUN atualiza_crapalt.
                 END.
 
-             IF crapcrl.dsorgemi <> log_dsorgemi_crl   THEN
+             IF crapcrl.idorgexp <> log_idorgexp_crl   THEN
                 DO:
                    ASSIGN log_nmdcampo = "org emi doc. " +
                                          STRING(log_idseqmen_crl) +
@@ -2310,7 +2316,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
 
                 END.
 
-             IF crapcrl.dsnacion <> log_dsnacion_crl   THEN
+             IF crapcrl.cdnacion <> log_cdnacion_crl   THEN
                 DO:
                    ASSIGN log_nmdcampo = "nacionalidade. " +
                                          STRING(log_idseqmen_crl) +
@@ -2499,7 +2505,7 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                              RUN atualiza_crapalt.
                     END.
              
-               IF   crapcje.cdoedcje <> log_cdoedcje   THEN
+               IF   crapcje.idorgexp <> log_idorgexp_cje   THEN
                     DO:
                         ASSIGN log_nmdcampo = "org.emiss.cje".
     

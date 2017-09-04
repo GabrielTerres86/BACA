@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 25/04/2017
+   Data    : Junho/2007                     Ultima atualizacao: 02/05/2017
 
    Dados referentes ao programa:
 
@@ -227,7 +227,7 @@ DEF VAR aux_nrfonav1 AS CHAR                                           NO-UNDO.
 DEF VAR aux_emailav1 AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmcidav1 AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdufava1 AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsnacio1 AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdnacio1 AS INTE                                           NO-UNDO.
 /* Campos para CEP integrado */
 DEF VAR aux_nrender1 AS INTE                                           NO-UNDO.
 DEF VAR aux_complen1 AS CHAR                                           NO-UNDO.
@@ -238,7 +238,7 @@ DEF VAR aux_nrcxaps2 AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcepend AS INTE                                           NO-UNDO.
 DEF VAR aux_nmdaval2 AS CHAR                                           NO-UNDO.
 DEF VAR par_dsdbeavt AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsnacio2 AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdnacio2 AS INTE                                           NO-UNDO.
 DEF VAR aux_tdccjav2 AS CHAR                                           NO-UNDO.
 DEF VAR aux_doccjav2 AS CHAR                                           NO-UNDO.
 DEF VAR aux_ende1av2 AS CHAR                                           NO-UNDO.
@@ -322,7 +322,7 @@ DEF VAR aux_flgerlog AS LOGI INIT TRUE                                 NO-UNDO.
 
 DEF VAR aux_tpdocava AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdocava AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsnacion AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdnacion AS INTE                                           NO-UNDO.
 DEF VAR aux_nmconjug AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpdoccjg AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdoccjg AS CHAR                                           NO-UNDO.
@@ -395,7 +395,7 @@ PROCEDURE valores_entrada:
 
             WHEN "cdcooper" THEN aux_cdcooper = INTE(tt-param.valorCampo).
             WHEN "cdagenci" THEN aux_cdagenci = INTE(tt-param.valorCampo).
-			      WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
+			WHEN "cdpactra" THEN aux_cdpactra = INTE(tt-param.valorCampo).			
             WHEN "nrdcaixa" THEN aux_nrdcaixa = INTE(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
@@ -544,9 +544,9 @@ PROCEDURE valores_entrada:
             WHEN "nmcidav2" THEN aux_nmcidav2 = tt-param.valorCampo.
             WHEN "cdufava2" THEN aux_cdufava2 = tt-param.valorCampo.
             WHEN "dsdbeavt" THEN par_dsdbeavt = tt-param.valorCampo.
-            WHEN "dsnacio2" THEN aux_dsnacio2 = tt-param.valorCampo.
+            WHEN "cdnacio2" THEN aux_cdnacio2 = INTE(tt-param.valorCampo).
             WHEN "cdufava1" THEN aux_cdufava1 = tt-param.valorCampo.
-            WHEN "dsnacio1" THEN aux_dsnacio1 = tt-param.valorCampo.
+            WHEN "cdnacio1" THEN aux_cdnacio1 = INTE(tt-param.valorCampo).
             WHEN "nmdaval2" THEN aux_nmdaval2 = tt-param.valorCampo.
             WHEN "tpdocav2" THEN aux_tpdocav2 = tt-param.valorCampo.
             WHEN "dsdocav2" THEN aux_dsdocav2 = tt-param.valorCampo.
@@ -565,7 +565,7 @@ PROCEDURE valores_entrada:
 
             WHEN "tpdocava" THEN aux_tpdocava = tt-param.valorCampo.
             WHEN "nrdocava" THEN aux_nrdocava = tt-param.valorCampo.
-            WHEN "dsnacion" THEN aux_dsnacion = tt-param.valorCampo.
+            WHEN "cdnacion" THEN aux_cdnacion = INTE(tt-param.valorCampo).
             WHEN "nmconjug" THEN aux_nmconjug = tt-param.valorCampo.
             WHEN "tpdoccjg" THEN aux_tpdoccjg = tt-param.valorCampo.
             WHEN "nrdoccjg" THEN aux_nrdoccjg = tt-param.valorCampo.
@@ -1560,7 +1560,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_nmcidav1,        
                                 INPUT aux_cdufava1,        
                                 INPUT aux_nrcepav1,        
-                                INPUT aux_dsnacio1,
+                                INPUT aux_cdnacio1,
                                 INPUT aux_vledvmt1,        
                                 INPUT aux_vlrenme1,
                                 INPUT aux_nrender1,
@@ -1583,7 +1583,7 @@ PROCEDURE grava-proposta-completa:
                                 INPUT aux_nmcidav2,        
                                 INPUT aux_cdufava2,        
                                 INPUT aux_nrcepav2,        
-                                INPUT aux_dsnacio2,        
+                                INPUT aux_cdnacio2,        
                                 INPUT aux_vledvmt2,        
                                 INPUT aux_vlrenme2,
                                 INPUT aux_nrender2,
@@ -1998,7 +1998,7 @@ PROCEDURE valida-interv:
                            INPUT aux_nrcpfcgc, 
                            INPUT aux_tpdocava, 
                            INPUT aux_nrdocava, 
-                           INPUT aux_dsnacion, 
+                           INPUT aux_cdnacion, 
                            INPUT aux_nmconjug, 
                            INPUT aux_nrcpfcjg, 
                            INPUT aux_tpdoccjg, 
@@ -2438,7 +2438,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
          INPUT aux_nmcidav1,
          INPUT aux_cdufava1,
          INPUT aux_nrcepav1,
-         INPUT aux_dsnacio1,
+         INPUT aux_cdnacio1,
          INPUT aux_vledvmt1,
          INPUT aux_vlrenme1,
          INPUT aux_nrender1,
@@ -2461,7 +2461,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
          INPUT aux_nmcidav2,
          INPUT aux_cdufava2,
          INPUT aux_nrcepav2,
-         INPUT aux_dsnacio2,
+         INPUT aux_cdnacio2,
          INPUT aux_vledvmt2,
          INPUT aux_vlrenme2,
          INPUT aux_nrender2,

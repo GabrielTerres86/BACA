@@ -29,6 +29,11 @@
                              
                 12/08/2015 - Projeto Reformulacao cadastral
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
+                             
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)             
+                             
+
 				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
@@ -226,14 +231,14 @@ DEFINE TEMP-TABLE tt-fcad-respl NO-UNDO
     FIELD nmrespon LIKE crapcrl.nmrespon
     FIELD tpdeiden LIKE crapcrl.tpdeiden
     FIELD nridenti LIKE crapcrl.nridenti
-    FIELD dsorgemi LIKE crapcrl.dsorgemi
+    FIELD dsorgemi AS CHAR
     FIELD cdufiden LIKE crapcrl.cdufiden
     FIELD dtemiden LIKE crapcrl.dtemiden
     FIELD dtnascin LIKE crapcrl.dtnascin
     FIELD cddosexo AS CHAR 
     FIELD cdestciv LIKE crapcrl.cdestciv
     FIELD dsestciv AS CHAR
-    FIELD dsnacion LIKE crapcrl.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD dsnatura LIKE crapcrl.dsnatura
     FIELD cdcepres AS CHAR
     FIELD dsendres LIKE crapcrl.dsendres
@@ -246,7 +251,8 @@ DEFINE TEMP-TABLE tt-fcad-respl NO-UNDO
     FIELD nmmaersp LIKE crapcrl.nmmaersp
     FIELD nmpairsp LIKE crapcrl.nmpairsp
     FIELD nrcpfmen LIKE crapcrl.nrcpfmen
-    FIELD nrctamen LIKE crapcrl.nrctamen.
+    FIELD nrctamen LIKE crapcrl.nrctamen
+    FIELD cdnacion LIKE crapcrl.cdnacion.
 
 DEFINE TEMP-TABLE tt-fcad-cjuge NO-UNDO
     FIELD nrctacje AS CHAR
@@ -255,7 +261,7 @@ DEFINE TEMP-TABLE tt-fcad-cjuge NO-UNDO
     FIELD dtnasccj LIKE crapcje.dtnasccj
     FIELD tpdoccje LIKE crapcje.tpdoccje
     FIELD nrdoccje LIKE crapcje.nrdoccje
-    FIELD cdoedcje LIKE crapcje.cdoedcje
+    FIELD cdoedcje AS CHAR
     FIELD cdufdcje LIKE crapcje.cdufdcje
     FIELD dtemdcje LIKE crapcje.dtemdcje
     FIELD gresccje LIKE crapcje.grescola
@@ -353,7 +359,8 @@ DEFINE TEMP-TABLE tt-fcad-procu NO-UNDO
     FIELD inhabmen AS INT 
     FIELD dthabmen AS DATE
     FIELD dshabmen AS CHAR
-    FIELD cpfprocu AS DEC.
+    FIELD cpfprocu AS DEC
+    FIELD cdnacion AS INTE.
     
 
 DEFINE TEMP-TABLE tt-fcad-bensp NO-UNDO

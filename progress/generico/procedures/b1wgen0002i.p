@@ -269,6 +269,10 @@
                             para chamar respectiva versao oracle
 						                Projeto 337 - Motor de crédito. (Odirlei-AMcom)             
 
+
+               19/04/2017 - Removido DSNACION variavel nao utilizada.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -396,7 +400,6 @@ DEF VAR rel_dsliqant AS CHAR                                           NO-UNDO.
 DEF VAR rel_nmcidade AS CHAR                                           NO-UNDO.
 DEF VAR rel_nmbairro AS CHAR                                           NO-UNDO.
 DEF VAR rel_cdufresd AS CHAR                                           NO-UNDO.
-DEF VAR rel_dsnacion AS CHAR                                           NO-UNDO.
                                                                        
 DEF VAR rel_dsfinemp AS CHAR                                           NO-UNDO.
 DEF VAR rel_dslcremp AS CHAR                                           NO-UNDO.
@@ -2343,9 +2346,9 @@ PROCEDURE trata-impressao-modelo2:
           rel_nmbairro    = crapenc.nmbairro
           rel_nmcidade    = crapenc.nmcidade
           rel_cdufresd    = crapenc.cdufende
-          rel_nrcepend    = crapenc.nrcepend
-          rel_dsnacion    = crapass.dsnacion.            
+          rel_nrcepend    = crapenc.nrcepend.            
                 
+   
    
    IF   crapass.inpessoa = 1 THEN
         ASSIGN rel_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999")
@@ -8062,7 +8065,7 @@ PROCEDURE busca_operacoes:
    DEF INPUT PARAM par_vldctitu AS DECI                             NO-UNDO.
    DEF INPUT PARAM par_vlutitit AS DECI                             NO-UNDO.
    DEF INPUT-OUTPUT PARAM TABLE FOR w-co-responsavel.
-   
+      
    DEF VAR xml_req      AS CHAR                                      NO-UNDO.
    DEF VAR xDoc         AS HANDLE                                    NO-UNDO.  
    DEF VAR xRoot        AS HANDLE                                    NO-UNDO. 
@@ -8074,10 +8077,10 @@ PROCEDURE busca_operacoes:
    DEF VAR ponteiro_xml AS MEMPTR                                    NO-UNDO.
    DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
    DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
-      
-      
-   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+   
 
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+   
     /* Efetuar a chamada a rotina Oracle */ 
     RUN STORED-PROCEDURE pc_busca_operacoes_prog
      aux_handproc = PROC-HANDLE NO-ERROR 
@@ -8092,21 +8095,21 @@ PROCEDURE busca_operacoes:
                   ,OUTPUT ""       /* pr_xml      --> Retorna dados        */
                   ,OUTPUT ""       /* pr_dscritic --> Descriçao da critica */
                   ,OUTPUT 0).      /* pr_cdcritic --> Codigo da critica    */
-                  
-                  
+             
+
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_busca_operacoes_prog
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
+                        
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
+             
     /* Rotina original nao trata critica */
     ASSIGN aux_cdcritic = pc_busca_operacoes_prog.pr_cdcritic
                              WHEN pc_busca_operacoes_prog.pr_cdcritic <> ?
            aux_dscritic = pc_busca_operacoes_prog.pr_dscritic
                              WHEN pc_busca_operacoes_prog.pr_dscritic <> ?.
-
-
+                        
+   
      ASSIGN par_vldscchq = pc_busca_operacoes_prog.pr_vldscchq
                              WHEN pc_busca_operacoes_prog.pr_vldscchq <> ?
             par_vlutlchq = pc_busca_operacoes_prog.pr_vlutlchq
@@ -8115,16 +8118,16 @@ PROCEDURE busca_operacoes:
                              WHEN pc_busca_operacoes_prog.pr_vldctitu <> ?
             par_vlutitit = pc_busca_operacoes_prog.pr_vlutitit
                              WHEN pc_busca_operacoes_prog.pr_vlutitit <> ?.
-
+             
     /*Leitura do XML de retorno da proc e criacao dos registros na w-co-responsavel */
-
+              
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_req = pc_busca_operacoes_prog.pr_xml_co_responsavel. 
-
+     
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
     PUT-STRING(ponteiro_xml,1) = xml_req. 
-
+             
     /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
     CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
@@ -8133,7 +8136,7 @@ PROCEDURE busca_operacoes:
     CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
     IF ponteiro_xml <> ? THEN
-        DO:
+                    DO:
             xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
             xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 
@@ -8145,7 +8148,7 @@ PROCEDURE busca_operacoes:
                     NEXT. 
 
                 IF xRoot2:NUM-CHILDREN > 0 THEN
-                    CREATE w-co-responsavel.
+                        CREATE w-co-responsavel.
 
                 DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
 
@@ -8167,8 +8170,8 @@ PROCEDURE busca_operacoes:
                     ASSIGN w-co-responsavel.dsfinemp =    (xText:NODE-VALUE) WHEN xField:NAME = "dsfinemp". 
                     ASSIGN w-co-responsavel.dslcremp =    (xText:NODE-VALUE) WHEN xField:NAME = "dslcremp". 
 
-                END. 
-
+                    END.
+         
             END.
 
             SET-SIZE(ponteiro_xml) = 0. 
@@ -8244,21 +8247,21 @@ PROCEDURE gera_co_responsavel:
                   ,OUTPUT ""       /* pr_xml      --> Retorna dados        */
                   ,OUTPUT ""       /* pr_dscritic --> Descriçao da critica */
                   ,OUTPUT 0).      /* pr_cdcritic --> Codigo da critica    */
-    
+
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_gera_co_responsavel_prog
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
+                                   
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
+
     ASSIGN aux_cdcritic = pc_gera_co_responsavel_prog.pr_cdcritic
                              WHEN pc_gera_co_responsavel_prog.pr_cdcritic <> ?
            aux_dscritic = pc_gera_co_responsavel_prog.pr_dscritic
                              WHEN pc_gera_co_responsavel_prog.pr_dscritic <> ?.
 
-     
+
     IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-      DO:
+                     DO:
          RUN gera_erro (INPUT par_cdcooper,
                         INPUT par_cdagenci,
                         INPUT par_nrdcaixa,
@@ -8266,8 +8269,8 @@ PROCEDURE gera_co_responsavel:
                         INPUT aux_cdcritic,
                         INPUT-OUTPUT aux_dscritic). 
           RETURN "NOK".
-      END.   
-      
+                     END.
+                
      ASSIGN par_vldscchq = pc_gera_co_responsavel_prog.pr_vldscchq
                              WHEN pc_gera_co_responsavel_prog.pr_vldscchq <> ?
             par_vlutlchq = pc_gera_co_responsavel_prog.pr_vlutlchq
@@ -8281,7 +8284,7 @@ PROCEDURE gera_co_responsavel:
     /*Leitura do XML de retorno da proc e criacao dos registros na w-co-responsavel */
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_req = pc_gera_co_responsavel_prog.pr_xml_co_responsavel. 
-    
+
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
     PUT-STRING(ponteiro_xml,1) = xml_req. 
@@ -8294,7 +8297,7 @@ PROCEDURE gera_co_responsavel:
     CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
     IF ponteiro_xml <> ? THEN
-        DO:
+                        DO:
 
             xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
 
@@ -8308,7 +8311,7 @@ PROCEDURE gera_co_responsavel:
                     NEXT. 
 
                 IF xRoot2:NUM-CHILDREN > 0 THEN
-                    CREATE w-co-responsavel.
+                            CREATE w-co-responsavel.
 
                 DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
 
@@ -8338,13 +8341,13 @@ PROCEDURE gera_co_responsavel:
                     ASSIGN w-co-responsavel.dspreapg =    (xText:NODE-VALUE) WHEN xField:NAME = "dspreapg". 
                     ASSIGN w-co-responsavel.inprejuz = INT(xText:NODE-VALUE) WHEN xField:NAME = "inprejuz". 
 
-                END. 
+                        END.
 
-            END.
+           END. 
 
             SET-SIZE(ponteiro_xml) = 0. 
 
-        END.
+   END.  
 
     /*Elimina os objetos criados*/
     DELETE OBJECT xDoc. 
@@ -8832,8 +8835,8 @@ PROCEDURE valida_impressao:
                 END.
         END.
 
-    END.
-    
+        END.
+
     FIND crawepr WHERE RECID(crawepr) = par_recidepr NO-LOCK NO-ERROR.
     
     IF  AVAILABLE crawepr   THEN
@@ -8879,7 +8882,7 @@ PROCEDURE valida_impressao:
 
                     ASSIGN aux_returnvl = "NOK".
 
-                 END.
+    END.
             END.
         END.    
 

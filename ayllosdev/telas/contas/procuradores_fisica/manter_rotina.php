@@ -7,6 +7,7 @@
  *                23/04/2012 - Incluido os parametros dthabmen, inhabmen, nmrotina
  *							   para as procedures valida_dados, grava_Dados (Adriano).
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  */
 ?>
  
@@ -35,7 +36,7 @@
 	$tpdocava = (isset($_POST['tpdocava'])) ? $_POST['tpdocava'] : '';
 	$nrdocava = (isset($_POST['nrdocava'])) ? $_POST['nrdocava'] : '';
 	$cdestcvl = (isset($_POST['cdestcvl'])) ? $_POST['cdestcvl'] : '';
-	$dsnacion = (isset($_POST['dsnacion'])) ? $_POST['dsnacion'] : '';
+	$cdnacion = (isset($_POST['cdnacion'])) ? $_POST['cdnacion'] : '';
 	$dsnatura = (isset($_POST['dsnatura'])) ? $_POST['dsnatura'] : '';
 	$complend = (isset($_POST['complend'])) ? $_POST['complend'] : '';
 	$nmcidade = (isset($_POST['nmcidade'])) ? $_POST['nmcidade'] : '';
@@ -100,7 +101,7 @@
 	$xml .= '       <tpdocava>'.$tpdocava.'</tpdocava>';
 	$xml .= '       <nrdocava>'.$nrdocava.'</nrdocava>';
 	$xml .= '       <cdestcvl>'.$cdestcvl.'</cdestcvl>';
-	$xml .= '       <dsnacion>'.$dsnacion.'</dsnacion>';
+	$xml .= '       <cdnacion>'.$cdnacion.'</cdnacion>';
 	$xml .= '       <dsnatura>'.$dsnatura.'</dsnatura>';
 	$xml .= '       <complend>'.$complend.'</complend>';
 	$xml .= '       <nmcidade>'.$nmcidade.'</nmcidade>';
@@ -224,7 +225,7 @@
 		if (($GLOBALS['cdsexcto'] != 1)&&($GLOBALS['cdsexcto'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'sexoMas\',\'frmDadosProcuradores\')',false);
 		
 		// Nacionalidade
-		if ($GLOBALS['dsnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnacion\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosProcuradores\')',false);
 		
 		// Naturalidade
 		if ($GLOBALS['dsnatura']=='') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnatura\',\'frmDadosProcuradores\')',false);

@@ -44,9 +44,11 @@
  * 020: [25/10/2016] Tiago            (CECRED): M310 Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  * 021: [08/02/2017] Kelvin           (CECRED): Ajuste realiazado para tratar o chamado 566462. 
  * 022: [03/03/2017] Adriano          (CECRED): Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
+ * 023: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 024: [14/06/2017] Adriano          (CECRED): Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
- * 025: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
+ * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
+ * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
 					                        
  */
 
@@ -314,7 +316,7 @@ function manterRotina() {
         cdoedptl = normalizaTexto($('#cdoedptl', '#frmFisico').val());
         dtemdptl = $('#dtemdptl', '#frmFisico').val();
         tpnacion = $('#tpnacion', '#frmFisico').val();
-        dsnacion = $('#dsnacion', '#frmFisico').val();
+        cdnacion = $('#cdnacion', '#frmFisico').val();
         dtnasctl = $('#dtnasctl', '#frmFisico').val();
         dsnatura = $('#dsnatura', '#frmFisico').val();
         inhabmen = $('#inhabmen', '#frmFisico').val();
@@ -408,7 +410,7 @@ function manterRotina() {
 				nmprimtl: nmprimtl, nrcpfcgc: nrcpfcgc, dtcnscpf: dtcnscpf,
 				cdsitcpf: cdsitcpf, tpdocptl: tpdocptl, nrdocptl: nrdocptl,
 				cdoedptl: cdoedptl, cdufdptl: cdufdptl, dtemdptl: dtemdptl,
-				tpnacion: tpnacion, dsnacion: dsnacion, dtnasctl: dtnasctl,
+				tpnacion: tpnacion, cdnacion: cdnacion, dtnasctl: dtnasctl,
 				dsnatura: dsnatura, cdsexotl: cdsexotl, cdestcvl: cdestcvl,
 				nmconjug: nmconjug, cdempres: cdempres, nrcadast: nrcadast,
 				cdocpttl: cdocpttl, rowidcem: rowidcem, dsdemail: dsdemail, 
@@ -1263,7 +1265,7 @@ function formataPessoaFisica() {
 	/* ----------------------- */
 	/*  FIELDSET INF. COMPL.   */
 	/* ----------------------- */	
-    var rRotuloPF2 = $('label[for="tpnacion"],label[for="dsnacion"],label[for="dsnatura"],label[for="cdestcvl"],label[for="cdempres"],label[for="cdocpttl"],label[for="inhabmen"],label[for="nrtelres"]', '#frmFisico');
+    var rRotuloPF2 = $('label[for="tpnacion"],label[for="cdnacion"],label[for="dsnatura"],label[for="cdestcvl"],label[for="cdempres"],label[for="cdocpttl"],label[for="inhabmen"],label[for="nrtelres"]', '#frmFisico');
     var rRotulo70 = $('label[for="dtnasctl"],label[for="cdsexotl"]', '#frmFisico');
     var rNrcadast = $('label[for="nrcadast"]', '#frmFisico');
     var rNmconjug = $('label[for="nmconjug"]', '#frmFisico');
@@ -1280,10 +1282,11 @@ function formataPessoaFisica() {
     rTelefones.css({ 'width': '70px' });
 	
     var cTodosPF2 = $('input,select', '#frmFisico fieldset:eq(1)');
-    var cCodigoPF1 = $('#tpnacion,#cdestcvl,#cdempres,#cdocpttl', '#frmFisico');
-    var cDescricaoPF1 = $('#destpnac,#dsestcvl,#nmresemp,#dsocpttl', '#frmFisico');
+    var cCodigoPF1 = $('#cdnacion,#tpnacion,#cdestcvl,#cdempres,#cdocpttl', '#frmFisico');
+    var cDescricaoPF1 = $('#dsnacion,#destpnac,#dsestcvl,#nmresemp,#dsocpttl', '#frmFisico');
     var cCodTpNacio = $('#tpnacion', '#frmFisico');
     var cDesTpNacio = $('#destpnac', '#frmFisico');
+    var cCodNacion = $('#cdnacion', '#frmFisico');
     var cDesNacion = $('#dsnacion', '#frmFisico');
     var cCPF = $('#nrcpfcgc', '#frmFisico');
     var cDtNasc = $('#dtnasctl', '#frmFisico');
@@ -1312,9 +1315,9 @@ function formataPessoaFisica() {
     cCodigoPF1.addClass('codigo pesquisa').css({ 'width': '40px' });
 	cDescricaoPF1.addClass('descricao');
     cDesTpNacio.css('width', '526px');
-    cDesNacion.addClass('pesquisa alphanum').css('width', '400px').attr('maxlength', '15');
+    cDesNacion.css('width', '526px');
     cDtNasc.addClass('data').css('width', '75px');
-    cDesNatura.addClass('pesquisa alphanum').css('width', '330px').attr('maxlength', '25');
+    cDesNatura.addClass('pesquisa alphanum').css('width', '330px').attr('maxlength', '50');
     cInhabmen.css('width', '183px');
     cDthabmen.addClass('data').css('width', '94px');
     cDesEstCivil.css('width', '200px');
@@ -1348,16 +1351,18 @@ function formataPessoaFisica() {
 	
 		if ($(this).val() == 1) { // Se for brasileiro/a
 			cCdufnatu.val("").habilitaCampo();
-			cDesNacion.val("BRASILEIRA").desabilitaCampo();
+            cCodNacion.val("37");
+			cDesNacion.val("BRASILEIRA");
 			controlaPesquisas();
 			cDesNatura.focus();
 		}
 		else {
 			cCdufnatu.val("EX").desabilitaCampo();
 			if (cDesNacion.val() == "BRASILEIRA") {
+                cCodNacion.val("");
 				cDesNacion.val("");
 			}
-			cDesNacion.habilitaCampo().focus();
+			cCodNacion.focus();
 			controlaPesquisas();
 		}
 		return false;
@@ -3085,7 +3090,7 @@ function limpaCharEsp(texto) {
 // Somente para nao dar erro quando fechada alguma rotina
 function btnVoltar() {
 	
-}
+		}				
 
 function validaAcessoEexecuta(UrlSite, tipo) {
     //alert('in');

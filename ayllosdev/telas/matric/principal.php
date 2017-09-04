@@ -16,6 +16,7 @@
  * 006: [27/07/2016] Carlos R.(CECRED): Corrigi a forma de utilizacao de indices de informacoes do XML. SD 479874
  * 007: [05/12/2016] Renato D.(Supero): P341-Automatização BACENJUD - Removido passagem do departamento 
  *                                      como parametros pois a BO não utiliza o mesmo.
+ * 008: [12/04/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */ 
 
 	session_start();	
@@ -142,6 +143,7 @@
 				regFilhoavt<?php echo $i; ?>['cdestcvl'] = '<?php echo getByTagName($regFilhos[$i]->tags,'cdestcvl'); ?>';
 				regFilhoavt<?php echo $i; ?>['dsestcvl'] = '<?php echo getByTagName($regFilhos[$i]->tags,'dsestcvl'); ?>';
 				regFilhoavt<?php echo $i; ?>['nrdeanos'] = '<?php echo getByTagName($regFilhos[$i]->tags,'nrdeanos'); ?>';
+				regFilhoavt<?php echo $i; ?>['cdnacion'] = '<?php echo getByTagName($regFilhos[$i]->tags,'cdnacion'); ?>';
 				regFilhoavt<?php echo $i; ?>['dsnacion'] = '<?php echo getByTagName($regFilhos[$i]->tags,'dsnacion'); ?>';
 				regFilhoavt<?php echo $i; ?>['dsnatura'] = '<?php echo getByTagName($regFilhos[$i]->tags,'dsnatura'); ?>';				
 				regFilhoavt<?php echo $i; ?>['nmmaecto'] = '<?php echo getByTagName($regFilhos[$i]->tags,'nmmaecto'); ?>';
@@ -257,6 +259,7 @@
 				regResp<?php echo $i; ?>['dtnascin'] = '<?php echo getByTagName($responsaveis[$i]->tags,'dtnascin'); ?>';				
 				regResp<?php echo $i; ?>['cddosexo'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cddosexo'); ?>';			
 				regResp<?php echo $i; ?>['cdestciv'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cdestciv'); ?>';
+				regResp<?php echo $i; ?>['cdnacion'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cdnacion'); ?>';
 				regResp<?php echo $i; ?>['dsnacion'] = '<?php echo getByTagName($responsaveis[$i]->tags,'dsnacion'); ?>';
 				regResp<?php echo $i; ?>['dsnatura'] = '<?php echo getByTagName($responsaveis[$i]->tags,'dsnatura'); ?>';
 				regResp<?php echo $i; ?>['cdcepres'] = '<?php echo getByTagName($responsaveis[$i]->tags,'cdcepres'); ?>';				

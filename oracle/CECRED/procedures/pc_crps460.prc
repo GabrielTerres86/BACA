@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio       
-   Data    : Dezembro/2005.                  Ultima atualizacao: 24/04/2017
+   Data    : Dezembro/2005.                  Ultima atualizacao: 24/07/2017
 
    Dados referentes ao programa:
 
@@ -105,6 +105,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
                             
                10/04/2015 - Realizado tratamento com pragma para não deixar a gnsequt
                             com lock, após a atualização do número do pedido ( Renato - Supero )
+
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)             
 
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
@@ -233,7 +236,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , crapass.inpessoa
            , crapass.tpdocptl
            , crapass.nrdocptl
-           , crapass.cdoedptl
+           , org.cdorgao_expedidor cdoedptl
            , crapass.cdufdptl
            , crapreq.tprequis
            , crapass.cdagenci
@@ -249,8 +252,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , (crapass.nrflcheq + crapreq.qtreqtal) nrflafim -- Folha final do talão
         FROM crapass
            , crapreq
+           , tbgen_orgao_expedidor org  
        WHERE crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta 
+         AND crapass.idorgexp = org.idorgao_expedidor(+)
          AND crapass.cdbcochq = pr_cdbanchq
          AND crapreq.cdcooper = pr_cdcooper     
          AND crapreq.insitreq = 1
@@ -285,7 +290,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , crapass.inpessoa
            , crapass.tpdocptl
            , crapass.nrdocptl
-           , crapass.cdoedptl
+           , org.cdorgao_expedidor cdoedptl
            , crapass.cdufdptl
            , crapass.cdtipcta
            , crapass.dtdemiss
@@ -293,6 +298,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , COUNT(1) over (PARTITION BY crapreq.tprequis) qttottpreq
         FROM crapass
            , crapreq           
+           , tbgen_orgao_expedidor org  
        WHERE crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta 
          AND crapass.cdbcochq = pr_cdbanchq
@@ -300,6 +306,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
          AND crapreq.dtpedido = pr_dtmvtolt    
          AND crapreq.insitreq = 3
          AND crapreq.tprequis IN (2,5)  
+         AND crapass.idorgexp = org.idorgao_expedidor(+)
        ORDER BY crapreq.tprequis
               , crapreq.cdagenci
               , crapreq.nrdconta;
@@ -441,7 +448,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
     vr_upd_insitreq  crapreq.insitreq%TYPE;
     vr_upd_cdcritic  crapreq.cdcritic%TYPE;
     vr_tpdocptl      crapass.tpdocptl%TYPE;
-    vr_cdoedptl      crapass.cdoedptl%TYPE;
+    vr_cdoedptl      tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
     vr_cdufdptl      crapass.cdufdptl%TYPE;
     vr_nrdocptl      crapass.nrdocptl%TYPE;
     -- Arquivos e diretórios                 

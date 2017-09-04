@@ -8,9 +8,11 @@
  *                24/04/2012 - Ajustes Projeto GP - Socios Menores (Adriano)
  *                28/01/2015 - #239097 Ajustes para cadastro de Resp. legal 0 menor/maior.
  *                16/07/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							  (Adriano - P339).
+ *                31/07/2017 - Aumentado campo dsnatura de 25 para 50, PRJ339-CRM (Odirlei-AMcom).
  */
 
 var nrcpfcto = "";
@@ -460,7 +462,7 @@ function manterRotinaResp(operacao_rsp) {
 	tpdocava = $('#tpdocava','#frmRespLegal').val(); 
 	nrdocava = $('#nrdocava','#frmRespLegal').val();
 	cdestcvl = (operacao_rsp == "EV") ? aux_cdestciv : $('#cdestciv','#frmRespLegal').val(); 
-	dsnacion = $('#dsnacion','#frmRespLegal').val(); 
+	cdnacion = $('#cdnacion','#frmRespLegal').val(); 
 	dsnatura = $('#dsnatura','#frmRespLegal').val(); 
 	complend = trim($('#complend','#frmRespLegal').val()); 
 	nmcidade = trim($('#nmcidade','#frmRespLegal').val()); 
@@ -510,7 +512,7 @@ function manterRotinaResp(operacao_rsp) {
 			tpdocava: tpdocava,             
 			nrdocava: nrdocava,	
 			cdestcvl: cdestcvl,	
-			dsnacion: dsnacion,             
+			cdnacion: cdnacion,             
 			dsnatura: dsnatura,	
 			complend: complend, 
 			nmcidade: nmcidade,             
@@ -615,7 +617,8 @@ function controlaLayoutResp(operacao_rsp) {
 		var cCPF    		= $('#nrcpfcto','#frmRespLegal');
 		
 		// Nome / Dt. Nasc. / Tp. Doc. / Nr. Doc./ Org. Emis. / UF / Dt. Emis. / Est. Civil / Sexo / Nacionalidade / Naturalidade / End.Residen. / Nro. / Comp. / Bairro / Cep / Cidade / UF / Mãe / Pai
-		var camposGrupo2  	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestciv,#nrdocava,#cdoeddoc,#cdufende,#dtemddoc,#dsnacion,#dsnatura,#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmRespLegal');
+		var camposGrupo2  	= $('#nmdavali,#dtnascto,#tpdocava,#cdufddoc,#cdestciv,#nrdocava,#cdoeddoc,#cdufende,#dtemddoc,#cdnacion,#dsnatura,#dsendere,#nrendere,#complend,#nmbairro,#nrcepend,#nmcidade,#nmmaecto,#nmpaicto,#vledvmto,#nrcxapst','#frmRespLegal');
+        var cDsnacion       = $('#dsnacion','#frmRespLegal');
 		var selectsGrupo2 	= $('select','#frmRespLegal');
 		var sexo 		  	= $('input[name="cdsexcto"]','#frmRespLegal');
 		var cdrlcrsp        = $('#cdrelacionamento','#frmRespLegal');
@@ -624,6 +627,7 @@ function controlaLayoutResp(operacao_rsp) {
 		// Sempre inicia com tudo bloqueado
 		camposGrupo1.desabilitaCampo();
 		camposGrupo2.desabilitaCampo();
+        cDsnacion.desabilitaCampo();
 		selectsGrupo2.desabilitaCampo();	
 		sexo.desabilitaCampo();
 		
@@ -636,8 +640,9 @@ function controlaLayoutResp(operacao_rsp) {
 		$('#cdoeddoc','#frmRespLegal').css({'width':'101px'}).addClass('alphanum').attr('maxlength','5');
 		$('#tpdocava','#frmRespLegal').css({'width':'57px'});
 		$('#nrdocava', '#frmRespLegal').css({ 'width': '230px' }).addClass('alphanum').attr('maxlength', '40');
-		$('#dsnacion','#frmRespLegal').css({'width':'150px'}).addClass('alphanum pesquisa').attr('maxlength','16');
-		$('#dsnatura','#frmRespLegal').css({'width':'202px'}).addClass('alphanum pesquisa').attr('maxlength','25');
+		$('#cdnacion', '#frmRespLegal').css({ 'width': '50px' }).addClass('inteiro pesquisa').attr('maxlength', '16');
+		$('#dsnacion', '#frmRespLegal').css({ 'width': '150px' }).addClass('alphanum').attr('maxlength', '16');
+		$('#dsnatura','#frmRespLegal').css({'width':'202px'}).addClass('alphanum pesquisa').attr('maxlength','50');
 		$('#nmpaicto,#nmmaecto','#frmRespLegal').css({'width':'444px'}).addClass('alpha').attr('maxlength','40');
 		$('label[for="nrcpfcto"]','#frmRespLegal').css({'width':'253px'});	
 		cdrlcrsp.css({'width':'200px'});
@@ -1070,6 +1075,7 @@ function carregaDadosResp() {
 		
 	$('#cdsexcto','#frmRespLegal').val( arrayFilhos[indarray_rsp]['cddosexo'] );	
 	$('#dsnacion','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dsnacion'] );	
+    $('#cdnacion','#frmRespLegal').val( arrayFilhos[indarray_rsp]['cdnacion'] );	
 	$('#dsnatura','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dsnatura'] );	
 	$('#nrcepend','#frmRespLegal').val( arrayFilhos[indarray_rsp]['cdcepres'] );	
 	$('#dsendere','#frmRespLegal').val( arrayFilhos[indarray_rsp]['dsendres'] );	
@@ -1160,6 +1166,7 @@ function controlaArrayResp(op){
 					}
 								
 				arrayFilhos[indarray_rsp]['dsnacion'] = $('#dsnacion','#frmRespLegal').val();
+                arrayFilhos[indarray_rsp]['cdnacion'] = $('#cdnacion','#frmRespLegal').val();
 				arrayFilhos[indarray_rsp]['dsnatura'] = $('#dsnatura','#frmRespLegal').val();	
 				arrayFilhos[indarray_rsp]['cdcepres'] = normalizaNumero($('#nrcepend','#frmRespLegal').val());	
 				arrayFilhos[indarray_rsp]['dsendres'] = $('#dsendere','#frmRespLegal').val();	
@@ -1280,6 +1287,7 @@ function controlaArrayResp(op){
 					}
 								
 				eval('regFilho'+i+'["cdestciv"] = $(\'select[name="cdestciv"]\',\'#frmRespLegal\').val();');
+				eval('regFilho'+i+'["cdnacion"] = $(\'#cdnacion\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["dsnacion"] = $(\'#dsnacion\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["dsnatura"] = $(\'#dsnatura\',\'#frmRespLegal\').val();');
 				eval('regFilho'+i+'["cdcepres"] = normalizaNumero($(\'#nrcepend\',\'#frmRespLegal\').val());');

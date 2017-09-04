@@ -21,6 +21,7 @@ DEFINE TEMP-TABLE tt-crapcje NO-UNDO LIKE crapcje
     FIELD dsturnos AS CHARACTER
     FIELD cdgraupr AS INTEGER
     FIELD dsblqalt AS CHARACTER
+    FIELD cdoedcje AS CHARACTER
     FIELD nrdrowid AS ROWID.
                                                                                 
 &IF DEFINED(TT-LOG) <> 0 &THEN

@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina de busca de avalistas
  *
  * 000: [15/07/2014] Incluso novos campos( inpessoa e dtnascto ) na carga array (Daniel).
+ * 001: [08/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */	
 ?>
  
@@ -72,6 +73,7 @@
 		echo 'arrayAvalBusca.length = 0;';
 		
 		echo 'arrayAvalBusca[\'nrctaava\'] = "'. getByTagName($avalista,'nrctaava').'" ;';
+		echo 'arrayAvalBusca[\'cdnacion\'] = "'. getByTagName($avalista,'cdnacion').'" ;';
 		echo 'arrayAvalBusca[\'dsnacion\'] = "'. getByTagName($avalista,'dsnacion').'" ;';
 		echo 'arrayAvalBusca[\'tpdocava\'] = "'. getByTagName($avalista,'tpdocava').'" ;';
 		echo 'arrayAvalBusca[\'nmconjug\'] = "'. getByTagName($avalista,'nmconjug').'" ;';

@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0058.p
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 25/08/2016
+    Data    : Marco/2010                   Ultima atualizacao: 08/05/2017
 
     Objetivo  : BO de Comunicacao XML x BO de Contas Procurador (b1wgen0058.p)
 
@@ -29,6 +29,11 @@
 
 				25/08/2016 - Alteraçoes de parametros da procedure
 							 valida_responsaveis, SD 510426 (Jean Michel).
+               
+               
+               08/05/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom) 
+                            
 .............................................................................*/
 
                                                                              
@@ -58,7 +63,7 @@ DEF VAR aux_dtnascto AS DATE                                           NO-UNDO.
 DEF VAR aux_cdsexcto AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdestcvl AS INTE                                           NO-UNDO.
 DEF VAR aux_dsestcvl AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsnacion AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdnacion AS INTE                                           NO-UNDO.
 DEF VAR aux_dsnatura AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcepend AS INTE                                           NO-UNDO.
 DEF VAR aux_dsendres AS CHAR                                           NO-UNDO.
@@ -148,7 +153,7 @@ PROCEDURE valores_entrada:
             WHEN "cdsexcto" THEN aux_cdsexcto = tt-param.valorCampo.
             WHEN "cdestcvl" THEN aux_cdestcvl = INTE(tt-param.valorCampo).
             WHEN "dsestcvl" THEN aux_dsestcvl = tt-param.valorCampo.
-            WHEN "dsnacion" THEN aux_dsnacion = tt-param.valorCampo.
+            WHEN "cdnacion" THEN aux_cdnacion = INTE(tt-param.valorCampo).
             WHEN "dsnatura" THEN aux_dsnatura = tt-param.valorCampo.
             WHEN "nrcepend" THEN aux_nrcepend = INTE(tt-param.valorCampo).
             WHEN "dsendres" THEN aux_dsendres = tt-param.valorCampo.
@@ -253,8 +258,8 @@ PROCEDURE valores_entrada:
                          tt-crapavt.dsestcvl = tt-param-i.valorCampo.
                     WHEN "nrdeanos" THEN
                          tt-crapavt.nrdeanos = INT(tt-param-i.valorCampo).
-                    WHEN "dsnacion" THEN
-                         tt-crapavt.dsnacion = tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                         tt-crapavt.cdnacion = INT(tt-param-i.valorCampo).
                     WHEN "dsnatura" THEN
                          tt-crapavt.dsnatura = tt-param-i.valorCampo.
                     WHEN "nmmaecto" THEN
@@ -461,9 +466,9 @@ PROCEDURE valores_entrada:
                     WHEN "cdestciv" THEN
                         ASSIGN tt-resp.cdestciv = 
                             INTE(tt-param-i.valorCampo).
-                    WHEN "dsnacion" THEN
-                        ASSIGN tt-resp.dsnacion = 
-                            tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                        ASSIGN tt-resp.cdnacion = 
+                            INTE(tt-param-i.valorCampo).
                     WHEN "dsnatura" THEN
                         ASSIGN tt-resp.dsnatura = 
                             tt-param-i.valorCampo.
@@ -745,7 +750,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_dtnascto,
                             INPUT aux_cdsexcto,
                             INPUT aux_cdestcvl,
-                            INPUT aux_dsnacion,
+                            INPUT aux_cdnacion,
                             INPUT aux_dsnatura,
                             INPUT aux_nrcepend,
                             INPUT aux_dsendres,
@@ -934,7 +939,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_dtnascto,
                              INPUT aux_cdsexcto,
                              INPUT aux_cdestcvl,
-                             INPUT aux_dsnacion,
+                             INPUT aux_cdnacion,
                              INPUT aux_dsnatura,
                              INPUT aux_nrcepend,
                              INPUT aux_dsendres,
