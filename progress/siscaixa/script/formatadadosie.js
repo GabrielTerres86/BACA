@@ -49,6 +49,8 @@ Alteracoes: 15/12/2008 - Alteracoes para unificacao dos bancos de dados (Evandro
 			31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
            23/08/2016  - Adicionado funções "setFocus()" e "callBlass()", para chamada do cartão assinatura (Evandro - RKAM).
+		   
+		   04/09/2017 - Removido rotinas 84, 85 pois nao serao mais usadas (Tiago/Elton #679866).
 */
 
 // < ! --
@@ -702,12 +704,6 @@ function change_location() {
     else if(document.forms[0].v_rotina.value == 66) {
         top.frames[1].window.location.href="crap066.html" ;
     }
-    else if(document.forms[0].v_rotina.value == 84) {
-        top.frames[1].window.location.href="crap084.html" ;
-    }
-    else if(document.forms[0].v_rotina.value == 85) {
-        top.frames[1].window.location.href="crap085.html" ;
-    }
     else if(document.forms[0].v_rotina.value == 86) {
         top.frames[1].window.location.href='login.w?v_prog=crap086.html';
     }
@@ -743,10 +739,7 @@ function change_location() {
     }
     else if(document.forms[0].v_rotina.value == 81) {
          top.frames[1].window.location.href='login.w?v_prog=crap081.w' ;
-    }
-    else if(document.forms[0].v_rotina.value == 84) {
-         top.frames[1].window.location.href='login.w?v_prog=crap084.w' ;
-    }
+    }    
     else if(document.forms[0].v_rotina.value == 87) {
          top.frames[1].window.location.href="crap087.htm";
     }
