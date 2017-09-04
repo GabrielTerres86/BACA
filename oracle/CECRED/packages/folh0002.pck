@@ -5506,6 +5506,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --
    --             21/03/2017 - Adicionando paginacao na tela de folha, conforme 
 	 --		        	             solicitado no chamado 626091 (Kelvin).
+   --             04/09/2017 - Alteração Projeto Assinatura conjunta (Proj 397), 
+   --                          Não visualizar na tela quando o pagamento por folha
+   --                          estiver em transações pendentes, nova situação tipo 6
    --
    ---------------------------------------------------------------------------------------------------------------
       -- Cursor para buscar os registros Pendentes e Aprovados                         
@@ -6011,6 +6014,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    -- Objetivo  : Procedure encarregada de efetuar o cancelamento dos registros
    --
    -- Alteracoes: 26/01/2016 - Inclusão de LOG sob as operações efetuadas (Marcos-Supero)
+   /*
+                  04/09/2017 - Alteração Projeto Assinatura conjunta (Proj 397), 
+                  Validar o limite do operador para realizar o cancelamento de uma
+                  folha de pagamento
+   */
    ---------------------------------------------------------------------------------------------------------------
 
       -- Busca todos os dados do registro selecionado
