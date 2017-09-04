@@ -2500,6 +2500,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
    Objetivo  : Package com as procedures necessárias para pagamento de guias DARF e DAS
   
    Alteracoes: 08/11/2016 - Alteração na procedure interna de LOG (Jean Michel).
+   
+               04/09/2017 - Alteração Projeto Assinatura conjunta (Proj 397), 
+               Incluido a variavel que determina se deve gerar pendência de aprovação
+               ou efetivar pagamento de acordo com alçada do preposto ou operador.
 ..............................................................................*/  
 
 	/* Procedimento do internetbank operação 188 - Operar pagamento DARF/DAS */
@@ -2563,6 +2567,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     --Variaveis de Erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
+    vr_assin_conjunta NUMBER(1);
 		vr_des_reto VARCHAR2(03);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -2961,14 +2966,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_tpoperac     => 10
                                   ,pr_flgvalid     => TRUE                --> Indicador validacoes
                                   ,pr_dsorigem     => 'INTERNET'          --> Descricao Origem
-                                  ,pr_nrcpfope     => (CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN nvl(vr_nrcpfcgc,0) ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do responsavel legal quando conta exigir assinatura multipla
+                                  ,pr_nrcpfope     => pr_nrcpfope --(CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN 0 ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do responsavel legal quando conta exigir assinatura multipla
                                   ,pr_flgctrag     => TRUE                --> controla validacoes na efetivacao de agendamentos */
                                   ,pr_nmdatela     => 'INTERNETBANK'      --> Nome da tela/programa que esta chamando a rotina
                                   ,pr_dstransa     => vr_dstrans1         --> Descricao da transacao
                                   ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                                   ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                                   ,pr_cdcritic     => vr_cdcritic         --> Codigo do erro
-                                  ,pr_dscritic     => vr_dscritic);       --> Descricao do erro
+                                  ,pr_dscritic     => vr_dscritic         --> Descricao do erro
+                                  ,pr_assin_conjunta => vr_assin_conjunta);   
     IF nvl(vr_cdcritic,0) > 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
@@ -3027,7 +3033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		IF pr_idefetiv = 1 THEN
 			
 		  --CPF operador PJ ou responsavel legal da conta exigir assinatura multipla
-		  IF pr_nrcpfope <> 0 OR vr_idastcjt = 1 THEN
+		  IF /*pr_nrcpfope <> 0 OR vr_idastcjt = 1 AND*/ vr_assin_conjunta = 1 THEN
 				INET0002.pc_cria_trans_pend_darf_das( pr_cdcooper => pr_cdcooper,
 																							pr_nrdcaixa => 900,
 																							pr_cdoperad => 996,
