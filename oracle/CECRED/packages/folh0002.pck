@@ -292,6 +292,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
                               ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
                               ,pr_indrowid  IN VARCHAR2
 														  ,pr_flvalsld  IN NUMBER																														
+                              ,pr_nrcpfope  IN NUMBER																										
                               ,pr_des_reto  OUT VARCHAR2
                               ,pr_dscritic  OUT VARCHAR2
                               ,pr_retxml    OUT CLOB);
@@ -5578,6 +5579,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             AND pfp.cdcooper = emp.cdcooper
             AND pfp.cdempres = emp.cdempres
             AND pfp.idsitapr < 4 --> Nao aprovados ainda
+            AND pfp.idsitapr <> 6  -- Transacao pendente
             AND (TRUNC(pfp.dtmvtolt) BETWEEN p_dtiniper AND p_dtfimper
              OR  TRUNC(pfp.dtdebito) BETWEEN p_dtiniper AND p_dtfimper
              OR  TRUNC(pfp.dtcredit) BETWEEN p_dtiniper AND p_dtfimper)
@@ -5642,6 +5644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              AND pfp.cdempres = emp.cdempres
              AND dat.cdcooper = pfp.cdcooper
              AND pfp.idsitapr > 3 --> Somente aprovados
+             AND pfp.idsitapr <> 6  -- Transacao pendente
              AND (TRUNC(pfp.dtmvtolt) BETWEEN p_dtiniper AND p_dtfimper
               OR  TRUNC(pfp.dtdebito) BETWEEN p_dtiniper AND p_dtfimper
               OR  TRUNC(pfp.dtcredit) BETWEEN p_dtiniper AND p_dtfimper
@@ -6070,6 +6073,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
            AND craplot.nrdolote = p_nrdolote;
       rw_craplot cr_craplot%ROWTYPE;
 
+      CURSOR cr_crappfp (prc_indrowid IN VARCHAR2)IS
+        SELECT pfp.dtdebito,
+               pfp.vllctpag
+          FROM crappfp pfp
+         WHERE pfp.rowid like prc_indrowid;
+      --
+       CURSOR cr_crapopi (prc_cdcooper       IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                         ,prc_nrdconta       IN crapass.nrdconta%TYPE --Conta do Associado
+                         ,prc_nrcpfope       IN crapass.nrcpfcgc%TYPE) IS
+         SELECT 1
+            FROM crapopi opi
+           WHERE opi.cdcooper = prc_cdcooper
+             AND opi.nrdconta = prc_nrdconta
+             AND opi.nrcpfope = prc_nrcpfope
+             AND rownum       = 1;      
       -- Variaveis de exception
       vr_erro      EXCEPTION;
 
@@ -6077,6 +6095,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_nrseqdig  craplot.nrseqdig%TYPE := 0;
       vr_cdhisest  NUMBER(10);
       vr_nrdrowid  ROWID;
+      va_existe_operador NUMBER;
+      vr_vllanmto  crappfp.vllctpag%type;
+      va_data_ant  crappfp.dtdebito%type;
+      pr_tab_internet INET0001.typ_tab_internet;
+      vr_vldspptl     crapsnh.vllimflp%TYPE ;
 
    BEGIN
       -- Inicializa variavel
@@ -6102,6 +6125,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                       ,rw_valida_reg.cdempres);
       FETCH cr_crapemp INTO rw_crapemp;
       CLOSE cr_crapemp;
+      -- Inicializa
+      va_existe_operador := 0;
+      -- Verifica se é operador
+      BEGIN
+        FOR rw_crapopi IN cr_crapopi(pr_cdcooper,
+                                     pr_nrdconta,
+                                     pr_nrcpfope) LOOP
+          va_existe_operador := 1;
+        END LOOP;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'FOLH0002.Erro ao buscar operador: '||sqlerrm||  ' rowid: '||pr_indrowid;
+          --Levantar Excecao
+          RAISE vr_erro;
+      END;       
+      -- Se Operador e nao pendente
+      IF va_existe_operador = 1 AND rw_valida_reg.idsitapr <> 1 THEN
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Operador só pode cancelar folha de pagamento com status pendente';
+          --Levantar Excecao
+          RAISE vr_erro;        
+      END IF;
+      -- Se operador 
+      IF va_existe_operador = 1 THEN
+        vr_vllanmto := 0;
+        va_data_ant := null;
+        vr_vldspptl := 0;
+        FOR rw_crappfp IN cr_crappfp(pr_indrowid) LOOP
+          va_data_ant := rw_crappfp.dtdebito;
+          vr_vllanmto := rw_crappfp.vllctpag;
+        END LOOP;
+        BEGIN
+        
+          INET0001.pc_busca_limites_opera_trans(pr_cdcooper    => pr_cdcooper  --Codigo Cooperativa
+                                              ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                              ,pr_idseqttl     => 1            --Identificador Sequencial titulo
+                                              ,pr_nrcpfope     => pr_nrcpfope  --Numero do CPF
+                                              ,pr_dtmvtopg     => nvl(va_data_ant,sysdate)  --Data do debito da folha de pagamento
+                                              ,pr_dsorigem     => 'INTERNET'  --Descricao Origem
+                                              ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                              ,pr_cdcritic     => pr_cdcritic   --Codigo do erro
+                                              ,pr_dscritic     => pr_dscritic); --Descricao do erro;
+                             
+          --Se ocorreu erro
+          IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+             RAISE vr_erro;
+          END IF; 
+          
+          IF NOT pr_tab_internet.EXISTS(1) THEN
+            pr_cdcritic:= 0;
+            pr_dscritic:= 'Registro de limite para validar cancelamento folha de pagamento nao encontrado.';
+            --Levantar Excecao
+            RAISE vr_erro;
+          END IF; 
+          
+           vr_vldspptl := pr_tab_internet(1).vldspflp;            
+          /** Verifica se pode movimentar em relacao ao que ja foi usado **/
+          IF vr_vllanmto > vr_vldspptl  THEN
+            pr_cdcritic:= 0;
+            pr_dscritic:= 'Operador não possui limite disponível para cancelar a folha de pagamento';
+            --Levantar Excecao
+            RAISE vr_erro;            
+          END IF;              
+        END;
+      END IF;
+      --
 
       IF rw_valida_reg.idsitapr <> 1 THEN
 
@@ -6340,6 +6431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
                                ,pr_indrowid  IN VARCHAR2
                                ,pr_flvalsld  IN NUMBER
+                               ,pr_nrcpfope  IN NUMBER
                                ,pr_des_reto  OUT VARCHAR2
                                ,pr_dscritic  OUT VARCHAR2
                                ,pr_retxml    OUT CLOB) IS
@@ -6452,6 +6544,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          WHERE cdcooper = pr_cdcooper
            AND cdagenci = 90;
 
+     -- Buscar Limite do Operador
+     CURSOR cr_crapopi(prc_cdcooper crapopi.cdcooper%type,
+                       prc_nrdconta crapopi.nrdconta%type,
+                       prc_nrcpfope crapopi.nrcpfope%type) IS
+       SELECT c.vllimflp
+         FROM crapopi c
+        WHERE c.cdcooper = prc_cdcooper
+          AND c.nrdconta = prc_nrdconta
+          AND c.nrcpfope = prc_nrcpfope;
+     --
+     CURSOR cr_crappfp_2 (pr_cdcooper IN crappfp.cdcooper%type
+                         ,pr_nrdconta IN crapemp.nrdconta%type
+                         ,pr_dtdebito IN crappfp.dtdebito%type) IS
+      SELECT nvl(sum(pfp.VLLCTPAG),0) vllctpag
+         FROM crapemp emp
+            , crappfp pfp
+            , crapass ass
+        WHERE emp.cdcooper  = pfp.cdcooper
+          AND emp.cdempres  = pfp.cdempres
+          AND pfp.cdcooper = pr_cdcooper
+          AND emp.nrdconta = pr_nrdconta
+          AND TRUNC(pfp.dtdebito) = TRUNC(pr_dtdebito)
+          AND ass.cdcooper = emp.cdcooper
+          AND ass.nrdconta = emp.nrdconta
+          AND pfp.idsitapr = 5 -- Aprovada
+          ;         
+
      -- Tabelas
      TYPE typ_reg_craplfp IS
        RECORD (nrdconta craplfp.nrdconta%TYPE
@@ -6489,6 +6608,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      vr_totporta NUMBER;
      vr_totcoope NUMBER;
      vr_totporar NUMBER;
+     vr_totaprov NUMBER;
+     vr_dtdebito crappfp.dtdebito%type;
 
      -- Variaveis de Erro
      vr_dscritic VARCHAR2(4000);
@@ -6496,6 +6617,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      vr_des_reto VARCHAR2(3);
      vr_tab_erro GENE0001.typ_tab_erro;
 
+     --
+     vr_nrdrowid ROWID;
+     
      -- Variaveis Excecao
      vr_exc_erro EXCEPTION;
 
@@ -6519,6 +6643,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
        -- Quebra a string contendo o rowid separado por virgula
        vr_indrowid := gene0002.fn_quebra_string(pr_string => pr_indrowid, pr_delimit => ',');
 
+       vr_dtdebito := null;
+       vr_totaprov := 0;
+       
        -- Para cada registro selecionado, faremos as validacoes necessarias
        FOR vr_index IN 1..vr_indrowid.COUNT() LOOP
          --Reinicilizando variaveis
@@ -6543,7 +6670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          -- Se for Solicitacao De Estouro(2), devemos deixar processeguir
          -- pois usuario pode ter ajustado o saldo da conta e desaja tentar
          -- novamente a operacao
-         IF rw_crappfp.idsitapr NOT IN(1,2,3) THEN
+         IF rw_crappfp.idsitapr NOT IN(1,2,3,6) THEN
            -- Gera critica
            pr_dscritic := 'Somente pagamentos pendentes podem ser Aprovados!';
            RAISE vr_exc_erro;
@@ -6718,6 +6845,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          vr_vltotsel := vr_vltotsel + rw_crappfp.vllctpag;
          vr_vltottar := vr_vltottar + NVL(vr_vltarifa,0);
 
+         -- Somar as folhas de pagamento aprovadas, para subtrair do limite do operador
+         -- ou preposto
+         -- 397
+         /*FOR rw_crappfp_2 IN cr_crappfp_2(pr_cdcooper,
+                                          pr_nrdconta,
+                                          rw_crappfp.dtdebito) LOOP
+
+           IF rw_crappfp_2.vllctpag <> 0 AND 
+              (vr_dtdebito IS NULL OR vr_dtdebito <> rw_crappfp.dtdebito) THEN
+             vr_dtdebito := rw_crappfp.dtdebito;
+             vr_totaprov := vr_totaprov + rw_crappfp_2.vllctpag;
+           END IF;
+         END LOOP;*/
+
        END LOOP; -- vr_indrowid
 
        -- Busca a data limite de agendamento
@@ -6758,6 +6899,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                         'Favor alterar a data de débito se deseja continuar ou solicite ao Posto de Atendimento o aumento deste valor';
          RAISE vr_exc_erro;
        END IF;
+       -- 397
+/*       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => 1
+                           ,pr_dscritic => ''
+                           ,pr_dsorigem => 'INTERNET'
+                           ,pr_dstransa => 'Valicacao limite OP para folha de pagamento '
+                           ,pr_dttransa => TRUNC(SYSDATE)
+                           ,pr_flgtrans => 1 --> TRUE
+                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'FOLH0002'
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrdrowid => vr_nrdrowid);
+      --                                 
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Parametro CPF do operador'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => pr_nrcpfope);  
+      --
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Vl total sel FP'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_vltotsel);                                      
+       -- Validar com o limite do operador
+       IF pr_nrcpfope > 0 THEN
+         FOR rw_crapopi IN cr_crapopi (pr_cdcooper,
+                                       pr_nrdconta,
+                                       pr_nrcpfope) LOOP
+                                       
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Limite do operador'
+                                     ,pr_dsdadant => ''
+                                     ,pr_dsdadatu => rw_crapopi.vllimflp ); 
+                                     
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Total aprovados'
+                                     ,pr_dsdadant => ''
+                                     ,pr_dsdadatu => vr_totaprov );                                        
+                                     
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Limite do ope calc'
+                                     ,pr_dsdadant => ''
+                                     ,pr_dsdadatu => (rw_crapopi.vllimflp - vr_totaprov) );                                       
+                                                                            
+             IF (rw_crapopi.vllimflp - vr_totaprov) < vr_vltotsel THEN
+               pr_dscritic := 'Excedeu Valor limite diário de folha de pagamento do operador! '||
+                              'Aprovação de pagamento só poderá ser efetuada pelo Preposto';
+               RAISE vr_exc_erro;
+             END IF;
+           
+         END LOOP;       
+       END IF;*/
 
        -- Caso tenha algum lancamento com problema
        IF vr_tab_craplfp.COUNT() > 0 THEN
