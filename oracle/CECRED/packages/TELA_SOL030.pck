@@ -418,14 +418,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : SOBR
     Autor   : Lucas Lombardi
-    Data    : Agosto/2016                       Ultima atualizacao: 
+    Data    : Agosto/2016                       Ultima atualizacao: 24/08/2017
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para buscar cargas manuais do pre aprovado
     
-    Alteracoes: 
+    Alteracoes: 24/08/2017 - Ajustado para que alem da validacao dos meses 
+                             permitidos para execução para a executar tbem no 
+                             ultimo dia util do ano (M439 Tiago/Thiago).
     ..............................................................................*/ 
     DECLARE
       
@@ -444,6 +446,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
       -- cursor generico de data
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
       
+      -- Variaveis genericas
+      vr_flexecut BOOLEAN:=FALSE;
+            
       -- Variável de críticas
       vr_exc_erro  EXCEPTION;
       vr_cdcritic  INTEGER;
@@ -510,13 +515,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOL030 AS
         -- Incluir nome
         GENE0001.pc_informa_acesso(pr_module => vr_nmdatela
                                   ,pr_action => NULL);
-        
-        -- Tratar mês limite para calculo e distribuição
-        IF to_char(rw_crapdat.dtmvtolt,'MM') > to_number(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'NRMES_LIM_JURO_SOBRA')) THEN
-          pr_nmdcampo := 'txretorn';
-          vr_cdcritic := 282;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||gene0001.fn_param_sistema('CRED', vr_cdcooper, 'NRMES_LIM_JURO_SOBRA')||'.';
-          RAISE vr_exc_erro;
+           
+        IF   gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
+                                        ,pr_dtmvtolt => add_months(TRUNC(rw_crapdat.dtmvtolt,'RRRR'),12)-1 
+                                        ,pr_tipo => 'A') = rw_crapdat.dtmvtolt  THEN
+         IF  pr_txjurcap > 0 AND
+            (pr_txretorn + pr_txjurtar + pr_txreauat + 
+             pr_txjurapl + pr_txjursdm) = 0 THEN 
+           vr_flexecut := TRUE;
+         ELSE           
+           vr_cdcritic := 0;
+           vr_dscritic := 'No último dia útil do ano é permitido apenas juros ao capital.';
+           RAISE vr_exc_erro;
+         END IF;
+        END IF;
+
+        IF vr_flexecut = FALSE THEN
+          -- Tratar mês limite para calculo e distribuição
+          IF to_char(rw_crapdat.dtmvtolt,'MM') > to_number(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'NRMES_LIM_JURO_SOBRA')) THEN
+            pr_nmdcampo := 'txretorn';
+            vr_cdcritic := 282;
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||gene0001.fn_param_sistema('CRED', vr_cdcooper, 'NRMES_LIM_JURO_SOBRA')||'.';
+            RAISE vr_exc_erro;
+          END IF;
         END IF;
         
         /* Deve ser selecionado pelo menos um dos percentuais */
