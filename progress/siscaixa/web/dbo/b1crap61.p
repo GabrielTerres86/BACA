@@ -5,7 +5,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Evandro.
-   Data    : Marco/2010                      Ultima atualizacao: 13/10/2015
+   Data    : Marco/2010                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -51,6 +51,10 @@
                             
                13/10/2015 - Corrigida conversão de tipos na procedure 'deposita_envelope_dinheiro'
                             durante a criação da CRAPLCM (Lucas Lunelli)
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
 
 ............................................................................ */
 
@@ -1053,8 +1057,24 @@ PROCEDURE deposita_envelope_dinheiro:
                                 NO-LOCK NO-ERROR.
              
              IF AVAIL crapass  THEN
-                ASSIGN c-nome-titular1 = crapass.nmprimtl
-                       c-nome-titular2 = crapass.nmsegntl.
+			    DO:
+                   ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+				   IF crapass.inpessoa = 1 THEN
+				      DO:
+					     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+						                    WHERE crapttl.cdcooper = crapass.cdcooper AND
+    						                      crapttl.nrdconta = crapass.nrdconta AND
+											      crapttl.idseqttl = 2
+											      NO-LOCK:
+
+						   ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+						 END.
+
+					  END.
+
+		        END.
             
              ASSIGN c-literal = " "
                     c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 

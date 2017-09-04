@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Machado Flor
-       Data    : Setembro/2015                     Ultima atualizacao: 20/02/2017
+       Data    : Setembro/2015                     Ultima atualizacao: 24/04/2017
 
        Dados referentes ao programa:
 
@@ -150,6 +150,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
                
                20/02/2017 - #551202 Log de início, erros e fim da execução do programa (Carlos)
                
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+               
     ............................................................................ */
 
     DECLARE
@@ -202,7 +206,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
       flg_detalhes  PLS_INTEGER;
       vr_stsnrcal   BOOLEAN;
       vr_inpessoa   PLS_INTEGER;
-
+	  vr_nrcpfstl   crapttl.nrcpfcgc%TYPE;
+	  vr_nrcpfttl   crapttl.nrcpfcgc%TYPE;
 
       vr_dscpfcgc   VARCHAR2(18);
       vr_cpfdesti   VARCHAR2(18);
@@ -251,6 +256,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
       vr_dscritic   VARCHAR2(4000);
       vr_dscriti2   crapcri.dscritic%TYPE;
       vr_typ_saida  VARCHAR2(4000); 
+      vr_nrcpfcgc1  crapttl.nrcpfcgc%TYPE;
+      vr_nrcpfcgc2  crapttl.nrcpfcgc%TYPE;
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -273,6 +280,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
+      
+	    CURSOR cr_crapttl(pr_cdcooper IN crapttl.cdcooper%TYPE
+                       ,pr_nrdconta IN crapttl.nrdconta%TYPE
+			 	               ,pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+      SELECT ttl.nrcpfcgc
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta
+		     AND ttl.idseqttl = pr_idseqttl;
+      rw_crapttl cr_crapttl%ROWTYPE;
       
       CURSOR cr_craptco(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN craptco.nrdconta%TYPE) IS
@@ -853,6 +870,42 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
              
              CLOSE cr_crapass;
              
+             vr_nrcpfcgc1 := 0;
+             vr_nrcpfcgc2 := 0;
+
+             IF rw_crapass.inpessoa = 1 THEN
+
+               OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                              ,pr_nrdconta => rw_crapass.nrdconta
+                              ,pr_idseqttl => 2);
+
+               FETCH cr_crapttl INTO rw_crapttl;
+
+               IF cr_crapttl%FOUND THEN
+
+                 vr_nrcpfstl := rw_crapttl.nrcpfcgc;
+
+               END IF;
+
+               CLOSE cr_crapttl;
+
+               OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                              ,pr_nrdconta => rw_crapass.nrdconta
+                              ,pr_idseqttl => 3);
+
+               FETCH cr_crapttl INTO rw_crapttl;
+
+               IF cr_crapttl%FOUND THEN
+
+                 vr_nrcpfttl := rw_crapttl.nrcpfcgc;
+
+               END IF;
+
+               CLOSE cr_crapttl;
+
+             END IF;
+
+             
              --Verificar coops migradas
              IF pr_cdcooper = 1 OR
                 pr_cdcooper = 2 THEN
@@ -932,8 +985,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
              IF (lt_d_tipdocto IN (4,6,9) OR
                  (lt_d_cdfinali = 50 AND lt_d_tipdocto = 2)) THEN
                 IF NOT (lt_d_cpfcgcds = rw_crapass.nrcpfcgc OR
-                        lt_d_cpfcgcds = rw_crapass.nrcpfstl OR
-                        lt_d_cpfcgcds = rw_crapass.nrcpfttl) THEN
+                        lt_d_cpfcgcds = vr_nrcpfstl         OR
+                        lt_d_cpfcgcds = vr_nrcpfttl)        THEN
                    vr_cdcritic := 301;
                 END IF;        
              END IF;
@@ -945,9 +998,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
                    END IF;
                 ELSE                
                    IF ((lt_d_cpfcgcds = rw_crapass.nrcpfcgc)   OR
-                       (lt_d_cpfcgcds = rw_crapass.nrcpfstl))  AND
+                       (lt_d_cpfcgcds = vr_nrcpfstl))          AND
                       ((lt_d_cpfcgcap = rw_crapass.nrcpfcgc)   OR
-                       (lt_d_cpfcgcap = rw_crapass.nrcpfstl))  THEN
+                       (lt_d_cpfcgcap = vr_nrcpfstl))          THEN
                       NULL;
                    ELSE     
                       vr_cdcritic := 301;

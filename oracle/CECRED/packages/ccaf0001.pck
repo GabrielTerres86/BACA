@@ -36,7 +36,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCAF0001 AS
                             (Reinert)
 
                02/04/2014 - Tratamento para nao receber cheques de determinados
-                            Bancos (Elton). 
+                            Bancos (Elton).
                               
                06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
                             Incluido set de modulo
@@ -112,8 +112,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                             Bancos (Elton).
                             
                22/10/2014 - Ajuste na procedure pc_verifica_feriado - cursor
-                            cr_crapfsf ficava aberto. (Rafael). 
-               
+                            cr_crapfsf ficava aberto. (Rafael).
+                            
+		       25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
                06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
                             Incluido set de modulo
                             Incluidos códigos de critica 1027 e 9999 ( Belli Envolti ) - Ch 665812
@@ -201,12 +204,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT crapass.nrdconta
           ,crapass.nmprimtl
-          ,crapass.nmsegntl
           ,crapass.inpessoa
           ,crapass.cdagenci
           ,crapass.vllimcre
           ,crapass.nrcpfcgc
-          ,crapass.nrcpfstl
       FROM crapass
      WHERE crapass.cdcooper = pr_cdcooper
      AND   crapass.nrdconta = pr_nrdconta;
@@ -462,7 +463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       END IF;
     EXCEPTION
        WHEN vr_exc_erro THEN
-         pr_cdcritic:= vr_cdcritic; 
+         pr_cdcritic:= vr_cdcritic;
          pr_dscritic:= vr_dscritic;
        WHEN OTHERS THEN
          pr_cdcritic:= 0;
@@ -665,7 +666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
    Alteracoes: 09/08/2013 - Convers¿o Progress >> Oracle (PLSQL) (Alisson-Amcom)
 
                20/03/2014 - Incluido upper na leitura do campo rw_crapagb.cdsitagb (Odirlei-AMcom)
-               
+
                06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
                             Incluido set de modulo
                             Incluido código de critica 9999 ( Belli Envolti ) - Ch 665812
@@ -911,7 +912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
           vr_tmp_qtdiasut:= vr_tmp_qtdiasut + 1;
           pr_dtblqchq:= pr_dtblqchq + 1;
         END IF;
-      END LOOP;   
+      END LOOP;
     EXCEPTION
       WHEN vr_exc_erro THEN
         

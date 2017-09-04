@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 05/04/2016
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -53,6 +53,10 @@
                             PinPad Novo (Lucas Lunelli - [PROJ290])
                05/04/2016 - Incluidos novos parametros na procedure
                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).
+                            
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
                             
 ............................................................................ */
 
@@ -800,8 +804,7 @@ PROCEDURE atualiza-cheque-avulso:
          
     IF  AVAIL crapass THEN 
         DO:
-            ASSIGN c-nome-titular1 = crapass.nmprimtl
-                   c-nome-titular2 = crapass.nmsegntl.
+            ASSIGN c-nome-titular1 = crapass.nmprimtl.
 
             FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper AND
                                crapttl.nrdconta = crapass.nrdconta AND
@@ -814,7 +817,8 @@ PROCEDURE atualiza-cheque-avulso:
                        
                    IF AVAIL crapttl THEN
                       ASSIGN c-cgc-cpf2 = STRING(crapttl.nrcpfcgc,"99999999999")
-                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99"). 
+                             c-cgc-cpf2 = STRING(c-cgc-cpf2,"999.999.999-99")
+							 c-nome-titular2 = crapttl.nmextttl. 
                 END.
             ELSE 
                 ASSIGN c-cgc-cpf1 = STRING(crapass.nrcpfcgc,"99999999999999")

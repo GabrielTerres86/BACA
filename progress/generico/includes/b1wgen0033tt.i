@@ -2,7 +2,7 @@
 
    Programa: b1wgen00333t.i                  
    Autor   : Guilherme
-   Data    : Agosto/2008                  Ultima atualizacao:  12/08/2015
+   Data    : Agosto/2008                  Ultima atualizacao:  04/08/2017
 
    Dados referentes ao programa:
 
@@ -25,6 +25,8 @@
                12/08/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
 
+			   04/08/2017 - Inclusao de novos campos na tt-associado 
+			                (Adriano)
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-matricula NO-UNDO
@@ -147,7 +149,9 @@ DEF TEMP-TABLE tt-cooperativa NO-UNDO
 
 DEF TEMP-TABLE tt-associado NO-UNDO
     LIKE crapass
-    FIELD nrfonres AS CHAR.
+    FIELD nrfonres AS CHAR
+	FIELD nrcpfstl LIKE crapttl.nrcpfcgc
+	FIELD nrfonemp AS CHAR.
 
 DEF TEMP-TABLE tt2-associado NO-UNDO
     LIKE crapass.

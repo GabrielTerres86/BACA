@@ -2,11 +2,11 @@
 	/*************************************************************************
 	  Fonte: obtem_consulta.php                                               
 	  Autor: Jaison Fernando
-	  Data : Novembro/2015                         Última Alteração: --/--/----		   
+	  Data : Novembro/2015                         Última Alteração: 03/08/2017
 	                                                                   
 	  Objetivo  : Carrega os dados da tela TAB097.
 	                                                                 
-	  Alterações: 
+	  Alterações: 03/08/2017 - Ajuste para chamar a rotina CONSULTA_CNAE (Adriano).
 				  
 	***********************************************************************/
 
@@ -38,7 +38,7 @@
 	$xml .= "</Root>";
 
 	// Requisicao dos dados de CNAE
-	$xmlResult = mensageria($xml, "MATRIC", "BUSCA_CNAE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "MATRIC", "CONSULTA_CNAE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {

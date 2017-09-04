@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 12/08/2015
+    Data    : Marco/2010                   Ultima atualizacao: 20/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -29,6 +29,11 @@
                               crapcje. (Tiago Castro - RKAM)
                               
                  12/08/2015 - Reformulacao cadastral (Gabriel-RKAM).             
+                              
+				 20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                  crapass, crapttl, crapjur 
+							 (Adriano - P339).        
+
                               
 .............................................................................*/
 
@@ -322,7 +327,7 @@ PROCEDURE Busca_Dados_Id:
         /* procurar a conta do titular conf. conta do conjuge */
         FOR FIRST crabttl FIELDS(nrcpfcgc nmextttl dtnasttl tpdocttl nrdocttl
                                  cdoedttl cdufdttl dtemdttl cdfrmttl cdnatopc
-                                 tpcttrab dsproftl cdnvlcgo nrfonemp cdturnos
+                                 tpcttrab dsproftl cdnvlcgo cdturnos
                                  dtadmemp vlsalari cdcooper cdempres inpessoa
                                  idseqttl nrdconta grescola nrcpfemp cdocpttl)
                           WHERE crabttl.cdcooper = tt-crapcje.cdcooper AND
@@ -363,7 +368,6 @@ PROCEDURE Busca_Dados_Id:
                   tt-crapcje.tpcttrab = crabttl.tpcttrab
                   tt-crapcje.dsproftl = crabttl.dsproftl
                   tt-crapcje.cdnvlcgo = crabttl.cdnvlcgo
-                  tt-crapcje.nrfonemp = crabttl.nrfonemp
                   tt-crapcje.cdturnos = crabttl.cdturnos
                   tt-crapcje.dtadmemp = crabttl.dtadmemp
                   tt-crapcje.vlsalari = crabttl.vlsalari
@@ -386,7 +390,8 @@ PROCEDURE Busca_Dados_Id:
                FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper  AND
                                        craptfc.nrdconta = crabttl.nrdconta AND
                                        craptfc.tptelefo = 3 NO-LOCK:
-                   ASSIGN tt-crapcje.nrramemp = craptfc.nrdramal.
+                   ASSIGN tt-crapcje.nrfonemp = string(craptfc.nrtelefo)
+				          tt-crapcje.nrramemp = craptfc.nrdramal.
                END.
             END.
         ELSE 
@@ -530,7 +535,7 @@ PROCEDURE Busca_Dados_Cje:
         /* procurar a conta do titular conf. conta do conjuge */
         FOR FIRST crapttl FIELDS(nrcpfcgc nmextttl dtnasttl tpdocttl nrdocttl
                                  cdoedttl cdufdttl dtemdttl cdfrmttl cdnatopc
-                                 tpcttrab dsproftl cdnvlcgo nrfonemp cdturnos
+                                 tpcttrab dsproftl cdnvlcgo cdturnos
                                  dtadmemp vlsalari cdcooper cdempres inpessoa
                                  idseqttl nrdconta grescola nrcpfemp cdocpttl
                                  cdgraupr)
@@ -582,7 +587,6 @@ PROCEDURE Busca_Dados_Cje:
            tt-crapcje.tpcttrab = crapttl.tpcttrab
            tt-crapcje.dsproftl = crapttl.dsproftl
            tt-crapcje.cdnvlcgo = crapttl.cdnvlcgo
-           tt-crapcje.nrfonemp = crapttl.nrfonemp
            tt-crapcje.cdturnos = crapttl.cdturnos
            tt-crapcje.dtadmemp = crapttl.dtadmemp
            tt-crapcje.vlsalari = crapttl.vlsalari
@@ -611,7 +615,8 @@ PROCEDURE Busca_Dados_Cje:
         FOR FIRST craptfc WHERE craptfc.cdcooper = crapttl.cdcooper AND
                                 craptfc.nrdconta = crapttl.nrdconta AND
                                 craptfc.tptelefo = 3 NO-LOCK:
-            ASSIGN tt-crapcje.nrramemp = craptfc.nrdramal.
+            ASSIGN tt-crapcje.nrfonemp = string(craptfc.nrtelefo)
+			       tt-crapcje.nrramemp = craptfc.nrdramal.
         END.
 
         RUN Atualiza_Descricao.

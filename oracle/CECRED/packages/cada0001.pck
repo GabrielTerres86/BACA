@@ -1,24 +1,29 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0001
-  --  Sistema  : Rotinas para cadastros Web
-  --  Sigla    : CADA
-  --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 16/06/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
-  --
-  --             10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
-  --                          na procedure pc_busca_dados_58 para verificar se o representante
-  --                          é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).	             
-  --
-  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
-  --                          procedures desta package. (Carlos Rafael Tanholi).                    
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : CADA0001
+    Sistema  : Rotinas para cadastros Web
+    Sigla    : CADA
+    Autor    : Petter R. Villa Real  - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 22/06/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
+  
+               10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
+                            na procedure pc_busca_dados_58 para verificar se o representante
+                            é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).	             
+  
+               16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
+                            procedures desta package. (Carlos Rafael Tanholi).   
+  
+               22/06/2017 - Ajustes para retirar as rotinas de consulta/inclusão de naciondalidade, pois
+                            foi criado a tela CADNAC para genrenciar as nacionalidades
+                            (Adriano - P339).
+                                             
+  ---------------------------------------------------------------------------------------------------------------*/
 
   --Tipo de Registro para os lançamentos
   TYPE typ_reg_lancamentos IS
@@ -567,58 +572,51 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                                      ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro
                          
-  PROCEDURE pc_busca_nacionalidades(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);
                                      
-  PROCEDURE pc_inclui_nacionalidade(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                     ,pr_des_erro OUT VARCHAR2);                                   
 
 END CADA0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0001
-  --  Sistema  : Rotinas para cadastros Web
-  --  Sigla    : CADA
-  --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 16/06/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
-  --
-  -- Alteracoes: 02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
-  --                          adicionados na crapttl. Ajustes na "pc_busca_dados_cto_72",
-  --                          "pc_busca_dados_cto_58", "pc_busca_dados_ass_58",
-  --                          "pc_busca_dados_id_58" (Douglas - Chamado 131253)
-  --
-  --             07/10/2015 - Alterado parametro pr_flcomple da pc_busca_idade para number 
-  --                          (Lucas Ranghetti #340156)  
-  --
-  --             10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
-  --                          na procedure pc_busca_dados_58 para verificar se o representante
-  --                          é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).
-  --
-  --             01/03/2016 - Adicionado SUBSTR na procedure pc_busca_dados_cto_72 para os campos 
-  --                          nmrespon, nmpairsp, nmmaersp que são carregados da crapttl, e que 
-  --                          possuem tamanho de campos diferentes (Douglas - Chamado 410909)
-  --
-  --             16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
-  --                          procedures desta package. (Carlos Rafael Tanholi).        
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : CADA0001
+    Sistema  : Rotinas para cadastros Web
+    Sigla    : CADA
+    Autor    : Petter R. Villa Real  - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 22/06/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para manutenção (cadastro) dos dados para sistema Web/genérico
+  
+   Alteracoes: 02/06/2014 - Removido os campos cdestcvl e vlsalari da crapass e
+                            adicionados na crapttl. Ajustes na "pc_busca_dados_cto_72",
+                            "pc_busca_dados_cto_58", "pc_busca_dados_ass_58",
+                            "pc_busca_dados_id_58" (Douglas - Chamado 131253)
+  
+               07/10/2015 - Alterado parametro pr_flcomple da pc_busca_idade para number 
+                            (Lucas Ranghetti #340156)  
+  
+               10/11/2015 - Incluido o campo tt-crapavt.idrspleg, e incluido verificacao
+                            na procedure pc_busca_dados_58 para verificar se o representante
+                            é responsável legal pelo acesso aos canais de autoatendimento e SAC (Jean Michel).
+  
+               01/03/2016 - Adicionado SUBSTR na procedure pc_busca_dados_cto_72 para os campos 
+                            nmrespon, nmpairsp, nmmaersp que são carregados da crapttl, e que 
+                            possuem tamanho de campos diferentes (Douglas - Chamado 410909)
+  
+               16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias
+                            procedures desta package. (Carlos Rafael Tanholi).        
+  
+    			     25/04/2017 - Ajustes realizados:
+                            - Retirar o uso de campos removidos da tabela crapass, crapttl, crapjur 
+                            - Retirar as rotinas de consulta/inclusão de naciondalidade, pois
+                              foi criado a tela CADNAC para genrenciar as nacionalidades
+                            (Adriano - P339).
+              
+	
+  ---------------------------------------------------------------------------------------------------------------*/
 
   -- Type para os motivos de demissões
   TYPE tab_motdem IS TABLE OF craptab.dstextab%TYPE INDEX BY BINARY_INTEGER;
@@ -634,10 +632,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
           ,crapass.nrcpfcgc
           ,crapass.inpessoa
           ,crapass.cdcooper
-          ,crapass.nrcpfstl
           ,crapass.cdagenci
           ,crapass.dtdemiss
-          ,crapass.dsdemail
           ,crapass.indnivel
           ,crapass.cdtipcta
           ,crapass.tpdocptl
@@ -5958,202 +5954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     END;
   END pc_lista_cooperativas_web;
   
-  --Busca as nacionalidades cadastradas no sistema
-  PROCEDURE pc_busca_nacionalidades(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
-  /* .............................................................................
-   Programa: pc_busca_nacionalidades
-   Sistema : Conta-Corrente - Cooperativa de Credito
-   Sigla   : CRED
-   Autor   : Kelvin Souza Ott
-   Data    : 13/05/2016                        Ultima atualizacao: --/--/----
-
-   Dados referentes ao programa:
-
-   Frequencia: Sempre que for chamado
-   Objetivo  : Rotina para buscar as nacionalidades
-
-   Alteracoes: 
-                
-    ............................................................................. */                                    
-    CURSOR cr_crapnac (p_dsnacion IN crapnac.dsnacion%TYPE) IS
-      SELECT nac.dsnacion 
-            ,nac.cdnacion
-        FROM crapnac nac
-       WHERE (UPPER(nac.dsnacion) LIKE '%' || UPPER(pr_dsnacion) || '%') 
-          OR (TRIM(pr_dsnacion) IS NULL)
-       ORDER BY nac.dsnacion;
     
-    -- Variaveis de log
-    vr_cdcooper NUMBER;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-    vr_auxconta PLS_INTEGER := 0;
-    
-    --Variaveis de erro
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic crapcri.dscritic%TYPE;         
-    vr_exc_saida EXCEPTION;
-  
-  BEGIN
-    -- Extrai os dados dos dados que vieram do php
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);  
-    -- Verifica se houve erro                      
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;                         
-    
-    -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nacionalidades/>');
-    
-    --Loop nas nacionalidades   
-    FOR rw_crapnac IN cr_crapnac(p_dsnacion => pr_dsnacion) LOOP
-       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidades',pr_posicao => 0,pr_tag_nova => 'nacionalidade',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
-       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'nacionalidade',pr_posicao => vr_auxconta, pr_tag_nova => 'dsnacion', pr_tag_cont => rw_crapnac.dsnacion, pr_des_erro => vr_dscritic);
-       
-       -- Incrementa contador p/ posicao no XML
-       vr_auxconta := nvl(vr_auxconta,0) + 1;  
-        
-    END LOOP;
-  
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-      IF TRIM(vr_dscritic) IS NULL THEN
-        vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      END IF;
-      pr_cdcritic := pr_cdcritic;
-      pr_dscritic := vr_dscritic;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
-    WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral (CADA0001.pc_buscar_nacionalidades): ' || SQLERRM;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;   
-  
-  END;
-
---Inclui nacionalidade requerida pelo usuario
-  PROCEDURE pc_inclui_nacionalidade(pr_dsnacion IN crapnac.dsnacion%TYPE --> Descrição da nacionalidade
-                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
-  /* .............................................................................
-   Programa: pc_busca_nacionalidades
-   Sistema : Conta-Corrente - Cooperativa de Credito
-   Sigla   : CRED
-   Autor   : Kelvin Souza Ott
-   Data    : 16/05/2016                        Ultima atualizacao: --/--/----
-
-   Dados referentes ao programa:
-
-   Frequencia: Sempre que for chamado
-   Objetivo  : Rotina para incluir as nacionalidades
-
-   Alteracoes: 
-                
-    ............................................................................. */                                    
-    CURSOR cr_crapnac (p_dsnacion IN crapnac.dsnacion%TYPE) IS
-      SELECT nac.dsnacion 
-        FROM crapnac nac
-       WHERE UPPER(nac.dsnacion) = UPPER(pr_dsnacion);
-    
-    rw_crapnac cr_crapnac%ROWTYPE;
-    
-    -- Variaveis de log
-    vr_cdcooper NUMBER;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-    vr_auxconta PLS_INTEGER := 0;
-    
-    --Variaveis de erro
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic crapcri.dscritic%TYPE;         
-    vr_exc_saida EXCEPTION;
-  
-  BEGIN
-    -- Extrai os dados dos dados que vieram do php
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);  
-    -- Verifica se houve erro                      
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;                         
-    
-    OPEN cr_crapnac(pr_dsnacion);
-      FETCH cr_crapnac
-      INTO rw_crapnac;
-      
-      IF cr_crapnac%FOUND THEN
-        vr_dscritic := 'Nacionalidade ja existe.';
-        RAISE vr_exc_saida;
-      END IF;  
-    CLOSE cr_crapnac;
-    
-    -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nacionalidades/>');    
-    
-    --Inclui a nacionalidade
-    INSERT INTO cecred.crapnac
-      (dsnacion)
-    VALUES
-      (UPPER(pr_dsnacion));
-    
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-      IF TRIM(vr_dscritic) IS NULL THEN
-        vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      END IF;
-      pr_cdcritic := pr_cdcritic;
-      pr_dscritic := vr_dscritic;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;
-    WHEN OTHERS THEN
-      pr_cdcritic := 0;
-      pr_dscritic := 'Erro geral (CADA0001.pc_inclui_nacionalidades): ' || SQLERRM;
-      -- Carregar XML padrão para variável de retorno não utilizada.
-      -- Existe para satisfazer exigência da interface.
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      ROLLBACK;   
-  
-  END;  
   
 END CADA0001;
 /

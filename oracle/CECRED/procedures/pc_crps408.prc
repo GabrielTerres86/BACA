@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                  Ultima atualizacao: 25/10/2016
+   Data    : Setembro/2004.                  Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -174,6 +174,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                             de semana ou feriados devem ser enviados no primeiro dia útil posterior). (Carlos)
 
 			   21/03/2017 - Ajuste para gerar número de pedido distinto por tipo de requisição (Rafael Monteiro)
+
+               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 
 ............................................................................. */
 
@@ -354,7 +359,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
              nrflcheq,
              qtfoltal,
              nmprimtl,
-             nmsegntl,
              cdtipcta,
              cdsitdtl,
              inlbacen,
@@ -379,6 +383,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                       pr_nrdconta IN crapttl.nrdconta%TYPE,
                       pr_idseqttl IN crapttl.idseqttl%TYPE) IS
       SELECT nmtalttl
+            ,nmextttl
         FROM crapttl
        WHERE crapttl.cdcooper  = pr_cdcooper
          AND crapttl.nrdconta  = pr_nrdconta
@@ -474,7 +479,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     vr_cdoedptl        crapass.cdoedptl%TYPE;
     vr_cdufdptl        crapass.cdufdptl%TYPE;
     vr_nmprital        crapass.nmprimtl%TYPE;
-    vr_nmsegtal        crapass.nmsegntl%TYPE;
+    vr_nmsegtal        crapttl.nmextttl%TYPE;
     vr_dtabtcc2        DATE;
     vr_literal2        VARCHAR2(200);
     vr_literal3        VARCHAR2(200);
@@ -947,6 +952,79 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
              vr_dstipreq := ' A';  -- CTA NOVA
           END IF;
 
+		  -- Inicializa variaveis
+          vr_tpdocptl := ' ';
+          vr_nrdocptl := ' ';
+          vr_cdoedptl := ' ';
+          vr_cdufdptl := ' ';
+          vr_nmsegtal := ' ';
+          vr_literal6 := ' ';
+		  vr_nmprital := rw_crapass.nmprimtl;
+
+		  -- Busca o nome do primeito titular da conta
+          IF rw_crapass.inpessoa = 1 THEN -- Se for pessoa fisica
+
+            vr_dscpfcgc := 'CPF: ';
+            vr_nrcpfcgc := gene0002.fn_mask(rw_crapass.nrcpfcgc,'999.999.999-99');
+            vr_tpdocptl := rw_crapass.tpdocptl;
+            vr_nrdocptl := rw_crapass.nrdocptl;
+            vr_cdoedptl := rw_crapass.cdoedptl;
+            vr_cdufdptl := rw_crapass.cdufdptl;
+
+            -- Abre o cursor contendo os titulares da conta
+            OPEN cr_crapttl(pr_cdcooper,
+                            rw_crapass.nrdconta,
+                            1);
+
+            FETCH cr_crapttl INTO rw_crapttl;
+
+            IF cr_crapttl%FOUND THEN
+              IF nvl(rw_crapttl.nmtalttl,' ') <> ' ' THEN
+                vr_nmprital := rw_crapttl.nmtalttl;
+              ELSE
+                vr_nmprital := rw_crapass.nmprimtl;
+              END IF;
+
+              -- Faz mais um fetch para buscar o segundo titular
+              FETCH cr_crapttl INTO rw_crapttl;
+              IF cr_crapttl%FOUND THEN
+                IF nvl(rw_crapttl.nmtalttl,' ') <> ' ' THEN
+                  vr_nmsegtal := rw_crapttl.nmtalttl;
+                ELSE
+                  vr_nmsegtal := rw_crapttl.nmextttl;
+                END IF;
+              END IF;
+
+            END IF;
+
+            CLOSE cr_crapttl;
+
+          ELSE -- Se for pessoa juridica
+
+            vr_dscpfcgc := 'CNPJ:';
+            vr_nrcpfcgc := gene0002.fn_mask(rw_crapass.nrcpfcgc,'99.999.999/9999-99');
+
+            -- Abre o cursor contendo os titulares da conta
+            OPEN cr_crapjur(pr_cdcooper,
+                            rw_crapass.nrdconta);
+
+            FETCH cr_crapjur INTO rw_crapjur;
+
+            IF cr_crapjur%FOUND THEN
+              IF nvl(rw_crapjur.nmtalttl,' ') <> ' ' THEN
+                vr_nmprital := rw_crapjur.nmtalttl;
+              ELSE
+                vr_nmprital := rw_crapass.nmprimtl;
+              END IF;
+
+            END IF;
+
+            CLOSE cr_crapjur;
+
+            vr_nmsegtal := '';
+
+          END IF;
+
           IF NOT (rw_crapreq.tprequis = 3 AND rw_crapreq.tpformul = 999) THEN -- Se nao for FC
             -- Insere as informações de detalhes do pedido da requisicao no XML
             pc_escreve_xml('<requisicao>'||
@@ -957,7 +1035,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                              '<nrultchq>'||gene0002.fn_mask(vr_nrultchq,'zzz.zzz.z')         ||'</nrultchq>'||
                              '<qtfoltal>'||to_char(rw_crapass.qtfoltal)  ||'</qtfoltal>'||
                              '<nmprimtl>'||substr(rw_crapass.nmprimtl,1,40)  ||'</nmprimtl>'||
-                             '<nmsegntl>'||substr(rw_crapass.nmsegntl,1,38)  ||'</nmsegntl>'|| -- Colocado tamanho maximo de 38, pois se for maior vai distorcer o relatorio
+                             '<nmsegntl>'||substr(vr_nmsegtal,1,38)  ||'</nmsegntl>'|| -- Colocado tamanho maximo de 38, pois se for maior vai distorcer o relatorio
                              '<dstipreq>'||vr_dstipreq||        '</dstipreq>'||
                            '</requisicao>',1);
             -- Atualiza o contador de REQUISICOES ou TRANSF/ABT
@@ -996,14 +1074,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           /*-----------------------------------------------------*/
 
           -- Inicializa variaveis
-          vr_tpdocptl := ' ';
-          vr_nrdocptl := ' ';
-          vr_cdoedptl := ' ';
-          vr_cdufdptl := ' ';
-          vr_nmsegtal := ' ';
-          vr_literal6 := ' ';
           rw_crapsfn.dtabtcct := NULL;
-
 
           -- Define o tipo de formulario
           IF rw_crapreq.tprequis = 1 THEN
@@ -1039,60 +1110,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           vr_auxiliar := vr_nrdctitg_aux * 10;
           vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_auxiliar); -- O retorno é ignorado, pois a variável vr_agencia é atualiza pelo programa
           vr_nrdigtc2 := MOD(vr_auxiliar,10);
-          vr_nmprital := rw_crapass.nmprimtl;
-
-          -- Busca o nome do primeito titular da conta
-          IF rw_crapass.inpessoa = 1 THEN -- Se for pessoa fisica
-            vr_dscpfcgc := 'CPF: ';
-            vr_nrcpfcgc := gene0002.fn_mask(rw_crapass.nrcpfcgc,'999.999.999-99');
-            vr_tpdocptl := rw_crapass.tpdocptl;
-            vr_nrdocptl := rw_crapass.nrdocptl;
-            vr_cdoedptl := rw_crapass.cdoedptl;
-            vr_cdufdptl := rw_crapass.cdufdptl;
-            -- Abre o cursor contendo os titulares da conta
-            OPEN cr_crapttl(pr_cdcooper,
-                            rw_crapass.nrdconta,
-                            1);
-            FETCH cr_crapttl INTO rw_crapttl;
-            IF cr_crapttl%FOUND THEN
-              IF nvl(rw_crapttl.nmtalttl,' ') <> ' ' THEN
-                vr_nmprital := rw_crapttl.nmtalttl;
-              ELSE
-                vr_nmprital := rw_crapass.nmprimtl;
-              END IF;
-
-              -- Faz mais um fetch para buscar o segundo titular
-              FETCH cr_crapttl INTO rw_crapttl;
-              IF cr_crapttl%FOUND THEN
-                IF nvl(rw_crapttl.nmtalttl,' ') <> ' ' THEN
-                  vr_nmsegtal := rw_crapttl.nmtalttl;
-                ELSE
-                  vr_nmsegtal := rw_crapass.nmsegntl;
-                END IF;
-              END IF;
-
-            END IF;
-            CLOSE cr_crapttl;
-          ELSE -- Se for pessoa juridica
-            vr_dscpfcgc := 'CNPJ:';
-            vr_nrcpfcgc := gene0002.fn_mask(rw_crapass.nrcpfcgc,'99.999.999/9999-99');
-            -- Abre o cursor contendo os titulares da conta
-            OPEN cr_crapjur(pr_cdcooper,
-                            rw_crapass.nrdconta);
-            FETCH cr_crapjur INTO rw_crapjur;
-            IF cr_crapjur%FOUND THEN
-              IF nvl(rw_crapjur.nmtalttl,' ') <> ' ' THEN
-                vr_nmprital := rw_crapjur.nmtalttl;
-              ELSE
-                vr_nmprital := rw_crapass.nmprimtl;
-              END IF;
-
-            END IF;
-            CLOSE cr_crapjur;
-
-            vr_nmsegtal := rw_crapass.nmsegntl;
-
-          END IF;
 
           -- Busca os dados cadastrais do titular
           IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
@@ -1102,7 +1119,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            rpad(' ',7,' ') ||
                            gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z');
             vr_literal3 := rpad(vr_tpdocptl,3,' ') ||
-                           TRIM(vr_nrdocptl) || ' '||
+                           SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
                            TRIM(vr_cdoedptl)|| ' '||
                            TRIM(vr_cdufdptl);
             vr_literal4 := '';
@@ -1113,7 +1130,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            rpad(' ',7,' ') ||
                            gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z');
             vr_literal4 := rpad(vr_tpdocptl,3,' ') ||
-                           TRIM(vr_nrdocptl) || ' '||
+                           SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
                            TRIM(vr_cdoedptl)|| ' '||
                            TRIM(vr_cdufdptl);
           END IF;

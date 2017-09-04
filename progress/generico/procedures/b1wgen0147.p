@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 12/05/2016
+   Data    : 02/05/2013                         Ultima atualizacao: 12/06/2017
 
    Dados referentes ao programa:
 
@@ -20,6 +20,10 @@
                
                12/05/2016 - Atualizar somente operacoes com situacao "N,A,P,L"
                            (Diego).            
+
+			   12/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							 (Adriano - P339).		            
 
 .............................................................................*/
 
@@ -214,7 +218,7 @@ PROCEDURE cria_dados_totvs:
                                              "</CDEODTTL>"
                            aux_textoxml[12] = "<DTEMDTTL>" + STRING(crapttl.dtemdttl) 
                                             + "</DTEMDTTL>"
-                           aux_textoxml[13] = "<NRDOCTTL>" + crapttl.nrdocttl + 
+                           aux_textoxml[13] = "<NRDOCTTL>" + SUBSTR(TRIM(crapttl.nrdocttl),1,15) + 
                                               "</NRDOCTTL>"
                            aux_textoxml[14] = "<DSEXTTTL>" + aux_dssexttl + 
                                               "</DSEXTTTL>"

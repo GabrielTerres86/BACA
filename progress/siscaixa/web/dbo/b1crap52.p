@@ -4,7 +4,7 @@
      Historicos - 403(Praca)/404(Fora Praca) - Unificados no historico 700     
      Autenticacao  - RC
                                                                  
-     Ultima Atualizacao:  05/08/2014
+     Ultima Atualizacao:  17/04/2017
      
      Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -20,6 +20,11 @@
                 05/05/2011 - Ajuste nas datas liberacao de cheque (Gabriel)
                 
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+
+				17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
 ----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -796,9 +801,27 @@ PROCEDURE atualiza-cheque-sem-captura:
            
     FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper  AND
                        crapass.nrdconta = craplcm.nrdconta  NO-ERROR.
+    
     IF  AVAIL crapass THEN
-        ASSIGN c-nome-titular1 = crapass.nmprimtl
-               c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+           ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+		   IF crapass.inpessoa = 1 THEN
+			  DO:
+				  FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                     WHERE crapttl.cdcooper = crapass.cdcooper AND
+									       crapttl.nrdconta = crapass.nrdconta AND
+									       crapttl.idseqttl = 2 
+									       NO-LOCK:
+
+					 ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+                  END.
+
+			  END.
+	   END.
+
+	
                    
     ASSIGN c-literal = " ".
     ASSIGN c-literal[1]  = 

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0061.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 22/07/2014
+    Data    : Marco/2010                   Ultima atualizacao: 20/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CLIENTE FINANCEIRO
 
@@ -22,6 +22,12 @@
    
                 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+
+			    20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+			   
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -76,7 +82,7 @@ PROCEDURE Busca_Dados:
         EMPTY TEMP-TABLE tt-erro.
 
         FOR FIRST crapass FIELDS(cdcooper nrdconta inpessoa nrcpfcgc 
-                                 cdagenci nrcpfstl nmsegntl nmprimtl)
+                                 cdagenci nmprimtl)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta NO-LOCK:
         END.
@@ -93,8 +99,6 @@ PROCEDURE Busca_Dados:
             tt-dadoscf.nrdconta = crapass.nrdconta
             tt-dadoscf.inpessoa = crapass.inpessoa
             tt-dadoscf.cdagenci = crapass.cdagenci
-            tt-dadoscf.nrcpfstl = crapass.nrcpfstl
-            tt-dadoscf.nmsegntl = crapass.nmsegntl
             tt-dadoscf.nrdrowid = ROWID(crapass).
 
         FOR FIRST crapcop FIELDS(nmextcop)
@@ -1214,8 +1218,7 @@ PROCEDURE Busca_Impressao:
             END.
 
         FOR FIRST crapass FIELDS(inpessoa cdsitdct dtdemiss nmprimtl 
-                                 nrcpfcgc dtabtcct dtadmiss nmsegntl
-                                 nrcpfstl)
+                                 nrcpfcgc dtabtcct dtadmiss )
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta NO-LOCK:
         END.
@@ -1303,23 +1306,31 @@ PROCEDURE Busca_Impressao:
                ELSE
                    ASSIGN tt-fichacad.dssitdct = "ATIVA".
 
-               IF  DEC(crapass.nrcpfstl) = 0 THEN
-                   ASSIGN
-                       tt-fichacad.nmsegntl = "XXXXXXXXXXXXXX" 
-                       tt-fichacad.nrcpfstl = "XXX.XXX.XXX-XX".
-               ELSE
-                   ASSIGN
-                       tt-fichacad.nrcpfstl = STRING(STRING(crapass.nrcpfstl,
-                                                            "99999999999"),
-                                                     "xxx.xxx.xxx-xx")
-                       tt-fichacad.nmsegntl = crapass.nmsegntl.
-
                FOR FIRST crapttl FIELDS(nmextttl)
                                  WHERE crapttl.cdcooper = par_cdcooper AND
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl = par_idseqttl NO-LOCK:
                    ASSIGN tt-fichacad.nmextttl = crapttl.nmextttl.
                END.
+
+			   FOR FIRST crapttl FIELDS(nmextttl nrcpfcgc)
+                                 WHERE crapttl.cdcooper = par_cdcooper AND
+                                       crapttl.nrdconta = par_nrdconta AND
+                                       crapttl.idseqttl = 2 NO-LOCK:
+                   
+               END.
+
+               IF  NOT AVAIL crapttl THEN
+                   ASSIGN tt-fichacad.nmsegntl = "XXXXXXXXXXXXXX" 
+                          tt-fichacad.nrcpfstl = "XXX.XXX.XXX-XX".
+               ELSE
+                   ASSIGN
+                       tt-fichacad.nrcpfstl = STRING(STRING(crapttl.nrcpfcgc,
+                                                            "99999999999"),
+                                                     "xxx.xxx.xxx-xx")
+                       tt-fichacad.nmsegntl = crapttl.nmextttl.
+
+               
            END.
 
            OTHERWISE DO:

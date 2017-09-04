@@ -29,7 +29,7 @@
 
     Programa: b1wgen0059.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao:  22/02/2017
+    Data    : Marco/2010                   Ultima atualizacao:  02/08/2017
 
     Objetivo  : Buscar os dados p/ telas de pesquisas ou zoom's
 
@@ -172,7 +172,7 @@
                  23/03/2016 - Adicionar validacao para nao exibir os historicos
                               817,821, e 825 na tela de custodia
                               (Douglas - Melhoria 100 - Alineas)
-                              
+
 				 15/07/2016 - Realizado a conversao da rotina busca-craplrt 
 							  (Andrei - RKAM).
 
@@ -192,6 +192,10 @@
 							 				
                  07/06/2016 - Adicionar validacao para nao exibir o historico 
                               1019 na tela autori (Lucas Ranghetti #464211)
+
+			    02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
 
 .............................................................................*/
 
@@ -1872,7 +1876,7 @@ PROCEDURE zoom-associados:
 
                   FOR EACH crapttl FIELDS(cdcooper nrdconta nmextttl
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao ) 
+                                           dtnasttl  ) 
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmextttl MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,    
@@ -1903,7 +1907,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl
@@ -1933,7 +1936,7 @@ PROCEDURE zoom-associados:
                                           USE-INDEX crapcje1 NO-LOCK,
                        EACH crapttl FIELDS(cdcooper nrdconta 
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao)
+                                           dtnasttl )
                                     WHERE crapttl.cdcooper = par_cdcooper NO-LOCK,                       
                        EACH crapass FIELDS(cdagenci nrdctitg dtdemiss dsnivris)
                             WHERE crapass.cdcooper = crapttl.cdcooper AND
@@ -1962,7 +1965,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(Conj)"
@@ -1987,7 +1989,7 @@ PROCEDURE zoom-associados:
                WHEN 2 THEN DO: /* Nome do pai */
                    FOR EACH crapttl FIELDS(cdcooper nrdconta nmpaittl
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao)
+                                           dtnasttl )
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmpaittl MATCHES ("*" + par_nmdbusca + "*")
                        NO-LOCK,
@@ -2017,7 +2019,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(PAI)"
@@ -2042,7 +2043,7 @@ PROCEDURE zoom-associados:
                WHEN 3 THEN DO: /* Nome da mae */
                    FOR EACH crapttl FIELDS(cdcooper nrdconta nmmaettl
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao)
+                                           dtnasttl )
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmmaettl MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,
@@ -2072,7 +2073,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(MAE)"
@@ -2246,7 +2246,7 @@ PROCEDURE zoom-associados:
                           IF  crapass.inpessoa = 1 THEN
                               DO:            
                                  FOR FIRST crapttl FIELDS(nmextttl nrdconta idseqttl
-                                                          dtnasttl nmdsecao
+                                                          dtnasttl 
                                                           cdempres nrcpfcgc)
                                      WHERE crapttl.cdcooper = par_cdcooper     AND
                                            crapttl.nrdconta = crapass.nrdconta AND
@@ -2271,7 +2271,6 @@ PROCEDURE zoom-associados:
                                          tt-titular.nmextttl = crapttl.nmextttl  
                                          tt-titular.idseqttl = crapttl.idseqttl  
                                          tt-titular.dtnasttl = crapttl.dtnasttl
-                                         tt-titular.nmdsecao = crapttl.nmdsecao
                                          tt-titular.cdempres = crapttl.cdempres
                                          tt-titular.nmpesttl = tt-titular.nmextttl
                                          tt-titular.nmprimtl = tt-titular.nmextttl
@@ -2355,7 +2354,7 @@ PROCEDURE zoom-associados:
                         IF  crapass.inpessoa = 1 THEN /* Pessoa Fisica */
                             DO:
                                FOR FIRST crapttl FIELDS(nmextttl idseqttl
-                                                        dtnasttl nmdsecao
+                                                        dtnasttl 
                                                         cdempres nrcpfcgc)
                                    WHERE crapttl.cdcooper = par_cdcooper     AND
                                          crapttl.nrdconta = crapass.nrdconta AND
@@ -2381,7 +2380,6 @@ PROCEDURE zoom-associados:
                                        tt-titular.nmextttl = crapttl.nmextttl  
                                        tt-titular.idseqttl = crapttl.idseqttl  
                                        tt-titular.dtnasttl = crapttl.dtnasttl
-                                       tt-titular.nmdsecao = crapttl.nmdsecao
                                        tt-titular.cdempres = crapttl.cdempres
                                        tt-titular.nmpesttl = tt-titular.nmextttl
                                        tt-titular.nmprimtl = tt-titular.nmextttl
@@ -2552,7 +2550,6 @@ PROCEDURE zoom-associados:
                                       tt-titular.nrdctitg = crapass.nrdctitg
                                       tt-titular.idseqttl = crapttl.idseqttl
                                       tt-titular.dtnasttl = crapttl.dtnasttl
-                                      tt-titular.nmdsecao = crapttl.nmdsecao
                                       tt-titular.dtdemiss = crapass.dtdemiss
                                       tt-titular.cdempres = crapttl.cdempres
                                       tt-titular.nmpesttl = tt-titular.nmextttl
@@ -3390,7 +3387,7 @@ PROCEDURE busca-historico:
                      IF  craphis.inautori = 1 AND 
                          craphis.cdhistor = 1019 THEN
                          NEXT.
-                 END.            
+                 END.
 
             ASSIGN par_qtregist = par_qtregist + 1.
 

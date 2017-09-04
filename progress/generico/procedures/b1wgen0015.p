@@ -399,6 +399,11 @@
                            PRJ335 - Analise de fraude. (Odirlei-AMcom).
               
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+
+
+              18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			               crapass, crapttl, crapjur 
+						  (Adriano - P339).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -2735,7 +2740,13 @@ PROCEDURE verifica-historico-transferencia:
     DEF OUTPUT PARAM par_cdhiscre LIKE craphis.cdhistor             NO-UNDO.
     DEF OUTPUT PARAM par_cdhisdeb LIKE craphis.cdhistor             NO-UNDO.
     
+	DEF VAR aux_nrcpfcgc1 LIKE crapttl.nrcpfcgc					    NO-UNDO.
+	DEF VAR aux_nrcpfcgc2 LIKE crapttl.nrcpfcgc					    NO-UNDO.
+
     DEF BUFFER crabass FOR crapass.
+    
+	ASSIGN aux_nrcpfcgc1 = 0 
+		   aux_nrcpfcgc2 = 0.
     
     /** Transferencia de credito de salario pela internet **/
     IF  par_cdorigem = 3 AND par_cdtiptra = 3  THEN
@@ -2748,27 +2759,57 @@ PROCEDURE verifica-historico-transferencia:
         
     /** Conta Origem **/
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                       crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+                       crapass.nrdconta = par_nrdconta 
+					   NO-LOCK NO-ERROR.
+                       
+	IF crapass.inpessoa = 1 THEN
+	   DO:
+	      FOR FIRST crapttl FIELDS(nrcpfcgc)
+		                     WHERE crapttl.cdcooper = crapass.cdcooper AND
+    							   crapttl.nrdconta = crapass.nrdconta AND
+							       crapttl.idseqttl = 2
+							       NO-LOCK:
+
+            ASSIGN aux_nrcpfcgc1 = crapttl.nrcpfcgc.
+
+		  END.
+
+	   END.	
                        
     /** Conta Destino **/
     FIND crabass WHERE crabass.cdcooper = par_cdcooper AND
-                       crabass.nrdconta = INTE(par_nrctatrf) NO-LOCK NO-ERROR.
+                       crabass.nrdconta = INTE(par_nrctatrf) 
+					   NO-LOCK NO-ERROR.
+                       
+	IF crabass.inpessoa = 1 THEN
+	   DO:
+	      FOR FIRST crapttl FIELDS(nrcpfcgc)
+		                     WHERE crapttl.cdcooper = crabass.cdcooper AND
+    							   crapttl.nrdconta = crabass.nrdconta AND
+							       crapttl.idseqttl = 2
+							       NO-LOCK:
+
+            ASSIGN aux_nrcpfcgc2 = crapttl.nrcpfcgc.
+
+		  END.
+
+	   END.
                        
     /** Verifica titularidade das contas para ver qual historico utilizar **/
     IF  crapass.nrcpfcgc = crabass.nrcpfcgc  AND
-        crapass.nrcpfstl = crabass.nrcpfstl  THEN
+        aux_nrcpfcgc1    = aux_nrcpfcgc2     THEN
         ASSIGN par_cdhisdeb = IF par_cdorigem = 3 THEN 538 ELSE 376.
     ELSE
-    IF  crapass.nrcpfstl = crabass.nrcpfcgc  AND     
-        crapass.nrcpfcgc = crabass.nrcpfstl  THEN
+    IF  aux_nrcpfcgc1    = crabass.nrcpfcgc  AND     
+        crapass.nrcpfcgc = aux_nrcpfcgc2     THEN
         ASSIGN par_cdhisdeb = IF par_cdorigem = 3 THEN 538 ELSE 376.    
     ELSE
     IF  crapass.nrcpfcgc = crabass.nrcpfcgc  AND
-        crabass.nrcpfstl = 0                 THEN
+        aux_nrcpfcgc2    = 0                 THEN
         ASSIGN par_cdhisdeb = IF par_cdorigem = 3 THEN 538 ELSE 376.    
     ELSE
-    IF  crapass.nrcpfstl = crabass.nrcpfcgc  AND
-        crabass.nrcpfstl = 0                 THEN
+    IF  aux_nrcpfcgc1    = crabass.nrcpfcgc  AND
+        aux_nrcpfcgc2    = 0                 THEN
         ASSIGN par_cdhisdeb = IF par_cdorigem = 3 THEN 538 ELSE 376.
     ELSE
         ASSIGN par_cdhisdeb = IF par_cdorigem = 3 THEN 537 ELSE 375.
@@ -5415,9 +5456,8 @@ PROCEDURE obtem-dados-titulares:
      
     IF  crapass.inpessoa = 1  THEN
         FOR EACH crapttl WHERE crapttl.cdcooper = par_cdcooper AND
-                               crapttl.nrdconta = par_nrdconta AND
-                               crapttl.flgsittl = TRUE         NO-LOCK
-                               BY crapttl.idseqttl:
+                               crapttl.nrdconta = par_nrdconta 
+							   NO-LOCK BY crapttl.idseqttl:
 
             EMPTY TEMP-TABLE cratsnh.
             
@@ -9626,11 +9666,19 @@ PROCEDURE consulta-contas-cadastradas:
                                    aux_nrcpfcgc = STRING(crapass.nrcpfcgc,
                                                          "99999999999").
 
-                        ASSIGN aux_nmprimtl = aux_nmprimtl + " " + 
-                                            crapass.nmsegntl
-
-                               aux_nrcpfcgc = STRING(aux_nrcpfcgc,
+                        ASSIGN aux_nrcpfcgc = STRING(aux_nrcpfcgc,
                                                      "xxx.xxx.xxx-xx").
+													 
+						FOR FIRST crapttl FIELDS(nmextttl) 
+						                   WHERE crapttl.cdcooper = crapcop.cdcooper       AND
+                                                 crapttl.nrdconta = INTE(crapcti.nrctatrf) AND 
+                                                 crapttl.idseqttl = 2
+                                                 NO-LOCK:
+
+						  ASSIGN aux_nmprimtl = aux_nmprimtl + " " + crapttl.nmextttl.
+
+						END.
+
                     END.
                 ELSE
                     ASSIGN aux_nmprimtl = crapass.nmprimtl
@@ -10551,8 +10599,21 @@ PROCEDURE valida-conta-destino:
       
         ASSIGN par_flgctafa = AVAIL crapcti            
                par_nmtitula = crabass.nmprimtl 
-               par_nmtitul2 = crabass.nmsegntl
                par_cddbanco = crabcop.cdbcoctl.
+
+	    IF crabass.inpessoa = 1 THEN
+		   DO:
+		      FOR FIRST crapttl FIELDS(nmextttl) 
+			                     WHERE crapttl.cdcooper = crabass.cdcooper AND
+   								       crapttl.nrdconta = crabass.nrdconta AND
+								       crapttl.idseqttl = 2
+								       NO-LOCK:
+
+			    ASSIGN par_nmtitul2 = crapttl.nmextttl.
+
+			  END.
+
+		   END.
 
         ASSIGN aux_flgtrans = TRUE.
 
@@ -11056,7 +11117,6 @@ PROCEDURE gera-termo-responsabilidade:
         "pela \033\105\COOPERATIVA\033\106, nao estando, no entanto, obrigado a faze-lo, podendo, "
         AT 9 SKIP
         "inclusive, utiliza-la como meio de prova valida e eficaz em juizo ou fora dele."
-        
         AT 9 SKIP(1)
         "\033\105\ 1.5\033\106  O \033\105\COOPERADO\033\106 assume total responsabilidade pelas movimentacoes, transacoes e "
         SKIP

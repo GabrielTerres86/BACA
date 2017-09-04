@@ -462,9 +462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              ass.tpdocptl,
              ass.cdufdptl,
              ass.cdcooper,
-             ass.nrcpfstl,
-             ass.dsnacion,
-             ass.nrfonemp
+             ass.dsnacion
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -606,6 +604,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_vledvmto        NUMBER;
     vr_nmconjug        crapcje.nmconjug%TYPE;
     vr_nrcpfcjg        crapcje.nrcpfcjg%TYPE;
+    vr_nrcpfstl        crapttl.nrcpfcgc%TYPE;
     
   BEGIN
   
@@ -646,6 +645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       
       vr_cdgraupr := 0;
       vr_vlrenmes := 0;
+	  vr_nrcpfstl := 0;
       
       --Pessoa fisica
       IF rw_crapass.inpessoa = 1 THEN
@@ -657,6 +657,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         FETCH cr_crapttl INTO rw_crapttl;
         IF cr_crapttl%FOUND THEN
           vr_cdgraupr := rw_crapttl.cdgraupr;
+		  vr_nrcpfstl := rw_crapttl.nrcpfcgc;
         END IF;
         CLOSE cr_crapttl;              
         
@@ -731,7 +732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       
       IF vr_cdgraupr = 1 then
         pr_tab_dados_avais(vr_idxavais).nrdoccjg := 'C.P.F. '|| 
-                                                    gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfstl,
+                                                    gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_nrcpfstl,
                                                                               pr_inpessoa => 1);
       END IF;
       
@@ -3149,7 +3150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --                            de limite de desconto de cheques. Projeto 300 (Lombardi)
     --
     --               26/05/2017 - Alterado para tipo de impressao 10 - Analise
-    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 
+    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom) 	
     --
     --               25/07/2017 - Alteração no cálculo da taxa de juros diária do borderô de 
     --                            Desconto de Cheques. PRJ300 - Desconto de cheque (Lombardi) 	

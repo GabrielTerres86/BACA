@@ -241,6 +241,10 @@
 						
 				        17/02/2017 - Incluir validacao de senha na procedure valida_senha_cartao (Lucas Ranghetti #597410)						
 									 		 
+               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339). 
+
                 02/06/2017 - Ajustes referentes ao Novo Catalogo do SPB(Lucas Ranghetti #668207)
 									 		 
 -----------------------------------------------------------------------------*/
@@ -384,29 +388,32 @@ PROCEDURE retorna-conta-de:
             ELSE
                 DO:
                     ASSIGN p-nome-de1    = crapass.nmprimtl
-                           p-nome-de2    = crapass.nmsegntl
-                           
                            p-pessoa-de   = IF crapass.inpessoa = 1 THEN 
                                               'V1' 
                                            ELSE 'V2'.
 
                     IF   crapass.inpessoa = 1   THEN
-                         ASSIGN p-cpfcnpj-de1 = 
-                                   STRING(crapass.nrcpfcgc,"99999999999")
-                                p-cpfcnpj-de1 =
-                                   STRING(p-cpfcnpj-de1, "xxx.xxx.xxx-xx").
+					   DO:
+					       ASSIGN p-cpfcnpj-de1 = STRING(crapass.nrcpfcgc,"99999999999")
+                                  p-cpfcnpj-de1 = STRING(p-cpfcnpj-de1, "xxx.xxx.xxx-xx").
+
+					       FOR FIRST crapttl FIELDS(crapttl.nmextttl crapttl.nrcpfcgc)
+						                      WHERE crapttl.cdcooper = crapass.cdcooper AND
+											        crapttl.nrdconta = crapass.nrdconta AND
+											        crapttl.idseqttl = 2
+											        NO-LOCK:
+						   
+						      ASSIGN p-cpfcnpj-de2 = STRING(crapttl.nrcpfcgc,"99999999999")
+				                     p-cpfcnpj-de2 = STRING(p-cpfcnpj-de2,"xxx.xxx.xxx-xx")
+									 p-nome-de2    = crapttl.nmextttl.
+
+						   END.
+
+					   END.
                     ELSE
-                         ASSIGN p-cpfcnpj-de1 = 
-                                   STRING(crapass.nrcpfcgc,"99999999999999")
-                                p-cpfcnpj-de1 = 
-                                   STRING(p-cpfcnpj-de1,"xx.xxx.xxx/xxxx-xx").  
+                       ASSIGN p-cpfcnpj-de1 = STRING(crapass.nrcpfcgc,"99999999999999")
+                              p-cpfcnpj-de1 = STRING(p-cpfcnpj-de1,"xx.xxx.xxx/xxxx-xx").  
 
-                    IF   crapass.nrcpfstl <> 0   THEN
-                         ASSIGN p-cpfcnpj-de2 =
-                                     STRING(crapass.nrcpfstl,"99999999999")
-
-                                p-cpfcnpj-de2 = 
-                                     STRING(p-cpfcnpj-de2,"xxx.xxx.xxx-xx").
 
                 END.
 
@@ -1004,7 +1011,7 @@ PROCEDURE valida-valores:
                                    c-desc-erro = 
                                          "Preenchimento de campo agencia nao e permitido para o " +
                                          "tipo de conta: Conta de Pagamento.". 
-                             
+
                             RUN cria-erro (INPUT p-cooper,
                                            INPUT p-cod-agencia,
                                            INPUT p-nro-caixa,

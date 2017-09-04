@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 10/10/2016
+   Data    : Dezembro/2009.                  Ultima atualizacao: 24/04/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -108,12 +108,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
                31/08/2016 - Adicionar validação para o campo de CPF recebido no arquivo ser
                             diferente do CPF do titular da conta (Douglas - Chamado 476269)
-
+                
                06/10/2016 - Ajuste na leitura do CPF do destintario quando processar a linha
                             do arquivo (Douglas - Chamado 533206)
 
 			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
+
+			   02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
   ............................................................................ */
 
 
@@ -294,6 +301,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_cdcritic     PLS_INTEGER;
   vr_dscritic     VARCHAR2(4000);
   vr_dsobserv     VARCHAR2(100);
+  vr_nrcpfstl     crapttl.nrcpfcgc%TYPE;
+  vr_nrcpfttl     crapttl.nrcpfcgc%TYPE;
   
   -- variáveis para controle de arquivos
    vr_dircon VARCHAR2(200);
@@ -345,12 +354,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
       SELECT ass.cdcooper
            , ass.nrdconta
            , ass.nrcpfcgc
-           , ass.nrcpfstl
-           , ass.nrcpfttl
+           , ass.inpessoa         
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
     rw_ass cr_crapass%ROWTYPE;
+
+	CURSOR cr_crapttl(pr_cdcooper IN crapttl.cdcooper%TYPE
+	                 ,pr_nrdconta IN crapttl.nrdconta%TYPE
+					 ,pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+  SELECT crapttl.nrcpfcgc
+    FROM crapttl
+	 WHERE crapttl.cdcooper = pr_cdcooper
+	   AND crapttl.nrdconta = pr_nrdconta
+	   AND crapttl.idseqttl = pr_idseqttl;
+	rw_crapttl cr_crapttl%ROWTYPE;
 
     vr_cdcrirej NUMBER;
 
@@ -372,10 +390,45 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         FETCH cr_crapass INTO rw_ass;
         CLOSE cr_crapass;
         
+		vr_nrcpfstl := 0;
+		vr_nrcpfttl := 0;
+
+		IF rw_ass.inpessoa = 1 THEN
+
+		  OPEN cr_crapttl(pr_cdcooper => rw_ass.cdcooper
+		                 ,pr_nrdconta => rw_ass.nrdconta
+					        	 ,pr_idseqttl => 2);
+
+		  FETCH cr_crapttl INTO rw_crapttl;
+
+		  IF cr_crapttl%FOUND THEN
+
+		    vr_nrcpfstl := rw_crapttl.nrcpfcgc;
+
+		  END IF;
+
+		  CLOSE cr_crapttl;
+
+		  OPEN cr_crapttl(pr_cdcooper => rw_ass.cdcooper
+		                 ,pr_nrdconta => rw_ass.nrdconta
+						 ,pr_idseqttl => 3);
+
+		  FETCH cr_crapttl INTO rw_crapttl;
+
+		  IF cr_crapttl%FOUND THEN
+
+		    vr_nrcpfttl := rw_crapttl.nrcpfcgc;
+
+		  END IF;
+
+		  CLOSE cr_crapttl;
+
+		END IF;
+        
         -- Verifica o cpf
         IF NOT ((vr_cpfdesti = rw_ass.nrcpfcgc)   OR
-                (vr_cpfdesti = rw_ass.nrcpfstl)   OR
-                (vr_cpfdesti = rw_ass.nrcpfttl))  THEN
+                (vr_cpfdesti = vr_nrcpfstl)     OR
+                (vr_cpfdesti = vr_nrcpfttl))    THEN
 
           vr_cdcrirej := 301; -- 301 - DADOS NAO CONFEREM!                
           vr_dshistor := RPAD(vr_nmdestin,40,' ')||
@@ -1639,12 +1692,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                    , crapass.cdsitdtl
                    , crapass.nrdconta
                    , crapass.nrcpfcgc
-                   , crapass.nrcpfstl
-                   , crapass.nrcpfttl
                    , crapass.cdagenci
+                   , crapass.inpessoa
+                   , crapass.cdcooper
                 FROM crapass
                WHERE crapass.cdcooper = pr_cdcooper
                  AND crapass.nrdconta = pr_nrdconta;
+
+		    CURSOR cr_crapttl(pr_cdcooper IN crapttl.cdcooper%TYPE
+			                 ,pr_nrdconta IN crapttl.nrdconta%TYPE
+							 ,pr_idseqttl IN crapttl.idseqttl%TYPE)IS
+			SELECT crapttl.nrcpfcgc
+ 			  FROM crapttl
+       WHERE crapttl.cdcooper = pr_cdcooper
+			   AND crapttl.nrdconta = pr_nrdconta
+			   AND crapttl.idseqttl = pr_idseqttl;
+		    rw_crapttl cr_crapttl%ROWTYPE;
 
             -- Buscar informações de Transferencia e Duplicacao de Matricula
             CURSOR cr_craptrf(pr_nrdconta  craptrf.nrdconta%TYPE) IS
@@ -2012,14 +2075,49 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               CLOSE cr_craptrf;
             END IF;
 
+			vr_nrcpfstl:= 0;
+			vr_nrcpfttl:= 0;
+
+			IF rw_crapass.inpessoa = 1 THEN
+
+			  OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+			                 ,pr_nrdconta => rw_crapass.nrdconta
+							 ,pr_idseqttl => 2);
+
+			  FETCH cr_crapttl INTO rw_crapttl;
+
+			  IF cr_crapttl%FOUND THEN
+
+			    vr_nrcpfstl:= rw_crapttl.nrcpfcgc;
+
+			  END IF;
+
+			  CLOSE cr_crapttl;
+
+			  OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+			                 ,pr_nrdconta => rw_crapass.nrdconta
+							 ,pr_idseqttl => 3);
+
+			  FETCH cr_crapttl INTO rw_crapttl;
+
+			  IF cr_crapttl%FOUND THEN
+
+			    vr_nrcpfttl:= rw_crapttl.nrcpfcgc;
+
+			  END IF;
+
+			  CLOSE cr_crapttl;
+
+			END IF;
+
             -- Verificar os tipos de documentos
             IF vr_tpdedocs IN (4,6,9) OR
                (to_number(SUBSTR(vr_dslinha,105,2)) = 50 AND vr_tpdedocs = 2) THEN
               vr_cpfdesti := to_number(SUBSTR(vr_dslinha,89,14));
               -- Verifica o cpf
               IF NOT ((vr_cpfdesti = rw_crapass.nrcpfcgc)   OR
-                      (vr_cpfdesti = rw_crapass.nrcpfstl)   OR
-                      (vr_cpfdesti = rw_crapass.nrcpfttl))  THEN
+                      (vr_cpfdesti = vr_nrcpfstl)           OR
+                      (vr_cpfdesti = vr_nrcpfttl))          THEN
                 vr_cdcritic := 301; -- 301 - DADOS NAO CONFEREM!                
                 
               END IF;
@@ -2039,9 +2137,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               ELSE
                 --
                 IF NOT (((vr_cpfdesti = rw_crapass.nrcpfcgc)    OR
-                         (vr_cpfdesti = rw_crapass.nrcpfstl))   AND
+                         (vr_cpfdesti = vr_nrcpfstl))         AND
                         ((vr_cpfremet = rw_crapass.nrcpfcgc)    OR
-                         (vr_cpfremet = rw_crapass.nrcpfstl)))  THEN
+                         (vr_cpfremet = vr_nrcpfstl)))        THEN
                   vr_cdcritic := 301;
                 END IF;
               END IF;
@@ -2845,7 +2943,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                              ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                              ,pr_flg_gerar => 'N'                      --> Apenas submeter
                                              ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
-                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos                                             
+                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
                                              ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                              ,pr_des_erro  => vr_des_erro);            --> Saída com erro
                                      
@@ -3337,5 +3435,6 @@ EXCEPTION
     pr_dscritic := sqlerrm;
     -- Efetuar rollback
     ROLLBACK;
+
 END pc_crps534;
 /

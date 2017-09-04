@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Maio/2003.                          Ultima atualizacao: 23/08/2006
+   Data    : Maio/2003.                          Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -17,6 +17,11 @@
                             dos bancos de dados - SQLWorks - Andre
 
                23/08/2006 - Criticar conta eliminada(Mirtes)
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................. */
 
 DEF INPUT  PARAM par_cdcooper AS INT                                 NO-UNDO.
@@ -90,17 +95,37 @@ IF   CAN-DO("2,3",STRING(crapass.inpessoa))   AND
      END.
 ELSE
      DO:
+	     FOR FIRST crapttl FIELDS(nrcpfcgc)
+		                     WHERE crapttl.cdcooper = crapass.cdcooper AND
+    							   crapttl.nrdconta = crapass.nrdconta AND
+							       crapttl.idseqttl = 2
+							       NO-LOCK:
+
+		   ASSIGN aux_nrcpfcgc1 = crapttl.nrcpfcgc.
+
+		 END.
+		  	
+		 FOR FIRST crapttl FIELDS(nrcpfcgc)
+		                     WHERE crapttl.cdcooper = crabass.cdcooper AND
+    							   crapttl.nrdconta = crabass.nrdconta AND
+							       crapttl.idseqttl = 2
+							       NO-LOCK:
+
+		   ASSIGN aux_nrcpfcgc2 = crapttl.nrcpfcgc.
+
+		 END.	  
+
          IF   crapass.nrcpfcgc = crabass.nrcpfcgc   AND
-              crapass.nrcpfstl = crabass.nrcpfstl   THEN.
+              aux_nrcpfcgc1    = aux_nrcpfcgc2    THEN.
          ELSE
-         IF   crapass.nrcpfstl = crabass.nrcpfcgc   AND     
-              crapass.nrcpfcgc = crabass.nrcpfstl   THEN.
+         IF   aux_nrcpfcgc1    = crabass.nrcpfcgc AND     
+              crapass.nrcpfcgc = aux_nrcpfcgc2    THEN.
          ELSE
          IF   crapass.nrcpfcgc = crabass.nrcpfcgc   AND
-              crabass.nrcpfstl = 0                  THEN.
+              aux_nrcpfcgc2    = 0                THEN.
          ELSE
-         IF   crapass.nrcpfstl = crabass.nrcpfcgc   AND
-              crabass.nrcpfstl = 0                  THEN.
+         IF   aux_nrcpfcgc1 = crabass.nrcpfcgc AND
+              aux_nrcpfcgc2 = 0                THEN.
          ELSE
               par_cdcritic = 755.
      END.

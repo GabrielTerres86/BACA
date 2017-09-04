@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 21/06/2017
+    Data    : Agosto/2008                     Ultima Atualizacao: 04/08/2017
            
     Dados referentes ao programa:
                 
@@ -220,6 +220,15 @@
 				26/05/2017 - Alteracao no contrato conforme solicitado no chamado 655583. (Kelvin)
 				
 				21/06/2017 - Ajuste emergencial no formato do cnpj do contrato. (Kelvin #655583)
+
+                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							 (Adriano - P339).
+
+				04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -363,6 +372,7 @@ FORM
     SKIP
     "CPF: " rel_nrcpfcgc  FORMAT "x(18)"
     SPACE(10)
+	SKIP
     "RG: " rel_nrdocttl
     SKIP(1)
     "LOCAL DE RISCO:"
@@ -778,7 +788,7 @@ FORM
     'registro na SUSEP, nome completo, CNPJ ou CPF."'
     SKIP(2)
 	"Telefones Uteis" 
-	SKIP
+    SKIP
 	"Assistencia 24 Horas: 0800 725 2064"
 	
 	SKIP
@@ -830,7 +840,7 @@ FORM
     SKIP
     "PRESENTE SEGURO.\033\110"
     WITH NO-BOX COLUMN 5 NO-ATTR-SPACE NO-LABELS WIDTH 150 FRAME f_autori_casa_5.
-	
+
 FORM
     SKIP(3)
     "Observacoes Gerais"
@@ -3964,7 +3974,7 @@ PROCEDURE imprimir_proposta_seguro:
         
         DISP STREAM str_1 WITH FRAME f_autori_casa_3.
         DISP STREAM str_1 WITH FRAME f_autori_casa_3_1.
-		
+
 		/* Propostas com inicio de vigencia maior ou igual a 20/06/2016 */
         IF  rel_dtinivig > 06/20/2017 THEN 
 			DO:
@@ -4031,7 +4041,7 @@ PROCEDURE imprimir_proposta_seguro:
 					 WITH FRAME f_autori_casa_4_3.
 
 				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
-				
+
 				DISP STREAM str_1 
 					 rel_nrdconta2
 					 WITH FRAME f_autori_casa_5_1_1.
@@ -4176,7 +4186,7 @@ PROCEDURE imprimir_proposta_seguro:
         
         DISP STREAM str_1 WITH FRAME f_autori_casa_3.
         DISP STREAM str_1 WITH FRAME f_autori_casa_3_1.
-        
+
 		/* Propostas com inicio de vigencia maior ou igual a 20/06/2017 */
         IF  rel_dtinivig > 06/20/2017 THEN 
 			DO:
@@ -4243,12 +4253,12 @@ PROCEDURE imprimir_proposta_seguro:
 					 WITH FRAME f_autori_casa_4_3.
 
 				DISP STREAM str_1 WITH FRAME f_autori_casa_4_4.
-				
+
 				DISP STREAM str_1 
 					 rel_nrdconta2
 					 WITH FRAME f_autori_casa_5_1_1.
 			END.
-       
+
         DISP STREAM str_1
             rel_nrctrseg 
             tt-prop-seguros.tpplaseg
@@ -5274,6 +5284,28 @@ PROCEDURE buscar_associados:
         DO:
             CREATE tt-associado.
             BUFFER-COPY crapass TO tt-associado.
+
+			FOR FIRST crapttl FIELDS (nrcpfcgc) 
+			    WHERE crapttl.cdcooper = par_cdcooper AND
+			          crapttl.nrdconta = par_cdcooper AND
+					  crapttl.idseqttl = 2
+			          NO-LOCK:
+
+              ASSIGN tt-associado.nrcpfstl = crapttl.nrcpfcgc.
+
+	        END.
+
+			FOR FIRST craptfc FIELDS(nrdddtfc nrtelefo)
+		        WHERE craptfc.cdcooper = par_cdcooper AND
+			          craptfc.nrdconta = par_nrdconta AND
+				  	  craptfc.idseqttl = 1            AND
+					  craptfc.tptelefo = 1 /*Residencial*/
+					  NO-LOCK:
+				    
+			  ASSIGN tt-associado.nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo).
+				
+		    END.
+
         END.
     ELSE
         ASSIGN aux_cdcritic = 9.

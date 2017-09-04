@@ -35,6 +35,10 @@
  *                             caracterizar quebra de sigilo bancário (Douglas - Chamado 194831)
  *				
  *				  05/11/2015 - Inclusão de novo Poder, PRJ. 131 - Ass. Conjunta (Jean Michel) 
+ * 
+ *                13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+ *			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+ *							  (Adriano - P339).
  */	 
 ?>
 
@@ -228,10 +232,13 @@
 			escreveLinha( $linha );
 			
 			$linha = '  Documento: '.preencheString(getByTagName($representante->tags,'tpdocava').' '.getByTagName($representante->tags,'nrdocava'),18);	
-			$linha .= ' Org.Emi.: '.preencheString(getByTagName($representante->tags,'cdoeddoc'),5);	
+			escreveLinha( $linha );
+			$linha  = ' Org.Emi.: '.preencheString(getByTagName($representante->tags,'cdoeddoc'),5);	
 			$linha .= ' UF: '.preencheString(getByTagName($representante->tags,'cdufddoc'),2);	
 			$linha .= ' Data Emi.: '.preencheString(getByTagName($representante->tags,'dtemddoc'),12);	
 			escreveLinha( $linha );
+
+			escreveLinha( '' );
 						
 			$linha = 'Data Nascimento: '.preencheString(getByTagName($representante->tags,'dtnascto'),15);	
 			$linha .= 'Responsab. Legal: '.preencheString(getByTagName($representante->tags,'inhabmen'),2);	

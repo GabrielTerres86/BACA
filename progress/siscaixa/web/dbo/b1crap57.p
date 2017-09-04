@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 20/06/2016.
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -74,6 +74,16 @@
                20/06/2016 - Adicionado validacao para nao permitir o recebimento 
                             de cheques de bancos que nao participam da COMPE
                             (Douglas - Chamado 417655)
+                            
+               27/07/2016 - Alterado validacao para nao permitir o recebimento 
+                            de cheques de bancos que nao participam da COMPE
+                            Utilizar apenas BANCO e FLAG ativo
+                            (Douglas - Chamado 417655)
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................ */
 /*-------------------------------------------------------------------------*/
 /* b1crap57.p   - Depositos Cheques Liberados(Varios)                      */  
@@ -694,25 +704,23 @@ PROCEDURE valida-codigo-cheque:
  
     /* Buscar os dados da agencia do cheque */
     FIND FIRST crapagb WHERE crapagb.cddbanco = p-cdbanchq
-                         AND crapagb.cdageban = p-cdagechq
+                         AND crapagb.cdsitagb = "S"
                        NO-LOCK NO-ERROR.
-    IF AVAILABLE crapagb THEN
+    IF NOT AVAILABLE crapagb THEN
     DO:
-        /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
+        /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
            por isso rejeitamos o cheque */
-        IF crapagb.cdsitagb = "N" THEN
-        DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = " ".           
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-            RETURN "NOK".
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
     END.
+ 
  
     ASSIGN p-cdcmpchq = INT(SUBSTRING(c-cmc-7,11,03)) NO-ERROR.
     IF   ERROR-STATUS:ERROR    THEN 
@@ -944,24 +952,21 @@ PROCEDURE valida-deposito-com-captura:
 
     /* Buscar os dados da agencia do cheque */
     FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,02,03))
-                         AND crapagb.cdageban = INT(SUBSTRING(c-cmc-7,05,04))
+                         AND crapagb.cdsitagb = "S"
                        NO-LOCK NO-ERROR.
-    IF AVAILABLE crapagb THEN
+    IF NOT AVAILABLE crapagb THEN
     DO:
-        /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
+        /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
            por isso rejeitamos o cheque */
-        IF crapagb.cdsitagb = "N" THEN
-        DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = " ".           
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-            RETURN "NOK".
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
     END.
 
     ASSIGN i-nro-lote = 11000 + p-nro-caixa.
@@ -1913,11 +1918,30 @@ PROCEDURE atualiza-deposito-com-captura:
     /*---- Gera literal autenticacao - RECEBIMENTO(Rolo) ----*/
     ASSIGN c-nome-titular1 = " "
            c-nome-titular2 = " ".
+
     FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper  AND
-                       crapass.nrdconta = aux_nrdconta      NO-LOCK NO-ERROR.
+                       crapass.nrdconta = aux_nrdconta      
+					   NO-LOCK NO-ERROR.
+
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+          ASSIGN c-nome-titular1 = crapass.nmprimtl.
+          
+		  IF crapass.inpessoa = 1 THEN
+		     DO:
+			    FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                   WHERE crapttl.cdcooper = crapass.cdcooper AND
+				                         crapttl.nrdconta = crapass.nrdconta AND
+								         crapttl.idseqttl = 2
+								         NO-LOCK:
+
+				  ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+		        END.
+
+			 END.
+
+	   END.
        
     ASSIGN c-literal = " "
            c-literal[1] = TRIM(crapcop.nmrescop) +  " - " + 

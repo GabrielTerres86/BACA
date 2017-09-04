@@ -250,7 +250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --
   --    Programa: RCEL0001
   --    Autor   : Lucas Reinert
-  --    Data    : Janeiro/2017                   Ultima Atualizacao: 
+  --    Data    : Janeiro/2017                   Ultima Atualizacao: 02/08/2017 
   --
   --    Dados referentes ao programa:
   --
@@ -259,6 +259,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --    Alteracoes: 06/06/2017 - Inclusão da função de calculo de repasse
   --                           - Alteração para corrigir reagendamento de job  (Renato Darosci)
   --    
+  --                02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --                             crapass, crapttl, crapjur 
+  --           		  				     (Adriano - P339).
   --                17/08/2017 - Alteração para ajustar relatório de agendamentos e mensagem do InternetBank 
   --                             para recargas agendadas. (Reinert)
   ---------------------------------------------------------------------------------------------------------------
@@ -1455,14 +1458,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			  END IF;
         
         IF pr_idorigem = 3 THEN -- Ser for ibank/mobile
-          --Origem
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                    pr_nmdcampo => 'Origem',
-                                    pr_dsdadant => NULL,
-                                    pr_dsdadatu => CASE pr_flmobile
-                                                   WHEN 1 THEN 'MOBILE'
-                                                   ELSE 'INTERNETBANK'
-                                                    END);
+        --Origem
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Origem',
+                                  pr_dsdadant => NULL,
+                                  pr_dsdadatu => CASE pr_flmobile
+                                                 WHEN 1 THEN 'MOBILE'
+                                                 ELSE 'INTERNETBANK'
+                                                  END);
         END IF;
         
 			ELSE
@@ -1800,14 +1803,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																	 ,pr_dsdadatu => pr_dserrlog);	
           
           IF pr_idorigem = 3 THEN -- Ser for ibank/mobile
-            --Origem
-            GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                    pr_nmdcampo => 'Origem',
-                                    pr_dsdadant => NULL,
-                                    pr_dsdadatu => CASE pr_flmobile
-                                                   WHEN 1 THEN 'MOBILE'
-                                                   ELSE 'INTERNETBANK'
-                                                    END);
+          --Origem
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Origem',
+                                  pr_dsdadant => NULL,
+                                  pr_dsdadatu => CASE pr_flmobile
+                                                 WHEN 1 THEN 'MOBILE'
+                                                 ELSE 'INTERNETBANK'
+                                                  END);															 
           END IF;
           
 					-- Efetuar commit;
@@ -2045,8 +2048,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				vr_dscritic := 'Não foi possível efetuar a recarga.';
 
 				     -- saida por TIMEOUT  
-				IF   vr_resposta.status_code = 408  THEN				     
-             vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
+				IF   vr_resposta.status_code = 408  THEN
+				     vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
 						 
 	           -- Se encontrou operação
              IF vr_flgoperac THEN
@@ -2085,8 +2088,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					vr_dscritic := 'Não foi possível efetuar a recarga.';
 				END IF;
 
-	      -- Descrição do erro da Rede Tendencia
-			  vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+			    -- Descrição do erro da Rede Tendencia
+			    vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
 
         -- Se encontrou operação
         IF vr_flgoperac THEN
@@ -2483,14 +2486,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         END IF;
 
         IF pr_idorigem = 3 THEN -- Ser for ibank/mobile
-          --Origem
-          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                  pr_nmdcampo => 'Origem',
-                                  pr_dsdadant => NULL,
-                                  pr_dsdadatu => CASE pr_flmobile
-                                                 WHEN 1 THEN 'MOBILE'
-                                                 ELSE 'INTERNETBANK'
-                                                  END);
+        --Origem
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'Origem',
+                                pr_dsdadant => NULL,
+                                pr_dsdadatu => CASE pr_flmobile
+                                               WHEN 1 THEN 'MOBILE'
+                                               ELSE 'INTERNETBANK'
+                                                END);
         END IF;
 				
 				-- Retornar o nsu da operadora
@@ -3637,7 +3640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           FROM tbrecarga_favorito fav
          WHERE fav.cdcooper = pr_cdcooper
            AND fav.nrdconta = pr_nrdconta;
-           
+
       -- Verificar se número do celular é fraudulento
 		  CURSOR cr_crapcbf(pr_dsfraude IN crapcbf.dsfraude%TYPE) IS
 			  SELECT 1
@@ -3863,7 +3866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
            vr_cdcritic := 0;
            vr_dscritic := 'Recarga de mesmo valor já efetuada. Consulte extrato ou tente novamente em 10 min.';
            RAISE vr_exc_erro;    
-        END IF;
+      END IF;
       
       END IF;
       
@@ -4259,7 +4262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_proces_agendamentos_recarga
     Sistema : Ayllos Web
     Autor   : Lucas Lombardi
-    Data    : Março/2017                 Ultima atualizacao:
+    Data    : Março/2017                 Ultima atualizacao: 02/08/2017
 
     Dados referentes ao programa:
 
@@ -4269,6 +4272,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
     Alteracoes: 30/05/2017 - Retirado acentuação das criticas na efetuação da recarga.
                              PRJ321 - Recarga de Celular (Lombardi)
+                             
+                02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+             		  				   (Adriano - P339).
+  
     ..............................................................................*/
     DECLARE
       
@@ -4357,7 +4365,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               ,crapass.nrcpfcgc
               ,crapass.inpessoa
               ,crapass.cdcooper
-              ,crapass.nrcpfstl
               ,crapass.cdagenci
               ,crapass.nrctacns
               ,crapass.dtdemiss
@@ -4408,7 +4415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
       END IF;
-
+      
       --> Verificar a execução da DEBNET/DEBSIC 
       SICR0001.pc_controle_exec_deb(pr_cdcooper => pr_cdcooper         --> Código da coopertiva
                                    ,pr_cdtipope => 'C'                 --> Tipo de operacao I-incrementar e C-Consultar
@@ -4530,7 +4537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                 vr_dscritic := 'Erro ao atualizar registro de recarga. ' || SQLERRM;
                 RAISE vr_exc_saida;
             END;
-						
+            
 						-- Crítica 888 é erro retornado da rede tendencia
 						IF vr_cdcritic = 888 THEN
 							-- Se erro retornado é 'CODIGO DE TELEFONE INVALIDO'
@@ -4554,14 +4561,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 							END IF;
 						ELSE
 							-- Erros validados pelo sistema da CECRED
-							vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
-														 '#DDD#='      ||rw_tbrecarga.nrddd||';'||
-														 '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
-														 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
-														 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
-														 '#Motivo#='   ||vr_dscritic;
+            vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+                           '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+                           '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+                           '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+                           '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
+                           '#Motivo#='   ||vr_dscritic;
             END IF;          
-						
+              
             --> buscar mensagem 
             vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
                                                       ,pr_cdproduto         => 32
@@ -5215,13 +5222,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
             vr_index := vr_tab_repasse.FIRST;
             -- Percorre registros
             WHILE vr_index IS NOT NULL LOOP
-              
+            
               IF vr_index = vr_tab_repasse.FIRST OR
                  vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.PRIOR(vr_index)).cdcooper THEN
                 -- Adicionar o no de origem
                 pc_escreve_xml('<coop nmrescop="'|| vr_tab_repasse(vr_index).nmrescop  ||'">');
               END IF;
-              
+          
               pc_escreve_xml('<conta>' ||
                                '<cdcooper>'  || vr_tab_repasse(vr_index).cdcooper  || '</cdcooper>' ||
                                '<nmrescop>'  || vr_tab_repasse(vr_index).nmrescop  || '</nmrescop>' ||
@@ -5231,7 +5238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                '<vlreceita>' || to_char(vr_tab_repasse(vr_index).vlreceita,'fm99g999g999g990d00') || '</vlreceita>' ||
                                '<vlapagar>'  || to_char(vr_tab_repasse(vr_index).vlapagar,'fm99g999g999g990d00')  || '</vlapagar>' ||
                              '</conta>');
-              
+          
               --Se mudou a origem ou chegou ao final do vetor
               IF vr_index = vr_tab_repasse.LAST OR
                  vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.NEXT(vr_index)).cdcooper THEN
@@ -5241,7 +5248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               --Proximo registro do vetor
               vr_index:= vr_tab_repasse.NEXT(vr_index);
             END LOOP;
-          
+            
           END IF; -- vr_tab_repasse.Count > 0
             
           --Finalizar tag detalhe
@@ -5251,7 +5258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                                 ,pr_cdcooper => 3 -- CECRED
                                                 ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-            
+
           -- Efetuar solicitacao de geracao de relatorio --
           gene0002.pc_solicita_relato (pr_cdcooper  => 3                   --> Cooperativa conectada
                                       ,pr_cdprogra  => 'JBRCEL_REP'          --> Programa chamador
@@ -5275,14 +5282,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           IF vr_dscritic IS NOT NULL THEN
             -- Gerar excecao
             RAISE vr_exc_saida;
-          END IF;
-            
+        END IF;
+
           -- Liberando a memoria alocada pro CLOB
           dbms_lob.close(vr_des_xml);
           dbms_lob.freetemporary(vr_des_xml);
-            
-        END IF;
         
+      END IF;
+
       END IF;
 
       pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência

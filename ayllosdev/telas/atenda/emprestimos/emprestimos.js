@@ -107,6 +107,9 @@
  * 086: [29/03/2017] Ajustado para nao permitir selecionar finalidade de tipo 2 - cessao de credito( PRJ343 - Cessao de credito - Odirlei-AMcom)
  * 087: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
  * 088: [12/06/2017] Retornar o protocolo. (Jaison/Marcos - PRJ337)
+ * 090: [13/06/2017] Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			         crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+					 (Adriano - P339).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -2331,7 +2334,7 @@ function controlaLayout(operacao) {
         cCPF.css('width', '134px');
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
-        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
+        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');
         cNacio.addClass('pesquisa alphanum').css('width', '114px').attr('maxlength', '13');
 
         // Daniel
@@ -2447,7 +2450,7 @@ function controlaLayout(operacao) {
         cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
         cDoc_1.css('width', '50px');
-        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '37');
+        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
 
         var cTodos_2 = $('select,input', '#' + nomeForm + ' fieldset:eq(2)');
 
@@ -2681,7 +2684,7 @@ function controlaLayout(operacao) {
         nomeForm = 'frmOrgProtCred';
         altura = '220px';
         largura = '495px';
-        
+
         // Exibe o Fieldset de GARANTIAS
         $('#' + nomeForm + ' fieldset:eq(1)').show();
 
@@ -2739,7 +2742,7 @@ function controlaLayout(operacao) {
         cPrej.addClass('moeda_6').css('width', '90px');
         c2Tit_1.css('width', '85px').setMask("DATE", "", "", "divRotina");
         c2TitEndv.addClass('moeda_6').css('width', '90px');
-		
+
         var cTodos_2 = $('input', '#' + nomeForm + ' fieldset:eq(1)');
         var rRotulo_2 = $('label[for="nrgarope"],label[for="nrpatlvr"],label[for="nrperger"]', '#' + nomeForm);
 
@@ -3055,7 +3058,7 @@ function controlaLayout(operacao) {
 
         cNome.addClass('alphanum').css('width', '255px').attr('maxlength', '40');
         cDoc.css('width', '50px');
-        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '37');
+        cNrDoc.addClass('alphanum').css('width', '202px').attr('maxlength', '40');
         cNacio.addClass('pesquisa alphanum').css('width', '114px').attr('maxlength', '13');
 
         cConta.unbind('change').bind('change', function() {
@@ -3166,7 +3169,7 @@ function controlaLayout(operacao) {
         cConj.addClass('alphanum').css('width', '250px').attr('maxlength', '40');
         cCPF_1.addClass('cpf').css('width', '134px');
         cDoc_1.css('width', '50px');
-        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '37');
+        cNrDoc_1.addClass('alphanum').css('width', '197px').attr('maxlength', '40');
 
         var cTodos_2 = $('input,select', '#' + nomeForm + ' fieldset:eq(2)');
 
@@ -5266,7 +5269,7 @@ function validaDados(cdcooper) {
         if (!validaDadosGerais()) {
             return false;
         }
-		
+
 		carregaDadosPropostaLinhaCredito();
 
     } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
@@ -5311,12 +5314,12 @@ function validaDados(cdcooper) {
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
 
         var aux_dtmvtolt = dataParaTimestamp(dtmvtolt);
-		
+
 		if (inobriga == 'N'){
-			if (!validaAnaliseProposta()) {
-				return false;
-			}
-		}
+        if (!validaAnaliseProposta()) {
+            return false;
+        }
+    }
     }
     else if (in_array(operacao, ['A_PROTECAO_TIT'])) {
 
@@ -6825,7 +6828,7 @@ function mostraTelaAltera(operacao) {
     exibeRotina($('#divUsoGenerico'));
 
     limpaDivGenerica();
-    
+
     inobriga = $("#divEmpres table tr.corSelecao").find("input[id='inobriga']").val();
     
     // Executa script de confirmação através de ajax
@@ -8653,7 +8656,7 @@ function carregaDadosPropostaLinhaCredito() {
         data: {
             cdfinemp: cdfinemp,
             cdlcremp: cdlcremp,
-            nrdconta: nrdconta,     
+            nrdconta: nrdconta,            
             dsctrliq: dsctrliq,            
             redirect: 'script_ajax'
         },
@@ -9163,7 +9166,7 @@ function formataAcionamento() {
     var arrayLargura = new Array();
 
     arrayLargura[0] = '80px';
-	  arrayLargura[1] = '110px';
+	arrayLargura[1] = '110px';
     arrayLargura[2] = '100px';
     arrayLargura[3] = '196px';
     arrayLargura[4] = '120px';
@@ -9243,6 +9246,6 @@ function abreProtocoloAcionamento(dsprotocolo) {
                 carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
 			}
             return false;
-        }
+}
     });
 }

@@ -1,16 +1,16 @@
 <?php
    /* FONTE        : busca_descricao.php
-	* CRIAÇÃO      : Rodolpho Telmo ( DB1 )
-	* DATA CRIAÇÃO : Fevereiro/2010 
-	* OBJETIVO     : Efetuar a busca da descrição de algum código passado como parâmetro. 
-	*                Chamada no evento (onBlur) do código de algum campo.
-	* --------------
-	* ALTERAÇÕES   :
-	* --------------
+ * CRIAÇÃO      : Rodolpho Telmo ( DB1 )
+ * DATA CRIAÇÃO : Fevereiro/2010 
+ * OBJETIVO     : Efetuar a busca da descrição de algum código passado como parâmetro. 
+ *                Chamada no evento (onBlur) do código de algum campo.
+ * --------------
+ * ALTERAÇÕES   :
+ * --------------
 	* 001: [25/03/2010] Rodolpho Telmo (DB1): Alterada função "buscaDescricao" acrescentando os parâmetros "campoRetorno" e "filtros"
 	* 002: [31/03/2010] Rodolpho Telmo (DB1): Alterada função "buscaDescricao" acrescentando o parâmetro "nomeFormulario"
 	* 003: [22/10/2020] David			(CECRED) : Incluir novo parametro para a funcao getDataXML (David).
-	* 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
+ * 004: [17/07/2015] Gabriel        (RKAM): Suporte para chamar rotinas Oracle.
 	* 005: [27/07/2016] Carlos R.	    (CECRED): Corrigi o tratamento para o retorno de erro do XML. SD 479874.
     * 006: [06/06/2017] Jonata        (Mouts): Ajuste para inclusão da busca de dominios - P408.
  */	
@@ -53,7 +53,7 @@
 
 	// Valida c&oacute;digo
 	if ($codigo == "0") exibirErro('error','O c&oacute;digo '.$tituloPesquisa.' deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
-	if (!validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
+	if ($nomeProcedure != 'BUSCA_ORGAO_EXPEDIDOR' && !validaInteiro($codigo)) exibirErro('error','C&oacute;digo '.$tituloPesquisa.' inv&aacute;lido, informe somente n&uacute;meros. Valor informado: '.$codigo.'.','Alerta - Ayllos','if( $(\'#divMatric\').css(\'display\') == \'block\' || $(\'#divTela\').css(\'display\') == \'block\' ) { unblockBackground(); }else{ bloqueiaFundo(divRotina); }',false);
 	
 	
 	// Verifica se e' uma rotina Progress ou Oracle
@@ -167,11 +167,11 @@
 	if ( $campoCodigo == 'cdfinemp' ) {
 		echo '$(\'input[name="tpfinali"]\').val("'.getByTagName($descricao,'tpfinali').'");';
 	}
-        
+	
 	if ( $nomeFormulario == 'frmSimulacao' ) {            
 		echo 'habilitaModalidade("'.getByTagName($descricao,'tpfinali').'");';
 	}
-        
+	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	echo 'bloqueiaFundo(divRotina);';

@@ -7,6 +7,9 @@
  * ALTERAÇÕES   : 06/06/2012 - Ajustes referente ao projeto GP - Sócios Menores (Adriano).
  * 				  04/07/2013 - Inclusão do botão poderes (Jean Michel)
  *                04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *                12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                   crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							  (Adriano - P339).
  */	
 ?>
 <? $search  = array('.','-'); 
@@ -46,7 +49,7 @@
 					</td>
 					<td>
 						<span><? echo str_replace($search,'',getByTagName($procuracao->tags,'nrdocava')) ?></span>
-						<? echo getByTagName($procuracao->tags,'nrdocava') ?>
+						<? echo stringTabela(getByTagName($procuracao->tags,'nrdocava'),15,'maiuscula') ?>
 					</td>
 					<td>
 						<span><? echo dataParaTimestamp(getByTagName($procuracao->tags,'dsvalida')) ?></span>

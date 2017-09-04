@@ -3,7 +3,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fernando
-   Data    : Fevereiro/2009                     Ultima alteracao: 31/11/2016
+   Data    : Fevereiro/2009                     Ultima alteracao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -69,6 +69,11 @@
                            
               01/12/2016 - Alterado campo dsdepart para cddepart.
                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                           
+			  18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			               crapass, crapttl, crapjur 
+						  (Adriano - P339).
+
                            
 ..............................................................................*/
 
@@ -2508,12 +2513,6 @@ PROCEDURE Exporta_Registros:
                                   "000000000000100"                   +
                                   STRING(MONTH(glb_dtmvtolt),"99")    +
                                   STRING(YEAR(glb_dtmvtolt),"9999").
-                        
-            IF  crapttl.dtsalari <> ?   THEN
-                aux_dsdlinha = aux_dsdlinha + 
-                               STRING(MONTH(crapttl.dtsalari),"99")  +
-                               STRING(YEAR(crapttl.dtsalari),"9999").
-                               /* o restante sao brancos */ 
                                       
             PUT STREAM str_1  aux_nrregist FORMAT "99999" "03".
             PUT STREAM str_1  aux_dsdlinha FORMAT "x(143)" SKIP.

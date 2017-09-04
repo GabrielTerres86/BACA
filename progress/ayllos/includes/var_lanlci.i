@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Setembro/2004.                    Ultima atualizacao: 16/01/2014
+   Data    : Setembro/2004.                    Ultima atualizacao: 12/05/2017
 
    Dados referentes ao programa:
 
@@ -30,6 +30,10 @@
                
                16/01/2014 - Alterado cdcritic ao nao encontrar PA para "962 - PA
                             nao cadastrado.". (Reinert)
+               
+			   12/05/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
                
 ............................................................................ */
 DEF BUFFER crabass5 FOR crapass.
@@ -226,6 +230,8 @@ DEF {1} SHARED VAR aux_vllanlcm LIKE craplcm.vllanmto                   NO-UNDO.
 DEF {1} SHARED VAR aux_nrdoclcm LIKE craplcm.nrdocmto                   NO-UNDO.
 DEF {1} SHARED VAR aux_nrdocchr AS CHAR                                 NO-UNDO.
 DEF {1} SHARED VAR tab_vlchqmai AS DECIMAL                              NO-UNDO.
+DEF {1} SHARED VAR aux_nrcpfcgc1 LIKE crapttl.nrcpfcgc				    NO-UNDO.
+DEF {1} SHARED VAR aux_nrcpfcgc2 LIKE crapttl.nrcpfcgc				    NO-UNDO.
 
 DEF {1} SHARED FRAME f_compel.
 DEF {1} SHARED FRAME f_lanctos_compel.

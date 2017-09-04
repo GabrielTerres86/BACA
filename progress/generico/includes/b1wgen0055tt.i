@@ -2,7 +2,7 @@
 
     Programa: b1wgen0055tt.i
     Autor   : Jose Luis
-    Data    : Janeiro/2010                   Ultima atualizacao: 27/07/2015
+    Data    : Janeiro/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Definicao das Temp-Tables
 
@@ -15,6 +15,9 @@
                              
                 27/07/2015 - Reformulacao cadastral (Gabriel-RKAM)             
                 
+				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).             
 ..............................................................................*/
 
                                                                              
@@ -53,7 +56,6 @@ DEFINE TEMP-TABLE tt-dados-fis NO-UNDO
     FIELD cdufnatu LIKE crapttl.cdufnatu
     FIELD dthabmen LIKE crapttl.dthabmen
     FIELD dsescola AS CHARACTER
-    FIELD nmcertif LIKE crapttl.nrcertif
     FIELD cdnatopc LIKE crapttl.cdnatopc
     FIELD cdocpttl LIKE crapttl.cdocpttl
     FIELD tpcttrab LIKE crapttl.tpcttrab
@@ -61,7 +63,6 @@ DEFINE TEMP-TABLE tt-dados-fis NO-UNDO
     FIELD nrcpfemp LIKE crapttl.nrcpfemp
     FIELD dsproftl LIKE crapttl.dsproftl
     FIELD cdnvlcgo LIKE crapttl.cdnvlcgo
-    FIELD nrfonemp LIKE crapttl.nrfonemp
     FIELD cdturnos LIKE crapttl.cdturnos
     FIELD dtadmemp LIKE crapttl.dtadmemp
     FIELD vlsalari LIKE crapttl.vlsalari

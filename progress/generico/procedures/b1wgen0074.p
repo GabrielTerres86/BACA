@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 02/12/2016
+    Data    : Maio/2010                   Ultima atualizacao: 20/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -192,6 +192,10 @@
                              (Carlos)
 				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
 				             (Incorporacao Transposul). (Fabricio)
+
+				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
 
 .............................................................................*/
 
@@ -3468,22 +3472,6 @@ PROCEDURE Grava_Dados_Altera:
               END.
                                      END.
 
-        IF crabass.inpessoa = 1   /* Fisica */                     AND
-           NOT CAN-DO("3,4,6,10,11,14,15,17",STRING(par_cdtipcta)) AND
-           CAN-DO("3,4,6,10,11,14,15,17",STRING(crabass.cdtipcta)) THEN
-           /* apaga os dados do segundo e terceiro titulares */
-           ASSIGN crabass.cdoedstl = ""   crabass.cdufdstl = ""
-                  crabass.dsfilstl = ""   crabass.dtemdstl = ?    
-                  crabass.dtnasstl = ?    crabass.nmmaestl = ""   
-                  crabass.nmpaistl = ""   crabass.nmsegntl = ""   
-                  crabass.nrcpfstl = 0    crabass.nrdocstl = ""   
-                  crabass.tpdocstl = ""   crabass.cdoedttl = ""   
-                  crabass.cdufdttl = ""   crabass.dsfilttl = ""   
-                  crabass.dtemdttl = ?    crabass.dtnasttl = ?
-                  crabass.nmmaettl = ""   crabass.nmpaittl = ""
-                  crabass.nmtertl  = ""   crabass.nrcpfttl = 0
-                  crabass.nrdocttl = ""   crabass.tpdocttl = "".
-
         IF crabass.cdbcochq <> par_cdbcochq THEN
            DO:
                ContadorAlt: DO aux_contador = 1 TO 10:
@@ -4455,19 +4443,6 @@ PROCEDURE Grava_Dados_Exclui:
                                 INPUT par_nrdconta, 
                                OUTPUT aux_nrdrowid).
         END.
-
-        /* Apaga os dados do segundo e terceiro titulares */
-        ASSIGN crabass.cdoedstl = ""   crabass.cdufdstl = ""
-               crabass.dsfilstl = ""   crabass.dtemdstl = ?    
-               crabass.dtnasstl = ?    crabass.nmmaestl = ""   
-               crabass.nmpaistl = ""   crabass.nmsegntl = ""   
-               crabass.nrcpfstl = 0    crabass.nrdocstl = ""   
-               crabass.tpdocstl = ""   crabass.cdoedttl = ""   
-               crabass.cdufdttl = ""   crabass.dsfilttl = ""   
-               crabass.dtemdttl = ?    crabass.dtnasttl = ?
-               crabass.nmmaettl = ""   crabass.nmpaittl = ""
-               crabass.nmtertl  = ""   crabass.nrcpfttl = 0
-               crabass.nrdocttl = ""   crabass.tpdocttl = "".
 
         ASSIGN aux_returnvl = "OK".
 

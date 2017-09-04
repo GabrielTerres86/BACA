@@ -340,6 +340,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             pois a autoconversao do oracle nao convertia de forma adequada
                             (Tiago/Fabricio SD616352).             
                             
+               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
               25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos 
                            em que o dia que antecede o final de semana ou feriado nacional
                            (Lucas Ranghetti #671126)      
@@ -2643,7 +2647,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               ,ass.cdagenci
               ,ass.inpessoa
               ,ass.nmprimtl
-              ,ass.nmsegntl
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -2724,6 +2727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_dstiparr   VARCHAR2(255);
      vr_linbarr1   VARCHAR2(50);
      vr_linbarr2   VARCHAR2(50);
+	 vr_nmsegntl   crapttl.nmextttl%TYPE;
 
      vr_lindigi1 VARCHAR2(50);
      vr_lindigi2 VARCHAR2(50);
@@ -3469,6 +3473,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       -- Nome titular
       vr_nmextttl:= rw_crapttl.nmextttl;
 
+	  /* Nome do titular que fez a transferencia */
+      OPEN cr_crapttl (pr_cdcooper => rw_crapass.cdcooper
+                      ,pr_nrdconta => rw_crapass.nrdconta
+                      ,pr_idseqttl => 2);
+
+      --Posicionar no proximo registro
+      FETCH cr_crapttl INTO rw_crapttl;
+
+      -- Fechar Cursor
+      CLOSE cr_crapttl;
+
+      -- Nome titular
+      vr_nmsegntl:= rw_crapttl.nmextttl;
+
     ELSE
       vr_nmextttl:= rw_crapass.nmprimtl;
     END IF;
@@ -3559,7 +3577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        vr_tab_literal(9):= 'CONTA..: '||TRIM(TO_CHAR(pr_nrdconta,'9999G999G9')) ||
                            '   PA: ' || TRIM(TO_CHAR(rw_crapass.cdagenci));
        vr_tab_literal(10):=  '       ' || TRIM(rw_crapass.nmprimtl); -- NOME TITULAR 1
-       vr_tab_literal(11):= '       ' || TRIM(rw_crapass.nmsegntl); -- NOME TITULAR 2
+       vr_tab_literal(11):= '       ' || TRIM(vr_nmsegntl); -- NOME TITULAR 2
        vr_tab_literal(12):= ' ';
 
        IF pr_tpdpagto = 2 THEN

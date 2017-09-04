@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 26/04/2016
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -73,6 +73,11 @@
 			   
 			   26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
 			                comprovantes, melhoria 112 (Tiago/Elton)    
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ........................................................................... */
 
 /*---------------------------------------------------------------*/
@@ -199,7 +204,6 @@ PROCEDURE consulta-conta:
  
     CREATE tt-conta.
     ASSIGN tt-conta.nome-tit     = crapass.nmprimtl
-           tt-conta.nome-seg-tit = crapass.nmsegntl
            tt-conta.magnetico    = 0.
 
     FOR EACH crapcrm WHERE crapcrm.cdcooper = crapcop.cdcooper  AND
@@ -235,12 +239,25 @@ PROCEDURE consulta-conta:
     
     IF  crapass.inpessoa = 1   THEN 
         DO:
-            FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper   AND
+            FOR FIRST crapttl FIELDS(crapttl.cdempres)
+			                   WHERE crapttl.cdcooper = crapcop.cdcooper   AND
                                crapttl.nrdconta = crapass.nrdconta   AND
-                               crapttl.idseqttl = 1 NO-LOCK NO-ERROR.
+                                     crapttl.idseqttl = 1 
+									 NO-LOCK:
 
-            IF   AVAIL crapttl  THEN
                  ASSIGN aux_cdempres = crapttl.cdempres.
+
+        END.
+
+			FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+			                   WHERE crapttl.cdcooper = crapcop.cdcooper   AND
+                                     crapttl.nrdconta = crapass.nrdconta   AND
+                                     crapttl.idseqttl = 2
+							         NO-LOCK:
+
+                 ASSIGN tt-conta.nome-seg-tit = crapttl.nmextttl.
+		    END.
+
         END.
     ELSE
         DO:
@@ -753,8 +770,24 @@ PROCEDURE impressao-saldo:
                        crapass.nrdconta = p-nro-conta       NO-LOCK NO-ERROR.
                        
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+	      IF crapass.inpessoa = 1 THEN
+		     DO:
+			     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                    WHERE crapttl.cdcooper = crapass.cdcooper AND
+				                          crapttl.nrdconta = crapass.nrdconta AND
+									      crapttl.idseqttl = 2 
+									      NO-LOCK:
+
+				    ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+				 END.
+
+			 END.
+			 
+          ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+	   END.
 
     ASSIGN de-valor-total = p-valor-disponivel + p-valor-emprestimo + 
                             p-valor-praca      + p-valor-fora-praca + 

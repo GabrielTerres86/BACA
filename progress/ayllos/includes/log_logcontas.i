@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2006.                    Ultima atualizacao: 11/12/2013
+   Data    : Abril/2006.                    Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -43,6 +43,11 @@
                11/12/2013 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( André Euzébio / SUPERO) 
+
+               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 .............................................................................*/ 
 
 ASSIGN log_nmdcampo = ""
@@ -611,14 +616,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
                          RUN atualiza_crapalt.
                 END.
                 
-           IF   crapjur.vlcapsoc <> log_vlcapsoc   THEN
-                DO:
-                    ASSIGN log_nmdcampo = "capital social".
-
-                    IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                         RUN atualiza_crapalt.
-                END.
-                
            IF   crapjur.vlfatano <> log_vlfatano   THEN
                 DO:
                     ASSIGN log_nmdcampo = "faturamento ano".
@@ -845,14 +842,6 @@ DO WHILE TRUE ON ERROR UNDO LOG, LEAVE:
            IF   crapttl.cdfrmttl <> log_cdfrmttl   THEN
                 DO:
                     ASSIGN log_nmdcampo = "formacao".
-
-                    IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
-                         RUN atualiza_crapalt.
-                END.
-
-           IF   crapttl.nrcertif <> log_nrcertif   THEN
-                DO:
-                    ASSIGN log_nmdcampo = "certificado".
 
                     IF   NOT CAN-DO(crapalt.dsaltera,log_nmdcampo)   THEN
                          RUN atualiza_crapalt.

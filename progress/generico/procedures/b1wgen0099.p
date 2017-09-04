@@ -2,13 +2,15 @@
 
     Programa: sistema/generico/procedures/b1wgen0099.p
     Autor   : Gabriel
-    Data    : Maio/2011               Ultima Atualizacao:
+    Data    : Maio/2011               Ultima Atualizacao: 13/06/2017
      
     Dados referentes ao programa:
    
     Objetivo  : BO referente a tela DECONV.
                  
-    Alteracoes: 
+    Alteracoes: 13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							 (Adriano - P339).	
 
 .............................................................................*/
 
@@ -202,11 +204,13 @@ PROCEDURE gera-declaracao:
           SKIP(1)
           rel_nmprimtl  AT  1 "\033\106"  ",   portador   do"
           SKIP(1)                                                      
-          "CPF "    rel_nrcpfcgc   " e  do  documento de  identificacao"
+          "CPF "    rel_nrcpfcgc   "      e    do    documento       de"
           SKIP(1) 
-          rel_nrdocptl   " ,  e'   cooperado   da  "
-          "\033\105"
-          crapcop.nmrescop FORMAT "x(13)" "-"   SKIP(1)
+		  "identificacao"          
+          rel_nrdocptl FORMAT "x(40)" "   ," 
+		  SKIP(1)
+		  "e'    cooperado     da     "
+		  crapcop.nmrescop FORMAT "x(13)" "\033\106" "               -"   SKIP(1)
           crapcop.nmextcop FORMAT "x(50)"
           "\033\106"        "    sob"           SKIP(1)
           "identificador " "\033\105" rel_identifi "\033\106" "."   

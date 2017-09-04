@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Julho/99                        Ultima alteracao: 09/09/2013
+   Data    : Julho/99                        Ultima alteracao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -42,6 +42,12 @@ BEGIN
                             a escrita será PA (André Euzébio - Supero). 
                             
                18/02/2015 - Conversão Progress >> Oracle PL/SQL (Vanessa).
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+
 ............................................................................. */
 
    DECLARE
@@ -67,14 +73,14 @@ BEGIN
       vr_dstipcta  VARCHAR2(200);
       vr_cdtipcta  crapass.cdtipcta%TYPE;
       vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
-      vr_nrcpfstl  crapass.nrcpfstl%TYPE;
+      vr_nrcpfstl  crapttl.nrcpfcgc%TYPE;
       vr_nmtitula  VARCHAR2(200);
       
       vr_dstipcta2 VARCHAR2(200);
       vr_nmtitula2 VARCHAR2(200);
       vr_cdtipcta2 crapass.cdtipcta%TYPE;
       vr_nrcpfcgc2 crapass.nrcpfcgc%TYPE;
-      vr_nrcpfstl2 crapass.nrcpfstl%TYPE;
+      vr_nrcpfstl2 crapttl.nrcpfcgc%TYPE;
       vr_nrdconta2 craplcm.nrdconta%TYPE;
       
       
@@ -107,7 +113,7 @@ BEGIN
                 ass.nmprimtl,
                 ass.cdtipcta,
                 ass.nrcpfcgc,
-                ass.nrcpfstl,
+				ass.inpessoa,
                 tip.dstipcta 
            FROM craplcm lcm
                ,crapass ass
@@ -133,7 +139,7 @@ BEGIN
                 ass.nmprimtl,
                 ass.cdtipcta,
                 ass.nrcpfcgc,
-                ass.nrcpfstl,
+				ass.inpessoa,
                 tip.dstipcta 
            FROM craplcm lcm
                ,crapass ass
@@ -148,6 +154,15 @@ BEGIN
                  lcm.nrdocmto = pr_nrdocmto   AND 
                  lcm.vllanmto = pr_vllanmto;
        rw_craplcm2 cr_craplcm2%ROWTYPE;
+            
+	   CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
+	                    ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+	   SELECT ttl.nrcpfcgc
+	     FROM crapttl ttl
+		WHERE ttl.cdcooper = pr_cdcooper 
+		  AND ttl.nrdconta = pr_nrdconta
+		  AND ttl.idseqttl = 2;
+	   rw_crapttl cr_crapttl%ROWTYPE;
             
     BEGIN
       
@@ -218,7 +233,24 @@ BEGIN
             vr_nmtitula := rw_craplcm.nmprimtl;
             vr_cdtipcta := rw_craplcm.cdtipcta; 
             vr_nrcpfcgc := rw_craplcm.nrcpfcgc;
-            vr_nrcpfstl := rw_craplcm.nrcpfstl;
+            vr_nrcpfstl := 0;
+
+			IF rw_craplcm.inpessoa = 1 THEN
+
+			  OPEN cr_crapttl(pr_cdcooper => rw_craplcm.cdcooper
+			                 ,pr_nrdconta => rw_craplcm.nrdconta);
+
+			  FETCH cr_crapttl INTO rw_crapttl;
+
+			  IF cr_crapttl%FOUND THEN
+
+			    vr_nrcpfstl := rw_crapttl.nrcpfcgc;
+
+			  END IF;
+
+			  CLOSE cr_crapttl;
+
+			END IF;
                 
             FOR rw_craplcm2 IN cr_craplcm2(pr_cdcooper => rw_crapcop.cdcooper,
                                            pr_dtmvtolt => rw_craplcm.dtmvtolt,
@@ -230,9 +262,25 @@ BEGIN
                 vr_nmtitula2 := rw_craplcm2.nmprimtl;
                 vr_cdtipcta2 := rw_craplcm2.cdtipcta;
                 vr_nrcpfcgc2 := rw_craplcm2.nrcpfcgc;
-                vr_nrcpfstl2 := rw_craplcm2.nrcpfstl;
+                vr_nrcpfstl2 := 0;
                 vr_nrdconta2 := rw_craplcm2.nrdconta;
                       
+				IF rw_craplcm2.inpessoa = 1 THEN
+
+				  OPEN cr_crapttl(pr_cdcooper => rw_craplcm2.cdcooper
+								 ,pr_nrdconta => rw_craplcm2.nrdconta);
+
+				  FETCH cr_crapttl INTO rw_crapttl;
+
+				  IF cr_crapttl%FOUND THEN
+
+					vr_nrcpfstl2 := rw_crapttl.nrcpfcgc;
+
+				  END IF;
+
+				  CLOSE cr_crapttl;
+
+				END IF;
                       
                 IF(vr_cdtipcta  IN(1,2,5,7,8,9,12,13,18)AND vr_cdtipcta2 IN(3,4,6,10,11,14,15,17)) THEN
                    vr_flgsitua := 'ERRADO'; -- individual para conjunta 

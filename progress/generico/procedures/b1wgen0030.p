@@ -483,6 +483,9 @@
 			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
 					       (Adriano - SD 603451).
 
+			   12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+			 		       (Adriano - P339).
  
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
 ..............................................................................*/
@@ -1807,7 +1810,7 @@ PROCEDURE efetua_liber_anali_bordero:
        ASSIGN aux_vldjuros     = aux_vltitulo - craptdb.vltitulo
               craptdb.vlliquid = craptdb.vltitulo - aux_vldjuros
               aux_vlborder     = aux_vlborder + craptdb.vlliquid.
-                          
+
        /* Daniel */
        IF par_cddopcao = "L" THEN 
        DO:
@@ -10092,7 +10095,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                 END.
             
             IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-                 rel_txnrdcid = crapass.tpdocptl + ": " + crapass.nrdocptl.
+                 rel_txnrdcid = crapass.tpdocptl + ": " + SUBSTR(TRIM(crapass.nrdocptl),1,15).
             ELSE 
                  rel_txnrdcid = "".  
 
@@ -15428,6 +15431,28 @@ PROCEDURE analisar-titulo-bordero:
                     ASSIGN aux_dsrestri = "Titulo ja foi pago."
                            aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 55
                                           ELSE 5.
+
+                    /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
+                    RUN grava-restricao-bordero (INPUT par_cdcooper,
+                                                 INPUT par_cdoperad,
+                                                 INPUT par_nrborder,
+                                                 INPUT aux_nrseqdig,
+                                                 INPUT aux_dsrestri,
+                                                 INPUT " ",   /* dsdetres */
+                                                 INPUT FALSE, /* flaprcoo */
+                                                 OUTPUT TABLE tt-erro).
+
+                    IF  RETURN-VALUE = "NOK" THEN
+                        RETURN "NOK".
+
+                END.
+
+            /* Verifica se o titulo está baixado */
+            IF  crapcob.incobran = 3 THEN
+                DO:
+                    ASSIGN aux_dsrestri = "Titulo baixado."
+                           aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 53
+                                          ELSE 3.
 
                     /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
                     RUN grava-restricao-bordero (INPUT par_cdcooper,

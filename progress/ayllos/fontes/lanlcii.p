@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Setembro/2004.                 Ultima atualizacao: 13/12/2013
+   Data    : Setembro/2004.                 Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -53,6 +53,11 @@
                             
                13/12/2013 - Inclusao de VALIDATE crapchd, craplci e crapsli 
                                                                       (Carlos)
+
+               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ..............................................................................*/
 
 { includes/var_online.i } 
@@ -218,10 +223,31 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                        NEXT.
                     END.
                ELSE
+			     DO:
+				    FOR FIRST crapttl FIELDS(nrcpfcgc)
+					                  WHERE crapttl.cdcooper = crapass.cdcooper AND
+									        crapttl.nrdconta = crapass.nrdconta AND
+											crapttl.idseqttl = 2
+											NO-LOCK:
+
+					   ASSIGN aux_nrcpfcgc1 = crapttl.nrcpfcgc.
+
+					END.
+
+					FOR FIRST crapttl FIELDS(nrcpfcgc)
+					                  WHERE crapttl.cdcooper = crabass.cdcooper AND
+									        crapttl.nrdconta = crabass.nrdconta AND
+											crapttl.idseqttl = 2
+											NO-LOCK:
+
+					   ASSIGN aux_nrcpfcgc2 = crapttl.nrcpfcgc.
+
+					END.
+
                IF   NOT (crapass.nrcpfcgc = crabass.nrcpfcgc OR
-                         crapass.nrcpfcgc = crabass.nrcpfstl)       OR
-                    NOT (crapass.nrcpfstl = crabass.nrcpfstl OR
-                         crapass.nrcpfstl = crabass.nrcpfcgc)       THEN
+                            crapass.nrcpfcgc = aux_nrcpfcgc2)    OR
+                       NOT (aux_nrcpfcgc1    = aux_nrcpfcgc2     OR
+                            aux_nrcpfcgc1    = crabass.nrcpfcgc) THEN
                     DO:
                        glb_cdcritic = 755.
                        NEXT.
@@ -231,6 +257,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                     DO:
                        glb_cdcritic = 121.
                        NEXT.
+						  END.
+
                     END.
 
                LEAVE.     

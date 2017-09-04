@@ -354,6 +354,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 20/03/2017 - Ajuste para validar o cpf/cnpj de acordo com o inpessoa informado             
                             (Adriano - SD 620221).
                 
+                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
+     
                 12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                             
                 08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
@@ -393,12 +397,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT crapass.nrdconta
           ,crapass.nmprimtl
-          ,crapass.nmsegntl
           ,crapass.inpessoa
           ,crapass.cdagenci
           ,crapass.vllimcre
           ,crapass.nrcpfcgc
-          ,crapass.nrcpfstl
       FROM crapass
      WHERE crapass.cdcooper = pr_cdcooper
      AND   crapass.nrdconta = pr_nrdconta;

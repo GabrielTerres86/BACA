@@ -59,6 +59,10 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                              temporaria de associados. Projeto 299/3 - Pre Aprovado (Lombardi).
 
                 26/10/2016 - PRJ 187.2 - Ajuste nas datas na importação (Guilherme/SUPERO)
+
+				26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
   
                 03/07/2017 - Incluido rotina de setar modulo Oracle 
                            - Implementado Log no padrão
@@ -173,68 +177,65 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
     ,nrflcheq  crapass.nrflcheq%type
     ,qtextmes  crapass.qtextmes%type
     ,vllimcre  crapass.vllimcre%type
-    ,dsregcas  crapass.dsregcas%TYPE
-    ,nmsegntl  crapass.nmsegntl%type
-    ,tpdocstl  crapass.tpdocstl%type
-    ,nrdocstl  crapass.nrdocstl%type
-    ,cdgraupr  crapass.cdgraupr%type
-    ,cddsecao  crapass.cddsecao%type
+    ,dsregcas  gnetcvl.dsestcvl%TYPE
+    ,nmsegntl  crapttl.nmextttl%type
+    ,tpdocstl  crapttl.tpdocttl%type
+    ,nrdocstl  crapttl.nrdocttl%type
+    ,cdgraupr  crapttl.cdgraupr%type
     ,dtultlcr  crapass.dtultlcr%type
     ,inpessoa  crapass.inpessoa%type
     ,inmatric  crapass.inmatric%type
     ,inisipmf  crapass.inisipmf%type
     ,tplimcre  crapass.tplimcre%type
-    ,dtnasstl  crapass.dtnasstl%type
-    ,dsfilstl  crapass.dsfilstl%type
-    ,nrcpfstl  crapass.nrcpfstl%type
+    ,dtnasstl  crapttl.dtnasttl%type
+    ,dsfilstl  VARCHAR2(140)
+    ,nrcpfstl  crapttl.nrcpfcgc%type
     ,dtelimin  crapass.dtelimin%type
     ,vledvmto  crapass.vledvmto%type
     ,dtedvmto  crapass.dtedvmto%type
     ,qtfolmes  crapass.qtfolmes%type
     ,tpextcta  crapass.tpextcta%type
     ,cdoedptl  crapass.cdoedptl%type
-    ,cdoedstl  crapass.cdoedstl%type
-    ,cdoedrsp  crapass.cdoedrsp%type
+    ,cdoedstl  crapttl.cdoedttl%type
+    ,cdoedrsp  crapcrl.dsorgemi%type
     ,cdufdptl  crapass.cdufdptl%type
-    ,cdufdstl  crapass.cdufdstl%type
-    ,cdufdrsp  crapass.cdufdrsp%type
-    ,nmrespon  crapass.nmrespon%type
-    ,inhabmen  crapass.inhabmen%type
-    ,nrcpfrsp  crapass.nrcpfrsp%type
-    ,nrdocrsp  crapass.nrdocrsp%type
-    ,tpdocrsp  crapass.tpdocrsp%type
-    ,dtemdstl  crapass.dtemdstl%type
+    ,cdufdstl  crapttl.cdufdttl%type
+    ,cdufdrsp  crapcrl.cdufiden%type
+    ,nmrespon  crapcrl.nmrespon%type
+    ,inhabmen  crapttl.inhabmen%type
+    ,nrcpfrsp  crapcrl.nrcpfcgc%type
+    ,nrdocrsp  crapcrl.nridenti%type
+    ,tpdocrsp  crapcrl.tpdeiden%type
+    ,dtemdstl  crapttl.dtemdttl%type 
     ,dtemdptl  crapass.dtemdptl%type
-    ,dtemdrsp  crapass.dtemdrsp%type
-    ,qtdepend  crapass.qtdepend%type
-    ,dsendcol  crapass.dsendcol%TYPE
+    ,dtemdrsp  crapcrl.dtemiden%type
     ,tpavsdeb  crapass.tpavsdeb%type
     ,iniscpmf  crapass.iniscpmf%type
     ,nrctaprp  crapass.nrctaprp%type
-    ,cdoedttl  crapass.cdoedttl%type
-    ,cdufdttl  crapass.cdufdttl%type
-    ,dsfilttl  crapass.dsfilttl%type
-    ,dtnasttl  crapass.dtnasttl%type
-    ,nmtertl  crapass.nmtertl%type
-    ,nrcpfttl  crapass.nrcpfttl%type
-    ,nrdocttl  crapass.nrdocttl%type
-    ,tpdocttl  crapass.tpdocttl%type
-    ,dtemdttl  crapass.dtemdttl%type
+    ,cdoedttl  crapttl.cdoedttl%type
+    ,cdufdttl  crapttl.cdufdttl%type
+    ,dsfilttl  VARCHAR2(134)
+    ,dtnasttl  crapttl.dtnasttl%type
+    ,nmtertl   crapttl.nmextttl%type
+    ,nrcpfttl  crapttl.nrcpfcgc%type
+    ,nrdocttl  crapttl.nrdocttl%type
+    ,tpdocttl  crapttl.tpdocttl%type
+    ,dtemdttl  crapttl.dtemdttl%type
     ,tpvincul  crapass.tpvincul%type
-    ,nrfonemp  crapass.nrfonemp%type
+    ,nrfonemp  craptfc.nrtelefo%type
     ,dtcnscpf  crapass.dtcnscpf%type
     ,cdsitcpf  crapass.cdsitcpf%type
-    ,nmpaittl  crapass.nmpaittl%type
-    ,nmpaistl  crapass.nmpaistl%type
+    ,nmpaittl  crapttl.nmpaittl%type
+    ,nmpaistl  crapttl.nmpaittl%type
     ,nmpaiptl  crapass.nmpaiptl%type
-    ,nmmaettl  crapass.nmmaettl%type
-    ,nmmaestl  crapass.nmmaestl%type
+    ,nmmaettl  crapttl.nmmaettl%type
+    ,nmmaestl  crapttl.nmmaettl%type
     ,nmmaeptl  crapass.nmmaeptl%type
     ,inccfcop  crapass.inccfcop%type
     ,dtccfcop  crapass.dtccfcop%type
     ,indrisco  crapass.indrisco%TYPE
     ,inarqcbr  crapass.inarqcbr%TYPE
-    ,dsdemail  crapass.dsdemail%type
+    ,dsdemail  crapcem.dsdemail%type
     ,qtfoltal  crapass.qtfoltal%type
     ,nrdctitg  crapass.nrdctitg%type
     ,flchqitg  crapass.flchqitg%type
@@ -630,6 +631,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --             19/06/2017 - #642644 Alterado o nome do arquivo gerado em pc_importa_seg_auto_sicr e
   --                          enviado como anexo no e-mail, de ERRO_ARQ_SEG% para RESUMO_ARQ_SEG% (Carlos)
   --
+  --             26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --		                  crapass, crapttl, crapjur 
+  --				  		  (Adriano - P339).
   --             03/07/2017 - Incluido rotina de setar modulo Oracle 
   --                        - Implementado Log no padrão
   --                          ( Belli - Envolti - #667957)
@@ -836,7 +840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
      WHEN vr_exc_erro THEN
        pr_cdcritic:= vr_cdcritic;
        pr_dscritic:= vr_dscritic;
-     WHEN OTHERS THEN                          
+     WHEN OTHERS THEN
        -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
        
@@ -1319,6 +1323,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         AND   crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%rowtype;
 
+   CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
+                       ,pr_nrdconta crapttl.nrdconta%TYPE
+                       ,pr_idseqttl crapttl.idseqttl%TYPE)IS
+      SELECT crapttl.nmextttl
+            ,crapttl.nrdocttl
+            ,crapttl.inhabmen
+            ,crapttl.tpdocttl
+            ,crapttl.cdestcvl
+            ,crapttl.dtnasttl
+            ,crapttl.nmpaittl
+            ,crapttl.nrcpfcgc
+            ,crapttl.cdoedttl
+            ,crapttl.cdufdttl
+            ,crapttl.nmmaettl
+            ,crapttl.dtemdttl
+            ,crapttl.cdgraupr
+        FROM crapttl
+       WHERE crapttl.cdcooper = pr_cdcooper
+         AND crapttl.nrdconta = pr_nrdconta
+       AND crapttl.idseqttl = pr_idseqttl;
+      rw_crapttl1 cr_crapttl%ROWTYPE;
+      rw_crapttl2 cr_crapttl%ROWTYPE;
+      rw_crapttl3 cr_crapttl%ROWTYPE;
+
+      CURSOR cr_crapcem(pr_cdcooper crapcem.cdcooper%TYPE
+                       ,pr_nrdconta crapcem.nrdconta%TYPE)IS
+      SELECT crapcem.dsdemail
+        FROM crapcem
+       WHERE crapcem.cdcooper = pr_cdcooper
+         AND crapcem.nrdconta = pr_nrdconta
+         AND crapcem.idseqttl = 1
+         AND crapcem.cddemail = 1;
+
+      CURSOR cr_crapcrl(pr_cdcooper IN rw_crapass.cdcooper%TYPE
+                       ,pr_nrctamen IN rw_crapass.nrdconta%TYPE)IS
+      SELECT crapcrl.dsorgemi
+            ,crapcrl.cdufiden
+            ,crapcrl.nmrespon
+            ,crapcrl.nrcpfmen
+            ,crapcrl.nridenti
+            ,crapcrl.tpdeiden
+            ,crapcrl.dtemiden
+        FROM crapcrl                       
+       WHERE crapcrl.cdcooper = pr_cdcooper
+         AND crapcrl.nrctamen = pr_nrctamen
+         AND crapcrl.idseqmen = 1;
+      rw_crapcrl cr_crapcrl%ROWTYPE;
+         
+      CURSOR cr_gnetcvl(pr_cdestcvl IN gnetcvl.cdestcvl%TYPE)IS
+      SELECT gnetcvl.dsestcvl
+        FROM gnetcvl
+       WHERE gnetcvl.cdestcvl = pr_cdestcvl;
+      rw_gnetcvl cr_gnetcvl%ROWTYPE;
+
+      CURSOR cr_craptfc (pr_cdcooper IN craptrf.cdcooper%TYPE
+                        ,pr_nrdconta IN craptrf.nrdconta%TYPE
+                        ,pr_tptelefo IN craptfc.tptelefo%TYPE) IS
+      SELECT f.nrdddtfc,
+             f.nrtelefo,
+             f.tptelefo
+        FROM craptfc f
+       WHERE f.progress_recid = (SELECT min(f1.progress_recid)
+                                   FROM craptfc f1
+                                  WHERE f1.cdcooper = pr_cdcooper
+                                    AND f1.nrdconta = pr_nrdconta
+                                    AND f1.tptelefo = pr_tptelefo);
+      rw_craptfc cr_craptfc%rowtype;
+
+	  -- Busca a Nacionalidade
+      CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+        SELECT crapnac.dsnacion
+          FROM crapnac
+         WHERE crapnac.cdnacion = pr_cdnacion;
+
       --Variaveis Locais
       vr_dsorigem VARCHAR2(1000);
       vr_dstransa VARCHAR2(1000);
@@ -1331,9 +1409,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       vr_exc_sair EXCEPTION;
       vr_exc_erro EXCEPTION;
+      vr_dsestcvl gnetcvl.dsestcvl%TYPE;
+      vr_inhabmen crapttl.inhabmen%TYPE;
+      vr_dsdemail crapcem.dsdemail%TYPE;
+      vr_nrfonres VARCHAR2(20);
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_associados');      
 
@@ -1358,6 +1440,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_cdcritic:= 9;
         vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
       ELSE
+
+	      IF rw_crapass.inpessoa = 1 THEN
+
+          --Busca informações do titular da conta
+          OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                         ,pr_nrdconta => rw_crapass.nrdconta
+                         ,pr_idseqttl => 1);
+
+          FETCH cr_crapttl INTO rw_crapttl1;
+
+          CLOSE cr_crapttl;
+
+          vr_inhabmen := rw_crapttl1.inhabmen;
+
+          --Busca informações do responsável legal do titular
+          OPEN cr_crapcrl(pr_cdcooper => rw_crapass.cdcooper
+                         ,pr_nrctamen => rw_crapass.nrdconta);
+
+          FETCH cr_crapcrl INTO rw_crapcrl;
+
+          CLOSE cr_crapcrl;
+          
+          -- Buscar telefone do associado Residencial
+          OPEN cr_craptfc(pr_cdcooper => rw_crapass.cdcooper
+                         ,pr_nrdconta => rw_crapass.nrdconta
+                         ,pr_tptelefo => 1); -- Residencial
+                         
+          FETCH cr_craptfc INTO rw_craptfc;
+          
+          IF cr_craptfc%NOTFOUND THEN
+             CLOSE cr_craptfc;
+          ELSE
+             vr_nrfonres := rw_craptfc.nrdddtfc || rw_craptfc.nrtelefo;
+             CLOSE cr_craptfc;
+          END IF;
+
+          OPEN cr_gnetcvl(pr_cdestcvl => rw_crapttl1.cdestcvl);
+
+          FETCH cr_gnetcvl INTO vr_dsestcvl;
+
+          CLOSE cr_gnetcvl;
+
+          --Busca informações do segundo titular 
+          OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                          ,pr_nrdconta => rw_crapass.nrdconta
+                  ,pr_idseqttl => 2);
+
+          FETCH cr_crapttl INTO rw_crapttl2;
+
+          CLOSE cr_crapttl;
+
+          --Busca informações do terceiro titular
+          OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+                          ,pr_nrdconta => rw_crapass.nrdconta
+                  ,pr_idseqttl => 2);
+
+          FETCH cr_crapttl INTO rw_crapttl3;
+
+          CLOSE cr_crapttl;
+
+        END IF;
+
+        /* Emails */
+        OPEN cr_crapcem (pr_cdcooper => rw_crapass.cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta);
+
+        FETCH cr_crapcem INTO vr_dsdemail;
+    		
+        --Fechar Cursor
+        CLOSE cr_crapcem;
+
         vr_index:= pr_tab_associado.COUNT + 1;
         pr_tab_associado(vr_index).nrmatric:= rw_crapass.nrmatric;
         pr_tab_associado(vr_index).indnivel:= rw_crapass.indnivel;
@@ -1398,68 +1551,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_tab_associado(vr_index).nrflcheq:= rw_crapass.nrflcheq;
         pr_tab_associado(vr_index).qtextmes:= rw_crapass.qtextmes;
         pr_tab_associado(vr_index).vllimcre:= rw_crapass.vllimcre;
-        pr_tab_associado(vr_index).dsregcas:= rw_crapass.dsregcas;
-        pr_tab_associado(vr_index).nmsegntl:= rw_crapass.nmsegntl;
-        pr_tab_associado(vr_index).tpdocstl:= rw_crapass.tpdocstl;
-        pr_tab_associado(vr_index).nrdocstl:= rw_crapass.nrdocstl;
-        pr_tab_associado(vr_index).cdgraupr:= rw_crapass.cdgraupr;
-        pr_tab_associado(vr_index).cddsecao:= rw_crapass.cddsecao;
+        pr_tab_associado(vr_index).dsregcas:= vr_dsestcvl;
+        pr_tab_associado(vr_index).nmsegntl:= rw_crapttl2.nmextttl;
+        pr_tab_associado(vr_index).tpdocstl:= rw_crapttl2.tpdocttl;
+        pr_tab_associado(vr_index).nrdocstl:= rw_crapttl2.nrdocttl;
+        pr_tab_associado(vr_index).cdgraupr:= rw_crapttl1.cdgraupr;
         pr_tab_associado(vr_index).dtultlcr:= rw_crapass.dtultlcr;
         pr_tab_associado(vr_index).inpessoa:= rw_crapass.inpessoa;
         pr_tab_associado(vr_index).inmatric:= rw_crapass.inmatric;
         pr_tab_associado(vr_index).inisipmf:= rw_crapass.inisipmf;
         pr_tab_associado(vr_index).tplimcre:= rw_crapass.tplimcre;
-        pr_tab_associado(vr_index).dtnasstl:= rw_crapass.dtnasstl;
-        pr_tab_associado(vr_index).dsfilstl:= rw_crapass.dsfilstl;
-        pr_tab_associado(vr_index).nrcpfstl:= rw_crapass.nrcpfstl;
+        pr_tab_associado(vr_index).dtnasstl:= rw_crapttl2.dtnasttl;
+        pr_tab_associado(vr_index).dsfilstl:= rw_crapttl2.nmpaittl || ' - ' || rw_crapttl2.nmmaettl;
+        pr_tab_associado(vr_index).nrcpfstl:= rw_crapttl2.nrcpfcgc;
         pr_tab_associado(vr_index).dtelimin:= rw_crapass.dtelimin;
         pr_tab_associado(vr_index).vledvmto:= rw_crapass.vledvmto;
         pr_tab_associado(vr_index).dtedvmto:= rw_crapass.dtedvmto;
         pr_tab_associado(vr_index).qtfolmes:= rw_crapass.qtfolmes;
         pr_tab_associado(vr_index).tpextcta:= rw_crapass.tpextcta;
         pr_tab_associado(vr_index).cdoedptl:= rw_crapass.cdoedptl;
-        pr_tab_associado(vr_index).cdoedstl:= rw_crapass.cdoedstl;
-        pr_tab_associado(vr_index).cdoedrsp:= rw_crapass.cdoedrsp;
+        pr_tab_associado(vr_index).cdoedstl:= rw_crapttl2.cdoedttl;
+        pr_tab_associado(vr_index).cdoedrsp:= rw_crapcrl.dsorgemi;
         pr_tab_associado(vr_index).cdufdptl:= rw_crapass.cdufdptl;
-        pr_tab_associado(vr_index).cdufdstl:= rw_crapass.cdufdstl;
-        pr_tab_associado(vr_index).cdufdrsp:= rw_crapass.cdufdrsp;
-        pr_tab_associado(vr_index).nmrespon:= rw_crapass.nmrespon;
-        pr_tab_associado(vr_index).inhabmen:= rw_crapass.inhabmen;
-        pr_tab_associado(vr_index).nrcpfrsp:= rw_crapass.nrcpfrsp;
-        pr_tab_associado(vr_index).nrdocrsp:= rw_crapass.nrdocrsp;
-        pr_tab_associado(vr_index).tpdocrsp:= rw_crapass.tpdocrsp;
-        pr_tab_associado(vr_index).dtemdstl:= rw_crapass.dtemdstl;
+        pr_tab_associado(vr_index).cdufdstl:= rw_crapttl2.cdufdttl;
+        pr_tab_associado(vr_index).cdufdrsp:= rw_crapcrl.cdufiden;
+        pr_tab_associado(vr_index).nmrespon:= rw_crapcrl.nmrespon;
+        pr_tab_associado(vr_index).inhabmen:= vr_inhabmen;
+        pr_tab_associado(vr_index).nrcpfrsp:= rw_crapcrl.nrcpfmen;
+        pr_tab_associado(vr_index).nrdocrsp:= rw_crapcrl.nridenti;
+        pr_tab_associado(vr_index).tpdocrsp:= rw_crapcrl.tpdeiden;
+        pr_tab_associado(vr_index).dtemdstl:= rw_crapttl2.dtemdttl;
         pr_tab_associado(vr_index).dtemdptl:= rw_crapass.dtemdptl;
-        pr_tab_associado(vr_index).dtemdrsp:= rw_crapass.dtemdrsp;
-        pr_tab_associado(vr_index).qtdepend:= rw_crapass.qtdepend;
-        pr_tab_associado(vr_index).dsendcol:= rw_crapass.dsendcol;
+        pr_tab_associado(vr_index).dtemdrsp:= rw_crapcrl.dtemiden;
         pr_tab_associado(vr_index).tpavsdeb:= rw_crapass.tpavsdeb;
         pr_tab_associado(vr_index).iniscpmf:= rw_crapass.iniscpmf;
         pr_tab_associado(vr_index).nrctaprp:= rw_crapass.nrctaprp;
-        pr_tab_associado(vr_index).cdoedttl:= rw_crapass.cdoedttl;
-        pr_tab_associado(vr_index).cdufdttl:= rw_crapass.cdufdttl;
-        pr_tab_associado(vr_index).dsfilttl:= rw_crapass.dsfilttl;
-        pr_tab_associado(vr_index).dtnasttl:= rw_crapass.dtnasttl;
-        pr_tab_associado(vr_index).nmtertl:= rw_crapass.nmtertl;
-        pr_tab_associado(vr_index).nrcpfttl:= rw_crapass.nrcpfttl;
-        pr_tab_associado(vr_index).nrdocttl:= rw_crapass.nrdocttl;
-        pr_tab_associado(vr_index).tpdocttl:= rw_crapass.tpdocttl;
-        pr_tab_associado(vr_index).dtemdttl:= rw_crapass.dtemdttl;
+        pr_tab_associado(vr_index).cdoedttl:= rw_crapttl3.cdoedttl;
+        pr_tab_associado(vr_index).cdufdttl:= rw_crapttl3.cdufdttl;
+        pr_tab_associado(vr_index).dsfilttl:= rw_crapttl3.nmpaittl || ' - ' || rw_crapttl3.nmmaettl;
+        pr_tab_associado(vr_index).dtnasttl:= rw_crapttl3.dtnasttl;
+        pr_tab_associado(vr_index).nmtertl:=  rw_crapttl3.nmextttl;
+        pr_tab_associado(vr_index).nrcpfttl:= rw_crapttl3.nrcpfcgc;
+        pr_tab_associado(vr_index).nrdocttl:= rw_crapttl3.nrdocttl;
+        pr_tab_associado(vr_index).tpdocttl:= rw_crapttl3.tpdocttl;
+        pr_tab_associado(vr_index).dtemdttl:= rw_crapttl3.dtemdttl;
         pr_tab_associado(vr_index).tpvincul:= rw_crapass.tpvincul;
-        pr_tab_associado(vr_index).nrfonemp:= rw_crapass.nrfonemp;
+        pr_tab_associado(vr_index).nrfonemp:= vr_nrfonres;
         pr_tab_associado(vr_index).dtcnscpf:= rw_crapass.dtcnscpf;
         pr_tab_associado(vr_index).cdsitcpf:= rw_crapass.cdsitcpf;
-        pr_tab_associado(vr_index).nmpaittl:= rw_crapass.nmpaittl;
-        pr_tab_associado(vr_index).nmpaistl:= rw_crapass.nmpaistl;
+        pr_tab_associado(vr_index).nmpaittl:= rw_crapttl3.nmpaittl;
+        pr_tab_associado(vr_index).nmpaistl:= rw_crapttl2.nmpaittl;
         pr_tab_associado(vr_index).nmpaiptl:= rw_crapass.nmpaiptl;
-        pr_tab_associado(vr_index).nmmaettl:= rw_crapass.nmmaettl;
-        pr_tab_associado(vr_index).nmmaestl:= rw_crapass.nmmaestl;
+        pr_tab_associado(vr_index).nmmaettl:= rw_crapttl3.nmmaettl;
+        pr_tab_associado(vr_index).nmmaestl:= rw_crapttl2.nmmaettl;
         pr_tab_associado(vr_index).nmmaeptl:= rw_crapass.nmmaeptl;
         pr_tab_associado(vr_index).inccfcop:= rw_crapass.inccfcop;
         pr_tab_associado(vr_index).dtccfcop:= rw_crapass.dtccfcop;
         pr_tab_associado(vr_index).indrisco:= rw_crapass.indrisco;
         pr_tab_associado(vr_index).inarqcbr:= rw_crapass.inarqcbr;
-        pr_tab_associado(vr_index).dsdemail:= rw_crapass.dsdemail;
+        pr_tab_associado(vr_index).dsdemail:= vr_dsdemail;
         pr_tab_associado(vr_index).qtfoltal:= rw_crapass.qtfoltal;
         pr_tab_associado(vr_index).nrdctitg:= rw_crapass.nrdctitg;
         pr_tab_associado(vr_index).flchqitg:= rw_crapass.flchqitg;
@@ -1640,7 +1790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_pessoa_juridica');      
 
@@ -1797,7 +1947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_titular');
 
@@ -1954,7 +2104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_empresa');
 
@@ -2118,7 +2268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_plano_seguro');
 
@@ -2321,7 +2471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_seguradora');
 
@@ -2563,7 +2713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_motivo_can');
 
@@ -2783,7 +2933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro  EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_buscar_seguros');
 
@@ -3265,7 +3415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_calcular_data_debito');
 
@@ -3446,7 +3596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_atualizar_matricula');
 
@@ -3924,7 +4074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'SEGU0001.pc_cria_seguro');
 
@@ -4944,7 +5094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_exc_erro EXCEPTION;
 
       BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_buscar_plaseg_web');
 
@@ -4963,7 +5113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
               END IF;
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'SEGU0001.pc_buscar_plaseg_web');
 
@@ -5045,7 +5195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
-      WHEN OTHERS THEN
+                  WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
         CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);   
         -- Retorno não OK
@@ -5132,7 +5282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       -- PL/Table que vai armazenar os nomes de arquivos a serem processados
       vr_tab_arqtmp      gene0002.typ_split;
-      
+
       -- Novo Vetor para posicionar a linha - Chamado 667957 - 07/07/2017      
       TYPE type_linha IS TABLE OF NUMBER INDEX BY VARCHAR2(105);
       v_linha                type_linha;  
@@ -5170,10 +5320,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_reg_casa    tbseg_vida_benefici%ROWTYPE; -- A tabela para esse Seguro ainda nao existe
       vr_reg_prst    tbseg_vida_benefici%ROWTYPE; -- A tabela para esse Seguro ainda nao existe
       vr_reg_tpatu   typ_reg_flg_atu;
-     
+
       -- Variaveis de posicionamento de modulo - 05/07/2017 - Chamado 667957
       vr_acao             VARCHAR2   (100) := 'SEGU0001.pc_importa_seg_auto_sicr'; 
-      
+
       -- Variaveis de inclusão de log  - 05/07/2017 - Chamado 667957
       vr_idprglog            tbgen_prglog.idprglog%TYPE := 0; 
 
@@ -5315,7 +5465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                       ) IS
                                       
       BEGIN
-        
+
         vr_nmarqlog := 'proc_batch.log';           
         vr_dscriti2 := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra 
                                || ' --> ' 
@@ -5364,7 +5514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
         IF pr_indierro = 1 THEN
           vr_nmarqlog := 'proc_batch.log';
-          vr_flfinmsg := 'S';          
+          vr_flfinmsg := 'S';
           pc_controla_log_batch(pr_dstiplog_in => 'E',
                                 pr_dscritic_in => 'Falta Tratar - ' || vr_dscriti2);                          
         ELSE
@@ -5378,16 +5528,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
           vr_nmarqlog := 'RESUMO_ARQ_SEG_' || vr_nmarqdat(1) || '_' ||to_char(SYSDATE,'hh24');
           vr_flfinmsg := 'N';
           vr_nmarqerr := vr_nmarqlog || '.log';
-                              
+
           vr_dscriti2 := to_char(sysdate,'hh24:mi:ss')||' - ' || pr_cdprogra 
                                  || ' --> ' 
                                  || 'ALERTA: '       || vr_dscriti2;
 
-          -- Envio centralizado de log de erro
+        -- Envio centralizado de log de erro
           btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
-                                     ,pr_ind_tipo_log => 1
-                                     ,pr_des_log      => vr_dscriti2
-                                     ,pr_nmarqlog     => vr_nmarqlog
+                                  ,pr_ind_tipo_log => 1
+                                  ,pr_des_log      => vr_dscriti2
+                                  ,pr_nmarqlog     => vr_nmarqlog
                                      ,pr_flfinmsg     => vr_flfinmsg
                                      ,pr_cdprograma   => pr_cdprogra);
         END IF;
@@ -5397,9 +5547,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
           -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                           
           -- Acerto geração de erro via vr_exc_saida - Chamado 667957 - 05/07/2018
-          vr_cdcritic := 0;
+            vr_cdcritic := 0;
           vr_dscritic := 'Problemas com geracao de Log - ' || SQLERRM;                                    
-          RAISE vr_exc_saida;
+            RAISE vr_exc_saida;
       END gera_log;
 
 
@@ -5429,7 +5579,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
               CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
               vr_dscritic := 'SEGU0001.pc_controla_execucao: Erro ao atualizar PRM[0] => ' ||
-                             SQLERRM ;              
+                             SQLERRM ;
               -- Acerto do log - Chamado 667957 - 05/07/2017              
               --> Final da execução com ERRO
               pc_controla_log_batch(pr_dstiplog_in => 'E',
@@ -5454,7 +5604,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         BEGIN
           UPDATE crapprm prm
              SET prm.dsvlrprm = vr_vlprmjob
-           WHERE prm.cdacesso ='FLAG_ARQ_SEGURO';           
+           WHERE prm.cdacesso ='FLAG_ARQ_SEGURO';
           COMMIT;
         EXCEPTION
           WHEN OTHERS THEN
@@ -5511,7 +5661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             END IF;
 
         END IF; -- Ultima Execução - as 12h
-        
+
      END pc_controla_execucao;
 
 
@@ -5548,7 +5698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     vr_dsdirenv  := gene0001.fn_param_sistema('CRED', 0, 'DIR_SEG_AUTO_ENV');
     vr_dsdirmov  := gene0001.fn_param_sistema('CRED', 0, 'DIR_SEG_AUTO_OK');
     vr_nmarquiv  := 'SEGURO_CECRED_%'; -- Todos os arquivos com esse nome existentes na pasta
-    
+
 
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
@@ -5589,13 +5739,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_temarquiv := TRUE;  -- Tem arquivo na pasta
     END IF;
 
-   pc_controla_execucao(vr_temarquiv);
+    pc_controla_execucao(vr_temarquiv);
 
 
 
     -- Leitura da PL/Table e processamento dos arquivos
     FOR idx in 1..vr_tab_arqtmp.count LOOP -- LOOP de Arquivos da PASTA
-      
+
       -- Acerto do log - Chamado 667957 - 05/07/2017     
       pc_controla_log_batch(pr_dstiplog_in => 'E',
                             pr_dscritic_in => 'Processamento do arquivo: ' || vr_tab_arqtmp(idx),
@@ -5638,14 +5788,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 ,pr_dscritic => 'Arquivo ' || vr_tab_arqtmp(idx)
                                 || ' não possui conteúdo!'
                  );
-        CONTINUE; -- Passa para o proximo arquivo da lista     
-      END IF;
+        CONTINUE; -- Passa para o proximo arquivo da lista
+          END IF;
 
 
       /*** Renato Darosci - 16/08/2016 - PRocessar o registro de memória e reordena-lo ***/
       -- Garantir que a tabela não possua registros
       vr_tab_ordena.DELETE();
-            
+
       -- Limpa Novo Vetor - Chamado 667957 - 07/07/2017   
       v_linha.DELETE();
 
@@ -5672,7 +5822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
         -- Inclui o registro de linha na tabela de ordenação
         vr_tab_ordena(vr_dsdchave) := vr_tab_linhas(vr_indice);
-        
+
       -- Carrega Novo Vetor - Chamado 667957 - 07/07/2017         
         vr_cdchave          := vr_dsdchave;
         vr_nrlinha          := vr_indice;
@@ -5745,7 +5895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_reg_tpatu.tp_vida         := 'I';
         vr_reg_tpatu.tp_casa         := 'I';
         vr_reg_tpatu.tp_prst         := 'I';
-        
+
 
         IF vr_tab_linhas(vr_indice2).exists('$ERRO$') THEN
           
@@ -5814,7 +5964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);         
               -- Acerto do log - Chamado 667957 - 05/07/2017 
               -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
-              -- Gera LOG de Erro do Arquivo    
+              -- Gera LOG de Erro do Arquivo
               pc_controla_log_batch(pr_dstiplog_in => 'E',
                                     pr_dscritic_in => 'Linha '|| vr_nrlinha || 
                                                       ' => Erro ao atualizar Endosso: ' || SQLERRM);
@@ -5830,16 +5980,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
           IF cr_endosso_ativa%NOTFOUND THEN
             -- Fechar cursor
             CLOSE cr_endosso_ativa;
-                     
+
             ROLLBACK; -- desfaz a transação
 
             -- Monta
             vr_dscritic := 'Endosso a ser ativado não encontrado! Apolice => '
                             || rw_endosso_cancel.nrapolice;
-      
+
             -- Acerto do log - Chamado 667957 - 05/07/2017 
             -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
-            -- Gera LOG de Erro do Arquivo    
+            -- Gera LOG de Erro do Arquivo
             pc_controla_log_batch(pr_dstiplog_in => 'E',
                                   pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
                                   
@@ -5865,7 +6015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       
               -- Acerto do log - Chamado 667957 - 05/07/2017 
               -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
-              -- Gera LOG de Erro do Arquivo    
+              -- Gera LOG de Erro do Arquivo
               pc_controla_log_batch(pr_dstiplog_in => 'E',
                                     pr_dscritic_in => 'Linha '|| vr_nrlinha || 
                                                       ' => Erro ao Ativar Endosso: ' || SQLERRM);
@@ -6017,13 +6167,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       
                 -- Acerto do log - Chamado 667957 - 05/07/2017 
                 -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
-                -- Gera LOG de Erro do Arquivo    
+                -- Gera LOG de Erro do Arquivo
                 pc_controla_log_batch(pr_dstiplog_in => 'E',
                                       pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
                          
                 -- Houve erro na Agencia/Conta
                 vr_reg_arquivo.inerro_import := 1; -- Registro COM ERRO de Agencia ou Conta
-                
+
 
               ELSE  -- Encontrou Cooperativa
         
@@ -6045,7 +6195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       
                   -- Acerto do log - Chamado 667957 - 05/07/2017 
                   -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017   
-                  -- Gera LOG de Erro do Arquivo    
+                  -- Gera LOG de Erro do Arquivo
                   pc_controla_log_batch(pr_dstiplog_in => 'E',
                                         pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
                            
@@ -6208,7 +6358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       
                 -- Acerto do log - Chamado 667957 - 05/07/2017 
                 -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
-                -- Gera LOG de Erro do Arquivo    
+                -- Gera LOG de Erro do Arquivo
                 pc_controla_log_batch(pr_dstiplog_in => 'E',
                                       pr_dscritic_in => 'Linha '|| vr_nrlinha || ': ' || vr_dscritic);
                          
@@ -6589,15 +6739,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                       pr_dscritic_in => vr_dscritic);                
               ELSE
                 -- Carrega linha original do Novo Vetor - Chamado 667957 - 07/07/2017 
-                -- Gera LOG de Erro do Arquivo
-                gera_log(pr_cdcooper => 3 --pr_cdcooper
-                        ,pr_cdprogra => vr_tab_arqtmp(idx)
-                        ,pr_indierro => vr_indierro -- 1 -- 1-Log Geral 2-Log Especifico Arquivo
-                        ,pr_cdcritic => 0
+              -- Gera LOG de Erro do Arquivo
+              gera_log(pr_cdcooper => 3 --pr_cdcooper
+                      ,pr_cdprogra => vr_tab_arqtmp(idx)
+                      ,pr_indierro => vr_indierro -- 1 -- 1-Log Geral 2-Log Especifico Arquivo
+                      ,pr_cdcritic => 0
                         ,pr_dscritic => 'Linha '|| vr_nrlinha || ' => ATENÇÃO: ' || vr_dscritic
-                        );
-                ROLLBACK;
-                CONTINUE; -- Passa para proxima linha            
+                       );
+              ROLLBACK;
+              CONTINUE; -- Passa para proxima linha
               END IF;            
             END IF;
           ------------------ FIM - PROCESSAMENTO PARA GRAVACAO DOS DADOS --------------------
@@ -6674,7 +6824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pc_controla_log_batch(pr_dstiplog_in => 'E',
                               pr_dscritic_in => vr_dscritic);
       END IF;
- 
+
       -- SE TEM LOG DE ERROS, ENVIAR PARA O CONNECT PARA SICREDI
       IF vr_dsdanexo IS NOT NULL THEN
 
@@ -6719,7 +6869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                 pr_dscritic_in => vr_dscritic);
         END IF;
       END IF;
-      
+
       -- Acerto do log - Chamado 667957 - 05/07/2017     
       pc_controla_log_batch(pr_dstiplog_in => 'E',
                             pr_dscritic_in => 'Termino processamento do arquivo: ' || vr_tab_arqtmp(idx),
@@ -6731,11 +6881,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
     END LOOP; -- Fim da Lista de Arquivos da Pasta
-    
+
 
     
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
-        
+	
     -- se for a ultima execução do dia,
     -- move arquivo de log de execução pra pasta /micros/cecred/segauto
     IF  vr_flultexc THEN
@@ -6799,7 +6949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       -- Efetuar rollback
       ROLLBACK;
-      
+
       -- No caso de erro de programa gravar tabela especifica de log - 17/07/2017 - Chamado 667957        
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);         
       -- Efetuar retorno do erro não tratado
@@ -6807,10 +6957,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       --> Final da execução com ERRO
       pc_controla_log_batch(pr_dstiplog_in => 'E',
                             pr_dscritic_in => vr_dscritic);
-                            
+
       pc_controla_log_batch(pr_dstiplog_in => 'F',
                             pr_tpocorrencia_in => 4);
-                            
+
   END pc_importa_seg_auto_sicr;
 
   --Procedimento para Criar o Seguro
@@ -6870,7 +7020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       WHERE auto.idcontrato = p_idcontrato;
 
     BEGIN
-    
+
       -- Inclusão da rotina de setar módulo - Chamado 667957 - 03/07/2017
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'SEGU0001.pc_insere_seguro');
 

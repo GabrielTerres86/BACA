@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 08/05/2017
+    Data     : 30/11/2015.                   Ultima atualizacao: 04/08/2017
   
    Dados referentes ao programa:
   
@@ -20,7 +20,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                             (Andrei - RKAM).
                             
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
-               
+               04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
+                                           
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).
                                            
@@ -363,7 +364,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                    ,pr_retxml    IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
                                    ,pr_nmdcampo  OUT VARCHAR2                      --> Nome do Campo
                             	     ,pr_des_erro  OUT VARCHAR2);                   --> Saida OK/NOK
-    
+                                                                                                        
   PROCEDURE pc_busca_dominios(pr_idtipo_dominio     IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
                              ,pr_dstipo_dominio     IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
                              ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
@@ -412,6 +413,40 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                 ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
                                 ,pr_des_erro  OUT VARCHAR2);                                         
                                                                                                                    
+  PROCEDURE pc_busca_nacionalidades(pr_cdnacion  IN crapnac.cdnacion%TYPE -- código da nacionalidade
+                                   ,pr_dsnacion  IN crapnac.dsnacion%TYPE -- descrição da nacionalidade
+                                   ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                                   ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                   ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2);     
+                                   
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2);  
+                                     
+  PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
+                         ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
+                         ,pr_flserasa  IN tbgen_cnae.flserasa%TYPE --Negativar SERASA
+                         ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                         ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                         ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                         ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                         ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                         ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                         ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                         ,pr_des_erro  OUT VARCHAR2);                                                                                    
+                                                                                                                   
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -422,7 +457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 08/05/2017
+   Data    : 30/11/2015                       Ultima atualizacao: 04/08/2017
 
    Dados referentes ao programa:
 
@@ -441,11 +476,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                07/02/2017 - Criacao da pc_busca_operacao_conta. (Jaison/Oscar - PRJ335)
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
-         	     08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
-			                     (Adriano - SD 614408). 
+			   08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
+			                (Adriano - SD 614408).                               
                
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
                             (Jonata - RKAM).        
+                                                    
+			   04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).       
                                                     
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -4980,7 +5017,347 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic:= 'Erro na pc_busca_gncdocp_car --> '|| SQLERRM;
       
   END pc_busca_gncdocp_car; 
+  PROCEDURE pc_busca_nacionalidades(pr_cdnacion  IN crapnac.cdnacion%TYPE -- código da nacionalidade
+                                   ,pr_dsnacion  IN crapnac.dsnacion%TYPE -- descrição da nacionalidade
+                                   ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                                   ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                   ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2)IS
   
+  /*---------------------------------------------------------------------------------------------------------------
+    
+  Programa : pc_busca_nacionalidades                            antiga: 
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Sigla    : CRED
+  Autor    : Adriano - CECRED
+  Data     : Junho/2017                           Ultima atualizacao:
+    
+  Dados referentes ao programa:
+    
+  Frequencia: -----
+  Objetivo   : Pesquisa de dominios
+    
+  Alterações : 
+  -------------------------------------------------------------------------------------------------------------*/    
+                        
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+    
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+    
+  --Variaveis de Excecoes
+  vr_exc_erro  EXCEPTION;                                       
+    
+  BEGIN
+    
+    --Inicializa as variaveis  
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+	  
+    TELA_CADNAC.pc_busca_nacionalidades(pr_cdnacion => pr_cdnacion 
+                                       ,pr_dsnacion => pr_dsnacion
+                                       ,pr_nrregist => pr_nrregist
+                                       ,pr_nriniseq => pr_nriniseq
+                                       ,pr_xmllog   => pr_xmllog
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic 
+                                       ,pr_retxml   => pr_retxml
+                                       ,pr_nmdcampo => pr_nmdcampo
+                                       ,pr_des_erro => pr_des_erro);
+                                       
+    IF pr_des_erro <> 'OK' THEN
+     
+      IF nvl(vr_cdcritic,0) = 0    AND
+         TRIM(vr_dscritic) IS NULL THEN
+      
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADNAC.pc_busca_nacionalidades.';
+          
+      END IF;
+    
+      RAISE vr_exc_erro;
+      
+    END IF;                                           
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_busca_nacionalidades --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_busca_nacionalidades;
+  
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+  Programa : pc_consulta_orgao_expedidor                            antiga: 
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Sigla    : CRED
+  Autor    : Adriano - CECRED
+  Data     : Junho/2017                           Ultima atualizacao:
+    
+  Dados referentes ao programa:
+    
+  Frequencia: -----
+  Objetivo   : Rotina para buscar orgão expedidor
+    
+  Alterações : 
+  -------------------------------------------------------------------------------------------------------------*/    
+                        
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+    
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+    
+  --Variaveis de Excecoes
+  vr_exc_erro  EXCEPTION;                                       
+    
+  BEGIN
+    
+    --Inicializa as variaveis  
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    TELA_CADORG.pc_consulta_orgao_expedidor(pr_cdorgao_expedidor => pr_cdorgao_expedidor 
+                                           ,pr_nmorgao_expedidor => pr_nmorgao_expedidor
+                                           ,pr_nrregist => pr_nrregist
+                                           ,pr_nriniseq => pr_nriniseq
+                                           ,pr_xmllog   => pr_xmllog
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic 
+                                           ,pr_retxml   => pr_retxml
+                                           ,pr_nmdcampo => pr_nmdcampo
+                                           ,pr_des_erro => pr_des_erro);
+                                       
+    IF pr_des_erro <> 'OK' THEN
+     
+      IF nvl(vr_cdcritic,0) = 0    AND
+         TRIM(vr_dscritic) IS NULL THEN
+      
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADORG.pc_consulta_orgao_expedidor.';
+          
+      END IF;
+    
+      RAISE vr_exc_erro;
+      
+    END IF;                                           
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_consulta_orgao_expedidor --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_consulta_orgao_expedidor;
+  
+  PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
+                         ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
+                         ,pr_flserasa  IN tbgen_cnae.flserasa%TYPE --Negativar SERASA
+                         ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                         ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                         ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                         ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                         ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                         ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                         ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                         ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+  Programa : pc_busca_cnae                                       antiga: 
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Sigla    : CRED
+  Autor    : Adriano - CECRED
+  Data     : Junho/2017                           Ultima atualizacao: 04/08/2017
+    
+  Dados referentes ao programa:
+    
+  Frequencia: -----
+  Objetivo   : Pesquisa de códigod CNAE
+    
+  Alterações : 04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
+  -------------------------------------------------------------------------------------------------------------*/    
+                        
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+    
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+    
+  --Variaveis de Excecoes
+  vr_exc_erro  EXCEPTION;                                       
+    
+  BEGIN
+    
+    --Inicializa as variaveis  
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+	  
+    TELA_CADCNA.pc_busca_cnae(pr_cdcnae => pr_cdcnae
+                             ,pr_dscnae => pr_dscnae
+                             ,pr_flserasa => pr_flserasa
+                             ,pr_nriniseq => pr_nriniseq
+                             ,pr_nrregist => pr_nrregist
+                             ,pr_xmllog   => pr_xmllog
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_retxml   => pr_retxml
+                             ,pr_nmdcampo => pr_nmdcampo
+                             ,pr_des_erro => pr_des_erro);
+                                       
+    IF pr_des_erro <> 'OK' THEN
+     
+      IF nvl(vr_cdcritic,0) = 0    AND
+         TRIM(vr_dscritic) IS NULL THEN
+      
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADCNA.pc_busca_cnae.';
+          
+      END IF;
+    
+      RAISE vr_exc_erro;
+      
+    END IF;                                           
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_busca_cnae --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_busca_cnae;
+
   PROCEDURE pc_busca_dominios(pr_idtipo_dominio     IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
                              ,pr_dstipo_dominio     IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
                              ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
