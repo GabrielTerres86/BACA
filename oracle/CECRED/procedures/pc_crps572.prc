@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Irlan
-     Data    : Jun/2009.                     Ultima atualizacao: 20/04/2015
+     Data    : Jun/2009.                     Ultima atualizacao: 17/04/2017
 
      Dados referentes ao programa:
 
@@ -68,6 +68,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
                                arquivo xml 3046" por email, removendo-a desta forma 
                                do log do processo. (Jaison/Gielow - SD: 273558)
 
+                  31/01/2017 - Ajustar mensagens de erro escritas no log do proc_batch, pois 
+                               as mensagens não estavam sendo apresentadas (Renato-Supero)
+
+                  17/04/2017 - #462629 Otimização do programa. Melhoria de performance na execução dos
+                               cursores cr_crapcop_ass e cr_crapvop (Carlos)
+
   ............................................................................. */
 
   -- CURSORES
@@ -88,7 +94,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
       FROM crapcop
          , crapass
      WHERE crapass.cdcooper  = crapcop.cdcooper
-       AND crapass.inpessoa IN (2,3)
+       AND crapass.inpessoa > 1
        AND crapass.dtdemiss IS NULL;
 
   -- Buscar o cadastro da operação financeira
@@ -164,6 +170,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
   vr_list_arquivos VARCHAR2(10000);
   -- Tabela de pessoas jurídicas
   vr_crawass       typ_cpbase; -- O nome da variável é o mesmo do progress para facilitar o entendimento
+  
+  --Tipo do Cursor para Bulk Collect
+  TYPE typ_crapcop_ass_bulk IS TABLE OF cr_crapcop_ass%ROWTYPE;
+  vr_crapcop_ass_bulk typ_crapcop_ass_bulk;
+  
+  --Tipo do Cursor para Bulk Collect
+  TYPE typ_crapvop_bulk IS TABLE OF cr_crapvop%ROWTYPE;
+  vr_crapvop_bulk typ_crapvop_bulk;
+  
   vr_inawass       VARCHAR2(14);
   -- Tabela de memória para dados do XML
   vr_crapvop       typ_crapvop;
@@ -387,12 +402,24 @@ BEGIN
   END IF;
 
   -- Popular o registro de memória de pessoas jurídicas
-  FOR rw_crapcop_ass IN cr_crapcop_ass LOOP
+  OPEN cr_crapcop_ass;  
+  --Carregar Bulk Collect
+  LOOP
+    FETCH cr_crapcop_ass BULK COLLECT INTO vr_crapcop_ass_bulk LIMIT 30000;  
+    EXIT WHEN vr_crapcop_ass_bulk.COUNT = 0;
+
+    -- Popular o registro de memória de pessoas jurídicas
+    FOR idx IN vr_crapcop_ass_bulk.FIRST .. vr_crapcop_ass_bulk.LAST LOOP      
     -- Guarda o registro na tabela de memória, ordenando em primeiro nível por estabelecimento apenas
-    vr_crawass(rw_crapcop_ass.stnrcnpj)(rw_crapcop_ass.nrcpfcgc).nrcpfcgc := rw_crapcop_ass.nrcpfcgc;
-    vr_crawass(rw_crapcop_ass.stnrcnpj)(rw_crapcop_ass.nrcpfcgc).stnrcnpj := rw_crapcop_ass.stnrcnpj;
-    vr_crawass(rw_crapcop_ass.stnrcnpj)(rw_crapcop_ass.nrcpfcgc).inpessoa := 2;
+      vr_crawass(vr_crapcop_ass_bulk(idx).stnrcnpj)(vr_crapcop_ass_bulk(idx).nrcpfcgc).nrcpfcgc := vr_crapcop_ass_bulk(idx).nrcpfcgc;
+      vr_crawass(vr_crapcop_ass_bulk(idx).stnrcnpj)(vr_crapcop_ass_bulk(idx).nrcpfcgc).stnrcnpj := vr_crapcop_ass_bulk(idx).stnrcnpj;
+      vr_crawass(vr_crapcop_ass_bulk(idx).stnrcnpj)(vr_crapcop_ass_bulk(idx).nrcpfcgc).inpessoa := 2;
   END LOOP;
+
+  END LOOP;
+  
+  --Fechar Cursor
+  CLOSE cr_crapcop_ass;
 
   -- Buscar os endereços de e-mail para enviar o arquivo
   vr_des_destino := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
@@ -585,9 +612,9 @@ BEGIN
         -- Se a flag estiver como TRUE
         IF vr_xml_flgpj THEN
           -- Se há registros de associados na tabela
-          IF vr_crawass.COUNT() > 0 THEN
+          IF vr_crawass.COUNT() > 0 AND
             -- Verifica se existe o CNPJ base que está no XML
-            IF vr_crawass.EXISTS(vr_xml_stcpfcgc) THEN
+            vr_crawass.EXISTS(vr_xml_stcpfcgc) THEN
               -- Buscar o primeiro indice
               vr_inawass := vr_crawass(vr_xml_stcpfcgc).FIRST;
               -- Percorrer todos os registros
@@ -600,7 +627,6 @@ BEGIN
                 -- Buscar o proximo registro para ser gravado
                 vr_inawass := vr_crawass(vr_xml_stcpfcgc).NEXT(vr_inawass);
               END LOOP; -- Fim loop registros
-            END IF;  -- Fim EXISTS
           END IF; -- Fim COUNT > 0
         ELSE
           -- Grava o novo registro
@@ -700,11 +726,10 @@ BEGIN
         EXIT WHEN vr_ixOPFv IS NULL;
         
         -- Verifica a data e o número do cgc
-        IF vr_crapopf(vr_ixOPFv).dtrefere = vr_xml_dtrefere THEN
-          -- Buscar o registro da crapopf
+        IF vr_crapopf(vr_ixOPFv).dtrefere = vr_xml_dtrefere 
+          -- Buscar o registro da crapopf se encontrar registros na CRAPOPF
+          AND vr_tab_crapopf.exists(LPAD(vr_crapopf(vr_ixOPFv).nrcpfcgc, 25, '0') || TO_CHAR(vr_crapopf(vr_ixOPFv).dtrefere, 'DDMMRRRR')) THEN
           
-          -- Se encontrar registros na CRAPOPF
-          IF vr_tab_crapopf.exists(LPAD(vr_crapopf(vr_ixOPFv).nrcpfcgc, 25, '0') || TO_CHAR(vr_crapopf(vr_ixOPFv).dtrefere, 'DDMMRRRR')) THEN
             -- Eliminar registro da PL Table
             vr_crapopf.delete(vr_ixOPFv);
             
@@ -716,7 +741,6 @@ BEGIN
                                                           'DATABASE: '||TO_CHAR(vr_crapopf(vr_ixOPFv).dtrefere,'dd/mm/yyyy')||' '||
                                                           'CPF_CNPJ: '||TO_CHAR(vr_crapopf(vr_ixOPFv).nrcpfcgc)||' ERRO: Registro ja existente');
           END IF;
-        END IF;
 
         -- Buscar a próxima chave
         vr_ixOPFv := vr_crapopf.NEXT(vr_ixOPFv);
@@ -759,7 +783,7 @@ BEGIN
                              ,NVL(vr_crapopfi(vr_ixOPF).inpessoa, 0));
       EXCEPTION
         WHEN others THEN
-          pr_dscritic := 'Erro ao incluir registro CRAPOPF: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
+          vr_dscritic := 'Erro ao incluir registro CRAPOPF: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
           RAISE vr_exc_saida;
       END;
       
@@ -767,13 +791,22 @@ BEGIN
       vr_crapopfi.delete;
 
       -- Criar PL Table para dados originais da CRAPVOP
-      FOR crapvop IN cr_crapvop(vr_xml_dtrefere) LOOP
-        vr_tab_crapvop(LPAD(crapvop.nrcpfcgc, 25, '0') ||
-                       TO_CHAR(crapvop.dtrefere, 'DDMMRRRR') ||
-                       LPAD(crapvop.cdmodali, 10, '0') ||
-                       LPAD(crapvop.cdvencto, 10, '0') ||
-                       LPAD(crapvop.flgmoest, 3, '0')).vlvencto := crapvop.vlvencto;
+      OPEN cr_crapvop(vr_xml_dtrefere);        
+      LOOP        
+        FETCH cr_crapvop BULK COLLECT INTO vr_crapvop_bulk LIMIT 100000;
+        EXIT WHEN vr_crapvop_bulk.COUNT = 0;
+        -- Popular o registro de memória
+        FOR idx IN vr_crapvop_bulk.FIRST .. vr_crapvop_bulk.LAST LOOP      
+
+          vr_tab_crapvop(LPAD(vr_crapvop_bulk(idx).nrcpfcgc, 25, '0') ||
+                         TO_CHAR(vr_crapvop_bulk(idx).dtrefere, 'DDMMRRRR') ||
+                         LPAD(vr_crapvop_bulk(idx).cdmodali, 10, '0') ||
+                         LPAD(vr_crapvop_bulk(idx).cdvencto, 10, '0') ||
+                         LPAD(vr_crapvop_bulk(idx).flgmoest, 3, '0')).vlvencto := vr_crapvop_bulk(idx).vlvencto;
+        END LOOP;
       END LOOP;
+      
+      CLOSE cr_crapvop;
       
       -- Criar os registros da CRAPVOP
       -- Capturar o primeiro índice
@@ -784,9 +817,9 @@ BEGIN
         EXIT WHEN vr_ixVOP IS NULL;
         
         -- Verifica a data e o número do cgc
-        IF vr_crapvop(vr_ixVOP).dtrefere = vr_xml_dtrefere THEN          
+        IF vr_crapvop(vr_ixVOP).dtrefere = vr_xml_dtrefere
           -- Se encontrar registros na CRAPVOP
-          IF vr_tab_crapvop.exists(LPAD(vr_crapvop(vr_ixVOP).nrcpfcgc, 25, '0') ||
+          AND vr_tab_crapvop.exists(LPAD(vr_crapvop(vr_ixVOP).nrcpfcgc, 25, '0') ||
                                    TO_CHAR(vr_crapvop(vr_ixVOP).dtrefere, 'DDMMRRRR') ||
                                    LPAD(vr_crapvop(vr_ixVOP).cdmodali, 10, '0') ||
                                    LPAD(vr_crapvop(vr_ixVOP).cdvencto, 10, '0') ||
@@ -804,7 +837,6 @@ BEGIN
                                                           'VENCIMENTO: ' || TO_CHAR(vr_crapvop(vr_ixVOP).cdvencto, 'FM000') || ' ' ||
                                                           'MOEDA_EST: ' || REPLACE(REPLACE(vr_crapvop(vr_ixVOP).flgmoest, 1, 'yes'), 0, 'no') || ' ERRO: Registro ja existente'); 
           END IF;
-        END IF;
         
         -- Capturar próximo índice
         vr_ixVOP := vr_crapvop.next(vr_ixVOP);
@@ -832,7 +864,7 @@ BEGIN
       EXCEPTION
         WHEN others THEN
           -- Gerar erro
-          pr_dscritic := 'Erro ao incluir registro CRAPVOP: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
+          vr_dscritic := 'Erro ao incluir registro CRAPVOP: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
           RAISE vr_exc_saida;
       END;
       
@@ -845,11 +877,17 @@ BEGIN
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic );
                                   
+        -- Limpar a variável de crítica
+        vr_dscritic := NULL;
+                                 
         -- Desfazer alterações deste arquivo
         ROLLBACK;
         -- Pular para próximo arquivo
         CONTINUE;
       WHEN OTHERS THEN
+        
+        cecred.pc_internal_exception(pr_cdcooper);
+      
         -- Verifica se retornou endereços de e-mail para envio do arquivo
         IF vr_des_destino IS NULL THEN
           -- Mensagem de erro
@@ -882,6 +920,9 @@ BEGIN
           END IF;
         END IF;
                                   
+        -- Limpar a variável de crítica
+        vr_dscritic := NULL;
+                         
         -- Desfazer alterações deste arquivo
         ROLLBACK;
         -- Pular para próximo arquivo
@@ -896,6 +937,7 @@ BEGIN
     
     -- Efetuar gravação ao processar cada arquivo, pois o mesmo foi movido a salvar
     COMMIT;
+
   END LOOP; -- Loop dos arquivos
 
   -- Fechar/salvar o arquivo de log
@@ -949,15 +991,15 @@ BEGIN
 
   -- Salvar informações atualizada
   COMMIT;
+
 EXCEPTION
   WHEN vr_exc_fimprg THEN
-    -- Se foi retornado apenas código
-    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+
       -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
     -- Se foi gerada critica para envio ao log
-    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+    IF vr_dscritic IS NOT NULL THEN
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 
@@ -970,18 +1012,21 @@ EXCEPTION
                              ,pr_stprogra => pr_stprogra);
     -- Efetuar commit pois gravaremos o que foi processo até então
     COMMIT;
+
   WHEN vr_exc_saida THEN
-    -- Se foi retornado apenas código
-    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
+
     -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
-    pr_dscritic := vr_dscritic;
+
+    -- Buscar a descrição
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
+
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
+
+    cecred.pc_internal_exception(pr_cdcooper);
+
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := SQLERRM;
@@ -989,4 +1034,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS572;
 /
-
