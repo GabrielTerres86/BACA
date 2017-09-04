@@ -411,7 +411,7 @@ function formataTabIntegrantes() {
     divRegistro.css({'height':'120px'});
 
     var ordemInicial = new Array();
-    ordemInicial = [[0,0]];
+    ordemInicial = [[9,0],[2,0]];
 
     var arrayLargura = new Array();
     arrayLargura[0] = '18px'; //Checkbox
