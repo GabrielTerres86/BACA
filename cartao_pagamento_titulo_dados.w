@@ -43,7 +43,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                Futuros. Lenilson (Mouts)
 
                   20/01/2017 - Ajustes Nova Plataforma de cobrança.
-                               PRJ340 - NPC (Odirlei-AMcom)   
+                               PRJ340 - NPC (Odirlei-AMcom)
+                               
+                  28/08/2017 - #705000 Adicionado o codigo de barras ao log (Carlos)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -297,26 +299,26 @@ DEFINE FRAME f_cartao_pagamento_titulo_dados
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 246 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.38 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 248 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.38 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
-          FONT 8
-     "Linha Digitável:" VIEW-AS TEXT
-          SIZE 26 BY .95 AT ROW 12.19 COL 20 WIDGET-ID 156
-          FONT 14
-     "Data do Pagamento:" VIEW-AS TEXT
-          SIZE 34 BY .95 AT ROW 16 COL 11.6 WIDGET-ID 190
-          FONT 14
-     "Data da Transação:" VIEW-AS TEXT
-          SIZE 33 BY .95 AT ROW 14.14 COL 13 WIDGET-ID 188
+     "Valor do Pagamento:" VIEW-AS TEXT
+          SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
           FONT 14
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 140
           FONT 8
+     "Data da Transação:" VIEW-AS TEXT
+          SIZE 33 BY .95 AT ROW 14.14 COL 13 WIDGET-ID 188
+          FONT 14
+     "Data do Pagamento:" VIEW-AS TEXT
+          SIZE 34 BY .95 AT ROW 16 COL 11.6 WIDGET-ID 190
+          FONT 14
+     "Linha Digitável:" VIEW-AS TEXT
+          SIZE 26 BY .95 AT ROW 12.19 COL 20 WIDGET-ID 156
+          FONT 14
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+          FONT 8
      "Banco:" VIEW-AS TEXT
           SIZE 13 BY .95 AT ROW 10.29 COL 33 WIDGET-ID 184
-          FONT 14
-     "Valor do Pagamento:" VIEW-AS TEXT
-          SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
           FONT 14
      RECT-132 AT ROW 9.81 COL 46 WIDGET-ID 198
      RECT-134 AT ROW 11.71 COL 46 WIDGET-ID 152
@@ -333,16 +335,16 @@ DEFINE FRAME f_cartao_pagamento_titulo_dados
          AT COL 1 ROW 1
          SIZE 160 BY 28.57 WIDGET-ID 100.
 
-DEFINE FRAME f_vencto
-     ed_dtvencto AT ROW 1.38 COL 38 COLON-ALIGNED NO-LABEL WIDGET-ID 200 NO-TAB-STOP 
-     "Data de Vencimento:" VIEW-AS TEXT
-          SIZE 35 BY .95 AT ROW 1.62 COL 3 WIDGET-ID 190
+DEFINE FRAME f_valor
+     ed_vlrdocum AT ROW 1.33 COL 38 COLON-ALIGNED NO-LABEL WIDGET-ID 202 NO-TAB-STOP 
+     "Valor do Título:" VIEW-AS TEXT
+          SIZE 25.2 BY .95 AT ROW 1.62 COL 12.8 WIDGET-ID 208
           FONT 14
-     RECT-142 AT ROW 1.14 COL 39 WIDGET-ID 176
+     RECT-140 AT ROW 1.14 COL 39 WIDGET-ID 204
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
-         AT COL 88 ROW 15.38
-         SIZE 68 BY 2 WIDGET-ID 200.
+         AT COL 88 ROW 17.33
+         SIZE 68 BY 2 WIDGET-ID 400.
 
 DEFINE FRAME f_mensagem_agen
      "conta corrente na data escolhida para débito." VIEW-AS TEXT
@@ -360,16 +362,16 @@ DEFINE FRAME f_mensagem_agen
          AT COL 35 ROW 19.33
          SIZE 101 BY 4.52 WIDGET-ID 300.
 
-DEFINE FRAME f_valor
-     ed_vlrdocum AT ROW 1.33 COL 38 COLON-ALIGNED NO-LABEL WIDGET-ID 202 NO-TAB-STOP 
-     "Valor do Título:" VIEW-AS TEXT
-          SIZE 25.2 BY .95 AT ROW 1.62 COL 12.8 WIDGET-ID 208
+DEFINE FRAME f_vencto
+     ed_dtvencto AT ROW 1.38 COL 38 COLON-ALIGNED NO-LABEL WIDGET-ID 200 NO-TAB-STOP 
+     "Data de Vencimento:" VIEW-AS TEXT
+          SIZE 35 BY .95 AT ROW 1.62 COL 3 WIDGET-ID 190
           FONT 14
-     RECT-140 AT ROW 1.14 COL 39 WIDGET-ID 204
+     RECT-142 AT ROW 1.14 COL 39 WIDGET-ID 176
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
-         AT COL 88 ROW 17.33
-         SIZE 68 BY 2 WIDGET-ID 400.
+         AT COL 88 ROW 15.38
+         SIZE 68 BY 2 WIDGET-ID 200.
 
 
 /* *********************** Procedure Settings ************************ */
@@ -587,6 +589,14 @@ DO:
             /* puxa o frame principal pra frente */
             h_principal:MOVE-TO-TOP().
 
+            RUN procedures/grava_log.p (INPUT "Codigo de Barras: " + 
+                                        par_cdbarra1 +
+                                        par_cdbarra2 +
+                                        par_cdbarra3 +
+                                        par_cdbarra4 +
+                                        par_cdbarra5 + " " +
+                                        par_dscodbar).
+
             /* verifica e retorna os dados do titulo */
             RUN procedures/efetua_pagamento.p( INPUT par_cdbarra1,
                                                INPUT par_cdbarra2,
@@ -609,8 +619,8 @@ DO:
 
             IF  NOT aux_flgderro THEN
                 DO:
-                                        RUN procedures/inicializa_dispositivo.p ( INPUT 6,
-                                                              OUTPUT aux_flgderro).
+                    RUN procedures/inicializa_dispositivo.p (INPUT 6,
+                                                             OUTPUT aux_flgderro).
 
                     IF  aux_idastcjt = 0    THEN
                         RUN imprime_comprovante (INPUT aux_dsprotoc,

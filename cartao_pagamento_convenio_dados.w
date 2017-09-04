@@ -49,7 +49,10 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                Futuros. Lenilson (Mouts)
                                
                   03/07/2017 - Inclusao do parameto de controle consulta npc na chamada
-                               da rotina efetua_pagamento.p, PRJ340 - NPC (Odirlei-AMcom)             
+                               da rotina efetua_pagamento.p, PRJ340 - NPC (Odirlei-AMcom)  
+                               
+                  28/08/2017 - #705000 Adicionado o nome do convenio e o codigo de barras
+                               ao log (Carlos)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -276,9 +279,9 @@ DEFINE FRAME f_cartao_pagto_convenio_dados
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 242 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.38 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.38 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 240 NO-TAB-STOP 
-     "Convênio:" VIEW-AS TEXT
-          SIZE 18 BY .95 AT ROW 10.29 COL 28 WIDGET-ID 184
-          FONT 14
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+          FONT 8
      "Valor do Pagamento:" VIEW-AS TEXT
           SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
           FONT 14
@@ -291,11 +294,11 @@ DEFINE FRAME f_cartao_pagto_convenio_dados
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 140
           FONT 8
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
-          FONT 8
      "Data do Pagamento:" VIEW-AS TEXT
           SIZE 34 BY .95 AT ROW 16 COL 11.6 WIDGET-ID 190
+          FONT 14
+     "Convênio:" VIEW-AS TEXT
+          SIZE 18 BY .95 AT ROW 10.29 COL 28 WIDGET-ID 184
           FONT 14
      RECT-132 AT ROW 9.81 COL 46 WIDGET-ID 198
      RECT-134 AT ROW 11.71 COL 46 WIDGET-ID 152
@@ -349,10 +352,10 @@ IF SESSION:DISPLAY-TYPE = "GUI":U THEN
          TITLE              = ""
          HEIGHT             = 28.52
          WIDTH              = 160
-         MAX-HEIGHT         = 33.14
-         MAX-WIDTH          = 204.8
-         VIRTUAL-HEIGHT     = 33.14
-         VIRTUAL-WIDTH      = 204.8
+         MAX-HEIGHT         = 34.33
+         MAX-WIDTH          = 272.8
+         VIRTUAL-HEIGHT     = 34.33
+         VIRTUAL-WIDTH      = 272.8
          SHOW-IN-TASKBAR    = no
          CONTROL-BOX        = no
          MIN-BUTTON         = no
@@ -533,6 +536,27 @@ DO:
             /* puxa o frame principal pra frente */
             h_principal:MOVE-TO-TOP().
             
+            /* Pegar nome do convenio */
+            RUN procedures/busca_convenios_codbarras.p(INPUT par_cdbarra1,
+                                                       INPUT par_cdbarra2,
+                                                       INPUT par_cdbarra3,
+                                                       INPUT par_cdbarra4,
+                                                       INPUT par_dscodbar,
+                                                       INPUT "P",
+                                                       OUTPUT aux_nmextcon,
+                                                       OUTPUT aux_flgderro).
+            IF aux_flgderro OR aux_nmextcon = "" THEN
+                RUN procedures/grava_log.p (INPUT "Convenio nao encontrado.").
+            ELSE
+                RUN procedures/grava_log.p (INPUT "Convenio: " + aux_nmextcon).
+
+            RUN procedures/grava_log.p (INPUT "Codigo de Barras: " + 
+                                        par_cdbarra1 +
+                                        par_cdbarra2 +
+                                        par_cdbarra3 +
+                                        par_cdbarra4 + " " +
+                                        par_dscodbar).
+
             /* verifica e retorna os dados do titulo */
             RUN procedures/efetua_pagamento.p (  INPUT par_cdbarra1,
                                                  INPUT par_cdbarra2,
@@ -552,7 +576,7 @@ DO:
                                                 OUTPUT aux_cdagectl,
                                                 OUTPUT aux_idastcjt,
                                                 OUTPUT aux_flgderro).
-                                                                                                                
+
             IF  NOT aux_flgderro THEN
                 DO:
                     RUN procedures/inicializa_dispositivo.p ( INPUT 6,
