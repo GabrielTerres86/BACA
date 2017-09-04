@@ -119,6 +119,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                                     ,pr_dtmvtopg      IN craplau.dtmvtopg%TYPE
                                     ,pr_vllanaut      IN craplau.vllanaut%TYPE
                                     ,pr_dtvencto      IN craplau.dtvencto%TYPE
+                                    ,pr_vldocnto      IN crapdpt.vltitulo%TYPE
                                     ,pr_cddbanco      IN craplau.cddbanco%TYPE
                                     ,pr_cdageban      IN craplau.cdageban%TYPE
                                     ,pr_nrctadst      IN craplau.nrctadst%TYPE
@@ -3297,6 +3298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                  ,pr_dtmvtopg => vr_dtmvtopg
                                                  ,pr_vllanaut => rw_crapdpt.vldpagto
                                                  ,pr_dtvencto => rw_crapdpt.dtvencto
+                                                 ,pr_vldocnto => rw_crapdpt.vltitulo
                                                  ,pr_cddbanco => 0
                                                  ,pr_cdageban => 0
                                                  ,pr_nrctadst => 0
@@ -3503,6 +3505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                     ,pr_dtmvtopg      IN craplau.dtmvtopg%TYPE
                                     ,pr_vllanaut      IN craplau.vllanaut%TYPE
                                     ,pr_dtvencto      IN craplau.dtvencto%TYPE
+                                    ,pr_vldocnto      IN crapdpt.vltitulo%TYPE
                                     ,pr_cddbanco      IN craplau.cddbanco%TYPE
                                     ,pr_cdageban      IN craplau.cdageban%TYPE
                                     ,pr_nrctadst      IN craplau.nrctadst%TYPE
@@ -3541,6 +3544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               ,crapass.cdagenci
               ,crapass.nrcpfcgc
               ,crapass.inpessoa
+              ,crapass.idastcjt
           FROM crapass crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
@@ -3590,6 +3594,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       vr_tpdvalor NUMBER := 0;
 
       vr_nrcpfpre NUMBER := 0;
+      vr_nrcpfcgc NUMBER := 0;
+      vr_inpessoa NUMBER := 0;
+      vr_idastcjt NUMBER := 0;
+      
+      vr_cdcoptfn NUMBER := 0;
+      vr_cdagetfn NUMBER := 0;
+      vr_nrterfin NUMBER := 0;
 
       vr_nmprepos VARCHAR2(4000);
 
@@ -3640,6 +3651,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            RAISE vr_exc_saida;
          ELSE
            -- Apenas fechar o cursor
+           vr_inpessoa := rw_crapass.inpessoa;
+           vr_idastcjt := rw_crapass.idastcjt;
            CLOSE cr_crapass;
          END IF;
 
@@ -3745,82 +3758,132 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          vr_nrcpfpre := 0;
 
 
-         BEGIN
-            INSERT INTO craplau
-               (cdcooper
-               ,nrdconta
-               ,idseqttl
-               ,dttransa
-               ,hrtransa
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,nrseqdig
-               ,nrdocmto
-               ,cdhistor
-               ,dsorigem
-               ,insitlau
-               ,cdtiptra
-               ,dscedent
-               ,dscodbar
-               ,dslindig
-               ,dtmvtopg
-               ,vllanaut
-               ,dtvencto
-               ,cddbanco
-               ,cdageban
-               ,nrctadst
-               ,cdcoptfn
-               ,cdagetfn
-               ,nrterfin
-               ,nrcpfope
-               ,nrcpfpre
-               ,nmprepos
-               ,idtitdda
-               ,tpdvalor
-               ,cdctrlcs)
-             VALUES
-               (pr_cdcooper
-               ,pr_nrdconta
-               ,pr_idseqttl
-               ,trunc(vr_dtmvtolt)
-               ,to_number(to_char(SYSDATE,'SSSSS'))
-               ,pr_dtmvtolt
-               ,rw_craplot.cdagenci
-               ,rw_craplot.cdbccxlt
-               ,rw_craplot.nrdolote
-               ,rw_craplot.nrseqdig + 1
-               ,rw_craplot.nrseqdig + 1
-               ,pr_cdhistor  -- 508
-               ,pr_dsorigem  -- INTERNET
-               ,1            -- Pendente insitlau
-               ,pr_cdtiptra  -- pgto titulo (2)
-               ,UPPER(pr_dscedent)
-               ,pr_dscodbar
-               ,vr_dslindig
-               ,pr_dtmvtopg
-               ,pr_vllanaut
-               ,pr_dtvencto
-               ,pr_cddbanco
-               ,pr_cdageban
-               ,pr_nrctadst
-               ,pr_cdcoptfn
-               ,pr_cdagetfn
-               ,pr_nrterfin
-               ,pr_nrcpfope
-               ,vr_nrcpfpre
-               ,vr_nmprepos
-               ,pr_idtitdda
-               ,vr_tpdvalor
-               ,nvl(pr_cdctrlcs,' '));
+
+         IF (vr_inpessoa = 2 OR vr_inpessoa = 3) AND 
+              vr_idastcjt = 1 THEN
+              --Cria transacao pendente de pagamento
+              INET0002.pc_cria_trans_pend_pagto( pr_cdagenci => 90             --> Codigo do PA
+                                                ,pr_nrdcaixa => 900            --> Numero do Caixa
+                                                ,pr_cdoperad => '996'          --> Codigo do Operados
+                                                ,pr_nmdatela => 'INTERNETBANK' --> Nome da Tela
+                                                ,pr_idorigem => 3              --> Origem da solicitacao
+                                                ,pr_idseqttl => pr_idseqttl    --> Sequencial de Titular
+                                                ,pr_nrcpfope => pr_nrcpfope    --> Numero do cpf do operador juridico
+                                                ,pr_nrcpfrep => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE NVL(vr_nrcpfcgc,0) END) --> Numero do cpf do representante legal
+                                                ,pr_cdcoptfn => vr_cdcoptfn    --> Cooperativa do Terminal
+                                                ,pr_cdagetfn => vr_cdagetfn    --> Agencia do Terminal
+                                                ,pr_nrterfin => vr_nrterfin    --> Numero do Terminal Financeiro
+                                                ,pr_dtmvtolt => pr_dtmvtolt    --> Data do movimento
+                                                ,pr_cdcooper => pr_cdcooper    --> Codigo da cooperativa
+                                                ,pr_nrdconta => pr_nrdconta    --> Numero da Conta
+                                                ,pr_idtippag => pr_idtpdpag    --> Identificacao do tipo de pagamento (1 – Convenio / 2 – Titulo)
+                                                ,pr_vllanmto => pr_vllanaut    --> Valor do pagamento
+                                                ,pr_dtmvtopg => pr_dtmvtopg    --> Data do debito
+                                                ,pr_idagenda => 2              --> Indica se o pagamento foi agendado (1 – Online / 2 – Agendamento)
+                                                ,pr_dscedent => pr_dscedent    --> Descricao do cedente do documento
+                                                ,pr_dscodbar => pr_dscodbar    --> Descricao do codigo de barras
+                                                ,pr_dslindig => vr_dslindig    --> Descricao da linha digitavel
+                                                ,pr_vlrdocto => pr_vldocnto    --> Valor do documento
+                                                ,pr_dtvencto => pr_dtvencto    --> Data de vencimento do documento
+                                                ,pr_tpcptdoc => 2              --> Tipo de captura do documento
+                                                ,pr_idtitdda => 0              --> Identificador do titulo no DDA
+                                                ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
+                                                ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
+                                                ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
+
+              -- Verificar se retornou critica
+              IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                -- se possui codigo, porém não possui descrição
+                IF nvl(vr_cdcritic,0) > 0 AND
+                   TRIM(vr_dscritic) IS NULL THEN
+                  -- buscar descrição
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+                END IF;
+                vr_dscritic := vr_dscritic||' - '||pr_dscedent;
+
+                -- Se retornou critica , deve abortar
+                RAISE vr_exc_saida;
+              END IF;
+         ELSE 
+           BEGIN        
+             INSERT INTO craplau
+                 (cdcooper
+                 ,nrdconta
+                 ,idseqttl
+                 ,dttransa
+                 ,hrtransa
+                 ,dtmvtolt
+                 ,cdagenci
+                 ,cdbccxlt
+                 ,nrdolote
+                 ,nrseqdig
+                 ,nrdocmto
+                 ,cdhistor
+                 ,dsorigem
+                 ,insitlau
+                 ,cdtiptra
+                 ,dscedent
+                 ,dscodbar
+                 ,dslindig
+                 ,dtmvtopg
+                 ,vllanaut
+                 ,dtvencto
+                 ,cddbanco
+                 ,cdageban
+                 ,nrctadst
+                 ,cdcoptfn
+                 ,cdagetfn
+                 ,nrterfin
+                 ,nrcpfope
+                 ,nrcpfpre
+                 ,nmprepos
+                 ,idtitdda
+                 ,tpdvalor
+                 ,cdctrlcs)
+               VALUES
+                 (pr_cdcooper
+                 ,pr_nrdconta
+                 ,pr_idseqttl
+                 ,trunc(vr_dtmvtolt)
+                 ,to_number(to_char(SYSDATE,'SSSSS'))
+                 ,pr_dtmvtolt
+                 ,rw_craplot.cdagenci
+                 ,rw_craplot.cdbccxlt
+                 ,rw_craplot.nrdolote
+                 ,rw_craplot.nrseqdig + 1
+                 ,rw_craplot.nrseqdig + 1
+                 ,pr_cdhistor  -- 508
+                 ,pr_dsorigem  -- INTERNET
+                 ,1            -- Pendente insitlau
+                 ,pr_cdtiptra  -- pgto titulo (2)
+                 ,UPPER(pr_dscedent)
+                 ,pr_dscodbar
+                 ,vr_dslindig
+                 ,pr_dtmvtopg
+                 ,pr_vllanaut
+                 ,pr_dtvencto
+                 ,pr_cddbanco
+                 ,pr_cdageban
+                 ,pr_nrctadst
+                 ,pr_cdcoptfn
+                 ,pr_cdagetfn
+                 ,pr_nrterfin
+                 ,pr_nrcpfope
+                 ,vr_nrcpfpre
+                 ,vr_nmprepos
+                 ,pr_idtitdda
+                 ,vr_tpdvalor
+                 ,nvl(pr_cdctrlcs,' '));
          EXCEPTION
             WHEN OTHERS THEN
                vr_dscritic := 'Nao foi possivel agendar o pagamento. ';
                vr_dscritic := vr_dscritic || SQLERRM;
                --Levantar Excecao
                RAISE vr_exc_saida;
-         END;
+         END;                   
+       END IF;
+
 
          BEGIN
             UPDATE craplot
@@ -3891,7 +3954,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                RAISE vr_exc_saida;
             END IF;*/
 
-         END IF;
          END IF;
 
 
