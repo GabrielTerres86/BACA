@@ -145,7 +145,11 @@
                            PRJ339 - CRM (Odirlei-AMcom)               
 
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
-                             PRJ339 - CRM (Odirlei-AMcom)               
+                             PRJ339 - CRM (Odirlei-AMcom)        
+				
+				17/08/2017- Ajuste na tela matric onde a opcao "X", "J" e pessoa juridica
+							nao estava funcionando devido a alteracao do campo IDORGEXP. (Kelvins)
+							
                              
 ........................................................................*/
 
@@ -364,24 +368,30 @@ PROCEDURE Valida_Dados :
             LEAVE Valida.
         
         
-        /* Identificar orgao expedidor */
-        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-            RUN sistema/generico/procedures/b1wgen0052b.p 
-                PERSISTENT SET h-b1wgen0052b.
+        IF par_inpessoa <> 2 AND
+           par_cddopcao <> "X" AND
+		   par_cddopcao <> "J" THEN
+           DO:
+              /* Identificar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                      PERSISTENT SET h-b1wgen0052b.
 
-        ASSIGN aux_idorgexp = 0.
-        RUN identifica_org_expedidor IN h-b1wgen0052b 
-                           ( INPUT par_cdoedptl,
-                            OUTPUT aux_idorgexp,
-                            OUTPUT par_cdcritic, 
-                            OUTPUT par_dscritic).
+              ASSIGN aux_idorgexp = 0.
+              RUN identifica_org_expedidor IN h-b1wgen0052b 
+                                 ( INPUT par_cdoedptl,
+                                  OUTPUT aux_idorgexp,
+                                  OUTPUT par_cdcritic, 
+                                  OUTPUT par_dscritic).
 
-        DELETE PROCEDURE h-b1wgen0052b.   
-
-        IF  RETURN-VALUE = "NOK" THEN
-        DO:
-            LEAVE Valida.
-        END.
+              DELETE PROCEDURE h-b1wgen0052b.   
+              
+              IF  RETURN-VALUE = "NOK" THEN
+              DO:
+                  LEAVE Valida.
+              END.
+              
+           END.
         
 
         /* validacao especifica por operacao */

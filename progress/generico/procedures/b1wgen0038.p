@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 17/01/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 16/08/2017
     
     Dados referentes ao programa:
 
@@ -98,8 +98,11 @@
 			    07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)      
                
-               17/01/2017 - Adicionado chamada a procedure de replicacao do 
-                            endereco para o CDC. (Reinert Prj 289)
+                17/01/2017 - Adicionado chamada a procedure de replicacao do 
+                             endereco para o CDC. (Reinert Prj 289)
+							
+				16/08/2017 - Ajuste realizado para que ao informar cep 0 no endereço do tipo (13,14)
+							 e exista registro na crapenc, deletamos o mesmo. (Kelvin/Andrino)
                             
 .............................................................................*/
 
@@ -1679,6 +1682,21 @@ PROCEDURE alterar-endereco:
                            VALIDATE crapenc.
                         END.
                 END.
+			ELSE
+			   DO:
+			   
+			      IF (aux_tpendass = 13   OR 
+					 aux_tpendass = 14)  AND
+					 par_nrcepend = 0    THEN
+				     DO:
+					    
+						DELETE crapenc.
+						
+					    aux_flgtrans = TRUE.
+						LEAVE TRANS_ENDERECO.
+				     END.	
+			   
+			   END.
 
             LEAVE.
 
