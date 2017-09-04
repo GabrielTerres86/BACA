@@ -3548,7 +3548,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                            ,pr_dsxml     => vr_xml_rel_parte
                                            ,pr_dsarqsaid => pr_nom_direto ||'/'|| vr_nmarqsai
                                            ,pr_cdrelato  => null
-                                           ,pr_flg_gerar => 'S'              --> Apenas submeter
+                                           ,pr_flg_gerar => 'N'              --> Apenas submeter
                                            ,pr_dspathcop => pr_nom_dirmic    --> Copiar para a Micros
                                            ,pr_fldoscop  => 'S'              --> Efetuar cópia com Ux2Dos
                                            ,pr_dscmaxcop => '| tr -d "\032"'
