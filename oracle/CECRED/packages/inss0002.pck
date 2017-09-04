@@ -430,6 +430,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   vr_dsxmlrel    CLOB;
   vr_dsdtexto    VARCHAR2(32000);
   vr_nrdrowid    ROWID;
+  vr_nrdrowid1  ROWID;
+  vr_dtcompet   VARCHAR(6); 
 
 
   vr_exc_saida      EXCEPTION;       --> Controle de Exceção
