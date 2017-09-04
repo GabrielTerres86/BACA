@@ -526,6 +526,36 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                        ,pr_tpleitur  IN NUMBER                                --> Tipo da leitura do documento (1 – Leitora de Código de Barras / 2 - Manual)
                                        ,pr_cdcritic OUT INTEGER 						                  --> Código do erro
                                        ,pr_dscritic OUT VARCHAR2);      	                    --> Descriçao do erro
+  --                                       
+  PROCEDURE pc_cria_trans_pend_pag_gps(pr_cdagenci  IN crapage.cdagenci%TYPE                     --> Codigo do PA
+                                      ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                     --> Numero do Caixa
+                                      ,pr_cdoperad  IN crapope.cdoperad%TYPE                     --> Codigo do Operados
+                                      ,pr_nmdatela  IN craptel.nmdatela%TYPE                     --> Nome da Tela
+                                      ,pr_idorigem  IN INTEGER                                   --> Origem da solicitacao
+                                      ,pr_idseqttl  IN crapttl.idseqttl%TYPE                     --> Sequencial de Titular            
+                                      ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE                     --> Numero do cpf do operador juridico
+                                      ,pr_nrcpfrep  IN crapopi.nrcpfope%TYPE                     --> Numero do cpf do representante legal
+                                      ,pr_cdcoptfn  IN tbgen_trans_pend.cdcoptfn%TYPE            --> Cooperativa do Terminal
+                                      ,pr_cdagetfn  IN tbgen_trans_pend.cdagetfn%TYPE            --> Agencia do Terminal
+                                      ,pr_nrterfin  IN tbgen_trans_pend.nrterfin%TYPE            --> Numero do Terminal Financeiro
+                                      ,pr_dtmvtolt  IN DATE                                      --> Data do movimento     
+                                      ,pr_cdcooper  IN tbpagto_trans_pend.cdcooper%TYPE          --> Codigo da cooperativa
+                                      ,pr_nrdconta  IN tbpagto_trans_pend.nrdconta%TYPE          --> Numero da Conta
+                                      ,pr_idtippag  IN tbpagto_trans_pend.tppagamento%TYPE       --> Identificacao do tipo de pagamento (1 – Convenio / 2 – Titulo)
+                                      ,pr_vllanmto  IN tbpagto_trans_pend.vlpagamento%TYPE       --> Valor do pagamento
+                                      ,pr_dtmvtopg  IN tbpagto_trans_pend.dtdebito%TYPE          --> Data do debito
+                                      ,pr_idagenda  IN tbpagto_trans_pend.idagendamento%TYPE     --> Indica se o pagamento foi agendado (1 – Online / 2 – Agendamento)
+                                      ,pr_dscedent  IN tbpagto_trans_pend.dscedente%TYPE         --> Descricao do cedente do documento
+                                      ,pr_dscodbar  IN tbpagto_trans_pend.dscodigo_barras%TYPE   --> Descricao do codigo de barras
+                                      ,pr_dslindig  IN tbpagto_trans_pend.dslinha_digitavel%TYPE --> Descricao da linha digitavel
+                                      ,pr_vlrdocto  IN tbpagto_trans_pend.vldocumento%TYPE       --> Valor do documento
+                                      ,pr_dtvencto  IN tbpagto_trans_pend.dtvencimento%TYPE      --> Data de vencimento do documento
+                                      ,pr_tpcptdoc  IN tbpagto_trans_pend.tpcaptura%TYPE         --> Tipo de captura do documento
+                                      ,pr_idtitdda  IN tbpagto_trans_pend.idtitulo_dda%TYPE      --> Identificador do titulo no DDA
+                                      ,pr_idastcjt  IN crapass.idastcjt%TYPE                     --> Indicador de Assinatura Conjunta
+                                      ,pr_nrdrowid  OUT ROWID
+                                      ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                     --> Codigo de Critica
+                                      ,pr_dscritic  OUT crapcri.dscritic%TYPE);                   --> Descricao de Critica                                       
 
   /******************************************************************************/
   /**     Procedure para carregar titulares/operadores para acesso a conta     **/
@@ -615,6 +645,91 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 																			,pr_idastcjt  IN INTEGER                            -- Id. assinatura conjunta
 																			,pr_cdcritic  OUT PLS_INTEGER                       -- Cód. da crítica
 																			,pr_dscritic  OUT VARCHAR2);                      -- Desc. da crítica																			
+                                 
+PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_nrcpf    IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);
+                                     
+  PROCEDURE pc_valida_limite_preposto(pr_cdcooper           IN VARCHAR2
+                                     ,pr_nrdconta           IN VARCHAR2 
+                                     ,pr_idseqttl           IN VARCHAR2
+                                     ,pr_vllimtrf           IN VARCHAR2 
+                                     ,pr_vllimpgo           IN VARCHAR2
+                                     ,pr_vllimted           IN VARCHAR2 
+                                     ,pr_vllimvrb           IN VARCHAR2 
+                                     ,pr_vllimflp           IN VARCHAR2 
+                                     ,pr_xmllog             IN VARCHAR2
+                                     ,pr_cdcritic       OUT PLS_INTEGER                       
+                                     ,pr_dscritic       OUT VARCHAR2
+                                     ,pr_retxml        IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2); 
+
+  PROCEDURE pc_altera_limite_preposto(pr_cdcooper           IN VARCHAR2
+                                     ,pr_nrdconta           IN VARCHAR2 
+                                     ,pr_nrcpf              IN VARCHAR2 
+                                     ,pr_idseqttl           IN VARCHAR2
+                                     ,pr_cdoperad           IN VARCHAR2 
+                                     ,pr_vllimtrf           IN VARCHAR2 
+                                     ,pr_vllimpgo           IN VARCHAR2
+                                     ,pr_vllimted           IN VARCHAR2 
+                                     ,pr_vllimvrb           IN VARCHAR2 
+                                     ,pr_vllimflp           IN VARCHAR2
+                                     ,pr_xmllog             IN  VARCHAR2
+                                     ,pr_cdcritic       OUT PLS_INTEGER                       
+                                     ,pr_dscritic       OUT VARCHAR2
+                                     ,pr_retxml        IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2);
+  
+  PROCEDURE pc_busca_preposto_master(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);
+
+PROCEDURE pc_altera_preposto_master(pr_cdcooper IN TBCC_LIMITE_PREPOSTO.cdcooper%TYPE 
+                                   ,pr_nrdconta IN TBCC_LIMITE_PREPOSTO.nrdconta%TYPE 
+                                   ,pr_nrcpf    IN TBCC_LIMITE_PREPOSTO.nrcpf%TYPE 
+                                   ,pr_xmllog   IN  VARCHAR2
+                                   ,pr_cdcritic OUT PLS_INTEGER                       
+                                   ,pr_dscritic OUT VARCHAR2
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2); 
+-- Validar aprovacao preposto master
+PROCEDURE pc_valida_apv_master (pr_cdcooper IN crapsnh.cdcooper%TYPE 
+                               ,pr_nrdconta IN crapsnh.nrdconta%TYPE
+                               ,pr_nrcpfcgc IN crapsnh.nrcpfcgc%TYPE
+                               ,pr_cdtransacao_pendente IN tbgen_aprova_trans_pend.cdtransacao_Pendente%type
+                               ,pr_conttran OUT INTEGER -- Identificador se deve finalizar o processo ou nao
+                               ,pr_cdcritic OUT PLS_INTEGER                       
+                               ,pr_dscritic OUT VARCHAR2);
+
+PROCEDURE pc_corrigi_limite_preposto(pr_cdcooper IN VARCHAR2
+                                     ,pr_nrdconta IN VARCHAR2 
+                                     ,pr_idseqttl IN VARCHAR2
+                                     ,pr_cdoperad IN VARCHAR2
+                                     ,pr_vllimtrf IN VARCHAR2 
+                                     ,pr_vllimpgo IN VARCHAR2
+                                     ,pr_vllimted IN VARCHAR2 
+                                     ,pr_vllimvrb IN VARCHAR2 
+                                     ,pr_xmllog   IN VARCHAR2
+                                     ,pr_cdcritic OUT PLS_INTEGER                       
+                                     ,pr_dscritic OUT VARCHAR2
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2);    
+                                                                                              
                                  
 END INET0002;
 /
@@ -1487,7 +1602,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 		        ROLLBACK;
        WHEN OTHERS THEN
             pr_cdcritic:= 0;
-            pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
+            pr_dscritic:= 'Erro na rotina INET0002.pc_exclui_trans_pend. '||SQLERRM;
 		        ROLLBACK;
     END;
   END pc_exclui_trans_pend;
@@ -1640,7 +1755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                ,vr_idsitapr);
          EXCEPTION
            WHEN OTHERS THEN
-             vr_dscritic := 'Erro ao incluir registro na tabela TBGEN_APROVA_TRANS_PEND. Erro: ' || SQLERRM;
+             vr_dscritic := '01 - Erro ao incluir registro na tabela TBGEN_APROVA_TRANS_PEND. Erro: ' || SQLERRM;
              RAISE vr_exc_saida;
          END;  
        END IF;   
@@ -2100,7 +2215,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
 							 pr_dsdmensg := pr_dsdmensg || 
 															'<b>Pagamento de ' ||
-															(CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 'Convênio' ELSE 'Título' END) || '</b> de ' ||
+															(CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 
+                                      'Convênio' 
+                                    WHEN rw_tbpagto_trans_pend.tppagamento = 2 THEN   
+                                      'Título'
+                                    ELSE 
+                                      'GPS' END) || '</b> de ' ||
 															'<b>' || rw_tbpagto_trans_pend.dscedente || '</b>' ||
 															(CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN ' com débito em ' ELSE ' agendado para ' END) ||
 															'<b>' || TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>' || ' no valor de <b>R$ ' ||
@@ -2603,6 +2723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_dsdmensg VARCHAR2(32000) := ' ';
     vr_ncctarep crapavt.nrdctato%TYPE;
     vr_auxnumbe NUMBER;
+    vr_msgretor VARCHAR2(1000);
     
     -- Array para guardar o split dos dados contidos na dstextab
     vr_cdditens gene0002.typ_split;
@@ -2745,58 +2866,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       --Fechar Cursor
       CLOSE cr_crapass;
-
-      --Consulta do cpf do representante na crapsnh
-      OPEN cr_crapsnh(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta
-			               ,pr_idseqttl => pr_idseqttl);
-      FETCH cr_crapsnh INTO vr_nrcpfcgc;
-      
-	    --Se nao encontrou 
-      IF cr_crapsnh%NOTFOUND THEN  
-        --Fechar Cursor
-        CLOSE cr_crapsnh;  
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Registro de senha nao encontrado.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      END IF;
-      
-      --Fechar Cursor
-      CLOSE cr_crapsnh;
-
-      --Se conta exige assinatura multipla
-      IF vr_idastcjt = 1 THEN
-         --Consulta do nome do Representante
-         OPEN cr_crapavt(pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_nrcpfcgc => vr_nrcpfcgc);
-         FETCH cr_crapavt INTO vr_nrdctato
-                              ,vr_nmprimtl
-				                      ,vr_dtvalida;
-         
-		     --Se nao encontrou 
-         IF cr_crapavt%NOTFOUND THEN    
-            --Fechar Cursor
-            CLOSE cr_crapavt;
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Dados do Representante nao encontrado.';
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-         END IF;                             
+      -- se for preposto
+      IF pr_nrcpfope = 0 THEN
+        --Consulta do cpf do representante na crapsnh
+        OPEN cr_crapsnh(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_idseqttl => pr_idseqttl);
+        FETCH cr_crapsnh INTO vr_nrcpfcgc;
         
-         --Fechar Cursor
-         CLOSE cr_crapavt;
-
-         -- Valida data de vigencia do representante 
-         IF vr_dtvalida < TRUNC(SYSDATE) THEN
-			      vr_cdcritic:= 0;
-            vr_dscritic:= 'Operacao indisponivel. A vigencia da procuracao ou atividade de socio esta vencida.';
+        --Se nao encontrou 
+        IF cr_crapsnh%NOTFOUND THEN  
+          --Fechar Cursor
+          CLOSE cr_crapsnh;  
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Registro de senha nao encontrado.';
             --Levantar Excecao
             RAISE vr_exc_erro;
-		     END IF;
-      END IF;
-	  
+        END IF;
+        
+        --Fechar Cursor
+        CLOSE cr_crapsnh;
+
+        --Se conta exige assinatura multipla
+        IF vr_idastcjt = 1 THEN
+           --Consulta do nome do Representante
+           OPEN cr_crapavt(pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrcpfcgc => vr_nrcpfcgc);
+           FETCH cr_crapavt INTO vr_nrdctato
+                                ,vr_nmprimtl
+                                ,vr_dtvalida;
+           
+           --Se nao encontrou 
+           IF cr_crapavt%NOTFOUND THEN    
+              --Fechar Cursor
+              CLOSE cr_crapavt;
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Dados do Representante nao encontrado.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+           END IF;                             
+          
+           --Fechar Cursor
+           CLOSE cr_crapavt;
+
+           -- Valida data de vigencia do representante 
+           IF vr_dtvalida < TRUNC(SYSDATE) THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Operacao indisponivel. A vigencia da procuracao ou atividade de socio esta vencida.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+           END IF;
+        END IF;
+	    END IF;
       vr_cdditens := GENE0002.fn_quebra_string(pr_string  => pr_cdditens, 
                                                pr_delimit => '/');
       
@@ -2810,26 +2932,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
          FETCH cr_tbgen_trans_pend INTO rw_tbgen_trans_pend;
                   
          IF cr_tbgen_trans_pend%FOUND THEN
-           
-            --Fechar Cursor
-            CLOSE cr_tbgen_trans_pend;
+            -- Se for preposto
+            IF pr_nrcpfope = 0 THEN
+              --Fechar Cursor
+              CLOSE cr_tbgen_trans_pend;
 
-            OPEN cr_tbgen_aprova_trans_pend(pr_cddoitem => vr_cddoitem,
-                                            pr_nrcpfcgc => vr_nrcpfcgc,
-                                            pr_inoutros => 0); -- buscar registro do cpf informado
-            FETCH cr_tbgen_aprova_trans_pend INTO rw_tbgen_aprova_trans_pend;
-			      
-			      IF cr_tbgen_aprova_trans_pend%NOTFOUND THEN	
-               --Fechar Cursor
-               CLOSE cr_tbgen_aprova_trans_pend;
-               vr_cdcritic:= 0;
-               vr_dscritic:= 'Transacao nao pode ser reprovada pelo representante legal.';
-               --Levantar Excecao
-               RAISE vr_exc_erro;
-			      END IF;
-			
-            --Fechar Cursor
-            CLOSE cr_tbgen_aprova_trans_pend;
+              OPEN cr_tbgen_aprova_trans_pend(pr_cddoitem => vr_cddoitem,
+                                              pr_nrcpfcgc => vr_nrcpfcgc,
+                                              pr_inoutros => 0); -- buscar registro do cpf informado
+              FETCH cr_tbgen_aprova_trans_pend INTO rw_tbgen_aprova_trans_pend;
+  			      
+              IF cr_tbgen_aprova_trans_pend%NOTFOUND THEN	
+                 --Fechar Cursor
+                 CLOSE cr_tbgen_aprova_trans_pend;
+                 vr_cdcritic:= 0;
+                 vr_dscritic:= 'Transacao nao pode ser reprovada pelo representante legal.';
+                 --Levantar Excecao
+                 RAISE vr_exc_erro;
+              END IF;
+  			
+              --Fechar Cursor
+              CLOSE cr_tbgen_aprova_trans_pend;
+            END IF;
+            -- Se for operador, validar o limite diario
+            IF pr_nrcpfope > 0 THEN
+              INET0001.pc_verifica_limite_ope_prog(pr_cdcooper => pr_cdcooper, 
+                                                   pr_nrdconta => pr_nrdconta, 
+                                                   pr_idseqttl => pr_idseqttl, 
+                                                   pr_nrcpfope => pr_nrcpfope, 
+                                                   pr_cdoperad => pr_cdoperad, 
+                                                   pr_cddoitem => vr_cddoitem, 
+                                                   pr_dtmvtopg => sysdate, 
+                                                   pr_dsorigem => gene0001.vr_vet_des_origens(pr_cdorigem), 
+                                                   pr_msgretor => vr_msgretor, 
+                                                   pr_cdcritic => pr_cdcritic, 
+                                                   pr_dscritic => pr_dscritic);
+               
+              IF vr_msgretor <> 'OK' THEN
+                pr_cdcritic:= 0;
+                vr_dscritic:= vr_msgretor;
+                --Levantar Excecao
+                RAISE vr_exc_erro; 
+              ELSIF pr_dscritic IS NOT NULL THEN 
+                RAISE vr_exc_erro; 
+              END IF; 
+
+            END IF;
 
 			      BEGIN
                --Atualiza para reprovada a transacao
@@ -2840,27 +2988,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             EXCEPTION
                WHEN OTHERS THEN
                     pr_cdcritic:= 0;
-                    pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
+                    pr_dscritic:= 'update tbgen_trans_pend rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
                     --Levantar Excecao
                     RAISE vr_exc_erro;
             END;
-			
-            BEGIN
-               --Atualiza registro de aprovacao do responsavel legal 
-               UPDATE tbgen_aprova_trans_pend
-               SET    tbgen_aprova_trans_pend.idsituacao_aprov = 3 -- Reprovada
-                     ,tbgen_aprova_trans_pend.dtalteracao_situacao = TRUNC(SYSDATE)
-                     ,tbgen_aprova_trans_pend.hralteracao_situacao = gene0002.fn_busca_time
-               WHERE  tbgen_aprova_trans_pend.cdtransacao_pendente = vr_cddoitem
-               AND    tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = vr_nrcpfcgc;
-            EXCEPTION
-               WHEN OTHERS THEN
-                    pr_cdcritic:= 0;
-                    pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
-            END;
-			      
+            -- Se for preposto
+			      IF pr_nrcpfope = 0 THEN
+              BEGIN
+                 --Atualiza registro de aprovacao do responsavel legal 
+                 UPDATE tbgen_aprova_trans_pend
+                 SET    tbgen_aprova_trans_pend.idsituacao_aprov = 3 -- Reprovada
+                       ,tbgen_aprova_trans_pend.dtalteracao_situacao = TRUNC(SYSDATE)
+                       ,tbgen_aprova_trans_pend.hralteracao_situacao = gene0002.fn_busca_time
+                 WHERE  tbgen_aprova_trans_pend.cdtransacao_pendente = vr_cddoitem
+                 AND    tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = vr_nrcpfcgc;
+              EXCEPTION
+                 WHEN OTHERS THEN
+                      pr_cdcritic:= 0;
+                      pr_dscritic:= 'update 02 Erro na rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
+                      --Levantar Excecao
+                      RAISE vr_exc_erro;
+              END;
+			      END IF;
+            --
             IF rw_tbgen_trans_pend.tptransacao = 13 THEN
               
               OPEN cr_tbrecarga_trans_pend(pr_cddoitem => vr_cddoitem);
@@ -2877,7 +3027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  EXCEPTION
                    WHEN OTHERS THEN
                         pr_cdcritic:= 0;
-                        pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
+                        pr_dscritic:= 'Update 03 Erro na rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
                         --Levantar Excecao
                         RAISE vr_exc_erro;
                  END;
@@ -3006,16 +3156,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                           pr_nmdcampo => 'Nome do Representante', 
                                           pr_dsdadant => '', 
                                           pr_dsdadatu => vr_nmprimtl);
-										
-			          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
-                                          pr_nmdcampo => 'CPF do Representante', 
-                                          pr_dsdadant => '', 
-                                          pr_dsdadatu => TO_CHAR( vr_nrcpfcgc));
+							  IF pr_nrcpfope = 0 THEN
+                  gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                            pr_nmdcampo => 'CPF do Representante', 
+                                            pr_dsdadant => '', 
+                                            pr_dsdadatu => TO_CHAR( vr_nrcpfcgc));
+                ELSE
+			            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                            pr_nmdcampo => 'CPF do Operador', 
+                                            pr_dsdadant => '', 
+                                            pr_dsdadatu => TO_CHAR(pr_nrcpfope));                 
+                END IF;
 			      
             END IF;  --IF  pr_flgerlog = 1 THEN
          ELSE
             --Fechar Cursor
             CLOSE cr_tbgen_trans_pend;
+
          END IF; --IF cr_tbgen_trans_pend%FOUND THEN
          
       END LOOP;
@@ -3032,7 +3189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 		       ROLLBACK;
       WHEN OTHERS THEN
            pr_cdcritic:= 0;
-           pr_dscritic:= 'Erro na rotina INET0002.pc_verifica_rep_assinatura. '||SQLERRM;
+           pr_dscritic:= 'Others Erro na rotina INET0002.pc_reprova_trans_pend. '||SQLERRM;
 		       ROLLBACK;
   END;
            
@@ -3280,6 +3437,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_exec_saida EXCEPTION;
       vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
       vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas    
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
 
     BEGIN
     
@@ -3364,6 +3525,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
        RAISE vr_exec_saida;
     END IF;
+    --
+    vr_nrdrowid := NULL;
+    vr_dstransa := '2 - Transacao de pagamento pendente de aprovacao de assinatura conjunta';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => pr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de Lancamento'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_vllanmto);
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'CPF do Preposto'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_nrcpfrep);
+                             
 
     COMMIT;
 
@@ -3446,6 +3632,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_tab_lsdatagd gene0002.typ_split;
     vr_idagenda INTEGER := 0;
     vr_dtmvtopg DATE;    
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);     
     
   BEGIN
 
@@ -3647,6 +3837,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         END IF;
     
     END IF;      
+    
+    vr_nrdrowid := NULL;
+    vr_dstransa := '4 - Transacao de TED pendente de aprovacao de assinatura conjunta';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => pr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor do Lancamento'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_vllanmto);
+                              
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'CPF do Preposto'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_nrcpfrep);                                  
       
     COMMIT;
 
@@ -3723,6 +3938,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_tab_lsdatagd gene0002.typ_split;
     vr_idagenda INTEGER := 0;
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+        
   BEGIN
    
     IF pr_idagenda > 1 THEN
@@ -3900,6 +4120,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
     END IF;
 
+    -- Gerar LOG VERLOG
+    vr_nrdrowid := NULL;
+    vr_dstransa := pr_cdtiptra||' - Transacao de '||(CASE WHEN pr_cdtiptra = 3 THEN 'Credito Salario' ELSE 'Transferencia' END)||' pendente de aprovacao de assinatura conjunta';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => pr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor do Lancamento'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_vllanmto);
+                             
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'CPF do Preposto'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_nrcpfrep);                             
     COMMIT;
 
   EXCEPTION
@@ -4378,8 +4623,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_rowid    VARCHAR2(50);
     vr_dtdebpfp crappfp.dtdebito%TYPE;
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
-  BEGIN
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
     
+  BEGIN
+    --
+    -- Gerar LOG VERLOG
+    vr_nrdrowid := NULL;
+    vr_dstransa := '9 - Transacao de Folha de Pagamento pendente de aprovacao de assinatura conjunta';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => pr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);  
     -- Quebra a string contendo o rowid separado por virgula
     vr_indrowid := gene0002.fn_quebra_string(pr_string => pr_indrowid, pr_delimit => ',');
 
@@ -4474,8 +4739,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
          RAISE vr_exec_saida;
       END IF;
-      
-    END LOOP; -- vr_indrowid
+      -- Item LOG VERLOG
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'ROWID'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_rowid);   
+                                     
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Valor da Transacao'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => rw_pfp_cfp.vllctpag);
+                             
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'CPF do Preposto'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => pr_nrcpfrep);   
+                                    
+    END LOOP;
  
     COMMIT;
 
@@ -5032,6 +5312,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                  ,pr_cdagenci => pr_cdagenci  --Agencia do Associado
                                  ,pr_tpoperac => 0            --Tipo de Operacao (0=todos)
                                  ,pr_inpessoa => 2            --Tipo de Pessoa
+                                 ,pr_idagenda => 0            --Tipo de agendamento
+                                 ,pr_cdtiptra => 0            --Tipo de transferencia
                                  ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
                                  ,pr_cdcritic => vr_cdcritic    --Código do erro
                                  ,pr_dscritic => vr_dscritic);  --Descricao do erro
@@ -5698,6 +5980,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            AND pen.cdtransacao_pendente = pr_cdtransa;	
       
       rw_tbrecarga_trans_pend cr_tbrecarga_trans_pend%ROWTYPE;
+      --
+      -- buscar o numero do CPF
+      CURSOR cr_crapsnh2 (prc_cdcooper crapsnh.cdcooper%type,
+                         prc_nrdconta crapsnh.nrdconta%type,
+                         prc_idseqttl crapsnh.idseqttl%type)IS
+        SELECT c.nrcpfcgc,
+               c.vllimweb
+          FROM crapsnh c
+         WHERE c.cdcooper = prc_cdcooper
+           AND c.nrdconta = prc_nrdconta
+           AND c.idseqttl = prc_idseqttl
+           AND c.tpdsenha = 1 -- INTERNET
+           ;
+      --
+      CURSOR cr_crapopi2 (prc_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                         ,prc_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                         ,prc_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Operador
+                         ) IS
+        SELECT 1
+          FROM crapopi opi
+         WHERE opi.cdcooper = prc_cdcooper
+           AND opi.nrdconta = prc_nrdconta
+           AND opi.nrcpfope = prc_nrcpfope
+          ;       
       
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -5748,6 +6054,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_dtaltera VARCHAR2(10);
       vr_idseqttl crapsnh.idseqttl%TYPE; 
       vr_labnmage VARCHAR2(100);
+      va_existe_operador NUMBER(1);
+      va_nrcpfcgc crapsnh.nrcpfcgc%type;
+      va_vllimweb crapsnh.vllimweb%type;
       
       --Pagamento
       vr_cdcopdes VARCHAR2(100);
@@ -6049,10 +6358,95 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       --Limpar Tabela Memoria de Limites
       vr_tab_internet.DELETE;
- 
-      --Buscar Limites  
-      INET0001.pc_busca_limites(pr_cdcooper     => pr_cdcooper   --Codigo Cooperativa
+      BEGIN
+        -- Inicializa variavel
+        va_existe_operador := 0;
+        -- Se for assinatura conjunta habilitada
+        IF vr_idastcjt = 1 THEN
+          FOR rw_crapopi2 in cr_crapopi2 (pr_cdcooper
+                                         ,pr_nrdconta
+                                         ,pr_nrcpfope) LOOP
+       
+            va_existe_operador := 1;                        
+          END LOOP;
+          --
+          
+          -- Se for preposto
+          IF va_existe_operador = 0 THEN
+            
+            va_nrcpfcgc := null;
+            va_vllimweb := null;
+            IF pr_nrcpfope IS NULL OR
+               pr_nrcpfope <= 0 THEN
+              FOR rw_crapsnh2 IN cr_crapsnh2(pr_cdcooper,
+                                             pr_nrdconta,
+                                             vr_idseqttl) LOOP
+                va_nrcpfcgc := rw_crapsnh2.nrcpfcgc;
+                va_vllimweb := rw_crapsnh2.vllimweb;
+              END LOOP;     
+            END IF;
+            -- buscar limites preposto
+            INET0001.pc_busca_limites_prepo_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
                                ,pr_nrdconta     => pr_nrdconta   --Numero da conta
+                                                 ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                                 ,pr_nrcpfope	    => NVL(va_nrcpfcgc,pr_nrcpfope)  --Numero do CPF
+                                                 ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
+                                                 ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                                 ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                                 ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                                 ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+              --Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;        
+            
+          ELSE -- Se for operador
+            -- Buscar limites operador do sistema
+            INET0001.pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                                 ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                                 ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                                 ,pr_nrcpfope	    => pr_nrcpfope  --Numero do CPF
+                                                 ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
+                                                 ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                                 ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                                 ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                                 ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+                              
+            --Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;        
+          END IF;
+      ELSE   
+        /* Buscar Limites da internet */
+        INET0001.pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                  ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                  ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                  ,pr_flglimdp     => FALSE         --Indicador limite deposito
+                                  ,pr_dtmvtopg     => pr_dtmvtolt  --Data do proximo pagamento
+                                  ,pr_flgctrag     => FALSE  --Indicador validacoes
+                                  ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_cdorigem)  --Descricao Origem
+                                  ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                  ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                  ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;  -- Validar se esá habilitado assinatura conjunta                                      
+
+      END IF; 
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao buscar os limites '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+      /*--Buscar Limites  
+      INET0001.pc_busca_limites(pr_cdcooper     => pr_cdcooper   --Codigo Cooperativa
+                               ,pr_nrdconta     => pr_dsorigempr_nrdconta   --Numero da conta
                                ,pr_idseqttl     => vr_idseqttl   --Seq de Titularidade
                                ,pr_flglimdp     => FALSE         --Indicador limite deposito
                                ,pr_dtmvtopg     => pr_dtmvtolt   --Data do proximo pagamento
@@ -6066,7 +6460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
          --Levantar Excecao
          RAISE vr_exc_erro;
-      END IF;                                                                   
+      END IF;  */                                                                 
       
             --Montar Tag Xml de Limites
       gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
@@ -6080,7 +6474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_texto_completo => vr_xml_temp 
                                 ,pr_texto_novo     => '<limite>' 
                                                    ||   '<idseqttl>'||nvl(vr_tab_internet(vr_ind).idseqttl,0)||'</idseqttl>'
-                                                   ||   '<vllimweb>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimweb,0),'fm999g999g990d00')||'</vllimweb>'
+                                                   ||   '<vllimweb>'||TO_CHAR(nvl(va_vllimweb,nvl(vr_tab_internet(vr_ind).vllimweb,0)),'fm999g999g990d00')||'</vllimweb>'
                                                    ||   '<vllimpgo>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimpgo,0),'fm999g999g990d00')||'</vllimpgo>'
                                                    ||   '<vllimtrf>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimtrf,0),'fm999g999g990d00')||'</vllimtrf>'
                                                    ||   '<vllimted>'||TO_CHAR(nvl(vr_tab_internet(vr_ind).vllimted,0),'fm999g999g990d00')||'</vllimted>'
@@ -6397,7 +6791,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  vr_dsvltran := TO_CHAR(rw_tbpagto_trans_pend.vlpagamento,'fm999g999g990d00'); -- Valor
                  vr_dsdtefet := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao
                  vr_dsdescri := rw_tbpagto_trans_pend.dscedente; -- Descricao
-                 vr_dstptran := CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 'Pagamento de Convênio' ELSE 'Pagamento de Boletos Diversos' END; -- Tipo de Transacao
+                 vr_dstptran := CASE WHEN rw_tbpagto_trans_pend.tppagamento = 1 THEN 
+                                       'Pagamento de Convênio' 
+                                     WHEN rw_tbpagto_trans_pend.tppagamento = 2 THEN
+                                       'Pagamento de Boletos Diversos'
+                                     ELSE 
+                                        'Pagamento de GPS' END; -- Tipo de Transacao
                  vr_dsagenda := CASE WHEN rw_tbpagto_trans_pend.idagendamento = 1 THEN 'NÃO' ELSE 'SIM' END; -- Agendamento
                  
                  --Variaveis especificas
@@ -7523,6 +7922,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; -- Tabela Avalistas 
     vr_lindigit VARCHAR2(500) := '';
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
 
     -- Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -7638,6 +8041,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       RAISE vr_exc_erro;
     END IF;
 
+    vr_nrdrowid := NULL;
+    vr_dstransa := '11 - Transacao de DARF-DAS pendente de aprovacao de assinatura conjunta';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => pr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'VLRTOTAL'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_vlrtotal);
+                             
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'NRCPFREP'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_nrcpfrep);                             
     COMMIT;
 
   EXCEPTION
@@ -7648,7 +8075,191 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       -- Erro
       pr_dscritic:= 'Erro na rotina INET002.pc_cria_trans_pend_darf_das. '||sqlerrm; 
   END pc_cria_trans_pend_darf_das;  
+  --
+  PROCEDURE pc_cria_trans_pend_pag_gps(pr_cdagenci  IN crapage.cdagenci%TYPE                     --> Codigo do PA
+                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                     --> Numero do Caixa
+                                        ,pr_cdoperad  IN crapope.cdoperad%TYPE                     --> Codigo do Operados
+                                        ,pr_nmdatela  IN craptel.nmdatela%TYPE                     --> Nome da Tela
+                                        ,pr_idorigem  IN INTEGER                                   --> Origem da solicitacao
+                                        ,pr_idseqttl  IN crapttl.idseqttl%TYPE                     --> Sequencial de Titular            
+                                        ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE                     --> Numero do cpf do operador juridico
+                                        ,pr_nrcpfrep  IN crapopi.nrcpfope%TYPE                     --> Numero do cpf do representante legal
+                                        ,pr_cdcoptfn  IN tbgen_trans_pend.cdcoptfn%TYPE            --> Cooperativa do Terminal
+                                        ,pr_cdagetfn  IN tbgen_trans_pend.cdagetfn%TYPE            --> Agencia do Terminal
+                                        ,pr_nrterfin  IN tbgen_trans_pend.nrterfin%TYPE            --> Numero do Terminal Financeiro
+                                        ,pr_dtmvtolt  IN DATE                                      --> Data do movimento     
+                                        ,pr_cdcooper  IN tbpagto_trans_pend.cdcooper%TYPE          --> Codigo da cooperativa
+                                        ,pr_nrdconta  IN tbpagto_trans_pend.nrdconta%TYPE          --> Numero da Conta
+                                        ,pr_idtippag  IN tbpagto_trans_pend.tppagamento%TYPE       --> Identificacao do tipo de pagamento (1 – Convenio / 2 – Titulo)
+                                        ,pr_vllanmto  IN tbpagto_trans_pend.vlpagamento%TYPE       --> Valor do pagamento
+                                        ,pr_dtmvtopg  IN tbpagto_trans_pend.dtdebito%TYPE          --> Data do debito
+                                        ,pr_idagenda  IN tbpagto_trans_pend.idagendamento%TYPE     --> Indica se o pagamento foi agendado (1 – Online / 2 – Agendamento)
+                                        ,pr_dscedent  IN tbpagto_trans_pend.dscedente%TYPE         --> Descricao do cedente do documento
+                                        ,pr_dscodbar  IN tbpagto_trans_pend.dscodigo_barras%TYPE   --> Descricao do codigo de barras
+                                        ,pr_dslindig  IN tbpagto_trans_pend.dslinha_digitavel%TYPE --> Descricao da linha digitavel
+                                        ,pr_vlrdocto  IN tbpagto_trans_pend.vldocumento%TYPE       --> Valor do documento
+                                        ,pr_dtvencto  IN tbpagto_trans_pend.dtvencimento%TYPE      --> Data de vencimento do documento
+                                        ,pr_tpcptdoc  IN tbpagto_trans_pend.tpcaptura%TYPE         --> Tipo de captura do documento
+                                        ,pr_idtitdda  IN tbpagto_trans_pend.idtitulo_dda%TYPE      --> Identificador do titulo no DDA
+                                        ,pr_idastcjt  IN crapass.idastcjt%TYPE                     --> Indicador de Assinatura Conjunta
+                                        ,pr_nrdrowid  OUT ROWID
+                                        ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                     --> Codigo de Critica
+                                        ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS                 --> Descricao de Critica
+      
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_cria_trans_pend_pagto
+    --  Sistema  : Procedure de criacao de transacao de pagamentos de GPS
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Junho/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedure de criacao de transacao de pagamentos
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    BEGIN
+    DECLARE
+    -- Variáveis
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic crapcri.dscritic%TYPE := '';
+    vr_exec_saida EXCEPTION;
+    vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
+    vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas    
+    -- log verlog
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+    
+    BEGIN
+    
+    INET0002.pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
+                                       ,pr_nrdcaixa => pr_nrdcaixa
+                                       ,pr_cdoperad => pr_cdoperad
+                                       ,pr_nmdatela => pr_nmdatela
+                                       ,pr_idorigem => pr_idorigem
+                                       ,pr_idseqttl => pr_idseqttl
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrcpfope => pr_nrcpfope
+                                       ,pr_nrcpfrep => pr_nrcpfrep
+                                       ,pr_cdcoptfn => pr_cdcoptfn
+                                       ,pr_cdagetfn => pr_cdagetfn
+                                       ,pr_nrterfin => pr_nrterfin
+                                       ,pr_dtmvtolt => pr_dtmvtolt
+                                       ,pr_cdtiptra => 2 --  Pagamento
+                                       ,pr_idastcjt => pr_idastcjt
+                                       ,pr_tab_crapavt => vr_tab_crapavt
+                                       ,pr_cdtranpe => vr_cdtranpe
+                                       ,pr_dscritic => vr_dscritic);
+                                         
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exec_saida;
+    END IF;
 
+    BEGIN
+      INSERT INTO
+        tbpagto_trans_pend(
+           cdtransacao_pendente 
+          ,cdcooper              
+          ,nrdconta             
+          ,tppagamento          
+          ,vlpagamento          
+          ,dtdebito             
+          ,idagendamento        
+          ,dscedente            
+          ,dscodigo_barras      
+          ,dslinha_digitavel    
+          ,vldocumento          
+          ,dtvencimento         
+          ,tpcaptura            
+          ,idtitulo_dda)
+        VALUES(
+           vr_cdtranpe
+          ,pr_cdcooper
+          ,pr_nrdconta
+          ,pr_idtippag
+          ,pr_vllanmto
+          ,pr_dtmvtopg
+          ,pr_idagenda
+          ,pr_dscedent
+          ,pr_dscodbar
+          ,pr_dslindig
+          ,pr_vlrdocto
+          ,pr_dtvencto
+          ,pr_tpcptdoc
+          ,pr_idtitdda);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao incluir registro tbpagto_trans_pend. Erro: ' || SQLERRM;
+    END;
+
+    pc_cria_aprova_transpend(pr_cdagenci => pr_cdagenci
+                            ,pr_nrdcaixa => pr_nrdcaixa
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_idorigem => pr_idorigem
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrcpfrep => pr_nrcpfrep
+                            ,pr_dtmvtolt => pr_dtmvtolt
+                            ,pr_cdtiptra => 2 
+                            ,pr_tab_crapavt => vr_tab_crapavt
+                            ,pr_cdtranpe => vr_cdtranpe
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
+
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+       RAISE vr_exec_saida;
+    END IF;
+    --
+    vr_nrdrowid := NULL;
+    vr_dstransa := 'GPS Transacao de pagamento pendente de aprovacao de assinatura conjunta';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => pr_idorigem,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => pr_nmdatela
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'gpscdtransacao_pendente'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_cdtranpe);    
+    pr_nrdrowid := vr_nrdrowid;    
+    --COMMIT;
+
+  EXCEPTION
+    WHEN vr_exec_saida THEN
+      pr_cdcritic := vr_cdcritic;
+      
+      IF vr_cdcritic <> 0 THEN
+         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE	
+         pr_dscritic := vr_dscritic;
+      END IF;
+        
+      ROLLBACK;
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral na procedure pc_cria_trans_pend_pagto. Erro: '|| SQLERRM; 
+      ROLLBACK; 
+    END;
+  END pc_cria_trans_pend_pag_gps;  
+  --
   PROCEDURE pc_busca_darf_das(pr_cdcooper IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
                              ,pr_cdoperad IN crapope.cdoperad%TYPE              --> Código do Operador
                              ,pr_nmdatela IN craptel.nmdatela%TYPE              --> Nome da Tela
@@ -8929,6 +9540,1408 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 				ROLLBACK; 		
 		END;		
 	END pc_cria_trans_pend_recarga;
+
+PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_nrcpf    IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_limite_preposto
+    --  Sistema  : Ayllos - Procedure buscar limites cadastrado de preposto
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Maio/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Buscar os limites pre cadastrados de prepostos
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                    
+
+    CURSOR cr_tbcc_limite_preposto (prc_cdcooper IN TBCC_LIMITE_PREPOSTO.cdcooper%TYPE 
+                                   ,prc_nrdconta IN TBCC_LIMITE_PREPOSTO.nrdconta%TYPE 
+                                   ,prc_nrcpf    IN TBCC_LIMITE_PREPOSTO.nrcpf%TYPE) IS
+      SELECT vllimite_transf,
+             dtlimite_transf,
+             vllimite_pagto,
+             dtlimite_pagto,
+             vllimite_ted,
+             dtlimite_ted,
+             vllimite_vrboleto,
+             dtlimite_vrboleto,
+             vllimite_folha,
+             dtlimite_folha
+        FROM tbcc_limite_preposto 
+       WHERE tbcc_limite_preposto.cdcooper = prc_cdcooper
+         AND tbcc_limite_preposto.nrdconta = prc_nrdconta
+         AND tbcc_limite_preposto.nrcpf    = prc_nrcpf;
+    rw_tbcc_limite_preposto cr_tbcc_limite_preposto%ROWTYPE;
+    --                
+    vr_cdcooper           TBCC_LIMITE_PREPOSTO.cdcooper%TYPE; 
+    vr_nrdconta           TBCC_LIMITE_PREPOSTO.nrdconta%TYPE; 
+    vr_nrcpf              TBCC_LIMITE_PREPOSTO.nrcpf%TYPE;
+    vr_vllimite_transf    TBCC_LIMITE_PREPOSTO.vllimite_transf%TYPE; 
+    vr_dtlimite_transf    TBCC_LIMITE_PREPOSTO.dtlimite_transf%TYPE;  
+    vr_vllimite_pagto     TBCC_LIMITE_PREPOSTO.vllimite_pagto%TYPE;
+    vr_dtlimite_pagto     TBCC_LIMITE_PREPOSTO.dtlimite_pagto%TYPE;
+    vr_vllimite_ted       TBCC_LIMITE_PREPOSTO.vllimite_ted%TYPE;
+    vr_dtlimite_ted       TBCC_LIMITE_PREPOSTO.dtlimite_ted%TYPE; 
+    vr_vllimite_vrboleto  TBCC_LIMITE_PREPOSTO.vllimite_vrboleto%TYPE; 
+    vr_dtlimite_vrboleto  TBCC_LIMITE_PREPOSTO.dtlimite_vrboleto%TYPE; 
+    vr_vllimite_folha     TBCC_LIMITE_PREPOSTO.vllimite_folha%TYPE; 
+    vr_dtlimite_folha     TBCC_LIMITE_PREPOSTO.dtlimite_folha%TYPE;
+    
+    -- Variaveis de XML
+    vr_xml_temp VARCHAR2(32767);    
+  BEGIN
+    --
+    vr_cdcooper := gene0002.fn_char_para_number(pr_dsnumtex => pr_cdcooper);
+    vr_nrdconta := gene0002.fn_char_para_number(pr_dsnumtex => pr_nrdconta); 
+    vr_nrcpf    := gene0002.fn_char_para_number(pr_dsnumtex => pr_nrcpf);
+    --
+    BEGIN
+      OPEN cr_tbcc_limite_preposto (prc_cdcooper => vr_cdcooper
+                                   ,prc_nrdconta => vr_nrdconta
+                                   ,prc_nrcpf    => vr_nrcpf);
+      FETCH cr_tbcc_limite_preposto INTO rw_tbcc_limite_preposto;
+      -- Se nao existir preposto, inserir
+      IF cr_tbcc_limite_preposto%FOUND THEN
+        vr_vllimite_transf   := rw_tbcc_limite_preposto.vllimite_transf;
+        vr_dtlimite_transf   := rw_tbcc_limite_preposto.dtlimite_transf;
+        vr_vllimite_pagto    := rw_tbcc_limite_preposto.vllimite_pagto;
+        vr_dtlimite_pagto    := rw_tbcc_limite_preposto.dtlimite_pagto;
+        vr_vllimite_ted      := rw_tbcc_limite_preposto.vllimite_ted;
+        vr_dtlimite_ted      := rw_tbcc_limite_preposto.dtlimite_ted;
+        vr_vllimite_vrboleto := rw_tbcc_limite_preposto.vllimite_vrboleto;
+        vr_dtlimite_vrboleto := rw_tbcc_limite_preposto.dtlimite_vrboleto;
+        vr_vllimite_folha    := rw_tbcc_limite_preposto.vllimite_folha;
+        vr_dtlimite_folha    := rw_tbcc_limite_preposto.dtlimite_folha;
+      ELSE
+        vr_vllimite_transf := 0;
+        vr_dtlimite_transf := null;
+        vr_vllimite_pagto  := 0;
+        vr_dtlimite_pagto  := null;
+        vr_vllimite_ted    := 0;
+        vr_dtlimite_ted    := null;
+        vr_vllimite_vrboleto := 0;
+        vr_dtlimite_vrboleto := null;
+        vr_vllimite_folha  := 0;
+        vr_dtlimite_folha  := null;      
+      END IF; 
+      CLOSE cr_tbcc_limite_preposto;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro pc_busca_limite_preposto. cursor crw_tbcc_limite_preposto Erro: '|| SQLERRM;
+    END;    
+    --
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    --
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'preposto', pr_tag_cont => null, pr_des_erro => pr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'preposto', pr_posicao => 0, pr_tag_nova => 'pr_vllimite_transf', pr_tag_cont => vr_vllimite_transf, pr_des_erro => pr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'preposto', pr_posicao => 0, pr_tag_nova => 'pr_vllimite_pagto', pr_tag_cont => vr_vllimite_pagto, pr_des_erro => pr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'preposto', pr_posicao => 0, pr_tag_nova => 'pr_vllimite_ted', pr_tag_cont => vr_vllimite_ted, pr_des_erro => pr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'preposto', pr_posicao => 0, pr_tag_nova => 'pr_vllimite_vrboleto', pr_tag_cont => vr_vllimite_vrboleto, pr_des_erro => pr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'preposto', pr_posicao => 0, pr_tag_nova => 'pr_vllimite_folha', pr_tag_cont => vr_vllimite_folha, pr_des_erro => pr_dscritic);    
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral em pc_busca_limite_preposto: ' || SQLERRM;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');    
+    --
+  END pc_busca_limite_preposto;                                       
+
+
+  PROCEDURE pc_valida_limite_preposto(pr_cdcooper           IN VARCHAR2
+                                     ,pr_nrdconta           IN VARCHAR2 
+                                     ,pr_idseqttl           IN VARCHAR2
+                                     ,pr_vllimtrf           IN VARCHAR2 
+                                     ,pr_vllimpgo           IN VARCHAR2
+                                     ,pr_vllimted           IN VARCHAR2 
+                                     ,pr_vllimvrb           IN VARCHAR2 
+                                     ,pr_vllimflp           IN VARCHAR2 
+                                     ,pr_xmllog             IN VARCHAR2
+                                     ,pr_cdcritic       OUT PLS_INTEGER                       
+                                     ,pr_dscritic       OUT VARCHAR2
+                                     ,pr_retxml        IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2) is
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_valida_limite_preposto
+    --  Sistema  : Ayllos - Procedure para validar limite de preposto
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Maio/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Validar os limites pre cadastrados de prepostos
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------  
+    
+    CURSOR cr_crapsnh (prc_cdcooper IN crapsnh.cdcooper%TYPE
+                      ,prc_nrdconta IN crapsnh.nrdconta%TYPE
+                      ,prc_idseqttl IN crapsnh.idseqttl%TYPE) IS
+      SELECT crapsnh.vllimted,
+             crapsnh.vllimtrf,
+             crapsnh.vllimpgo,
+             crapsnh.vllimvrb
+        FROM crapsnh 
+       WHERE crapsnh.cdcooper = prc_cdcooper
+         AND crapsnh.nrdconta = prc_nrdconta
+         AND crapsnh.idseqttl = prc_idseqttl
+         AND crapsnh.tpdsenha = 1;  
+    rw_crapsnh cr_crapsnh%ROWTYPE;
+    --
+    CURSOR cr_crapemp (prc_cdcooper IN crapemp.cdcooper%TYPE
+                      ,prc_nrdconta IN crapemp.nrdconta%TYPE) IS 
+      SELECT vllimfol 
+        FROM crapemp 
+       WHERE crapemp.cdcooper = prc_cdcooper 
+         AND crapemp.nrdconta = prc_nrdconta; 
+    rw_crapemp cr_crapemp%ROWTYPE;
+         
+   --
+    vr_cdcooper          TBCC_LIMITE_PREPOSTO.cdcooper%TYPE; 
+    vr_nrdconta          TBCC_LIMITE_PREPOSTO.nrdconta%TYPE; 
+    vr_idseqttl          crapsnh.idseqttl%TYPE;
+    vr_vllimtrf          TBCC_LIMITE_PREPOSTO.vllimite_transf%TYPE; 
+    vr_vllimpgo          TBCC_LIMITE_PREPOSTO.vllimite_pagto%TYPE;
+    vr_vllimted          TBCC_LIMITE_PREPOSTO.vllimite_ted%TYPE; 
+    vr_vllimvrb          TBCC_LIMITE_PREPOSTO.vllimite_vrboleto%TYPE; 
+    vr_vllimflp          TBCC_LIMITE_PREPOSTO.vllimite_folha%TYPE;   
+    vrb_vllimted         crapsnh.vllimted%TYPE;
+    vrb_vllimtrf         crapsnh.vllimtrf%TYPE;
+    vrb_vllimpgo         crapsnh.vllimpgo%TYPE;
+    vrb_vllimvrb         crapsnh.vllimvrb%TYPE;
+    vrb_vllimfol         crapemp.vllimfol%TYPE;
+    vr_alerta            varchar2(2000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;    
+  BEGIN
+    --
+    --vr_alerta := 'OKww'||'/'||pr_cdcooper||'/'||pr_nrdconta||'/'||pr_idseqttl||'/'||pr_vllimtrf||'/'||
+    --   pr_vllimpgo||'/'||pr_vllimted||'/'||pr_vllimvrb||'/'||pr_vllimflp ;
+    --
+    vr_alerta := 'OK';
+    --
+    vr_cdcooper          := gene0002.fn_char_para_number(pr_dsnumtex => pr_cdcooper);
+    vr_nrdconta          := gene0002.fn_char_para_number(pr_dsnumtex => pr_nrdconta); 
+    vr_idseqttl          := gene0002.fn_char_para_number(pr_dsnumtex => pr_idseqttl); 
+    vr_vllimtrf          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimtrf);
+    vr_vllimpgo          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimpgo);
+    vr_vllimted          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimted);
+    vr_vllimvrb          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimvrb); 
+    vr_vllimflp          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimflp);
+    --
+    BEGIN
+      OPEN cr_crapsnh (prc_cdcooper => vr_cdcooper
+                      ,prc_nrdconta => vr_nrdconta
+                      ,prc_idseqttl => vr_idseqttl);
+      FETCH cr_crapsnh INTO rw_crapsnh;
+      --
+      IF cr_crapsnh%FOUND THEN
+      
+        vrb_vllimted := rw_crapsnh.vllimted;
+        vrb_vllimtrf := rw_crapsnh.vllimtrf;
+        vrb_vllimpgo := rw_crapsnh.vllimpgo;
+        vrb_vllimvrb := rw_crapsnh.vllimvrb;
+      
+      ELSE
+        vrb_vllimted := 0;
+        vrb_vllimtrf := 0;
+        vrb_vllimpgo := 0;
+        vrb_vllimvrb := 0;
+      END IF;
+      -- Fechar cursor
+      CLOSE cr_crapsnh;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        vr_alerta := 'Erro pc_valida_limite_preposto - cursor cr_crapsnh - Erro: '|| SQLERRM;
+        RAISE vr_exc_erro;
+    END;     
+    --
+    
+    BEGIN
+    OPEN cr_crapemp (prc_cdcooper => vr_cdcooper
+                    ,prc_nrdconta => vr_nrdconta);
+    FETCH cr_crapemp INTO rw_crapemp;
+      IF cr_crapemp%FOUND THEN
+        vrb_vllimfol := rw_crapemp.vllimfol;
+      ELSE 
+        vrb_vllimfol := 0;
+      END IF;
+      -- Fechar Cursor 
+      CLOSE cr_crapemp;
+    EXCEPTION
+      WHEN OTHERS THEN
+         pr_cdcritic := 0;
+         vr_alerta := 'Erro pc_valida_limite_preposto. cursor cr_crapemp - Erro: '|| SQLERRM;
+         RAISE vr_exc_erro;
+    END;
+    --
+    IF vr_vllimtrf > vrb_vllimtrf THEN
+       pr_cdcritic := 0;
+       vr_alerta :=  'Valor do limite de tranfer&ecirc;ncia superior ao liberado no cadastro da conta';
+    ELSIF vr_vllimpgo > vrb_vllimpgo THEN
+       pr_cdcritic := 0;
+       vr_alerta := 'Valor do limite de pagamento superior ao liberado no cadastro da conta'||vr_vllimpgo||'-'||vrb_vllimpgo;      
+    ELSIF vr_vllimted > vrb_vllimted THEN
+       pr_cdcritic := 0;
+       vr_alerta := 'Valor do limite de TED superior ao liberado no cadastro da conta';      
+    ELSIF vr_vllimvrb > vrb_vllimvrb THEN
+       pr_cdcritic := 0;
+       vr_alerta := 'Valor do limite de Boleto superior ao liberado no cadastro da conta';      
+    ELSIF vr_vllimflp > vrb_vllimfol THEN
+       pr_cdcritic := 0;
+       vr_alerta := 'Valor do limite de Folha de pagamento superior ao liberado no cadastro da Empresa';    
+    END IF;
+    --
+    --vr_alerta := pr_dscritic;
+    --
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'pr_alerta', pr_tag_cont => vr_alerta, pr_des_erro => pr_dscritic);
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := pr_cdcritic;
+      pr_dscritic := vr_alerta;    
+    WHEN OTHERS THEN 
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral na procedure pc_valida_limite_preposto. - Erro: '|| SQLERRM;      
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>'); 
+  END pc_valida_limite_preposto;
+  
+  PROCEDURE pc_altera_limite_preposto(pr_cdcooper           IN VARCHAR2
+                                     ,pr_nrdconta           IN VARCHAR2 
+                                     ,pr_nrcpf              IN VARCHAR2 
+                                     ,pr_idseqttl           IN VARCHAR2
+                                     ,pr_cdoperad           IN VARCHAR2 
+                                     ,pr_vllimtrf           IN VARCHAR2 
+                                     ,pr_vllimpgo           IN VARCHAR2
+                                     ,pr_vllimted           IN VARCHAR2 
+                                     ,pr_vllimvrb           IN VARCHAR2 
+                                     ,pr_vllimflp           IN VARCHAR2
+                                     ,pr_xmllog             IN VARCHAR2
+                                     ,pr_cdcritic       OUT PLS_INTEGER                       
+                                     ,pr_dscritic       OUT VARCHAR2
+                                     ,pr_retxml        IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2) is
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_altera_limite_preposto
+    --  Sistema  : Procedure para alterar limite de preposto
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Maio/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Alterar os limites dos prepostos
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                       
+     --
+     CURSOR cr_tbcc_limite_preposto (prc_cdcooper IN TBCC_LIMITE_PREPOSTO.cdcooper%TYPE 
+                                    ,prc_nrdconta IN TBCC_LIMITE_PREPOSTO.nrdconta%TYPE 
+                                    ,prc_nrcpf    IN TBCC_LIMITE_PREPOSTO.nrcpf%TYPE) IS
+       SELECT vllimite_transf,
+              vllimite_pagto,
+              vllimite_ted,
+              vllimite_vrboleto,
+              vllimite_folha,
+              dtlimite_transf,
+              dtlimite_pagto,
+              dtlimite_ted,
+              dtlimite_vrboleto,
+              dtlimite_folha
+         FROM tbcc_limite_preposto 
+        WHERE tbcc_limite_preposto.cdcooper = prc_cdcooper
+          AND tbcc_limite_preposto.nrdconta = prc_nrdconta
+          AND tbcc_limite_preposto.nrcpf    = prc_nrcpf;    
+
+     rw_tbcc_limite_preposto cr_tbcc_limite_preposto%ROWTYPE;     
+     --
+     vr_cdcooper          TBCC_LIMITE_PREPOSTO.cdcooper%TYPE; 
+     vr_nrdconta          TBCC_LIMITE_PREPOSTO.nrdconta%TYPE; 
+     vr_nrcpf             TBCC_LIMITE_PREPOSTO.nrcpf%TYPE;
+     vr_idseqttl          crapsnh.idseqttl%TYPE;
+     vr_vllimtrf          TBCC_LIMITE_PREPOSTO.Vllimite_Transf%TYPE;
+     vr_vllimpgo          TBCC_LIMITE_PREPOSTO.Vllimite_Pagto%TYPE;
+     vr_vllimted          TBCC_LIMITE_PREPOSTO.Vllimite_Ted%TYPE;
+     vr_vllimvrb          TBCC_LIMITE_PREPOSTO.Vllimite_Vrboleto%TYPE;
+     vr_vllimflp          TBCC_LIMITE_PREPOSTO.Vllimite_Folha%TYPE;
+
+     vrb_Dtlimite_Transf   TBCC_LIMITE_PREPOSTO.Dtlimite_Transf%TYPE;
+     vrb_Dtlimite_Pagto    TBCC_LIMITE_PREPOSTO.Dtlimite_Pagto%TYPE;
+     vrb_Dtlimite_Ted      TBCC_LIMITE_PREPOSTO.Dtlimite_Ted%TYPE;
+     vrb_Dtlimite_Vrboleto TBCC_LIMITE_PREPOSTO.Dtlimite_Vrboleto%TYPE;
+     vrb_Dtlimite_Folha    TBCC_LIMITE_PREPOSTO.Dtlimite_Folha%TYPE;
+          
+     vr_reg               number(1) := 1;
+     vr_opi_vllbolet      crapopi.vllbolet%TYPE;
+     vr_opi_vllimtrf      crapopi.vllimtrf%TYPE;
+     vr_opi_vllimted      crapopi.vllimted%TYPE;
+     vr_opi_vllimvrb      crapopi.vllimvrb%TYPE;
+     vr_opi_vllimflp      crapopi.vllimflp%TYPE;
+     vr_alerta            varchar2(2000);
+     vr_nrdrowid          ROWID;
+     vr_operador          varchar2(1) := 'N';
+     --Variaveis de Excecao
+     vr_exc_erro          EXCEPTION;
+     
+     CURSOR C_OPERADOR IS
+        SELECT opi.cdcooper,
+               opi.nrdconta,
+               opi.nrcpfope,
+               opi.vllbolet,
+               opi.vllimtrf,
+               opi.vllimted,
+               opi.vllimvrb,
+               opi.vllimflp
+          FROM crapopi opi
+         WHERE opi.cdcooper = vr_cdcooper
+           AND opi.nrdconta = vr_nrdconta
+           AND (opi.vllbolet > vr_vllimpgo OR
+                opi.vllimtrf > vr_vllimtrf OR
+                opi.vllimted > vr_vllimted OR
+                opi.vllimvrb > vr_vllimvrb OR 
+                opi.vllimflp > vr_vllimflp);     
+
+           
+     
+  BEGIN
+    --
+    --vr_alerta := 'OKww'||'/'||pr_cdcooper||'/'||pr_nrdconta||'/'||pr_nrcpf||'/'||pr_idseqttl||'/'||pr_cdoperad||'/'||pr_vllimtrf||'/'||
+    --   pr_vllimpgo||'/'||pr_vllimted||'/'||pr_vllimvrb||'/'||pr_vllimflp ;
+    --
+    vr_alerta := 'OK';
+    --
+    vr_cdcooper          := gene0002.fn_char_para_number(pr_dsnumtex => pr_cdcooper);
+    vr_nrdconta          := gene0002.fn_char_para_number(pr_dsnumtex => pr_nrdconta); 
+    vr_nrcpf             := gene0002.fn_char_para_number(pr_dsnumtex => pr_nrcpf); 
+    vr_idseqttl          := gene0002.fn_char_para_number(pr_dsnumtex => pr_idseqttl); 
+    vr_vllimtrf          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimtrf);
+    vr_vllimpgo          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimpgo);
+    vr_vllimted          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimted);
+    vr_vllimvrb          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimvrb); 
+    vr_vllimflp          := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimflp);    
+    --
+    OPEN cr_tbcc_limite_preposto (prc_cdcooper => pr_cdcooper
+                                 ,prc_nrdconta => pr_nrdconta
+                                 ,prc_nrcpf    => pr_nrcpf);
+    FETCH cr_tbcc_limite_preposto INTO rw_tbcc_limite_preposto;
+    -- Se nao existir preposto, inserir
+    IF cr_tbcc_limite_preposto%NOTFOUND THEN
+      --
+      BEGIN
+        INSERT into TBCC_LIMITE_PREPOSTO
+        (cdcooper,
+         nrdconta,
+         nrcpf,
+         cdoperad,
+         vllimite_transf,
+         dtlimite_transf,
+         vllimite_pagto,
+         dtlimite_pagto,
+         vllimite_ted,
+         dtlimite_ted,
+         vllimite_vrboleto,
+         dtlimite_vrboleto,
+         vllimite_folha,
+         dtlimite_folha
+        )
+        values
+        (vr_cdcooper,
+         vr_nrdconta,
+         vr_nrcpf,
+         pr_cdoperad,
+         vr_vllimtrf,
+         sysdate,
+         vr_vllimpgo,
+         sysdate,
+         vr_vllimted,
+         sysdate,
+         vr_vllimvrb,
+         sysdate,
+         vr_vllimflp,
+         sysdate);
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          vr_alerta := 'Erro pc_altera_limite_preposto - insert TBCC_LIMITE_PREPOSTO - Erro: '|| SQLERRM;
+          raise vr_exc_erro;
+      END;
+      --
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => NULL
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
+                          ,pr_dstransa => 'Inserir Limite de Preposto.'
+                          ,pr_dttransa => trunc(sysdate)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => gene0002.fn_busca_time
+                          ,pr_idseqttl => vr_idseqttl
+                          ,pr_nmdatela => 'ATENDA'
+                          ,pr_nrdconta => vr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid); 
+                          
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de Transferencia'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vllimtrf);
+                               
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de Boleto'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vllimpgo); 
+                             
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de TED'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vllimted); 
+                             
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de VR Boleto'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vllimvrb); 
+                             
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de Folha PGTO'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vllimflp);                             
+                                                                                                                                    
+      --
+      CLOSE cr_tbcc_limite_preposto;
+    ELSE
+      --
+      IF vr_vllimtrf   <> rw_tbcc_limite_preposto.vllimite_transf THEN
+         vrb_Dtlimite_Transf   := sysdate;
+      END IF;
+      --
+      IF vr_vllimpgo <> rw_tbcc_limite_preposto.vllimite_pagto THEN
+         vrb_dtlimite_pagto    := sysdate;
+      END IF;
+      --
+      IF vr_vllimted   <> rw_tbcc_limite_preposto.vllimite_ted THEN
+         vrb_dtlimite_ted      := sysdate;
+      END IF;
+      --
+      IF vr_vllimvrb <> rw_tbcc_limite_preposto.vllimite_vrboleto THEN
+         vrb_dtlimite_vrboleto := sysdate;
+      END IF;
+      --
+      IF vr_vllimflp <> rw_tbcc_limite_preposto.vllimite_folha THEN
+         vrb_dtlimite_folha    := sysdate;
+      END IF;
+      --
+      BEGIN
+        UPDATE TBCC_LIMITE_PREPOSTO
+           SET cdoperad = pr_cdoperad,
+               vllimite_transf   = vr_vllimtrf,
+               dtlimite_transf   = nvl(vrb_dtlimite_transf,dtlimite_transf),
+               vllimite_pagto    = vr_vllimpgo,
+               dtlimite_pagto    = nvl(vrb_dtlimite_pagto,dtlimite_pagto),
+               vllimite_ted      = vr_vllimted,
+               dtlimite_ted      = nvl(vrb_dtlimite_ted,dtlimite_ted),
+               vllimite_vrboleto = vr_vllimvrb,
+               dtlimite_vrboleto = nvl(vrb_dtlimite_vrboleto,dtlimite_vrboleto),
+               vllimite_folha    = vr_vllimflp,
+               dtlimite_folha    = nvl(vrb_dtlimite_folha,dtlimite_folha)
+         WHERE TBCC_LIMITE_PREPOSTO.cdcooper = vr_cdcooper
+           AND TBCC_LIMITE_PREPOSTO.nrdconta = vr_nrdconta
+           AND TBCC_LIMITE_PREPOSTO.nrcpf    = vr_nrcpf;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          vr_alerta := 'Erro pc_altera_limite_preposto update TBCC_LIMITE_PREPOSTO. '||sqlerrm;          
+          raise vr_exc_erro;
+      END;
+      --
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => NULL
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
+                          ,pr_dstransa => 'Altera Limite de Preposto.'
+                          ,pr_dttransa => trunc(sysdate)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => gene0002.fn_busca_time
+                          ,pr_idseqttl => vr_idseqttl
+                          ,pr_nmdatela => 'ATENDA'
+                          ,pr_nrdconta => vr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+                          
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de Transferencia'
+                             ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_transf
+                             ,pr_dsdadatu => vr_vllimtrf);
+                               
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de Boleto'
+                             ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_pagto
+                             ,pr_dsdadatu => vr_vllimpgo); 
+                             
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de TED'
+                             ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_ted
+                             ,pr_dsdadatu => vr_vllimted); 
+                             
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de VR Boleto'
+                             ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_vrboleto
+                             ,pr_dsdadatu => vr_vllimvrb); 
+                             
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor de Folha PGTO'
+                             ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_folha
+                             ,pr_dsdadatu => vr_vllimflp);
+             
+      --
+      FOR R_OPERADOR IN C_OPERADOR LOOP
+        --
+        IF r_operador.vllbolet > vr_vllimpgo THEN
+           vr_opi_vllbolet := vr_vllimpgo;
+        ELSE
+           vr_opi_vllbolet := r_operador.vllbolet;
+        END IF;
+        --
+        IF r_operador.vllimtrf > vr_vllimtrf THEN
+           vr_opi_vllimtrf := vr_vllimtrf;
+        ELSE
+           vr_opi_vllimtrf := r_operador.vllimtrf;
+        END IF;       
+        --
+        IF r_operador.vllimted > vr_vllimted THEN
+           vr_opi_vllimted := vr_vllimted;
+        ELSE
+           vr_opi_vllimted := r_operador.vllimted;
+        END IF;       
+        --  
+        IF r_operador.vllimvrb > vr_vllimvrb THEN
+           vr_opi_vllimvrb := vr_vllimvrb;
+        ELSE
+           vr_opi_vllimvrb := r_operador.vllimvrb;
+        END IF;  
+        --  
+        IF r_operador.vllimflp > vr_vllimflp THEN
+           vr_opi_vllimflp := vr_vllimflp;
+        ELSE
+           vr_opi_vllimflp := r_operador.vllimflp;
+        END IF;             
+        --                
+        BEGIN
+          UPDATE crapopi opi
+             SET opi.vllbolet = vr_opi_vllbolet,
+                 opi.vllimtrf = vr_opi_vllimtrf,
+                 opi.vllimted = vr_opi_vllimted,
+                 opi.vllimvrb = vr_opi_vllimvrb,
+                 opi.vllimflp = vr_opi_vllimflp
+           WHERE opi.cdcooper = R_OPERADOR.CDCOOPER
+             AND opi.nrdconta = R_OPERADOR.NRDCONTA
+             AND opi.nrcpfope = R_OPERADOR.NRCPFOPE;
+        EXCEPTION  
+          WHEN OTHERS THEN
+            pr_cdcritic := 0;
+            vr_alerta := 'Erro pc_altera_limite_preposto - update crapopi.';          
+            raise vr_exc_erro;
+        END; 
+        --
+        vr_operador := 'S';
+        --
+      END LOOP;
+      --
+      CLOSE cr_tbcc_limite_preposto;
+    END IF;
+    --
+    --
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'pr_alerta', pr_tag_cont => vr_alerta, pr_des_erro => pr_dscritic);    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'pr_operador', pr_tag_cont => vr_operador, pr_des_erro => pr_dscritic);    
+    --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         pr_cdcritic := 0;
+         --vr_alerta := 'Erro geral na procedure pc_altera_limite_preposto. - Erro: ';      
+         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'pr_alerta', pr_tag_cont => vr_alerta, pr_des_erro => pr_dscritic);    
+ 
+    WHEN OTHERS THEN 
+         pr_cdcritic := 0;
+         vr_alerta := 'Erro geral na procedure pc_altera_limite_preposto. - Erro: '|| SQLERRM;      
+         -- Carregar XML padrão para variável de retorno não utilizada.
+         -- Existe para satisfazer exigência da interface.
+         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  commit;                                                             
+  END pc_altera_limite_preposto;
+  
+  PROCEDURE pc_busca_preposto_master(pr_cdcooper IN VARCHAR2 
+                                    ,pr_nrdconta IN VARCHAR2 
+                                    ,pr_xmllog   IN  VARCHAR2
+                                    ,pr_cdcritic OUT PLS_INTEGER                       
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_preposto_master
+    --  Sistema  : Procedure buscar preposto master
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Maio/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Buscar o preposto master
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                                                           
+    BEGIN
+    DECLARE
+       vr_cdcooper           TBCC_LIMITE_PREPOSTO.cdcooper%TYPE; 
+       vr_nrdconta           TBCC_LIMITE_PREPOSTO.nrdconta%TYPE; 
+       vr_nrcpf              TBCC_LIMITE_PREPOSTO.nrcpf%TYPE;
+       vr_flgmaster          TBCC_LIMITE_PREPOSTO.flgmaster%TYPE;
+    
+       -- Variaveis de XML
+       vr_xml_temp VARCHAR2(32767); 
+      -- Cursores
+      CURSOR cr_preposto_master IS
+        SELECT tbcc_limite_preposto.cdcooper,
+               tbcc_limite_preposto.nrcpf,
+               tbcc_limite_preposto.nrdconta,  
+               tbcc_limite_preposto.flgmaster      
+        FROM tbcc_limite_preposto 
+       WHERE tbcc_limite_preposto.cdcooper = pr_cdcooper
+         AND tbcc_limite_preposto.nrdconta = pr_nrdconta
+         AND tbcc_limite_preposto.flgmaster = 1;
+    
+      rw_preposto_master cr_preposto_master%ROWTYPE;
+    
+      -- Variaveis locais
+      vr_contador INTEGER := 0;
+    
+      -- Variaveis de critica
+      vr_dscritic crapcri.dscritic%TYPE;
+    BEGIN
+      
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+      FOR rw_preposto_master IN cr_preposto_master LOOP
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Dados',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'preposto',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'preposto',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'cdcooper',
+                               pr_tag_cont => rw_preposto_master.cdcooper,
+                               pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'preposto',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'nrdconta',
+                               pr_tag_cont => rw_preposto_master.nrdconta,
+                               pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'preposto',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'nrcpf',
+                               pr_tag_cont => rw_preposto_master.nrcpf,
+                               pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'preposto',
+                              pr_posicao  => vr_contador,
+                               pr_tag_nova => 'flgmaster',
+                               pr_tag_cont => rw_preposto_master.flgmaster,
+                               pr_des_erro => vr_dscritic);
+      
+        vr_contador := vr_contador + 1;
+      
+      END LOOP;
+    
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_des_erro := 'Erro geral em pc_busca_preposto_master: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em pc_busca_preposto_master: ' || SQLERRM;
+    END;
+  END pc_busca_preposto_master;
+
+  PROCEDURE pc_altera_preposto_master(pr_cdcooper IN TBCC_LIMITE_PREPOSTO.cdcooper%TYPE 
+                                     ,pr_nrdconta IN TBCC_LIMITE_PREPOSTO.nrdconta%TYPE 
+                                     ,pr_nrcpf    IN TBCC_LIMITE_PREPOSTO.nrcpf%TYPE 
+                                     ,pr_xmllog   IN  VARCHAR2
+                                     ,pr_cdcritic OUT PLS_INTEGER                       
+                                     ,pr_dscritic OUT VARCHAR2
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2) IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_altera_preposto_master
+    --  Sistema  : Procedure alterar preposto master
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Maio/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Alterar preposto master
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                      
+
+    CURSOR cr_tbcc_limite_preposto (prc_cdcooper IN TBCC_LIMITE_PREPOSTO.cdcooper%TYPE 
+                                   ,prc_nrdconta IN TBCC_LIMITE_PREPOSTO.nrdconta%TYPE 
+                                   ,prc_nrcpf    IN TBCC_LIMITE_PREPOSTO.nrcpf%TYPE) IS
+      SELECT tbcc_limite_preposto.cdcooper,
+             tbcc_limite_preposto.nrcpf,
+             tbcc_limite_preposto.nrdconta,  
+             tbcc_limite_preposto.flgmaster
+        FROM tbcc_limite_preposto 
+       WHERE tbcc_limite_preposto.cdcooper = prc_cdcooper
+         AND tbcc_limite_preposto.nrdconta = prc_nrdconta
+         AND tbcc_limite_preposto.nrcpf    = prc_nrcpf;    
+
+    rw_tbcc_limite_preposto cr_tbcc_limite_preposto%ROWTYPE;
+
+    -- Variaveis local
+    vr_flgmaster          TBCC_LIMITE_PREPOSTO.flgmaster%TYPE;
+    
+    -- Variaveis de XML
+    vr_xml_temp VARCHAR2(32767); 
+    -- Cursores
+    
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    --vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+
+
+    -- Variaveis de critica
+    vr_dscritic crapcri.dscritic%TYPE;
+    
+  BEGIN
+    OPEN cr_tbcc_limite_preposto (prc_cdcooper => pr_cdcooper
+                                 ,prc_nrdconta => pr_nrdconta
+                                 ,prc_nrcpf    => pr_nrcpf);
+    FETCH cr_tbcc_limite_preposto INTO rw_tbcc_limite_preposto;
+    -- Se nao existir preposto, inserir
+    IF cr_tbcc_limite_preposto%NOTFOUND THEN
+
+      BEGIN
+        INSERT INTO tbcc_limite_preposto
+          (cdcooper
+	        ,nrdconta
+          ,nrcpf
+          ,flgmaster
+          ,cdoperad
+          ,vllimite_transf
+          ,dtlimite_transf
+          ,vllimite_pagto
+          ,dtlimite_pagto
+          ,vllimite_ted
+          ,dtlimite_ted
+          ,vllimite_vrboleto
+          ,dtlimite_vrboleto
+          ,vllimite_folha
+          ,dtlimite_folha
+          )
+          VALUES
+          (pr_cdcooper --cdcooper
+          ,pr_nrdconta --nrdconta
+          ,pr_nrcpf    --nrcpf
+          ,1           --flgmaster
+          ,1           --cdoperad
+          ,0           --vllimite_transf
+          ,SYSDATE     --dtlimite_transf
+          ,0           --vllimite_pagto
+          ,SYSDATE     --dtlimite_pagto
+          ,0           --vllimite_ted
+          ,SYSDATE     --dtlimite_ted
+          ,0           --vllimite_vrboleto
+          ,SYSDATE     --dtlimite_vrboleto
+          ,0           --vllimite_folha
+          ,SYSDATE     --dtlimite_folha
+          );
+      EXCEPTION
+        WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_des_erro := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;
+        pr_dscritic := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;          
+      END;
+      CLOSE cr_tbcc_limite_preposto;
+    ELSE
+     if(rw_tbcc_limite_preposto.flgmaster = 1) then
+       vr_flgmaster := 0;            
+     else
+       vr_flgmaster := 1;
+     end if;
+   
+     BEGIN
+       UPDATE tbcc_limite_preposto
+          SET flgmaster = vr_flgmaster 
+        WHERE tbcc_limite_preposto.cdcooper = pr_cdcooper
+          AND tbcc_limite_preposto.nrdconta = pr_nrdconta
+          AND tbcc_limite_preposto.nrcpf = pr_nrcpf;
+     EXCEPTION
+       WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_des_erro := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;
+        pr_dscritic := 'Erro ao alterar tabela tbcc_limite_preposto: ' || SQLERRM;
+      END;
+      
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => 0
+                          ,pr_dscritic => NULL
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
+                          ,pr_dstransa => 'Altera Preposto Master'
+                          ,pr_dttransa => trunc(sysdate)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => gene0002.fn_busca_time
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'ATENDA'
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+                          
+     gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Preposto Master'
+                             ,pr_dsdadant => nvl(rw_tbcc_limite_preposto.flgmaster,0)
+                             ,pr_dsdadatu => vr_flgmaster);      
+      CLOSE cr_tbcc_limite_preposto;
+    END IF; 
+    
+    -- Confirma a transacao
+    COMMIT;
+
+  END pc_altera_preposto_master;
+  
+  PROCEDURE pc_valida_apv_master (pr_cdcooper IN crapsnh.cdcooper%TYPE 
+                                 ,pr_nrdconta IN crapsnh.nrdconta%TYPE
+                                 ,pr_nrcpfcgc IN crapsnh.nrcpfcgc%TYPE
+                                 ,pr_cdtransacao_pendente IN tbgen_aprova_trans_pend.cdtransacao_Pendente%type
+                                 ,pr_conttran OUT INTEGER -- Identificador se deve finalizar o processo ou nao
+                                 ,pr_cdcritic OUT PLS_INTEGER                       
+                                 ,pr_dscritic OUT VARCHAR2)IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_valida_apv_master
+    --  Sistema  : Valida aprovação de preposto master
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Maio/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Valida se o preposto que está aprovando uma transação pendente é um master.
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                  
+
+    -- Busca preposto master pela conta
+    CURSOR cr_tbcc_limite_preposto IS
+      SELECT 1
+        FROM tbcc_limite_preposto t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.nrdconta  = pr_nrdconta
+         AND t.flgmaster = 1 -- preposto master
+         AND rownum      = 1;
+    -- Buscar preposto master aprovador    
+    CURSOR cr_tbcc_limite_preposto2 IS
+      SELECT 1
+        FROM tbcc_limite_preposto t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.nrdconta  = pr_nrdconta
+         AND t.nrcpf     = pr_nrcpfcgc
+         AND t.flgmaster = 1 -- preposto master 
+         AND rownum      = 1;
+    -- Busca aprovacoes da transacao em questao
+    CURSOR cr_tbgen_aprova_trans_pend IS
+      SELECT 1
+        FROM tbgen_aprova_trans_pend  t
+       WHERE t.cdcooper                = pr_cdcooper
+         AND t.nrdconta                = pr_nrdconta
+         AND t.nrcpf_responsavel_aprov = pr_nrcpfcgc
+         AND t.cdtransacao_pendente    = pr_cdtransacao_pendente 
+         AND t.idsituacao_aprov        = 2 ; -- Aprovado                
+    -- Variaveis
+    va_aprovador_master NUMBER(1);
+    va_preposto_ja_aprovou NUMBER(1);
+  BEGIN
+    
+    pr_conttran := 1;
+    
+    -- Valida se existe preposto master para a conta
+    FOR rw_tbcc_limite_preposto IN cr_tbcc_limite_preposto LOOP
+      -- Validar se o aprovador eh preposto master
+      va_aprovador_master := 0;
+      FOR rw_tbcc_limite_preposto2 IN cr_tbcc_limite_preposto2 LOOP
+        va_aprovador_master := 1;
+      END LOOP;
+      -- Se for preposto master o aprovador, devera retornar 1 
+      IF va_aprovador_master = 1 THEN
+        NULL; -- nao realizar nenhuma alteracao
+      ELSE 
+        -- Verifica se teve o preposto ja aprovou esta transacao
+        va_preposto_ja_aprovou := 0;
+        FOR rw_tbgen_aprova_trans_pend IN cr_tbgen_aprova_trans_pend LOOP
+          va_preposto_ja_aprovou := 1;
+        END LOOP;
+        IF va_preposto_ja_aprovou = 1 THEN
+          null; -- nao realizar nenhuma alteracao
+        ELSE
+          pr_dscritic := 'Necessário ter aprovação do presposto master.';
+        END IF;
+      END IF;
+      
+    END LOOP;
+  
+  END pc_valida_apv_master;
+  
+ PROCEDURE pc_corrigi_limite_preposto(pr_cdcooper IN VARCHAR2
+                                     ,pr_nrdconta IN VARCHAR2 
+                                     ,pr_idseqttl IN VARCHAR2
+                                     ,pr_cdoperad IN VARCHAR2
+                                     ,pr_vllimtrf IN VARCHAR2 
+                                     ,pr_vllimpgo IN VARCHAR2
+                                     ,pr_vllimted IN VARCHAR2 
+                                     ,pr_vllimvrb IN VARCHAR2 
+                                     ,pr_xmllog   IN VARCHAR2
+                                     ,pr_cdcritic OUT PLS_INTEGER                       
+                                     ,pr_dscritic OUT VARCHAR2
+                                     ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2) IS  
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_corrigi_limite_preposto
+    --  Sistema  : Valida aprovação de preposto master
+    --  Sigla    : CRED
+    --  Autor    : Rafael Monteiro
+    --  Data     : Maio/2017.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Corrige automaticamente os limites de prepostos e operadores para igual o menor limite de um 
+    --             preposto.
+    --
+    -- Alteração : 
+    --
+    ---------------------------------------------------------------------------------------------------------------                                      
+    
+    CURSOR cr_crapemp (prc_cdcooper IN crapemp.cdcooper%TYPE
+                      ,prc_nrdconta IN crapemp.nrdconta%TYPE) IS 
+      SELECT vllimfol 
+        FROM crapemp 
+       WHERE crapemp.cdcooper = prc_cdcooper 
+         AND crapemp.nrdconta = prc_nrdconta; 
+    rw_crapemp cr_crapemp%ROWTYPE;
+    
+    CURSOR cr_tbcc_limite_preposto (prc_cdcooper IN TBCC_LIMITE_PREPOSTO.cdcooper%TYPE 
+                                   ,prc_nrdconta IN TBCC_LIMITE_PREPOSTO.nrdconta%TYPE) IS
+      SELECT nrcpf,
+             vllimite_transf,
+             dtlimite_transf,
+             vllimite_pagto,
+             dtlimite_pagto,
+             vllimite_ted,
+             dtlimite_ted,
+             vllimite_vrboleto,
+             dtlimite_vrboleto,
+             vllimite_folha,
+             dtlimite_folha
+        FROM tbcc_limite_preposto 
+       WHERE tbcc_limite_preposto.cdcooper = prc_cdcooper
+         AND tbcc_limite_preposto.nrdconta = prc_nrdconta;
+    rw_tbcc_limite_preposto cr_tbcc_limite_preposto%ROWTYPE;
+    --
+    CURSOR cr_crapopi (prc_cdcooper       IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                      ,prc_nrdconta       IN crapass.nrdconta%TYPE ) IS
+      SELECT opi.nrcpfope,
+             opi.vllbolet, --  Valor Limite Boleto, Convenio e Todos os Tributos
+             opi.vllimtrf, --	Valor Limite Transferencia
+             opi.vllimted, --	Valor Limite TED
+             opi.vllimvrb, --	Valor Limite VR Boleto
+             opi.vllimflp  --	Valor Limite Folha de Pagamento
+        FROM crapopi opi
+       WHERE opi.cdcooper = prc_cdcooper
+         AND opi.nrdconta = prc_nrdconta;    
+    -- Variaveis
+    vr_cdcooper crapsnh.cdcooper%type;
+    vr_nrdconta crapsnh.nrdconta%type;
+    vr_idseqttl crapsnh.idseqttl%type;
+    
+    vr_vllimtrf crapsnh.vllimtrf%type;
+    vr_vllimpgo crapsnh.vllimpgo%type;
+    vr_vllimted crapsnh.vllimted%type;
+    vr_vllimvrb crapsnh.vllimvrb%type;
+    vr_vllimflp crapsnh.vllimflp%type;
+    
+    vr_nvlimtrf crapsnh.vllimtrf%type;
+    vr_nvlimpgo crapsnh.vllimpgo%type;
+    vr_nvlimted crapsnh.vllimted%type;
+    vr_nvlimvrb crapsnh.vllimvrb%type;
+    vr_nvlimflp crapsnh.vllimflp%type;
+    
+    vrb_dtlimite_transf tbcc_limite_preposto.dtlimite_transf%type;
+    vrb_dtlimite_pagto tbcc_limite_preposto.dtlimite_pagto%type; 
+    vrb_dtlimite_ted tbcc_limite_preposto.dtlimite_ted%type;
+    vrb_dtlimite_vrboleto tbcc_limite_preposto.dtlimite_vrboleto%type;
+    vrb_dtlimite_folha tbcc_limite_preposto.dtlimite_folha%type;
+
+    vrb_vllimfol crapemp.vllimfol%type;
+    
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(100);
+    --vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+    
+    vr_update number(1);
+    vr_alterou BOOLEAN;
+    vr_alerta   varchar2(1000);
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;    
+        
+  BEGIN
+
+    vr_alerta := 'OK';
+    vr_alterou  := FALSE; -- veifica se sera necessario commit
+    --
+    vr_cdcooper := gene0002.fn_char_para_number(pr_dsnumtex => pr_cdcooper);
+    vr_nrdconta := gene0002.fn_char_para_number(pr_dsnumtex => pr_nrdconta); 
+    vr_idseqttl := gene0002.fn_char_para_number(pr_dsnumtex => pr_idseqttl); 
+    vr_vllimtrf := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimtrf);
+    vr_vllimpgo := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimpgo);
+    vr_vllimted := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimted);
+    vr_vllimvrb := gene0002.fn_char_para_number(pr_dsnumtex => pr_vllimvrb); 
+    --
+    BEGIN
+      OPEN cr_crapemp (prc_cdcooper => vr_cdcooper
+                      ,prc_nrdconta => vr_nrdconta);
+      FETCH cr_crapemp INTO rw_crapemp;
+        IF cr_crapemp%FOUND THEN
+          vrb_vllimfol := rw_crapemp.vllimfol;
+        ELSE 
+          vrb_vllimfol := NULL;
+        END IF;
+        -- Fechar Cursor 
+        CLOSE cr_crapemp;
+    EXCEPTION
+      WHEN OTHERS THEN
+         pr_cdcritic := 0;
+         vr_alerta := 'Erro pc_corrigi_limite_preposto. cursor cr_crapemp - Erro: '|| SQLERRM;
+         RAISE vr_exc_erro;
+    END;
+    --
+    -- Valida os limites dos prepostos   
+    FOR rw_tbcc_limite_preposto IN cr_tbcc_limite_preposto(vr_cdcooper, vr_nrdconta) LOOP
+      --
+      vr_nvlimtrf := NULL;
+      vr_nvlimpgo := NULL;
+      vr_nvlimted := NULL;
+      vr_nvlimvrb := NULL;
+      vr_nvlimflp := NULL;
+      vr_update   := 0; -- verifica se é ncessario realizar update
+      --
+      IF vr_vllimtrf < rw_tbcc_limite_preposto.vllimite_transf THEN
+        vr_nvlimtrf := vr_vllimtrf;
+        vr_update := 1;
+        vrb_dtlimite_transf := sysdate;
+      END IF;
+      IF vr_vllimpgo < rw_tbcc_limite_preposto.vllimite_pagto THEN
+        vr_nvlimpgo := vr_vllimpgo;
+        vr_update := 1;
+        vrb_dtlimite_pagto := sysdate;
+      END IF; 
+      IF vr_vllimted < rw_tbcc_limite_preposto.vllimite_ted THEN
+        vr_nvlimted := vr_vllimted;
+        vr_update := 1;
+        vrb_dtlimite_ted := sysdate;
+      END IF;
+      IF vr_vllimvrb < rw_tbcc_limite_preposto.vllimite_vrboleto THEN
+        vr_nvlimvrb := vr_vllimvrb;
+        vr_update := 1;
+        vrb_dtlimite_vrboleto := sysdate;
+      END IF;
+      IF vrb_vllimfol < rw_tbcc_limite_preposto.vllimite_folha THEN
+        vr_nvlimflp := vrb_vllimfol;
+        vr_update := 1;
+        vrb_dtlimite_folha := sysdate;
+      END IF;
+
+      IF vr_update = 1 THEN
+        vr_alterou := TRUE;
+        BEGIN
+          UPDATE TBCC_LIMITE_PREPOSTO t
+             SET t.cdoperad          = pr_cdoperad,
+                 t.vllimite_transf   = NVL(vr_nvlimtrf,t.vllimite_transf),
+                 t.dtlimite_transf   = NVL(vrb_dtlimite_transf,t.dtlimite_transf),
+                 t.vllimite_pagto    = NVL(vr_nvlimpgo,t.vllimite_pagto),
+                 t.dtlimite_pagto    = NVL(vrb_dtlimite_pagto,t.dtlimite_pagto),
+                 t.vllimite_ted      = NVL(vr_nvlimted,t.vllimite_ted),
+                 t.dtlimite_ted      = NVL(vrb_dtlimite_ted,t.dtlimite_ted),
+                 t.vllimite_vrboleto = NVL(vr_nvlimvrb,t.vllimite_vrboleto),
+                 t.dtlimite_vrboleto = NVL(vrb_dtlimite_vrboleto,t.dtlimite_vrboleto),
+                 t.vllimite_folha    = NVL(vr_nvlimflp,t.vllimite_folha),
+                 t.dtlimite_folha    = NVL(vrb_dtlimite_folha,t.dtlimite_folha)
+           WHERE t.cdcooper = vr_cdcooper
+             AND t.nrdconta = vr_nrdconta
+             AND t.nrcpf    = rw_tbcc_limite_preposto.nrcpf;
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_cdcritic := 0;
+            vr_alerta := 'Erro pc_corrigi_limite_preposto update TBCC_LIMITE_PREPOSTO. '||sqlerrm;          
+            raise vr_exc_erro;
+        END;
+        --
+        BEGIN   
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => vr_alerta
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
+                            ,pr_dstransa => 'Corrige Limite de Preposto.'
+                            ,pr_dttransa => trunc(sysdate)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => gene0002.fn_busca_time
+                            ,pr_idseqttl => vr_idseqttl
+                            ,pr_nmdatela => 'ATENDA'
+                            ,pr_nrdconta => vr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+                            
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Valor de Transferencia'
+                                   ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_transf
+                                   ,pr_dsdadatu => vr_nvlimtrf);
+                                         
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de Boleto'
+                                  ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_pagto
+                                  ,pr_dsdadatu => vr_nvlimpgo); 
+                                       
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de TED'
+                                  ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_ted
+                                  ,pr_dsdadatu => vr_nvlimted); 
+                                      
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de VR Boleto'
+                                  ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_vrboleto
+                                  ,pr_dsdadatu => vr_nvlimvrb); 
+                                      
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de Folha PGTO'
+                                  ,pr_dsdadant => rw_tbcc_limite_preposto.vllimite_folha
+                                  ,pr_dsdadatu => vr_nvlimflp);
+                                      
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'CPF do Preposto'
+                                  ,pr_dsdadant => rw_tbcc_limite_preposto.nrcpf
+                                  ,pr_dsdadatu => vr_nvlimflp);                        
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_cdcritic := 0;
+            vr_alerta := 'Erro ao gerar LOG. '||sqlerrm;          
+            raise vr_exc_erro;
+        END;  
+      END IF;
+    END LOOP;
+    --
+    FOR rw_crapopi IN cr_crapopi(vr_cdcooper, vr_nrdconta) LOOP
+      --
+      vr_nvlimtrf := NULL;
+      vr_nvlimpgo := NULL;
+      vr_nvlimted := NULL;
+      vr_nvlimvrb := NULL;
+      vr_nvlimflp := NULL;
+      vr_update   := 0; -- verifica se é ncessario realizar update
+      --
+      IF vr_vllimtrf < rw_crapopi.vllimtrf THEN
+        vr_nvlimtrf := vr_vllimtrf;
+        vr_update := 1;
+      END IF;
+      IF vr_vllimpgo < rw_crapopi.vllbolet THEN
+        vr_nvlimpgo := vr_vllimpgo;
+        vr_update := 1;
+      END IF; 
+      IF vr_vllimted < rw_crapopi.vllimted THEN
+        vr_nvlimted := vr_vllimted;
+        vr_update := 1;
+
+      END IF;
+      IF vr_vllimvrb < rw_crapopi.vllimvrb THEN
+        vr_nvlimvrb := vr_vllimvrb;
+        vr_update := 1;
+      END IF;
+      IF vrb_vllimfol < rw_crapopi.vllimflp THEN
+        vr_nvlimflp := vrb_vllimfol;
+        vr_update := 1;
+      END IF;
+
+      IF vr_update = 1 THEN
+        vr_alterou := TRUE;
+        BEGIN
+          UPDATE crapopi t
+             SET t.vllimtrf = NVL(vr_nvlimtrf,t.vllimtrf),
+                 t.vllbolet = NVL(vr_nvlimpgo,t.vllbolet),
+                 t.vllimted = NVL(vr_nvlimted,t.vllimted),
+                 t.vllimvrb = NVL(vr_nvlimvrb,t.vllimvrb),
+                 t.vllimflp = NVL(vr_nvlimflp,t.vllimflp)
+           WHERE t.cdcooper = vr_cdcooper
+             AND t.nrdconta = vr_nrdconta
+             AND t.nrcpfope = rw_crapopi.nrcpfope;
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_cdcritic := 0;
+            vr_alerta := 'Erro pc_corrigi_limite_preposto update crapopi '||sqlerrm;          
+            raise vr_exc_erro;
+        END;
+        --
+        BEGIN   
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => vr_alerta
+                              ,pr_dsorigem => gene0001.vr_vet_des_origens(1) --> Origem enviada
+                              ,pr_dstransa => 'Corrige Limite de Operador.'
+                              ,pr_dttransa => trunc(sysdate)
+                              ,pr_flgtrans => 1
+                              ,pr_hrtransa => gene0002.fn_busca_time
+                              ,pr_idseqttl => vr_idseqttl
+                              ,pr_nmdatela => 'ATENDA'
+                              ,pr_nrdconta => vr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+                            
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Valor de Transferencia'
+                                   ,pr_dsdadant => rw_crapopi.vllimtrf
+                                   ,pr_dsdadatu => vr_nvlimtrf);
+                                         
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de Boleto'
+                                  ,pr_dsdadant => rw_crapopi.vllbolet
+                                  ,pr_dsdadatu => vr_nvlimpgo); 
+                                       
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de TED'
+                                  ,pr_dsdadant => rw_crapopi.vllimted
+                                  ,pr_dsdadatu => vr_nvlimted); 
+                                      
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de VR Boleto'
+                                  ,pr_dsdadant => rw_crapopi.vllimvrb
+                                  ,pr_dsdadatu => vr_nvlimvrb); 
+                                      
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'Valor de Folha PGTO'
+                                  ,pr_dsdadant => rw_crapopi.vllimflp
+                                  ,pr_dsdadatu => vr_nvlimflp);
+                                      
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                  ,pr_nmdcampo => 'CPF do Operador'
+                                  ,pr_dsdadant => rw_crapopi.nrcpfope
+                                  ,pr_dsdadatu => vr_nvlimflp);                        
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_cdcritic := 0;
+            vr_alerta := 'Erro ao gerar LOG operador. '||sqlerrm;          
+            raise vr_exc_erro;
+        END;  
+      END IF;
+    END LOOP;    
+
+    -- Confirma a transacao
+    IF vr_alterou THEN
+      COMMIT;
+    END IF;
+     --
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Dados',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'preposto',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => pr_dscritic);
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'preposto',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'pralerta',
+                           pr_tag_cont => vr_alerta,
+                           pr_des_erro => pr_dscritic);
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := pr_cdcritic;
+      --pr_dscritic := vr_alerta;   
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'alerta',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => pr_dscritic);
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'alerta',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'pralerta',
+                             pr_tag_cont => vr_alerta,
+                             pr_des_erro => pr_dscritic);     
+                           
+/*     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><pralerta>' || pr_dscritic || '</pralerta></Root>'); */
+    WHEN OTHERS THEN 
+      pr_cdcritic := 0;
+      vr_alerta := 'Erro geral na procedure pc_corrigi_limite_preposto. - Erro: '|| SQLERRM;      
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');  
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'alerta',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => pr_dscritic);
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'alerta',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'pralerta',
+                             pr_tag_cont => vr_alerta,
+                             pr_des_erro => pr_dscritic);                                          
+
+                                        
+  END pc_corrigi_limite_preposto;
 
 END INET0002;
 /
