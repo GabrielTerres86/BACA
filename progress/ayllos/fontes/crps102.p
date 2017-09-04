@@ -42,6 +42,7 @@
 DEF STREAM str_1.
 
 { includes/var_batch.i "NEW" }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR aux_nrdconta     AS  INT                              NO-UNDO.
 DEF        VAR aux_nmarqimp     AS  CHAR     INIT   "rl/crrl085.lst" NO-UNDO.
@@ -214,4 +215,5 @@ CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
 RUN fontes/imprim.p.
 
 /* .......................................................................... */
+
 
