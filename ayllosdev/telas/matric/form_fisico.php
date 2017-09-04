@@ -179,10 +179,10 @@
 		<legend><? echo utf8ToHtml('Filiação') ?></legend>
 		
 		<label for="nmmaettl"><? echo utf8ToHtml('Nome Mãe:') ?></label>
-		<input name="nmmaettl" id="nmmaettl" type="text" value="<? echo stringTabela(getByTagName($registro,'nmmaettl'),41,'maiuscula') ?>" />		
+		<input name="nmmaettl" id="nmmaettl" type="text" value="<? echo stringTabela(getByTagName($registro,'nmmaeptl'),41,'maiuscula') ?>" />		
 	
 		<label for="nmpaittl">Nome Pai:</label>
-		<input name="nmpaittl" id="nmpaittl" type="text" value="<? echo stringTabela(getByTagName($registro,'nmpaittl'),41,'maiuscula') ?>" />		
+		<input name="nmpaittl" id="nmpaittl" type="text" value="<? echo stringTabela(getByTagName($registro,'nmpaiptl'),41,'maiuscula') ?>" />		
 		<br style="clear:both" />	
 				
 	</fieldset>	
