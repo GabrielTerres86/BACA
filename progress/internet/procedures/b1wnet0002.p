@@ -2770,16 +2770,8 @@ PROCEDURE permissoes-menu-mobile:
            tt-itens-menu-mobile.flcreate = aux_flgaprov. 
     
     CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 900. /*CONVENIÊNCIA*/
-           tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
-           
-    CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 901. /*RECARGA DE CELULAR*/
            tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
-    
-    CREATE tt-itens-menu-mobile.
-    ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇÕES PENDENTES*/
-           tt-itens-menu-mobile.flcreate = FALSE.
     
     FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
 							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 

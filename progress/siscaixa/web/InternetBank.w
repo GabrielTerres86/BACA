@@ -1595,11 +1595,15 @@ PROCEDURE process-web-request :
         IF GET-VALUE("aux_idefetiv") <> "" THEN
             ASSIGN aux_idefetiv = INTE(GET-VALUE("aux_idefetiv")).
 
+        IF  GET-VALUE("flcadast") <> ""  THEN
+            ASSIGN aux_flcadast = INT(GET-VALUE("flcadast")).
+
         /* Verificar senha e frase */
         IF  aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao))  OR /** Utiliza criptografia **/
            (
                NOT aux_flgcript AND 
                ( 
+                 (
                   /** Nao utiliza criptografia se for confirmacao de pagamento **/
                   CAN-DO("27",STRING(aux_operacao)) 
                ) OR
@@ -1630,7 +1634,12 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for confirmação de recarga de celular **/
                   CAN-DO("181",STRING(aux_operacao)) AND INT(GET-VALUE("aux_operacao")) = 6
+               ) OR
+               (
+                  /** Nao utiliza criptografia se for cadastro de debito automatico **/
+                  CAN-DO("99",STRING(aux_operacao)) AND aux_flcadast = 1
                )
+           )
            )
              THEN 
         DO:
@@ -5627,11 +5636,16 @@ PROCEDURE proc_operacao99:
                                           INPUT aux_flcadast,
                                           INPUT aux_cdhistor,
                                           INPUT aux_idmotivo,
-                                         OUTPUT aux_dsmsgerr).
+                                         OUTPUT aux_dsmsgerr,
+                                         OUTPUT TABLE xml_operacao).
 
-    IF  RETURN-VALUE = "NOK"  THEN
-        DO:
+    IF RETURN-VALUE <> "OK" THEN
             {&out} aux_dsmsgerr. 
+
+    FOR EACH xml_operacao NO-LOCK:
+
+        {&out} xml_operacao.dslinxml.
+
         END.
 
     {&out} aux_tgfimprg.
