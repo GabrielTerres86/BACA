@@ -273,6 +273,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                      ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
                                      ,pr_dsiduser   IN VARCHAR2                       --> id do usuario
                                      ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
+                                     ,pr_tppacote  IN INTEGER DEFAULT 0               --> Tipo de pacote(1-pacote,2-individual,0-Todos)
                                      --------->> OUT <<-----------
                                      ,pr_nmarqpdf OUT  VARCHAR2                       --> Retorna o nome do relatorio gerado
                                      ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
@@ -314,7 +315,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                      ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
 
   --> Buscar informações dos contratos de serviço de SMS
-  PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+PROCEDURE pc_ret_dados_serv_sms (pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
                                   ,pr_nrdconta      IN crapass.nrdconta%TYPE  --> Conta do associado
                                   ,pr_nmdatela      IN craptel.nmdatela%TYPE  --> Nome da tela
                                   ,pr_idorigem      IN INTEGER                --> Indicador de sistema origem
@@ -324,15 +325,19 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                   ,pr_tpnmemis     OUT tbcobran_sms_contrato.tpnome_emissao%TYPE --> Tipo de nome na emissao do SMS
                                   ,pr_nmemisms     OUT tbcobran_sms_contrato.nmemissao_sms%TYPE  --> Nome na emissao do SMS - Outro
                                   ,pr_flgativo     OUT INTEGER                                    --> Indicador de ativo
+                                  ,pr_idpacote     OUT tbcobran_sms_contrato.idpacote%TYPE   --> identificador do pacote
                                   ,pr_dspacote     OUT tbcobran_sms_pacotes.dspacote%TYPE    --> Descrição do pacote
                                   ,pr_dhadesao     OUT tbcobran_sms_contrato.dhadesao%TYPE   --> Data hora de adesao
                                   ,pr_idcontrato   OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato
                                   ,pr_vltarifa     OUT crapfco.vltarifa%TYPE                 --> Valor da tarifa
-                                  ,pr_flsitsms     OUT  INTEGER                              --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
-                                  ,pr_dsalerta     OUT  VARCHAR2                             --> Retorna alerta para o cooperado
-                                  
-                                  ,pr_cdcritic OUT  INTEGER                 --> Retorna codigo de critica
-                                  ,pr_dscritic OUT  VARCHAR2);              --> Retorno de critica
+                                  ,pr_flsitsms     OUT INTEGER                               --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
+                                  ,pr_dsalerta     OUT VARCHAR2                              --> Retorna alerta para o cooperado
+                                  ,pr_qtsmspct     OUT tbcobran_sms_contrato.qtdsms_pacote%TYPE --> Retorna quantidade de sms contratada do pacote
+                                  ,pr_qtsmsusd     OUT tbcobran_sms_contrato.qtdsms_usados%TYPE --> Retorna quantidade de sms ja utilizadas do pacote
+                                  ,pr_dsmsgsemlinddig OUT VARCHAR2                                  
+                                  ,pr_dsmsgcomlinddig OUT VARCHAR2                                  
+                                  ,pr_cdcritic     OUT  INTEGER                 --> Retorna codigo de critica
+                                  ,pr_dscritic     OUT  VARCHAR2);     
                                   
   --> Buscar informações dos contratos de serviço de SMS - Web
   PROCEDURE pc_ret_dados_serv_sms_web ( pr_nrdconta   IN crapass.nrdconta%TYPE  --> Numer de conta do cooperado                                     
@@ -352,6 +357,9 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                  ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao
                                  ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE  --> CPF do operador de conta juridica
                                  ,pr_inaprpen    IN NUMBER                 --> Indicador de aprovação de transacao pendente
+                                 ,pr_idpacote    IN INTEGER DEFAULT 0      --> Identificador do pacote de SMS
+                                 ,pr_tpnmemis    IN tbcobran_sms_contrato.tpnome_emissao%TYPE DEFAULT 1   --> Tipo de nome na emissao do boleto (0-outro, 1-nome razao/ 2-nome fantasia) 
+                                 ,pr_nmemissa    IN tbcobran_sms_contrato.nmemissao_sms%TYPE DEFAULT NULL --> Nome caso selecionado Outro
                                  -----> OUT <----                                   
                                  ,pr_idcontrato OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de sms
                                  ,pr_dsretorn   OUT  VARCHAR2              --> Mensagem de retorno
@@ -363,6 +371,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                        ,pr_idseqttl   IN crapttl.idseqttl%TYPE  --> Sequencial do titular
                                        ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE  --> CPF do operador de conta juridica
                                        ,pr_inaprpen   IN NUMBER                 --> Indicador de aprovação de transacao pendente
+                                       ,pr_idpacote   IN INTEGER DEFAULT 0      --> Identificador do pacote de SMS
                                        ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
                                        ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
                                        ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
@@ -388,9 +397,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
   --> Rotina para canlemaneto do contrato de SMS
   PROCEDURE pc_cancel_contrato_sms_web (pr_nrdconta    IN crapass.nrdconta%TYPE  --> Conta do associado
                                        ,pr_idseqttl    IN crapttl.idseqttl%TYPE  --> Sequencial do titular 
-                                       ,pr_idcontrato  IN tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de SMS
-                                       ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE  --> CPF do operador de conta juridica
-                                       ,pr_inaprpen    IN NUMBER                 --> Indicador de aprovação de transacao pendente
+                                       ,pr_idcontrato  IN tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de SMS                                       
                                        ,pr_xmllog      IN VARCHAR2               --> XML com informacoes de LOG
                                        ,pr_cdcritic   OUT PLS_INTEGER            --> Codigo da critica
                                        ,pr_dscritic   OUT VARCHAR2               --> Descricao da critica
@@ -472,11 +479,89 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
   --> Rotina para atualizar situação do SMS - chamada SOA
   PROCEDURE pc_atualiza_status_msg_soa ( pr_idlotsms   IN tbgen_sms_lote.idlote_sms%TYPE,  --> Numer do lote de SMS
                                          pr_xmlrequi   IN xmltype);                        --> Requeisicao xml
-                                         
-  --> Rotina cobrar tarifas de SMS de cobrança enviados
-  PROCEDURE pc_calcula_tarifa_individual (pr_cdcooper    IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa                                                                         
-                                         ,pr_dscritic   OUT VARCHAR2);             --> Retorno de critica
+ 
+  --> Rotina para validar a criação do contrato de sms de cobrança
+  PROCEDURE pc_valida_contrato_sms( pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                   ,pr_cdagenci      IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                   ,pr_nrdcaixa      IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                   ,pr_cdoperad      IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                   ,pr_nmdatela      IN craptel.nmdatela%TYPE  --> Nome da tela
+                                   ,pr_idorigem      IN INTEGER                --> Identificador sistema origem
+                                   ,pr_nrdconta      IN crapass.nrdconta%TYPE  --> Conta do associado
+                                   ,pr_idpacote      IN tbcobran_sms_pacotes.idpacote%TYPE --> Id do pacote de sms de cobrança
+                                   -----> OUT <----                                                                                                      
+                                   ,pr_flpossnh OUT  INTEGER                   --> Retornar se cooperado possui senha de Internet (1-Ok, 0-NOK)
+                                   ,pr_cdcritic OUT  INTEGER                   --> Retorna codigo de critica
+                                   ,pr_dscritic OUT  VARCHAR2);                --> Retorno de critica
 
+  --> Rotina para validar a criação do contrato de sms de cobrança - Chamada ayllos Web
+  PROCEDURE pc_valida_contrato_sms_web (pr_nrdconta   IN crapass.nrdconta%TYPE  --> Numero de conta do cooperado
+                                       ,pr_idpacote   IN INTEGER                --> Numero do pacote de SMS
+                                       ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                       ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                       ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                       ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
+                                       
+  --> Rotina para lançar tarifa do pacote de SMS
+  PROCEDURE pc_gerar_tarifa_pacote (pr_dscritic   OUT  VARCHAR2);            --> Retorno de critica
+
+  --> Rotina para verificar e renovar os contratos/pacote de SMS
+  PROCEDURE pc_verifica_renovacao_pacote (pr_dscritic   OUT  VARCHAR2);      --> Retorno de critica                                   
+                                         
+                                         
+  --> Rotina para realizar a troca do pacote de SMS
+  PROCEDURE pc_trocar_pacote_sms (pr_cdcooper    IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                 ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Conta do associado                             
+                                 ,pr_idorigem    IN INTEGER                --> id origem 
+                                 ,pr_cdoperad    IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                 ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao                             
+                                 ,pr_idpacote    IN INTEGER DEFAULT 0      --> Identificador do pacote de SMS                                 ,
+                                 ,pr_idctratu    IN tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de sms
+                                 -----> OUT <----                                   
+                                 ,pr_idctrnov   OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de sms
+                                 ,pr_dsretorn   OUT VARCHAR2               --> Mensagem de retorno             
+                                 ,pr_cdcritic   OUT INTEGER                --> Retorna codigo de critica
+                                 ,pr_dscritic   OUT VARCHAR2);             --> Retorno de critica
+                                                                          
+  --> Rotina para realizar a troca do pacote de SMS - Chamada ayllos Web
+  PROCEDURE pc_trocar_pacote_sms_web (  pr_nrdconta   IN crapass.nrdconta%TYPE  --> Numero de conta do cooperado
+                                       ,pr_idcontrato IN INTEGER                --> indicador do contrato de serviço de SMS de Cobrança
+                                       ,pr_idpacote   IN INTEGER                --> Numero do pacote de SMS
+                                       ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                       ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                       ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                       ,pr_des_erro  OUT VARCHAR2) ;            --> Erros do processo
+
+  --> Rotina para cobrar tarifas das SMSs enviadas 
+  PROCEDURE pc_gera_tarifa_sms_enviados (pr_cdcooper    IN  INTEGER               --> Codigo da cooperativa                                         
+                                        ,pr_dscritic   OUT  VARCHAR2);            --> Retorno de critica
+
+  --> Rotina para verificar se é para apresentar popup do serviço de SMS para o cooperado
+  PROCEDURE pc_verifar_oferta_sms(pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                 ,pr_nrdconta      IN crapass.nrdconta%TYPE  --> Conta do associado                                 
+                                 -----> OUT <----                                                                                                  
+                                 ,pr_flofesms OUT  INTEGER                   --> Retorna se deve exibir oferta de SMS
+                                 ,pr_dsmensag OUT  VARCHAR2                  --> Retorna alerta para o cooperado
+                                 ,pr_dscritic OUT  VARCHAR2);                --> Retorno de critica
+                                 
+                                 
+--> Rotina responsavel por gerar o relatorio de resumo de envio de SMS
+  PROCEDURE pc_relat_resumo_envio_sms (pr_cdcooper  IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa                                    
+                                      ,pr_nrdconta  IN  crapass.nrdconta%TYPE          --> Numer de conta do cooperado                                     
+                                      ,pr_dtiniper  IN  DATE                           --> Data inicio do periodo para relatorio
+                                      ,pr_dtfimper  IN  DATE                           --> Data fim do periodo para relatorio
+                                      ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
+                                      ,pr_dsiduser   IN VARCHAR2                       --> id do usuario
+                                      ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
+                                      --------->> OUT <<-----------
+                                      ,pr_nmarqpdf OUT VARCHAR2                        --> Retorna o nome do relatorio gerado
+                                      ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                                      ,pr_cdcritic OUT NUMBER                          --> nome na emissao do boleto (1-nome razao/ 2-nome fantasia) 
+                                      ,pr_dscritic OUT VARCHAR2);                                    
 END cobr0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
@@ -786,7 +871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lombardi
-     Data    : Agosto/2015                     Ultima atualizacao: 13/03/2016
+     Data    : Agosto/2015                     Ultima atualizacao: 28/08/2017
 
      Dados referentes ao programa:
 
@@ -796,6 +881,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
 						 	  para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
 						 	 (Andrei - RKAM).
+               
+                 28/08/2017 - Ajuste para possibilitar envio do boleto à CIP (Rafael)
 
   ............................................................................ */      
 
@@ -997,7 +1084,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
               vlabatim, cdmensag, dsdoccop, vltitulo, dsdinstr, dsinform, cdimpcob, flgimpre, nrctasac, nrctremp, 
               nrnosnum, flgdprot, qtdiaprt, indiaprt, vljurdia, vlrmulta, flgaceit, flgregis, inemiten, insitcrt, 
-              insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp)
+              insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp, inregcip, inenvcip, dtvctori)
       VALUES ( pr_cdcooper
               ,pr_nrdconta
               ,vr_nrdocmto
@@ -1047,6 +1134,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idopeleg.nextval ELSE 0 END) -- 
               ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idtitleg.nextval ELSE 0 END) -- 
               ,(CASE WHEN pr_inemiten = 3 THEN 1 /* a enviar à PG */ ELSE 0 END )
+              ,2 -- registro batch CIP
+              ,1 -- CIP a enviar
+              ,pr_dtvencto -- vencimento original
               ) RETURNING 
                   cdcooper, nrdconta, nrdocmto, idseqttl, dtmvtolt, cdbandoc, incobran, nrcnvcob, nrdctabb, cdcartei, 
                   cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
@@ -2160,8 +2250,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                      ,pr_dtiniper  IN  DATE                           --> Data inicio do periodo para relatorio
                                      ,pr_dtfimper  IN  DATE                           --> Data fim do periodo para relatorio
                                      ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
-                                     ,pr_dsiduser   IN VARCHAR2                       --> id do usuario
+                                     ,pr_dsiduser  IN VARCHAR2                        --> id do usuario
                                      ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
+                                     ,pr_tppacote  IN INTEGER DEFAULT 0               --> Tipo de pacote(1-pacote,2-individual,0-Todos)
                                      --------->> OUT <<-----------
                                      ,pr_nmarqpdf OUT VARCHAR2                        --> Retorna o nome do relatorio gerado
                                      ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
@@ -2196,9 +2287,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              cob.dtvencto,
              cob.vltitulo,
              ctl.dhenvio_sms AS dhenvsms,
-             ctl.nrddd||' '||ctl.nrtelefone  AS nrdofone
-        FROM tbgen_sms_controle ctl,
+             ctl.nrddd||' '||ctl.nrtelefone  AS nrdofone,
+             pct.dspacote
+        FROM tbgen_sms_controle ctl,             
              tbcobran_sms sms,
+             tbcobran_sms_contrato ctr,
+             tbcobran_sms_pacotes pct,
              crapsab sab,
              crapcob cob,
              crapass ass,
@@ -2208,7 +2302,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ctl.dhenvio_sms BETWEEN pr_dtiniper AND to_date(to_char(pr_dtfimper,'DDMMRRRR')||'235959','DDMMRRHH24MISS')
          AND sms.idlote_sms = ctl.idlote_sms
          AND sms.idsms    = ctl.idsms
-         AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,pr_instatus)          
+         AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,pr_instatus)     
+         AND sms.cdcooper = ctr.cdcooper
+         AND sms.nrdconta = ctr.nrdconta
+         AND sms.idcontrato = ctr.idcontrato
+         AND ctr.cdcooper = pct.cdcooper
+         AND ctr.idpacote = pct.idpacote
          AND cob.cdcooper = sms.cdcooper
          AND cob.nrdconta = sms.nrdconta
          AND cob.nrcnvcob = sms.nrcnvcob
@@ -2221,7 +2320,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND cob.cdcooper = ass.cdcooper
          AND cob.nrdconta = ass.nrdconta
          AND ass.cdcooper = age.cdcooper
-         AND ass.cdagenci = age.cdagenci;
+         AND ass.cdagenci = age.cdagenci
+         AND ( (pr_tppacote = 2 AND ctr.idpacote IN (1,2)) OR
+               (pr_tppacote = 1 AND ctr.idpacote > 2) OR
+               (pr_tppacote = 0)
+              );
     
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -2287,7 +2390,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                        '<dtvencto>'||     to_char(rw_cobran_sms.dtvencto,'DD/MM/RRRR')       ||'</dtvencto>'||   
                        '<vltitulo>'||     rw_cobran_sms.vltitulo                             ||'</vltitulo>'||   
                        '<dhenvio_sms>'||  to_char(rw_cobran_sms.dhenvsms,'DD/MM/RRRR HH24:MI:SS')   ||'</dhenvio_sms>'||
-                       '<nrdofone>'||     rw_cobran_sms.nrdofone                             ||'</nrdofone>
+                       '<nrdofone>'||     rw_cobran_sms.nrdofone                             ||'</nrdofone> '||
+                       '<dspacote>'||     rw_cobran_sms.dspacote                             ||'</dspacote>
                      </SMS>');      
     END LOOP;
     
@@ -2558,7 +2662,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Frequencia: Sempre que chamado
        Objetivo  : Rotina para verificar se serviço de SMS.
 
-       Alteracoes: ----
+       Alteracoes: 14/06/2017 - Alterado para sempre cancelar pacote ativo, quando
+                                a validação encontrar críticas. (Renato Darosci)
 
     ............................................................................ */
     --------------->> CURSORES <<----------------
@@ -2634,6 +2739,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND prm.cdproduto = 19;
     rw_sms_param cr_sms_param%ROWTYPE;
     
+    --> Verificar se existe ceb ativo
+    CURSOR cr_crapceb IS    
+    SELECT 1
+      FROM crapceb ceb
+     WHERE ceb.insitceb = 1
+       AND ceb.cdcooper = pr_cdcooper
+       AND ceb.nrdconta = pr_nrdconta
+       AND rownum <= 1;
     
     -------------->> VARIAVEIS <<----------------
     vr_exc_erro     EXCEPTION;
@@ -2642,6 +2755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     vr_qtlatpen     INTEGER;
     vr_tot_qtlatpen INTEGER := 0;
+    vr_existe       INTEGER := 0; 
     vr_dsalerta     VARCHAR2(2000);
     
   BEGIN
@@ -2655,6 +2769,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -- Fechar o cursor
     CLOSE btch0001.cr_crapdat;   
   
+    rw_contrato_sms := NULL;
+    --> Buscar contrato ativo do cooperado
+    OPEN cr_contrato_sms;
+    FETCH cr_contrato_sms INTO rw_contrato_sms;
+    CLOSE cr_contrato_sms;    
+        
+  
     --> Verificar se coop esta habilitada a enviar SMS de cobrança
     rw_sms_param := NULL;
     OPEN cr_sms_param;
@@ -2664,6 +2785,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     IF nvl(rw_sms_param.flgenvia_sms,0) = 0 THEN
       -- Se coop nao estiver liberada, retornar zero na situação do serviço
       pr_flsitsms := 0;
+      
+      --> Verificar se possui contrato ativo
+      IF NVL(rw_contrato_sms.idcontrato,0) > 0 THEN
+        --> Canlemaneto do contrato de SMS ativo
+        COBR0005.pc_cancel_contrato_sms 
+                             (pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
+                             ,pr_nrdconta    => pr_nrdconta    --> Conta do associado
+                             ,pr_idseqttl    => 1              --> Sequencial do titular
+                             ,pr_idcontrato  => rw_contrato_sms.idcontrato  --> Numero do contrato de SMS
+                             ,pr_idorigem    => 7   /*Batch-automatico*/    --> id origem 
+                             ,pr_cdoperad    => 996            --> Codigo do operador
+                             ,pr_nmdatela    => pr_nmdatela    --> Identificador da tela da operacao
+                             ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
+                             ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
+                             -----> OUT <----           
+                             ,pr_dsretorn    => vr_dscritic    --> Mensagem de retorno             
+                             ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
+                             ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
+                                                                  
+        -- Se retornou erro
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_erro;
+        END IF;  
+        
+        rw_contrato_sms.idcontrato := 0;
+      END IF;
+      
       RETURN;
     END IF;
     
@@ -2676,7 +2825,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_cobran_prm;
-    END IF;      
+    END IF;  
+    
+    --> Verificar se existe ceb ativo
+    OPEN cr_crapceb;
+    FETCH cr_crapceb INTO vr_existe;
+    IF cr_crapceb%NOTFOUND THEN
+      CLOSE cr_crapceb;
+      -- Se cooperado nao possuir ceb ativo, retornar zero na situação do serviço
+      pr_flsitsms := 0;
+      
+      --> Verificar se possui contrato ativo
+      IF NVL(rw_contrato_sms.idcontrato,0) > 0 THEN
+        --> Canlemaneto do contrato de SMS ativo
+        COBR0005.pc_cancel_contrato_sms 
+                             (pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
+                             ,pr_nrdconta    => pr_nrdconta    --> Conta do associado
+                             ,pr_idseqttl    => 1              --> Sequencial do titular
+                             ,pr_idcontrato  => rw_contrato_sms.idcontrato  --> Numero do contrato de SMS
+                             ,pr_idorigem    => 7   /*Batch-automatico*/    --> id origem 
+                             ,pr_cdoperad    => 996            --> Codigo do operador
+                             ,pr_nmdatela    => pr_nmdatela    --> Identificador da tela da operacao
+                             ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
+                             ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
+                             -----> OUT <----           
+                             ,pr_dsretorn    => vr_dscritic    --> Mensagem de retorno             
+                             ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
+                             ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
+                                                                  
+        -- Se retornou erro
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_erro;
+        END IF;  
+        
+        rw_contrato_sms.idcontrato := 0;
+      END IF;
+      
+      RETURN;
+      
+    END IF;
+    CLOSE cr_crapceb;
+        
     
     --> Buscar tarifas de sms já aderidas pelo cooperado
     FOR rw_tarifas IN cr_tarifas LOOP
@@ -2702,12 +2892,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 
     END LOOP;
     
-    rw_contrato_sms := NULL;
-    --> Buscar contrato ativo do cooperado
-    OPEN cr_contrato_sms;
-    FETCH cr_contrato_sms INTO rw_contrato_sms;
-    CLOSE cr_contrato_sms;    
-        
     --> Caso possuir lançamentos pendentes, cancelar serviço
     IF nvl(vr_tot_qtlatpen,0) > 0 THEN
       --> vr_dsalerta := 'Cooperado possui '||vr_tot_qtlatpen|| ' tarifa(s) de SMS de Cobrança pendente(s).';      
@@ -2904,13 +3088,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                   ,pr_tpnmemis     OUT tbcobran_sms_contrato.tpnome_emissao%TYPE --> Tipo de nome na emissao do SMS
                                   ,pr_nmemisms     OUT tbcobran_sms_contrato.nmemissao_sms%TYPE  --> Nome na emissao do SMS - Outro
                                   ,pr_flgativo     OUT INTEGER                                    --> Indicador de ativo
+                                  ,pr_idpacote     OUT tbcobran_sms_contrato.idpacote%TYPE   --> identificador do pacote
                                   ,pr_dspacote     OUT tbcobran_sms_pacotes.dspacote%TYPE    --> Descrição do pacote
                                   ,pr_dhadesao     OUT tbcobran_sms_contrato.dhadesao%TYPE   --> Data hora de adesao
                                   ,pr_idcontrato   OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato
                                   ,pr_vltarifa     OUT crapfco.vltarifa%TYPE                 --> Valor da tarifa
                                   ,pr_flsitsms     OUT INTEGER                               --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
                                   ,pr_dsalerta     OUT VARCHAR2                              --> Retorna alerta para o cooperado
-                                  
+                                  ,pr_qtsmspct     OUT tbcobran_sms_contrato.qtdsms_pacote%TYPE --> Retorna quantidade de sms contratada do pacote
+                                  ,pr_qtsmsusd     OUT tbcobran_sms_contrato.qtdsms_usados%TYPE --> Retorna quantidade de sms ja utilizadas do pacote
+                                  ,pr_dsmsgsemlinddig OUT VARCHAR2                                  
+                                  ,pr_dsmsgcomlinddig OUT VARCHAR2                                  
                                   ,pr_cdcritic     OUT  INTEGER                 --> Retorna codigo de critica
                                   ,pr_dscritic     OUT  VARCHAR2) IS            --> Retorno de critica
 
@@ -2950,12 +3138,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     --> Buscar dados do contrato de sms     
     CURSOR cr_contrato_sms IS
       SELECT pct.cdtarifa
+            ,ctr.cdcooper
             ,pct.dspacote
+            ,ctr.idpacote
             ,ctr.dhcancela
             ,ctr.idcontrato
             ,ctr.dhadesao
             ,ctr.tpnome_emissao
             ,ctr.nmemissao_sms
+            ,ctr.qtdsms_pacote
+            ,ctr.qtdsms_usados
             ,ass.nmprimtl
             ,ass.inpessoa
         FROM crapass ass
@@ -2980,7 +3172,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        AND fco.flgvigen = 1 --> ativa 
        AND fco.cdfaixav = fvl.cdfaixav 
        AND fvl.cdtarifa = pr_cdtarifa;
-    
+       
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE
+                      ,pr_nrdconta crapass.nrdconta%TYPE) IS
+                      
+     SELECT ass.nmprimtl
+       FROM crapass ass
+      WHERE ass.cdcooper = pr_cdcooper
+        AND ass.nrdconta = pr_nrdconta;
     
     -------------->> VARIAVEIS <<----------------
     vr_exc_erro     EXCEPTION;
@@ -2989,7 +3188,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     vr_cdtarifa     craptar.cdtarifa%TYPE;
     vr_idctrativ    tbcobran_sms_contrato.idcontrato%TYPE;
-    
+    vr_nmremsms     VARCHAR2(1000);
+    vr_valores_dinamicos VARCHAR2(1000);
     
   BEGIN
   
@@ -3025,12 +3225,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CLOSE cr_contrato_sms;
       vr_cdtarifa   := rw_contrato_sms.cdtarifa;
       pr_dspacote   := rw_contrato_sms.dspacote;
+      pr_idpacote   := rw_contrato_sms.idpacote;
       pr_idcontrato := rw_contrato_sms.idcontrato;
       pr_dhadesao   := rw_contrato_sms.dhadesao;
       
       pr_nmprintl  := rw_contrato_sms.nmprimtl;
       pr_tpnmemis  := rw_contrato_sms.tpnome_emissao;
       pr_nmemisms  := rw_contrato_sms.nmemissao_sms;
+      
+      pr_qtsmspct  := rw_contrato_sms.qtdsms_pacote;
+      pr_qtsmsusd  := rw_contrato_sms.qtdsms_usados;
       
       IF rw_contrato_sms.inpessoa = 1 THEN
         --> buscar nome da titular
@@ -3043,8 +3247,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         OPEN cr_crapjur;
         FETCH cr_crapjur INTO pr_nmfansia;
         CLOSE cr_crapjur;      
-    END IF;
+      END IF;
       
+     
+    -- Definir nome de remetente para o SMS
+    IF rw_contrato_sms.tpnome_emissao = 3 THEN
+      vr_nmremsms := rw_contrato_sms.nmemissao_sms;
+    --> se selecionou Razao social/Nome
+    ELSIF rw_contrato_sms.tpnome_emissao = 1 THEN
+      --> Buscar nome na crapass
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO vr_nmremsms;
+      CLOSE cr_crapass;
+                    
+    -- se selecionou Nome fantasia
+    ELSIF rw_contrato_sms.tpnome_emissao = 2 THEN
+                  
+      -- Buscar nome na crapjur
+      OPEN cr_crapjur;
+      FETCH cr_crapjur INTO vr_nmremsms;
+      CLOSE cr_crapjur;              
+
+    END IF;  
+
+ --> Variavel para SMS
+    vr_valores_dinamicos := '#Nome#=' ||vr_nmremsms ||';'|| 
+                            '#LinhaDigitavel#='|| '000000000000';
+          
+    --> buscar mensagem
+    pr_dsmsgcomlinddig := GENE0003.fn_buscar_mensagem
+                               (pr_cdcooper        => pr_cdcooper
+                               ,pr_cdproduto       => 19
+                               ,pr_cdtipo_mensagem => 9
+                               ,pr_sms             => 1
+                               ,pr_valores_dinamicos => vr_valores_dinamicos);
+                               
+    --> buscar mensagem
+    pr_dsmsgsemlinddig := GENE0003.fn_buscar_mensagem
+                               (pr_cdcooper        => pr_cdcooper
+                               ,pr_cdproduto       => 19
+                               ,pr_cdtipo_mensagem => 12
+                               ,pr_sms             => 1
+                               ,pr_valores_dinamicos => vr_valores_dinamicos);                               
     END IF;
     
     --> Se estiver cancelado, mandar como inativo, para solicitar
@@ -3120,12 +3365,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_tpnmemis   tbcobran_sms_contrato.tpnome_emissao%TYPE;
     vr_nmemisms   tbcobran_sms_contrato.nmemissao_sms%TYPE;
     vr_flgativo   INTEGER;    
+    vr_idpacote   tbcobran_sms_pacotes.idpacote%TYPE;
     vr_dspacote   tbcobran_sms_pacotes.dspacote%TYPE;
     vr_dhadesao   tbcobran_sms_contrato.dhadesao%TYPE;
     vr_idcontrato tbcobran_sms_contrato.idcontrato%TYPE;
     vr_vltarifa   crapfco.vltarifa%TYPE;
     vr_flsitsms   INTEGER;
     vr_dsalerta   VARCHAR2(4000);
+    vr_qtsmspct   tbcobran_sms_contrato.qtdsms_pacote%TYPE;
+    vr_qtsmsusd   tbcobran_sms_contrato.qtdsms_usados%TYPE;
+    vr_dsmsgsemlinddig VARCHAR2(1000);
+    vr_dsmsgcomlinddig VARCHAR2(1000);
 
     
     
@@ -3152,13 +3402,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tpnmemis  => vr_tpnmemis   --> Tipo de nome na emissao do SMS 
                           ,pr_nmemisms  => vr_nmemisms   --> Nome na emissao do SMS - Outro                                       
                           ,pr_flgativo  => vr_flgativo   --> Indicador de ativo
+                          ,pr_idpacote  => vr_idpacote   --> identificador do pacote
                           ,pr_dspacote  => vr_dspacote   --> Descrição do pacote
                           ,pr_dhadesao  => vr_dhadesao   --> Data hora de adesao
                           ,pr_idcontrato=> vr_idcontrato --> Numero do contrato
                           ,pr_vltarifa  => vr_vltarifa   --> Valor da tarifa                          
                           ,pr_flsitsms  => vr_flsitsms   --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
                           ,pr_dsalerta  => vr_dsalerta   --> Retorna alerta para o cooperado
-                          
+                          ,pr_qtsmspct  => vr_qtsmspct   --> Retorna quantidade de sms contratada do pacote
+                          ,pr_qtsmsusd  => vr_qtsmsusd   --> Retorna quantidade de sms ja utilizadas do pacote
+                          ,pr_dsmsgsemlinddig => vr_dsmsgsemlinddig
+                          ,pr_dsmsgcomlinddig => vr_dsmsgcomlinddig
                           ,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
                           ,pr_dscritic  => vr_dscritic); --> Retorno de critica
                                                           
@@ -3216,6 +3470,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_flgativo
                           ,pr_des_erro => vr_dscritic);
     
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'idpacote'
+                          ,pr_tag_cont => vr_idpacote
+                          ,pr_des_erro => vr_dscritic);
       
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'Dados'
@@ -3264,6 +3525,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                           ,pr_tag_cont => vr_dsalerta
                           ,pr_des_erro => vr_dscritic);
     
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'qtsmspct'
+                          ,pr_tag_cont => vr_qtsmspct
+                          ,pr_des_erro => vr_dscritic);
+                          
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'qtsmsusd'
+                          ,pr_tag_cont => vr_qtsmsusd
+                          ,pr_des_erro => vr_dscritic);                                            
+    
                                                
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -3298,6 +3573,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                  ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao
                                  ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE  --> CPF do operador de conta juridica
                                  ,pr_inaprpen    IN NUMBER                 --> Indicador de aprovação de transacao pendente
+                                 ,pr_idpacote    IN INTEGER DEFAULT 0      --> Identificador do pacote de SMS
+                                 ,pr_tpnmemis    IN tbcobran_sms_contrato.tpnome_emissao%TYPE DEFAULT 1   --> Tipo de nome na emissao do boleto (0-outro, 1-nome razao/ 2-nome fantasia) 
+                                 ,pr_nmemissa    IN tbcobran_sms_contrato.nmemissao_sms%TYPE DEFAULT NULL --> Nome caso selecionado Outro
                                  -----> OUT <----                                   
                                  ,pr_idcontrato OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de sms
                                  ,pr_dsretorn   OUT  VARCHAR2                --> Mensagem de retorno             
@@ -3324,7 +3602,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     --> Buscar dados do contrato de sms     
     CURSOR cr_contrato_sms IS
-      SELECT ctr.idcontrato
+      SELECT ctr.idcontrato,
+             ctr.idpacote
         FROM cecred.tbcobran_sms_contrato ctr
        WHERE ctr.cdcooper = pr_cdcooper
          AND ctr.nrdconta = pr_nrdconta
@@ -3341,7 +3620,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND pct.inpessoa = ass.inpessoa
          AND ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta
-         AND pct.flgstatus = 1;      
+         AND pct.flgstatus = 1
+         AND pct.idpacote IN (1,2);      
     
     --> Buscar Valor tarifa
     CURSOR cr_crapfco(pr_cdcooper crapcop.cdcooper%TYPE,
@@ -3363,6 +3643,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_cdcritic     INTEGER;
     
     vr_idcontrato   INTEGER;
+    vr_idctrnov     INTEGER;
+    vr_idpacote_aux INTEGER;
     
     vr_dsorigem     craplgm.dsorigem%TYPE;
     vr_dstransa     craplgm.dstransa%TYPE;
@@ -3376,6 +3658,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_nmprimtl   VARCHAR2(500);
     vr_flcartma   INTEGER(1);		
     
+    vr_tab_pacote TELA_CADSMS.typ_tab_pacote;
+    vr_qtdsmspct  INTEGER := 0;
+    vr_qtdsmsusd  INTEGER := 0;
+    vr_vlunitario NUMBER;
+    vr_vlpacote   NUMBER;
     
   BEGIN
     
@@ -3388,150 +3675,231 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -- Fechar o cursor
     CLOSE btch0001.cr_crapdat;
     
+    vr_idctrnov := 0;
+    
     --> Verificar se ja existe contrato ativo
     OPEN cr_contrato_sms;
-    FETCH cr_contrato_sms INTO vr_idcontrato;
+    FETCH cr_contrato_sms INTO vr_idcontrato,vr_idpacote_aux;
     IF cr_contrato_sms%FOUND THEN
       CLOSE cr_contrato_sms;
-      vr_dscritic := 'Já existe o contrato de numero '||vr_idcontrato||' ativo.';
-      RAISE vr_exc_erro;
+      
+      IF nvl(pr_idpacote,0) <> nvl(vr_idpacote_aux,0) THEN
+        
+        vr_dstransa := 'Trocar pacote Contrato SMS de cobrança.';
+        --> Rotina para realizar a troca do pacote de SMS
+        COBR0005.pc_trocar_pacote_sms ( pr_cdcooper    => pr_cdcooper   --> Codigo da cooperativa
+                                       ,pr_nrdconta    => pr_nrdconta   --> Conta do associado                             
+                                       ,pr_idorigem    => pr_idorigem   --> id origem 
+                                       ,pr_cdoperad    => pr_cdoperad   --> Codigo do operador
+                                       ,pr_nmdatela    => pr_nmdatela   --> Identificador da tela da operacao                             
+                                       ,pr_idpacote    => pr_idpacote   --> Identificador do pacote de SMS                                 ,
+                                       ,pr_idctratu    => vr_idcontrato --> Numero do contrato de sms
+                                       -----> OUT <----                                   
+                                       ,pr_idctrnov    => pr_idcontrato   --> Numero do contrato de sms
+                                       ,pr_dsretorn    => pr_dsretorn   --> Mensagem de retorno             
+                                       ,pr_cdcritic    => vr_cdcritic   --> Retorna codigo de critica
+                                       ,pr_dscritic    => vr_dscritic); --> Retorno de critica
+               
+        IF nvl(vr_cdcritic,0) > 0 OR
+           TRIM(vr_dscritic)IS NOT NULL THEN
+          RAISE vr_exc_erro; 
+        END IF;           
+      
+      ELSE
+        vr_dscritic := 'Já existe o contrato de numero '||vr_idcontrato||' ativo.';
+        RAISE vr_exc_erro;
+      
+      END IF;
+      
+      
     ELSE
       CLOSE cr_contrato_sms;
     END IF;
     
-    vr_idpacote := NULL;
-    
-    --> Buscar pacote de sms
-    OPEN cr_pacotes;
-    FETCH cr_pacotes INTO vr_idpacote, vr_cdtarifa;
-    CLOSE cr_pacotes;
-    
-    IF vr_idpacote IS NULL THEN
-      vr_dscritic := 'Nenhum pacote de SMS ativo.';
-      RAISE vr_exc_erro;
-    END IF;
-    
-    -- Se for 3 apenas valida criação do contrato
-    IF pr_inaprpen = 3 THEN
-      RETURN;
-    END IF;
-    
-    --> Apenas validar assinatura para InternetBank
-    IF pr_idorigem = 3 THEN
-    
-      -- Valida transação de representante legal
-      INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => pr_nrdconta
-                                         ,pr_idseqttl => pr_idseqttl
-                                         ,pr_flvldrep => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE 1 END)                                         
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-
-      -- Se houve crítica, gerar exceção
-      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF; 
-
-      --Verifica se conta for conta PJ e se exige asinatura multipla
-      INET0002.pc_verifica_rep_assinatura(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => pr_nrdconta
-                                         ,pr_idseqttl => pr_idseqttl
-                                         ,pr_cdorigem => 3
-                                         ,pr_idastcjt => vr_idastcjt
-                                         ,pr_nrcpfcgc => vr_nrcpfcgc
-                                         ,pr_nmprimtl => vr_nmprimtl
-                                         ,pr_flcartma => vr_flcartma
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-      IF nvl(vr_cdcritic,0) <> 0 OR
-         TRIM(vr_dscritic) IS NOT NULL THEN
-         RAISE vr_exc_erro; 
-      END IF;                              								
-		END IF;
-    
-    --> Inclusao de contrato efetuada por operador ou responsável de assinatura conjunta 
-    IF (pr_nrcpfope > 0 OR vr_idastcjt = 1) AND pr_inaprpen = 0 THEN
-      
-      vr_vltarifa := 0;
-      
-      --> Buscar Valor tarifa
-      OPEN cr_crapfco(pr_cdcooper => pr_cdcooper,
-                      pr_cdtarifa => vr_cdtarifa);
-      FETCH cr_crapfco INTO vr_vltarifa;
-      CLOSE cr_crapfco;
-      
-      --> Necessario inclusao de transacao pensente
-      INET0002.pc_cria_trans_pend_sms_cobran ( pr_cdagenci  => 90                   --> Codigo do PA
-                                              ,pr_nrdcaixa  => 900                  --> Numero do Caixa
-                                              ,pr_cdoperad  => pr_cdoperad          --> Codigo do Operados
-                                              ,pr_nmdatela  => pr_nmdatela          --> Nome da Tela
-                                              ,pr_idorigem  => pr_idorigem          --> Origem da solicitacao
-                                              ,pr_idseqttl  => pr_idseqttl          --> Sequencial de Titular               
-                                              ,pr_cdtiptra  => 16                   --> Tipo de transacao (16 - Adesao, 17 - Cancelamento)
-                                              ,pr_nrcpfope  => pr_nrcpfope          --> Numero do cpf do operador juridico
-                                              ,pr_nrcpfrep  => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE NVL(vr_nrcpfcgc,0) END)          --> Numero do cpf do representante legal) 
-                                              ,pr_cdcoptfn  => 0                    --> Cooperativa do Terminal
-                                              ,pr_cdagetfn  => 0                    --> Agencia do Terminal
-                                              ,pr_nrterfin  => 0                    --> Numero do Terminal Financeiro
-                                              ,pr_dtmvtolt  => rw_crapdat.dtmvtolt  --> Data do movimento     
-                                              ,pr_cdcooper  => pr_cdcooper          --> Codigo da cooperativa
-                                              ,pr_nrdconta  => pr_nrdconta          --> Numero da Conta
-                                              ,pr_idoperac  => 1                    --> Identifica tipo da operacao (1 – Inclusao contraro SMS)
-                                              ,pr_idastcjt  => vr_idastcjt          --> Indicador de Assinatura Conjunta
-                                              ,pr_idpacote  => vr_idpacote          --> Codigo do pacote de SMS
-                                              ,pr_vlservico => vr_vltarifa          --> valor de tarifa do SMS/Pacote de SMS
-                                              ,pr_cdcritic  => vr_cdcritic          --> Codigo de Critica
-                                              ,pr_dscritic  => vr_dscritic);        --> Descricao de Critica
-    
-      IF nvl(vr_cdcritic,0) <> 0 OR
-         TRIM(vr_dscritic) IS NOT NULL THEN
-        RAISE vr_exc_erro; 
-      END IF; 
-      
-      IF vr_idastcjt = 1 THEN
-        pr_dsretorn := 'Serviço de SMS registrado com sucesso. Aguardando aprovacao do registro pelos demais responsaveis.';
-      ELSE
-        pr_dsretorn := 'Serviço de SMS registrado com sucesso. Aguardando efetivacao do registro pelo preposto.';
-      END IF;            
-    
-    ELSE
-    
-      BEGIN      
-      
-        INSERT INTO tbcobran_sms_contrato
-                   ( cdcooper
-                    ,nrdconta
-                    ,idseqttl
-                    ,idpacote
-                    ,dhadesao
-                    ,dhcancela
-                    ,cdcanal_adesao 
-                    ,cdcanal_cancela 
-                    ,tpnome_emissao
-                    ,nmemissao_sms)
-             VALUES( pr_cdcooper              --> cdcooper
-                    ,pr_nrdconta              --> nrdconta
-                    ,pr_idseqttl              --> idseqttl
-                    ,vr_idpacote              --> idpacote
-                    ,SYSDATE                  --> dhadesao
-                    ,NULL                     --> dhcancela
-                    ,pr_idorigem              --> indorigem_adesao
-                    ,NULL                     --> indorigem_cancela 
-                    ,1                        --> tpnome_emissao
-                    ,NULL)                   --> nmemissao_sms
-            RETURNING idcontrato INTO vr_idcontrato;       
-            
-      EXCEPTION 
-        WHEN OTHERS THEN
-          vr_dscritic := 'Não foi possivel gravar contrato SMS:'|| SQLERRM;
+    --> Verificar se nao gerou novo contrato pela troca de pacote
+    IF nvl(pr_idcontrato,0) = 0 THEN
+      --> buscar pacote caso nao seja informado
+      IF nvl(pr_idpacote,0) = 0 THEN
+        --> Buscar pacote de sms
+        OPEN cr_pacotes;
+        FETCH cr_pacotes INTO vr_idpacote, vr_cdtarifa;
+        CLOSE cr_pacotes;
+        
+        IF vr_idpacote IS NULL THEN
+          vr_dscritic := 'Nenhum pacote de SMS ativo.';
           RAISE vr_exc_erro;
-      END;
+        END IF;
+      ELSE
+        vr_idpacote := pr_idpacote;
+      END IF;
       
-      pr_idcontrato := vr_idcontrato;
-      pr_dsretorn   := 'Ativação do serviço efetuada com sucesso.';
+      IF vr_idpacote > 2 THEN
       
+        --> buscar dados do pacote
+        TELA_CADSMS.pc_consultar_pacote(pr_idpacote   => vr_idpacote     --> Indicador do pacote
+                                       ,pr_cdcooper   => pr_cdcooper     --> Codigo da cooperativa
+                                       ,pr_tab_pacote => vr_tab_pacote   --> Retornar dados do pacote de SMS  
+                                       ,pr_cdcritic   => vr_cdcritic     --> Codigo da critica
+                                       ,pr_dscritic   => vr_dscritic );  --> Descricao da critica
+      
+        
+        IF TRIM(vr_dscritic) IS NOT NULL OR 
+           nvl(vr_cdcritic,0) > 0 THEN
+          RAISE vr_exc_erro;        
+        END IF;
+        
+        IF vr_tab_pacote.count() = 0 THEN
+          vr_dscritic := 'Pacote '||vr_idpacote||' não encontrado.';
+          RAISE vr_exc_erro;
+        END IF; 
+        
+        
+        vr_qtdsmspct  := vr_tab_pacote(vr_tab_pacote.first).qtdsms;
+        vr_qtdsmsusd  := 0;
+        vr_vlunitario := vr_tab_pacote(vr_tab_pacote.first).vlsmsad;
+        vr_vlpacote   := vr_tab_pacote(vr_tab_pacote.first).vlpacote;
+      
+      ELSE
+      
+        vr_vlunitario := 0;
+        
+        --> Buscar Valor tarifa
+        OPEN cr_crapfco(pr_cdcooper => pr_cdcooper,
+                        pr_cdtarifa => vr_cdtarifa);
+        FETCH cr_crapfco INTO vr_vlunitario;
+        CLOSE cr_crapfco;
+      
+      
+        vr_qtdsmspct   :=   0;
+        vr_qtdsmsusd   :=   0;
+        vr_vlpacote    :=   0;
+        
+      END IF;
+      
+      
+      -- Se for 3 apenas valida criação do contrato
+      IF pr_inaprpen = 3 THEN
+        RETURN;
+      END IF;
+      
+      --> Apenas validar assinatura para InternetBank
+      IF pr_idorigem = 3 THEN
+      
+        -- Valida transação de representante legal
+        INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_idseqttl => pr_idseqttl
+                                           ,pr_flvldrep => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE 1 END)                                         
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+
+        -- Se houve crítica, gerar exceção
+        IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF; 
+
+        --Verifica se conta for conta PJ e se exige asinatura multipla
+        INET0002.pc_verifica_rep_assinatura(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_idseqttl => pr_idseqttl
+                                           ,pr_cdorigem => 3
+                                           ,pr_idastcjt => vr_idastcjt
+                                           ,pr_nrcpfcgc => vr_nrcpfcgc
+                                           ,pr_nmprimtl => vr_nmprimtl
+                                           ,pr_flcartma => vr_flcartma
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+        IF nvl(vr_cdcritic,0) <> 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_erro; 
+        END IF;                              								
+      END IF;
+      
+      --> Inclusao de contrato efetuada por operador ou responsável de assinatura conjunta 
+      IF (pr_nrcpfope > 0 OR vr_idastcjt = 1) AND pr_inaprpen = 0 THEN
+        
+        
+        --> Necessario inclusao de transacao pensente
+        INET0002.pc_cria_trans_pend_sms_cobran ( pr_cdagenci  => 90                   --> Codigo do PA
+                                                ,pr_nrdcaixa  => 900                  --> Numero do Caixa
+                                                ,pr_cdoperad  => pr_cdoperad          --> Codigo do Operados
+                                                ,pr_nmdatela  => pr_nmdatela          --> Nome da Tela
+                                                ,pr_idorigem  => pr_idorigem          --> Origem da solicitacao
+                                                ,pr_idseqttl  => pr_idseqttl          --> Sequencial de Titular               
+                                                ,pr_cdtiptra  => 16                   --> Tipo de transacao (16 - Adesao, 17 - Cancelamento)
+                                                ,pr_nrcpfope  => pr_nrcpfope          --> Numero do cpf do operador juridico
+                                                ,pr_nrcpfrep  => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE NVL(vr_nrcpfcgc,0) END)          --> Numero do cpf do representante legal) 
+                                                ,pr_cdcoptfn  => 0                    --> Cooperativa do Terminal
+                                                ,pr_cdagetfn  => 0                    --> Agencia do Terminal
+                                                ,pr_nrterfin  => 0                    --> Numero do Terminal Financeiro
+                                                ,pr_dtmvtolt  => rw_crapdat.dtmvtolt  --> Data do movimento     
+                                                ,pr_cdcooper  => pr_cdcooper          --> Codigo da cooperativa
+                                                ,pr_nrdconta  => pr_nrdconta          --> Numero da Conta
+                                                ,pr_idoperac  => 1                    --> Identifica tipo da operacao (1 – Inclusao contraro SMS)
+                                                ,pr_idastcjt  => vr_idastcjt          --> Indicador de Assinatura Conjunta
+                                                ,pr_idpacote  => vr_idpacote          --> Codigo do pacote de SMS
+                                                ,pr_vlservico => vr_vlpacote          --> valor de tarifa do SMS/Pacote de SMS
+                                                ,pr_cdcritic  => vr_cdcritic          --> Codigo de Critica
+                                                ,pr_dscritic  => vr_dscritic);        --> Descricao de Critica
+      
+        IF nvl(vr_cdcritic,0) <> 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro; 
+        END IF; 
+        
+        IF vr_idastcjt = 1 THEN
+          pr_dsretorn := 'Serviço de SMS registrado com sucesso. Aguardando aprovacao do registro pelos demais responsaveis.';
+        ELSE
+          pr_dsretorn := 'Serviço de SMS registrado com sucesso. Aguardando efetivacao do registro pelo preposto.';
+        END IF;            
+      
+      ELSE
+      
+        BEGIN      
+        
+          INSERT INTO tbcobran_sms_contrato
+                     ( cdcooper
+                      ,nrdconta
+                      ,idseqttl
+                      ,idpacote
+                      ,dhadesao
+                      ,dhcancela
+                      ,cdcanal_adesao 
+                      ,cdcanal_cancela 
+                      ,tpnome_emissao
+                      ,nmemissao_sms
+                      ,qtdsms_pacote
+                      ,qtdsms_usados
+                      ,vlunitario   
+                      ,vlpacote)
+               VALUES( pr_cdcooper              --> cdcooper
+                      ,pr_nrdconta              --> nrdconta
+                      ,pr_idseqttl              --> idseqttl
+                      ,vr_idpacote              --> idpacote
+                      ,SYSDATE                  --> dhadesao
+                      ,NULL                     --> dhcancela
+                      ,pr_idorigem              --> indorigem_adesao
+                      ,NULL                     --> indorigem_cancela 
+                      ,pr_tpnmemis              --> tpnome_emissao
+                      ,pr_nmemissa              --> nmemissao_sms
+                      ,vr_qtdsmspct             --> qtdsms_pacote
+                      ,vr_qtdsmsusd             --> qtdsms_usados
+                      ,vr_vlunitario            --> vlunitario   
+                      ,vr_vlpacote )            --> vlpacote     
+                      
+              RETURNING idcontrato INTO vr_idcontrato;       
+              
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Não foi possivel gravar contrato SMS:'|| SQLERRM;
+            RAISE vr_exc_erro;
+        END;
+        
+        pr_idcontrato := vr_idcontrato;
+        pr_dsretorn   := 'Ativação do serviço efetuada com sucesso.';
+        
+      END IF;
     END IF;
-    
     -- Gerar log ao cooperado (b1wgen0014 - gera_log);
     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => pr_cdoperad
@@ -3575,6 +3943,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 															 ,pr_dsdadant => ' '
 															 ,pr_dsdadatu => gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc, 1));
 		END IF;
+    
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                              pr_nmdcampo => 'idpacote',
+                              pr_dsdadant => NULL,
+                              pr_dsdadatu => vr_idpacote);
+    
     
     
     COMMIT;
@@ -3634,6 +4008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                        ,pr_idseqttl   IN crapttl.idseqttl%TYPE  --> Sequencial do titular
                                        ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE  --> CPF do operador de conta juridica
                                        ,pr_inaprpen   IN NUMBER                 --> Indicador de aprovação de transacao pendente
+                                       ,pr_idpacote   IN INTEGER DEFAULT 0      --> Identificador do pacote de SMS
                                        ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
                                        ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
                                        ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
@@ -3700,6 +4075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                          ,pr_nmdatela  => vr_nmdatela  --> Identificador da tela da operacao
                          ,pr_nrcpfope  => pr_nrcpfope  --> CPF do operador de conta juridica
                          ,pr_inaprpen  => pr_inaprpen  --> Indicador de aprovação de transacao pendente                         
+                         ,pr_idpacote  => pr_idpacote  --> Identificador do pacote de SMS
                          -----> OUT <----                                   
                          ,pr_idcontrato=> vr_idcontrato --> Numero do contrato
                          ,pr_dsretorn  => vr_dsretorn   --> Mensagem de retorno
@@ -4178,9 +4554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --> Rotina para canlemaneto do contrato de SMS
   PROCEDURE pc_cancel_contrato_sms_web (pr_nrdconta    IN crapass.nrdconta%TYPE  --> Conta do associado
                                        ,pr_idseqttl    IN crapttl.idseqttl%TYPE  --> Sequencial do titular 
-                                       ,pr_idcontrato  IN tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de SMS
-                                       ,pr_nrcpfope    IN crapopi.nrcpfope%TYPE  --> CPF do operador de conta juridica
-                                       ,pr_inaprpen    IN NUMBER                 --> Indicador de aprovação de transacao pendente
+                                       ,pr_idcontrato  IN tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de SMS                                       
                                        ,pr_xmllog      IN VARCHAR2               --> XML com informacoes de LOG
                                        ,pr_cdcritic   OUT PLS_INTEGER            --> Codigo da critica
                                        ,pr_dscritic   OUT VARCHAR2               --> Descricao da critica
@@ -4244,8 +4618,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                            ,pr_idorigem    => vr_idorigem    --> id origem 
                            ,pr_cdoperad    => vr_cdoperad    --> Codigo do operador
                            ,pr_nmdatela    => vr_nmdatela    --> Identificador da tela da operacao
-                           ,pr_nrcpfope    => pr_nrcpfope    --> CPF do operador de conta juridica
-                           ,pr_inaprpen    => pr_inaprpen    --> Indicador de aprovação de transacao pendente
+                           ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
+                           ,pr_inaprpen    => 0              --> Indicador de aprovação de transacao pendente
                            -----> OUT <----           
                            ,pr_dsretorn    => vr_dsretorn
                            ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
@@ -5332,7 +5706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: --/--/----
+       Data    : novembro/2016                     Ultima atualizacao: 14/03/2017
 
        Dados referentes ao programa:
 
@@ -5340,7 +5714,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Objetivo  : Rotina para identificar os SMSs de cobrança pendente de envio 
                    e realizar o envio
 
-       Alteracoes: ----
+       Alteracoes: 14/03/2017 - Ajuste no select do cursor cr_sms_cobran (Aline)
 
     ............................................................................ */
     --------------->> CURSORES <<----------------
@@ -5388,6 +5762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             ,sms.rowid rowid_sms
             ,ctr.tpnome_emissao
             ,ctr.nmemissao_sms
+            ,ctr.idcontrato
         FROM crapcob               cob
             ,tbcobran_sms          sms
             ,crapsab               sab
@@ -5405,6 +5780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND cob.cdcooper = ctr.cdcooper
          AND cob.nrdconta = ctr.nrdconta
          AND ctr.dhcancela IS null
+		 AND ctr.cdcooper = pct.cdcooper
          AND ctr.idpacote = pct.idpacote 
          AND cob.cdcooper = pr_cdcooper
          AND sab.nrcelsac <> 0 --ativo
@@ -5820,7 +6196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                 CLOSE cr_crapass;
                 
               --> se selecionou Nome fantasia
-              ELSIF rw_sms_cobran.tpnome_emissao = 1 THEN
+              ELSIF rw_sms_cobran.tpnome_emissao = 2 THEN
               
                 --> Buscar nome na crapjur
                 OPEN cr_crapjur(pr_cdcooper => rw_crapcop.cdcooper,
@@ -5839,6 +6215,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             END IF;            
             
             vr_dsdmensa := NULL;
+
+            vr_dslindig := REPLACE(vr_dslindig,'.','');
+            vr_dslindig := REPLACE(vr_dslindig,' ','');    
+
             --> Retornar mensagem 
             vr_dsdmensa := fn_mensagem_vencto 
                                      ( pr_cdcooper => rw_crapcop.cdcooper    --> Codigo da cooperativa
@@ -5877,7 +6257,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               UPDATE tbcobran_sms sms
                  SET sms.idlote_sms   = vr_idlote_sms,
                      sms.idsms        = vr_idsms,
-                     sms.instatus_sms = 2
+                     sms.instatus_sms = 2,
+                     sms.idcontrato   = rw_sms_cobran.idcontrato
                WHERE sms.rowid = rw_sms_cobran.rowid_sms;
                  
             EXCEPTION
@@ -6275,7 +6656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   BEGIN
     
     vr_xmldoc:= xmldom.newDOMDocument(pr_xmlrequi); 
-       
+    
     ----------------------------------------------------
     --            GRAVAR OS DADOS DO CONTRATO         --
     ----------------------------------------------------      
@@ -6349,26 +6730,1129 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                                  || vr_dscritic );
   END pc_atualiza_status_msg_soa; 
   
-  --> Rotina cobrar tarifas de SMS de cobrança enviados
-  PROCEDURE pc_calcula_tarifa_individual (pr_cdcooper    IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa                                                                         
-                                         ,pr_dscritic   OUT VARCHAR2) IS          --> Retorno de critica
-
+  
+  --> Rotina para validar a criação do contrato de sms de cobrança
+  PROCEDURE pc_valida_contrato_sms( pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                   ,pr_cdagenci      IN crapage.cdagenci%TYPE --> Codigo de agencia
+                                   ,pr_nrdcaixa      IN crapbcx.nrdcaixa%TYPE --> Numero do caixa
+                                   ,pr_cdoperad      IN crapope.cdoperad%TYPE --> Codigo do operador
+                                   ,pr_nmdatela      IN craptel.nmdatela%TYPE --> Nome da tela
+                                   ,pr_idorigem      IN INTEGER               --> Identificador sistema origem
+                                   ,pr_nrdconta      IN crapass.nrdconta%TYPE  --> Conta do associado
+                                   ,pr_idpacote      IN tbcobran_sms_pacotes.idpacote%TYPE --> Id do pacote de sms de cobrança
+                                   -----> OUT <----                                                                                                      
+                                   ,pr_flpossnh OUT  INTEGER                   --> Retornar se cooperado possui senha de Internet (1-Ok, 0-NOK)
+                                   ,pr_cdcritic OUT  INTEGER                   --> Retorna codigo de critica
+                                   ,pr_dscritic OUT  VARCHAR2) IS              --> Retorno de critica
+                                  
   /* ............................................................................
 
-       Programa: pc_calcula_tarifa_individual
+       Programa: pc_valida_contrato_sms
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
-       Autor   : Odirlei Busana- AMcom
-       Data    : novembro/2016                     Ultima atualizacao: --/--/----
+       Autor   : Odirlei Busana - AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
-       Objetivo  : Rotina cobrar tarifas de SMS de cobrança enviados
+       Objetivo  : otina para validar a criação do contrato de sms de cobrança
 
        Alteracoes: ----
 
     ............................................................................ */
+    --------------->> CURSORES <<----------------
+    -- cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE; 
+    
+    -------------->> VARIAVEIS <<----------------
+    vr_exc_erro        EXCEPTION;
+    vr_cdcritic        NUMBER;
+    vr_dscritic        VARCHAR2(1000);        
+    
+    -- PLTABLE
+    vr_tab_sald        EXTR0001.typ_tab_saldos;
+    vr_tab_pacote      TELA_CADSMS.typ_tab_pacote;
+    vr_tab_erro        GENE0001.typ_tab_erro;
+    vr_des_reto        VARCHAR2(1000);
+    
+    
+    vr_idcontrato      tbcobran_sms_contrato.idcontrato%TYPE; -->Numero do contratro ativo
+    vr_flsitsms        INTEGER;                               --> flag se serviço esta ok para o cooperado(1-Ok,0-NOK )
+    vr_dsalerta        VARCHAR2(1000);                        --> Alerta para o cooperado
+    
+    --> Senha
+    vr_tab_titulates   INET0002.typ_tab_titulates;
+    vr_qtdiaace        INTEGER;
+    vr_nmprimtl        crapass.nmprimtl%TYPE;
+    
+    
+  BEGIN
+    --> Inicializar como não possui senha IBank
+    pr_flpossnh := 0;
+  
+    --> Rotina para verificar se serviço de SMS.
+    pc_verifar_serv_sms(pr_cdcooper   => pr_cdcooper    --> Codigo da cooperativa
+                       ,pr_nrdconta   => pr_nrdconta    --> Conta do associado
+                       ,pr_nmdatela   => pr_nmdatela    --> Nome da tela
+                       ,pr_idorigem   => pr_idorigem    --> Indicador de sistema origem
+                       -----> OUT <----                                                                 
+                       ,pr_idcontrato =>  vr_idcontrato --> Retornar Numero do contratro ativo
+                       ,pr_flsitsms   =>  vr_flsitsms   --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
+                       ,pr_dsalerta   =>  vr_dsalerta   --> Retorna alerta para o cooperado
+                       ,pr_cdcritic   =>  vr_cdcritic   --> Retorna codigo de critica
+                       ,pr_dscritic   =>  vr_dscritic); --> Retorno de critica  
+  
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --> Verificar se contem alerta que impede a criação do contrato
+    IF vr_dsalerta IS NOT NULL THEN
+      vr_dscritic := vr_dsalerta;
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --> Verificar se o serviço esta ativo para a cooperativa/cooperado
+    IF nvl(vr_flsitsms,0) = 0 THEN
+      vr_dscritic := 'Serviço de Cobrança de SMS não esta habilitado para esta cooperativa ou cooperado.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- datas da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      CLOSE btch0001.cr_crapdat;
+      -- monta msg de critica
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);     
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE btch0001.cr_crapdat;
+    END IF;  
+    
+    IF nvl(pr_idpacote,0) > 2 THEN
+      
+      --> buscar dados do pacote
+      TELA_CADSMS.pc_consultar_pacote(pr_idpacote   => pr_idpacote     --> Indicador do pacote
+                                     ,pr_cdcooper   => pr_cdcooper     --> Codigo da cooperativa
+                                     ,pr_tab_pacote => vr_tab_pacote   --> Retornar dados do pacote de SMS  
+                                     ,pr_cdcritic   => vr_cdcritic     --> Codigo da critica
+                                     ,pr_dscritic   => vr_dscritic );  --> Descricao da critica
+    
+      
+      IF TRIM(vr_dscritic) IS NOT NULL OR 
+         nvl(vr_cdcritic,0) > 0 THEN
+        RAISE vr_exc_erro;        
+      END IF;
+      
+      IF vr_tab_pacote.count() = 0 THEN
+        vr_dscritic := 'Pacote '||pr_idpacote||' não encontrado.';
+        RAISE vr_exc_erro;
+      END IF;      
+      
+      -- Chamar rotina para busca do saldo
+      extr0001.pc_obtem_saldo(pr_cdcooper   => pr_cdcooper
+                             ,pr_rw_crapdat => rw_crapdat
+                             ,pr_cdagenci   => pr_cdagenci
+                             ,pr_nrdcaixa   => pr_nrdcaixa
+                             ,pr_cdoperad   => pr_cdoperad
+                             ,pr_nrdconta   => pr_nrdconta
+                             ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                             ,pr_des_reto   => vr_des_reto
+                             ,pr_tab_sald   => vr_tab_sald
+                             ,pr_tab_erro   => vr_tab_erro);
+      IF vr_des_reto = 'NOK' THEN
+        -- Tenta buscar o erro no vetor de erro
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+        ELSE
+          vr_dscritic := 'Retorno "NOK" na extr0001.pc_obtem_saldo e sem informação na pr_vet_erro, Conta: '||pr_nrdconta;
+
+        END IF;
+        RAISE vr_exc_erro;
+      END IF;
+      
+      IF vr_tab_pacote(vr_tab_pacote.first).vlpacote > (nvl(vr_tab_sald(vr_tab_sald.FIRST).vlsddisp,0) + nvl(vr_tab_sald(vr_tab_sald.FIRST).vllimcre,0)) THEN
+        vr_dscritic := 'Saldo insuficiente para contratação do pacote de SMS.';
+        RAISE vr_exc_erro;
+      END IF;  
+      
+      
+    END IF;    
+    --> Carrega titulares
+    INET0002.pc_carrega_ttl_internet (  pr_cdcooper  => pr_cdcooper --> Codigo Cooperativa
+                                       ,pr_cdagenci  => pr_cdagenci --> Codigo de agencia
+                                       ,pr_nrdcaixa  => pr_nrdcaixa --> Numero do caixa
+                                       ,pr_cdoperad  => pr_cdoperad --> Codigo do operador
+                                       ,pr_nmdatela  => pr_nmdatela --> Nome da tela
+                                       ,pr_idorigem  => pr_idorigem --> Identificador sistema origem
+                                       ,pr_nrdconta  => pr_nrdconta --> Conta do Associado
+                                       ,pr_idseqttl  => 1           --> Titularidade do Associado
+                                       ,pr_flgerlog  => 1           --> Identificador se gera log  
+                                       ,pr_flmobile  => 0           --> identificador se é chamada mobile
+                                       ,pr_floperad  => 0           --> identificador se deve carregar operadores                                     
+                                               
+                                       ,pr_tab_titulates => vr_tab_titulates --> Retorna titulares com acesso ao Ibank
+                                       ,pr_qtdiaace      => vr_qtdiaace      --> Retornar dias do primeiro acesso
+                                       ,pr_nmprimtl      => vr_nmprimtl      --> Retornar nome do cooperaro
+                                       ,pr_cdcritic      => vr_cdcritic      --> Codigo do erro
+                                       ,pr_dscritic      => vr_dscritic);    --> Descricao do erro                                   
+                                                          
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL AND
+       (vr_dscritic NOT IN ('A senha para Conta On-Line foi cancelada',
+                            'A senha para Conta On-Line nao foi cadastrada')) THEN
+      RAISE vr_exc_erro;
+    END IF;  
+    
+    IF vr_tab_titulates.count > 0 THEN
+      --> Retornar informação que possui senha internet
+      pr_flpossnh := 1;      
+    END IF; 
+    
+     
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      pr_dscritic := 'Não foi possivel validar criação do contrato: '||SQLERRM;
+      
+                                                 
+  END pc_valida_contrato_sms; 
+  
+  --> Rotina para validar a criação do contrato de sms de cobrança - Chamada ayllos Web
+  PROCEDURE pc_valida_contrato_sms_web (pr_nrdconta   IN crapass.nrdconta%TYPE  --> Numero de conta do cooperado
+                                       ,pr_idpacote   IN INTEGER                --> Numero do pacote de SMS
+                                       ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                       ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                       ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                       ,pr_des_erro  OUT VARCHAR2) IS           --> Erros do processo
+
+  /* ............................................................................
+
+       Programa: pc_valida_contrato_sms_web
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busana- AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para validar a criação do contrato de sms de cobrança - Chamada ayllos Web
+
+       Alteracoes: ----
+
+    ............................................................................ */  
+    
+    -------------->> VARIAVEIS <<----------------
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper   INTEGER;
+    vr_cdoperad   VARCHAR2(100);
+    vr_nmdatela   VARCHAR2(100);
+    vr_nmeacao    VARCHAR2(100);
+    vr_cdagenci   VARCHAR2(100);
+    vr_nrdcaixa   VARCHAR2(100);
+    vr_idorigem   VARCHAR2(100);
+
+    vr_flpossnh   INTEGER;
+    
+  BEGIN
+  
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    pc_valida_contrato_sms( pr_cdcooper      => vr_cdcooper --> Codigo da cooperativa
+                           ,pr_cdagenci      => vr_cdagenci --> Codigo de agencia
+                           ,pr_nrdcaixa      => vr_nrdcaixa --> Numero do caixa
+                           ,pr_cdoperad      => vr_cdoperad --> Codigo do operador
+                           ,pr_nmdatela      => vr_nmdatela --> Nome da tela
+                           ,pr_idorigem      => vr_idorigem --> Identificador sistema origem
+                           ,pr_nrdconta      => pr_nrdconta --> Conta do associado
+                           ,pr_idpacote      => pr_idpacote --> Id do pacote de sms de cobrança
+                           -----> OUT <----                                                                                                      
+                           ,pr_flpossnh      => vr_flpossnh    --> Retornar se cooperado possui senha de Internet (1-Ok, 0-NOK)
+                           ,pr_cdcritic      => vr_cdcritic    --> Retorna codigo de critica
+                           ,pr_dscritic      => vr_dscritic);  --> Retorno de critica
+    
+                                                          
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);    
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'flpossnh'
+                          ,pr_tag_cont => vr_flpossnh
+                          ,pr_des_erro => vr_dscritic);    
+                          
+                                                
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_valida_contrato_sms_web: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
+  END pc_valida_contrato_sms_web; 
+  
+  --> Rotina para lançar tarifa do pacote de SMS
+  PROCEDURE pc_gerar_tarifa_pacote (pr_dscritic   OUT  VARCHAR2) IS          --> Retorno de critica
+
+  /* ............................................................................
+
+       Programa: pc_gerar_tarifa_pacote
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busana- AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para para lançar tarifa do pacote de SMS
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    
+    --> Buscar contratos cujo existe tarifa de pacote a ser cobrada
+    CURSOR cr_smsctr IS    
+      SELECT ctr.nrdconta
+            ,ctr.cdcooper
+            ,ctr.vlpacote
+            ,pct.cdtarifa
+            ,ctr.qtdsms_pacote
+        FROM tbcobran_sms_contrato ctr,
+             tbcobran_sms_pacotes pct
+       WHERE ctr.cdcooper = pct.cdcooper
+         AND ctr.idpacote = pct.idpacote
+         AND ctr.idpacote > 2
+         AND ctr.dhcancela IS NULL
+         AND trunc(ctr.dhadesao) < trunc(SYSDATE) 
+         AND trunc(ctr.dhadesao) >= gene0005.fn_valida_dia_util(pr_cdcooper => 3, 
+                                                                pr_dtmvtolt => SYSDATE -1 , 
+                                                                pr_tipo     => 'A' );
+    
+    
+    --> Verificar se lat ja foi criada
+    CURSOR cr_craplat ( pr_cdcooper  craplat.cdcooper%TYPE,
+                        pr_nrdconta  craplat.nrdconta%TYPE,
+                        pr_dtmvtolt  craplat.dtmvtolt%TYPE,
+                        pr_nrdolote  craplat.nrdolote%TYPE,
+                        pr_tpdolote  craplat.tpdolote%TYPE,
+                        pr_vltarifa  craplat.vltarifa%TYPE ) IS
+      SELECT 1
+        FROM craplat lat
+       WHERE lat.cdcooper = pr_cdcooper
+         AND lat.nrdconta = pr_nrdconta
+         AND lat.dtmvtolt = pr_dtmvtolt 
+         AND lat.nrdolote = pr_nrdolote
+         AND lat.tpdolote = pr_tpdolote
+         AND lat.vltarifa = pr_vltarifa;
+    rw_craplat cr_craplat%ROWTYPE;
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    -------------->> TEMP-Table <<---------------    
+    TYPE typ_rec_tarifa
+         IS RECORD (cdhistor   INTEGER,
+                    cdhisest   INTEGER,
+                    vltarifa   NUMBER,
+                    dtdivulg   DATE,
+                    dtvigenc   DATE,
+                    cdfvlcop   INTEGER);
+
+    TYPE typ_tab_tarifa IS TABLE OF typ_rec_tarifa
+         INDEX BY PLS_INTEGER;
+    vr_tab_tarifa   typ_tab_tarifa;  
+    vr_tab_erro     GENE0001.typ_tab_erro; 
+      
+    -------------->> VARIAVEIS <<----------------
+    vr_nomdojob     CONSTANT VARCHAR2(100) := 'JBCOBRAN_SMS_ENVIAR';
+    vr_flgerlog     BOOLEAN := FALSE;  
+    
+    vr_exc_erro     EXCEPTION;
+    vr_dscritic     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
+    
+    vr_idxtar       tbcobran_sms_pacotes.cdtarifa%TYPE;
+       
+    vr_vltarsms     craplat.vltarifa%TYPE;
+    vr_rowid_lat    ROWID;
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+ 
+    --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => NULL           --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+        
+    END pc_controla_log_batch;
+    
+    
+       
+  BEGIN    
+  
+    
+    -->  Validar execução
+    gene0004.pc_executa_job(pr_cdcooper => 3, --> Codigo da cooperativa
+                            pr_fldiautl => 1,                        --> Flag se deve validar dia util
+                            pr_flproces => 1,                        --> Flag se deve validar se esta no processo 
+                            pr_flrepjob => 1,                        --> Flag para reprogramar o job
+                            pr_flgerlog => 1,                        --> indicador se deve gerar log
+                            pr_nmprogra => 'PC_GERAR_TARIFA_PACOTE', --> Nome do programa que esta s
+                            pr_dscritic => vr_dscritic);
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;    
+    
+    --> Controla log proc_batch
+    pc_controla_log_batch(pr_dstiplog => 'I');  
+   
+    
+    -- datas da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      CLOSE btch0001.cr_crapdat;
+      -- monta msg de critica
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);     
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE btch0001.cr_crapdat;
+    END IF; 
+    
+    vr_tab_tarifa.delete;
+    vr_dscritic := NULL; 
+    
+    -->Buscar contratos cujo existe tarifa de pacote a ser cobrada
+    FOR rw_smsctr IN cr_smsctr LOOP
+      
+      vr_idxtar := rw_smsctr.cdtarifa;
+        
+      --> Se ainda não foi buscada essa tarifa
+      IF NOT vr_tab_tarifa.exists(vr_idxtar) THEN
+        --> Carregar Tarifas de pessoa fisica e juridica      
+        TARI0001.pc_carrega_dados_tar_vigente ( pr_cdcooper  => rw_smsctr.cdcooper   -- Codigo Cooperativa
+                                               ,pr_cdtarifa  => rw_smsctr.cdtarifa   -- Codigo da Tarifa (CRAPTAR) - Ao popular este parâmetro o pr_cdbattar não é necessário
+                                               ,pr_vllanmto  => 0                    -- Valor Lancamento
+                                               ,pr_cdprogra  => 'COBR0005'           -- Codigo Programa
+                                               ,pr_cdhistor  => vr_tab_tarifa(vr_idxtar).cdhistor   -- Codigo Historico
+                                               ,pr_cdhisest  => vr_tab_tarifa(vr_idxtar).cdhisest   -- Historico Estorno
+                                               ,pr_vltarifa  => vr_tab_tarifa(vr_idxtar).vltarifa   -- Valor tarifa
+                                               ,pr_dtdivulg  => vr_tab_tarifa(vr_idxtar).dtdivulg   -- Data Divulgacao
+                                               ,pr_dtvigenc  => vr_tab_tarifa(vr_idxtar).dtvigenc   -- Data Vigencia
+                                               ,pr_cdfvlcop  => vr_tab_tarifa(vr_idxtar).cdfvlcop   -- Codigo faixa valor cooperativa
+                                               ,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
+                                               ,pr_dscritic  => vr_dscritic   -- Descricao Critica
+                                               ,pr_tab_erro  => vr_tab_erro); -- Tabela erros
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          -- Se possui erro no vetor
+          IF vr_tab_erro.Count > 0 THEN
+            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic := 0;
+            vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+          END IF;
+          -- Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+        
+      vr_vltarsms := rw_smsctr.vlpacote;
+      
+      
+      --> Verificar se lat ja foi criada
+      OPEN cr_craplat (pr_cdcooper => rw_smsctr.cdcooper,
+                       pr_nrdconta => rw_smsctr.nrdconta,
+                       pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                       pr_nrdolote => 33001,
+                       pr_tpdolote => 18,
+                       pr_vltarifa => vr_vltarsms);
+      FETCH cr_craplat INTO rw_craplat;
+      
+      --> Caso nao encontre, deve criar
+      IF cr_craplat%NOTFOUND THEN
+        CLOSE cr_craplat;
+        
+        --> Gerar tarifa do pacote de SMS
+        TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => rw_smsctr.cdcooper
+                                        ,pr_nrdconta => rw_smsctr.nrdconta
+                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                        ,pr_cdhistor => vr_tab_tarifa(vr_idxtar).cdhistor
+                                        ,pr_vllanaut => vr_vltarsms
+                                        ,pr_cdoperad => '1'
+                                        ,pr_cdagenci => 1
+                                        ,pr_cdbccxlt => 100
+                                        ,pr_nrdolote => 33001
+                                        ,pr_tpdolote => 18
+                                        ,pr_nrdocmto => 0
+                                        ,pr_nrdctabb => rw_smsctr.nrdconta
+                                        ,pr_nrdctitg => GENE0002.fn_mask(rw_smsctr.nrdconta,'99999999')
+                                        ,pr_cdpesqbb => ' '
+                                        ,pr_cdbanchq => 0
+                                        ,pr_cdagechq => 0
+                                        ,pr_nrctachq => 0
+                                        ,pr_flgaviso => FALSE
+                                        ,pr_tpdaviso => 0
+                                        ,pr_cdfvlcop => vr_tab_tarifa(vr_idxtar).cdfvlcop
+                                        ,pr_inproces => rw_crapdat.inproces
+                                        ,pr_rowid_craplat => vr_rowid_lat
+                                        ,pr_tab_erro => vr_tab_erro
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+    
+      ELSE 
+        --> caso ja exista, ir para o proximo
+        CLOSE cr_craplat;
+      END IF;
+    END LOOP;
+    
+   
+    --> Controla log proc_batch
+    pc_controla_log_batch(pr_dstiplog => 'F'); 
+    
+    COMMIT;       
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;
+      
+      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => vr_dscritic);
+      
+      
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral pc_gerar_tarifa_pacote : '||SQLERRM;        
+      ROLLBACK;
+      
+      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => pr_dscritic);
+      
+  END pc_gerar_tarifa_pacote; 
+  
+  --> Rotina para verificar e renovar os contratos/pacote de SMS
+  PROCEDURE pc_verifica_renovacao_pacote (pr_dscritic   OUT  VARCHAR2) IS          --> Retorno de critica
+
+  /* ............................................................................
+
+       Programa: pc_verifica_renovacao_pacote
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busana- AMcom
+       Data    : Março/2017                     Ultima atualizacao: 14/06/2017
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para para lançar tarifa do pacote de SMS
+
+       Alteracoes: 13/06/2017 - Incluir cláusula para considerar apenas pacotes
+                                na consulta do cursor CR_SMSCTR (Renato Darosci)
+
+                   14/06/2017 - Incluir verificação de pacotes ativos, para que 
+                                seja chamada a rotina de renovação apenas para 
+                                pacotes que ainda estejam ativos. (Renato Darosci)
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    
+    --> Verificar se lat ja foi criada
+    CURSOR cr_smsctr  IS
+      SELECT ctr.cdcooper,
+             ctr.nrdconta,
+             ctr.idcontrato,
+             ctr.idpacote,
+             ctr.idseqttl,
+             ctr.nmemissao_sms,
+             ctr.tpnome_emissao
+        FROM tbcobran_sms_contrato ctr
+       WHERE ctr.dhcancela IS NULL
+         AND ctr.idpacote   > 2   -- Apenas pacotes
+         AND trunc(ctr.dhadesao) < trunc(SYSDATE - 30);
+
+    -- Verificar se o pacote a ser renovado encontra-se ativo
+    CURSOR cr_pacote_ativo(pr_cdcooper  tbcobran_sms_pacotes.cdcooper%TYPE
+                          ,pr_idpacote  tbcobran_sms_pacotes.idpacote%TYPE) IS
+      SELECT 1
+        FROM tbcobran_sms_pacotes t
+       WHERE t.cdcooper  = pr_cdcooper
+         AND t.idpacote  = pr_idpacote
+         AND t.flgstatus = 1; -- Flag indicando PACOTE ATIVO
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    -------------->> TEMP-Table <<---------------    
+      
+    -------------->> VARIAVEIS <<----------------
+    vr_nomdojob     CONSTANT VARCHAR2(100) := 'JBCOBRAN_SMS_RENOV';
+    vr_flgerlog     BOOLEAN := FALSE;  
+    
+    vr_exc_erro     EXCEPTION;
+    vr_dscritic     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
+    
+    vr_indativo     NUMBER;
+    vr_idcontrato   NUMBER;
+    vr_dsalerta     VARCHAR2(2000);
+    vr_dsretorn     VARCHAR2(2000);
+       
+    vr_flsitsms     INTEGER;
+    
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+ 
+    --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
+                               ,pr_cdprogra  => NULL           --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+        
+    END pc_controla_log_batch;
+    
+    
+       
+  BEGIN    
+  
+    
+    -->  Validar execução
+    gene0004.pc_executa_job(pr_cdcooper => 3, --> Codigo da cooperativa
+                            pr_fldiautl => 1,                        --> Flag se deve validar dia util
+                            pr_flproces => 0,                        --> Flag se deve validar se esta no processo 
+                            pr_flrepjob => 0,                        --> Flag para reprogramar o job
+                            pr_flgerlog => 1,                        --> indicador se deve gerar log
+                            pr_nmprogra => 'PC_VERIFICA_RENOVACAO_PACOTE', --> Nome do programa que esta s
+                            pr_dscritic => vr_dscritic);
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;    
+    
+    --> Controla log proc_batch
+    pc_controla_log_batch(pr_dstiplog => 'I');  
+   
+    
+    -- datas da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      CLOSE btch0001.cr_crapdat;
+      -- monta msg de critica
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);     
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE btch0001.cr_crapdat;
+    END IF; 
+    
+    
+    vr_dscritic := NULL; 
+    
+    -->Buscar contratos cujo existe tarifa de pacote a ser cobrada
+    FOR rw_smsctr IN cr_smsctr LOOP
+       --> Rotina para verificar se serviço de SMS.
+      pc_verifar_serv_sms(pr_cdcooper   => rw_smsctr.cdcooper   --> Codigo da cooperativa
+                         ,pr_nrdconta   => rw_smsctr.nrdconta   --> Conta do associado
+                         ,pr_nmdatela   => 'COBR0005'           --> Nome da tela
+                         ,pr_idorigem   => 7                    --> Indicador de sistema origem
+                         -----> OUT <----                                                                 
+                         ,pr_idcontrato =>  vr_idcontrato --> Retornar Numero do contratro ativo
+                         ,pr_flsitsms   =>  vr_flsitsms   --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
+                         ,pr_dsalerta   =>  vr_dsalerta   --> Retorna alerta para o cooperado
+                         ,pr_cdcritic   =>  vr_cdcritic   --> Retorna codigo de critica
+                         ,pr_dscritic   =>  vr_dscritic); --> Retorno de critica  
+    
+      -- Se retornou erro
+      IF NVL(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF; 
+      
+      --> Se serviço estiver habilitado
+      IF vr_flsitsms = 1 THEN
+        
+        --> Cancelamento do contrato atual de SMS
+        COBR0005.pc_cancel_contrato_sms 
+                               (pr_cdcooper    => rw_smsctr.cdcooper    --> Codigo da cooperativa
+                               ,pr_nrdconta    => rw_smsctr.nrdconta    --> Conta do associado
+                               ,pr_idseqttl    => 1                     --> Sequencial do titular
+                               ,pr_idcontrato  => rw_smsctr.idcontrato  --> Numero do contrato de SMS
+                               ,pr_idorigem    => 13 /* Renovacao SMS */--> id origem 
+                               ,pr_cdoperad    => 996            --> Codigo do operador
+                               ,pr_nmdatela    => 'COBR0005'     --> Identificador da tela da operacao
+                               ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
+                               ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
+                               -----> OUT <----           
+                               ,pr_dsretorn    => vr_dsretorn    --> Mensagem de retorno             
+                               ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
+                               ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
+                                                                
+        -- Se retornou erro
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;  
+        
+        -- Verifica se o pacote a ser renovado existe e está ativo
+        OPEN  cr_pacote_ativo(rw_smsctr.cdcooper
+                             ,rw_smsctr.idpacote);
+        FETCH cr_pacote_ativo INTO vr_indativo;
+      
+        -- Se não houver retorno, indica pacote inexistente ou inativo
+        IF cr_pacote_ativo%NOTFOUND THEN
+          vr_indativo := 0;
+        END IF;
+                                                                
+        -- Fechar o cursor
+        CLOSE cr_pacote_ativo;
+        
+        -- Se o pacote estiver ativo
+        IF NVL(vr_indativo,0) = 1 THEN
+          --> Rotina para geração do novo contrato de SMS
+        pc_gera_contrato_sms (pr_cdcooper  => rw_smsctr.cdcooper  --> Codigo da cooperativa
+                             ,pr_nrdconta  => rw_smsctr.nrdconta  --> Conta do associado
+                             ,pr_idseqttl  => rw_smsctr.idseqttl  --> Sequencial do titular
+                             ,pr_idorigem  => 13                  --> id origem 
+                             ,pr_cdoperad  => 0                   --> Codigo do operador
+                             ,pr_nmdatela  => 'COBR0005'          --> Identificador da tela da operacao
+                             ,pr_nrcpfope  => 0                   --> CPF do operador de conta juridica
+                             ,pr_inaprpen  => 0                   --> Indicador de aprovação de transacao pendente                         
+                             ,pr_idpacote  => rw_smsctr.idpacote  --> Indicador de pacote
+                             ,pr_tpnmemis  => rw_smsctr.tpnome_emissao --> Tipo de nome na emissao do boleto (0-outro, 1-nome razao/ 2-nome fantasia) 
+                             ,pr_nmemissa  => rw_smsctr.nmemissao_sms  --> Nome caso selecionado Outro
+                             -----> OUT <----                                   
+                             ,pr_idcontrato=> vr_idcontrato --> Numero do contrato
+                             ,pr_dsretorn  => vr_dsretorn   --> Mensagem de retorno
+                             ,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
+                             ,pr_dscritic  => vr_dscritic); --> Retorno de critica
+                                                              
+        -- Se retornou erro
+        IF NVL(vr_cdcritic,0) > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+          END IF; -- Critica
+        END IF; -- Verificar pacote ativo
+      END IF; -- Serviço habilitado
+     
+    END LOOP;
+    
+    --> Controla log proc_batch
+    pc_controla_log_batch(pr_dstiplog => 'F'); 
+    
+    COMMIT;       
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;
+      
+      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => vr_dscritic);
+      
+      
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral pc_gerar_tarifa_pacote : '||SQLERRM;        
+      ROLLBACK;
+      
+      --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => pr_dscritic);
+      
+  END pc_verifica_renovacao_pacote; 
+  
+  --> Rotina para realizar a troca do pacote de SMS
+  PROCEDURE pc_trocar_pacote_sms (pr_cdcooper    IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                 ,pr_nrdconta    IN crapass.nrdconta%TYPE  --> Conta do associado                             
+                                 ,pr_idorigem    IN INTEGER                --> id origem 
+                                 ,pr_cdoperad    IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                 ,pr_nmdatela    IN craptel.nmdatela%TYPE  --> Identificador da tela da operacao                             
+                                 ,pr_idpacote    IN INTEGER DEFAULT 0      --> Identificador do pacote de SMS                                 ,
+                                 ,pr_idctratu    IN tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de sms
+                                 -----> OUT <----                                   
+                                 ,pr_idctrnov   OUT tbcobran_sms_contrato.idcontrato%TYPE --> Numero do contrato de sms
+                                 ,pr_dsretorn   OUT VARCHAR2               --> Mensagem de retorno             
+                                 ,pr_cdcritic   OUT INTEGER                --> Retorna codigo de critica
+                                 ,pr_dscritic   OUT VARCHAR2) IS           --> Retorno de critica
+
+  /* ............................................................................
+
+       Programa: pc_trocar_pacote_sms
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busana- AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para realizar a troca do pacote de SMS
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    
+    --> Buscar inf do contrato de SMS
+    CURSOR cr_smsctr  (pr_cdcooper   tbcobran_sms_contrato.cdcooper%TYPE,  
+                       pr_nrdconta   tbcobran_sms_contrato.nrdconta%TYPE,  
+                       pr_idcontrato tbcobran_sms_contrato.idcontrato%TYPE) IS
+      SELECT ctr.cdcooper,
+             ctr.nrdconta,
+             ctr.idcontrato,
+             ctr.idpacote,
+             ctr.idseqttl,
+             ctr.nmemissao_sms,
+             ctr.tpnome_emissao
+        FROM tbcobran_sms_contrato ctr
+       WHERE ctr.cdcooper   = pr_cdcooper
+         AND ctr.nrdconta   = pr_nrdconta
+         AND ctr.idcontrato = pr_idcontrato;
+    rw_smsctr cr_smsctr%ROWTYPE;
+    
+    -------------->> TEMP-Table <<---------------    
+      
+    -------------->> VARIAVEIS <<----------------
+    
+    vr_exc_erro     EXCEPTION;    
+    vr_dscritic     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
+    
+    vr_idcontrato   NUMBER;
+    vr_dsalerta     VARCHAR2(2000);
+    vr_dsretorn     VARCHAR2(2000);
+       
+    vr_flsitsms     INTEGER;
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+ 
+    
+       
+  BEGIN    
+  
+    
+    --> Rotina para verificar se serviço de SMS.
+    pc_verifar_serv_sms(pr_cdcooper   => pr_cdcooper   --> Codigo da cooperativa
+                       ,pr_nrdconta   => pr_nrdconta   --> Conta do associado
+                       ,pr_nmdatela   => 'COBR0005'           --> Nome da tela
+                       ,pr_idorigem   => 7                    --> Indicador de sistema origem
+                       -----> OUT <----                                                                 
+                       ,pr_idcontrato =>  vr_idcontrato --> Retornar Numero do contratro ativo
+                       ,pr_flsitsms   =>  vr_flsitsms   --> Retorna se serviço esta ok para o cooperado(1-Ok,0-NOK )
+                       ,pr_dsalerta   =>  vr_dsalerta   --> Retorna alerta para o cooperado
+                       ,pr_cdcritic   =>  vr_cdcritic   --> Retorna codigo de critica
+                       ,pr_dscritic   =>  vr_dscritic); --> Retorno de critica  
+    
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF nvl(vr_idcontrato,0) = 0 THEN  
+      vr_dscritic := 'Não encontrado nenhum contrato ativo.';
+      RAISE vr_exc_erro;    
+    ELSIF nvl(vr_idcontrato,0) <> nvl(pr_idctratu,0) THEN
+      vr_dscritic := 'Numero do contrato difere do contrato ativo.';
+      RAISE vr_exc_erro;    
+    END IF;
+    
+    --> Buscar inf do contrato de SMS
+    OPEN cr_smsctr  (pr_cdcooper   => pr_cdcooper  ,  
+                     pr_nrdconta   => pr_nrdconta  ,  
+                     pr_idcontrato => pr_idctratu);
+    FETCH cr_smsctr INTO rw_smsctr;
+    IF cr_smsctr%NOTFOUND THEN
+      CLOSE cr_smsctr;
+      vr_dscritic := 'Ccontrato '||pr_idctratu||' não encontrado.';
+      RAISE vr_exc_erro;    
+    END IF;
+      
+    --> Canlemaneto do contrato de SMS
+    COBR0005.pc_cancel_contrato_sms 
+                           (pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
+                           ,pr_nrdconta    => pr_nrdconta    --> Conta do associado
+                           ,pr_idseqttl    => 1              --> Sequencial do titular
+                           ,pr_idcontrato  => pr_idctratu    --> Numero do contrato de SMS
+                           ,pr_idorigem    => pr_idorigem    --> id origem 
+                           ,pr_cdoperad    => pr_cdoperad   --> Codigo do operador
+                           ,pr_nmdatela    => pr_nmdatela   --> Identificador da tela da operacao
+                           ,pr_nrcpfope    => 0              --> CPF do operador de conta juridica
+                           ,pr_inaprpen    => 1              --> Indicador de aprovação de transacao pendente
+                           -----> OUT <----           
+                           ,pr_dsretorn    => vr_dsretorn    --> Mensagem de retorno             
+                           ,pr_cdcritic    => vr_cdcritic    --> Retorna codigo de critica
+                           ,pr_dscritic    => vr_dscritic);  --> Retorno de critica
+                                                                
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+        
+    --> Rotina para geração do contrato de SMS
+    pc_gera_contrato_sms (pr_cdcooper  => pr_cdcooper              --> Codigo da cooperativa
+                         ,pr_nrdconta  => pr_nrdconta              --> Conta do associado
+                         ,pr_idseqttl  => rw_smsctr.idseqttl       --> Sequencial do titular
+                         ,pr_idorigem  => pr_idorigem              --> id origem 
+                         ,pr_cdoperad  => pr_cdoperad              --> Codigo do operador
+                         ,pr_nmdatela  => pr_nmdatela              --> Identificador da tela da operacao
+                         ,pr_nrcpfope  => 0                        --> CPF do operador de conta juridica
+                         ,pr_inaprpen  => 1                        --> Indicador de aprovação de transacao pendente                         
+                         ,pr_idpacote  => pr_idpacote       --> Indicador de pacote
+                         ,pr_tpnmemis  => rw_smsctr.tpnome_emissao --> Tipo de nome na emissao do boleto (0-outro, 1-nome razao/ 2-nome fantasia) 
+                         ,pr_nmemissa  => rw_smsctr.nmemissao_sms  --> Nome caso selecionado Outro
+                         -----> OUT <----                                   
+                         ,pr_idcontrato=> pr_idctrnov   --> Numero do contrato
+                         ,pr_dsretorn  => vr_dsretorn   --> Mensagem de retorno
+                         ,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
+                         ,pr_dscritic  => vr_dscritic); --> Retorno de critica
+                                                              
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+     
+    pr_dsretorn := 'Alteração de pacote de SMS realizada com sucesso.';
+    
+    COMMIT;       
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;      
+      
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral pc_trocar_pacote : '||SQLERRM;        
+      ROLLBACK;      
+      
+  END pc_trocar_pacote_sms; 
+   
+  --> Rotina para realizar a troca do pacote de SMS - Chamada ayllos Web
+  PROCEDURE pc_trocar_pacote_sms_web (  pr_nrdconta   IN crapass.nrdconta%TYPE  --> Numero de conta do cooperado
+                                       ,pr_idcontrato IN INTEGER                --> indicador do contrato de serviço de SMS de Cobrança
+                                       ,pr_idpacote   IN INTEGER                --> Numero do pacote de SMS
+                                       ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                       ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                       ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                       ,pr_des_erro  OUT VARCHAR2) IS           --> Erros do processo
+
+  /* ............................................................................
+
+       Programa: pc_trocar_pacote_sms_web
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busana- AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para realizar a troca do pacote de SMS - Chamada ayllos Web
+
+       Alteracoes: ----
+
+    ............................................................................ */  
+    
+    -------------->> VARIAVEIS <<----------------
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+
+    -- Tratamento de erros
+    vr_exc_erro EXCEPTION;
+
+    -- Variaveis de log
+    vr_cdcooper   INTEGER;
+    vr_cdoperad   VARCHAR2(100);
+    vr_nmdatela   VARCHAR2(100);
+    vr_nmeacao    VARCHAR2(100);
+    vr_cdagenci   VARCHAR2(100);
+    vr_nrdcaixa   VARCHAR2(100);
+    vr_idorigem   VARCHAR2(100);
+
+    vr_idctrnov   INTEGER;
+    vr_dsretorn   VARCHAR2(2000);
+    
+  BEGIN
+  
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    
+    pc_trocar_pacote_sms (pr_cdcooper    => vr_cdcooper   --> Codigo da cooperativa
+                         ,pr_nrdconta    => pr_nrdconta   --> Conta do associado                             
+                         ,pr_idorigem    => vr_idorigem   --> id origem 
+                         ,pr_cdoperad    => vr_cdoperad   --> Codigo do operador
+                         ,pr_nmdatela    => vr_nmdatela   --> Identificador da tela da operacao                             
+                         ,pr_idpacote    => pr_idpacote   --> Identificador do pacote de SMS
+                         ,pr_idctratu    => pr_idcontrato --> Numero do contrato de sms
+                         -----> OUT <----                                   
+                         ,pr_idctrnov    => vr_idctrnov   --> Numero do contrato de sms
+                         ,pr_dsretorn    => vr_dsretorn   --> Mensagem de retorno             
+                         ,pr_cdcritic    => vr_cdcritic   --> Retorna codigo de critica
+                         ,pr_dscritic    => vr_dscritic );--> Retorno de critica
+    
+                                                          
+    -- Se retornou erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);    
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'idcontrato'
+                          ,pr_tag_cont => vr_idctrnov
+                          ,pr_des_erro => vr_dscritic);    
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'dsretorn'
+                          ,pr_tag_cont => vr_dsretorn
+                          ,pr_des_erro => vr_dscritic);                          
+                                                
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_trocar_pacote_sms_web: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
+  END pc_trocar_pacote_sms_web; 
+  
+  --> Rotina para cobrar tarifas das SMSs enviadas 
+  PROCEDURE pc_gera_tarifa_sms_enviados (pr_cdcooper    IN  INTEGER               --> Codigo da cooperativa                                         
+                                        ,pr_dscritic   OUT  VARCHAR2) IS          --> Retorno de critica
+
+  /* ............................................................................
+
+       Programa: pc_gera_tarifa_sms_enviados
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busana- AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para cobrar tarifas das SMSs enviadas 
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    
     --------------->> CURSORES <<----------------
     
     --> Buscar cooperativas
@@ -6395,9 +7879,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND lot.cdproduto  = 19
          AND lot.idtpreme   = 'SMSCOBRAN'
          AND cdretorno      = 00
-         AND trunc(dhenvio_sms)  = trunc(SYSDATE)
+         AND trunc(dhenvio_sms)  = trunc(SYSDATE)         
        GROUP BY ctl.cdcooper, ctl.nrdconta,ctl.cdtarifa;
 
+    -->  Buscar contrato ativo
+    CURSOR cr_smsctr (pr_cdcooper crapass.cdcooper%TYPE,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT ctr.idpacote,
+             ctr.qtdsms_pacote,
+             ctr.qtdsms_usados,
+             ctr.vlunitario,
+             ctr.rowid
+        FROM tbcobran_sms_contrato ctr
+       WHERE ctr.cdcooper = pr_cdcooper
+         AND ctr.nrdconta = pr_nrdconta
+         AND ctr.dhcancela IS NULL;
+    rw_smsctr cr_smsctr%ROWTYPE;
+    
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     -------------->> TEMP-Table <<---------------
@@ -6416,10 +7914,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     -------------->> VARIAVEIS <<----------------
     vr_nomdojob     CONSTANT VARCHAR2(100) := 'JBCOBRAN_TARIFA_SMS';
     vr_flgerlog     BOOLEAN := FALSE;  
+    vr_nmarqlog     VARCHAR2(200);
     
     vr_exc_erro     EXCEPTION;
     vr_next_coop    EXCEPTION;
-    vr_next_sms     EXCEPTION;
+    vr_exc_next     EXCEPTION;
     vr_dscritic     VARCHAR2(2000);
     vr_cdcritic     INTEGER;
     
@@ -6427,10 +7926,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     vr_rowid_lat    ROWID;
     vr_idxtar       PLS_INTEGER;
-    vr_vltarsms     NUMBER;        
+    vr_vltarsms     NUMBER;       
+    vr_qtsmsdis     INTEGER;
+    vr_qtdsms       INTEGER;
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
-
+    -- procedimento para gerar log da debtar
+    PROCEDURE pc_gera_log( pr_cdcooper IN NUMBER DEFAULT 3,
+                           pr_idtiplog IN NUMBER DEFAULT 1,
+                           pr_dscdolog IN VARCHAR2) IS
+    BEGIN
+      -- Envio centralizado de log de erro
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => pr_idtiplog
+                                ,pr_nmarqlog     => vr_nmarqlog
+                                ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+                                                 || vr_nomdojob || ' --> '
+                                                 || pr_dscdolog );
+    END pc_gera_log;
+    
     -- procedimento para gerar email de alerta 
     PROCEDURE pc_email_critica(pr_dscritic IN VARCHAR2) IS
     
@@ -6472,8 +7986,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
         
     END pc_controla_log_batch;
     
+    --> Rotina para notificar cooperado
+    PROCEDURE pc_notifica_cooperado (pr_cdcooper IN crapass.cdcooper%TYPE,
+                                     pr_nmrescop IN crapcop.nmrescop%TYPE,
+                                     pr_nrdconta IN crapass.nrdconta%TYPE )IS
+      
+      --Selecionar titulares com senhas ativas
+    CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
+                       ,pr_nrdconta IN crapsnh.nrdconta%TYPE
+                       ,pr_cdsitsnh IN crapsnh.cdsitsnh%TYPE
+                       ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE) IS
+      SELECT crapsnh.nrcpfcgc
+            ,crapsnh.cdcooper
+            ,crapsnh.nrdconta
+            ,crapsnh.idseqttl
+        FROM crapsnh
+       WHERE crapsnh.cdcooper = pr_cdcooper
+         AND crapsnh.nrdconta = pr_nrdconta
+         AND crapsnh.cdsitsnh = pr_cdsitsnh
+         AND crapsnh.tpdsenha = pr_tpdsenha;
+         
+      vr_dsdassun  crapmsg.dsdassun%TYPE;
+      vr_dsdplchv  crapmsg.dsdplchv%TYPE;
+      vr_dsdmensg  crapmsg.dsdmensg%TYPE;
+    
+    BEGIN
+    
+      vr_dsdassun := 'O limite de SMSs do seu Pacote foi excedido'; 
+      vr_dsdplchv := 'Limite de SMSs'; 
+      vr_dsdmensg := 'Informamos que o limite de SMSs de seu pacote foi excedido. A partir deste momento '||
+                     'cada SMS enviado terá o custo do SMS individual, até que o pacote seja automaticamente renovado. '||
+                     'Você também pode contratar um novo pacote de SMS. Caso seja de seu interesse, acesse o menu: '||
+                     'Cobrança Bancária > SMS para boletos, para visualizar os pacotes disponíveis.';
+    
+      --> Buscar pessoas que possuem acesso a conta
+      FOR rw_crapsnh IN cr_crapsnh (pr_cdcooper  => pr_cdcooper
+                                   ,pr_nrdconta  => pr_nrdconta
+                                   ,pr_cdsitsnh  => 1
+                                   ,pr_tpdsenha  => 1) LOOP
+        --> Insere na tabela de mensagens (CRAPMSG)
+        GENE0003.pc_gerar_mensagem
+                              (pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_idseqttl => rw_crapsnh.idseqttl --> Titular 
+                              ,pr_cdprogra => 'COBR0005'          --> Programa 
+                              ,pr_inpriori => 0
+                              ,pr_dsdmensg => vr_dsdmensg         --> corpo da mensagem 
+                              ,pr_dsdassun => vr_dsdassun         --> Assunto 
+                              ,pr_dsdremet => pr_nmrescop 
+                              ,pr_dsdplchv => vr_dsdplchv
+                              ,pr_cdoperad => 1
+                              ,pr_cdcadmsg => 0
+                              ,pr_dscritic => vr_dscritic); 
+
+      END LOOP;  
+    END pc_notifica_cooperado;
+    
   BEGIN
     
+    vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
+                                              pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
+                                              
     --> Controla log proc_batch
     pc_controla_log_batch(pr_dstiplog => 'I'); 
     
@@ -6505,26 +8078,133 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       
       --> buscar SMSs enviados com sucesso
       FOR rw_sms_cobran IN cr_sms_cobran(pr_cdcooper => rw_crapcop.cdcooper) LOOP
-        
-        vr_idxtar := rw_sms_cobran.cdtarifa;
-        
-        --> Se ainda não foi buscada essa tarifa
-        IF NOT vr_tab_tarifa.exists(vr_idxtar) THEN
-        
-          --> Carregar Tarifas de pessoa fisica e juridica      
-          TARI0001.pc_carrega_dados_tar_vigente ( pr_cdcooper  => rw_sms_cobran.cdcooper   -- Codigo Cooperativa
-                                                 ,pr_cdtarifa  =>  rw_sms_cobran.cdtarifa  --Codigo da Tarifa (CRAPTAR) - Ao popular este parâmetro o pr_cdbattar não é necessário
-                                                 ,pr_vllanmto  => 0             -- Valor Lancamento
-                                                 ,pr_cdprogra  => 'COBR0005'    -- Codigo Programa
-                                                 ,pr_cdhistor  => vr_tab_tarifa(vr_idxtar).cdhistor   -- Codigo Historico
-                                                 ,pr_cdhisest  => vr_tab_tarifa(vr_idxtar).cdhisest   -- Historico Estorno
-                                                 ,pr_vltarifa  => vr_tab_tarifa(vr_idxtar).vltarifa   -- Valor tarifa
-                                                 ,pr_dtdivulg  => vr_tab_tarifa(vr_idxtar).dtdivulg   -- Data Divulgacao
-                                                 ,pr_dtvigenc  => vr_tab_tarifa(vr_idxtar).dtvigenc   -- Data Vigencia
-                                                 ,pr_cdfvlcop  => vr_tab_tarifa(vr_idxtar).cdfvlcop   -- Codigo faixa valor cooperativa
-                                                 ,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
-                                                 ,pr_dscritic  => vr_dscritic   -- Descricao Critica
-                                                 ,pr_tab_erro  => vr_tab_erro); -- Tabela erros
+        BEGIN
+          
+          --> Localizar contrato ativo
+          OPEN cr_smsctr(pr_cdcooper => rw_sms_cobran.cdcooper,
+                         pr_nrdconta => rw_sms_cobran.nrdconta);
+          FETCH cr_smsctr INTO rw_smsctr;                 
+          IF cr_smsctr%NOTFOUND THEN
+            CLOSE cr_smsctr;
+            vr_dscritic := 'Nenhum contrato de SMS de cobrança localizado para o cooperado '||rw_sms_cobran.nrdconta;
+            RAISE vr_exc_erro;
+          END IF;
+		  CLOSE cr_smsctr;
+          
+          vr_qtsmsdis := 0;
+          vr_qtdsms   := 0;
+          vr_vltarsms := 0;
+          
+          IF rw_smsctr.idpacote > 2 THEN
+          
+            --> Calcular SMSs disponiveis
+            vr_qtsmsdis := nvl(rw_smsctr.qtdsms_pacote,0) - nvl(rw_smsctr.qtdsms_usados,0);
+            
+            BEGIN
+              UPDATE tbcobran_sms_contrato ctr
+                 SET ctr.qtdsms_usados = nvl(ctr.qtdsms_usados,0) + nvl(rw_sms_cobran.qtdsms,0)
+               WHERE ctr.rowid = rw_smsctr.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Nao foi possivel atualizar contrato sms  cooperado '||rw_sms_cobran.nrdconta;
+            END;
+            
+            IF vr_qtsmsdis <= 0 THEN
+              vr_qtdsms := rw_sms_cobran.qtdsms;
+            ELSE
+              vr_qtdsms := vr_qtsmsdis - rw_sms_cobran.qtdsms;
+            END IF;
+            
+            --> Se ainda nao utilizou todas as SMSs disponiveis
+            IF vr_qtdsms >= 0 THEN
+              --> nao precisa cobrar tarifa
+              RAISE vr_exc_next;
+            ELSE
+              --> se ja utilizou, gerar tarifa dos SMSs adicionais
+              vr_qtdsms   := abs(vr_qtdsms); 
+              vr_vltarsms := vr_qtdsms * rw_smsctr.vlunitario;
+            END IF;
+            
+            -- Se possuia qtd de SMSs disponiveis, porem ultrapassou a quantidade
+            --> e irá cobrar SMS
+            IF vr_qtsmsdis >= 0 AND vr_qtdsms > 0 THEN
+              pc_notifica_cooperado (pr_cdcooper => rw_sms_cobran.cdcooper,
+                                     pr_nmrescop => rw_crapcop.nmrescop,
+                                     pr_nrdconta => rw_sms_cobran.nrdconta);            
+            END IF;
+          
+          --> Individual
+          ELSE
+            vr_qtdsms := rw_sms_cobran.qtdsms;
+          
+          END IF;
+          
+          
+          vr_idxtar := rw_sms_cobran.cdtarifa;
+          
+          --> Se ainda não foi buscada essa tarifa
+          IF NOT vr_tab_tarifa.exists(vr_idxtar) THEN
+          
+            --> Carregar Tarifas de pessoa fisica e juridica      
+            TARI0001.pc_carrega_dados_tar_vigente ( pr_cdcooper  => rw_sms_cobran.cdcooper   -- Codigo Cooperativa
+                                                   ,pr_cdtarifa  => rw_sms_cobran.cdtarifa  --Codigo da Tarifa (CRAPTAR) - Ao popular este parâmetro o pr_cdbattar não é necessário
+                                                   ,pr_vllanmto  => 0             -- Valor Lancamento
+                                                   ,pr_cdprogra  => 'COBR0005'    -- Codigo Programa
+                                                   ,pr_cdhistor  => vr_tab_tarifa(vr_idxtar).cdhistor   -- Codigo Historico
+                                                   ,pr_cdhisest  => vr_tab_tarifa(vr_idxtar).cdhisest   -- Historico Estorno
+                                                   ,pr_vltarifa  => vr_tab_tarifa(vr_idxtar).vltarifa   -- Valor tarifa
+                                                   ,pr_dtdivulg  => vr_tab_tarifa(vr_idxtar).dtdivulg   -- Data Divulgacao
+                                                   ,pr_dtvigenc  => vr_tab_tarifa(vr_idxtar).dtvigenc   -- Data Vigencia
+                                                   ,pr_cdfvlcop  => vr_tab_tarifa(vr_idxtar).cdfvlcop   -- Codigo faixa valor cooperativa
+                                                   ,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
+                                                   ,pr_dscritic  => vr_dscritic   -- Descricao Critica
+                                                   ,pr_tab_erro  => vr_tab_erro); -- Tabela erros
+            -- Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              -- Se possui erro no vetor
+              IF vr_tab_erro.Count > 0 THEN
+                vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+              ELSE
+                vr_cdcritic := 0;
+                vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+              END IF;
+              -- Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+          
+          --> Para pacote individual, necessario buscar valor de tarifa atualizado
+          IF rw_smsctr.idpacote <= 2 THEN
+            vr_vltarsms := vr_qtdsms * vr_tab_tarifa(vr_idxtar).vltarifa;
+          END IF;
+          
+          -- Criar Lancamento automatico tarifa
+          TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => rw_sms_cobran.cdcooper
+                                          ,pr_nrdconta      => rw_sms_cobran.nrdconta
+                                          ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
+                                          ,pr_cdhistor      => vr_tab_tarifa(vr_idxtar).cdhistor
+                                          ,pr_vllanaut      => vr_vltarsms
+                                          ,pr_cdoperad      => '1'
+                                          ,pr_cdagenci      => 1
+                                          ,pr_cdbccxlt      => 100
+                                          ,pr_nrdolote      => 33001
+                                          ,pr_tpdolote      => 18
+                                          ,pr_nrdocmto      => 0
+                                          ,pr_nrdctabb      => rw_sms_cobran.nrdconta
+                                          ,pr_nrdctitg      => GENE0002.fn_mask(rw_sms_cobran.nrdconta,'99999999')
+                                          ,pr_cdpesqbb      => ' '
+                                          ,pr_cdbanchq      => 0
+                                          ,pr_cdagechq      => 0
+                                          ,pr_nrctachq      => 0
+                                          ,pr_flgaviso      => FALSE
+                                          ,pr_tpdaviso      => 0
+                                          ,pr_cdfvlcop      => vr_tab_tarifa(vr_idxtar).cdfvlcop
+                                          ,pr_inproces      => rw_crapdat.inproces
+                                          ,pr_rowid_craplat => vr_rowid_lat
+                                          ,pr_tab_erro      => vr_tab_erro
+                                          ,pr_cdcritic      => vr_cdcritic
+                                          ,pr_dscritic      => vr_dscritic);
           -- Se ocorreu erro
           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
             -- Se possui erro no vetor
@@ -6533,64 +8213,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
             ELSE
               vr_cdcritic := 0;
-              vr_dscritic := 'Nao foi possivel carregar a tarifa.';
+              vr_dscritic := 'Erro no lancamento tarifa de sms de cobrança.';
             END IF;
             -- Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-        END IF;
-        
-        vr_vltarsms := rw_sms_cobran.qtdsms * vr_tab_tarifa(vr_idxtar).vltarifa;
-        
-        -- Criar Lancamento automatico tarifa
-        TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => rw_sms_cobran.cdcooper
-                                        ,pr_nrdconta      => rw_sms_cobran.nrdconta
-                                        ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
-                                        ,pr_cdhistor      => vr_tab_tarifa(vr_idxtar).cdhistor
-                                        ,pr_vllanaut      => vr_vltarsms
-                                        ,pr_cdoperad      => '1'
-                                        ,pr_cdagenci      => 1
-                                        ,pr_cdbccxlt      => 100
-                                        ,pr_nrdolote      => 33001
-                                        ,pr_tpdolote      => 18
-                                        ,pr_nrdocmto      => 0
-                                        ,pr_nrdctabb      => rw_sms_cobran.nrdconta
-                                        ,pr_nrdctitg      => GENE0002.fn_mask(rw_sms_cobran.nrdconta,'99999999')
-                                        ,pr_cdpesqbb      => ' '
-                                        ,pr_cdbanchq      => 0
-                                        ,pr_cdagechq      => 0
-                                        ,pr_nrctachq      => 0
-                                        ,pr_flgaviso      => FALSE
-                                        ,pr_tpdaviso      => 0
-                                        ,pr_cdfvlcop      => vr_tab_tarifa(vr_idxtar).cdfvlcop
-                                        ,pr_inproces      => rw_crapdat.inproces
-                                        ,pr_rowid_craplat => vr_rowid_lat
-                                        ,pr_tab_erro      => vr_tab_erro
-                                        ,pr_cdcritic      => vr_cdcritic
-                                        ,pr_dscritic      => vr_dscritic);
-        -- Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-          -- Se possui erro no vetor
-          IF vr_tab_erro.Count > 0 THEN
-            vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-          ELSE
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro no lancamento tarifa de sms de cobrança.';
-          END IF;
-          -- Levantar Excecao
-          RAISE vr_exc_erro;
-        END IF;
-        
+        EXCEPTION
+          WHEN vr_exc_next THEN
+            NULL;
+          WHEN vr_exc_erro THEN
+            pc_gera_log( pr_cdcooper => rw_crapcop.cdcooper,
+                         pr_idtiplog => 1,
+                         pr_dscdolog => vr_dscritic);
+            vr_dscritic := NULL;                       
+          WHEN OTHERS THEN
+            vr_dscritic := 'Não foi possivel gerar tarifa de SMS para a conta '||
+                            rw_sms_cobran.nrdconta ||': '|| SQLERRM;
+            pc_gera_log( pr_cdcooper => rw_crapcop.cdcooper,
+                         pr_idtiplog => 1,
+                         pr_dscdolog => vr_dscritic);
+          
+        END;  
       END LOOP;
     
     END LOOP; --> Fim loop crapcop
     
+   
     --> Controla log proc_batch
     pc_controla_log_batch(pr_dstiplog => 'F'); 
     
-    COMMIT;
-    
+    COMMIT;       
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -6600,22 +8252,342 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       pc_email_critica(pr_dscritic);
       --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
       pc_controla_log_batch(pr_dstiplog => 'E',
-                          pr_dscritic => vr_dscritic);
-      --> Commir apos gerar os alertas
+                            pr_dscritic => vr_dscritic);
+      --> Commit apos gerar os alertas
       COMMIT;
       
+      
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro geral pc_verifica_sms_a_enviar : '||SQLERRM;        
+      pr_dscritic := 'Erro geral pc_gera_tarifa_sms_enviados : '||SQLERRM;        
       ROLLBACK;
       
       pc_email_critica(pr_dscritic);
       --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
       pc_controla_log_batch(pr_dstiplog => 'E',
                             pr_dscritic => pr_dscritic);
-                            
-      --> Commir apos gerar os alertas
-      COMMIT;                      
-  END pc_calcula_tarifa_individual;  
+      
+  END pc_gera_tarifa_sms_enviados; 
+  
+  --> Rotina responsavel por gerar o relatorio de resumo de envio de SMS
+  PROCEDURE pc_relat_resumo_envio_sms (pr_cdcooper  IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa                                    
+                                      ,pr_nrdconta  IN  crapass.nrdconta%TYPE          --> Numer de conta do cooperado                                     
+                                      ,pr_dtiniper  IN  DATE                           --> Data inicio do periodo para relatorio
+                                      ,pr_dtfimper  IN  DATE                           --> Data fim do periodo para relatorio
+                                      ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
+                                      ,pr_dsiduser   IN VARCHAR2                       --> id do usuario
+                                      ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
+                                      --------->> OUT <<-----------
+                                      ,pr_nmarqpdf OUT VARCHAR2                        --> Retorna o nome do relatorio gerado
+                                      ,pr_dsxmlrel OUT CLOB                            --> Retorna xml do relatorio quando origem for 3 -InternetBank
+                                      ,pr_cdcritic OUT NUMBER                          --> nome na emissao do boleto (1-nome razao/ 2-nome fantasia) 
+                                      ,pr_dscritic OUT VARCHAR2) IS                    --> Retorno de critica
+
+  /* ............................................................................
+
+       Programa: pc_relat_resumo_envio_sms
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busana - AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina responsavel por gerar o relatorio de resumo de envio de SMS
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    --> Buscar SMSs enviados 
+    CURSOR cr_smsctr IS
+      SELECT ctr.idpacote,
+             pct.dspacote,
+             ctr.idcontrato,
+             ctr.dhcancela,
+             pct.cdtarifa,
+             ctr.qtdsms_pacote,
+             ctr.qtdsms_usados,
+             GREATEST(ctr.qtdsms_pacote - ctr.qtdsms_usados,0) qtsmsdis,
+             GREATEST(ctr.qtdsms_usados - ctr.qtdsms_pacote,0) qtsmsadi,
+             ctr.vlpacote,
+             ctr.vlunitario,
+             ass.nmprimtl
+        FROM crapass ass, 
+             tbcobran_sms_contrato ctr,
+             tbcobran_sms_pacotes  pct
+       WHERE ctr.cdcooper = pct.cdcooper
+         AND ctr.idpacote = pct.idpacote
+         AND ctr.cdcooper = ass.cdcooper
+         AND ctr.nrdconta = ass.nrdconta
+         AND ctr.cdcooper = pr_cdcooper
+         AND ctr.nrdconta = pr_nrdconta
+         AND trunc(ctr.dhadesao) >= pr_dtiniper 
+         AND trunc(ctr.dhadesao) <= pr_dtfimper
+         ORDER BY ctr.dhadesao DESC;
+    
+    --> Buscar Valor tarifa
+    CURSOR cr_crapfco(pr_cdcooper crapcop.cdcooper%TYPE,
+                      pr_cdtarifa craptar.cdtarifa%TYPE) IS
+      SELECT fco.vltarifa           
+        FROM crapfco fco
+            ,crapfvl fvl
+       WHERE fco.cdcooper = pr_cdcooper
+         AND fco.flgvigen = 1 --> ativa 
+         AND fco.cdfaixav = fvl.cdfaixav 
+         AND fvl.cdtarifa = pr_cdtarifa;
+    
+    --> Buscar quantidade de SMSs programadas/pendentes de envio
+    CURSOR cr_smsprog IS   
+      SELECT COUNT(1)
+        FROM tbcobran_sms sms
+       WHERE sms.cdcooper = pr_cdcooper
+         AND sms.nrdconta = pr_nrdconta
+         AND sms.instatus_sms IN ( 1,  --> A enviar
+                                   2); --> processamento
+    --> Buscar quantidade de SMSs enviadas
+    CURSOR cr_smsenv (pr_cdcooper   tbcobran_sms.cdcooper%TYPE,  
+                      pr_nrdconta   tbcobran_sms.nrdconta%TYPE,  
+                      pr_idcontrato tbcobran_sms.idcontrato%TYPE )IS   
+      SELECT COUNT(1)
+        FROM tbcobran_sms sms
+       WHERE sms.cdcooper   = pr_cdcooper
+         AND sms.nrdconta   = pr_nrdconta
+         AND sms.idcontrato = pr_idcontrato
+         AND sms.instatus_sms = 4; -- Enviado
+       
+    
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+     
+    -------------->> VARIAVEIS <<----------------
+    vr_exc_erro     EXCEPTION;
+    vr_dscritic     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
+    vr_des_reto     VARCHAR2(100);
+    vr_tab_erro     GENE0001.typ_tab_erro; 
+    
+    vr_flexsreg     BOOLEAN := FALSE;
+    vr_vltottar     NUMBER;
+    vr_vlunitario   NUMBER;
+    vr_qtsmspen     INTEGER;
+    vr_qtsmspen_aux INTEGER;
+    vr_qtsmsenv     INTEGER;
+    
+    vr_dsdireto     VARCHAR2(4000);
+    vr_dscomand     VARCHAR2(4000);
+    vr_typsaida     VARCHAR2(100); 
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml      CLOB;
+    vr_txtcompl     VARCHAR2(32600);
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_txtcompl, pr_des_dados, pr_fecha_xml);
+    END;
+    
+  BEGIN
+  
+    -- Leitura do calendario da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Fechar o cursor
+    CLOSE btch0001.cr_crapdat;  
+  
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);    
+    vr_txtcompl := NULL;
+    
+    IF pr_idorigem <> '3' THEN
+      --> INICIO
+      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl728 dtiniper="'||to_char(pr_dtiniper,'DD/MM/RRRR')||'"
+                                                                     dtfimper="'||to_char(pr_dtfimper,'DD/MM/RRRR')||'">');
+      
+    ELSE
+      pc_escreve_xml('<crrl728>');
+    END IF;
+    
+    vr_qtsmspen := 0;
+    --> Buscar quantidade de SMSs programadas/pendentes de envio
+    OPEN cr_smsprog;
+    FETCH cr_smsprog INTO vr_qtsmspen;
+    CLOSE cr_smsprog;
+    
+    
+    --> Buscar SMSs enviados 
+    FOR rw_smsctr IN cr_smsctr LOOP
+      vr_flexsreg := TRUE;
+      
+      IF rw_smsctr.idpacote IN (1,2) THEN
+      
+        --> Buscar Valor tarifa
+        OPEN cr_crapfco(pr_cdcooper => pr_cdcooper,
+                        pr_cdtarifa => rw_smsctr.cdtarifa);
+        FETCH cr_crapfco INTO vr_vlunitario;
+        CLOSE cr_crapfco;
+        
+        vr_qtsmsenv := 0;
+        --> Buscar quantidade de SMSs enviadas
+        OPEN cr_smsenv (pr_cdcooper   => pr_cdcooper,  
+                        pr_nrdconta   => pr_nrdconta,  
+                        pr_idcontrato => rw_smsctr.idcontrato);
+        FETCH cr_smsenv INTO vr_qtsmsenv;
+        CLOSE cr_smsenv;
+        rw_smsctr.qtdsms_usados := vr_qtsmsenv;
+        
+        --> Nao precisa calcular apenas apresentar valor tarifa
+        /*vr_vltottar := vr_qtsmsenv * vr_vlunitario;*/
+        vr_vltottar := vr_vlunitario;
+        
+      ELSE
+        --> Nao é necessario calcular, apenas apresenta valor do pacote
+        vr_vltottar := rw_smsctr.vlpacote;
+        /*vr_vltottar := rw_smsctr.vlpacote + 
+                      nvl(rw_smsctr.qtsmsadi * rw_smsctr.vlunitario,0);*/
+      END IF;
+      
+      --> Atribuir a qtd de sms pendente para o contrato que estiver ativo
+      vr_qtsmspen_aux := NULL;
+      IF rw_smsctr.dhcancela IS NULL THEN
+        vr_qtsmspen_aux := nvl(vr_qtsmspen,0);
+      END IF;
+      
+      pc_escreve_xml('<CONTRATO>'||   
+                       '<nmprimtl>'||   rw_smsctr.nmprimtl       ||'</nmprimtl>'||
+                       '<idpacote>'||   rw_smsctr.idpacote       ||'</idpacote>'||
+                       '<dspacote>'||   rw_smsctr.dspacote       ||'</dspacote>'||
+                       '<qtsmspct>'||   rw_smsctr.qtdsms_pacote  ||'</qtsmspct>'||
+                       '<qtsmsusd>'||   rw_smsctr.qtdsms_usados  ||'</qtsmsusd>'||
+                       '<qtsmsdis>'||   rw_smsctr.qtsmsdis       ||'</qtsmsdis>'||
+                       '<qtsmsadi>'||   rw_smsctr.qtsmsadi       ||'</qtsmsadi>'||
+                       '<qtsmspen>'||   vr_qtsmspen_aux          ||'</qtsmspen>'||                       
+                       '<vlpacote>'||   to_char(rw_smsctr.vlpacote,'fm999G999G990D00')     ||'</vlpacote>'||
+                       '<vlunitar>'||   to_char(rw_smsctr.vlunitario,'fm999G999G990D00')   ||'</vlunitar>'||
+                       '<vltottar>'||   to_char(vr_vltottar,'fm999G999G990D00')            ||'</vltottar>'||
+             '        </CONTRATO>');      
+    END LOOP;
+    
+    pc_escreve_xml('</crrl728>',TRUE);
+    
+    IF vr_flexsreg = FALSE THEN
+      vr_dscritic := 'Nenhum registro encontrado para o periodo informado.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --Para origem InternetBank, já concluiu busca das informações, 
+    --geração do relatorio ocorrerá no PHP    
+    IF pr_idorigem = 3 THEN      
+      pr_dsxmlrel := vr_des_xml;        
+    END IF;  
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral pc_relat_resumo_envio_sms : '||SQLERRM;  
+  END pc_relat_resumo_envio_sms; 
+  
+  --> Rotina para verificar se é para apresentar popup do serviço de SMS para o cooperado
+  PROCEDURE pc_verifar_oferta_sms(pr_cdcooper      IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                 ,pr_nrdconta      IN crapass.nrdconta%TYPE  --> Conta do associado                                 
+                                 -----> OUT <----                                                                                                  
+                                 ,pr_flofesms OUT  INTEGER                   --> Retorna se deve exibir oferta de SMS
+                                 ,pr_dsmensag OUT  VARCHAR2                  --> Retorna alerta para o cooperado
+                                 ,pr_dscritic OUT  VARCHAR2) IS              --> Retorno de critica
+
+  /* ............................................................................
+
+       Programa: pc_verifar_oferta_sms
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Odirlei Busan - AMcom
+       Data    : Março/2017                     Ultima atualizacao: --/--/----
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que chamado
+       Objetivo  : Rotina para verificar se é para apresentar popup do serviço de SMS para o cooperado
+
+       Alteracoes: ----
+
+    ............................................................................ */
+    --------------->> CURSORES <<----------------
+    
+    --> Buscar dados do contrato de sms     
+    CURSOR cr_smsparam IS
+      SELECT 1 flgoferta_sms
+        FROM cecred.tbcobran_sms_param_coop prm
+       WHERE prm.cdcooper = pr_cdcooper
+         AND prm.flgoferta_sms = 1
+         AND trunc(SYSDATE) BETWEEN prm.dtini_oferta AND prm.dtfim_oferta
+         AND NOT EXISTS (SELECT 1
+                           FROM tbcobran_sms_contrato ctr
+                          WHERE ctr.cdcooper = prm.cdcooper
+                            AND ctr.nrdconta = pr_nrdconta
+                            AND ctr.dhcancela IS NULL)
+         --> Verificar se possui convenio de cobrança ativo
+         AND EXISTS ( SELECT 1
+                        FROM crapceb ceb
+                       WHERE ceb.insitceb = 1
+                         AND ceb.cdcooper = prm.cdcooper
+                         AND ceb.nrdconta = pr_nrdconta
+                         AND rownum <= 1);
+    rw_smsparam cr_smsparam%ROWTYPE;
+    
+    CURSOR cr_msg (pr_cdcooper IN crapcco.cdcooper%TYPE) IS
+      SELECT dsmensagem 
+        FROM tbgen_mensagem 
+       WHERE cdproduto = 19 
+         AND cdtipo_mensagem = 7 
+         AND cdcooper = pr_cdcooper; 
+    rw_msg cr_msg%ROWTYPE;         
+    
+    
+    -------------->> VARIAVEIS <<----------------
+    vr_exc_erro     EXCEPTION;
+    vr_dscritic     VARCHAR2(2000);
+    vr_cdcritic     INTEGER;
+    
+    vr_qtlatpen     INTEGER;
+    vr_tot_qtlatpen INTEGER := 0;
+    vr_existe       INTEGER := 0; 
+    vr_dsalerta     VARCHAR2(2000);
+    
+  BEGIN
+    pr_dsmensag := NULL;  
+  
+    --> Verificar se coop esta habilitada a enviar SMS de cobrança
+    rw_smsparam := NULL;
+    OPEN cr_smsparam;
+    FETCH cr_smsparam INTO rw_smsparam;
+    CLOSE cr_smsparam;
+    
+    pr_flofesms := nvl(rw_smsparam.flgoferta_sms,0);
+    
+    rw_msg := NULL;
+    OPEN cr_msg(pr_cdcooper);
+    FETCH cr_msg INTO rw_msg;
+    CLOSE cr_msg;    
+
+    pr_dsmensag := nvl(rw_msg.dsmensagem,'');    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral pc_verifar_oferta_sms : '||SQLERRM;  
+  END pc_verifar_oferta_sms; 
+  
+  
+  
 
 END COBR0005;
 /

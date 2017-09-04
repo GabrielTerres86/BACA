@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 31/07/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 04/09/2017
     
     Dados referentes ao programa:
 
@@ -500,6 +500,8 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            Heitor (Mouts) - Chamado 688338
 
 			  31/07/2017 - Alterado parametro par_cdcltrcs de INTEGER para CHAR. (Rafael)
+
+              04/09/2017 - Permitir estorno de boletos pagos pelo DDA. (Rafael/Ademir)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -4495,6 +4497,7 @@ PROCEDURE estorna_titulo:
     DEF INPUT  PARAM par_cdoperad         LIKE crapope.cdoperad      NO-UNDO.
     DEF INPUT  PARAM par_idorigem         AS INT                     NO-UNDO.
     DEF INPUT  PARAM par_cdctrbxo         AS CHAR                    NO-UNDO.
+    DEF INPUT  PARAM par_nrdident         LIKE craptit.nrdident      NO-UNDO.
     
     DEF OUTPUT PARAM par_dstransa         AS CHAR                    NO-UNDO.
     DEF OUTPUT PARAM par_dscritic         LIKE crapcri.dscritic      NO-UNDO.
@@ -4643,7 +4646,7 @@ PROCEDURE estorna_titulo:
                               craplot.dtmvtolt = crapaut.dtmvtolt   AND
                               craplot.cdagenci = crapaut.cdagenci   AND
                               craplot.cdbccxlt = 11                 AND
-                              craplot.nrdolote = 11000 + 900
+                              craplot.nrdolote = 16000 + 900
                               USE-INDEX craplot1
                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -4980,6 +4983,41 @@ PROCEDURE estorna_titulo:
               IF aux_des_erro = "NOK"   THEN
                  UNDO, RETURN "NOK".  
             
+
+              IF par_nrdident > 0 THEN
+                DO:
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+            
+                  /* atualizar status do titulo DDA para "aberto" */
+                  RUN STORED-PROCEDURE PC_ATUALZ_SITUAC_TITULO_SACADO
+                      aux_handproc = PROC-HANDLE NO-ERROR
+                                              (INPUT par_cdcooper
+                                              ,INPUT par_cdagenci
+                                              ,INPUT 900
+                                              ,INPUT par_cdoperad
+                                              ,INPUT "ESTORNO"
+                                              ,INPUT par_idorigem
+                                              ,INPUT par_nrdconta
+                                              ,INPUT par_idseqttl
+                                              ,INPUT STRING(par_nrdident)
+                                              ,INPUT 1            /* 1=Em aberto */
+                                              ,INPUT 0            /* Gerar log */
+                                              ,INPUT par_dtmvtolt
+                                              ,INPUT par_cdbarras
+                                              ,INPUT ""
+                                              ,OUTPUT 0           /* pr_des_erro Indicador erro OK/NOK */
+                                              ,OUTPUT "" ).       /* pr_dscritic Descricao erro */
+    
+                  CLOSE STORED-PROC PC_ATUALZ_SITUAC_TITULO_SACADO
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+    
+                  ASSIGN par_dscritic = PC_ATUALZ_SITUAC_TITULO_SACADO.pr_dscritic.
+                     
+                  IF par_dscritic <> ? THEN
+                     UNDO, RETURN "NOK". 
+                END.
             END.           
             
     END. /* fim DO TRANSACTION */

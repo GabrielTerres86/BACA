@@ -408,7 +408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0079.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 13/07/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 29/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -432,6 +432,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --                          como públicas. (Renato Darosci - Supero)
   --
   --             13/07/2017 - Retirado procedure pc_retorno_operacao_tit_DDA (antigo JDDDA) (Rafael)
+  --
+  --             29/08/2017 - Retirado mensagem de logs da proc_message.log e direcionado para o log
+  --                          principal da NPC. (Rafael)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   
@@ -497,7 +501,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
   --Selecionar convenio de cobranca
   CURSOR cr_crapcco(pr_cdcooper IN crapcco.cdcooper%TYPE,
                     pr_nrconven IN crapcco.nrconven%TYPE) IS
-    SELECT cco.dsorgarq
+    SELECT cco.dsorgarq,
+           cco.qtdecate
       FROM crapcco cco
      WHERE cco.cdcooper = pr_cdcooper
        AND cco.nrconven = pr_nrconven;
@@ -525,6 +530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           ,crapcob.cddespec
           ,crapcob.dsdinstr
           ,crapcob.idtitleg
+          ,crapcob.idopeleg
           ,crapcob.cdtpinav
           ,crapcob.nrinsava
           ,crapcob.nmdavali
@@ -564,6 +570,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
        AND ceb.nrdconta = pr_nrdconta
        AND ceb.nrconven = pr_nrconven;
   rw_crapceb cr_crapceb%ROWTYPE;  
+  
+  vr_dsarqlg         CONSTANT VARCHAR2(20) := 'npc_'||to_char(SYSDATE,'RRRRMM')||'.log'; -- nome do arquivo de log mensal  
 
   /* Procedure para buscar dados legado */
   PROCEDURE pc_obtem_dados_legado(pr_cdcooper IN INTEGER --Codigo Cooperativa
@@ -1307,6 +1315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                'Falha na execucao do metodo DDA SOAP-ENV:-722%' THEN
               --Se não for a crítica 722, geramos a informação no log
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_nmarqlog     => vr_dsarqlg
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
                                         ,pr_des_log      => to_char(sysdate
                                                                    ,'hh24:mi:ss') ||
@@ -1546,13 +1555,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       --Variaveis Locais
       vr_string   VARCHAR2(100);
       vr_flgcbok  BOOLEAN;
+      vr_ftvencto INTEGER := 0;
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
     BEGIN
+      
+      IF pr_dtvencto >= to_date('22/02/2025','DD/MM/RRRR') THEN
+         vr_ftvencto := (pr_dtvencto - to_date('22/02/2025','DD/MM/RRRR')) + 1000;
+      ELSE
+         vr_ftvencto := (pr_dtvencto - ct_dtini);
+      END IF;      
+    
       --Montar o Codigo Barrass
       vr_string := to_char(pr_cdbandoc, 'fm000') || '9' || /* moeda */
                    '1' || /* nao alterar - constante */
-                   to_char((pr_dtvencto - ct_dtini), 'fm0000') ||
+                   to_char(vr_ftvencto, 'fm0000') ||
                    to_char(pr_vltitulo * 100, 'fm0000000000') ||
                    to_char(pr_nrcnvcob, 'fm000000') ||
                    To_Char(pr_nrnosnum, 'fm00000000000000000') ||
@@ -1911,9 +1928,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                , cob.qtdiaprt = NVL(vr_qtdiaprt,cob.qtdiaprt)
                , cob.indiaprt = NVL(vr_indiaprt,cob.indiaprt)
                , cob.idtitleg = seqcob_idtitleg.NEXTVAL
+               , cob.idopeleg = seqcob_idopeleg.NEXTVAL
            WHERE ROWID = pr_rowid_cob
-           RETURNING cob.idtitleg 
-                INTO rw_crapcob.idtitleg;
+           RETURNING cob.idtitleg, cob.idopeleg 
+                INTO rw_crapcob.idtitleg, rw_crapcob.idopeleg;
                
         EXCEPTION
           WHEN OTHERS THEN
@@ -1926,9 +1944,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           UPDATE crapcob cob
              SET cob.ininscip = 1
                , cob.dhinscip = SYSDATE
+               , cob.idopeleg = seqcob_idopeleg.NEXTVAL
            WHERE ROWID = pr_rowid_cob
-           RETURNING cob.idtitleg 
-                INTO rw_crapcob.idtitleg;               
+           RETURNING cob.idtitleg, cob.idopeleg
+                INTO rw_crapcob.idtitleg, rw_crapcob.idopeleg;               
         EXCEPTION
           WHEN OTHERS THEN
             pr_dscritic := 'PC_CRIA_REMESSA_DDA: Erro ao atualizar CRAPCOB: '||SQLERRM;
@@ -1996,7 +2015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         CLOSE cr_crapttl;
       END IF;
     
-      --Calcular Codigo Barras
+      --Calcular Codigo Barras      
       DDDA0001.pc_calc_codigo_barras(pr_cdbandoc => rw_crapcob.cdbandoc --Codigo banco
                                     ,pr_vltitulo => rw_crapcob.vltitulo --Valor Titulo
                                     ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenvio Cobranca
@@ -2110,7 +2129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       pr_tab_remessa_dda(vr_index).rowidcob := pr_rowid_cob;
       pr_tab_remessa_dda(vr_index).cdlegado := 'LEG';
       pr_tab_remessa_dda(vr_index).nrispbif := rw_crapban.nrispbif;
-      pr_tab_remessa_dda(vr_index).idopeleg := seqcob_idopeleg.NEXTVAL;
+      pr_tab_remessa_dda(vr_index).idopeleg := rw_crapcob.idopeleg;
       pr_tab_remessa_dda(vr_index).idtitleg := rw_crapcob.idtitleg;
       pr_tab_remessa_dda(vr_index).tpoperad := pr_tpoperad;
       pr_tab_remessa_dda(vr_index).tpdbaixa := pr_tpdbaixa;
@@ -2185,6 +2204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       ELSE
         pr_tab_remessa_dda(vr_index).nrdiapro := NULL;
       END IF;
+      
       pr_tab_remessa_dda(vr_index).tpdepgto := 3; /* vencto indeterminado */
       IF pr_flgdprot THEN
         pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto +
@@ -2192,19 +2212,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
                                                                   ,'YYYYMMDD'));
       ELSIF rw_crapcco.dsorgarq = 'EMPRESTIMO' THEN
         pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto,'YYYYMMDD'));
+        
+      ELSIF rw_crapcco.dsorgarq = 'ACORDO' THEN
+        pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto + nvl(rw_crapcco.qtdecate,0),'YYYYMMDD'));                
       ELSE
         pr_tab_remessa_dda(vr_index).dtlipgto := To_Number(To_Char(pr_dtvencto + rw_crapceb.qtdecprz,'YYYYMMDD'));        
       END IF;
+      
       pr_tab_remessa_dda(vr_index).indnegoc := 'N';
       pr_tab_remessa_dda(vr_index).vlrabati := pr_vlabatim;
-      IF rw_crapcob.vljurdia > 0 THEN
+      
+      IF rw_crapcob.vljurdia > 0 AND vr_dsdjuros <> '5' THEN
         pr_tab_remessa_dda(vr_index).dtdjuros := To_Number(To_Char(pr_dtvencto + 1
                                                                   ,'YYYYMMDD'));
       ELSE
         pr_tab_remessa_dda(vr_index).dtdjuros := NULL;
       END IF;
       pr_tab_remessa_dda(vr_index).dsdjuros := vr_dsdjuros;
-      IF rw_crapcob.vljurdia > 0 THEN
+      
+      IF rw_crapcob.vljurdia > 0 AND vr_dsdjuros <> '5' THEN
         pr_tab_remessa_dda(vr_index).vlrjuros := rw_crapcob.vljurdia;
       ELSE
         pr_tab_remessa_dda(vr_index).vlrjuros := 0;
@@ -2837,6 +2863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         -- Se encontrou erro gera o log no arquivo batch
         IF vr_dscritic IS NOT NULL THEN
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_nmarqlog     => vr_dsarqlg          
                                     ,pr_ind_tipo_log => 1
                                     ,pr_des_log      => to_char(sysdate
                                                                ,'hh24:mi:ss') ||
@@ -3155,7 +3182,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     
      ---------->>> VARIAVEIS <<<-----------   
     vr_dscritic   VARCHAR2(2000);   
-    vr_dslogmes crapprm.dsvlrprm%TYPE;   
        
   BEGIN
     
@@ -3183,12 +3209,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END LOOP;  
     
     
-    vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');    
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                               pr_ind_tipo_log => 2, 
-                               pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                  ' - DDDA0001 -> ' || vr_dscritic,
-                               pr_nmarqlog     => vr_dslogmes);
+    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                              ,pr_nmarqlog     => vr_dsarqlg    
+                              ,pr_ind_tipo_log => 2
+                              ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                  ' - DDDA0001 -> ' || vr_dscritic);                               
   
   END pc_trata_retorno_erro;   
   
@@ -3721,13 +3746,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     --Variaveis Excecao
-    vr_exc_erro EXCEPTION;
-    
-    vr_dslogmes VARCHAR2(200);
+    vr_exc_erro EXCEPTION;   
       
-  BEGIN
-  
-    vr_dslogmes := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');    
+  BEGIN  
     
     FOR rw_crapcop IN cr_crapcop LOOP
   
@@ -3794,11 +3815,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
             vr_dscritic := 'Erro ao processar retorno idtitleg: '||rw_retnpc.idtitleg||' -> '||
                            vr_dscritic;
                       
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                       pr_ind_tipo_log => 2, 
-                                       pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                      ' - DDDA0001 -> ' || vr_dscritic,
-                                       pr_nmarqlog     => vr_dslogmes);
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                      ,pr_nmarqlog     => vr_dsarqlg            
+                                      ,pr_ind_tipo_log => 2 
+                                      ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                      ' - DDDA0001 -> ' || vr_dscritic);
              
           END IF; 
                     
@@ -4270,13 +4291,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         pr_dscritic := 'Erro na rotina DDDA0001.pc_remessa_titulos_dda. ' ||
                        SQLERRM;
 
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                                   pr_ind_tipo_log => 2, 
-                                   pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                      ' - DDDA0001 -> ' || pr_dscritic,
-                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                                              , pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
-                       
+        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                  ,pr_nmarqlog     => vr_dsarqlg        
+                                  ,pr_ind_tipo_log => 2
+                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                      ' - DDDA0001 -> ' || pr_dscritic);                       
     END;
   END pc_remessa_titulos_dda;
   

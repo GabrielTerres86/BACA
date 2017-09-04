@@ -27,6 +27,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                 28/07/2017 - Gerar log de erro no log do boleto (Rafael)
                            - Ajustado ordenação na busca do processamento do 
                              boleto DDA nas tabelas da JD. (Rafael)
+                             
+                31/08/2017 - Criado procedure para buscar o retorno do registro
+                             CIP dos titulos da carga por faixa de rollout. (Rafael)
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps718';     -- Nome do programa
@@ -787,6 +790,203 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
   
   END pc_retorno_operacao_tit_NPC;  
   
+  /* Procedure para Executar retorno da carga por faixa de rollout de Titulos NPC */
+  PROCEDURE pc_retorno_carga_tit_NPC(pr_cdcritic        OUT crapcri.cdcritic%type --Codigo de Erro
+                                    ,pr_dscritic        OUT VARCHAR2) IS --Descricao de Erro
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_retorno_carga_tit_NPC    
+    --  Sistema  : Procedure para Executar retorno operacao Titulos NPC
+    --  Sigla    : CRED
+    --  Autor    : Rafael Cechet
+    --  Data     : Agosto/2017.                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Procedure para buscar o retorno da carga por faixa de rollout de titulos NPC
+    --
+    -- Alteracoes: 
+    ---------------------------------------------------------------------------------------------------------------
+    --> Buscar retornos 
+    CURSOR cr_retnpc (pr_cdlegado IN tbjdnpcdstleg_jd2lg_optit."CdLeg"@jdnpcbisql%type
+                     ,pr_nrispbif IN tbjdnpcdstleg_jd2lg_optit."ISPBAdministrado"@jdnpcbisql%TYPE
+                     ,pr_idtitleg IN tbjdnpcdstleg_jd2lg_optit."IdTituloLeg"@jdnpcbisql%TYPE) IS
+      SELECT tit."ISPBAdministrado" AS nrispbif
+            ,tit."TpOpJD"           AS tpoperac
+            ,tit."IdOpJD"           AS idoperac
+            ,tit."DtHrOpJD"         AS dhoperac
+            ,tit."SitOpJD"          AS cdstiope
+            ,tit."IdTituloLeg"      AS idtitleg
+            ,tit."NumIdentcTit"     AS idtitnpc
+            ,tit."IdOpLeg"          AS idopeleg
+            ,tit."IdOpJD"           AS iddopeJD
+            ,tit."NumRefAtlCadTit"  AS nratutit
+        FROM tbjdnpcdstleg_jd2lg_optit@jdnpcbisql tit
+       WHERE tit."CdLeg"            = pr_cdlegado
+         AND tit."ISPBAdministrado" = pr_nrispbif
+         AND tit."IdTituloLeg"      = pr_idtitleg
+         AND tit."TpOpJD"           IN ('RI','RA','RB')
+       ORDER BY tit."DtHrOpJD" ASC;
+    rw_retnpc cr_retnpc%ROWTYPE;
+      
+    CURSOR cr_crapcop IS
+      SELECT MIN(dat.dtmvtoan) dtmvtoan,
+             MAX(dat.dtmvtolt) dtmvtolt
+        FROM crapcop cop,
+             crapdat dat
+       WHERE cop.cdcooper > 0
+         AND cop.cdcooper <> 3
+         AND cop.flgativo = 1
+         AND dat.cdcooper = cop.cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;    
+      
+    --Variaveis Locais
+    vr_index     INTEGER;
+    vr_index_ret INTEGER;
+    vr_dhenvini  DATE := to_date((to_char(SYSDATE, 'DD/MM/RRRR') || ' 00:00:01'),'DD/MM/RRRR HH24:MI:SS');
+    vr_dhenvfin  DATE := to_date((to_char(SYSDATE, 'DD/MM/RRRR') || ' 23:59:59'),'DD/MM/RRRR HH24:MI:SS');
+    --Variaveis Erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+    vr_dstextab     craptab.dstextab%TYPE;  
+    vr_tab_campos   gene0002.typ_split;      
+    --Variaveis Excecao
+    vr_exc_erro EXCEPTION;    
+          
+  BEGIN
+    
+    vr_dstextab := TABE0001.fn_busca_dstextab
+                                     (pr_cdcooper => pr_cdcooper
+                                     ,pr_nmsistem => 'CRED'
+                                     ,pr_tptabela => 'GENERI'
+                                     ,pr_cdempres => 0
+                                     ,pr_cdacesso => 'ROLLOUT_CIP_CARGA'
+                                     ,pr_tpregist => 0); 
+      
+    vr_tab_campos:= gene0002.fn_quebra_string(vr_dstextab,';');
+    
+    IF vr_tab_campos.count > 0 THEN
+
+      --> Verificar se esta no dia da carga inicial da faixa de rollout
+      IF to_date(vr_tab_campos(2),'DD/MM/RRRR') = trunc(SYSDATE) THEN  
+    
+        OPEN cr_crapcop;
+        FETCH cr_crapcop INTO rw_crapcop;
+        CLOSE cr_crapcop;      
+              
+        FOR rw IN (
+
+          SELECT 
+            cob.idtitleg,
+            cob.inenvcip,
+            cob.ininscip
+            FROM crapcob cob, crapcco cco --, crapceb ceb 
+          WHERE cco.cdcooper > 0
+            AND cco.cddbanco = 85
+            AND cob.cdcooper = cco.cdcooper
+            AND cob.nrcnvcob = cco.nrconven
+            AND cob.nrdctabb = cco.nrdctabb
+            AND cob.cdbandoc = cco.cddbanco
+            AND cob.idtitleg > 0
+            AND cob.inenvcip = 2
+            AND cob.inregcip IN (0,1,2)
+            AND cob.dhenvcip BETWEEN vr_dhenvini AND vr_dhenvfin
+            AND cob.cdbandoc = 85
+            AND cob.vltitulo >= vr_tab_campos(3)
+            
+        ) LOOP
+        
+          --> buscar retornos disponibilizados
+          FOR rw_retnpc IN cr_retnpc(pr_cdlegado => 'LEG'
+                                    ,pr_nrispbif => '5463212'
+                                    ,pr_idtitleg => rw.idtitleg ) LOOP
+                          
+
+            IF rw_retnpc.tpoperac = 'RI' AND rw.inenvcip = 2 THEN --> Retorno Inclusao          
+                --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
+                pc_ret_inclusao_tit_npc ( pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
+                                         ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
+                                         ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
+                                         ,pr_cdstiope  => rw_retnpc.cdstiope --> Situacao do envio da informaçcao
+                                         ,pr_idtitnpc  => rw_retnpc.idtitnpc --> Identificador do titulo na CIP-NPC
+                                         ,pr_nratutit  => rw_retnpc.nratutit --> Identificador do titulo alteracao na CIP-NPC
+                                         ,pr_cdcritic  => vr_cdcritic        --> Codigo de Erro
+                                         ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
+                                           
+              ELSIF rw_retnpc.tpoperac = 'RA' AND rw.ininscip = 1 THEN --> Retorno Alteração
+                pc_ret_alteracao_tit_npc (pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
+                                         ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
+                                         ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
+                                         ,pr_cdstiope  => rw_retnpc.cdstiope --> Situacao do envio da informaçcao
+                                         ,pr_idtitnpc  => rw_retnpc.idtitnpc --> Identificador do titulo na CIP-NPC
+                                         ,pr_nratutit  => rw_retnpc.nratutit --> Identificador do titulo alteracao na CIP-NPC
+                                         ,pr_cdcritic  => vr_cdcritic        --> Codigo de Erro
+                                         ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
+                
+              ELSIF rw_retnpc.tpoperac = 'RB' AND rw.ininscip = 1 THEN --> Retorno Baixa
+                 pc_ret_baixa_tit_npc ( pr_idtitleg  => rw_retnpc.idtitleg --> Identificador do titulo no legado
+                                       ,pr_idopeleg  => rw_retnpc.idopeleg --> Identificador da operadao do legado
+                                       ,pr_iddopeJD  => rw_retnpc.iddopeJD --> Identificador da operadao da JD
+                                       ,pr_cdstiope  => rw_retnpc.cdstiope --> Situacao do envio da informaçcao
+                                       ,pr_idtitnpc  => rw_retnpc.idtitnpc --> Identificador do titulo na CIP-NPC
+                                       ,pr_nratutit  => rw_retnpc.nratutit --> Identificador do titulo alteracao na CIP-NPC
+                                       ,pr_cdcritic  => vr_cdcritic        --> Codigo de Erro
+                                       ,pr_dscritic  => vr_dscritic);      --> Descricao de Erro
+                                         
+              ELSIF rw_retnpc.tpoperac = 'CO' THEN --> Cancelamento da Baixa Operacional enviada pelo Banco Recebedor
+                --> Acão ainda nao definida, será programada em segunda etapa
+                NULL;
+              ELSIF rw_retnpc.tpoperac = 'JB' THEN --> Baixa Efetiva feita diretamente no JDNPC(Contingência)
+                --> Acão ainda nao definida, será programada em segunda etapa
+                NULL;
+              ELSIF rw_retnpc.tpoperac = 'DP' THEN --> Baixa por Decurso de Prazo
+                --> Acão ainda nao definida, será programada em segunda etapa
+                NULL;        
+              ELSE
+                -- Demais tipos de operacao serão ignoradas
+                NULL;
+            END IF;    
+              
+            --> verificar se transacao apresentou erro
+            IF nvl(vr_cdcritic,0) > 0 OR
+               vr_dscritic IS NOT NULL THEN         
+              ROLLBACK;
+                
+              vr_dscritic := 'Erro ao processar retorno idtitleg: '||rw_retnpc.idtitleg||' -> '||
+                             vr_dscritic;
+                          
+              btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                         pr_ind_tipo_log => 2, 
+                                         pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
+                                                        ' - PC_CRPS718 -> ' || vr_dscritic,
+                                         pr_nmarqlog     => vr_dsarqlog);
+                 
+            END IF; 
+                      
+          END LOOP; -- loop retnpc
+            
+          COMMIT;
+          
+        END LOOP; -- loop rw 
+          
+      END IF;
+        
+    END IF;
+    
+  EXCEPTION
+    
+    WHEN vr_exc_erro THEN     
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN     
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;      
+  
+  END pc_retorno_carga_tit_NPC;  
+  
+  
   /**********************************************************/
    
 BEGIN
@@ -833,6 +1033,18 @@ BEGIN
     END IF;
     
     COMMIT;                                          
+    
+    --> Buscar retorno carga de Titulos NPC por faixa de rollout
+    pc_retorno_carga_tit_NPC(pr_cdcritic => vr_cdcritic  --Codigo de Erro
+                            ,pr_dscritic => vr_dscritic); --Descricao de Erro    
+                                        
+    -- Verifica se ocorreu erro
+    IF NVL(vr_cdcritic,0) > 0 OR 
+       vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    COMMIT;                                              
     
     -- Log de fim da execução
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,

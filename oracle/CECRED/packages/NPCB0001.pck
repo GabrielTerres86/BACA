@@ -622,13 +622,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Dezembro/2016.                   Ultima atualizacao: 29/12/2016
+      Data     : Dezembro/2016.                   Ultima atualizacao: 04/09/2017
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina para pre-validação do boleto na Nova plataforma de cobrança 
       Alteração : 
+      
+      04/09/2017 - Verificar se a data do pagamento excedeu ao próximo dia util
+                   da data limite de pagamento. (SD#747481 - Rafael).
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -718,6 +721,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     END IF;
     
     --> Verificar se o boleto excedeu a data limite de pagto
+    vr_DtLimPgt_npc := gene0005.fn_valida_dia_util( pr_cdcooper  => pr_cdcooper, 
+                                                    pr_dtmvtolt  => vr_DtLimPgt_npc, 
+                                                    pr_tipo      => 'P');    
     IF vr_DtLimPgt_npc < pr_dtmvtolt THEN
 		  vr_dscritic := 'Boleto excedeu a data limite de pagamento.';
       RAISE vr_exc_erro;
