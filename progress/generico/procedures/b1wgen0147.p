@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 12/05/2016
+   Data    : 02/05/2013                         Ultima atualizacao: 15/08/2017
 
    Dados referentes ao programa:
 
@@ -21,6 +21,9 @@
                12/05/2016 - Atualizar somente operacoes com situacao "N,A,P,L"
                            (Diego).            
 
+               15/08/2017 - Incluir dividor por 100 ao buscar o percentual de 
+                            garantia aux_vlpergar 116,5 (Lucas Ranghetti #734912)
+                            
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0147tt.i }
@@ -1523,7 +1526,7 @@ PROCEDURE atualiza-central-risco:
                 IF SUBSTR(aux_tpgarant, 1, 2) = "09" THEN
                 DO:
                     ASSIGN aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha, 102, 14))
-                           aux_vlpergar = DECI(SUBSTR(aux_setlinha, 116, 5)).
+                           aux_vlpergar = DECI(SUBSTR(aux_setlinha, 116, 5)) / 100.
 
                     IF aux_cdtipgar = "01" THEN
                         ASSIGN aux_dscatbem = "Avalista PF".
