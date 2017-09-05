@@ -276,7 +276,7 @@ function manterRotina(operacao) {
 }
 
 function controlaLayout(operacao) {
-    altura = '360px';
+    altura = '390px';
     largura = '580px';
     divRotina.css('width', largura);
     $('#divConteudoOpcao').css('height', altura);
