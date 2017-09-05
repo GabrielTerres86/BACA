@@ -7221,6 +7221,8 @@ PROCEDURE altera-valor-proposta:
                                                     /* Se nao estiver em contigencia e a proposta estava na Esteira */
                                                     IF NOT aux_contigen AND aux_inobriga = "S" 
                                                                         AND (   crawepr.insitest = 2 
+                                                                             OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
+                                                                                  AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
                                                                              OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                                              OR ( crawepr.insitest = 4 ) ) THEN  
                                                     DO:
@@ -7263,6 +7265,8 @@ PROCEDURE altera-valor-proposta:
                                          /* Se nao estiver em contigencia e a proposta estava na Esteira */
                                          IF NOT aux_contigen AND aux_inobriga = "S" 
                                                              AND (   crawepr.insitest = 2 
+                                                                   OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
+                                                                        AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
                                                                    OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                                    OR ( crawepr.insitest = 4 ) ) THEN 
                                          DO:
@@ -7287,6 +7291,8 @@ PROCEDURE altera-valor-proposta:
                       /* Se nao estiver em contigencia e a proposta estava na Esteira */
                       IF NOT aux_contigen AND aux_inobriga = "S" 
                                           AND (   crawepr.insitest = 2 
+                                               OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
+                                                    AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
                                                OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                OR ( crawepr.insitest = 4 ) ) THEN 
                       DO:
@@ -7321,6 +7327,8 @@ PROCEDURE altera-valor-proposta:
                  /* Se nao estiver em contigencia e a proposta estava na Esteira */
                  IF NOT aux_contigen AND aux_inobriga = "S" 
                                      AND (   crawepr.insitest = 2 
+                                         OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
+                                              AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )                                     
                                          OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                          OR ( crawepr.insitest = 4 ) ) THEN 
                  DO:
@@ -7352,7 +7360,10 @@ PROCEDURE altera-valor-proposta:
               DO:
               
                   /* Se a proposta estava na Esteira */
-                  IF aux_inobriga = "S" AND (   crawepr.insitest = 2 
+                  IF aux_inobriga = "S" 
+                  AND (   crawepr.insitest = 2 
+                       OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
+                            AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
                      OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                      OR ( crawepr.insitest = 4 ) ) THEN 
                       ASSIGN aux_flcancel = true. /* Cancelar na Esteira*/
@@ -7550,7 +7561,7 @@ PROCEDURE altera-valor-proposta:
       RUN sistema/generico/procedures/b1wgen0195.p
                        PERSISTENT SET h-b1wgen0195.
                
-      /* Enviar alteracao do numero para esteira*/
+      /* Enviar Cancelamento na Esteira */
       RUN Enviar_proposta_esteira IN h-b1wgen0195        
                         ( INPUT par_cdcooper,
                           INPUT crapope.cdpactra,
@@ -7572,7 +7583,8 @@ PROCEDURE altera-valor-proposta:
       
       DELETE OBJECT h-b1wgen0195.
        
-      IF RETURN-VALUE = "NOK"  THEN
+      /* Ignorar erro de "%Proposta nao encontrada" */ 
+      IF RETURN-VALUE = "NOK" AND NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" THEN
           DO:
               IF aux_cdcritic = 0 AND 
                  aux_dscritic = "" THEN
@@ -13093,6 +13105,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                /* Se nao estiver em contigencia e a proposta estava na Esteira */
                                IF NOT aux_contigen AND aux_inobriga = "S" 
                                                    AND (   crawepr.insitest = 2 
+                                                       OR ( crawepr.insitest = 0 AND crawepr.hrenvest > 0 
+                                                            AND (crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) )
                                                        OR ( crawepr.insitest = 3 AND UPPER(crawepr.cdopeapr) = 'ESTEIRA' )
                                                        OR ( crawepr.insitest = 4 ) ) THEN 
                                DO:
@@ -13154,7 +13168,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
       
       DELETE OBJECT h-b1wgen0195.
        
-      IF RETURN-VALUE = "NOK"  THEN
+      /* Ignorar erro de "%Proposta nao encontrada" */ 
+      IF RETURN-VALUE = "NOK" AND NOT lower(aux_dscritic) MATCHES "*proposta nao encontrada*" THEN
           DO:
               IF aux_cdcritic = 0 AND 
                  aux_dscritic = "" THEN

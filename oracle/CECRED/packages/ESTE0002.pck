@@ -1711,7 +1711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       
         vr_obj_generic2.put('ddd', rw_craptfc.nrdddtfc);
         vr_obj_generic2.put('numero'
-                           ,REPLACE(REPLACE(REPLACE(rw_craptfc.nrtelefo,' ',''), '-', '')
+                           ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(rw_craptfc.nrtelefo,' ',''), '-', ''),'(',''),')','')
                                    ,'.'
                                    ,''));
         -- Adicionar telefone na lista
