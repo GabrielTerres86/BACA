@@ -32,7 +32,8 @@ CREATE WIDGET-POOL.
 DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                    NO-UNDO.
 DEF INPUT PARAM par_dtmvtolt AS DATE                                  NO-UNDO.
 DEF INPUT PARAM par_nrdconta LIKE crapass.nrdconta                    NO-UNDO.
-DEF INPUT PARAM par_nrcpfope AS DECI                                  NO-UNDO.
+DEF INPUT PARAM par_nrcpfope LIKE crapopi.nrcpfope                    NO-UNDO.
+DEF INPUT PARAM par_idseqttl AS INTE                                  NO-UNDO.
 DEF INPUT PARAM par_dsdrowid AS CHAR                                  NO-UNDO.
 DEF INPUT PARAM par_tpoperac AS INTE                                  NO-UNDO.
 DEF INPUT PARAM par_tpdpagto AS INTE                                  NO-UNDO.
@@ -139,6 +140,7 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
                          INPUT par_nrdconta,
                          INPUT 90,             /* cdagenci */
                          INPUT 900,            /* nrdcaixa */
+                         INPUT par_idseqttl,  
                          INPUT par_tpdpagto,
                          INPUT 3,              /* idorigem */
                          INPUT "996",          /* cdoperad -  Internet Banking */
@@ -157,6 +159,7 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
                          INPUT par_dtvencim,
                          INPUT par_idfisjur,
                          INPUT 0, /* NRSEQAGP */
+                         INPUT par_nrcpfope,
                          OUTPUT "",
                          OUTPUT 0,
                          OUTPUT "").
@@ -223,7 +226,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
                          INPUT par_tpdpagto,
                          INPUT 90,
                          INPUT 900,
-                         INPUT 1,              /* par_idseqttl */
+                         INPUT par_idseqttl,   /* par_idseqttl */
                          INPUT 3,              /* par_idorigem */
                          INPUT "996",
                          INPUT "INTERNETBANK", /* nmdatela */
@@ -240,6 +243,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
                          INPUT par_dtvencim,
                          INPUT par_idfisjur,
                          INPUT par_dtdiadeb,
+                         INPUT par_nrcpfope,
                          OUTPUT "",
                          OUTPUT 0,
                          OUTPUT "").
@@ -282,7 +286,7 @@ ELSE IF  par_tpoperac = 6 THEN DO:
                           INPUT "900", 
                           INPUT 3, 
                           INPUT par_dtmvtolt, 
-                          INPUT "INTERNETBANK", 
+                          INPUT "INTERNETBAN2", 
                           INPUT "996", 
                           INPUT 1,
                           INPUT par_idleitur,   /* indicador de leitura 1-leitora/0-manual */
@@ -297,12 +301,13 @@ ELSE IF  par_tpoperac = 6 THEN DO:
                           INPUT par_vloutent / 100,
                           INPUT par_vlatmjur / 100,
                           INPUT par_vlrtotal / 100, 
-                          INPUT 1, 
+                          INPUT par_idseqttl, 
                           INPUT par_tpdpagto, 
                           INPUT par_nrdconta, 
                           INPUT par_idfisjur, 
                           INPUT par_tpvalida, /* A-Agendar / P-Pagar / V-Validar Pagamento */
                           INPUT 0, /* NRSEQAGP */
+                          INPUT par_nrcpfope,
                           OUTPUT "",
                           OUTPUT 0,
                           OUTPUT 0,

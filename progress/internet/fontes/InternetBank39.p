@@ -42,6 +42,7 @@ DEF  INPUT PARAM par_dtmvtage LIKE craplau.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_nrdocmto LIKE craplau.nrdocmto                    NO-UNDO.
 DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_cdtiptra AS INT                                   NO-UNDO.
+DEF  INPUT PARAM par_nrcpfope AS DECI                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
 IF par_cdtiptra = 11 THEN
@@ -97,6 +98,7 @@ ELSE
                                              INPUT par_dtmvtage,
                                              INPUT par_nrdocmto,
                          INPUT "INTERNETBANK", /*Nome da tela*/ 
+                                             INPUT par_nrcpfope,
                                             OUTPUT aux_dstransa,
                                             OUTPUT aux_dscritic).
             DELETE PROCEDURE h-b1wgen0016.
