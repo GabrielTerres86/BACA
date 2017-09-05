@@ -3665,11 +3665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 		-- Buscar última data de consulta ao bacen
 		CURSOR cr_crapopf IS
 	    SELECT max(opf.dtrefere) dtrefere
-			  FROM crapopf opf
-				    ,crapass ass
-			 WHERE ass.cdcooper = pr_cdcooper
-			   AND ass.nrdconta = pr_nrdconta
-				 AND opf.nrcpfcgc = ass.nrcpfcgc;
+			  FROM crapopf opf;
 		rw_crapopf cr_crapopf%ROWTYPE;
 		
     --> Buscar dados da proposta
@@ -3984,12 +3980,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 		
 		OPEN cr_crapopf;
 		FETCH cr_crapopf INTO rw_crapopf;
-    CLOSE cr_crapopf;
+    IF cr_crapopf%NOTFOUND THEN
+      CLOSE cr_crapopf;
+      vr_dscritic := 'Data Base Bacen-SCR nao encontrada!';   
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapopf;
+    END IF;
 		
 		-- Montar os atributos de 'configuracoes'
 		vr_obj_generico := json();
 		vr_obj_generico.put('centroCusto', vr_cdpactra);
-		vr_obj_generico.put('dataBaseBacen', to_char(nvl(rw_crapopf.dtrefere, rw_crapdat.dtmvtolt),'RRRRMM'));
+		vr_obj_generico.put('dataBaseBacen', to_char(rw_crapopf.dtrefere,'RRRRMM'));
 		vr_obj_generico.put('horasReaproveitamento', vr_qtdiarpv);
 		
     -- Adicionar o array configuracoes
