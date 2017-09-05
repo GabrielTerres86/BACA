@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 21/07/2017
+   Data    : 02/05/2013                         Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -26,7 +26,9 @@
 							 (Adriano - P339).		            
 
                21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
-                            PRJ339 - CRM (Odirlei-AMcom)              
+                            PRJ339 - CRM (Odirlei-AMcom)          
+							
+			   01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
 
 .............................................................................*/
 
@@ -427,10 +429,7 @@ PROCEDURE cria_dados_totvs:
                
        END. /*fim do juridica*/
            
-
-     UNIX SILENT VALUE ('sudo /usr/bin/su - scpuser -c ' +
-                       '"scp ' + aux_nmarquiv + ' scpuser@' + aux_nmservid +
-                       ':/usr/local/cecred/bndes/xml/" 2>/dev/null').
+	 UNIX SILENT VALUE ('"cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/" 2>/dev/null').
 
      UNIX SILENT VALUE ("rm " + aux_nmarquiv + " 2> /dev/null" ).
       
