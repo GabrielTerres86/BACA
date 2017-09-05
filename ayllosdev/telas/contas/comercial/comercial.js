@@ -1,5 +1,5 @@
 /*!
- * FONTE        : comercial.js                              Última alteração: 03/03/2017
+ * FONTE        : comercial.js                              Última alteração: 27/03/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 24/05/2010 
  * OBJETIVO     : Biblioteca de funções na rotina COMERCIAL da tela de CONTAS
@@ -16,6 +16,7 @@
  *                20/02/2017 - Alterado codigo para que os caracteres com acento sejam substituidos pelos equivalentes sem acento,
  *                             ao inves de removidos. (Heitor - Chamado 614746)
  *                03/03/2017 - Ajuste devido a conversão das rotinas busca_nat_ocupacao, busca_ocupacao (Adriano - SD 614408).
+ *				  27/03/2017 - Ajuste realizado para corrigir o filtro da ocupação. (Kelvin - SD 636559)	
  * --------------
  */
 
@@ -705,7 +706,7 @@ function controlaPesquisas() {
 
                     // Busca Ocupação
                 } else if (campoAnterior == 'cdocpttl') {
-                    filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsocupa;200px;S;';
+                    filtrosPesq = 'Cód. Ocupação;cdocpttl;30px;S;0|Ocupação;rsdocupa;200px;S;';
                     colunas = 'Código;cdocupa;20%;right|Ocupação;dsdocupa;80%;left';
                     mostraPesquisa("ZOOM0001", "BUSCOCUPACAO", "Natureza de Ocupa&ccedil;&atilde;o", "30", filtrosPesq, colunas, divRotina);
                     return false;
