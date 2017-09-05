@@ -68,7 +68,8 @@
 
              13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 	                      crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-						  (Adriano - P339).
+						  (Adriano - P339).	
+             05/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
 
 *********************************************************************************/
 
@@ -184,22 +185,36 @@ function controlaFoco() {
 }
 
 // Função para seleção de titular para consulta e alteração de dados
-function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade) {
+function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl,cpfcgc) {
 	
 		
 	// Formata cor da linha da tabela que lista titulares e esconde div com dados do mesmo
 	for (var i = 1; i <= qtTitulares; i++) {		
 				
 		// Esconde div com dados do titular
+		$("#divTitInternetOpe" + i).css("display","none");
 		$("#divTitInternet" + i).css("display","none");
 	}
 		
 	// Mostra div com os dados do titular selecionado
+	$("#divTitInternetOpe" + id).css("display","block");
+	if(sqttl == "999"){
+      id = 1;
+    }
 	$("#divTitInternet" + id).css("display","block");
 	
 	if(idastcjt == "1"){
 		// Mostra CPF do titular no título da área de dados
 		$("#spanSeqTitular").html(cpf);
+		
+		if (sqttl == "999"){
+			$('#divBotoes').hide();
+			$('#preoroper').html('OPERADOR');
+	}else{
+			$('#preoroper').html('PREPOSTO');
+			$('#divBotoes').show();
+		}
+		
 	}else{
 		// Mostra sequência do titular no título da área de dados
 		$("#spanSeqTitular").html(id);	
@@ -236,6 +251,8 @@ function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade) {
 	
 	// Armazena sequencial do titular selecionado
 	idseqttl = titularidade;
+	nrcpfcgc = cpfcgc;
+	idastcjt = idastcjt;
 }
 
 // Função para bloquear senha de acesso ao InternetBank
@@ -594,6 +611,8 @@ function carregaHabilitacao() {
 		data: {
 			nrdconta: nrdconta,
 			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			idastcjt: idastcjt,
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -1484,6 +1503,44 @@ function obtemDadosLimites() {
 }
 
 // Função para mostrar a opção Habilitação
+function obtemDadosLimitesprep() {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados dos limites ...");
+		
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/limites_preposto.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divConteudoOpcao").html(response);
+			
+			$('#vllimtrf','#frmAlterarLimites').focus(); 
+			
+			controlaFocoEnter("frmAlterarLimites");
+			
+			$('#vllimvrb','#frmAlterarLimites').keypress( function(e) {
+				if ( e.keyCode == 13 ) { 
+					$('#btAlterar','#divBotoes').focus(); 
+					return false; 
+				}		
+			});
+			
+		}				
+	});
+}
+
+// Função para mostrar a opção Habilitação
 function validaDadosLimites(inpessoa) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando dados de habilita&ccedil;&atilde;o ...");
@@ -1542,13 +1599,81 @@ function validaDadosLimites(inpessoa) {
 	});
 }
 
+// Função para mostrar a opção Habilitação
+function validaDadosLimitesprep(inpessoa) {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, validando dados de habilita&ccedil;&atilde;o ...");
+	
+	if (inpessoa == 1) {
+		// Valida valor do limite diário
+		if ($("#vllimweb","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimweb","#frmAlterarLimites").val(),false,0,0)) {
+			hideMsgAguardo();
+			showError("error","Valor do limite di&aacute;rio inv&aacute;lido.","Alerta - Ayllos","$('#vllimweb','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
+	} else {
+		// Valida valor do limite diário transferência
+		if ($("#vllimtrf","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimtrf","#frmAlterarLimites").val(),false,0,0)) {
+			hideMsgAguardo();
+			showError("error","Valor do limite di&aacute;rio para transfer&ecirc;ncia inv&aacute;lido.","Alerta - Ayllos","$('#vllimtrf','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}		
+
+		// Valida valor do limite diário pagamento
+		if ($("#vllimpgo","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimpgo","#frmAlterarLimites").val(),false,0,0)) {
+			hideMsgAguardo();
+			showError("error","Valor do limite di&aacute;rio para pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimpgo','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}		
+	}
+	// Valida valor do limite diário pagamento
+	if ($("#vllimted","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimted","#frmAlterarLimites").val(),false,0,0)) {
+		hideMsgAguardo();
+		showError("error","Valor do limite di&aacute;rio para pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimted','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
+	// Valida valor do limite diário pagamento
+	if ($("#vllimflp","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimflp","#frmAlterarLimites").val(),false,0,0)) {
+		hideMsgAguardo();
+		showError("error","Valor do limite di&aacute;rio para folha de pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimflp','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}	
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/limites_validar_prep.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			vllimweb: $("#vllimweb","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimtrf: $("#vllimtrf","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimpgo: $("#vllimpgo","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimted: $("#vllimted","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimvrb: $("#vllimvrb", "#frmAlterarLimites").val().replace(/\./g, ""),
+			vllimflp: $("#vllimflp", "#frmAlterarLimites").val().replace(/\./g, ""),
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divHabilitacaoInternet02").html(response);
+		}				
+	});
+}
+
 // Função para esconder divtacaoInternet02
 function escondeDivHabilitacao02() {
 	$("#divHabilitacaoInternet01").css("display","block");
 	$("#divHabilitacaoInternet02").css("display","none");
 	
 	// Aumenta tamanho do div onde o conteúdo da opção será visualizado
-	$("#divConteudoOpcao").css("height","160px");
+	$("#divConteudoOpcao").css("height","290px!important");
 }
 
 // Função para mostrar divHabilitacaoInternet02
@@ -1616,6 +1741,15 @@ function confirmaAlteracaoLimites() {
 	showConfirmacao("Confirma altera&ccedil;&otilde;es de habilita&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","alterarDadosLimites()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 }
 
+// Função para confirmar alteração dos limites de habilitação
+function confirmaAlteracaoLimites2() {
+	// Escoder div de preposto e mostrar div com limites
+	escondeDivHabilitacao02();
+
+	// Confirma alteração dos dados da habilitação	
+	showConfirmacao("Confirma altera&ccedil;&otilde;es de habilita&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","alterarDadosLimites2()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+}
+
 // Função para alterar limites
 function alterarDadosLimites() {
 	// Mostra mensagem de aguardo
@@ -1652,6 +1786,43 @@ function alterarDadosLimites() {
 	});				
 }
 
+// Função para alterar limites
+function alterarDadosLimites2() {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, atualizando dados de habilita&ccedil;&atilde;o ...");
+		
+	// Executa script de bloqueio através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/atenda/internet/limites_alterar_prep.php", 
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			vllimweb: $("#vllimweb","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimtrf: $("#vllimtrf","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimpgo: $("#vllimpgo","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimted: $("#vllimted","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimvrb: $("#vllimvrb", "#frmAlterarLimites").val().replace(/\./g, ""),
+			vllimflp: $("#vllimflp", "#frmAlterarLimites").val().replace(/\./g, ""),
+			idastcjt: idastcjt,
+			executandoProdutos: executandoProdutos,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});				
+}
 
 function controlaLayout( nomeForm ){
 
@@ -1666,12 +1837,14 @@ function controlaLayout( nomeForm ){
 		var Lvllimpgo = $('label[for="vllimpgo"]','#'+nomeForm);
 		var Lvllimted = $('label[for="vllimted"]','#'+nomeForm);
 		var Lvllimvrb = $('label[for="vllimvrb"]','#'+nomeForm); 
+		var Lvllimflp = $('label[for="vllimflp"]', '#' + nomeForm);
 				
 		var Cvllimweb = $('#vllimweb','#'+nomeForm);
 		var Cvllimtrf = $('#vllimtrf','#'+nomeForm);
 		var Cvllimpgo = $('#vllimpgo','#'+nomeForm);
 		var Cvllimted = $('#vllimted','#'+nomeForm);
 		var Cvllimvrb = $('#vllimvrb','#'+nomeForm); 
+		var Cvllimflp = $('#vllimflp', '#' + nomeForm);
 		
 		$('#'+nomeForm).addClass('formulario');
 		
@@ -1680,13 +1853,15 @@ function controlaLayout( nomeForm ){
 		Lvllimpgo.addClass('rotulo').css('width','170px');
 		Lvllimted.addClass('rotulo').css('width','170px');
 		Lvllimvrb.addClass('rotulo').css('width','170px'); 
+		Lvllimflp.addClass('rotulo').css('width', '170px');
 		
 		Cvllimweb.css({'width':'120px','text-align':'right'});
 		Cvllimtrf.css({'width':'120px','text-align':'right'});
 		Cvllimpgo.css({'width':'120px','text-align':'right'});
 		Cvllimted.css({'width':'120px','text-align':'right'});
 		Cvllimvrb.css({'width':'120px','text-align':'right'}); 
-		
+		Cvllimflp.css({ 'width': '120px', 'text-align': 'right' });
+		$("#divConteudoOpcao").css("height", "290px");
 	}else if( nomeForm == 'divInternetPrincipal' ){
 		$("#divInternetPrincipal").show();
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
@@ -1727,6 +1902,7 @@ function controlaLayout( nomeForm ){
         var Lvllimpgo = $('label[for="vllimpgo"]', '#' + nomeForm);
         var Lvllimted = $('label[for="vllimted"]', '#' + nomeForm);
         var Lvllimvrb = $('label[for="vllimvrb"]', '#' + nomeForm);
+        var Lvllimflp = $('label[for="vllimflp"]', '#' + nomeForm);
         var Ldtlibera = $('label[for="dtlibera"]', '#' + nomeForm);
         var Ldtaltsit = $('label[for="dtaltsit"]', '#' + nomeForm);
         var Ldtaltsnh = $('label[for="dtaltsnh"]', '#' + nomeForm);
@@ -1748,6 +1924,7 @@ function controlaLayout( nomeForm ){
         var Cvllimpgo = $('#vllimpgo', '#' + nomeForm);
         var Cvllimted = $('#vllimted', '#' + nomeForm);
         var Cvllimvrb = $('#vllimvrb', '#' + nomeForm);
+        var Cvllimflp = $('#vllimflp', '#' + nomeForm);
         var Cdtlibera = $('#dtlibera', '#' + nomeForm);
         var Cdtaltsit = $('#dtaltsit', '#' + nomeForm);
         var Cdtaltsnh = $('#dtaltsnh', '#' + nomeForm);
@@ -1770,6 +1947,7 @@ function controlaLayout( nomeForm ){
         Lvllimpgo.css('width', '133px');
         Lvllimted.css('width', '133px');
         Lvllimvrb.css('width', '133px');
+        Lvllimflp.css('width', '133px');
         Ldtlibera.css('width', '133px');
         Ldtblutsh.css('width', '160px');
         Ldtaltsit.css('width', '133px');
@@ -1792,6 +1970,7 @@ function controlaLayout( nomeForm ){
         Cvllimpgo.css({ 'width': '110px' });
         Cvllimted.css({ 'width': '110px' });
         Cvllimvrb.css({ 'width': '110px' });
+        Cvllimflp.css({ 'width': '110px' });
         Cdtlibera.css({ 'width': '110px' });
         Cdtaltsit.css({ 'width': '110px' });
         Cdtaltsnh.css({ 'width': '110px' });
@@ -1813,6 +1992,7 @@ function controlaLayout( nomeForm ){
 		Cvllimpgo.desabilitaCampo();
 		Cvllimted.desabilitaCampo();
 		Cvllimvrb.desabilitaCampo(); 
+		Cvllimflp.desabilitaCampo();
 		Cdtlibera.desabilitaCampo();
 		Cdtaltsit.desabilitaCampo();
 		Cdtaltsnh.desabilitaCampo();
@@ -1958,7 +2138,7 @@ function controlaLayout( nomeForm ){
 		$("#frmDadosTitInternet").hide();
 		$("#divInternetPrincipal").hide();
 		
-		$("#divConteudoOpcao").css("width","930");
+		$("#divConteudoOpcao").css("width","800");
 		
 		ajustarCentralizacao();
 		
@@ -1976,7 +2156,7 @@ function controlaLayout( nomeForm ){
 		arrayLargura[1] = '70px';
 		arrayLargura[2] = '180px';
 		arrayLargura[3] = '80px';
-		arrayLargura[4] = '250px';
+		arrayLargura[4] = '80px';
 		arrayLargura[5] = '70px';
 		
 		var arrayAlinha = new Array();
@@ -2224,7 +2404,7 @@ function validaResponsaveis(){
 	var flgconju = "yes";
 	var qtminast = $("#qtminast").val();
 	
-	$('input[type=checkbox]').each(function () {
+	$("input:checkbox[name='chkRespAssConj']").each(function () {
 	    if ($(this).val() != "on") {
 	        if ($(this).prop('checked')) {
 	            dscpfcgc += "#" + $(this).val();
@@ -2264,7 +2444,7 @@ function salvarRepresentantes(){
 	var responsa = "";	
 	var qtminast = $("#qtminast").val();
 	
-	$('input[type=checkbox]').each(function () {
+	$("input:checkbox[name='chkRespAssConj']").each(function () {
 		if($(this).val() != "on"){
 			if(this.checked){
 				responsa += "#" + $("#nrdctato" + $(this).val()).val() + "," + $(this).val() + ",yes,no";
@@ -2309,11 +2489,85 @@ function selecionarTodos(){
 		aux_checkado = 0;
 	}
 	
-	$(':checkbox').each(function() {
+	$("input:checkbox[name='chkRespAssConj']").each(function() {
 		if(aux_checkado == 1){
 			$(this).prop('checked',true);
 		}else{
 			$(this).prop('checked',false);
+		}
+	});
+}
+
+function validaRespAssConj(nrconta, cpf){
+	if ($("#chkRespAssConj"+cpf).prop('checked')) {
+		aux_checkado = 1;
+	}else{
+		aux_checkado = 0;
+	}
+	
+	if(aux_checkado == 0){
+		if($("#chkMasterAssConj"+cpf).prop('checked')){
+			alterarPrepostoMaster(nrconta, cpf);
+			$("#chkRespAssConj"+cpf).prop('checked', false);
+			$("#chkMasterAssConj"+cpf).prop('checked',false);
+		}
+	}
+}
+
+function validaPrepostoMaster(nrconta,nome,cpf){
+	aux_checkado = 0;
+	chkcount = 0;
+
+	if ($("#chkMasterAssConj"+cpf).prop('checked')) {
+		aux_checkado = 1;
+		$(".chkMasterAssConj").each(function(){	
+			if($(this).prop('checked')){
+				chkcount = chkcount+1;
+			}
+		})
+	}else{
+		aux_checkado = 0;
+	}
+ 
+	if(chkcount > 1 && aux_checkado == 1){
+		$("#chkMasterAssConj"+cpf).prop('checked',false);
+		showError("error","Est&aacute conta j&aacute possui um PREPOSTO MASTER cadastrado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+	} else {
+		showConfirmacao('Deseja alterar o status de preposto master para '+nome+'?','Confirma&ccedil;&atilde;o - Ayllos','alterarPrepostoMaster(' + nrdconta + ', "' + cpf + '")','alteraChkBoxPrepostoMaster("'+cpf+'", '+aux_checkado+')','sim.gif','nao.gif');
+	}
+}
+
+function alteraChkBoxPrepostoMaster(cpf, aux_checkado){
+	if(aux_checkado == 1){
+		$("#chkMasterAssConj"+cpf).prop('checked',false);
+	}else{
+		$("#chkMasterAssConj"+cpf).prop('checked',true);
+	}
+}
+
+function alterarPrepostoMaster(nrdconta, cpf){
+	if($("#chkRespAssConj"+cpf).prop('checked') == false && $("#chkMasterAssConj"+cpf).prop('checked')){
+		$("#chkRespAssConj"+cpf).prop('checked',true);
+	}
+	
+	showMsgAguardo("Aguarde, atualizando status do preposto master...");
+	
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/atenda/internet/altera_preposto_master.php",
+		data: {
+			nrdconta: nrdconta,
+			nrcpfcgc: cpf,
+			redirect: "script_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval(response);
 		}
 	});
 }
