@@ -217,7 +217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 18/05/2017
+--  Data     : Maio/2014.                   Ultima atualizacao: 28/08/2017
 --
 -- Dados referentes ao programa:
 --
@@ -242,7 +242,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             18/05/2017 - Ajustado rotina pc_processar_arq_pgto para realizar consulta NPC.
 --                     
---   
+--             28/08/2017 - Ajustado rotina pc_gerar_arq_ret_pgto para gravar situação da transação corretamente
+--                          ao gravar o log da operação
+--                          (Adriano - SD 738594).
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -3598,7 +3600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       vr_nrcpfcgc NUMBER := 0;
       vr_inpessoa NUMBER := 0;
       vr_idastcjt NUMBER := 0;
-
+      
       vr_cdcoptfn NUMBER := 0;
       vr_cdagetfn NUMBER := 0;
       vr_nrterfin NUMBER := 0;
@@ -3807,82 +3809,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                 RAISE vr_exc_saida;
               END IF;
          ELSE 
-         BEGIN
-            INSERT INTO craplau
-               (cdcooper
-               ,nrdconta
-               ,idseqttl
-               ,dttransa
-               ,hrtransa
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,nrseqdig
-               ,nrdocmto
-               ,cdhistor
-               ,dsorigem
-               ,insitlau
-               ,cdtiptra
-               ,dscedent
-               ,dscodbar
-               ,dslindig
-               ,dtmvtopg
-               ,vllanaut
-               ,dtvencto
-               ,cddbanco
-               ,cdageban
-               ,nrctadst
-               ,cdcoptfn
-               ,cdagetfn
-               ,nrterfin
-               ,nrcpfope
-               ,nrcpfpre
-               ,nmprepos
-               ,idtitdda
-               ,tpdvalor
-               ,cdctrlcs)
-             VALUES
-               (pr_cdcooper
-               ,pr_nrdconta
-               ,pr_idseqttl
-               ,trunc(vr_dtmvtolt)
-               ,to_number(to_char(SYSDATE,'SSSSS'))
-               ,pr_dtmvtolt
-               ,rw_craplot.cdagenci
-               ,rw_craplot.cdbccxlt
-               ,rw_craplot.nrdolote
-               ,rw_craplot.nrseqdig + 1
-               ,rw_craplot.nrseqdig + 1
-               ,pr_cdhistor  -- 508
-               ,pr_dsorigem  -- INTERNET
-               ,1            -- Pendente insitlau
-               ,pr_cdtiptra  -- pgto titulo (2)
-               ,UPPER(pr_dscedent)
-               ,pr_dscodbar
-               ,vr_dslindig
-               ,pr_dtmvtopg
-               ,pr_vllanaut
-               ,pr_dtvencto
-               ,pr_cddbanco
-               ,pr_cdageban
-               ,pr_nrctadst
-               ,pr_cdcoptfn
-               ,pr_cdagetfn
-               ,pr_nrterfin
-               ,pr_nrcpfope
-               ,vr_nrcpfpre
-               ,vr_nmprepos
-               ,pr_idtitdda
-               ,vr_tpdvalor
-               ,nvl(pr_cdctrlcs,' '));
+           BEGIN        
+             INSERT INTO craplau
+                 (cdcooper
+                 ,nrdconta
+                 ,idseqttl
+                 ,dttransa
+                 ,hrtransa
+                 ,dtmvtolt
+                 ,cdagenci
+                 ,cdbccxlt
+                 ,nrdolote
+                 ,nrseqdig
+                 ,nrdocmto
+                 ,cdhistor
+                 ,dsorigem
+                 ,insitlau
+                 ,cdtiptra
+                 ,dscedent
+                 ,dscodbar
+                 ,dslindig
+                 ,dtmvtopg
+                 ,vllanaut
+                 ,dtvencto
+                 ,cddbanco
+                 ,cdageban
+                 ,nrctadst
+                 ,cdcoptfn
+                 ,cdagetfn
+                 ,nrterfin
+                 ,nrcpfope
+                 ,nrcpfpre
+                 ,nmprepos
+                 ,idtitdda
+                 ,tpdvalor
+                 ,cdctrlcs)
+               VALUES
+                 (pr_cdcooper
+                 ,pr_nrdconta
+                 ,pr_idseqttl
+                 ,trunc(vr_dtmvtolt)
+                 ,to_number(to_char(SYSDATE,'SSSSS'))
+                 ,pr_dtmvtolt
+                 ,rw_craplot.cdagenci
+                 ,rw_craplot.cdbccxlt
+                 ,rw_craplot.nrdolote
+                 ,rw_craplot.nrseqdig + 1
+                 ,rw_craplot.nrseqdig + 1
+                 ,pr_cdhistor  -- 508
+                 ,pr_dsorigem  -- INTERNET
+                 ,1            -- Pendente insitlau
+                 ,pr_cdtiptra  -- pgto titulo (2)
+                 ,UPPER(pr_dscedent)
+                 ,pr_dscodbar
+                 ,vr_dslindig
+                 ,pr_dtmvtopg
+                 ,pr_vllanaut
+                 ,pr_dtvencto
+                 ,pr_cddbanco
+                 ,pr_cdageban
+                 ,pr_nrctadst
+                 ,pr_cdcoptfn
+                 ,pr_cdagetfn
+                 ,pr_nrterfin
+                 ,pr_nrcpfope
+                 ,vr_nrcpfpre
+                 ,vr_nmprepos
+                 ,pr_idtitdda
+                 ,vr_tpdvalor
+                 ,nvl(pr_cdctrlcs,' '));
          EXCEPTION
             WHEN OTHERS THEN
                vr_dscritic := 'Nao foi possivel agendar o pagamento. ';
                vr_dscritic := vr_dscritic || SQLERRM;
                --Levantar Excecao
                RAISE vr_exc_saida;
-         END;
+         END;                   
        END IF;
 
 
@@ -5259,7 +5261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                         ,pr_dsorigem => vr_dsorigem
                         ,pr_dstransa => 'Gerado arquivo de retorno de pagamento por arquivo: ' || vr_nmarquiv
                         ,pr_dttransa => pr_dtmvtolt
-                        ,pr_flgtrans => 0 -- TRUE
+                        ,pr_flgtrans => 1 -- TRUE
                         ,pr_hrtransa => to_number(to_char(SYSDATE,'SSSSS'))
                         ,pr_idseqttl => 1
                         ,pr_nmdatela => ' '
