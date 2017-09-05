@@ -344,6 +344,7 @@ begin
   end loop;
 exception
   when others then
+    pc_internal_exception(3);
     raise_application_error(-20001, vr_dserro);
 end pc_processa_majoracao;
 /
