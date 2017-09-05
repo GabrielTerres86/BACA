@@ -163,13 +163,13 @@ END btch0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
 /*
-  ---------------------------------------------------------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------
   --
   -- Programa : BTCH0001
   --  Sistema : Processos Batch
   --  Sigla   : BTCH
   --  Autor   : Marcos E. Martini - Supero
-  --  Data    : Novembro/2012.                   Ultima atualizacao: 03/07/2017
+  --  Data    : Novembro/2012.                   Ultima atualizacao: 17/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -198,7 +198,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
              - incluido tratamento de excptions nos cursores para melhorar os erros
                (Belli - Envolti - Chamado 667957)
   
-  --------------------------------------------------------------------------------------------------------------- */
+  17/08/2017 - #738346 Alteração da rotina pc_log_exec_job para gravar no proc_batch apenas os erros.
+               Os log s de Início e Fim de execução irão apenas para as tabelas tbgen_prglog e 
+               tbgen_prglog_ocorrencia quando o arquivo for proc_batch ou proc_message (Carlos)
+
+  ------------------------------------------------------------------------------------------------------------ */
 
   -- Tratamento de erros
   vr_exc_erro exception;
@@ -728,6 +732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
     -- Trata Erro - Chamado 667957 - 034/07/2018
     vr_exc_saida  EXCEPTION;
     vr_dscritic   VARCHAR2(4000);
+    vr_flgsucesso tbgen_prglog.flgsucesso%TYPE := 1;
+    vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
     
   BEGIN
   
@@ -757,9 +763,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
       END IF;
       
       IF pr_dscritic IS NOT NULL THEN
-        vr_dscdolog := vr_dscdolog || ' ' || pr_dscritic;
+        vr_dscdolog   := vr_dscdolog || ' ' || pr_dscritic;
+        vr_flgsucesso := 0;
       END IF;
       
+      -- Logs que iriam para o proc_batch ou proc_message irão apenas para tabela
+      IF pr_nmarqlog IS NULL OR
+         INSTR(pr_nmarqlog, 'proc_batch',   1, 1) > 0 OR
+         INSTR(pr_nmarqlog, 'proc_message', 1, 1) > 0 THEN
+         
+        cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog, 
+                               PR_CDPROGRAMA => nvl(pr_nomdojob,'JOB'), 
+                               pr_cdcooper   => pr_cdcooper, 
+                               pr_flgsucesso => vr_flgsucesso,
+                               PR_IDPRGLOG   => vr_idprglog);
+      ELSE
       -- Colocada descrição da mensagem de erro no padrão - Chamado 667957 - 04/07/2017      
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
@@ -770,12 +788,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                  pr_nmarqlog     => pr_nmarqlog,
                                  pr_cdprograma   => pr_nomdojob,
                                  pr_tpexecucao   => 2);
+      END IF;
+      
       pr_flgerlog := TRUE;
     --> Log de final da execução
     ELSIF pr_dstiplog = 'F' AND pr_flgerlog THEN
     
       vr_dscdolog := 'Execucao ok';
 
+      -- Logs que iriam para o proc_batch ou proc_message irão apenas para tabela
+      IF pr_nmarqlog IS NULL OR
+         INSTR(pr_nmarqlog, 'proc_batch',   1, 1) > 0 OR
+         INSTR(pr_nmarqlog, 'proc_message', 1, 1) > 0 THEN
+         
+        cecred.pc_log_programa(PR_DSTIPLOG   => pr_dstiplog, 
+                               PR_CDPROGRAMA => nvl(pr_nomdojob,'JOB'), 
+                               pr_cdcooper   => pr_cdcooper, 
+                               PR_IDPRGLOG   => vr_idprglog);  
+      ELSE
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 1, 
                                  pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
@@ -785,6 +815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0001 AS
                                  pr_cdprograma   => pr_nomdojob,
                                  pr_nmarqlog     => pr_nmarqlog,
                                  pr_tpexecucao   => 2);
+      END IF;
 
     --> Log Final com erro
     ELSIF pr_dstiplog = 'E' AND pr_flgerlog THEN

@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 23/01/2017
+   Data    : 20/11/2006                        Ultima atualizacao: 17/08/2017
 
    Dados referentes ao programa:
 
@@ -206,6 +206,9 @@
                23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)                            
                
                31/05/2017 - Ajustado código da agencia do PA ao enviar arquivo COB605. (Rafael)
+               
+               17/08/2017 - #738442 Retiradas as mensagens informativas 
+                            "Verificando registros para geracao de arquivo(s)" (Carlos)
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -881,8 +884,6 @@ PROCEDURE gerar_doctos:
    DEF VAR glb_dsdctitg AS CHAR                                       NO-UNDO.
    DEF VAR glb_stsnrcal AS LOGICAL                                    NO-UNDO.
    DEF VAR aux_flgerror AS LOGICAL                                    NO-UNDO.
-   DEF VAR aux_contador AS INTE                                       NO-UNDO.
-
 
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
@@ -900,8 +901,7 @@ PROCEDURE gerar_doctos:
 
    /* Contadores de arquivo e registros */
    ASSIGN ret_qtarquiv = 0
-          ret_totregis = 0
-          aux_contador = 0.
+          ret_totregis = 0.
 
     FOR EACH craptvl WHERE craptvl.cdcooper  = par_cdcooper    AND
                           craptvl.dtmvtolt  = par_dtmvtolt    AND
@@ -915,13 +915,6 @@ PROCEDURE gerar_doctos:
                           BREAK BY craptvl.cdagenci
                                 BY craptvl.cdbccrcb :
 
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
-
-       
        IF   FIRST-OF(craptvl.cdagenci)  THEN
             DO:
                 ASSIGN aux_qtregarq = 0
@@ -1270,7 +1263,6 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_cdfatven AS DEC                                        NO-UNDO.
    DEF VAR aux_cdsituac AS INT                                        NO-UNDO.
    DEF VAR aux_nrdahora AS INT                                        NO-UNDO.
-   DEF VAR aux_contador AS INT                                        NO-UNDO.
    DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
    DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
    
@@ -1279,8 +1271,7 @@ PROCEDURE gerar_titulo:
    ASSIGN aux_qttitcxa = 0
           aux_qttitprg = 0
           aux_vltitcxa = 0
-          aux_vltitprg = 0
-          aux_contador = 0.
+          aux_vltitprg = 0.
 
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper 
                       NO-LOCK NO-ERROR.
@@ -1320,12 +1311,6 @@ PROCEDURE gerar_titulo:
                           NO-LOCK BREAK BY craptit.cdagenci
                                          BY craptit.cdbccxlt 
                                           BY craptit.nrdolote: 
-
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
 
        IF FIRST-OF(craptit.cdagenci) THEN
           DO:
@@ -3980,8 +3965,6 @@ PROCEDURE gerar_compel_prcctl:
             RETURN.
         END.
 
-   ASSIGN aux_contador = 0.
-
    FOR EACH crapchd WHERE crapchd.cdcooper  = par_cdcooper       AND
                           crapchd.dtmvtolt  = par_dtmvtolt       AND
                           crapchd.cdagenci >= par_cdageini       AND
@@ -3991,12 +3974,6 @@ PROCEDURE gerar_compel_prcctl:
                           crapage.cdagenci  = crapchd.cdagenci   AND
                           crapage.cdbanchq  = crapcop.cdbcoctl
                           NO-LOCK BREAK BY crapchd.cdagenci:
-
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
 
        IF   FIRST-OF(crapchd.cdagenci)  THEN
             DO:

@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --  Sistema  : PROGRID
   --  Sigla    : WPGD
   --  Autor    : Jonathan Cristiano da Silva - RKAM
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 18/04/2017
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 09/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -59,7 +59,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --              23/03/2017 - Ajustes referente a Melhoria 399 - Simplificar Inscricao no Progrid (Márcio - Mouts)
   --
   --              18/04/2017 - #551227 Ajuste do nome da var vr_cdprogra para o tipo crapprg.cdprogra (Carlos)
-  ---------------------------------------------------------------------------------------------------------------
+  --
+  --              09/08/2017 - #677251 Corrigido o nome do job p jbpgd_rec_cursos_aprovados e formatação de data na
+  --                           rotina pc_busca_conteudo_campo para dd/mm/rrrr, usada nas tags DTINIEVT e DTFIMEVT (Carlos)
+  -------------------------------------------------------------------------------------------------------------------
+
  -- Rotina para buscar o conteudo do campo com base no xml enviado
  PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML de retorno da operadora
                                    pr_nrcampo   IN VARCHAR2,              --> Campo a ser buscado no XML
@@ -91,7 +95,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
           IF vr_tab_xml(0).tag IN ('00000000','0')  THEN
             pr_retorno := NULL;
           ELSE
-            pr_retorno := to_date(vr_tab_xml(0).tag,'yyyymmdd');
+            pr_retorno := to_date(vr_tab_xml(0).tag,'dd/mm/rrrr');
           END IF;
         WHEN 'N' THEN -- Se o tipo de dado for Number
           pr_retorno := replace(vr_tab_xml(0).tag,'.',',');
@@ -104,6 +108,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
     WHEN vr_exc_saida THEN
       pr_dscritic := 'Erro ao buscar campo '||pr_nrcampo||'. '||vr_dscritic;
     WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => pr_nrcampo);
       pr_dscritic := 'Erro ao buscar campo '||pr_nrcampo||'. '||SQLERRM;
   END;
  
@@ -348,7 +353,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       vr_nrdctato            NUMBER;          
       
     vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'WPGD0191';
-    vr_nomdojob  CONSTANT VARCHAR2(50)          := 'jbpgr_rec_cursos_aprovados';
+    vr_nomdojob  CONSTANT VARCHAR2(50)          := 'jbpgd_rec_cursos_aprovados';
     vr_flgerlog  BOOLEAN := FALSE; 
     
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
@@ -559,7 +564,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                 vr_dscritic := 'Erro ao registrar o Curso Raiz '||vr_contador_raiz||': '||SQLERRM;
                   
                 RAISE vr_exc_saida;
-             END;
+            END;
               
           END IF;
 
@@ -803,8 +808,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'CDAGENCI', 'N', vr_cdagenci, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTANOAGE', 'N', vr_dtanoage, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTMESEVT', 'N', vr_dtmesevt, vr_dscritic);
-        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTINIEVT', 'N', vr_dtinievt, vr_dscritic);
-        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'N', vr_dtfimevt, vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTINIEVT', 'D', vr_dtinievt, vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'D', vr_dtfimevt, vr_dscritic);
         
         --> Verificar se deve ignorar o evento
         IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
@@ -955,7 +960,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         IF vr_xml.existsnode(vr_nmtagaux||'CDEVENTO') = 0 THEN  
           EXIT;      
         END IF;
-        
+
         ------------- BUSCA OS DADOS DOS CURSOS -------------
         --Busca os campos do detalhe da consulta
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'IDEVENTO', 'N', vr_idevento, vr_dscritic);
@@ -963,8 +968,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'CDCOOPER', 'N', vr_cdcooper, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'CDAGENCI', 'N', vr_cdagenci, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTANOAGE', 'N', vr_dtanoage, vr_dscritic);
-        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTINIEVT', 'N', vr_dtinievt, vr_dscritic);
-        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'N', vr_dtfimevt, vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTINIEVT', 'D', vr_dtinievt, vr_dscritic);
+        pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'D', vr_dtfimevt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NOMLOGIN', 'S', vr_nomlogin, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTCONINS', 'S', vr_dtconins, vr_dscritic);
         -- Buscar informação de campos adicionados no XML que retorna as informações do curso
@@ -1526,7 +1531,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         --> manter tabela de email                  
         COMMIT;
       WHEN OTHERS THEN
-      
+
+        cecred.pc_internal_exception;
+
         -- RETORNA DADOS NAS TABELAS
         ROLLBACK;
         
