@@ -328,7 +328,7 @@ DEF        VAR vr_nrdconta  AS INTE                                  NO-UNDO.
 DEF        VAR vr_cdcooper  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdagectl  AS INTE                                  NO-UNDO. 
 
-/*variaveis da arquivo contábil AAMMDD_CRITICAS.txt*/
+/*variaveis da arquivo contábil AAMMDD_CRITICADEVOLU.txt*/
 DEF        VAR aux_nmarqcri AS CHAR                                  NO-UNDO.
 DEF        VAR aux_nmarqcop AS CHAR                                  NO-UNDO.
 DEF        VAR aux_linhaarq AS CHAR                                  NO-UNDO.

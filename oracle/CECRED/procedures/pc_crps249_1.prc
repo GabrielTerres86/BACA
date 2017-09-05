@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                         Ultima atualizacao: 03/04/2017
+   Data    : Novembro/98                         Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -70,9 +70,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
 
                07/01/2016 - Ajuste para verificar pr_cdhistor para contabilizar
                             portabilidade de credito. (Jaison/Diego - SD: 382779)
-                            
+
                03/04/2017 - Ajuste para segregar lançamentos em pessoa fisica e juridica
-                            P307 - (Jonatas - Supero)
+                            P307 - (Jonatas - Supero)	
+
+               01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
 
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
@@ -689,8 +691,8 @@ BEGIN
   IF pr_nmestrut = 'CRAPLEM' THEN
     vr_nmcolsql := ' ,x.nrctremp ';    
   END IF;  
-  
-  IF pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093, 2094, 2090, 2091, 1072, 1070,1544,1542,1713,1722,1710,1719,1510) THEN
+
+  IF pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719) THEN
     vr_nmcolsql := ' ,trim(replace(x.cdpesqbb,''.'','''')) ';
   END IF;
 
@@ -725,7 +727,7 @@ BEGIN
   dbms_sql.define_column(vr_num_cursor, 8, vr_inpessoa);
   
   IF upper(pr_nmestrut) = 'CRAPLEM' OR 
-     (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093, 2094, 2090, 2091, 1072, 1070,1544,1542,1713,1722,1710,1719,1510)) THEN
+     (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719)) THEN
     dbms_sql.define_column(vr_num_cursor, 9, vr_nrctremp);
   END IF;
       
@@ -755,7 +757,7 @@ BEGIN
       dbms_sql.column_value(vr_num_cursor, 8, vr_inpessoa);
       
       IF upper(pr_nmestrut) = 'CRAPLEM' OR 
-        (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093, 2094, 2090, 2091, 1072, 1070,1544,1542,1713,1722,1710,1719,1510)) THEN
+        (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719)) THEN
         dbms_sql.column_value(vr_num_cursor, 9, vr_nrctremp);
       END IF;
       
@@ -866,8 +868,8 @@ BEGIN
 
       ELSE
         -- Verifica a estrutura e se o historico for
-        --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS
-        if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (98, 277) THEN
+        --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
+        if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (98, 277, 1038) THEN
           -- Verifica se tem empréstimo. Se não tiver, descarta.
           open cr_crapepr (pr_cdcooper,
                            vr_nrdconta,
@@ -1037,12 +1039,12 @@ BEGIN
             vr_tab_agencia(vr_cdagenci).vr_qtcxaage_499 := vr_tab_agencia(vr_cdagenci).vr_qtcxaage_499 + 1;
             vr_tab_agencia(vr_ass_cdagenci).vr_vlccuage_499 := vr_tab_agencia(vr_ass_cdagenci).vr_vlccuage_499 + vr_vllanmto;
             vr_tab_agencia(vr_ass_cdagenci).vr_qtccuage_499 := vr_tab_agencia(vr_ass_cdagenci).vr_qtccuage_499 + 1;
-              
+            
             -- Segregando as informacoes por tipo de pessoa
             IF vr_inpessoa = 1 THEN
                vr_tab_agencia(999).vr_vlccagpf_499 := vr_tab_agencia(999).vr_vlccagpf_499 + vr_vllanmto;
                vr_tab_agencia(999).vr_qtccagpf_499 := vr_tab_agencia(999).vr_qtccagpf_499 + 1;
-                 
+               
                vr_tab_agencia(vr_cdagenci).vr_vlcxagpf_499 := vr_tab_agencia(vr_cdagenci).vr_vlcxagpf_499 + vr_vllanmto;
                vr_tab_agencia(vr_cdagenci).vr_qtcxagpf_499 := vr_tab_agencia(vr_cdagenci).vr_qtcxagpf_499 + 1;
                vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpf_499 := vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpf_499 + vr_vllanmto;
@@ -1050,13 +1052,13 @@ BEGIN
             ELSE
                vr_tab_agencia(999).vr_vlccagpj_499 := vr_tab_agencia(999).vr_vlccagpj_499 + vr_vllanmto;
                vr_tab_agencia(999).vr_qtccagpj_499 := vr_tab_agencia(999).vr_qtccagpj_499 + 1;
-                 
+               
                vr_tab_agencia(vr_cdagenci).vr_vlcxagpj_499 := vr_tab_agencia(vr_cdagenci).vr_vlcxagpj_499 + vr_vllanmto;
                vr_tab_agencia(vr_cdagenci).vr_qtcxagpj_499 := vr_tab_agencia(vr_cdagenci).vr_qtcxagpj_499 + 1;
                vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpj_499 := vr_tab_agencia(vr_ass_cdagenci).vr_vlccagpj_499 + vr_vllanmto;
                vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj_499 := vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj_499 + 1;               
             END IF;
-
+            
           ELSE /* Emprestimo */
 
             vr_tab_agencia(999).vr_vlccuage := vr_tab_agencia(999).vr_vlccuage + vr_vllanmto;
@@ -1086,7 +1088,7 @@ BEGIN
             END IF;
 
           END IF;
-        ELSIF pr_cdhistor in (2093, 2094, 2090, 2091, 1038, 1072, 1070,1544,1542,1713,1722,1710,1719,1510) THEN
+        ELSIF pr_cdhistor in (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719) THEN
               
           -- Verifica se tem empréstimo. Se não tiver, descarta.
           open cr_crapepr (pr_cdcooper,
@@ -1277,7 +1279,7 @@ BEGIN
              vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj := vr_tab_agencia(vr_ass_cdagenci).vr_qtccagpj + 1;
           END IF;
 
-        ELSE  
+        ELSE
         
           vr_tab_agencia(999).vr_vlccuage := vr_tab_agencia(999).vr_vlccuage + vr_vllanmto;
           vr_tab_agencia(999).vr_qtccuage := vr_tab_agencia(999).vr_qtccuage + 1;
@@ -1318,9 +1320,9 @@ BEGIN
   pc_cria_craprej(pr_cdhistor => pr_cdhistor,
                   pr_dtrefere => pr_nmestrut);
   -- Verifica a estrutura e se o historico for
-  --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS
+  --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
   if upper(pr_nmestrut) = 'CRAPLEM' and
-     pr_cdhistor in (98, 277) then
+     pr_cdhistor in (98, 277, 1038) then
     --
     vr_indice_agencia := vr_tab_agencia.first;
     -- Percorre todas as agencias
@@ -1347,6 +1349,8 @@ BEGIN
       vr_dtrefere := 'craplem_499';
     ELSIF pr_cdhistor = '277' THEN
       vr_dtrefere := 'craplem_estfin';
+    ELSIF pr_cdhistor = '1038' THEN
+      vr_dtrefere := 'craplem';
     END IF;
 
     pc_cria_craprej(pr_cdhistor => pr_cdhistor,

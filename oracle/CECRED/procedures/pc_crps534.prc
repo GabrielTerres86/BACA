@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 24/04/2017
+   Data    : Dezembro/2009.                  Ultima atualizacao: 01/09/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -108,7 +108,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
                31/08/2016 - Adicionar validação para o campo de CPF recebido no arquivo ser
                             diferente do CPF do titular da conta (Douglas - Chamado 476269)
-                
+
                06/10/2016 - Ajuste na leitura do CPF do destintario quando processar a linha
                             do arquivo (Douglas - Chamado 533206)
 
@@ -120,6 +120,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+               01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
+			               o nome do arquivo apos processamento, iremos gerar o arquivo
+						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
 
   ............................................................................ */
 
@@ -2932,7 +2936,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           -- Busca o diretório para contabilidade
           vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
           vr_dircon := vr_dircon || vc_dircon;
-          vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
+          vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_527.txt';
 
           -- Chama a geracao do TXT
           GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
@@ -2942,9 +2946,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                              ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_arqcon    --> Arquivo final com o path
                                              ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                              ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                             ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
-                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
-                                             ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
+                                             ,pr_dspathcop => vr_dircon                --> Copiar para a Micros
+                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos                                             
                                              ,pr_des_erro  => vr_des_erro);            --> Saída com erro
                                      
                                              
