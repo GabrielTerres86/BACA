@@ -635,12 +635,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps597 (pr_cdcooper IN crapcop.cdcooper%T
       -- Rodar somente na segunda-feira 
       IF TO_NUMBER(to_char(rw_crapdat.dtmvtolt, 'D')) > 
 			   TO_NUMBER(to_char(rw_crapdat.dtmvtoan, 'D')) THEN
-        vr_dscritic := 'Execução SEM processo - ';
         NULL;
       ELSE
         pc_processa;
-			END IF;
-			--
+	  END IF;
+	  --
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
       -- Processo OK, devemos chamar a fimprg
