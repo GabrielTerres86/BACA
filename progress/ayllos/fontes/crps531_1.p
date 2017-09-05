@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 14/07/2017
+   Data    : Setembro/2009.                     Ultima atualizacao: 18/08/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -205,6 +205,10 @@
                
                14/07/2017 - Ajustar a procedure deleta_objetos para validar se o handle do objeto eh 
                             valido para que seja excluido (Douglas - Chamado 524133)
+
+			   18/08/2017 - Ajuste para efetuar o controle de lock ao realizar a atualizacao
+			                da tabela craplfp
+							(Adriano - SD 733103).
 
 
              #######################################################
@@ -1550,19 +1554,41 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                               ELSE
                                   DO:
                                      ASSIGN craplcs.flgopfin = TRUE. /* Finaliz.*/
+
                                      /*Alteração FOLHAIB*/
                                      IF craplcs.nrridlfp <> 0 THEN
                                      DO: 
+									     DO aux_contlock = 1 TO 10:
+
                                          FIND FIRST craplfp WHERE 
                                             craplfp.cdcooper = craplcs.cdcooper  AND
                                             RECID(craplfp)   = craplcs.nrridlfp 
                                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                                          
-                                         IF AVAIL craplfp THEN
+											 IF NOT AVAIL craplfp    THEN
+												IF LOCKED craplfp   THEN
                                          DO:
+													   ASSIGN aux_dscritic = "Registro craplfp sendo alterado.".
+													   PAUSE 1 NO-MESSAGE.
+													   NEXT.
+												   END.
+												ELSE
+												   DO:
+													   ASSIGN aux_dscritic = "Lancamento de folha nao encontrado.".
+													   LEAVE.
+												   END.
+
+											 ASSIGN aux_dscritic = "".
+											 LEAVE.
+
+										 END.
+										 
+										 IF LOCKED craplfp THEN
+											NEXT.
+
                                              ASSIGN craplfp.idsitlct = 'T'
                                                     craplfp.dsobslct = ? .  
-                                         END.
+                                         
                                   END.
                                         
                               END.
@@ -3277,6 +3303,7 @@ PROCEDURE trata_IFs.
                                               INT(hTextTag:NODE-VALUE).
                                                                                                                                            
                 END.            
+                
             END.
        ELSE
             DO:
