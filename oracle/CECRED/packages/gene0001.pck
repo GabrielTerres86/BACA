@@ -292,6 +292,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   PROCEDURE pc_abre_arquivo(pr_nmdireto IN VARCHAR2            --> Diretório do arquivo
                            ,pr_nmarquiv IN VARCHAR2            --> Nome do arquivo
                            ,pr_tipabert IN VARCHAR2            --> Modo de abertura (R,W,A)
+                           ,pr_flaltper IN INTEGER DEFAULT 1   --> Altera permissão de acesso do arquivo (0 - Não altera / 1 - Altera)
                            ,pr_utlfileh IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
                            ,pr_des_erro OUT VARCHAR2);         --> Saída de erros
 
@@ -408,7 +409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 29/06/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 30/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -434,6 +435,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --             09/06/2017 - #660327 informa acesso dispara a procedure pc_set_modulo (Belli-Envolti)
   --             16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal (Belli-Envolti)
   --             29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
+  --
+  --             30/08/2017 - Ajuste para verificar se deve mudar permissões do arquivo ou não 
+  --                          (Adriano - SD 734960).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1967,13 +1971,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   PROCEDURE pc_abre_arquivo(pr_nmdireto IN VARCHAR2            --> Diretório do arquivo
                            ,pr_nmarquiv IN VARCHAR2            --> Nome do arquivo
                            ,pr_tipabert IN VARCHAR2            --> Modo de abertura (R,W,A)
+                           ,pr_flaltper IN INTEGER DEFAULT 1   --> Altera permissão de acesso do arquivo (0 - Não altera / 1 - Altera)
                            ,pr_utlfileh IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
                            ,pr_des_erro OUT VARCHAR2) IS       --> Saída de erros
     /*..............................................................................
 
        Programa: pc_abre_arquivo (Caminho e nome do arquivos passados separadamente)
        Autor   : Marcos (Supero)
-       Data    : Maio/2013                      Ultima atualizacao: 13/03/2015
+       Data    : Maio/2013                      Ultima atualizacao: 30/08/2017
 
        Dados referentes ao programa:
 
@@ -1989,6 +1994,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 
        Alteracoes: 13/03/2015 - Adicionado parametro linesize 32767 na utl_file.fopen
                                 (Alisson AMcom)
+
+                   30/08/2017 - Ajuste para verificar se deve mudar permissões do arquivo ou não
+                               (Adriano - SD 734960).             
+                   
 
     ..............................................................................*/
   BEGIN
@@ -2006,8 +2015,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
           pr_des_erro := 'Problema ao abrir o arquivo <'||pr_nmdireto||'/'||pr_nmarquiv||'>: ' || sqlerrm;
           RAISE vr_exc_erro;
       END;
+      
+      IF pr_flaltper = 1                                                    AND 
+         NVL(gene0001.fn_param_sistema('CRED',0,'ALTERA_PERMIS_ARQ'),0) = 1 THEN
+         
       -- Ao final, tenta setar as propriedades para garantir que o arquivo seja acessível por outros usuários
       pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||pr_nmdireto||'/'||pr_nmarquiv);
+        
+      END IF;
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Montar o erro
