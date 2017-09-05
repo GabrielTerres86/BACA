@@ -762,7 +762,14 @@ PROCEDURE obtem-operadores.
                tt-operadores.nrcpfope = crapopi.nrcpfope
                tt-operadores.dsdcargo = crapopi.dsdcargo
                tt-operadores.flgsitop = crapopi.flgsitop
-               tt-operadores.dsdemail = crapopi.dsdemail.
+               tt-operadores.dsdemail = crapopi.dsdemail
+               /* inicio: melhoria conta conjunta */
+			   tt-operadores.vllbolet = crapopi.vllbolet
+			   tt-operadores.vllimtrf = crapopi.vllimtrf
+			   tt-operadores.vllimted = crapopi.vllimted
+			   tt-operadores.vllimvrb = crapopi.vllimvrb
+			   tt-operadores.vllimflp = crapopi.vllimflp.
+			   /* fim da melhoria */
 
     END. /** Fim do FOR EACH crapopi **/
         
@@ -802,7 +809,14 @@ PROCEDURE gerenciar-operador.
     DEF  INPUT PARAM par_dsdemail AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dsdcargo AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_flgsitop AS LOGI                           NO-UNDO.
+	DEF  INPUT PARAM par_geraflux AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdditens AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_vllbolet LIKE crapopi.vllbolet             NO-UNDO.
+	DEF  INPUT PARAM par_vllimtrf LIKE crapopi.vllimtrf             NO-UNDO.
+	DEF  INPUT PARAM par_vllimted LIKE crapopi.vllimted             NO-UNDO.
+	DEF  INPUT PARAM par_vllimvrb LIKE crapopi.vllimvrb             NO-UNDO.
+	DEF  INPUT PARAM par_vllimflp LIKE crapopi.vllimflp             NO-UNDO.
+
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -819,6 +833,12 @@ PROCEDURE gerenciar-operador.
     DEF VAR aux_dsdsenha AS CHAR                                    NO-UNDO.
     DEF VAR aux_cdditens AS CHAR                                    NO-UNDO.
     DEF VAR aux_conteudo AS CHAR                                    NO-UNDO.
+
+    DEF VAR aux_vllbolet AS DECI                                     NO-UNDO.
+    DEF VAR aux_vllimtrf AS DECI                                     NO-UNDO.
+    DEF VAR aux_vllimted AS DECI                                     NO-UNDO.
+    DEF VAR aux_vllimvrb AS DECI                                     NO-UNDO.
+    DEF VAR aux_vllimflp AS DECI                                     NO-UNDO.	
 
     DEF VAR aux_flgsitop AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
@@ -1103,11 +1123,19 @@ PROCEDURE gerenciar-operador.
                    aux_dsdemail     = crapopi.dsdemail
                    aux_dsdcargo     = crapopi.dsdcargo
                    aux_flgsitop     = crapopi.flgsitop
+				   aux_vllbolet		= crapopi.vllbolet
+				   aux_vllimtrf		= crapopi.vllimtrf
+				   aux_vllimted		= crapopi.vllimted
+				   aux_vllimvrb		= crapopi.vllimvrb
+				   aux_vllimflp		= crapopi.vllimflp
                    crapopi.dtultalt = aux_datdodia
                    crapopi.nmoperad = par_nmoperad
                    crapopi.dsdemail = par_dsdemail
                    crapopi.dsdcargo = par_dsdcargo
-                   crapopi.flgsitop = par_flgsitop.
+				   crapopi.flgsitop = IF par_desdacao = "CADASTRAR" THEN
+										            FALSE
+									            ELSE
+										            par_flgsitop.
     
             FOR EACH crapaci WHERE crapaci.cdcooper = par_cdcooper AND
                                    crapaci.nrdconta = par_nrdconta AND
@@ -1222,11 +1250,85 @@ PROCEDURE gerenciar-operador.
                 END.
         END.
         
-        ASSIGN aux_flgtrans = TRUE.
+        ASSIGN aux_flgtrans = FALSE.
         
     END. /** Fim do DO TRANSACTION - TRANSACAO **/
     
 
+	TRANSACAO:
+    DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
+	
+		IF par_geraflux = 1 THEN
+		DO:
+	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+	RUN STORED-PROCEDURE pc_valida_limite_operador aux_handproc = PROC-HANDLE NO-ERROR
+							 (INPUT par_cdcooper,
+							  INPUT par_nrdconta,
+							  INPUT par_nrcpfope,
+							  INPUT par_idseqttl,
+							  INPUT par_vllbolet,
+							  INPUT par_vllimtrf,
+							  INPUT par_vllimted,
+							  INPUT par_vllimvrb,
+							  INPUT par_vllimflp,
+							  OUTPUT ?,
+							  OUTPUT 0).
+
+		CLOSE STORED-PROC pc_valida_limite_operador aux_statproc = PROC-STATUS
+			  WHERE PROC-HANDLE = aux_handproc.
+			  
+		ASSIGN aux_dscritic = pc_valida_limite_operador.pr_dscritic
+                                    WHEN pc_valida_limite_operador.pr_dscritic <> ?
+			   aux_cdcritic = pc_valida_limite_operador.pr_cdcritic
+                                    WHEN pc_valida_limite_operador.pr_cdcritic <> ?.
+
+		{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+		
+			IF  aux_cdcritic > 0 THEN
+				DO:
+					FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                                       NO-LOCK NO-ERROR.
+              
+					IF AVAIL crapcri THEN
+					DO:
+						ASSIGN aux_dscritic = crapcri.dscritic.
+					END.
+				END.
+			ELSE
+				DO:
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+					 RUN STORED-PROCEDURE pc_gera_msg_preposto aux_handproc = PROC-HANDLE NO-ERROR
+											 (INPUT par_cdcooper,
+											  INPUT par_nrdconta,
+											  INPUT par_nrcpfope,
+											  INPUT par_idseqttl,
+											  INPUT par_vllbolet,
+											  INPUT par_vllimtrf,
+											  INPUT par_vllimted,
+											  INPUT par_vllimvrb,
+											  INPUT par_vllimflp,
+													  OUTPUT ?).
+
+						CLOSE STORED-PROC pc_gera_msg_preposto aux_statproc = PROC-STATUS
+							  WHERE PROC-HANDLE = aux_handproc.
+
+							ASSIGN aux_dscritic = pc_gera_msg_preposto.pr_dscritic
+											WHEN pc_gera_msg_preposto.pr_dscritic <> ?.
+											
+					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+					
+							IF aux_dscritic = "" THEN
+								DO:
+					ASSIGN aux_flgtrans = TRUE.
+								END.
+			
+						END.
+		END.
+		ELSE
+			DO:
+				ASSIGN aux_flgtrans = TRUE.
+				END.
+	END.
 
     IF  NOT aux_flgtrans  THEN
         DO:
@@ -1326,6 +1428,49 @@ PROCEDURE gerenciar-operador.
                                                           "Liberado/Bloqueado"),
                                              INPUT STRING(par_flgsitop,
                                                           "Liberado/Bloqueado")).
+                                                          
+				IF par_geraflux = 1 THEN
+					DO:
+				IF  aux_vllbolet <> par_vllbolet  THEN
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "Boleto/Convenio/Tributos",
+                                             INPUT TRIM(STRING(aux_vllbolet,
+															"zzz,zzz,zz9.99-")),
+                                             INPUT TRIM(STRING(par_vllbolet,
+															"zzz,zzz,zz9.99-"))).
+															
+				IF  aux_vllimtrf <> par_vllimtrf  THEN
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "Transferencia",
+                                             INPUT TRIM(STRING(aux_vllimtrf,
+															"zzz,zzz,zz9.99-")),
+                                             INPUT TRIM(STRING(par_vllimtrf,
+															"zzz,zzz,zz9.99-"))).
+															
+				IF  aux_vllimted <> par_vllimted  THEN
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "TED",
+                                             INPUT TRIM(STRING(aux_vllimted,
+															"zzz,zzz,zz9.99-")),
+                                             INPUT TRIM(STRING(par_vllimted,
+															"zzz,zzz,zz9.99-"))).
+															
+				IF  aux_vllimvrb <> par_vllimvrb  THEN
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "VR Boleto",
+                                             INPUT TRIM(STRING(aux_vllimvrb,
+															"zzz,zzz,zz9.99-")),
+                                             INPUT TRIM(STRING(par_vllimvrb,
+															"zzz,zzz,zz9.99-"))).
+															
+				IF  aux_vllimflp <> par_vllimflp  THEN
+                    RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                             INPUT "Folha de Pagamento",
+                                             INPUT TRIM(STRING(aux_vllimflp,
+															"zzz,zzz,zz9.99-")),
+                                             INPUT TRIM(STRING(par_vllimflp,
+															"zzz,zzz,zz9.99-"))).
+				END.
                                                           
                 FOR EACH tt-itens-menu NO-LOCK:
             
