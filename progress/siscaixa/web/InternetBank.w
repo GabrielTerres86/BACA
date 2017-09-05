@@ -901,6 +901,7 @@ DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
 DEF VAR aux_nrinsava AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfdrf AS CHAR                                           NO-UNDO.
+DEF VAR str_nrcpfope AS CHAR                                           NO-UNDO.
 DEF VAR aux_vldescto AS DECI                                           NO-UNDO.
 DEF VAR aux_inidocto AS DECI                                           NO-UNDO.
 DEF VAR aux_fimdocto AS DECI                                           NO-UNDO.
@@ -927,6 +928,13 @@ DEF VAR aux_txmensal AS DECI                                           NO-UNDO.
 DEF VAR aux_vlrtarif AS DECI                                           NO-UNDO.
 DEF VAR aux_vltaxiof AS DECI                                           NO-UNDO.
 DEF VAR aux_vltariof AS DECI                                           NO-UNDO.
+DEF VAR aux_vllbolet LIKE crapopi.vllbolet                             NO-UNDO.
+DEF VAR aux_vllimtrf LIKE crapopi.vllimtrf                             NO-UNDO.
+DEF VAR aux_vllimted LIKE crapopi.vllimted                             NO-UNDO.
+DEF VAR aux_vllimvrb LIKE crapopi.vllimvrb                             NO-UNDO.
+DEF VAR aux_vllimflp LIKE crapopi.vllimflp                             NO-UNDO.
+DEF VAR aux_nrcpfpre LIKE crapopi.nrcpfope                             NO-UNDO.
+DEF VAR aux_geraflux AS INTE										   NO-UNDO.
 
 DEF VAR aux_dtmvtolt AS DATE                                           NO-UNDO.
 DEF VAR aux_dtmvtopr AS DATE                                           NO-UNDO.
@@ -2176,6 +2184,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 191 THEN /* Solicitar Emprestimo */
                 RUN proc_operacao191. 
+        ELSE
+            IF  aux_operacao = 192 THEN /* Ler Mensagens de Confirmacao para Prepostos */
+                RUN proc_operacao192. 
     END.
 /*....................................................................*/
     
@@ -3794,6 +3805,7 @@ PROCEDURE proc_operacao39:
                                                   INPUT aux_nrdocmto,
                                                   INPUT aux_flmobile,
                                                   INPUT aux_cdtiptra,
+                                                  INPUT aux_nrcpfope,
                                                  OUTPUT aux_dsmsgerr).
 
     IF  RETURN-VALUE = "NOK"  THEN
@@ -3881,7 +3893,13 @@ PROCEDURE proc_operacao43:
            aux_dsdemail = GET-VALUE("dsdemail")
            aux_dsdcargo = GET-VALUE("dsdcargo")
            aux_flgsitop = LOGICAL(GET-VALUE("flgsitop"))
-           aux_cdditens = GET-VALUE("cdditens").
+           aux_cdditens = GET-VALUE("cdditens")
+		   aux_geraflux = INTE(GET-VALUE("geraflux"))
+           aux_vllbolet = DEC(GET-VALUE("vllbolet"))
+           aux_vllimtrf = DEC(GET-VALUE("vllimtrf"))
+           aux_vllimted = DEC(GET-VALUE("vllimted"))
+           aux_vllimvrb = DEC(GET-VALUE("vllimvrb"))
+           aux_vllimflp = DEC(GET-VALUE("vllimflp")).
 
     RUN sistema/internet/fontes/InternetBank43.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
@@ -3892,7 +3910,13 @@ PROCEDURE proc_operacao43:
                                                   INPUT aux_dsdemail,
                                                   INPUT aux_dsdcargo,
                                                   INPUT aux_flgsitop,
+												  INPUT aux_geraflux,
                                                   INPUT aux_cdditens,
+                                                  INPUT aux_vllbolet,
+                                                  INPUT aux_vllimtrf,
+                                                  INPUT aux_vllimted,
+                                                  INPUT aux_vllimvrb,
+                                                  INPUT aux_vllimflp,
                                                  OUTPUT aux_dsmsgerr).
 
     {&out} aux_dsmsgerr aux_tgfimprg.
@@ -7133,6 +7157,7 @@ PROCEDURE proc_operacao153:
 
     ASSIGN aux_dtmvtolt = DATE(  GET-VALUE("dtmvtolt"))
            aux_nrcpfope = DECI(  GET-VALUE("nrcpfope"))
+           aux_idseqttl = INTE(  GET-VALUE("idseqttl")) 
            aux_lisrowid = STRING(GET-VALUE("dsdrowid"))
            aux_tpoperac = INTE(  GET-VALUE("tpoperac"))
            aux_tpdpagto = INTE(  GET-VALUE("tpdpagto"))
@@ -7154,6 +7179,7 @@ PROCEDURE proc_operacao153:
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_nrcpfope,
+                                                   INPUT aux_idseqttl,
                                                    INPUT aux_lisrowid,
                                                    INPUT aux_tpoperac,
                                                    INPUT aux_tpdpagto,
@@ -7477,7 +7503,7 @@ PROCEDURE proc_operacao163:
                                                    INPUT 3,   /*Origem*/
                                                    INPUT "INTERNETBANK",
                                                    INPUT aux_cdditens,
-												   INPUT 0,   /* nrcpfope */
+                                                   INPUT aux_nrcpfope,   /* nrcpfope */
                                                    INPUT aux_idseqttl,
                                                    OUTPUT aux_dsmsgerr,
                                                    OUTPUT TABLE xml_operacao).
@@ -8245,6 +8271,62 @@ PROCEDURE proc_operacao191:
                                                   OUTPUT aux_dsmsgerr). 
                                                   
     {&out} aux_dsmsgerr aux_tgfimprg.
+
+END PROCEDURE.
+
+/** Listar mensagems de aprovacao para Prepostos **/
+PROCEDURE proc_operacao192:
+        
+    ASSIGN aux_nrcpfpre = DECI(GET-VALUE("aux_nrcpfpre"))
+                   str_nrcpfope = STRING(GET-VALUE("str_nrcpfope"))
+                   aux_iddopcao = INTE(GET-VALUE("aux_iddopcao")).
+        
+        /* salvar confirmacao */
+        IF aux_iddopcao = 1 THEN
+                DO:
+
+                        RUN sistema/internet/fontes/InternetBank192.p (INPUT aux_cdcooper,
+                                                                                                                   INPUT aux_nrdconta,
+                                                                                                                   INPUT aux_nrcpfpre,
+                                                                                                                   INPUT str_nrcpfope,
+                                                                                                                   INPUT 1,
+                                                                                                                   OUTPUT aux_dsmsgerr,
+                                                                                                                   OUTPUT TABLE xml_operacao).
+                                                  
+                        IF  RETURN-VALUE = "NOK"  THEN
+                                {&out} aux_dsmsgerr. 
+                        ELSE
+                                FOR EACH xml_operacao NO-LOCK:
+                        
+                                        {&out} xml_operacao.dslinxml. 
+                                                
+                                END.
+
+                        {&out} aux_tgfimprg.
+                END.
+                
+        /* listar confirmacao */
+        ELSE
+                DO:
+                        RUN sistema/internet/fontes/InternetBank192.p (INPUT aux_cdcooper,
+                                                                                                                   INPUT aux_nrdconta,
+                                                                                                                   INPUT aux_nrcpfpre,
+                                                                                                                   INPUT "",
+                                                                                                                   INPUT 2,
+                                                                                                                   OUTPUT aux_dsmsgerr,
+                                                                                                                   OUTPUT TABLE xml_operacao).
+                                                  
+                        IF  RETURN-VALUE = "NOK"  THEN
+                                {&out} aux_dsmsgerr. 
+                        ELSE
+                                FOR EACH xml_operacao NO-LOCK:
+                        
+                                        {&out} xml_operacao.dslinxml. 
+                                                
+                                END.
+
+                        {&out} aux_tgfimprg.
+                END.
 
 END PROCEDURE.
 /*............................................................................*/
