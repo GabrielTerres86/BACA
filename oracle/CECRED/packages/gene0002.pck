@@ -28,6 +28,9 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
                22/06/2017 - Tratamento de erros 
                           - setado modulo
                           - Chamado 660322 - Belli - Envolti
+			
+			   04/09/2017 - #748810 ajuste do tamanho minimo para realizar a copia da variavel tipo varchar
+               para a variavel tipo clob da procedure pc_clob_buffer (Mauro - Mouts);
       
   ------------------------------------------------------------------------------------------------------------------*/
 
@@ -272,7 +275,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
 
   /* Procedure para controlar buferização de um CLOB */
   PROCEDURE pc_clob_buffer(pr_dados   IN OUT NOCOPY VARCHAR2       --> Buffer de dados
-                          ,pr_btam    IN PLS_INTEGER DEFAULT 32600 --> Determina o tamanho do buffer
+                          ,pr_btam    IN PLS_INTEGER DEFAULT 32000 --> Determina o tamanho do buffer
                           ,pr_gravfim IN BOOLEAN                   --> Verifica se é gravação final do buffer
                           ,pr_clob    IN OUT NOCOPY CLOB);         --> Clob de gravação
 
@@ -379,6 +382,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             27/07/2017 - #724054 retirada a exclusão da coop 3 do cursor cr_crapcop, rotina 
   --                          pc_publicar_arq_intranet (Carlos)
+  --
+  --             04/09/2017 - #748810 ajuste do tamanho minimo para realizar a copia da variavel tipo varchar
+  --             para a variavel tipo clob da procedure pc_clob_buffer (Mauro - Mouts);
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -4799,7 +4805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
   /* Procedure para controlar buferização de um CLOB */
   PROCEDURE pc_clob_buffer(pr_dados   IN OUT NOCOPY VARCHAR2       --> Buffer de dados
-                          ,pr_btam    IN PLS_INTEGER DEFAULT 32600 --> Determina o tamanho do buffer
+                          ,pr_btam    IN PLS_INTEGER DEFAULT 32000 --> Determina o tamanho do buffer
                           ,pr_gravfim IN BOOLEAN                   --> Verifica se é gravação final do buffer
                           ,pr_clob    IN OUT NOCOPY CLOB) IS       --> Clob de gravação
     -- ..........................................................................
