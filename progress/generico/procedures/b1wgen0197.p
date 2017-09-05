@@ -76,7 +76,6 @@ DEF VAR aux_cdhistor AS INTE                                           NO-UNDO.
 DEF VAR aux_cdrefere AS INTE                                           NO-UNDO.
 DEF VAR aux_flgsicre AS CHAR                                           NO-UNDO.
 DEF VAR aux_qtregist AS INTEGER                                        NO-UNDO.
-DEF VAR aux_insitlim AS INTEGER                                        NO-UNDO.
 
 /******************************************************************************/
 
@@ -214,16 +213,11 @@ PROCEDURE busca_inf_produtos:
     FOR EACH tt-dados-epr-out NO-LOCK:
       ASSIGN tt-inf-produto.vlemprst = tt-inf-produto.vlemprst + tt-dados-epr-out.vlsdeved.
     END.
-    
-    IF  crapass.vllimcre > 0  THEN
-        aux_insitlim = 2.
-    ELSE
-        aux_insitlim = 3.
-    
+        
     FOR LAST craplim WHERE craplim.cdcooper = par_cdcooper AND
                            craplim.nrdconta = par_nrdconta AND
                            craplim.tpctrlim = 1            AND
-                           craplim.insitlim = aux_insitlim 
+                           craplim.insitlim = 2
                            NO-LOCK USE-INDEX craplim2:
       ASSIGN tt-inf-produto.vllimpro = craplim.vllimite.
     END.
