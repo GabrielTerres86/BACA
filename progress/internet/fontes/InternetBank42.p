@@ -75,7 +75,22 @@ FOR EACH tt-operadores NO-LOCK BY tt-operadores.nmoperad:
                                                "yes/no")) +
                                    "</flgsitop><dsdemail>" +
                                    tt-operadores.dsdemail +
-                                   "</dsdemail><PERMISSOES>". 
+                                   "</dsdemail><vllbolet>" +
+								   TRIM(STRING(tt-operadores.vllbolet,
+                                               "zzz,zzz,zz9.99-")) +
+								   "</vllbolet><vllimtrf>" +
+								   TRIM(STRING(tt-operadores.vllimtrf,
+                                               "zzz,zzz,zz9.99-")) +
+								   "</vllimtrf><vllimted>" +
+								   TRIM(STRING(tt-operadores.vllimted,
+                                               "zzz,zzz,zz9.99-")) +
+								   "</vllimted><vllimvrb>" +
+								   TRIM(STRING(tt-operadores.vllimvrb,
+                                               "zzz,zzz,zz9.99-")) +
+								   "</vllimvrb><vllimflp>" +
+								   TRIM(STRING(tt-operadores.vllimflp,
+                                               "zzz,zzz,zz9.99-")) +
+								   "</vllimflp><PERMISSOES>". 
                                       
     RUN cria-tags-itens-menu (INPUT tt-operadores.nrcpfope).
     

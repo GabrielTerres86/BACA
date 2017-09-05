@@ -1531,13 +1531,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     para PM.AGROLANDIA (Tiago/Fabricio #647174)                        
                     
        08/06/2017 - Retirado "OR" por problemas na compilacao(Tiago).
-       
+       															 
        10/07/2017 - Adicionar tratamento para validar o vencimento dos tributos
                     sicredi (Lucas Ranghetti #653552)
 
        03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                     4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
-                    processo (Lucas Ranghetti #711123)              
+                    processo (Lucas Ranghetti #711123)        
        02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
   		              crapass, crapttl, crapjur 
        						 (Adriano - P339).
@@ -2007,6 +2007,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
   --Tabela de Memoria para desconto titulo
   vr_tab_descontar typ_tab_titulos;
+  --
+  vr_assin_conjunta NUMBER(1);
 
   /* Funcao para buscar a data do dia */
   FUNCTION fn_busca_datdodia (pr_cdcooper IN crapcop.cdcooper%type) RETURN DATE IS
@@ -2421,7 +2423,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                     pr_tab_limite => vr_tab_limite, 
                                     pr_tab_internet => vr_tab_internet, 
                                     pr_cdcritic => vr_cdcritic, 
-                                    pr_dscritic => vr_dscritic);                                    
+                                    pr_dscritic => vr_dscritic
+                                   ,pr_assin_conjunta => vr_assin_conjunta);                                    
       IF (nvl(vr_cdcritic,0) <> 0 OR 
         TRIM(vr_dscritic) IS NOT NULL) THEN
         RAISE vr_exc_erro;
@@ -5680,7 +5683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
                                        ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                        ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                                       ,pr_dscritic => vr_dscritic);        --Descricao do erro;
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
 
          IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           /* Se for a primeira execução da DEBNET/CRPS509 */
@@ -10635,7 +10639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       END IF;
 
       IF pr_idagenda = 2 THEN /** Agendamento **/
-      
+      									 
         -- Se for convenio sicredi
         IF rw_crapcon.flgcnvsi = 1 THEN 
           /* Validação referente aos dias de tolerancia */
@@ -10963,7 +10967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   21/12/2015 - Incluido verificacao de situação de transacao pendente, Prj. Assinatura
                                Conjunta (Jean Michel).             
 
-                  05/04/2016 - Ajustado conforme solicitação do SD 429445 (Jean Michel).     
+                  05/04/2016 - Ajustado conforme solicitação do SD 429445 (Jean Michel).            
                   
                   03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                                4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
@@ -11396,7 +11400,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                       ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
                                       ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                       ,pr_cdcritic => vr_cdcritic          --Código do erro
-                                      ,pr_dscritic => vr_dscritic);        --Descricao do erro;
+                                      ,pr_dscritic => vr_dscritic
+                                      ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
 
         IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           --> Se for a primeira execução da DEBNET/CRPS509 DEBSIC/CRPS642
@@ -11607,7 +11612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_idagenda => 1 -- Indicador de agendamento (1-Nesta Data/2-Agendamento)
                                        ,pr_dtagenda => rw_craplau.dtmvtopg -- Data de agendamento
                                        ,pr_indvalid => 2 -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
-									                     ,pr_flmobile => 0 --Indicador Mobile
+									   ,pr_flmobile => 0 --Indicador Mobile
                                        ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                        ,pr_vldocmto => vr_vlrdocum -- Valor da guia
                                        ,pr_nrdigfat => vr_nrdigfat -- Digito do faturamento
@@ -11671,7 +11676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dtagenda => rw_craplau.dtmvtopg   --Data agendamento
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
-   						               ,pr_flmobile => 0                     --Indicador Mobile
+							 ,pr_flmobile => 0                     --Indicador Mobile
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
                              ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
@@ -11755,7 +11760,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                ,pr_dtagenda => rw_craplau.dtmvtopg    --Data agendamento
                                ,pr_idorigem => pr_idorigem            --Indicador de origem
                                ,pr_indvalid => 2                      --Nao validar horario limite
-							                 ,pr_flmobile => 0                    --Indicador Mobile
+							   ,pr_flmobile => 0                    --Indicador Mobile
                                ,pr_nmextcon => vr_nmconban            --Nome do banco
                                ,pr_cdseqfat => vr_cdseqfat            --Codigo Sequencial fatura
                                ,pr_vlfatura => vr_vlrdocum            --Valor fatura
@@ -11788,7 +11793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                              ,pr_dscritic => vr_dscritic            --Descricao critica
                              ,pr_msgofatr => vr_msgofatr
                              ,pr_cdempcon => vr_cdempcon
-							               ,pr_cdsegmto => vr_cdsegmto);        
+							 ,pr_cdsegmto => vr_cdsegmto);        
           END IF;
 
         -- Se for GPS
@@ -13079,7 +13084,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
         IF vr_idagenda = 1  THEN /* Debito nesta data */
           --Se data pagamento menor data movimento
-          IF Trunc(vr_dtmvtopg) <= Trunc(pr_dtmvtolt)  AND
+          IF Trunc(vr_dtmvtopg) < Trunc(pr_dtmvtolt)  AND
              (Trunc(vr_dtmvtopg) < Trunc(SYSDATE) OR vr_hratual > vr_hrlimite) THEN
             --Atualiza flag alterar para true
             vr_flgalter := TRUE;
@@ -13111,9 +13116,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
 																											,pr_dtmvtolt => TRUNC(SYSDATE) --> Data do movimento
 																											,pr_tipo     => 'P');
-						IF Trunc(vr_dtmvtopg) <= Trunc(SYSDATE) OR
+						IF Trunc(vr_dtmvtopg) < Trunc(SYSDATE) OR
 							 (Trunc(pr_dtmvtolt) > Trunc(SYSDATE)      AND
-								Trunc(vr_dtmvtopg) <= Trunc(pr_dtmvtolt) AND
+								Trunc(vr_dtmvtopg) < Trunc(pr_dtmvtolt) AND
 								vr_dtmvtopg <> vr_dtauxili               AND --Verificarcao de final de semana ou feriado
 											pr_dssgproc = 'NAO') THEN
 							--Atualizar flag para true
@@ -22946,7 +22951,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
                                        ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
                                        ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                                       ,pr_dscritic => vr_dscritic);        --Descricao do erro;
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
    
         IF vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
            

@@ -317,7 +317,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                ,pr_idagendamento IN NUMBER
                                ,pr_cdcritic1     OUT NUMBER  --> Código da crítica
                                ,pr_dscritic1     OUT VARCHAR2) ;
-
+                                   
 
 END INSS0002;
 /
@@ -430,6 +430,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   vr_dsxmlrel    CLOB;
   vr_dsdtexto    VARCHAR2(32000);
   vr_nrdrowid    ROWID;
+  vr_nrdrowid1  ROWID;
+  vr_dtcompet   VARCHAR(6); 
 
 
   vr_exc_saida      EXCEPTION;       --> Controle de Exceção
@@ -1147,7 +1149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                  ,pr_dsdadant => ''
                                  ,pr_dsdadatu => pr_nrcpfope);  
         --               
-
+                                                                  
       EXCEPTION
         WHEN OTHERS THEN
           pr_dscritic := 'Erro chamada GERAR LOG GPS '||SQLERRM;
@@ -1453,7 +1455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           pr_dscritic := 'Erro chamada pr_cdlindig '||SQLERRM;
           RAISE vr_exc_saida;
       END;
-
+      
       BEGIN                             
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'pr_nrcpfope'
@@ -3480,7 +3482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        vr_dsmsglog := pr_dscritic; -- Mantém mesma mensagem no log
        -- Exception
        RAISE vr_exc_saida;
-    END IF;
+      END IF;
     END IF;
 
     /************************* CALCULO DE DATA (DIA UTEIS) *************************/
@@ -6537,7 +6539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   -- VARIAVEIS
   
   vr_rowid ROWID;
-
+  
   vr_cdcooper NUMBER;
   vr_nrdconta NUMBER;
   vr_tpdpagto NUMBER;
