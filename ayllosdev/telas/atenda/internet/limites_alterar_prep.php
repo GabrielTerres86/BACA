@@ -1,17 +1,12 @@
 <?php 
 	/**************************************************************************
-	      Fonte: limites_alterar.php     	 	                           
-	      Autor: Lucas                                                    
-	      Data : Maio/2012                   Última Alteração: 04/10/2015  
+	      Fonte: limites_alterar_prep.php     	 	                           
+	      Autor: Everton                                                    
+	      Data : Junho/2017                   Ãšltima AlteraÃ§Ã£o: 18/06/2017  
 	                                                                  
-          Objetivo  : Executa alterações nos limites do coop.		       
+          Objetivo  : Executa alteraÃ§Ãµes nos limites do preposto.		       
                                                                   	 
 	                                                                  	 
-	Alterações: 23/04/2013 - Incluido novos campos referente ao cadastro de limites Vr Boleto (David Kruger).						    
-	                  04/10/2015 - Reformulacao cadastral                                                 
-                17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM) 
-				26/07/2016 - Corrigi a forma de recuperacao do retorno de erro no XML. SD 479874 (Carlos R.)
-                05/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
 	**************************************************************************/
 	
 	session_start();
@@ -32,20 +27,21 @@
 	}	
 	
 	// Verifica se o n&uacute;mero da conta foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"]) || !isset($_POST["vllimweb"]) || !isset($_POST["vllimtrf"]) || 
-			!isset($_POST["vllimpgo"])) {
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["idseqttl"]) || !isset($_POST["vllimweb"]) || !isset($_POST["vllimtrf"]) || !isset($_POST["vllimpgo"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
-
+    //exibeErro($_POST["nrcpfcgc"]);
 	$nrdconta = $_POST["nrdconta"];
 	$idseqttl = $_POST["idseqttl"];
+	$nrcpfcgc = $_POST["nrcpfcgc"];
 	$vllimweb = $_POST["vllimweb"];
 	$vllimtrf = $_POST["vllimtrf"];
 	$vllimpgo = $_POST["vllimpgo"];
 	$vllimted = $_POST["vllimted"];
-	$vllimvrb = $_POST["vllimvrb"]; 
-	$executandoProdutos = $_POST['executandoProdutos'];
+	$vllimvrb = $_POST["vllimvrb"];
+	$vllimflp = $_POST["vllimflp"];	
 	$idastcjt = $_POST["idastcjt"];
+	$executandoProdutos = $_POST['executandoProdutos'];
 
 	// Verifica se o n&uacute;mero da conta &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrdconta)) {
@@ -70,78 +66,43 @@
 	// Verifica se limite TED e um decimal valido
 	if (!validaDecimal($vllimted)) {
 		exibeErro("Valor do limite TED inv&aacute;lido.");
+	}
+	
+	// Verifica se limite Folha PGTO e um decimal valido
+	if (!validaDecimal($vllimflp)) {
+		exibeErro("Valor do limite da Folha de Pagamento inv&aacute;lido.");
 	}	
 	
-	// Monta o xml de requisi&ccedil;&atilde;o
-	$xmlSetLimites  = "";
-	$xmlSetLimites .= "<Root>";
-	$xmlSetLimites .= "	<Cabecalho>";
-	$xmlSetLimites .= "		<Bo>b1wgen0015.p</Bo>";
-	$xmlSetLimites .= "		<Proc>alterar-limites-internet</Proc>";
-	$xmlSetLimites .= "	</Cabecalho>";
-	$xmlSetLimites .= "	<Dados>";
-	$xmlSetLimites .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlSetLimites .= "		<cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
-	$xmlSetLimites .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xmlSetLimites .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlSetLimites .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
-	$xmlSetLimites .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xmlSetLimites .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlSetLimites .= "		<idseqttl>".$idseqttl."</idseqttl>";
-	$xmlSetLimites .= "		<vllimweb>".$vllimweb."</vllimweb>";
-	$xmlSetLimites .= "		<vllimtrf>".$vllimtrf."</vllimtrf>";
-	$xmlSetLimites .= "		<vllimpgo>".$vllimpgo."</vllimpgo>";
-	$xmlSetLimites .= "		<vllimted>".$vllimted."</vllimted>";	
-	$xmlSetLimites .= "		<vllimvrb>".$vllimvrb."</vllimvrb>";	
-	$xmlSetLimites .= "	</Dados>";
-	$xmlSetLimites .= "</Root>";
-	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlSetLimites);
-	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjLimites = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (isset($xmlObjLimites->roottag->tags[0]->name) && strtoupper($xmlObjLimites->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjLimites->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} else {
-
-		/*if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
-			exibeErro($msgError);		
-		}*/
-		
-		$strnomacao = 'CORRIGI_LIMITES_PREPOSTOS';
+		$strnomacao = 'ALTERA_LIMITES_PREPOSTOS';
 
 		// Montar o xml para requisicao
 		$xml  = "";
 		$xml .= "<Root>";
-		$xml .= "<Dados>";
+		$xml .= " <Dados>";
 		$xml .= "    <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
 		$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "    <nrcpf>".$nrcpfcgc."</nrcpf>";
 		$xml .= "    <idseqttl>".$idseqttl."</idseqttl>";
 		$xml .= "    <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 		$xml .= "    <vllimtrf>".$vllimtrf."</vllimtrf>";
 		$xml .= "    <vllimpgo>".$vllimpgo."</vllimpgo>";
 		$xml .= "    <vllimted>".$vllimted."</vllimted>";
 		$xml .= "    <vllimvrb>".$vllimvrb."</vllimvrb>";
-		$xml .= "</Dados>";
+		$xml .= "    <vllimflp>".$vllimflp."</vllimflp>";
+		$xml .= " </Dados>";
 		$xml .= "</Root>";
 
-		$xmlNResult = mensageria($xml, "ATENDA", $strnomacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");	
+		$xmlResult = mensageria($xml, "ATENDA", $strnomacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");	
 		
-		$xml_geral = simplexml_load_string($xmlNResult);	
+		$xml_geral = simplexml_load_string($xmlResult);	
 		
-		//exibeErro($xml_geral->pralerta);
-		foreach($xml_geral as $newxml){
-		  if ($newxml->pralerta != "OK") {
-		    exibeErro($newxml->pralerta);
-		  }			
-
-		}
+		//exibeErro($xmlResult);
 		
-	} 	
-	
+		if ($xml_geral->pr_alerta != "OK") {
+		  exibeErro($xml_geral->pr_alerta);
+	    } 
+		
+		
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';	
 	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
@@ -159,5 +120,9 @@
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
+	
+	if ($xml_geral->pr_operador == "S") {
+		  exibeErro("Limite de Operadores diminuido conforme limite de Prepostos.");
+	    } 
 	
 ?>
