@@ -22,6 +22,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
             
             29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)     
+
+            23/08/2017 - Ajuste para nao permitir dar submit mais de uma vez no botao OK.
+                         SD719011 - PRJ340 - NPC (Odirlei-AMcom)    
 .............................................................................-->
 <html>
 
@@ -34,11 +37,27 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>CONSULTA CONTA ASSOCIADO</title>
 
 <script language="JavaScript">
  
+var btnOk = "#ok";
+var btnAguarde = "#Aguarde";
+
+// Submit do formulario
+function submitFormulario() {
+
+  $(btnOk).hide();
+  $(btnAguarde).show();
+
+}
+
+$( document ).ready(function(){  
+    $(btnAguarde).hide();       
+});
+
 function verificaValor() {
 
     var valor = document.forms[0].v_valorinf.value;
@@ -109,7 +128,7 @@ function verificaValor() {
 
 
 <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click(); verificaValor();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
-<form name="form1" onKeyDown="change_page(event)" method=post>
+<form name="form1" onKeyDown="change_page(event)" method=post onSubmit="submitFormulario()">
          <input type="hidden" name="v_msg"><input type="hidden" name="vh_foco" value="7"> <input type="hidden" name="v_intitcop">
          <input type="hidden" name="v_cdctrlcs" id="v_cdctrlcs" class="input" >               
          <input type="hidden" name="v_inpesbnf" id="v_inpesbnf" class="input" >               
@@ -225,7 +244,8 @@ function verificaValor() {
             <td class="linhaform" align="right">
             <td></td>
             <td class="linhaform" align="center" width="100%" colspan="3">
-                <input class="button" type="submit" name="ok" value="Ok">
+                <input class="button" type="button" name="Aguarde" value="Aguarde" id="Aguarde">
+                <input class="button" type="submit" name="ok" value="Ok" id="ok">
             </td>
            </tr>        
           <tr>

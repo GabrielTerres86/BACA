@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 18/05/2017
+       Data    : Agosto/2010                       Ultima atualizacao: 15/08/2017
 
        Dados referentes ao programa:
 
@@ -309,6 +309,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
                     18/05/2017 - P408 - Inclusão dos contratos inddocto=5 - Provisão de Garantias Prestas
                                  Andrei - Mouts
+                                 
+                    15/08/2017 - Alterar cursores onde efetuavam leitura da tabela crapbpr
+                                 pelo cr_tbepr_bens_hst que chama a tabela tbepr_bens_hst
+                                 (Lucas Ranghetti #734912)
                                  
 .............................................................................................................................*/
 
@@ -619,23 +623,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         rw_crapbpr cr_crapbpr%ROWTYPE;
 
         -- Descricao dos bens da proposta de emprestimo do cooperado.
-        CURSOR cr_crapbpr_2(pr_nrdconta crapebn.nrdconta%TYPE,
+        CURSOR cr_tbepr_bens_hst_2(pr_nrdconta crapebn.nrdconta%TYPE,
                             pr_nrctremp crapebn.nrctremp%TYPE,
-                            pr_tpctrpro crapbpr.tpctrpro%TYPE) IS
+                                   pr_tpctrpro crapbpr.tpctrpro%TYPE,
+                                   pr_dtrefere DATE) IS
           SELECT nrcpfbem,
                  vlperbem,
                  upper(dscatbem) dscatbem,
                  vlmerbem,
                  dschassi
-            FROM crapbpr
-           WHERE crapbpr.cdcooper = pr_cdcooper
-             AND crapbpr.nrdconta = pr_nrdconta
-             AND crapbpr.nrctrpro = pr_nrctremp
-             AND crapbpr.tpctrpro = pr_tpctrpro
-             AND crapbpr.flgbaixa = 0
-             AND crapbpr.flcancel = 0
-             AND crapbpr.vlmerbem > 0
-             AND crapbpr.flgalien = 1;
+            FROM tbepr_bens_hst hst
+           WHERE hst.cdcooper = pr_cdcooper
+             AND hst.nrdconta = pr_nrdconta
+             AND hst.nrctrpro = pr_nrctremp
+             AND hst.tpctrpro = pr_tpctrpro
+             AND hst.flgbaixa = 0
+             AND hst.flcancel = 0
+             AND hst.vlmerbem > 0
+             AND hst.flgalien = 1
+             AND hst.dtrefere = last_day(pr_dtrefere);
 
         -- Descricao dos bens da proposta de emprestimo do cooperado.
         CURSOR cr_crapbpr_3(pr_nrdconta crapebn.nrdconta%TYPE,
@@ -656,9 +662,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapbpr.nrcpfbem = 0;
 
         -- Descricao dos bens da proposta de emprestimo do cooperado.
-        CURSOR cr_crapbpr_4(pr_nrdconta crapebn.nrdconta%TYPE,
+        CURSOR cr_tbepr_bens_hst_4(pr_nrdconta crapebn.nrdconta%TYPE,
                             pr_nrctremp crapebn.nrctremp%TYPE,
-                            pr_tpctrpro crapbpr.tpctrpro%TYPE) IS
+                                   pr_tpctrpro crapbpr.tpctrpro%TYPE,
+                                   pr_dtrefere DATE) IS
           SELECT nrcpfbem,
                  vlperbem,
                  upper(dscatbem) dscatbem,
@@ -671,12 +678,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                  dtcancel,
                  dtatugrv,
                  dtmvtolt
-            FROM crapbpr
-           WHERE crapbpr.cdcooper = pr_cdcooper
-             AND crapbpr.nrdconta = pr_nrdconta
-             AND crapbpr.nrctrpro = pr_nrctremp
-             AND crapbpr.tpctrpro = pr_tpctrpro             
-             AND crapbpr.flgalien = 1;
+            FROM tbepr_bens_hst hst
+           WHERE hst.cdcooper = pr_cdcooper
+             AND hst.nrdconta = pr_nrdconta
+             AND hst.nrctrpro = pr_nrctremp
+             AND hst.tpctrpro = pr_tpctrpro             
+             AND hst.flgalien = 1
+             AND hst.dtrefere = last_day(pr_dtrefere);
 
       --> Verificar se é emprestimo de cessao de credito
       CURSOR cr_cessao (pr_cdcooper crapepr.cdcooper%TYPE,
@@ -2437,6 +2445,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                             vr_tab_individ(vr_idx_individ).nrctremp,
                             95,
                             1); -- Ordenacao ascendente
+
             FETCH cr_crapbpr INTO rw_crapbpr;
             IF cr_crapbpr%FOUND THEN
               CLOSE cr_crapbpr;
@@ -2604,26 +2613,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                         lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
           IF NOT vr_tab_crapebn.exists(vr_ind_ebn) THEN
             -- Pesquisar os bens alienados dos contratos e caso exista gravar como garantia da operaçao.
-            FOR rw_crapbpr IN cr_crapbpr_2(vr_tab_individ(vr_idx_individ).nrdconta,
+            FOR rw_tbepr_bens_hst IN cr_tbepr_bens_hst_2(vr_tab_individ(vr_idx_individ).nrdconta,
                                            vr_tab_individ(vr_idx_individ).nrctremp,
-                                           90) LOOP
+                                                         90,
+                                                         vr_dtrefere) LOOP
               -- Realizar de-para da categoria do bem cadastrado no sistema
               --  crapbpr.dscatbem com os codigos de garantias do Bacen. 
-              IF rw_crapbpr.dscatbem = 'AUTOMOVEL' THEN
+              IF rw_tbepr_bens_hst.dscatbem = 'AUTOMOVEL' THEN
                 vr_tpatribu := 0424;
-              ELSIF rw_crapbpr.dscatbem = 'CASA' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'CASA' THEN
                 vr_tpatribu := 0426;
-              ELSIF rw_crapbpr.dscatbem = 'TERRENO' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'TERRENO' THEN
                 vr_tpatribu := 0427;
-              ELSIF rw_crapbpr.dscatbem = 'MOTO' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'MOTO' THEN
                 vr_tpatribu := 0424;
-              ELSIF rw_crapbpr.dscatbem = 'EQUIPAMENTO' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'EQUIPAMENTO' THEN
                 vr_tpatribu := 0423;
-              ELSIF rw_crapbpr.dscatbem = 'CAMINHAO' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'CAMINHAO' THEN
                 vr_tpatribu := 0424;
-              ELSIF rw_crapbpr.dscatbem = 'APARTAMENTO' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'APARTAMENTO' THEN
                 vr_tpatribu := 0426;
-              ELSIF rw_crapbpr.dscatbem = 'MAQUINA DE COSTURA' THEN
+              ELSIF rw_tbepr_bens_hst.dscatbem = 'MAQUINA DE COSTURA' THEN
                 vr_tpatribu := 0423;
               ELSE
                 vr_tpatribu := 0499;
@@ -2632,7 +2642,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                      ,pr_texto_completo => vr_xml_3040_temp
                                      ,pr_texto_novo     => '            <Gar Tp="' || to_char(vr_tpatribu,'fm0000')
-                                                        || '" VlrOrig="' ||replace(to_char(rw_crapbpr.vlmerbem,'fm99999999999990D00'),',','.') 
+                                                        || '" VlrOrig="' ||replace(to_char(rw_tbepr_bens_hst.vlmerbem,'fm99999999999990D00'),',','.') 
                                                         || '"/>' ||CHR(10));
             END LOOP;
           ELSE --cr_crapebn%FOUND
@@ -2698,8 +2708,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Para Emprst ou Financ
         IF pr_cdmodali IN(0299,0499) THEN
           -- Busca a descricao dos bens da proposta de emprestimo
-          FOR rw_crapbpr IN cr_crapbpr_4(pr_nrdconta, pr_nrctremp, 90) LOOP
-            IF (rw_crapbpr.dschassi <> ' ') AND UPPER(rw_crapbpr.dscatbem) IN ('AUTOMOVEL','MOTO','CAMINHAO') THEN
+          FOR rw_tbepr_bens_hst IN cr_tbepr_bens_hst_4(pr_nrdconta, pr_nrctremp, 90, vr_dtrefere) LOOP
+            IF (rw_tbepr_bens_hst.dschassi <> ' ') AND UPPER(rw_tbepr_bens_hst.dscatbem) IN ('AUTOMOVEL','MOTO','CAMINHAO') THEN
               -- Somente para empréstimo da COOP com origem 3
               IF pr_dsinfaux <> 'BNDES' AND pr_cdorigem = 3 THEN              
                 -- Busca o cadastro de emprestimos
@@ -2708,8 +2718,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 -- e (Sub=01) Aquis de bens – veic automotores
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
                    
-                   IF (rw_crapbpr.cdsitgrv = 4 AND rw_crapbpr.dtdbaixa <= vr_dtrefere ) OR 
-                      (rw_crapbpr.cdsitgrv = 5 AND rw_crapbpr.dtcancel <= vr_dtrefere) THEN
+                   IF (rw_tbepr_bens_hst.cdsitgrv = 4 AND rw_tbepr_bens_hst.dtdbaixa <= vr_dtrefere ) OR 
+                      (rw_tbepr_bens_hst.cdsitgrv = 5 AND rw_tbepr_bens_hst.dtcancel <= vr_dtrefere) THEN
                      /*********************************************************************************
                      ** Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
                      ** Renato Darosci - Supero
@@ -2723,12 +2733,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      
                    ELSE
                    
-                     IF rw_crapbpr.dtmvtolt <= vr_dtrefere THEN
+                     IF rw_tbepr_bens_hst.dtmvtolt <= vr_dtrefere THEN
                        -- Informação do Empréstimo
                        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                               ,pr_texto_completo => vr_xml_3040_temp
                                               ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                                 || rw_crapbpr.dschassi || '" />' || chr(10));
+                                                                 || rw_tbepr_bens_hst.dschassi || '" />' || chr(10));
                      END IF;
                        
                      
@@ -4368,6 +4378,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           IF NOT vr_tab_totmodali.exists(vr_cdmodali) THEN
             vr_tab_totmodali(vr_cdmodali) := 0;
           END IF;
+
+          IF vr_vldivnor <> 0 THEN             
           -- Acumular
           vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);          
           -- Enviar vencimento
@@ -4376,6 +4388,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  ,pr_texto_novo     => ' v' || vr_tab_venc(vr_indice_venc).cdvencto 
                                                     || '="' || replace(to_char(vr_vldivnor,'fm99999999990D00'),',','.') 
                                                     || '"');
+          END IF;  
+                                                              
           vr_indice_venc := vr_tab_venc.next(vr_indice_venc);
         END LOOP;
         -- Finaliza a TAG <Venc> 
@@ -4747,6 +4761,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             IF NOT vr_tab_totmodali.exists(vr_cdmodali) THEN
               vr_tab_totmodali(vr_cdmodali) := 0;
             END IF;
+
+            IF vr_vldivnor <> 0 THEN    
             -- Acumular
             vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);                      
             -- Enviar o vencimento
@@ -4754,6 +4770,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                    ,pr_texto_completo => vr_xml_3040_temp
                                    ,pr_texto_novo     => ' v' || vr_tab_venc_agreg(vr_indice_venc_agreg).cdvencto 
                                                       ||'="' || replace(to_char(vr_vldivnor, 'fm999999990D00'),',','.') || '"');
+          END IF;
           END IF;
           vr_indice_venc_agreg := vr_tab_venc_agreg.next(vr_indice_venc_agreg);
         END LOOP;

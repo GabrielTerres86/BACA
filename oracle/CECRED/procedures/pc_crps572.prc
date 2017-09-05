@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Irlan
-     Data    : Jun/2009.                     Ultima atualizacao: 17/04/2017
+     Data    : Jun/2009.                     Ultima atualizacao: 22/08/2017
 
      Dados referentes ao programa:
 
@@ -74,6 +74,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
                   17/04/2017 - #462629 Otimização do programa. Melhoria de performance na execução dos
                                cursores cr_crapcop_ass e cr_crapvop (Carlos)
 
+                  22/08/2017 - Gravar informações do Header do arquivo 3046 na tabela cecred.tbbi_opf_header
+                               (Lucas Ranghetti #549788)
   ............................................................................. */
 
   -- CURSORES
@@ -151,7 +153,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
                              ,vlsbjsfn   NUMBER
                              ,percdocp   NUMBER
                              ,percvolp   NUMBER
-                             ,inpessoa   NUMBER);
+                             ,inpessoa   NUMBER
+                             ,idopf_header NUMBER);
   -- Tabela de memória para as OPs
   TYPE typ_crapopf IS TABLE OF rec_crapopf INDEX BY VARCHAR2(100);
   TYPE typ_crapopfi IS TABLE OF rec_crapopf INDEX BY PLS_INTEGER;
@@ -221,6 +224,48 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
   -- PL Table para tabelas acessadas constantemente
   vr_tab_crapvop   typ_tab_crapvop;
   vr_tab_crapopf   typ_tab_crapopf;
+
+  PROCEDURE pc_grava_header_3046(pr_nmarquivo          IN VARCHAR2
+                                ,pr_nrcnpj_if          IN NUMBER
+                                ,pr_dtbase             IN DATE
+                                ,pr_nrprotocolo        IN NUMBER
+                                ,pr_dhgeracao          IN VARCHAR2
+                                ,pr_peif_dados_individ IN NUMBER
+                                ,pr_pevol_operacoes_if IN NUMBER
+                                ,pr_idopf_header      OUT NUMBER
+                                ,pr_dscritic          OUT VARCHAR2) IS
+  BEGIN 
+
+
+BEGIN
+      INSERT INTO cecred.tbbi_opf_header
+        (nmarquivo,
+         dhprocesso,
+         nrcnpj_if,
+         dtbase,
+         nrprotocolo,
+         dhgeracao,
+         peif_dados_individ,
+         pevol_operacoes_if)
+      VALUES
+        (pr_nmarquivo,
+         SYSDATE,
+         pr_nrcnpj_if,
+         pr_dtbase,
+         pr_nrprotocolo,
+         to_Date(pr_dhgeracao,'rrrr-mm-dd hh24:mi:ss'),
+         pr_peif_dados_individ,
+         pr_pevol_operacoes_if)
+      RETURNING idopf_header INTO pr_idopf_header;
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic:= 'Erro ao inserir os dados do Header do Arquivo 3046 - cecred.tbbi_opf_header: '||SQLERRM;
+        -- Envio centralizado de log de erro
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || pr_dscritic );
+    END;
+  END pc_grava_header_3046;
 
 BEGIN
 
@@ -499,6 +544,11 @@ BEGIN
       vr_xml_dtrefere    DATE;
       vr_xml_percdocp    NUMBER;
       vr_xml_percvolp    NUMBER;
+      vr_xml_cnpjinst    NUMBER;
+      vr_xml_protocol    NUMBER;
+      vr_xml_dtgeraca    VARCHAR2(50);
+      vr_xml_nmarquiv    VARCHAR2(100);
+      vr_idopf_header    NUMBER;
 
       vr_xml_qtopesfn    NUMBER;
       vr_xml_qtifssfn    NUMBER;
@@ -576,7 +626,26 @@ BEGIN
           vr_xml_percdocp := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_root),'PercDocProcess'),'9999.99');
           -- Buscar valor: VolPercProcess
           vr_xml_percvolp := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_root),'VolPercProcess'),'99999999999.99');
-
+          -- Buscar valor: CNPJ
+          vr_xml_cnpjinst := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_root),'CNPJ'),'99999999999999');
+          -- Buscar valor: Protocolo
+          vr_xml_protocol := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_root),'Protocolo'),'999999999999999');
+          -- Buscar valor: DtGeracao
+          vr_xml_dtgeraca := xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_root),'DtGeracao');
+          -- Nome do Arquivo processado
+          vr_xml_nmarquiv := vr_array_arquivo(ind);
+          
+          -- Gravar Header do arquivo 3046 na cecred.tbbi_opf_header
+          pc_grava_header_3046(pr_nmarquivo => vr_xml_nmarquiv
+                              ,pr_nrcnpj_if => vr_xml_cnpjinst      
+                              ,pr_dtbase => vr_xml_dtrefere          
+                              ,pr_nrprotocolo => vr_xml_protocol
+                              ,pr_dhgeracao => vr_xml_dtgeraca
+                              ,pr_peif_dados_individ => vr_xml_percdocp
+                              ,pr_pevol_operacoes_if => vr_xml_percvolp
+                              ,pr_idopf_header => vr_idopf_header
+                              ,pr_dscritic => vr_dscritic);
+          
           -- Seta como lido
           vr_load_root := FALSE;
         END IF;
@@ -649,6 +718,7 @@ BEGIN
           vr_crapopf(vr_ixOPFv).percdocp := vr_xml_percdocp;
           vr_crapopf(vr_ixOPFv).percvolp := vr_xml_percvolp;
           vr_crapopf(vr_ixOPFv).inpessoa := vr_cpfcgc(indcgc).inpessoa;
+          vr_crapopf(vr_ixOPFv).idopf_header := vr_idopf_header;
         END LOOP;
 
         -- Se houve o load de um novo NODO: Op
@@ -771,7 +841,8 @@ BEGIN
                              ,vlsbjsfn
                              ,percdocp
                              ,percvolp
-                             ,inpessoa)
+                             ,inpessoa
+                             ,idopf_header)
                        VALUES(NVL(vr_crapopfi(vr_ixOPF).nrcpfcgc, 0) 
                              ,vr_crapopfi(vr_ixOPF).dtrefere        
                              ,NVL(vr_crapopfi(vr_ixOPF).qtopesfn, 0) 
@@ -780,7 +851,8 @@ BEGIN
                              ,NVL(vr_crapopfi(vr_ixOPF).vlsbjsfn, 0)
                              ,NVL(vr_crapopfi(vr_ixOPF).percdocp, 0)
                              ,NVL(vr_crapopfi(vr_ixOPF).percvolp, 0)
-                             ,NVL(vr_crapopfi(vr_ixOPF).inpessoa, 0));
+                             ,NVL(vr_crapopfi(vr_ixOPF).inpessoa, 0)
+                             ,NVL(vr_crapopfi(vr_ixOPF).idopf_header, 0));
       EXCEPTION
         WHEN others THEN
           vr_dscritic := 'Erro ao incluir registro CRAPOPF: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));
