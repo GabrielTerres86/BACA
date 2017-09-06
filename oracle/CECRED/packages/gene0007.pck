@@ -50,6 +50,11 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0007 IS
   /* Função para substituir os caractertes especiais por codigos HTML */
   FUNCTION fn_acento_xml(pr_texto IN VARCHAR2) RETURN VARCHAR2;  --> String para conversao
 
+  /* Procedure para substituir os caractertes especiais por codigos HTML */
+  PROCEDURE pc_caract_acento(pr_texto    IN  VARCHAR2,                                  --> String para limpeza
+                             pr_insubsti IN  PLS_INTEGER DEFAULT 0,                     --> Flag para substituir
+                             pr_clstexto OUT VARCHAR2);
+                             
   /* Procedure para gerar nomes das TAG do XML */
   PROCEDURE pc_gera_tag(pr_nome_tag  IN VARCHAR2                     --> Nome da TAG
                        ,pr_tab_tag   IN OUT NOCOPY typ_tab_tagxml);  --> PL Table que armazena os nomes
@@ -185,7 +190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
   --  Sistema  : Rotinas para manipulação de XML
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Junho/2013.                   Ultima atualizacao: 29/08/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 06/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -197,6 +202,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
   --
   --             29/08/2016 - Criacao da fn_remove_cdata. (Jaison/Anderson)
   --
+  --             06/09/2017 - Criacao da procedure pc_caract_acento que remove acentuacao
+  --                          e caracteres especiais conforme parametro (Tiago #722921)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Função para invocar classe Java para executar parser SAX (XML) */
@@ -333,6 +340,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0007 IS
                                       'Ç','&Ccedil;');
   END fn_acento_xml;
 
+
+  PROCEDURE pc_caract_acento(pr_texto    IN  VARCHAR2,                                  --> String para limpeza
+                             pr_insubsti IN  PLS_INTEGER DEFAULT 0,                     --> Flag para substituir
+                             pr_clstexto OUT VARCHAR2) IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_caract_acento
+    --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
+    --  Sigla    : GENE
+    --  Autor    : Tiago 
+    --  Data     : Setembro/2017.                   Ultima atualizacao: 00/00/0000
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Remover acentos de caracteres e demais sinais silábicos.
+    --
+    --  Alteracoes: 00/00/0000 - xxxx
+    -- .............................................................................
+  BEGIN
+    pr_clstexto := NVL(fn_caract_acento(pr_texto    => pr_texto
+                                       ,pr_insubsti => pr_insubsti                    
+                                       ,pr_dssubsin => '@#$&%¹²³ªº°*!?<>/\|'
+                                       ,pr_dssubout => '                    '),pr_texto);
+  END pc_caract_acento;
 
   /* Procedure para definir nomes das TAG do XML */
   PROCEDURE pc_gera_tag(pr_nome_tag  IN VARCHAR2                       --> Nome da TAG
