@@ -103,6 +103,8 @@
 
 	01/08/2017 - Substituir caracter "." por "," na conversao de valores, devido
 				 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
+
+    06/09/2017 - Removido tag JDNPCSitTitulo por orientação da JD. (Rafael)
 .............................................................................*/
 
 
@@ -2012,9 +2014,6 @@ PROCEDURE requisicao-lista-titulos PRIVATE:
               INPUT "string", INPUT hXmlMetodo).
 
     cria-tag (INPUT "CNPJ_CPFPagdr", INPUT STRING(par_nrcpfcgc), 
-              INPUT "int", INPUT hXmlMetodo).
-
-    cria-tag (INPUT "JDNPCSitTitulo", INPUT STRING(par_cdsittit), 
               INPUT "int", INPUT hXmlMetodo).
 
     IF   aux_dtvenini <> ?   THEN
