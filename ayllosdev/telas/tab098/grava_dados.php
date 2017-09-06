@@ -2,11 +2,12 @@
 	/*************************************************************************
 	  Fonte: grava_dados.php                                               
 	  Autor: Ricardo Linhares
-	  Data : Dezembro/2016                       Última Alteração: --/--/----
+	  Data : Dezembro/2016                       Última Alteração: 01/08/2017
 	                                                                   
 	  Objetivo  : Grava os dados.
 	                                                                 
-	  Alterações: 
+	  Alterações: 01/08/2017 - Excluir campos para habilitar contigencia e incluir campo para valor limite.
+                               PRJ340-NPC (Odirlei-AMcom)
 	                                                                  
 	***********************************************************************/
 
@@ -25,16 +26,9 @@
 
 	$cdcooper = (isset($_POST["cdcooper"])) ? $_POST["cdcooper"] : $glbvars["cdcooper"];
 
-	$flgpagcont_ib 	= $_POST['flgpagcont_ib'];
-	$flgpagcont_taa = $_POST['flgpagcont_taa'];
-	$flgpagcont_cx  = $_POST['flgpagcont_cx'];
-	$flgpagcont_mob = $_POST['flgpagcont_mob'];
 	$prz_baixa_cip 	= $_POST['prz_baixa_cip'];
 	$vlvrboleto 	= $_POST['vlvrboleto'];
-	$rollout_cip_reg_data	= $_POST['rollout_cip_reg_data'];
-	$rollout_cip_reg_valor 	= $_POST['rollout_cip_reg_valor'];
-	$rollout_cip_pag_data	= $_POST['rollout_cip_pag_data'];
-	$rollout_cip_pag_valor 	= $_POST['rollout_cip_pag_valor'];
+    $vlcontig_cip 	= $_POST['vlcontig_cip'];
 
     $dsmensag = 'Parâmetros alterados com sucesso!';
 
@@ -44,16 +38,9 @@
 	$xmlCarregaDados .= " <Dados>";
 	$xmlCarregaDados .= "	<cdcooper>".$cdcooper."</cdcooper>";
 	$xmlCarregaDados .= "	<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlCarregaDados .= "	<flgpagcont_ib>".$flgpagcont_ib."</flgpagcont_ib>";
-	$xmlCarregaDados .= "	<flgpagcont_taa>".$flgpagcont_taa."</flgpagcont_taa>";
-	$xmlCarregaDados .= "	<flgpagcont_cx>".$flgpagcont_cx."</flgpagcont_cx>";
-	$xmlCarregaDados .= "	<flgpagcont_mob>".$flgpagcont_mob."</flgpagcont_mob>";
 	$xmlCarregaDados .= "	<prz_baixa_cip>".$prz_baixa_cip."</prz_baixa_cip>";
 	$xmlCarregaDados .= "	<vlvrboleto>".$vlvrboleto."</vlvrboleto>";
-	$xmlCarregaDados .= "	<rollout_cip_reg_data>".$rollout_cip_reg_data."</rollout_cip_reg_data>";
-	$xmlCarregaDados .= "	<rollout_cip_reg_valor>".$rollout_cip_reg_valor."</rollout_cip_reg_valor>";
-	$xmlCarregaDados .= "	<rollout_cip_pag_data>".$rollout_cip_pag_data."</rollout_cip_pag_data>";
-	$xmlCarregaDados .= "	<rollout_cip_pag_valor>".$rollout_cip_pag_valor."</rollout_cip_pag_valor>";	
+    $xmlCarregaDados .= "	<vlcontig_cip>". $vlcontig_cip.   "</vlcontig_cip>";
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";
 

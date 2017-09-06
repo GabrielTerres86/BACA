@@ -10,16 +10,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB098 IS
 
   PROCEDURE pc_atualizar(pr_cdcooper                IN crapcop.cdcooper%TYPE
                         ,pr_cdoperad                IN VARCHAR2    
-                        ,pr_flgpagcont_ib           IN VARCHAR2
-                        ,pr_flgpagcont_taa          IN VARCHAR2
-                        ,pr_flgpagcont_cx           IN VARCHAR2
-                        ,pr_flgpagcont_mob          IN VARCHAR2
                         ,pr_prz_baixa_cip           IN VARCHAR2
                         ,pr_vlvrboleto              IN VARCHAR2
-                        ,pr_rollout_cip_reg_data    IN VARCHAR2
-                        ,pr_rollout_cip_reg_valor   IN VARCHAR2
-                        ,pr_rollout_cip_pag_data    IN VARCHAR2
-                        ,pr_rollout_cip_pag_valor   IN VARCHAR2
+                        ,pr_vlcontig_cip            IN VARCHAR2
                         ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic   OUT VARCHAR2 --> Descricao da critica
@@ -252,40 +245,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
                             ,pr_des_erro => vr_dscritic);
 
      -- insere as tags de conteúdo
-     pc_insere_tag_dados(pr_retxml, 'flgpagcont_ib',      fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_IB'),  vr_dscritic);
-     pc_insere_tag_dados(pr_retxml, 'flgpagcont_taa',     fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_TAA'), vr_dscritic);                            
-     pc_insere_tag_dados(pr_retxml, 'flgpagcont_cx',      fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_CX'),  vr_dscritic);                                                        
-     pc_insere_tag_dados(pr_retxml, 'flgpagcont_mob',     fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_MOB'), vr_dscritic);                        
      pc_insere_tag_dados(pr_retxml, 'prz_baixa_cip',      fn_buscar_param(pr_cdcooper, 'PRZ_BAIXA_CIP'),  vr_dscritic);                                                    
      pc_insere_tag_dados(pr_retxml, 'vlvrboleto',         fn_buscar_param(pr_cdcooper, 'VLVRBOLETO'),     vr_dscritic);                                                    
-                       
-     -- rollout_cip_reg
-     vr_dstextab := TRIM(fn_buscar_param(pr_cdcooper, 'ROLLOUT_CIP_REG'));
-     IF vr_dstextab IS NOT NULL THEN
-       vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
-                                                ,pr_delimit => ';'); 
-                                               
-       vr_rollout_cip_reg_data := vr_vet_dados(1);                                                  
-       vr_rollout_cip_reg_valor := vr_vet_dados(2);
-                                                 
-     END IF;
-   
-     pc_insere_tag_dados(pr_retxml, 'rollout_cip_reg_data', vr_rollout_cip_reg_data, vr_dscritic);                                                    
-     pc_insere_tag_dados(pr_retxml, 'rollout_cip_reg_valor', vr_rollout_cip_reg_valor, vr_dscritic);                             
-   
-     -- rollout_cip_pag
-     vr_dstextab := TRIM(fn_buscar_param(pr_cdcooper, 'ROLLOUT_CIP_PAG'));
-     IF vr_dstextab IS NOT NULL THEN
-       vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
-                                                ,pr_delimit => ';'); 
-                                               
-       vr_rollout_cip_pag_data := vr_vet_dados(1);                                                  
-       vr_rollout_cip_pag_valor := vr_vet_dados(2);
-                                                 
-     END IF;
-   
-     pc_insere_tag_dados(pr_retxml, 'rollout_cip_pag_data', vr_rollout_cip_pag_data, vr_dscritic);                                                    
-     pc_insere_tag_dados(pr_retxml, 'rollout_cip_pag_valor', vr_rollout_cip_pag_valor, vr_dscritic);                                    
+     pc_insere_tag_dados(pr_retxml, 'vlcontig_cip',       fn_buscar_param(pr_cdcooper, 'VLCONTIG_CIP'),   vr_dscritic);
+                            
      
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -313,16 +276,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
   
    PROCEDURE pc_atualizar(pr_cdcooper             IN crapcop.cdcooper%TYPE
                          ,pr_cdoperad              IN VARCHAR2
-                         ,pr_flgpagcont_ib         IN VARCHAR2
-                         ,pr_flgpagcont_taa        IN VARCHAR2
-                         ,pr_flgpagcont_cx         IN VARCHAR2
-                         ,pr_flgpagcont_mob        IN VARCHAR2
                          ,pr_prz_baixa_cip         IN VARCHAR2
                          ,pr_vlvrboleto            IN VARCHAR2
-                         ,pr_rollout_cip_reg_data  IN VARCHAR2
-                         ,pr_rollout_cip_reg_valor IN VARCHAR2
-                         ,pr_rollout_cip_pag_data  IN VARCHAR2
-                         ,pr_rollout_cip_pag_valor IN VARCHAR2
+                         ,pr_vlcontig_cip          IN VARCHAR2
                          ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
                          ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
                          ,pr_dscritic   OUT VARCHAR2 --> Descricao da critica
@@ -343,21 +299,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
 
     Objetivo  : Rotina responsável receber o XML das atualizações dos parâmetros da tab098
 
-    Alteracoes: -----
+    Alteracoes: 01/08/2017 - Incluir campo vlcontig_cip para armazenar o valor limite 
+                             para pagamentos de boletos em contigencia.
+                             PRJ340 - (Odirlei-AMcom)
     ..............................................................................*/                             
                          
   BEGIN
     DECLARE
-      vr_flgpagcont_ib            VARCHAR2(2);
-      vr_flgpagcont_taa           VARCHAR2(2);
-      vr_flgpagcont_cx            VARCHAR2(2);
-      vr_flgpagcont_mob           VARCHAR2(2);
       vr_prz_baixa_cip           VARCHAR2(10);
       vr_vlvrboleto              VARCHAR2(50);
-      vr_rollout_cip_reg_data    VARCHAR2(50);
-      vr_rollout_cip_reg_valor   VARCHAR2(50);
-      vr_rollout_cip_pag_data    VARCHAR2(50);
-      vr_rollout_cip_pag_valor   VARCHAR2(50);
+      vr_vlcontig_cip            VARCHAR2(50);      
       vr_vet_dados gene0002.typ_split;
       vr_dstextab  craptab.dstextab%TYPE;      
       vr_rollout_cip_reg craptab.dstextab%TYPE;
@@ -385,30 +336,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
           RAISE vr_exc_saida;
         END IF;                                            
     
-        vr_flgpagcont_ib  := fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_IB');
-        IF vr_flgpagcont_ib <> pr_flgpagcont_ib THEN
-          pc_atualizar_param(pr_cdcooper, 'FLGPAGCONT_IB', pr_flgpagcont_ib, pr_cdcritic, pr_dscritic);
-          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'FLGPAGCONT_IB', vr_flgpagcont_ib, pr_flgpagcont_ib);
-        END IF;
-        
-        vr_flgpagcont_taa := fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_TAA');
-        IF vr_flgpagcont_taa <> pr_flgpagcont_taa THEN
-          pc_atualizar_param(pr_cdcooper, 'FLGPAGCONT_TAA', pr_flgpagcont_taa, pr_cdcritic, pr_dscritic);
-          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'FLGPAGCONT_TAA', vr_flgpagcont_taa, pr_flgpagcont_taa);          
-        END IF;        
-        
-        vr_flgpagcont_cx  := fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_CX'); 
-        IF vr_flgpagcont_cx <> pr_flgpagcont_cx THEN
-          pc_atualizar_param(pr_cdcooper, 'FLGPAGCONT_CX', pr_flgpagcont_cx, pr_cdcritic, pr_dscritic);
-          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'FLGPAGCONT_CX', vr_flgpagcont_cx, pr_flgpagcont_cx);          
-        END IF;       
-
-        vr_flgpagcont_mob := fn_buscar_param(pr_cdcooper, 'FLGPAGCONT_MOB');
-        IF vr_flgpagcont_mob <> pr_flgpagcont_mob THEN
-          pc_atualizar_param(pr_cdcooper, 'FLGPAGCONT_MOB', pr_flgpagcont_mob, pr_cdcritic, pr_dscritic);
-          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'FLGPAGCONT_MOB', vr_flgpagcont_mob, pr_flgpagcont_mob);                    
-        END IF;       
-
         vr_prz_baixa_cip := NVL(fn_buscar_param(pr_cdcooper, 'PRZ_BAIXA_CIP'),' ');
         IF vr_prz_baixa_cip <> pr_prz_baixa_cip THEN
           pc_atualizar_param(pr_cdcooper, 'PRZ_BAIXA_CIP', pr_prz_baixa_cip, pr_cdcritic, pr_dscritic);
@@ -421,36 +348,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
           pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'VLVRBOLETO', vr_vlvrboleto, pr_vlvrboleto);          
         END IF;
 
-        -- ROLLOUT_CIP_REG
-        vr_dstextab := TRIM(fn_buscar_param(pr_cdcooper, 'ROLLOUT_CIP_REG'));
-        IF vr_dstextab IS NOT NULL THEN
-          vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
-                                                   ,pr_delimit => ';'); 
-                                                       
-          vr_rollout_cip_reg_data := vr_vet_dados(1);                                                  
-          vr_rollout_cip_reg_valor := vr_vet_dados(2);
-        END IF;
-        
-        IF(NVL(vr_rollout_cip_reg_data,' ') <> pr_rollout_cip_reg_data) OR (NVL(vr_rollout_cip_reg_valor, ' ') <> pr_rollout_cip_reg_valor) THEN
-          vr_rollout_cip_reg := pr_rollout_cip_reg_data ||';'|| pr_rollout_cip_reg_valor;
-          pc_atualizar_param(pr_cdcooper, 'ROLLOUT_CIP_REG', vr_rollout_cip_reg, pr_cdcritic, pr_dscritic);
-          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'ROLLOUT_CIP_REG', pr_rollout_cip_reg_data||';'||pr_rollout_cip_reg_valor, vr_rollout_cip_reg);          
-        END IF;
-        
-         -- ROLLOUT_CIP_PAG
-        vr_dstextab := TRIM(fn_buscar_param(pr_cdcooper, 'ROLLOUT_CIP_PAG'));
-        IF vr_dstextab IS NOT NULL THEN
-          vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
-                                                   ,pr_delimit => ';'); 
-                                                   
-          vr_rollout_cip_pag_data := vr_vet_dados(1);                                                  
-          vr_rollout_cip_pag_valor := vr_vet_dados(2);
-        END IF;        
-        
-        IF(NVL(vr_rollout_cip_pag_data, ' ') <> pr_rollout_cip_pag_data) OR (NVL(vr_rollout_cip_pag_valor, ' ') <> pr_rollout_cip_pag_valor) THEN
-          vr_rollout_cip_pag := pr_rollout_cip_pag_data ||';'|| pr_rollout_cip_pag_valor;
-          pc_atualizar_param(pr_cdcooper, 'ROLLOUT_CIP_PAG', vr_rollout_cip_pag, pr_cdcritic, pr_dscritic);
-          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'ROLLOUT_CIP_PAG', vr_rollout_cip_pag_data||';'||vr_rollout_cip_pag_valor, vr_rollout_cip_pag);                    
+        --> Estabelece o valor limite para recebimento de boletos em contigencia        
+        vr_vlcontig_cip    := NVL(fn_buscar_param(pr_cdcooper, 'VLCONTIG_CIP'),' ');
+        IF vr_vlcontig_cip <> pr_vlcontig_cip THEN
+          pc_atualizar_param(pr_cdcooper, 'VLCONTIG_CIP', pr_vlcontig_cip, pr_cdcritic, pr_dscritic);
+          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'VLCONTIG_CIP', vr_vlcontig_cip, pr_vlcontig_cip);          
         END IF;
         
         -- Fechar arquivo

@@ -12,7 +12,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
      Frequencia: Executado via Job - A cada 1h
      Objetivo  : Efetuar as baixas operacionais
 
-     Alteracoes:
+     Alteracoes: 01/08/2017 - Incluido rotina para enviar titulos pagos em contigencia
+                              para a JD-CIP. PRJ340-NPC (Odirlei-AMcom)
 
      08/08/2017 - Ajustado data de credito do boleto em funçao da data de 
                   movimento do sistema. (Rafael)
@@ -586,12 +587,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
      END LOOP;
    
    END IF;
-   -- se não existir registros na JD então finaliza processo
+   -- se não existir registros na JD apenas gera log
    IF vr_baixa_operac.count = 0 THEN
      vr_cdcritic:= 0;
      vr_dscritic:= 'Não há registros na cabine JD para serem importados';
-     RAISE vr_exc_saida;     
-   END IF;
+     
+     pc_gera_log_erro(pr_cdcooper => vr_cdcooper
+                      ,pr_dscritic => vr_dscritic);
+                      
+     vr_dscritic := NULL;
+          
+   ELSE
    
    -- Salva os registros na tabela do Oracle
    pc_salvar_registros (pr_tab_baixa_operac => vr_baixa_operac
@@ -603,6 +609,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps711 IS
                           ,pr_cdcritic         => vr_cdcritic
                           ,pr_dscritic         => vr_dscritic);  
                           
+   END IF;
+   
+   --> Verificar se possui titulos pagos em contigencia pendentes de envio para a JD  
+   NPCB0002.pc_proc_tit_contigencia(pr_cdcooper   => 0                   --> Codigo da cooperativa
+                                   ,pr_dtmvtolt   => rw_crapdat.dtmvtocd --> Numer da conta do cooperado
+                                   ,pr_cdcritic   => vr_cdcritic         --> Codigo da critico
+                                   ,pr_dscritic   => vr_dscritic);       --> Descrição da critica
+   IF nvl(vr_cdcritic,0) > 0 OR
+      TRIM(vr_dscritic) IS NOT NULL THEN
+     RAISE vr_exc_saida; 
+   END IF;   
   
   ----------------- ENCERRAMENTO DO PROGRAMA -------------------
  

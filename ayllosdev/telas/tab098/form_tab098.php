@@ -4,52 +4,25 @@
  * CRIAÇÃO      	: Ricardo Linhares
  * DATA CRIAÇÃO 	: Dezembro/2016
  * OBJETIVO     	: Form para a tela TAB098
- * ÚLTIMA ALTERAÇÃO : --/--/----
+ * ÚLTIMA ALTERAÇÃO : 01/08/2017
  * --------------
- * ALTERAÇÕES   	: 
+ * ALTERAÇÕES   	: 01/08/2017 - Excluir campos para habilitar contigencia e rollout e incluir campo para valor limite.
+ *                                 PRJ340-NPC (Odirlei-AMcom)
  * --------------
  */
 ?>
 
 <style>
     .labelNomeParametro {
-        width:300px;
+        width:315px;
     } 
 
 </style>
 
 <form id="frmTab098" name="frmTab098" class="formulario" style="display:none; border-bottom: 1px solid #777777; ">
 
-	<input name="cdcooper" id="cdcooper" type="hidden" value="<? echo $glbvars["cdcooper"]; ?>" />
-    <label for="flgpagcont_ib" class="labelNomeParametro"><? echo utf8ToHtml('Habilitar pagamento por conting&ecirc;ncia - IB:') ?></label>                        
-    <select id="flgpagcont_ib" name="flgpagcont_ib">                      
-        <option value="S" selected>SIM</option>
-        <option value="N" selected>NAO</option>
-    </select>                
-
-    <br style="clear:both" />   
-
-    <label for="flgpagcont_taa" class="labelNomeParametro"><? echo utf8ToHtml('Habilitar pagamento por conting&ecirc;ncia - TAA:') ?></label>                        
-    <select id="flgpagcont_taa" name="flgpagcont_taa">                      
-        <option value="S" selected>SIM</option>
-        <option value="N" selected>NAO</option>
-    </select>                
-
-    <br style="clear:both" />   
-
-    <label for="flgpagcont_cx" class="labelNomeParametro"><? echo utf8ToHtml('Habilitar pagamento por conting&ecirc;ncia - Caixa Online:') ?></label>                        
-    <select id="flgpagcont_cx" name="flgpagcont_cx">                      
-        <option value="S" selected>SIM</option>
-        <option value="N" selected>NAO</option>
-    </select>                
-
-    <br style="clear:both" />   
-
-    <label for="flgpagcont_mob" class="labelNomeParametro"><? echo utf8ToHtml('Habilitar pagamento por conting&ecirc;ncia - Mobile:') ?></label>                        
-    <select id="flgpagcont_mob" name="flgpagcont_mob">                      
-        <option value="S" selected>SIM</option>
-        <option value="N" selected>NAO</option>
-    </select>                
+    <label for="vlcontig_cip" class="labelNomeParametro"><? echo utf8ToHtml('Valor limite de pagamento em conting&ecirc;ncia:') ?></label>  
+    <input name="vlcontig_cip" id="vlcontig_cip" type="text" class="moeda" style="margin-right: 5px"/>        
 
     <br style="clear:both" />   
 
@@ -65,20 +38,6 @@
 
         <label for="vlvrboleto" class="labelNomeParametro"><? echo utf8ToHtml('Valor do VR-Boleto:') ?></label>
         <input name="vlvrboleto" id="vlvrboleto" type="text" class="moeda" style="margin-right: 5px"/>        
-        
-        <br style="clear:both" />    
-
-        <label for="rollout_cip_reg_data" class="labelNomeParametro"><? echo utf8ToHtml('Rollout Registro CIP a partir de:') ?></label>
-        <input name="rollout_cip_reg_data" id="rollout_cip_reg_data" type="text" style="margin-right: 5px"/>            
-        <label for="rollout_cip_reg_valor" ><? echo utf8ToHtml('R$:') ?></label>
-        <input name="rollout_cip_reg_valor" id="rollout_cip_reg_valor" type="text" class="moeda" style="margin-right: 5px"/>
-
-        <br style="clear:both" />
-
-        <label for="rollout_cip_pag_data" class="labelNomeParametro"><? echo utf8ToHtml('Rollout Pagamento CIP a partir de:') ?></label>
-        <input name="rollout_cip_pag_data" id="rollout_cip_pag_data" type="text" style="margin-right: 5px"/>            
-        <label for="rollout_cip_pag_valor" ><? echo utf8ToHtml('R$:') ?></label>
-        <input name="rollout_cip_pag_valor" id="rollout_cip_pag_valor" type="text" class="moeda" style="margin-right: 5px"/>
 
         <br style="clear:both" />        
     

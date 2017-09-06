@@ -1175,7 +1175,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     
       --> Buscar dados da consulta
       CURSOR cr_cons_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE ) IS
-        SELECT con.dsxml
+        SELECT con.dsxml,
+               con.flgcontingencia
           FROM tbcobran_consulta_titulo con
          WHERE con.cdctrlcs = pr_cdctrlcs;
          
@@ -1236,7 +1237,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         --Descricao da Critica
         vr_dscritic := 'Situacao do titulo invalida.';
         --Sair
-        RAISE vr_exc_saida;
+        RAISE vr_exc_erro;
       END IF;
       
       IF TRIM(pr_cdctrlcs) IS NOT NULL THEN
@@ -1248,23 +1249,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         IF cr_cons_titulo%NOTFOUND THEN
           CLOSE cr_cons_titulo;
           vr_dscritic := 'Não foi possivel localizar consulta NPC '||pr_cdctrlcs;    
-          RAISE vr_exc_saida;  
+          RAISE vr_exc_erro;  
         ELSE
           CLOSE cr_cons_titulo;
         END IF;
           
-        --> Rotina para retornar dados do XML para temptable
-        NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
-                                          ,pr_tbtitulo => vr_tituloCIP
-                                          ,pr_des_erro => vr_des_erro
-                                          ,pr_dscritic => vr_dscritic);
+        --> Verificar se cip esta em contigencia
+        --> e não é pagamento pelo menu DDA
+        IF rw_cons_titulo.flgcontingencia = 1 AND vr_idtitdda IS NULL THEN
+          --> Caso esteja deve sair do programa sem critica
+          --> pois atualização da cabine e CIP ocorrerá quando for normalizado
+          vr_cdcritic := 0;
+          vr_dscritic := NULL;
+          RAISE vr_exc_erro;
+        
+        END IF;
+        
+        --> Se nao estiver em contigencia
+        IF rw_cons_titulo.flgcontingencia = 0 THEN  
+          --> Rotina para retornar dados do XML para temptable
+          NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
+                                            ,pr_tbtitulo => vr_tituloCIP
+                                            ,pr_des_erro => vr_des_erro
+                                            ,pr_dscritic => vr_dscritic);
             
-        -- Se houve retorno de erro
-        IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
-          RAISE vr_exc_saida;       
-        END IF; 
+          -- Se houve retorno de erro
+          IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
+            RAISE vr_exc_erro;       
+          END IF; 
             
-        vr_idtitdda := vr_tituloCIP.NumIdentcTit;
+          vr_idtitdda := vr_tituloCIP.NumIdentcTit;
+        END IF;
+            
+        
        
       END IF;
       
@@ -1396,7 +1413,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dsderror := NULL;
     
       /* se título pago, realizar baixa operacional */
-      IF pr_cdsittit IN (3, 4) THEN
+      IF pr_cdsittit IN (3, 4) AND 
+         --> e Se nao estiver em contigencia
+         rw_cons_titulo.flgcontingencia = 0 THEN 
         BEGIN
           
           --Dado retorno

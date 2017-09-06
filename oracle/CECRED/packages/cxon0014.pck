@@ -1683,6 +1683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                          (leitora ou manual(linha digitavel)) (Odirlei-AMcom)
   --
   --             06/10/2015 - Inclusao do nrsnosnum na criacao da crapcob SD339759 (Odirlei-AMcom)
+  --     
+  --             01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1779,6 +1781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
               ,crapcob.dsinform
               ,crapcob.rowid
               ,crapcob.inemiten
+              ,crapcob.nrdident
         FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.cdbandoc = pr_cdbandoc
@@ -1818,6 +1821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       vr_dsconmig  VARCHAR2(100);
       vr_nridetit  NUMBER;
       vr_tpdbaixa  INTEGER;
+      vr_flcontig  INTEGER;
       vr_inpessoa  crapass.inpessoa%TYPE;
       vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
       
@@ -2073,6 +2077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                            ,pr_vltitulo  => vr_vltitulo         --> Valor do titulo
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
                            ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
                            
@@ -2082,6 +2087,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           --> Abortar programa
           RAISE vr_exc_erro; 
         END IF;
+      --> Se for titulo da cooperativa  
+      ELSIF pr_intitcop = 1 THEN
+        vr_tpdbaixa := 1; -- Baixa Operacional Integral Intrabancária
       END IF;
       
       --Se for iptu
@@ -2255,7 +2263,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,craptit.nrispbds
           ,craptit.inpessoa
           ,craptit.nrcpfcgc
-          ,craptit.tpbxoper)
+          ,craptit.tpbxoper
+          ,craptit.flgconti)
         VALUES
           (rw_crapcop.cdcooper               -- cdcooper
           ,pr_nrdconta                       -- nrdconta
@@ -2290,7 +2299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,nvl(rw_crapban.nrispbif,0)        -- nrispbds
           ,nvl(vr_inpessoa,0)                -- inpessoa
           ,nvl(vr_nrcpfcgc,0)                -- nrcpfcgc
-          ,nvl(vr_tpdbaixa,0))               -- tpbxoper          
+          ,nvl(vr_tpdbaixa,0)                -- tpbxoper      
+          ,nvl(vr_flcontig,0))               -- flgconti   
         RETURNING
           craptit.nrseqdig
          ,craptit.nrdocmto
@@ -3311,6 +3321,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
             END IF;
           END IF;
         END IF; --vr_flgdesct
+        
+        --> Se for titulo da cooperativa
+        --> deve armazenar o numero de ident titulo
+        IF TRIM(rw_crapcob.nrdident) > 0 AND  
+           nvl(vr_nridetit,0) = 0 THEN
+          vr_nridetit := rw_crapcob.nrdident;
+        END IF;  
+        
+        
       END IF; --NOT pr_iptu AND pr_intitcop = 1
       --Parametros de retorno
       pr_pg:= FALSE;
@@ -3465,7 +3484,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
 
       /* Atualiza sequencia Autenticacao */
       BEGIN
-        UPDATE craptit SET craptit.nrautdoc = pr_ult_sequencia
+        UPDATE craptit 
+           SET craptit.nrautdoc = pr_ult_sequencia,
+               craptit.nrdident = nvl(vr_nridetit,craptit.nrdident)
         WHERE craptit.ROWID = rw_craptit_rowid;
       EXCEPTION
         WHEN Others THEN
@@ -4876,8 +4897,8 @@ END pc_gera_titulos_iptu_prog;
   --               25/08/2016 - Caso encontre o parâmetro pagadorvip permite pagar valor menor que o valor do
   --                            documento (M271 - Kelvin)
   --
-  --               13/06/2017 - Retirado validacao que estava feita de forma incorreta olhando no valor
-  --                            do titulo para nao ocorrer critica 100 (Tiago/Elton #691470)
+  --               01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5036,6 +5057,7 @@ END pc_gera_titulos_iptu_prog;
       vr_nrdipatu VARCHAR2(1000);
       vr_nridetit       NUMBER;
       vr_tpdbaixa       INTEGER;
+      vr_flcontig       INTEGER;
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -6241,6 +6263,7 @@ END pc_gera_titulos_iptu_prog;
                            ,pr_vltitulo  => pr_vlfatura         --> Valor do titulo
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
                            ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
                            
