@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             ,lau.dtmvtolt
             ,lau.nrdocmto
             ,lau.idanafrd
-            ,ass.cdagenci
+            ,ass.cdagenci AS cdagenci
             ,darf_das.tppagamento -- Tipo pagamento (1-DARF, 2-DAS)
             ,darf_das.tpcaptura -- Tipo de Captura (1 – Com Código de Barras / 2 – Sem Código de Barras)
             ,DECODE(darf_das.tpcaptura,1,'COM','SEM') || ' CODIGO DE BARRAS' dstpcaptura -- Descricao do Tipo de Captura
@@ -196,6 +196,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             ,darf_das.vljuros -- Valor dos Juros
             ,darf_das.vlreceita_bruta -- Receita Bruta Acumulada
             ,darf_das.vlpercentual -- Percentual
+            ,0  AS nrddd
+            ,0  AS nrcelular
+            ,'' AS nmoperadora
         FROM craplau                lau
             ,crapass                ass
             ,tbpagto_agend_darf_das darf_das
@@ -231,7 +234,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
          AND ass.cdcooper = lau.cdcooper
          AND ass.nrdconta = lau.nrdconta
          AND (NVL(pr_cdagenci, 0) = 0 OR ass.cdagenci = pr_cdagenci)
-       ORDER BY ass.cdagenci;
+         AND NVL(pr_cdtiptra,0) <> 11
+       UNION
+      SELECT rec.cdcooper
+            ,11
+            ,0
+            ,0
+            ,NULL
+            ,NULL
+            ,NULL
+            ,0
+            ,0
+            ,TRUNC(rec.dtrecarga)
+            ,rec.vlrecarga
+            ,rec.insit_operacao
+            ,TRUNC(rec.dtrecarga)
+            ,to_number(to_char(rec.dttransa,'SSSSS'))
+            ,0
+            ,0
+            ,0
+            ,rec.nrdconta
+            ,0
+            ,TRUNC(rec.dtrecarga)
+            ,0
+            ,0
+            ,ass.cdagenci AS cdagenci
+            ,NULL
+            ,NULL
+            ,''
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,NULL
+            ,rec.nrddd       AS nrddd
+            ,rec.nrcelular   AS nrcelular
+            ,opr.nmoperadora AS nmoperadora
+        FROM tbrecarga_operacao rec
+            ,tbrecarga_operadora opr
+            ,crapass            ass
+       WHERE rec.cdcooper = pr_cdcooper
+         AND opr.cdoperadora = rec.cdoperadora
+         AND (NVL(pr_nrdconta, 0) = 0 OR rec.nrdconta = pr_nrdconta)
+         AND (NVL(pr_cdagenci, 0) = 0 OR ass.cdagenci = pr_cdagenci)
+         AND rec.cdcooper = ass.cdcooper
+         AND rec.nrdconta = ass.nrdconta
+         AND rec.dtrecarga > trunc(rec.dttransa) /* só agendamento*/
+         AND rec.dtrecarga >= pr_dtiniper        /* Dt. inicio */
+         AND rec.dtrecarga <= pr_dtfimper        /* Dt. fim */
+         AND rec.insit_operacao IN (1,2,4,5)
+         AND (NVL(pr_insitlau, 0) = 0 OR rec.insit_operacao = DECODE(pr_insitlau, 3, 4, 4, 5, pr_insitlau))   
+         AND NVL(pr_cdtiptra, 0) IN (0, 11)
+       ORDER BY cdagenci;
       rw_craplau cr_craplau%ROWTYPE;     
           
       -- Busca dos dados do associado
@@ -620,6 +681,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             
             END IF;
                                 
+          ELSIF rw_craplau.cdtiptra = 11 THEN -- Recarga de Celular
+            
+            vr_dstiptra := 'RECARGA CEL';
+            
+            vr_dstransa := '(' || rw_craplau.nrddd || ') ' || 
+                           TRIM(TO_CHAR(TRIM(gene0002.fn_mask(rw_craplau.nrcelular,'zzzzz-zzzz')))) || ' - ' || 
+                           rw_craplau.nmoperadora;
           END IF;
                   
           IF rw_craplau.dsorigem = 'TAA' THEN

@@ -111,7 +111,16 @@ function formataFormularioFiltro(){
 	$('#dtfimper','#frmFiltro').css({'width':'75px','text-align':'right'}).habilitaCampo().addClass('inteiro').attr('maxlength','14').setMask("DATE","","","");
 	$('#tipsaida','#frmFiltro').css({'width':'100px'}).habilitaCampo();
 	$('#nmarquiv','#frmFiltro').css({'width':'245px','text-align':'left'}).habilitaCampo().addClass('alphanum').attr('maxlength','32');
-		
+	
+	if ($('#cddopcao', '#frmCab').val() != 'C') {
+		$("#cdtiptra","#frmFiltro").val('0');
+	}
+	if ($("#cddopcao","#frmCab").val() != "T"){
+		$('#opt_recarga').attr('disabled','disabled').css('display','none');
+	} else {
+		$('#opt_recarga').removeAttr('disabled').css('display','block');
+	}
+	
 	$('#dtiniper','#frmFiltro').val(dtiniper);
 	$('#dtfimper','#frmFiltro').val(dtfimper);
 	
@@ -609,6 +618,7 @@ function selecionaAgendamentos(tr){
 		$('#fsetAgendamentoLinhaDig').css('display','none');
 		$('#fsetAgendamentoContaDestino').css('display','none');
 		$('#fsetAgendamentoDarfDas').css('display','block');
+		$('#fsetAgendamentoRecarga').css('display','none');
 		
 	}else if(dstiptra.indexOf('PAGAMENTO') > -1){
 
@@ -632,6 +642,7 @@ function selecionaAgendamentos(tr){
 		$('#fsetAgendamentoLinhaDig').css('display','block');
 		$('#fsetAgendamentoContaDestino').css('display','none');
 		$('#fsetAgendamentoDarfDas').css('display','none');
+		$('#fsetAgendamentoRecarga').css('display','none');
 		
 	}else if((dstiptra.indexOf('TRANSFERENCIA') > -1) || dstiptra.indexOf('TED') > -1) {
 	
@@ -666,6 +677,7 @@ function selecionaAgendamentos(tr){
 		$('#fsetAgendamentoLinhaDig').css('display','none');
 		$('#fsetAgendamentoContaDestino').css('display', 'block');
 		$('#fsetAgendamentoDarfDas').css('display','none');
+		$('#fsetAgendamentoRecarga').css('display','none');
 
 		if ($('#cddopcao', '#frmCab').val() == 'C') {
 
@@ -687,11 +699,34 @@ function selecionaAgendamentos(tr){
 		    }
 		}
 		
+	}else if(dstiptra.indexOf('RECARGA') > -1){
+
+		$('#dstransa','#fsetAgendamentoRecarga').val( $('#dstransa', tr ).val() );
+		$('#dttransa','#fsetAgendamentoRecarga').val( $('#dttransa', tr ).val() );
+		$('#hrtransa','#fsetAgendamentoRecarga').val( $('#hrtransa', tr ).val() );
+		$('#dstitdda','#fsetAgendamentoRecarga').val( $('#dstitdda', tr ).val() );
+		
+		//label
+		$('label[for="dstransa"]',"#fsetAgendamentoRecarga").addClass("rotulo").css({"width":"115px"}); 
+		$('label[for="dttransa"]',"#fsetAgendamentoRecarga").addClass("rotulo").css({"width":"115px"}); 
+		$('label[for="hrtransa"]',"#fsetAgendamentoRecarga").addClass("rotulo-linha").css({"width":"100px"}); 
+			
+		// campo
+		$("#dstransa","#fsetAgendamentoRecarga").css('width','500px').desabilitaCampo();
+		$("#dttransa","#fsetAgendamentoRecarga").css('width','100px').desabilitaCampo();
+		$("#hrtransa","#fsetAgendamentoRecarga").css('width','100px').desabilitaCampo();
+		$("#dstitdda","#fsetAgendamentoRecarga").css('width','190px').desabilitaCampo();
+		
+		$('#fsetAgendamentoConta').css('display','none'); 
+		$('#fsetAgendamentoLinhaDig').css('display','none');
+		$('#fsetAgendamentoContaDestino').css('display','none');
+		$('#fsetAgendamentoDarfDas').css('display','none');
+		$('#fsetAgendamentoRecarga').css('display','block');
+		
 	}else{
 		
 		$('#dttransa','#fsetAgendamentoConta').val( $('#dttransa', tr ).val() );
 		$('#hrtransa','#fsetAgendamentoConta').val( $('#hrtransa', tr ).val() );
-		$('#dstitdda','#fsetAgendamentoConta').val( $('#dstitdda', tr ).val() );
 		
 		//label
 		$('label[for="dstransa"]',"#fsetAgendamentoConta").addClass("rotulo").css({"width":"115px"}); 
@@ -702,12 +737,12 @@ function selecionaAgendamentos(tr){
 		$("#dstransa","#fsetAgendamentoConta").css('width','100px').desabilitaCampo();
 		$("#dttransa","#fsetAgendamentoConta").css('width','100px').desabilitaCampo();
 		$("#hrtransa","#fsetAgendamentoConta").css('width','100px').desabilitaCampo();
-		$("#dstitdda","#fsetAgendamentoConta").css('width','190px').desabilitaCampo();
 				
 		$('#fsetAgendamentoConta').css('display','block'); 
 		$('#fsetAgendamentoLinhaDig').css('display','none');
 		$('#fsetAgendamentoContaDestino').css('display','none');
 		$('#fsetAgendamentoDarfDas').css('display','none');
+		$('#fsetAgendamentoRecarga').css('display','none');
 		
 	}
 	
