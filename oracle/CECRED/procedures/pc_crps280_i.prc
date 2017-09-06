@@ -1742,16 +1742,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
                IF vr_chave_finalidade = 1 THEN
                   vr_destino := 1437;
-                  vr_descricao := '"AJUSTE CONTÁBIL - PAGTO. JUROS MICROCRÉDITO CEF"';
+                  vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS MICROCREDITO CEF"';
                ELSIF vr_chave_finalidade = 2 THEN
                   vr_destino := 1780;
                   vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS CCB IMOBILIZADO REFAP"';
                ELSIF vr_chave_finalidade = 3 THEN
                   vr_destino := 5505;
-                  vr_descricao := '"AJUSTE CONTÁBIL - PAGTO. JUROS CCB MAIS CRÉDITO"';
+                  vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS CCB MAIS CREDITO"';
                ELSIF vr_chave_finalidade = 4 THEN
                   vr_destino := 1440;
-                  vr_descricao := '"AJUSTE CONTÁBIL - PAGTO. JUROS MICROCRÉDITO BNDES"';
+                  vr_descricao := '"AJUSTE CONTABIL - PAGTO. JUROS MICROCREDITO BNDES"';
                END IF;
 
                vr_setlinha := fn_set_cabecalho('20'
@@ -1817,26 +1817,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             IF vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441 > 0 THEN
               
                IF vr_chave_finalidade = 1 THEN
-                  vr_destino := 1437;
-                  vr_descricao := '"AJUSTE CONTÁBIL - AJUSTE DE SALDO MICROCRÉDITO CEF"';
+                  vr_origem  := 7306;
+                  vr_destino := 7302;
+                  vr_descricao := '(AJUSTE DE SALDO - MICROCREDITO CEF - AJUSTE CONTABIL)"';
                ELSIF vr_chave_finalidade = 2 THEN
-                  vr_destino := 1780;  
-                  vr_descricao := '"AJUSTE CONTÁBIL - AJUSTE DE SALDO CCB IMOBILIZADO REFAP"';
+                  vr_origem  := 7306;
+                  vr_destino := 7112;
+                  vr_descricao := '(AJUSTE DE SALDO - CCB IMOBILIZADO REFAP - AJUSTE CONTABIL)"';
                ELSIF vr_chave_finalidade = 3 THEN
-                  vr_destino := 5505;  
-                  vr_descricao := '"AJUSTE CONTÁBIL - AJUSTE DE SALDO CCB MAIS CRÉDITO"';
+                  vr_origem  := 7306;
+                  vr_destino := 7011;
+                  vr_descricao := '(AJUSTE DE SALDO - CCB MAIS CREDITO - AJUSTE CONTABIL)"';
                ELSIF vr_chave_finalidade = 4 THEN
-                  vr_destino := 1440;  
-                  vr_descricao := '"AJUSTE CONTÁBIL - AJUSTE DE SALDO MICROCRÉDITO BNDES"';
+                  vr_origem  := 1440;
+                  vr_destino := 1662;
+                  vr_descricao := '(AJUSTE DE SALDO - MICROCREDITO BNDES - AJUSTE CONTABIL)"';
                END IF;
                
                vr_setlinha := fn_set_cabecalho('20'
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,pr_rw_crapdat.dtmvtolt
-                                              ,1662
+                                              ,vr_origem
                                               ,vr_destino
                                               ,vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441
-                                              ,vr_descricao);
+                                              ,'"EMPRESTIMOS EFETUADOS PARA ASSOCIADOS - (0441) JUROS SOBRE EMPRESTIMOS ' || vr_descricao);
                                                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
