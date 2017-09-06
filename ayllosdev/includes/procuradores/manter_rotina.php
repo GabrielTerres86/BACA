@@ -11,6 +11,7 @@
  *                28/09/2015 - Chamado 337371 - Correcao na opcao de operadores. (Gabriel-RKAM)
  *                11/01/2016 - Validar exclusão de representante (David)
  *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *				  22/08/2017 - Correcao no uso de indices invalidos. (SD 732024 - Carlos Tanholi)
  */
 ?>
  
@@ -154,6 +155,7 @@
 			$xml .= '		<permalte>'.$permalte.'</permalte>'; 
 			
 			/*Procuradores*/		
+			if (count($arrayFilhosAvtMatric) > 0 ) {
 			foreach ($arrayFilhosAvtMatric as $key => $value) {
 		
 				$campospc = "";
@@ -183,6 +185,7 @@
 				$xml .= retornaXmlFilhos( $campospc, $dadosprc, 'Procurador', 'Procuradores');
 				
 			}
+			}
 			
 		}
 		
@@ -194,6 +197,7 @@
 			$xml .= '       <nmrotina>'.$nmrotina.'</nmrotina>'; /*PROCURADORES*/
 			
 			/*Resp. Legal*/			
+			if (count($arrayFilhos) > 0) {	
 			foreach ($arrayFilhos as $key => $value) {
 		
 				$campospc = "";
@@ -223,8 +227,9 @@
 				$xml .= retornaXmlFilhos( $campospc, $dadosprc, 'RespLegal', 'Responsavel');
 				
 			}
-			
+			}
 			/*Bens dos procuradores*/			
+			if (count($arrayBensMatric) > 0) {			
 			foreach ($arrayBensMatric as $key => $value) {
 		
 				$campospc = "";
@@ -254,7 +259,7 @@
 				$xml .= retornaXmlFilhos( $campospc, $dadosprc, 'Bens', 'Itens');
 				
 			}
-			
+		}
 		}
 		
 		$xml .= "	</Dados>";
@@ -272,8 +277,8 @@
 		$msg = Array();
 		
 		// Se não retornou erro, então pegar a mensagem de retorno do Progress na variável msgRetorno, para ser utilizada posteriormente
-		$msgRetorno = $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'];	
-		$msgAlerta  = $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'];
+		$msgRetorno = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'] : '';	
+		$msgAlerta  = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'] : '';
 		
 		
 		if ($msgRetorno!='') $msg[] = $msgRetorno;
@@ -282,9 +287,9 @@
 		$stringArrayMsg = implode( "|", $msg);
 			
 		// Verificação da revisão Cadastral
-		$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
-		$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
-		$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];	
+		$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
+		$chaveAlt = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
+		$tpAtlCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';	
 			
 	}	
 		
