@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 04/09/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 05/09/2017
     
     Dados referentes ao programa:
 
@@ -502,6 +502,8 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
 			  31/07/2017 - Alterado parametro par_cdcltrcs de INTEGER para CHAR. (Rafael)
 
               04/09/2017 - Permitir estorno de boletos pagos pelo DDA. (Rafael/Ademir)
+
+              05/09/2017 - Ajuste no numero do lote de estorno de pagto de títulos para 11900. (Rafael)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -4646,7 +4648,7 @@ PROCEDURE estorna_titulo:
                               craplot.dtmvtolt = crapaut.dtmvtolt   AND
                               craplot.cdagenci = crapaut.cdagenci   AND
                               craplot.cdbccxlt = 11                 AND
-                              craplot.nrdolote = 16000 + 900
+                              craplot.nrdolote = 11000 + 900
                               USE-INDEX craplot1
                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
