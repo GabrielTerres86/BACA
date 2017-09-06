@@ -21,6 +21,9 @@
                12/05/2016 - Atualizar somente operacoes com situacao "N,A,P,L"
                            (Diego).            
 
+               15/08/2017 - Incluir dividor por 100 ao buscar o percentual de 
+                            garantia aux_vlpergar 116,5 (Lucas Ranghetti #734912)
+                            
 			   12/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							 (Adriano - P339).		            
@@ -1552,7 +1555,7 @@ PROCEDURE atualiza-central-risco:
                 IF SUBSTR(aux_tpgarant, 1, 2) = "09" THEN
                 DO:
                     ASSIGN aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha, 102, 14))
-                           aux_vlpergar = DECI(SUBSTR(aux_setlinha, 116, 5)).
+                           aux_vlpergar = DECI(SUBSTR(aux_setlinha, 116, 5)) / 100.
 
                     IF aux_cdtipgar = "01" THEN
                         ASSIGN aux_dscatbem = "Avalista PF".
