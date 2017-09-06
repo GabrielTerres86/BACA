@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 09/03/2017
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 31/08/2017
 
    Dados referentes ao programa:
 
@@ -79,6 +79,14 @@
                 09/03/2017 - Ajuste envio de arquivos devolucao da cobranca
                              sua remessa 085 Cecred - 2*.DVS (Rafael).
                 
+                17/05/2017 - Remover a procedure proc_verifica_pac_internet e suas chamadas,
+                             pois a mensagem de erro do LOOP está comentada desde a 
+                             alteracao de "28/11/2014", como nao existe mais validacao do 
+                             erro o LOOP nao é mais necessário (Douglas - Chamado 666540)
+
+                31/08/2017 - Ajustado rotina de envio de arquivos para a ABBC
+                             para nao enviar arquivos 2*.DVS em feriados. (Rafael)
+                             
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -602,98 +610,6 @@ PROCEDURE carrega_agenda_proc:
     RETURN "OK".
 END PROCEDURE.
                                                                                 
-PROCEDURE proc_verifica_pac_internet:
-    
-    /* Verifica se os titulos e faturas pagos tiveram os seus devidos debitos
-       efetuados nas contas */
-      
-    DEF INPUT PARAM par_cdcooper AS INTEGER                          NO-UNDO.
-    DEF INPUT PARAM par_cdagenci AS INTEGER                          NO-UNDO.
-    DEF INPUT PARAM par_dtmvtolt AS DATE                             NO-UNDO.
-
-    DEF         VAR aux_qtlanmto AS INTEGER                          NO-UNDO.
-    DEF         VAR aux_vllanmto AS DECIMAL                          NO-UNDO.
-    
-    DEF         VAR lcm_qtlanmto AS INTEGER                          NO-UNDO.
-    DEF         VAR lcm_vllanmto AS DECIMAL                          NO-UNDO.
-
-
-    FOR EACH craplcm WHERE craplcm.cdcooper = par_cdcooper   AND
-                           craplcm.dtmvtolt = par_dtmvtolt   AND
-                           craplcm.cdagenci = par_cdagenci   AND
-                           craplcm.cdbccxlt = 11             AND
-                           craplcm.nrdolote = 11000 + 900    AND
-                           craplcm.cdhistor = 508            NO-LOCK
-                           BREAK BY craplcm.nrdconta
-                                   BY SUBSTRING(craplcm.cdpesqbb,1,36):
-
-        IF   FIRST-OF(SUBSTRING(craplcm.cdpesqbb,1,36))   THEN
-             ASSIGN aux_qtlanmto = 0 
-                    aux_vllanmto = 0
-                    lcm_qtlanmto = 0
-                    lcm_vllanmto = 0.
-        
-        ASSIGN lcm_qtlanmto = lcm_qtlanmto + 1
-               lcm_vllanmto = lcm_vllanmto + craplcm.vllanmto
-               aux_contador = aux_contador + 1.
-       
-        IF   LAST-OF(SUBSTRING(craplcm.cdpesqbb,1,36))   THEN
-             DO:
-                 /* Titulos */
-                 IF   craplcm.cdpesqbb BEGINS
-                      "INTERNET - PAGAMENTO ON-LINE - BANCO"   THEN
-                      DO:
-                          /* Desconsidera estornos */
-                          FOR EACH crablcm WHERE
-                                   crablcm.cdcooper = par_cdcooper       AND
-                                   crablcm.dtmvtolt = par_dtmvtolt       AND
-                                   crablcm.cdagenci = par_cdagenci       AND
-                                   crablcm.cdbccxlt = 11                 AND
-                                   crablcm.nrdolote = 11000 + 900        AND
-                                   crablcm.cdhistor = 570                AND
-                                   crablcm.nrdconta = craplcm.nrdconta
-                                   NO-LOCK:
-                          
-                              IF   crablcm.cdpesqbb BEGINS
-                                   "INTERNET - ESTORNO PAGAMENTO " +
-                                   "ON-LINE - BANCO"    THEN
-                                   ASSIGN lcm_qtlanmto = lcm_qtlanmto - 1
-                                          lcm_vllanmto = lcm_vllanmto -
-                                                         crablcm.vllanmto.
-                          END.
-                          
-                          FOR EACH craptit WHERE
-                                   craptit.cdcooper = par_cdcooper   AND
-                                   craptit.dtmvtolt = par_dtmvtolt   AND
-                                   craptit.cdagenci = par_cdagenci   AND
-                                   craptit.cdbccxlt = 11             AND
-                                   craptit.nrdolote = 16000 + 900    AND
-                                   craptit.nrdconta = craplcm.nrdconta
-                                   NO-LOCK:
-                          
-                              ASSIGN aux_qtlanmto = aux_qtlanmto + 1
-                                     aux_vllanmto = aux_vllanmto +
-                                                    craptit.vldpagto.
-                          END.
-                     /*   IF   aux_qtlanmto <> lcm_qtlanmto   THEN
-                               DO:
-                                  
-                                  glb_dscritic = "Titulos nao conferem com" +
-                                                 "lancamentos - Conta/DV: " +
-                                                 STRING(craplcm.nrdconta).
-                                  RUN gera_critica_procbatch.
-                                  glb_cdcritic = 139.
-                                  RETURN "NOK".
-                               END.   */
-                      
-                      END.
-             END. /* Fim LAST-OF */
-        
-   END.                          
-
-   RETURN "OK".
-END PROCEDURE. /* Fim proc_verifica_pac_internet */
-
 PROCEDURE gera_arq:
 
     DEF INPUT PARAM par_cdcooper    AS  INTE                        NO-UNDO.
@@ -1180,13 +1096,6 @@ PROCEDURE gera_arq:
               efetuados nas contas para a cooperativa. */
             glb_cdcritic = 0.
 
-            RUN proc_verifica_pac_internet(INPUT crapcop.cdcooper,
-                                           INPUT aux_cdagenci,
-                                           INPUT par_dtmvtolt).
-
-            IF  glb_cdcritic <> 0   THEN
-                NEXT.
-
             /* TITULO */
             RUN arquivos_noturnos(INPUT par_cdcooper,
                                   INPUT aux_cdagenci,
@@ -1211,13 +1120,6 @@ PROCEDURE gera_arq:
               se os titulos e faturas pagos tiveram os seus devidos debitos 
               efetuados nas contas para a cooperativa. */
             glb_cdcritic = 0.
-
-            RUN proc_verifica_pac_internet(INPUT crapcop.cdcooper,
-                                           INPUT aux_cdagenci,
-                                           INPUT par_dtmvtolt).
-
-            IF  glb_cdcritic <> 0   THEN
-                NEXT.
 
             /* TITULO */
             RUN arquivos_noturnos(INPUT par_cdcooper,
@@ -2774,10 +2676,10 @@ END PROCEDURE.
 PROCEDURE carrega_tabela_envio.
 
     DEF INPUT PARAM par_cdcooper    AS  INTE                        NO-UNDO.
+    DEF BUFFER b-crapfer FOR crapfer.
 
     EMPTY TEMP-TABLE crawarq.
     EMPTY TEMP-TABLE w-arquivos.
-
 
     FIND crabcop WHERE crabcop.cdcooper = 3 NO-LOCK NO-ERROR.
 
@@ -2804,6 +2706,16 @@ PROCEDURE carrega_tabela_envio.
 
         RUN verifica_arquivos.
         
+        /* verificar se o dia atual eh um feriado */
+        FIND FIRST b-crapfer 
+             WHERE b-crapfer.cdcooper = crabcop.cdcooper
+               AND b-crapfer.dtferiad = TODAY
+               NO-LOCK NO-ERROR.
+        
+        /* se o dia atual nao for feriado, os arquivos 2* podem
+           ser transmitidos para a ABBC */
+        IF NOT AVAIL b-crapfer THEN 
+        DO:                             
         /*** Procura arquivos TITULOS ***/
         ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
                               "/abbc/2" + STRING(crabcop.cdagectl,"9999") +
@@ -2811,6 +2723,7 @@ PROCEDURE carrega_tabela_envio.
                aux_tparquiv = "TITULOS". 
             
         RUN verifica_arquivos.
+        END.
 
         /*** Procura arquivos TITULOS ***/
         ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
@@ -3011,11 +2924,22 @@ PROCEDURE carrega_tabela_envio.
 
     FIND crabcop WHERE crabcop.cdcooper = INT(par_cdcooper) NO-LOCK NO-ERROR.
 
+    /* verificar se o dia atual eh um feriado */
+    FIND FIRST b-crapfer 
+         WHERE b-crapfer.cdcooper = par_cdcooper
+           AND b-crapfer.dtferiad = TODAY
+           NO-LOCK NO-ERROR.
+        
+    /* se o dia atual nao for feriado, os arquivos 2* podem
+       ser transmitidos para a ABBC */
+    IF NOT AVAIL b-crapfer THEN 
+    DO:
     ASSIGN aux_nmarquiv = "/micros/cecred/abbc/2*.DVS"
            aux_tparquiv = "DEVSR085" /* devolucao boletos sua remessa 085 */
            par_cdcooper = 0.
            
     RUN verifica_arquivos.     
+    END.    
         
     ASSIGN aux_tparquiv = "".
 

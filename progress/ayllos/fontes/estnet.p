@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2008                        Ultima atualizacao: 30/06/2017
+   Data    : Abril/2008                        Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -42,6 +42,8 @@
 							
                30/06/2017 - Validar saida de critica para as procedures
                             (Lucas Ranghetti #674894)
+
+               01/09/2017 - Permitir estorno de titulos DDA (Rafael)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -84,7 +86,8 @@ DEF TEMP-TABLE w_doctos                                             NO-UNDO
     FIELD tpdocmto  AS LOGICAL  FORMAT "FAT/TIT"
     FIELD cdagenci  LIKE craptit.cdagenci
     FIELD dtmvtolt  LIKE craptit.dtmvtolt
-    FIELD cdctrbxo  LIKE craptit.cdctrbxo.
+    FIELD cdctrbxo  LIKE craptit.cdctrbxo
+    FIELD nrdident  LIKE craptit.nrdident.
     
 DEF QUERY q_doctos FOR w_doctos.
     
@@ -188,6 +191,7 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
                                              INPUT  glb_cdoperad,
                                              INPUT  aux_idorigem,
                                              INPUT  w_doctos.cdctrbxo,
+                                             INPUT  w_doctos.nrdident,
                                              OUTPUT aux_dstransa,
                                              OUTPUT aux_dscritic,
                                              OUTPUT aux_dsprotoc).
@@ -197,15 +201,9 @@ ON  RETURN OF b_doctos IN FRAME f_doctos DO:
          END.
          
     /* Status da transacao */
-    IF  RETURN-VALUE <> "OK" THEN
-        DO:
-            ASSIGN aux_fltransa = NO.
-            
-            IF  aux_dscritic = "" OR aux_dscritic = ? THEN
-                ASSIGN aux_dscritic = "Nao foi possivel estornar o pagamento. Tente novamente.".
-        END.
-    ELSE
-        aux_fltransa = YES.
+    aux_fltransa = IF   RETURN-VALUE = "OK"   THEN
+                        YES
+                   ELSE NO.
 
     /* Log da operacao realizada */         
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
@@ -496,10 +494,6 @@ DO  WHILE TRUE:
                            craptit.nrdconta = tel_nrdconta
                            NO-LOCK:
 
-        /** Nao permite estorno de Titulos DDA **/
-        IF  craptit.flgpgdda  THEN
-            NEXT.
-                           
         CREATE w_doctos.
         ASSIGN w_doctos.cdbarras = craptit.dscodbar
                w_doctos.cdseqdoc = craptit.nrdocmto
@@ -508,6 +502,7 @@ DO  WHILE TRUE:
                w_doctos.dtmvtolt = craptit.dtmvtolt
                w_doctos.tpdocmto = NO
                w_doctos.cdctrbxo = craptit.cdctrbxo
+               w_doctos.nrdident = craptit.nrdident
                w_doctos.dsbarras = SUBSTRING(craptit.dscodbar,01,04) + 
                                    SUBSTRING(craptit.dscodbar,20,01) + "." +
                                    SUBSTRING(craptit.dscodbar,21,04) + "0" +

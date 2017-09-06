@@ -1135,6 +1135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,decode(crapass.inpessoa,1,to_char(crapass.nrcpfcgc)
                                         ,to_char(crapass.nrcpfcgc)) nrcpfcgc
               ,to_char(crapcop.cdagectl) cdagectl
+              ,crapass.dtadmiss
           FROM crapass,
                crapcop 
          WHERE crapass.cdcooper = crapcop.cdcooper
@@ -1626,6 +1627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         OPEN cr_DDA_Benef (pr_dspessoa => rw_crapass.dspessoa,
                            pr_nrcpfcgc => rw_crapass.nrcpfcgc);
         FETCH cr_DDA_Benef INTO rw_DDA_Benef;
+        
         IF cr_DDA_Benef%NOTFOUND THEN
           IF rw_crapass.inpessoa = 2 THEN
             --> Buscar dados pessoa juridica
@@ -1636,6 +1638,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           END IF;              
                     
       BEGIN
+            -- utilizar a data de admissao do cooperado como data de relacionamento
+            vr_dsdtmvto := to_char(nvl(rw_crapass.dtadmiss,rw_crapdat.dtmvtolt),'RRRRMMDD');      
+            
             INSERT INTO cecredleg.TBJDDDABNF_BeneficiarioIF@jdnpcsql
                   ( "ISPB_IF",
                     "TpPessoaBenfcrio",
@@ -1748,6 +1753,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         IF cr_DDA_Conven%NOTFOUND THEN
           --> Gerar informação de adesão de convênio ao JDBNF                            
           BEGIN
+            
+            vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');      
+            
             INSERT INTO cecredleg.TBJDDDABNF_Convenio@jdnpcsql 
                        ("ISPB_IF",
                         "ISPBPartIncorpd",
@@ -1785,10 +1793,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       ELSE
         BEGIN
           vr_nrconven := to_char(pr_nrconven);
-          vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');          
+                    
           UPDATE cecredleg.TBJDDDABNF_Convenio@jdnpcsql a
              SET a."SitConvBenfcrioPar" = vr_sitifcnv
-                ,a."DtInicRelctConv"    = vr_dsdtmvto
+                ,a."DtInicRelctConv"    = nvl(vr_dsdtmvto,a."DtInicRelctConv")
                 ,a."DtFimRelctConv"     = vr_dtfimrel
            WHERE a."ISPB_IF"            = '05463212'
              AND a."TpPessoaBenfcrio"   = rw_crapass.dspessoa

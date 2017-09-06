@@ -871,7 +871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lombardi
-     Data    : Agosto/2015                     Ultima atualizacao: 13/03/2016
+     Data    : Agosto/2015                     Ultima atualizacao: 28/08/2017
 
      Dados referentes ao programa:
 
@@ -881,6 +881,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
 						 	  para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
 						 	 (Andrei - RKAM).
+
+                 28/08/2017 - Ajuste para possibilitar envio do boleto à CIP (Rafael)
 
   ............................................................................ */      
 
@@ -1082,7 +1084,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
               vlabatim, cdmensag, dsdoccop, vltitulo, dsdinstr, dsinform, cdimpcob, flgimpre, nrctasac, nrctremp, 
               nrnosnum, flgdprot, qtdiaprt, indiaprt, vljurdia, vlrmulta, flgaceit, flgregis, inemiten, insitcrt, 
-              insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp)
+              insitpro, flgcbdda, tpjurmor, tpdmulta, idopeleg, idtitleg, inemiexp, inregcip, inenvcip, dtvctori)
       VALUES ( pr_cdcooper
               ,pr_nrdconta
               ,vr_nrdocmto
@@ -1132,6 +1134,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
               ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idopeleg.nextval ELSE 0 END) -- 
               ,(CASE pr_flgsacad WHEN 1 THEN seqcob_idtitleg.nextval ELSE 0 END) -- 
               ,(CASE WHEN pr_inemiten = 3 THEN 1 /* a enviar à PG */ ELSE 0 END )
+              ,2 -- registro batch CIP
+              ,1 -- CIP a enviar
+              ,pr_dtvencto -- vencimento original
               ) RETURNING 
                   cdcooper, nrdconta, nrdocmto, idseqttl, dtmvtolt, cdbandoc, incobran, nrcnvcob, nrdctabb, cdcartei, 
                   cddespec, cdtpinsc, nrinssac, nmdavali, cdtpinav, nrinsava, dtretcob, dtdocmto, dtvencto, vldescto, 
