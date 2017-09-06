@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/94                         Ultima atualizacao: 15/08/2013
+   Data    : Novembro/94                         Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -34,11 +34,15 @@
              
              15/08/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
+                            
+             01/09/2017 - Inclusao de log de fim de execucao do programa 
+                          (Carlos)
              ............................................................................. */
 
 DEF STREAM str_1.
 
 { includes/var_batch.i "NEW" }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR aux_nrdconta     AS  INT                              NO-UNDO.
 DEF        VAR aux_nmarqimp     AS  CHAR     INIT   "rl/crrl085.lst" NO-UNDO.
@@ -188,7 +192,28 @@ ASSIGN glb_nmarqimp = aux_nmarqimp
        glb_nmformul = ""
        glb_nrcopias = 1.
 
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_log_programa aux_handproc = PROC-HANDLE
+   (INPUT "PF",
+    INPUT "CRPS102.P",
+    input glb_cdcooper,
+    input 1,
+    input 4,
+    input 0,
+    input 0,
+    input "",
+    input 1,
+    INPUT "", /* nmarqlog */
+    INPUT 0,  /* flabrechamado */
+    INPUT "", /* texto_chamado */
+    INPUT "", /* destinatario_email */
+    INPUT 0,  /* flreincidente */
+    INPUT 0).
+CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
 RUN fontes/imprim.p.
 
 /* .......................................................................... */
+
 
