@@ -7589,9 +7589,14 @@ PROCEDURE altera-valor-proposta:
               IF aux_cdcritic = 0 AND 
                  aux_dscritic = "" THEN
               DO:
-                ASSIGN aux_dscritic = "Nao foi possivel enviar alteracao do " + 
-                                      "numero da proposta para Analise de Credito.".
+                ASSIGN aux_dscritic = "Nao foi possivel enviar cancelamento da " +
+                                      "proposta para Analise de Credito.".
               END.
+          END.
+      ELSE
+          DO:
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "".
           END.
     END.
     
@@ -13174,9 +13179,14 @@ PROCEDURE atualiza_dados_avalista_proposta:
               IF aux_cdcritic = 0 AND 
                  aux_dscritic = "" THEN
               DO:
-                ASSIGN aux_dscritic = "Nao foi possivel enviar alteracao do " + 
-                                      "numero da proposta para Analise de Credito.".
+                ASSIGN aux_dscritic = "Nao foi possivel enviar cancelamento da " +
+                                      "proposta para Analise de Credito.".
               END.
+          END.
+      ELSE
+          DO:
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "".
           END.
     END.
     
