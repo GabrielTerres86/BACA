@@ -382,7 +382,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                      ,pr_cdcritic OUT INTEGER  
                                      ,pr_dscritic OUT VARCHAR2);
                                      
-                     
+
   --
   /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
   PROCEDURE pc_verifica_operacao (pr_cdcooper IN crapcop.cdcooper%type  --C¿digo Cooperativa
@@ -499,7 +499,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                         ,pr_msgretor     OUT VARCHAR2                    
                                         ,pr_cdcritic     OUT INTEGER        --Codigo do erro
                                         ,pr_dscritic     OUT VARCHAR2) ;
-                                        
+    
   /*Procedure para validar reprovacao de agendamento com um operador*/
   PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type  --C¿digo Cooperativa
                                         ,pr_nrdconta     IN crapass.nrdconta%TYPE  --Numero da conta
@@ -513,7 +513,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                         ,pr_msgretor     OUT VARCHAR2                    
                                         ,pr_cdcritic     OUT INTEGER        --Codigo do erro
                                         ,pr_dscritic     OUT VARCHAR2);                                                                       
-    
+                                    
     
                                     
 END INET0001;
@@ -2188,7 +2188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
      CURSOR cr_crappfp (pr_cdcooper IN craplau.cdcooper%type
                        ,pr_nrdconta IN craplau.nrdconta%type
                        ,pr_dtmvtopg IN craplau.dtmvtopg%type) IS
-                       
+
       SELECT nvl(sum(pfp.VLLCTPAG),0) vllctpag
          FROM crapemp emp
             , crappfp pfp
@@ -3566,6 +3566,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 			  13/06/2017 - Alteração na mensagem de "Conta destino nao habilitada para receber valores da transferencia."
 			               para "Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online"
 						   (Rafael Monteiro - Mouts - 690752)
+
+			  29/08/2017 - Adição GPS (P356.2 - Ricardo Linhares)
+						
 					   
               04/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397),
                            Incluído novas regras para definir se deve seguir o fluxo de aprovação
@@ -3713,8 +3716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         vr_tp_transa := 'TED';
         pr_dstransa:= pr_dstransa || 'TED';
         vr_dsdmensa:= 'essa transferencia';
-      ELSIF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN  /** Operacao de Pagamento / DARF/DAS **/
-        vr_tp_transa := 'Pagamento';
+      ELSIF pr_tpoperac = 2 OR pr_tpoperac = 10 OR pr_tpoperac = 13 THEN  /** Operacao de Pagamento / DARF/DAS/GPS **/
         pr_dstransa:= pr_dstransa || 'Pagamento de Titulos e Faturas';
         vr_dsdmensa:= 'esse pagamento';
       ELSIF pr_tpoperac = 5 THEN  /** Operacao de Transferencia Intercooperativa **/
@@ -3815,7 +3817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                ,pr_nmdcampo => 'Tipo Transacao'
                                ,pr_dsdadant => ''
                                ,pr_dsdadatu => vr_tp_transa); 
-                               
+
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                ,pr_nmdcampo => 'id titular'
                                ,pr_dsdadant => ''
@@ -3834,10 +3836,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         FOR rw_cr_crapopi in cr_crapopi (pr_cdcooper
                                         ,pr_nrdconta
                                         ,pr_nrcpfope) LOOP
-     
+
           va_existe_operador := 1;                        
         END LOOP;
-
+                       
         -- Se for preposto
         IF va_existe_operador = 0 THEN
           -- log item
@@ -3845,7 +3847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                    ,pr_nmdcampo => 'Tipo usuario'
                                    ,pr_dsdadant => ''
                                    ,pr_dsdadatu => 'Preposto');      
-          
+
           va_nrcpfcgc := null;
           IF pr_nrcpfope IS NULL OR
              pr_nrcpfope <= 0 THEN
@@ -3899,7 +3901,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF; -- Validar se esá habilitado assinatura conjunta            
-          END IF;
+        END IF;
         ELSE -- Se for operador
           -- log item
           gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -3922,13 +3924,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                       ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
                                       ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
                                       ,pr_dscritic     => vr_dscritic); --Descricao do erro;
-                            
+
           --Se ocorreu erro
           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;        
-        END IF;
+      END IF;
       ELSE  
         -- Log item 
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -3940,21 +3942,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                  ,pr_nmdcampo => 'Data Prox Pagamento'
                                  ,pr_dsdadant => ''
                                  ,pr_dsdadatu => pr_dtmvtopg);        
-        /* Buscar Limites da internet */
-        pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
-                         ,pr_nrdconta     => pr_nrdconta  --Numero da conta
-                         ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
-                         ,pr_flglimdp     => TRUE         --Indicador limite deposito
-                         ,pr_dtmvtopg     => pr_dtmvtopg  --Data do proximo pagamento
-                         ,pr_flgctrag     => pr_flgctrag  --Indicador validacoes
-                         ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
-                         ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
-                         ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
-                         ,pr_dscritic     => vr_dscritic); --Descricao do erro;
-        --Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-          --Levantar Excecao
-          RAISE vr_exc_erro;
+      /* Buscar Limites da internet */
+      pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                       ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                       ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                       ,pr_flglimdp     => TRUE         --Indicador limite deposito
+                       ,pr_dtmvtopg     => pr_dtmvtopg  --Data do proximo pagamento
+                       ,pr_flgctrag     => pr_flgctrag  --Indicador validacoes
+                       ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                       ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                       ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                       ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+      --Se ocorreu erro
+      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
         END IF; -- Validar se esá habilitado assinatura conjunta                                      
 
       END IF;
@@ -6011,7 +6013,7 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
   
   END pc_verifica_limite_ope_canc;    
   
-  
+
   
 
 END INET0001;

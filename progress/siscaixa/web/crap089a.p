@@ -308,6 +308,7 @@ PROCEDURE process-web-request :
                       INPUT ab_unmap.v_operador,
                       INPUT "CRAP089A",
                       INPUT get-value("nrseqagp"),  /* ROWID */
+					  INPUT 0, /* flmobile */
                       OUTPUT "").
               
               CLOSE STORED-PROC pc_gps_agmto_desativar
