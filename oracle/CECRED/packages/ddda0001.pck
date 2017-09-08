@@ -331,7 +331,7 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
   em PLSQL através da rotina Progress via DataServer */
   PROCEDURE pc_remessa_titulos_dda(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                   ,pr_dscritic OUT VARCHAR2);
-
+ 
   /* Procedure para Executar retorno da remessa da títulos da DDA diretamente do ORACLE
   --> Foi criado uma rotina para fazer o meio de campo pois não é permitido ter 
       sobrecarga de método, pois estraga o schema holder    */
@@ -570,7 +570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
        AND ceb.nrdconta = pr_nrdconta
        AND ceb.nrconven = pr_nrconven;
   rw_crapceb cr_crapceb%ROWTYPE;  
-
+  
   vr_dsarqlg         CONSTANT VARCHAR2(20) := 'npc_'||to_char(SYSDATE,'RRRRMM')||'.log'; -- nome do arquivo de log mensal  
 
   /* Procedure para buscar dados legado */
@@ -950,7 +950,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_des_erro = 'NOK' THEN
         RAISE vr_exc_erro;
-      END IF; 
+      END IF;     
     
       -- Enviar requisição para webservice
       soap0001.pc_cliente_webservice(pr_endpoint    => NPCB0003.fn_url_SendSoapNPC(pr_idservic => 3)
@@ -964,8 +964,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;
-      
+      END IF;      
+    
       -- Verifica se ocorreu retorno com erro no XML
       pc_obtem_fault_packet(pr_xml      => vr_xml_res
                            ,pr_dsderror => ''
@@ -1175,7 +1175,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     
       --> Buscar dados da consulta
       CURSOR cr_cons_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE ) IS
-        SELECT con.dsxml
+        SELECT con.dsxml,
+               con.flgcontingencia
           FROM tbcobran_consulta_titulo con
          WHERE con.cdctrlcs = pr_cdctrlcs;
          
@@ -1236,7 +1237,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         --Descricao da Critica
         vr_dscritic := 'Situacao do titulo invalida.';
         --Sair
-        RAISE vr_exc_saida;
+        RAISE vr_exc_erro;
       END IF;
       
       IF TRIM(pr_cdctrlcs) IS NOT NULL THEN
@@ -1248,23 +1249,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         IF cr_cons_titulo%NOTFOUND THEN
           CLOSE cr_cons_titulo;
           vr_dscritic := 'Não foi possivel localizar consulta NPC '||pr_cdctrlcs;    
-          RAISE vr_exc_saida;  
+          RAISE vr_exc_erro;  
         ELSE
           CLOSE cr_cons_titulo;
         END IF;
           
-        --> Rotina para retornar dados do XML para temptable
-        NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
-                                          ,pr_tbtitulo => vr_tituloCIP
-                                          ,pr_des_erro => vr_des_erro
-                                          ,pr_dscritic => vr_dscritic);
+        --> Verificar se cip esta em contigencia
+        --> e não é pagamento pelo menu DDA
+        IF rw_cons_titulo.flgcontingencia = 1 AND vr_idtitdda IS NULL THEN
+          --> Caso esteja deve sair do programa sem critica
+          --> pois atualização da cabine e CIP ocorrerá quando for normalizado
+          vr_cdcritic := 0;
+          vr_dscritic := NULL;
+          RAISE vr_exc_erro;
+        
+        END IF;
+        
+        --> Se nao estiver em contigencia
+        IF rw_cons_titulo.flgcontingencia = 0 THEN  
+          --> Rotina para retornar dados do XML para temptable
+          NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
+                                            ,pr_tbtitulo => vr_tituloCIP
+                                            ,pr_des_erro => vr_des_erro
+                                            ,pr_dscritic => vr_dscritic);
             
-        -- Se houve retorno de erro
-        IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
-          RAISE vr_exc_saida;       
-        END IF; 
+          -- Se houve retorno de erro
+          IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
+            RAISE vr_exc_erro;       
+          END IF; 
             
-        vr_idtitdda := vr_tituloCIP.NumIdentcTit;
+          vr_idtitdda := vr_tituloCIP.NumIdentcTit;
+        END IF;
+            
+        
        
       END IF;
       
@@ -1396,7 +1413,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       vr_dsderror := NULL;
     
       /* se título pago, realizar baixa operacional */
-      IF pr_cdsittit IN (3, 4) THEN
+      IF pr_cdsittit IN (3, 4) AND 
+         --> e Se nao estiver em contigencia
+         rw_cons_titulo.flgcontingencia = 0 THEN 
         BEGIN
           
           --Dado retorno
@@ -1760,7 +1779,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       FETCH cr_abertura
        INTO rw_abertura;
       CLOSE cr_abertura;
-      
+          
       --Selecionar registro cobranca
       OPEN cr_crapcob(pr_rowid => pr_rowid_cob);
       --Posicionar no proximo registro
@@ -2015,7 +2034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         CLOSE cr_crapttl;
       END IF;
     
-      --Calcular Codigo Barras
+      --Calcular Codigo Barras      
       DDDA0001.pc_calc_codigo_barras(pr_cdbandoc => rw_crapcob.cdbandoc --Codigo banco
                                     ,pr_vltitulo => rw_crapcob.vltitulo --Valor Titulo
                                     ,pr_nrcnvcob => rw_crapcob.nrcnvcob --Numero Convenvio Cobranca
@@ -2109,18 +2128,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
           WHEN '37' THEN vr_cdCanPgt := 1; --> Agências- Postos Tradicionais
           WHEN '06' THEN vr_cdCanPgt := 3; --> Internet
         ELSE
-            vr_cdCanPgt := 8; --> DDA
-            END CASE;       
+          vr_cdCanPgt := 8; --> DDA
+        END CASE;       
         
         IF nvl(vr_cdCanPgt,0) IN (2,3,8) THEN
-            vr_cdmeiopg := 2; --> Débito em conta;
-          ELSE
-            vr_cdmeiopg := 1; --> Espécie
-          END IF;
-        
+          vr_cdmeiopg := 2; --> Débito em conta;
+        ELSE
+          vr_cdmeiopg := 1; --> Espécie
+        END IF;        
+
         vr_vlrbaixa := rw_crapcob.vldpagto;
         
-        END IF;
+      END IF;
       
       --Pegar proximo indice remessa
       vr_index := pr_tab_remessa_dda.Count + 1;
@@ -2195,8 +2214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       IF To_Number(To_Char(rw_crapcob.dtmvtolt,'YYYYMMDD')) > to_number(nvl(rw_abertura.datamov,to_char(SYSDATE,'YYYYMMDD'))) THEN
         pr_tab_remessa_dda(vr_index).dtemissa := rw_abertura.datamov;
       ELSE
-      pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
-                                                                ,'YYYYMMDD'));
+        pr_tab_remessa_dda(vr_index).dtemissa := To_Number(To_Char(rw_crapcob.dtmvtolt
+                                                                  ,'YYYYMMDD')); 
       END IF;
       
       IF pr_flgdprot = TRUE THEN
@@ -2260,7 +2279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- conforme documentação da CIP, a data de desconto só pode ser utilizada
       -- quando for menor que a data do vencimento
       -- Portanto, não será utilizada
-          pr_tab_remessa_dda(vr_index).dtddesct := NULL;
+      pr_tab_remessa_dda(vr_index).dtddesct := NULL;
       
       IF pr_vldescto > 0 THEN
         pr_tab_remessa_dda(vr_index).cdddesct := '1';
@@ -2487,7 +2506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     --
     --             14/07/2017 - Retirado Autonomous Transacion por orientação dos DBAs. (Rafael)
     ---------------------------------------------------------------------------------------------------------------
-  
+    
     --Selecionar dados saque
 /*    CURSOR cr_dadosaque(pr_cnpjcpfpagdr IN NUMBER,
                         pr_tppessoa     IN VARCHAR2) IS
@@ -2505,7 +2524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         ,tbj."QtdAdesao"      QtdAdesao
         FROM VWJDNPCPAG_PAGADOR_ELETRONICO@jdnpcbisql tbj
        WHERE tbj."CNPJCPFPagdr"  = pr_cnpjcpfpagdr
-         AND tbj."TpPessoaPagdr" = pr_tppessoa;
+         AND tbj."TpPessoaPagdr" = pr_tppessoa;          
            
     rw_dadosaque cr_dadosaque%ROWTYPE;
   
@@ -2538,7 +2557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     IF cr_dadosaque%ISOPEN THEN
       CLOSE cr_dadosaque;
     END IF;
-    
+        
   EXCEPTION
     WHEN OTHERS THEN
       
@@ -3746,9 +3765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     --Variaveis Excecao
-    vr_exc_erro EXCEPTION;
-    
-  BEGIN
+    vr_exc_erro EXCEPTION;   
+      
+  BEGIN  
     
     FOR rw_crapcop IN cr_crapcop LOOP
   
@@ -5569,7 +5588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END IF;
     
     IF cr_DDA_Benef%ISOPEN THEN
-    CLOSE cr_DDA_Benef;
+      CLOSE cr_DDA_Benef;
     END IF;
     
     --> Verificar se ja existe o convenio na cip
@@ -5642,7 +5661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
     END IF;
     
     IF cr_DDA_Conven%ISOPEN THEN
-    CLOSE cr_DDA_Conven;      
+      CLOSE cr_DDA_Conven;
     END IF;
     
   EXCEPTION    
@@ -5740,7 +5759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
       -- Verifica se ocorreu erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      END IF;
+      END IF;     
     
       -- Verifica se ocorreu retorno com erro no XML
       pc_obtem_fault_packet(pr_xml      => vr_xml_res

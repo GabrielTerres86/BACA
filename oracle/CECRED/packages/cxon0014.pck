@@ -1683,6 +1683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                          (leitora ou manual(linha digitavel)) (Odirlei-AMcom)
   --
   --             06/10/2015 - Inclusao do nrsnosnum na criacao da crapcob SD339759 (Odirlei-AMcom)
+  --     
+  --             01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1819,6 +1821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       vr_dsconmig  VARCHAR2(100);
       vr_nridetit  NUMBER;
       vr_tpdbaixa  INTEGER;
+      vr_flcontig  INTEGER;
       vr_inpessoa  crapass.inpessoa%TYPE;
       vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
       
@@ -2074,6 +2077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                            ,pr_vltitulo  => vr_vltitulo         --> Valor do titulo
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
                            ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
                            
@@ -2259,7 +2263,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,craptit.nrispbds
           ,craptit.inpessoa
           ,craptit.nrcpfcgc
-          ,craptit.tpbxoper)
+          ,craptit.tpbxoper
+          ,craptit.flgconti)
         VALUES
           (rw_crapcop.cdcooper               -- cdcooper
           ,pr_nrdconta                       -- nrdconta
@@ -2294,7 +2299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,nvl(rw_crapban.nrispbif,0)        -- nrispbds
           ,nvl(vr_inpessoa,0)                -- inpessoa
           ,nvl(vr_nrcpfcgc,0)                -- nrcpfcgc
-          ,nvl(vr_tpdbaixa,0))               -- tpbxoper          
+          ,nvl(vr_tpdbaixa,0)                -- tpbxoper      
+          ,nvl(vr_flcontig,0))               -- flgconti   
         RETURNING
           craptit.nrseqdig
          ,craptit.nrdocmto
@@ -4893,6 +4899,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --               13/06/2017 - Retirado validacao que estava feita de forma incorreta olhando no valor
   --                            do titulo para nao ocorrer critica 100 (Tiago/Elton #691470)
+  --
+  --               01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5051,6 +5060,7 @@ END pc_gera_titulos_iptu_prog;
       vr_nrdipatu VARCHAR2(1000);
       vr_nridetit       NUMBER;
       vr_tpdbaixa       INTEGER;
+      vr_flcontig       INTEGER;
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -6256,6 +6266,7 @@ END pc_gera_titulos_iptu_prog;
                            ,pr_vltitulo  => pr_vlfatura         --> Valor do titulo
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
                            ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
                            
@@ -8153,13 +8164,13 @@ END pc_gera_titulos_iptu_prog;
             RAISE vr_exc_erro;
           END IF;
         END IF;
-
-          ELSE
+          
+      ELSE
         -- Como essa chave nao existe, nao validamos o vencimento
         -- Apenas fecha o cursor
         CLOSE cr_crapprm_dias_tolera;
       END IF;
-      
+
       /* Buscar Sequencial da fatura */
       CXON0014.pc_busca_sequencial_fatura(pr_cdhistor      => rw_crapcon.cdhistor  --Codigo historico
                                          ,pr_codigo_barras => pr_codigo_barras     --Codigo Barras

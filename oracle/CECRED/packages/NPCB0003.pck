@@ -690,13 +690,13 @@ END;
       IF nvl(rw_valorestitulo.VlrTotCobrar,0) = 0 THEN 
         pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar := nvl(pr_tbtitulo.VlrTit,0);
       ELSE       
-      pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar  := rw_valorestitulo.VlrTotCobrar;
+        pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrTotCobrar  := rw_valorestitulo.VlrTotCobrar;
       END IF;
       
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMin   := rw_valorestitulo.VlrCalcdMin;
       pr_tbtitulo.TabCalcTit(rw_valorestitulo.idregist).VlrCalcdMax   := rw_valorestitulo.VlrCalcdMax;
-
-    END LOOP;
+    
+    END LOOP;        
     
     -- Limpar e carregar as informações de baixas operacionais
     pr_tbtitulo.TabBaixaOperac.DELETE();
@@ -1083,6 +1083,19 @@ END;
     vr_dssrdom       VARCHAR2(1000); -- Var para retorno do Service Domain
     
   BEGIN
+  
+   /* pr_dsxmltit := '<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"><SOAP-ENV:Body SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:NS1="urn:JDNPCWS_RecebimentoPgtoTitIntf-IJDNPCWS_RecebimentoPgtoTit"><NS1:RequisitarTituloCIPCalcVlrResponse><return xsi:type="xsd:string"><RequisitarTituloCIP><NumCtrlPart>201707171358211234CX</NumCtrlPart><ISPBPartRecbdrPrincipal>05463212</ISPBPartRecbdrPrincipal><ISPBPartRecebdrAdmtd>05463212</ISPBPartRecebdrAdmtd><NumIdentcTit>2017070606000279285</NumIdentcTit><NumRefAtlCadTit>1500286255693000717</NumRefAtlCadTit><NumSeqAtlzCadTit>10</NumSeqAtlzCadTit><DtHrSitTit>2017-07-17T07:10:55</DtHrSitTit><ISPBPartDestinatario>33657248</ISPBPartDestinatario><CodPartDestinatario>007</CodPartDestinatario><TpPessoaBenfcrioOr>J</TpPessoaBenfcrioOr><CNPJ_CPFBenfcrioOr>33657248000189</CNPJ_CPFBenfcrioOr><Nom_RzSocBenfcrioOr>teste</Nom_RzSocBenfcrioOr><NomFantsBenfcrioOr>Banco Nacional de Desenvolvimento Econ?mico e Soci</NomFantsBenfcrioOr><LogradBenfcrioOr>Avenida República do Chile 100</LogradBenfcrioOr><CidBenfcrioOr>Rio de Janeiro</CidBenfcrioOr><UFBenfcrioOr>RJ</UFBenfcrioOr><CEPBenfcrioOr>20031917</CEPBenfcrioOr><TpPessoaPagdr>J</TpPessoaPagdr><CNPJ_CPFPagdr>82647165000114</CNPJ_CPFPagdr><Nom_RzSocPagdr>COOPERATIVA DE PRODUCAO E ABASTECIMENTO VALE DO IT</Nom_RzSocPagdr><NomFantsPagdr>COOPERATIVA DE PRODUCAO E ABASTECIMENTO VALE DO IT</NomFantsPagdr><CodMoedaCNAB>09</CodMoedaCNAB><NumCodBarras>00796722300316191180109019000043201707031446</NumCodBarras><NumLinhaDigtvl>00790109061900004320817070314467672230031619118</NumLinhaDigtvl><DtVencTit>2017-07-17</DtVencTit><VlrTit>316191.18</VlrTit><CodEspTit>24</CodEspTit><DtLimPgtoTit>2017-07-17</DtLimPgtoTit><IndrBloqPgto>N</IndrBloqPgto><IndrPgtoParcl>N</IndrPgtoParcl><VlrAbattTit>0.00</VlrAbattTit><TpModlCalc>03</TpModlCalc><TpAutcRecbtVlrDivgte>3</TpAutcRecbtVlrDivgte><RepetCalcTit><CalcTit>
+    <VlrCalcdJuros>0.00</VlrCalcdJuros>
+    <VlrCalcdMulta>0.00</VlrCalcdMulta>
+    <VlrCalcdDesct>0.00</VlrCalcdDesct>
+    <VlrTotCobrar>316191.18</VlrTotCobrar>
+    <DtValiddCalc>2017-07-17</DtValiddCalc>
+    </CalcTit></RepetCalcTit><SitTitPgto>12</SitTitPgto><JDCalcTit><DtValiddCalcJD>2017-07-17</DtValiddCalcJD><CdMunicipio>12311</CdMunicipio><DtCalcdJDVencTit>2017-07-17</DtCalcdJDVencTit><VlrCalcdJDAbatt>0</VlrCalcdJDAbatt><VlrCalcdJDJuros>0</VlrCalcdJDJuros><VlrCalcdJDMulta>0</VlrCalcdJDMulta><VlrCalcdJDDesct>0</VlrCalcdJDDesct><VlrCalcdJDTotCobrar>316191.18</VlrCalcdJDTotCobrar><VlrCalcdJDMin>316191.18</VlrCalcdJDMin><VlrCalcdJDMax>316191.18</VlrCalcdJDMax></JDCalcTit></RequisitarTituloCIP></return></NS1:RequisitarTituloCIPCalcVlrResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>';
+    pr_des_erro := 'OK';
+    pr_tpconcip := 1;
+    RETURN;*/
+  
     -- Indica que a rotina não foi executada por completo
     pr_des_erro := 'NOK';
     
@@ -1171,9 +1184,9 @@ END;
                            ,pr_dsxmlerr => vr_dsxmltit.getClobVal()
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
-    dbms_output.put_line('******************************************');
-    dbms_output.put_line('======>>> '||vr_cdcritic);
-    dbms_output.put_line('******************************************');
+    --dbms_output.put_line('******************************************');
+    --dbms_output.put_line('======>>> '||vr_cdcritic);
+    --dbms_output.put_line('******************************************');
     -- Se ocorreu crítica, mas a mesma é diferente da critica 940 - Tempo Excedido
     -- deve gerar o erro e encerrar a rotina
     IF (vr_cdcritic > 0 OR vr_dscritic IS NOT NULL) AND vr_cdcritic <> 940 THEN
@@ -1238,9 +1251,9 @@ END;
     
     -- Se passou pela validação de erros sem encontrar retorno do Fault Packet, deve retornar o XML
     pr_dsxmltit := REPLACE( REPLACE(vr_dsxmltit.getClobVal(),'&lt;','<') ,'&gt;','>');
-    dbms_output.PUT_LINE('#### RETORNO #######################################');
-    dbms_output.put_line(pr_dsxmltit);
-    dbms_output.PUT_LINE('####################################################');
+    --dbms_output.PUT_LINE('#### RETORNO #######################################');
+    --dbms_output.put_line(pr_dsxmltit);
+    --dbms_output.PUT_LINE('####################################################');
     -- Indica que a rotina foi executada com sucesso
     pr_des_erro := 'OK';
     
@@ -1375,9 +1388,9 @@ END;
                            ,pr_dsxmlerr => vr_dsxmltit.getClobVal()
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
-    dbms_output.put_line('******************************************');
-    dbms_output.put_line('======>>> '||vr_cdcritic);
-    dbms_output.put_line('******************************************');
+    --dbms_output.put_line('******************************************');
+    --dbms_output.put_line('======>>> '||vr_cdcritic);
+    --dbms_output.put_line('******************************************');
     -- Se ocorreu crítica, mas a mesma é diferente da critica 940 - Tempo Excedido
     -- deve gerar o erro e encerrar a rotina
     IF (vr_cdcritic > 0 OR vr_dscritic IS NOT NULL) THEN
@@ -1495,7 +1508,7 @@ END;
     
     -- Fechar o cursor
     CLOSE cr_craptit;
-  
+    
     vr_nratutit := NULL;
     
     --Se for titulo da propria cooperativa
@@ -1527,7 +1540,7 @@ END;
     
 
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'EnvioImediato';
-    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 'N'; 
+    vr_tbcampos(vr_tbcampos.COUNT()  ).dsValTag := 'N';
     vr_tbcampos(vr_tbcampos.COUNT()  ).dsTypTag := 'string';    
     --
     vr_tbcampos(vr_tbcampos.COUNT()+1).dsNomTag := 'NumCtrlPart';
@@ -1635,10 +1648,10 @@ END;
     vr_dssrdom := fn_url_SendSoapNPC (pr_idservic => 4);
     
     
-    dbms_output.PUT_LINE('#### REQUISIÇÃO ####################################');
-    dbms_output.put_line(vr_xml.getClobVal());
+    --dbms_output.PUT_LINE('#### REQUISIÇÃO ####################################');
+    --dbms_output.put_line(vr_xml.getClobVal());
     --DBMS_XSLPROCESSOR.CLOB2FILE(vr_xml.getclobval(), '/micros/cecred/odirlei/arq', 'req.xml', NLS_CHARSET_ID('UTF8'));
-    dbms_output.PUT_LINE('####################################################');
+    --dbms_output.PUT_LINE('####################################################');
     
     
     -- Enviar requisição para webservice
@@ -1656,9 +1669,9 @@ END;
     END IF;
     
     
-    dbms_output.PUT_LINE('#### RETORNO #######################################');
-    dbms_output.put_line(vr_xml_res.getClobVal());
-    dbms_output.PUT_LINE('####################################################');
+    --dbms_output.PUT_LINE('#### RETORNO #######################################');
+    --dbms_output.put_line(vr_xml_res.getClobVal());
+    --dbms_output.PUT_LINE('####################################################');
     
     
     -- Verifica se ocorreu retorno com erro no XML

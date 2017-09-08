@@ -8641,7 +8641,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       -- buscar as informacoes do boleto 
       CURSOR cr_npc(pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE) IS
-       SELECT npc.dsxml FROM tbcobran_consulta_titulo npc
+       SELECT npc.dsxml 
+             ,npc.flgcontingencia 
+         FROM tbcobran_consulta_titulo npc
         WHERE npc.cdctrlcs = pr_cdctrlcs;
       rw_npc cr_npc%ROWTYPE;
 
@@ -9196,32 +9198,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           FETCH cr_npc INTO rw_npc;
           CLOSE cr_npc;
           
-          npcb0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_npc.dsxml
-                                           , pr_tbtitulo => vr_tbtitulo
-                                           , pr_des_erro => vr_des_erro
-                                           , pr_dscritic => vr_dscritic);
+          --> Senao estiver em contigencia
+          IF rw_npc.flgcontingencia = 0 THEN
+            npcb0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_npc.dsxml
+                                             , pr_tbtitulo => vr_tbtitulo
+                                             , pr_des_erro => vr_des_erro
+                                             , pr_dscritic => vr_dscritic);
                                            
-          IF pr_idorigem = 4 THEN
-          vr_dscedent := gene0007.fn_caract_acento(
-                                       NVL(TRIM(vr_tbtitulo.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
-                                          ,TRIM(vr_tbtitulo.Nom_RzSocBenfcrioOr)));-- Razão Social do Beneficiário Original
-          END IF;
+            IF pr_idorigem = 4 THEN
+              vr_dscedent := gene0007.fn_caract_acento(
+                                         NVL(TRIM(vr_tbtitulo.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
+                                            ,TRIM(vr_tbtitulo.Nom_RzSocBenfcrioOr)));-- Razão Social do Beneficiário Original
+            END IF;
           
-          vr_dsinfor3:= vr_dsinfor3 || '#Pagador: '           || trim(vr_tbtitulo.Nom_RzSocPagdr) 
-                                    || '#CPF/CNPJ Pagador: '  || gene0002.fn_mask_cpf_cnpj(vr_tbtitulo.CNPJ_CPFPagdr,(CASE vr_tbtitulo.TpPessoaPagdr 
+            vr_dsinfor3:= vr_dsinfor3 || '#Pagador: '           || trim(vr_tbtitulo.Nom_RzSocPagdr) 
+                                      || '#CPF/CNPJ Pagador: '  || gene0002.fn_mask_cpf_cnpj(vr_tbtitulo.CNPJ_CPFPagdr,(CASE vr_tbtitulo.TpPessoaPagdr 
                                                                                                                            WHEN 'F' THEN 1
                                                                                                                            WHEN 'J' THEN 2
                                                                                                                            ELSE 2
                                                                                                                        END) )
-                                    || '#Vencimento: '        || to_char(vr_tbtitulo.DtVencTit,'DD/MM/RRRR') 
-                                    || '#Valor Titulo: '      || to_char(vr_tbtitulo.VlrTit,'fm999g999g990d00') 
-                                    || '#Encargos: '          || trim(to_char((nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdJuros,0) + nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdMulta,0)), 'fm999g999g990d00')) 
-                                    || '#Descontos: '         || trim(to_char((nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdDesct,0) + nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdAbatt,0)), 'fm999g999g990d00'))
-                                    || '#CPF/CNPJ Beneficiario: ' || gene0002.fn_mask_cpf_cnpj(vr_tbtitulo.CNPJ_CPFBenfcrioOr,(CASE vr_tbtitulo.TpPessoaBenfcrioOr 
+                                      || '#Vencimento: '        || to_char(vr_tbtitulo.DtVencTit,'DD/MM/RRRR') 
+                                      || '#Valor Titulo: '      || to_char(vr_tbtitulo.VlrTit,'fm999g999g990d00') 
+                                      || '#Encargos: '          || trim(to_char((nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdJuros,0) + nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdMulta,0)), 'fm999g999g990d00')) 
+                                      || '#Descontos: '         || trim(to_char((nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdDesct,0) + nvl(vr_tbtitulo.TabCalcTit(1).VlrCalcdAbatt,0)), 'fm999g999g990d00'))
+                                      || '#CPF/CNPJ Beneficiario: ' || gene0002.fn_mask_cpf_cnpj(vr_tbtitulo.CNPJ_CPFBenfcrioOr,(CASE vr_tbtitulo.TpPessoaBenfcrioOr 
                                                                                                                                    WHEN 'F' THEN 1
                                                                                                                                    WHEN 'J' THEN 2
                                                                                                                                    ELSE 2
                                                                                                                                END));
+          ELSE
+            vr_dsinfor3:= vr_dsinfor3 || '#Pagador: '            
+                                      || '#CPF/CNPJ Pagador: '   
+                                      || '#Vencimento: '         
+                                      || '#Valor Titulo: '      || to_char(pr_vlfatura,'fm999g999g990d00') 
+                                      || '#Encargos: '          || trim(to_char((nvl(pr_vlrjuros,0) + nvl(pr_vlrmulta,0)), 'fm999g999g990d00'))  
+                                      || '#Descontos: '         || trim(to_char((nvl(pr_vldescto,0) + nvl(pr_vlabatim,0)), 'fm999g999g990d00'))
+                                      || '#CPF/CNPJ Beneficiario: ' ;   
+          
+          
+          END IF;                                                                                                                   
           vr_des_erro := NULL;
           vr_dscritic := NULL;
         EXCEPTION 
