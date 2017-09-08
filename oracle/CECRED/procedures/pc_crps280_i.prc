@@ -341,7 +341,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               (Odirlei-AMcom)   
 							  
                  05/09/2017 - Ajustado para gerar os historicos separadamente no arquivo AJUSTE_MICROCREDITO
-                              (Rafael Faria - Supero)							                                        
+                              (Rafael Faria - Supero)
   ............................................................................. */
 
    DECLARE
@@ -355,8 +355,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       -- Desvio de fluxo para ingorar o registro
       vr_exc_ignorar EXCEPTION;
       -- chave de indice 
-      vr_chave_index VARCHAR2(240);
-      
+      vr_chave_index VARCHAR2(240);    
+
       -- Constante para usar em indice do primeiro nivel
       vr_vlfinanc_pf CONSTANT VARCHAR2(10) := 'VLFINANCPF'; -- Valor Financiamento PF
       vr_vlfinanc_pj CONSTANT VARCHAR2(10) := 'VLFINANCPJ'; -- Valor Financiamento PJ   
@@ -531,8 +531,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         IS TABLE OF crapass.nrdconta%TYPE
           INDEX BY PLS_INTEGER;
 
-      vr_tab_craptco typ_tab_craptco;  
-      
+      vr_tab_craptco typ_tab_craptco;      
+
       -- Definição de registro para totalização por origem de microcrédito
       TYPE typ_reg_microcredito IS
         RECORD(idgrumic INTEGER   -- Id do grupo para separação das informações - 1 - CECRED / 2 - BNDES
@@ -870,7 +870,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
         WHERE craplcr.cdcooper = pr_cdcooper
         AND   craplcr.cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
-      
+
       CURSOR cr_craplem(pr_nrdconta IN craplem.nrdconta%TYPE
                        ,pr_nrctremp IN craplem.nrctremp%TYPE) IS 
         SELECT lem.cdhistor
@@ -882,7 +882,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
            AND lem.dtmvtolt BETWEEN TRUNC(pr_rw_crapdat.dtmvtolt,'MM') AND pr_rw_crapdat.dtmvtolt
            AND lem.cdhistor in (91,95,441) --> Pagamentos / juros
          GROUP BY lem.cdhistor; 
-      
+
       CURSOR cr_craplim(pr_nrdconta IN craplim.nrdconta%TYPE
                        ,pr_nrctremp IN craplim.nrctrlim%TYPE) IS 
         SELECT count(*) existe_contrato_finame
@@ -1082,7 +1082,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       -- Configuração para mês novo
       vr_tab_ddmesnov INTEGER;
       vr_flgconsg     INTEGER;
-      
+
       --microcredito
       vr_chave_microcredito craplcr.dsorgrec%TYPE;
       vr_cdusolcr           craplcr.cdusolcr%TYPE;
@@ -1096,7 +1096,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
       vr_dtmvtolt_yymmdd    VARCHAR2(6);
       vr_nom_diretorio      VARCHAR2(200); 
       vr_nom_dir_copia      VARCHAR2(200);
-      
+
       -- P307 Calculo de Compensação de Microcrédito
       vr_tot_vltttlcr_dim        NUMBER := 0;
       vr_tot_vltttlcr_dim_outros NUMBER := 0;       
@@ -1615,12 +1615,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                               ,1662
                                               ,vr_tab_miccred_fin(vr_chave_finalidade).vllibctr
                                               ,vr_descricao);
-                                               
+
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
                IF vr_chave_finalidade IN (1,4) THEN
-               vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);
+                  vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);
                ELSE
                  vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);  
                END IF;
@@ -1662,7 +1662,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
                IF vr_chave_finalidade IN (1,4) THEN
-               vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
+                 vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
                ELSE
                  vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
                END IF;
@@ -1683,7 +1683,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
                IF vr_chave_finalidade IN (1,4) THEN
-               vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
+                 vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
                ELSE
                  vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec); 
                END IF; 
@@ -1731,7 +1731,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
                IF vr_chave_finalidade IN (1,4) THEN
-               vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
+                 vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
                ELSE
                  vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);                 
                END IF;
@@ -1752,7 +1752,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
             
                IF vr_chave_finalidade IN (1,4) THEN
-               vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
+                 vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
                ELSE
                  vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper); 
                END IF;
@@ -1786,10 +1786,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                               ,vr_destino
                                               ,vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91
                                               ,vr_descricao);
-               
+                                               
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
-            
+
                IF vr_chave_finalidade IN (1,4) THEN            
                  vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91);
                ELSE
@@ -1798,11 +1798,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
-            END IF; 
+            END IF;    
 
             -- Gera no arquivo linhas referente a valor de pagamento de parcelas de contrato
             IF vr_tab_miccred_fin(vr_chave_finalidade).vldebpar95 > 0 THEN
-              
+
                IF vr_chave_finalidade = 1 THEN
                   vr_destino := 1437;
                   vr_descricao := '"AJUSTE CONTABIL - PAGTO. MENSAL MICROCREDITO CEF"';
@@ -1842,26 +1842,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
             IF vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441 > 0 THEN
               
                IF vr_chave_finalidade = 1 THEN
-                  vr_destino := 1437;
-                  vr_descricao := '"AJUSTE CONTABIL - AJUSTE DE SALDO MICROCREDITO CEF"';
+                  vr_origem  := 7306;
+                  vr_destino := 7302;
+                  vr_descricao := '(AJUSTE DE SALDO - MICROCREDITO CEF - AJUSTE CONTABIL)"';
                ELSIF vr_chave_finalidade = 2 THEN
-                  vr_destino := 1780;  
-                  vr_descricao := '"AJUSTE CONTABIL - AJUSTE DE SALDO CCB IMOBILIZADO REFAP"';
+                  vr_origem  := 7306;
+                  vr_destino := 7112;
+                  vr_descricao := '(AJUSTE DE SALDO - CCB IMOBILIZADO REFAP - AJUSTE CONTABIL)"';
                ELSIF vr_chave_finalidade = 3 THEN
-                  vr_destino := 5505;  
-                  vr_descricao := '"AJUSTE CONTABIL - AJUSTE DE SALDO CCB MAIS CREDITO"';
+                  vr_origem  := 7306;
+                  vr_destino := 7011;
+                  vr_descricao := '(AJUSTE DE SALDO - CCB MAIS CREDITO - AJUSTE CONTABIL)"';
                ELSIF vr_chave_finalidade = 4 THEN
-                  vr_destino := 1440;  
-                  vr_descricao := '"AJUSTE CONTABIL - AJUSTE DE SALDO MICROCREDITO BNDES"';
+                  vr_origem  := 1440;
+                  vr_destino := 1662;
+                  vr_descricao := '(AJUSTE DE SALDO - MICROCREDITO BNDES - AJUSTE CONTABIL)"';
                END IF;
                
                vr_setlinha := fn_set_cabecalho('20'
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,pr_rw_crapdat.dtmvtolt
-                                              ,1662
+                                              ,vr_origem
                                               ,vr_destino
                                               ,vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441
-                                              ,vr_descricao);
+                                              ,'"EMPRESTIMOS EFETUADOS PARA ASSOCIADOS - (0441) JUROS SOBRE EMPRESTIMOS ' || vr_descricao);
                                                
                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                              ,pr_des_text => vr_setlinha); --> Texto para escrita
@@ -1952,7 +1956,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
            vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarqmic||'>: ' || SQLERRM;
            RAISE vr_exc_erro;
         END;
-        
+
         -- Copia o arquivo gerado para o diretório final convertendo para DOS
         gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqmic||' > '||vr_nom_dir_copia||'/'||vr_nmarqmic||' 2>/dev/null',
                                     pr_typ_saida   => vr_typ_said,
@@ -3752,7 +3756,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                 (vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (2,3)) AND
                  vr_tab_crapris(vr_des_chave_crapris).cdusolcr = 0) AND
                vr_tab_crapris(vr_des_chave_crapris).dsorgrec <> ' ' THEN
-            
+          
                -- Garantir que a finalidade exista na PL Table
                IF NOT vr_tab_miccred_fin.exists(vr_tab_crapris(vr_des_chave_crapris).cdfinemp) THEN
                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr    := 0;
@@ -3762,15 +3766,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95  := 0;
                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 := 0;                 
                END IF;
-                        
-                  --Apenas contratos liberados no mês
+               
+               --Apenas contratos liberados no mês
                IF vr_tab_crapris(vr_des_chave_crapris).dtinictr BETWEEN TRUNC(pr_rw_crapdat.dtmvtolt,'mm') 
                                                                     AND pr_rw_crapdat.dtmvtolt THEN 
-                     vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr + vr_tab_dados_epr(vr_indice).vlemprst;
-                  END IF;
-                  
-                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec + vr_tab_dados_epr(vr_indice).vljurmes;
-                  vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper + vr_vlpreatr;
+                 vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vllibctr + vr_tab_dados_epr(vr_indice).vlemprst;
+               END IF;
+
+               vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlaprrec + vr_tab_dados_epr(vr_indice).vljurmes;
+               vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vlprvper + vr_vlpreatr;
 
                -- Busca valor de parcelas pagas
                FOR rw_craplem in cr_craplem(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
@@ -3779,21 +3783,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                    vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar91 + rw_craplem.vllanmto;
                  ELSIF rw_craplem.cdhistor = 95 then 
                    vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar95 + rw_craplem.vllanmto;
-                  ELSE
+                 ELSE 
                    vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 := vr_tab_miccred_fin(vr_tab_crapris(vr_des_chave_crapris).cdfinemp).vldebpar441 + rw_craplem.vllanmto;
-               END IF;
+                 END IF;
                END LOOP;
               
                --Agupar valores microcrédito das filiadas por nível de risco
                IF vr_tab_crapris(vr_des_chave_crapris).cdfinemp IN (1,4) THEN
-               IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
-                  vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + vr_vldivida;
-               ELSE
-                 vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_vldivida;
-               END IF;
+                 IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
+                   vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + vr_vldivida;
+                 ELSE
+                   vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_vldivida;
+                 END IF;
                END IF;
             END IF;
-            
+
             --Agrupar informações operação finame
             IF vr_tab_crapris(vr_des_chave_crapris).cdmodali = 201 THEN
               
@@ -3810,8 +3814,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                     
                     vr_tot_libctnfiname   := vr_tot_libctnfiname + vr_vldivida;
                     
-                  END IF;
-                  
+         END IF;
+        
                   vr_tot_prvperdafiname := vr_tot_prvperdafiname + vr_vlpreatr;
                   
                   --Agrupar valores de finame por nível de risco
@@ -3827,10 +3831,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          -- Buscar o próximo registro
          vr_des_chave_crapris := vr_tab_crapris.NEXT(vr_des_chave_crapris);
       END LOOP;
-      
+
       --Gerar arquivo de operações de micro crédito e finame das filiadas
       IF (TRUNC(pr_rw_crapdat.dtmvtolt,'mm') <> TRUNC(pr_rw_crapdat.dtmvtopr,'mm')) THEN
-         
+
          -- Formata a data para criar o nome do arquivo
          vr_dtmvtolt_yymmdd := to_char(pr_rw_crapdat.dtmvtolt, 'yymmdd');
       
@@ -3848,7 +3852,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          IF pr_cdcooper = 3 THEN
            --Gera arquivo de operação de microcrédito
            pc_gera_arq_miccred(pr_dscritic);
-          
+
            IF pr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
            END IF;
@@ -4124,7 +4128,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                             ||'  <vlsdeved_caixa>'||to_char(rw_reccaixa.vlsdeved,'fm999g999g999g990d00')||'</vlsdeved_caixa>'
                             ||'</reccaixa>';     
         END LOOP;
-        
+      
         vr_des_xml_gene := vr_des_xml_gene || '</tabreccaixa>';   
       END IF;
       
@@ -4265,7 +4269,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          -- Gerar exceção
          RAISE vr_exc_erro;
       END IF;
-      
+
       
       -- Solicitar a geração do relatório crrl227
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
