@@ -1,9 +1,9 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS365(pr_cdcooper  IN  crapcop.cdcooper%TYPE   --> Cooperativa
-                                      ,pr_flgresta  IN  PLS_INTEGER             --> Controle de restart
-                                      ,pr_stprogra  OUT PLS_INTEGER             --> Saída de termino da execução
-                                      ,pr_infimsol  OUT PLS_INTEGER             --> Saída de termino da solicitação
-                                      ,pr_cdcritic  OUT NUMBER                  --> Código crítica
-                                      ,pr_dscritic  OUT VARCHAR2) IS            --> Descrição crítica
+                                             ,pr_flgresta  IN  PLS_INTEGER             --> Controle de restart
+                                             ,pr_stprogra  OUT PLS_INTEGER             --> Saída de termino da execução
+                                             ,pr_infimsol  OUT PLS_INTEGER             --> Saída de termino da solicitação
+                                             ,pr_cdcritic  OUT NUMBER                  --> Código crítica
+                                             ,pr_dscritic  OUT VARCHAR2) IS            --> Descrição crítica
 BEGIN
   /* .............................................................................
 
@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/2003.                      Ultima atualizacao: 21/01/2014
+   Data    : Outubro/2003.                      Ultima atualizacao: 21/03/2017
 
    Dados referentes ao programa:
 
@@ -70,6 +70,9 @@ BEGIN
                28/11/2013 - Ajustes nas variaveis tratadas durante a iniprg (Marcos-Supero)
 
                21/01/2014 - Nao gerar o pdf do crrl312 (Gabriel).
+               
+               21/03/2017 - Segregar informações de saldo de desconto de cheques em PF e PJ
+                            Projeto 307 Automatização Arquivos Contábeis Ayllos (Jonatas - Supero)
   ............................................................................. */
   DECLARE
     -- PL Table para borderos
@@ -109,7 +112,8 @@ BEGIN
             ,vlliquid crapcdb.vlliquid%TYPE
             ,cdagenci crapass.cdagenci%TYPE
             ,cdcmpchq crapcdb.cdcmpchq%TYPE
-            ,nmprimtl crapass.nmprimtl%TYPE);
+            ,nmprimtl crapass.nmprimtl%TYPE
+            ,inpessoa crapass.inpessoa%TYPE);
 
     -- Definição de tipo da PL Table
     TYPE typ_tab_crapcdb IS TABLE OF typ_reg_crapcdb INDEX BY VARCHAR2(300);
@@ -148,20 +152,50 @@ BEGIN
     -- Pl Table para a tabela CRAPASS
     TYPE typ_reg_crapass IS
       RECORD(cdagenci crapass.cdagenci%TYPE
-            ,nmprimtl crapass.nmprimtl%TYPE);
+            ,nmprimtl crapass.nmprimtl%TYPE
+            ,inpessoa crapass.inpessoa%TYPE);
 
     -- Definição de tipo para PL Table
     TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY VARCHAR2(15);
+    
+    -- Pl Table para resumo de valores totais de desconto cheque por agência
+    TYPE typ_tot_dsc_chq IS
+      RECORD(vllimite NUMBER(20,2)
+            ,vldescto NUMBER(20,2)
+            ,vldjuros NUMBER(20,2)
+            ,vldispon NUMBER(20,2));
+            
+     -- Definição de tipo para PL Table
+    TYPE typ_tab_tot_dsc_chq IS TABLE OF typ_tot_dsc_chq INDEX BY BINARY_INTEGER;
+    
+    -- Pl Table para resumo de valores totais de desconto cheque por agência
+    TYPE typ_tot_dsc_chq_pf_pj IS
+      RECORD(vllimite_pf NUMBER(20,2)
+            ,vldescto_pf NUMBER(20,2)
+            ,vldjuros_pf NUMBER(20,2)
+            ,vldispon_pf NUMBER(20,2)
+            ,vllimite_pj NUMBER(20,2)
+            ,vldescto_pj NUMBER(20,2)
+            ,vldjuros_pj NUMBER(20,2)
+            ,vldispon_pj NUMBER(20,2));
+            
+     -- Definição de tipo para PL Table
+    TYPE typ_tab_tot_dsc_chq_pf_pj IS TABLE OF typ_tot_dsc_chq_pf_pj INDEX BY BINARY_INTEGER;    
+    
 
-    vr_tab_borderos typ_tab_borderbos;                  --> Armazenar borderos
-    vr_tab_work     typ_tab_work;                       --> Armazenar dados do processo
-    vr_tab_crapcdb  typ_tab_crapcdb;                    --> Armazenar dados da tabela CRAPCDB
-    vr_tab_crapcdbr typ_tab_crapcdb;                    --> Armazenar dados da tabela CRAPCDB
-    vr_tab_crapage  typ_tab_crapage;                    --> Armazenar dados da tabela CRAPAGE
-    vr_tab_crapljd  typ_tab_crapljd;                    --> Armazenar dados da tabela CRAPLJD
-    vr_tab_crapcec  typ_tab_crapcec;                    --> Armazenar dados da tabela CRAPCEC
-    vr_tab_craplim  typ_tab_craplim;                    --> Armazenar dados da tabela CRAPLIM
-    vr_tab_crapass  typ_tab_crapass;                    --> Armazenar dados da tabela CRAPASS
+    vr_tab_borderos          typ_tab_borderbos;         --> Armazenar borderos
+    vr_tab_work              typ_tab_work;              --> Armazenar dados do processo
+    vr_tab_crapcdb           typ_tab_crapcdb;           --> Armazenar dados da tabela CRAPCDB
+    vr_tab_crapcdbr          typ_tab_crapcdb;           --> Armazenar dados da tabela CRAPCDB
+    vr_tab_crapage           typ_tab_crapage;           --> Armazenar dados da tabela CRAPAGE
+    vr_tab_crapljd           typ_tab_crapljd;           --> Armazenar dados da tabela CRAPLJD
+    vr_tab_crapcec           typ_tab_crapcec;           --> Armazenar dados da tabela CRAPCEC
+    vr_tab_craplim           typ_tab_craplim;           --> Armazenar dados da tabela CRAPLIM
+    vr_tab_crapass           typ_tab_crapass;           --> Armazenar dados da tabela CRAPASS
+    vr_tab_tot_dsc_chq       typ_tab_tot_dsc_chq; 
+    vr_tab_tot_dsc_chq_pf_pj typ_tab_tot_dsc_chq_pf_pj;               
+    
+    --
     vr_cdprogra     VARCHAR2(100);                      --> Nome do programa
     vr_nom_dir      VARCHAR2(400);                      --> Diretório do relatório
     rw_crapdat      btch0001.cr_crapdat%ROWTYPE;        --> Cursor de informações sobre datas de execução
@@ -177,6 +211,7 @@ BEGIN
     vr_rel_dscpfcgc VARCHAR2(400);                      --> CPF ou CNPJ
     vr_rel_nrdconta PLS_INTEGER := 0;                   --> Númerdo da conta
     vr_rel_nmprimtl VARCHAR2(100);                      --> Nome para impressão
+    vr_rel_inpessoa VARCHAR2(2);                        --> Tipo de pessoa - PF ou PJ
     vr_rel_deschequ VARCHAR2(19);                       --> Descrição do cheque
     vr_rel_qtdsocio PLS_INTEGER := 0;                   --> Quantidade de associados
     vr_rel_descgral VARCHAR2(19);                       --> Descrição de grau
@@ -233,6 +268,7 @@ BEGIN
       SELECT cp.cdagenci
             ,cp.nmprimtl
             ,cp.nrdconta
+            ,cp.inpessoa
       FROM crapass cp
       WHERE cp.cdcooper = pr_cdcooper;
 
@@ -400,6 +436,7 @@ BEGIN
 
       vr_tab_crapass(vr_gerindex).cdagenci := rw_crapass.cdagenci;
       vr_tab_crapass(vr_gerindex).nmprimtl := rw_crapass.nmprimtl;
+      vr_tab_crapass(vr_gerindex).inpessoa := rw_crapass.inpessoa;
     END LOOP;
 
     FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper, rw_crapdat.dtmvtolt, rw_crapdat.dtmvtopr) LOOP
@@ -442,6 +479,7 @@ BEGIN
         vr_tab_crapcdb(vr_gerindex).cdagenci := vr_tab_crapass(lpad(rw_crapcdb.nrdconta, 15, '0')).cdagenci;
         vr_tab_crapcdb(vr_gerindex).cdcmpchq := rw_crapcdb.cdcmpchq;
         vr_tab_crapcdb(vr_gerindex).nmprimtl := vr_tab_crapass(lpad(rw_crapcdb.nrdconta, 15, '0')).nmprimtl;
+        vr_tab_crapcdb(vr_gerindex).inpessoa := vr_tab_crapass(lpad(rw_crapcdb.nrdconta, 15, '0')).inpessoa;
       END IF;
     END LOOP;
 
@@ -480,8 +518,8 @@ BEGIN
       vr_tab_crapljd(vr_gerindex).controle := lpad(rw_crapljd.nrdconta, 15, '0') ||
                                               lpad(rw_crapljd.nrborder, 20, '0') ||
                                               lpad(rw_crapljd.cdcmpchq, 10, '0') ||
-                                              lpad(rw_crapljd.cdbanchq, 5, '0') ||
-                                              lpad(rw_crapljd.cdagechq, 5, '0') ||
+                                              lpad(rw_crapljd.cdbanchq, 5, '0')  ||
+                                              lpad(rw_crapljd.cdagechq, 5, '0')  ||
                                               lpad(rw_crapljd.nrctachq, 20, '0') ||
                                               lpad(rw_crapljd.nrcheque, 30, '0');
     END LOOP;
@@ -581,6 +619,11 @@ BEGIN
       IF vr_tab_crapcdb.prior(vr_index) IS NULL OR vr_tab_crapcdb(vr_index).nrdconta <> vr_tab_crapcdb(vr_tab_crapcdb.prior(vr_index)).nrdconta THEN
         vr_rel_nrdconta := vr_tab_crapcdb(vr_index).nrdconta;
         vr_rel_nmprimtl := vr_tab_crapcdb(vr_index).nmprimtl;
+        IF vr_tab_crapcdb(vr_index).inpessoa = 1 THEN
+          vr_rel_inpessoa := 'PF';
+        ELSE
+          vr_rel_inpessoa := 'PJ';
+        END IF;
 
         -- Gerar dados para o relatório de auditoria
         vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<registro2><nrdconta>' || to_char(vr_rel_nrdconta, 'FM9999G999G999G9') || '</nrdconta>' ||
@@ -670,7 +713,8 @@ BEGIN
 
         -- Gera dados para relatório
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<registro1><rel_nrdconta>' || to_char(vr_rel_nrdconta, 'FM9999999G999G9') || '</rel_nrdconta>' ||
-                                            '<rel_nmprimtl><![CDATA[' || vr_rel_nmprimtl || ']]></rel_nmprimtl>';
+                                            '<rel_nmprimtl><![CDATA[' || vr_rel_nmprimtl || ']]></rel_nmprimtl>' ||
+                                            '<rel_inpessoa><![CDATA[' || vr_rel_inpessoa || ']]></rel_inpessoa>';
         gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
         vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<rel_qtcheque>' || to_char(vr_rel_qtcheque, 'FM9999G999G999G999') || '</rel_qtcheque>' ||
                                             '<rel_qtdsocio>' || to_char(vr_rel_qtdsocio, 'FM9999G999G999G999') || '</rel_qtdsocio>';
@@ -693,6 +737,62 @@ BEGIN
 
         vr_controle := TRUE;
 
+        --Sumarizar valores desconto cheques por agencia
+        IF NOT vr_tab_tot_dsc_chq.exists(vr_tab_crapcdb(vr_index).cdagenci) THEN
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vllimite := NVL(vr_rel_vllimite,0); 
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldescto := NVL(vr_rel_vldescto,0); 
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldjuros := NVL(vr_rel_vldjuros,0); 
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldispon := NVL(vr_rel_disponiv,0);
+        ELSE
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vllimite := vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vllimite + nvl(vr_rel_vllimite,0); 
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldescto := vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldescto + nvl(vr_rel_vldescto,0); 
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldjuros := vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldjuros + nvl(vr_rel_vldjuros,0); 
+          vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldispon := vr_tab_tot_dsc_chq(vr_tab_crapcdb(vr_index).cdagenci).vldispon + nvl(vr_rel_disponiv,0); 
+        END IF;                                        
+
+        
+        --Sumarizar valores desconto cheques por agencia e tipo de pessoa
+        IF NOT vr_tab_tot_dsc_chq_pf_pj.exists(vr_tab_crapcdb(vr_index).cdagenci) THEN
+          IF vr_tab_crapcdb(vr_index).inpessoa = 1 then
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pf := NVL(vr_rel_vllimite,0); 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pf := NVL(vr_rel_vldescto,0); 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pf := NVL(vr_rel_vldjuros,0); 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pf := NVL(vr_rel_disponiv,0);  
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pj := 0; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pj := 0; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pj := 0; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pj := 0;                               
+                                         
+          ELSE
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pj := NVL(vr_rel_vllimite,0); 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pj := NVL(vr_rel_vldescto,0); 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pj := NVL(vr_rel_vldjuros,0); 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pj := NVL(vr_rel_disponiv,0); 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pf := 0; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pf := 0; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pf := 0; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pf := 0;                                           
+          END IF; 
+        
+        ELSE
+            
+          IF vr_tab_crapcdb(vr_index).inpessoa = 1 then
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pf := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pf + vr_rel_vllimite; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pf := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pf + vr_rel_vldescto; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pf := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pf + vr_rel_vldjuros; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pf := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pf + vr_rel_disponiv;                               
+          ELSE
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pj := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vllimite_pj + vr_rel_vllimite; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pj := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldescto_pj + vr_rel_vldescto; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pj := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldjuros_pj + vr_rel_vldjuros; 
+            vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pj := vr_tab_tot_dsc_chq_pf_pj(vr_tab_crapcdb(vr_index).cdagenci).vldispon_pj + vr_rel_disponiv;                               
+          END IF;                   
+        
+        END IF;
+        
+  
+
+
         -- Sumarizar valores
         vr_tot_qtcheque := vr_tot_qtcheque + vr_rel_qtcheque;
         vr_tot_vldescto := vr_tot_vldescto + vr_rel_vldescto;
@@ -700,6 +800,7 @@ BEGIN
         vr_rel_qtcheque := 0;
         vr_rel_vldescto := 0;
         vr_rel_vldjuros := 0;
+        
       END IF;
 
       IF vr_tab_crapcdb.next(vr_index) IS NULL OR
@@ -904,20 +1005,89 @@ BEGIN
       gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
       vr_xmlbuffer_1 := vr_xmlbuffer_1 || '<tot_vlrutili>' || to_char(vr_tot_vlrutili, 'FM999G999G999G990D00') || '</tot_vlrutili>' ||
                                           '<tot_vlrnaout>' || to_char(vr_tot_vlrnaout, 'FM999G999G999G990D00') || '</tot_vlrnaout></totalGeralPessoa>';
-      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
 
       vr_xmlbuffer_1 := vr_xmlbuffer_1 || '</regPessoa' || vr_tipopess || '>';
+      
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1); 
     END LOOP;
 
     -- Fechar TAG pai
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '</TipoPessoa>';
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => TRUE, pr_clob    => vr_xml_1);
 
     vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<totalFinal><tot_geralchq>' || to_char(vr_tot_geralchq, 'FM999G999G999G999') || '</tot_geralchq>' ||
                                         '<tot_valordes>' || to_char(vr_tot_valordes, 'FM999G999G999G990D00') || '</tot_valordes>';
     gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
     vr_xmlbuffer_2 := vr_xmlbuffer_2 || '<tot_valorjur>' || to_char(vr_tot_valorjur, 'FM999G999G999G990D00') || '</tot_valorjur></totalFinal>';
     gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_2, pr_gravfim => FALSE, pr_clob    => vr_xml_2);
+    
+    --Quadro de resumo de desconto de cheques
+    vr_xmlbuffer_1 := vr_xmlbuffer_1 ||'<resumo_dsc_chq>';
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);    
+    
+    --Resumo total por agencia de desconto de cheques
+    vr_index := null;    
+    vr_index := vr_tab_tot_dsc_chq.first;
+    LOOP
+      
+      EXIT WHEN vr_index IS NULL;
+    
+      vr_xmlbuffer_1 := vr_xmlbuffer_1 ||'<total_geral>'
+                                       ||  '<res_cdagenci>'||vr_index||'</res_cdagenci>'
+                                       ||  '<res_vllimite>'||to_char(vr_tab_tot_dsc_chq(vr_index).vllimite, 'FM999G999G999G990D00')||'</res_vllimite>'
+                                       ||  '<res_vldescto>'||to_char(vr_tab_tot_dsc_chq(vr_index).vldescto, 'FM999G999G999G990D00')||'</res_vldescto>'
+                                       ||  '<res_vldjuros>'||to_char(vr_tab_tot_dsc_chq(vr_index).vldjuros, 'FM999G999G999G990D00')||'</res_vldjuros>'
+                                       ||  '<res_vldispon>'||to_char(vr_tab_tot_dsc_chq(vr_index).vldispon, 'FM999G999G999G990D00')||'</res_vldispon>'                                                                                                                                       
+                                       ||'</total_geral>';    
 
+      gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);
+      
+      vr_index := vr_tab_tot_dsc_chq.NEXT(vr_index);
+        
+    END LOOP;
+    
+    --Resumo por tipo de pessoa e agencia de desconto de cheques
+    FOR indpes in 1..2 LOOP
+      vr_index := null;
+      vr_index := vr_tab_tot_dsc_chq_pf_pj.first;
+      LOOP
+        
+        EXIT WHEN vr_index IS NULL;
+        
+        IF indpes = 1 THEN 
+          vr_xmlbuffer_1 := vr_xmlbuffer_1 ||'<total_pf>'
+                                           ||  '<res_cdagenci_pf>'||vr_index||'</res_cdagenci_pf>'
+                                           ||  '<res_vllimite_pf>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vllimite_pf, 'FM999G999G999G990D00')||'</res_vllimite_pf>'
+                                           ||  '<res_vldescto_pf>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldescto_pf, 'FM999G999G999G990D00')||'</res_vldescto_pf>'
+                                           ||  '<res_vldjuros_pf>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldjuros_pf, 'FM999G999G999G990D00')||'</res_vldjuros_pf>'
+                                           ||  '<res_vldispon_pf>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldispon_pf, 'FM999G999G999G990D00')||'</res_vldispon_pf>'                                                                                                                                       
+                                           ||'</total_pf>'; 
+                                           
+          gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);                                           
+                                             
+        ELSE
+
+          vr_xmlbuffer_1 := vr_xmlbuffer_1 ||'<total_pj>'
+                                           ||  '<res_cdagenci_pj>'||vr_index||'</res_cdagenci_pj>'
+                                           ||  '<res_vllimite_pj>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vllimite_pj, 'FM999G999G999G990D00')||'</res_vllimite_pj>'
+                                           ||  '<res_vldescto_pj>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldescto_pj, 'FM999G999G999G990D00')||'</res_vldescto_pj>'
+                                           ||  '<res_vldjuros_pj>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldjuros_pj, 'FM999G999G999G990D00')||'</res_vldjuros_pj>'
+                                           ||  '<res_vldispon_pj>'||to_char(vr_tab_tot_dsc_chq_pf_pj(vr_index).vldispon_pj, 'FM999G999G999G990D00')||'</res_vldispon_pj>'                                                                                                                                       
+                                           ||'</total_pj>';   
+                                           
+          gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);                                           
+                                                    
+        END IF; 
+
+        
+        vr_index := vr_tab_tot_dsc_chq_pf_pj.NEXT(vr_index);
+          
+      END LOOP;
+    END LOOP;
+    
+    vr_xmlbuffer_1 := vr_xmlbuffer_1 ||'</resumo_dsc_chq>';
+    gene0002.pc_clob_buffer(pr_dados   => vr_xmlbuffer_1, pr_gravfim => FALSE, pr_clob    => vr_xml_1);    
+    
     -- Fechar TAG XML
     vr_xmlbuffer_1 := vr_xmlbuffer_1 || '</registros1></base>';
     vr_xmlbuffer_2 := vr_xmlbuffer_2 || '</registros2></base>';
@@ -935,7 +1105,7 @@ BEGIN
                                ,pr_dsjasper  => 'crrl311.jasper'
                                ,pr_dsparams  => 'PR_QUEBRA##S'
                                ,pr_dsarqsaid => vr_nom_dir || '/crrl311.lst'
-                               ,pr_flg_gerar => 'N'
+                               ,pr_flg_gerar => 'N' 
                                ,pr_qtcoluna  => 132
                                ,pr_sqcabrel  => 1
                                ,pr_cdrelato  => NULL
@@ -1015,4 +1185,3 @@ BEGIN
   END;
 END PC_CRPS365;
 /
-
