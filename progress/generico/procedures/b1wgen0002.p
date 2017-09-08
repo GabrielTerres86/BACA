@@ -13139,8 +13139,9 @@ PROCEDURE atualiza_dados_avalista_proposta:
 
     END. /* DO WHILE TRUE TRANSACTION */
 
-    /* Se devemos cancelar a proposta na Esteira */
-    IF aux_flcancel THEN
+    /* Soh devemos cancelar a proposta na Esteira quando chamada */
+    /* for ASA - Alterar Somente Avalistas */
+    IF aux_flcancel AND par_dsdopcao = "ASA" THEN
     DO:
       
       FIND FIRST crapope  

@@ -2959,8 +2959,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 												pr_dsprotocolo => vr_dsprotocolo,
                         pr_dscritic    => vr_dscritic);            
     
-    -- verificar se retornou critica
-    IF vr_dscritic IS NOT NULL THEN
+    -- verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada
+    IF vr_dscritic IS NOT NULL AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' THEN
       RAISE vr_exc_erro;
     END IF;      
     
@@ -2986,7 +2986,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --IF TRIM(vr_dscritic) IS NOT NULL THEN
       --  RAISE vr_exc_erro;
       --END IF;
-    END IF;       
+    END IF;   
+    
+    --> Atualizar proposta
+    BEGIN
+      UPDATE crawepr wpr 
+         SET wpr.dtenvest = NULL
+            ,wpr.hrenvest = 0
+            ,wpr.cdopeste = ' '
+       WHERE wpr.cdcooper = pr_cdcooper
+         AND wpr.nrdconta = pr_nrdconta
+         AND wpr.nrctremp = pr_nrctremp;
+    EXCEPTION    
+      WHEN OTHERS THEN
+        vr_dscritic := 'Nao foi possivel atualizar proposta apos cancelamento: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END; 
+    
+    COMMIT;  
+        
     
   EXCEPTION
     WHEN vr_exc_erro THEN
