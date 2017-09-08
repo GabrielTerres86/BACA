@@ -8583,6 +8583,7 @@ create or replace package body cecred.PAGA0002 is
           ,lau.nmprepos
           ,lau.dslindig
           ,lau.idlancto
+          ,lau.nrseqagp
       FROM craplau lau
     WHERE (lau.cdcooper = pr_cdcooper
       AND  lau.nrdconta = pr_nrdconta   
@@ -8912,11 +8913,13 @@ create or replace package body cecred.PAGA0002 is
               vr_incancel := 2;
             END IF;    
                 
-            -- Se for GPS, nao permite cancelar na tela de Agendamentos
-            IF rw_craplau.dscedent LIKE '%GPS IDENTIFICADOR%' THEN
+            
+            /* ajustado para permitir cancelamento devido a alterações no Mobile
+			-- Se for GPS, nao permite cancelar na tela de Agendamentos
+			IF rw_craplau.nrseqagp > 0 THEN
               vr_incancel := 3;
-            END IF;    
-                
+            END IF;            
+            */    
             -- Se for DARF/DAS e jah foi efetivado nao pode ser permitido o cancelamento.
             IF rw_craplau.cdtiptra = 10 AND rw_craplau.insitlau = 2 THEN
               vr_incancel := 2;

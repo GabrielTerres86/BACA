@@ -1150,7 +1150,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                   DO:
                     ASSIGN aux_dstiptra = "Pagamento de Boletos Diversos".
                   END.
-                  ELSE 
+                ELSE
                   DO:
                     ASSIGN aux_dstiptra = "GPS".
                   END.
@@ -2461,15 +2461,47 @@ PROCEDURE cancelar-agendamento:
                 UNDO TRANSACAO, LEAVE TRANSACAO.                      
             END.
             
-        /* Se for agendamento de TED*/
-        IF craplau.cdtiptra = 4 THEN
+      /* Se for agendamento de gps */
+        IF craplau.cdtiptra = 2 AND craplau.nrseqagp > 0 THEN DO:
+        
+            IF craplau.insitlau <> 1 THEN DO:
+                ASSIGN par_dscritic = "Para cancelar, o agendamento deve estar PENDENTE.".
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.        
+            
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_gps_agmto_desativar_car aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper,         /* pr_cdcooper */
+                                  INPUT par_nrdconta,         /* pr_nrdconta */
+                                  INPUT craplau.nrseqagp,     /* pr_nrseqagp */
+                                  INPUT 3,                    /* pr_idorigem */
+                                  INPUT "996",                /* pr_cdoperad */
+                                  INPUT "INTERNETBANK",       /* pr_nmdatela */
+                                  INPUT 1,                    /* pr_flmobile */
+                                  OUTPUT "").                 /* pr_dscritic */
+
+              CLOSE STORED-PROC pc_gps_agmto_desativar_car aux_statproc = PROC-STATUS
+                    WHERE PROC-HANDLE = aux_handproc.
+
+              ASSIGN par_dscritic = pc_gps_agmto_desativar_car.pr_dscritic
+                                    WHEN pc_gps_agmto_desativar_car.pr_dscritic <> ?.
+           
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              IF par_dscritic <> "" THEN DO:
+                UNDO TRANSACAO, LEAVE TRANSACAO.                  
+              END.
+        
+        END.  /* se for TED */
+        ELSE IF craplau.cdtiptra = 4 THEN
         DO: 
            /*Somente pode ser permitido cancela-lo se o mesmo AINDA ESTA
              COM O STATUS DE "EFETIVADO". */
             IF craplau.insitlau <> 1 THEN
             DO:
                 ASSIGN par_dscritic = "Para cancelar, o agendamento deve " + 
-                                      "estar PENDETE.".
+                                      "estar PENDENTE.".
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
@@ -2508,7 +2540,7 @@ PROCEDURE cancelar-agendamento:
        
             /* Procedimento do internetbank pc_verifica_limite_ope_prog */
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-        
+                            
             RUN STORED-PROCEDURE pc_verifica_limite_ope_canc aux_handproc = PROC-HANDLE NO-ERROR
                                 (INPUT par_cdcooper
                                 ,INPUT par_nrdconta
@@ -5836,8 +5868,8 @@ PROCEDURE aprova_trans_pend:
                 RUN proc_geracao_log.
                   RETURN "NOK".
                            
-              END. 
-
+                                        END.
+                                
               CLOSE STORED-PROC pc_valida_apv_master
               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
