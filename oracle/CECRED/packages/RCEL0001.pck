@@ -1044,8 +1044,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					-- Levanta exceção
 					RAISE vr_exc_erro;
 				END IF;
-      END IF;
-      
+      END IF;		
+			
       -- Valida se possui saldo em conta
       OPEN cr_crapass(pr_cdcooper, pr_nrdconta);
       FETCH cr_crapass
@@ -1393,7 +1393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 													                       ELSE 'TAA' END
 														,pr_nrdconta => pr_nrdconta
 														,pr_nrdrowid => vr_nrdrowid);
-
+        
 				-- Operador
 				IF pr_nrcpfope > 0  THEN
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
@@ -1578,7 +1578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Programa: pc_efetua_recarga
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Fevereiro/2017                 Ultima atualizacao: 03/08/2017
+    Data    : Fevereiro/2017                 Ultima atualizacao: 31/08/2017
 
     Dados referentes ao programa:
 
@@ -1600,6 +1600,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 							 
                 03/08/2017 - Efetuado ajuste para calcular e gravar o valor do repasse 
                              na tabela tbrecarga_operacao (Lombardi). 
+
+				31/08/2017 - Solicitar geracao do relatorio utilizando a data
+				             vr_dtmvtolt (Diego).
 							 
     ..............................................................................*/		
 	  DECLARE
@@ -1633,7 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_vrreceita   NUMBER; --> Valor da receita
       vr_vlrepasse   NUMBER; --> Valor do repasse
 			vr_flgoperac BOOLEAN;
-
+			
 			-- Variáveis para utilizar o Aymaru
 			vr_resposta AYMA0001.typ_http_response_aymaru;
 			vr_parametros WRES0001.typ_tab_http_parametros;
@@ -1800,7 +1803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																	 ,pr_nmdcampo => 'Erro'
 																	 ,pr_dsdadant => ' '
-																	 ,pr_dsdadatu => pr_dserrlog);	
+																	 ,pr_dsdadatu => pr_dserrlog);																 
           
           IF pr_idorigem = 3 THEN -- Ser for ibank/mobile
           --Origem
@@ -2046,7 +2049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				-- Gerar crítica
 				vr_cdcritic := 0;
 				vr_dscritic := 'Não foi possível efetuar a recarga.';
-
+				
 				     -- saida por TIMEOUT  
 				IF   vr_resposta.status_code = 408  THEN
 				     vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
@@ -2088,8 +2091,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					vr_dscritic := 'Não foi possível efetuar a recarga.';
 				END IF;
 
-			    -- Descrição do erro da Rede Tendencia
-			    vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+				-- Descrição do erro da Rede Tendencia
+				vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
 
         -- Se encontrou operação
         IF vr_flgoperac THEN
@@ -2484,7 +2487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																		pr_dsdadant => ' ', 
 																		pr_dsdadatu =>TO_CHAR(gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc,1)));
         END IF;
-
+				
         IF pr_idorigem = 3 THEN -- Ser for ibank/mobile
         --Origem
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -3640,7 +3643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           FROM tbrecarga_favorito fav
          WHERE fav.cdcooper = pr_cdcooper
            AND fav.nrdconta = pr_nrdconta;
-
+      
       -- Verificar se número do celular é fraudulento
 		  CURSOR cr_crapcbf(pr_dsfraude IN crapcbf.dsfraude%TYPE) IS
 			  SELECT 1
@@ -3720,7 +3723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela RCEL0001: ' || SQLERRM;
-    END;
+    END;																			
 	END pc_cadastra_favorito;
   
   -- Confirma recarga de celular
@@ -3866,7 +3869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
            vr_cdcritic := 0;
            vr_dscritic := 'Recarga de mesmo valor já efetuada. Consulte extrato ou tente novamente em 10 min.';
            RAISE vr_exc_erro;    
-      END IF;
+        END IF;
       
       END IF;
       
@@ -5222,13 +5225,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
             vr_index := vr_tab_repasse.FIRST;
             -- Percorre registros
             WHILE vr_index IS NOT NULL LOOP
-            
+              
               IF vr_index = vr_tab_repasse.FIRST OR
                  vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.PRIOR(vr_index)).cdcooper THEN
                 -- Adicionar o no de origem
                 pc_escreve_xml('<coop nmrescop="'|| vr_tab_repasse(vr_index).nmrescop  ||'">');
               END IF;
-          
+              
               pc_escreve_xml('<conta>' ||
                                '<cdcooper>'  || vr_tab_repasse(vr_index).cdcooper  || '</cdcooper>' ||
                                '<nmrescop>'  || vr_tab_repasse(vr_index).nmrescop  || '</nmrescop>' ||
@@ -5238,7 +5241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                '<vlreceita>' || to_char(vr_tab_repasse(vr_index).vlreceita,'fm99g999g999g990d00') || '</vlreceita>' ||
                                '<vlapagar>'  || to_char(vr_tab_repasse(vr_index).vlapagar,'fm99g999g999g990d00')  || '</vlapagar>' ||
                              '</conta>');
-          
+              
               --Se mudou a origem ou chegou ao final do vetor
               IF vr_index = vr_tab_repasse.LAST OR
                  vr_tab_repasse(vr_index).cdcooper <> vr_tab_repasse(vr_tab_repasse.NEXT(vr_index)).cdcooper THEN
@@ -5248,7 +5251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
               --Proximo registro do vetor
               vr_index:= vr_tab_repasse.NEXT(vr_index);
             END LOOP;
-            
+          
           END IF; -- vr_tab_repasse.Count > 0
             
           --Finalizar tag detalhe
@@ -5258,11 +5261,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                                 ,pr_cdcooper => 3 -- CECRED
                                                 ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-
+            
           -- Efetuar solicitacao de geracao de relatorio --
           gene0002.pc_solicita_relato (pr_cdcooper  => 3                   --> Cooperativa conectada
                                       ,pr_cdprogra  => 'JBRCEL_REP'          --> Programa chamador
-                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                      ,pr_dtmvtolt  => vr_dtmvtolt			 --> Data do movimento atual
                                       ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
                                       ,pr_dsxmlnode => '/crrl732/contas/coop/conta'       --> No base do XML para leitura dos dados
                                       ,pr_dsjasper  => 'crrl732.jasper'    --> Arquivo de layout do iReport
@@ -5282,14 +5285,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           IF vr_dscritic IS NOT NULL THEN
             -- Gerar excecao
             RAISE vr_exc_saida;
-        END IF;
-
+          END IF;
+            
           -- Liberando a memoria alocada pro CLOB
           dbms_lob.close(vr_des_xml);
           dbms_lob.freetemporary(vr_des_xml);
+            
+        END IF;
         
-      END IF;
-
       END IF;
 
       pc_log_programa(PR_DSTIPLOG   => 'F'           --> Tipo do log: I - início; F - fim; O - ocorrência
