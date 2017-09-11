@@ -120,7 +120,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
            ,nmdavali crapavt.nmdavali%type
            ,tpdocava crapavt.tpdocava%type
            ,nrdocava crapavt.nrdocava%type
-           ,cdoeddoc crapavt.cdoeddoc%type
+           cdoeddoc tbgen_orgao_expedidor.cdorgao_expedidor%TYPE
            ,cdufddoc crapavt.cdufddoc%type
            ,dtemddoc crapavt.dtemddoc%type
            ,dsproftl crapavt.dsproftl%type
