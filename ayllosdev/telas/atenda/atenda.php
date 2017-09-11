@@ -57,6 +57,8 @@
 			 21/03/2017 - Ajuste para incluir o controle mt_rand na chamada do atenda.css (Adriano - SD 603451).
 
 			 28/03/2017 - Ajuste para incluir o controle mt_rand na chamada do funcoes.js (Jonata - RKAM / M294).   
+			 
+			 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
 
 
 //**************************************************************************/
@@ -402,6 +404,11 @@ setVarSession("rotinasTela", $rotinasTela);
 																						    <div class="bloco_line" onMouseOver="focoRotina(30, true);" onMouseOut="focoRotina(30, false);">
 																						     <a tabindex="37" name="37" class="txtNormalBold SetFocus" id="labelRot30">&nbsp;</a>
 																						     <p id="valueRot30" class="txtNormal">&nbsp;</p>
+																							</div>
+																							
+																							<div class="bloco_line" onMouseOver="focoRotina(31, true);" onMouseOut="focoRotina(31, false);">
+																						     <a tabindex="38" name="38" class="txtNormalBold SetFocus" id="labelRot31">&nbsp;</a>
+																						     <p id="valueRot31" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>
 																						  																
