@@ -1089,6 +1089,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                   
                   21/10/2016 - Incluir validação de cooperativa habilitada para gerar
                                acordos ( Renato Darosci - Supero )
+
+                  11/09/2017 - Incluido substr na busca do campo bairro, limitando em 30 posicoes
+                               pois o campo na CRAPENC e maior que o campo na CRAPSAB
+                               Heitor (Mouts) - Chamado 752022
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1102,7 +1106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
              ass.inpessoa,
              ass.nmprimtl,
              enc.dsendere,
-             enc.nmbairro,
+             substr(enc.nmbairro,1,30) nmbairro,
              enc.nrcepend,
              enc.nmcidade,
              enc.nrendere,
