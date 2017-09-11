@@ -264,7 +264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 12/05/2017
+   Data    : Maio/2015                      Ultima atualizacao: 24/08/2017
 
    Dados referentes ao programa:
 
@@ -280,6 +280,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                             do job pc_processo_controlador (Carlos)
                
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+               
+               24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto
+                            na procedure pc_valida_arq_folha_ib (Lucas Ranghetti #729039)               
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -8672,7 +8675,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : IB
   --  Sigla    : CRED
   --  Autor    : Renato Darosci - SUPERO
-  --  Data     : Maio/2015.                   Ultima atualizacao: 27/01/2015
+  --  Data     : Maio/2015.                   Ultima atualizacao: 24/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -8690,6 +8693,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             04/03/2016 - Incluido validacao para não permitir numero no CPF com mais de 11 digito
   --                          (Odirlei-AMcom)  
+  --
+  --             24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto (Lucas Ranghetti #729039)
   ---------------------------------------------------------------------------------------------------------------
 
     -- CURSORES
@@ -9070,16 +9075,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             CONTINUE;
         END;
 
+        -- Caso o Cursor ja estiver aberto, vamos fecha-lo antes de abrir novamente
+        IF cr_crapofp%ISOPEN THEN
+          CLOSE cr_crapofp;
+        END IF;
+
         -- Buscar o registro do tipo do serviço na CRAPOFP
         OPEN  cr_crapofp(pr_cdcooper, vr_tpservic);
         FETCH cr_crapofp INTO rw_crapofp;
 
         -- Se não encontrar registros
         IF cr_crapofp%NOTFOUND THEN
+          CLOSE cr_crapofp;
           -- Criticar a falta do registro
           vr_dscrilot := 'Tipo de Serviço inválido! Código: '||vr_tpservic||' [Err.: 001]';
           CONTINUE;
         ELSE
+          CLOSE cr_crapofp;
           -- Caso seja cooperativa
           IF vr_idtpempr = 'C' THEN
             -- Os campos de histórico devem estar informados
@@ -9099,9 +9111,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             END IF;
           END IF;
         END IF;
-
-        -- Fecha o cursor
-        CLOSE cr_crapofp;
 
         -- Verificar o CNPJ
         BEGIN
@@ -9839,7 +9848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                                     ||'<dsdconta>'||vr_tbcritic(ind).dsdconta||'</dsdconta>'
                                                     ||'<dscpfcgc>'||vr_tbcritic(ind).dscpfcgc||'</dscpfcgc>'
                                                     ||'<dscritic>'||vr_dscritic ||'</dscritic>'
-                                                    ||'<dsorigem>'||vr_tbcritic(ind).dsorigem||'</dsorigem>'
+                                                    ||'<dsorigem>'||NVL(vr_tbcritic(ind).dsorigem, ' ')||'</dsorigem>'
                                                     ||'<vlrpagto>'||vr_tbcritic(ind).vlrpagto||'</vlrpagto>'
                                                     ||'</critica>'||chr(13));
 
