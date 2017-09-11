@@ -163,6 +163,8 @@ BEGIN
     vr_nrparcela number;
     vr_idtpprd varchar2(2);
 
+    vr_rowid rowid;
+
     -- Busca de todas as agencias da cooperativa
     CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_dtmvtolt IN crappep.dtvencto%TYPE
@@ -305,6 +307,21 @@ BEGIN
       /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
     if PR_CDAGENCI = 0
     and   rw_crapdat.inproces >= 2 then
+       -- gera log para futuros rastreios
+       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => 1
+                           ,pr_dscritic => null
+                           ,pr_dsorigem => 'AYLLOS'
+                           ,pr_dstransa => 'Antes PC_CRPS750_1 - fase 1.'
+                           ,pr_dttransa => trunc(sysdate)
+                           ,pr_flgtrans => 1
+                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'CRPS750'
+                           ,pr_nrdconta => 0
+                           ,pr_nrdrowid => vr_rowid);
+      
+       --
        PC_CRPS750_1( pr_faseprocesso => 1
                     ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                     ,pr_nrdconta     => null  --> Número da conta
