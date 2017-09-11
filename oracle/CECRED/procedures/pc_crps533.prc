@@ -242,7 +242,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                07/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
-				
+                            
                04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael)
 
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
@@ -250,7 +250,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
 
-			   07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+			         07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
                             
                12/01/2017 - Limpar crapdev com situacao devolvido, jogar as 
@@ -278,7 +278,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                
                08/08/2017 - Ajustes para criar craplcm para historicos 573 ou 78 caso a critica 96
                             (Lucas Ranghetti #715027)
-
+                            
+               29/08/2017 - Ajuste para gravar corretamente os dados do cheque, quando for contra-ordem (critica 96),
+                            ao gerar o registro de lancamento na tabela craplcm
+                            (Adriano - SD 746815). 
+                            
+               30/08/2017 - Ajuste para utilizar o lote 76000 e gravar o campo cdcmpchq ao criar o lançamento referente
+                            a contra-ordem (critica 96)
+                            (Adriano - SD 746815). 
+                            
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
 			               o nome do arquivo apos processamento, iremos gerar o arquivo
 						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
@@ -585,7 +593,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
           vr_nrcheque   gncpchq.nrcheque%TYPE;
           vr_cdtipreg   gncpchq.cdtipreg%TYPE;
           vr_exc_erro   EXCEPTION;
-
+          
       
 
         BEGIN
@@ -2177,6 +2185,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  AND craplot.cdbccxlt = pr_cdbccxlt
                  AND craplot.nrdolote = pr_nrdolote;
             rw_craplot cr_craplot%ROWTYPE;
+            
+            --Selecionar informacoes dos lotes (contra-ordem)
+            CURSOR cr_craplot2(pr_cdcooper IN craplot.cdcooper%TYPE
+                              ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                              ,pr_cdagenci IN craplot.cdagenci%TYPE
+                              ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                              ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+              SELECT craplot.dtmvtolt,
+                     craplot.cdagenci,
+                     craplot.cdbccxlt,
+                     craplot.nrdolote,
+                     craplot.rowid
+                FROM craplot craplot
+               WHERE craplot.cdcooper = pr_cdcooper
+                 AND craplot.dtmvtolt = pr_dtmvtolt
+                 AND craplot.cdagenci = pr_cdagenci
+                 AND craplot.cdbccxlt = pr_cdbccxlt
+                 AND craplot.nrdolote = pr_nrdolote;
+            rw_craplot2 cr_craplot2%ROWTYPE;
 
             --Selecionar informacoes das rejeicoes
             CURSOR cr_craprej(pr_cdcooper IN craprej.cdcooper%TYPE
@@ -3890,7 +3917,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       -- Se não tiver critica
                       IF vr_cdcritic = 0 AND 
                          vr_cdcritic_aux = 0 THEN                        
-                        
+                      
                         IF cr_tbchq_param_conta%ISOPEN THEN
                           CLOSE cr_tbchq_param_conta;  
                         END IF;                         
@@ -4802,6 +4829,54 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                       -- 096 - Cheque com contra-ordem
                       IF vr_cdcritic_aux = 96 THEN
 
+                        OPEN cr_craplot2 (pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => pr_dtmvtolt
+                                         ,pr_cdagenci => 1
+                                         ,pr_cdbccxlt => 100
+                                         ,pr_nrdolote => 7600);  
+                                        
+                        --Posicionar no proximo registro
+                        FETCH cr_craplot2 INTO rw_craplot2;
+                        
+                        --Se encontrou registro
+                        IF cr_craplot2%NOTFOUND THEN
+                          --Criar lote
+                          BEGIN
+                            --Inserir a capa do lote retornando informacoes para uso posterior
+                            INSERT INTO craplot (cdcooper
+                                                ,dtmvtolt
+                                                ,cdagenci
+                                                ,cdbccxlt
+                                                ,nrdolote
+                                                ,tplotmov)
+                                        VALUES  (pr_cdcooper
+                                                ,pr_dtmvtolt
+                                                ,1
+                                                ,100
+                                                ,7600
+                                                ,1)
+                                      RETURNING dtmvtolt
+                                               ,cdagenci
+                                               ,cdbccxlt
+                                               ,nrdolote
+                                               ,ROWID
+                                         INTO  rw_craplot2.dtmvtolt
+                                              ,rw_craplot2.cdagenci
+                                              ,rw_craplot2.cdbccxlt
+                                              ,rw_craplot2.nrdolote
+                                              ,rw_craplot2.rowid;
+                                              
+                          EXCEPTION
+                            WHEN OTHERS THEN
+                              vr_des_erro := 'Erro ao inserir na tabela craplot. '||SQLERRM;
+                              --Sair do programa
+                              RAISE vr_exc_erro;
+                          END;
+                        END IF;
+                        
+                        --Fechar Cursor
+                        CLOSE cr_craplot2;
+                         
                         IF vr_cdalinea <> 0 THEN
                           vr_alinea_96:= vr_cdalinea;
                         ELSE
@@ -4824,8 +4899,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             nrseqdig,
                             cdpesqbb,
                             cdbanchq,
-                            cdcmpchq,
                             cdagechq,
+                            cdcmpchq,
                             nrctachq,
                             nrlotchq,
                             sqlotchq,
@@ -4834,22 +4909,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             hrtransa)
                          VALUES
                            (pr_cdcooper,
-                            rw_craplot.dtmvtolt,
+                            rw_craplot2.dtmvtolt,
                             pr_dtleiarq,
-                            nvl(rw_craplot.cdagenci, 0),
-                            nvl(rw_craplot.cdbccxlt, 0),
-                            nvl(rw_craplot.nrdolote, 0),
+                            nvl(rw_craplot2.cdagenci, 0),
+                            nvl(rw_craplot2.cdbccxlt, 0),
+                            nvl(rw_craplot2.nrdolote, 0),
                             nvl(nvl(vr_nrdconta_incorp, vr_nrdconta), 0),
                             nvl(nvl(vr_nrdconta_incorp, vr_nrdctabb), 0),
-                            nvl(vr_nrdocmto, 0) + 1000000,
+                            nvl(vr_nrdocmto, 0),
                             (CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END),
                             nvl(vr_vllanmto, 0),
-                            nvl(vr_nrseqarq, 0) + 1000000,
+                            nvl(vr_nrseqarq, 0),
                             vr_alinea_96,
-                            nvl(vr_cdbandep, 0),
-                            nvl(vr_cdcmpdep, 0),
-                            nvl(vr_cdagedep, 0),
-                            nvl(vr_nrctadep, 0),
+                            rw_crapfdc.cdbanchq,
+                            rw_crapfdc.cdagechq,
+                            rw_crapfdc.cdcmpchq,
+                            rw_crapfdc.nrctachq,
                             nvl(vr_nrlotchq, 0),
                             nvl(vr_sqlotchq, 0),
                             0,
@@ -4870,7 +4945,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                  craplot.vlinfocr = craplot.vlinfocr + vr_vllanmto,
                                  craplot.vlcompcr = craplot.vlcompcr + vr_vllanmto,
                                  craplot.nrseqdig = vr_nrseqarq
-                           WHERE craplot.rowid = rw_craplot.rowid;
+                           WHERE craplot.rowid = rw_craplot2.rowid;
                         EXCEPTION
                           WHEN OTHERS THEN
                             vr_des_erro:= 'Erro ao atualizar a tabela craplot (devolucao). Rotina'
@@ -4902,7 +4977,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                            UPDATE gncpchq 
                               SET gncpchq.cdalinea = vr_alinea_96
                             WHERE gncpchq.cdcooper = pr_cdcooper 
-                              AND gncpchq.dtmvtolt = rw_craplot.dtmvtolt
+                              AND gncpchq.dtmvtolt = rw_craplot2.dtmvtolt
                               AND gncpchq.cdbanchq = nvl(vr_cdbanchq,0)
                               AND gncpchq.cdagechq = nvl(vr_cdagechq,0)
                               AND gncpchq.nrctachq = nvl(vr_nrctachq,0)
