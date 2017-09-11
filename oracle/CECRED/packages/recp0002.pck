@@ -1584,8 +1584,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_cdcritic := 993;
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
       pr_dscritic := vr_dscritic;      
-      pr_dsdetcri := SQLERRM; 
-            
+      pr_dsdetcri := SQLERRM;
+	  pc_internal_exception(vr_cdcooper);
   END pc_gerar_acordo;
   
   --> Rotina responsavel por cancelar acordo
