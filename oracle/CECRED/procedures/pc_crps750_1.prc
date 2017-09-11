@@ -198,11 +198,31 @@ BEGIN
       vr_cdindice     VARCHAR2(30) := '';            --> Indice da tabela de acordos
       vr_mesespago    INTEGER;
       vr_inliquid     crapepr.inliquid%TYPE;
+
+	  vr_rowid rowid;
       
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
+	   --
+       --
+       IF pr_cdcooper = 3 then
+       -- gera log para futuros rastreios
+       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => 1
+                           ,pr_dscritic => null
+                           ,pr_dsorigem => 'AYLLOS'
+                           ,pr_dstransa => 'Inicio pc_gera_tabela_parcelas.'
+                           ,pr_dttransa => trunc(sysdate)
+                           ,pr_flgtrans => 1
+                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'CRPS750_1'
+                           ,pr_nrdconta => 0
+                           ,pr_nrdrowid => vr_rowid);
+       END IF;
+       -- 
        --
        -- Leitura do indicador de uso da tabela de taxa de juros
        vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -338,6 +358,23 @@ BEGIN
            RAISE vr_exc_erro;
        END;
        --
+       IF pr_cdcooper = 3 then
+       -- gera log para futuros rastreios
+       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => 1
+                           ,pr_dscritic => null
+                           ,pr_dsorigem => 'AYLLOS'
+                           ,pr_dstransa => 'Após DELETE tbepr_tr_parcelas.'
+                           ,pr_dttransa => trunc(sysdate)
+                           ,pr_flgtrans => 1
+                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'CRPS750_1'
+                           ,pr_nrdconta => 0
+                           ,pr_nrdrowid => vr_rowid);       
+       --
+       END IF;
+       --
        -- Carregar Contratos de Acordos
        FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
          vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
@@ -409,6 +446,24 @@ BEGIN
                                                   ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
        --
        FOR rw_crapepr IN cr_crapepr LOOP
+         --
+         IF pr_cdcooper = 3 then
+         -- gera log para futuros rastreios
+         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => 1
+                           ,pr_dscritic => null
+                           ,pr_dsorigem => 'AYLLOS'
+                           ,pr_dstransa => 'Início loop cr_crapepr:'||
+                                           'Contrato:'||rw_crapepr.nrctremp
+                           ,pr_dttransa => trunc(sysdate)
+                           ,pr_flgtrans => 1
+                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'CRPS750_1'
+                           ,pr_nrdconta => rw_crapepr.nrdconta
+                           ,pr_nrdrowid => vr_rowid);
+         END IF;  
+
          -- acerto de datas
          IF to_char(rw_crapepr.dtdpagto,'dd') <> to_char(rw_crapepr.dtdpagto_nova,'dd') THEN
            rw_crapepr.dtdpagto_nova := rw_crapepr.dtdpagto_nova - 1;
@@ -636,6 +691,27 @@ BEGIN
            END IF;
            --
          END IF;
+		 --
+         --
+         IF pr_cdcooper = 3 then
+         -- gera log para futuros rastreios
+         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                           ,pr_cdoperad => 1
+                           ,pr_dscritic => null
+                           ,pr_dsorigem => 'AYLLOS'
+                           ,pr_dstransa => 'Antes de inserir tbepr_tr_parcelas:'||
+                                           'Contrato:'||rw_crapepr.nrctremp||
+                                           'Data pgto:'||to_char(vr_dtdpagto,'dd/mm/yyyy')||
+                                           'Saldo Dev:'||to_char(vr_vlsdeved)
+                           ,pr_dttransa => trunc(sysdate)
+                           ,pr_flgtrans => 1
+                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                           ,pr_idseqttl => 1
+                           ,pr_nmdatela => 'CRPS750_1'
+                           ,pr_nrdconta => rw_crapepr.nrdconta
+                           ,pr_nrdrowid => vr_rowid);
+         END IF;   
+         --
          --
          -- Enquanto data de vencimento da parcela for menor que data processamento E houver saldo devedor do emprestimo
          WHILE (vr_dtdpagto <= vr_dtcursor) and (vr_vlsdeved > 0) LOOP
