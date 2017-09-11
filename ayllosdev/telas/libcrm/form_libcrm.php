@@ -13,7 +13,7 @@
 
 <form id="frmLibCrm" name="frmLibCrm" class="formulario" >		
 	<div style="width:100%;">
-		<fieldset style="width:95%; padding-left:20px; height:100px"  >
+		<fieldset style="width:95%; height:100px"  >
 			<legend align="left"><? echo 'Parâmetros Gerais' ?></legend>
 			<div style="text-align:center; margin-top: 25px;">
 				<div style="display:inline-block; ">

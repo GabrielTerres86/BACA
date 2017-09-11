@@ -4098,6 +4098,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                             ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da natureza
                             ,pr_nrregist IN INTEGER               -- Número de registro
                             ,pr_nriniseq IN INTEGER               -- Número sequencial do registro
+                            ,pr_nmdatela IN VARCHAR2              -- Nome da tela que chamou  
                             ,pr_qtregist OUT INTEGER              -- Quantidade de registro
                             ,pr_nmdcampo OUT VARCHAR2             -->Nome do campo com erro
                             ,pr_tab_natureza_ocupacao OUT typ_tab_natureza_ocupacao --Tabela natureza de ocupação
@@ -4151,8 +4152,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         CONTINUE;
         
       END IF;
-      
-      IF rw_gncdnto.cdnatocp = 99 THEN
+          
+      IF rw_gncdnto.cdnatocp = 99 AND
+         pr_nmdatela <> 'TELA_CADOCP' THEN
         
         CONTINUE;
       
@@ -4275,7 +4277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                             ,pr_idorigem => vr_idorigem
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
-
+                            
     -- Verifica se houve erro recuperando informacoes de log                              
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
@@ -4295,6 +4297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                     ,pr_rsnatocp => UPPER(pr_rsnatocp) -- Descrição da natureza
                     ,pr_nrregist => pr_nrregist        -- Número de registro
                     ,pr_nriniseq => pr_nriniseq        -- Número sequencial do registro
+                    ,pr_nmdatela => vr_nmdatela        -- Nome da tela que chamou
                     ,pr_qtregist => vr_qtregist        -- Quantidade de registro
                     ,pr_nmdcampo => pr_nmdcampo        -- Nome do campo com erro
                     ,pr_tab_natureza_ocupacao => vr_tab_natureza_ocupacao -- Tabela naturezas
@@ -4467,8 +4470,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                     ,pr_rsnatocp   => UPPER(pr_rsnatocp)
                     ,pr_nrregist   => pr_nrregist
                     ,pr_nriniseq   => pr_nriniseq
+                    ,pr_nmdatela   => NULL
                     ,pr_qtregist   => vr_qtregist
-                    ,pr_nmdcampo   => pr_nmdcampo
+                    ,pr_nmdcampo   => pr_nmdcampo                    
                     ,pr_tab_natureza_ocupacao => vr_tab_natureza_ocupacao
                     ,pr_tab_erro   => vr_tab_erro
                     ,pr_des_erro   => vr_des_reto);
