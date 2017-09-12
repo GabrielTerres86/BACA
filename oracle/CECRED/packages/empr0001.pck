@@ -2581,7 +2581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 14/02/2017
+       Data    : 06/03/2012                         Ultima atualizacao: 11/07/2017
     
        Dados referentes ao programa:
     
@@ -2616,6 +2616,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     14/02/2017 - Foi inicializada a vr_vlsderel com zero. (Jaison/James)
 
+                    11/07/2017 - P337 - Não estava se comportando de acordo quando 
+                                  emprestimo nao liberado, usada rw_crapepr e 
+                                  nao rw_crawepr (Marcos-Supero)
+
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -2623,11 +2627,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     CURSOR cr_crawepr(pr_cdcooper crawepr.cdcooper%type
                      ,pr_nrdconta crawepr.nrdconta%type
                      ,pr_nrctremp crawepr.nrctremp%type) is
-      SELECT dtlibera
-        FROM crawepr
-       WHERE crawepr.cdcooper = pr_cdcooper
-             AND crawepr.nrdconta = pr_nrdconta
-             AND crawepr.nrctremp = pr_nrctremp;
+      SELECT wpr.dtlibera
+            ,epr.inliquid
+        FROM crapepr epr
+            ,crawepr wpr
+       WHERE epr.cdcooper = wpr.cdcooper
+         AND epr.nrdconta = wpr.nrdconta
+         AND epr.nrctremp = wpr.nrctremp
+         AND wpr.cdcooper = pr_cdcooper
+         AND wpr.nrdconta = pr_nrdconta
+         AND wpr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%rowtype;
   
     -- Busca as parcelas do contrato de emprestimos e seus respectivos valores
@@ -2947,7 +2956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END LOOP;
       
       IF pr_dtmvtolt <= rw_crawepr.dtlibera AND
-         rw_crapepr.inliquid <> 1 THEN
+         rw_crawepr.inliquid <> 1 THEN
         /* Nao liberado */
         vr_vlsdeved := pr_vlemprst;
         vr_vlprepag := 0;
@@ -6391,7 +6400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_vltotpre := pr_vltotpre + rw_crapepr.vlpreemp;
         END IF;
         -- Acumular a quantidade de parcelas calculadas
-        pr_qtprecal := pr_qtprecal + vr_qtprecal_lem;
+        pr_qtprecal := pr_qtprecal + nvl(vr_qtprecal_lem,0);
         -- Acumular o saldo devedor calculado
         pr_vlsdeved := pr_vlsdeved + nvl(vr_vlsdeved,0);
       END LOOP; -- Fim leitura dos empréstimos
@@ -8041,6 +8050,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
                                            ,pr_nrctremp => pr_nrctremp
+                                           ,pr_cdorigem => 3
                                            ,pr_flgativo => vr_flgativo
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -13537,6 +13547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_nrctremp => pr_nrctremp
+                                        ,pr_cdorigem => 3
                                         ,pr_flgativo => vr_flgativo
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
