@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps427(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Dezembro/2004.                    Ultima atualizacao: 22/01/2016
+   Data    : Dezembro/2004.                    Ultima atualizacao: 12/09/2017
 
    Dados referentes ao programa:
 
@@ -85,6 +85,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps427(pr_cdcooper  IN craptab.cdcooper%T
                
                22/01/2016 - #377293 Inclusão da função upper() no campo cdoperad, 
                             cursor cr_crapcbb (Carlos)
+                            
+               12/09/2017 - Decorrente a inclusão de novo parâmetro na rotina pc_abre_arquivo,
+                            foi ncessário ajuste para mencionar os parâmetros no momento da chamada
+                            (Adriano - SD 734960 ).
 ............................................................................. */
 
   -- Buscar os dados da cooperativa
@@ -347,13 +351,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps427(pr_cdcooper  IN craptab.cdcooper%T
     vr_nrseqarq      number(9);
     vr_rowid_rcb     varchar2(18);
     vr_tot_registro  number(15);
-  begin
+  BEGIN                    
     -- Abre o arquivo
-    gene0001.pc_abre_arquivo(pr_dsdircop||'/compbb',
-                             pr_nmarquiv,
-                             'R',
-                             vr_arquivo,
-                             pr_dscritic);
+    gene0001.pc_abre_arquivo(pr_nmdireto => pr_dsdircop||'/compbb',
+                             pr_nmarquiv => pr_nmarquiv,
+                             pr_tipabert => 'R',
+                             pr_utlfileh => vr_arquivo,
+                             pr_des_erro => pr_dscritic);
     if pr_dscritic is not null then
       raise vr_exc_saida;
     end if;

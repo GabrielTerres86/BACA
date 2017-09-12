@@ -853,14 +853,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     -- Busca a sequencia do lancamento
     OPEN cr_sequencia;
     FETCH cr_sequencia INTO vr_nrsequencia;
-    CLOSE cr_sequencia;  
-    
+    CLOSE cr_sequencia; 
+     
     -- Abre o arquivo
-    gene0001.pc_abre_arquivo(pr_dsdiretorio,
-                             pr_nmarquivo,
-                             'R',
-                             vr_arquivo,
-                             vr_dscritic);
+    gene0001.pc_abre_arquivo(pr_nmdireto => pr_dsdiretorio,
+                             pr_nmarquiv => pr_nmarquivo,
+                             pr_tipabert => 'R',
+                             pr_utlfileh => vr_arquivo,
+                             pr_des_erro => vr_dscritic);
     IF vr_dscritic IS NOT NULL THEN 
       RAISE vr_exc_saida;
     END IF;
