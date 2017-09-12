@@ -3,20 +3,20 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   ⁄ltima AlteraÁ„o: 03/03/2015 ***//
+	//*** Data : Julho/2007                   √öltima Altera√ß√£o: 03/03/2015 ***//
 	//***                                                                  ***//
-	//*** Objetivo  : Vari·veis globais de controle                        ***//
+	//*** Objetivo  : Vari√°veis globais de controle                        ***//
 	//***                                                                  ***//	 
-	//*** AlteraÁıes: 22/10/2010 - Eliminar vari·veis da session que s„o   ***//
-	//***                          utilizadas na validaÁ„o para permiss„o  ***//
+	//*** Altera√ß√µes: 22/10/2010 - Eliminar vari√°veis da session que s√£o   ***//
+	//***                          utilizadas na valida√ß√£o para permiss√£o  ***//
 	//***                          de acesso (David).                      ***//
 	//***                                                                  ***//	 
 	//***             21/05/2012 - Adicionado Servidor GED (Guilherme).    ***//
 	//***                                                                  ***//
 	//***             25/06/2013 - Adicionar pkglibera (David).            ***//
 	//***                                                                  ***//
-	//***             03/03/2015 - Incluir tratamento para requisiÁıes de  ***//
-	//***                          scripts de monitoraÁ„o (David).         ***//
+	//***             03/03/2015 - Incluir tratamento para requisi√ß√µes de  ***//
+	//***                          scripts de monitora√ß√£o (David).         ***//
 	//***                                                                  ***// 
 	//***             07/07/2016 - Correcao do erro de uso da constante    ***// 
 	//**                           $_ENV depreciada.SD 479874 (Carlos R.)  ***//
@@ -25,17 +25,17 @@
 	// Nome do servidor com banco de dados PROGRESS
 	$DataServer = "pkgdesen2";
 	
-	//URL do serviÁo WebSpeed do Ayllos Web
+	//URL do servi√ßo WebSpeed do Ayllos Web
 	if (isset($ServerMonitoracao) && trim($ServerMonitoracao) <> '') {
 		$url_webspeed_ayllosweb = 'http://'.$ServerMonitoracao.'.cecred.coop.br/cgi-bin/cgiip.exe/WService=ws_ayllos/';
 	} else {		
 		$url_webspeed_ayllosweb = "http://caixadev2.cecred.coop.br/cgi-bin/cgiip.exe/WService=ws_ayllos/";
 	}	
 	
-	// TÌtulo do sistema
+	// T√≠tulo do sistema
 	$TituloSistema = ":: Sistema Ayllos - DESENVOLVIMENTO ::";
 	
-	// TÌtulo para p·gina de login
+	// T√≠tulo para p√°gina de login
 	$TituloLogin = "SISTEMA AYLLOS<br>DESENVOLVIMENTO";
 	
 	// Url do site
@@ -50,13 +50,13 @@
 	// Servidor do GED (Selbetti)
 	$GEDServidor = "0303hmlged01";
 	
-	// Identificador dos grupos de usu·rios nas m·quinas HP-UX
+	// Identificador dos grupos de usu√°rios nas m√°quinas HP-UX
 	$gidNumbers[0] = 103; // Cecred
 	$gidNumbers[1] = 902; // Desenvolvimento
 	$gidNumbers[2] = 903; // Suporte
 	$gidNumbers[3] = 905; // Admin
 	
-	// Identificador de pacotes ambientes nas m·quinas HP-UX
+	// Identificador de pacotes ambientes nas m√°quinas HP-UX
 	$MTCCServers["pkgprod"]   = 1;
 	$MTCCServers["pkgdesen"]  = 2;
 	$MTCCServers["pkgprodsb"] = 3;
@@ -68,10 +68,10 @@
 	    (strpos($UrlSite."principal.php",$_SERVER["SCRIPT_NAME"]) !== false && isset($_SESSION["sidlogin"]))) { 		
 		$sidlogin = isset($_POST["sidlogin"]) ? $_POST["sidlogin"] : $_SESSION["sidlogin"];		
 		
-		// Define como deve ser feito o redirecionamento no caso da sess„o expirar, ou ocorrer erro na leitura do XML, etc ...		
+		// Define como deve ser feito o redirecionamento no caso da sess√£o expirar, ou ocorrer erro na leitura do XML, etc ...		
 		$_SESSION["glbvars"][$sidlogin]["redirect"] = isset($_POST["redirect"]) ? $_POST["redirect"] : "html";
 		
-		// Eliminar vari·veis utilizadas para validaÁ„o de permiss„o de acesso se existirem
+		// Eliminar vari√°veis utilizadas para valida√ß√£o de permiss√£o de acesso se existirem
 		if  (isset($_SESSION["glbvars"][$sidlogin]["telpermi"])) {
 			unset($_SESSION["glbvars"][$sidlogin]["telpermi"]);
 			unset($_SESSION["glbvars"][$sidlogin]["rotpermi"]);
@@ -87,7 +87,7 @@
 	define("SERVERNAMEAPP", gethostname());     
 
 	// Dados de acesso ao Oracle
-	define("HOST" , "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = 0302devora01)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = ayllosd) )  )");
+	define("HOST" , "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = 0302oradev01)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = ayllosd) )  )");
 	define("USERE", "YXlsbG9z");
 	define("PASSE", "cHdkY2VjcmVkMjAxMg==");
 	
