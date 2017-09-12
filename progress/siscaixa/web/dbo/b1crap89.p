@@ -12,6 +12,8 @@ Objetivo  : Validacoes de Arrecadacoes GPS SICREDI - Faturas.
 Alteracoes: 20/06/2016 - Incluida validacao da conta para verificar se esta
                          possui INTERNET ativa, caso contrario, nao segue
 						 (Guilherme/SUPERO)
+
+            12/09/2017 - Ajustes melhoria 397 - Rafael (Mouts)
 ..............................................................................*/
 
 {dbo/bo-erro1.i}
@@ -686,6 +688,7 @@ PROCEDURE pc-efetua-agendamento-gps:
                          INPUT p-dtvencim,
                          INPUT p-idfisjur,
                          INPUT p-dtdebito,
+                         INPUT 0,
                          OUTPUT "",
                          OUTPUT 0,
                          OUTPUT "").

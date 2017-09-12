@@ -9745,10 +9745,7 @@ PROCEDURE consulta-contas-cadastradas:
                                    aux_nrcpfcgc = STRING(crapass.nrcpfcgc,
                                                          "99999999999").
 
-                        ASSIGN aux_nmprimtl = aux_nmprimtl + " " + 
-                                            crapass.nmsegntl
-
-                               aux_nrcpfcgc = STRING(aux_nrcpfcgc,
+                        ASSIGN aux_nrcpfcgc = STRING(aux_nrcpfcgc,
                                                      "xxx.xxx.xxx-xx").
 													 
 						FOR FIRST crapttl FIELDS(nmextttl) 
@@ -10681,7 +10678,6 @@ PROCEDURE valida-conta-destino:
       
         ASSIGN par_flgctafa = AVAIL crapcti            
                par_nmtitula = crabass.nmprimtl 
-               par_nmtitul2 = crabass.nmsegntl
                par_cddbanco = crabcop.cdbcoctl.
 
 	    IF crabass.inpessoa = 1 THEN

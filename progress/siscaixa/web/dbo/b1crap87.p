@@ -9,7 +9,7 @@ Dados referentes ao programa:
 
 Objetivo  : Validacoes de Arrecadacoes GPS SICREDI - Faturas.
 
-Alteracoes: 
+Alteracoes: 12/09/2017 - Ajustes melhoria 397 - Rafael (Mouts)
 ..............................................................................*/
 
 {dbo/bo-erro1.i}
@@ -722,6 +722,7 @@ PROCEDURE pc-efetua-gps-pagamento:
                          INPUT p-nrdconta,
                          INPUT p-cdagenci,
                          INPUT p-nrdcaixa,
+                         INPUT 1,
                          INPUT p-tpdpagto,
                          INPUT 2,          /* par_idorigem */
                          INPUT p-cdoperad,
@@ -740,6 +741,7 @@ PROCEDURE pc-efetua-gps-pagamento:
                          INPUT p-dtvencim,
                          INPUT p-idfisjur,
                          INPUT 0, /* NRSEQAGP */
+                         INPUT 0,
                          OUTPUT "",
                          OUTPUT 0,
                          OUTPUT "").

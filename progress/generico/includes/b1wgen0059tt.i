@@ -356,6 +356,8 @@ DEF TEMP-TABLE tt-relacionamento NO-UNDO
     FIELD codigo    AS INTE
     FIELD descricao AS CHAR.
 
+DEF TEMP-TABLE tt-relacionamento2  NO-UNDO LIKE tt-relacionamento.
+
 DEF TEMP-TABLE tt-crapass NO-UNDO
     FIELD cdcooper AS INTE
     FIELD nrdconta AS INTE
