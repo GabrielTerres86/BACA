@@ -245,6 +245,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --             28/08/2017 - Ajustado rotina pc_gerar_arq_ret_pgto para gravar situação da transação corretamente
 --                          ao gravar o log da operação
 --                          (Adriano - SD 738594).
+--
+--             12/09/2017 - Ajuste contigencia NPC. PRJ340 (Odirlei-AMcom)   
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -3021,6 +3023,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        vr_tbtitulocip NPCB0001.typ_reg_titulocip;        
        vr_flblq_valor INTEGER;
        vr_flgtitven   INTEGER;
+       vr_flcontig    NUMBER;
+       
 
        vr_exc_critico EXCEPTION;
        vr_tab_erro GENE0001.typ_tab_erro;
@@ -3216,6 +3220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                               ,pr_tbtitulocip   => vr_tbtitulocip    
                                               ,pr_flblq_valor   => vr_flblq_valor    
                                               ,pr_fltitven      => vr_flgtitven
+                                              ,pr_flcontig     => vr_flcontig
                                               ,pr_des_erro      => vr_des_erro       
                                               ,pr_cdcritic      => vr_cdcritic       
                                               ,pr_dscritic      => vr_dscritic);     
@@ -3273,6 +3278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                             ,pr_dscritic => vr_dscritic);         --Descricao critica
               
               END IF;
+                                          
               --Se nao ocorreu erro
               IF NVL(vr_cdcritic,0) = 0 AND TRIM(vr_dscritic) IS NULL THEN
                  IF gene0002.fn_existe_valor(pr_base => 'BD' -- Situacoes de SUCESSO
