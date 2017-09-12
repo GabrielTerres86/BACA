@@ -87,7 +87,7 @@
 	define("SERVERNAMEAPP", gethostname());     
 
 	// Dados de acesso ao Oracle
-	define("HOST" , "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = 0302oradev01)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = ayllosd) )  )");
+	define("HOST" , "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = 0302oradev01)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = ayllosd2) )  )");
 	define("USERE", "YXlsbG9z");
 	define("PASSE", "cHdkY2VjcmVkMjAxMg==");
 	
