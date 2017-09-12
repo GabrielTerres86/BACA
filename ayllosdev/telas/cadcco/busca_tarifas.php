@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : Marco/2016 
  * OBJETIVO     : Rotina para buscas as tarifas para a tela CADCCO
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+ *                             código do departamento ao invés da descrição (Renato Darosci - Supero)
  */
 ?> 
 
@@ -41,7 +42,7 @@
 	$xml 	   .= "     <nrconven>".$nrconven."</nrconven>";
 	$xml 	   .= "     <dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";
 	$xml 	   .= "     <cddbanco>".$cddbanco."</cddbanco>";	
-	$xml 	   .= "     <dsdepart>".$glbvars['dsdepart']."</dsdepart>";
+	$xml 	   .= "     <cddepart>".$glbvars['cddepart']."</cddepart>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
 	$xml 	   .= "     <nmdatela>".$glbvars['nmdatela']."</nmdatela>";
 	$xml	   .= "     <nrregist>".$nrregist."</nrregist>";	

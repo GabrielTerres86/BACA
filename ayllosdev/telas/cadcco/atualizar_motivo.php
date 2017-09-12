@@ -6,7 +6,8 @@
 	                                                                  
 	 Objetivo  : Efetua a atualizacao das tarifas e histórico do motivo                              
 	                                                                  
-	 Alterações: 
+	 Alterações: 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+                              código do departamento ao invés da descrição (Renato Darosci - Supero)
 							  
 	********************************************************************************/
 	
@@ -74,7 +75,7 @@
 	$xml 	   .= " <Dados>";
 	$xml 	   .= "     <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml 	   .= "     <nrconven>".$nrconven."</nrconven>";		
-	$xml 	   .= "     <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml 	   .= "     <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
 	$xml 	   .= "     <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xml 	   .= "     <vlmotivo>".$vlmotivo."</vlmotivo>";

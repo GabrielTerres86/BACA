@@ -3,11 +3,11 @@
 
   Fonte: form_cadcco.php
   Autor: Jonathan - RKAM
-  Data : Marco/2016                      Última Alteração:
+  Data : Marco/2016                      Última Alteração: 19/09/2016
 
   Objetivo  : Mostrar valores da CADCCO.
 
-  Alterações: 
+  Alterações: 19/09/2016 - Incluida opcao "ACORDO" no campo "dsorgarq", Prj. 302 (Jean Michel)
   
 
  * ********************************************************************* */
@@ -40,6 +40,7 @@
 			<option value="INTERNET" <? echo getByTagName($inf,'dsorgarq') == 'INTERNET' ? 'selected' : '' ?> >Internet</option>
 			<option value="PROTESTO" <? echo getByTagName($inf,'dsorgarq') == 'PROTESTO' ? 'selected' : '' ?> >Protesto</option>
 			<option value="EMPRESTIMO" <? echo getByTagName($inf,'dsorgarq') == 'EMPRESTIMO' ? 'selected' : '' ?> >Empr&eacute;stimo</option>
+			<option value="ACORDO" <? echo getByTagName($inf,'dsorgarq') == 'ACORDO' ? 'selected' : '' ?> >Acordo</option>
 			
 			<?php if($cddopcao != 'I'){?>
 				<option value="MIGRACAO" <? echo getByTagName($inf,'dsorgarq') == 'MIGRACAO' ? 'selected' : '' ?>> Migra&ccedil;&atilde;o</option>

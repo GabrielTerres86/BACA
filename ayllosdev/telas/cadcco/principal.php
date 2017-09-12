@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : Marco/2016
  * OBJETIVO     : Rotina para manter as operações da tela CADCCO
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+ *                             código do departamento ao invés da descrição (Renato Darosci - Supero)
  */
 ?> 
 
@@ -36,7 +37,7 @@
 	$xml 	   .= "<Root>";
 	$xml 	   .= " <Dados>";
 	$xml 	   .= "     <nrconven>".$nrconven."</nrconven>";
-	$xml 	   .= "     <dsdepart>".$glbvars['dsdepart']."</dsdepart>";
+	$xml 	   .= "     <cddepart>".$glbvars['cddepart']."</cddepart>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
 	$xml 	   .= "     <nmdatela>".$glbvars['nmdatela']."</nmdatela>";
 	$xml 	   .= " </Dados>";
