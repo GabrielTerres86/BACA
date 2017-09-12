@@ -163,19 +163,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_IMOVEL AS
 END TELA_IMOVEL;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMOVEL AS
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
   --
   --    Programa: TELA_IMOVEL 
   --    Autor   : Renato Darosci/SUPERO
-  --    Data    : Junho/2016                   Ultima Atualizacao:
+  --    Data    : Junho/2016                   Ultima Atualizacao: 12/09/2017
   --
   --    Dados referentes ao programa:
   --
   --    Objetivo  : BO ref. a Mensageria da tela IMOVEL
   --
-  --    Alteracoes:
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  --    Alteracoes: 12/09/2017 - Decorrente a inclusão de novo parâmetro na rotina pc_abre_arquivo,
+                                 foi ncessário ajuste para mencionar os parâmetros no momento da chamada
+                                (Adriano - SD 734960 ).
+  
+  ---------------------------------------------------------------------------------------------------------------*/
   -- Buscar os dados do registro que vai ser atualizado
   CURSOR cr_tbepr_imovel_alienado(pr_cdcooper  tbepr_imovel_alienado.cdcooper%TYPE
                                  ,pr_nrdconta  tbepr_imovel_alienado.nrdconta%TYPE
@@ -3685,14 +3687,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMOVEL AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Renato Darosci/SUPERO
-    Data    : Julho/2016                       Ultima atualizacao:
+    Data    : Julho/2016                       Ultima atualizacao: 12/09/2017
 
     Dados referentes ao programa:
 
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para realizar a leitura do arquivo de processamento do Cetip
 
-    Alteracoes:
+    Alteracoes: 12/09/2017 - Decorrente a inclusão de novo parâmetro na rotina pc_abre_arquivo,
+                             foi ncessário ajuste para mencionar os parâmetros no momento da chamada
+                            (Adriano - SD 734960 ).
     ............................................................................. */
     -- Buscar todas as cooperativas ou a cooperativa selecionada na tela
     CURSOR cr_crapcop IS
@@ -3798,11 +3802,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMOVEL AS
         vr_nrdolote := TO_NUMBER(SUBSTR(vr_tab_arqtmp(ind_arq), INSTR(vr_tab_arqtmp(ind_arq),'_')+5, 7));
         
         -- Abrir o arquivo
-        gene0001.pc_abre_arquivo(vr_dsdiretorio,
-                                 vr_tab_arqtmp(ind_arq),
-                                 'R',
-                                 vr_arquivo,
-                                 pr_dscritic);
+        gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdiretorio,
+                                 pr_nmarquiv => vr_tab_arqtmp(ind_arq),
+                                 pr_tipabert => 'R',
+                                 pr_utlfileh => vr_arquivo,
+                                 pr_des_erro => pr_dscritic);
         
         IF pr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;

@@ -38,6 +38,26 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0193 IS
                             pr_dscritic   OUT VARCHAR2, -- Texto de erro/critica encontrada
                             pr_nrpaconta  OUT NUMBER    -- PA da CONTA 
 ) IS 
+
+   /* .............................................................................
+
+       Programa: pc_valida_conta
+       Sistema : PROGRID
+       Sigla   : CRED
+       Autor   : 
+       Data    :                            Ultima atualizacao: 12/09/2017
+
+       Dados referentes ao programa:
+
+       Frequencia:
+       Objetivo  : 
+       
+       Alteracoes: 12/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                          crapass, crapttl, crapjur 
+              							    (Adriano - P339).
+
+    ..............................................................................*/
+    
     vr_inpessoa crapass.inpessoa%TYPE;
     vr_dtdemiss crapass.dtdemiss%TYPE;
     vr_cdsitdct crapass.cdsitdct%TYPE;
@@ -96,8 +116,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0193 IS
             WHERE
                    ct.cdcooper = pr_cdcooper
                and ct.nrdconta = pr_nrdconta
-               and ct.nrcpfcgc = pr_nrcpfcta
-               and flgsittl    = 1; -- Titular ativo
+               and ct.nrcpfcgc = pr_nrcpfcta;
           EXCEPTION
             WHEN NO_DATA_FOUND THEN
             -- Se o CPF passado como parâmetro não estiver associado a conta passada como parâmetro,
