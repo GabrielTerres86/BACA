@@ -37,14 +37,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 04/05/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 12/09/2017
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de credito
 
-      Alteracoes:
+      Alteracoes: 12/09/2017 - Ajuste nacionalidade e orgao emissor. PRJ339 - CRM (Odirlei-AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -956,11 +956,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               ,ttl.cdsitcpf
               ,ttl.tpdocttl
               ,ttl.nrdocttl
-              ,ttl.cdoedttl
+              ,org.cdorgao_expedidor cdoedttl
               ,ttl.dtnasttl
               ,ttl.cdsexotl
               ,ttl.tpnacion
-              ,ttl.dsnacion
+              ,nac.dsnacion dsnacion
               ,ttl.dsnatura || '-' || ttl.cdufnatu dsnatura
               ,ttl.dthabmen
               ,ttl.cdestcvl
@@ -994,11 +994,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               ,ass.cdsitdtl
           FROM crapttl ttl
               ,crapass ass
+              ,crapnac nac
+              ,tbgen_orgao_expedidor org
          WHERE ttl.cdcooper = pr_cdcooper
            AND ttl.nrdconta = pr_nrdconta
            AND ttl.idseqttl = 1
            AND ass.cdcooper = ttl.cdcooper
-           AND ass.nrdconta = ttl.nrdconta;
+           AND ass.nrdconta = ttl.nrdconta
+           AND ttl.cdnacion = nac.cdnacion(+)
+           AND ttl.idorgexp = org.idorgao_expedidor(+);
       rw_crapttl cr_crapttl%ROWTYPE;
     
       -- Buscar dados do titular pessoa juridical
@@ -3417,7 +3421,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         
     ..........................................................................*/
     -----------> CURSORES <-----------
-    
+    -- Busca a Nacionalidade
+    CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+      SELECT crapnac.dsnacion
+        FROM crapnac
+       WHERE crapnac.cdnacion = pr_cdnacion;
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -3429,6 +3437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_lst_generic2 json_list := json_list(); 
     vr_inpessoa     crapass.inpessoa%TYPE;
     vr_stsnrcal     BOOLEAN;
+    vr_dsnacion     crapnac.dsnacion%TYPE;
       
   BEGIN
     
@@ -3466,7 +3475,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generico.put('nomeMae'      ,pr_rw_crapavt.nmmaecto);
       END IF;  
       
-      vr_obj_generico.put('nacionalidade',pr_rw_crapavt.dsnacion);
+      -- Busca a Nacionalidade
+      vr_dsnacion := '';
+      OPEN  cr_crapnac(pr_cdnacion => pr_rw_crapavt.cdnacion);
+      FETCH cr_crapnac INTO vr_dsnacion;
+      CLOSE cr_crapnac;
+      
+      vr_obj_generico.put('nacionalidade',vr_dsnacion);
       
       -- Montar objeto profissao       
       IF pr_rw_crapavt.dsproftl <> ' ' THEN 
@@ -3795,13 +3810,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,crapcrl.nrdconta
             ,crapcrl.nrcpfcgc
             ,crapcrl.nmrespon
-            ,crapcrl.dsorgemi
+            ,org.cdorgao_expedidor dsorgemi
             ,crapcrl.cdufiden
             ,crapcrl.dtemiden
             ,crapcrl.dtnascin
             ,crapcrl.cddosexo
             ,crapcrl.cdestciv
-            ,crapcrl.dsnacion
+            ,crapnac.dsnacion
             ,crapcrl.dsnatura
             ,crapcrl.cdcepres
             ,crapcrl.dsendres
@@ -3816,9 +3831,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,crapcrl.tpdeiden
             ,crapcrl.nridenti
             ,crapcrl.cdrlcrsp
-        FROM crapcrl
+        FROM crapcrl,
+             crapnac,
+             tbgen_orgao_expedidor org
        WHERE crapcrl.cdcooper = pr_cdcooper
-         AND crapcrl.nrctamen = pr_nrdconta;
+         AND crapcrl.nrctamen = pr_nrdconta
+         AND crapcrl.cdnacion = crapnac.cdnacion(+)
+         AND crapcrl.idorgexp = org.idorgao_expedidor(+);
     
     -- Declarar cursor de participações societárias
     CURSOR cr_crapepa (pr_cdcooper crapass.cdcooper%type,
