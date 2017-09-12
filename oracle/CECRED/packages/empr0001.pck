@@ -233,7 +233,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                           ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                           ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                           ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de presta¿¿es calculadas at¿ momento
-                          ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de presta¿¿es paga at¿ momento
+                          ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de presta¿¿es paga at¿ momento
                           ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no m¿s
                           ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no m¿s corrente
                           ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -251,7 +251,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                               ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                               ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                               ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes calculadas ate momento
-                              ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestacoes paga ate momento
+                              ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes paga ate momento
                               ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mes
                               ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mes corrente
                               ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -810,7 +810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 05/05/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 12/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -867,6 +867,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --                          a crapepr estava ficando com valor incorreto (Tiago/Thiago SD644598)
   --
   --             05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
+  --
+  --             12/09/2017 - #749442 Alterado o tipo da variável e parametro qtprepag das
+  --                          rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
+  --                          crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
 
   ---------------------------------------------------------------------------------------------------------------
 
@@ -998,7 +1002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                           ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                           ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                           ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestações calculadas até momento
-                          ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestações paga até momento
+                          ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestações paga até momento
                           ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mês
                           ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mês corrente
                           ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
@@ -1666,7 +1670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_diapagto   IN OUT INTEGER --> Dia para pagamento
                               ,pr_txdjuros   IN OUT crapepr.txjuremp%TYPE --> Taxa de juros aplicada
                               ,pr_qtprecal   OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes calculadas ate momento
-                              ,pr_qtprepag   IN OUT crapepr.qtprepag%TYPE --> Quantidade de prestacoes paga ate momento
+                              ,pr_qtprepag   IN OUT crapepr.qtprecal%TYPE --> Quantidade de prestacoes paga ate momento
                               ,pr_vlprepag   IN OUT craplem.vllanmto%TYPE --> Valor acumulado pago no mes
                               ,pr_vljurmes   IN OUT crapepr.vljurmes%TYPE --> Juros no mes corrente
                               ,pr_vljuracu   IN OUT crapepr.vljuracu%TYPE --> Juros acumulados total
