@@ -20,6 +20,11 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
                          Chamado 229313 (Jean Reddiga - RKAM).  
       
             12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
+            
+            29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)     
+
+            23/08/2017 - Ajuste para nao permitir dar submit mais de uma vez no botao OK.
+                         SD719011 - PRJ340 - NPC (Odirlei-AMcom)    
 .............................................................................-->
 <html>
 
@@ -32,11 +37,27 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>CONSULTA CONTA ASSOCIADO</title>
 
 <script language="JavaScript">
  
+var btnOk = "#ok";
+var btnAguarde = "#Aguarde";
+
+// Submit do formulario
+function submitFormulario() {
+
+  $(btnOk).hide();
+  $(btnAguarde).show();
+
+}
+
+$( document ).ready(function(){  
+    $(btnAguarde).hide();       
+});
+
 function verificaValor() {
 
     var valor = document.forms[0].v_valorinf.value;
@@ -47,14 +68,50 @@ function verificaValor() {
     valor = valor.replace(".","");
     valor = valor.replace(",",".");
 
+    document.getElementById('v_cpfcedente').style.display = "block";
+    document.getElementById('c_dsdocbnf').style.display   = "none";
+    document.getElementById('v_nmbenefi').style.display   = "none";
+    document.getElementById('tr_nmbenefi').style.display  = "none";
+    
+    // Se possuir informação do beneficiario, exibe os campos 
+    if (document.forms[0].v_nmbenefi.value != ""){ 
+        document.getElementById('v_cpfcedente').style.display = "none";
+        document.getElementById('c_dsdocbnf').style.display   = "block";
+        document.getElementById('v_nmbenefi').style.display   = "block";
+        document.getElementById('tr_nmbenefi').style.display  = "block";        
+        
+    }
+    
+    if (document.forms[0].v_cdctrlcs.value != ""){
+    
+        // Se nao foi informado a conta deve informar o CPF
+        /* Campo não será exibido -  não é necessario informar no NPC
+        if ( document.forms[0].v_conta.value == "" || 
+             document.forms[0].v_conta.value != "0"){
+        document.forms[0].v_cpfsacado.disabled = false;
+        document.forms[0].v_cpfsacado.focus();
+        }*/
     if (valor >= 250000) {
+            document.forms[0].v_cpfcedente.disabled = false;
+            document.forms[0].v_cpfsacado.disabled = false;
+            document.forms[0].v_cod.disabled = false;
+            document.forms[0].v_senha.disabled = false;
+            document.forms[0].v_cpfsacado.focus();            
+            
+        }
+        
+    }
+    
+    else if (valor >= 250000) {
         document.forms[0].v_cpfcedente.disabled = false;
         document.forms[0].v_cpfsacado.disabled = false;
         document.forms[0].v_cod.disabled = false;
         document.forms[0].v_senha.disabled = false;
         document.forms[0].v_cpfcedente.focus();
+    
     }
     else {
+    
         document.forms[0].v_cpfcedente.value = "";
         document.forms[0].v_cpfsacado.value = "";
         document.forms[0].v_cpfcedente.disabled = true;
@@ -71,8 +128,11 @@ function verificaValor() {
 
 
 <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click(); verificaValor();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
-<form name="form1" onKeyDown="change_page(event)" method=post>
+<form name="form1" onKeyDown="change_page(event)" method=post onSubmit="submitFormulario()">
          <input type="hidden" name="v_msg"><input type="hidden" name="vh_foco" value="7"> <input type="hidden" name="v_intitcop">
+         <input type="hidden" name="v_cdctrlcs" id="v_cdctrlcs" class="input" >               
+         <input type="hidden" name="v_inpesbnf" id="v_inpesbnf" class="input" >               
+         <input type="hidden" name="v_nrdocbnf" id="v_nrdocbnf" class="input" >               
 
 <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
 <div align="center">
@@ -123,7 +183,14 @@ function verificaValor() {
 		 <tr> 
                <td class="linhaform" width=25% align="right">CPF/CNPJ Beneficiario:</td>
                <td> 
-                   <input type="text" name="v_cpfcedente" class="input" maxlength="14" onKeyDown="JavaScript:validaInteiro(event)" size="18" disabled>               
+                   <input type="text" name="v_cpfcedente" id="v_cpfcedente" class="input" maxlength="14" onKeyDown="JavaScript:validaInteiro(event)" size="18" style="display:block" disabled>               
+                   <input type="text" name="c_dsdocbnf"   id="c_dsdocbnf"   class="input" maxlength="14" onKeyDown="JavaScript:validaInteiro(event)" size="18" style="display:none" disabled >               
+               </td>
+          </tr>
+          <tr id='tr_nmbenefi'style="display:none"> 
+               <td class="linhaform" width=25% align="right">Nome Beneficiario:</td>
+               <td> 
+                   <input type="text" name="v_nmbenefi" id="v_nmbenefi" class="input"  size="60" style="display:none" disabled>               
                </td>
           </tr>
            <tr> 
@@ -177,7 +244,8 @@ function verificaValor() {
             <td class="linhaform" align="right">
             <td></td>
             <td class="linhaform" align="center" width="100%" colspan="3">
-                <input class="button" type="submit" name="ok" value="Ok">
+                <input class="button" type="button" name="Aguarde" value="Aguarde" id="Aguarde">
+                <input class="button" type="submit" name="ok" value="Ok" id="ok">
             </td>
            </tr>        
           <tr>
