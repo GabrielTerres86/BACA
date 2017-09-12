@@ -479,7 +479,7 @@ ELSE IF par_tpoperac = 8 THEN DO:
                           INPUT par_indtpaga,         /* pr_indtpaga 1 - Pagamento / 2 - Agendamento */                          
                           INPUT INT(par_flmobile),    /* pr_flmobile */
                           INPUT par_nrcpfope,         /* pr_nrcpfope */
-                          INPUT "",                   /* pr_dshistor */
+                          INPUT par_dshistor,         /* pr_dshistor */
                           OUTPUT 0,                   /* pr_cdcritic */
                           OUTPUT "",                  /* pr_dscritic */
                           OUTPUT "").                 /* pr_retxml */
