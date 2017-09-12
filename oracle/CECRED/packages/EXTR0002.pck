@@ -520,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 05/04/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 11/09/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -766,6 +766,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
                      e nrcpfcgc para não consultar novamente o associado nos packages 
                      apli0001 e imut0001 (Carlos)
+                     
+        11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
+        
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -11887,7 +11890,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 11/04/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 11/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -11908,6 +11911,8 @@ END pc_consulta_ir_pj_trim;
   --
   --              11/04/2016 - Exibir numero de conta cartão para o emprestimos de cessao de credito.
   --                           PRJ-343 - Cessao de Credito(Odirlei-AMcom)                   
+  -- 
+  --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).             
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -12354,7 +12359,7 @@ END pc_consulta_ir_pj_trim;
                        '" cdmodali="' || rw_gnmodal.cdmodali                                        ||
                        '" dsmodali="' || rw_gnmodal.dsmodali                                        ||
                        '" cdsubmod="' || rw_gnsbmod.cdsubmod                                        ||
-                       '" dssubmod="' || rw_gnsbmod.dssubmod                                        ||
+                       '" dssubmod="' || gene0007.fn_caract_acento(rw_gnsbmod.dssubmod,1,'#$&%¹²³ªº°*!?<>|','                  ') ||
                        '" nrconta_cartao="' || rw_tbcessao.nrconta_cartao                           ||
                        '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                 ||
                        '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                ||
@@ -12770,7 +12775,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 11/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -12790,6 +12795,8 @@ END pc_consulta_ir_pj_trim;
   --
   --              20/04/2016 - Remover comando rm e incluir direto na tela impres 
   --                           (Lucas Ranghetti/Rodrigo #399412)
+  --
+  --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -13226,7 +13233,7 @@ END pc_consulta_ir_pj_trim;
                            '" cdmodali="' || vr_tab_dados_epr(vr_index).cdmodali                                  ||
                            '" dsmodali="' || vr_tab_dados_epr(vr_index).dsmodali                                  ||
                            '" cdsubmod="' || vr_tab_dados_epr(vr_index).cdsubmod                                  ||
-                           '" dssubmod="' || vr_tab_dados_epr(vr_index).dssubmod                                  ||
+                           '" dssubmod="' || gene0007.fn_caract_acento(vr_tab_dados_epr(vr_index).dssubmod,1,'#$&%¹²³ªº°*!?<>|','                  ') ||
                            '" txanual="'  || to_char(vr_txanual,'fm9999g999g990d00000')                           ||
                            '" txnominal="'|| to_char(vr_txnomina,'fm9999g999g990d00000')                          ||
                            '" qtpreapg="' || to_char(vr_tab_dados_epr(vr_index).qtpreapg,'fm990d0000')            ||
