@@ -3796,6 +3796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                 ,pr_tpcptdoc => 2              --> Tipo de captura do documento
                                                 ,pr_idtitdda => 0              --> Identificador do titulo no DDA
                                                 ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
+												,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
                                                 ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
                                                 ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
 
