@@ -106,6 +106,8 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
              05/04/2017 - Melhorias e ajustes decorrentes de erros encontrados em testes
                           e também erros de regras de negócio. (Jean Michel)             
 													
+             12/09/2017 - Removido campo dsdemail.PRJ339-CRM(Odirlei-AMcom)
+													
 ............................................................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -1939,7 +1941,7 @@ PROCEDURE NomeCooperado :
     IF INT(aux_nrdconta) = 0 THEN
       RETURN "NOK".
     		
-    FOR FIRST crapass FIELDS(inpessoa dsdemail nmprimtl cdagenci) WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
+    FOR FIRST crapass FIELDS(inpessoa nmprimtl cdagenci) WHERE crapass.cdcooper = INT(ab_unmap.aux_cdcooper)
                                                                     AND crapass.nrdconta = INT(aux_nrdconta) NO-LOCK. END.
     
     IF NOT AVAILABLE crapass THEN                    

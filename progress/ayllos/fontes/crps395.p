@@ -1026,7 +1026,7 @@ PROCEDURE Busca_Dados:
                    NO-LOCK NO-ERROR.
               
               IF  AVAILABLE crapnac THEN
-                ASSIGN aux_dsnacion = crapttl.dsnacion.
+                ASSIGN aux_dsnacion = crapnac.dsnacion.
               ELSE     
                 ASSIGN aux_dsnacion = "".
                 
