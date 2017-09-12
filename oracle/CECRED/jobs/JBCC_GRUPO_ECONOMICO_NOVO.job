@@ -15,7 +15,7 @@ begin
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
 
-  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JB_GRUPO_ECONOMICO_NOVO',
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBCC_GRUPO_ECONOMICO_NOVO',
                                 job_type            => 'PLSQL_BLOCK',
                                 job_action          => 'BEGIN TELA_CONTAS_GRUPO_ECONOMICO.pc_job_grupo_economico_novo; END;',
                                 start_date          => TO_TIMESTAMP_TZ(to_char(SYSDATE+1,'DD/MM/RRRR')||' 08:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR'),
