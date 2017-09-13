@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0052tt.i
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 13/04/2017
+    Data    : Junho/2010                      Ultima atualizacao: 13/09/2017
   
     Dados referentes ao programa:
   
@@ -65,6 +65,11 @@
                
                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                             PRJ339 - CRM (Odirlei-AMcom)  
+
+			   13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+              	     	    (Adriano - P339).
+
 .............................................................................*/
 
 /* DEFINICOES PARA MATRIC[N].P */
@@ -122,7 +127,9 @@ DEFINE TEMP-TABLE tt-crapass NO-UNDO LIKE crapass
     FIELD idorigee AS INTE
     FIELD nrlicamb AS DECI
     FIELD dsnacion LIKE crapnac.dsnacion
-    FIELD cdoedptl AS CHAR	  .
+    FIELD cdoedptl AS CHAR
+	FIELD dsdemail LIKE crapcem.dsdemail
+    FIELD inhabmen LIKE crapavt.inhabmen.
     
 DEFINE TEMP-TABLE tt-crapavt NO-UNDO 
     FIELD cdcooper LIKE crapavt.cdcooper
