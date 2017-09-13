@@ -1,0 +1,47 @@
+/*
+
+    CHAMADO 734960 - CRIAÇÃO DO JOB JBCHQ_ARQUIVO_RET_TRUNC_ABBC PARA EFETUAR A CHAMADO DO PROGRAMA CRPS584;
+
+*/
+BEGIN
+
+  EXECUTE IMMEDIATE 'ALTER SESSION SET 
+                    nls_calendar = ''GREGORIAN''
+                    nls_comp = ''BINARY''
+                    nls_date_format = ''DD-MON-RR''
+                    nls_date_language = ''AMERICAN''
+                    nls_iso_currency = ''AMERICA''
+                    nls_language = ''AMERICAN''
+                    nls_length_semantics = ''BYTE''
+                    nls_nchar_conv_excp = ''FALSE''
+                    nls_numeric_characters = ''.,''
+                    nls_sort = ''BINARY''
+                    nls_territory = ''AMERICA''
+                    nls_time_format = ''HH.MI.SSXFF AM''
+                    nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+                    nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+                    nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+
+  -- Create do job do mesmo
+  sys.dbms_scheduler.create_job(job_name        => 'CECRED.JBCHQ_ARQUIVO_RET_TRUNC_ABBC'
+                               ,job_type        => 'PLSQL_BLOCK'
+                               ,job_action      => 'DECLARE
+                                                      vr_dscritic VARCHAR2(500);
+                                                      vr_cdcritic crapcri.cdcritic%TYPE;
+                                                    BEGIN
+                                                      PC_CRPS584(vr_cdcritic, vr_dscritic);
+                                                        
+                                                      IF vr_dscritic IS NOT NULL THEN
+                                                        raise_application_error(-20001,vr_dscritic);
+                                                      END IF;
+                                                    END;'
+                               ,start_date      => to_timestamp_tz(to_date('20/09/2017','DD/MM/RRRR') || ' 06:00 America/Sao_Paulo','DD/MM/RRRR HH24:MI TZR')
+                               ,repeat_interval => 'FREQ=MINUTELY; INTERVAL=2; BYDAY=MON, TUE, WED, THU, FRI; BYHOUR=8,9,10,11,12,13,14,15,16,17,18,19,20'
+                               ,end_date        => to_date(NULL)
+                               ,job_class       => 'DEFAULT_JOB_CLASS'
+                               ,enabled         => TRUE
+                               ,auto_drop       => TRUE
+                               ,comments        => 'Integra Protocolo Eletronico - Atualizacao de Cheques para Processados - Tratar arquivo de retorno da Truncagem');
+
+  COMMIT;
+END;
