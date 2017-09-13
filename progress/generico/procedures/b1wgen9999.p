@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 30/08/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 13/09/2017
     
     Dados referentes ao programa:
 
@@ -266,7 +266,12 @@
 
 			   30/08/2017 - Ajuste para incluir o lote 7600
 					        (Adriano - SD 746815).
-                            
+               
+               13/09/2017 - #706145 Rotina acha-lock limpada pois a mesma faz
+                            buscas em tabelas exclusivamente progress, que não 
+                            são utilizadas no oracle, podendo causar lentidão
+                            quando requisitada por programas que tratam LOCK
+                            (Carlos)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -5033,54 +5038,6 @@ PROCEDURE acha-lock:
 
     DEF VAR aux_dsretcmd AS CHAR                                    NO-UNDO.
     DEF VAR aux_dscomand AS CHAR                                    NO-UNDO.
-
-    FIND FIRST _file WHERE 
-               _file._file-name = par_nmtabela NO-LOCK NO-ERROR.
-
-    IF  NOT AVAILABLE _file  THEN
-        RETURN "OK".
-    
-    FIND FIRST _lock WHERE _lock._lock-table = _file._file-number AND
-                           _lock._lock-recid = par_nrdrecid       
-                           NO-LOCK NO-ERROR.
-                       
-    IF  NOT AVAILABLE _lock  THEN
-        RETURN "OK".
-    
-    FIND FIRST _connect WHERE _connect._connect-usr = _lock._lock-usr 
-                              NO-LOCK NO-ERROR.
-     
-    IF  NOT AVAILABLE _connect  THEN
-        RETURN "OK".
-    
-    ASSIGN par_loginusr = TRIM(_lock._lock-name)
-           par_dsdevice = TRIM(_connect._connect-device).
-    
-    /** Pega o nome do usuario **/
-    INPUT THROUGH VALUE("pwget -n " + _lock._lock-name + " 2> /dev/null") 
-          NO-ECHO.
-    
-    IMPORT UNFORMATTED aux_dsretcmd.
-    
-    INPUT CLOSE.
-    
-    ASSIGN par_nmusuari = TRIM(ENTRY(5,aux_dsretcmd,":")).
-    
-    /** Pega IP do usuario e data do lock **/
-    ASSIGN aux_dscomand = "echo `who -u | grep " + 
-                          TRIM(SUBSTR(_connect._connect-device,6)) +
-                          ' | awk -F " " ' + "'~{ print ~}'` 2> /dev/null".
-    
-    INPUT THROUGH VALUE(aux_dscomand) NO-ECHO.
-    
-    IMPORT UNFORMATTED aux_dsretcmd.
-    
-    INPUT CLOSE.
-    
-    ASSIGN par_dtconnec = TRIM(ENTRY(4,aux_dsretcmd," ")) + " " +
-                          TRIM(ENTRY(3,aux_dsretcmd," ")) + " " +
-                          TRIM(ENTRY(5,aux_dsretcmd," "))
-           par_numipusr = TRIM(ENTRY(8,aux_dsretcmd," ")).
     
     RETURN "OK".
 
