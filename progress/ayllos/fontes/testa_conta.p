@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Maio/2003.                          Ultima atualizacao: 24/04/2017
+   Data    : Maio/2003.                          Ultima atualizacao: 13/09/2017
 
    Dados referentes ao programa:
 
@@ -21,6 +21,9 @@
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+			   13/09/2017 - Ajustado pois estava faltando declarar as variáveis
+			               	(Adriano - P339).
 
 ............................................................................. */
 
@@ -98,10 +101,10 @@ ELSE
 	     FOR FIRST crapttl FIELDS(nrcpfcgc)
 		                     WHERE crapttl.cdcooper = crapass.cdcooper AND
     							   crapttl.nrdconta = crapass.nrdconta AND
-							       crapttl.idseqttl = 2
+							       crapttl.idseqttl = 1
 							       NO-LOCK:
 
-		   ASSIGN aux_nrcpfcgc1 = crapttl.nrcpfcgc.
+		   ASSIGN pri_nrcpfcgc = crapttl.nrcpfcgc.
 
 		 END.
 		  	
@@ -111,23 +114,25 @@ ELSE
 							       crapttl.idseqttl = 2
 							       NO-LOCK:
 
-		   ASSIGN aux_nrcpfcgc2 = crapttl.nrcpfcgc.
+		   ASSIGN seg_nrcpfcgc = crapttl.nrcpfcgc.
 
 		 END.	  
 
          IF   crapass.nrcpfcgc = crabass.nrcpfcgc   AND
-              aux_nrcpfcgc1    = aux_nrcpfcgc2    THEN.
+              pri_nrcpfcgc     = seg_nrcpfcgc       THEN.
          ELSE
-         IF   aux_nrcpfcgc1    = crabass.nrcpfcgc AND     
-              crapass.nrcpfcgc = aux_nrcpfcgc2    THEN.
+         IF   pri_nrcpfcgc     = crabass.nrcpfcgc AND     
+              crapass.nrcpfcgc = seg_nrcpfcgc     THEN.
          ELSE
          IF   crapass.nrcpfcgc = crabass.nrcpfcgc   AND
-              aux_nrcpfcgc2    = 0                THEN.
+              seg_nrcpfcgc     = 0                 THEN.
          ELSE
-         IF   aux_nrcpfcgc1 = crabass.nrcpfcgc AND
-              aux_nrcpfcgc2 = 0                THEN.
+         IF   pri_nrcpfcgc  = crabass.nrcpfcgc AND
+              seg_nrcpfcgc  = 0                THEN.
          ELSE
               par_cdcritic = 755.
+
+
      END.
 
 /* .......................................................................... */
