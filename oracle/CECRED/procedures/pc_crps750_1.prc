@@ -198,29 +198,25 @@ BEGIN
       vr_cdindice     VARCHAR2(30) := '';            --> Indice da tabela de acordos
       vr_mesespago    INTEGER;
       vr_inliquid     crapepr.inliquid%TYPE;
-
-	  vr_rowid rowid;
+      
+    vr_idprglog   NUMBER;
       
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
-	   --
+       --
        --
        IF pr_cdcooper = 3 then
-       -- gera log para futuros rastreios
-       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                           ,pr_cdoperad => 1
-                           ,pr_dscritic => null
-                           ,pr_dsorigem => 'AYLLOS'
-                           ,pr_dstransa => 'Inicio pc_gera_tabela_parcelas.'
-                           ,pr_dttransa => trunc(sysdate)
-                           ,pr_flgtrans => 1
-                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                           ,pr_idseqttl => 1
-                           ,pr_nmdatela => 'CRPS750_1'
-                           ,pr_nrdconta => 0
-                           ,pr_nrdrowid => vr_rowid);
+        -- gera log para futuros rastreios
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => 'CRPS750_1',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 2,
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Inicio pc_gera_tabela_parcelas.',
+                        PR_IDPRGLOG           => vr_idprglog);                           
+                           
        END IF;
        -- 
        --
@@ -360,18 +356,13 @@ BEGIN
        --
        IF pr_cdcooper = 3 then
        -- gera log para futuros rastreios
-       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                           ,pr_cdoperad => 1
-                           ,pr_dscritic => null
-                           ,pr_dsorigem => 'AYLLOS'
-                           ,pr_dstransa => 'Após DELETE tbepr_tr_parcelas.'
-                           ,pr_dttransa => trunc(sysdate)
-                           ,pr_flgtrans => 1
-                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                           ,pr_idseqttl => 1
-                           ,pr_nmdatela => 'CRPS750_1'
-                           ,pr_nrdconta => 0
-                           ,pr_nrdrowid => vr_rowid);       
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => 'CRPS750_1',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 2,
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Após DELETE tbepr_tr_parcelas.',
+                        PR_IDPRGLOG           => vr_idprglog);                           
        --
        END IF;
        --
@@ -449,19 +440,16 @@ BEGIN
          --
          IF pr_cdcooper = 3 then
          -- gera log para futuros rastreios
-         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                           ,pr_cdoperad => 1
-                           ,pr_dscritic => null
-                           ,pr_dsorigem => 'AYLLOS'
-                           ,pr_dstransa => 'Início loop cr_crapepr:'||
-                                           'Contrato:'||rw_crapepr.nrctremp
-                           ,pr_dttransa => trunc(sysdate)
-                           ,pr_flgtrans => 1
-                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                           ,pr_idseqttl => 1
-                           ,pr_nmdatela => 'CRPS750_1'
-                           ,pr_nrdconta => rw_crapepr.nrdconta
-                           ,pr_nrdrowid => vr_rowid);
+          pc_log_programa(PR_DSTIPLOG           => 'O',
+                          PR_CDPROGRAMA         => 'CRPS750_1',
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,
+                          pr_tpocorrencia       => 4,
+                          pr_dsmensagem         => 'Início loop cr_crapepr:'||
+                                                   ' Conta: '||rw_crapepr.nrdconta||
+                                                   ' Contrato:'||rw_crapepr.nrctremp,
+                          PR_IDPRGLOG           => vr_idprglog);                            
+                           
          END IF;  
 
          -- acerto de datas
@@ -691,25 +679,22 @@ BEGIN
            END IF;
            --
          END IF;
-		 --
+     --
          --
          IF pr_cdcooper = 3 then
          -- gera log para futuros rastreios
-         gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                           ,pr_cdoperad => 1
-                           ,pr_dscritic => null
-                           ,pr_dsorigem => 'AYLLOS'
-                           ,pr_dstransa => 'Antes de inserir tbepr_tr_parcelas:'||
-                                           'Contrato:'||rw_crapepr.nrctremp||
-                                           'Data pgto:'||to_char(vr_dtdpagto,'dd/mm/yyyy')||
-                                           'Saldo Dev:'||to_char(vr_vlsdeved)
-                           ,pr_dttransa => trunc(sysdate)
-                           ,pr_flgtrans => 1
-                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                           ,pr_idseqttl => 1
-                           ,pr_nmdatela => 'CRPS750_1'
-                           ,pr_nrdconta => rw_crapepr.nrdconta
-                           ,pr_nrdrowid => vr_rowid);
+          pc_log_programa(PR_DSTIPLOG           => 'O',
+                          PR_CDPROGRAMA         => 'CRPS750_1',
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,
+                          pr_tpocorrencia       => 4,
+                          pr_dsmensagem         => 'Antes insert tbepr_tr_parcelas:'||
+                                                   ' Conta: '||rw_crapepr.nrdconta||
+                                                   ' Contrato:'||rw_crapepr.nrctremp||
+                                                   ' Data pgto:'||to_char(vr_dtdpagto,'dd/mm/yyyy')||
+                                                   ' Saldo Dev:'||to_char(vr_vlsdeved),
+                          PR_IDPRGLOG           => vr_idprglog);
+                           
          END IF;   
          --
          --
