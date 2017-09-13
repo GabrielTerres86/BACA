@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Setembro/2004                   Ultima atualizacao: 16/06/2014
+   Data    : Setembro/2004                   Ultima atualizacao: 13/09/2017
 
    Dados referentes ao programa:
 
@@ -145,6 +145,11 @@
                            
               19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)  
+
+			  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			               crapass, crapttl, crapjur 
+              	           (Adriano - P339).
+
                            
 .............................................................................*/
 
@@ -186,7 +191,6 @@ DEF     VAR aux_cdfrmttl LIKE crapttl.cdfrmttl                       NO-UNDO.
 DEF     VAR aux_grescola LIKE crapttl.grescola                       NO-UNDO.
 DEF     VAR aux_cdnatopc LIKE crapttl.cdnatopc                       NO-UNDO.
 DEF     VAR aux_cdocpttl LIKE crapttl.cdocpttl                       NO-UNDO.
-DEF     VAR aux_dtsalari LIKE crapttl.dtsalari                       NO-UNDO.
 DEF     VAR aux_nmmaettl LIKE crapttl.nmmaettl                       NO-UNDO.
 DEF     VAR aux_nmpaittl LIKE crapttl.nmpaittl                       NO-UNDO.
 DEF     VAR aux_nmconjug LIKE crapcje.nmconjug                       NO-UNDO.
@@ -445,7 +449,6 @@ FOR EACH crapeca WHERE crapeca.cdcooper = glb_cdcooper       AND
                             aux_grescola = crapttl.grescola
                             aux_cdnatopc = crapttl.cdnatopc
                             aux_cdocpttl = crapttl.cdocpttl
-                            aux_dtsalari = crapttl.dtsalari
                             aux_nmmaettl = crapttl.nmmaettl
                             aux_nmpaittl = crapttl.nmpaittl
                             aux_nrcpfemp = crapttl.nrcpfemp
@@ -524,10 +527,10 @@ FOR EACH crapeca WHERE crapeca.cdcooper = glb_cdcooper       AND
                          aux_dtinires = ""
                          aux_cddocttl = 0
                          aux_idseqttl = 2
-                         aux_nrcpfcgc = crapass.nrcpfstl
+                         aux_nrcpfcgc = 0
                          aux_inpessoa = 2
                          aux_dtnasttl = crapass.dtnasctl
-                         aux_nmextttl = crapass.nmsegntl
+                         aux_nmextttl = crapass.nmprimtl
                          aux_nmtalttl = crapjur.nmtalttl
                          aux_tpnacion = 0
                          aux_dsnatura = ""
@@ -539,7 +542,6 @@ FOR EACH crapeca WHERE crapeca.cdcooper = glb_cdcooper       AND
                          aux_grescola = 0
                          aux_cdnatopc = 0
                          aux_cdocpttl = 0
-                         aux_dtsalari = glb_dtmvtolt
                          aux_nmmaettl = ""
                          aux_nmpaittl = ""
                          aux_nmconjug = ""
@@ -647,12 +649,6 @@ FOR EACH crapeca WHERE crapeca.cdcooper = glb_cdcooper       AND
                                   STRING(MONTH(glb_dtmvtolt),"99")    +
                                   STRING(YEAR(glb_dtmvtolt),"9999").
                         
-            IF   aux_dtsalari <> ?   THEN
-                 aux_dsdlinha = aux_dsdlinha + 
-                                STRING(MONTH(aux_dtsalari),"99")  +
-                                STRING(YEAR(aux_dtsalari),"9999").
-                                /* o restante sao brancos */ 
-                                       
             PUT STREAM str_1  aux_nrregist FORMAT "99999" "03".
             PUT STREAM str_1  aux_dsdlinha FORMAT "x(143)" SKIP.
                  
@@ -1006,7 +1002,6 @@ FOR EACH  cratalt NO-LOCK,
                     aux_grescola = 0
                     aux_cdnatopc = 0
                     aux_cdocpttl = 0
-                    aux_dtsalari = glb_dtmvtolt
                     aux_nmmaettl = ""
                     aux_nmpaittl = ""
                     aux_nmconjug = ""
@@ -1175,7 +1170,6 @@ FOR EACH  cratalt NO-LOCK,
                aux_grescola = crapttl.grescola
                aux_cdnatopc = crapttl.cdnatopc
                aux_cdocpttl = crapttl.cdocpttl
-               aux_dtsalari = crapttl.dtsalari
                aux_nmmaettl = crapttl.nmmaettl
                aux_nmpaittl = crapttl.nmpaittl
                aux_nrcpfemp = crapttl.nrcpfemp
@@ -1445,12 +1439,6 @@ PROCEDURE gera_arquivo:
                                   STRING(MONTH(glb_dtmvtolt),"99")        +
                                   STRING(YEAR(glb_dtmvtolt),"9999").
                     
-            IF   aux_dtsalari <> ?   THEN
-                 aux_dsdlinha = aux_dsdlinha + 
-                                STRING(MONTH(aux_dtsalari),"99")  +
-                                STRING(YEAR(aux_dtsalari),"9999").
-                                /* o restante sao brancos */ 
-                                   
             PUT STREAM str_1  aux_nrregist FORMAT "99999" "03".
             PUT STREAM str_1  aux_dsdlinha FORMAT "x(143)" SKIP.
              
