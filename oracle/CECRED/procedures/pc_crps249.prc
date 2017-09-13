@@ -577,6 +577,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			   03/08/2017 - Ajuste nas consultas de recarga de celular para substituir o cálculo
                             da receita pela totalização do vlrepasse. (Lombardi)
 
+               21/08/2017 - Ajuste leitura crapcst. (Odirlei-AMcom)
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -785,8 +786,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            vlcheque
       from crapcst
      where crapcst.cdcooper = pr_cdcooper
-       and crapcst.dtmvtolt = pr_dtmvtolt
-	   and crapcst.nrborder = 0;
+       and crapcst.dtmvtolt = pr_dtmvtolt;
+       
   -- Liberacao de cheques em custodia do dia
   cursor cr_crapcst2 (pr_cdcooper in craptab.cdcooper%type,
                       pr_dtmvtoan in crapcst.dtlibera%type,
@@ -799,8 +800,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        and crapcst.dtlibera > pr_dtmvtoan
        and crapcst.dtlibera <= pr_dtmvtolt
        and crapcst.dtdevolu is null
-	   and crapcst.nrborder = 0;
-  -- Resgates de cheques em custodia do dia / transf. para desconto de cheques
+       AND  (  --Ignorar cheques descontados 
+               NOT EXISTS (SELECT 1
+                             FROM crapcdb cdb
+                            WHERE cdb.cdcooper = crapcst.cdcooper
+                              AND cdb.nrdconta = crapcst.nrdconta
+                              AND cdb.dtlibera = crapcst.dtlibera
+                              --> Casos que não tem o numero do bordero gravado
+                              --AND cdb.nrborder = crapcst.nrborder
+                              AND cdb.dtlibbdc IS NOT NULL
+                              AND cdb.cdcmpchq = crapcst.cdcmpchq
+                              AND cdb.cdbanchq = crapcst.cdbanchq
+                              AND cdb.cdagechq = crapcst.cdagechq
+                              AND cdb.nrctachq = crapcst.nrctachq
+                              AND cdb.nrcheque = crapcst.nrcheque                               
+                              AND cdb.dtdevolu IS NULL));
+       
+  -- Resgates de cheques em custodia do dia 
   cursor cr_crapcst3 (pr_cdcooper in craptab.cdcooper%type,
                       pr_dtmvtolt in crapdat.dtmvtolt%type) is
     select /*+ index (crapcst crapcst##crapcst6)*/
@@ -809,8 +825,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            insitchq
       from crapcst
      where crapcst.cdcooper = pr_cdcooper
-       and crapcst.dtdevolu = pr_dtmvtolt
-	   and crapcst.nrborder = 0;
+       and crapcst.dtdevolu = pr_dtmvtolt;
+       
+  -- Cheques transf. para desconto de cheques
+  cursor cr_crapcst4 (pr_cdcooper in craptab.cdcooper%type,
+                      pr_dtmvtolt in crapcst.dtlibera%type) is
+    SELECT cst.nrdconta,
+           cst.vlcheque
+      FROM crapcst cst
+     WHERE cst.cdcooper = pr_cdcooper
+       AND cst.dtdevolu is null
+       AND EXISTS ( SELECT 1
+                      FROM crapcdb cdb
+                     WHERE cdb.cdcooper = cst.cdcooper
+                       AND cdb.nrdconta = cst.nrdconta
+                       AND cdb.nrborder = cst.nrborder
+                       AND cdb.dtlibbdc = pr_dtmvtolt
+                       AND cdb.cdcmpchq = cst.cdcmpchq
+                       AND cdb.cdbanchq = cst.cdbanchq
+                       AND cdb.cdagechq = cst.cdagechq
+                       AND cdb.nrctachq = cst.nrctachq
+                       AND cdb.nrcheque = cst.nrcheque                               
+                       AND cdb.dtdevolu IS NULL);
+                                   
   -- Títulos compensáveis
   cursor cr_craptit (pr_cdcooper in craptit.cdcooper%type,
                      pr_dtmvtolt in craptit.dtmvtolt%type,
@@ -8250,14 +8287,9 @@ BEGIN
   vr_vlcdbcop := 0;
 
   for rw_crapcst in cr_crapcst3 (pr_cdcooper,
-                                 vr_dtmvtolt) loop
-    if rw_crapcst.insitchq = 5 then  -- Cheque descontado
-      if rw_crapcst.nrdconta = 85448 then
-        vr_vlcdbcop := vr_vlcdbcop + rw_crapcst.vlcheque;
-      else
-        vr_vlcdbban := vr_vlcdbban + rw_crapcst.vlcheque;
-      end if;
-    else
+                                 vr_dtmvtolt) LOOP
+                                 
+    if rw_crapcst.insitchq <> 5 then  -- Cheque descontado      
       if rw_crapcst.nrdconta = 85448 then
         vr_vlcstcop := vr_vlcstcop + rw_crapcst.vlcheque;
       else
@@ -8265,6 +8297,18 @@ BEGIN
       end if;
     end if;
   end loop;
+  
+  -- Cheques transf. para desconto de cheques  
+  for rw_crapcst in cr_crapcst4 (pr_cdcooper,
+                                 vr_dtmvtolt) loop
+    -- Cheque descontado
+    if rw_crapcst.nrdconta = 85448 then
+      vr_vlcdbcop := vr_vlcdbcop + rw_crapcst.vlcheque;
+    else
+      vr_vlcdbban := vr_vlcdbban + rw_crapcst.vlcheque;
+    end if;
+  end loop;
+  
   --
   if vr_vlcstout > 0 then
     vr_linhadet := trim(vr_cdestrut)||

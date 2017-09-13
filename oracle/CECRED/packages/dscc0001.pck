@@ -2886,13 +2886,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         AND dcc.cdcooper = cst.cdcooper
         AND dcc.nrdconta = cst.nrdconta
         AND dcc.intipmvt IN (1,3)
-        AND dcc.dtlibera BETWEEN pr_dtinilib AND pr_dtfimlib
+      --  AND dcc.dtlibera BETWEEN pr_dtinilib AND pr_dtfimlib
         AND dcc.cdcmpchq = cst.cdcmpchq
         AND dcc.cdbanchq = cst.cdbanchq
         AND dcc.cdagechq = cst.cdagechq
         AND dcc.nrctachq = cst.nrctachq
         AND dcc.nrcheque = cst.nrcheque
         AND dcc.nrborder = cst.nrborder
+        AND dcc.dtlibera = cst.dtlibera
+        AND dcc.nrdolote = cst.nrdolote
 			UNION
 			SELECT 'DCC' dstipchq
 						,hcc.cdcooper
@@ -3260,7 +3262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para criar borederos de cheques para desconto
 
-    Alteracoes: -----
+    Alteracoes: 24/08/2017 - Ajuste para gravar log. (Lombardi)
   ..............................................................................*/
     --------->> VARIAVEIS <<--------
     -- Variável de críticas
@@ -3276,6 +3278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		vr_nrborder        NUMBER;
     vr_cdagenci        crapass.cdagenci%TYPE;
 		vr_flg_criou_lot   BOOLEAN;
+    vr_rowid_log       ROWID;
 	
 	  -- Busca registro de associado
 		CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -3646,6 +3649,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				RAISE vr_exc_erro;
 		END;	
 		
+    -- Efetua os inserts para apresentacao na tela VERLOG
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+                        ,pr_dstransa => 'Inclusao do bordero de cheques Nro.: ' || vr_nrborder
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA_DESCT'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
+    
 		-- Atribui parametros
 		pr_nrdolote := vr_nrdolote;
 		pr_nrborder := vr_nrborder;														
@@ -4895,7 +4912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para analisar cheques do bordero
 
-    Alteracoes: -----
+    Alteracoes: 23/08/2017 - Ajuste para gravar o cpf/cnpj na tabela crapabc. (Lombardi)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -5030,15 +5047,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	rw_crapavt cr_crapavt%ROWTYPE;
   
 	-- Verificar se o emitente possui prejuízo
-	CURSOR cr_crapepr_prj(pr_cdcooper IN crapass.cdcooper%TYPE
+	CURSOR cr_crapepr_prj(pr_cdagectl IN crapcop.cdagectl%TYPE
 	                     ,pr_nrdconta IN crapass.nrcpfcgc%TYPE) IS
 		SELECT 1
-		  FROM crapepr epr
-     WHERE epr.cdcooper = pr_cdcooper
+		  FROM crapepr epr, crapcop cop
+     WHERE epr.cdcooper = cop.cdcooper
 		   AND epr.nrdconta = pr_nrdconta
        AND epr.inliquid = 1
        AND epr.inprejuz = 1
-       AND epr.vlsdprej > 0; 
+       AND epr.vlsdprej > 0
+       AND cop.cdagectl = pr_cdagectl;
+       
 	rw_crapepr_prj cr_crapepr_prj%ROWTYPE;
 	
 	-- Verificar se o emitente possui borderos de desconto de cheque com cheques do cooperado
@@ -5689,7 +5708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				-- Se for cheque da CECRED
 				IF pr_tab_cheques(vr_index).cdbanchq = 85 THEN
 					-- Verificar se emitente possui prejuizo na cooperativa
-					OPEN cr_crapepr_prj(pr_cdcooper => pr_cdcooper
+					OPEN cr_crapepr_prj(pr_cdagectl => pr_tab_cheques(vr_index).cdagechq
 														 ,pr_nrdconta => pr_tab_cheques(vr_index).nrctachq);
 					FETCH cr_crapepr_prj INTO rw_crapepr_prj;
 					-- Se encontrou
@@ -5878,6 +5897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 									cdagechq, 
 									nrctachq, 
 									nrcheque, 
+                  nrcpfcgc, 
 									cdocorre,							
 									dsrestri,
 									dsdetres,
@@ -5892,6 +5912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 									pr_tab_cheques(vr_index).cdagechq, 
 									pr_tab_cheques(vr_index).nrctachq, 
 									pr_tab_cheques(vr_index).nrcheque, 
+									pr_tab_cheques(vr_index).nrcpfcgc, 
 									pr_tab_cheques(vr_index).ocorrencias(vr_idx_ocorre).cdocorre,					
 									pr_tab_cheques(vr_index).ocorrencias(vr_idx_ocorre).dsrestri,
 									pr_tab_cheques(vr_index).ocorrencias(vr_idx_ocorre).dsdetres,
@@ -7033,7 +7054,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para aprovar/reprovar cheques do borderô
 
-    Alteracoes: -----
+    Alteracoes: 24/08/2017 - Ajuste para gravar log. (Lombardi)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7044,6 +7065,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	-- PlTable com dados dos cheques
 	vr_tab_cheques typ_tab_cheques := pr_tab_cheques;
 	vr_idx_ocorre PLS_INTEGER;
+  
+  vr_rowid_log ROWID;
+  
 	BEGIN
     -- Analisar os cheques novamente
 		dscc0001.pc_analisar_bordero_cheques(pr_cdcooper => pr_cdcooper
@@ -7066,6 +7090,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			vr_cdcritic := 0;
 			vr_dscritic := 'Cheques para aprovação não encontrados.';
 		END IF;
+		
+    -- Efetua os inserts para apresentacao na tela VERLOG
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                        ,pr_dstransa => 'Analise dos cheques do bordero Nro.: ' || pr_nrborder || '.'
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA_DESCT'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
 		
 		FOR vr_index IN vr_tab_cheques.first..vr_tab_cheques.last LOOP		
 			-- Se o cheque foi marcado para ser aprovado
@@ -7135,6 +7173,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 				END;
+        
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'Cheque Reprovado'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => gene0002.fn_mask(vr_tab_cheques(vr_index).dsdocmc7,'<99999999<9999999999>999999999999:'));
+      ELSE
+        
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'Cheque Aprovado'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => gene0002.fn_mask(vr_tab_cheques(vr_index).dsdocmc7,'<99999999<9999999999>999999999999:'));
 			END IF;
 		END LOOP;
 	EXCEPTION    
@@ -7184,8 +7235,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                              
                 26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
                              PRJ300-Desconto de cheque(Lombardi) 
+                             
+                27/07/2017 - Ajuste para verificar custódia também para cheques que não são 
+                             da cooperativa. PRJ300-Desconto de cheque(Lombardi)
 
                 14/08/2017 - Ajuste para buscar cheques de custodia sem data de resgate. (Daniel)
+
+                24/08/2017 - Ajuste para gravar log. (Lombardi)	  
+
+                24/08/2017 - Ajuste para verificar a custodia (cr_crapcst) para todos os cheques. (Lombardi)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7213,6 +7271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_vllanmto         NUMBER;
 	vr_tab_lim_desconto typ_tab_lim_desconto;
   vr_dsdmensg         VARCHAR2(300);
+  vr_rowid_log        ROWID;
   
   -- IOF
   vr_qtdiaiof         NUMBER;   
@@ -7636,6 +7695,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						
 		-- Iterar sobre os cheques aprovados						
 		FOR vr_idx_cheque IN vr_tab_cheques.first..vr_tab_cheques.last LOOP
+			
+  
+			-- Buscar custódia
+			OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
+			               ,pr_nrdconta => pr_nrdconta
+										 ,pr_nrborder => pr_nrborder
+										 ,pr_cdcmpchq => vr_tab_cheques(vr_idx_cheque).cdcmpchq
+										 ,pr_cdbanchq => vr_tab_cheques(vr_idx_cheque).cdbanchq
+										 ,pr_cdagechq => vr_tab_cheques(vr_idx_cheque).cdagechq
+										 ,pr_nrctachq => vr_tab_cheques(vr_idx_cheque).nrctachq
+										 ,pr_nrcheque => vr_tab_cheques(vr_idx_cheque).nrcheque);
+			FETCH cr_crapcst INTO rw_crapcst;
+			
+			-- Se não encontrou
+			IF cr_crapcst%NOTFOUND THEN
+				-- Fechar cursor
+				CLOSE cr_crapcst;
+				-- Gerar crítica
+				vr_cdcritic := 0;
+				vr_dscritic := 'Custódia de cheque não encontrada. Conta: '  || to_char(vr_tab_cheques(vr_idx_cheque).nrctachq) ||
+                               ' Cheque: ' || to_char(vr_tab_cheques(vr_idx_cheque).nrcheque);
+				-- Levantar exceção
+				RAISE vr_exc_erro;
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_crapcst;
+      
 			-- Se o cheque for da cooperativa
 			IF vr_tab_cheques(vr_idx_cheque).inchqcop = 1 THEN
 				-- Criar nrdocmto
@@ -7724,30 +7810,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 				END;
-				-- Buscar custódia
-				OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
-				               ,pr_nrdconta => pr_nrdconta
-											 ,pr_nrborder => pr_nrborder
-											 ,pr_cdcmpchq => vr_tab_cheques(vr_idx_cheque).cdcmpchq
-											 ,pr_cdbanchq => vr_tab_cheques(vr_idx_cheque).cdbanchq
-											 ,pr_cdagechq => vr_tab_cheques(vr_idx_cheque).cdagechq
-											 ,pr_nrctachq => vr_tab_cheques(vr_idx_cheque).nrctachq
-											 ,pr_nrcheque => vr_tab_cheques(vr_idx_cheque).nrcheque);
-				FETCH cr_crapcst INTO rw_crapcst;
-				
-				-- Se não encontrou
-				IF cr_crapcst%NOTFOUND THEN
-					-- Fechar cursor
-					CLOSE cr_crapcst;
-					-- Gerar crítica
-					vr_cdcritic := 0;
-					vr_dscritic := 'Custódia de cheque não encontrada. Conta: '  || to_char(vr_tab_cheques(vr_idx_cheque).nrctachq) ||
-                                   ' Cheque: ' || to_char(vr_tab_cheques(vr_idx_cheque).nrcheque);
-					-- Levantar exceção
-					RAISE vr_exc_erro;
-				END IF;
-				-- Fechar cursor
-				CLOSE cr_crapcst;
 				
 				BEGIN
 					-- Atualizar lançamento automático de custodia
@@ -8207,6 +8269,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       RAISE vr_exc_erro;
     END IF;
     
+    -- Efetua os inserts para apresentacao na tela VERLOG
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                        ,pr_dstransa => 'Liberado desconto do bordero Nro.: ' || pr_nrborder || '.'
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA_DESCT'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
+    
+    
 	EXCEPTION    
     WHEN vr_exc_erro THEN      
       IF NVL(vr_cdcritic,0) <> 0 AND 
@@ -8245,7 +8322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para resgatar os cheques do bordero.
 
-    Alteracoes: -----
+    Alteracoes: 24/08/2017 - Ajuste para gravar log. (Lombardi)
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -8264,6 +8341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	
     vr_nrdconta_ver_cheque crapass.nrdconta%TYPE;
 	vr_dsdaviso VARCHAR2(1000);
+	vr_rowid_log ROWID;
 	
 	rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 	
@@ -8384,6 +8462,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 																						 ,pr_cdacesso => 'LIMDESCONT'
 																						 ,pr_tpregist => 00);
 
+    -- Efetua os inserts para apresentacao na tela VERLOG
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                        ,pr_dstransa => 'Resgate de cheques do bordero Nro. ' || pr_nrborder || '.'
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA_DESCT'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
+    
     FOR vr_index IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
 			
 			IF vr_dstextab IS NOT NULL THEN
@@ -8569,6 +8661,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         END IF;	
 				-- Fechar cursor
 				CLOSE cr_crapcst;
+        
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'Cheque'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => pr_tab_cheques(vr_index).dsdocmc7);
+        
 			ELSE
 				-- Gerar crítica
 				vr_cdcritic := 79;

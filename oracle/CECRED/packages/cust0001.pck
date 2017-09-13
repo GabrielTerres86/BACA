@@ -7291,6 +7291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                              
                 01/06/2017 - Removido Commit e rollback, rotinas chamadoras devem controlar isto.
                              PRJ300 - Desconto de cheque (Odirlei-AMcom)
+
+                24/08/2017 - Ajuste para gravar log. (Lombardi)
                         
   ............................................................................. */
   	DECLARE
@@ -7313,6 +7315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
       vr_dtdivulg DATE;
       vr_dtvigenc DATE;
       vr_cdfvlcop INTEGER;
+      vr_rowid_log ROWID;
 
 			-- PlTable para armazenar informações de erro
       vr_tab_resgate_erro typ_erro_resgate;
@@ -7425,6 +7428,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 				RAISE vr_exc_erro;
 			END IF;
       
+      -- Efetua os inserts para apresentacao na tela VERLOG
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => ' '
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                          ,pr_dstransa => 'Resgate de cheques custodiados.'
+                          ,pr_dttransa => trunc(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CUSTOD'
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_rowid_log);
+      
       -- Percorre todos os cheques para processá-los
       FOR vr_auxcont IN 1..vr_ret_all_cheques.count LOOP
 
@@ -7493,6 +7510,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 						    ,cst.cdopedev = pr_cdoperad
 								,cst.insitchq = 1
 					 WHERE cst.rowid = rw_crapcst.rowid;
+  			
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'Cheque'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => vr_dsdocmc7_formatado);
 				END IF;
 			END LOOP;
 

@@ -1625,7 +1625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
     Frequencia: Sempre que for chamado
     Objetivo  : Verifica se a conta exige assinatura multipla
 
-    Alteracoes: 
+    Alteracoes: 24/08/2017 - Ajuste na busca de emitentes. (Lombardi)
     
     ............................................................................. */
     DECLARE
@@ -1675,6 +1675,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
       vr_tab_cheques         dscc0001.typ_tab_cheques;
       vr_tab_custodia_erro   cust0001.typ_erro_custodia;
       vr_tab_cheque_custodia cust0001.typ_cheque_custodia;
+      
+      --> Buscar cadastro do cooperado emitente
+      CURSOR cr_crapass (pr_cdagectl IN crapcop.cdagectl%TYPE,
+                         pr_nrdconta IN crapass.nrdconta%TYPE)IS
+        SELECT ass.inpessoa
+              ,ass.nrcpfcgc
+          FROM crapass ass
+              ,crapcop cop
+         WHERE cop.cdagectl = pr_cdagectl
+           AND ass.cdcooper = cop.cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+      rw_crapass  cr_crapass%ROWTYPE;
+      
+      --> Buscar primeiro titular da conta
+      CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT ttl.nrcpfcgc
+          FROM crapttl ttl
+         WHERE ttl.cdcooper = pr_cdcooper
+           AND ttl.nrdconta = pr_nrdconta
+           AND ttl.idseqttl = 1;
+      rw_crapttl  cr_crapttl%ROWTYPE;
       
       -- Busca informações do emitente
       CURSOR cr_crapcec (pr_cdcooper IN crapcec.cdcooper%TYPE
@@ -1836,25 +1858,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
         vr_tab_cheques(vr_index_cheque).nrcheque := vr_nrcheque;
         vr_tab_cheques(vr_index_cheque).nrremret := vr_nrremret;
         
-        -- Busca Emitentes
+        -- Se for do sistema CECRED
+        IF vr_cdbanchq = 85 THEN
+          -- Buscar cadastro do cooperado emitente
+          OPEN cr_crapass (pr_cdagectl => vr_cdagechq
+                          ,pr_nrdconta => vr_nrctachq);
+          FETCH cr_crapass INTO rw_crapass;
+          
+          -- Se encontrar
+          IF cr_crapass%FOUND THEN
+            CLOSE cr_crapass;
+            -- Pessoa Física
+            IF rw_crapass.inpessoa = 1 THEN
+              OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => vr_nrctachq);
+              FETCH cr_crapttl INTO rw_crapttl;
+              -- Se encontrar
+              IF cr_crapttl%FOUND THEN
+                CLOSE cr_crapttl;
+                vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapttl.nrcpfcgc;
+              ELSE
+                CLOSE cr_crapttl;
+                vr_dscritic := 'Emitente não cadastrado.';
+                RAISE vr_exc_erro;
+              END IF;
+            ELSE -- Pessoa Juridica
+              vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapass.nrcpfcgc;
+            END IF;
+          ELSE
+            CLOSE cr_crapass;
+            vr_dscritic := 'Emitente não cadastrado.';
+            RAISE vr_exc_erro;
+          END IF;
+        ELSE
+          -- Buscar cadastro de emitentes de cheques
         OPEN cr_crapcec (pr_cdcooper => pr_cdcooper
                         ,pr_cdcmpchq => vr_cdcmpchq
                         ,pr_cdbanchq => vr_cdbanchq
                         ,pr_cdagechq => vr_cdagechq
                         ,pr_nrctachq => vr_nrctachq);
         FETCH cr_crapcec INTO rw_crapcec;
-        -- Se não encontrar
-        IF cr_crapcec%NOTFOUND  AND
-           vr_cdbanchq <> 85    THEN
+          -- Se encontrar
+          IF cr_crapcec%FOUND THEN
           CLOSE cr_crapcec;
-          vr_dscritic := 'Emitente não cadastrado.';
-          RAISE vr_exc_erro;
-        ELSE
           vr_tab_cheques(vr_index_cheque).nrcpfcgc := rw_crapcec.nrcpfcgc;
-        END IF;
-        
-        -- Fecha cursor
+          ELSE
         CLOSE cr_crapcec;
+            vr_dscritic := 'Emitente não cadastrado.';
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
         
       END LOOP;
   		
