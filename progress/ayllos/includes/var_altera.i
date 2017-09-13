@@ -182,9 +182,6 @@ DEF        VAR log_tpextcta LIKE crapass.tpextcta                    NO-UNDO.
 DEF        VAR log_cddsenha LIKE crapsnh.cddsenha                    NO-UNDO.
 DEF        VAR log_cdoedptl AS CHARACTER                             NO-UNDO.
 DEF        VAR log_cdufdptl LIKE crapass.cdufdptl                    NO-UNDO.
-DEF        VAR log_cdufdstl LIKE crapass.cdufdstl                    NO-UNDO.
-DEF        VAR log_cdufdrsp LIKE crapass.cdufdrsp                    NO-UNDO.
-DEF        VAR log_nmrespon LIKE crapass.nmrespon                    NO-UNDO.
 DEF        VAR log_inhabmen LIKE crapttl.inhabmen                    NO-UNDO.
 DEF        VAR log_dtemdptl LIKE crapass.dtemdptl                    NO-UNDO.
 DEF        VAR log_vlsalari LIKE crapttl.vlsalari                    NO-UNDO.
