@@ -1902,7 +1902,8 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para alterar cheques da remessa de cheques em custódia
 
-    Alteracoes: 
+    Alteracoes: 29/08/2017 - Ajuste para não deixar alterar o cheque quando ele estiver
+                             em um bordero.(Lombardi)
                                                      
   ............................................................................. */
   	DECLARE
@@ -1940,6 +1941,14 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 											 ,pr_intipmvt IN craphcc.intipmvt%TYPE
 											 ,pr_dsdocmc7 IN crapdcc.dsdocmc7%TYPE) IS
 			  SELECT dcc.rowid
+              ,dcc.dtdcaptu
+              ,dcc.dtlibera
+              ,dcc.vlcheque
+              ,dcc.cdcmpchq
+              ,dcc.cdbanchq
+              ,dcc.cdagechq
+              ,dcc.nrctachq
+              ,dcc.nrcheque
 					FROM crapdcc dcc
 				 WHERE dcc.cdcooper = pr_cdcooper
 				   AND dcc.nrdconta = pr_nrdconta
@@ -1948,6 +1957,27 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 					 AND dcc.intipmvt = pr_intipmvt
 					 AND dcc.dsdocmc7 = gene0002.fn_mask(pr_dsdocmc7,'<99999999<9999999999>999999999999:');
        rw_crapdcc cr_crapdcc%ROWTYPE;
+			 
+      CURSOR cr_crapcdb (pr_cdcooper IN crapcdb.cdcooper%TYPE
+                        ,pr_nrdconta IN craphcc.nrdconta%TYPE
+                        ,pr_cdcmpchq IN crapcdb.cdcmpchq%TYPE
+                        ,pr_cdbanchq IN crapcdb.cdbanchq%TYPE
+                        ,pr_cdagechq IN crapcdb.cdagechq%TYPE
+                        ,pr_nrctachq IN crapcdb.nrctachq%TYPE
+                        ,pr_nrcheque IN crapcdb.nrcheque%TYPE
+                        ,pr_dtlibera IN crapcdb.dtlibera%TYPE) IS
+        SELECT cdb.nrborder
+          FROM crapcdb cdb
+         WHERE cdb.cdcooper = pr_cdcooper
+           AND cdb.nrdconta = pr_nrdconta
+           AND cdb.cdcmpchq = pr_cdcmpchq
+           AND cdb.cdbanchq = pr_cdbanchq 
+           AND cdb.cdagechq = pr_cdagechq 
+           AND cdb.nrctachq = pr_nrctachq 
+           AND cdb.nrcheque = pr_nrcheque 
+           AND cdb.dtlibera = pr_dtlibera
+           AND cdb.dtdevolu IS NULL;
+      rw_crapcdb cr_crapcdb%ROWTYPE;
 			 
       --Selecionar feriados
       CURSOR cr_crapfer (pr_cdcooper IN crapfer.cdcooper%TYPE
@@ -2034,6 +2064,49 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 				EXIT WHEN vr_qtddmini = 2;
 			END LOOP;
 
+		  -- Busca Detalhes da custódia de cheque
+      OPEN cr_crapdcc(pr_cdcooper => vr_cdcooper
+										 ,pr_nrdconta => pr_nrdconta
+										 ,pr_nrconven => pr_nrconven
+										 ,pr_nrremret => pr_nrremret
+										 ,pr_intipmvt => pr_intipmvt
+										 ,pr_dsdocmc7 => pr_dsdocmc7);
+			FETCH cr_crapdcc INTO rw_crapdcc;
+
+      -- Se não encontrou
+      IF cr_crapdcc%NOTFOUND THEN
+				-- Fecha cursor
+				CLOSE cr_crapdcc;
+			  -- Data para Deposito invalida
+        vr_cdcritic := 0;
+				vr_dscritic := 'Registro de detalhes do cheque não encontrado.';
+				-- Executa RAISE para sair das validações
+				RAISE vr_exc_erro;				
+			END IF;
+			-- Fecha cursor
+			CLOSE cr_crapdcc;
+      
+      IF rw_crapdcc.dtdcaptu <> vr_dtemissa OR
+         rw_crapdcc.dtlibera <> vr_dtlibera OR
+         rw_crapdcc.vlcheque <> pr_vlcheque THEN
+        OPEN cr_crapcdb (vr_cdcooper
+                        ,pr_nrdconta
+                        ,rw_crapdcc.cdcmpchq
+                        ,rw_crapdcc.cdbanchq
+                        ,rw_crapdcc.cdagechq
+                        ,rw_crapdcc.nrctachq
+                        ,rw_crapdcc.nrcheque
+                        ,rw_crapdcc.dtlibera);
+        FETCH cr_crapcdb INTO rw_crapcdb;
+        IF cr_crapcdb%FOUND THEN
+          -- Data para Deposito invalida
+          vr_cdcritic := 0;
+          vr_dscritic := 'Cheque encontra-se no borderô ' || rw_crapcdb.nrborder || '. Não é possível realizar a alteração.';
+          -- Executa RAISE para sair das validações
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;      
+      
 			-- Se o cheque não estiver no prazo mínimo ou no
 			-- prazo máximo (1095 dias)
 			IF   vr_dtlibera <= vr_dtminimo OR
@@ -2071,28 +2144,6 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 				-- Executa RAISE para sair das validações
 				RAISE vr_exc_erro;
 			END IF;
-			
-		  -- Busca Detalhes da custódia de cheque
-      OPEN cr_crapdcc(pr_cdcooper => vr_cdcooper
-										 ,pr_nrdconta => pr_nrdconta
-										 ,pr_nrconven => pr_nrconven
-										 ,pr_nrremret => pr_nrremret
-										 ,pr_intipmvt => pr_intipmvt
-										 ,pr_dsdocmc7 => pr_dsdocmc7);
-			FETCH cr_crapdcc INTO rw_crapdcc;
-
-      -- Se não encontrou
-      IF cr_crapdcc%NOTFOUND THEN
-				-- Fecha cursor
-				CLOSE cr_crapdcc;
-			  -- Data para Deposito invalida
-        vr_cdcritic := 0;
-				vr_dscritic := 'Registro de detalhes do cheque não encontrado.';
-				-- Executa RAISE para sair das validações
-				RAISE vr_exc_erro;				
-			END IF;
-			-- Fecha cursor
-			CLOSE cr_crapdcc;
 
       -- Atualizar informações de detahles do cheque
 			UPDATE crapdcc dcc
@@ -3432,7 +3483,7 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 						
       -- Variaveis de controle de calendario
       rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;					
-
+			
 			--Selecionar os dados da tabela de Associados
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -3600,7 +3651,7 @@ CREATE OR REPLACE PACKAGE BODY TELA_CUSTOD IS
 		   WHERE hcc.rowid = rw_craphcc.rowid;
       -- Efetuar commit
 			COMMIT;
-      
+			
       
       vr_dstransa := 'Exclusao da remessa ' || 'Nro.: ' || pr_nrremret;
           

@@ -95,7 +95,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                31/01/2016 - Conversão Progress para PLSQL (Jonata-MOUTS) 
 			   
 			   04/11/2016 - Cheques custodiados deverao ter o numero do bordero
-                            igual a zero. (Projeto 300 - Rafael)
+                            igual a zero. (Projeto 300 - Rafael)	
+							                            
+               28/08/2017 - Ajustes na consulta da tabela crapcst na procedure 
+                            pc_trata_custodia. (Lombardi)
 							                            
     ............................................................................. */
 
@@ -423,24 +426,36 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                        ,pr_nrctachq crapcst.nrctachq%type
                        ,pr_nrcheque crapcst.nrcheque%type) is
 
-        select rowid
+        SELECT ROWID
               ,nrdconta
               ,cdbanchq
               ,cdagechq
               ,nrctachq
               ,nrcheque 
-          from crapcst
-         where crapcst.cdcooper = pr_cdcooper
-           and crapcst.dtmvtolt = pr_dtmvtolt
-           and crapcst.cdagenci = pr_cdagenci
-           and crapcst.cdbccxlt = pr_cdbccxlt
-           and crapcst.nrdolote = pr_nrdolote
-           and crapcst.cdcmpchq = pr_cdcmpchq
-           and crapcst.cdbanchq = pr_cdbanchq
-           and crapcst.cdagechq = pr_cdagechq
-           and crapcst.nrctachq = pr_nrctachq
-           and crapcst.nrcheque = pr_nrcheque
-		   and crapcst.nrborder = 0;
+          FROM crapcst
+         WHERE crapcst.cdcooper = pr_cdcooper
+           AND crapcst.dtmvtolt = pr_dtmvtolt
+           AND crapcst.cdagenci = pr_cdagenci
+           AND crapcst.cdbccxlt = pr_cdbccxlt
+           AND crapcst.nrdolote = pr_nrdolote
+           AND crapcst.cdcmpchq = pr_cdcmpchq
+           AND crapcst.cdbanchq = pr_cdbanchq
+           AND crapcst.cdagechq = pr_cdagechq
+           AND crapcst.nrctachq = pr_nrctachq
+           AND crapcst.nrcheque = pr_nrcheque
+           AND NOT EXISTS (
+             SELECT 1
+               FROM crapcdb cdb
+              WHERE cdb.cdcooper = crapcst.cdcooper
+                AND cdb.nrdconta = crapcst.nrdconta
+                AND cdb.dtlibera = crapcst.dtlibera
+                AND cdb.dtlibbdc IS NOT NULL
+                AND cdb.cdcmpchq = crapcst.cdcmpchq
+                AND cdb.cdbanchq = crapcst.cdbanchq
+                AND cdb.cdagechq = crapcst.cdagechq
+                AND cdb.nrctachq = crapcst.nrctachq
+                AND cdb.nrcheque = crapcst.nrcheque 
+                AND cdb.dtdevolu IS NULL);
       rw_crapcst cr_crapcst%ROWTYPE;
           
       --Cadastro de folhas de cheques emitidos para o cooperado.
