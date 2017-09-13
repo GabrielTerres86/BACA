@@ -147,6 +147,7 @@ BEGIN
     --Variaveis para retorno de erro
        vr_cdcritic      INTEGER:= 0;
        vr_dscritic      VARCHAR2(4000);
+       vr_idprglog      NUMBER;
 
 
     --Variaveis de Excecao
@@ -162,8 +163,6 @@ BEGIN
     vr_nrctremp number;
     vr_nrparcela number;
     vr_idtpprd varchar2(2);
-
-    vr_rowid rowid;
 
     -- Busca de todas as agencias da cooperativa
     CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -308,18 +307,13 @@ BEGIN
     if PR_CDAGENCI = 0
     and   rw_crapdat.inproces >= 2 then
        -- gera log para futuros rastreios
-       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                           ,pr_cdoperad => 1
-                           ,pr_dscritic => null
-                           ,pr_dsorigem => 'AYLLOS'
-                           ,pr_dstransa => 'Antes PC_CRPS750_1 - fase 1.'
-                           ,pr_dttransa => trunc(sysdate)
-                           ,pr_flgtrans => 1
-                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                           ,pr_idseqttl => 1
-                           ,pr_nmdatela => 'CRPS750'
-                           ,pr_nrdconta => 0
-                           ,pr_nrdrowid => vr_rowid);
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => 'CRPS750',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 2,
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Antes PC_CRPS750_1 - fase 1.',
+                        PR_IDPRGLOG           => vr_idprglog);                           
       
        --
        PC_CRPS750_1( pr_faseprocesso => 1
