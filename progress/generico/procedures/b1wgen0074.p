@@ -182,6 +182,14 @@
                 21/03/2016 - Inclusao campos consulta boa vista.
                              PRJ207 - Esteira (Odirlei/AMcom)    
 
+
+	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
+				             estiver em execucao (Andrino - Chamado 495821)
+                     
+                11/11/2016 - #511290 Correcao de como o sistema verifica se eh
+                             abertura de conta ou mudanca do tipo da mesma, 
+                             para solicitar talao de cheque para o cooperado 
+                             (Carlos)
 				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
 				             (Incorporacao Transposul). (Fabricio)
 
@@ -744,17 +752,17 @@ PROCEDURE Valida_Dados:
                 
 				IF par_cdcooper <> 17 THEN
 				DO:
-					RUN bloqueia-opcao(INPUT par_cdcooper,
-						               INPUT par_cdagenci,
-                                       INPUT par_nrdconta,
-                                       INPUT par_dtmvtolt).
+                RUN bloqueia-opcao(INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdconta,
+                                   INPUT par_dtmvtolt).
 
-                    IF  RETURN-VALUE = "NOK" THEN
+                IF  RETURN-VALUE = "NOK" THEN
                     DO:
                         ASSIGN aux_dscritic = "Opcao indisponivel. Motivo: Transferencia do PA."
                                aux_cdcritic = 0.
                     END.
-                    ELSE
+                ELSE
                     DO: 
 						IF par_cdcooper <> 15 THEN
 						DO:
@@ -765,9 +773,9 @@ PROCEDURE Valida_Dados:
                              OUTPUT par_msgconfi,
                              OUTPUT aux_cdcritic,
 													 OUTPUT aux_dscritic).
-                        END.				
-			        END.
-				END.
+                    END.
+            END.
+            END.
 			    ELSE
 			    DO:
 					RUN Valida_Dados_Encerra(INPUT par_cdcooper,
@@ -779,7 +787,7 @@ PROCEDURE Valida_Dados:
 											OUTPUT aux_dscritic).
 			    END.
             END.
-            END.
+            
             WHEN "X" THEN DO: /* EXCLUI TITULARES */
                 RUN Valida_Dados_Exclui
                     ( INPUT par_cdcooper,
@@ -2060,6 +2068,25 @@ PROCEDURE Grava_Dados:
 
         { sistema/generico/includes/b1wgenllog.i }
 
+        /*Se o processo do BI ainda estiver rodando, nao pode-se alterar o PA */
+        IF aux_cdageant <> crapass.cdagenci THEN 
+          DO:
+          FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+          IF AVAIL crapdat THEN
+             IF crapdat.inprocbi = 2 THEN 
+                DO:
+                  ASSIGN aux_dscritic = "Processo do BI ainda em execucao. Alteracao de PA nao permitida!".
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,          /** Sequencia **/
+                                  INPUT 0,
+                                  INPUT-OUTPUT aux_dscritic).
+                            
+                  UNDO Grava, LEAVE Grava.
+                END.
+          END.
+
         /*Se a troca de PA ocorrer com sucesso entao, se for pessoa fisica, 
           sera enviado uma solicitacao ao SICREDI de alteracao do orgao 
           pagador de todos os beneficios do cpf em questao. Caso ocorra algum
@@ -2613,7 +2640,9 @@ PROCEDURE Grava_Dados_Altera:
           IF crabass.dtabtcct = ? THEN
             ASSIGN crabass.dtabtcct = par_dtmvtolt.
 
-        IF par_cdtipcta <> crabass.cdtipcta   THEN
+        /* Se estiver alterando o tipo de conta ou estiver cadastrando ... */
+        IF par_cdtipcta <> crabass.cdtipcta   OR
+           crabass.dtinsori = par_dtmvtolt    THEN
            DO:  
                 /* Removido a criação da doc conforme solicitado no chamado 372880*/
                 /*ContadorDoc7: DO aux_contador = 1 TO 10:
