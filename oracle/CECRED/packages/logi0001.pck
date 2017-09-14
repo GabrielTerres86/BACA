@@ -199,7 +199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LOGI0001 AS
     ELSE
 			-- Validar senha do operador no AD
 			gene0001.pc_valida_senha_AD(pr_cdcooper => pr_cdcooper
-																 ,pr_cdoperad => pr_cdoperad
+																 ,pr_cdoperad => pr_operador
 																 ,pr_nrdsenha => pr_nrdsenha
 																 ,pr_cdcritic => vr_cdcritic
 																 ,pr_dscritic => vr_dscritic);
