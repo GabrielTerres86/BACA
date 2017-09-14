@@ -1,31 +1,35 @@
 CREATE OR REPLACE PACKAGE CECRED.btch0002 AS
 
   /*---------------------------------------------------------------------------------------------------------------
-  --
-  -- Programa : BTCH0002
-  --  Sistema : Processos Batch
-  --  Sigla   : BTCH
-  --  Autor   : Odirlei Busana - AMcom
-  --  Data    : Maio/2014.                       Ultima atualizacao: 23/06/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Agrupar rotinas do processamento pre-batch
-  --
-  --
-  -- Alteracoes: 16/06/2016 - Correcao para o uso correto do indice da CRAPTAB na
-  --                          procedure pc_gera_criticas_proces.(Carlos Rafael Tanholi).      
-  --
-  --             23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
-  --                          sobre o campo cdopecxa.(Carlos Rafael Tanholi). 
+  
+   Programa : BTCH0002
+    Sistema : Processos Batch
+    Sigla   : BTCH
+    Autor   : Odirlei Busana - AMcom
+    Data    : Maio/2014.                       Ultima atualizacao: 01/02/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Agrupar rotinas do processamento pre-batch
+  
+  
+   Alteracoes: 16/06/2016 - Correcao para o uso correto do indice da CRAPTAB na
+                            procedure pc_gera_criticas_proces.(Carlos Rafael Tanholi).      
+  
+               23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
+                            sobre o campo cdopecxa.(Carlos Rafael Tanholi). 
+                            
+               01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)                
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Tipo para armazenamento as criticas identificadas */
   TYPE typ_rec_criticas IS
     RECORD(dscritic VARCHAR2(150)
           ,cdsitexc INTEGER
-          ,cdagenci INTEGER);
+          ,cdagenci INTEGER
+          ,cdcooper INTEGER);
           
   TYPE typ_tab_criticas IS
     TABLE OF typ_rec_criticas
@@ -90,24 +94,33 @@ END btch0002;
 CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 
 /*---------------------------------------------------------------------------------------------------------------
-  --
-  -- Programa : BTCH0002
-  --  Sistema : Processos Batch
-  --  Sigla   : BTCH
-  --  Autor   : Odirlei Busana - AMcom
-  --  Data    : Maio/2014.                       Ultima atualizacao: 23/06/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Agrupar rotinas do processamento pre-batch
-  --
-  -- Alteracoes: 16/06/2016 - Correcao para o uso correto do indice da CRAPTAB na
-  --                          procedure pc_gera_criticas_proces.(Carlos Rafael Tanholi).   
-  --
-  --             23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
-  --                          sobre o campo cdopecxa.(Carlos Rafael Tanholi). 
-  --
+  
+    Programa : BTCH0002
+    Sistema : Processos Batch
+    Sigla   : BTCH
+    Autor   : Odirlei Busana - AMcom
+    Data    : Maio/2014.                       Ultima atualizacao: 07/07/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Agrupar rotinas do processamento pre-batch
+  
+   Alteracoes: 16/06/2016 - Correcao para o uso correto do indice da CRAPTAB na
+                            procedure pc_gera_criticas_proces.(Carlos Rafael Tanholi).   
+  
+               23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
+                            sobre o campo cdopecxa.(Carlos Rafael Tanholi). 
+                            
+               01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)
+  
+               28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
+                            para ter permissao de exclusao do arquivo ao rodar novamente 
+                            a tela process ref ao chamado 491624(Lucas Ranghetti/Elton)
+                            
+               07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
+                            ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
   ---------------------------------------------------------------------------------------------------------------*/
   -- Gerar criticas do processo
   PROCEDURE pc_gera_criticas_proces (pr_cdcooper       IN NUMBER,                 --> Codigo da cooperativa
@@ -138,7 +151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Margarete/Mirtes
-   Data    : Junho/2004.                     Ultima atualizacao: 23/08/2016
+   Data    : Junho/2004.                     Ultima atualizacao: 07/07/2017
 
    Dados referentes ao programa:
 
@@ -316,13 +329,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                23/08/2016 - M360 - Verificação de novos percentuais de retorno de 
                             Sobras para ativação da flag sol30 (Marcos-Supero)
                														
+               01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)
+                            
+               28/04/2017 - Adicionar chmod 666 apos a chamada do pc_clob_para_arquivo
+                            para ter permissao de exclusao do arquivo ao rodar novamente 
+                            a tela process (Lucas Ranghetti/Elton)
+                            
+               07/07/2017 - Adicionar Order by na consulta da tabela crapbcx, pois estava
+                            ordenando pelo operador ao inves de ordear pelo PA (Lucas Ranghetti #701329)
   ..............................................................................*/  
     ------------------------------- CURSORES ---------------------------------
 
     -- Busca dos dados da cooperativa
-    CURSOR cr_crapcop IS
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
       SELECT cop.nmrescop
             ,cop.nmextcop
+            ,cop.dsdircop
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -537,23 +560,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     -- Buscar Boletim de caixa ABERTO
     CURSOR cr_crapbcx (pr_cdcooper crapcop.cdcooper%type,
                        pr_dtmvtolt DATE) IS
-      SELECT crapbcx.cdopecxa
-            ,crapbcx.cdagenci
-            ,crapbcx.nrdcaixa
-            ,crapope.nmoperad
-        FROM crapbcx,
-             crapope       
+      SELECT crapbcx.cdopecxa,
+             crapbcx.cdagenci,
+             crapbcx.nrdcaixa,
+             crapope.nmoperad
+        FROM crapbcx, crapope
        WHERE crapbcx.cdcooper = pr_cdcooper
          AND crapbcx.dtmvtolt = pr_dtmvtolt
          AND crapope.cdcooper = pr_cdcooper        
          AND crapope.cdcooper = crapbcx.cdcooper        
-         AND UPPER(crapope.cdoperad) = UPPER(crapbcx.cdopecxa)
+         AND upper(crapope.cdoperad) = upper(crapbcx.cdopecxa)
          AND crapbcx.cdsitbcx = 1
          /* Nao considera se o caixa da INTERNET ou TAA estiver aberto, pois ele sao
             fechados durante o processo */
-         AND NOT(crapbcx.cdagenci in (90,91)AND /** TAA **/
-                 crapbcx.nrdcaixa = 900     AND
-                 UPPER(crapbcx.cdopecxa) = '996'   );
+         AND NOT (crapbcx.cdagenci IN (90, 91) AND /** TAA **/
+                  crapbcx.nrdcaixa = 900 AND upper(crapbcx.cdopecxa) = '996')
+       ORDER BY crapbcx.cdcooper, 
+                crapbcx.cdagenci, 
+                crapbcx.nrdcaixa;
                  
     -- Buscar lotes
     CURSOR cr_craplot (pr_cdcooper crapcop.cdcooper%type,
@@ -763,7 +787,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     end;
       
     -- Procedimento para gravar a critica na temptable
-    PROCEDURE pc_grava_critica (pr_dscritic VARCHAR2
+    PROCEDURE pc_grava_critica (pr_cdcooper INTEGER
+                               ,pr_dscritic VARCHAR2
                                ,pr_cdsitexc INTEGER default null
                                ,pr_cdagenci INTEGER default null 
                                ,pr_cancsoli INTEGER default 1) IS
@@ -771,6 +796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       
     BEGIN
       vr_nrsequen := nvl(pr_tab_criticas.count,0) + 1;
+      pr_tab_criticas(vr_nrsequen).cdcooper := pr_cdcooper;           
       pr_tab_criticas(vr_nrsequen).dscritic := substr(pr_dscritic,1,150);
       pr_tab_criticas(vr_nrsequen).cdsitexc := pr_cdsitexc;     
       pr_tab_criticas(vr_nrsequen).cdagenci := pr_cdagenci;
@@ -818,22 +844,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     -- Se não encontrar
     IF btch0001.cr_crapdat%NOTFOUND THEN
       -- Montar mensagem de critica
-      pc_grava_critica(pr_dscritic => ' - Cooperativa sem data de movimento');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cooperativa sem data de movimento');
     END IF;
     CLOSE btch0001.cr_crapdat;
     
     -- Validar processo
     IF rw_crapdat.inproces = 3 THEN
-      pc_grava_critica(pr_dscritic => ' - Cooperativa com Processo solicitado ou ja rodando');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cooperativa com Processo solicitado ou ja rodando');
     END IF;  
     
     -- Validar cooperativa
-    OPEN cr_crapcop;
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop
      INTO rw_crapcop;
     -- Se não encontrar
     IF cr_crapcop%NOTFOUND THEN      
-      pc_grava_critica(pr_dscritic => ' - Nao encontrado cadastro da Cooperativa - Tela CADCOP');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Nao encontrado cadastro da Cooperativa - Tela CADCOP');
     END IF;  
     CLOSE cr_crapcop;
     
@@ -869,7 +898,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     FETCH cr_crapmfx INTO rw_crapmfx;
     
     IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_dscritic => ' - Cadastrar UFIR dia '||
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar UFIR dia '||
                                       TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||
                                       ' - Tela MOEDAS');  
     END IF;  
@@ -898,7 +928,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     FETCH cr_crapmfx INTO rw_crapmfx;
     
     IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_dscritic => ' - Cadastrar TR dia '||
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar TR dia '||
                                       TO_CHAR(vr_dtiniper,'DD/MM/RRRR')||
                                       ' - Tela MOEDAS');  
     END IF;  
@@ -912,7 +943,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     FETCH cr_crapmfx INTO rw_crapmfx;
     
     IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_dscritic => ' - Cadastrar SELIC Meta dia '||
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Cadastrar SELIC Meta dia '||
                                       TO_CHAR(vr_dtiniper,'DD/MM/RRRR')||
                                       ' - Tela MOEDAS');  
     END IF;  
@@ -937,7 +969,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     -- Validar URV
     IF rw_crapdat.dtmvtolt > to_date('06/30/1994','MM/DD/RRRR') AND
        pr_vldaurvs <> 2750.00 THEN
-      pc_grava_critica(pr_dscritic => ' - Valor da URV cadastrado errado');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Valor da URV cadastrado errado');
     END IF;   
     
     -- Validar agencias da cooperativa
@@ -948,7 +981,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                        pr_dtmvtolt => rw_crapdat.dtmvtolt);
       FETCH cr_craplau INTO rw_craplau;
       IF cr_craplau%FOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
                                         ' nao debitou todos os seus agendamentos - Tela DEBNET');
       END IF;
       CLOSE cr_craplau;
@@ -963,7 +997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                  
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
-        pc_grava_critica(pr_dscritic => ' - Cadastrar horario fechamento de TITULOS do Pa '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar horario fechamento de TITULOS do Pa '||
                                         TO_CHAR(rw_crapage.cdagenci,'fm000')||' - Tela TITULO');  
                                               
       ELSIF TO_NUMBER(SUBSTR(VR_dstextab,1,1)) <> 1 AND
@@ -974,7 +1009,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                          pr_dtmvtolt => rw_crapdat.dtmvtolt);
         FETCH cr_craptit INTO rw_craptit;
         IF cr_craptit%FOUND THEN
-          pc_grava_critica(pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
+          pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                           pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
                                           ' nao enviou todos os seus TITULOS - Tela TITULO',
                            pr_cdsitexc => 2,
                            pr_cdagenci => rw_crapage.cdagenci);                           
@@ -993,7 +1029,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                  
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN    
-        pc_grava_critica(pr_dscritic => ' - Cadastrar horario fechamento DOC/TED''S do Pa '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar horario fechamento DOC/TED''S do Pa '||
                                         TO_CHAR(rw_crapage.cdagenci,'fm000')||' - Tela DOCTOS');  
                                               
       ELSE
@@ -1005,7 +1042,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
           FETCH cr_craptvl INTO rw_craptvl;
           -- Se encontrou, gera critica
           IF cr_craptvl%FOUND THEN
-            pc_grava_critica(pr_dscritic => ' - Nao foram enviados todos os DOC''S do Pa '||
+            pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                             pr_dscritic => ' - Nao foram enviados todos os DOC''S do Pa '||
                                             TO_CHAR(rw_crapage.cdagenci,'fm000')||' - Tela DOCTOS',
                              pr_cdsitexc => 4,
                              pr_cdagenci => rw_crapage.cdagenci);                           
@@ -1022,7 +1060,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
           FETCH cr_craptvl_2 INTO rw_craptvl;
           -- se econtrou, gerar critica
           IF cr_craptvl_2%FOUND THEN
-            pc_grava_critica(pr_dscritic => ' - Nao foram enviados todos os TED''S do Pa'||
+            pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                             pr_dscritic => ' - Nao foram enviados todos os TED''S do Pa'||
                                             TO_CHAR(rw_crapage.cdagenci,'000')||' - Tela DOCTOS',
                              pr_cdsitexc => 4,
                              pr_cdagenci => rw_crapage.cdagenci);                           
@@ -1043,7 +1082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                  
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN    
-        pc_grava_critica(pr_dscritic => ' - Cadastrar horario fechamento de GUIAS GPS do Pa '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar horario fechamento de GUIAS GPS do Pa '||
                                         TO_CHAR(rw_crapage.cdagenci,'fm000')||' - Tela MOVGPS');  
                                               
       ELSIF TO_NUMBER(SUBSTR(vr_dstextab,1,1)) <> 1 THEN /* GPS */ 
@@ -1054,7 +1094,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         FETCH cr_craplgp INTO rw_craplgp;
         -- se encontrou deve gerar critica
         IF cr_craplgp%FOUND THEN
-          pc_grava_critica(pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
+          pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                           pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
                                           ' nao enviou todas as suas GUIAS GPS - Tela MOVGPS',
                            pr_cdsitexc => 1,
                            pr_cdagenci => rw_crapage.cdagenci);                           
@@ -1070,7 +1111,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_craplbi INTO rw_craplbi;
       -- se encontrou, gerar critica
       IF cr_craplbi%FOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Pa '||TO_CHAR(rw_crapage.cdagenci,'fm000')||
                                         ' nao enviou todos os pagamentos do INSS - Tela PRPREV',
                          pr_cdsitexc => 5,
                          pr_cdagenci => rw_crapage.cdagenci);                           
@@ -1093,7 +1135,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar RDC dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar RDC dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;
@@ -1105,7 +1148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar RDC dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar RDC dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;
@@ -1142,11 +1186,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         FETCH cr_crapmfx INTO rw_crapmfx;
           
         IF cr_crapmfx%NOTFOUND THEN
-          pc_grava_critica(pr_dscritic => ' - Falta Cadastrar Taxa no dia '||
+          pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                           pr_dscritic => ' - Falta Cadastrar Taxa no dia '||
                                           TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||
                                           ' - '||vr_tab_moeda(vr_contador));  
         ELSIF rw_crapmfx.vlmoefix = 0 THEN
-          pc_grava_critica(pr_dscritic => ' - Cadastrar Taxa no dia '||
+          pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                           pr_dscritic => ' - Cadastrar Taxa no dia '||
                                           TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||
                                           ' para o Tipo de Aplicaçao - '||vr_tab_moeda(vr_contador)); 
         END IF;  
@@ -1171,7 +1217,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;
@@ -1183,7 +1230,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar JUROS P/APLICACAO RDC dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar JUROS P/APLICACAO RDC dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;
@@ -1205,7 +1253,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;            
@@ -1227,7 +1276,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar UFIR dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar UFIR dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;                
@@ -1243,7 +1293,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Falta CECRED cadastrar TAXRDC para RDCPOS do dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta CECRED cadastrar TAXRDC para RDCPOS do dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
       END IF;  
       CLOSE cr_crapmfx;   
@@ -1268,7 +1319,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         FETCH cr_craptrd INTO rw_craptrd;
         -- Se não encontrar
         IF cr_craptrd%NOTFOUND THEN
-          pc_grava_critica(pr_dscritic => ' - Cadastrar RDCA dia '||TO_CHAR(rw_craprda_2.dtfimper,'DD/MM/RRRR')
+          pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                           pr_dscritic => ' - Cadastrar RDCA dia '||TO_CHAR(rw_craprda_2.dtfimper,'DD/MM/RRRR')
                                           ||' - Tela TAXCDI');  
         END IF;  
         CLOSE cr_craptrd;  
@@ -1304,7 +1356,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 			
 			-- Se não encontrar, gerar crítica
 			IF cr_crapind%NOTFOUND THEN			
-			  pc_grava_critica(pr_dscritic => ' - Produto de captacao ' || rw_crapcpc.nmprodut || 
+			  pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Produto de captacao ' || rw_crapcpc.nmprodut || 
                                         ' sem indexador cadastrado. Tela PCAPTA.');  							
 			END IF;
 			CLOSE cr_crapind;
@@ -1324,7 +1377,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 			FETCH cr_craptxi INTO rw_craptxi;			
 
 			IF cr_craptxi%NOTFOUND THEN
-			  pc_grava_critica(pr_dscritic => ' - Falta cadastrar taxa do dia ' || to_char(vr_dtperiod, 'DD/MM/RRRR') || 
+			  pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta cadastrar taxa do dia ' || to_char(vr_dtperiod, 'DD/MM/RRRR') || 
                                         ' para o indexador ' || rw_crapind.nmdindex || '. Tela PCAPTA.');  	
 			END IF;
 		  CLOSE cr_craptxi;
@@ -1347,11 +1401,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                      ,pr_dstext      => SUBSTR(vr_dstextab,5,200)
                                      ,pr_delimitador => ';')  = 0 THEN
           
-          pc_grava_critica(pr_dscritic => ' - Falta cadastrar a tela SOL026 para o mes.');   
+          pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                           pr_dscritic => ' - Falta cadastrar a tela SOL026 para o mes.');   
         END IF;
       ELSE
         -- se não localizou registro na craptab
-        pc_grava_critica(pr_dscritic => ' - Falta cadastrar a tela SOL026 para o mes.');  
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta cadastrar a tela SOL026 para o mes.');  
       END IF;
       
       /*  Leitura da tabela TAXASDOMES */
@@ -1364,10 +1420,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                  
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar taxas para o mes. - Tela TAXMES');
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar taxas para o mes. - Tela TAXMES');
         
       ELSIF TO_CHAR(rw_crapdat.dtmvtolt,'MMRRRR') <> SUBSTR(vr_dstextab,27,6)THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar juros para o mes '
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar juros para o mes '
                                         ||to_char(rw_crapdat.dtmvtolt,'MM/RRRR')
                                         ||' - Tela TAXMES');
       END IF;      
@@ -1379,7 +1437,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_crapmfx INTO rw_crapmfx;
       -- Senão localizou
       IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar UFIR dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar UFIR dia '||
                                         TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR')||' - Tela MOEDAS');  
       END IF;  
       CLOSE cr_crapmfx;  
@@ -1402,7 +1461,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
           FETCH cr_crapmfx INTO rw_crapmfx;
           -- Senão localizou
           IF cr_crapmfx%NOTFOUND THEN
-            pc_grava_critica(pr_dscritic => ' - Cadastrar TAXRDC dia '||
+            pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                             pr_dscritic => ' - Cadastrar TAXRDC dia '||
                                             TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||' - Tela TAXRDC');  
           END IF;  
           CLOSE cr_crapmfx;          
@@ -1420,7 +1480,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         FETCH cr_craptrd INTO rw_craptrd;
         -- Se não encontrar
         IF cr_craptrd%NOTFOUND THEN
-          pc_grava_critica(pr_dscritic => ' - Cadastrar POUP.PROGR. dia '||
+          pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                           pr_dscritic => ' - Cadastrar POUP.PROGR. dia '||
                                             TO_CHAR(rw_craprpp.dtperiodo,'DD/MM/RRRR')||' - Tela MOEDAS');    
         END IF;             
         CLOSE cr_craptrd;
@@ -1447,7 +1508,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
             FETCH cr_craptrd INTO rw_craptrd;
             -- Se não encontrar
             IF cr_craptrd%NOTFOUND THEN
-              pc_grava_critica(pr_dscritic => ' - Cadastrar NOVA POUP.PROGR. dia '||
+              pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                               pr_dscritic => ' - Cadastrar NOVA POUP.PROGR. dia '||
                                               to_char(rw_craprpp.dtperiodo,'DD/MM/RRRR')||' - Tela MOEDAS');
             END IF;  
           END IF;  
@@ -1477,7 +1539,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
           FETCH cr_crapmfx INTO rw_crapmfx;
           -- Senão localizou
           IF cr_crapmfx%NOTFOUND THEN
-            pc_grava_critica(pr_dscritic => ' - Cadastrar UFIR de C.M. dia '||
+            pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                             pr_dscritic => ' - Cadastrar UFIR de C.M. dia '||
                                             TO_CHAR(vr_dtmvtocm,'DD/MM/RRRR')||' - Tela MOEDAS');  
           ELSE
             -- se estiver com valor zero, inicializar o valor
@@ -1486,7 +1549,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
             END IF;  
             -- Verificar se o valor é menor que o já encontrado
             IF rw_crapmfx.vlmoefix < vr_vlufircm   THEN
-              pc_grava_critica(pr_dscritic => ' - UFIR C.M. do dia e menor que a do dia anterior: dia '||
+              pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                               pr_dscritic => ' - UFIR C.M. do dia e menor que a do dia anterior: dia '||
                                               TO_CHAR(vr_dtmvtocm,'DD/MM/RRRR')||' - Tela MOEDAS');  
             END IF;  
               
@@ -1517,7 +1581,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       FETCH cr_craptrd INTO rw_craptrd;
       -- Se não encontrar
       IF cr_craptrd%NOTFOUND THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastrar POUP.PROGR. dia '||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastrar POUP.PROGR. dia '||
                                           TO_CHAR(rw_craprpp.dtperiodo,'DD/MM/RRRR')||' - Tela MOEDAS');    
       END IF;             
       CLOSE cr_craptrd;
@@ -1544,7 +1609,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
           FETCH cr_craptrd INTO rw_craptrd;
           -- Se não encontrar
           IF cr_craptrd%NOTFOUND THEN
-            pc_grava_critica(pr_dscritic => ' - Cadastrar NOVA POUP.PROGR. dia '||
+            pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                             pr_dscritic => ' - Cadastrar NOVA POUP.PROGR. dia '||
                                             to_char(rw_craprpp.dtperiodo,'DD/MM/RRRR')||' - Tela MOEDAS');
           END IF;  
         END IF;  
@@ -1562,7 +1628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                  
     -- verificar se existe valor
     IF TRIM(vr_dstextab) is null THEN
-      pc_grava_critica(pr_dscritic => ' - Tabela nao cadastrada. CRED-GENERI-0-VMINCTRCEN-0');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Tabela nao cadastrada. CRED-GENERI-0-VMINCTRCEN-0');
       /* Enviar email de controle de movimentacao soh quando solicitar o processo */
     ELSIF pr_choice = 2 THEN
       -- Buscar controle de movimentacao em especie
@@ -1622,7 +1689,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                    
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN
-        pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao de limpeza - registro 001');
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta tabela de execucao de limpeza - registro 001');
       END IF;  
     END IF;  
     
@@ -1648,7 +1716,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                    
     -- verificar se existe valor
     IF TRIM(vr_dstextab) is null THEN
-      pc_grava_critica(pr_dscritic => ' - Preencha a Tela SOL027 para PEDIDO DE TALONARIOS');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Preencha a Tela SOL027 para PEDIDO DE TALONARIOS');
     ELSIF vr_dstextab <> '0 0'   THEN
       pr_flgsol27 := 1; --TRUE;
     END IF;  
@@ -1663,7 +1732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                    
     -- verificar se existe valor
     IF TRIM(vr_dstextab) is null THEN
-      pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao do acompanhamento de talonarios');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Falta tabela de execucao do acompanhamento de talonarios');
     ELSIF (to_char(rw_crapdat.dtmvtopr,'DD') > 14 AND vr_dstextab = '0') /* Apos o dia 13 */
         OR(to_char(rw_crapdat.dtmvtopr,'DD') > 27 AND vr_dstextab = '1') /* Apos o dia 26 */
         THEN
@@ -1682,7 +1752,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                      
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
-        pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao da listagem de aplicacoes a vencer');
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta tabela de execucao da listagem de aplicacoes a vencer');
       ELSE
         -- Se valor for zero, recebe true
         IF vr_dstextab = 0   THEN
@@ -1704,7 +1775,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                      
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
-        pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao das fichas de admitidos');
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta tabela de execucao das fichas de admitidos');
       ELSIF vr_dstextab = 0   THEN
         pr_flgsol59 := 1;--TRUE;
       END IF;
@@ -1724,7 +1796,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                      
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
-        pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao de baixa de talonarios');
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta tabela de execucao de baixa de talonarios');
       ELSIF vr_dstextab = '0' THEN
         pr_flgsol28 := 1;--TRUE;
       END IF;
@@ -1745,7 +1818,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                      
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
-        pc_grava_critica(pr_dscritic => ' - Falta tabela de emissao dos cartoes de cheque especial');
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta tabela de emissao dos cartoes de cheque especial');
       /* Foi pego e comparado apenas a primeira posicao */
       ELSIF SUBSTR(vr_dstextab,1,1) = '0' THEN
         pr_flgsol57 := 1; --TRUE;             
@@ -1764,7 +1838,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                      
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
-        pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao do credito de retorno');
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta tabela de execucao do credito de retorno');
       -- Se foi selecionado algum percentual a distribuir
       ELSIF SUBSTR(vr_dstextab,03,63) <> '0 000,00000000 0 000,00000000 000,00000000 0   0 0 000,00000000'
          OR SUBSTR(vr_dstextab,78,25) <> '000,00000000 000,00000000' THEN
@@ -1785,7 +1860,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                      
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
-        pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao dos emprestimos em atraso');      
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Falta tabela de execucao dos emprestimos em atraso');      
       ELSIF vr_dstextab = '0' THEN
         pr_flgsol46 := 1;--TRUE;
       END IF;        
@@ -1802,7 +1878,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                                      
     -- verificar se existe valor
     IF TRIM(vr_dstextab) is null THEN 
-      pc_grava_critica(pr_dscritic => ' - Tabela nao cadastrada CRED-USUARI-11-RISCOBACEN-000');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Tabela nao cadastrada CRED-USUARI-11-RISCOBACEN-000');
     ELSE
       IF SUBSTR(vr_dstextab,1,1) = '1' THEN
         pr_flgsol80 := 1;--TRUE;
@@ -1810,7 +1887,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       ELSIF SUBSTR(vr_dstextab,1,1) = '0' AND
             to_char(rw_crapdat.dtmvtopr,'DD') > 15   AND 
             to_char(rw_crapdat.dtmvtolt,'DD') <= 15  THEN
-        pc_grava_critica(pr_dscritic => ' - Cadastramento da CENTRAL DE RISCO ainda nao'||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Cadastramento da CENTRAL DE RISCO ainda nao'||
                                         ' foi executado. CRED-USUARI-11-RISCOBACEN-000',
                          pr_cancsoli => 0); --não cancelar solicitação    
       END IF;      
@@ -1818,7 +1896,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     
     -- Buscar capas de lotes de requisicoes que estão com diferenças
     FOR rw_craptrq IN cr_craptrq (pr_cdcooper => pr_cdcooper) LOOP
-      pc_grava_critica(pr_dscritic => ' - Lote de requisicoes NAO BATIDO. Pa: '||to_char(rw_craptrq.cdagelot,'000')
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Lote de requisicoes NAO BATIDO. Pa: '||to_char(rw_craptrq.cdagelot,'000')
                                       ||' Lote: '||to_char(rw_craptrq.nrdolote,'000000'),
                        pr_cancsoli => 0); --não cancelar solicitação
     END LOOP;
@@ -1827,7 +1906,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     FOR rw_crapbcx IN cr_crapbcx (pr_cdcooper => pr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
                                   
-      pc_grava_critica(pr_dscritic => ' - Boletim de caixa ABERTO ==> Pa: '||to_char(rw_crapbcx.cdagenci,'fm000')
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Boletim de caixa ABERTO ==> Pa: '||to_char(rw_crapbcx.cdagenci,'fm000')
                                       ||' Caixa: '||to_char(rw_crapbcx.nrdcaixa,'fm000')
                                       ||' Operador: '||rw_crapbcx.cdopecxa||'-'
                                       ||gene0002.fn_busca_entrada(1,rw_crapbcx.nmoperad,' '));
@@ -1852,7 +1932,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       IF rw_craplot.cdbccxlt = 11 AND /* LOTE DE CAIXA */
          rw_craplot.nrdcaixa = 0  THEN
          
-         pc_grava_critica(pr_dscritic => ' - Lote de caixa NAO ASSOCIADO - Pa: '||to_char(rw_craplot.cdagenci,'000')
+         pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                          pr_dscritic => ' - Lote de caixa NAO ASSOCIADO - Pa: '||to_char(rw_craplot.cdagenci,'000')
                                          ||' Lote: '||to_char(rw_craplot.nrdolote,'000000'));
       END IF;   
       
@@ -1861,7 +1942,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
               rw_craplot.vlinfodb = rw_craplot.vlcompdb   AND
               rw_craplot.vlinfocr = rw_craplot.vlcompcr)   THEN
       
-        pc_grava_critica(pr_dscritic => ' - Ha lotes nao batidos => Pa: '||to_char(rw_craplot.cdagenci,'000')
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Ha lotes nao batidos => Pa: '||to_char(rw_craplot.cdagenci,'000')
                                       ||' Banco/Caixa: '||to_char(rw_craplot.cdbccxlt,'000')
                                       ||' Lote: '||to_char(rw_craplot.nrdolote,'000000'));
       END IF;        
@@ -1874,7 +1956,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
              rw_craplot.qtcompci = rw_craplot.qtinfoci AND
              rw_craplot.vlcompci = rw_craplot.vlinfoci)   THEN
              
-        pc_grava_critica(pr_dscritic => ' - Protoc CUSTODIA nao batido => Pa: '||to_char(rw_craplot.cdagenci,'000')
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Protoc CUSTODIA nao batido => Pa: '||to_char(rw_craplot.cdagenci,'000')
                                       ||' Bco/Cxa: '||to_char(rw_craplot.cdbccxlt,'000')
                                       ||' Lote: '||to_char(rw_craplot.nrdolote,'000000'));
       END IF;                                     
@@ -1889,7 +1972,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
          o nrdconta cadastrado na crapass***/
     FOR rw_crapact IN cr_crapact (pr_cdcooper => pr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
-      pc_grava_critica(pr_dscritic => ' - Associado nao encontrado no crapass. ERRO DE SISTEMA');
+      pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                       pr_dscritic => ' - Associado nao encontrado no crapass. ERRO DE SISTEMA');
     END LOOP;
     
     /* Chamado pelo tela proces e se o diretorio existir*/
@@ -1905,11 +1989,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       
       -- Verifica se ocorreram erros no processo de listagem de arquivos
       IF TRIM(vr_dscritic) IS NOT NULL THEN
-        pc_grava_critica(pr_dscritic => ' - Erro ao buscar arquivo pd%BANCOOB: '||vr_dscritic); 
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Erro ao buscar arquivo pd%BANCOOB: '||vr_dscritic); 
       END IF;
       -- Senão retornou algum arquivo, gerar critica
       IF TRIM(vr_listarq) IS NOT NULL THEN
-        pc_grava_critica(pr_dscritic => ' - Ha arquivos de cheques do BANCOOB Form.'||
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Ha arquivos de cheques do BANCOOB Form.'||
                                         ' Continuo para serem enviados - PCOMPE');
       END IF;        
     END IF;
@@ -2028,7 +2114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       
       /* Caso a conta tenha saldo, criticar */
       IF nvl(vr_vlsalbol,0) <> 0 THEN
-        pc_grava_critica(pr_dscritic => ' - Ha saldo na conta'||gene0002.fn_mask_conta(rw_crapass.nrdconta)
+        pc_grava_critica(pr_cdcooper => pr_cdcooper,
+                         pr_dscritic => ' - Ha saldo na conta'||gene0002.fn_mask_conta(rw_crapass.nrdconta)
                                         ||' - Emprestimos com emissao de boletos.'
                          ,pr_cdsitexc   => 6 );
       END IF;                      
@@ -2069,11 +2156,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     IF trim(pr_nmarqimp) is not null THEN     /* Chamado pelo tela proces */
       -- Inicializar o CLOB
       vr_des_clob := null;
+
       dbms_lob.createtemporary(vr_des_clob, true);
       dbms_lob.open(vr_des_clob, dbms_lob.lob_readwrite);
       -- Inicilizar as informações do XML
       vr_texto_completo := null;
       
+      IF pr_choice = 4 THEN
+      -- Varrer criticas e exibir no log
+        IF pr_tab_criticas.COUNT > 0 and -- se existir criticas
+           pr_nrsequen > 0 THEN          -- e existir alguma critica que cancela solicitação
+          -- Varrer criticas e exibir no log        
+          FOR vr_idx IN pr_tab_criticas.first..pr_tab_criticas.last LOOP            
+            pc_escreve_clob(UPPER(rw_crapcop.dsdircop)||' --> '||to_char(vr_idx,'fm00000')||pr_tab_criticas(vr_idx).dscritic||chr(10));            
+          END LOOP;  
+          
+        ELSE -- SE ESTIVER VAZIO
+          pc_escreve_clob(UPPER(rw_crapcop.dsdircop)||' --> NENHUMA pendencia ENCONTRADA'||chr(10));
+        END IF;
+      ELSE
       -- Varrer criticas e exibir no log
       IF pr_tab_criticas.COUNT > 0 and -- se existir criticas
          pr_nrsequen > 0 THEN          -- e existir alguma critica que cancela solicitação
@@ -2083,13 +2184,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         END LOOP;  
         
       ELSE -- SE ESTIVER VAZIO
-        pc_escreve_clob('NENHUMA pendencia ENCONTRADA');
+          pc_escreve_clob('NENHUMA pendencia ENCONTRADA'||chr(10));
+        END IF;
       END IF;
       
       -- descarregar buffer
       pc_escreve_clob('',true);
+      -- Escolheu todas cooperavias
+      IF pr_choice = 4 THEN
+        vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                              ,pr_cdcooper => 3 -- cecred
+                                              ,pr_nmsubdir => ''); 
+        vr_nmarqimp := vr_nmdireto||'/'||pr_nmarqimp;        
+      ELSE
       -- incluir diretorio da cooperativa no parametro recebido(diretorio rl + nmarquivo)
       vr_nmarqimp := vr_nmdireto||'/'||pr_nmarqimp;
+      END IF;
       
       -- Separar diretorio do nome do arquivo
       gene0001.pc_separa_arquivo_path(pr_caminho => vr_nmarqimp, 
@@ -2099,6 +2209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       gene0002.pc_clob_para_arquivo( pr_clob    => vr_des_clob 
                                     ,pr_caminho => vr_nmdireto 
                                     ,pr_arquivo => vr_nmarqimp
+                                    ,pr_flappend => 'S' -- Sobreescrever
                                     ,pr_des_erro=> vr_dscritic);
       
       -- gerar log da critica
@@ -2109,10 +2220,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                            pr_des_log      => vr_dscritic);  
       END IF;  
       
+      -- Setar privilégio para evitar falta de permissão a outros usuários
+      gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||vr_nmdireto||
+                                                    '/'||vr_nmarqimp);
+          
+      
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_des_clob);
       dbms_lob.freetemporary(vr_des_clob);
       
+     
     ELSE
       /* Chamado pelo crps417.p - BATCH */
       -- Varrer criticas e exibir no log
@@ -2161,17 +2278,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Odirlei Busana(AMcom)
-   Data    : Junho/2004.                     Ultima atualizacao: 03/06/2014
+   Data    : Junho/2004.                     Ultima atualizacao: 01/02/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
-   Objetivo  : Gerar criticas do processo e gravar retorno na work table, para conseguir utilizar no progress
+   Objetivo  : Gerar criticas do processo e gravar retorno na work table, para conseguir 
+               utilizar no progress
   
+   Alteracoes: 01/02/2017 - Ajustes para consultar dados da tela PROCES de todas as cooperativas
+                            (Lucas Ranghetti #491624)
   ..................................................................................*/ 
   
     vr_tab_criticas   btch0002.typ_tab_criticas;
     vr_ind            PLS_INTEGER;
+    
+    -- Busca das cooperativas ativas
+    CURSOR cr_crapcop IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.flgativo = 1 
+       ORDER BY cop.cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
   BEGIN
     -- Limpa a tabela temporaria de interface
     BEGIN
@@ -2182,6 +2310,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         pr_dscritic := 'Erro ao excluir wt_critica_proces: '||SQLERRM;
         RETURN;
     END;
+    
+    -- se está na cecred e escolheu a opção "4" de todas as coops
+    IF pr_cdcooper = 3 AND 
+       pr_choice = 4 THEN
+      
+      -- Cooperativas ativas
+      FOR rw_crapcop IN cr_crapcop LOOP
+    -- Gerar critica do processo
+        btch0002.pc_gera_criticas_proces ( pr_cdcooper => rw_crapcop.cdcooper, --> Codigo da cooperativa
+                                           pr_cdagenci => pr_cdagenci,    --> Codigo da agencia
+                                           pr_cdoperad => pr_cdoperad,    --> codigo do operador
+                                           pr_nmdatela => pr_nmdatela,    --> Nome da tela                      
+                                           pr_nmarqimp => pr_nmarqimp,    --> Nome do arquivo
+                                           pr_choice   => pr_choice,      --> Tipo de escolhe efetuado na tela
+                                           pr_nrsequen => pr_nrsequen,    --> Numero sequencial
+                                           pr_vldaurvs => pr_vldaurvs,    --> Variavel para armazenar o valor do urv
+                                           pr_flgsol16 => pr_flgsol16,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol27 => pr_flgsol27,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol28 => pr_flgsol28,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol29 => pr_flgsol29,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol30 => pr_flgsol30,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol37 => pr_flgsol37,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol46 => pr_flgsol46,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol57 => pr_flgsol57,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol59 => pr_flgsol59,    --> variavel que controla se deve gerar a solicitação
+                                           pr_flgsol80 => pr_flgsol80,    --> variavel que controla se deve gerar a solicitação
+                                           pr_tab_criticas => vr_tab_criticas,--> Retorna as criticas encontradas
+                                           pr_cdcritic => pr_cdcritic,    --> Critica encontrada
+                                           pr_dscritic => pr_dscritic);  
+      
+        -- se não encontrar critica
+        IF NVL(pr_cdcritic,0) = 0 AND
+           TRIM(pr_dscritic) IS NULL THEN
+          -- incluir os registros da tabela temporaria na work-table
+          
+          vr_ind := vr_tab_criticas.first; -- Vai para o primeiro registro
+
+          -- loop sobre a tabela de retorno
+          WHILE vr_ind IS NOT NULL LOOP
+            -- Insere na tabela de interface
+            BEGIN
+              INSERT INTO wt_critica_proces
+                       (cdcooper,
+                        nrsequen, 
+                        dscritic, 
+                        cdsitexc, 
+                        cdagenci)
+                 VALUES(vr_tab_criticas(vr_ind).cdcooper,
+                        vr_ind, -- nrsequen 
+                        substr(vr_tab_criticas(vr_ind).dscritic,1,70), 
+                        vr_tab_criticas(vr_ind).cdsitexc, 
+                        vr_tab_criticas(vr_ind).cdagenci);    
+            EXCEPTION
+              WHEN OTHERS THEN
+                pr_cdcritic := 0;
+                pr_dscritic := 'Erro ao inserir na tabela wt_critica_proces: '||SQLERRM;
+                RETURN;
+            END;
+            
+            -- Vai para o proximo registro
+            vr_ind := vr_tab_criticas.next(vr_ind);
+          END LOOP; 
+             
+        END IF; -- Fim if critica não existe critica
+        CONTINUE;
+      END LOOP;
+    ELSE -- faz por cooperativa
     -- Gerar critica do processo
     btch0002.pc_gera_criticas_proces ( pr_cdcooper       => pr_cdcooper,    --> Codigo da cooperativa
                                        pr_cdagenci       => pr_cdagenci,    --> Codigo da agencia
@@ -2217,12 +2412,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         -- Insere na tabela de interface
         BEGIN
           INSERT INTO wt_critica_proces
-                   (nrsequen, 
+                     (cdcooper,
+                      nrsequen, 
                     dscritic, 
                     cdsitexc, 
                     cdagenci)
-             VALUES(vr_ind, -- nrsequen 
-                    vr_tab_criticas(vr_ind).dscritic, 
+               VALUES(vr_tab_criticas(vr_ind).cdcooper,
+                      vr_ind, -- nrsequen 
+                      substr(vr_tab_criticas(vr_ind).dscritic,1,70), 
                     vr_tab_criticas(vr_ind).cdsitexc, 
                     vr_tab_criticas(vr_ind).cdagenci);    
         EXCEPTION
@@ -2237,6 +2434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END LOOP; 
          
     END IF; -- Fim if critica não existe critica
+    END IF;
+    
     
   EXCEPTION
     WHEN OTHERS THEN
