@@ -1,6 +1,6 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                              ,pr_cdprogra IN VARCHAR2                --> Nome do programa
+                                              ,pr_stprogra IN OUT PLS_INTEGER         --> Saída de termino da execução
                                               ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                               ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Machado Flor
-       Data    : Setembro/2015                     Ultima atualizacao: 18/09/15
+       Data    : Setembro/2015                     Ultima atualizacao: 20/02/2017
 
        Dados referentes ao programa:
 
@@ -147,6 +147,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
                             de DOC NAO ACEITO - 798 (SD174586 - Tiago).
                             
                18/09/2015 - Conversao de crps252.p(Progress) para Oracle (Tiago).
+               
+               20/02/2017 - #551202 Log de início, erros e fim da execução do programa (Carlos)
+               
     ............................................................................ */
 
     DECLARE
@@ -154,7 +157,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
       ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
       -- Código do programa
-      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS252';
+      vr_cdprogra CONSTANT VARCHAR2(40) := pr_cdprogra;
 
       vr_dsdireto   VARCHAR2(200);
       vr_dsdircop   VARCHAR2(200);
@@ -207,6 +210,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
       vr_des_xml    CLOB;            -- Dados do XML
       vr_Bufdes_xml VARCHAR2(32000); -- Dados relatorio
 
+      vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
 
       --Variaveis pertencentes ao layout d(DETAIL) do arquivo
       lt_d_cdcmpdst   NUMBER(3);
@@ -348,27 +352,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
       PROCEDURE gera_log(pr_cdcooper IN crapcop.cdcooper%TYPE
-                        ,pr_cdprogra IN crapprg.cdprogra%TYPE
+                        ,pr_cdprogra IN VARCHAR2
                         ,pr_indierro IN PLS_INTEGER
                         ,pr_cdcritic IN crapcri.cdcritic%TYPE
                         ,pr_dscritic IN crapcri.dscritic%TYPE) IS
       BEGIN
-        -- Se foi retornado apenas código
-        IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
+
           -- Buscar a descrição
-          vr_dscriti2 := gene0001.fn_busca_critica(pr_cdcritic);            
-        END IF;
+        vr_dscriti2 := TRIM(gene0001.fn_busca_critica(pr_cdcritic, pr_dscritic));
         
-        IF TRIM(pr_dscritic) IS NOT NULL THEN
-           vr_dscriti2 := pr_dscritic;
-        END IF;
-           
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss')||' - '
                                                    || pr_cdprogra || ' --> '
-                                                   || vr_dscriti2 || ' (' || TO_CHAR(pr_indierro) || ')');
+                                                   || vr_dscriti2 || ' (' || TO_CHAR(pr_indierro) || ')'
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => pr_cdprogra);
         
       EXCEPTION
         WHEN OTHERS THEN
@@ -431,8 +431,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
 
       --------------- VALIDACOES INICIAIS -----------------
 
+      -- Início de execução do programa
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'I', 
+                             PR_CDPROGRAMA => vr_cdprogra, 
+                             pr_cdcooper   => pr_cdcooper,
+                             PR_IDPRGLOG   => vr_idprglog);
+
       -- Incluir nome do módulo logado
-      GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+      GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS252'
                                 ,pr_action => null);
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop;
@@ -469,7 +475,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
       -- Validações iniciais do programa
       BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                                ,pr_flgbatch => 1
-                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_cdprogra => 'CRPS252'
                                ,pr_infimsol => pr_infimsol
                                ,pr_cdcritic => vr_cdcritic);
       -- Se a variavel de erro é <> 0
@@ -1255,7 +1261,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
         
         -- Submeter o relatório 205
         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
-                                   ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
+                                   ,pr_cdprogra  => 'CRPS252'                            --> Programa chamador
                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
                                    ,pr_dsxml     => vr_des_xml                           --> Arquivo XML de dados
                                    ,pr_dsxmlnode => '/raiz/detalhe/linha'                --> Nó base do XML para leitura dos dados
@@ -1361,7 +1367,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
         
         -- Submeter o relatório 205_99
         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
-                                   ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
+                                   ,pr_cdprogra  => 'CRPS252'                          --> Programa chamador
                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
                                    ,pr_dsxml     => vr_des_xml                           --> Arquivo XML de dados
                                    ,pr_dsxmlnode => '/raiz/detalhe/linha'                --> Nó base do XML para leitura dos dados
@@ -1412,18 +1418,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
          vr_cdcritic := 190; --Arquivo integrado com sucesso
       END IF;
       
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
         -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
-
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
       
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );      
+                                                 || vr_dscritic
+                                ,pr_dstiplog     => 'E'
+                                ,pr_cdprograma   => vr_cdprogra);
       
       --Limpar a craprej 
       BEGIN
@@ -1442,48 +1447,82 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
 
       -- Processo OK, devemos chamar a fimprg
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_cdprogra => 'CRPS252'
                                ,pr_infimsol => pr_infimsol
                                ,pr_stprogra => pr_stprogra);
 
       -- Salvar informações atualizadas
       COMMIT;
 
+      -- Fim da execução do programa
+      cecred.pc_log_programa(PR_DSTIPLOG   => 'F', 
+                             PR_CDPROGRAMA => vr_cdprogra, 
+                             pr_cdcooper   => pr_cdcooper,
+                             PR_IDPRGLOG   => vr_idprglog);
+
     EXCEPTION
       WHEN vr_exc_fimprg THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+
           -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+        
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                    || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
+                                                   || vr_dscritic
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => vr_cdprogra);
+
         -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
         btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdprogra => vr_cdprogra
+                                 ,pr_cdprogra => 'CRPS252'
                                  ,pr_infimsol => pr_infimsol
                                  ,pr_stprogra => pr_stprogra);
         -- Efetuar commit
         COMMIT;
       WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+
           -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
         -- Devolvemos código e critica encontradas das variaveis locais
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E', 
+                               PR_CDPROGRAMA    => vr_cdprogra,
+                               pr_cdcooper      => pr_cdcooper,
+                               pr_tpexecucao    => 2,
+                               pr_tpocorrencia  => 3,
+                               pr_cdcriticidade => 1,
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               PR_IDPRGLOG      => vr_idprglog);
+
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
+        
+        cecred.pc_internal_exception(pr_cdcooper);
+
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
+        
+        cecred.pc_log_programa(PR_DSTIPLOG      => 'E', 
+                               PR_CDPROGRAMA    => vr_cdprogra,
+                               pr_cdcooper      => pr_cdcooper,
+                               pr_tpexecucao    => 2,
+                               pr_tpocorrencia  => 2, -- erro não tratado
+                               pr_cdcriticidade => 2, -- alta
+                               pr_cdmensagem    => pr_cdcritic,
+                               pr_dsmensagem    => pr_dscritic,
+                               pr_flgsucesso    => 0,
+                               PR_IDPRGLOG      => vr_idprglog);
+        
         -- Efetuar rollback
         ROLLBACK;
     END;
