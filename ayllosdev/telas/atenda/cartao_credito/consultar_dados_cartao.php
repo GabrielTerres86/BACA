@@ -23,6 +23,10 @@
 	//***             			   do Sistema do TAA. (James)              ***//
 	//***                                                                  ***//
 	//***             14/10/2015 - Desenvolvimento do projeto 126. (James) ***//
+	//***                                                                  ***//
+	//***             31/08/2017 - Alterar os botões da tela e incluir o   ***//
+	//***                          novo botão de histórico de alteração    ***//
+	//***                          de limite de crédito (Renato - Prj360)  ***//
 	//************************************************************************//			
 	
 	session_start();
@@ -330,9 +334,16 @@
 		</fieldset>
 	</form>
 	<div id="divBotoes">
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"          onClick="voltaDiv(0,1,4);return false;">
+		<!--input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif"          onClick="voltaDiv(0,1,4);return false;">
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/avais.gif"           onClick="mostraAvais();return false;">
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/ultimos_debitos.gif" onClick="mostraUltDebitos();return false;">
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/ultimos_debitos.gif" onClick="mostraUltDebitos();return false;"-->
+		
+		<a href="#" class="botao" id="btvoltar" onClick="voltaDiv(0,1,4);return false;">Voltar</a>
+		<a href="#" class="botao" id="btavais" onClick="mostraAvais();return false;">Avais</a>
+		<a href="#" class="botao" id="btultimos_debitos" onClick="mostraUltDebitos();return false;">&Uacute;ltimos D&eacute;bitos</a>
+		<? if (($cdadmcrd >= 10) && ($cdadmcrd <= 80)){ ?>
+		<a href="#" class="botao" id="bthislim" onClick="mostraHisLimite(); return false;">Hist. Limite</a>
+		<? } ?>
 	</div>
 </div>
 
