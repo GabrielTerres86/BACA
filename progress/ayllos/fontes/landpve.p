@@ -1843,6 +1843,7 @@ DO WHILE TRUE:
                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
                                                             ,INPUT craplcm.nrdconta
                                                             ,INPUT INT(ENTRY(1,craplcm.cdpesqbb, ";"))
+															,INPUT 3
                                                             ,OUTPUT 0 /* pr_flgretativo */
                                                             ,OUTPUT 0 /* pr_flgretquitado */
                                                             ,OUTPUT 0 /* pr_flgretcancelado */
