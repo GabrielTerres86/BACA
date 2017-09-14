@@ -1877,7 +1877,9 @@ DO WHILE TRUE:
                         END.
                         
                       /* Se estiver ATIVO */
-                      IF aux_flgretativo = 1 THEN
+                      /*  Tratamento Temporario para perimitir a Helen estornar
+                          valores de emprestimo em acordo */
+                      IF aux_flgretativo = 1 AND glb_cdoperad <> 'F0030500' THEN
                         DO:
                           MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
                           PAUSE 3 NO-MESSAGE.
