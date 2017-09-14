@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 13/07/2017
+    Data    : Marco/07.                       Ultima atualizacao: 05/09/2017
     
     Dados referentes ao programa:
 
@@ -226,6 +226,14 @@
               
               13/07/2017 - Alterar a situação do insitchq das tabelas crapcdb e crapcst
                            para 3 depois que criar o craplcm (Lucas Ranghetti #659855)
+
+              01/09/2017 - SD737676 - Alteracao de comentario fazendo mencao a arquivo 
+			               nao gerado por esta procedure (Marcos-Supero)
+
+              05/09/2017 - Ajuste para apresentar novamente a conta do associado na coluna Benefic
+						   no relatorio de cheques 085
+						   (Adriano - SD 744959).
+
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -320,7 +328,7 @@ DEF        VAR vr_nrdconta  AS INTE                                  NO-UNDO.
 DEF        VAR vr_cdcooper  AS INTE                                  NO-UNDO. 
 DEF        VAR vr_cdagectl  AS INTE                                  NO-UNDO. 
 
-/*variaveis da arquivo contábil AAMMDD_CRITICAS.txt*/
+/*variaveis da arquivo contábil AAMMDD_CRITICADEVOLU.txt*/
 DEF        VAR aux_nmarqcri AS CHAR                                  NO-UNDO.
 DEF        VAR aux_nmarqcop AS CHAR                                  NO-UNDO.
 DEF        VAR aux_linhaarq AS CHAR                                  NO-UNDO.
@@ -2969,7 +2977,7 @@ PROCEDURE gera_arquivo_cecred:
                                            AND crapcdb.cdagechq = crapfdc.cdagechq                                          
                                            AND crapcdb.nrctachq = crapfdc.nrctachq
                                            AND crapcdb.nrcheque = crapfdc.nrcheque
-                                           AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                           AND CAN-DO("0,2,3",STRING(crapcdb.insitchq))
                                            AND crapcdb.dtdevolu = ?
                                            NO-LOCK:
                        END.                        
@@ -2986,7 +2994,7 @@ PROCEDURE gera_arquivo_cecred:
                                                   AND crapcst.cdagechq = crapfdc.cdagechq
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
-                                                  AND CAN-DO("0,2",STRING(crapcst.insitchq))
+                                                  AND CAN-DO("0,2,3",STRING(crapcst.insitchq))
 												  AND crapcst.dtdevolu = ?
 												  AND crapcst.nrborder = 0
                                                   NO-LOCK:
