@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Lucas R.
-  Data    : Setembro/2013                        Ultima atualizacao: 01/08/2017
+  Data    : Setembro/2013                        Ultima atualizacao: 13/09/2017
 
   Dados referentes ao programa:
 
@@ -150,6 +150,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS647(pr_cdcooper  IN crapcop.cdcooper%T
                            
               01/08/2017 - Incluir tratamento para contas demitidas, exibir critica correta
                            no relatorio (Lucas Ranghetti #711763)
+
+              13/09/2017 - Atribuir ao nome resumido o nome completo limitando em 20
+                           caracteres. (Jaison/Aline - #744121)
+
    ............................................................................. */
   -- Constantes do programa
   vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS647';
@@ -1271,7 +1275,7 @@ BEGIN
                       IF (TRIM(vr_dsnomres) IS NOT NULL) THEN  
                         vr_dsnomsms := vr_dsnomres;
                       ELSE
-                        vr_dsnomsms := vr_nmempres;
+                        vr_dsnomsms := SUBSTR(vr_nmempres, 1, 20);
                       END IF;
                       
                       sicr0001.pc_notif_cooperado_debaut(pr_cdcritic      => 967       -- 967 - Limite ultrapassado.
