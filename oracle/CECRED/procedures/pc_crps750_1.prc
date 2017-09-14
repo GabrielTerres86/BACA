@@ -198,11 +198,27 @@ BEGIN
       vr_cdindice     VARCHAR2(30) := '';            --> Indice da tabela de acordos
       vr_mesespago    INTEGER;
       vr_inliquid     crapepr.inliquid%TYPE;
+
+    vr_idprglog   NUMBER;
       
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
     BEGIN
+	   --
+       --
+       IF pr_cdcooper = 3 then
+        -- gera log para futuros rastreios
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => 'CRPS750_1',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 2,
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Inicio pc_gera_tabela_parcelas.',
+                        PR_IDPRGLOG           => vr_idprglog);                           
+                           
+       END IF;
+       -- 
        --
        -- Leitura do indicador de uso da tabela de taxa de juros
        vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -338,6 +354,18 @@ BEGIN
            RAISE vr_exc_erro;
        END;
        --
+       IF pr_cdcooper = 3 then
+       -- gera log para futuros rastreios
+        pc_log_programa(PR_DSTIPLOG           => 'O',
+                        PR_CDPROGRAMA         => 'CRPS750_1',
+                        pr_cdcooper           => pr_cdcooper,
+                        pr_tpexecucao         => 2,
+                        pr_tpocorrencia       => 4,
+                        pr_dsmensagem         => 'Após DELETE tbepr_tr_parcelas.',
+                        PR_IDPRGLOG           => vr_idprglog);                           
+       --
+       END IF;
+       --
        -- Carregar Contratos de Acordos
        FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
          vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
@@ -409,6 +437,21 @@ BEGIN
                                                   ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');
        --
        FOR rw_crapepr IN cr_crapepr LOOP
+         --
+         IF pr_cdcooper = 3 then
+         -- gera log para futuros rastreios
+          pc_log_programa(PR_DSTIPLOG           => 'O',
+                          PR_CDPROGRAMA         => 'CRPS750_1',
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,
+                          pr_tpocorrencia       => 4,
+                          pr_dsmensagem         => 'Início loop cr_crapepr:'||
+                                                   ' Conta: '||rw_crapepr.nrdconta||
+                                                   ' Contrato:'||rw_crapepr.nrctremp,
+                          PR_IDPRGLOG           => vr_idprglog);                            
+                           
+         END IF;  
+
          -- acerto de datas
          IF to_char(rw_crapepr.dtdpagto,'dd') <> to_char(rw_crapepr.dtdpagto_nova,'dd') THEN
            rw_crapepr.dtdpagto_nova := rw_crapepr.dtdpagto_nova - 1;
@@ -634,8 +677,23 @@ BEGIN
               vr_qtparcela := round(vr_vlprepag / rw_crapepr.vlpreemp,4);
               vr_vlparcela := rw_crapepr.vlpreemp - vr_vlprepag;
            END IF;
-           --
-         END IF;
+		 --
+         --
+         IF pr_cdcooper = 3 then
+         -- gera log para futuros rastreios
+          pc_log_programa(PR_DSTIPLOG           => 'O',
+                          PR_CDPROGRAMA         => 'CRPS750_1',
+                          pr_cdcooper           => pr_cdcooper,
+                          pr_tpexecucao         => 2,
+                          pr_tpocorrencia       => 4,
+                          pr_dsmensagem         => 'Antes insert tbepr_tr_parcelas:'||
+                                                   ' Conta: '||rw_crapepr.nrdconta||
+                                                   ' Contrato:'||rw_crapepr.nrctremp||
+                                                   ' Data pgto:'||to_char(vr_dtdpagto,'dd/mm/yyyy')||
+                                                   ' Saldo Dev:'||to_char(vr_vlsdeved),
+                          PR_IDPRGLOG           => vr_idprglog);
+                           
+         END IF;   
          --
          -- Enquanto data de vencimento da parcela for menor que data processamento E houver saldo devedor do emprestimo
          WHILE (vr_dtdpagto <= vr_dtcursor) and (vr_vlsdeved > 0) LOOP
