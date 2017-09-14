@@ -1,10 +1,10 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                       ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                                       ,pr_nmtelant IN VARCHAR2
-                                       ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                                       ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                       ,pr_dscritic OUT varchar2) IS
+                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                                              ,pr_nmtelant IN VARCHAR2
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                              ,pr_dscritic OUT varchar2) IS
   BEGIN
 
   /* .............................................................................
@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 30/08/2017
+   Data    : Dezembro/2009                   Ultima atualizacao: 11/09/2017
 
    Dados referentes ao programa:
 
@@ -286,6 +286,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                30/08/2017 - Ajuste para utilizar o lote 76000 e gravar o campo cdcmpchq ao criar o lançamento referente
                             a contra-ordem (critica 96)
                             (Adriano - SD 746815). 
+                            
+               11/09/2017 - Ajustes para criar craplcm para historicos 573 ou 78 caso a critica for 
+                            96,257,414,439,950
+                            (Adriano - SD 745649).                        
                             
 ............................................................................. */
 
@@ -4819,12 +4823,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         RAISE vr_exc_erro;
                       END IF;
 
-                       --Atribuir quantidade e valor integrado para as variaveis
+                      --Atribuir quantidade e valor integrado para as variaveis
                       vr_qtcompln:= nvl(vr_qtcompln,0) + 1;
                       vr_vlcompdb:= nvl(vr_vlcompdb,0) + vr_vllanmto;
 
-                      -- 096 - Cheque com contra-ordem
-                      IF vr_cdcritic_aux = 96 THEN
+                      /*
+                      096 - Cheque com contra-ordem.
+                      257 - Cheque com alerta.
+                      414 - Cheque devolvido pelo sistema.
+                      439 - Ch. C.Ordem - Apr. Indevida.
+                      950 - Cheque Custodiado/Descontado em outra IF.*/
+                      IF vr_cdcritic_aux IN (96,257,414,439,950) THEN
 
                         OPEN cr_craplot2 (pr_cdcooper => pr_cdcooper
                                          ,pr_dtmvtolt => pr_dtmvtolt
