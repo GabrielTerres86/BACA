@@ -1,15 +1,16 @@
 /***********************************************************************
  Fonte: cadcco.js                                                  
  Autor: Jonathan - RKAM
- Data : Marco/2016                Última Alteração: 10/08/2016 
+ Data : Marco/2016                Última Alteração: 12/09/2017
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela CADCCO
                                                                    	 
  Alterações: 10/08/2016 - Ajuste para controlar corretamente o tamanho das
                           janela de pesquisa
                           (Adriano);
-						  
-						  
+
+             12/09/2017 - Inclusao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+
 ************************************************************************/
 
 var exisbole = 0;
@@ -20,7 +21,7 @@ var motivo = new Object();
 var cFlgativo, cDsorgarq, cNrdctabb, cCddbanco, cNmextbcc, cCdbccxlt, cCdagenci, cNrdolote, cCdhistor, cFlserasa,
     cFlgregis, cNmarquiv, cFlcopcob, cTamannro, cNmdireto, cNrbloque, cFlgcnvcc, cCdcartei, cNrvarcar, cNrlotblq,
     cDtmvtolt, cCdoperad, cFlprotes, cFlserasa, cQtdfloat, cQtfltate, cQtdecini, cQtdecate, cFldctman, cPerdctmx,
-    cFlgapvco, cFlrecipr;
+    cFlgapvco, cFlrecipr, cCdagedbb;
 
 
 
@@ -493,6 +494,7 @@ function incluirConvenio() {
 	var flrecipr = $('#flrecipr', '#frmCadcco').val();
 	var idprmrec = $('#idprmrec', '#frmCadcco').val();
 	var dslogcfg = $('#dslogcfg', '#frmCadcco').val();
+	var cdagedbb = normalizaNumero($('#cdagedbb', '#frmCadcco').val());
     $('input,select', '#frmCadcco').removeClass('campoErro').desabilitaCampo();
 
     // Mostra mensagem de aguardo
@@ -535,6 +537,7 @@ function incluirConvenio() {
 			flrecipr: flrecipr,
 			idprmrec: idprmrec,
             dslogcfg: dslogcfg,
+            cdagedbb: cdagedbb,
             redirect: "html_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -588,6 +591,7 @@ function alterarConvenio() {
 	var flrecipr = $('#flrecipr', '#frmCadcco').val();
 	var idprmrec = $('#idprmrec', '#frmCadcco').val();
 	var dslogcfg = $('#dslogcfg', '#frmCadcco').val();
+	var cdagedbb = normalizaNumero($('#cdagedbb', '#frmCadcco').val());
 
     $('input,select', '#frmCadcco').removeClass('campoErro').desabilitaCampo();
 
@@ -631,6 +635,7 @@ function alterarConvenio() {
 			flrecipr: flrecipr,			
 			idprmrec: idprmrec,
             dslogcfg: dslogcfg,
+            cdagedbb: cdagedbb,
             redirect: "html_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {
@@ -944,6 +949,7 @@ function formataInformacoes() {
     var rQtdfloat = $('label[for="qtdfloat"]', '#frmCadcco');
     var rNrbloque = $('label[for="nrbloque"]', '#frmCadcco');
     var rFlgcnvcc = $('label[for="flgcnvcc"]', '#frmCadcco');	
+    var rCdagedbb = $('label[for="cdagedbb"]', '#frmCadcco');
 	//Formata label tarifas
 	var rCdcartei = $('label[for="cdcartei"]', '#frmCadcco');
 	var rNrvarcar = $('label[for="nrvarcar"]', '#frmCadcco');
@@ -964,7 +970,7 @@ function formataInformacoes() {
     rFlgativo.addClass('rotulo').css('width', '80px');
     rDsorgarq.addClass('rotulo-linha').css('width', '135px');
     rNrdctabb.addClass('rotulo').css('width', '80px');
-    rFlgregis.addClass('rotulo-linha').css('width', '185px');
+    rFlgregis.addClass('rotulo-linha').css('width', '176px');
     rCddbanco.addClass('rotulo').css('width', '80px');
     rCdbccxlt.addClass('rotulo').css('width', '80px');
     rCdagenci.addClass('rotulo-linha').css('width', '30px');
@@ -992,6 +998,7 @@ function formataInformacoes() {
 	rPerdctmx.addClass('rotulo-linha').css('width', '220px');
 	rFlgapvco.addClass('rotulo-linha').css('width', '220px');
     rFlrecipr.addClass('rotulo').css('width', '170px');
+    rCdagedbb.addClass('rotulo-linha').css('width', '120px');
 	
     //Formata Campos Inf. Gerais
     cFlgativo = $('#flgativo', '#frmCadcco');
@@ -1011,6 +1018,7 @@ function formataInformacoes() {
     cNmdireto = $('#nmdireto', '#frmCadcco');
     cNrbloque = $('#nrbloque', '#frmCadcco');
     cFlgcnvcc = $('#flgcnvcc', '#frmCadcco');
+    cCdagedbb = $('#cdagedbb', '#frmCadcco');
     //Formata campo Tarifas
     cCdcartei = $('#cdcartei', '#frmCadcco');
     cNrvarcar = $('#nrvarcar', '#frmCadcco');
@@ -1060,6 +1068,7 @@ function formataInformacoes() {
 	cFlrecipr.css('width', '60px');		
     cDtmvtolt.css('width', '90px').addClass('data').desabilitaCampo();
     cCdoperad.css('width', '260px').desabilitaCampo();       
+    cCdagedbb.css('width', '60px').addClass('inteiro').attr('maxlength','10').setMask("INTEGER", "zzzzz-9", ".", "");
       
 
     cFlgativo.unbind('keypress').bind('keypress', function (e) {
@@ -1133,6 +1142,23 @@ function formataInformacoes() {
                 $('#cdtarhis', '#frmCadcco').desabilitaCampo();
 
             }
+
+            $(this).nextAll('.campo:first').focus();
+
+            return false;
+
+        }
+
+    });
+
+    cCdagedbb.unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        $('input,select').removeClass('campoErro');
+
+        // Se é a tecla ENTER, TAB, F1
+        if (e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 18) {
 
             $(this).nextAll('.campo:first').focus();
 

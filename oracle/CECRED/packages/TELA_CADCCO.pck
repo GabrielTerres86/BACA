@@ -107,7 +107,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
                         ,pr_perdctmx IN crapcco.perdctmx%TYPE --Percentual máximo de desconto manual
                         ,pr_flgapvco IN crapcco.flgapvco%TYPE --Aprovação do coordenador
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
-												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_cdagedbb IN crapcco.cdagedbb%TYPE --Codigo da agencia no Banco do Brasil
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
@@ -161,7 +162,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
                         ,pr_perdctmx IN crapcco.perdctmx%TYPE --Percentual máximo de desconto manual
                         ,pr_flgapvco IN crapcco.flgapvco%TYPE --Aprovação do coordenador
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
-												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_cdagedbb IN crapcco.cdagedbb%TYPE --Codigo da agencia no Banco do Brasil
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
@@ -1130,14 +1132,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                         Ultima atualizacao:
+    Data     : Marco/2016                         Ultima atualizacao: 12/09/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Busca cadastro de parametro de cobranca.
     
-    Alterações : 
+    Alterações : 12/09/2017 - Busca da Agencia do Banco do Brasil. (Jaison/Elton - M459)
     -------------------------------------------------------------------------------------------------------------*/                               
   
     --Busca os parametros de cobranca
@@ -1174,6 +1176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 					,crapcco.flgapvco
 					,crapcco.flrecipr
 					,crapcco.idprmrec
+					,crapcco.cdagedbb
       FROM crapcco
      WHERE crapcco.nrconven = pr_nrconven 
        AND crapcco.cdcooper = pr_cdcooper;
@@ -1385,6 +1388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 																								 '  <flgapvco>' || rw_crapcco.flgapvco||'</flgapvco>' ||
 																								 '  <flrecipr>' || rw_crapcco.flrecipr||'</flrecipr>' ||
 																								 '  <idprmrec>' || rw_crapcco.idprmrec||'</idprmrec>' ||
+																								 '  <cdagedbb>' || LTrim(RTRIM(gene0002.fn_mask(rw_crapcco.cdagedbb, 'zzzzzz-9')))||'</cdagedbb>' ||
                                                  '</parametro>');  
       
     -- Encerrar a tag raiz
@@ -1456,7 +1460,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_perdctmx IN crapcco.perdctmx%TYPE --Percentual máximo de desconto manual
                         ,pr_flgapvco IN crapcco.flgapvco%TYPE --Aprovação do coordenador
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
-												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_cdagedbb IN crapcco.cdagedbb%TYPE --Codigo da agencia no Banco do Brasil
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
@@ -1474,7 +1479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
+    Data     : Marco/2016                           Ultima atualizacao: 12/09/2017
     
     Dados referentes ao programa:
     
@@ -1484,6 +1489,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
                               de erro, para que seja exibido o erro correto no Ayllos WEB
                               (Douglas - Chamado 550711)
+
+                 12/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
     -------------------------------------------------------------------------------------------------------------*/ 
   
     --Busca os parametros de cobranca
@@ -1521,6 +1528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 					,cco.flgapvco
 					,cco.flrecipr
 					,cco.idprmrec
+          ,cco.cdagedbb
           ,cco.rowid
       FROM crapcco cco
      WHERE cco.cdcooper = pr_cdcooper
@@ -1713,6 +1721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 												,crapcco.flgapvco = pr_flgapvco
 												,crapcco.flrecipr = pr_flrecipr
 												,crapcco.idprmrec = pr_idprmrec
+                        ,crapcco.cdagedbb = pr_cdagedbb
                   WHERE crapcco.rowid = rw_crapcco.rowid
               RETURNING crapcco.cdcooper
                        ,crapcco.nrconven
@@ -1748,6 +1757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                        ,crapcco.flgapvco
                        ,crapcco.flrecipr
 											 ,crapcco.idprmrec
+                       ,crapcco.cdagedbb
                   INTO rw_crapcco_new.cdcooper
                       ,rw_crapcco_new.nrconven
                       ,rw_crapcco_new.cddbanco
@@ -1781,7 +1791,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                       ,rw_crapcco_new.perdctmx
                       ,rw_crapcco_new.flgapvco
                       ,rw_crapcco_new.flrecipr
-											,rw_crapcco_new.idprmrec;
+                      ,rw_crapcco_new.idprmrec
+                      ,rw_crapcco_new.cdagedbb;
                       
     EXCEPTION
       WHEN OTHERS THEN      
@@ -1899,6 +1910,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                    ,pr_dsdcampo => 'Cobranca Registrada'
                    ,pr_vlrcampo => rw_crapcco.flgregis
                    ,pr_vlcampo2 => rw_crapcco_new.flgregis);
+    END IF;
+    
+    IF rw_crapcco.cdagedbb <> rw_crapcco_new.cdagedbb   THEN
+       pc_gera_log (pr_cdoperad => vr_cdoperad
+                   ,pr_tipdolog => 2                   
+                   ,pr_nrconven => pr_nrconven
+                   ,pr_dsdcampo => 'Agencia BB'
+                   ,pr_vlrcampo => rw_crapcco.cdagedbb
+                   ,pr_vlcampo2 => rw_crapcco_new.cdagedbb);
     END IF;
     
     IF rw_crapcco.cdbccxlt <> rw_crapcco_new.cdbccxlt THEN
@@ -2432,7 +2452,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_perdctmx IN crapcco.perdctmx%TYPE --Percentual máximo de desconto manual
                         ,pr_flgapvco IN crapcco.flgapvco%TYPE --Aprovação do coordenador
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
-												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
+                        ,pr_cdagedbb IN crapcco.cdagedbb%TYPE --Codigo da agencia no Banco do Brasil
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
                         ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
@@ -2450,7 +2471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
+    Data     : Marco/2016                           Ultima atualizacao: 12/09/2017
     
     Dados referentes ao programa:
     
@@ -2460,6 +2481,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
                               de erro, para que seja exibido o erro correto no Ayllos WEB
                               (Douglas - Chamado 550711)
+
+                 12/09/2017 - Inclusao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
     -------------------------------------------------------------------------------------------------------------*/ 
         
     --Cursor para encontrar a cooperativa
@@ -2628,7 +2651,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 												 ,crapcco.perdctmx
 												 ,crapcco.flgapvco
 												 ,crapcco.flrecipr
-												 ,crapcco.idprmrec)
+												 ,crapcco.idprmrec
+                         ,crapcco.cdagedbb)
                   VALUES(pr_nrconven
                         ,pr_cddbanco
                         ,vr_nmresbcc
@@ -2662,7 +2686,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_perdctmx
                         ,pr_flgapvco
                         ,pr_flrecipr
-                        ,NVL(TRIM(pr_idprmrec),0));
+                        ,NVL(TRIM(pr_idprmrec),0)
+                        ,pr_cdagedbb);
                           
     EXCEPTION
       WHEN OTHERS THEN  
@@ -2743,6 +2768,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
               ,pr_dsdcampo => 'Cobranca Registrada'
               ,pr_vlrcampo => pr_flgregis
               ,pr_vlcampo2 => '');
+    
+    pc_gera_log(pr_cdoperad => vr_cdoperad
+               ,pr_tipdolog => 6                   
+               ,pr_nrconven => pr_nrconven
+               ,pr_dsdcampo => 'Agencia BB'
+               ,pr_vlrcampo => pr_cdagedbb
+               ,pr_vlcampo2 => '');
 
     pc_gera_log(pr_cdoperad => vr_cdoperad
                ,pr_tipdolog => 6                   

@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: cadcop.js
  Autor: Andrei - RKAM
- Data : Agosto/2016                Última Alteração: 26/01/2016
+ Data : Agosto/2016                Última Alteração: 15/09/2017
 
  Objetivo  : Cadastro de servicos ofertados na tela CADCOP
 
@@ -11,6 +11,8 @@
                           e utilizar a mesma para validação no lugar da DSDEPART (Renato Darosci - Supero)
 
              26/01/2016 - Correcao na forma de recuperação do campo flgofatr do form de tela. (SD 601029 Carlos R. Tanholi)
+
+             15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
 ************************************************************************/
 var cddepart;
@@ -410,7 +412,7 @@ function formataFormularioConsulta() {
     $('#hhvrbini', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hhvrbfim', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#cdagebcb', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '6').setMask("INTEGER", "zz.zzz", "", "");
-    $('#cdagedbb', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
+    $('#cdagedbb', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("INTEGER", "zzzzzzz.z", "", "");
     $('#cdageitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
     $('#cdcnvitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '9').desabilitaCampo();
     $('#cdmasitg', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '5').desabilitaCampo();

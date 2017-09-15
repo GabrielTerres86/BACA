@@ -2,12 +2,14 @@
 	/*******************************************************************************
 	 Fonte: alterar_convenio.php                                                 
 	 Autor: Jonathan - RKAM                                                    
-	 Data : Marco/2016                   Última Alteração:  
+	 Data : Marco/2016                   Última Alteração: 12/09/2017
 	                                                                  
 	 Objetivo  : Efetua a alteracao do convenio de cobrança.                                  
 	                                                                  
 	 Alterações: 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
                               código do departamento ao invés da descrição (Renato Darosci - Supero)
+
+                 12/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 							  
 	********************************************************************************/
 	
@@ -63,6 +65,7 @@
 	$flrecipr = (isset($_POST['flrecipr'])) ? $_POST['flrecipr'] : 0;
 	$idprmrec = (isset($_POST['idprmrec'])) ? $_POST['idprmrec'] : 0;
 	$dslogcfg = (isset($_POST['dslogcfg'])) ? $_POST['dslogcfg'] : '';
+	$cdagedbb = (isset($_POST['cdagedbb'])) ? $_POST['cdagedbb'] : 0;
 	
 	validaDados();
 
@@ -105,6 +108,7 @@
 	$xml       .=		"<cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml       .=		"<cddopcao>".$cddopcao."</cddopcao>";
 	$xml       .=		"<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+	$xml       .=		"<cdagedbb>".$cdagedbb."</cdagedbb>";
 	$xml 	   .= " </Dados>";
 	$xml 	   .= "</Root>";		
 						

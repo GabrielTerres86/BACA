@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 20/04/2017
+    Data    : Maio/2010                   Ultima atualizacao: 13/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -201,7 +201,12 @@
 							(Adriano - P339).
 
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
-                             PRJ339 - CRM (Odirlei-AMcom)                             
+                             PRJ339 - CRM (Odirlei-AMcom)
+
+                13/09/2017 - Tratamento temporario para nao permitir solicitacao
+                             ou encerramento de conta ITG devido a migracao do BB.
+                             (Jaison/Elton - M459)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -478,6 +483,24 @@ PROCEDURE Busca_Dados:
                                        crapttl.nrdconta = par_nrdconta AND
                                        crapttl.idseqttl > 1) THEN
             ASSIGN tt-conta-corr.btexcttl = NO.
+
+        /* Tratamento temporario para nao permitir solicitacao
+           ou encerramento de conta ITG devido a migracao do BB */
+        IF  (CAN-DO ("6,12", STRING(par_cdcooper)) AND /* Credifiesc / Crevisc */
+             par_dtmvtolt >= 10/18/2017 AND par_dtmvtolt <= 10/24/2017)  OR
+            (CAN-DO ("2,16", STRING(par_cdcooper)) AND /* Acredicoop / Alto Vale */
+             par_dtmvtolt >= 10/19/2017 AND par_dtmvtolt <= 10/25/2017)  OR
+            (CAN-DO ("8,9,11", STRING(par_cdcooper)) AND /* Credelesc / Transpocred / Credifoz */
+             par_dtmvtolt >= 10/20/2017 AND par_dtmvtolt <= 10/26/2017)  OR
+            (CAN-DO ("5,7,10", STRING(par_cdcooper)) AND /* Acentra / Credcrea / Credicomin */
+             par_dtmvtolt >= 10/23/2017 AND par_dtmvtolt <= 10/27/2017)  OR
+            (par_cdcooper = 1 AND /* Viacredi */
+             par_dtmvtolt >= 10/24/2017 AND par_dtmvtolt <= 10/30/2017)  THEN
+            DO:
+               ASSIGN tt-conta-corr.btencitg = NO
+                      tt-conta-corr.btsolitg = NO.
+            END.
+        
 
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 31/08/2017
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 12/09/2017
 
    Dados referentes ao programa:
 
@@ -86,7 +86,9 @@
 
                 31/08/2017 - Ajustado rotina de envio de arquivos para a ABBC
                              para nao enviar arquivos 2*.DVS em feriados. (Rafael)
-                             
+
+                12/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1454,7 +1456,6 @@ PROCEDURE gera_remessa.
 
             ASSIGN aux_nrdocnpj = crapcop.nrdocnpj
                    aux_dsdircop = LOWER(crapcop.dsdircop)
-                   aux_cdagedbb = 34207 /*crapcop.cdagedbb*/
                    aux_nrctabbd = crapcop.nrctabbd
                    aux_nmextcop = crapcop.nmextcop
                    aux_nrsequen = 1
@@ -1472,8 +1473,10 @@ PROCEDURE gera_remessa.
                 EACH crapcco WHERE crapcco.cdcooper = crapcre.cdcooper
                                AND crapcco.nrconven = crapcre.nrcnvcob
                                AND crapcco.flgregis = TRUE
-                               AND crapcco.flgativo = TRUE
+                               AND crapcco.dsorgarq = 'PROTESTO'
                                AND crapcco.cddbanco = par_nrdbanco NO-LOCK:
+
+                    ASSIGN aux_cdagedbb = crapcco.cdagedbb.
 
                     INPUT STREAM str_3 THROUGH VALUE( "grep " + aux_dsdircop + 
                             " /usr/local/cecred/etc/TabelaDeCooperativas " + 
@@ -2132,7 +2135,7 @@ PROCEDURE gera_relatorio_remcob.
                 EACH crapcco WHERE crapcco.cdcooper = crapcre.cdcooper
                                AND crapcco.nrconven = crapcre.nrcnvcob
                                AND crapcco.flgregis = TRUE
-                               AND crapcco.flgativo = TRUE
+                               AND crapcco.dsorgarq = 'PROTESTO'
                                AND crapcco.cddbanco = par_nrdbanco NO-LOCK:
                     
                     
