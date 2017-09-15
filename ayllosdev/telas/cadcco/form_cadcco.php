@@ -3,11 +3,13 @@
 
   Fonte: form_cadcco.php
   Autor: Jonathan - RKAM
-  Data : Marco/2016                      Última Alteração: 19/09/2016
+  Data : Marco/2016                      Última Alteração: 12/09/2017
 
   Objetivo  : Mostrar valores da CADCCO.
 
   Alterações: 19/09/2016 - Incluida opcao "ACORDO" no campo "dsorgarq", Prj. 302 (Jean Michel)
+
+              12/09/2017 - Inclusao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
   
 
  * ********************************************************************* */
@@ -59,6 +61,9 @@
 			<option value="1" <?php echo (getByTagName($inf,'flgregis') == 1 ? "selected" : "");?>> <? echo utf8ToHtml('Sim') ?> </option> 
 			<option value="0" <?php echo (getByTagName($inf,'flgregis') == 0 ? "selected" : "");?>> <? echo utf8ToHtml('Nao') ?> </option>
 		</select>	
+
+		<label for="cdagedbb"><? echo utf8ToHtml('Ag&ecirc;ncia BB:') ?></label>
+		<input type="text" id="cdagedbb" name="cdagedbb" value="<?php echo getByTagName($inf,'cdagedbb');?>" disabled />
 				
 		</br>
 		

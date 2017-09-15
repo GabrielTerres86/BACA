@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --  Sistema  : Rotina acessada pela tela CADCOP
   --  Sigla    : TELA_CADCOP
   --  Autor    : Andrei - RKAM
-  --  Data     : Agosto/2016.                   Ultima atualizacao: 22/12/2016
+  --  Data     : Agosto/2016.                   Ultima atualizacao: 15/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -205,6 +205,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --
   --             22/12/2016 - Ajuste para gravar o nome resumido da cooperativa em maiusculo
   --                          (Adriano - SD 582204).
+  --
+  --             15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -851,7 +853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'inioppag', pr_tag_cont => to_char(to_date(rw_crapcop.inioppag,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'fimoppag', pr_tag_cont => to_char(to_date(rw_crapcop.fimoppag,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdagebcb', pr_tag_cont => to_char(rw_crapcop.cdagebcb,'fm99g990'), pr_des_erro => vr_dscritic);
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdagedbb', pr_tag_cont => to_char(rw_crapcop.cdagedbb,'fm9999g0'), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdagedbb', pr_tag_cont => to_char(rw_crapcop.cdagedbb,'fm999999999g0'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdageitg', pr_tag_cont => rw_crapcop.cdageitg, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdcnvitg', pr_tag_cont => rw_crapcop.cdcnvitg, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'cdmasitg', pr_tag_cont => rw_crapcop.cdmasitg, pr_des_erro => vr_dscritic);

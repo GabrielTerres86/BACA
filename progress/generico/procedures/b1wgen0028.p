@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 12/05/2017
+    Data      : Marco/2008                    Ultima Atualizacao: 13/09/2017
     
     Dados referentes ao programa:
 
@@ -515,6 +515,9 @@
                 19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+                13/09/2017 - Tratamento para nao permitir solicitacao de novos Cartoes BB.
+                             (Jaison/Elton - M459)
 
 ..............................................................................*/
 
@@ -1326,6 +1329,22 @@ PROCEDURE carrega_dados_inclusao:
     FOR EACH crapadc WHERE crapadc.cdcooper = par_cdcooper   AND
                            crapadc.insitadc = 0 NO-LOCK 
                            BY crapadc.cdadmcrd DESCENDING:
+
+        /* Tratamento para nao permitir solicitacao de novos Cartoes BB */
+        IF  CAN-DO ("83,85", STRING(crapadc.cdadmcrd))  THEN
+            DO:
+               IF  (CAN-DO ("6,12", STRING(par_cdcooper)) AND /* Credifiesc / Crevisc */
+                    par_dtmvtolt >= 10/18/2017 AND par_dtmvtolt <= 10/24/2017)  OR
+                   (CAN-DO ("2,16", STRING(par_cdcooper)) AND /* Acredicoop / Alto Vale */
+                    par_dtmvtolt >= 10/19/2017 AND par_dtmvtolt <= 10/25/2017)  OR 
+                   (CAN-DO ("8,9,11", STRING(par_cdcooper)) AND /* Credelesc / Transpocred / Credifoz */
+                    par_dtmvtolt >= 10/20/2017 AND par_dtmvtolt <= 10/26/2017)  OR
+                   (CAN-DO ("5,7,10", STRING(par_cdcooper)) AND /* Acentra / Credcrea / Credicomin */
+                    par_dtmvtolt >= 10/23/2017 AND par_dtmvtolt <= 10/27/2017)  OR
+                   (par_cdcooper = 1 AND /* Viacredi */
+                    par_dtmvtolt >= 10/24/2017 AND par_dtmvtolt <= 10/30/2017)  THEN
+                    NEXT.
+            END.
 
         IF  crapadc.cdadmcrd = 3 AND crapope.cddepart  <> 2 THEN   /* 2-CARTÕES */
             NEXT.
