@@ -23,7 +23,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 27/04/2017
+   Data    : 23/03/2011                        Ultima atualizacao: 15/09/2017
     
    Dados referentes ao programa:
 
@@ -273,6 +273,9 @@
                19/04/2017 - Removido DSNACION variavel nao utilizada.
                             PRJ339 - CRM (Odirlei-AMcom)  
 
+               15/09/2017 - Ajuste na variavel de retorno dos co-responsaveis
+                            pois estourava para conta com muitos AVAIS (Marcos-Supero)               
+                            
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -8211,7 +8214,7 @@ PROCEDURE gera_co_responsavel:
    DEF OUTPUT PARAM TABLE FOR tt-erro.
    DEF OUTPUT PARAM TABLE FOR w-co-responsavel.
 
-   DEF VAR xml_req      AS CHAR                                      NO-UNDO.
+   DEF VAR xml_req      AS LONGCHAR                                  NO-UNDO.
    DEF VAR xDoc         AS HANDLE                                    NO-UNDO.  
    DEF VAR xRoot        AS HANDLE                                    NO-UNDO. 
    DEF VAR xRoot2       AS HANDLE                                    NO-UNDO. 
