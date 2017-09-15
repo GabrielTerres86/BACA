@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 05/09/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 14/09/2017
     
     Dados referentes ao programa:
 
@@ -507,6 +507,10 @@
               04/09/2017 - Permitir estorno de boletos pagos pelo DDA. (Rafael/Ademir)
 
               05/09/2017 - Ajuste no numero do lote de estorno de pagto de títulos para 11900. (Rafael)
+              11/09/2017 - Adicionado campos para consulta de agendamento de GPS
+                           xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
+                           
+              14/09/2017 - Adicionar no campo nrrefere como String (Lucas Ranghetti #756034)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -5878,8 +5882,8 @@ PROCEDURE aprova_trans_pend:
                 RUN proc_geracao_log.
                   RETURN "NOK".
                            
-              END. 
-
+                                        END.
+                                
               CLOSE STORED-PROC pc_valida_apv_master
               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
@@ -10528,7 +10532,7 @@ PROCEDURE aprova_trans_pend:
                                                           INPUT tt-tbpagto_darf_das_trans_pend.dtapuracao ,      /* Período de apuraçao da guia */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.nrcpfcgc ,        /* CPF/CNPJ da guia */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.cdtributo ,       /* Código de tributaçao da guia */
-                                                          INPUT tt-tbpagto_darf_das_trans_pend.nrrefere,        /* Número de referencia da guia */
+                                                          INPUT STRING(tt-tbpagto_darf_das_trans_pend.nrrefere), /* Número de referencia da guia */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.dtvencto,        /* Data de vencimento da guia */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.vlprincipal,     /* Valor principal da guia */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.vlmulta,         /* Valor da multa da guia */
@@ -10634,7 +10638,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.dtapuracao,      /* Período de apuraçao da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.nrcpfcgc,        /* CPF/CNPJ da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.cdtributo,       /* Código de tributaçao da guia */
-                                                                  INPUT tt-tbpagto_darf_das_trans_pend.nrrefere,        /* Número de referencia da guia */
+                                                                  INPUT STRING(tt-tbpagto_darf_das_trans_pend.nrrefere), /* Número de referencia da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.dtvencto,        /* Data de vencimento da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.vlprincipal,     /* Valor principal da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.vlmulta,         /* Valor da multa da guia */
@@ -10732,7 +10736,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.dtapuracao,  /* Período de apuraçao da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.nrcpfcgc,  /* CPF/CNPJ da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.cdtributo,  /* Código de tributaçao da guia */
-                                                                  INPUT tt-tbpagto_darf_das_trans_pend.nrrefere,  /* Número de referencia da guia */
+                                                                  INPUT STRING(tt-tbpagto_darf_das_trans_pend.nrrefere), /* Número de referencia da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.dtvencto,  /* Data de vencimento da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.vlprincipal,  /* Valor principal da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.vlmulta,  /* Valor da multa da guia */
