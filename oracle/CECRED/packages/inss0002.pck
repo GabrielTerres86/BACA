@@ -7210,7 +7210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                    ,pr_texto_completo => vr_xml_temp
                                    ,pr_texto_novo     =>
                                    '<cdpagmto>' || SUBSTR(pr_cdbarras,20,4)                                    || '</cdpagmto>' ||
-                                   '<dtcompet>' || SUBSTR(pr_cdbarras,42,2)  || SUBSTR(pr_cdbarras,38,4)       || '</dtcompet>' ||
+                                   '<dtcompet>' || SUBSTR(pr_cdbarras,42,2)  || '/' || SUBSTR(pr_cdbarras,38,4)|| '</dtcompet>' ||
                                    '<dsidenti>' || SUBSTR(pr_cdbarras,24,14)                                   || '</dsidenti>' ||
                                    '<vldoinss>' || TO_NUMBER(SUBSTR(pr_cdbarras,6,10)) / 100                   || '</vldoinss>' ||
                                    '<vloutent>0,00</vloutent>' ||
