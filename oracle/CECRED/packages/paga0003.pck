@@ -43,7 +43,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                 ,pr_dtapurac IN DATE -- Período de apuração da guia
                                 ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                 ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
-                                ,pr_nrrefere IN NUMBER -- Número de referência da guia
+                                ,pr_nrrefere IN VARCHAR2 -- Número de referência da guia
                                 ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                 ,pr_vlrprinc IN NUMBER -- Valor principal da guia
                                 ,pr_vlrmulta IN NUMBER -- Valor da multa da guia
@@ -81,7 +81,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                             ,pr_dtapurac IN DATE		-- Período de apuração da guia
                             ,pr_nrcpfcgc IN VARCHAR2  -- CPF/CNPJ da guia
                             ,pr_cdtribut IN VARCHAR2  -- Código de tributação da guia
-                            ,pr_nrrefere IN NUMBER  -- Número de referência da guia
+                            ,pr_nrrefere IN VARCHAR2  -- Número de referência da guia
                             ,pr_dtvencto IN DATE		-- Data de vencimento da guia
                             ,pr_vlrprinc IN NUMBER	-- Valor principal da guia
                             ,pr_vlrmulta IN NUMBER	-- Valor da multa da guia
@@ -118,7 +118,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
 															,pr_dtapurac IN  DATE                   -- CPF/CNPJ da guia
 															,pr_nrcpfcgc IN  VARCHAR2               -- Código de tributação da guia
 															,pr_cdtribut IN  VARCHAR2                 -- Número de referência da guia
-															,pr_nrrefere IN  NUMBER                 -- Data de vencimento da guia
+															,pr_nrrefere IN  VARCHAR2                 -- Data de vencimento da guia
 															,pr_dtvencto IN  DATE                   -- Valor principal da guia
 															,pr_vlrprinc IN  NUMBER                 -- Valor da multa da guia
 															,pr_vlrmulta IN  NUMBER                 -- Valor dos juros da guia
@@ -155,7 +155,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_dtapurac IN DATE -- Período de apuração da guia
                                   ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                   ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
-                                  ,pr_nrrefere IN NUMBER -- Número de referência da guia
+                                  ,pr_nrrefere IN VARCHAR2 -- Número de referência da guia
                                   ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                   ,pr_vlrprinc IN NUMBER -- Valor principal da guia
                                   ,pr_vlrmulta IN NUMBER -- Valor da multa da guia
@@ -213,7 +213,7 @@ END paga0003;
   
    Programa: PAGA0003
    Autor   : Dionathan
-   Data    : 19/07/2016                        Ultima atualizacao: 22/08/2017
+   Data    : 19/07/2016                        Ultima atualizacao: 14/09/2017
   
    Dados referentes ao programa: 
   
@@ -232,6 +232,8 @@ END paga0003;
        22/08/2017 - Adicionar parametro para data de agendamento na pc_cria_comprovante_darf_das
                     para tambem gravar este campo no protocolo de agendamentos de DARF/DAS 
                     (Lucas Ranghetti #705465)
+                    
+       14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
 ..............................................................................*/
 CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
@@ -996,7 +998,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ,pr_dtapurac IN DATE -- Período de apuração da guia
                                 ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                 ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
-                                ,pr_nrrefere IN NUMBER -- Número de referência da guia
+                                ,pr_nrrefere IN VARCHAR2 -- Número de referência da guia
                                 ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                 ,pr_vlrprinc IN NUMBER -- Valor principal da guia
                                 ,pr_vlrmulta IN NUMBER -- Valor da multa da guia
@@ -1017,7 +1019,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_verifica_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: 08/05/2017
+     Data    : Julho/2016.                    Ultima atualizacao: 14/09/2017
 
      Objetivo  : Procedure para validação de pagamento de DARF/DAS
 
@@ -1025,7 +1027,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      --          31/05/2017 - Regra para alertar o usuário quando tentar pagar um GPS na modalidade de 
      --                       DARF apresentando a seguinte mensagem: GPS deve ser paga na opção 
-     --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)     
+     --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)   
+       
+                 14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1616,7 +1620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                             ,pr_dtapurac IN DATE		-- Período de apuração da guia
                             ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                             ,pr_cdtribut IN VARCHAR2  -- Código de tributação da guia
-                            ,pr_nrrefere IN NUMBER  -- Número de referência da guia
+                            ,pr_nrrefere IN VARCHAR2  -- Número de referência da guia
                             ,pr_dtvencto IN DATE		-- Data de vencimento da guia
                             ,pr_vlrprinc IN NUMBER	-- Valor principal da guia
                             ,pr_vlrmulta IN NUMBER	-- Valor da multa da guia
@@ -1634,11 +1638,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_paga_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+     Data    : Julho/2016.                    Ultima atualizacao: 14/09/2017
 
      Objetivo  : Procedure para efetivação de pagamento de DARF/DAS
 
-     Alteracoes: 
+     Alteracoes: 14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
     ..............................................................................*/
     CURSOR cr_crappod(pr_cdcooper crapass.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE)IS
@@ -2528,7 +2532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_dtapurac IN  DATE                   -- Período de apuração da guia
                                ,pr_nrcpfcgc IN  VARCHAR2               -- CPF/CNPJ da guia
                                ,pr_cdtribut IN  VARCHAR2               -- Código de tributação da guia
-                               ,pr_nrrefere IN  NUMBER                 -- Número de referência da guia
+                               ,pr_nrrefere IN  VARCHAR2                 -- Número de referência da guia
                                ,pr_dtvencto IN  DATE                   -- Data de vencimento da guia
                                ,pr_vlrprinc IN  NUMBER                 -- Valor principal da guia
                                ,pr_vlrmulta IN  NUMBER                 -- Valor da multa da guia
@@ -3089,7 +3093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_idseqttl => pr_idseqttl,
 																	 pr_nrcpfope => pr_nrcpfope,
 																	 pr_idorigem => pr_idorigem,
-                                   									 pr_tpdaguia => pr_tpdaguia,
+                                   pr_tpdaguia => pr_tpdaguia,
 																	 pr_tpcaptur => pr_tpcaptur,
 																	 pr_cdseqfat => vr_cdseqfat,
 																	 pr_nrdigfat => vr_nrdigfat,
@@ -3326,7 +3330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dtapurac IN DATE -- Período de apuração da guia
                                   ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                   ,pr_cdtribut IN VARCHAR2 -- Código de tributação da guia
-                                  ,pr_nrrefere IN NUMBER -- Número de referência da guia
+                                  ,pr_nrrefere IN VARCHAR2 -- Número de referência da guia
                                   ,pr_dtvencto IN DATE -- Data de vencimento da guia
                                   ,pr_vlrprinc IN NUMBER -- Valor principal da guia
                                   ,pr_vlrmulta IN NUMBER -- Valor da multa da guia
@@ -3343,13 +3347,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
      Programa: pc_cria_agend_darf_das
      Autor   : Dionathan
-     Data    : Julho/2016.                    Ultima atualizacao: 22/08/2017
+     Data    : Julho/2016.                    Ultima atualizacao: 14/09/2017
 
      Objetivo  : Procedure para criação dos agendamentos de pagamento de DARF/DAS
 
      Alteracoes:  22/08/2017 - Adicionar parametro para data de agendamento na pc_cria_comprovante_darf_das
                                para tambem gravar este campo no protocolo de agendamentos de DARF/DAS 
                                (Lucas Ranghetti #705465)
+                               
+                  14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
     ..............................................................................*/															 
 		rw_craplot LOTE0001.cr_craplot%ROWTYPE;
 		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;

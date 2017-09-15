@@ -4,14 +4,14 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Agosto/2016.                       Ultima atualizacao:
+   Data    : Agosto/2016.                       Ultima atualizacao: 14/09/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    
    Objetivo  : Operar pagamento DARF/DAS.
    
-   Alteracoes: 
+   Alteracoes: 14/09/2017 - Adicionar no campo nrrefere como String (Lucas Ranghetti #756034)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -122,7 +122,7 @@ RUN STORED-PROCEDURE pc_InternetBank188
                                        ,INPUT par_dtapurac
                                        ,INPUT par_nrcpfcgc
                                        ,INPUT par_cdtribut
-                                       ,INPUT par_nrrefere
+                                       ,INPUT STRING(par_nrrefere)
                                        ,INPUT par_dtvencto
                                        ,INPUT par_vlrprinc
                                        ,INPUT par_vlrmulta
