@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: cadcop.js
  Autor: Andrei - RKAM
- Data : Agosto/2016                Última Alteração: 17/11/2016
+ Data : Agosto/2016                Última Alteração: 26/01/2016
 
  Objetivo  : Cadastro de servicos ofertados na tela CADCOP
 
@@ -9,6 +9,8 @@
 
              30/11/2016 - P341-Automatização BACENJUD - Incluir a variável cddepart no fonte
                           e utilizar a mesma para validação no lugar da DSDEPART (Renato Darosci - Supero)
+
+             26/01/2016 - Correcao na forma de recuperação do campo flgofatr do form de tela. (SD 601029 Carlos R. Tanholi)
 
 ************************************************************************/
 var cddepart;
@@ -3373,7 +3375,7 @@ function alterarCooperativa() {
     var qtmeatel = $("#qtmeatel", "#frmConsulta5").val();
     var permaxde = isNaN(parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#permaxde', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var cdloggrv = $("#cdloggrv", "#frmConsulta5").val();
-    var flgofatr = $("#flgofatr", "#frmConsulta").val();
+    var flgofatr = $("#flgofatr", "#frmConsulta5").val();
     var qtdiasus = $("#qtdiasus", "#frmConsulta5").val();
     var cdcliser = $("#cdcliser", "#frmConsulta5").val();
     var vlmiplco = isNaN(parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlmiplco', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
