@@ -3,11 +3,11 @@
 	/*************************************************************************
 	  Fonte: carrega_dados.php                                               
 	  Autor: Henrique                                                  
-	  Data : Agosto/2011                       Última Alteração: 		   
+	  Data : Agosto/2011                       Última Alteração:  13/09/2017
 	                                                                   
 	  Objetivo  : Carregar os dados da tela TAB042.              
 	                                                                 
-	  Alterações: 										   			  
+	  Alterações: 13/09/2017 - Correcao na validacao de permissoes na tela. SD 750528 (Carlos Rafael Tanholi).
 	                                                                  
 	***********************************************************************/
 
@@ -25,8 +25,18 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	// Função para exibir erros na tela através de javascript
+	function exibeErro($msgErro) {
+		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
+		exit();
+	}	
+
+	//recupera a opcao de tela
+	$cddopcao = ( isset($_POST["cddopcao"]) ) ? $_POST["cddopcao"] : 'C';
+	$msgErro = '';	
+	
+	if (($msgErro = validaPermissao($glbvars["nmdatela"],' ',$cddopcao,false)) <> '') {
+		exibeErro($msgErro);
 	}
 	
 	$xmlCarregaDados  = "";
@@ -60,13 +70,6 @@
 	$dados = $xmlObjCarregaDados->roottag->tags[0]->tags;
 	
 	$dstextab = $xmlObjCarregaDados->roottag->tags[0]->attributes["DSTEXTAB"];
-	
-	// Função para exibir erros na tela através de javascript
-	function exibeErro($msgErro) { 		
-		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
-		exit();
-	}
-	
 ?>
 <script type="text/javascript">	
 	$('#dstextab','#frmTab042').val('<? echo $dstextab ?>');
