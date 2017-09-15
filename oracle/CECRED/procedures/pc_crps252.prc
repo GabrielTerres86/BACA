@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Machado Flor
-       Data    : Setembro/2015                     Ultima atualizacao: 20/02/2017
+       Data    : Setembro/2015                     Ultima atualizacao: 15/09/2017
 
        Dados referentes ao programa:
 
@@ -150,6 +150,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
                
                20/02/2017 - #551202 Log de início, erros e fim da execução do programa (Carlos)
                
+               15/09/2017 - #753383 O programa estava sobrescrevendo o caminho do integra para 
+                            o diretório da cooperativa no momento que gerava o relatório da
+                            primeira integração (Carlos)
+
     ............................................................................ */
 
     DECLARE
@@ -203,9 +207,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
       vr_stsnrcal   BOOLEAN;
       vr_inpessoa   PLS_INTEGER;
 
-
       vr_dscpfcgc   VARCHAR2(18);
-      vr_cpfdesti   VARCHAR2(18);
 
       vr_des_xml    CLOB;            -- Dados do XML
       vr_Bufdes_xml VARCHAR2(32000); -- Dados relatorio
@@ -1246,18 +1248,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
         END LOOP;                            
            
         pc_escreve_xml('</raiz>',TRUE);
-        
+
         --Gera relatorio
-        vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
+        vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => null); 
-                                              
+
         --  Salvar copia relatorio para "/rlnsv"
-        vr_dsdireto_rlnsv:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                                 ,pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsubdir => 'rlnsv');
+        vr_dsdireto_rlnsv := vr_dsdircop || '/rlnsv';
               
-        vr_dsdirarq := vr_dsdireto||'/rl/'||vr_nmarqimp;
+        vr_dsdirarq := vr_dsdircop || '/rl/'||vr_nmarqimp;
         
         -- Submeter o relatório 205
         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
@@ -1352,19 +1352,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
         pc_escreve_xml('</total>');
            
         pc_escreve_xml('</raiz>',TRUE);
-        
-        --Gera relatorio
-        vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
-                                            ,pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsubdir => null); 
-                                              
-        --  Salvar copia relatorio para "/rlnsv"
-        vr_dsdireto_rlnsv:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                                 ,pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsubdir => 'rlnsv');
-              
-        vr_dsdirarq := vr_dsdireto||'/rl/crrl205_99_'||TO_CHAR(vr_indice,'fm00')||'.lst';
-        
+
+        vr_dsdirarq := vr_dsdircop||'/rl/crrl205_99_'||TO_CHAR(vr_indice,'fm00')||'.lst';
+
         -- Submeter o relatório 205_99
         gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                          --> Cooperativa conectada
                                    ,pr_cdprogra  => 'CRPS252'                          --> Programa chamador
@@ -1387,15 +1377,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_des_xml);
         dbms_lob.freetemporary(vr_des_xml);
-
-        vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C'
-                                            ,pr_cdcooper => rw_crapcop.cdcooper
-                                            ,pr_nmsubdir => 'salvar');
         
         -- Montar Comando para mover o arquivo lido para o diretório salvar
-        vr_comando:= 'mv '|| vr_dsdireto || '/integra/' || vr_tabarqs(vr_indice) || ' ' ||
-                     vr_dsdircop;
-                                   
+        vr_comando:= 'mv '|| vr_dsdircop || '/integra/' || vr_tabarqs(vr_indice) || ' ' ||
+                             vr_dsdircop || '/salvar';
+
         -- Executar o comando no unix
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
                              ,pr_des_comando => vr_comando
@@ -1529,4 +1515,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps252 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps252;
 /
-
