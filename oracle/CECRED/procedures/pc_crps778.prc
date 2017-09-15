@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Julho/2016                         Ultima atualizacao:18/07/2017
+     Data    : Julho/2016                         Ultima atualizacao: 22/02/2017
 
      Dados referentes ao programa:
 
@@ -22,8 +22,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
 							                (Andrei - Mouts).
                               
                  22/02/2017 - #551199 Melhorias de performance e inclusão de logs de controle de execução (Carlos)
-                 
-                 18/07/2017 - #716973 Verificando tamanho da pl table vr_tab_rejeita (Carlos)
   ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -103,6 +101,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
     vr_hrtransa    INTEGER;
     vr_nrprotoc    VARCHAR2(200);
 	idx INTEGER;
+	  
 	--Enquanto nao existir operador "ftp", deverá usar o Internet
     vr_cdoperad     crapope.cdoperad%TYPE := '996'; 
     
@@ -141,9 +140,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                              ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                              ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                              ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-
-  END pc_controla_log_batch;
       
+  END pc_controla_log_batch;
+	  
   BEGIN
     --------------- VALIDACOES INICIAIS -----------------
 
@@ -352,18 +351,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
 
             -- Se retornou erro
             IF vr_des_reto <> 'OK'  THEN                                            
+              FOR idx IN vr_tab_rejeita.first..vr_tab_rejeita.last LOOP
+                -- Gera log
+               pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
+                            pr_dscdolog => 'Arquivo: '|| vr_tab_cratarq(vr_chave).nmarquiv||
+                                           ',linha: ' || vr_tab_rejeita(idx).nrlinseq||
+                                           ': '       || vr_tab_rejeita(idx).dscritic); 
               
-              IF vr_tab_rejeita.COUNT() > 0 THEN
-                FOR idx IN vr_tab_rejeita.first..vr_tab_rejeita.last LOOP
-                  -- Gera log
-                 pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-                              pr_dscdolog => 'Arquivo: '|| vr_tab_cratarq(vr_chave).nmarquiv||
-                                             ',linha: ' || vr_tab_rejeita(idx).nrlinseq||
-                                             ': '       || vr_tab_rejeita(idx).dscritic); 
-                
-                END LOOP; 
-              END IF;
-              
+              END LOOP; 
+                           
               -- Arquivo possui erros criticos, aborta processo de validação
               COBR0006.pc_rejeitar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper
                                           ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta
@@ -611,23 +607,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                     
        EXCEPTION
          WHEN vr_exc_erro THEN
-
-           -- Verifica se houve código de erro
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+            
+            -- Verifica se houve código de erro
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 						
-           IF vr_dscritic IS NOT NULL THEN
-             -- Envio centralizado de log de erro
+            IF vr_dscritic IS NOT NULL THEN
+             -- Envio centralizado de log de erro							 
+             -- Gera log 
              pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
                           pr_dscdolog => vr_dscritic);
            END IF;
 						
            vr_cdcritic := 0;
            vr_dscritic := NULL;
-
+            
            -- Efetuar rollback				  
            ROLLBACK;
-         WHEN OTHERS THEN
-           cecred.pc_internal_exception(3);
+             
        END;
 				
      END LOOP; -- FOR rw_crapcoop
@@ -641,8 +637,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
    EXCEPTION
          
      WHEN OTHERS THEN
-
-       cecred.pc_internal_exception(3);
+         
+       btch0001.pc_log_internal_exception(3);
 
        -- Efetuar retorno do erro nao tratado
        pr_dscritic := sqlerrm;
