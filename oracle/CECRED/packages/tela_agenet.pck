@@ -247,7 +247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             ,0
             ,TRUNC(rec.dtrecarga)
             ,rec.vlrecarga
-            ,rec.insit_operacao
+            ,DECODE(rec.insit_operacao, 4, 3, 5, 4, rec.insit_operacao)
             ,TRUNC(rec.dtrecarga)
             ,to_number(to_char(rec.dttransa,'SSSSS'))
             ,0
