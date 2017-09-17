@@ -468,6 +468,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                  ,pr_nrparepr IN INTEGER --> Número parcelas empréstimo
                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                  ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
+                                 ,pr_idlautom IN NUMBER DEFAULT 0 --> sequencia criada pela craplau
                                  ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
                                  ,pr_tab_erro OUT gene0001.typ_tab_erro);                             
 
@@ -809,7 +810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 16/11/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 05/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -860,6 +861,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --
   --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
   --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel). 
+  --
+  --             25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro rowtype da crapepr na hora 
+  --                          do update qdo cai na validacao do vr_ehmensal pois qdo ia atualizar o valor novamente 
+  --                          a crapepr estava ficando com valor incorreto (Tiago/Thiago SD644598)
+  --
+  --             05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
+
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -2573,7 +2581,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 14/02/2017
+       Data    : 06/03/2012                         Ultima atualizacao: 11/07/2017
     
        Dados referentes ao programa:
     
@@ -2608,6 +2616,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     14/02/2017 - Foi inicializada a vr_vlsderel com zero. (Jaison/James)
 
+                    11/07/2017 - P337 - Não estava se comportando de acordo quando 
+                                  emprestimo nao liberado, usada rw_crapepr e 
+                                  nao rw_crawepr (Marcos-Supero)
+
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -2615,11 +2627,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     CURSOR cr_crawepr(pr_cdcooper crawepr.cdcooper%type
                      ,pr_nrdconta crawepr.nrdconta%type
                      ,pr_nrctremp crawepr.nrctremp%type) is
-      SELECT dtlibera
-        FROM crawepr
-       WHERE crawepr.cdcooper = pr_cdcooper
-             AND crawepr.nrdconta = pr_nrdconta
-             AND crawepr.nrctremp = pr_nrctremp;
+      SELECT wpr.dtlibera
+            ,epr.inliquid
+        FROM crapepr epr
+            ,crawepr wpr
+       WHERE epr.cdcooper = wpr.cdcooper
+         AND epr.nrdconta = wpr.nrdconta
+         AND epr.nrctremp = wpr.nrctremp
+         AND wpr.cdcooper = pr_cdcooper
+         AND wpr.nrdconta = pr_nrdconta
+         AND wpr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%rowtype;
   
     -- Busca as parcelas do contrato de emprestimos e seus respectivos valores
@@ -2939,7 +2956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END LOOP;
       
       IF pr_dtmvtolt <= rw_crawepr.dtlibera AND
-         rw_crapepr.inliquid <> 1 THEN
+         rw_crawepr.inliquid <> 1 THEN
         /* Nao liberado */
         vr_vlsdeved := pr_vlemprst;
         vr_vlprepag := 0;
@@ -6383,7 +6400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_vltotpre := pr_vltotpre + rw_crapepr.vlpreemp;
         END IF;
         -- Acumular a quantidade de parcelas calculadas
-        pr_qtprecal := pr_qtprecal + vr_qtprecal_lem;
+        pr_qtprecal := pr_qtprecal + nvl(vr_qtprecal_lem,0);
         -- Acumular o saldo devedor calculado
         pr_vlsdeved := pr_vlsdeved + nvl(vr_vlsdeved,0);
       END LOOP; -- Fim leitura dos empréstimos
@@ -7028,6 +7045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  ,pr_nrparepr IN INTEGER --> Número parcelas empréstimo
                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                  ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
+                                 ,pr_idlautom IN NUMBER DEFAULT 0 --> sequencia criada pela craplau
                                  ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
                                  ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
   BEGIN
@@ -7037,7 +7055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 13/08/2014
+       Data    : Fevereiro/2014                        Ultima atualizacao: 05/05/2017
     
        Dados referentes ao programa:
     
@@ -7049,6 +7067,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/06/2014 - Ajuste para atualizar o campo nrseqava. (James)
     
                    13/08/2014 - Ajuste para gravar o operador e a hora da transacao. (James)
+                   
+                   05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
     ............................................................................. */
   
     DECLARE
@@ -7111,7 +7131,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             ,craplcm.cdpesqbb
             ,craplcm.nrseqava
             ,craplcm.cdoperad
-            ,craplcm.hrtransa)
+            ,craplcm.hrtransa
+            ,craplcm.idlautom)
           VALUES
             (pr_dtmvtolt
             ,pr_cdpactra
@@ -7129,7 +7150,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             ,gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
             ,pr_nrseqava
             ,pr_cdoperad
-            ,gene0002.fn_busca_time);
+            ,gene0002.fn_busca_time
+            ,pr_idlautom);
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
@@ -8028,6 +8050,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
                                            ,pr_nrctremp => pr_nrctremp
+                                           ,pr_cdorigem => 3
                                            ,pr_flgativo => vr_flgativo
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic);
@@ -10772,6 +10795,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
+
+                   25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro 
+                                rowtype da crapepr na hora do update qdo cai na validacao 
+                                do vr_ehmensal pois qdo ia atualizar o valor novamente 
+                                a crapepr estava ficando com valor incorreto 
+                                (Tiago/Thiago SD644598).
     ............................................................................. */
   
     DECLARE
@@ -10944,7 +10973,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Atualizar Saldo Devedor Emprestimo
             UPDATE crapepr
                SET crapepr.vlsdeved = crapepr.vlsdeved - pr_vlparepr
-             WHERE crapepr.ROWID = rw_crapepr.rowid;
+             WHERE crapepr.ROWID = rw_crapepr.rowid
+             RETURNING crapepr.vlsdeved INTO rw_crapepr.vlsdeved;
           EXCEPTION
             WHEN OTHERS THEN
               --Mensagem erro
@@ -13517,6 +13547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_nrctremp => pr_nrctremp
+                                        ,pr_cdorigem => 3
                                         ,pr_flgativo => vr_flgativo
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
@@ -14800,6 +14831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   
     vr_saldo_devedor     NUMBER(25,2) := 0;  
     vr_txmensal          craplcr.txmensal%TYPE;
+    vr_txdiaria          craplcr.txdiaria%TYPE;
     vr_dtvencto          DATE;
     vr_dtiniiof          DATE;
     vr_dtfimiof          DATE;
@@ -14854,48 +14886,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       CLOSE cr_craplcr;
       -- Taxa de juros remunerados mensal
       vr_txmensal := ROUND((POWER(1 + (nvl(rw_craplcr.txmensal,0) / 100),1) - 1) * 100,2);
+      vr_txdiaria := POWER((1 + (rw_craplcr.txmensal / 100)),(1/30))-1;
     ELSE
       CLOSE cr_craplcr;
     END IF; 
-    
+      
     ------------------------------------------------------------------------------------------------
     --                                 CALCULO DO NOVO IOF
     ------------------------------------------------------------------------------------------------        
     -- Se o empréstimo for do tipo PP 
     IF pr_tpemprst = 1 THEN
-      -- Condicao Pessoa Fisica
-      IF pr_inpessoa = 1 THEN
-        vr_taxaiof := 0.000082;
+    -- Condicao Pessoa Fisica
+    IF pr_inpessoa = 1 THEN
+      vr_taxaiof := 0.000082;
+    ELSE
+      vr_taxaiof := 0.000041;
+    END IF;
+    
+    FOR vr_ind IN 1..pr_qtpreemp LOOP
+      IF vr_ind = 1 THEN
+        vr_saldo_devedor := ROUND(pr_vlemprst * (POWER((1 + vr_txdiaria),((pr_dtdpagto - pr_dtmvtolt) - 30))),2);
       ELSE
-        vr_taxaiof := 0.000041;
+        vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
       END IF;
       
-      FOR vr_ind IN 1..pr_qtpreemp LOOP
-        IF vr_ind = 1 THEN
-          vr_saldo_devedor := pr_vlemprst;
-        ELSE
-          vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
-        END IF;
-        
-        -- Data de Vencimento da Parcela
-        vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
-        
-        -- Somente eh permitido calcular o IOF para 365 dias
-        vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
-        IF vr_qtdias > 365 THEN
-          vr_qtdias := 365;
-        END IF;
+      -- Data de Vencimento da Parcela
+      vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
       
-        -- Valor do Juros
-        vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
-        -- Valor Amortizacao/Principal
-        vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
-        -- Valor Saldo Devedor
-        vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
-        -- Valor do IOF
-        pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
-      END LOOP;
+      -- Somente eh permitido calcular o IOF para 365 dias
+      vr_qtdias   := vr_dtvencto - pr_dtmvtolt;
+      IF vr_qtdias > 365 THEN
+        vr_qtdias := 365;
+      END IF;
     
+      -- Valor do Juros
+      vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+      -- Valor Amortizacao/Principal
+      vr_tab_parcela(vr_ind).vlprincipal    := pr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+      -- Valor Saldo Devedor
+      vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+      -- Valor do IOF
+      pr_valoriof := pr_valoriof + ROUND(vr_qtdias * vr_tab_parcela(vr_ind).vlprincipal * vr_taxaiof,2);
+    END LOOP;
+      
     ELSE  -- Se o tipo do empréstimo for TR
       
       -- Condicao Pessoa Fisica
