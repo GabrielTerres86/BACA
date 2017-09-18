@@ -57,7 +57,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     -- Buscar todos os lançamentos
     CURSOR cr_limite IS
       SELECT to_char(atu.dtretorno,'DD/MM/YYYY')  dtretorno
-           , DECODE(atu.cdcanal, 12, 'AUTOMATICA'   /* SAS */
+           , DECODE(atu.cdcanal, 14, 'AUTOMATICA'   /* SAS */
                                    , 'MANUAL' )   dstipatu
            , atu.vllimite_anterior
            , atu.vllimite_alterado
@@ -130,14 +130,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                             ,pr_tag_pai  => 'historico'
                             ,pr_posicao  => vr_cont_tag
                             ,pr_tag_nova => 'vllimold'
-                            ,pr_tag_cont => TO_CHAR(rw_limite.vllimite_anterior,'FM9G999G999G990D00')
+                            ,pr_tag_cont => TO_CHAR(rw_limite.vllimite_anterior,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')
                             ,pr_des_erro => vr_dscritic);
       -- Novo valor de limite
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'historico'
                             ,pr_posicao  => vr_cont_tag
                             ,pr_tag_nova => 'vllimnew'
-                            ,pr_tag_cont => TO_CHAR(rw_limite.vllimite_alterado,'FM9G999G999G990D00')
+                            ,pr_tag_cont => TO_CHAR(rw_limite.vllimite_alterado,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')
                             ,pr_des_erro => vr_dscritic);
 
       -- Incrementa o contador de tags

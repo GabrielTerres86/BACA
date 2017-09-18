@@ -44,6 +44,9 @@ function estadoInicial() {
 	
 	cTodosCabecalho.habilitaCampo();
 	cCddopcao.focus();
+
+    // Setar todos os inputs com tabindex = 0
+	$(":input", '#frmCab').attr('tabindex', 0);
 }
 
 function formataCabecalho() {

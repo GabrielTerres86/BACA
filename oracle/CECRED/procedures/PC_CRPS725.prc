@@ -115,7 +115,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS725(pr_dscritic OUT VARCHAR2) IS
                       ,pr_nrctacrd  NUMBER) IS
     SELECT 1
 		  FROM INTEGRADADOS.sasf_majoracaocartao@SASP maj
-		 WHERE maj.nrdconta      = pr_nrdconta
+		 WHERE maj.cdcooper      = pr_cdcooper
+       AND maj.nrdconta      = pr_nrdconta
 		   AND maj.nrcontacartao = pr_nrctacrd
 		   AND maj.cdmajorado    = 4 -- Pendente 
      UNION
@@ -409,7 +410,8 @@ BEGIN
                       ,vllimite_anterior
                       ,vllimite_alterado
                       ,cdcanal
-                      ,cdcribcb)
+                      ,cdcribcb
+                      ,cdadmcrd)
                 VALUES(rw_majoracao.cdcooper       -- cdcooper
                       ,rw_majoracao.nrdconta       -- nrdconta
                       ,rw_majoracao.nrcontacartao  -- nrconta_cartao
@@ -419,7 +421,8 @@ BEGIN
                       ,rw_crawcrd.vllimcrd         -- vllimite_anterior
                       ,rw_majoracao.vllimite       -- vllimite_alterado
                       ,14    -- SAS                -- cdcanal
-                      ,NULL);                      -- cdcribcb
+                      ,NULL                        -- cdcribcb
+                      ,rw_crawcrd.cdadmcrd);       -- cdadmcrd
         
       EXCEPTION
         WHEN OTHERS THEN
