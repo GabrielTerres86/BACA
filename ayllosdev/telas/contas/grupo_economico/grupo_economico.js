@@ -153,6 +153,10 @@ function manterRotina(operacao,nomeFormulario) {
 	var nmgrupo      = $('#nmgrupo', '#'+nomeFormulario).val();
 	var dsobservacao = $('#dsobservacao', '#'+nomeFormulario).val();
 	
+	if (typeof dsobservacao == 'undefined') {
+		dsobservacao = '';
+	}
+	
 	$.ajax({		
 		type: 'POST',
 		url: UrlSite + 'telas/contas/grupo_economico/manter_rotina.php', 		
