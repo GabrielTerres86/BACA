@@ -150,6 +150,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                   ,pr_cdoperad   IN crapope.cdoperad%TYPE
                                   ,pr_nmdatela   IN craptel.nmdatela%TYPE
                                   ,pr_dsdrowid   IN VARCHAR2
+								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397
                                   ,pr_dscritic  OUT VARCHAR2);
 
 
@@ -179,7 +180,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                              ,pr_dtvencim   IN VARCHAR2 -- Recebe como string e trata no programa
                              ,pr_inpesgps   IN NUMBER
                              ,pr_dtdebito   IN VARCHAR2 -- Recebe como string e trata no programa
-                             ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT NULL
+                             ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT 0	-- 397
                              ,pr_dslitera  OUT CLOB
                              ,pr_cdultseq  OUT NUMBER
                              ,pr_dscritic  OUT VARCHAR2);
@@ -211,7 +212,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                              ,pr_dtvencim   IN VARCHAR2 -- Recebe como string e trata no programa
                              ,pr_inpesgps   IN NUMBER
                              ,pr_nrseqagp   IN NUMBER
-                             ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT NULL
+                             ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT 0 -- 397
                              ,pr_dslitera  OUT VARCHAR2
                              ,pr_cdultseq  OUT NUMBER
                              ,pr_dscritic  OUT VARCHAR2);
@@ -1130,7 +1131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       END IF;
       BEGIN
         vr_nrdrowid := NULL;
-        vr_dstransa1 := 'Rregistro de Validacoes GPS';
+        vr_dstransa1 := 'Registro de Validacoes GPS'; -- 397
         GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                             ,pr_cdoperad => pr_cdoperad
                             ,pr_dscritic => ''
@@ -2714,7 +2715,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                   ,pr_cdoperad   IN crapope.cdoperad%TYPE
                                   ,pr_nmdatela   IN craptel.nmdatela%TYPE
                                   ,pr_dsdrowid   IN VARCHAR2
+								  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE --397
                                   ,pr_dscritic  OUT VARCHAR2) IS
+    
+	/*
+    Alterações: 
+                04/09/2017 - Alterações projeto 397 - Assinatura conjunta
+    */
 
     -- Buscar dados do agendamento
     CURSOR cr_agmto IS
@@ -2723,6 +2730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            , gps.nrseqagp
            , gps.insituacao insituac
            , gps.dtdebito
+		   , gps.vltotal_gps -- 397
         FROM tbinss_agendamento_gps  gps
        WHERE gps.rowid = pr_dsdrowid;
     rw_agmto    cr_agmto%ROWTYPE;
@@ -2741,10 +2749,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          AND lgp.nrseqagp = p_nrseqagp;
     rw_gps    cr_gps%ROWTYPE;
 
+	-- 397
+    CURSOR cr_crapopi (prc_cdcooper       IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                      ,prc_nrdconta       IN crapass.nrdconta%TYPE --Conta do Associado
+                      ,prc_nrcpfope       IN crapass.nrcpfcgc%TYPE) IS
+      SELECT 1
+        FROM crapopi opi
+       WHERE opi.cdcooper = prc_cdcooper
+         AND opi.nrdconta = prc_nrdconta
+         AND opi.nrcpfope = prc_nrcpfope
+         AND rownum       = 1; 
+
     -- Variáveis
     vr_dstransa VARCHAR2(100) := 'Cancelar Agendamentos de GPS';
     vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_cdcompet VARCHAR(10);
+	-- 397
+    va_existe_operador NUMBER;             
+    vr_vldsppgo NUMBER;
+    pr_tab_internet INET0001.typ_tab_internet;
+    pr_cdcritic    PLS_INTEGER;  
 
   BEGIN
 
@@ -2790,9 +2814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     END IF;
 
     -- Excluir os dados do agendamento conforme informações encontradas através do Rowid e pagamento não efetuado
-    BEGIN
-
-      -- Buscar dados da GPS
+    -- Buscar dados da GPS
       OPEN cr_gps(rw_agmto.cdcooper, rw_agmto.nrdconta, rw_agmto.nrseqagp);
       FETCH cr_gps INTO rw_gps;
       -- Verificar se existe informacao, e gerar erro caso nao exista
@@ -2805,8 +2827,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       END IF;
       -- Fechar o cursor
       CLOSE cr_gps;
+      -- 397
+      IF pr_nrcpfope > 0 THEN
+        -- Inicializa 
+        va_existe_operador := 0;
+        -- Verifica se é operador
+        BEGIN
+          FOR rw_crapopi IN cr_crapopi(pr_cdcooper,
+                                       pr_nrdconta,
+                                       pr_nrcpfope) LOOP
+            va_existe_operador := 1;
+          END LOOP;
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_cdcritic:= 0;
+            pr_dscritic:= 'INSS0002.Erro ao buscar operador: '||sqlerrm;
+            --Levantar Excecao
+            RAISE vr_exc_saida;
+        END;
+        --
+        IF va_existe_operador = 1 THEN
 
 
+          BEGIN
+          
+            INET0001.pc_busca_limites_opera_trans(pr_cdcooper    => pr_cdcooper  --Codigo Cooperativa
+                                                ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                                ,pr_idseqttl     => 1            --Identificador Sequencial titulo
+                                                ,pr_nrcpfope     => pr_nrcpfope  --Numero do CPF
+                                                ,pr_dtmvtopg     => nvl(rw_agmto.dtdebito,sysdate)  --Data do debito da folha de pagamento
+                                                ,pr_dsorigem     => gene0001.vr_vet_des_origens(pr_idorigem)  --Descricao Origem
+                                                ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                                ,pr_cdcritic     => pr_cdcritic   --Codigo do erro
+                                                ,pr_dscritic     => pr_dscritic); --Descricao do erro;
+                               
+            --Se ocorreu erro
+            IF pr_cdcritic IS NOT NULL OR pr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+               RAISE vr_exc_saida;
+            END IF; 
+            
+            IF NOT pr_tab_internet.EXISTS(1) THEN
+              pr_cdcritic:= 0;
+              pr_dscritic:= 'Registro de limite para validar cancelamento GPS nao encontrado.';
+              --Levantar Excecao
+              RAISE vr_exc_saida;
+            END IF; 
+            
+             vr_vldsppgo := pr_tab_internet(1).vldsppgo;            
+            /** Verifica se pode movimentar em relacao ao que ja foi usado **/
+            IF rw_agmto.vltotal_gps > vr_vldsppgo  THEN
+
+              pr_dscritic:= 'Operador não possui limite disponível para cancelar o agendamento do GPS';
+              RAISE vr_exc_saida;            
+           
+            END IF;              
+          END;
+        END IF; 
+      END IF;
+    BEGIN
       -- Excluir
       DELETE craplgp lgp
        WHERE lgp.cdcooper = rw_agmto.cdcooper
@@ -2958,7 +3037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                              ,pr_dtvencim   IN VARCHAR2 -- Recebe como string e trata no programa
                              ,pr_inpesgps   IN NUMBER
                              ,pr_dtdebito   IN VARCHAR2 -- Recebe como string e trata no programa
-                             ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT NULL
+                             ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT 0 -- 397
                              ,pr_dslitera  OUT CLOB     -- Retornará o comprovante Agendamento quando CAIXA
                              ,pr_cdultseq  OUT NUMBER
                              ,pr_dscritic  OUT VARCHAR2) IS
@@ -3765,7 +3844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,dtmvtopg
                          ,vllanaut
                          ,nrseqagp
-                         ,tpdvalor)
+                         ,tpdvalor
+						 ,NRCPFOPE)	 -- 397
                        VALUES
     --unico: CDCOOPER, DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCTABB, NRDOCMTO
     --unico: CDCOOPER, DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRSEQDIG
@@ -3791,7 +3871,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,vr_dtdebito                              -- dtmvtopg
                          ,pr_vlrtotal                              -- vllanaut
                          ,vr_nrseqagp                              -- nrseqagp
-                         ,1);                                      -- tpdvalor
+                         ,1                                        -- tpdvalor
+						 ,pr_nrcpfope);   --397
 
       -- Limpa a variavel
       /* CARLOS - 05/09/2016 - SD 490844
@@ -4232,7 +4313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             ,pr_dtvencim   IN VARCHAR2 -- Recebe como string e trata no programa
                             ,pr_inpesgps   IN NUMBER
                             ,pr_nrseqagp   IN NUMBER   -- Nr Seq Agendamento => Quando vem pelo CRPS
-                            ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT NULL
+                            ,pr_nrcpfope   IN crapopi.nrcpfope%TYPE DEFAULT 0 -- 397
                             ,pr_dslitera  OUT VARCHAR2
                             ,pr_cdultseq  OUT NUMBER
                             ,pr_dscritic  OUT VARCHAR2) IS
