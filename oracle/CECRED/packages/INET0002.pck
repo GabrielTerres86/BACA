@@ -10498,13 +10498,17 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
          AND rownum      = 1;
     -- Busca aprovacoes da transacao em questao
     CURSOR cr_tbgen_aprova_trans_pend IS
-      SELECT 1
-        FROM tbgen_aprova_trans_pend  t
+       SELECT 1
+        FROM tbgen_aprova_trans_pend  t,
+             tbcc_limite_preposto     tl
        WHERE t.cdcooper                = pr_cdcooper
          AND t.nrdconta                = pr_nrdconta
-         --AND t.nrcpf_responsavel_aprov = pr_nrcpfcgc
          AND t.cdtransacao_pendente    = pr_cdtransacao_pendente 
-         AND t.idsituacao_aprov        = 2 ; -- Aprovado                
+         AND t.idsituacao_aprov        = 2  -- Aprovado 
+         AND t.cdcooper                = tl.cdcooper
+         AND t.nrdconta                = tl.nrdconta
+         AND tl.flgmaster              = 1 -- eh master
+         AND rownum                    = 1;
     -- Variaveis
     va_aprovador_master NUMBER(1);
     va_preposto_ja_aprovou NUMBER(1);
