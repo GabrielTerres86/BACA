@@ -679,6 +679,8 @@ BEGIN
            END IF;
 		 --
          --
+		 END IF;
+
          IF pr_cdcooper = 3 then
          -- gera log para futuros rastreios
           pc_log_programa(PR_DSTIPLOG           => 'O',
@@ -693,7 +695,7 @@ BEGIN
                                                    ' Saldo Dev:'||to_char(vr_vlsdeved),
                           PR_IDPRGLOG           => vr_idprglog);
                            
-         END IF;   
+         END IF;  
          --
          -- Enquanto data de vencimento da parcela for menor que data processamento E houver saldo devedor do emprestimo
          WHILE (vr_dtdpagto <= vr_dtcursor) and (vr_vlsdeved > 0) LOOP
