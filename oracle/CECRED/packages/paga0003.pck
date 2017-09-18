@@ -3036,8 +3036,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		-- efetivar
 		IF pr_idefetiv = 1 THEN
 			
-		  --CPF operador PJ ou responsavel legal da conta exigir assinatura multipla
-		  IF /*pr_nrcpfope <> 0 OR vr_idastcjt = 1 AND*/ vr_assin_conjunta = 1 THEN
+		  -- Mobile seguir regra antiga, IB nova regra por limites
+      --     IF pr_nrcpfope > 0 OR vr_idastcjt = 1 THEN
+      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
 				INET0002.pc_cria_trans_pend_darf_das( pr_cdcooper => pr_cdcooper,
 																							pr_nrdcaixa => 900,
 																							pr_cdoperad => 996,

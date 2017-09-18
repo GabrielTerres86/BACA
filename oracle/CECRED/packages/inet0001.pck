@@ -2518,7 +2518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       /* Cursores Locais */
 
       --selecionar movimentacoes internet
-      CURSOR cr_crapmvi (pr_cdcooper IN crapmvi.cdcooper%type
+/*      CURSOR cr_crapmvi (pr_cdcooper IN crapmvi.cdcooper%type
                         ,pr_nrdconta IN crapmvi.nrdconta%type
                         ,pr_idseqttl IN crapmvi.idseqttl%type
                         ,pr_dtmvtolt IN crapmvi.dtmvtolt%type) IS
@@ -2531,7 +2531,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         AND   crapmvi.nrdconta = pr_nrdconta
         AND   (pr_idseqttl = -1 OR (pr_idseqttl <> -1 AND crapmvi.idseqttl = pr_idseqttl))
         AND   crapmvi.dtmvtolt = pr_dtmvtopg;
-      rw_crapmvi cr_crapmvi%ROWTYPE;
+      rw_crapmvi cr_crapmvi%ROWTYPE;*/
+      --
+      CURSOR cr_crappro (prc_cdcooper IN crappro.cdcooper%type
+                        ,prc_nrdconta IN crappro.nrdconta%type
+                        ,prc_nrcpfope IN crappro.nrcpfope%type
+                        ,prc_dtmvtolt IN crappro.dtmvtolt%type) IS      
+      SELECT pro.cdtippro,
+             pro.vldocmto
+        FROM crappro pro
+       WHERE pro.cdcooper = prc_cdcooper
+         AND pro.nrdconta = prc_nrdconta
+         AND trunc(pro.dtmvtolt) = trunc(prc_dtmvtolt) -- 30 --pr_dtmvtolt
+         AND pro.flgativo        = 1 -- Ativo
+         AND pro.nrcpfope        = prc_nrcpfope
+         AND pro.cdtippro        in (1,2,6,9,13,15,16,17)
+        ; 
+      --        
       --Selecionar informacoes dos lancamentos automaticos
       CURSOR cr_craplau (pr_cdcooper IN craplau.cdcooper%type
                         ,pr_nrdconta IN craplau.nrdconta%type
@@ -2764,7 +2780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     vr_vlutlvrb:= 0;
     vr_vlutlflp:= 0;
 
-    /** Acumula valores movimentados pelo titular **/
+/*    \** Acumula valores movimentados pelo titular **\
     OPEN cr_crapmvi (pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta
                     ,pr_idseqttl => pr_idseqttl
@@ -2783,7 +2799,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_vlutlted:= rw_crapmvi.vlmovted;
     END IF;
     --Fechar Cursor
-    CLOSE cr_crapmvi;
+    CLOSE cr_crapmvi;*/
+    
+    --
+    
+    /* Tipos de transacoes na tabela crappro
+    -1 - Transferencia 
+    -9 -	TED
+    -2 -	Pagamento
+    -6 -	Pagamento
+    -15 -	Pagamento - Convenio
+    -13 -	Pagamento de GPS
+    -16 -	DARF
+    -17 -	DAS
+    */
+
+    FOR rw_crappro IN cr_crappro(pr_cdcooper,
+                                 pr_nrdconta,
+                                 pr_nrcpfope,
+                                 pr_dtmvtopg) LOOP
+
+      IF rw_crappro.cdtippro IN (2,6,13,15,16,17) THEN -- PAGAMENTO
+        IF rw_crappro.vldocmto < 250000 THEN 
+          vr_vlutlpgo := vr_vlutlpgo + rw_crappro.vldocmto;
+        ELSE -- VR BOLETO
+          vr_vlutlvrb := vr_vlutlvrb + rw_crappro.vldocmto;
+        END IF;
+      ELSIF rw_crappro.cdtippro = 1 THEN -- Tranferencia
+        vr_vlutltrf := vr_vlutltrf + rw_crappro.vldocmto;
+      ELSIF rw_crappro.cdtippro = 9 THEN -- TED
+        vr_vlutlted := vr_vlutlted + rw_crappro.vldocmto;
+      END IF;
+      
+    END LOOP;
+    
 
     --Percorrer todos os lancamentos
     FOR rw_craplau IN cr_craplau (pr_cdcooper => pr_cdcooper
@@ -3567,7 +3616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 			  13/06/2017 - Alteração na mensagem de "Conta destino nao habilitada para receber valores da transferencia."
 			               para "Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online"
 						   (Rafael Monteiro - Mouts - 690752)
-					   
+
               04/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397),
                            Incluído novas regras para definir se deve seguir o fluxo de aprovação
                            em transações pendentes ou não de acordo com o limite disponível diário
