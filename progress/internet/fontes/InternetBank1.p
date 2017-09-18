@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 18/04/2017
+   Data    : Marco/2007                        Ultima atualizacao: 18/09/2017
 
    Dados referentes ao programa:
 
@@ -129,6 +129,9 @@
 			   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+               18/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil.
+                            (Jaison/Elton - M459)
 
 ..............................................................................*/
 
@@ -313,7 +316,7 @@ IF  tmp_cdagectl <> 0  THEN
 ASSIGN aux_cdagedbb = IF  crapcop.cdagedbb = 0  THEN
                           ""
                       ELSE
-                          STRING(STRING(crapcop.cdagedbb,"99999"),"xxxx-x")
+                          STRING(STRING(crapcop.cdagedbb,"zzzzzzz9"),"xxxxxxx-x")
        aux_cdbcoctl = IF  crapcop.cdbcoctl = 0  THEN
                           ""
                       ELSE
