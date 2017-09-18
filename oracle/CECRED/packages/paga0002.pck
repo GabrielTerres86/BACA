@@ -1028,6 +1028,7 @@ create or replace package body cecred.PAGA0002 is
 
     vr_vltarifa   NUMBER := 0;
 
+    vr_assin_conjunta NUMBER(1);
     -----------> SubPrograma <------------
     -- Gerar log
     PROCEDURE pc_proc_geracao_log(pr_flgtrans IN INTEGER) IS
@@ -1482,7 +1483,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_cdoperad => '996'       --> Codigo do operador
                                 ,pr_tpoperac => pr_tpoperac --> tipo de operação
                                 ,pr_dsorigem => 'INTERNET'  --> Descrição de origem do registro
-                                ,pr_nrcpfope => (CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN nvl(vr_nrcpfcgc,0) ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do representante legal quando conta exigir assinatura multipla
+                                ,pr_nrcpfope => (CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN nvl(vr_nrcpfcgc,pr_nrcpfope) ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do representante legal quando conta exigir assinatura multipla
                                 ,pr_nmdatela => 'INTERNETBANK' --> Nome da tela
                                 /* parametros de saida */
                                 ,pr_dstransa => vr_dstrans1 --> descrição de transação
@@ -1524,14 +1525,15 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_tpoperac     => pr_tpoperac        --> 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca /  */     /* 4 - TED / 5 - Transferencia intercooperativa */
                            ,pr_flgvalid     => TRUE               --> Indicador validacoes
                            ,pr_dsorigem     => 'INTERNET'         --> Descricao Origem
-                           ,pr_nrcpfope     => (CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN nvl(vr_nrcpfcgc,0) ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do representante legal quando conta exigir assinatura multipla
+                           ,pr_nrcpfope     => nvl(pr_nrcpfope,0)--(CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN nvl(vr_nrcpfcgc,0) ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do representante legal quando conta exigir assinatura multipla
                            ,pr_flgctrag     => TRUE               --> controla validacoes na efetivacao de agendamentos */
                            ,pr_nmdatela     => 'INTERNETBANK'     --> Nome da tela/programa que esta chamando a rotina
                            ,pr_dstransa     => vr_dstrans1        --> Descricao da transacao
                            ,pr_tab_limite   => vr_tab_limite      --> Tabelas de retorno de horarios limite
                            ,pr_tab_internet => vr_tab_internet    --> Tabelas de retorno de horarios limite
                            ,pr_cdcritic     => vr_cdcritic        --> Codigo do erro
-                           ,pr_dscritic     => vr_dscritic);      --> Descricao do erro
+                           ,pr_dscritic     => vr_dscritic        --> Descricao do erro
+                           ,pr_assin_conjunta => vr_assin_conjunta); --> Varia      
 
       IF (nvl(vr_cdcritic,0) <> 0 OR
         TRIM(vr_dscritic) IS NOT NULL) THEN
@@ -1686,10 +1688,11 @@ create or replace package body cecred.PAGA0002 is
       pr_dsretorn := 'OK';
       RETURN;
     END IF;
-
+     -- 397
+     --    IF pr_nrcpfope > 0 OR vr_idastcjt = 1 THEN
     /* Efetuada por operador ou responsável de assinatura conjunta de conta PJ */
-    IF pr_nrcpfope > 0 OR vr_idastcjt = 1 THEN
 
+      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
       /* Se deseja gravar favorito */
       IF pr_gravafav = 1 THEN
         pc_grava_favorito(pr_dscritic => vr_dscritic);
@@ -1883,7 +1886,7 @@ create or replace package body cecred.PAGA0002 is
            --Executar rotina verifica-historico-transferencia
            PAGA0001.pc_executa_transferencia
                                     (pr_cdcooper => pr_cdcooper    --> Codigo Cooperativa
-                                    ,pr_dtmvtolt => NULL           --> Data Movimento
+                                    ,pr_dtmvtolt => TRUNC(SYSDATE) --> Data Movimento
                                     ,pr_dtmvtocd => pr_dtmvtolt    --> Data Credito
                                     ,pr_cdagenci => 90             --> Codigo Agencia
                                     ,pr_cdbccxlt => 11             --> Codigo Banco/Caixa
@@ -1903,7 +1906,7 @@ create or replace package body cecred.PAGA0002 is
                                     ,pr_nrterfin => 0              --> Numero terminal
                                     ,pr_dscartao => NULL           --> Descricao do cartao
                                     ,pr_cdorigem => 3              --> Codigo da Origem
-                                    ,pr_nrcpfope => 0              --> CPF operador
+                                    ,pr_nrcpfope => pr_nrcpfope    --> CPF operador
                                     ,pr_flmobile => pr_flmobile    --> Indicador Mobile
                                     ,pr_idtipcar => 0              --> Indicador Tipo Cartão Utilizado
                                     ,pr_nrcartao => 0              --> Numero Cartao
@@ -2066,7 +2069,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_cdagetfn => 0            --> Numero do pac do cash.
                                 ,pr_nrterfin => 0            --> Numero do terminal financeiro.
 
-                                ,pr_nrcpfope => 0            --> Numero do cpf do operador juridico
+                                ,pr_nrcpfope => pr_nrcpfope  --> Numero do cpf do operador juridico
                                 ,pr_idtitdda => 0            --> Contem o identificador do titulo dda.
                                 ,pr_cdtrapen => 0            --> Codigo da Transacao Pendente
                                 ,pr_flmobile => pr_flmobile  --> Indicador Mobile
@@ -2364,6 +2367,7 @@ create or replace package body cecred.PAGA0002 is
     vr_vloutdeb  NUMBER;
     vr_vloutcre  NUMBER;
 
+    vr_assin_conjunta NUMBER(1);
     vr_idastcjt  crapass.idastcjt%TYPE;
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
@@ -2443,7 +2447,8 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                          ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                          ,pr_cdcritic     => vr_cdcritic         --> Codigo do erro
-                         ,pr_dscritic     => vr_dscritic);       --> Descricao do erro
+                         ,pr_dscritic     => vr_dscritic
+                         ,pr_assin_conjunta => vr_assin_conjunta);       --> Descricao do erro
 
     -- verificar se retornou critica
     IF nvl(vr_cdcritic,0) > 0 OR
@@ -2908,7 +2913,7 @@ create or replace package body cecred.PAGA0002 is
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
-
+    vr_assin_conjunta NUMBER(1);
     -- Gerar log
     PROCEDURE pc_proc_geracao_log(pr_flgtrans IN INTEGER) IS
     BEGIN
@@ -3167,7 +3172,8 @@ create or replace package body cecred.PAGA0002 is
                          ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                          ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                          ,pr_cdcritic     => vr_cdcritic         --> Codigo do erro
-                         ,pr_dscritic     => vr_dscritic);       --> Descricao do erro
+                         ,pr_dscritic     => vr_dscritic
+                         ,pr_assin_conjunta => vr_assin_conjunta);       --> Descricao do erro
 
     -- verificar se retornou critica
     IF nvl(vr_cdcritic,0) > 0 OR
@@ -3224,7 +3230,8 @@ create or replace package body cecred.PAGA0002 is
       END IF;
 
       /* Efetuada por operador ou responsável de assinatura conjunta de conta PJ */
-      IF pr_nrcpfope > 0 OR vr_idastcjt = 1 THEN
+      -- IF pr_nrcpfope > 0 OR vr_idastcjt = 1 THEN
+      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
         vr_lindigit := SUBSTR(TO_CHAR(vr_lindigi1,'fm000000000000'),1,11) ||'-'||
                        SUBSTR(TO_CHAR(vr_lindigi1,'fm000000000000'),12,1) ||' '||
                        SUBSTR(TO_CHAR(vr_lindigi2,'fm000000000000'),1,11) ||'-'||
@@ -3516,11 +3523,12 @@ create or replace package body cecred.PAGA0002 is
 
     /** Pagamento na data corrente **/
     IF pr_idagenda = 1  THEN
-      IF vr_idastcjt = 1 THEN
+      --IF vr_idastcjt = 1 OR vr_assin_conjunta = 1 THEN
+      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
         vr_dscritic := 'Pagamento registrado com sucesso. ' ||
                        'Aguardando aprovacao do registro pelos ' ||
                        'demais responsaveis.';
-      ELSIF pr_nrcpfope > 0 THEN
+      ELSIF pr_nrcpfope > 0 AND vr_assin_conjunta = 1 THEN
         vr_dscritic := 'Pagamento registrado com sucesso. '||
                        'Aguardando efetivacao do registro pelo preposto.';
       ELSE
@@ -3537,10 +3545,11 @@ create or replace package body cecred.PAGA0002 is
 
     ELSIF pr_idagenda = 2 THEN /** Agendamento de pagamento **/
 
-      IF vr_idastcjt = 1 THEN
+      --IF vr_idastcjt = 1 OR vr_assin_conjunta = 1 THEN
+      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
         vr_dscritic := 'Agendamento de pagamento registrado com sucesso. '||
                        'Aguardando aprovacao do registro pelos demais responsaveis.';
-      ELSIF pr_nrcpfope > 0  THEN /* se nao for executado por um operador */
+      ELSIF pr_nrcpfope > 0 AND vr_assin_conjunta = 1 THEN /* se nao for executado por um operador */
         vr_dscritic := 'Agendamento de pagamento registrado com sucesso. '||
                        'Aguardando efetivacao do registro pelo preposto.';
       ELSE
@@ -6924,7 +6933,7 @@ create or replace package body cecred.PAGA0002 is
     vr_ddagenda     INTEGER;
     vr_dtpagext     VARCHAR2(100);
     vr_idxagend     PLS_INTEGER;
-
+    vr_assin_conjunta NUMBER(1);
 
   BEGIN
     pr_tab_agenda_recorrente.delete;
@@ -6958,7 +6967,8 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                            ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                            ,pr_cdcritic     => vr_cdcritic         --> Codigo do erro
-                           ,pr_dscritic     => vr_dscritic);       --> Descricao do erro
+                           ,pr_dscritic     => vr_dscritic
+                           ,pr_assin_conjunta => vr_assin_conjunta);       --> Descricao do erro
 
       -- verificar se retornou critica
       IF nvl(vr_cdcritic,0) > 0 AND
@@ -7072,7 +7082,8 @@ create or replace package body cecred.PAGA0002 is
                              ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                              ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                              ,pr_cdcritic     => vr_cdcritic         --> Codigo do erro
-                             ,pr_dscritic     => vr_dscritic);       --> Descricao do erro
+                             ,pr_dscritic     => vr_dscritic
+                             ,pr_assin_conjunta => vr_assin_conjunta);       --> Descricao do erro
 
       END IF;
 

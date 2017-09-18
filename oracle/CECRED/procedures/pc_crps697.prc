@@ -232,6 +232,7 @@ BEGIN
                                               pr_cdoperad => '1',
                                               pr_nmdatela => 'AYLLOS',
                                               pr_dsdrowid => rw_pendentes_gps.rowid,
+                                              pr_nrcpfope => 0, 
                                               pr_dscritic => vr_dscritic);
 
               IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -339,4 +340,3 @@ BEGIN
 
 END PC_CRPS697;
 /
-

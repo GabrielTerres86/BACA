@@ -134,6 +134,7 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Desativacao */
                           INPUT "INTERNETBANK", /* nmdatela */
                           INPUT par_dsdrowid,
                           INPUT INT(par_flmobile),
+						  INPUT par_nrcpfope,
                           OUTPUT "").
 
     CLOSE STORED-PROC pc_gps_agmto_desativar aux_statproc = PROC-STATUS
