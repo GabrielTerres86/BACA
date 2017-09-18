@@ -10502,7 +10502,7 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
         FROM tbgen_aprova_trans_pend  t
        WHERE t.cdcooper                = pr_cdcooper
          AND t.nrdconta                = pr_nrdconta
-         AND t.nrcpf_responsavel_aprov = pr_nrcpfcgc
+         --AND t.nrcpf_responsavel_aprov = pr_nrcpfcgc
          AND t.cdtransacao_pendente    = pr_cdtransacao_pendente 
          AND t.idsituacao_aprov        = 2 ; -- Aprovado                
     -- Variaveis
