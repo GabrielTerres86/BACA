@@ -1634,6 +1634,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 											 
 		BEGIN
     
+     -- Produto 999 = Monitoração do serviço
+     IF pr_dsprotoc = 'PoliticaGeralMonitoramento' THEN
+       
+       -- Apenas gerar retorno de sucesso para a esteira
+       pc_gera_retor_proposta_esteira(pr_status      => 200  --> Status
+                                     ,pr_nrtransacao => NULL --> Numero da transacao
+                                     ,pr_cdcritic    => 0    --> Codigo da critica
+                                     ,pr_dscritic    => 0    --> Descricao da critica
+                                     ,pr_msg_detalhe => 'Monitoracao' --> Mensagem de detalhe
+                                     ,pr_dtmvtolt    => NULL
+                                     ,pr_retxml      => pr_retxml);  
+       RETURN;
+     END IF;    
+    
       -- Se o acionamento já foi gravado na origem
       IF nvl(pr_nrtransa,0) > 0 THEN
         vr_nrtransacao := pr_nrtransa;
