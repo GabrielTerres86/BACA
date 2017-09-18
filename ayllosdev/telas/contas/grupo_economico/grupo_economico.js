@@ -158,8 +158,8 @@ function manterRotina(operacao,nomeFormulario) {
 		url: UrlSite + 'telas/contas/grupo_economico/manter_rotina.php', 		
 		data: {
 			nrdconta: nrdconta, 
-			nmgrupo:  nmgrupo,
-			dsobservacao: dsobservacao,
+			nmgrupo:  removeCaracteresInvalidos(nmgrupo,true),
+			dsobservacao: removeCaracteresInvalidos(dsobservacao,true),
 			operacao: operacao, 
 			redirect: 'script_ajax'
 		},
@@ -242,7 +242,7 @@ function incluirIntegranteGrupoEconomico(){
 		   ,tppessoa: $('#tppessoa','#frmGrupoEconomicoIntegrantes').val()
 		   ,nrcpfcgc: normalizaNumero($('#nrcpfcgc','#frmGrupoEconomicoIntegrantes').val())
 		   ,nrdconta: normalizaNumero($('#nrdconta','#frmGrupoEconomicoIntegrantes').val())
-		   ,nmprimtl: $('#nmprimtl','#frmGrupoEconomicoIntegrantes').val()
+		   ,nmprimtl: removeCaracteresInvalidos($('#nmprimtl','#frmGrupoEconomicoIntegrantes').val(),true)
 		   ,tpvinculo: $('#tpvinculo','#frmGrupoEconomicoIntegrantes').val()
 		   ,peparticipacao: $('#peparticipacao','#frmGrupoEconomicoIntegrantes').val()
 		   ,operacao: 'IncluirIntegrante'
