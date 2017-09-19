@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Julho/2016                         Ultima atualizacao: 22/02/2017
+     Data    : Julho/2016                         Ultima atualizacao: 15/09/2017
 
      Dados referentes ao programa:
 
@@ -22,6 +22,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
 							                (Andrei - Mouts).
                               
                  22/02/2017 - #551199 Melhorias de performance e inclusão de logs de controle de execução (Carlos)
+                 
+                 15/09/2017 - Remover a chamada da procedure de validação do arquivo de cobrança.
+                              (Douglas - Chamado 736854)
   ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -208,7 +211,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                                              
         -- Setando os diretorios auxiliares
         vr_caminho_arq     := vr_caminho_cooper||'/upload/ftp';							
-					
+
         FOR rw_crapceb IN cr_crapceb(rw_crapcoop.cdcooper) LOOP
 			
           vr_caminho_conta := rw_crapcoop.dsdircop || '/' || 
@@ -340,48 +343,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
             EXIT WHEN vr_chave IS NULL;
             
             vr_tab_rejeita.delete;
-            
-            -- Rotina para validar arquivo de remessa  
-            COBR0006.pc_valida_arquivo_cobranca
-                                       (pr_cdcooper    => rw_crapcoop.cdcooper,    --> Codigo da cooperativa
-                                        pr_nmarqint    => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv,  --> Nome do arquivo a ser validado
-                                        pr_tpenvcob    => 2,                      --> Tipo de envio do arquivo (1-Envio via Internet Bank, 2-Envio via FTP)
-                                        pr_rec_rejeita => vr_tab_rejeita,         --> Dados invalidados
-                                        pr_des_reto    => vr_des_reto);           --> Retorno OK/NOK            
-
-            -- Se retornou erro
-            IF vr_des_reto <> 'OK'  THEN                                            
-              FOR idx IN vr_tab_rejeita.first..vr_tab_rejeita.last LOOP
-                -- Gera log
-               pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-                            pr_dscdolog => 'Arquivo: '|| vr_tab_cratarq(vr_chave).nmarquiv||
-                                           ',linha: ' || vr_tab_rejeita(idx).nrlinseq||
-                                           ': '       || vr_tab_rejeita(idx).dscritic); 
-              
-              END LOOP; 
-                           
-              -- Arquivo possui erros criticos, aborta processo de validação
-              COBR0006.pc_rejeitar_arquivo(pr_cdcooper => rw_crapcoop.cdcooper
-                                          ,pr_nrdconta => vr_tab_cratarq(vr_chave).nrdconta
-                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                          ,pr_nmarquiv => vr_tab_cratarq(vr_chave).nmarquiv
-                                          ,pr_idorigem => 3 --FTP pr_idorigem
-                                          ,pr_cdoperad => vr_cdoperad
-                                          ,pr_cdcritic => vr_cdcritic
-                                          ,pr_dscritic => vr_dscritic);
-              
-              IF nvl(vr_cdcritic,0) > 0 OR  
-                 TRIM(vr_dscritic) IS NOT NULL THEN
-                RAISE vr_exc_erro; 
-              END IF;   
-            
-              -- Erro ja esta sendo logado na procedure
-              vr_cdcritic := 0;
-              vr_dscritic := '';
-              vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-              CONTINUE;                   
-  					  	                                                  
-            END IF;
             
             --> Identificar arquivo CNAB
             COBR0006.pc_identifica_arq_cnab(pr_cdcooper    => rw_crapcoop.cdcooper       --> Codigo da cooperativa
