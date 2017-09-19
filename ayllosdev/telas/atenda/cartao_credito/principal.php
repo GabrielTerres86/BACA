@@ -29,10 +29,14 @@
 				  28/07/2014 - Novo tratamento para exibição parcial do
 							   número do cartão (Lunelli).
 
-				  29/07/2015 - Incluir a opcao TAA. (James)		
+				  29/07/2015 - Incluir a opcao TAA. (James)			   
 
 				  09/12/2016 - (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. (Kelvin)										  				  
-				  
+				  				  
+				  29/11/2016 - P341-Automatização BACENJUD - Alterado a validação 
+					           pelo DSDEPART passando a utilizar o CDDEPART (Renato Darosci)   
+							   
+				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)							   
 	************************************************************************/
 	
 	session_start();
@@ -178,6 +182,7 @@
 			<input type="image" id="btnnseg" src="<?php echo $UrlImagens; ?>botoes/2via.gif"      <?php if (!in_array("2",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcao2via();return false;'"; } ?>>
 			<input type="image" id="btnreno" src="<?php echo $UrlImagens; ?>botoes/renovar.gif"   <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoRenovar();return false;'"; } ?>>
 			<input type="image" id="btntaa"  src="<?php echo $UrlImagens; ?>botoes/taa.gif"   <?php if (!in_array("U",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoTAA();return false;'"; } ?>>
+			<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(1);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
 			
 			<br style="clear:both;" />
 			
@@ -187,7 +192,7 @@
 			<input type="image" id="btnextr" src="<?php echo $UrlImagens; ?>botoes/extrato.gif"   <?php if (!in_array("T",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoExtrato();return false;'"; } ?>>
 			<input type="image" id="btnupdo" src="<?php echo $UrlImagens; ?>botoes/upgrade-downgrade.gif" <?php if (!in_array("D",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoAlteraAdm();return false;'"; } ?>>
 			
-			<?php if ($inpessoa <> "1" && $glbvars["dsdepart"] == "CARTOES" ) { ?>
+			<?php if ($inpessoa <> "1" && $glbvars["cddepart"] == 2 ) { ?>
 				<input type="image" src="<?php echo $UrlImagens; ?>botoes/habilitar.gif" <?php if (!in_array("H",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoHabilitar();return false;'"; } ?>>
 			<?php } ?>
 		</div>
