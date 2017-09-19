@@ -4734,11 +4734,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                               MESSAGE glb_dscritic.
                               ASSIGN glb_cdcritic = 0.
                               UNDO, NEXT INICIO.
-                            END.	   
+                            END.
                             
-                          /*  Tratamento Temporario para perimitir a Helen estornar
-                              valores de emprestimo em acordo */
-                          IF aux_flgativo = 1 AND glb_cdoperad <> 'F0030500' THEN
+                          IF aux_flgativo = 1 THEN
                             DO:
                               MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
                               PAUSE 3 NO-MESSAGE.
