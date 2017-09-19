@@ -1626,6 +1626,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
     Objetivo  : Verifica se a conta exige assinatura multipla
 
     Alteracoes: 24/08/2017 - Ajuste na busca de emitentes. (Lombardi)
+
+	            19/09/2017 - Ajuste na busta de emitente 085 na crapttl (Daniel)
     
     ............................................................................. */
     DECLARE
@@ -1681,6 +1683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
                          pr_nrdconta IN crapass.nrdconta%TYPE)IS
         SELECT ass.inpessoa
               ,ass.nrcpfcgc
+			  ,cop.cdcooper
           FROM crapass ass
               ,crapcop cop
          WHERE cop.cdagectl = pr_cdagectl
@@ -1870,7 +1873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0002 AS
             CLOSE cr_crapass;
             -- Pessoa Física
             IF rw_crapass.inpessoa = 1 THEN
-              OPEN cr_crapttl (pr_cdcooper => pr_cdcooper
+              OPEN cr_crapttl (pr_cdcooper => rw_crapass.cdcooper
                               ,pr_nrdconta => vr_nrctachq);
               FETCH cr_crapttl INTO rw_crapttl;
               -- Se encontrar
