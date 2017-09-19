@@ -49,7 +49,7 @@
 			                                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
  * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
  * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
-					                        
+ * 027: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                        
  */
 
 // Definição de algumas variáveis globais 
@@ -1608,15 +1608,17 @@ function formataPessoaJuridica() {
 	});
 	
     cCNPJ.unbind('blur').bind('blur', function (e) {
-		
+		if ($('#opcao', '#frmCabMatric').val() == "CI") {
 			if ($(this).val() != normalizaNumero(nrcpfcgc)) {
 				$("#nmttlrfb", "#frmJuridico").val("");
 				$("#cdsitcpf", "#frmJuridico").val(0);
 				$("#dtcnscpf", "#frmJuridico").val("");
 				$("#inconrfb", "#frmJuridico").val("");
-		}
 				
 				nrcpfcgc = $(this).val();
+		    }
+	    }
+				
 	});
 	// Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());
