@@ -8930,7 +8930,7 @@ create or replace package body cecred.PAGA0002 is
             END IF;   */         
 
             -- Se for DARF/DAS e jah foi efetivado nao pode ser permitido o cancelamento.
-            IF (rw_craplau.cdtiptra = 10 OR rw_craplau.cdtiptra = 13) AND rw_craplau.insitlau = 2 THEN
+            IF (rw_craplau.cdtiptra = 10 OR (rw_craplau.cdtiptra = 2 AND rw_craplau.nrseqagp > 0)) AND rw_craplau.insitlau = 2 THEN
               vr_incancel := 2;
             END IF;
 
