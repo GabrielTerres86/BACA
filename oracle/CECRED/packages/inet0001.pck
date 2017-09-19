@@ -3681,7 +3681,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            AND c.nrdconta = prc_nrdconta
            AND c.idseqttl = prc_idseqttl
            AND c.tpdsenha = 1 -- INTERNET
-           ;            
+           ;
+
+	  -- Verifica se o CPF eh de um operador
       CURSOR cr_crapopi (prc_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
                         ,prc_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
                         ,prc_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Operador
@@ -3692,6 +3694,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           AND opi.nrdconta = prc_nrdconta
           AND opi.nrcpfope = prc_nrcpfope
          ;      
+
+	  -- Verifica se a conta possui operador     
+     CURSOR cr_crapopi2 (prc_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                        ,prc_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                        ) IS
+       SELECT 1
+         FROM crapopi opi
+        WHERE opi.cdcooper = prc_cdcooper
+          AND opi.nrdconta = prc_nrdconta
+          AND rownum       = 1 
+         ;       
+
       --Variaveis Locais
       vr_vlsldisp  NUMBER;
       vr_dtdialim  DATE;
@@ -3715,6 +3729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_flvldrep  NUMBER(1) := 0;
       vr_idseqttl  crapttl.idseqttl%TYPE := 0;
       va_existe_operador NUMBER(1);
+	  vr_operador_conta  NUMBER(1);
       vr_dsdmensa  VARCHAR2(100);
       va_nrcpfcgc  crapsnh.nrcpfcgc%type;
       --Variaveis de Erro
@@ -4493,7 +4508,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         RAISE vr_exc_erro;
       END IF;
       
-      IF pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+      vr_operador_conta := 0;
+      FOR rw_cr_crapopi2 in cr_crapopi2(pr_cdcooper
+                                      ,pr_nrdconta) LOOP
+
+        vr_operador_conta := 1;                        
+      END LOOP;
+      -- SE NAO FOR ASSINATURA E NAO TIVER OPERADOR E ULTRAPSSOU O LIMITE DA CONTA, MOSTRAR CRITICA
+      IF rw_crapass.idastcjt = 0 AND vr_operador_conta = 0 AND
+        pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'O saldo do seu limite de conta diario e insuficiente para ' || vr_dsdmensa || '.';
+                
+      ELSIF pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
         pr_assin_conjunta := 1; -- Deverá gerar fluxo de aprovação assinatura conjunta
       END IF;
       
