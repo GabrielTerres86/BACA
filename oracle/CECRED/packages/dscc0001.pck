@@ -1307,12 +1307,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		vr_inpessoa        NUMBER;
     vr_dtjurtab        DATE;
     vr_vlliquid        NUMBER;
-    
+
   BEGIN
     -- Limpa a PLTABLE
     pr_tab_chq_bordero.DELETE;
     pr_tab_bordero_restri.DELETE;
-    
+
     BEGIN
       -- Buscar data parametro de referencia para calculo de juros
       vr_dtjurtab :=	to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -2401,7 +2401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                         '<nmcheque></nmcheque>'||
                         '<dscpfcgc></dscpfcgc>');
         pc_escreve_xml( '</cheque>');
-        
+
         
       END IF;
 
@@ -3736,6 +3736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_fldigit3 BOOLEAN;	
 	vr_inchqcop INTEGER;
 	vr_dscheque VARCHAR2(32726);
+	vr_nrseqdig crapcdb.nrseqdig%TYPE := 0;
 	vr_nrremret_aux NUMBER := 0;
 	vr_nrremret NUMBER := 0;	
 	vr_qtcompln NUMBER := 0;
@@ -3826,6 +3827,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     
     CLOSE cr_craplot;
 		
+    vr_nrseqdig := rw_craplot.nrseqdig;
+    
 		-- Se o bordero já estiver liberado
 		IF rw_crapbdc.insitbdc > 2 THEN
 		  -- Gera crítica	
@@ -3855,6 +3858,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		-- Iterar sobre os cheques parametrizados para inclusão no bordero
 		FOR idx IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
       
+		  vr_nrseqdig := vr_nrseqdig + 1;
+
 		  -- Verificar Cheque
 			CUST0001.pc_ver_cheque(pr_cdcooper => pr_cdcooper
 			                      ,pr_nrcustod => pr_nrdconta
@@ -4006,7 +4011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 							 ,0
 							 ,NULL
 							 ,gene0002.fn_mask(pr_tab_cheques(idx).dsdocmc7,'<99999999<9999999999>999999999999:')
-							 ,rw_craplot.nrseqdig + 1
+							 ,vr_nrseqdig
 							 ,vr_nrddigc1
 							 ,vr_nrddigc2
 							 ,vr_nrddigc3
@@ -4117,7 +4122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		   SET lot.qtcompln = lot.qtcompln + vr_qtcompln
 			    ,lot.vlcompdb = lot.vlcompdb + vr_vlcompdb
 					,lot.vlcompcr = lot.vlcompcr + vr_vlcompcr
-			    ,lot.nrseqdig = lot.nrseqdig + 1
+			    ,lot.nrseqdig = vr_nrseqdig
           ,lot.vlinfodb = lot.vlinfodb + vr_vlcompdb
           ,lot.vlinfocr = lot.vlinfocr + vr_vlcompcr
           ,lot.qtinfoln = lot.qtinfoln + vr_qtcompln
@@ -7641,7 +7646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_dscritic := 'Registro de parametros de desconto de cheques nao encontrado.';
       RAISE vr_exc_erro;    
     END IF;
-    
+
     -- Percorrer todos os cheques do bordero
     FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
 			                          ,pr_nrdconta => pr_nrdconta
