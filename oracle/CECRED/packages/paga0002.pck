@@ -1692,7 +1692,7 @@ create or replace package body cecred.PAGA0002 is
      --    IF pr_nrcpfope > 0 OR vr_idastcjt = 1 THEN
     /* Efetuada por operador ou responsável de assinatura conjunta de conta PJ */
 
-      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
+      IF vr_assin_conjunta = 1 THEN
       /* Se deseja gravar favorito */
       IF pr_gravafav = 1 THEN
         pc_grava_favorito(pr_dscritic => vr_dscritic);
@@ -3252,7 +3252,7 @@ create or replace package body cecred.PAGA0002 is
 
       /* Efetuada por operador ou responsável de assinatura conjunta de conta PJ */
       -- IF pr_nrcpfope > 0 OR vr_idastcjt = 1 THEN
-      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
+      IF vr_assin_conjunta = 1 THEN
         vr_lindigit := SUBSTR(TO_CHAR(vr_lindigi1,'fm000000000000'),1,11) ||'-'||
                        SUBSTR(TO_CHAR(vr_lindigi1,'fm000000000000'),12,1) ||' '||
                        SUBSTR(TO_CHAR(vr_lindigi2,'fm000000000000'),1,11) ||'-'||
@@ -3427,7 +3427,7 @@ create or replace package body cecred.PAGA0002 is
       END IF;
 
       -- Se for executado por um operador juridico
-      IF /*pr_nrcpfope > 0 OR vr_idastcjt = 1 AND */vr_assin_conjunta = 1 THEN
+      IF vr_assin_conjunta = 1 THEN
         vr_lindigit :=  SUBSTR(to_char(vr_lindigi1,'fm0000000000'),1,5) ||'.'||
                         SUBSTR(to_char(vr_lindigi1,'fm0000000000'),6,5) ||' '||
                         SUBSTR(to_char(vr_lindigi2,'fm00000000000'),1,5) ||'.'||
@@ -3549,7 +3549,7 @@ create or replace package body cecred.PAGA0002 is
     /** Pagamento na data corrente **/
     IF pr_idagenda = 1  THEN
       --IF vr_idastcjt = 1 OR vr_assin_conjunta = 1 THEN
-      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
+      IF vr_assin_conjunta = 1 THEN
         vr_dscritic := 'Pagamento registrado com sucesso. ' ||
                        'Aguardando aprovacao do registro pelos ' ||
                        'demais responsaveis.';
@@ -3571,7 +3571,7 @@ create or replace package body cecred.PAGA0002 is
     ELSIF pr_idagenda = 2 THEN /** Agendamento de pagamento **/
 
       --IF vr_idastcjt = 1 OR vr_assin_conjunta = 1 THEN
-      IF (NVL(pr_flmobile,0) = 1 AND vr_idastcjt = 1) OR vr_assin_conjunta = 1 THEN
+      IF vr_assin_conjunta = 1 THEN
         vr_dscritic := 'Agendamento de pagamento registrado com sucesso. '||
                        'Aguardando aprovacao do registro pelos demais responsaveis.';
       ELSIF pr_nrcpfope > 0 AND vr_assin_conjunta = 1 THEN /* se nao for executado por um operador */

@@ -4518,8 +4518,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       IF rw_crapass.idastcjt = 0 AND vr_operador_conta = 0 AND
         pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
         vr_cdcritic:= 0;
-        vr_dscritic:= 'O saldo do seu limite de conta diario e insuficiente para ' || vr_dsdmensa || '.';
-                
+        vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
+        RAISE vr_exc_erro;
+      ELSIF rw_crapass.idastcjt = 0 AND pr_nrcpfope <= 0 AND
+        pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';        
+        RAISE vr_exc_erro;
       ELSIF pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
         pr_assin_conjunta := 1; -- Deverá gerar fluxo de aprovação assinatura conjunta
       END IF;
