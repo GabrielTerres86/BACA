@@ -519,6 +519,11 @@
                 13/09/2017 - Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
 							 
+				19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
+							 solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
+							 onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
+							 (Chamado 712927) (Kelvin/Douglas)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1100,6 +1105,26 @@ PROCEDURE carrega_dados_inclusao:
        END. /* END IF crapass.inpessoa = 1 THEN */
     ELSE
     DO:
+	
+		/* Buscar o CNPJ da cooperativa para nao deixar solicitar o cartao */ 
+        FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+             
+        IF crapass.nrcpfcgc = crapcop.nrdocnpj THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Solicitacao nao permitida. O cliente nao pode " + 
+                                  "ser igual ao CNPJ da instituicao informante.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).                
+                    
+            RETURN "NOK".
+        END.
+		
         FOR FIRST crapjfn FIELDS(vlrftbru mesftbru anoftbru)
                           WHERE crapjfn.cdcooper = crapass.cdcooper AND
                                 crapjfn.nrdconta = crapass.nrdconta
