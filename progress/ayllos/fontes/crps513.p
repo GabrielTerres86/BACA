@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Junho/2008.                       Ultima atualizacao: 05/12/2016.
+   Data    : Junho/2008.                       Ultima atualizacao: 19/09/2017.
 
    Dados referentes ao programa:
 
@@ -34,6 +34,8 @@
                             Concred pela Viacredi (Daniel).
 
                05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
+               19/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
 ............................................................................ */
 
@@ -323,7 +325,9 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
            NEXT.
       
       ASSIGN aux_cdlanmto = INT(SUBSTRING(aux_setlinha,195,6))
-             aux_nrdctabb = INT(SUBSTRING(aux_setlinha,33,09))
+             aux_nrdctabb = IF SUBSTRING(aux_setlinha,41,01) = 'X' 
+                            THEN INT(SUBSTRING(aux_setlinha,33,08) + "0")
+                            ELSE INT(SUBSTRING(aux_setlinha,33,09))
              aux_dshistor = TRIM(SUBSTRING(aux_setlinha,46,29))
              aux_nrdocmto = INT(SUBSTRING(aux_setlinha,75,6))
              aux_vllanmto = DECIMAL(SUBSTRING(aux_setlinha,87,18)) / 100
@@ -424,10 +428,10 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                NEXT.
       END.
       
-      IF   aux_nrdctabb <> 50482 THEN
+      IF   aux_nrdctabb <> 50482 AND aux_nrdctabb <>  2050480 THEN
            DO:
                RUN cria_rejeitado 
-                  (INPUT "Somente lancamento da conta 5.048.2").
+                  (INPUT "Somente lancamento da conta 5.048.2 ou 205.048.0").
                NEXT.           
       END.
 
