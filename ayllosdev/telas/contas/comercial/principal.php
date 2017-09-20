@@ -13,6 +13,7 @@
  *                07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
  *				  13/07/2016 - Correcao de acesso ao indice MSGALERT do array XML. SD 479874. (Carlos R.)	
  *                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+ *				  20/09/2017 - Ajuste onde o turno e nivel cargo nao estavam sendos carregados. (PRJ339 - Kelvin)
  */
 
 	session_start();
@@ -240,10 +241,9 @@
 			
 	nrdrowid = '<? echo $nrdrowid ?>';
 	
-	if (operacao == '') {
-		cdturnos = '<? echo $cdturnos ?>';
-		cdnvlcgo = '<? echo $cdnvlcgo ?>';
-	}
+	cdturnos = '<? echo $cdturnos ?>';
+	cdnvlcgo = '<? echo $cdnvlcgo ?>';
+	
 		
 	controlaLayout(operacao);
 	
