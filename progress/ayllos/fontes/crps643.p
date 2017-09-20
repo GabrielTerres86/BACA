@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Maio/2013                       Ultima Atualizacao : 29/03/2016
+    Data    : Maio/2013                       Ultima Atualizacao : 04/07/2017
     
     Dados referente ao programa:
     
@@ -26,6 +26,9 @@
                  29/03/2016 - Alterado trecho do codigo onde o programa chamava o 
                               imprim_unif.p para que gere relatorio apenas se importou
                               arquivo (Lucas Ranghetti #412518)
+                              
+                 04/07/2017 - Tratamento para enviar por e-mail os arquivos DE* para 
+                              o convenios@cecred (Lucas Ranghetti #679608)
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO COMPACTADO  */
@@ -35,6 +38,7 @@ DEF STREAM str_4.  /* CRRL650 - INCONSISTENCIAS DA LEITURA DOS ARQUIVOS DE DEBIT
 DEF STREAM str_5.  /* CRRL651 - REL. DE INCONSISTENCIAS LEIT. ARQ. DEBITOS EFETUADOS (Mvtos.) - SICREDI */
 DEF STREAM str_6.  /* CRRL652 - RELATORIO DE ARRECADACOES DE DARF - SICREDI */ 
 DEF STREAM str_7.  /* CRRL655 - INCONSISTENCIAS DE ARQUIVOS DE DARF - SICREDI */ 
+DEF STREAM str_8.  /* REL. DE CRITICAS DOS ARQUIVOS DE DEBITOS EFETUADOS - SICREDI */ 
 
 { includes/var_batch.i "NEW" }
 
@@ -52,6 +56,7 @@ DEF  VAR aux_dsanexos AS    CHAR                                      NO-UNDO.
 DEF  VAR aux_conteudo AS    CHAR                                      NO-UNDO.
 DEF  VAR aux_contador AS    INTE                                      NO-UNDO.
 DEF  VAR aux_flgarqui AS    LOGI                                      NO-UNDO.
+DEF  VAR aux_dscritic AS    CHAR                                      NO-UNDO.
 
 DEF  VAR aux_nmrellst AS    CHAR   FORMAT "x(21)"                     NO-UNDO.
 DEF  VAR aux_nmarqlst AS    CHAR   FORMAT "x(21)"                     NO-UNDO.
@@ -436,6 +441,90 @@ FOR EACH crapcop NO-LOCK.
                                " >> /usr/coop/cecred/log/crps643.log"). 
 
             ASSIGN aux_flgarqui = FALSE.
+        END.    
+
+    /* REL. DE CRITICAS DOS ARQUIVOS DE DEBITOS EFETUADOS - SICREDI  */    
+    ASSIGN  aux_nmarqped = "DE" + SUBSTRING(STRING(crapcop.cdagesic),1,4) + "*"
+            aux_nmarquiv = "/usr/connect/sicredi/recebe/" + aux_nmarqped
+            aux_dsrellog = ""
+            aux_contador = 1.
+
+    RUN sistema/generico/procedures/b1wgen0011.p
+              PERSISTENT SET h-b1wgen0011.
+
+    INPUT STREAM str_8 THROUGH VALUE( "ls " + aux_nmarquiv + " 2> /dev/null")
+                   NO-ECHO.
+
+    DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
+
+        IMPORT STREAM str_8 UNFORMATTED aux_nmarquiv.
+
+        /* Incrementa contador para múltiplos arquivos */
+        ASSIGN aux_contador = aux_contador + 1
+               aux_nmarqema = aux_nmarqema + "/usr/connect/sicredi/recebidos/" + 
+                                             ENTRY(6,aux_nmarquiv,"/") + ";"
+               aux_dsrellog = aux_dsrellog + " " + ENTRY(6,aux_nmarquiv,"/")
+               aux_flgarqui = TRUE. /* Para LOG */
+               
+        /* Mover o arquivo para o dir /recebidos */
+        UNIX SILENT VALUE("mv " + aux_nmarquiv + " /usr/connect/sicredi/recebidos/ 2> /dev/null").
+
+    END.
+
+    DELETE PROCEDURE h-b1wgen0011.
+
+    INPUT STREAM str_8 CLOSE.
+
+    IF  aux_nmarqema <> "" THEN
+        DO:
+            ASSIGN aux_conteudo = "Em anexo o(s) arquivo(s) contendo as " +
+                                  "criticas dos debitos efetuados(SICREDI). " + aux_dsrellog + ".".
+
+            RUN sistema/generico/procedures/b1wgen0011.p
+                PERSISTENT SET h-b1wgen0011.
+
+            RUN solicita_email_oracle IN h-b1wgen0011
+                                   ( INPUT glb_cdcooper /* par_cdcooper */
+                                    ,INPUT glb_cdprogra /* par_cdprogra */
+                                    ,INPUT "convenios@cecred.coop.br" 
+                                    ,INPUT "RELATORIO DE CRITICAS DEBITOS EFETUADOS - DE" /* par_des_assunto */
+                                    ,INPUT aux_conteudo /* par_des_corpo */
+                                    ,INPUT aux_nmarqema /* par_des_anexo */
+                                    ,INPUT "N" /* par_flg_remove_anex */
+                                    ,INPUT "N" /* par_flg_remete_coop */
+                                    ,INPUT "" /* par_des_nome_reply */
+                                    ,INPUT "" /* par_des_email_reply */
+                                    ,INPUT "N" /* par_flg_log_batch */
+                                    ,INPUT "S" /* par_flg_enviar */
+                                    ,OUTPUT aux_dscritic). /* par_des_erro */
+
+            IF  aux_dscritic <> "" THEN
+                DO:
+                    UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999")     +   
+                                      " - "   + STRING(TIME,"HH:MM:SS")        +   
+                                      " - "   + glb_cdprogra + "' --> '"       +   
+                                      "Arquivo " + aux_dsrellog                +   
+                                      " Erro ao enviar e-mail: "               + 
+                                      aux_dscritic + " >> /usr/coop/cecred/log/crps643.log").
+                    ASSIGN aux_dscritic = ""
+                           aux_flgarqui = FALSE.
+                END.
+
+            DELETE PROCEDURE h-b1wgen0011.
+        END.
+
+   
+    IF  aux_flgarqui THEN
+        DO:
+            UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999")     +   
+                               " - "   + STRING(TIME,"HH:MM:SS")        +   
+                               " - "   + glb_cdprogra + "' --> '"       +   
+                               "Arquivo " + aux_dsrellog                +   
+                               " importado com sucesso."                +   
+                               " >> /usr/coop/cecred/log/crps643.log"). 
+
+            ASSIGN aux_flgarqui = FALSE.
+            
         END.    
 
 END. /* FIM crapcop */
