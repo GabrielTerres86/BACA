@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 01/09/2017
+   Data    : Novembro/98                     Ultima atualizacao: 20/09/2017
 
    Dados referentes ao programa:
 
@@ -569,12 +569,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             celular - SD 707484 - (Jonatas - Supero) 
 
                21/07/2017 - Ajuste na geracao das Entradas de cheques em custodia do dia para
- 							incluir penas custodias nao descontadas (Daniel)
+ 							              incluir penas custodias nao descontadas (Daniel)
 
                26/07/2017 - Ajuste na geracao das informacoes de cheques em custodia para
- 							incluir penas custodias nao descontadas (Daniel)
+ 							               incluir penas custodias nao descontadas (Daniel)
 
-			   03/08/2017 - Ajuste nas consultas de recarga de celular para substituir o cálculo
+			         03/08/2017 - Ajuste nas consultas de recarga de celular para substituir o cálculo
                             da receita pela totalização do vlrepasse. (Lombardi)
                             
                15/08/2017 - Alterado histórico 1510 Normal.
@@ -586,6 +586,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                01/09/2017 - SD737681 - Ajustes nos históricos do projeto 307 - Marcos(Supero)
 
+               20/09/2017 - Ajustar para contabilizar a tarifa dos convenios proprios 
+                            no PA do cooperado ou se for TAA no PA do TAA (Lucas Ranghetti #689991)
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -614,7 +616,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craphis.nrctadeb
       from craphis
      where craphis.cdcooper = pr_cdcooper
-       and craphis.cdhstctb > 0
+       and craphis.cdhstctb > 0 
        and craphis.cdhistor NOT IN (1154, -- Hist.Sicredi
                                     1019, -- Hist. Debito Automatico Sicredi
                                     1414) -- Hist. Gps inss convencional via sicredi
@@ -711,7 +713,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craprej.nrseqdig,
            crapthi.vltarifa,
            craprej.nraplica,
-           craprej.vlsdapli
+           craprej.vlsdapli,
+           craprej.nrdocmto
       from craprej,
            crapthi
      where crapthi.cdcooper = pr_cdcooper
@@ -2119,7 +2122,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     order by crapass.inpessoa,
              crapass.cdagenci;
                           
-             
+   CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
+                         pr_cdhistor in craprej.cdhistor%TYPE,
+                         pr_dtmvtolt IN craprej.dtmvtolt%TYPE,
+                         pr_cdagenci IN craprej.cdagenci%TYPE) IS
+    SELECT j.nrdocmto
+          ,j.cdhistor
+          ,j.nrseqdig
+      FROM craprej j
+     WHERE j.cdcooper = pr_cdcooper
+       AND upper(j.cdpesqbb) = 'CRPS249' 
+       AND j.cdhistor = pr_cdhistor
+       AND j.dtmvtolt = pr_dtmvtolt
+       AND j.cdagenci = pr_cdagenci;             
 
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_pf_pj_op_cred IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
@@ -2397,6 +2412,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_cdagenci            NUMBER;
   vr_receita_cel_pf      NUMBER := 0;
   vr_receita_cel_pj      NUMBER := 0;
+    
+  vr_vltarifa_taa        NUMBER := 0;
+  vr_vltarifa_ib         NUMBER := 0;
+  vr_agencia_prox        INTEGER:= 0;
+  vr_agencia_ant         INTEGER:= 0; 
   
   --Váriaveis arquivo prejuizo
   vr_nmarqdat_prejuizo      VARCHAR2(100);
@@ -7457,7 +7477,7 @@ BEGIN
 
           end if;
         end if;
-        --
+               
         if rw_craprej.tpctbcxa = 3 then -- POR CAIXA CREDITO
           vr_linhadet := trim(vr_cdestrut)||
                          trim(vr_dtmvtolt_yymmdd)||','||
@@ -7606,6 +7626,8 @@ BEGIN
     vr_nrctatrd := to_char(rw_craphis2.nrctatrd);
     vr_nrctatrc := to_char(rw_craphis2.nrctatrc);
     vr_vltarifa := 0;
+    vr_vltarifa_taa := 0;
+    vr_vltarifa_ib  := 0;
     --
     if rw_craprej2.cdagenci = 0 then
       if rw_craprej2.dtrefere = 'TARIFA' then -- por conta BB
@@ -7652,42 +7674,66 @@ BEGIN
                      ') '||trim(rw_craphis2.dsexthst)||' (tarifa)"';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     else
-      vr_vltarifa := rw_craprej2.vltarifa;
-      --
-      if rw_craprej2.cdagenci = 90 then -- Internet
-        open cr_crabthi (pr_cdcooper,
-                         rw_craprej2.cdhistor,
-                         'INTERNET');
-          fetch cr_crabthi into rw_crabthi;
-          if cr_crabthi%found then
-            vr_vltarifa := rw_crabthi.vltarifa;
-          end if;
-        close cr_crabthi;
-      elsif rw_craprej2.cdagenci = 91 then -- TAA
-        open cr_crabthi (pr_cdcooper,
-                         rw_craprej2.cdhistor,
-                         'CASH');
-          fetch cr_crabthi into rw_crabthi;
-          if cr_crabthi%found then
-            vr_vltarifa := rw_crabthi.vltarifa;
-          end if;
-        close cr_crabthi;
-      end if;
-      --
+
+      vr_agencia_prox:= rw_craprej2.cdagenci;
+      
+      -- Verificar se a proxima Agencia eh igual a anterior
+      IF nvl(vr_agencia_ant,0) = nvl(vr_agencia_prox,0) THEN       
+        continue;
+      END IF;
+      
+      ----------------------------------------------------------------------------------------------------
+      -- Verificar os registros daquele PA, ex: PA 4 tem 2 lancamentos registrados na agencia 4,
+      -- 2 lancamentos registrados no PA 90 e 1 no 91, então vamos contabilizar as tarifas baseadas no
+      -- PA de origem do lancamentos, se foi efetuados no IB vamos pegar a tarifa do Internet, se no 
+      -- TAA vamos pegar a do CASH.  O campo craprej.nrdocmto esta gravado a agencia origem do lançamento.
+      -- Porem o lançamento desta tarifa deverá ser registrado na agencia do cooperado ou do terminal(TAA)
+      ----------------------------------------------------------------------------------------------------
+      FOR rw_craprej_pa IN cr_craprej_pa(rw_craprej2.cdcooper,
+                                         rw_craprej2.cdhistor,
+                                         vr_dtmvtolt,
+                                         rw_craprej2.cdagenci) LOOP
+        -- cdagenci original 
+        IF rw_craprej_pa.nrdocmto = 90 THEN -- Internet
+          OPEN cr_crabthi (1,
+                           rw_craprej_pa.cdhistor,
+                           'INTERNET');
+            FETCH cr_crabthi INTO rw_crabthi;
+            IF cr_crabthi%FOUND THEN
+              vr_vltarifa_ib := rw_craprej_pa.nrseqdig * rw_crabthi.vltarifa;
+            END IF;
+          CLOSE cr_crabthi;
+        ELSIF rw_craprej_pa.nrdocmto = 91 THEN -- TAA
+          OPEN cr_crabthi (1,
+                           rw_craprej_pa.cdhistor,
+                           'CASH');
+            FETCH cr_crabthi INTO rw_crabthi;
+            IF cr_crabthi%FOUND THEN
+              vr_vltarifa_taa := rw_craprej_pa.nrseqdig * rw_crabthi.vltarifa;
+            END IF;
+          CLOSE cr_crabthi;
+        ELSE
+          vr_vltarifa:= vr_vltarifa + (rw_craprej_pa.nrseqdig * rw_craprej2.vltarifa);
+        END IF;   
+      
+      END LOOP;
+  
+      vr_vltarifa:= vr_vltarifa + vr_vltarifa_taa + vr_vltarifa_ib;           
+      
       if rw_craphis2.tpctbcxa in (2,3) then
         vr_linhadet := trim(vr_cdestrut)||
                        trim(vr_dtmvtolt_yymmdd)||','||
                        trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                        trim(to_char(vr_nrctatrd))||','||
                        trim(to_char(vr_nrctatrc))||','||
-                       trim(to_char(rw_craprej2.nrseqdig * vr_vltarifa, '99999999999990.00'))||','||
+                       trim(to_char(vr_vltarifa, '99999999999990.00'))||','||
                        trim(to_char(rw_craphis2.cdhstctb))||','||
                        '"('||trim(to_char(rw_craprej2.cdhistor,'0000'))||
                        ') '||trim(rw_craphis2.dsexthst)||' (tarifa)"';
         gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       end if;
       --
-      vr_linhadet := to_char(vr_tab_agencia2(rw_craprej2.cdagenci).vr_cdccuage,'fm000')||','||trim(to_char(rw_craprej2.nrseqdig * vr_vltarifa, '999999990.00'));
+      vr_linhadet := to_char(rw_craprej2.cdagenci,'fm000')||','||trim(to_char(vr_vltarifa, '999999990.00'));
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       
       --Acumular valores de despesas de cobranca para geração de arquivo contábil
@@ -7724,6 +7770,7 @@ BEGIN
   end loop;
       end if;
     end if;
+    vr_agencia_ant:= rw_craprej2.cdagenci;
   end loop;
   
   -- Convênio Sicredi
