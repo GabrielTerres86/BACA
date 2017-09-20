@@ -16,6 +16,7 @@
  * 007: [03/12/2015] Jaison/Andrino  (CECRED)  : Adicao do campo flserasa na pesquisa generica de BUSCA_CNAE.
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
  * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
+ * 010: [13/07/2017] Diogo (M410)         	   : Incluido campo Identificador do Regime tributário 'idregtrb'
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -154,6 +155,8 @@ function manterRotina(operacao) {
 	cdcnae   = trim($('#cdcnae','#frmDadosIdentJuridica').val());
 	nrlicamb = $('#nrlicamb', '#frmDadosIdentJuridica').val();
 	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
+	idregtrb = $('#idregtrb', '#frmDadosIdentJuridica').val();
+	inpessoa = $('#inpessoa', '#frmDadosIdentJuridica').val();
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		
@@ -165,10 +168,10 @@ function manterRotina(operacao) {
 			dtiniatv: dtiniatv, cdseteco: cdseteco, cdrmativ: cdrmativ, dsendweb: dsendweb,
 			nmtalttl: nmtalttl, qtfoltal: qtfoltal,	dtcadass: dtcadass, cdcnae  : cdcnae,
 			operacao: operacao,	flgcadas: flgcadas, nrlicamb: nrlicamb, dtvallic : dtvallic,
-			redirect: 'script_ajax'
+			idregtrb: idregtrb, inpessoa: inpessoa,	redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
+            hideMsgAguardo();
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
@@ -199,7 +202,7 @@ function controlaLayout(operacao) {
 	var camposGrupo1	= $('#nmprimtl, #inpessoa, #nrcpfcgc','#frmDadosIdentJuridica');	
 	
 	// Nome Fantasia / Consulta / Situação / Natureza Jurídica / Qt. Filiais / Qt. Funcionários / Início Atividade / Setor Econômico / Ramo Atividade / Site / Nome Talão / Qt. Folhas Talão
-	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb, #dtvallic','#frmDadosIdentJuridica');
+	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb, #dtvallic, #idregtrb','#frmDadosIdentJuridica');
 	var selectsGrupo2	= $('select[name="cdsitcpf"], select[name="cdseteco"]','#frmDadosIdentJuridica');	
 	var codigo			= $('#cdnatjur, #cdseteco, #cdrmativ','#frmDadosIdentJuridica');
 

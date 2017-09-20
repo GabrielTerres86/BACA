@@ -17,6 +17,7 @@
  * 008: [23/07/2015] Gabriel        (RKAM): Reformulacao Cadastral 
  * 009: [25/10/2016] Tiago                : Inclusao da data de validade da licensa (M310).
  * 010: [27/03/2017] Reinert			  : Alterado botão "Dossie DigiDOC" para chamar rotina do Oracle. (Projeto 357)
+ * 010: [13/07/2017] Diogo			  	  : Incluido campo Identificador do Regime tributário 'idregtrb' (Projeto 410)
  */
 ?>
 
@@ -50,7 +51,19 @@
 		<option value="4" <? if (getByTagName($identificacao,'cdsitcpf') == "4"){ echo " selected"; } ?>> 4 - Irregular</option>
 	</select>		
 	<br />
-	
+		
+	<? if ((int)getByTagName($identificacao,'inpessoa') >= 2): ?>
+    <label for="idregtrb" class="rotulo-120">Regime tribut&aacute;rio:</label>
+	<select id="idregtrb" name="idregtrb">
+		<option value=""> - </option>
+		<option value="1" <? if (getByTagName($identificacao,'idregtrb') == "1"){ echo " selected"; } ?>> 1 - Simples Nacional</option>
+		<option value="2" <? if (getByTagName($identificacao,'idregtrb') == "2"){ echo " selected"; } ?>> 2 - Simples Nacional – MEI</option>
+		<option value="3" <? if (getByTagName($identificacao,'idregtrb') == "3"){ echo " selected"; } ?>> 3 - Lucro Real</option>
+		<option value="4" <? if (getByTagName($identificacao,'idregtrb') == "4"){ echo " selected"; } ?>> 4 - Lucro Presumido</option>
+	</select>		
+	<br />
+	<? endif; ?>
+
 	<label for="qtfilial" class="rotulo rotulo-90">Qt. Filiais:</label>
 	<input name="qtfilial" id="qtfilial" type="text" class="inteiro"  maxlength="3" value="<? echo getByTagName($identificacao,'qtfilial') ?>" />
 	

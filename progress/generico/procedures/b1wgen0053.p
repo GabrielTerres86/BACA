@@ -131,7 +131,8 @@ PROCEDURE busca_dados:
             tt-dados-jur.dtcadass = bcrapass.dtmvtolt
             tt-dados-jur.cdclcnae = bcrapass.cdclcnae
             tt-dados-jur.nrlicamb = bcrapjur.nrlicamb
-			      tt-dados-jur.dtvallic = bcrapjur.dtvallic.     
+			tt-dados-jur.dtvallic = bcrapjur.dtvallic
+			tt-dados-jur.idregtrb = bcrapjur.idregtrb.     
 
         /* Situacao do CPF/CNPJ */
         CASE tt-dados-jur.cdsitcpf:
@@ -208,8 +209,8 @@ PROCEDURE valida_dados:
     DEF  INPUT PARAM tel_cdrmativ AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmtalttl AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_qtfoltal AS INTE                           NO-UNDO.
-	  DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-	  DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
+	DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
@@ -368,7 +369,8 @@ PROCEDURE grava_dados:
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-	  DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_idregtrb AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -397,7 +399,7 @@ PROCEDURE grava_dados:
        ON ENDKEY UNDO Grava, LEAVE Grava:
 
        ContadorAss: DO aux_contador = 1 TO 10:
-
+		   
            FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                               crapass.nrdconta = par_nrdconta
                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -548,7 +550,8 @@ PROCEDURE grava_dados:
               crapjur.nmtalttl = CAPS(par_nmtalttl)
               crapjur.cdseteco = par_cdseteco
               crapjur.nrlicamb = par_nrlicamb 
-			        crapjur.dtvallic = par_dtvallic NO-ERROR.
+			  crapjur.dtvallic = par_dtvallic
+              crapjur.idregtrb = par_idregtrb	NO-ERROR.
 
        IF ERROR-STATUS:ERROR THEN
           DO:

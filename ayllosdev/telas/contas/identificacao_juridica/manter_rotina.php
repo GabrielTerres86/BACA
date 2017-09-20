@@ -13,6 +13,7 @@
 				     de licença ambiental conforme solicitado no chamado 449294. (Kelvin)
  * 003: [10/08/2016] Inclusao de obrigatoriedade do CNAE. (Jaison/Anderson)
  * 004: [30/09/2016] Incluido validacao para Data validade da licenca 'dtvallic' (Tiago/Thiago M310)
+ * 005: [13/07/2017] Incluido campo Identificador do Regime tributário 'idregtrb' (Diogo M410)
  */
 ?>
  
@@ -46,6 +47,8 @@
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';
 	$nrlicamb = (isset($_POST['nrlicamb'])) ? $_POST['nrlicamb'] : '';
 	$dtvallic = (isset($_POST['dtvallic'])) ? $_POST['dtvallic'] : '';
+	$idregtrb = (isset($_POST['idregtrb'])) ? $_POST['idregtrb'] : '0';
+	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -104,18 +107,19 @@
 	$xml .= '       <qtfoltal>'.$qtfoltal.'</qtfoltal>';
 	$xml .= '       <dtcadass>'.$dtcadass.'</dtcadass>';
 	$xml .= '       <cdcnae>'.$cdcnae.'</cdcnae>';
-	
+
 	if ($procedure == 'grava_dados') {
 		$xml .= '       <nrlicamb>'.$nrlicamb.'</nrlicamb>';
 		$xml .= '       <dtvallic>'.$dtvallic.'</dtvallic>';
+	    $xml .= '       <idregtrb>'.$idregtrb.'</idregtrb>';
 	}
-	
+
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
-	
+
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);
-		
+
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	
@@ -162,6 +166,10 @@
 
 		// Nome Fantasia GLOBALS
 		if ( $GLOBALS['nmfatasi'] == '' ) exibirErro('error','Nome Fantasia deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmfatasi\',\'frmDadosIdentJuridica\')',false);
+		
+		// Regime de tributação - apenas para PJ - não usar validaInteiro pois zero retorna true, e neste caso zero deve retornar false (empty garante isso)
+        $inPessoa = (int)substr($GLOBALS['inpessoa'], 0, 1);
+ 		if (($inPessoa >= 2) && (empty($GLOBALS['idregtrb']))) exibirErro('error','Faltou informar o Regime tribut&aacute;rio.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'idregtrb\',\'frmDadosIdentJuridica\')',false);
 
 		//if ( $GLOBALS['nrdocava'] == '' ) exibirErro('error','Nr. do Documento inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nrdocava\',\'frmRespLegal\')',false);
 
