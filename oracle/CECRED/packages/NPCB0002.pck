@@ -594,7 +594,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Objetivo  : Rotina para consultar o titulo na CIP, realizar a gravação do 
                   retorno da consulta e retornar a tab com os dados recebidos
                   
-      Alteração : 
+      Alteração : 20/09/2017 - Incluido tratamento para periodo de convivencia.
+							   PRJ340 - NPC(Odirlei-AMcom) 
         
     ..........................................................................*/
     
@@ -897,6 +898,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            vr_dscritic := 'Erro ao registrar consulta CIP: '||SQLERRM;
            RAISE vr_exc_erro;
        END;
+       
+       
+       --> Se retornou critica de titulo nao registrao
+       IF vr_cdcritic_req = 950 THEN
+         --> e ainda esta no periodo de convivencia
+         IF NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt) = 1 THEN
+           --> Garantir a gravação da tabela tbcobran_consulta_titulo
+           COMMIT;
+           
+           BTCH0001.pc_gera_log_batch ( pr_cdcooper     => 3
+                                       ,pr_ind_tipo_log => 2 -- Erro tratato
+                                       ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '||
+                                                        'Coop: '  || pr_cdcooper ||' - '||
+                                                        'Codbar: '|| vr_codbarras ||' - '||
+                                                        'Banco: ' || SUBSTR(vr_codbarras,1,3)||' -> '||
+                                                        '['||vr_cdctrlcs||']: '||' 950 - Titulo não registrado na CIP, '||
+                                                        'porém consulta ainda esta no periodo de convivencia.'
+                                                        
+                                       ,pr_nmarqlog     => 'npc_conviv_'||to_char(SYSDATE,'RRRRMM')||'.log');
+                      
+           
+           --> limpar variaveis/parametro
+           vr_cdctrlcs    := NULL;
+           pr_cdctrlcs    := NULL;
+           pr_tbTituloCIP := NULL;
+           pr_des_erro    := 'OK';
+           
+           --> Sair da procedure sem validação e sem numero de controle de consulta
+           --> para que a rotina trate o titulo como fora do rollout npc
+           RETURN;
+         
+         END IF;       
+       END IF;
+       
        
        --> Se possuir critica e se não é contigencia
        IF (nvl(vr_cdcritic_req,0) > 0 OR trim(vr_dscritic_req) IS NOT NULL) AND 
