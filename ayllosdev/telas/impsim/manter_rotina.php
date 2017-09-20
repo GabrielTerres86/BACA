@@ -28,63 +28,53 @@
 	switch ($cddopcao) {
 		case 'I':
 			// Monta o xml de requisicao
-			$xml  = "";
-			$xml .= "<Root>";
-			$xml .= " <Dados>";
-			$xml .= "   <nome_arquivo>"   .utf8_decode($nome_arquivo) ."</nome_arquivo>";
-			$xml .= "   <iddcarga>"		  .$iddcarga	   			  ."</iddcarga>";
-			$xml .= " </Dados>";
-			$xml .= "</Root>";
+            $nomeArquivo = (isset($_POST['nome_arquivo'])) ? $_POST['nome_arquivo'] : '';
 
-			$xmlResult = mensageria($xml, "TELA_IMPSIM", "IMPSIM_IMPORTA_ARQUIVO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-			$xmlObjeto = getObjectXML($xmlResult);
+            $xml  = "<Root>";
+            $xml .= "	<Dados>";
+            $xml .= "		<arquivo>".$nomeArquivo."</arquivo>";
+            $xml .= "	</Dados>";
+            $xml .= "</Root>";
 
-			if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-				$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-				if ($msgErro == "") {
-					$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
-				}
-				exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos',"",false);
-			}
-			$dados = $xmlObjeto->roottag->tags[0]->cdata;
-			echo "showError(\"inform\",\"".htmlentities($dados)."\",\"Alerta - Ayllos\",\"\");";
-            echo "estadoInicial();";
+            $xmlResult = mensageria($xml, "IMPSIM", "IMPSIM_IMPORTA_ARQUIVO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+            $xmlObj = getObjectXML($xmlResult);
+
+            if (isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO"){
+                $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+
+                if ($msgErro == "") {
+                    $msgErro = $xmlObj->roottag->tags[0]->cdata;
+                }
+                exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','estadoInicial();', false);
+            }
+            else{
+                exibirErro("inform","Opera&ccedil;&atilde;o executada com sucesso!","Alerta - Ayllos","estadoInicial();", false);
+            }
 			break;
 
 		case 'E':
 			// Monta o xml de requisicao
-			$xml  = "";
-			$xml .= "<Root>";
-			$xml .= " <Dados>";
-            $xml .= "   <pr_arquivo></pr_arquivo>";
-			$xml .= " </Dados>";
-			$xml .= "</Root>";
+            $xml  = "<Root>";
+            $xml .= "	<Dados>";
+            $xml .= "		<arquivo>exportacao-simples-nacional.csv</arquivo>";
+            $xml .= "	</Dados>";
+            $xml .= "</Root>";
 
-			$xmlResult = mensageria($xml, "TELA_IMPSIM", "IMPSIM_EXPORTA_ARQUIVO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			$xmlResult = mensageria($xml, "IMPSIM", "IMPSIM_EXPORTA_ARQUIVO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 			$xmlObjeto = getObjectXML($xmlResult);
 
-			if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+			if (isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO")  {
 				$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 				if ($msgErro == "") {
 					$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
 				}
 				exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos',"",false);
 			}
-			//$dados = $xmlObjeto->roottag->tags[0]->cdata;
 
-            ob_start();
-            visualizaArquivo("exportacao-simples-nacional.csv","csv");
-            $conteudo = ob_get_contents();
-            ob_end_clean();
-
-            if (stripos($conteudo, 'alert(') === FALSE){
-                $conteudo = 'data:text/csv;base64,'.base64_encode($conteudo);
-            }
-
-            echo $conteudo;
+            exibirErro('inform',"Arquivo gerado com sucesso!",'Alerta - Ayllos',"",false);
             break;
 
         default:
-            echo "Opcao invalida!";
+            exibirErro('error',"Op&ccedil;&atilde;o inv&aacute;lida!",'Alerta - Ayllos','estadoInicial();', false);
 	}
 ?>

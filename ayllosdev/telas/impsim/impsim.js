@@ -284,10 +284,10 @@ function formataManterCarga() {
 }
 function validaImportacao() {
 
-	if ($('#nome_arquivo','#frmImportaArquivo').val() == '') {
-		showError("error","Campo \"Nome do Arquivo\" &eacute; obrigat&oacute;rio.","Alerta - Ayllos","$('#nome_arquivo','#frmImportaArquivo').focus();");
-		return false;
-	}
+	// if ($('#nome_arquivo','#frmImportaArquivo').val() == '') {
+	// 	showError("error","Campo \"Nome do Arquivo\" &eacute; obrigat&oacute;rio.","Alerta - Ayllos","$('#nome_arquivo','#frmImportaArquivo').focus();");
+	// 	return false;
+	// }
 
 	importaArquivo();
 	return false;
@@ -298,12 +298,13 @@ function importaArquivo(){
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, transferindo arquivo...");
     // Carrega dados parametro através de ajax
-
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/impsim/importa_arquivo.php',
-        data:{nome_arquivo: $('#nome_arquivo','#frmImportaArquivo').val(),
+        url: UrlSite + 'telas/impsim/manter_rotina.php',
+        data:{
+        	nome_arquivo: $('#nome_arquivo','#frmImportaArquivo').val().replace(/.*(\/|\\)/, ''), //faz o replace do "fakepath" se tiver, retornando somente o nome do arquivo
+            cddopcao: 'I',
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -335,18 +336,18 @@ function exportarArquivo() {
         success: function(response) {
         	hideMsgAguardo();
 
-            if (response.indexOf('alert(') == -1) {
+            if ((response.indexOf('alert(') == -1) && (response.indexOf('showError(') == -1)) {
                 try {
-                    downloadArquivoExportado(response);
+                    eval(response);
                     return false;
                 } catch (error) {
                     showError('error', '1-N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
                 }
             } else {
                 try {
-                    eval($(response).text());
-                    downloadArquivoExportado("");
+                    eval(response);
                 } catch (error) {
+                	console.error(error);
                     hideMsgAguardo();
                     showError('error', '2-N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
                 }
@@ -354,15 +355,4 @@ function exportarArquivo() {
         }
     });
     return false;
-}
-
-function downloadArquivoExportado(conteudo){
-	if ($('#link_download', '#frmImportaArquivo').length > 0){
-        $('#link_download', '#frmImportaArquivo').remove();
-	}
-	if (conteudo != ""){
-	    var $link = $('<a id="link_download" style="" target="_blank" download="exportacao-simples-nacional.csv" class="botao">Download</a>');
-	    $link.attr('href', conteudo);
-	    $link.appendTo('#divImportacaoSIM');
-    }
 }

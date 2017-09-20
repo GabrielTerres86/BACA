@@ -49,6 +49,7 @@ DEF VAR aux_cdclcnae AS INTE                                           NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrlicamb AS DECI                                           NO-UNDO.
 DEF VAR aux_dtvallic AS DATE										   NO-UNDO.
+DEF VAR aux_idregtrb AS INTE										   NO-UNDO.
 
 { sistema/generico/includes/b1wgen0053tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -96,6 +97,7 @@ PROCEDURE valores_entrada:
           WHEN "chavealt" THEN aux_chavealt = tt-param.valorCampo.
           WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
 		  WHEN "dtvallic" THEN aux_dtvallic = DATE(tt-param.valorCampo).
+		  WHEN "idregtrb" THEN aux_idregtrb = INTE(tt-param.valorCampo).
 
       END CASE.
 
@@ -219,6 +221,7 @@ PROCEDURE Grava_Dados:
                              INPUT aux_dtmvtolt,
                              INPUT aux_nrlicamb,
 							 INPUT aux_dtvallic,
+							 INPUT aux_idregtrb,
                             OUTPUT aux_tpatlcad,
                             OUTPUT aux_msgatcad,
                             OUTPUT aux_chavealt,
