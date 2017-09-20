@@ -1,28 +1,39 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : CADA0004
-  --  Sistema  : Rotinas para detalhes de cadastros
-  --  Sigla    : CADA
-  --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 01/12/2015
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Rotinas para buscar detalhes de cadastros
-  --
-  -- Alteracoes:   10/11/2015 - Incluido verificacao para impressao de termo de
-  --                            responsabilidade na procedure pc_obtem_mensagens_alerta.
-  --                            (Jean Michel).
-  --
-  --               01/12/2015 - Ajustes para projeto de assinatura multipla PJ.
-  --                            Baseado na condicao da atenda.p em funcao
-  --                            fn_situacao_senha. (Jorge/David)
-  --
-  --               12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
-  --                            Caixa OnLine) 
-  ---------------------------------------------------------------------------------------------------------------
+ /* ---------------------------------------------------------------------------------------------------------------
+  
+    Programa : CADA0004
+    Sistema  : Rotinas para detalhes de cadastros
+    Sigla    : CADA
+    Autor    : Odirlei Busana - AMcom
+    Data     : Agosto/2015.                   Ultima atualizacao: 25/04/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Rotinas para buscar detalhes de cadastros
+  
+   Alteracoes:   10/11/2015 - Incluido verificacao para impressao de termo de
+                              responsabilidade na procedure pc_obtem_mensagens_alerta.
+                              (Jean Michel).
+  
+                 01/12/2015 - Ajustes para projeto de assinatura multipla PJ.
+                              Baseado na condicao da atenda.p em funcao
+                              fn_situacao_senha. (Jorge/David)
+  
+                 12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
+                              Caixa OnLine) 
+  
+                 29/09/2019 - Inclusao de verificacao de contratos de acordos de
+                              empréstimos na procedure pc_obtem_mensagens_alerta,
+                              Prj. 302 (Jean Michel).
+  
+                 14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
+  
+                 25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                  crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
+  ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   --TempTable para retornar valores para tela Atenda (Antigo b1wgen0001tt.i/tt-valores_conta)
@@ -44,7 +55,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                 vltotccr NUMBER(32,8),
                 qtcarmag INTEGER,
                 qttotseg NUMBER(18),
-				vltotseg NUMBER(32,8),
+                vltotseg NUMBER(32,8),
                 vltotdsc NUMBER(32,8),
                 flgbloqt INTEGER,
                 vllimite_saque tbtaa_limite_saque.vllimite_saque%TYPE,
@@ -183,7 +194,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                nrctainv  crapass.nrctainv%TYPE,
                dtadmemp  crapass.dtadmemp%TYPE,
                nmprimtl  crapass.nmprimtl%TYPE,
-               nmsegntl  crapass.nmsegntl%TYPE,
+               nmsegntl  crapttl.nmextttl%TYPE,
                dtaltera  crapalt.dtaltera%TYPE,
                dsnatopc  VARCHAR2(30),
                nrramfon  VARCHAR2(100),
@@ -260,6 +271,64 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
                               ) RETURN VARCHAR2; --> returnar descricao da situacao(dssitura)
   
+  /******************************************************************************/
+  /**            Procedure para listar cartoes do cooperado                    **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_cartoes(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                            ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                            ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                            ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                            ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
+                            ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
+                            ------ OUT ------
+                            ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
+                            ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
+                            ,pr_flgliber     OUT INTEGER           --> Retorna se esta liberado 1-sim 2-nao
+                            ,pr_vltotccr     OUT NUMBER            --> retorna total de limite do cartao 
+                            ,pr_tab_cartoes  OUT typ_tab_cartoes   --> retorna temptable com os dados dos convenios
+                            ,pr_des_reto     OUT VARCHAR2                    --> OK ou NOK
+                            ,pr_tab_erro     OUT gene0001.typ_tab_erro);
+                            
+  /******************************************************************************/
+  /**            Procedure para listar ocorrencias do cooperado                **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                            ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                            ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                            ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                            ,pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE --> Data da cooperativa
+                            ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                            ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                            ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                            ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                            ------ OUT ------
+                            ,pr_tab_ocorren  OUT typ_tab_ocorren   --> retorna temptable com os dados dos convenios
+                            ,pr_des_reto     OUT VARCHAR2          --> OK ou NOK
+                            ,pr_tab_erro     OUT gene0001.typ_tab_erro);
+                            
+   /******************************************************************************/
+  /**    Procedure para listar ocorrencias do cooperado - Chamada PROGRESS     **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren_prog( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                  ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                  ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta                            
+                                  ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                  ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                  ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                  ------ OUT ------
+                                  ,pr_xml_ocorren  OUT CLOB              --> retorna xml com os dados dos convenios
+                                  ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                  ,pr_cdcritic     OUT INTEGER) ;       --> Codigo da critica
+                                  
   /******************************************************************************/
   /**             Funcao para obter saldo da conta investimento                **/
   /******************************************************************************/
@@ -478,6 +547,205 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                      pr_tpcartao OUT tbcrd_log_operacao.tpcartao%TYPE, -- Tipo de cartao
                                      pr_dscritic OUT varchar2); -- Descricao do erro quando houver
 
+  -- Inserir registro de CNAE bloqueado
+  PROCEDURE pc_inserir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
+                                     ,pr_dsmotivo   IN tbcc_cnae_bloqueado.dsmotivo%TYPE       --> Motivo da inclusao
+                                     ,pr_dtarquivo  IN tbcc_cnae_bloqueado.dtarquivo%TYPE      --> Data do arquivo
+                                     ,pr_tpbloqueio IN tbcc_cnae_bloqueado.tpbloqueio%TYPE     --> Tipo de bloqueio do CNAE (0-Restrito, 1-Proibido)
+                                     ,pr_tpinclusao IN tbcc_cnae_bloqueado.tpinclusao%TYPE     --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                     ,pr_dtmvtolt   IN tbcc_cnae_bloqueado.dtmvtolt%TYPE       --> Data atual
+                                     ,pr_dslicenca  IN tbcc_cnae_bloqueado.dslicenca%TYPE      --> licencas necessarias
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE);
+
+  PROCEDURE pc_excluir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE);                --> Descricao da critica                                     
+
+  PROCEDURE pc_buscar_cnae_bloqueado(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
+                                    ,pr_dscnae   IN tbgen_cnae.dscnae%TYPE --> Descricao do CNAE
+                                    ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
+                                    ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+
+  PROCEDURE pc_cria_cnae_proibido_web(pr_cdcnae     IN  tbcc_cnae_bloqueado.cdcnae%TYPE
+                                     ,pr_dsmotivo   IN  tbcc_cnae_bloqueado.dsmotivo%TYPE
+                                     ,pr_tpbloqueio IN  tbcc_cnae_bloqueado.tpbloqueio%TYPE
+                                     ,pr_tpinclusao IN  tbcc_cnae_bloqueado.tpinclusao%TYPE
+                                     ,pr_dtarquivo  IN  VARCHAR2
+                                     ,pr_dtmvtolt   IN  VARCHAR2
+                                     ,pr_dslicenca  IN  VARCHAR2
+                                     ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo
+
+  PROCEDURE pc_exclui_cnae_proibido_web(pr_cdcnae     IN  tbcc_cnae_bloqueado.cdcnae%TYPE
+                                       ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo
+
+  PROCEDURE pc_importa_arq_cnae(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  IN VARCHAR2
+                               ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2
+                               ,pr_retxml    OUT CLOB);
+                               
+  PROCEDURE pc_importa_arq_cnae_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
+                                   ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER             --> 1 - Limpa tabela ou 2 - só atualiza as informaçoes
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);                               
+                                   
+  PROCEDURE pc_exporta_arq_cnae(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  OUT VARCHAR2
+                               ,pr_cdcritic  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2);                                   
+                                   
+  PROCEDURE pc_exporta_arq_cnae_web(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                   ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                   ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                   ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo   
+                                   
+  PROCEDURE pc_verifica_cnae_blq(pr_cdcnae   IN tbcc_cnae_bloqueado.cdcnae%TYPE  
+                                ,pr_nrcpfcgc IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> Codigo do CNPJ
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                                                                  
+                                
+  PROCEDURE pc_valida_cnae_restrito(pr_cdcnae       IN  tbcc_cnae_bloqueado.cdcnae%TYPE --> Cod CNAE
+                                   ,pr_flgrestrito  OUT INTEGER); --> 0 - OK, 1 = Restrito
+                                   
+  PROCEDURE pc_inserir_cnpj_bloqueado(pr_inpessoa   IN tbcc_cnpjcpf_bloqueado.inpessoa%TYPE    --> PF/PJ
+                                     ,pr_nrcpfcgc   IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE    --> Codigo do CNAE 
+                                     ,pr_dsnome     IN tbcc_cnpjcpf_bloqueado.dsnome%TYPE      --> Nome                                     
+                                     ,pr_dsmotivo   IN tbcc_cnpjcpf_bloqueado.dsmotivo%TYPE    --> Motivo da inclusao
+                                     ,pr_dtarquivo  IN tbcc_cnpjcpf_bloqueado.dtarquivo%TYPE   --> Data do arquivo                                     
+                                     ,pr_tpinclusao IN tbcc_cnpjcpf_bloqueado.tpinclusao%TYPE  --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                     ,pr_dtmvtolt   IN tbcc_cnpjcpf_bloqueado.dtmvtolt%TYPE    --> Data atual
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE);
+                                     
+  PROCEDURE pc_excluir_cnpj_bloqueado(pr_nrcpfcgc   IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE    --> Codigo do CNPJ 
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE);                --> Descricao da critica                                     
+                                     
+  PROCEDURE pc_buscar_cnpj_bloqueado(pr_inpessoa IN tbcc_cnpjcpf_bloqueado.inpessoa%TYPE --> 1 PF/ 2 PJ
+                                    ,pr_nrcpfcgc IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> Codigo do CNPJ
+                                    ,pr_dsnome   IN tbcc_cnpjcpf_bloqueado.dsnome%TYPE --> Nome do CNPJ
+                                    ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
+                                    ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                                     
+                                    
+  PROCEDURE pc_cria_cnpj_proibido_web(pr_inpessoa   IN tbcc_cnpjcpf_bloqueado.inpessoa%TYPE
+                                     ,pr_nrcpfcgc   IN  tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE
+                                     ,pr_dsnome     IN  tbcc_cnpjcpf_bloqueado.dsnome%TYPE
+                                     ,pr_dsmotivo   IN  tbcc_cnpjcpf_bloqueado.dsmotivo%TYPE
+                                     ,pr_tpinclusao IN  tbcc_cnpjcpf_bloqueado.tpinclusao%TYPE
+                                     ,pr_dtarquivo  IN  VARCHAR2
+                                     ,pr_dtmvtolt   IN  VARCHAR2
+                                     ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo                                   
+                                     
+  PROCEDURE pc_exclui_cnpj_proibido_web(pr_nrcpfcgc   IN  tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> CNPJ ou CPF
+                                       ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo
+                                       
+  PROCEDURE pc_importa_arq_cnpj(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  IN VARCHAR2
+                               ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2
+                               ,pr_retxml    OUT CLOB);
+                               
+  PROCEDURE pc_importa_arq_cnpj_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
+                                   ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER             --> Limpar base de dados
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2);          --> Erros do processo
+                                   
+  PROCEDURE pc_exporta_arq_cnpj(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  OUT VARCHAR2
+                               ,pr_cdcritic  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2);
+                               
+  PROCEDURE pc_exporta_arq_cnpj_web(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                   ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                   ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                   ,pr_des_erro   OUT VARCHAR2);            --> Erros do processo                               
+
+  PROCEDURE pc_verifica_cnpj_blq(pr_inpessoa IN crapass.inpessoa%TYPE  --> Pessoa Fisica/ Pessoa Juridica
+                                ,pr_nrcpfcgc IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> Codigo do CNPJ
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                               
+                                     
+  PROCEDURE pc_atualiz_data_manut_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                      ,pr_cdcritic OUT INTEGER
+                                      ,pr_dscritic OUT VARCHAR2);
+
+  PROCEDURE pc_verifica_atualiz_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                    ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                                    ,pr_cdcritic OUT INTEGER
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_atualiza OUT VARCHAR2              --> OK ou NOK
+                                    ,pr_dsnrfone OUT VARCHAR2              --> Nr Telefone Atual
+                                    ,pr_qtmeatel OUT INTEGER               --> Qtde Meses Atualizacao Telefone
+                                    );
+
+  PROCEDURE pc_ib_verif_atualiz_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                    ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                                    ,pr_inpessoa IN crapttl.inpessoa%TYPE  --> Indicador PF/PJ
+                                    ,pr_cdcritic OUT INTEGER
+                                    ,pr_dscritic OUT VARCHAR2
+                                    );
 
 END CADA0004;
 /
@@ -488,13 +756,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/07/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas para buscar detalhes de cadastros
-  -- 
+  --
   -- Alteracoes:   10/11/2015 - Incluido verificacao para impressao de termo de
   --                            responsabilidade na procedure pc_obtem_mensagens_alerta.
   --                            (Jean Michel).
@@ -518,12 +786,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --               21/06/2016 - Correcao para o uso correto do indice da CRAPTAB em procedures 
   --                            desta package.(Carlos Rafael Tanholi).    
   --
+  --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
+  --                           empréstimos na procedure pc_obtem_mensagens_alerta,
+  --                           Prj. 302 (Jean Michel).
+  --
   --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
   --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).             
-  ---------------------------------------------------------------------------------------------------------------
-  
-  
+  --       
+  --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
+  --
+  --               25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --			                crapass, crapttl, crapjur 
+  --						   (Adriano - P339).
+---------------------------------------------------------------------------------------------------------------
 
+
+  
   /*****************************************************************************/
   /**            Procedure verficar vigencia do procurador                    **/
   /*****************************************************************************/
@@ -876,7 +1154,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 11/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
-    --
+    --              08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+		--                           do departamento pelo código do mesmo (Renato Darosci)
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------- 
@@ -898,7 +1177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     -- buscar operador     
     CURSOR cr_crapope IS
-      SELECT dsdepart
+      SELECT cddepart
         FROM crapope
        WHERE crapope.cdcooper = pr_cdcooper
          AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
@@ -956,7 +1235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       /** Mostra todos os cartoes somente para SUPER-USUARIO **/
       /** Despreza cancelados e vencidos ha mais de 180 dias **/
-      IF rw_crapope.dsdepart <> 'TI'   AND
+      IF rw_crapope.cddepart <> 20  AND  -- TI
          ((rw_crapcrm.cdsitcar = 3 AND 
           rw_crapcrm.dtcancel < (pr_dtmvtolt - 180))   OR
           (rw_crapcrm.cdsitcar = 2  AND 
@@ -1187,7 +1466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                 rw_crapsnh.dssitsnh := 'INATIVA';
                 CLOSE cr_crapsnh2;
                 EXIT;
-    END IF; 
+             END IF;
              
              IF aux_cdsitsnh = 2 THEN
                 rw_crapsnh.dssitsnh := 'BLOQUEADA';
@@ -1209,14 +1488,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     ELSE ---------> URA <------------
       
-    -- buscar situacao da senha para URA
+      -- buscar situacao da senha para URA
       OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta,
                        pr_tpdsenha => pr_tpdsenha,
                        pr_idseqttl => pr_idseqttl);
-    FETCH cr_crapsnh INTO rw_crapsnh;
-    CLOSE cr_crapsnh;
-    
+      FETCH cr_crapsnh INTO rw_crapsnh;
+      CLOSE cr_crapsnh;
+      
     END IF;
     
     -- retornar descricao da situacao
@@ -1449,6 +1728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
                             ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
                             ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da cooperativa
+                            ,pr_flgzerar IN VARCHAR2 DEFAULT 'S'  --> Flag para Zerar limite
                             ------ OUT ------
                             ,pr_flgativo     OUT INTEGER           --> Retorna situação 1-ativo 2-inativo
                             ,pr_nrctrhcj     OUT NUMBER            --> Retorna numero do contrato
@@ -1590,6 +1870,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_vltotccr := 0;
     
     FOR rw_crawcrd IN cr_crawcrd LOOP
+      
+	  -- Buscar situação
+      vr_dssitcrd := fn_retorna_situacao_cartao( pr_insitcrd => rw_crawcrd.insitcrd 
+                                                ,pr_dtsol2vi => rw_crawcrd.dtsol2vi
+                                                ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);    
       -- diferente de bancoob
       IF fn_verifica_adm(rw_crawcrd.cdadmcrd) <> 2 THEN
       
@@ -1617,13 +1902,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           
         END IF; --> Fim IF insitcrd IN (4,7)
       ELSE
-        pr_vltotccr := pr_vltotccr + 0; /* ZERAR LIMITE CONFORME SD 181559 */   
+        -- P337 - SOmente zerar se passado via parametro [ZERAR LIMITE CONFORME SD 181559]
+        IF pr_flgzerar = 'N' THEN
+          -- Somente acumular limite conforme situação cartão
+          IF vr_dssitcrd IN ('Solic.','Liber.','Sol.2v','Prc.BB','Em uso','Sol.2v') THEN 
+            pr_vltotccr := pr_vltotccr + rw_crawcrd.vllimcrd; 
       END IF;
+        END IF;  
+      END IF;  
       
-      -- Buscar situação
-      vr_dssitcrd := fn_retorna_situacao_cartao( pr_insitcrd => rw_crawcrd.insitcrd 
-                                                ,pr_dtsol2vi => rw_crawcrd.dtsol2vi
-                                                ,pr_cdadmcrd => rw_crawcrd.cdadmcrd);    
       
       vr_idx := pr_tab_cartoes.count;
       
@@ -2339,6 +2626,168 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;
       pr_des_reto := 'NOK';      
   END pc_lista_ocorren;
+  
+  /******************************************************************************/
+  /**    Procedure para listar ocorrencias do cooperado - Chamada PROGRESS     **/
+  /******************************************************************************/
+  PROCEDURE pc_lista_ocorren_prog( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                  ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                  ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta                            
+                                  ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                  ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                  ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                  ------ OUT ------
+                                  ,pr_xml_ocorren  OUT CLOB              --> retorna temptable com os dados dos convenios
+                                  ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                  ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_lista_ocorren_prog        Antiga: b1wgen0027.p/lista_ocorren
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Odirlei Busana(Amcom)
+    --  Data     : Abril/2017.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para listar ocorrencias do cooperado - Chamada progress 
+    --
+    --  Alteração : 
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <----------------- 
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+                          
+    --------------> VARIAVEIS <-----------------
+    vr_cdcritic     INTEGER;
+    vr_dscritic     VARCHAR2(1000);
+    vr_des_reto     VARCHAR2(10);
+    vr_exc_erro     EXCEPTION;
+    vr_tab_erro     gene0001.typ_tab_erro;
+    
+    vr_tab_ocorren  typ_tab_ocorren;
+    vr_dstexto      VARCHAR2(32767);
+    vr_string       VARCHAR2(32767);    
+    vr_index        PLS_INTEGER;
+    
+  BEGIN
+    
+    -- DATA DA COOPERATIVA
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+
+      -- FECHAR CR_CRAPDAT CURSOR POIS HAVERÁ RAISE
+      CLOSE btch0001.cr_crapdat;
+
+      -- MONTAR MENSAGEM DE CRITICA
+      vr_cdcritic := 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        
+      RAISE vr_exc_erro;
+    ELSE
+      -- APENAS FECHAR O CURSOR
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+  
+    pc_lista_ocorren(  pr_cdcooper   => pr_cdcooper  --> Codigo da cooperativa
+                      ,pr_cdagenci   => pr_cdagenci  --> Codigo de agencia
+                      ,pr_nrdcaixa   => pr_nrdcaixa  --> Numero do caixa
+                      ,pr_cdoperad   => pr_cdoperad  --> Codigo do operador
+                      ,pr_nrdconta   => pr_nrdconta  --> Numero da conta
+                      ,pr_rw_crapdat => rw_crapdat   --> Data da cooperativa
+                      ,pr_idorigem   => pr_idorigem  --> Identificado de oriem
+                      ,pr_idseqttl   => pr_idseqttl  --> sequencial do titular
+                      ,pr_nmdatela   => pr_nmdatela  --> Nome da tela
+                      ,pr_flgerlog   => pr_flgerlog  --> identificador se deve gerar log S-Sim e N-Nao
+                      ------ OUT ------
+                      ,pr_tab_ocorren  => vr_tab_ocorren  --> retorna temptable com os dados dos convenios
+                      ,pr_des_reto     => vr_des_reto     --> OK ou NOK
+                      ,pr_tab_erro     => vr_tab_erro);
+  
+    IF vr_des_reto = 'NOK' THEN 
+      IF vr_tab_erro.exists(vr_tab_erro.first)  THEN
+        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+      ELSE
+        vr_dscritic := 'Não foi possivel listar ocorrencias';        
+      END IF;
+      RAISE vr_exc_erro;    
+    END IF;
+    
+    --Montar CLOB
+    IF vr_tab_ocorren.COUNT > 0 THEN
+        
+      -- Criar documento XML
+      dbms_lob.createtemporary(pr_xml_ocorren, TRUE); 
+      dbms_lob.open(pr_xml_ocorren, dbms_lob.lob_readwrite);
+        
+      -- Insere o cabeçalho do XML 
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                             ,pr_texto_completo => vr_dstexto 
+                             ,pr_texto_novo     => '<root>');
+         
+      --Buscar Primeiro beneficiario
+      vr_index := vr_tab_ocorren.FIRST;
+        
+      --Percorrer todos os beneficiarios
+      WHILE vr_index IS NOT NULL LOOP
+        vr_string := '<ocorren>'||
+                         '<qtctrord>'|| vr_tab_ocorren(vr_index).qtctrord  ||'</qtctrord>'||
+                         '<qtdevolu>'|| vr_tab_ocorren(vr_index).qtdevolu  ||'</qtdevolu>'||
+                         '<dtcnsspc>'|| to_char(vr_tab_ocorren(vr_index).dtcnsspc,'DD/MM/RRRR')  ||'</dtcnsspc>'||
+                         '<dtdsdsps>'|| to_char(vr_tab_ocorren(vr_index).dtdsdsps,'DD/MM/RRRR')  ||'</dtdsdsps>'||
+                         '<qtddsdev>'|| vr_tab_ocorren(vr_index).qtddsdev  ||'</qtddsdev>'||
+                         '<dtdsdclq>'|| to_char(vr_tab_ocorren(vr_index).dtdsdclq,'DD/MM/RRRR')  ||'</dtdsdclq>'||
+                         '<qtddtdev>'|| vr_tab_ocorren(vr_index).qtddtdev  ||'</qtddtdev>'||
+                         '<flginadi>'|| vr_tab_ocorren(vr_index).flginadi  ||'</flginadi>'||
+                         '<flglbace>'|| vr_tab_ocorren(vr_index).flglbace  ||'</flglbace>'||
+                         '<flgeprat>'|| vr_tab_ocorren(vr_index).flgeprat  ||'</flgeprat>'||
+                         '<indrisco>'|| vr_tab_ocorren(vr_index).indrisco  ||'</indrisco>'||
+                         '<nivrisco>'|| vr_tab_ocorren(vr_index).nivrisco  ||'</nivrisco>'||
+                         '<flgpreju>'|| vr_tab_ocorren(vr_index).flgpreju  ||'</flgpreju>'||
+                         '<flgjucta>'|| vr_tab_ocorren(vr_index).flgjucta  ||'</flgjucta>'||
+                         '<flgocorr>'|| vr_tab_ocorren(vr_index).flgocorr  ||'</flgocorr>'||
+                         '<dtdrisco>'|| to_char(vr_tab_ocorren(vr_index).dtdrisco,'DD/MM/RRRR')  ||'</dtdrisco>'||
+                         '<qtdiaris>'|| vr_tab_ocorren(vr_index).qtdiaris  ||'</qtdiaris>'||
+                         '<inrisctl>'|| vr_tab_ocorren(vr_index).inrisctl  ||'</inrisctl>'||
+                         '<dtrisctl>'|| to_char(vr_tab_ocorren(vr_index).dtrisctl,'DD/MM/RRRR')  ||'</dtrisctl>'||
+                         '<dsdrisgp>'|| vr_tab_ocorren(vr_index).dsdrisgp  ||'</dsdrisgp>'||
+                         '<innivris>'|| vr_tab_ocorren(vr_index).innivris  ||'</innivris>'||
+                     '</ocorren>';
+        
+        -- Escrever no XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                               ,pr_texto_completo => vr_dstexto 
+                               ,pr_texto_novo     => vr_string
+                               ,pr_fecha_xml      => FALSE);   
+                                      
+        vr_index := vr_tab_ocorren.next(vr_index);
+      END LOOP;
+      
+      -- Encerrar a tag raiz 
+      gene0002.pc_escreve_xml(pr_xml            => pr_xml_ocorren 
+                             ,pr_texto_completo => vr_dstexto 
+                             ,pr_texto_novo     => '</root>' 
+                             ,pr_fecha_xml      => TRUE);
+      
+    END IF;   
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro CADA0004.pc_lista_ocorren:'||SQLERRM;
+          
+  END pc_lista_ocorren_prog;
   
   /******************************************************************************/
   /**             Funcao para obter saldo da conta investimento                **/
@@ -3623,7 +4072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 01/12/2015
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 12/04/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3645,6 +4094,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              01/12/2015 - Alterar validacao de contratos em cobrança no 
     --                           CYBER para verificar na cracyc ao inves da crapcyb
     --                           (Douglas)
+    --
+    --              01/08/2016 - Incluido mensagem do pre aprovado para cargas manuais.
+    --                           Projeto 299/3 - Pre-Aprovado (Lombardi)
+    --
+    --              04/10/2016 - Validação de emprestimo em atraso da própria conta e como fiador.
+    --                           Incluído uma cláusula "and" no lugar de utilizar 2 if's.
+    --                           Dessa forma permite que as demais condições (else e elsif) sejam validadas
+    --                           #487823 (AJFink)
+    --
+    --              22/09/2016 - Alterado para buscar a qtd de dias da renovacao do limite de cheque
+    --                           da tabela craprli e nao mais da craptab.
+    --                           PRJ-300 - Desconto de Cheque (Odirlei-AMcom) 
+    --                          
+    --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
+    --                           empréstimos, Prj. 302 (Jean Michel).	
+    --
+    --              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
+    --                           PRJ-300 Desconto de Cheque (Daniel)
+    --
+    --              12/04/2017 - Exibir mensagem de fatura de cartão atrasado.
+    --                           PRJ343 - Cessao de credito(Odirlei-AMcom)    
+	--
+	--              27/08/2017 - Inclusao de mensagens na tela Atenda. Melhoria 364 - Grupo Economico (Mauro)
+    --   
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -3836,6 +4309,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND craplim.tpctrlim = pr_tpctrlim
          AND craplim.insitlim = pr_insitlim;
     rw_craplim cr_craplim%ROWTYPE;     
+    
+    --> Buscar Contratos de Limite de Desconto de Cheque e regras
+    CURSOR cr_craprli (pr_cdcooper craplim.cdcooper%TYPE,
+                       pr_nrdconta craplim.nrdconta%TYPE,
+                       pr_tpctrlim craplim.tpctrlim%TYPE,
+                       pr_insitlim craplim.insitlim%TYPE,
+                       pr_inpessoa craprli.inpessoa%TYPE)IS 
+      SELECT /*+index_asc (craplim CRAPLIM##CRAPLIM1)*/
+             lim.dtfimvig
+            ,lim.dtinivig
+            ,lim.qtdiavig
+            ,rli.qtmaxren
+        FROM craplim lim,
+             craprli rli  
+       WHERE lim.cdcooper = rli.cdcooper
+         AND lim.tpctrlim = rli.tplimite
+         AND rli.inpessoa = pr_inpessoa
+         AND lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.tpctrlim = pr_tpctrlim
+         AND lim.insitlim = pr_insitlim;
+    rw_craprli cr_craprli%ROWTYPE; 
     
     --> Buscar emprestimos do cooperado
     CURSOR cr_crapepr IS
@@ -4055,7 +4550,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND snh.nrcpfcgc = pr_nrcpfcgc;
 
     rw_crapsnh_2 cr_crapsnh_2%ROWTYPE;     
-              
+
+    -- Cursor para buscar os bloqueios judiciais
+    CURSOR cr_crapblj IS
+      SELECT DISTINCT a.nrproces,
+             a.dsjuizem
+        FROM crapblj a
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND dtblqfim IS NULL
+       ORDER BY 1,2;
+	
+    --> Buscar alerta de atraso do cartao
+    CURSOR cr_crdatraso (pr_cdcooper crapsnh.cdcooper%TYPE,
+                         pr_nrdconta crapsnh.nrdconta%TYPE )IS
+      SELECT * 
+        FROM (SELECT atr.qtdias_atraso,
+                     atr.vlsaldo_devedor
+                FROM tbcrd_alerta_atraso atr
+               WHERE atr.cdcooper = pr_cdcooper
+                 AND atr.nrdconta = pr_nrdconta
+                 ORDER BY atr.qtdias_atraso DESC, atr.vlsaldo_devedor DESC)
+       WHERE rownum <= 1; 
+      
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -4097,15 +4614,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_flbndatr     BOOLEAN;
     vr_flbndprj     BOOLEAN;
     vr_flbndnor     BOOLEAN;
-    vr_fcraptco     BOOLEAN;
+    vr_fcraptco     BOOLEAN;    
     vr_dsvigpro     VARCHAR2(2000);
     vr_vlblqjud     NUMBER := 0;
     vr_vlresblq     NUMBER := 0;
 		vr_flgpvida     INTEGER;
     
+    vr_nrdconta_grp tbcc_grupo_economico.nrdconta%TYPE;
+    vr_dsvinculo    VARCHAR(2000);                                                           
+    
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
-    
+
+    vr_flgativo INTEGER := 0;
   BEGIN
   
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -4293,10 +4814,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           vr_dsmensag := 'Falta cadastro das letras de seguranca - '|| vr_contador|| 'o titular.';
         ELSE
           IF rw_crapass.idastcjt = 0 THEN
-          vr_dsmensag := 'Falta cadastro das letras de seguranca.';
+            vr_dsmensag := 'Falta cadastro das letras de seguranca.';
           ELSE
             vr_dsmensag := 'Falta cadastro das letras de seguranca para TAA.';
-        END IF;
+          END IF;
         END if;
         -- Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
@@ -4326,7 +4847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;                           
     END IF;
     CLOSE cr_craplim;
-        
+
     --> Tabela de limite de desconto de cheques
     vr_dstextab := tabe0001.fn_busca_dstextab ( pr_cdcooper => pr_cdcooper 
                                                ,pr_nmsistem => 'CRED'
@@ -4344,20 +4865,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     
     --> Verifica se ja excedeu a vigencia do limite de desconto de cheques
-    OPEN cr_craplim( pr_cdcooper => pr_cdcooper,
+    OPEN cr_craprli( pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
                      pr_tpctrlim => 2,
-                     pr_insitlim => 2);
-    FETCH cr_craplim INTO rw_craplim;
-    IF cr_craplim%FOUND THEN
-      IF pr_rw_crapdat.dtmvtolt >= (rw_craplim.dtinivig + (rw_craplim.qtdiavig * nvl(vr_dstextab,0))) THEN
+                     pr_insitlim => 2,
+                     pr_inpessoa => rw_crapass.inpessoa);
+    FETCH cr_craprli INTO rw_craprli;
+    IF cr_craprli%FOUND THEN
+      
+      IF rw_craprli.dtfimvig IS NOT NULL THEN
+          IF rw_craprli.dtfimvig < pr_rw_crapdat.dtmvtolt THEN
         -- Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END IF;        
+      ELSIF (rw_craprli.dtinivig + rw_craprli.qtdiavig) < pr_rw_crapdat.dtmvtolt  THEN
+        -- Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => 'Contrato de Desconto de Cheques Vencido.',
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
     
     END IF;
-    CLOSE cr_craplim;
+    CLOSE cr_craprli;
     
     vr_flgpreju := FALSE;
     vr_dsprejuz := ' - liquidado';
@@ -4508,10 +5037,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         
         vr_dsmensag := NULL;
 
-        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1   THEN
-          IF vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN 
+        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
             vr_dsmensag := 'Associado com emprestimo em atraso.';
-          END IF;            
         ELSIF (vr_tab_dados_epr(vr_idxepr).qtmesdec - vr_tab_dados_epr(vr_idxepr).qtprecal) >= 0.01  AND
                vr_tab_dados_epr(vr_idxepr).dtdpagto < pr_rw_crapdat.dtmvtolt                    THEN
           --> Verificar se a data de pagamento é um dia util
@@ -4643,10 +5170,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       vr_dsmensag := NULL;
                 
-      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1   THEN
-        IF vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN 
+      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
           vr_dsmensag := 'Fiador de emprestimo em atraso: ';
-        END IF;
       ELSIF rw_crapavl.inprejuz = 1 AND rw_crapavl.vlsdprej > 0  THEN
         vr_dsmensag := 'Fiador de emprestimo em atraso: ';
       ELSE
@@ -4775,7 +5300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --> Verifica se o CPF não está regularizado
     IF rw_crapass.cdsitcpf > 1 THEN
       vr_dsmensag := 'Associado com CPF' ||           
-      CASE rw_crapass.cdsitcpf
+                      CASE rw_crapass.cdsitcpf
                         WHEN 2 THEN ' pendente.'
                         WHEN 3 THEN ' cancelado.'
                         WHEN 4 THEN ' irregular.'
@@ -4837,7 +5362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     FETCH cr_craptco INTO rw_craptco;
     vr_fcraptco := cr_craptco%FOUND;
     CLOSE cr_craptco;
-    
+		
 		vr_flgpvida := INSS0001.fn_verifica_renovacao_vida(pr_cdcooper => (CASE 
 													 																						   WHEN vr_fcraptco THEN rw_craptco.cdcopant
 																																				  ELSE pr_cdcooper
@@ -4964,6 +5489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END IF;      
     END IF;
     
+	/*
     --> Busca Saldo Bloqueado Judicial
     GENE0005.pc_retorna_valor_blqjud (pr_cdcooper => pr_cdcooper      --> Cooperativa
                                      ,pr_nrdconta => pr_nrdconta      --> Conta
@@ -4984,7 +5510,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pc_cria_registro_msg(pr_dsmensag             => 'Conta Possui Valor Bloqueado Judicialmente.',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
     END IF;
-    
+    */
+
+    -- Busca os processos judiciais
+    FOR rw_crapblj IN cr_crapblj LOOP
+      pc_cria_registro_msg(pr_dsmensag             => 'Bloqueio judicial. Processo '||rw_crapblj.nrproces||'. '||rw_crapblj.dsjuizem||'.',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+    END LOOP;
+	
     --> Procedimento para buscar dados do credito pré-aprovado (crapcpa)
     EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
                                 ,pr_cdagenci  => pr_cdagenci   --> Código da agencia
@@ -5004,11 +5537,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
        vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
-      --> Incluir na temptable
-      pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                      'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-    END IF;   
+      IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
+        --> Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
+                            ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+    
+      ELSE
+          --> Incluir na temptable
+          pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
+                                                          'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
+                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+        END IF;
+      END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;
@@ -5129,6 +5669,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     END IF;
     
+    -- Verifica contratos de acordos
+    RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrctremp => 0
+                                     ,pr_cdorigem => 0
+                                     ,pr_flgativo => vr_flgativo
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_flgativo = 1 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Atencao! Cooperado possui contrato em acordo.',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+    
+    --> Buscar alerta de atraso do cartao
+    FOR rw_crdatraso IN cr_crdatraso( pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta) LOOP
+      
+      IF rw_crdatraso.qtdias_atraso > 0 THEN
+        vr_dsmensag := 'Cooperado com fatura de cartão de crédito em atraso há '||
+                       rw_crdatraso.qtdias_atraso ||
+                       ' dias no valor de R$ '|| to_char(rw_crdatraso.vlsaldo_devedor,'FM999G999G999G990D00');
+        
+        --> Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => vr_dsmensag,
+                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda); 
+      END IF;
+    END LOOP;
+
+	-- Verifica se a conta possui algum grupo economico novo
+    TELA_CONTAS_GRUPO_ECONOMICO.pc_verifica_conta_grp_econ(pr_cdcooper => pr_cdcooper, 
+                                                           pr_nrdconta => pr_nrdconta, 
+                                                           pr_flgativo => vr_flgativo, 
+                                                           pr_nrdconta_grp => vr_nrdconta_grp, 
+                                                           pr_dsvinculo => vr_dsvinculo, 
+                                                           pr_cdcritic => vr_cdcritic, 
+                                                           pr_dscritic => vr_dscritic);
+    
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_flgativo = 1 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Grupo Economico Novo. Conta: ' || TRIM(gene0002.fn_mask_conta(vr_nrdconta_grp)) || '. Vinculo: ' || vr_dsvinculo,
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
     pr_des_reto := 'OK';
     
   EXCEPTION    
@@ -5192,6 +5782,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              01/12/2015 - Carregar o campo cdclcnae da crapass (Jaison/Andrino)
+	                
+					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                     crapass, crapttl, crapjur 
+							    (Adriano - P339).
+
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -5206,7 +5801,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.nrctainv,
              crapass.dtadmemp,
              crapass.nmprimtl,
-             crapass.nmsegntl,
              crapass.dtdemiss,
              crapass.cdsecext,
              crapass.indnivel,
@@ -5235,7 +5829,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        WHERE crapttl.cdcooper = pr_cdcooper
          AND crapttl.nrdconta = pr_nrdconta; 
     
-    
+	-->Busca informações do segundo titular
+    CURSOR cr_crapttl(pr_cdcooper crapttl.cdcooper%TYPE
+	                 ,pr_nrdconta crapttl.nrdconta%TYPE)IS
+	SELECT crapttl.nmextttl
+	  FROM crapttl
+	 WHERE crapttl.cdcooper = pr_cdcooper
+	   AND crapttl.nrdconta = pr_nrdconta
+	   AND crapttl.idseqttl = 2;
+    rw_crapttl cr_crapttl%ROWTYPE;
     
     --------------> VARIAVEIS <----------------
     vr_cdcritic   INTEGER;
@@ -5248,6 +5850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_dsnatura   crapttl.dsnatura%TYPE;
     vr_idxcab     PLS_INTEGER;
     vr_qttitula   INTEGER;
+	vr_nmsegntl   crapttl.nmextttl%TYPE;
     
   BEGIN
     -- Buscar dados do cooperado
@@ -5271,9 +5874,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --> Contar quantidade de titulares da conta
     vr_qttitula := 0;
     IF rw_crapass.inpessoa = 1 THEN      
+
       OPEN cr_crapttl_count;
       FETCH cr_crapttl_count INTO vr_qttitula;
       CLOSE cr_crapttl_count;
+
+	  OPEN cr_crapttl(pr_cdcooper => pr_cdcooper
+	                 ,pr_nrdconta => rw_crapass.nrdconta);
+
+	  FETCH cr_crapttl INTO rw_crapttl;
+
+	  IF cr_crapttl%FOUND THEN
+	    
+        vr_nmsegntl:= rw_crapttl.nmextttl;
+
+	  END IF;
+
+	  CLOSE cr_crapttl;
+
     ELSE
       vr_qttitula := 1;
     END IF;
@@ -5287,7 +5905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).nrctainv := rw_crapass.nrctainv;
     pr_tab_cabec(vr_idxcab).dtadmemp := rw_crapass.dtadmemp;
     pr_tab_cabec(vr_idxcab).nmprimtl := rw_crapass.nmprimtl;
-    pr_tab_cabec(vr_idxcab).nmsegntl := rw_crapass.nmsegntl;
+    pr_tab_cabec(vr_idxcab).nmsegntl := vr_nmsegntl;
     pr_tab_cabec(vr_idxcab).cdclcnae := rw_crapass.cdclcnae;
     
     pr_tab_cabec(vr_idxcab).dtaltera := fn_ult_dtaltera (pr_cdcooper => pr_cdcooper,  --> Codigo da cooperativa
@@ -5398,7 +6016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --   Objetivo  : Procedure para carregar dos dados para a tela ATENDA
     --
     --  Alteração : 23/10/2015 - Conversão Progress -> Oracle (Odirlei)
-    --
+    --              
     --              23/03/2015 - Adicionar novos parametros na chamada da
     --                           EXTR0002.pc_consulta_lancamento - Melhoria 157 (Lucas Ranghetti)
 
@@ -6325,7 +6943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Outubro/2015.                         Ultima atualizacao: 23/06/2016
+       Data    : Outubro/2015.                         Ultima atualizacao: 29/08/2016
 
        Dados referentes ao programa:
 
@@ -6342,6 +6960,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                    23/06/2016 - P333.1 - Alteração no retorno de valor do seguro por quantidade 
                                 (Marcos-Supero)
 
+                   
+                   29/08/2016 - Ajustado para adicionar os atributos flconven e dscritic
+                                na tag Anotacoes quando a conta nao possui observações
+                                (Douglas - Chamado 513666)
     ............................................................................. */
     -------------------> VARIAVEIS <----------------------
     vr_cdcritic          INTEGER;
@@ -6599,7 +7221,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END LOOP;                                                      
       pc_escreve_xml ('</Anotacoes>');                                 
     ELSE
-      pc_escreve_xml ('<Anotacoes/>');
+      pc_escreve_xml ('<Anotacoes flconven="'|| vr_flconven||'" 
+                                  dscritic="'|| vr_dscritic||'" />');
     END IF;
     
     --> Descarregar buffer
@@ -7836,7 +8459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-    --  Data     : Abril/2016.                   Ultima atualizacao: 08/06/2016
+    --  Data     : Abril/2016.                   Ultima atualizacao: 14/11/2016
     --
     --  Dados referentes ao programa:
     --
@@ -7850,6 +8473,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           e 'FINTRFTEDS' para utilizar a rotina padrao da TABE0001
     --                           (Douglas - Chamado 454248)
     --
+    --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
+    --                           ifs no programa(Odirlei-AMcom)  
     -- ..........................................................................*/
 
     -- Cursor para retornar o nome do banco
@@ -7896,26 +8521,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     
     -- Preenche a descricao da origem
-    IF pr_cdorigem = 1 THEN
-      vr_dsorigem := 'AYLLOS';
-    ELSIF pr_cdorigem = 2 THEN
-      vr_dsorigem := 'CAIXA';
-    ELSIF pr_cdorigem = 3 THEN
-      vr_dsorigem := 'INTERNET';
-    ELSIF pr_cdorigem = 4 THEN
-      vr_dsorigem := 'CASH';
-    ELSIF pr_cdorigem = 5 THEN
-      vr_dsorigem := 'INTRANET';
-    ELSIF pr_cdorigem = 6 THEN
-      vr_dsorigem := 'URA';
-    ELSIF pr_cdorigem = 7 THEN
-      vr_dsorigem := 'BATCH';
-    ELSIF pr_cdorigem = 8 THEN
-      vr_dsorigem := 'MENSAGERIA';
-    ELSIF pr_cdorigem = 9 THEN
-      vr_dsorigem := 'MOBILE';
-    ELSE
+    IF vr_dsorigem > gene0001.vr_vet_des_origens.count() THEN
       vr_dsorigem := 'OUTROS';
+    ELSE
+      vr_dsorigem := gene0001.vr_vet_des_origens(pr_cdorigem);
     END IF;    
    
     -- Se deve gerar log na VERLOG
@@ -7993,9 +8602,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                  ,pr_nmdcampo => 'Valor do lancamento'
                                  ,pr_dsdadant => ' '
                                  ,pr_dsdadatu => to_char(pr_vllanmto,'fm999g999g990d00'));
+        END IF;
       END IF;
-      END IF;
-      
+
       -- Se possuir banco de destino
       IF nvl(pr_cdbccrcb,0) > 0 THEN
         -- Busca o banco de destino
@@ -8230,6 +8839,2987 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     WHEN OTHERS THEN
       pr_dscritic := 'Não foi possivel buscar dados pc_busca_qtd_entrega_talao: '||SQLERRM;
   END pc_busca_qtd_entrega_talao;
+  
+  PROCEDURE pc_inserir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
+                                     ,pr_dsmotivo   IN tbcc_cnae_bloqueado.dsmotivo%TYPE       --> Motivo da inclusao
+                                     ,pr_dtarquivo  IN tbcc_cnae_bloqueado.dtarquivo%TYPE      --> Data do arquivo
+                                     ,pr_tpbloqueio IN tbcc_cnae_bloqueado.tpbloqueio%TYPE     --> Tipo de bloqueio do CNAE (0-Restrito, 1-Proibido)
+                                     ,pr_tpinclusao IN tbcc_cnae_bloqueado.tpinclusao%TYPE     --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                     ,pr_dtmvtolt   IN tbcc_cnae_bloqueado.dtmvtolt%TYPE       --> Data atual
+                                     ,pr_dslicenca  IN tbcc_cnae_bloqueado.dslicenca%TYPE      --> Licencas necessarias
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      -- Inserir 
+      BEGIN
+        INSERT 
+          INTO tbcc_cnae_bloqueado(cdcnae,        dsmotivo
+                                  ,dtarquivo,     tpbloqueio
+                                  ,tpinclusao,    dtmvtolt
+                                  ,dslicenca)
+                            VALUES(pr_cdcnae,     pr_dsmotivo
+                                  ,pr_dtarquivo,  pr_tpbloqueio
+                                  ,pr_tpinclusao, pr_dtmvtolt
+                                  ,pr_dslicenca);        
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'CNAE já cadastrado.';        
+          RAISE vr_exc_saida;
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnae_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnae_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_inserir_cnae_bloqueado;
+
+  PROCEDURE pc_atualizar_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
+                                       ,pr_dsmotivo   IN tbcc_cnae_bloqueado.dsmotivo%TYPE       --> Motivo da inclusao
+                                       ,pr_dtarquivo  IN tbcc_cnae_bloqueado.dtarquivo%TYPE      --> Data do arquivo
+                                       ,pr_tpbloqueio IN tbcc_cnae_bloqueado.tpbloqueio%TYPE     --> Tipo de bloqueio do CNAE (0-Restrito, 1-Proibido)
+                                       ,pr_tpinclusao IN tbcc_cnae_bloqueado.tpinclusao%TYPE     --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                       ,pr_dtmvtolt   IN tbcc_cnae_bloqueado.dtmvtolt%TYPE       --> Data atual
+                                       ,pr_dslicenca  IN tbcc_cnae_bloqueado.dslicenca%TYPE      --> Licencas necessarias
+                                       ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                       ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+    
+      CURSOR cr_cnae_blq(pr_cdcnae tbcc_cnae_bloqueado.cdcnae%TYPE) IS
+        SELECT tbcc_cnae_bloqueado.cdcnae
+          FROM tbcc_cnae_bloqueado
+         WHERE tbcc_cnae_bloqueado.cdcnae = pr_cdcnae;
+      rw_cnae_blq cr_cnae_blq%ROWTYPE;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      OPEN cr_cnae_blq(pr_cdcnae => pr_cdcnae);
+      FETCH cr_cnae_blq INTO rw_cnae_blq;
+      
+      IF cr_cnae_blq%NOTFOUND THEN -->Nao disparar critica apenas nao atualiza
+         CLOSE cr_cnae_blq;
+         vr_cdcritic := 0;
+         vr_dscritic := '';
+         RAISE vr_exc_saida;
+      END IF;    
+      
+      CLOSE cr_cnae_blq;
+      
+      -- Update
+      BEGIN
+        UPDATE tbcc_cnae_bloqueado
+           SET tbcc_cnae_bloqueado.dsmotivo   = pr_dsmotivo
+              ,tbcc_cnae_bloqueado.dtarquivo  = pr_dtarquivo
+              ,tbcc_cnae_bloqueado.tpbloqueio = pr_tpbloqueio
+              ,tbcc_cnae_bloqueado.tpinclusao = pr_tpinclusao
+              ,tbcc_cnae_bloqueado.dtmvtolt   = pr_dtmvtolt
+              ,tbcc_cnae_bloqueado.dslicenca  = pr_dslicenca
+         WHERE tbcc_cnae_bloqueado.cdcnae     = pr_cdcnae;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_atualizar_cnae_bloqueado;
+
+  PROCEDURE pc_excluir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      -- Excluir 
+      BEGIN
+        DELETE FROM tbcc_cnae_bloqueado WHERE tbcc_cnae_bloqueado.cdcnae = pr_cdcnae;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnae_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnae_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_excluir_cnae_bloqueado;
+  
+  PROCEDURE pc_buscar_cnae_bloqueado(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
+                                    ,pr_dscnae   IN tbgen_cnae.dscnae%TYPE --> Descricao do CNAE
+                                    ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
+                                    ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+      -- Cursor sobre a tabela do CNAE
+      CURSOR cr_cnae_bloqueado(pr_cdcnae tbcc_cnae_bloqueado.cdcnae%TYPE
+                              ,pr_dscnae tbgen_cnae.dscnae%TYPE) IS
+        SELECT a.cdcnae,
+               gene0007.fn_caract_acento(b.dscnae) dscnae,
+               gene0007.fn_caract_acento(a.dsmotivo) dsmotivo,
+               a.tpbloqueio,
+               a.dslicenca,
+               a.dtmvtolt,
+               a.dtarquivo,
+               count(1) over() retorno
+          FROM tbcc_cnae_bloqueado a, tbgen_cnae b
+         WHERE a.cdcnae = b.cdcnae
+           AND a.cdcnae = decode(nvl(pr_cdcnae,0),0,a.cdcnae, pr_cdcnae)
+           AND (trim(pr_dscnae) IS NULL
+            OR  b.dscnae LIKE '%'||pr_dscnae||'%')           
+         ORDER BY a.cdcnae;
+
+      -- Variável de críticas
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(10000);
+
+      -- Variaveis de log
+      vr_cdoperad      VARCHAR2(100);
+      vr_cdcooper      NUMBER;
+      vr_nmdatela      VARCHAR2(100);
+      vr_nmeacao       VARCHAR2(100);
+      vr_cdagenci      VARCHAR2(100);
+      vr_nrdcaixa      VARCHAR2(100);
+      vr_idorigem      VARCHAR2(100);
+
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
+
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      vr_posreg   PLS_INTEGER := 0;
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_clob     CLOB;
+    BEGIN
+
+        gene0004.pc_extrai_dados(pr_xml => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+
+        -- Monta documento XML de ERRO
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+        -- Criar cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
+
+        -- Loop sobre a tabela de CNAE
+        FOR rw_cnae_bloqueado IN cr_cnae_bloqueado(pr_cdcnae => pr_cdcnae
+                                                  ,pr_dscnae => pr_dscnae)  LOOP
+
+          -- Incrementa o contador de registros
+          vr_posreg := vr_posreg + 1;
+
+          -- Se for o primeiro registro, insere uma tag com o total de registros existentes no filtro
+          IF vr_posreg = 1 THEN
+            gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => '<CNAE qtregist="' || rw_cnae_bloqueado.retorno || '">');
+          END IF;
+
+          -- Enviar somente se a linha for superior a linha inicial
+          IF nvl(pr_nriniseq,0) <= vr_posreg THEN
+
+            -- Carrega os dados
+            gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => '<inf>'||
+                                                            '<cdcnae>' || rw_cnae_bloqueado.cdcnae ||'</cdcnae>'||
+                                                            '<dscnae>' || rw_cnae_bloqueado.dscnae ||'</dscnae>'||
+                                                            '<dsmotivo>' || rw_cnae_bloqueado.dsmotivo ||'</dsmotivo>'||
+                                                            '<tpbloqueio>' || rw_cnae_bloqueado.tpbloqueio ||'</tpbloqueio>'||
+                                                            '<dslicenca>' || rw_cnae_bloqueado.dslicenca ||'</dslicenca>'||
+                                                            '<dtmvtolt>' || TO_CHAR(rw_cnae_bloqueado.dtmvtolt,'DD/MM/RRRR') ||'</dtmvtolt>'||
+                                                            '<dtarquivo>' || TO_CHAR(rw_cnae_bloqueado.dtarquivo,'DD/MM/RRRR') ||'</dtarquivo>'||
+                                                         '</inf>');
+            vr_contador := vr_contador + 1;
+          END IF;
+
+          -- Deve-se sair se o total de registros superar o total solicitado
+          EXIT WHEN vr_contador > nvl(pr_nrregist,99999);
+
+        END LOOP;
+
+        -- Se nao possuir nenhum registro, envia a quantidade de registros zerada
+        IF vr_posreg = 0 THEN
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<CNAE qtregist="0">');
+        END IF;
+
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</CNAE></Dados>'
+                               ,pr_fecha_xml      => TRUE);
+
+        -- Atualiza o XML de retorno
+        pr_retxml := xmltype(vr_clob);
+
+        -- Libera a memoria do CLOB
+        dbms_lob.close(vr_clob);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na busca do CNAE: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_buscar_cnae_bloqueado;
+    
+  PROCEDURE pc_cria_cnae_proibido_web(pr_cdcnae     IN  tbcc_cnae_bloqueado.cdcnae%TYPE
+                                     ,pr_dsmotivo   IN  tbcc_cnae_bloqueado.dsmotivo%TYPE
+                                     ,pr_tpbloqueio IN  tbcc_cnae_bloqueado.tpbloqueio%TYPE
+                                     ,pr_tpinclusao IN  tbcc_cnae_bloqueado.tpinclusao%TYPE
+                                     ,pr_dtarquivo  IN  VARCHAR2
+                                     ,pr_dtmvtolt   IN  VARCHAR2
+                                     ,pr_dslicenca  IN  VARCHAR2
+                                     ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro   OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      --Variáveis locais
+      vr_auxconta PLS_INTEGER := 0;
+      vr_nmarqpdf VARCHAR2(500);
+
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+    BEGIN 
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Inserir 
+      pc_inserir_cnae_bloqueado(pr_cdcnae     => pr_cdcnae
+                               ,pr_dsmotivo   => pr_dsmotivo
+                               ,pr_dtarquivo  => TO_DATE(pr_dtmvtolt,'DD/MM/RRRR')
+                               ,pr_dtmvtolt   => TO_DATE(pr_dtmvtolt,'DD/MM/RRRR')
+                               ,pr_tpbloqueio => pr_tpbloqueio
+                               ,pr_tpinclusao => pr_tpinclusao
+                               ,pr_dslicenca  => pr_dslicenca
+                               ,pr_cdcritic   => vr_cdcritic
+                               ,pr_dscritic   => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+      
+      --gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0     , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+      --gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nmarqpdf', pr_tag_cont => vr_nmarqpdf, pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_cria_cnae_proibido_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;    
+  END pc_cria_cnae_proibido_web;  
+
+  PROCEDURE pc_exclui_cnae_proibido_web(pr_cdcnae     IN  tbcc_cnae_bloqueado.cdcnae%TYPE
+                                       ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro   OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+    BEGIN 
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Inserir 
+      pc_excluir_cnae_bloqueado(pr_cdcnae     => pr_cdcnae
+                               ,pr_cdcritic   => vr_cdcritic
+                               ,pr_dscritic   => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exclui_cnae_proibido_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;    
+  END pc_exclui_cnae_proibido_web;  
+
+  PROCEDURE pc_limpa_cnae_bloqueado(pr_cdcritic   OUT PLS_INTEGER    --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2) IS   --> Descrição da crítica
+
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN 
+      
+      BEGIN
+        DELETE FROM tbcc_cnae_bloqueado;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE vr_exc_saida;  
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Nao foi possivel limpar a tabela de CNAEs bloqueados.';
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral em CADA0004.pc_limpa_cnae_bloqueado: ' || SQLERRM;
+        
+        ROLLBACK;
+
+    END;    
+  END pc_limpa_cnae_bloqueado;
+
+  /* Rotina para a validação do arquivo de folha - Através do IB */
+  PROCEDURE pc_importa_arq_cnae(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  IN VARCHAR2
+                               ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2
+                               ,pr_retxml    OUT CLOB) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_arq_cnae                  Antigo: Não há
+  --  Sistema  : IB
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado flor - CECRED
+  --  Data     : SET/2015.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina para a validação e importacao do arquivo de cnae
+  --
+  -- Alterações:
+  ---------------------------------------------------------------------------------------------------------------
+
+    -- CURSORES
+    -- Buscar os dados de Origens para Pagamentos de Folha
+    CURSOR cr_crapofp(pr_cdcooper  crapofp.cdcooper%TYPE
+                     ,pr_cdorigem  crapofp.cdorigem%TYPE) IS
+      SELECT ofp.cdhisdeb
+           , ofp.cdhiscre
+           , ofp.cdhsdbcp
+           , ofp.cdhscrcp
+           , ofp.cdorigem
+           , ofp.dsorigem
+           , ofp.idvarmes
+        FROM crapofp ofp
+       WHERE ofp.cdcooper = pr_cdcooper
+         AND ofp.cdorigem = pr_cdorigem;
+    rw_crapofp     cr_crapofp%ROWTYPE;
+
+    -- Busca dados da empresa/conta logada
+    CURSOR cr_crapemp(pr_cdcooper  crapemp.cdcooper%TYPE
+                     ,pr_nrdconta  crapemp.nrdconta%TYPE) IS
+      SELECT emp.idtpempr
+           , SUBSTR(LPAD(emp.nrdocnpj,14,0),1,8) nrdocnpj
+           , emp.cdempres
+        FROM crapemp emp
+       WHERE emp.cdcooper = pr_cdcooper
+         AND emp.nrdconta = pr_nrdconta;
+
+    -- Buscar dados para validar registro repetidos
+    CURSOR cr_verifica(pr_cdcooper    crappfp.cdcooper%TYPE
+                      ,pr_cdempres    crappfp.cdempres%TYPE
+                      ,pr_dtcredit    crappfp.dtcredit%TYPE
+                      ,pr_nrdconta    craplfp.nrdconta%TYPE
+                      ,pr_cdorigem    craplfp.cdorigem%TYPE) IS
+      SELECT COUNT(1)
+        FROM craplfp lfp
+           , crappfp pfp
+       WHERE pfp.cdcooper = lfp.cdcooper
+         AND pfp.cdempres = lfp.cdempres
+         AND pfp.nrseqpag = lfp.nrseqpag
+         AND pfp.cdcooper             = pr_cdcooper
+         AND pfp.cdempres             = pr_cdempres
+         AND TRUNC(pfp.dtcredit,'MM') = TRUNC(pr_dtcredit,'MM')
+         AND lfp.nrdconta             = pr_nrdconta
+         AND lfp.cdorigem             = pr_cdorigem;
+
+    -- Registros
+    TYPE typ_reccritc IS RECORD (nrdlinha NUMBER
+                                ,dscritic VARCHAR2(1000));
+    TYPE typ_tbcritic IS TABLE OF typ_reccritc INDEX BY BINARY_INTEGER;
+    vr_tbcritic    typ_tbcritic; -- Tabela de criticas encontradas na validação do arquivo
+
+    -- Variaveis
+    vr_excerror    EXCEPTION;
+
+    vr_dsdireto    VARCHAR2(100);
+    vr_dsdlinha    VARCHAR2(500);
+    vr_dscrilot    VARCHAR2(500); -- Critica a ser replicada no arquivo
+    vr_dscriarq    VARCHAR2(500); -- Critica a ser replicada no arquivo
+    vr_cdcritic    INTEGER;
+    vr_dscritic    VARCHAR2(500); -- Critica
+    vr_typ_said    VARCHAR2(50); -- Critica
+    vr_des_erro    VARCHAR2(500); -- Critica
+    vr_dsalert     VARCHAR2(500); -- Critica
+    vr_tpregist    NUMBER;
+    vr_qtlinhas    NUMBER;
+    vr_indice      INTEGER;
+
+    vr_nrdconta    NUMBER;
+    vr_nmarquiv    VARCHAR2(100); -- Nome do arquivo gerado para gravação dos dados
+
+    vr_clitmxml    CLOB;
+    vr_dsitmxml    VARCHAR2(32767);
+
+    vr_retxml      XMLType;
+    vr_dsauxml     varchar2(32767);
+    
+    vr_tab_linhas  gene0009.typ_tab_linhas;
+    vr_cdprogra    VARCHAR2(50) := 'CADA0004.pc_importa_arq_cnae';
+
+    -- Procedure auxiliar para adicionar as criticas do arquivo
+    PROCEDURE pc_add_critica(pr_dscritic IN VARCHAR2
+                            ,pr_nrdlinha IN NUMBER) IS
+
+      nrindice    NUMBER;
+
+    BEGIN
+      -- Indice para inclusão da crítica
+      nrindice := vr_tbcritic.count() + 1;
+
+      -- Inserir a critica no registro de memória
+      vr_tbcritic(nrindice).nrdlinha := pr_nrdlinha;
+      vr_tbcritic(nrindice).dscritic := pr_dscritic;
+
+    END pc_add_critica;
+
+  BEGIN
+
+    -- Busca o diretório do upload do arquivo
+    vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'upload');
+
+    -- Realizar a cópia do arquivo
+    GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dsdireto||pr_dsarquiv||' S'
+                               ,pr_typ_saida   => vr_typ_said
+                               ,pr_des_saida   => vr_des_erro);
+
+      -- Testar erro
+    IF vr_typ_said = 'ERR' THEN
+      -- O comando shell executou com erro, gerar log e sair do processo
+      vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
+      RAISE vr_excerror;
+    END IF;
+
+    -- Verifica se o arquivo existe
+    IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||pr_dsarquiv) THEN
+      -- Retorno de erro
+      vr_dscritic := 'Erro no upload do arquivo: '||REPLACE(vr_dsdireto,'/','-')||'-'||pr_dsarquiv;
+      RAISE vr_excerror;
+    END IF;    
+    
+    -- Criar cabecalho do XML
+    vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    --limpa temptable
+    vr_tab_linhas.DELETE;
+    -- Importar o arquivo utilizando o Layout, separado por Virgula
+    gene0009.pc_importa_arq_layout(pr_nmlayout   => 'CNAEBLQ'
+                                  ,pr_dsdireto   => vr_dsdireto
+                                  ,pr_nmarquiv   => pr_dsarquiv
+                                  ,pr_dscritic   => vr_dscritic
+                                  ,pr_tab_linhas => vr_tab_linhas);
+
+    IF vr_dscritic IS NOT NULL THEN
+       RAISE vr_excerror;
+    END IF;
+
+    -- Se não possuir linhas - Gera log erros
+    IF vr_tab_linhas.count = 0 THEN
+       vr_dscritic := 'Arquivo ' || pr_dsarquiv || ' não possui conteúdo!';
+       RAISE vr_excerror;
+    END IF;   
+
+    -- Se flglimpa = 1 entao devo limpar a tabela
+    IF pr_flglimpa = 1 THEN
+       pc_limpa_cnae_bloqueado(pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+                              
+       IF vr_cdcritic > 0 OR
+          vr_dscritic IS NOT NULL THEN
+          RAISE vr_excerror;
+       END IF;
+    END IF;    
+
+
+    -- Excluir o arquivo, pois desse ponto em diante irá trabalhar com o registro
+    -- de memória. Em caso de erros o programa abortará e o usuário irá realizar
+    -- novamente o envio do arquivo
+    GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
+
+    FOR vr_indice IN vr_tab_linhas.FIRST..vr_tab_linhas.LAST LOOP --LINHAS ARQUIVO
+        
+      IF vr_tab_linhas(vr_indice).exists('$ERRO$') THEN
+         pc_add_critica(pr_dscritic => vr_tab_linhas(vr_indice)('$ERRO$').texto
+                       ,pr_nrdlinha => vr_indice);
+      ELSE
+        pc_inserir_cnae_bloqueado(pr_cdcnae     => vr_tab_linhas(vr_indice)('CDCNAE').numero
+                                 ,pr_dsmotivo   => vr_tab_linhas(vr_indice)('DSMOTIVO').texto
+                                 ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
+                                 ,pr_tpbloqueio => vr_tab_linhas(vr_indice)('TPBLOQUEIO').numero
+                                 ,pr_tpinclusao => 1 --Inclusao via arquivo
+                                 ,pr_dtmvtolt   => SYSDATE
+                                 ,pr_dslicenca  => vr_tab_linhas(vr_indice)('DSLICENCA').texto
+                                 ,pr_cdcritic   => vr_cdcritic
+                                 ,pr_dscritic   => vr_dscritic);
+                                   
+        IF vr_dscritic IS NOT NULL THEN
+           
+           -- se nao conseguir inserir tenta atualizar           
+           pc_atualizar_cnae_bloqueado(pr_cdcnae     => vr_tab_linhas(vr_indice)('CDCNAE').numero
+                                      ,pr_dsmotivo   => vr_tab_linhas(vr_indice)('DSMOTIVO').texto
+                                      ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
+                                      ,pr_tpbloqueio => vr_tab_linhas(vr_indice)('TPBLOQUEIO').numero
+                                      ,pr_tpinclusao => 1 -- Via arquivo
+                                      ,pr_dtmvtolt   => SYSDATE
+                                      ,pr_dslicenca  => vr_tab_linhas(vr_indice)('DSLICENCA').texto
+                                      ,pr_cdcritic   => vr_cdcritic
+                                      ,pr_dscritic   => vr_dscritic);
+       
+           IF vr_cdcritic > 0 OR
+              vr_dscritic IS NOT NULL THEN
+              
+           pc_add_critica(pr_dscritic => vr_dscritic
+                         ,pr_nrdlinha => vr_indice);
+
+           CONTINUE;
+                            
+        END IF;
+        
+        END IF;
+        
+      END IF;
+
+    END LOOP;
+
+    -- Se possui críticas a serem retornadas
+    IF vr_tbcritic.COUNT() > 0 THEN
+       vr_indice := 0;
+        
+       -- Recriar cabecalho do XML
+       vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><criticas></criticas><arqcnaes></arqcnaes></Root>');
+       -- Percorre todas as mensagens de alerta
+       FOR vr_indice IN vr_tbcritic.FIRST..vr_tbcritic.LAST LOOP
+
+         -- Criar nodo filho
+         vr_retxml := XMLTYPE.appendChildXML(vr_retxml
+                                             ,'/Root/criticas'
+                                             ,XMLTYPE('<critica>'
+                                                    ||'    <nrdlinha>'||vr_tbcritic(vr_indice).nrdlinha||'</nrdlinha>'
+                                                    ||'    <dscritic>'||vr_tbcritic(vr_indice).dscritic||'</dscritic>'
+                                                    ||'</critica>'));
+
+       END LOOP; -- Loop das críticas
+
+    END IF;
+    
+    -- Converter o XML em CLOB e retornar
+    pr_retxml := vr_retxml.getClobVal();
+
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_dscritic := vr_dscritic;
+
+      vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+       -- Converter o XML
+      pr_retxml := vr_retxml.getClobVal();
+    WHEN OTHERS THEN
+      GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
+
+      pr_dscritic := 'Erro geral na rotina pc_importa_arq_cnae: '||SQLERRM;
+      
+      vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+                                     
+       -- Converter o XML
+      pr_retxml := vr_retxml.getClobVal();
+      
+  END pc_importa_arq_cnae;
+  
+  /* Rotina para importacao do arquivo de cnae para tela COCNAE Através do AyllosWeb */
+  PROCEDURE pc_importa_arq_cnae_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
+                                   ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER             --> 1 - Limpa tabela ou 2 - só atualiza as informaçoes
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS        --> Erros do processo
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_arq_cnae_web                  Antigo: Não há
+  --  Sistema  : Ayllos
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado Flor
+  --  Data     : Set/2016.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina importacao arquivo cnae bloqueado
+  --
+  ---------------------------------------------------------------------------------------------------------------
+
+    -- Variáveis
+    vr_cdcooper    NUMBER;
+    vr_nmdatela    VARCHAR2(25);
+    vr_nmeacao     VARCHAR2(25);
+    vr_cdagenci    VARCHAR2(25);
+    vr_nrdcaixa    VARCHAR2(25);
+    vr_idorigem    VARCHAR2(25);
+    vr_cdoperad    VARCHAR2(25);
+    vr_retxml      CLOB;
+
+    vr_excerror    EXCEPTION;
+    
+    CURSOR cr_cnae_blq(pr_cdcnae tbcc_cnae_bloqueado.cdcnae%TYPE) IS 
+      SELECT ROWID
+        FROM tbcc_cnae_bloqueado
+       WHERE tbcc_cnae_bloqueado.cdcnae = pr_cdcnae;
+
+  BEGIN
+
+    -- Extrair informacoes padrao do xml - parametros
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => pr_dscritic);
+
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
+      RAISE vr_excerror;
+    END IF;
+
+    -- Realiza a chamada da rotina
+    pc_importa_arq_cnae(pr_cdcooper => vr_cdcooper
+                       ,pr_dsarquiv => pr_dsarquiv
+                       ,pr_dsdireto => pr_dsdireto
+                       ,pr_flglimpa => pr_flglimpa
+                       ,pr_dscritic => pr_dscritic
+                       ,pr_retxml   => vr_retxml);
+
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
+      RAISE vr_excerror;
+    END IF;
+
+    -- Cria o XML de retorno
+    pr_retxml := XMLType.createXML(vr_retxml);
+
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_des_erro := pr_dscritic;
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral na rotina pc_importa_arq_cnae_web: '||SQLERRM;
+      pr_des_erro := pr_dscritic;
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+  END pc_importa_arq_cnae_web;
+  
+  PROCEDURE pc_exporta_arq_cnae(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  OUT VARCHAR2
+                               ,pr_cdcritic  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_exporta_arq_cnae                  Antigo: Não há
+  --  Sistema  : IB
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado flor - SUPERO
+  --  Data     : SET/2015.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina para a exportacao do arquivo de cnae
+  --
+  -- Alterações:
+  ---------------------------------------------------------------------------------------------------------------
+  
+    CURSOR cr_cnae_blq IS 
+      SELECT *
+        FROM tbcc_cnae_bloqueado;
+  
+    TYPE typ_tab_cnae_blq IS TABLE OF VARCHAR2(1000)
+      INDEX BY PLS_INTEGER;
+  
+    vr_tab_cnae_blq typ_tab_cnae_blq;
+  
+    vr_arqhandl  utl_file.file_type;    --> Handle do arquivo aberto
+    vr_arq_path  VARCHAR2(1000);        --> Diretorio que sera criado o relatorio    
+    vr_arq_temp  VARCHAR2(100);         --> Nome do arquivo Temporario    
+
+    vr_dslinha   VARCHAR2(4000);
+    vr_count      NUMBER := 0;
+     
+    vr_des_xml         CLOB;
+    vr_texto_completo  VARCHAR2(32600);
+
+    vr_dscritic  VARCHAR2(4000);
+    vr_cdcritic  INTEGER;
+    vr_tab_erro  gene0001.typ_tab_erro;
+  
+    vr_excerror  EXCEPTION;   
+    
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+     
+  
+  BEGIN
+    
+    -- Iniciar Variáveis     
+    vr_arq_path := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'arq');
+    vr_arq_temp := 'CNAES_BLOQ.txt';
+    
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    vr_texto_completo := NULL;
+    
+    FOR rw_cnae_blq IN cr_cnae_blq LOOP
+      
+      pc_escreve_xml( rw_cnae_blq.cdcnae     || ';' ||  
+                      rw_cnae_blq.dsmotivo   || ';' || 
+                      rw_cnae_blq.dslicenca  || ';' ||
+                      rw_cnae_blq.tpbloqueio || ';' || 
+                      TO_CHAR(rw_cnae_blq.dtarquivo,'DD/MM/RRRR') || ';' || 
+                      TO_CHAR(rw_cnae_blq.dtmvtolt,'DD/MM/RRRR') || chr(10) );
+    
+    END LOOP;
+    
+    pc_escreve_xml(' ',TRUE);
+    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);   
+    
+    vr_dscritic := '';
+    
+    gene0002.pc_efetua_copia_pdf(pr_cdcooper => 3 
+                                ,pr_cdagenci => 1
+                                ,pr_nrdcaixa => 100 
+                                ,pr_nmarqpdf => vr_arq_path ||'/'|| vr_arq_temp
+                                ,pr_des_reto => vr_dscritic
+                                ,pr_tab_erro => vr_tab_erro);
+                                
+    IF vr_dscritic IS NOT NULL AND 
+       vr_dscritic <> 'OK' THEN
+       vr_dscritic := 'Problemas ao efetuar copia do arquivo para o servidor de destino. ' || vr_dscritic;
+       RAISE vr_excerror;
+    END IF;
+    
+    pr_dsarquiv := vr_arq_path ||'/'|| vr_arq_temp;
+  
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral na rotina pc_exporta_arq_cnae: '||SQLERRM;
+  END pc_exporta_arq_cnae;
+  
+  PROCEDURE pc_exporta_arq_cnae_web(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                   ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                   ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                   ,pr_des_erro   OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      vr_dsarquiv VARCHAR2(400);
+      
+    BEGIN 
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      pc_exporta_arq_cnae(pr_cdcooper   => vr_cdcooper
+                         ,pr_dsarquiv   => vr_dsarquiv
+                         ,pr_cdcritic   => vr_cdcritic
+                         ,pr_dscritic   => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados><dsarquiv>'||vr_dsarquiv||'</dsarquiv></Dados></Root>');
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exporta_arq_cnae_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;    
+  END pc_exporta_arq_cnae_web;    
+  
+  PROCEDURE pc_verifica_cnae_blq(pr_cdcnae   IN tbcc_cnae_bloqueado.cdcnae%TYPE  
+                                ,pr_nrcpfcgc IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> Codigo do CNPJ
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+      -- Cursor sobre a tabela do CNAE
+      CURSOR cr_cnae_bloqueado(pr_cdcnae tbcc_cnae_bloqueado.cdcnae%TYPE) IS
+        SELECT tbcc_cnae_bloqueado.cdcnae
+              ,tbcc_cnae_bloqueado.tpbloqueio
+          FROM tbcc_cnae_bloqueado
+         WHERE tbcc_cnae_bloqueado.cdcnae = pr_cdcnae;
+      rw_cnae_bloqueado cr_cnae_bloqueado%ROWTYPE;
+
+      -- Variável de críticas
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(10000);
+
+      -- Variaveis de log
+      vr_cdoperad      VARCHAR2(100);
+      vr_cdcooper      NUMBER;
+      vr_nmdatela      VARCHAR2(100);
+      vr_nmeacao       VARCHAR2(100);
+      vr_cdagenci      VARCHAR2(100);
+      vr_nrdcaixa      VARCHAR2(100);
+      vr_idorigem      VARCHAR2(100);
+
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
+
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      vr_posreg   PLS_INTEGER := 0;
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_clob     CLOB;
+    BEGIN
+
+        gene0004.pc_extrai_dados(pr_xml => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+
+        -- Monta documento XML de ERRO
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+        -- Criar cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
+
+        OPEN cr_cnae_bloqueado(pr_cdcnae => pr_cdcnae);
+        FETCH cr_cnae_bloqueado INTO rw_cnae_bloqueado;
+        
+        IF cr_cnae_bloqueado%NOTFOUND THEN
+           CLOSE cr_cnae_bloqueado;
+           
+           -- Carrega os dados
+           gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => '<bloqueado>3</bloqueado>');
+        ELSE
+           CLOSE cr_cnae_bloqueado;
+           
+           IF rw_cnae_bloqueado.tpbloqueio = 0 THEN 
+              -- Carrega os dados 
+              gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                     ,pr_texto_completo => vr_xml_temp
+                                     ,pr_texto_novo     => '<bloqueado>0</bloqueado>'); --Restrito
+           ELSE                          
+              -- Carrega os dados 
+              gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                     ,pr_texto_completo => vr_xml_temp
+                                     ,pr_texto_novo     => '<bloqueado>1</bloqueado>'); --Proibido
+           END IF;                          
+                                  
+           /*grava tabela de bloqueio de conta*/
+           BEGIN
+             INSERT 
+               INTO tbcc_aberturas_bloqueadas(cdcooper, cdagenci, 
+                                              cdcnae, dtmvtolt,
+                                              nrcpfcgc, tpbloqueio)
+                                       VALUES(vr_cdcooper, vr_cdagenci,
+                                              pr_cdcnae, SYSDATE,
+                                              pr_nrcpfcgc, 1); 
+
+           EXCEPTION
+             WHEN dup_val_on_index THEN
+                RAISE vr_exc_saida;
+             WHEN OTHERS THEN
+                RAISE vr_exc_saida;
+           END;
+           
+        END IF;
+        
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</Dados>'
+                               ,pr_fecha_xml      => TRUE);
+
+        -- Atualiza o XML de retorno
+        pr_retxml := xmltype(vr_clob);
+
+        -- Libera a memoria do CLOB
+        dbms_lob.close(vr_clob);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na busca do CNAE: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_verifica_cnae_blq;  
+  
+  PROCEDURE pc_valida_cnae_restrito(pr_cdcnae       IN  tbcc_cnae_bloqueado.cdcnae%TYPE
+                                   ,pr_flgrestrito  OUT INTEGER) IS
+  BEGIN
+    DECLARE
+      CURSOR cr_cnae_res(pr_cdcnae tbcc_cnae_bloqueado.cdcnae%TYPE) IS
+        SELECT 1 
+          FROM tbcc_cnae_bloqueado
+         WHERE tbcc_cnae_bloqueado.cdcnae = pr_cdcnae
+           AND tbcc_cnae_bloqueado.tpbloqueio = 0;
+           
+      rw_cnae_res cr_cnae_res%ROWTYPE;        
+      
+      vr_exc_saida EXCEPTION;
+    BEGIN
+      
+      pr_flgrestrito := 0; --OK
+    
+      OPEN cr_cnae_res(pr_cdcnae => pr_cdcnae);
+      FETCH cr_cnae_res INTO rw_cnae_res;
+      
+      IF cr_cnae_res%NOTFOUND THEN
+         CLOSE cr_cnae_res;                  
+         RAISE vr_exc_saida;
+      END IF;
+      
+      CLOSE cr_cnae_res;
+      
+      pr_flgrestrito := 1; --Restrito
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        ROLLBACK;        
+      WHEN OTHERS THEN
+        ROLLBACK;
+    END;
+  EXCEPTION
+    WHEN OTHERS THEN 
+      ROLLBACK;
+  END pc_valida_cnae_restrito;
+  
+--#########################################################################################################
+--#############                 CNPJ BLOQUEADOS                                                     #######
+--#########################################################################################################
+  PROCEDURE pc_inserir_cnpj_bloqueado(pr_inpessoa   IN tbcc_cnpjcpf_bloqueado.inpessoa%TYPE    --> PF/PJ
+                                     ,pr_nrcpfcgc   IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE    --> Codigo do CNAE 
+                                     ,pr_dsnome     IN tbcc_cnpjcpf_bloqueado.dsnome%TYPE      --> Nome                                     
+                                     ,pr_dsmotivo   IN tbcc_cnpjcpf_bloqueado.dsmotivo%TYPE    --> Motivo da inclusao
+                                     ,pr_dtarquivo  IN tbcc_cnpjcpf_bloqueado.dtarquivo%TYPE   --> Data do arquivo                                     
+                                     ,pr_tpinclusao IN tbcc_cnpjcpf_bloqueado.tpinclusao%TYPE  --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                     ,pr_dtmvtolt   IN tbcc_cnpjcpf_bloqueado.dtmvtolt%TYPE    --> Data atual
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      -- Inserir 
+      BEGIN
+        INSERT 
+          INTO tbcc_cnpjcpf_bloqueado(inpessoa, nrcpfcgc, dsnome
+                                     ,dsmotivo, dtarquivo
+                                     ,dtmvtolt, tpinclusao)  
+                               VALUES(pr_inpessoa, pr_nrcpfcgc, pr_dsnome
+                                     ,pr_dsmotivo, pr_dtarquivo
+                                     ,pr_dtmvtolt, pr_tpinclusao);       
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'CNPJ ou CPF já cadastrado.';        
+          RAISE vr_exc_saida;
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnpj_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_inserir_cnpj_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_inserir_cnpj_bloqueado;
+
+  PROCEDURE pc_atualizar_cnpj_bloqueado(pr_inpessoa   IN tbcc_cnpjcpf_bloqueado.inpessoa%TYPE    --> PF/PJ
+                                       ,pr_nrcpfcgc   IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE    --> Codigo do CNAE 
+                                       ,pr_dsnome     IN tbcc_cnpjcpf_bloqueado.dsnome%TYPE      --> Nome                                     
+                                       ,pr_dsmotivo   IN tbcc_cnpjcpf_bloqueado.dsmotivo%TYPE    --> Motivo da inclusao
+                                       ,pr_dtarquivo  IN tbcc_cnpjcpf_bloqueado.dtarquivo%TYPE   --> Data do arquivo                                     
+                                       ,pr_tpinclusao IN tbcc_cnpjcpf_bloqueado.tpinclusao%TYPE  --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                       ,pr_dtmvtolt   IN tbcc_cnpjcpf_bloqueado.dtmvtolt%TYPE    --> Data atual
+                                       ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                       ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+    
+      CURSOR cr_cnpj_blq(pr_nrcpfcgc tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE) IS
+        SELECT tbcc_cnpjcpf_bloqueado.nrcpfcgc
+          FROM tbcc_cnpjcpf_bloqueado
+         WHERE tbcc_cnpjcpf_bloqueado.nrcpfcgc = pr_nrcpfcgc;
+      rw_cnpj_blq cr_cnpj_blq%ROWTYPE;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      OPEN cr_cnpj_blq(pr_nrcpfcgc => pr_nrcpfcgc);
+      FETCH cr_cnpj_blq INTO rw_cnpj_blq;
+      
+      IF cr_cnpj_blq%NOTFOUND THEN -->Nao disparar critica apenas nao atualiza
+         CLOSE cr_cnpj_blq;
+         vr_cdcritic := 0;
+         vr_dscritic := '';
+         RAISE vr_exc_saida;
+      END IF;    
+      
+      CLOSE cr_cnpj_blq;
+      
+      -- Update
+      BEGIN
+        UPDATE tbcc_cnpjcpf_bloqueado
+           SET tbcc_cnpjcpf_bloqueado.dsnome     = pr_dsnome
+              ,tbcc_cnpjcpf_bloqueado.dsmotivo   = pr_dsmotivo
+              ,tbcc_cnpjcpf_bloqueado.dtarquivo  = pr_dtarquivo
+              ,tbcc_cnpjcpf_bloqueado.dtmvtolt   = pr_dtmvtolt
+              ,tbcc_cnpjcpf_bloqueado.tpinclusao = pr_tpinclusao
+              ,tbcc_cnpjcpf_bloqueado.inpessoa   = pr_inpessoa
+         WHERE tbcc_cnpjcpf_bloqueado.nrcpfcgc   = pr_nrcpfcgc;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_atualizar_cnpj_bloqueado;
+
+  PROCEDURE pc_excluir_cnpj_bloqueado(pr_nrcpfcgc   IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE    --> Codigo do CNPJ 
+                                     ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                     ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      -- Excluir 
+      BEGIN
+        DELETE FROM tbcc_cnpjcpf_bloqueado WHERE tbcc_cnpjcpf_bloqueado.nrcpfcgc = pr_nrcpfcgc;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnpj_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_excluir_cnpj_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_excluir_cnpj_bloqueado;
+  
+  PROCEDURE pc_buscar_cnpj_bloqueado(pr_inpessoa IN tbcc_cnpjcpf_bloqueado.inpessoa%TYPE --> PF/PJ
+                                    ,pr_nrcpfcgc IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> Codigo do CNPJ
+                                    ,pr_dsnome   IN tbcc_cnpjcpf_bloqueado.dsnome%TYPE --> Nome do CNPJ
+                                    ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
+                                    ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+      -- Cursor sobre a tabela do CNAE
+      CURSOR cr_cnpj_bloqueado(pr_nrcpfcgc tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE
+                              ,pr_dsnome tbcc_cnpjcpf_bloqueado.dsnome%TYPE) IS
+        SELECT a.nrcpfcgc,
+               gene0007.fn_caract_acento(a.dsnome) dsnome,
+               gene0007.fn_caract_acento(a.dsmotivo) dsmotivo,
+               a.tpinclusao,
+               a.dtarquivo,
+               a.dtmvtolt,
+               a.inpessoa,
+               count(1) over() retorno
+          FROM tbcc_cnpjcpf_bloqueado a
+         WHERE a.nrcpfcgc = decode(nvl(pr_nrcpfcgc,0),0,a.nrcpfcgc, pr_nrcpfcgc)
+           AND a.inpessoa = decode(nvl(pr_inpessoa,0),0,a.inpessoa, pr_inpessoa)
+           AND (trim(pr_dsnome) IS NULL
+            OR  a.dsnome LIKE '%'||pr_dsnome||'%')           
+         ORDER BY a.dsnome;
+
+      -- Variável de críticas
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(10000);
+
+      -- Variaveis de log
+      vr_cdoperad      VARCHAR2(100);
+      vr_cdcooper      NUMBER;
+      vr_nmdatela      VARCHAR2(100);
+      vr_nmeacao       VARCHAR2(100);
+      vr_cdagenci      VARCHAR2(100);
+      vr_nrdcaixa      VARCHAR2(100);
+      vr_idorigem      VARCHAR2(100);
+
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
+
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      vr_posreg   PLS_INTEGER := 0;
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_clob     CLOB;
+    BEGIN
+
+        gene0004.pc_extrai_dados(pr_xml => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+
+        -- Monta documento XML de ERRO
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+        -- Criar cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
+
+        -- Loop sobre a tabela de CNAE
+        FOR rw_cnpj_bloqueado IN cr_cnpj_bloqueado(pr_nrcpfcgc => pr_nrcpfcgc
+                                                  ,pr_dsnome   => pr_dsnome)  LOOP
+
+          -- Incrementa o contador de registros
+          vr_posreg := vr_posreg + 1;
+
+          -- Se for o primeiro registro, insere uma tag com o total de registros existentes no filtro
+          IF vr_posreg = 1 THEN
+            gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => '<CNPJ qtregist="' || rw_cnpj_bloqueado.retorno || '">');
+          END IF;
+
+          -- Enviar somente se a linha for superior a linha inicial
+          IF nvl(pr_nriniseq,0) <= vr_posreg THEN
+
+            -- Carrega os dados
+            gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => '<inf>'||
+                                                            '<nrcpfcgc>' || rw_cnpj_bloqueado.nrcpfcgc ||'</nrcpfcgc>'||
+                                                            '<dsnome>' || rw_cnpj_bloqueado.dsnome ||'</dsnome>'||
+                                                            '<dsmotivo>' || rw_cnpj_bloqueado.dsmotivo ||'</dsmotivo>'||
+                                                            '<inpessoa>' || rw_cnpj_bloqueado.inpessoa ||'</inpessoa>'||
+                                                            '<tpinclusao>' || rw_cnpj_bloqueado.tpinclusao ||'</tpinclusao>'||
+                                                            '<dtmvtolt>' || TO_CHAR(rw_cnpj_bloqueado.dtmvtolt,'DD/MM/RRRR') ||'</dtmvtolt>'||
+                                                            '<dtarquivo>' || TO_CHAR(rw_cnpj_bloqueado.dtarquivo,'DD/MM/RRRR') ||'</dtarquivo>'||
+                                                         '</inf>');
+            vr_contador := vr_contador + 1;
+          END IF;
+
+          -- Deve-se sair se o total de registros superar o total solicitado
+          EXIT WHEN vr_contador > nvl(pr_nrregist,99999);
+
+        END LOOP;
+
+        -- Se nao possuir nenhum registro, envia a quantidade de registros zerada
+        IF vr_posreg = 0 THEN
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<CNPJ qtregist="0">');
+        END IF;
+
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</CNPJ></Dados>'
+                               ,pr_fecha_xml      => TRUE);
+
+        -- Atualiza o XML de retorno
+        pr_retxml := xmltype(vr_clob);
+
+        -- Libera a memoria do CLOB
+        dbms_lob.close(vr_clob);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na busca do CNPJ: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_buscar_cnpj_bloqueado;
+    
+  PROCEDURE pc_cria_cnpj_proibido_web(pr_inpessoa   IN  tbcc_cnpjcpf_bloqueado.inpessoa%TYPE
+                                     ,pr_nrcpfcgc   IN  tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE
+                                     ,pr_dsnome     IN  tbcc_cnpjcpf_bloqueado.dsnome%TYPE
+                                     ,pr_dsmotivo   IN  tbcc_cnpjcpf_bloqueado.dsmotivo%TYPE
+                                     ,pr_tpinclusao IN  tbcc_cnpjcpf_bloqueado.tpinclusao%TYPE
+                                     ,pr_dtarquivo  IN  VARCHAR2
+                                     ,pr_dtmvtolt   IN  VARCHAR2
+                                     ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro   OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      --Variáveis locais
+      vr_auxconta PLS_INTEGER := 0;
+      vr_nmarqpdf VARCHAR2(500);
+
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+    BEGIN 
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Inserir 
+      pc_inserir_cnpj_bloqueado(pr_inpessoa   => pr_inpessoa
+                               ,pr_nrcpfcgc   => pr_nrcpfcgc
+                               ,pr_dsnome     => pr_dsnome
+                               ,pr_dsmotivo   => pr_dsmotivo
+                               ,pr_dtarquivo  => TO_DATE(pr_dtmvtolt,'DD/MM/RRRR')
+                               ,pr_dtmvtolt   => TO_DATE(pr_dtmvtolt,'DD/MM/RRRR')
+                               ,pr_tpinclusao => pr_tpinclusao
+                               ,pr_cdcritic   => vr_cdcritic
+                               ,pr_dscritic   => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_cria_cnpj_proibido_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;    
+  END pc_cria_cnpj_proibido_web;  
+
+  PROCEDURE pc_exclui_cnpj_proibido_web(pr_nrcpfcgc   IN  tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> CNPJ ou CPF
+                                       ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                       ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                       ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                       ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro   OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+    BEGIN 
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Inserir 
+      pc_excluir_cnpj_bloqueado(pr_nrcpfcgc   => pr_nrcpfcgc
+                               ,pr_cdcritic   => vr_cdcritic
+                               ,pr_dscritic   => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exclui_cnpj_proibido_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;    
+  END pc_exclui_cnpj_proibido_web;  
+
+  PROCEDURE pc_limpa_cnpj_proibido(pr_cdcritic   OUT PLS_INTEGER    --> Código da crítica
+                                  ,pr_dscritic   OUT VARCHAR2) IS   --> Descrição da crítica
+
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN 
+      
+      BEGIN
+        DELETE FROM tbcc_cnpjcpf_bloqueado;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE vr_exc_saida;  
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Nao foi possivel limpar a tabela de CNPJ/CPF bloqueados.';
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral em CADA0004.pc_limpa_cnpj_proibido: ' || SQLERRM;
+        
+        ROLLBACK;
+
+    END;    
+  END pc_limpa_cnpj_proibido;  
+
+  /* Rotina para a validação do arquivo de folha - Através do IB */
+  PROCEDURE pc_importa_arq_cnpj(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  IN VARCHAR2
+                               ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2
+                               ,pr_retxml    OUT CLOB) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_arq_cnpj                  Antigo: Não há
+  --  Sistema  : IB
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado flor - SUPERO
+  --  Data     : SET/2015.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina para a validação e importacao do arquivo de cnpj
+  --
+  -- Alterações:
+  ---------------------------------------------------------------------------------------------------------------
+
+    -- Registros
+    TYPE typ_reccritc IS RECORD (nrdlinha NUMBER
+                                ,dscritic VARCHAR2(1000));
+    TYPE typ_tbcritic IS TABLE OF typ_reccritc INDEX BY BINARY_INTEGER;
+    vr_tbcritic    typ_tbcritic; -- Tabela de criticas encontradas na validação do arquivo
+
+    -- Variaveis
+    vr_excerror    EXCEPTION;
+
+    vr_dsdireto    VARCHAR2(100);
+    vr_dsdlinha    VARCHAR2(500);
+    vr_dscrilot    VARCHAR2(500); -- Critica a ser replicada no arquivo
+    vr_dscriarq    VARCHAR2(500); -- Critica a ser replicada no arquivo
+    vr_cdcritic    INTEGER;
+    vr_dscritic    VARCHAR2(500); -- Critica
+    vr_typ_said    VARCHAR2(50); -- Critica
+    vr_des_erro    VARCHAR2(500); -- Critica
+    vr_dsalert     VARCHAR2(500); -- Critica
+    vr_tpregist    NUMBER;
+    vr_qtlinhas    NUMBER;
+    vr_indice      INTEGER;
+
+    vr_nrdconta    NUMBER;
+    vr_nmarquiv    VARCHAR2(100); -- Nome do arquivo gerado para gravação dos dados
+
+    vr_clitmxml    CLOB;
+    vr_dsitmxml    VARCHAR2(32767);
+
+    vr_retxml      XMLType;
+    vr_dsauxml     varchar2(32767);
+    
+    vr_tab_linhas  gene0009.typ_tab_linhas;
+    vr_cdprogra    VARCHAR2(50) := 'CADA0004.pc_importa_arq_cnpj';
+
+    -- Procedure auxiliar para adicionar as criticas do arquivo
+    PROCEDURE pc_add_critica(pr_dscritic IN VARCHAR2
+                            ,pr_nrdlinha IN NUMBER) IS
+
+      nrindice    NUMBER;
+
+    BEGIN
+      -- Indice para inclusão da crítica
+      nrindice := vr_tbcritic.count() + 1;
+
+      -- Inserir a critica no registro de memória
+      vr_tbcritic(nrindice).nrdlinha := pr_nrdlinha;
+      vr_tbcritic(nrindice).dscritic := pr_dscritic;
+
+    END pc_add_critica;
+
+  BEGIN
+
+    -- Busca o diretório do upload do arquivo
+    vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'upload');
+
+    -- Realizar a cópia do arquivo
+    GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dsdireto||pr_dsarquiv||' S'
+                               ,pr_typ_saida   => vr_typ_said
+                               ,pr_des_saida   => vr_des_erro);
+
+      -- Testar erro
+    IF vr_typ_said = 'ERR' THEN
+      -- O comando shell executou com erro, gerar log e sair do processo
+      vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
+      RAISE vr_excerror;
+    END IF;
+
+    -- Verifica se o arquivo existe
+    IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||pr_dsarquiv) THEN
+      -- Retorno de erro
+      vr_dscritic := 'Erro no upload do arquivo: '||REPLACE(vr_dsdireto,'/','-')||'-'||pr_dsarquiv;
+      RAISE vr_excerror;
+    END IF;    
+    
+    -- Criar cabecalho do XML
+    vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    --limpa temptable
+    vr_tab_linhas.DELETE;
+    -- Importar o arquivo utilizando o Layout, separado por Virgula
+    gene0009.pc_importa_arq_layout(pr_nmlayout   => 'CNPJCPFBLQ'
+                                  ,pr_dsdireto   => vr_dsdireto
+                                  ,pr_nmarquiv   => pr_dsarquiv
+                                  ,pr_dscritic   => vr_dscritic
+                                  ,pr_tab_linhas => vr_tab_linhas);
+
+    IF vr_dscritic IS NOT NULL THEN         
+       RAISE vr_excerror;
+    END IF;
+
+    -- Se não possuir linhas - Gera log erros
+    IF vr_tab_linhas.count = 0 THEN
+       vr_dscritic := 'Arquivo ' || pr_dsarquiv || ' não possui conteúdo!';
+       RAISE vr_excerror;
+    END IF;   
+
+    -- Excluir o arquivo, pois desse ponto em diante irá trabalhar com o registro
+    -- de memória. Em caso de erros o programa abortará e o usuário irá realizar
+    -- novamente o envio do arquivo
+    GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
+
+    -- Se flglimpa = 1 entao devo limpar a tabela
+    IF pr_flglimpa = 1 THEN
+       pc_limpa_cnpj_proibido(pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+                              
+       IF vr_cdcritic > 0 OR
+          vr_dscritic <> '' THEN
+          RAISE vr_excerror;
+       END IF;
+    END IF;    
+
+    FOR vr_indice IN vr_tab_linhas.FIRST..vr_tab_linhas.LAST LOOP --LINHAS ARQUIVO
+        
+      IF vr_tab_linhas(vr_indice).exists('$ERRO$') THEN
+         pc_add_critica(pr_dscritic => vr_tab_linhas(vr_indice)('$ERRO$').texto
+                       ,pr_nrdlinha => vr_indice);
+      ELSE
+        pc_inserir_cnpj_bloqueado(pr_inpessoa   => vr_tab_linhas(vr_indice)('INPESSOA').numero
+                                 ,pr_nrcpfcgc   => vr_tab_linhas(vr_indice)('NRCPFCGC').numero
+                                 ,pr_dsnome     => vr_tab_linhas(vr_indice)('DSNOME').texto
+                                 ,pr_dsmotivo   => vr_tab_linhas(vr_indice)('DSMOTIVO').texto
+                                 ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
+                                 ,pr_tpinclusao => 1 --via arq
+                                 ,pr_dtmvtolt   => SYSDATE
+                                 ,pr_cdcritic   => vr_cdcritic
+                                 ,pr_dscritic   => vr_dscritic);
+                                   
+        IF vr_dscritic IS NOT NULL THEN
+          
+           -- se nao conseguir inserir tenta atualizar
+           pc_atualizar_cnpj_bloqueado(pr_inpessoa   => vr_tab_linhas(vr_indice)('INPESSOA').numero
+                                      ,pr_nrcpfcgc   => vr_tab_linhas(vr_indice)('NRCPFCGC').numero
+                                      ,pr_dsnome     => vr_tab_linhas(vr_indice)('DSNOME').texto
+                                      ,pr_dsmotivo   => vr_tab_linhas(vr_indice)('DSMOTIVO').texto
+                                      ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
+                                      ,pr_tpinclusao => 1 -- via arq
+                                      ,pr_dtmvtolt   => SYSDATE
+                                      ,pr_cdcritic   => vr_cdcritic
+                                      ,pr_dscritic   => vr_dscritic);
+           
+           
+           pc_add_critica(pr_dscritic => vr_dscritic
+                         ,pr_nrdlinha => vr_indice);
+
+        END IF;
+        
+      END IF;
+
+    END LOOP;
+
+    -- Se possui críticas a serem retornadas
+    IF vr_tbcritic.COUNT() > 0 THEN
+       vr_indice := 0;
+        
+       -- Recriar cabecalho do XML
+       vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><criticas></criticas><arqcnpjs></arqcnpjs></Root>');
+       -- Percorre todas as mensagens de alerta
+       FOR vr_indice IN vr_tbcritic.FIRST..vr_tbcritic.LAST LOOP
+
+         -- Criar nodo filho
+         vr_retxml := XMLTYPE.appendChildXML(vr_retxml
+                                             ,'/Root/criticas'
+                                             ,XMLTYPE('<critica>'
+                                                    ||'    <nrdlinha>'||vr_tbcritic(vr_indice).nrdlinha||'</nrdlinha>'
+                                                    ||'    <dscritic>'||vr_tbcritic(vr_indice).dscritic||'</dscritic>'
+                                                    ||'</critica>'));
+
+       END LOOP; -- Loop das críticas
+
+    END IF;
+    
+    -- Converter o XML em CLOB e retornar
+    pr_retxml := vr_retxml.getClobVal();
+
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_dscritic := vr_dscritic;
+
+      vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros..' || pr_dscritic || '</Erro></Root>');
+       -- Converter o XML
+      pr_retxml := vr_retxml.getClobVal();
+    WHEN OTHERS THEN
+      GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
+
+      pr_dscritic := 'Erro geral na rotina pc_importa_arq_cnpj: '||SQLERRM;
+      
+      vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+       -- Converter o XML
+      pr_retxml := vr_retxml.getClobVal();
+      
+  END pc_importa_arq_cnpj;
+  
+  /* Rotina para importacao do arquivo de cnae para tela COCNAE Através do AyllosWeb */
+  PROCEDURE pc_importa_arq_cnpj_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
+                                   ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER
+                                   ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
+                                   ,pr_des_erro  OUT VARCHAR2) IS        --> Erros do processo
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_arq_cnpj_web                  Antigo: Não há
+  --  Sistema  : Ayllos
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado Flor
+  --  Data     : Set/2016.                   Ultima atualizacao: --/--/----
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina importacao arquivo cnae bloqueado
+  --
+  ---------------------------------------------------------------------------------------------------------------
+
+    -- Variáveis
+    vr_cdcooper    NUMBER;
+    vr_nmdatela    VARCHAR2(25);
+    vr_nmeacao     VARCHAR2(25);
+    vr_cdagenci    VARCHAR2(25);
+    vr_nrdcaixa    VARCHAR2(25);
+    vr_idorigem    VARCHAR2(25);
+    vr_cdoperad    VARCHAR2(25);
+    vr_retxml      CLOB;
+
+    vr_excerror    EXCEPTION;
+    
+    CURSOR cr_cnae_blq(pr_nrcpfcgc tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE) IS 
+      SELECT ROWID
+        FROM tbcc_cnpjcpf_bloqueado
+       WHERE tbcc_cnpjcpf_bloqueado.nrcpfcgc = pr_nrcpfcgc;
+
+  BEGIN
+
+    -- Extrair informacoes padrao do xml - parametros
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => pr_dscritic);
+
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN      
+      RAISE vr_excerror;
+    END IF;
+
+    -- Realiza a chamada da rotina
+    pc_importa_arq_cnpj(pr_cdcooper => vr_cdcooper
+                       ,pr_dsarquiv => pr_dsarquiv
+                       ,pr_dsdireto => pr_dsdireto
+                       ,pr_flglimpa => pr_flglimpa
+                       ,pr_dscritic => pr_dscritic
+                       ,pr_retxml   => vr_retxml);
+
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
+      RAISE vr_excerror;
+    END IF;
+
+    -- Cria o XML de retorno
+    pr_retxml := XMLType.createXML(vr_retxml);
+
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_des_erro := pr_dscritic;
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros '||pr_dscritic||'</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral na rotina pc_importa_arq_cnpj_web: '||SQLERRM;
+      pr_des_erro := pr_dscritic;
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+  END pc_importa_arq_cnpj_web;
+  
+  PROCEDURE pc_exporta_arq_cnpj(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                               ,pr_dsarquiv  OUT VARCHAR2
+                               ,pr_cdcritic  IN INTEGER
+                               ,pr_dscritic  OUT VARCHAR2) IS
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_exporta_arq_cnpj                  Antigo: Não há
+  --  Sistema  : IB
+  --  Sigla    : CRED
+  --  Autor    : Tiago Machado flor - SUPERO
+  --  Data     : SET/2015.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que for chamado
+  -- Objetivo  : Rotina para a exportacao do arquivo de cnpj
+  --
+  -- Alterações:
+  ---------------------------------------------------------------------------------------------------------------
+  
+    CURSOR cr_cnpj_blq IS 
+      SELECT *
+        FROM tbcc_cnpjcpf_bloqueado;
+  
+    TYPE typ_tab_cnpj_blq IS TABLE OF VARCHAR2(1000)
+      INDEX BY PLS_INTEGER;
+  
+    vr_tab_cnpj_blq typ_tab_cnpj_blq;
+  
+    vr_arqhandl  utl_file.file_type;    --> Handle do arquivo aberto
+    vr_arq_path  VARCHAR2(1000);        --> Diretorio que sera criado o relatorio    
+    vr_arq_temp  VARCHAR2(100);         --> Nome do arquivo Temporario    
+
+    vr_dslinha   VARCHAR2(4000);
+    vr_count      NUMBER := 0;
+     
+    vr_des_xml         CLOB;
+    vr_texto_completo  VARCHAR2(32600);
+
+    vr_dscritic  VARCHAR2(4000);
+    vr_cdcritic  INTEGER;
+    vr_tab_erro  gene0001.typ_tab_erro;
+  
+    vr_excerror  EXCEPTION;   
+    
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+     
+  
+  BEGIN
+    
+    -- Iniciar Variáveis     
+    vr_arq_path := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'arq');
+    vr_arq_temp := 'CNPJS_BLOQ.txt';
+    
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    vr_texto_completo := NULL;
+    
+    FOR rw_cnpj_blq IN cr_cnpj_blq LOOP
+      
+      pc_escreve_xml( rw_cnpj_blq.inpessoa   || ';' ||  
+                      rw_cnpj_blq.nrcpfcgc   || ';' || 
+                      rw_cnpj_blq.dsnome     || ';' ||
+                      rw_cnpj_blq.dsmotivo   || ';' ||
+                      rw_cnpj_blq.tpinclusao || ';' ||                      
+                      TO_CHAR(rw_cnpj_blq.dtarquivo,'DD/MM/RRRR') || ';' || 
+                      TO_CHAR(rw_cnpj_blq.dtmvtolt,'DD/MM/RRRR') || chr(10) );
+    
+    END LOOP;
+    
+    pc_escreve_xml(' ',TRUE);
+    DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_xml, vr_arq_path, vr_arq_temp, NLS_CHARSET_ID('UTF8'));
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);   
+    
+    vr_dscritic := '';
+    
+    gene0002.pc_efetua_copia_pdf(pr_cdcooper => 3 
+                                ,pr_cdagenci => 1
+                                ,pr_nrdcaixa => 100 
+                                ,pr_nmarqpdf => vr_arq_path ||'/'|| vr_arq_temp
+                                ,pr_des_reto => vr_dscritic
+                                ,pr_tab_erro => vr_tab_erro);
+                                
+    IF vr_dscritic IS NOT NULL AND 
+       vr_dscritic <> 'OK' THEN
+       vr_dscritic := 'Problemas ao efetuar copia do arquivo para o servidor de destino. ' || vr_dscritic;
+       RAISE vr_excerror;
+    END IF;
+    
+    pr_dsarquiv := vr_arq_path ||'/'|| vr_arq_temp;
+  
+  EXCEPTION
+    WHEN vr_excerror THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral na rotina pc_exporta_arq_cnpj: '||SQLERRM;
+  END pc_exporta_arq_cnpj;
+  
+  PROCEDURE pc_exporta_arq_cnpj_web(pr_cdcooper   IN crapcop.cdcooper%TYPE
+                                   ,pr_xmllog     IN  VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic   OUT PLS_INTEGER           --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2              --> Descrição da crítica
+                                   ,pr_retxml     IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo   OUT VARCHAR2              --> Nome do campo com erro
+                                   ,pr_des_erro   OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      vr_dsarquiv VARCHAR2(400);
+      
+    BEGIN 
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      pc_exporta_arq_cnpj(pr_cdcooper   => vr_cdcooper
+                         ,pr_dsarquiv   => vr_dsarquiv
+                         ,pr_cdcritic   => vr_cdcritic
+                         ,pr_dscritic   => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados><dsarquiv>'||vr_dsarquiv||'</dsarquiv></Dados></Root>');
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_exporta_arq_cnpj_web: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;    
+  END pc_exporta_arq_cnpj_web;      
+  
+  PROCEDURE pc_verifica_cnpj_blq(pr_inpessoa IN crapass.inpessoa%TYPE  --> Pessoa Fisica/ Pessoa Juridica
+                                ,pr_nrcpfcgc IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE --> Codigo do CNPJ
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+
+      -- Cursor sobre a tabela do CNAE
+      CURSOR cr_cnpj_bloqueado(pr_inpessoa crapass.inpessoa%TYPE
+                              ,pr_nrcpfcgc tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE) IS 
+        SELECT nrcpfcgc
+          FROM tbcc_cnpjcpf_bloqueado 
+         WHERE tbcc_cnpjcpf_bloqueado.nrcpfcgc = pr_nrcpfcgc;
+--           AND tbcc_cnpjcpf_bloqueado.inpessoa = pr_inpessoa
+      rw_cnpj_bloqueado cr_cnpj_bloqueado%ROWTYPE;
+
+      -- Variável de críticas
+      vr_cdcritic      crapcri.cdcritic%TYPE;
+      vr_dscritic      VARCHAR2(10000);
+
+      -- Variaveis de log
+      vr_cdoperad      VARCHAR2(100);
+      vr_cdcooper      NUMBER;
+      vr_nmdatela      VARCHAR2(100);
+      vr_nmeacao       VARCHAR2(100);
+      vr_cdagenci      VARCHAR2(100);
+      vr_nrdcaixa      VARCHAR2(100);
+      vr_idorigem      VARCHAR2(100);
+
+      -- Tratamento de erros
+      vr_exc_saida     EXCEPTION;
+
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      vr_posreg   PLS_INTEGER := 0;
+      vr_xml_temp VARCHAR2(32726) := '';
+      vr_clob     CLOB;
+    BEGIN
+
+        gene0004.pc_extrai_dados(pr_xml => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+
+        -- Monta documento XML de ERRO
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+        -- Criar cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
+
+        OPEN cr_cnpj_bloqueado(pr_inpessoa => pr_inpessoa
+                              ,pr_nrcpfcgc => pr_nrcpfcgc);
+        FETCH cr_cnpj_bloqueado INTO rw_cnpj_bloqueado;
+        
+        IF cr_cnpj_bloqueado%NOTFOUND THEN
+           CLOSE cr_cnpj_bloqueado;
+           
+           -- Carrega os dados
+           gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => '<bloqueado>NAO</bloqueado>');
+        ELSE
+           CLOSE cr_cnpj_bloqueado;
+           
+           -- Carrega os dados
+           gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                                  ,pr_texto_completo => vr_xml_temp
+                                  ,pr_texto_novo     => '<bloqueado>SIM</bloqueado>');
+                                  
+           /*grava tabela de bloqueio de conta*/
+           BEGIN
+             INSERT 
+               INTO tbcc_aberturas_bloqueadas(cdcooper, cdagenci, 
+                                              nrcpfcgc, dtmvtolt,
+                                              tpbloqueio)
+                                       VALUES(vr_cdcooper, vr_cdagenci,
+                                              pr_nrcpfcgc, SYSDATE,0); 
+           EXCEPTION
+             WHEN dup_val_on_index THEN
+                RAISE vr_exc_saida;
+             WHEN OTHERS THEN
+                RAISE vr_exc_saida;
+           END;
+           
+        END IF;
+        
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</Dados>'
+                               ,pr_fecha_xml      => TRUE);
+
+        -- Atualiza o XML de retorno
+        pr_retxml := xmltype(vr_clob);
+
+        -- Libera a memoria do CLOB
+        dbms_lob.close(vr_clob);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na busca do CNPJ: ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_verifica_cnpj_blq;  
+  
+  PROCEDURE pc_atualiz_data_manut_fone
+                        ( pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                         ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                         ,pr_cdcritic OUT INTEGER
+                         ,pr_dscritic OUT VARCHAR2) IS
+  /* ..........................................................................
+    --
+    --  Programa : pc_atualiz_data_manut_fone
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Guilherme/SUPERO
+    --  Data     : Novembro/2016.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Atualizar a Data de Atualização de Telefone da Conta/Cooperado
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    ---------------> CURSORES <----------------
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    CURSOR cr_crapass (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE) IS 
+      SELECT ass.inpessoa
+        FROM crapass ass
+       WHERE ass.cdcooper = p_cdcooper
+         AND ass.nrdconta = p_nrdconta;
+
+    --------------> Variaveis <----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    vr_exc_erro EXCEPTION;
+    vr_inpessoa INTEGER;
+    
+  BEGIN
+  
+    OPEN cr_crapass(p_cdcooper => pr_cdcooper
+                   ,p_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO vr_inpessoa;
+    -- Se não encontrar
+    IF cr_crapass%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_crapass;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Associado não encontrado!';
+      RAISE vr_exc_erro;      
+    END IF;
+    -- Fechar o cursor
+    CLOSE cr_crapass;
+
+    -- Leitura do calendário da cooperativa, para alguns procedimentos que precisam
+    -- receber como parametro
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic := 'Sistema sem data de movimento.';
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+    
+    
+    IF  vr_inpessoa = 1 THEN
+      -- PESSOA FISICA
+      BEGIN
+        UPDATE crapttl ttl
+           SET ttl.dtatutel = rw_crapdat.dtmvtocd
+         WHERE ttl.cdcooper = pr_cdcooper
+           AND ttl.nrdconta = pr_nrdconta;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro na atualização do telefone[TTL]: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;    
+    ELSE
+      -- PESSOA JURIDICA
+      BEGIN
+         UPDATE crapjur jur
+            SET jur.dtatutel = rw_crapdat.dtmvtocd
+           WHERE jur.cdcooper = pr_cdcooper
+            AND jur.nrdconta = pr_nrdconta;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro na atualização do telefone[JUR]: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;  
+    END IF;
+
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;
+            
+    WHEN OTHERS THEN
+      pr_dscritic := 'Não foi possivel atualizar dados pc_atualiz_data_manut_fone: '||SQLERRM;
+  END pc_atualiz_data_manut_fone;  
+ 
+
+  PROCEDURE pc_verifica_atualiz_fone
+                        ( pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                         ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                         ,pr_cdcritic OUT INTEGER
+                         ,pr_dscritic OUT VARCHAR2
+                         ,pr_atualiza OUT VARCHAR2
+                         ,pr_dsnrfone OUT VARCHAR2
+                         ,pr_qtmeatel OUT INTEGER) IS          --> OK ou NOK                         
+  /* ..........................................................................
+    --
+    --  Programa : pc_verifica_atualiz_fone
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Guilherme/SUPERO
+    --  Data     : Novembro/2016.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Verifica se a conta necessita atualizar telefone
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    ---------------> CURSORES <----------------
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    CURSOR cr_crapcop (p_cdcooper crapass.cdcooper%TYPE) IS 
+      SELECT NVL(cop.qtmeatel,0) qtmeatel
+        FROM crapcop cop
+       WHERE cop.cdcooper = p_cdcooper;
+
+    CURSOR cr_ttl_jur (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_idseqttl crapttl.idseqttl%TYPE,
+                       p_dtmvtolt crapdat.dtmvtolt%TYPE
+                       ) IS 
+      SELECT 1            INPESSOA
+            ,ttl.nrdconta
+            ,ttl.dtatutel
+            ,NVL( TRUNC((p_dtmvtolt - ttl.dtatutel)/ 30),999) DIF_DATA
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = p_cdcooper
+         AND ttl.nrdconta = p_nrdconta
+         AND ttl.idseqttl = p_idseqttl
+      UNION ALL
+      SELECT 2            INPESSOA
+            ,jur.nrdconta
+            ,jur.dtatutel
+            ,NVL( TRUNC((p_dtmvtolt - jur.dtatutel)/ 30),999) DIF_DATA
+        FROM crapjur jur
+       WHERE jur.cdcooper = p_cdcooper
+         AND jur.nrdconta = p_nrdconta;
+    rw_ttl_jur cr_ttl_jur%ROWTYPE;
+
+    -- BUSCAR DATA DA REVISAO CADASTRAL
+    CURSOR cr_crapalt (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
+     SELECT alt.dsaltera
+           ,alt.dtaltera
+           ,nvl(trunc ( (p_dtmvtolt - alt.dtaltera)  / 30),999) DIF_DATA
+       FROM crapalt alt
+      WHERE alt.cdcooper = p_cdcooper
+        AND alt.nrdconta = p_nrdconta
+      ORDER BY alt.dtaltera DESC;
+
+    -- BUSCAR DATA DE ADMISSAO ASSOCIADO
+    CURSOR cr_crapass (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
+     SELECT nvl(trunc ( (p_dtmvtolt - ass.dtadmiss)  / 30),999) DIF_DATA
+       FROM crapass ass
+      WHERE ass.cdcooper = p_cdcooper
+        AND ass.nrdconta = p_nrdconta;
+
+    -- BUSCAR O TELEFONE CADASTRADO
+    CURSOR cr_craptfc (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_idseqttl crapttl.idseqttl%TYPE,
+                       p_inpessoa crapass.inpessoa%TYPE ) IS
+     SELECT p_inpessoa    inpessoa
+           ,tfc.cdseqtfc
+           ,'(' || gene0002.fn_mask(tfc.nrdddtfc,'99') || ') ' || DECODE(LENGTH(tfc.nrtelefo),8,'XXXX','XXXXX')  || '-' || SUBSTR(tfc.nrtelefo,-4) nr_fone_format
+           ,DECODE(p_inpessoa,1,DECODE(tfc.tptelefo,2,1,1,2,3,3,4,4) ,(DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) )) nrordreq
+       FROM craptfc tfc
+      WHERE tfc.cdcooper = p_cdcooper
+        AND tfc.nrdconta = p_nrdconta
+        AND tfc.idseqttl = p_idseqttl
+        AND tfc.idsittfc = 1 -- ATIVO
+        --AND ((p_inpessoa = 1 AND tfc.tptelefo IN (1,2,4))
+        --  OR (p_inpessoa = 2 AND tfc.tptelefo IN (1,2,3,4)))
+       ORDER BY nrordreq -- DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) 
+               ,tfc.cdseqtfc DESC;
+    rw_craptfc cr_craptfc%ROWTYPE;               
+
+
+    --------------> Variaveis <----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+
+    vr_qtmeatel INTEGER:=0;
+    vr_qtdifdat INTEGER; -- diferenca em meses da data
+    vr_dtatutel DATE;
+    vr_inpessoa INTEGER;
+    
+    vr_exc_erro EXCEPTION;
+    vr_exc_sair EXCEPTION;
+
+  BEGIN
+  
+    -- VERIFICAR PARAMETRO DA COOPERATIVA
+    OPEN cr_crapcop(p_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO vr_qtmeatel;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_crapcop;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Cooperativa não encontrada!';
+      RAISE vr_exc_erro;
+    END IF;
+    -- Fechar o cursor
+    CLOSE cr_crapcop;
+    
+    pr_qtmeatel := vr_qtmeatel;
+    
+    
+    -- SE COOP NAO CONFIGURADA, NAO PRECISA ATUALIZAR, RETORNA FALSO
+    IF vr_qtmeatel = 0 THEN
+      pr_atualiza := 'NAO';  -- NAO PRECISA ATUALIZAR TELEFONE
+      pr_dsnrfone := '';
+      -- APENAS SAI
+      RAISE vr_exc_sair;       
+    END IF;
+
+
+    -- Leitura do calendário da cooperativa, para alguns procedimentos que precisam
+    -- receber como parametro
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic := 'Sistema sem data de movimento.';
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+
+    
+    -- SE vr_qtmeatel É DIFERENTE DE ZERO, VERIFICA DATA ATUALIZACAO DA CONTA  
+    -- VERIFICAR TIPO PESSOA E DATA ATUALIZACAO
+    OPEN cr_ttl_jur(p_cdcooper => pr_cdcooper
+                   ,p_nrdconta => pr_nrdconta
+                   ,p_idseqttl => pr_idseqttl
+                   ,p_dtmvtolt => rw_crapdat.dtmvtocd);
+    FETCH cr_ttl_jur INTO rw_ttl_jur;
+    -- Se não encontrar
+    IF cr_ttl_jur%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_ttl_jur;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Associado não encontrado!';
+      RAISE vr_exc_erro;      
+    END IF;
+    -- Fechar o cursor
+    CLOSE cr_ttl_jur;
+
+
+    vr_dtatutel := rw_ttl_jur.dtatutel;
+    vr_inpessoa := rw_ttl_jur.inpessoa;
+    vr_qtdifdat := rw_ttl_jur.dif_data; -- Diferenca em meses da data do dia com a data da atualizacao
+
+    -- SE A DATA É NULA, RETORNA 999, DEVE VERIFICAR ULTIMA REVISAO CADASTRAL
+    IF vr_qtdifdat = 999 THEN
+       FOR rw_crapalt IN cr_crapalt(p_cdcooper => pr_cdcooper
+                                   ,p_nrdconta => pr_nrdconta
+                                   ,p_dtmvtolt => rw_crapdat.dtmvtocd) LOOP
+
+         IF (instr(lower(rw_crapalt.dsaltera), 'revisao cadastral') > 0) THEN
+           -- SE ENCONTROU REVISAO, ARMAZENA DIFERENCA E SAI DO LOOP
+           vr_qtdifdat := rw_crapalt.dif_data; -- Diferenca em meses da data do dia com a data da revisao
+           EXIT; -- SAI DO LOOP/FOR
+         END IF;
+       END LOOP;
+
+
+       /** SE A DATA CONTINUOU 999(NULA), BUSCA DTADMISS DO ASSOCIADO */
+       IF vr_qtdifdat = 999 THEN
+          OPEN cr_crapass(p_cdcooper => pr_cdcooper
+                         ,p_nrdconta => pr_nrdconta
+                         ,p_dtmvtolt => rw_crapdat.dtmvtocd);
+          FETCH cr_crapass INTO vr_qtdifdat;
+          -- Fechar o cursor
+          CLOSE cr_crapass;
+       END IF;       
+       
+    END IF;
+       
+
+    -- SE DIF DE MESES FOR SUPERIOR AO PARAMETRO DA COOP,
+    -- SOLICITA ALTERACAO TELEFONE    
+    IF vr_qtdifdat > vr_qtmeatel THEN
+      
+      -- BUSCA TELEFONE ATUAL DA CONTA
+      OPEN cr_craptfc(p_cdcooper => pr_cdcooper
+                     ,p_nrdconta => pr_nrdconta
+                     ,p_idseqttl => pr_idseqttl
+                     ,p_inpessoa => vr_inpessoa);
+      FETCH cr_craptfc INTO rw_craptfc;
+      -- Se não encontrar
+      IF cr_craptfc%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_craptfc;
+
+        pr_atualiza := 'SIM';
+        pr_dsnrfone := ''; -- SEM TELEFONE CADASTRADO
+        RAISE vr_exc_sair;
+      END IF;
+      -- Fechar o cursor
+      CLOSE cr_craptfc;
+
+      -- PRECISA ATUALIZAR TELEFONE
+      pr_atualiza := 'SIM';
+      pr_dsnrfone := rw_craptfc.nr_fone_format;
+
+    ELSE
+      -- NAO PRECISA ATUALIZAR TELEFONE
+      pr_atualiza := 'NAO';
+      pr_dsnrfone := '';
+    END IF;
+
+    pr_cdcritic := 0;
+    pr_dscritic := '';    
+
+  EXCEPTION
+    WHEN vr_exc_sair THEN
+      -- Sair da procedure - Nao precisa atualizar
+      pr_cdcritic := 0;
+      pr_dscritic := '';
+    
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_atualiza := 'NAO';  -- NAO PRECISA ATUALIZAR TELEFONE
+      pr_dsnrfone := '';
+            
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
+      pr_atualiza := 'NAO';
+      pr_dsnrfone := '';
+
+  END pc_verifica_atualiz_fone;
+
+
+  PROCEDURE pc_ib_verif_atualiz_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                    ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                                    ,pr_inpessoa IN crapttl.inpessoa%TYPE  --> Indicador PF/PJ
+                                    ,pr_cdcritic OUT INTEGER
+                                    ,pr_dscritic OUT VARCHAR2) IS
+  /* ..........................................................................
+    --
+    --  Programa : pc_ib_verif_atualiz_fone
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Guilherme/SUPERO
+    --  Data     : Novembro/2016.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --               EXCLUSIVO PARA CHAMADA INTERNET BANKING
+    --
+    --   Objetivo  : Efetua o processo de Verificar Atualização Telefone, Atualizar Data Telefone,
+    --               Criar mensagem para o Cooperado no IB.
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    ---------------> CURSORES <----------------
+		-- Busca cooperativa
+		CURSOR cr_crapcop(p_cdcooperc IN crapcop.cdcooper%TYPE)IS
+		  SELECT cop.nmrescop
+			  FROM crapcop cop
+			 WHERE cop.cdcooper = p_cdcooperc;
+		rw_crapcop cr_crapcop%ROWTYPE;
+
+
+
+    -- BUSCAR O TELEFONE CADASTRADO
+    CURSOR cr_craptfc (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_idseqttl crapttl.idseqttl%TYPE,
+                       p_inpessoa crapttl.inpessoa%TYPE) IS
+      SELECT *
+        FROM (
+               SELECT tfc.cdseqtfc
+                     ,'(' || gene0002.fn_mask(tfc.nrdddtfc,'99') || ') ' || DECODE(LENGTH(tfc.nrtelefo),8,'XXXX','XXXXX')  || '-' || SUBSTR(tfc.nrtelefo,-4) nr_fone_format
+                     ,DECODE(tfc.tptelefo,1,'RESIDENCIAL',2,'CELULAR',3,'COMERCIAL',4,'CONTATO') dstelefo
+                     ,DECODE(p_inpessoa,1,DECODE(tfc.tptelefo,2,1,1,2,3,3,4,4) ,(DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) )) nrordreq
+                     ,ROW_NUMBER() OVER (PARTITION BY tfc.tptelefo
+                                             ORDER BY DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) 
+                                                     ,tfc.cdseqtfc DESC) nrseqreg
+                 FROM craptfc tfc
+                WHERE tfc.cdcooper = p_cdcooper
+                  AND tfc.nrdconta = p_nrdconta
+                  AND tfc.idseqttl = p_idseqttl
+                  AND tfc.idsittfc = 1 -- ATIVO
+                 ORDER BY nrordreq --DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) 
+                         ,tfc.cdseqtfc DESC
+              ) tmp
+         WHERE tmp.nrseqreg = 1; -- PEGAR APENAS O 1º TELEFONE DE CADA TIPO
+    rw_craptfc cr_craptfc%ROWTYPE;    
+    
+    --------------> Variaveis <----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    vr_inpessoa INTEGER;
+    vr_atualiza VARCHAR2(4);
+    vr_dsnrfone VARCHAR(18);
+    vr_qtmeatel INTEGER;
+    vr_dsmensag VARCHAR2(1000);
+    vr_lstfones VARCHAR2(200):='';
+    
+    vr_exc_erro EXCEPTION;
+
+  BEGIN
+
+		-- Verifica cooperativa
+		OPEN cr_crapcop(pr_cdcooper);
+		FETCH cr_crapcop INTO rw_crapcop;
+		
+		IF cr_crapcop%NOTFOUND THEN
+			-- Gera crítica
+			vr_cdcritic := 794;
+			-- Fecha cursor
+			CLOSE cr_crapcop;
+			-- Levanta exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fecha cursor
+		CLOSE cr_crapcop;
+
+
+    -- VERIFICAR SE A CONTA PRECISA ATUALIZAR O TELEFONE
+    CADA0004.pc_verifica_atualiz_fone(pr_cdcooper => pr_cdcooper
+                                    , pr_nrdconta => pr_nrdconta
+                                    , pr_idseqttl => pr_idseqttl
+                                    , pr_cdcritic => vr_cdcritic
+                                    , pr_dscritic => vr_dscritic
+                                    , pr_atualiza => vr_atualiza
+                                    , pr_dsnrfone => vr_dsnrfone
+                                    , pr_qtmeatel => vr_qtmeatel);
+    -- SE DEU ERRO...
+    IF vr_cdcritic <> 0
+    OR vr_dscritic IS NOT NULL THEN
+
+      -- APENAS SAI
+      RAISE vr_exc_erro;
+
+    ELSE -- NAO DEU ERRO.
+                                    
+      IF vr_atualiza = 'SIM' THEN
+         -- SE PRECISA ATUALIZAR TELEFONE, ATUALIZA A DATA DE MANUTENÇÃO DO TELEFONE
+         CADA0004.pc_atualiz_data_manut_fone(pr_cdcooper => pr_cdcooper
+                                           , pr_nrdconta => pr_nrdconta
+                                           , pr_cdcritic => vr_cdcritic
+                                           , pr_dscritic => vr_dscritic);
+         -- SE DEU ERRO...
+         IF vr_cdcritic <> 0
+         OR vr_dscritic IS NOT NULL THEN
+           -- APENAS SAI
+           RAISE vr_exc_erro;
+
+         ELSE -- NAO DEU ERRO.
+           
+           -- MONTAR A LISTA DE TELEFONES DO COOPERADO
+           FOR rw_craptfc IN cr_craptfc(p_cdcooper => pr_cdcooper
+                                       ,p_nrdconta => pr_nrdconta
+                                       ,p_idseqttl => pr_idseqttl
+                                       ,p_inpessoa => pr_inpessoa) LOOP
+             vr_lstfones := vr_lstfones || '</br>' || 
+                            rw_craptfc.dstelefo || ': ' ||rw_craptfc.nr_fone_format;
+           END LOOP;
+           
+           -- CRIAR MENSAGEM NA CAIXA DO COOPERADO NO IB
+           IF vr_lstfones IS NULL THEN
+             vr_dsmensag := 'Cooperado,' ||
+                            '</br></br>' ||
+                            'Identificamos que você NÃO possui telefones cadastrados em nossa '      ||
+                            'base de contatos.'                                                      ||
+                            '</br></br>' ||
+                            'Estes telefones poderão ser utilizados para informar você sobre algum ' ||
+                            'evento importante da sua cooperativa ou de sua conta.'                  ||
+                            '</br></br>' ||
+                            '<a style=''color: blue; font-weight: bold; text-decoration: underline;'''||
+                            ' href=''meu_cadastro.php''>Clique aqui</a> '                            ||
+                            'e informe seus telefones para contato.'                                 ||
+                            '</br></br>' ||
+                            'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
+                            'contato com seu Posto de Atendimento ou através do SAC da cooperativa, '||
+                            'pelo 0800 647 2200 ou e-mail sac@cecred.coop.br.';
+           ELSE
+             vr_dsmensag := 'Cooperado,' ||
+                            '</br></br>' ||
+                            'Identificamos que você possui telefones cadastrados em nossa base de '  ||
+                            'contatos, porém os números não são atualizados há mais de '             || 
+                            to_char(vr_qtmeatel) || ' meses.'                                        ||
+                            '</br></br>' ||
+                            'Telefones cadastrados:'                                                 ||
+                            vr_lstfones                                                              ||
+                            '</br></br>' ||
+                            'Caso os números estejam desatualizados, '                               ||
+                            '<a style=''color: blue; font-weight: bold; text-decoration: underline;'''||
+                            ' href=''meu_cadastro.php''>clique aqui</a> '                            ||
+                            'e adicione seus novos contatos ou procure o Posto de Atendimento '      ||
+                            'para atualizar seu cadastro.'                                           ||
+                            '</br>' ||
+                            'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
+                            'contato pelo SAC 0800 647 2200 ou através do e-mail '                   ||
+                            'sac@cecred.coop.br, todos os dias (incluindo domingos e feriados), '    ||
+                            'das 6h às 22h.';
+           END IF;
+
+           -- CRIAR A MENSAGEM NA CONTA DO COOPERADO
+           gene0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_idseqttl => 1 -- SEMPRE PRO PRIMEIRO TITULAR
+                                     ,pr_cdprogra => 'CADA0004'
+                                     ,pr_inpriori => 0
+                                     ,pr_dsdmensg => vr_dsmensag
+                                     ,pr_dsdassun => 'Atualização de Telefone'
+                                     ,pr_dsdremet => rw_crapcop.nmrescop
+                                     ,pr_dsdplchv => 'Atualização de Telefone'
+                                     ,pr_cdoperad => 996
+                                     ,pr_cdcadmsg => 0
+                                     ,pr_dscritic => vr_dscritic);
+
+           IF vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_erro;
+           END IF;
+           
+           COMMIT; -- COMMITAR A MENSAGEM NA BASE
+           pr_dscritic := vr_dsmensag;
+
+         END IF;
+
+      END IF;
+
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+            
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
+                                    
+  END pc_ib_verif_atualiz_fone;
+
   
 END CADA0004;
 /
