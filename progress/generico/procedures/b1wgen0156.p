@@ -31,6 +31,9 @@
                24/11/2014 - Alteraçao da rotina gerar_arq_enc_brde para 
                             chamada da rotina convertida para oracle
                             (Odirlei-AMcom)
+
+			   06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                            departamento passando a considerar o código (Renato Darosci)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0156tt.i }
@@ -2108,8 +2111,8 @@ PROCEDURE valida_operad_depto:
             RETURN "NOK".
         END.
 
-     IF   crapope.dsdepart <> "TI"       AND
-          crapope.dsdepart <> "PRODUTOS" THEN
+     IF   crapope.cddepart <> 20   AND  /* TI */
+          crapope.cddepart <> 14  THEN  /* PRODUTOS */
           DO:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Voce nao tem permissao para realizar " 
