@@ -72,7 +72,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
        IS RECORD (nmrepres crapavt.nmdavali%TYPE,
                   nrcpfrep VARCHAR2(100),
                   dsdocrep crapavt.nrdocava%TYPE,
-                  cdoedrep crapavt.cdoeddoc%TYPE);
+                  cdoedrep tbgen_orgao_expedidor.cdorgao_expedidor%TYPE);
        
   TYPE typ_tab_repres_ctr IS TABLE OF typ_rec_repres_ctr
     INDEX BY PLS_INTEGER;
@@ -1086,7 +1086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              ass.inpessoa,
              ass.nrdconta,
              ass.nrdocptl,
-             ass.cdoedptl,
+             ass.idorgexp,
              ass.tpdocptl,
              ass.cdufdptl
              
@@ -1365,13 +1365,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : Odirlei Busana - AMcom
-     Data    : Agosto/16.                    Ultima atualizacao:
+     Data    : Agosto/16.                    Ultima atualizacao: 24/07/2017
 
      Dados referentes ao programa:
 
      Frequencia:
      Objetivo  : Rotina para buscar dados para impressao do contrato de limite de credito
-     Alteracoes: -----
+     
+     Alteracoes: 24/07/2017 - Alterar cdoedptl para idorgexp.
+                              PRJ339-CRM  (Odirlei-AMcom)
     ..............................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -1384,7 +1386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              ass.inpessoa,
              ass.nrdconta,
              ass.nrdocptl,
-             ass.cdoedptl,
+             ass.idorgexp,
              ass.tpdocptl,
              ass.cdufdptl
              
@@ -1497,7 +1499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              avt.nrcpfcgc,
              avt.nmdavali,
              avt.nrdocava,
-             avt.cdoeddoc
+             avt.idorgexp
              
         FROM crapavt avt
        WHERE avt.cdcooper = pr_cdcooper
@@ -1527,6 +1529,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
     vr_dsendcop        VARCHAR2(1000);
     vr_dsendass        VARCHAR2(1000);
+    vr_cdorgexp        tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
+    vr_nmorgexp        tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
     
   BEGIN
   
@@ -1741,7 +1745,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
             vr_tab_repres_ctr(vr_idxrepre).nrcpfrep := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crabass.nrcpfcgc, 
                                                                                 pr_inpessoa => rw_crabass.inpessoa );
             vr_tab_repres_ctr(vr_idxrepre).dsdocrep := rw_crabass.nrdocptl;
-            vr_tab_repres_ctr(vr_idxrepre).cdoedrep := rw_crabass.cdoedptl;
+            
+            
+            --> Buscar orgão expedidor
+            vr_tab_repres_ctr(vr_idxrepre).cdoedrep := NULL;
+            cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crabass.idorgexp, 
+                                              pr_cdorgao_expedidor => vr_tab_repres_ctr(vr_idxrepre).cdoedrep, 
+                                              pr_nmorgao_expedidor => vr_nmorgexp, 
+                                              pr_cdcritic          => vr_cdcritic, 
+                                              pr_dscritic          => vr_dscritic);
+            IF nvl(vr_cdcritic,0) > 0 OR 
+               TRIM(vr_dscritic) IS NOT NULL THEN
+              vr_tab_repres_ctr(vr_idxrepre).cdoedrep := 'NAO CADAST';
+              vr_nmorgexp := NULL; 
+            END IF;  
             
           ELSE
             CLOSE cr_crapass;
@@ -1752,15 +1769,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
           vr_tab_repres_ctr(vr_idxrepre).nrcpfrep := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcgc, 
                                                                                pr_inpessoa => 1 );
           vr_tab_repres_ctr(vr_idxrepre).dsdocrep := rw_crapavt.nrdocava;
-          vr_tab_repres_ctr(vr_idxrepre).cdoedrep := rw_crapavt.cdoeddoc;
+          
+          --> Buscar orgão expedidor
+          vr_tab_repres_ctr(vr_idxrepre).cdoedrep := NULL;
+          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapavt.idorgexp, 
+                                            pr_cdorgao_expedidor => vr_tab_repres_ctr(vr_idxrepre).cdoedrep, 
+                                            pr_nmorgao_expedidor => vr_nmorgexp, 
+                                            pr_cdcritic          => vr_cdcritic, 
+                                            pr_dscritic          => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR 
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_tab_repres_ctr(vr_idxrepre).cdoedrep := 'NAO CADAST';
+            vr_nmorgexp := NULL; 
+          END IF; 
           
         END IF;
         
       END LOOP;
     ELSE
+      --> Buscar orgão expedidor
+      vr_cdorgexp := NULL;
+      cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
+                                        pr_cdorgao_expedidor => vr_cdorgexp, 
+                                        pr_nmorgao_expedidor => vr_nmorgexp, 
+                                        pr_cdcritic          => vr_cdcritic, 
+                                        pr_dscritic          => vr_dscritic);
+      IF nvl(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_cdorgexp := 'NAO CADAST';
+        vr_nmorgexp := NULL; 
+      END IF;
+    
       vr_tab_dados_ctr(vr_idxctr).nrdrgass := rw_crapass.tpdocptl || ' '  || 
                                               rw_crapass.nrdocptl || ' - '||
-                                              rw_crapass.cdoedptl || '/'  ||
+                                              vr_cdorgexp         || '/'  ||
                                               rw_crapass.cdufdptl ;
     END IF; 
     

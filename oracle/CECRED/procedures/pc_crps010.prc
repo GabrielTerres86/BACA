@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 28/09/2016
+ Data    : Janeiro/92.                         Ultima atualizacao: 24/04/2017
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -150,6 +150,10 @@ BEGIN
 
    		  28/09/2016 - Alteração do diretório para geração de arquivo contábil.
                        P308 (Ricardo Linhares).                            
+
+		  24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			           crapass, crapttl, crapjur 
+					  (Adriano - P339).                     
 
    ............................................................................. */
    DECLARE
@@ -297,7 +301,7 @@ BEGIN
      TYPE typ_reg_crapass IS
        RECORD (nmprimtl crapass.nmprimtl%type
               ,nrfonres VARCHAR2(20)
-              ,nrfonemp crapass.nrfonemp%type
+              ,nrtelefo craptfc.nrtelefo%type
               ,nrmatric crapass.nrmatric%type);
      --Definicao do tipo de tabela para associados
      TYPE typ_tab_crapass IS TABLE OF typ_reg_crapass INDEX BY PLS_INTEGER;
@@ -498,7 +502,6 @@ BEGIN
               crapass.nrdconta
              ,crapass.nmprimtl
              ,TO_CHAR(NULL) NRFONRES  -- Retorna NULL, pois é necssário que o campo exista no select
-             ,crapass.nrfonemp
              ,crapass.nrmatric
          FROM crapass crapass
         WHERE  crapass.cdcooper = pr_cdcooper;
@@ -1693,6 +1696,8 @@ BEGIN
         vr_cdcritic  INTEGER:= 0;
         -- Número do telefone do associado
         vr_nrfonres  VARCHAR2(20);
+		-- Número do telefone do associado
+        vr_nrfonemp  VARCHAR2(20);
         -- Variavel de Exceção
         vr_exc_erro  EXCEPTION;
 
@@ -1739,7 +1744,6 @@ BEGIN
              rw_crapass.nrdconta:= vr_tab_duplicados(vr_des_chave).nrdconta;
              rw_crapass.nmprimtl:= vr_tab_crapass(rw_crapass.nrdconta).nmprimtl;
              rw_crapass.nrmatric:= vr_tab_crapass(rw_crapass.nrdconta).nrmatric;
-             rw_crapass.nrfonemp:= vr_tab_crapass(rw_crapass.nrdconta).nrfonemp;
           END IF;
 
           -- Selecionar informacoes das cotas
@@ -1780,7 +1784,7 @@ BEGIN
           END IF;
 
           vr_nrfonres         := NULL;
-          rw_crabass.nrfonemp := NULL;
+          vr_nrfonemp := NULL;
 
           -- Buscar telefone do associado Residencial
           OPEN cr_craptfc(pr_cdcooper => pr_cdcooper
@@ -1804,7 +1808,7 @@ BEGIN
           IF cr_craptfc%NOTFOUND THEN
              CLOSE cr_craptfc;
           ELSE
-             rw_crabass.nrfonemp := rw_craptfc.nrdddtfc || rw_craptfc.nrtelefo;
+             vr_nrfonemp := rw_craptfc.nrdddtfc || rw_craptfc.nrtelefo;
              CLOSE cr_craptfc;
           END IF;
 
@@ -1822,7 +1826,7 @@ BEGIN
                         <nrdconta>'||LTrim(gene0002.fn_mask_conta(rw_crapass.nrdconta))||'</nrdconta>
                         <nmprimtl><![CDATA['||substr(rw_crapass.nmprimtl,1,21)||']]></nmprimtl>
                         <nrfonres>'||vr_nrfonres||'</nrfonres>
-                        <nrfonemp>'||rw_crabass.nrfonemp||'</nrfonemp>
+                        <nrfonemp>'||vr_nrfonemp||'</nrfonemp>
                         <vldcotas>'||To_Char(rw_crapcot.vldcotas,'fm999g999g990d00')||'</vldcotas>
                         <nrmatric>'||LTrim(gene0002.fn_mask_matric(rw_crabass.nrmatric))||'</nrmatric>
                         <nrdconta_trf>'||LTrim(gene0002.fn_mask_conta(rw_craptrf.nrdconta))||'</nrdconta_trf>
@@ -2959,7 +2963,6 @@ BEGIN
       FOR rw_crapass IN cr_crapass_carga (pr_cdcooper => pr_cdcooper) LOOP
          vr_tab_crapass(rw_crapass.nrdconta).nmprimtl:= rw_crapass.nmprimtl;
          vr_tab_crapass(rw_crapass.nrdconta).nrfonres:= NULL;
-         vr_tab_crapass(rw_crapass.nrdconta).nrfonemp:= rw_crapass.nrfonemp;
          vr_tab_crapass(rw_crapass.nrdconta).nrmatric:= rw_crapass.nrmatric;
       END LOOP;
 

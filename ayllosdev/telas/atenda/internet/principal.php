@@ -88,6 +88,7 @@
 	}
 	
 	$nrdconta = $_POST["nrdconta"];
+	$nrcpfcgc = $_POST["nrcpfcgc"];
 	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -147,11 +148,18 @@
       <thead>
         <tr>
           <?php
-						if($idastcjt == 1){
+						if($idastcjt == 1 && $inpessoa == 2){
 					?>
           <th>CPF</th>
           <th>Respons&aacute;vel Assinatura Conjunta</th>
+          <th style="width: 107px;">Tipo</th>
           <?php
+						} else if(($inpessoa == 2 || $inpessoa == 3) && $idastcjt == 0){
+					?>
+          <th>CPF</th>
+          <th>Titular</th>
+          <th style="width: 107px;">Tipo</th>
+		  <?php
 						}else{
 					?>
           <th>Sequ&ecirc;ncia</th>
@@ -165,11 +173,11 @@
         <?  					
 					for ($i = 0; $i < $qtTitulares; $i++) { 
 										
-						$mtdClick = "selecionaTitularInternet('".($i + 1)."',".$qtTitulares.",'".formatar(str_pad($titulares[$i]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true)."','".$idastcjt."','".$titulares[$i]->tags[0]->cdata."');";
+						$mtdClick = "selecionaTitularInternet('".($i + 1)."',".$qtTitulares.",'".formatar(str_pad($titulares[$i]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true)."','".$idastcjt."','".$titulares[$i]->tags[0]->cdata."', '".$titulares[$i]->tags[0]->cdata."', ".$titulares[$i]->tags[14]->cdata.");";
 					?>
 					<tr id="trTitInternet<?php echo ($i + 1); ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						<?php
-							if($idastcjt == 1){
+							if($idastcjt == 1 || ($inpessoa == 2 || $inpessoa == 3)){
 						?>
 						<td><?php echo formatar(str_pad($titulares[$i]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true); ?></td>
           <?php
@@ -180,18 +188,115 @@
 						}
 					?>
 						<td><?php echo $titulares[$i]->tags[1]->cdata; ?></td>
+						<?php
+						if ($idastcjt == 1 || ($inpessoa == 2 || $inpessoa == 3)){
+						?>							
+							<td>
+								<?php
+									if ($titulares[$i]->tags[0]->cdata == 999){
+										echo 'OPERADOR';
+									}else{
+										echo 'PREPOSTO';
+									}
+								?>
+							</td>
+						<?php
+						}
+						?>
         </tr>
         <?} // Fim do for ?>
       </tbody>
     </table>
   </div>
 
+    <?php
+		if($idastcjt == 1 || ($inpessoa == 2 || $inpessoa == 3)){
+	?>
+	<form class="formulario" style="width: 560px; display: block;">
+		<fieldset>
+			<legend><span id="preoroper">PREPOSTO</span> (CPF:<span id="spanSeqTitular"><?php echo formatar(str_pad($titulares[0]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true); ?></span>)</legend>						
+			
+			<?php
+			
+				for ($i = 0; $i < $qtTitulares; $i++) {
+					
+					$temp_vllimtrf = 0;
+					$temp_vllimpgo = 0;
+					$temp_vllimted = 0;
+					$temp_vllimvrb = 0;
+					$temp_vllimpgo = 0;
+					
+					if ($titulares[$i]->tags[0]->cdata != 999 && $idastcjt == 1){	// idseqttl diferente de 999 são preposto, carregados da tabela TBCC_LIMITE_PREPOSTO
+						$xml  = "";
+						$xml .= "<Root>";
+						$xml .= "	<Dados>";
+						$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+						$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+						$xml .= "		<nrcpf>".$titulares[$i]->tags[14]->cdata."</nrcpf>";
+						$xml .= "	</Dados>";
+						$xml .= "</Root>";	
+
+						$xmlResultPreposto = mensageria($xml, "ATENDA", "BUSCA_LIMITES_PREPOSTOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+						$xmlObjPreposto = simplexml_load_string($xmlResultPreposto);
+						//var_dump($xmlObjPreposto->preposto['pr_vllimite_transf']);exit;
+						
+						//foreach ($xmlObjPreposto->preposto as $row){
+							
+							//print_r($row);
+							
+							$temp_vllimtrf = number_format(str_replace(",",".",$xmlObjPreposto->preposto->pr_vllimite_transf),2,",",".");
+							$temp_vllimpgo = number_format(str_replace(",",".",$xmlObjPreposto->preposto->pr_vllimite_pagto),2,",",".");
+							$temp_vllimted = number_format(str_replace(",",".",$xmlObjPreposto->preposto->pr_vllimite_ted),2,",",".");
+							$temp_vllimvrb = number_format(str_replace(",",".",$xmlObjPreposto->preposto->pr_vllimite_vrboleto),2,",",".");
+							$temp_vllimfol = number_format(str_replace(",",".",$xmlObjPreposto->preposto->pr_vllimite_folha),2,",",".");
+						//}
+					}else{ // operadores
+							if(($inpessoa == 2 and $inpessoa == 3)  and $idastcjt == 0){
+								$temp_vllimtrf = number_format(str_replace(",",".",$titulares[$i]->tags[12]->cdata),2,",",".");
+								$temp_vllimpgo = number_format(str_replace(",",".",$titulares[$i]->tags[11]->cdata),2,",",".");
+								$temp_vllimted = number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",",".");
+								$temp_vllimvrb = number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",",".");
+								$temp_vllimfol = number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",",".");
+							} else {
+								$temp_vllimtrf = number_format(str_replace(",",".",$titulares[$i]->tags[12]->cdata),2,",",".");
+								$temp_vllimfol = number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",",".");
+								$temp_vllimted = number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",",".");
+								$temp_vllimvrb = number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",",".");
+								$temp_vllimpgo = number_format(str_replace(",",".",$titulares[$i]->tags[11]->cdata),2,",",".");
+							}
+					}
+			?>
+				<div id="divTitInternetOpe<?php echo ($i + 1); ?>" style="display: none;" >
+					<label style="width: 130px;" for="vllimtrf"><? echo utf8ToHtml('Vlr.Limite/Dia Transf:')?></label>
+					<input class="campoTelaSemBorda" style="width: 130px;" readonly type="text" id="vllimtrf" value="<?php echo $temp_vllimtrf; ?>" />
+					<label style="width: 130px;" for="vllimpgo"><? echo utf8ToHtml('Vlr.Limite/Dia Pagto:') ?></label>
+					<input class="campoTelaSemBorda" style="width: 130px;" readonly type="text" id="vllimpgo" value="<?php echo $temp_vllimpgo; ?>" />
+					<br />
+					<br />
+					<label style="width: 130px;" for="vllimted"><? echo utf8ToHtml('Vlr.Limite/Dia TED:') ?></label>
+					<input class="campoTelaSemBorda" style="width: 130px;" readonly type="text" id="vllimted" value="<?php echo $temp_vllimted; ?>" />
+					<label style="width: 130px;" for="vllimvrb"><? echo utf8ToHtml('Vlr.Limite VR Boleto:') ?></label>
+					<input class="campoTelaSemBorda" style="width: 130px;" readonly type="text" id="vllimvrb" value="<?php echo $temp_vllimvrb; ?>" />
+					<br />
+					<br />
+					<label style="width: 130px;" for="vllimfol"><? echo utf8ToHtml('Vlr.Limite Folha Pagto:') ?></label>
+					<input class="campoTelaSemBorda" style="width: 130px;" readonly type="text" id="vllimfol" value="<?php echo $temp_vllimfol; ?>" />
+				</div>
+			<?php
+				}
+			?>
+		</fieldset>
+	</form>
+	<?php
+		}
+	?>
+
 	<form action="" method="post" name="frmDadosTitInternet" id="frmDadosTitInternet">
     <fieldset>
       <?php
 				if($idastcjt == 1){
 			?>
-					<legend>Acesso &agrave; Conta Corrente Via Internet (CPF:<span id="spanSeqTitular"><?php echo formatar(str_pad($titulares[0]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true); ?></span>)</legend>						
+					<legend>Acesso &agrave; Conta Corrente Via Internet <!--(CPF:<span id="spanSeqTitular"><?php echo formatar(str_pad($titulares[0]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true); ?></span>)--></legend>						
       <?php
 				}else{
 			?>
@@ -203,7 +308,7 @@
 				for ($i = 0; $i < $qtTitulares; $i++) { ?>
 
 
-				<div id="divTitInternet<?php echo ($i + 1); ?>" style="display: none;" >						
+				<div id="divTitInternet<?php echo ($i + 1); ?>" style="display: <?php echo (($i==0) ?'block':'none'); ?>;" >						
 
 					<label id="dssitsnh" for="dssitsnh<?php echo ($i + 1);?>"><? echo utf8ToHtml('Situação:') ?></label>
 					<input id="dssitsnh<?php echo ($i + 1);?>" name="dssitsnh" type="text" value="<?php echo $titulares[$i]->tags[3]->cdata; ?>" />
@@ -245,28 +350,28 @@
         <br />
 
 						<label for="vllimtrf"><? echo utf8ToHtml('Vlr.Limite/Dia Transf:') ?></label>
-        <input type="text" id="vllimtrf" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[12]->cdata),2,",","."); ?>" />
+        <input type="text" id="vllimtrf" readonly value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[12]->cdata),2,",","."); ?>" />
 
 						<label for="dtlimtrf"><? echo utf8ToHtml('Dt.Alter.Limite/Dia Transf:') ?></label>
-        <input type="text" id="dtlimtrf" value="<?php echo $titulares[$i]->tags[19]->cdata; ?>" />
+        <input type="text" id="dtlimtrf" readonly value="<?php echo $titulares[$i]->tags[19]->cdata; ?>" />
 
 						<label for="vllimpgo"><? echo utf8ToHtml('Vlr.Limite/Dia Pagto:') ?></label>
-        <input type="text" id="vllimpgo" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",","."); ?>" />
+        <input type="text" id="vllimpgo" readonly value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",","."); ?>" />
 
 						<label for="dtlimpgo"><? echo utf8ToHtml('Dt.Alter.Limite/Dia Pagto:') ?></label>
-        <input type="text" id="dtlimpgo" value="<?php echo $titulares[$i]->tags[18]->cdata; ?>" />
+        <input type="text" id="dtlimpgo" readonly value="<?php echo $titulares[$i]->tags[18]->cdata; ?>" />
 
 						<label for="vllimted"><? echo utf8ToHtml('Vlr.Limite/Dia TED:') ?></label>
-        <input type="text" id="vllimted" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",","."); ?>" />
+        <input type="text" id="vllimted" readonly value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",","."); ?>" />
 
 						<label for="dtlimted"><? echo utf8ToHtml('Dt.Alter.Limite/Dia TED:') ?></label>
-        <input type="text" id="dtlimted" value="<?php echo $titulares[$i]->tags[17]->cdata; ?>" />
+        <input type="text" id="dtlimted" readonly value="<?php echo $titulares[$i]->tags[17]->cdata; ?>" />
 
 						<label for="vllimvrb"><? echo utf8ToHtml('Vlr.Limite VR Boleto:') ?></label>
-        <input type="text" id="vllimvrb" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",","."); ?>" />
+        <input type="text" id="vllimvrb" readonly value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",","."); ?>" />
 
 						<label for="dtlimvrb"><? echo utf8ToHtml('Dt.Alter.Limite Vr Boleto:') ?></label>
-        <input type="text" id="dtlimvrb" value="<?php echo $titulares[$i]->tags[21]->cdata; ?>" />
+        <input type="text" id="dtlimvrb" readonly value="<?php echo $titulares[$i]->tags[21]->cdata; ?>" />
         <br />
 
         <? } ?>
@@ -461,7 +566,7 @@
   }
 
   controlaLayout('divInternetPrincipal');
-	tamanhoDiv = '<?php if ($inpessoa == "1") { echo "365"; } else { echo "405"; } ?>px';
+	tamanhoDiv = '<?php if ($inpessoa == "1" || $inpessoa == "3") { echo "365"; } else { echo "500"; } ?>px';
 
   // Aumenta tamanho do div onde o conteúdo da opção será visualizado
   $("#divConteudoOpcao").css("height",tamanhoDiv);

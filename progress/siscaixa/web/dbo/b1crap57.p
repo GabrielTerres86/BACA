@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 27/07/2016.
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -79,6 +79,11 @@
                             de cheques de bancos que nao participam da COMPE
                             Utilizar apenas BANCO e FLAG ativo
                             (Douglas - Chamado 417655)
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ............................................................................ */
 /*-------------------------------------------------------------------------*/
 /* b1crap57.p   - Depositos Cheques Liberados(Varios)                      */  
@@ -715,6 +720,7 @@ PROCEDURE valida-codigo-cheque:
                        INPUT YES).
         RETURN "NOK".
     END.
+ 
  
     ASSIGN p-cdcmpchq = INT(SUBSTRING(c-cmc-7,11,03)) NO-ERROR.
     IF   ERROR-STATUS:ERROR    THEN 
@@ -1912,11 +1918,30 @@ PROCEDURE atualiza-deposito-com-captura:
     /*---- Gera literal autenticacao - RECEBIMENTO(Rolo) ----*/
     ASSIGN c-nome-titular1 = " "
            c-nome-titular2 = " ".
+
     FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper  AND
-                       crapass.nrdconta = aux_nrdconta      NO-LOCK NO-ERROR.
+                       crapass.nrdconta = aux_nrdconta      
+					   NO-LOCK NO-ERROR.
+
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+          ASSIGN c-nome-titular1 = crapass.nmprimtl.
+          
+		  IF crapass.inpessoa = 1 THEN
+		     DO:
+			    FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                   WHERE crapttl.cdcooper = crapass.cdcooper AND
+				                         crapttl.nrdconta = crapass.nrdconta AND
+								         crapttl.idseqttl = 2
+								         NO-LOCK:
+
+				  ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+		        END.
+
+			 END.
+
+	   END.
        
     ASSIGN c-literal = " "
            c-literal[1] = TRIM(crapcop.nmrescop) +  " - " + 

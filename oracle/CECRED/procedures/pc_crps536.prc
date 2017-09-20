@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2009                     Ultima atualizacao: 27/03/2017.
+   Data    : Novembro/2009                     Ultima atualizacao: 01/09/2017.
 
    Dados referentes ao programa:
 
@@ -68,12 +68,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares). 
 
-			         13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
-							              da rotina padrão. (Rodrigo)
+			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
+							da rotina padrão. (Rodrigo)
               
                27/03/2017 - Alterar a geração do arquivo AAMMDD_CRITICAS.txt para considerar valores 
                             de devolução de recebimento de cobrança que já foram lançados na conta do associado
                             P307 (Jonatas - Supero).               
+
+               01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
+			               o nome do arquivo apos processamento, iremos gerar o arquivo
+						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
+
 .............................................................................*/
 
   -- CURSORES
@@ -954,9 +959,9 @@ BEGIN
         
         -- Se NAO foi lancado corretamente
         --IF vr_relato(ind).flglanca = 'NAO' THEN
-        pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
-                                   ',1455,4894,' || TO_CHAR(vr_relato(ind).vltitulo,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
-                                   ',157,"DEVOLUCAO RECEBIMENTO COBRANCA (CONFORME CRITICA RELATORIO 521)"' || chr(10));
+          pc_escreve_clob(vr_clobcri,'50' || TO_CHAR(vr_dtmvtolt,'DDMMRR') || ',' || TO_CHAR(vr_dtmvtolt,'DDMMRR') ||
+                                     ',1455,4894,' || TO_CHAR(vr_relato(ind).vltitulo,'fm9999999990d00','NLS_NUMERIC_CHARACTERS=.,') ||
+                                     ',157,"DEVOLUCAO RECEBIMENTO COBRANCA (CONFORME CRITICA RELATORIO 521)"' || chr(10));
         --END IF;
 
       END LOOP;
@@ -1004,7 +1009,8 @@ BEGIN
         vr_dircon := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                               ,pr_cdcooper => 0
                                               ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
-        vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
+
+        vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_521.txt';
 
         -- Chama a geracao do TXT
         GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
@@ -1016,7 +1022,6 @@ BEGIN
                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
                                            ,pr_dspathcop => vr_dircon
                                            ,pr_fldoscop  => 'S'                                           
-                                           ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                            ,pr_des_erro  => vr_des_erro);
                                    --> Saída com erro
                                    

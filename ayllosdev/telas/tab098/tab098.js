@@ -5,7 +5,9 @@
 //***                                                                  						***//
 //*** Objetivo  : Biblioteca de funções da tela TAB098                 						***//
 //***                                                                  						***//	 
-//*** Alterações: 																			***//
+//*** Alterações: 01/08/2017 - Excluir campos para habilitar contigencia e rollout e    	***//	 
+//***                           incluir campo para valor limite. PRJ340-NPC (Odirlei-AMcom) ***//	  
+//***                           									                        ***//
 //*********************************************************************************************//
 
 var cCddopcao;
@@ -123,11 +125,6 @@ function formataFormulario(cddopcao) {
         $("#btAlterar", "#divMsgAjuda").hide();    
     }
 
-    $("#rollout_cip_pag_data","#frmTab098").setMask("DATE","","","");
-    $("#rollout_cip_pag_data","#frmTab098").css('text-align','right');
-    $("#rollout_cip_reg_data","#frmTab098").setMask("DATE","","","");
-    $("#rollout_cip_reg_data","#frmTab098").css('text-align','right');
-
     layoutPadrao();
 
 }
@@ -188,16 +185,9 @@ function grava_dados() {
 
     // Campos de parametrizacao
     var cdcooper = $('#cdcooper', '#frmCab').val();
-    var flgpagcont_ib = $('#flgpagcont_ib','#frmTab098').val();
-    var flgpagcont_taa = $('#flgpagcont_taa','#frmTab098').val();
-    var flgpagcont_cx = $('#flgpagcont_cx','#frmTab098').val();
-    var flgpagcont_mob = $('#flgpagcont_mob','#frmTab098').val();
+    var vlcontig_cip = $('#vlcontig_cip','#frmTab098').val();    
     var prz_baixa_cip = $('#prz_baixa_cip','#frmTab098').val();
     var vlvrboleto = $('#vlvrboleto','#frmTab098').val();
-    var rollout_cip_reg_data = $('#rollout_cip_reg_data','#frmTab098').val();
-    var rollout_cip_reg_valor = $('#rollout_cip_reg_valor','#frmTab098').val();
-    var rollout_cip_pag_data = $('#rollout_cip_pag_data','#frmTab098').val();
-    var rollout_cip_pag_valor = $('#rollout_cip_pag_valor','#frmTab098').val();
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, enviando informa&ccedil;&otilde;es ...");
@@ -208,16 +198,9 @@ function grava_dados() {
         url: UrlSite + "telas/tab098/grava_dados.php",
         data: {
             cdcooper                : cdcooper,
-            flgpagcont_ib           : flgpagcont_ib,
-            flgpagcont_taa          : flgpagcont_taa,
-            flgpagcont_cx           : flgpagcont_cx,
-            flgpagcont_mob          : flgpagcont_mob,
+            vlcontig_cip            : vlcontig_cip,
             prz_baixa_cip           : prz_baixa_cip,
             vlvrboleto              : vlvrboleto,
-            rollout_cip_reg_data    : rollout_cip_reg_data,
-            rollout_cip_reg_valor   : rollout_cip_reg_valor,
-            rollout_cip_pag_data    : rollout_cip_pag_data,
-            rollout_cip_pag_valor   : rollout_cip_pag_valor,
             redirect             : "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {

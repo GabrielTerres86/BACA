@@ -68,7 +68,8 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
 					                         ,pr_tbTituloCIP   OUT NPCB0001.typ_reg_TituloCIP  -- TAB com os dados do Boleto
 						                       ,pr_flblq_valor   OUT NUMBER	     -- Flag para bloquear o valor de pagamento			
 					                         ,pr_fltitven      OUT NUMBER      -- Flag indicando que o título está vencido
-					                         ,pr_des_erro      OUT VARCHAR2    -- Indicador erro OK/NOK
+					                         ,pr_flcontig      OUT NUMBER       -- Flag indicando se esta a cip esta em contigencia
+                                   ,pr_des_erro      OUT VARCHAR2    -- Indicador erro OK/NOK
                                    ,pr_cdcritic      OUT NUMBER      -- Código do erro 
 					                         ,pr_dscritic      OUT VARCHAR2);  -- Descricao do erro
 
@@ -79,6 +80,12 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
                                        ,pr_dscritic    OUT VARCHAR2              --> Descrição da critica
                                        ) ;
 
+  --> Rotina para processar titulos que foram pagos em contigencia
+  PROCEDURE pc_proc_tit_contigencia (pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                    ,pr_dtmvtolt     IN craptit.dtmvtolt%TYPE --> Numer da conta do cooperado
+                                    ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
+                                    ,pr_dscritic    OUT VARCHAR2 );           --> Descrição da critica
+                                       
 END NPCB0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
@@ -209,6 +216,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_flgpgdda        INTEGER := 0;
     vr_tab_erro        GENE0001.typ_tab_erro;
     vr_critica_data    BOOLEAN:= FALSE;
+    vr_flcontig        INTEGER := 0;
+    
   BEGIN
                
     pr_des_erro := 'NOK';
@@ -259,7 +268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                         ,pr_idseqttl    => pr_idseqttl      --Sequencial do Titular
                                         ,pr_cod_agencia => pr_cdagenci      --Codigo da Agencia
                                         ,pr_nro_caixa   => vr_nrdcaixa      --Numero Caixa
-                                        ,pr_codbarras   => vr_codbarras --Codigo Barras
+                                        ,pr_codbarras   => vr_codbarras     --Codigo Barras
                                         ,pr_flgcritica  => TRUE             --Flag Critica
                                         ,pr_nrdconta    => vr_nrdconta_cob  --Numero da Conta OUT
                                         ,pr_insittit    => vr_insittit      --Situacao Titulo
@@ -398,7 +407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                       ,pr_titulo5       => pr_titulo5        
                                       ,pr_codigo_barras => pr_codigo_barras  
                                       ,pr_cdoperad      => pr_cdoperad  
-                                      ,pr_idorigem      => pr_idorigem     
+                                      ,pr_idorigem      => pr_idorigem    
                                       ,pr_flgpgdda      => vr_flgpgdda 
                                       ,pr_nrdocbenf     => vr_nrdocbenf
                                       ,pr_tppesbenf     => vr_tppesbenf
@@ -411,6 +420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                       ,pr_tbtitulocip   => vr_tbtitulocip    
                                       ,pr_flblq_valor   => vr_flblq_valor    
                                       ,pr_fltitven      => vr_flgtitven
+                                      ,pr_flcontig      => vr_flcontig
                                       ,pr_des_erro      => vr_des_erro       
                                       ,pr_cdcritic      => vr_cdcritic       
                                       ,pr_dscritic      => vr_dscritic);     
@@ -440,7 +450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
         RAISE vr_exc_erro;
       
       -- Se não encontrou titulo na CIP e não ocorreu erro (normalmente por estar fora do rollout)
-      ELSIF vr_tbtitulocip.NumCtrlPart IS NULL THEN
+      ELSIF vr_tbtitulocip.NumCtrlPart IS NULL AND vr_flcontig = 0 THEN
 
         -- Busca o valor do titulo de vencimento
         CXON0014.pc_retorna_vlr_tit_vencto(pr_cdcooper      => pr_cdcooper
@@ -499,6 +509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                     ,pr_dtmvtolt    => rw_crapdat.dtmvtolt
                                     ,pr_cdctrlcs    => vr_cdctrlcs
                                     ,pr_tbtitulocip => vr_tbtitulocip
+                                    ,pr_flcontig    => vr_flcontig
                                     ,pr_cdcritic    => vr_cdcritic
                                     ,pr_dscritic    => vr_dscritic);
         
@@ -564,7 +575,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
 					                         ,pr_tbTituloCIP   OUT NPCB0001.typ_reg_TituloCIP  -- TAB com os dados do Boleto
 						                       ,pr_flblq_valor   OUT NUMBER	      -- Flag para bloquear o valor de pagamento				
                                    ,pr_fltitven      OUT NUMBER       -- Flag indicando que o título está vencido
-					                         ,pr_des_erro      OUT VARCHAR2     -- Indicador erro OK/NOK
+					                         ,pr_flcontig      OUT NUMBER       -- Flag indicando se esta a cip esta em contigencia
+                                   ,pr_des_erro      OUT VARCHAR2     -- Indicador erro OK/NOK
                                    ,pr_cdcritic      OUT NUMBER       -- Código do erro 
 					                         ,pr_dscritic      OUT VARCHAR2) IS -- Descricao do erro
 
@@ -633,13 +645,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_cdctrlcs        VARCHAR2(50);
     vr_cdcritic        NUMBER;
     vr_dscritic        VARCHAR2(1000);
+    vr_cdcritic_req    NUMBER;
+    vr_dscritic_req    VARCHAR2(1000);
     vr_des_erro        VARCHAR2(3);
     vr_vlboleto        NUMBER;
     vr_tpconcip        NUMBER;
     vr_xmltit          CLOB;
     vr_nrdrowid        VARCHAR2(50);
     vr_cdcidade        crapcaf.cdcidade%TYPE;
-    
+    vr_de_campo        NUMBER;
+    vr_dtvencto        DATE;
+
   BEGIN   
 
      -- Inicializar o retorno como não-ok
@@ -707,6 +723,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        -- Garantir que não retorne dados tbm na collection
        pr_tbTituloCIP := NULL;
             
+       -- como não consultou a CIP, parametro contingencia sera zero;
+       pr_flcontig := 0;
+            
        pr_des_erro := 'OK';
        
        -- Sai da rotina de consulta 
@@ -721,7 +740,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        
        -- Retornar o número de controle de consulta
        pr_cdctrlcs := vr_cdctrlcs;
-       
+       pr_flcontig := 0;
+
        /* BUSCAR O CÓDIGO DO MUNICIPIO DE PAGAMENTO */
        -- Se o pagamento foi via Internet Banking ou Mobile
        IF pr_cdagenci IN (90,91) OR pr_flmobile = 1 THEN
@@ -764,7 +784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        
        -- Se retornar o indicador de erro da rotina 
        IF vr_des_erro = 'NOK' THEN
-         
+       
          -- Gerar log para a tela ver log, quando há número de conta
          IF pr_nrdconta IS NOT NULL THEN
            
@@ -790,19 +810,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            COMMIT;
          
          END IF;
-       
-         RAISE vr_exc_erro;
+          
+         -- Nao deve abortar pois deve gerar tabela de consulta e verificar se critica é de contigencia 
+         --> RAISE vr_exc_erro;
        END IF;
-     
-       -- Converter o XML retornado
-       NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltit
-                                         ,pr_tbtitulo => pr_tbTituloCIP
-                                         ,pr_des_erro => vr_des_erro
-                                         ,pr_dscritic => vr_dscritic);
+
+       --> Se nao retornou critica, extrai dados do xml
+       IF vr_dscritic IS NULL THEN
        
-       -- Se retornar o indicador de erro da rotina de extração de título
-       IF vr_des_erro = 'NOK' THEN
-         RAISE vr_exc_erro;
+         pr_tbTituloCIP := NULL;
+         -- Converter o XML retornado
+         NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltit
+                                           ,pr_tbtitulo => pr_tbTituloCIP
+                                           ,pr_des_erro => vr_des_erro
+                                           ,pr_dscritic => vr_dscritic);
+         
+         -- Se retornar o indicador de erro da rotina de extração de título
+         IF vr_des_erro = 'NOK' THEN
+           RAISE vr_exc_erro;
+         END IF;
+       ELSE
+         vr_cdcritic_req := vr_cdcritic;
+         vr_dscritic_req := vr_dscritic;
+       
+       
+         --> Se retornou critica, extrais dados do codigo de barras
+         pr_tbTituloCIP.NumCodBarras := vr_codbarras;
+         --Retornar valor fatura
+         pr_tbTituloCIP.VlrTit     := TO_NUMBER(SUBSTR(vr_titulo5,05,10));
+         pr_tbTituloCIP.VlrTit     := pr_tbTituloCIP.VlrTit / 100;
+                  
+         --> Verificar se esta em contigencia
+         IF vr_cdcritic_req = 945 THEN
+           pr_flcontig := 1;
+                
+           vr_de_campo                := TO_NUMBER(SUBSTR(gene0002.fn_mask(vr_titulo5,'99999999999999'),1,4));
+           cxon0014.pc_calcula_data_vencimento 
+                                  ( pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_de_campo => vr_de_campo
+                                   ,pr_dtvencto => vr_dtvencto
+                                   ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
+                                   ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
+           
+           
+           pr_tbTituloCIP.DtVencTit  := vr_dtvencto;
+           
+         END IF;
+         
        END IF;
        
        -- Inserir o registro consultado na tabela de registro de consulta
@@ -819,9 +873,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                              ,nrispbds
                                              ,dsxml
                                              ,cdcanal
-                                             ,cdoperad)
+                                             ,cdoperad
+                                             ,cdcritic
+                                             ,flgcontingencia)
                                       VALUES (vr_cdctrlcs                 -- cdctrlcs
-                                             ,pr_tbTituloCIP.NumIdentcTit -- nrdident
+                                             ,nvl(pr_tbTituloCIP.NumIdentcTit,0) -- nrdident
                                              ,pr_cdcooper                 -- cdcooper
                                              ,pr_cdagenci                 -- cdagenci
                                              ,pr_dtmvtolt                 -- dtmvtolt
@@ -829,10 +885,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                              ,SYSDATE                     -- dhconsulta
                                              ,pr_tbTituloCIP.NumCodBarras -- dscodbar
                                              ,pr_tbTituloCIP.VlrTit       -- vltitulo
-                                             ,pr_tbTituloCIP.ISPBPartDestinatario -- nrispbds
-                                             ,vr_xmltit                   -- dsxml
+                                             ,nvl(pr_tbTituloCIP.ISPBPartDestinatario,0) -- nrispbds
+                                             ,nvl(vr_xmltit,' ')          -- dsxml
                                              ,NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0)  -- cdcanal 
-                                             ,pr_cdoperad );              -- cdoperad
+                                             ,pr_cdoperad                 -- cdoperad
+                                             ,nvl(vr_cdcritic_req,0)      -- cdcritic
+                                             ,pr_flcontig );              -- flgcontingencia
        
        EXCEPTION
          WHEN OTHERS THEN
@@ -840,12 +898,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            RAISE vr_exc_erro;
        END;
        
+       --> Se possuir critica e se não é contigencia
+       IF (nvl(vr_cdcritic_req,0) > 0 OR trim(vr_dscritic_req) IS NOT NULL) AND 
+          pr_flcontig = 0 THEN
+         --> Garantir a gravação da tabela tbcobran_consulta_titulo
+         COMMIT;
+         vr_cdcritic := vr_cdcritic_req;
+         vr_dscritic := vr_dscritic_req;
+
+         RAISE vr_exc_erro;       
+       END IF;       
        
        -- Realizar as pré-validações do boleto
        NPCB0001.pc_valid_titulo_npc(pr_cdcooper    => pr_cdcooper
                                    ,pr_dtmvtolt    => pr_dtmvtolt
                                    ,pr_cdctrlcs    => vr_cdctrlcs
                                    ,pr_tbtitulocip => pr_tbTituloCIP
+                                   ,pr_flcontig    => pr_flcontig
                                    ,pr_cdcritic    => vr_cdcritic
                                    ,pr_dscritic    => vr_dscritic );
        
@@ -869,7 +938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        -- Retornar o nome do beneficiário
        pr_dsbenefic := gene0007.fn_caract_acento( NVL(TRIM(pr_tbTituloCIP.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
                           ,TRIM(pr_tbTituloCIP.Nom_RzSocBenfcrioOr)));-- Razão Social do Beneficiário Original
-              
+       
        
          -- Definir os valores do título
          NPCB0001.pc_valor_calc_titulo_npc(pr_dtmvtolt  => pr_dtmvtolt
@@ -1014,6 +1083,225 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       pr_cdcritic := 0;
       pr_dscritic := 'Nao foi possivel enviar titulo cip online: '||SQLERRM; 
   END pc_registra_tit_cip_online;
+
+  
+  --> Rotina para processar titulos que foram pagos em contigencia
+  PROCEDURE pc_proc_tit_contigencia (pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                    ,pr_dtmvtolt     IN craptit.dtmvtolt%TYPE --> Numer da conta do cooperado
+                                    ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
+                                    ,pr_dscritic    OUT VARCHAR2              --> Descrição da critica
+                                       ) IS
+  /* ..........................................................................
+    
+      Programa : pc_proc_tit_contigencia        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(AMcom)
+      Data     : Agosto/2017.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para processar titulos que foram pagos em contigencia
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    CURSOR cr_craptit IS 
+      SELECT tit.cdcooper,
+             tit.nrdconta,
+             tit.cdagenci,
+             tit.vldpagto,
+             tit.dtmvtolt,
+             tit.dscodbar,
+             tit.cdoperad,
+             tit.intitcop,
+             tit.nrdident,
+             tit.rowid,
+             tit.flgpgdda      
+      
+        FROM craptit tit
+       WHERE tit.cdcooper = decode(pr_cdcooper,0,tit.cdcooper,pr_cdcooper)
+         AND tit.dtmvtolt = pr_dtmvtolt
+         --> Titulos gerados em contigencia
+         AND tit.flgconti = 1
+         --> que ainda não foi enviado a baixa operacional
+         AND TRIM(tit.cdctrbxo) IS NULL;
+         
+    
+    ----------> VARIAVEIS <-----------
+    vr_dscritic       VARCHAR2(4000);
+    vr_cdcritic       INTEGER;
+    vr_exc_erro       EXCEPTION;    
+    vr_des_erro        VARCHAR2(3);
+    
+    vr_tbtitulocip     NPCB0001.typ_reg_titulocip;        
+    vr_nrdocbenf       NUMBER;
+    vr_tppesbenf       VARCHAR2(1);
+    vr_dsbenefic       VARCHAR2(100);
+    vr_vltitulo        NUMBER;
+    vr_vlrjuros        NUMBER;
+    vr_vlrmulta        NUMBER;
+    vr_vlrdescto       NUMBER;
+    vr_vlrabatim       NUMBER;     
+    vr_fltitven        NUMBER;
+    vr_cdctrlcs        VARCHAR2(50);   
+    vr_flblq_valor     NUMBER;
+    vr_flcontig        INTEGER;
+    vr_nridetit        NUMBER;
+    vr_tpdbaixa        INTEGER;
+    vr_cdsittit        INTEGER;
+    
+        
+    
+  BEGIN   
+   
+    --> Buscar titulos pagos em contigencia
+    FOR rw_craptit IN cr_craptit LOOP
+    
+      --> Rotina para consultar os titulos CIP
+      pc_consultar_titulo_cip ( pr_cdcooper       => rw_craptit.cdcooper    -- Cooperativa
+                               ,pr_nrdconta       => rw_craptit.nrdconta  -- Número da conta
+                               ,pr_cdagenci       => rw_craptit.cdagenci  -- Agência
+                               ,pr_flmobile       => 0                    -- Indicador origem Mobile
+                               ,pr_dtmvtolt       => rw_craptit.dtmvtolt  -- Data de movimento
+                               ,pr_titulo1        => NULL                 -- FORMAT "99999,99999"
+                               ,pr_titulo2        => NULL                 -- FORMAT "99999,999999"
+                               ,pr_titulo3        => NULL                 -- FORMAT "99999,999999"
+                               ,pr_titulo4        => NULL                 -- FORMAT "9"
+                               ,pr_titulo5        => NULL                 -- FORMAT "zz,zzz,zzz,zzz999"
+                               ,pr_codigo_barras  => rw_craptit.dscodbar  -- Codigo de Barras
+                               ,pr_cdoperad       => rw_craptit.cdoperad  -- Código do operador
+                               ,pr_idorigem       => 7                    -- Origem da requisição
+                               ,pr_flgpgdda       => rw_craptit.flgpgdda  -- Indicador pagto DDA
+                               ,pr_nrdocbenf      => vr_nrdocbenf         -- Documento do beneficiário emitente
+                               ,pr_tppesbenf      => vr_tppesbenf         -- Tipo de pessoa beneficiaria
+                               ,pr_dsbenefic      => vr_dsbenefic         -- Descrição do beneficiário emitente
+                               ,pr_vlrtitulo      => vr_vltitulo          -- Valor do título
+                               ,pr_vlrjuros       => vr_vlrjuros          -- Valor dos Juros
+                               ,pr_vlrmulta       => vr_vlrmulta          -- Valor da multa
+                               ,pr_vlrdescto      => vr_vlrdescto         -- Valor do desconto*/
+                               ,pr_cdctrlcs       => vr_cdctrlcs          -- Numero do controle da consulta
+                               ,pr_tbTituloCIP    => vr_tbTituloCIP       -- TAB com os dados do Boleto
+                               ,pr_flblq_valor    => vr_flblq_valor       -- Flag para bloquear o valor de pagamento        
+                               ,pr_fltitven       => vr_fltitven          -- Flag indicando que o título está vencido
+                               ,pr_flcontig       => vr_flcontig          -- Flag indicando se esta a cip esta em contigencia
+                               ,pr_des_erro       => vr_des_erro          -- Indicador erro OK/NOK
+                               ,pr_cdcritic       => vr_cdcritic          -- Código do erro 
+                               ,pr_dscritic       => vr_dscritic );       -- Descricao do erro
+    
+      -- Se ainda estiver em contigencia
+      IF vr_flcontig = 1 THEN
+        NPCB0001.pc_gera_log_npc(pr_cdcooper => rw_craptit.cdcooper, 
+                               pr_nmrotina => 'pc_proc_tit_contigencia', 
+                               pr_dsdolog  => '['||vr_cdctrlcs||']: '||' Processo ainda em contigencia.');
+        
+        --> Deve sair do programa
+        EXIT;
+      END IF;
+    
+      -- Se der erro não retorna informações   
+      IF vr_des_erro = 'NOK' THEN              
+        
+        NPCB0001.pc_gera_log_npc(pr_cdcooper => rw_craptit.cdcooper, 
+                                 pr_nmrotina => 'pc_proc_tit_contigencia', 
+                                 pr_dsdolog  => '['||vr_cdctrlcs||']: '||vr_dscritic);
+      
+        vr_dscritic := NULL;
+        vr_cdcritic := 0;
+        continue; 
+      END IF;
+      
+      --> Validação do pagamento do boleto na Nova plataforma de cobrança 
+      NPCB0001.pc_valid_pagamento_npc 
+                        ( pr_cdcooper  => rw_craptit.cdcooper --> Codigo da cooperativa
+                         ,pr_dtmvtolt  => rw_craptit.dtmvtolt --> Data de movimento                                   
+                         ,pr_cdctrlcs  => vr_cdctrlcs         --> Numero de controle da consulta no NPC
+                         ,pr_dtagenda  => NULL                --> Data de agendamento
+                         ,pr_vldpagto  => rw_craptit.vldpagto  --> Valor a ser pago
+                         ,pr_vltitulo  => vr_vltitulo         --> Valor do titulo
+                         ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
+                         ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                         ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
+                         ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
+                         ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
+                           
+      --> Verificar se retornou critica                             
+      IF nvl(vr_cdcritic,0) <> 0 OR
+         TRIM(vr_dscritic) IS NOT NULL THEN
+         
+        NPCB0001.pc_gera_log_npc(pr_cdcooper => rw_craptit.cdcooper, 
+                                 pr_nmrotina => 'pc_proc_tit_contigencia', 
+                                 pr_dsdolog  => '['||vr_cdctrlcs||']: '||vr_dscritic); 
+        vr_dscritic := NULL;
+        vr_cdcritic := 0;
+        continue;
+      END IF;
+      
+      --> Atualizar dados do titulo
+      BEGIN
+        UPDATE craptit 
+           SET cdctrlcs = nvl(vr_cdctrlcs,' ')          
+              ,nrdident = nvl(vr_nridetit,0)            
+              ,nrispbds = nvl(vr_tbTituloCIP.ISPBPartDestinatario,0)      
+              ,tpbxoper = nvl(vr_tpdbaixa,0)                  
+         WHERE craptit.rowid = rw_craptit.rowid;
+      EXCEPTION
+        WHEN OTHERS THEN  
+          vr_dscritic := 'Não foi possivel atualizar craptit: '||SQLERRM;
+          NPCB0001.pc_gera_log_npc(pr_cdcooper => rw_craptit.cdcooper, 
+                                 pr_nmrotina => 'pc_proc_tit_contigencia', 
+                                 pr_dsdolog  => '['||vr_cdctrlcs||']: '||vr_dscritic); 
+          vr_dscritic := NULL;
+          continue;
+      END;
+      
+      ------->>>>>>> ENVIAR BAIXA OPERACIONAL <<<<<<<-------
+      
+      --Determinar situacao titulo
+      IF rw_craptit.intitcop = 1 THEN
+        vr_cdsittit:= 3;  /* Pg.IntraBanc. */
+      ELSE
+        vr_cdsittit:= 4; /* Pg.InterBanc. */
+      END IF;     
+      
+ 
+      
+      --Executar Baixa Operacional
+      NPCB0003.pc_wscip_requisitar_baixa(pr_cdcooper => rw_craptit.cdcooper  --> Codigo da cooperativa
+                                        ,pr_dtmvtolt => rw_craptit.dtmvtolt  --> Data de movimento
+                                        ,pr_dscodbar => rw_craptit.dscodbar  --> Codigo de barra
+                                        ,pr_cdctrlcs => vr_cdctrlcs  --> Identificador da consulta
+                                        ,pr_idtitdda => vr_nridetit  --> Identificador Titulo DDA
+                                        ,pr_tituloCIP => vr_tbTituloCIP 
+                                        ,pr_flmobile => 0
+                                        --,pr_xml_frag => vr_xml --Documento XML referente ao fragmento do XML de resposta do SOAP
+                                        ,pr_des_erro => vr_des_erro --Indicador erro OK/NOK
+                                        ,pr_dscritic => vr_dscritic); --Descricao erro
+      IF vr_des_erro = 'NOK' THEN      
+        vr_dscritic := 'Não foi possivel requisitar baixa em contingencia: ' || vr_dscritic;
+        NPCB0001.pc_gera_log_npc(pr_cdcooper => rw_craptit.cdcooper, 
+                                 pr_nmrotina => 'pc_proc_tit_contigencia', 
+                                 pr_dsdolog  => '['||vr_cdctrlcs||']: '||vr_dscritic); 
+        vr_dscritic := NULL;
+        continue;
+      END IF;
+      
+      --> Depois de enviar a baixa operacional para cip é necessario realizar commit
+      COMMIT;
+    
+    END LOOP;
+    
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Nao foi possivel enviar titulo em contigencia cip: '||SQLERRM; 
+  END pc_proc_tit_contigencia;
 
 END NPCB0002;
 /

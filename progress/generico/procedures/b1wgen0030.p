@@ -483,7 +483,17 @@
 			   09/03/2017 - Ajuste para validar se o titulo ja esta incluso em um bordero
 					       (Adriano - SD 603451).
 
- 
+               12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+
+               05/06/2017 - Verificacao de titulo baixado para gravar restricao
+                            (Tiago/Ademir #678289)
+                            
+               12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+			 		       (Adriano - P339).
+
+			   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
 ..............................................................................*/
 
@@ -1807,7 +1817,7 @@ PROCEDURE efetua_liber_anali_bordero:
        ASSIGN aux_vldjuros     = aux_vltitulo - craptdb.vltitulo
               craptdb.vlliquid = craptdb.vltitulo - aux_vldjuros
               aux_vlborder     = aux_vlborder + craptdb.vlliquid.
-                          
+
        /* Daniel */
        IF par_cddopcao = "L" THEN 
        DO:
@@ -4248,12 +4258,16 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_perfatcl AS DECI                           NO-UNDO.
                                        
     DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
         
     DEF VAR h-b1wgen0021 AS HANDLE  NO-UNDO.
     DEF VAR h-b1wgen9999 AS HANDLE  NO-UNDO.
     DEF VAR aux_contador AS INTE    NO-UNDO.
     DEF VAR aux_lscontas AS CHAR    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
+    DEF VAR aux_flgativo     AS INT                                 NO-UNDO.
+    DEF VAR aux_nrdconta_grp LIKE crapass.nrdconta                  NO-UNDO. 
+    DEF VAR aux_dsvinculo    AS CHAR                                NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -4357,7 +4371,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "", /* Nacao*/
+                                                    INPUT 0, /* Nacao*/
                                                     INPUT 0,  /* Vl. Endiv. */
                                                     INPUT 0,  /* Vl. Rendim */
                                                     INPUT par_nrender1,
@@ -4382,7 +4396,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "", /* Nacao */
+                                                    INPUT 0, /* Nacao */
                                                     INPUT 0,  /* Vl. Endiv */
                                                     INPUT 0,  /* Vl. Rendim. */
                                                     INPUT par_nrender2,
@@ -4657,6 +4671,64 @@ PROCEDURE efetua_inclusao_limite:
                crapprp.cdcooper    = par_cdcooper
                crapprp.dtmvtolt    = par_dtmvtolt.
         VALIDATE crapprp.                   
+        
+        /* Verificar se a conta pertence ao grupo economico novo */	
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,0
+                                              ,0
+                                              ,""
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_verifica_conta_grp_econ
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic      = 0
+               aux_dscritic     = ""
+               aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
+               aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
+               aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
+               aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
+               aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+                        
+        IF aux_cdcritic > 0 THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1, /*sequencia*/
+                              INPUT aux_cdcritic,
+                              INPUT-OUTPUT aux_dscritic).
+                              
+               ASSIGN aux_flgderro = TRUE.
+               UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+           END.
+        ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+          DO:
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1, /*sequencia*/
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
+                             
+              ASSIGN aux_flgderro = TRUE.
+              UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+          END.
+                      
+        IF aux_flgativo = 1 THEN
+           DO:
+               CREATE tt-msg-confirma.                        
+               ASSIGN tt-msg-confirma.inconfir = 1
+                      tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+           END.    
+        
     END. /* Final da TRANSACAO */
     
     IF  aux_flgderro  THEN
@@ -4883,7 +4955,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav1, 
                                   INPUT par_cdufava1, 
                                   INPUT par_nrcepav1, 
-                                  INPUT "", /* Nacao */
+                                  INPUT 0, /* Nacao */
                                   INPUT 0,  /* Vl. Endividamento */
                                   INPUT 0,  /* Vl. Renda */
                                   INPUT par_nrender1,
@@ -4908,7 +4980,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav2, 
                                   INPUT par_cdufava2, 
                                   INPUT par_nrcepav2,
-                                  INPUT "",  /* Nacao */ 
+                                  INPUT 0,  /* Nacao */ 
                                   INPUT 0,   /* Vl. Endividamento */
                                   INPUT 0,   /* Vl. Renda*/
                                   INPUT par_nrender2,
@@ -10092,7 +10164,7 @@ PROCEDURE busca_dados_impressao_dsctit:
                 END.
             
             IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-                 rel_txnrdcid = crapass.tpdocptl + ": " + crapass.nrdocptl.
+                 rel_txnrdcid = crapass.tpdocptl + ": " + SUBSTR(TRIM(crapass.nrdocptl),1,15).
             ELSE 
                  rel_txnrdcid = "".  
 
@@ -15428,6 +15500,28 @@ PROCEDURE analisar-titulo-bordero:
                     ASSIGN aux_dsrestri = "Titulo ja foi pago."
                            aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 55
                                           ELSE 5.
+
+                    /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
+                    RUN grava-restricao-bordero (INPUT par_cdcooper,
+                                                 INPUT par_cdoperad,
+                                                 INPUT par_nrborder,
+                                                 INPUT aux_nrseqdig,
+                                                 INPUT aux_dsrestri,
+                                                 INPUT " ",   /* dsdetres */
+                                                 INPUT FALSE, /* flaprcoo */
+                                                 OUTPUT TABLE tt-erro).
+
+                    IF  RETURN-VALUE = "NOK" THEN
+                        RETURN "NOK".
+
+                END.
+
+            /* Verifica se o titulo está baixado */
+            IF  crapcob.incobran = 3 THEN
+                DO:
+                    ASSIGN aux_dsrestri = "Titulo baixado."
+                           aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 53
+                                          ELSE 3.
 
                     /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
                     RUN grava-restricao-bordero (INPUT par_cdcooper,

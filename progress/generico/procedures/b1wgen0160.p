@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0160.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 16/07/2013                     Ultima atualizacao: 28/11/2016
+    Data    : 16/07/2013                     Ultima atualizacao: 02/08/2016
 
     Objetivo  : Tranformacao BO tela PESQSR.
 
@@ -22,6 +22,10 @@
                 28/11/2016 - Incorporacao Transulcred
                              Correcao do FIND da TCO, estava errado
                              (Guilherme/SUPERO)
+
+				02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
 
 ............................................................................*/
 
@@ -85,7 +89,6 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_nmprimtl AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrfonemp AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrramemp AS INTE                                    NO-UNDO.
-    DEF VAR aux_nmdsecao AS CHAR                                    NO-UNDO.
     DEF VAR aux_cdturnos AS INTE                                    NO-UNDO.
     DEF VAR aux_dsagenci AS CHAR                                    NO-UNDO.
     DEF VAR aux_regexist AS LOGI INIT FALSE                         NO-UNDO.
@@ -244,7 +247,6 @@ PROCEDURE Busca_Opcao_C:
     DEF VAR aux_nmprimtl AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrfonemp AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrramemp AS INTE                                    NO-UNDO.
-    DEF VAR aux_nmdsecao AS CHAR                                    NO-UNDO.
     DEF VAR aux_cdturnos AS INTE                                    NO-UNDO.
     DEF VAR aux_dsagenci AS CHAR                                    NO-UNDO.
     DEF VAR aux_regexist AS LOGI INIT FALSE                         NO-UNDO.
@@ -252,6 +254,7 @@ PROCEDURE Busca_Opcao_C:
     DEF VAR aux_ctamigra AS LOGICAL INIT FALSE                      NO-UNDO.
 	DEF VAR aux_contador AS INT										NO-UNDO.
 
+    
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_returnvl = "NOK"
@@ -443,11 +446,9 @@ PROCEDURE Busca_Opcao_C:
         END.
 
         IF  AVAIL crapttl THEN
-            ASSIGN aux_nmdsecao = crapttl.nmdsecao
-                   aux_cdturnos = crapttl.cdturnos.
+            ASSIGN aux_cdturnos = crapttl.cdturnos.
         ELSE
-            ASSIGN aux_nmdsecao = ""
-                   aux_cdturnos = 0.
+            ASSIGN aux_cdturnos = 0.
 
         FOR FIRST crapage
             WHERE crapage.cdcooper = par_cdcooper AND
@@ -530,7 +531,6 @@ PROCEDURE Busca_Opcao_C:
                            tt-pesqsr.nrdctabb = par_nrdctabb
                            tt-pesqsr.nmprimtl = aux_nmprimtl
                            tt-pesqsr.dsagenci = aux_dsagenci
-                           tt-pesqsr.nmdsecao = aux_nmdsecao
                            tt-pesqsr.cdturnos = aux_cdturnos
                            tt-pesqsr.nrfonemp = aux_nrfonemp
                            tt-pesqsr.nrramemp = aux_nrramemp
@@ -663,7 +663,6 @@ PROCEDURE Busca_Opcao_D:
     DEF VAR aux_nmprimtl AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrfonemp AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrramemp AS INTE                                    NO-UNDO.
-    DEF VAR aux_nmdsecao AS CHAR                                    NO-UNDO.
     DEF VAR aux_cdturnos AS INTE                                    NO-UNDO.
     DEF VAR aux_nrdctabb AS INTE                                    NO-UNDO.
     DEF VAR aux_nrdctabb_x AS CHAR                                  NO-UNDO.
@@ -716,7 +715,7 @@ PROCEDURE Busca_Opcao_D:
         ELSE
             ASSIGN aux_nrdctabb_x = crapass.nrdctitg.
 
-        /* Alimenta nmdsecao e cdturnos */
+        /* Alimenta cdturnos */
         FOR FIRST crapttl
             WHERE crapttl.cdcooper = par_cdcooper     AND
                   crapttl.nrdconta = crapass.nrdconta AND
@@ -724,11 +723,9 @@ PROCEDURE Busca_Opcao_D:
         END.
 
         IF  AVAIL crapttl THEN
-            ASSIGN aux_nmdsecao = crapttl.nmdsecao
-                   aux_cdturnos = crapttl.cdturnos.
+            ASSIGN aux_cdturnos = crapttl.cdturnos.
         ELSE
-            ASSIGN aux_nmdsecao = ""
-                   aux_cdturnos = 0.
+            ASSIGN aux_cdturnos = 0.
 
         ASSIGN aux_nmprimtl = crapass.nmprimtl
                        aux_nrfonemp = "0"
@@ -840,7 +837,6 @@ PROCEDURE Busca_Opcao_D:
                    tt-pesqsr.cdbaninf = craplcm.cdbccxlt
                    tt-pesqsr.nmprimtl = aux_nmprimtl
                    tt-pesqsr.dsagenci = aux_dsagenci
-                   tt-pesqsr.nmdsecao = aux_nmdsecao
                    tt-pesqsr.cdturnos = aux_cdturnos
                    tt-pesqsr.nrfonemp = aux_nrfonemp
                    tt-pesqsr.nrramemp = aux_nrramemp

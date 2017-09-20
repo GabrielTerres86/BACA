@@ -11,7 +11,7 @@ AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Janeiro/94.                       Ultima atualizacao: 22/06/2016
+    Data    : Janeiro/94.                       Ultima atualizacao: 05/06/2017
 
     Dados referentes ao programa:
 
@@ -51,6 +51,10 @@ AS
                             
                22/06/2016 - Correcao para o uso da function fn_busca_dstextab 
                             da TABE0001. (Carlos Rafael Tanholi).
+
+			   05/06/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+						    (Adriano - P339).
     ......................................................................... */
     DECLARE
       -- Identificacao do programa
@@ -88,7 +92,6 @@ AS
       cursor cr_crapttl is
         SELECT crapttl.cdempres, -- Código da empresa
                decode(crapttl.cdturnos, 0, null, crapttl.cdturnos) cdturnos, -- Turno de trabalho
-               crapttl.nmdsecao, -- Setor da empresa
                crapttl.nrdconta  -- Nr da conta
           FROM crapttl
          WHERE crapttl.cdcooper = pr_cdcooper AND
@@ -185,13 +188,13 @@ AS
               ,cdturnos crapttl.cdturnos%type
               ,cdempres crapttl.cdempres%type
               ,av1nmpri crapass.nmprimtl%type
-              ,av1nmsec crapttl.nmdsecao%type
+              ,av1nmsec crapdes.nmsecext%type
               ,av1nrfon crapavt.nrfonres%type
               ,av1cdtur crapttl.cdturnos%type
               ,av1cdemp crapttl.cdempres%type
               ,av1cdage crapass.cdagenci%type
               ,av2nmpri crapass.nmprimtl%type
-              ,av2nmsec crapttl.nmdsecao%type
+              ,av2nmsec crapdes.nmsecext%type
               ,av2nrfon crapavt.nrfonres%type
               ,av2cdtur crapttl.cdturnos%type
               ,av2cdemp crapttl.cdempres%type
@@ -243,8 +246,7 @@ AS
       -- Tipo de Registro para PlTable de cadastro de titular
       type typ_reg_emp is
         record(cdempres crapjur.cdempres%type
-              ,cdturnos crapttl.cdturnos%type
-              ,nmdsecao crapttl.nmdsecao%type);
+              ,cdturnos crapttl.cdturnos%type);
 
       -- Tipo de tabela para PlTable de cadastro de titular
       type typ_tab_emp is
@@ -383,7 +385,6 @@ AS
       FOR rw_crapttl IN cr_crapttl LOOP
         vr_tab_emp(rw_crapttl.nrdconta).cdempres := rw_crapttl.cdempres;
         vr_tab_emp(rw_crapttl.nrdconta).cdturnos := rw_crapttl.cdturnos;
-        vr_tab_emp(rw_crapttl.nrdconta).nmdsecao := rw_crapttl.nmdsecao;
       END LOOP;
 
       -- Alimenta PlTable vr_tab_ass com dados de Associados
@@ -578,7 +579,6 @@ AS
                 if vr_tab_emp.exists(vr_nrdconta_aval) then
                   vr_av1cdtur := vr_tab_emp(vr_nrdconta_aval).cdturnos;
                   vr_av1cdemp := vr_tab_emp(vr_nrdconta_aval).cdempres;
-                  vr_av1nmsec := vr_tab_emp(vr_nrdconta_aval).nmdsecao;
                 end if;
                 vr_av1cdage := vr_tab_ass(vr_nrdconta_aval).cdagenci;
               else

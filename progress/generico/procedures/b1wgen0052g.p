@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 15/07/2016
+    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
   
     Dados referentes ao programa:
   
@@ -150,6 +150,16 @@
                              (Lucas Ranghetti #484923)
 				
                 01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
+				
+				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+										
+
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
+                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)  
 .............................................................................*/
                                                      
 
@@ -166,6 +176,7 @@
 
 DEF VAR aux_contador AS INTE                                        NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                        NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                     NO-UNDO.
 
 FUNCTION LockTabela RETURNS CHARACTER PRIVATE
   ( INPUT par_recidtab AS RECID,
@@ -208,7 +219,7 @@ PROCEDURE Grava_Dados :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO. 
@@ -506,7 +517,7 @@ PROCEDURE Grava_Dados :
                       INPUT par_dtcnscpf,  
                       INPUT par_dtnasctl,  
                       INPUT par_tpnacion,  
-                      INPUT par_dsnacion,  
+                      INPUT par_cdnacion,  
                       INPUT par_dsnatura,
                       INPUT par_cdufnatu,
                       INPUT par_cdocpttl,
@@ -712,7 +723,7 @@ PROCEDURE Altera PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
@@ -878,7 +889,7 @@ PROCEDURE Altera PRIVATE :
               INPUT par_dtcnscpf,
               INPUT par_dtnasctl,
               INPUT par_tpnacion,
-              INPUT par_dsnacion,
+              INPUT par_cdnacion,
               INPUT par_dsnatura,
               INPUT par_cdocpttl,
               INPUT par_cdestcvl,
@@ -949,7 +960,7 @@ PROCEDURE Altera PRIVATE :
                       INPUT crabass.dtcnscpf,
                       INPUT crabass.dtnasctl,
                       INPUT par_tpnacion,
-                      INPUT crabass.dsnacion,
+                      INPUT crabass.cdnacion,
                       INPUT par_dsnatura,
                       INPUT par_cdufnatu,
                       INPUT crabttl.cdestcvl,
@@ -1199,7 +1210,7 @@ PROCEDURE Altera_Ass PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -1269,13 +1280,12 @@ PROCEDURE Altera_Ass PRIVATE :
                    crabass.nmmaeptl = CAPS(par_nmmaettl)
                    crabass.cdsexotl = par_cdsexotl
                    crabass.dtnasctl = par_dtnasctl
-                   crabass.dsnacion = CAPS(par_dsnacion)
+                   crabass.cdnacion = par_cdnacion
                    /* Retirado campo crabass.dsnatura */
                    crabass.dsproftl = CAPS(par_dsproftl)
                    crabass.nrcadast = par_nrcadast
                    crabass.tpdocptl = CAPS(par_tpdocptl)
                    crabass.nrdocptl = par_nrdocptl
-                   crabass.cdoedptl = CAPS(par_cdoedptl)
                    crabass.cdufdptl = CAPS(par_cdufdptl)
                    crabass.dtemdptl = par_dtemdptl NO-ERROR.
 
@@ -1285,6 +1295,25 @@ PROCEDURE Altera_Ass PRIVATE :
                        ASSIGN par_dscritic = {&GET-MSG}.
                        UNDO AlteraAss, LEAVE AlteraAss.
                     END.
+
+                /* Identificar orgao expedidor */
+                IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                    RUN sistema/generico/procedures/b1wgen0052b.p 
+                        PERSISTENT SET h-b1wgen0052b.
+
+                ASSIGN crabass.idorgexp = 0.
+                RUN identifica_org_expedidor IN h-b1wgen0052b 
+                                   ( INPUT CAPS(par_cdoedptl),
+                                    OUTPUT crabass.idorgexp,
+                                    OUTPUT par_cdcritic, 
+                                    OUTPUT par_dscritic).
+
+                DELETE PROCEDURE h-b1wgen0052b.   
+
+                IF  RETURN-VALUE = "NOK" THEN
+                DO:
+                    UNDO AlteraAss, LEAVE AlteraAss.
+                END.
 
                 /* Dados do Titular - Pessoa Fisica */
                 ContadorTtl: DO aux_contador = 1 TO 10:
@@ -2323,7 +2352,7 @@ PROCEDURE Altera_Fis PRIVATE :
     DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -2421,7 +2450,7 @@ PROCEDURE Altera_Fis PRIVATE :
                crabttl.dtcnscpf = par_dtcnscpf
                crabttl.dtnasttl = par_dtnasctl
                crabttl.tpnacion = par_tpnacion
-               crabttl.dsnacion = CAPS(par_dsnacion)
+               crabttl.cdnacion = par_cdnacion
                crabttl.dsnatura = CAPS(par_dsnatura)
                crabttl.cdufnatu = CAPS(par_cdufnatu)
                crabttl.cdestcvl = par_cdestcvl
@@ -2434,7 +2463,6 @@ PROCEDURE Altera_Fis PRIVATE :
                crabttl.cdocpttl = par_cdocpttl
                crabttl.tpdocttl = CAPS(par_tpdocptl)
                crabttl.nrdocttl = par_nrdocptl
-               crabttl.cdoedttl = CAPS(par_cdoedptl)
                crabttl.cdufdttl = CAPS(par_cdufdptl)
                crabttl.dtemdttl = par_dtemdptl
                crabttl.nrcpfcgc = par_nrcpfcgc
@@ -2450,6 +2478,25 @@ PROCEDURE Altera_Fis PRIVATE :
                ASSIGN par_dscritic = {&GET-MSG}.
                UNDO AlteraFis, LEAVE AlteraFis.
             END.
+
+        /* Identificar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+            RUN sistema/generico/procedures/b1wgen0052b.p 
+                PERSISTENT SET h-b1wgen0052b.
+
+        ASSIGN crabttl.idorgexp = 0.
+        RUN identifica_org_expedidor IN h-b1wgen0052b 
+                           ( INPUT CAPS(par_cdoedptl),
+                            OUTPUT crabttl.idorgexp,
+                            OUTPUT par_cdcritic, 
+                            OUTPUT par_dscritic).
+
+        DELETE PROCEDURE h-b1wgen0052b.   
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            UNDO AlteraFis, LEAVE AlteraFis.
+        END.     
 
         /* CONJUGE */
         ContadorCje: DO aux_contador = 1 TO 10:
@@ -4259,7 +4306,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.inmatric = 1
                        crabass.tpavsdeb = 0
                        crabass.qtfoltal = 10 
-                       crabass.nmttlrfb = SUBSTR(par_nmttlrfb,1,60) 
+                       crabass.nmttlrfb = SUBSTR(par_nmttlrfb,1,200) 
                        crabass.inconrfb = par_inconrfb 
                        crabass.hrinicad = par_hrinicad 
                        crabass.cdsitdct = 6  /* Normal S/Talao */
@@ -5705,6 +5752,7 @@ PROCEDURE Procurador PRIVATE :
   DEF VAR aux_stsnrcal AS LOG                                     NO-UNDO.
   DEF VAR aux_nrcpfcgc AS DEC                                     NO-UNDO.
   DEF VAR aux_nrdctato AS INT                                     NO-UNDO.
+  DEF VAR aux_cdorgexp AS CHAR                                    NO-UNDO.
 
   DEF BUFFER b-crapavt1 FOR crapavt.
 
@@ -5838,6 +5886,25 @@ PROCEDURE Procurador PRIVATE :
                                          crapcrl.idseqmen = tt-crapavt.nrctremp
                                          NO-LOCK:
                                      
+                                         /* Retornar orgao expedidor */
+                                         IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                                              RUN sistema/generico/procedures/b1wgen0052b.p 
+                                                  PERSISTENT SET h-b1wgen0052b.
+
+                                         ASSIGN aux_cdorgexp = "".
+                                         RUN busca_org_expedidor IN h-b1wgen0052b 
+                                                             ( INPUT crapcrl.idorgexp,
+                                                              OUTPUT aux_cdorgexp,
+                                                              OUTPUT par_cdcritic, 
+                                                              OUTPUT par_dscritic).
+
+                                         DELETE PROCEDURE h-b1wgen0052b.   
+
+                                         IF  RETURN-VALUE = "NOK" THEN
+                                         DO:
+                                           LEAVE ContadorAvt.   
+                                         END.
+                                     
                                          RUN Grava_Dados IN h-b1wgen0072 
                                                    (INPUT par_cdcooper,
                                                     INPUT 0,
@@ -5856,13 +5923,13 @@ PROCEDURE Procurador PRIVATE :
                                                     INPUT crapcrl.nmrespon,
                                                     INPUT crapcrl.tpdeiden,
                                                     INPUT crapcrl.nridenti,
-                                                    INPUT crapcrl.dsorgemi,
+                                                    INPUT aux_cdorgexp,
                                                     INPUT crapcrl.cdufiden,
                                                     INPUT crapcrl.dtemiden,
                                                     INPUT crapcrl.dtnascin,
                                                     INPUT crapcrl.cddosexo,
                                                     INPUT crapcrl.cdestciv,
-                                                    INPUT crapcrl.dsnacion,
+                                                    INPUT crapcrl.cdnacion,
                                                     INPUT crapcrl.dsnatura,
                                                     INPUT crapcrl.cdcepres,
                                                     INPUT crapcrl.dsendres,
@@ -5923,13 +5990,12 @@ PROCEDURE Procurador PRIVATE :
                ASSIGN crapavt.nmdavali    = UPPER(tt-crapavt.nmdavali)
                       crapavt.tpdocava    = tt-crapavt.tpdocava
                       crapavt.nrdocava    = tt-crapavt.nrdocava
-                      crapavt.cdoeddoc    = UPPER( tt-crapavt.cdoeddoc)
                       crapavt.cdufddoc    = UPPER(tt-crapavt.cdufddoc)
                       crapavt.dtemddoc    = tt-crapavt.dtemddoc
                       crapavt.dtnascto    = tt-crapavt.dtnascto
                       crapavt.cdsexcto    = tt-crapavt.cdsexcto
                       crapavt.cdestcvl    = tt-crapavt.cdestcvl
-                      crapavt.dsnacion    = UPPER(tt-crapavt.dsnacion)
+                      crapavt.cdnacion    = tt-crapavt.cdnacion
                       crapavt.dsnatura    = UPPER(tt-crapavt.dsnatura)
                       crapavt.nrcepend    = tt-crapavt.nrcepend
                       crapavt.dsendres[1] = UPPER(tt-crapavt.dsendres[1])
@@ -5950,6 +6016,25 @@ PROCEDURE Procurador PRIVATE :
                      ASSIGN par_dscritic = {&GET-MSG}.
                      LEAVE Procurador.
 
+                  END.
+
+               /* Identificar orgao expedidor */
+               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                    RUN sistema/generico/procedures/b1wgen0052b.p 
+                        PERSISTENT SET h-b1wgen0052b.
+
+               ASSIGN crapavt.idorgexp = 0.
+               RUN identifica_org_expedidor IN h-b1wgen0052b 
+                                   ( INPUT UPPER( tt-crapavt.cdoeddoc),
+                                    OUTPUT crapavt.idorgexp,
+                                    OUTPUT par_cdcritic, 
+                                    OUTPUT par_dscritic).
+
+               DELETE PROCEDURE h-b1wgen0052b.   
+
+               IF  RETURN-VALUE = "NOK" THEN
+               DO:
+                    LEAVE Procurador.
                   END.
 
                ASSIGN aux_contador = 0.
@@ -6220,13 +6305,13 @@ PROCEDURE atualiza_avt_crl PRIVATE:
                     crapavt.nmdavali = "" 
                     crapavt.tpdocava = "" 
                     crapavt.nrdocava = "" 
-                    crapavt.cdoeddoc = "" 
+                    crapavt.idorgexp = 0 
                     crapavt.cdufddoc = "" 
                     crapavt.dtemddoc = ? 
                     crapavt.dtnascto = ? 
                     crapavt.cdsexcto = 0
                     crapavt.cdestcvl = 0 
-                    crapavt.dsnacion = "" 
+                    crapavt.cdnacion = 0
                     crapavt.dsnatura = "" 
                     crapavt.nrcepend = 0 
                     crapavt.dsendres = ""
@@ -6268,13 +6353,13 @@ PROCEDURE atualiza_avt_crl PRIVATE:
                     crapcrl.nmrespon = ""
                     crapcrl.tpdeiden = ""
                     crapcrl.nridenti = ""
-                    crapcrl.dsorgemi = ""
+                    crapcrl.idorgexp = 0
                     crapcrl.cdufiden = ""
                     crapcrl.dtemiden = ?
                     crapcrl.dtnascin = ?
                     crapcrl.cddosexo = 0
                     crapcrl.cdestciv = 0
-                    crapcrl.dsnacion = ""
+                    crapcrl.cdnacion = 0
                     crapcrl.dsnatura = ""
                     crapcrl.cdcepres = 0
                     crapcrl.dsendres = ""
@@ -6390,12 +6475,6 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
                                     WHEN 1 THEN DO:
                                         ASSIGN crapass.nmprimtl = UPPER(par_nmextttl).
                                     END.
-                                    WHEN 2 THEN DO:
-                                        ASSIGN crapass.nmsegntl = "E/OU " + UPPER(par_nmextttl).
-                                    END.
-                                    WHEN 3 THEN DO:
-                                        ASSIGN crapass.nmtertl  = "E/OU " + UPPER(par_nmextttl).
-                                    END.
                                 END CASE.
 
                                 LEAVE ContadorAss.
@@ -6475,12 +6554,6 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
                                 CASE crapttl.idseqttl:
                                     WHEN 1 THEN DO:
                                         ASSIGN crapass.nmprimtl = UPPER(par_nmextttl).
-                                    END.
-                                    WHEN 2 THEN DO:
-                                        ASSIGN crapass.nmsegntl = "E/OU " + UPPER(par_nmextttl).
-                                    END.
-                                    WHEN 3 THEN DO:
-                                        ASSIGN crapass.nmtertl  = "E/OU " + UPPER(par_nmextttl).
                                     END.
                                 END CASE.
 

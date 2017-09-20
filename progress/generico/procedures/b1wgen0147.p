@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 15/08/2017
+   Data    : 02/05/2013                         Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -24,6 +24,15 @@
                15/08/2017 - Incluir dividor por 100 ao buscar o percentual de 
                             garantia aux_vlpergar 116,5 (Lucas Ranghetti #734912)
                             
+			   12/06/2017  - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							 (Adriano - P339).		            
+
+               21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                            PRJ339 - CRM (Odirlei-AMcom)          
+							
+			   01/09/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 747633)
+
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0147tt.i }
@@ -37,6 +46,7 @@ DEF VAR aux_setlinha AS CHAR NO-UNDO.
 DEF VAR aux_cdcooper AS INTE NO-UNDO.
 DEF VAR aux_cdcritic AS INTE NO-UNDO.
 DEF VAR aux_dscritic AS CHAR NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE NO-UNDO.
 
 PROCEDURE busca_dados:
     
@@ -105,6 +115,7 @@ PROCEDURE cria_dados_totvs:
    DEF VAR aux_contador AS INTE                                        NO-UNDO.
    DEF VAR aux_nrcpfcgc AS CHAR                                        NO-UNDO.
    DEF VAR aux_nmservid AS CHAR                                        NO-UNDO.
+   DEF VAR aux_cdorgexp AS CHAR                                        NO-UNDO.
 
    DEF BUFFER crabcop FOR crapcop.
 
@@ -194,6 +205,27 @@ PROCEDURE cria_dados_totvs:
                     IF   crapttl.cdestcvl = 12 THEN
                          ASSIGN aux_dsestcvl = "UE". /*Unico estavel*/
                 
+                    /* Retornar orgao expedidor */
+                    IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                        RUN sistema/generico/procedures/b1wgen0052b.p 
+                            PERSISTENT SET h-b1wgen0052b.
+
+                    ASSIGN aux_cdorgexp = "".
+                    RUN busca_org_expedidor IN h-b1wgen0052b 
+                                       ( INPUT crapttl.idorgexp,
+                                        OUTPUT aux_cdorgexp,
+                                        OUTPUT aux_cdcritic, 
+                                        OUTPUT aux_dscritic).
+
+                    DELETE PROCEDURE h-b1wgen0052b.   
+
+                    IF  RETURN-VALUE = "NOK" THEN
+                    DO:
+                        CREATE tt-erro.
+                        ASSIGN tt-erro.dscritic = aux_dscritic.                       
+                        RETURN "NOK".
+                    END.                
+                
                     ASSIGN aux_textoxml[1] = '<?xml version="1.0" encoding="ISO-8859-1"?>'
                            aux_textoxml[2] = "<CADASTRO_CONTA>"
                            aux_textoxml[3] = "<SP_CLIENTE>"
@@ -213,11 +245,11 @@ PROCEDURE cria_dados_totvs:
                                            + "</DTNASTTL>"
                            aux_textoxml[10] = "<TPDOCTTL>" + aux_tpdocttl + 
                                              "</TPDOCTTL>"
-                           aux_textoxml[11] = "<CDEODTTL>" + crapttl.cdoedttl + 
+                           aux_textoxml[11] = "<CDEODTTL>" + aux_cdorgexp + 
                                              "</CDEODTTL>"
                            aux_textoxml[12] = "<DTEMDTTL>" + STRING(crapttl.dtemdttl) 
                                             + "</DTEMDTTL>"
-                           aux_textoxml[13] = "<NRDOCTTL>" + crapttl.nrdocttl + 
+                           aux_textoxml[13] = "<NRDOCTTL>" + SUBSTR(TRIM(crapttl.nrdocttl),1,15) + 
                                               "</NRDOCTTL>"
                            aux_textoxml[14] = "<DSEXTTTL>" + aux_dssexttl + 
                                               "</DSEXTTTL>"
@@ -400,10 +432,7 @@ PROCEDURE cria_dados_totvs:
                
        END. /*fim do juridica*/
            
-
-     UNIX SILENT VALUE ('sudo /usr/bin/su - scpuser -c ' +
-                       '"scp ' + aux_nmarquiv + ' scpuser@' + aux_nmservid +
-                       ':/usr/local/cecred/bndes/xml/" 2>/dev/null').
+	 UNIX SILENT VALUE ('"cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/" 2>/dev/null').
 
      UNIX SILENT VALUE ("rm " + aux_nmarquiv + " 2> /dev/null" ).
       

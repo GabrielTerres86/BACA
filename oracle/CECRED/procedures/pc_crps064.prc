@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Agosto/93.                          Ultima atualizacao: 12/05/2014
+   Data    : Agosto/93.                          Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -50,6 +50,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
 							
                12/05/2014 - Ajustado update crapsld incluso tratamento com NVL (Daniel).							
 
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
      ............................................................................. */
 
      DECLARE
@@ -84,7 +88,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
        TYPE typ_reg_crapass IS
          RECORD (nrcpfcgc crapass.nrcpfcgc%TYPE
                 ,nmprimtl crapass.nmprimtl%TYPE
-                ,nmsegntl crapass.nmsegntl%TYPE
+                ,nmsegntl crapttl.nmextttl%TYPE
                 ,inpessoa crapass.inpessoa%TYPE);
 
 
@@ -147,11 +151,19 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
                 crapass.nrdconta
                ,crapass.nrcpfcgc
                ,crapass.nmprimtl
-               ,crapass.nmsegntl
                ,crapass.inpessoa
+               ,crapass.cdcooper
          FROM crapass crapass
          WHERE crapass.cdcooper = pr_cdcooper;
 
+	   --Selecionar informacoes do titular
+       CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE
+	                       ,pr_nrdconta IN crapttl.nrdconta%TYPE) IS
+         SELECT crapttl.nmextttl
+         FROM crapttl
+         WHERE crapttl.cdcooper = pr_cdcooper
+		   AND crapttl.nrdconta = pr_nrdconta
+		   AND crapttl.idseqttl = 2;
 
        /***** Variaveis RDCA para BO *****/
        vr_cdprogra     VARCHAR2(10);
@@ -197,6 +209,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
        vr_exc_saida  EXCEPTION;
        vr_exc_fimprg EXCEPTION;
        vr_exc_pula   EXCEPTION;
+       vr_nmextttl   crapttl.nmextttl%TYPE;
 
        --Procedure para limpar os dados das tabelas de memoria
        PROCEDURE pc_limpa_tabela IS
@@ -230,7 +243,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
 
          --Variaveis
          vr_nrdconta crapass.nrdconta%TYPE;
-         vr_nmsegntl crapass.nmsegntl%TYPE;
+         vr_nmsegntl crapttl.nmextttl%TYPE;
 
 		     --Variavel de Exceção
 		     vr_exc_saida EXCEPTION;
@@ -400,11 +413,29 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
 
        --Carregar tabela de memoria de associados
        FOR rw_crapass IN cr_crapass (pr_cdcooper => pr_cdcooper) LOOP
+
          --Popular vetor de memoria
          vr_tab_crapass(rw_crapass.nrdconta).nrcpfcgc:= rw_crapass.nrcpfcgc;
          vr_tab_crapass(rw_crapass.nrdconta).nmprimtl:= rw_crapass.nmprimtl;
-         vr_tab_crapass(rw_crapass.nrdconta).nmsegntl:= rw_crapass.nmsegntl;
          vr_tab_crapass(rw_crapass.nrdconta).inpessoa:= rw_crapass.inpessoa;
+
+		 IF rw_crapass.inpessoa = 1 THEN
+		    
+	       OPEN cr_crapttl(pr_cdcooper => rw_crapass.cdcooper
+		                    ,pr_nrdconta => rw_crapass.nrdconta);
+
+		   FETCH cr_crapttl INTO vr_nmextttl;
+
+		   IF cr_crapttl%FOUND THEN
+		     
+		     vr_tab_crapass(rw_crapass.nrdconta).nmsegntl:= vr_nmextttl;
+
+		   END IF;
+
+		   CLOSE cr_crapttl;
+
+	     END IF;
+
        END LOOP;
 
        --Pesquisar todos os associados
@@ -624,4 +655,3 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS064" (pr_cdcooper IN crapcop.cdcooper
      END;
    END pc_crps064;
 /
-

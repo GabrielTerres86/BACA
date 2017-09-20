@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 26/04/2016
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -73,6 +73,14 @@
 			   
 			   26/04/2016 - Inclusao dos horarios de SAC e OUVIDORIA nos
 			                comprovantes, melhoria 112 (Tiago/Elton)    
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)  
+             
 ........................................................................... */
 
 /*---------------------------------------------------------------*/
@@ -96,6 +104,7 @@ DEF  VAR aux_nrcpfcgc    AS CHAR                               NO-UNDO.
 DEF  VAR aux_vltotrda    AS DEC                                NO-UNDO.    
 
 DEF VAR h-b1wgen0155 AS HANDLE                                 NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                NO-UNDO.
 DEF VAR aux_vlblqjud AS DECI                                   NO-UNDO.
 DEF VAR aux_vlblqpop AS DECI                                   NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                   NO-UNDO.
@@ -169,6 +178,7 @@ PROCEDURE consulta-conta:
     DEF VAR tab_txiofapl   AS DEC FORMAT "zzzzzzzz9,999999" NO-UNDO.
     
     DEF VAR aux_cdempres   AS INT                           NO-UNDO.
+    DEF VAR aux_cdorgexp   AS CHAR                          NO-UNDO.
 
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -199,7 +209,6 @@ PROCEDURE consulta-conta:
  
     CREATE tt-conta.
     ASSIGN tt-conta.nome-tit     = crapass.nmprimtl
-           tt-conta.nome-seg-tit = crapass.nmsegntl
            tt-conta.magnetico    = 0.
 
     FOR EACH crapcrm WHERE crapcrm.cdcooper = crapcop.cdcooper  AND
@@ -235,12 +244,25 @@ PROCEDURE consulta-conta:
     
     IF  crapass.inpessoa = 1   THEN 
         DO:
-            FIND crapttl WHERE crapttl.cdcooper = crapcop.cdcooper   AND
+            FOR FIRST crapttl FIELDS(crapttl.cdempres)
+			                   WHERE crapttl.cdcooper = crapcop.cdcooper   AND
                                crapttl.nrdconta = crapass.nrdconta   AND
-                               crapttl.idseqttl = 1 NO-LOCK NO-ERROR.
+                                     crapttl.idseqttl = 1 
+									 NO-LOCK:
 
-            IF   AVAIL crapttl  THEN
                  ASSIGN aux_cdempres = crapttl.cdempres.
+
+        END.
+
+			FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+			                   WHERE crapttl.cdcooper = crapcop.cdcooper   AND
+                                     crapttl.nrdconta = crapass.nrdconta   AND
+                                     crapttl.idseqttl = 2
+							         NO-LOCK:
+
+                 ASSIGN tt-conta.nome-seg-tit = crapttl.nmextttl.
+		    END.
+
         END.
     ELSE
         DO:
@@ -415,8 +437,34 @@ PROCEDURE consulta-conta:
 
     END.   /*  FOR EACH */
     
+    
+    /* Retornar orgao expedidor */
+    IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+        RUN sistema/generico/procedures/b1wgen0052b.p 
+            PERSISTENT SET h-b1wgen0052b.
+
+    ASSIGN aux_cdorgexp = "".
+    RUN busca_org_expedidor IN h-b1wgen0052b 
+                       ( INPUT crapass.idorgexp,
+                        OUTPUT aux_cdorgexp,
+                        OUTPUT i-cod-erro, 
+                        OUTPUT c-desc-erro).
+
+    DELETE PROCEDURE h-b1wgen0052b.   
+    
+    IF c-desc-erro <> "" THEN
+    DO:       
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        LEAVE.
+    END.        
+    
     ASSIGN tt-conta.identidade = crapass.nrdocptl
-           tt-conta.orgao      = STRING(crapass.cdoedptl) + " - " + 
+           tt-conta.orgao      = STRING(aux_cdorgexp) + " - " + 
                                  STRING(crapass.dtemdptl,"99/99/9999").
 
     IF  crapass.inpessoa = 1 THEN
@@ -753,8 +801,24 @@ PROCEDURE impressao-saldo:
                        crapass.nrdconta = p-nro-conta       NO-LOCK NO-ERROR.
                        
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+	      IF crapass.inpessoa = 1 THEN
+		     DO:
+			     FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                    WHERE crapttl.cdcooper = crapass.cdcooper AND
+				                          crapttl.nrdconta = crapass.nrdconta AND
+									      crapttl.idseqttl = 2 
+									      NO-LOCK:
+
+				    ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+				 END.
+
+			 END.
+			 
+          ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+	   END.
 
     ASSIGN de-valor-total = p-valor-disponivel + p-valor-emprestimo + 
                             p-valor-praca      + p-valor-fora-praca + 

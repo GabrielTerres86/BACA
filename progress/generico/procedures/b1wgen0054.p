@@ -2,7 +2,7 @@
 
     Programa: b1wgen0054.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 22/09/2010   
+    Data    : Janeiro/2010                   Ultima atualizacao: 19/04/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - FILIACAO, task 119
 
@@ -12,6 +12,10 @@
                 20/12/2010 -  Adicionado parametros na chamada do procedure
                               Replica_Dados para tratamento do log e  erros
                               da validação na replicação (Gabriel - DB1).
+   
+				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
    
 .............................................................................*/
 
@@ -377,12 +381,6 @@ PROCEDURE Grava_Dados.
       
       CASE par_idseqttl:
          WHEN 1 THEN ASSIGN crapass.dsfiliac = CAPS(par_nmpaittl)
-                                               + " E " +
-                                               CAPS(par_nmmaettl).
-         WHEN 2 THEN ASSIGN crapass.dsfilstl = CAPS(par_nmpaittl) 
-                                               + " E " +
-                                               CAPS(par_nmmaettl).
-         WHEN 3 THEN ASSIGN crapass.dsfilttl = CAPS(par_nmpaittl) 
                                                + " E " +
                                                CAPS(par_nmmaettl).
       END CASE.

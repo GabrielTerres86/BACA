@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS541(
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2009.                      Ultima atualizacao: 07/10/2016
+   Data    : Novembro/2009.                      Ultima atualizacao: 01/09/2017
 
    Dados referentes ao programa:
 
@@ -67,8 +67,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS541(
 
 			   07/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares). 
+
 			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
 							da rotina padrão. (Rodrigo)
+
+               01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
+			               o nome do arquivo apos processamento, iremos gerar o arquivo
+						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
+
 ............................................................................. */
 
   -- CURSORES
@@ -984,7 +990,7 @@ BEGIN
        -- Busca o diretório para contabilidade
         vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
         vr_dircon := vr_dircon || vc_dircon;
-        vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD') ||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
+        vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD') ||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_525.txt';
 
         -- Chama a geracao do TXT
         GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
@@ -996,7 +1002,6 @@ BEGIN
                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
                                            ,pr_dspathcop => vr_dircon
                                            ,pr_fldoscop  => 'S'                                           
-                                           ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                            ,pr_des_erro  => vr_des_erro);            --> Saída com erro
                                            
         -- Liberando a memória alocada pro CLOB

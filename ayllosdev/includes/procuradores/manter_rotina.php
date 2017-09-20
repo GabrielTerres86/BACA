@@ -10,6 +10,8 @@
  *                19/02/2015 - Incluir tratamento para representante com cartão, conforme SD 251759 ( Renato - Supero )
  *                28/09/2015 - Chamado 337371 - Correcao na opcao de operadores. (Gabriel-RKAM)
  *                11/01/2016 - Validar exclusão de representante (David)
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
+ *				  22/08/2017 - Correcao no uso de indices invalidos. (SD 732024 - Carlos Tanholi)
  */
 ?>
  
@@ -39,7 +41,7 @@
 	$tpdocava = (isset($_POST["tpdocava"])) ? $_POST["tpdocava"] : "";
 	$nrdocava = (isset($_POST["nrdocava"])) ? $_POST["nrdocava"] : "";
 	$cdestcvl = (isset($_POST["cdestcvl"])) ? $_POST["cdestcvl"] : "";
-	$dsnacion = (isset($_POST["dsnacion"])) ? $_POST["dsnacion"] : "";
+	$cdnacion = (isset($_POST["cdnacion"])) ? $_POST["cdnacion"] : "";
 	$dsnatura = (isset($_POST["dsnatura"])) ? $_POST["dsnatura"] : "";
 	$complend = (isset($_POST["complend"])) ? $_POST["complend"] : "";
 	$nmcidade = (isset($_POST["nmcidade"])) ? $_POST["nmcidade"] : "";
@@ -122,7 +124,7 @@
 		$xml .= "       <tpdocava>".$tpdocava."</tpdocava>";
 		$xml .= "       <nrdocava>".$nrdocava."</nrdocava>";
 		$xml .= "       <cdestcvl>".$cdestcvl."</cdestcvl>";
-		$xml .= "       <dsnacion>".$dsnacion."</dsnacion>";
+		$xml .= "       <cdnacion>".$cdnacion."</cdnacion>";
 		$xml .= "       <dsnatura>".$dsnatura."</dsnatura>";
 		$xml .= "       <complend>".$complend."</complend>";
 		$xml .= "       <nmcidade>".$nmcidade."</nmcidade>";
@@ -153,6 +155,7 @@
 			$xml .= '		<permalte>'.$permalte.'</permalte>'; 
 			
 			/*Procuradores*/		
+			if (count($arrayFilhosAvtMatric) > 0 ) {
 			foreach ($arrayFilhosAvtMatric as $key => $value) {
 		
 				$campospc = "";
@@ -182,6 +185,7 @@
 				$xml .= retornaXmlFilhos( $campospc, $dadosprc, 'Procurador', 'Procuradores');
 				
 			}
+			}
 			
 		}
 		
@@ -193,6 +197,7 @@
 			$xml .= '       <nmrotina>'.$nmrotina.'</nmrotina>'; /*PROCURADORES*/
 			
 			/*Resp. Legal*/			
+			if (count($arrayFilhos) > 0) {	
 			foreach ($arrayFilhos as $key => $value) {
 		
 				$campospc = "";
@@ -222,8 +227,9 @@
 				$xml .= retornaXmlFilhos( $campospc, $dadosprc, 'RespLegal', 'Responsavel');
 				
 			}
-			
+			}
 			/*Bens dos procuradores*/			
+			if (count($arrayBensMatric) > 0) {			
 			foreach ($arrayBensMatric as $key => $value) {
 		
 				$campospc = "";
@@ -253,7 +259,7 @@
 				$xml .= retornaXmlFilhos( $campospc, $dadosprc, 'Bens', 'Itens');
 				
 			}
-			
+		}
 		}
 		
 		$xml .= "	</Dados>";
@@ -271,8 +277,8 @@
 		$msg = Array();
 		
 		// Se não retornou erro, então pegar a mensagem de retorno do Progress na variável msgRetorno, para ser utilizada posteriormente
-		$msgRetorno = $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'];	
-		$msgAlerta  = $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'];
+		$msgRetorno = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'] : '';	
+		$msgAlerta  = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGALERT'] : '';
 		
 		
 		if ($msgRetorno!='') $msg[] = $msgRetorno;
@@ -281,9 +287,9 @@
 		$stringArrayMsg = implode( "|", $msg);
 			
 		// Verificação da revisão Cadastral
-		$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
-		$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
-		$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];	
+		$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
+		$chaveAlt = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
+		$tpAtlCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';	
 			
 	}	
 		
@@ -455,7 +461,7 @@
 		if (($GLOBALS['cdsexcto'] != 1)&&($GLOBALS['cdsexcto'] != 2)) exibirErro('error','Sexo inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'sexoMas\',\'frmDadosProcuradores\')',false);
 		
 		// Nacionalidade
-		if ($GLOBALS['dsnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnacion\',\'frmDadosProcuradores\')',false);
+		if ($GLOBALS['cdnacion']=='') exibirErro('error','Nacionalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdnacion\',\'frmDadosProcuradores\')',false);
 		
 		// Naturalidade
 		if ($GLOBALS['dsnatura']=='') exibirErro('error','Naturalidade inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dsnatura\',\'frmDadosProcuradores\')',false);

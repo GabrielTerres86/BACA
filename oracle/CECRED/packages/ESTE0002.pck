@@ -30,21 +30,21 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 is
 									
 END ESTE0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
+CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0002
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 04/05/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 12/09/2017
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN - Motor de credito
 
-      Alteracoes:
+      Alteracoes: 12/09/2017 - Ajuste nacionalidade e orgao emissor. PRJ339 - CRM (Odirlei-AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -791,8 +791,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 			vr_vlutiliz NUMBER;
       vr_vlendivi NUMBER := 0;
 			vr_ind_coresp VARCHAR2(100);
-			vr_qtmesdec NUMBER(10);
-			vr_qtpreemp INTEGER;
 			vr_qtprecal NUMBER(10) := 0;
 			vr_tot_vlsdeved NUMBER(25, 10) := 0;
       vr_ava_vlsdeved NUMBER(25, 10) := 0;
@@ -956,11 +954,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               ,ttl.cdsitcpf
               ,ttl.tpdocttl
               ,ttl.nrdocttl
-              ,ttl.cdoedttl
+              ,org.cdorgao_expedidor cdoedttl
               ,ttl.dtnasttl
               ,ttl.cdsexotl
               ,ttl.tpnacion
-              ,ttl.dsnacion
+              ,nac.dsnacion dsnacion
               ,ttl.dsnatura || '-' || ttl.cdufnatu dsnatura
               ,ttl.dthabmen
               ,ttl.cdestcvl
@@ -994,11 +992,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
               ,ass.cdsitdtl
           FROM crapttl ttl
               ,crapass ass
+              ,crapnac nac
+              ,tbgen_orgao_expedidor org
          WHERE ttl.cdcooper = pr_cdcooper
            AND ttl.nrdconta = pr_nrdconta
            AND ttl.idseqttl = 1
            AND ass.cdcooper = ttl.cdcooper
-           AND ass.nrdconta = ttl.nrdconta;
+           AND ass.nrdconta = ttl.nrdconta
+           AND ttl.cdnacion = nac.cdnacion(+)
+           AND ttl.idorgexp = org.idorgao_expedidor(+);
       rw_crapttl cr_crapttl%ROWTYPE;
     
       -- Buscar dados do titular pessoa juridical
@@ -1711,7 +1713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       
         vr_obj_generic2.put('ddd', rw_craptfc.nrdddtfc);
         vr_obj_generic2.put('numero'
-                           ,REPLACE(REPLACE(REPLACE(rw_craptfc.nrtelefo,' ',''), '-', '')
+                           ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(rw_craptfc.nrtelefo,' ',''), '-', ''),'(',''),')','')
                                    ,'.'
                                    ,''));
         -- Adicionar telefone na lista
@@ -2867,22 +2869,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         /* Se Saldo Devedor Maior que Zero */ 
         IF vr_tab_co_responsavel(vr_ind_coresp).vlsdeved > 0 THEN
       
-          /* Atraso/Parcela */
-          vr_qtmesdec := NVL(vr_tab_co_responsavel(vr_ind_coresp).qtmesdec,0) - NVL(vr_tab_co_responsavel(vr_ind_coresp).qtprecal,0);
-          vr_qtpreemp := NVL(vr_tab_co_responsavel(vr_ind_coresp).qtpreemp,0) - NVL(vr_tab_co_responsavel(vr_ind_coresp).qtprecal,0);
-
-          IF vr_qtmesdec > vr_qtpreemp  THEN         
-            vr_qtprecal := vr_qtpreemp;
-          ELSE
-            vr_qtprecal := vr_qtmesdec;
-          END IF;
-                         
-          IF vr_qtprecal < 0 THEN 
-            vr_qtprecal := 0;
-          END IF; 
-
-          -- Se pagamento em atraso
-          IF vr_qtprecal > 0 THEN
+          -- Se ha pagamento a pagar
+          IF NVL(vr_tab_co_responsavel(vr_ind_coresp).vlpreapg,0)
+           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmrapar,0)
+           + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmtapar,0) > 0 THEN
+           -- Acumular atraso
             vr_tot_qtprecal := vr_tot_qtprecal + 1;
             vr_ava_vlsdeved := vr_ava_vlsdeved + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlpreapg,0)
                                                + NVL(vr_tab_co_responsavel(vr_ind_coresp).vlmrapar,0)
@@ -3417,7 +3408,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         
     ..........................................................................*/
     -----------> CURSORES <-----------
-    
+    -- Busca a Nacionalidade
+    CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+      SELECT crapnac.dsnacion
+        FROM crapnac
+       WHERE crapnac.cdnacion = pr_cdnacion;
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -3429,6 +3424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_lst_generic2 json_list := json_list(); 
     vr_inpessoa     crapass.inpessoa%TYPE;
     vr_stsnrcal     BOOLEAN;
+    vr_dsnacion     crapnac.dsnacion%TYPE;
       
   BEGIN
     
@@ -3466,7 +3462,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generico.put('nomeMae'      ,pr_rw_crapavt.nmmaecto);
       END IF;  
       
-      vr_obj_generico.put('nacionalidade',pr_rw_crapavt.dsnacion);
+      -- Busca a Nacionalidade
+      vr_dsnacion := '';
+      OPEN  cr_crapnac(pr_cdnacion => pr_rw_crapavt.cdnacion);
+      FETCH cr_crapnac INTO vr_dsnacion;
+      CLOSE cr_crapnac;
+      
+      vr_obj_generico.put('nacionalidade',vr_dsnacion);
       
       -- Montar objeto profissao       
       IF pr_rw_crapavt.dsproftl <> ' ' THEN 
@@ -3665,11 +3667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 		-- Buscar última data de consulta ao bacen
 		CURSOR cr_crapopf IS
 	    SELECT max(opf.dtrefere) dtrefere
-			  FROM crapopf opf
-				    ,crapass ass
-			 WHERE ass.cdcooper = pr_cdcooper
-			   AND ass.nrdconta = pr_nrdconta
-				 AND opf.nrcpfcgc = ass.nrcpfcgc;
+        FROM crapopf opf;
 		rw_crapopf cr_crapopf%ROWTYPE;
 		
     --> Buscar dados da proposta
@@ -3795,13 +3793,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,crapcrl.nrdconta
             ,crapcrl.nrcpfcgc
             ,crapcrl.nmrespon
-            ,crapcrl.dsorgemi
+            ,org.cdorgao_expedidor dsorgemi
             ,crapcrl.cdufiden
             ,crapcrl.dtemiden
             ,crapcrl.dtnascin
             ,crapcrl.cddosexo
             ,crapcrl.cdestciv
-            ,crapcrl.dsnacion
+            ,crapnac.dsnacion
             ,crapcrl.dsnatura
             ,crapcrl.cdcepres
             ,crapcrl.dsendres
@@ -3816,9 +3814,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             ,crapcrl.tpdeiden
             ,crapcrl.nridenti
             ,crapcrl.cdrlcrsp
-        FROM crapcrl
+        FROM crapcrl,
+             crapnac,
+             tbgen_orgao_expedidor org
        WHERE crapcrl.cdcooper = pr_cdcooper
-         AND crapcrl.nrctamen = pr_nrdconta;
+         AND crapcrl.nrctamen = pr_nrdconta
+         AND crapcrl.cdnacion = crapnac.cdnacion(+)
+         AND crapcrl.idorgexp = org.idorgao_expedidor(+);
     
     -- Declarar cursor de participações societárias
     CURSOR cr_crapepa (pr_cdcooper crapass.cdcooper%type,
@@ -3984,12 +3986,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 		
 		OPEN cr_crapopf;
 		FETCH cr_crapopf INTO rw_crapopf;
+    IF cr_crapopf%NOTFOUND THEN
+      CLOSE cr_crapopf;
+      vr_dscritic := 'Data Base Bacen-SCR nao encontrada!';
+      RAISE vr_exc_erro;
+    ELSE
     CLOSE cr_crapopf;
+    END IF;
 		
 		-- Montar os atributos de 'configuracoes'
 		vr_obj_generico := json();
 		vr_obj_generico.put('centroCusto', vr_cdpactra);
-		vr_obj_generico.put('dataBaseBacen', to_char(nvl(rw_crapopf.dtrefere, rw_crapdat.dtmvtolt),'RRRRMM'));
+    vr_obj_generico.put('dataBaseBacen', to_char(rw_crapopf.dtrefere,'RRRRMM'));
 		vr_obj_generico.put('horasReaproveitamento', vr_qtdiarpv);
 		
     -- Adicionar o array configuracoes

@@ -1411,6 +1411,42 @@ function formataVerpro() {
 			cNrseqaut.css({'display': 'block','width':'100px'});
 		}
 		
+		if (cdtippro == '21')  {
+			var rNmprepos = $('label[for="nmprepos"]', '#' + frmDados);
+			var cNmprepos = $('#nmprepos', '#' + frmDados);
+			var rNmoperad = $('label[for="nmoperad"]', '#' + frmDados);
+			var cNmoperad = $('#nmoperad', '#' + frmDados);
+			var rDttransa = $('label[for="dttransa"]', '#' + frmDados);
+			var cDttransa = $('#dttransa', '#' + frmDados);
+			var rVlrtrans = $('label[for="vlrtrans"]', '#' + frmDados);
+			var cVlrtrans = $('#vlrtrans', '#' + frmDados);
+			var rVlrboleto = $('label[for="vlrboleto"]', '#' + frmDados);
+			var cVlrboleto = $('#vlrboleto', '#' + frmDados);
+			var rVlrted = $('label[for="vlrted"]', '#' + frmDados);
+			var cVlrted = $('#vlrted', '#' + frmDados);
+			var rVlrvrbol = $('label[for="vlrvrbol"]', '#' + frmDados);
+			var cVlrvrbol = $('#vlrvrbol', '#' + frmDados);
+			var rVlrflpgto = $('label[for="vlrflpgto"]', '#' + frmDados);
+			var cVlrflpgto = $('#vlrflpgto', '#' + frmDados);
+			
+			rNmprepos.addClass('rotulo').css({'width': '125px'});
+			cNmprepos.css({'width': '430px'});
+			rNmoperad.addClass('rotulo').css({'width': '125px'});
+			cNmoperad.css({'width': '430px'});
+			rDttransa.addClass('rotulo').css({'width': '125px'});
+			cDttransa.css({'width': '180px'});
+			rVlrtrans.addClass('rotulo').css({'width': '98px'});
+			cVlrtrans.css({'width': '160px'});
+			rVlrboleto.addClass('rotulo-linha').css({'width': '98px'});
+			cVlrboleto.css({'width': '160px'});
+			rVlrted.addClass('rotulo').css({'width': '98px'});
+			cVlrted.css({'width': '160px'});
+			rVlrvrbol.addClass('rotulo-linha').css({'width': '98px'});
+			cVlrvrbol.css({'width': '160px'});
+			rVlrflpgto.addClass('rotulo').css({'width': '98px'});
+			cVlrflpgto.css({'width': '160px'});
+		}
+		
     }
 
     $('#label', '#' + frmDados).val(label);

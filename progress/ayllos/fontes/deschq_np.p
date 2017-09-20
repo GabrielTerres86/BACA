@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Marco/2003.                         Ultima atualizacao: 14/10/2014
+   Data    : Marco/2003.                         Ultima atualizacao: 24/04/2017
    
    Dados referentes ao programa:
 
@@ -69,6 +69,10 @@
                14/10/2014 - Validacao avalsitas. Projeto consultas 
                             automatizadas (Jonata-RKAM).                             
                                                                                
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).                         
+                                                                               
 ............................................................................. */
 { sistema/generico/includes/b1wgen0038tt.i }         
 { sistema/generico/includes/var_internet.i }
@@ -76,7 +80,6 @@
 { includes/var_atenda.i }
 { includes/var_deschq.i }
 
-DEF VAR aux_cdgraupr LIKE crapttl.cdgraupr                            NO-UNDO.
 DEF VAR aux_inhabmen LIKE crapttl.inhabmen                            NO-UNDO.
 DEF VAR aux_nrdeanos AS INT                                           NO-UNDO.
 DEF VAR aux_nrdmeses AS INT                                           NO-UNDO.
@@ -283,17 +286,27 @@ ON GO, RETURN OF lim_nrctaav1 DO:
         
             ELSE
                 DO:
-                    ASSIGN aux_cdgraupr = 0
-                           aux_inhabmen = 0.
+                    ASSIGN aux_inhabmen = 0.
+
                     IF  crabass.inpessoa = 1  THEN
                         DO:
-                            FIND crapttl WHERE 
-                                       crapttl.cdcooper = glb_cdcooper     AND 
+                            FOR FIRST crapttl FIELDS(cdgraupr inhabmen nrcpfcgc)
+							                  WHERE crapttl.cdcooper = glb_cdcooper     AND 
                                        crapttl.nrdconta = crabass.nrdconta AND 
-                                       crapttl.idseqttl = 2 NO-LOCK NO-ERROR.
-                            IF AVAIL crapttl THEN
-                                ASSIGN aux_cdgraupr = crapttl.cdgraupr
-                                       aux_inhabmen = crapttl.inhabmen.
+												    crapttl.idseqttl = 2 
+													NO-LOCK:
+
+							  ASSIGN aux_inhabmen = crapttl.inhabmen
+									 lim_dscfcav1 = IF crapttl.cdgraupr = 1 THEN
+													   STRING(crapttl.nrcpfcgc, "99999999999")
+													ELSE ""
+									 lim_dscfcav1 = STRING(lim_dscfcav1,"xxx.xxx.xxx-xx")        
+									 lim_dscfcav1 = IF lim_dscfcav1 <> " " THEN 
+													  "C.P.F. " + lim_dscfcav1
+												    ELSE "".
+
+							END.
+   
                         END.
         
                     IF  crabass.inpessoa = 3 THEN
@@ -333,15 +346,6 @@ ON GO, RETURN OF lim_nrctaav1 DO:
                                        crapenc.cdseqinc = 1 NO-LOCK NO-ERROR.
                     
                     ASSIGN lim_nmdaval1 = crabass.nmprimtl
-                           lim_dscfcav1 = IF aux_cdgraupr = 1 THEN
-                                            STRING(crabass.nrcpfstl, 
-                                                   "99999999999")
-                                          ELSE ""
-                           lim_dscfcav1 = STRING(lim_dscfcav1,"xxx.xxx.xxx-xx")
-        
-                           lim_dscfcav1 = IF   lim_dscfcav1 <> " " THEN 
-                                               "C.P.F. " + lim_dscfcav1
-                                          ELSE ""     
                            lim_dsendav1[1] = crapenc.dsendere
                            lim_dsendav1[2] = TRIM(crapenc.nmbairro)
                            lim_nmcidade1   = TRIM(crapenc.nmcidade)
@@ -472,17 +476,27 @@ ON GO, RETURN OF lim_nrctaav2 DO:
         
             ELSE
                 DO:
-                    ASSIGN aux_cdgraupr = 0
-                           aux_inhabmen = 0.
+                    ASSIGN aux_inhabmen = 0.
+
                     IF  crabass.inpessoa = 1  THEN
                         DO:
-                            FIND crapttl WHERE 
-                                      crapttl.cdcooper = glb_cdcooper AND 
+                            FOR FIRST crapttl FIELDS(cdgraupr inhabmen nrcpfcgc)
+											  WHERE crapttl.cdcooper = glb_cdcooper AND 
                                       crapttl.nrdconta = crabass.nrdconta AND 
-                                      crapttl.idseqttl = 2 NO-LOCK NO-ERROR.
-                            IF  AVAIL crapttl  THEN
-                                ASSIGN aux_cdgraupr = crapttl.cdgraupr
-                                       aux_inhabmen = crapttl.inhabmen.
+													crapttl.idseqttl = 2 
+													NO-LOCK:
+
+							  ASSIGN aux_inhabmen = crapttl.inhabmen
+									 lim_dscfcav2 = IF crapttl.cdgraupr = 1 THEN
+													  STRING(crapttl.nrcpfcgc,"99999999999")
+												    ELSE ""        
+									 lim_dscfcav2 = STRING(lim_dscfcav2,"xxx.xxx.xxx-xx")
+									 lim_dscfcav2 = IF lim_dscfcav2 <> " " THEN 
+													  "C.P.F. " + lim_dscfcav2
+												    ELSE " ".
+
+							END.
+
                         END.
         
                     IF  crabass.inpessoa = 3 THEN
@@ -523,17 +537,6 @@ ON GO, RETURN OF lim_nrctaav2 DO:
                     
                     ASSIGN lim_nmdaval2    = crabass.nmprimtl
                            lim_dsendav2[1] = crapenc.dsendere
-                           
-                        lim_dscfcav2 = IF aux_cdgraupr = 1 THEN
-                                              STRING(crabass.nrcpfstl,
-                                                     "99999999999")
-                                          ELSE ""
-        
-                           lim_dscfcav2 = STRING(lim_dscfcav2,"xxx.xxx.xxx-xx")
-                           lim_dscfcav2 = IF  lim_dscfcav2 <> " " THEN 
-                                              "C.P.F. " + lim_dscfcav2
-                                          ELSE " "
-                        
                            lim_dsendav2[2] = TRIM(crapenc.nmbairro)
                            lim_nmcidade2   = TRIM(crapenc.nmcidade)
                            lim_cdufresd2   = crapenc.cdufende

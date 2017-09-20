@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 12/06/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 10/08/2017
 
    Dados referentes ao programa:
 
@@ -498,6 +498,10 @@
 
                12/06/2017 - Nao deixar realizar lancamento do historico 1668 - Estorno de débito indevido               
                             na viacredi (Tiago/Fabricio #661260)
+                            
+               10/08/2017 - Somente vamos exibir a critica 728 para casos em que o Tipo do 
+                            cartao do titular nao for de um operador isso na leitura da crapcrm 
+                            (Lucas Ranghetti #726238)
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -1860,6 +1864,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  crapcrm.cdcooper = glb_cdcooper     AND
                                  crapcrm.nrdconta = crapass.nrdconta AND
                                  crapcrm.cdsitcar = 2                AND
+                                 crapcrm.tptitcar <> 9               AND /* Cartao de operador */
                                  crapcrm.dtvalcar > glb_dtmvtolt
                                  NO-LOCK NO-ERROR.
                                  
@@ -4734,11 +4739,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                               MESSAGE glb_dscritic.
                               ASSIGN glb_cdcritic = 0.
                               UNDO, NEXT INICIO.
-                            END.	   
+                            END.
                             
-                          /*  Tratamento Temporario para perimitir a Helen estornar
-                              valores de emprestimo em acordo */
-                          IF aux_flgativo = 1 AND glb_cdoperad <> 'F0030500' THEN
+                          IF aux_flgativo = 1 THEN
                             DO:
                               MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
                               PAUSE 3 NO-MESSAGE.

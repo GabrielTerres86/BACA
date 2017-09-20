@@ -10,6 +10,7 @@
  * 005: [13/04/2010] Rodolpho Telmo  (DB1): Inserção da propriedade maxlength nos inputs 
  * 006: [19/08/2013] Carlos (CECRED) : Bloqueio do caracter ponto e vírgula (function bloqueiaPontoVirgula) no cadastro de bens.
  * 007: [30/07/2014] Jorge  (CECRED) : Bloqueio do caracter pipe alterado nome de funcao bloqueiaPontoVirgula para bloqueiaChar no cadastro de bens.
+ * 008: [28/08/2017] Carlos R. (CECRED) : Correcao das mensagens de Warning log Apache. SD 743183
  */	
 ?>	
 
@@ -39,7 +40,7 @@ function bloqueiaChar(event) {
 	<br />
 	
 	<label for="persemon">Percentual sem &ocirc;nus:</label>
-	<input name="persemon" id="persemon" type="text" class="porcento" value="<? echo number_format(str_replace(',','.',getByTagName($bem,'persemon')),2,',','.'); ?>" />
+	<input name="persemon" id="persemon" type="text" class="porcento" value="<? echo number_format(floatval(str_replace(',','.',getByTagName($bem,'persemon'))),2,',','.'); ?>" />
 	<br />
 	
 	<label for="qtprebem">Parcelas a pagar:</label>
@@ -47,11 +48,11 @@ function bloqueiaChar(event) {
 	<br />
 	
 	<label for="vlprebem">Valor da parcela:</label>
-	<input name="vlprebem" id="vlprebem" type="text" maxlength="10" value="<? echo number_format(str_replace(',','.',getByTagName($bem,'vlprebem')),2,',','.'); ?>" />
+	<input name="vlprebem" id="vlprebem" type="text" maxlength="10" value="<? echo number_format(floatval(str_replace(',','.',getByTagName($bem,'vlprebem'))),2,',','.'); ?>" />
 	<br />
 	
 	<label for="vlrdobem">Valor do bem:</label>
-	<input name="vlrdobem" id="vlrdobem" type="text" class="moeda" maxlength="17" value="<? echo number_format(str_replace(',','.',getByTagName($bem,'vlrdobem')),2,',','.'); ?>" />
+	<input name="vlrdobem" id="vlrdobem" type="text" class="moeda" maxlength="17" value="<? echo number_format(floatval(str_replace(',','.',getByTagName($bem,'vlrdobem'))),2,',','.'); ?>" />
 	<br />	
 </form>	
 

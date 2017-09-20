@@ -4,7 +4,7 @@
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Fabricio
-  Data    : Abril/2011                       Ultima Atualizacao: 25/11/2015
+  Data    : Abril/2011                       Ultima Atualizacao: 15/09/2017
 
   Dados referentes ao programa:
 
@@ -94,6 +94,9 @@
                                                                            
                 25/11/2015 - Incluido log na prcctl da REMCOB processada
                              manualmente (Tiago SD338533).
+
+                15/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
+
 ..........................................................................*/
 DEF STREAM str_1.
 DEF STREAM str_2.
@@ -317,7 +320,7 @@ FUNCTION visualiza_resumo RETURNS LOGICAL(INPUT par_nrdbanco AS INT,
         FIND crapcco WHERE crapcco.cdcooper = crapcre.cdcooper
                        AND crapcco.nrconven = crapcre.nrcnvcob
                        AND crapcco.flgregis = TRUE
-                       AND crapcco.flgativo = TRUE
+                       AND crapcco.dsorgarq = 'PROTESTO'
                        AND crapcco.cddbanco = par_nrdbanco NO-LOCK NO-ERROR.
 
         IF AVAIL crapcco THEN
@@ -339,7 +342,7 @@ FUNCTION visualiza_resumo RETURNS LOGICAL(INPUT par_nrdbanco AS INT,
         EACH crapcco WHERE crapcco.cdcooper = crapcre.cdcooper
                        AND crapcco.nrconven = crapcre.nrcnvcob
                        AND crapcco.flgregis = TRUE
-                       AND crapcco.flgativo = TRUE
+                       AND crapcco.dsorgarq = 'PROTESTO'
                        AND crapcco.cddbanco = par_nrdbanco NO-LOCK,
 
         /* DF titulos do lote de remessa – CRAPREM */
@@ -571,7 +574,6 @@ PROCEDURE gera_remessa.
 
             ASSIGN aux_nrdocnpj = crapcop.nrdocnpj
                    aux_dsdircop = LOWER(crapcop.dsdircop)
-                   aux_cdagedbb = 34207 /*crapcop.cdagedbb*/
                    aux_nrctabbd = crapcop.nrctabbd
                    aux_nmextcop = crapcop.nmextcop
                    aux_nrsequen = 1
@@ -589,8 +591,10 @@ PROCEDURE gera_remessa.
                 EACH crapcco WHERE crapcco.cdcooper = crapcre.cdcooper
                                AND crapcco.nrconven = crapcre.nrcnvcob
                                AND crapcco.flgregis = TRUE
-                               AND crapcco.flgativo = TRUE
+                               AND crapcco.dsorgarq = 'PROTESTO'
                                AND crapcco.cddbanco = par_nrdbanco NO-LOCK:
+
+                    ASSIGN aux_cdagedbb = crapcco.cdagedbb.
 
                     INPUT STREAM str_3 THROUGH VALUE( "grep " + aux_dsdircop + 
                             " /usr/local/cecred/etc/TabelaDeCooperativas " + 
@@ -1247,7 +1251,7 @@ PROCEDURE gera_relatorio.
                 EACH crapcco WHERE crapcco.cdcooper = crapcre.cdcooper
                                AND crapcco.nrconven = crapcre.nrcnvcob
                                AND crapcco.flgregis = TRUE
-                               AND crapcco.flgativo = TRUE
+                               AND crapcco.dsorgarq = 'PROTESTO'
                                AND crapcco.cddbanco = par_nrdbanco NO-LOCK:
                     
                     

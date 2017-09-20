@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0166.p
     Autor   : Oliver Fagionato (GATI)
-    Data    : Agosto/2013                               Alteracao: 21/10/2016
+    Data    : Agosto/2013                               Alteracao: 17/04/2017
 
     Objetivo  : Alterar, consultar, incluir e gerar relatório de empresas.
 
@@ -79,6 +79,12 @@
 
                 21/10/2016 - Ajuste na mascara do cdempres na "Busca_Conta_Emp"
                              (Guilherme/SUPERO)
+
+				17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -357,9 +363,17 @@ PROCEDURE busca_dados_associado:
         ASSIGN tt-dados-ass.nmfansia = crapjur.nmfansia.
     END.
     
+	/* Emails */
+    FOR FIRST crapcem FIELDS(dsdemail)
+        WHERE crapcem.cdcooper = crapass.cdcooper AND
+              crapcem.nrdconta = crapass.nrdconta AND
+              crapcem.idseqttl = 1                AND
+              crapcem.cddemail = 1 NO-LOCK:
+    END.
+    
     ASSIGN tt-dados-ass.nmrazsoc = crapass.nmprimtl
            tt-dados-ass.nrcpfcgc = crapass.nrcpfcgc
-           tt-dados-ass.dsdemail = crapass.dsdemail
+           tt-dados-ass.dsdemail = crapcem.dsdemail WHEN AVAIL crapcem
            tt-dados-ass.dsendere = crapenc.dsendere
            tt-dados-ass.nrendere = crapenc.nrendere
            tt-dados-ass.complend = crapenc.complend

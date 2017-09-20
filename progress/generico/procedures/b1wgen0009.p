@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 02/06/2017
+   Data    : Marco/2009                     Última atualizacao: 28/07/2017
    
    Dados referentes ao programa:
 
@@ -262,6 +262,8 @@
 		   09/11/2016 - Alterado campo crapabc.nrseqdig para crapabc.cdocorre.
 		                PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
 					      
+            12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+					      
            26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
                        contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)         
                             
@@ -271,11 +273,17 @@
            02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
                         quando excluir bordero.
                         PRJ300 - Desconto de cheque(Odirlei-AMcom)         
+
+           12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			            crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+			 		    (Adriano - P339).  
 						
 		       14/07/2017 - na exclusao do bordero, gerar registro de LOG - Jean (Mout´s)   
 		       
            17/07/2017 - Ajustes na geraçao do registro de LOG na exclusao do bordero
                         Projeto 300. (Lombardi)
+					                
+		   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 					                
 ............................................................................. */
 
@@ -1947,6 +1955,7 @@ PROCEDURE efetua_inclusao_limite:
     
     DEFINE OUTPUT PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
+    DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
         
     DEFINE VARIABLE h-b1wgen0021 AS HANDLE      NO-UNDO.
     DEFINE VARIABLE h-b1wgen9999 AS HANDLE      NO-UNDO.
@@ -1955,7 +1964,10 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_lscontas AS CHARACTER   NO-UNDO.
     DEFINE VARIABLE aux_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_nrseqcar AS INTEGER     NO-UNDO.
-    
+
+    DEF VAR aux_flgativo     AS INT                     NO-UNDO.
+    DEF VAR aux_nrdconta_grp LIKE crapass.nrdconta      NO-UNDO. 
+    DEF VAR aux_dsvinculo    AS CHAR                    NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2116,7 +2128,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_nrender1,
@@ -2141,7 +2153,7 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT "",
+                                                    INPUT 0,
                                                     INPUT 0,
                                                     INPUT 0,
                                                     INPUT par_nrender2,
@@ -2402,6 +2414,63 @@ PROCEDURE efetua_inclusao_limite:
                crapprp.cdcooper    = par_cdcooper
                crapprp.dtmvtolt    = par_dtmvtolt.
         VALIDATE crapprp.
+
+        /* Verificar se a conta pertence ao grupo economico novo */	
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_verifica_conta_grp_econ
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                              ,INPUT par_nrdconta
+                                              ,0
+                                              ,0
+                                              ,""
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_verifica_conta_grp_econ
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic      = 0
+               aux_dscritic     = ""
+               aux_cdcritic     = INT(pc_verifica_conta_grp_econ.pr_cdcritic) WHEN pc_verifica_conta_grp_econ.pr_cdcritic <> ?
+               aux_dscritic     = pc_verifica_conta_grp_econ.pr_dscritic WHEN pc_verifica_conta_grp_econ.pr_dscritic <> ?
+               aux_flgativo     = INT(pc_verifica_conta_grp_econ.pr_flgativo) WHEN pc_verifica_conta_grp_econ.pr_flgativo <> ?
+               aux_nrdconta_grp = INT(pc_verifica_conta_grp_econ.pr_nrdconta_grp) WHEN pc_verifica_conta_grp_econ.pr_nrdconta_grp <> ?
+               aux_dsvinculo    = pc_verifica_conta_grp_econ.pr_dsvinculo WHEN pc_verifica_conta_grp_econ.pr_dsvinculo <> ?.
+                        
+        IF aux_cdcritic > 0 THEN
+           DO:
+               RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+                ASSIGN aux_flgderro = TRUE.                
+                UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+           END.
+        ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+          DO:
+              RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+
+              ASSIGN aux_flgderro = TRUE.
+              UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
+          END.
+                      
+        IF aux_flgativo = 1 THEN
+           DO:
+               CREATE tt-msg-confirma.
+               ASSIGN tt-msg-confirma.inconfir = 1
+                      tt-msg-confirma.dsmensag = "Grupo Economico Novo. Conta: " + STRING(aux_nrdconta_grp,"zzzz,zzz,9") + '. Vinculo: ' + aux_dsvinculo.
+           END.
 
     END. /* Final da TRANSACAO */
     
@@ -4226,7 +4295,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav1, 
                                   INPUT par_cdufava1, 
                                   INPUT par_nrcepav1, 
-                                  INPUT "", /* nacionalidade*/
+                                  INPUT 0, /* nacionalidade*/
                                   INPUT 0, /* endividamento */
                                   INPUT 0, /* renda mensal */
                                   INPUT par_nrender1,
@@ -4252,7 +4321,7 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav2, 
                                   INPUT par_cdufava2, 
                                   INPUT par_nrcepav2,
-                                  INPUT "",  /* nacionalidade */
+                                  INPUT 0,  /* nacionalidade */
                                   INPUT 0,  /* Endividamento */
                                   INPUT 0,
                                   INPUT par_nrender2,
@@ -6904,7 +6973,7 @@ PROCEDURE busca_dados_impressao_dscchq:
         END.
         
         IF   LENGTH(TRIM(crapass.tpdocptl)) > 0   THEN
-             rel_txnrdcid = crapass.tpdocptl + ": " + crapass.nrdocptl.
+             rel_txnrdcid = crapass.tpdocptl + ": " + SUBSTR(TRIM(crapass.nrdocptl),1,15).
         ELSE 
              rel_txnrdcid = "".  
 
@@ -10369,7 +10438,7 @@ PROCEDURE efetua_exclusao_bordero:
                                 INPUT "Operador",
                                 INPUT "",
                                 INPUT par_cdoperad).
-                                
+    
         RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                 INPUT "Quantidade de cheques",
                                 INPUT "",

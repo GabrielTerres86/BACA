@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0112tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 29/10/2015
+    Data    : Agosto/2011                        Ultima atualizacao: 20/04/2017
   
     Dados referentes ao programa:
   
@@ -30,6 +30,10 @@
                              
                 29/10/2015 - Incluso novo campo cdorigem e cdhistor
 				             na tt-extrato_epr_aux (Daniel)
+                             
+				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
                              
 .............................................................................
 .............................................................................*/
@@ -66,7 +70,7 @@ DEF TEMP-TABLE tt-extrato_ir NO-UNDO
     FIELD nrdconta LIKE crapass.nrdconta
     FIELD nmprimtl LIKE crapass.nmprimtl
     FIELD cdagenci LIKE crapass.cdagenci
-    FIELD nmsegntl LIKE crapass.nmsegntl
+    FIELD nmsegntl LIKE crapttl.nmextttl
     FIELD dsanoant AS CHAR FORMAT "x(8)"
     FIELD dtrefer1 AS DATE FORMAT "99/99/9999"
     FIELD vlsdapl1 AS DECI FORMAT "z,zzz,zzz,zz9.99-"

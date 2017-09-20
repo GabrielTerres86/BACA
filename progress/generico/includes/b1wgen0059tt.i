@@ -2,7 +2,7 @@
 
     Programa: b1wgen0059tt.i
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 22/05/2017
+    Data    : Marco/2010                   Ultima atualizacao: 02/08/2017
 
     Objetivo  : Definicao das Temp-Tables para telas de PESQUISA/ZOOM
                 
@@ -85,6 +85,15 @@
                              
                 17/08/2016 - Incluido campo txmensal na table tt-craplcr (Lombardi)
                              
+				15/07/2017 - Incluido a temp-table tt-crapass. (Mauro)             
+   
+                31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
+                             PRJ339 - CRM (Odirlei-AMcom)                        
+  
+				02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
 ............................................................................*/
 
 &IF DEFINED(VAR-AMB) <> 0 &THEN
@@ -165,7 +174,8 @@ DEFINE TEMP-TABLE tt-crapenc NO-UNDO LIKE crapenc.
 
 DEFINE TEMP-TABLE tt-crapnac NO-UNDO LIKE crapnac.
 
-DEFINE TEMP-TABLE tt-crapnat NO-UNDO LIKE crapnat.
+DEFINE TEMP-TABLE tt-crapnat 
+    FIELD dsnatura AS CHARACTER.
 
 DEFINE TEMP-TABLE tt-crapban NO-UNDO LIKE crapban.
 
@@ -231,7 +241,6 @@ DEFINE TEMP-TABLE tt-titular NO-UNDO
     FIELD idseqttl LIKE crapttl.idseqttl
     FIELD nmpesttl LIKE crapttl.nmextttl
     FIELD dtnasttl LIKE crapttl.dtnasttl
-    FIELD nmdsecao LIKE crapttl.nmdsecao
     FIELD cdempres LIKE crapttl.cdempres
     FIELD dtdemiss LIKE crapass.dtdemiss
     FIELD nrdocttl AS CHAR
@@ -346,7 +355,15 @@ DEF TEMP-TABLE tt-relacionamento NO-UNDO
     FIELD cdcooper  AS INTE
     FIELD codigo    AS INTE
     FIELD descricao AS CHAR.
+
 DEF TEMP-TABLE tt-relacionamento2  NO-UNDO LIKE tt-relacionamento.
+
+DEF TEMP-TABLE tt-crapass NO-UNDO
+    FIELD cdcooper AS INTE
+    FIELD nrdconta AS INTE
+    FIELD nmprimtl AS CHAR
+    FIELD inpessoa AS INTE
+    FIELD nrcpfcgc AS CHAR.
 
 /*
 DEFINE TEMP-TABLE tt-crappfo NO-UNDO LIKE crappfo.

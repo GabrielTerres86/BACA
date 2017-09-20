@@ -61,6 +61,11 @@ DEF TEMP-TABLE tt-operadores                                            NO-UNDO
     FIELD nrcpfope LIKE crapopi.nrcpfope
     FIELD dsdcargo LIKE crapopi.dsdcargo
     FIELD flgsitop LIKE crapopi.flgsitop
-    FIELD dsdemail LIKE crapopi.dsdemail.
+    FIELD dsdemail LIKE crapopi.dsdemail
+    FIELD vllbolet LIKE crapopi.vllbolet
+    FIELD vllimtrf LIKE crapopi.vllimtrf
+    FIELD vllimted LIKE crapopi.vllimted
+    FIELD vllimvrb LIKE crapopi.vllimvrb
+    FIELD vllimflp LIKE crapopi.vllimflp.
     
 /*............................................................................*/

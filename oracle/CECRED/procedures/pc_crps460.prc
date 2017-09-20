@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio       
-   Data    : Dezembro/2005.                  Ultima atualizacao: 05/03/2015
+   Data    : Dezembro/2005.                  Ultima atualizacao: 24/07/2017
 
    Dados referentes ao programa:
 
@@ -105,6 +105,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
                             
                10/04/2015 - Realizado tratamento com pragma para não deixar a gnsequt
                             com lock, após a atualização do número do pedido ( Renato - Supero )
+
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)             
+
+			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+
 ............................................................................. */
 
   -- CURSORES
@@ -224,11 +233,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , crapass.flchqitg
            , crapreq.qtreqtal
            , crapass.nmprimtl
-           , crapass.nmsegntl
            , crapass.inpessoa
            , crapass.tpdocptl
            , crapass.nrdocptl
-           , crapass.cdoedptl
+           , org.cdorgao_expedidor cdoedptl
            , crapass.cdufdptl
            , crapreq.tprequis
            , crapass.cdagenci
@@ -244,8 +252,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , (crapass.nrflcheq + crapreq.qtreqtal) nrflafim -- Folha final do talão
         FROM crapass
            , crapreq
+           , tbgen_orgao_expedidor org  
        WHERE crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta 
+         AND crapass.idorgexp = org.idorgao_expedidor(+)
          AND crapass.cdbcochq = pr_cdbanchq
          AND crapreq.cdcooper = pr_cdcooper     
          AND crapreq.insitreq = 1
@@ -277,11 +287,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , crapass.nrflcheq
            , crapreq.qtreqtal
            , crapass.nmprimtl
-           , crapass.nmsegntl
            , crapass.inpessoa
            , crapass.tpdocptl
            , crapass.nrdocptl
-           , crapass.cdoedptl
+           , org.cdorgao_expedidor cdoedptl
            , crapass.cdufdptl
            , crapass.cdtipcta
            , crapass.dtdemiss
@@ -289,6 +298,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
            , COUNT(1) over (PARTITION BY crapreq.tprequis) qttottpreq
         FROM crapass
            , crapreq           
+           , tbgen_orgao_expedidor org  
        WHERE crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta 
          AND crapass.cdbcochq = pr_cdbanchq
@@ -296,6 +306,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
          AND crapreq.dtpedido = pr_dtmvtolt    
          AND crapreq.insitreq = 3
          AND crapreq.tprequis IN (2,5)  
+         AND crapass.idorgexp = org.idorgao_expedidor(+)
        ORDER BY crapreq.tprequis
               , crapreq.cdagenci
               , crapreq.nrdconta;
@@ -341,6 +352,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
     CURSOR cr_crapttl(pr_nrdconta  crapttl.nrdconta%TYPE
                      ,pr_idseqttl  crapttl.idseqttl%TYPE) IS
       SELECT crapttl.nmtalttl
+            ,crapttl.nmextttl
         FROM crapttl 
        WHERE crapttl.cdcooper = pr_cdcooper
          AND crapttl.nrdconta = pr_nrdconta   
@@ -436,7 +448,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
     vr_upd_insitreq  crapreq.insitreq%TYPE;
     vr_upd_cdcritic  crapreq.cdcritic%TYPE;
     vr_tpdocptl      crapass.tpdocptl%TYPE;
-    vr_cdoedptl      crapass.cdoedptl%TYPE;
+    vr_cdoedptl      tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
     vr_cdufdptl      crapass.cdufdptl%TYPE;
     vr_nrdocptl      crapass.nrdocptl%TYPE;
     -- Arquivos e diretórios                 
@@ -914,14 +926,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
        
         vr_relat433(vr_nrindice).nrtalchq := vr_nrtalchq;
         vr_relat433(vr_nrindice).nmprimtl := rw_crapreq.nmprimtl;
-        vr_relat433(vr_nrindice).nmsegntl := rw_crapreq.nmsegntl;
         vr_qtdrl433(rw_crapage.cdagenci).qttalage := NVL(vr_qtdrl433(rw_crapage.cdagenci).qttalage,0) + 1;
-        
-        IF rw_crapreq.tprequis = 2 THEN
-          vr_nmtitdes := TRIM(rw_crapreq.nmprimtl)||' '||TRIM(rw_crapreq.nmsegntl);
-        ELSE     
-          vr_nmtitdes := NULL;
-        END IF;
         
         -- Verifica o tipo de requisição                     
         IF rw_crapreq.tprequis = 5 THEN
@@ -1022,17 +1027,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
 
           -- Buscar dados de titulares da conta - 2º Titular
           OPEN  cr_crapttl(rw_crapreq.nrdconta, 2);
+
           FETCH cr_crapttl INTO rw_crapttl;
+
           -- Se encontrar registro
           IF cr_crapttl%FOUND THEN
             -- Se nome do titular para o talao de cheques não for nulo
             IF TRIM(rw_crapttl.nmtalttl) IS NOT NULL THEN
               vr_nmsegtal := TRIM(rw_crapttl.nmtalttl);
             ELSE
-              vr_nmsegtal := rw_crapreq.nmprimtl;
+              vr_nmsegtal := TRIM(rw_crapttl.nmextttl);
             END IF;
+
+			vr_relat433(vr_nrindice).nmsegntl := TRIM(rw_crapttl.nmextttl);
+
           END IF;
+
           CLOSE cr_crapttl;
+
+		  IF rw_crapreq.tprequis = 2 THEN
+	        vr_nmtitdes := TRIM(rw_crapreq.nmprimtl)||' '||TRIM(rw_crapttl.nmextttl);
+		  ELSE     
+			vr_nmtitdes := NULL;
+		  END IF;
 
         ELSE
           --  Buscar dados de pessoas juridicas
@@ -1049,12 +1066,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
             END IF;
            
             -- Guarda Nome do segundo titular
-            vr_nmsegtal := rw_crapreq.nmsegntl;
+            vr_nmsegtal := NULL;
 
           END IF;
           
           -- Fecha o cursor
           CLOSE cr_crapjur;
+
+		  IF rw_crapreq.tprequis = 2 THEN
+	        vr_nmtitdes := TRIM(rw_crapreq.nmprimtl);
+		  ELSE     
+			vr_nmtitdes := NULL;
+        END IF;
+
         END IF;
 
         vr_dsconta1 := vr_nmprital;
@@ -1066,7 +1090,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
                          '       '||
                          GENE0002.fn_mask_conta(rw_crapreq.nrdconta);
           vr_dsconta3 := vr_tpdocptl||' '||
-                         TRIM(vr_nrdocptl)||' '||
+                         SUBSTR(TRIM(vr_nrdocptl),1,15)||' '||
                          TRIM(vr_cdoedptl)||' '||
                          TRIM(vr_cdufdptl);
           vr_dsconta4 := NULL;
@@ -1077,7 +1101,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
                          '       '||
                          GENE0002.fn_mask_conta(rw_crapreq.nrdconta);
           vr_dsconta4 := vr_tpdocptl||' '||
-                         TRIM(vr_nrdocptl)||' '||
+                         SUBSTR(TRIM(vr_nrdocptl),1,15)||' '||
                          TRIM(vr_cdoedptl)||' '||
                          TRIM(vr_cdufdptl);
         END IF;   
@@ -2006,4 +2030,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS460;
 /
-

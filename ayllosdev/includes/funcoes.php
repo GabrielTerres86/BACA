@@ -66,8 +66,8 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 043: [18/10/2016] Kelvin (CECRED)        : Ajustes feito na funcao RemoveCaracteresInvalidos para codificar a string antes de tratar.
  * 044: [08/02/2016] Kelvin (CECRED)        : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
  * 045: [08/05/2017] Andrey (MOUTS)         : Incluir funcao validar_cnpj e validar_cpf.
- * 042: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
-
+ * 046: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
+ * 047:	[28/08/2017] Carlos Rafael Tanholi	: Ajuste nas rotinas xmlFilho, dataParaTimestamp, validaPermissao, mensageria. SD 743183. 	
  */
 ?>
 <?php
@@ -466,7 +466,7 @@ function retornaUFs() {
 	return $estados;
 }
 
-function validaPermissao($nmdatela,$nmrotina,$cddopcao,$flgsecao=true) {
+function validaPermissao($nmdatela,$nmrotina,$cddopcao='',$flgsecao=true) {
 	global $glbvars;
 	
 	if ($flgsecao) {
@@ -839,9 +839,9 @@ function primeiraMaiuscula($str) {
 } 
 
 function dataParaTimestamp($data) {
-	$dia = substr($data,0,2); 
-	$mes = substr($data,3,2);
-	$ano = substr($data,6,4);
+	$dia = intval(substr($data,0,2)); 
+	$mes = intval(substr($data,3,2));
+	$ano = intval(substr($data,6,4));
 	return mktime(0, 0, 0, $mes, $dia, $ano);
 }
 
@@ -1192,19 +1192,20 @@ function xmlFilho($array, $pai, $filho) {
 	
 	$xml = "<".$pai.">";	
 
-	foreach ( $array as $a ) {
+	if ( count($array) > 0 ) { 
+		foreach ( $array as $a ) {
 		
-		$xml .= "<".$filho.">";	
+			$xml .= "<".$filho.">";	
 
-		foreach ( $a as $c => $v ) {
-			$xml .= "<".$c.">";	
-			$xml .= "$v";	
-			$xml .= "</".$c.">";	
+			foreach ( $a as $c => $v ) {
+				$xml .= "<".$c.">";	
+				$xml .= "$v";	
+				$xml .= "</".$c.">";	
+			}
+
+			$xml .= "</".$filho.">";	
 		}
-
-		$xml .= "</".$filho.">";	
 	}
-
 	$xml .= "</".$pai.">";	
 	
 	return $xml;
@@ -1473,17 +1474,23 @@ function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $
 
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
     $endereco = dirname(dirname(__FILE__)) . '/xml';
-	
-	$arquivo = fopen($endereco."/in.xml","w");
-	fwrite($arquivo, $xml);
-	fclose($arquivo);
+
+	//valida a existencia do arquivo
+	if (file_exists($endereco."/in.xml")) {
+		$arquivo = fopen($endereco."/in.xml","w");
+		fwrite($arquivo, $xml);
+		fclose($arquivo);
+	}
 		
 	$retXML = dbProcedure($xml);
 
-	$arquivo = fopen($endereco."/out.xml", "w");
-	fwrite($arquivo, $retXML);
-	fclose($arquivo);
-	
+	//valida a existencia do arquivo
+	if (file_exists($endereco."/out.xml")) {
+		$arquivo = fopen($endereco."/out.xml", "w");
+		fwrite($arquivo, $retXML);
+		fclose($arquivo);
+	}
+
 	return $retXML;
 }
 

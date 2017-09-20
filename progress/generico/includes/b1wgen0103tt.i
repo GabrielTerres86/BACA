@@ -2,13 +2,15 @@
 
     Programa: sistema/generico/includes/b1wgen0103tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Julho/2011                        Ultima atualizacao:
+    Data    : Julho/2011                        Ultima atualizacao:20/04/2017
   
     Dados referentes ao programa:
   
     Objetivo  : Include com Temp-Tables para a BO b1wgen0103.
   
-    Alteracoes: 
+    Alteracoes: 20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
     
 .............................................................................*/ 
 
@@ -48,7 +50,7 @@ DEF TEMP-TABLE tt-extrat NO-UNDO
     FIELD cdcooper LIKE crapass.cdcooper
     FIELD nrdconta LIKE crapass.nrdconta
     FIELD nmprimtl LIKE crapass.nmprimtl
-    FIELD nmsegntl LIKE crapass.nmsegntl
+    FIELD nmsegntl LIKE crapttl.nmextttl
     FIELD vllimcre LIKE crapass.vllimcre
     FIELD cdagenci LIKE crapass.cdagenci
     FIELD vlsanter AS DECI FORMAT "zzz,zzz,zzz,zz9.99-"

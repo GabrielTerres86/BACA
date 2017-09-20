@@ -5,15 +5,24 @@
  * DATA CRIAÇÃO : 12/05/2016
  * OBJETIVO     : Formulario para tela de nacionalidades
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 12/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * -------------- 
  */	
 	session_start();
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");
-
 ?>
+    <script type="text/javascript">
+        var glb_nomeForm;
+        <?php
+            if ($_POST['nomeForm']) {
+                ?>
+                glb_nomeForm = '<?php echo $_POST['nomeForm']; ?>';
+                <?php
+            }
+?>
+    </script>
 <script type="text/javascript" src="../../includes/nacionalidades/nacionalidades.js"></script>
 
 <table cellpadding="0" cellspacing="0" border="0" >

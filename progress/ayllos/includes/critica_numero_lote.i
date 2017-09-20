@@ -7,7 +7,7 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Outubro/2003.                   Ultima atualizacao:  26/09/2016
+   Data    : Outubro/2003.                   Ultima atualizacao:  30/08/2017
    
    Dados referentes ao programa:
 
@@ -52,6 +52,9 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
                 
                 13/01/2016 - Incluir lotes 44000 estorno TED analise de fraude.
                              PRJ335 - Analise de fraudes (Odirlei-AMcom)
+
+				30/08/2017 - Ajuste para incluir o lote 7600
+					         (Adriano - SD 746815).
 ............................................................................. */
 
 IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
@@ -80,6 +83,7 @@ IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
     ({1}nrdolote > 7099   AND       /* Transf. de cheque salario p/vala */
      {1}nrdolote < 7200)  OR
      {1}nrdolote = 7200   OR        /* Baixa de saldo de c/c dos demitidos */
+	 {1}nrdolote = 7600   OR        /* Lote devolucao contra-ordem */
      {1}nrdolote = 8001   OR        /* Capital Inicial */
      {1}nrdolote = 8002   OR        /* Transferencia de capital */
      {1}nrdolote = 8003   OR        /* Correcao monetaria */

@@ -510,7 +510,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     ,pr_nrdcaixa  IN INTEGER  --> Numero do caixa
                                     ,pr_cdoperad  IN VARCHAR2 --> Codigo Operador
                                     ,pr_dtmvtolt  IN DATE     --> Data Lancamento
-                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela
+                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela       
                                     ,pr_idorigem  IN INTEGER  --> Indicador de origem
                                     ,pr_inproces  IN INTEGER  --> Indicador processo
                                     ,pr_nrdconta  IN INTEGER  --> Numero da Conta
@@ -521,7 +521,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
                                     ,pr_flgerlog  IN VARCHAR2 --> Indicador se deve gerar log (S-sim N-Nao)
                                     ,pr_cdcritic OUT INTEGER      --> Codigo Critica
                                     ,pr_dscritic OUT VARCHAR2);   --> Descricao Critica
-
+                                    
 END TARI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
@@ -5461,7 +5461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                 ,pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || pr_dscritic );
-                                                 
+
       pc_controla_log_batch(pr_cdcooper => pr_cdcooper,
                             pr_dstiplog => 'E');
                                                  
@@ -6340,7 +6340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
       vr_qtdopera := rw_tbcc_operacoes_diarias.numregis;
 
-    IF vr_qtdopera < vr_dsconteu THEN
+      IF vr_qtdopera < vr_dsconteu THEN
         -- INSERE NOVO REGISTRO SEM TRIBUTACAO
         BEGIN
           INSERT
@@ -6364,105 +6364,105 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           RAISE vr_exc_saida;
         END;
 
-    pr_fliseope := 1; -- Não tarifar
+        pr_fliseope := 1; -- Não tarifar
 		RAISE vr_exc_null;
 
       END IF;
 
     END IF;  
 
-        -- INSERE NOVO REGISTRO COM TRIBUTACAO
-        BEGIN
-          INSERT
-           INTO tbcc_operacoes_diarias(
-             cdcooper
-            ,nrdconta
-          ,cdoperacao
-            ,dtoperacao
-            ,nrsequen
-            ,flgisencao_tarifa)
-           VALUES(
-             pr_cdcooper
-            ,pr_nrdconta
-            ,pr_tipotari
-            ,pr_dtmvtolt
-            ,vr_nrsequen
-            ,1);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
-          RAISE vr_exc_saida;
-        END;
+    -- INSERE NOVO REGISTRO COM TRIBUTACAO
+    BEGIN
+      INSERT
+       INTO tbcc_operacoes_diarias(
+         cdcooper
+        ,nrdconta
+      ,cdoperacao
+        ,dtoperacao
+        ,nrsequen
+        ,flgisencao_tarifa)
+       VALUES(
+         pr_cdcooper
+        ,pr_nrdconta
+        ,pr_tipotari
+        ,pr_dtmvtolt
+        ,vr_nrsequen
+        ,1);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir registro de lancamento de saque(TBCC_OPERACOES_DIARIAS). Erro: ' || SQLERRM;
+      RAISE vr_exc_saida;
+    END;
 
-        TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
-                                             ,pr_cdbattar => vr_cdbattar 
-                                             ,pr_vllanmto => 0  -- 
-                                             ,pr_cdprogra => '' --
-                                             ,pr_cdhistor => vr_cdhistor 
-                                             ,pr_cdhisest => vr_cdhisest 
-                                             ,pr_vltarifa => vr_vltarifa 
-                                             ,pr_dtdivulg => vr_dtdivulg 
-                                             ,pr_dtvigenc => vr_dtvigenc
-                                             ,pr_cdfvlcop => vr_cdfvlcop
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic
-                                             ,pr_tab_erro => vr_tab_erro);
+    TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
+                                         ,pr_cdbattar => vr_cdbattar
+                                         ,pr_vllanmto => 0  --
+                                         ,pr_cdprogra => '' --
+                                         ,pr_cdhistor => vr_cdhistor
+                                         ,pr_cdhisest => vr_cdhisest
+                                         ,pr_vltarifa => vr_vltarifa
+                                         ,pr_dtdivulg => vr_dtdivulg
+                                         ,pr_dtvigenc => vr_dtvigenc
+                                         ,pr_cdfvlcop => vr_cdfvlcop
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic
+                                         ,pr_tab_erro => vr_tab_erro);
 
-        -- Verifica se Houve Erro no Retorno
-      IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 OR vr_tab_erro.count > 0 THEN
-          -- Envio Centralizado de Log de Erro
-          IF vr_tab_erro.count > 0 THEN
+    -- Verifica se Houve Erro no Retorno
+    IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 OR vr_tab_erro.count > 0 THEN
+        -- Envio Centralizado de Log de Erro
+        IF vr_tab_erro.count > 0 THEN
 
-            -- Recebe Descrição do Erro
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            RAISE vr_exc_saida;
-          END IF;
+          -- Recebe Descrição do Erro
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
           RAISE vr_exc_saida;
         END IF;
- 
-    IF vr_vltarifa > 0  THEN
-        TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => pr_cdcooper
-                                        ,pr_nrdconta => pr_nrdconta
-                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                        ,pr_cdhistor => vr_cdhistor
-                                        ,pr_vllanaut => vr_vltarifa
-                                        ,pr_cdoperad => 1
-                                        ,pr_cdagenci => 1
-                                        ,pr_cdbccxlt => 100
-                                        ,pr_nrdolote => vr_nrdolote
-                                        ,pr_tpdolote => 1
-                                        ,pr_nrdocmto => 0
-                                        ,pr_nrdctabb => pr_nrdconta
-                                        ,pr_nrdctitg => 0
-                                        ,pr_cdpesqbb => 'Fato gerador tarifa:' || TO_CHAR(pr_dtmvtolt,'DDMMYY')
-                                        ,pr_cdbanchq => 0
-                                        ,pr_cdagechq => 0
-                                        ,pr_nrctachq => 0
-                                        ,pr_flgaviso => FALSE
-                                        ,pr_tpdaviso => 0
-                                        ,pr_cdfvlcop => vr_cdfvlcop
-                                        ,pr_inproces => rw_crapdat.inproces
-                                        ,pr_rowid_craplat => vr_rowid_craplat
-                                        ,pr_tab_erro => vr_tab_erro
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-    
-        -- Verifica se Houve Erro no Retorno
-      IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 OR vr_tab_erro.count > 0 THEN
-          -- Envio Centralizado de Log de Erro
-          IF vr_tab_erro.count > 0 THEN
-
-            -- Recebe Descrição do Erro
-            vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            RAISE vr_exc_saida;
-          END IF;
-          RAISE vr_exc_saida;
-        END IF;
+        RAISE vr_exc_saida;
       END IF;
+
+  IF vr_vltarifa > 0  THEN
+      TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                      ,pr_cdhistor => vr_cdhistor
+                                      ,pr_vllanaut => vr_vltarifa
+                                      ,pr_cdoperad => 1
+                                      ,pr_cdagenci => 1
+                                      ,pr_cdbccxlt => 100
+                                      ,pr_nrdolote => vr_nrdolote
+                                      ,pr_tpdolote => 1
+                                      ,pr_nrdocmto => 0
+                                      ,pr_nrdctabb => pr_nrdconta
+                                      ,pr_nrdctitg => 0
+                                      ,pr_cdpesqbb => 'Fato gerador tarifa:' || TO_CHAR(pr_dtmvtolt,'DDMMYY')
+                                      ,pr_cdbanchq => 0
+                                      ,pr_cdagechq => 0
+                                      ,pr_nrctachq => 0
+                                      ,pr_flgaviso => FALSE
+                                      ,pr_tpdaviso => 0
+                                      ,pr_cdfvlcop => vr_cdfvlcop
+                                      ,pr_inproces => rw_crapdat.inproces
+                                      ,pr_rowid_craplat => vr_rowid_craplat
+                                      ,pr_tab_erro => vr_tab_erro
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se Houve Erro no Retorno
+    IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 OR vr_tab_erro.count > 0 THEN
+        -- Envio Centralizado de Log de Erro
+        IF vr_tab_erro.count > 0 THEN
+
+          -- Recebe Descrição do Erro
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          RAISE vr_exc_saida;
+        END IF;
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
 
   EXCEPTION
     WHEN vr_exc_null THEN
-      pr_cdcritic := 0;      
+      pr_cdcritic := 0;
       pr_dscritic := '';
     WHEN vr_exc_saida THEN
       IF vr_cdcritic <> 0 THEN
@@ -7413,7 +7413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                     ,pr_nrdcaixa  IN INTEGER  --> Numero do caixa
                                     ,pr_cdoperad  IN VARCHAR2 --> Codigo Operador
                                     ,pr_dtmvtolt  IN DATE     --> Data Lancamento
-                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela
+                                    ,pr_nmdatela  IN VARCHAR2 --> Nome da tela       
                                     ,pr_idorigem  IN INTEGER  --> Indicador de origem
                                     ,pr_inproces  IN INTEGER  --> Indicador processo
                                     ,pr_nrdconta  IN INTEGER  --> Numero da Conta
@@ -7425,19 +7425,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                     ,pr_cdcritic OUT INTEGER      --> Codigo Critica
                                     ,pr_dscritic OUT VARCHAR2) IS --> Descricao Critica
     /* ........................................................................
-
+    
       Programa : pc_estorno_baixa_tarifa           Antigo: b1wgen0153.p/estorno-baixa-tarifa
       Sistema  : Cred
       Sigla    : TARI0001
       Autor    : Odirlei Busana - AMcom
       Data     : janeiro/2017.                   Ultima atualizacao: 10/01/2017
-
+    
       Dados referentes ao programa:
-
+    
        Frequencia: Sempre que for chamado
-
+       
        Objetivo  : Estorno/Baixa de lancamento de tarifas
-
+       
        Alterações: 10/01/2017 - Conversão Progress -> Oracle (Odirlei-AMcom)
       ........................................................................ */
 
@@ -7447,23 +7447,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       SELECT lat.rowid,
              lat.cdfvlcop,
              lat.nrdctabb,
-             lat.nrdctitg,
+             lat.nrdctitg,            
              lat.cdpesqbb,
              lat.cdbanchq,
              lat.cdagechq,
              lat.nrctachq,
-             lat.cdagenci,
+             lat.cdagenci,            
              lat.cdbccxlt,
              lat.nrdolote,
              lat.vltarifa,
              lat.nrdocmto,
              lat.cdhistor
-
+             
         FROM craplat lat
        WHERE lat.cdlantar = pr_cdlantar
-         FOR UPDATE NOWAIT;
+         FOR UPDATE NOWAIT; 
     rw_craplat cr_craplat%ROWTYPE;
-
+    
     --> Buscar dados da tarifa
     CURSOR cr_crapfvl (pr_cdfvlcop crapfco.cdfvlcop%TYPE)IS
       SELECT fvl.cdhisest
@@ -7472,16 +7472,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        WHERE fco.cdfvlcop = pr_cdfvlcop
          AND fvl.cdfaixav = fco.cdfaixav;
     rw_crapfvl cr_crapfvl%ROWTYPE;
-
+    
     --> Buscar dados do associado
     CURSOR cr_crapass (pr_nrdconta crapass.nrdconta%TYPE,
                        pr_cdcooper crapass.cdcooper%type) IS
       SELECT ass.cdagenci
         FROM crapass ass
-       WHERE ass.nrdconta = pr_nrdconta
+       WHERE ass.nrdconta = pr_nrdconta 
          AND ass.cdcooper = pr_cdcooper;
     rw_crapass cr_crapass%ROWTYPE;
-
+    
     -----------> VARIAVEIS <----------
     -- Tratamento de erros
     vr_cdcritic        NUMBER;
@@ -7489,31 +7489,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     vr_dscritic_aux    VARCHAR2(4000);
     vr_exc_erro        EXCEPTION;
     vr_tab_erro        gene0001.typ_tab_erro;
-
+    
     vr_dsorigem        craplgm.dsorigem%TYPE;
     vr_dstransa        craplgm.dstransa%TYPE;
-
+    
     vr_tab_cdlantar    gene0002.typ_split;
     vr_tab_cdmotest    gene0002.typ_split;
-
+    
     vr_cont            INTEGER;
     vr_cdlantar        craplat.cdlantar%TYPE;
     vr_cdmotest        craplat.cdmotest%TYPE;
     vr_fcraplat        BOOLEAN;
     vr_fcrapfvl        BOOLEAN;
     vr_fcrapass        BOOLEAN;
-
+    
     --> Gerar log para o cooperado
     PROCEDURE pr_gera_log(pr_dscrilog IN VARCHAR2 DEFAULT NULL,
                           pr_cdlantar IN VARCHAR2 DEFAULT NULL,
                           pr_cdhistor IN VARCHAR2 DEFAULT NULL,
                           pr_cdmotest IN VARCHAR2 DEFAULT NULL) IS
-
+    
       vr_nrdrowid ROWID;
-
+      
     BEGIN
-
-      -- Gerar log ao cooperado
+    
+      -- Gerar log ao cooperado 
       GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => pr_dscrilog
@@ -7526,57 +7526,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                           ,pr_nmdatela => pr_nmdatela
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
-
+          
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdlantar',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => pr_cdlantar);
-
+       
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdhistor',
                                 pr_dsdadant => NULL,
-                                pr_dsdadatu => pr_cdhistor);
-
+                                pr_dsdadatu => pr_cdhistor);                                
+                                
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'dtdestor',
                                 pr_dsdadant => NULL,
                                 pr_dsdadatu => pr_dtmvtolt);
-
+      
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdmotest',
                                 pr_dsdadant => NULL,
-                                pr_dsdadatu => pr_cdmotest);
-
+                                pr_dsdadatu => pr_cdmotest);                                                     
+                                
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'cdopeest',
                                 pr_dsdadant => NULL,
-                                pr_dsdadatu => pr_cdoperad);
+                                pr_dsdadatu => pr_cdoperad);                                                              
     END pr_gera_log;
-
+    
   BEGIN
-
+  
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
-    IF pr_cddopcap = 1 THEN
+    IF pr_cddopcap = 1 THEN 
       vr_dstransa := 'Estorno de tarifa.';
     ELSE
       vr_dstransa := 'Baixa de tarifa.';
     END IF;
-
+    
     --> Codigo Lantar
     vr_tab_cdlantar := gene0002.fn_quebra_string(pr_lscdlant,';');
     --> Motivo Estorno
     vr_tab_cdmotest := gene0002.fn_quebra_string(pr_lscdmote,';');
-
+    
     SAVEPOINT TRANS_ESTTAR;
-    --Buscar lançamentos passados por parametro
+    --Buscar lançamentos passados por parametro  
     FOR idx IN vr_tab_cdlantar.first..vr_tab_cdlantar.last LOOP
-
+    
       vr_cdlantar := vr_tab_cdlantar(idx);
       vr_cdmotest := NULL;
       IF vr_tab_cdmotest.exists(idx) THEN
         vr_cdmotest := vr_tab_cdmotest(idx);
       END IF;
-
+      
       --> Tentar lockar a craplat
       LOOP
         BEGIN
@@ -7584,48 +7584,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
           FETCH cr_craplat INTO rw_craplat;
           vr_fcraplat := cr_craplat%FOUND;
           CLOSE cr_craplat;
-
+          
           EXIT;
-        EXCEPTION
+        EXCEPTION  
           WHEN OTHERS THEN
             IF vr_cont = 10 THEN
               CLOSE cr_craplat;
               vr_dscritic := 'Registro de tarifa em uso.';
               RAISE vr_exc_erro;
             ELSE
-              vr_cont := nvl(vr_cont,0) + 1;
+              vr_cont := nvl(vr_cont,0) + 1; 
               CLOSE cr_craplat;
               dbms_lock.sleep(1);
             END IF;
         END;
-
+      
       END LOOP; --> Fim loop lockar craplat
-
+      
       --> Se localizou o lancamento
       IF vr_fcraplat =  TRUE THEN
-
-        --> 1 - Estorno
+      
+        --> 1 - Estorno 
         IF pr_cddopcap = 1 THEN
-
+        
           BEGIN
             UPDATE craplat lat
-               SET lat.insitlat = 4 --> Estornado
-                  ,lat.cdmotest = vr_cdmotest
+               SET lat.insitlat = 4 --> Estornado 
+                  ,lat.cdmotest = vr_cdmotest 
                   ,lat.dtdestor = pr_dtmvtolt
                   ,lat.cdopeest = pr_cdoperad
-             WHERE lat.rowid = rw_craplat.rowid;
+             WHERE lat.rowid = rw_craplat.rowid; 
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar situação tarifa: '||SQLERRM;
-              RAISE vr_exc_erro;
+              RAISE vr_exc_erro;  
           END;
-
+          
           --> Buscar dados da tarifa
           OPEN cr_crapfvl (pr_cdfvlcop => rw_craplat.cdfvlcop );
           FETCH cr_crapfvl INTO rw_crapfvl;
           vr_fcrapfvl := cr_crapfvl%FOUND;
           CLOSE cr_crapfvl;
-
+          
           IF vr_fcrapfvl = TRUE THEN
             --> Buscar dados do associado
             OPEN cr_crapass (pr_nrdconta => pr_nrdconta,
@@ -7633,7 +7633,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             FETCH cr_crapass INTO rw_crapass;
             vr_fcrapass := cr_crapass%FOUND;
             CLOSE cr_crapass;
-
+            
             IF vr_fcrapass = TRUE THEN
               -- Gerar Lancamento Estorno CRAPLCM
               pc_lan_tarifa_conta_corrente (pr_cdcooper => pr_cdcooper          --Codigo Cooperativa
@@ -7668,71 +7668,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                            ,pr_cdcritic => vr_cdcritic          --Codigo do erro
                                            ,pr_dscritic => vr_dscritic);        --Descricao do erro
               --Se ocorreu erro
-              IF vr_cdcritic IS NOT NULL OR
+              IF vr_cdcritic IS NOT NULL OR 
                  vr_dscritic IS NOT NULL THEN
                 --Levantar Excecao
                 RAISE vr_exc_erro;
               END IF;
-            END IF;
-          END IF; --crapfvl
-
+            END IF;          
+          END IF; --crapfvl          
+        
         ELSE --> 2 - Baixa
           BEGIN
             UPDATE craplat lat
-               SET lat.insitlat = 3 --> Baixado
-                  ,lat.cdmotest = vr_cdmotest
+               SET lat.insitlat = 3 --> Baixado 
+                  ,lat.cdmotest = vr_cdmotest 
                   ,lat.dtdestor = pr_dtmvtolt
                   ,lat.cdopeest = pr_cdoperad
-             WHERE lat.rowid = rw_craplat.rowid;
+             WHERE lat.rowid = rw_craplat.rowid; 
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar situação tarifa: '||SQLERRM;
-              RAISE vr_exc_erro;
-          END;
+              RAISE vr_exc_erro;  
+          END;          
         END IF;
 
       END IF; --> craplat
-
+      
        --> Gerar log para o cooperado
        pr_gera_log(pr_cdlantar => vr_cdlantar,
                    pr_cdhistor => rw_craplat.cdhistor,
                    pr_cdmotest => vr_cdmotest);
-
-
+      
+      
     END LOOP;
-
-
+    
+  
   EXCEPTION
     WHEN vr_exc_erro THEN
       ROLLBACK TO TRANS_ESTTAR;
-
+      
       --> Buscar critica
-      IF nvl(vr_cdcritic,0) > 0 AND
+      IF nvl(vr_cdcritic,0) > 0 AND 
         TRIM(vr_dscritic) IS NULL THEN
-        -- Busca descricao
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      END IF;
-
+        -- Busca descricao        
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+      END IF;  
+      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-
+      
       --> Gerar log para o cooperado
        pr_gera_log(pr_dscrilog => pr_dscritic,
                    pr_cdlantar => vr_cdlantar,
                    pr_cdhistor => rw_craplat.cdhistor,
                    pr_cdmotest => vr_cdmotest);
-
+      
     WHEN OTHERS THEN
       ROLLBACK TO TRANS_ESTTAR;
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na rotina estorno/baixa tarifa: '||SQLERRM;
-
+      
       --> Gerar log para o cooperado
       pr_gera_log(pr_dscrilog => pr_dscritic,
                   pr_cdlantar => vr_cdlantar,
                   pr_cdhistor => rw_craplat.cdhistor,
                   pr_cdmotest => vr_cdmotest);
-
+    
   END pc_estorno_baixa_tarifa;
 
 END TARI0001;

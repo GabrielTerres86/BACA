@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 27/06/2017
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 10/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -467,6 +467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          conforme faz para Sulamerica (Lucas Ranghetti #663781)
   --             27/06/2017 - Adicionar tratamento para o convenio AGUAS DE JOINVILLE 8 posicoes
   --                          na pc_gerandb (Tiago/Fabricio #692918)
+  --
+  --             10/07/2017 - Adicionar tratamento para o convenio SANEPAR 8 posicoes
+  --                          na pc_gerandb (Tiago/Fabricio #673343)  
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1615,7 +1618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 07/06/2017
+  --  Data     : Agosto/98.                  Ultima atualizacao: 10/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1726,6 +1729,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  
   --             27/06/2017 - Adicionar tratamento para o convenio AGUAS DE JOINVILLE 8 posicoes
   --                          (Tiago/Fabricio #692918)
+  --
+  --             10/07/2017 - Adicionar tratamento para o convenio SANEPAR 8 posicoes
+  --                          (Tiago/Fabricio #673343)  
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1849,8 +1855,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         ELSE
           -- APENAS FECHAR O CURSOR
           CLOSE cr_tbconv_det_agendamento;
-      END IF;
-
+        END IF;
+        
       END IF;
 
       vr_auxcdcri := vr_cdcritic;
@@ -1889,7 +1895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
         -- VERIFICAÇÃO DE HISTÓRICOS
         IF pr_cdhistor IN(31,690)  THEN -- BRASIL TELECOM DB. AUTOMATICO/SAMAE SAO BENTO
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999') || RPAD(' ',15,' ');
-        ELSIF pr_cdhistor IN (48,2284,554) THEN -- RECEBIMENTO CASAN AUTOMATICO | AGUAS GUARAMIRIM | AGUAS JOINVILLE
+        ELSIF pr_cdhistor IN (48,2284,554,2263) THEN -- RECEBIMENTO CASAN AUTOMATICO | AGUAS GUARAMIRIM | AGUAS JOINVILLE | SANEPAR
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999') || RPAD(' ',17,' ');
         ELSIF pr_cdhistor IN(2039,1517,2025) THEN -- PREVISC, SULAMERICA,UNIFIQUE POMERODE
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'9999999999999999999999') ||

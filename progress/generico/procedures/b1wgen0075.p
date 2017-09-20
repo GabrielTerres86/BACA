@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 08/03/2017
+    Data    : Maio/2010                   Ultima atualizacao: 16/08/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -90,6 +90,14 @@
 			   08/03/2017 - Ajuste na rotina Busca_Dados_PPE para pegar o nome completo
 			                da coupacao para as informacoes do PEP
 							(Adriano - SD 614408).
+
+			   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+							
+			   16/08/2017 - Ajustes realizado para que não se crie crapenc sem informar 
+							ao menos o CEP na tela comercial. (Kelvin/Andrino)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -187,9 +195,9 @@ PROCEDURE Busca_Dados:
             END.
 
         FOR FIRST crapttl FIELDS(cdnatopc cdocpttl tpcttrab cdempres nmextemp
-                                 nrcpfemp nmdsecao dsproftl cdnvlcgo nrcadast
-                                 dtadmemp vlsalari tpdrendi vldrendi cdturnos
-                                 dsjusren inpolexp)
+                                 nrcpfemp dsproftl cdnvlcgo nrcadast dtadmemp
+								 vlsalari tpdrendi vldrendi cdturnos dsjusren 
+								 inpolexp)
                           WHERE crapttl.cdcooper = par_cdcooper AND
                                 crapttl.nrdconta = par_nrdconta AND
                                 crapttl.idseqttl = par_idseqttl NO-LOCK:
@@ -218,7 +226,6 @@ PROCEDURE Busca_Dados:
             tt-comercial.vlsalari = crapttl.vlsalari
             tt-comercial.cdturnos = crapttl.cdturnos
             tt-comercial.dsjusren = crapttl.dsjusren
-            tt-comercial.nmdsecao = crapttl.nmdsecao
             tt-comercial.inpolexp = crapttl.inpolexp.
 
         DO aux_contador = 1 TO EXTENT(tt-comercial.tpdrendi):
@@ -234,7 +241,6 @@ PROCEDURE Busca_Dados:
                 tt-comercial.cdnatopc    = par_cdnatopc
                 tt-comercial.cdocpttl    = par_cdocpttl
                 tt-comercial.tpcttrab    = par_tpcttrab
-                tt-comercial.nmdsecao    = par_nmdsecao
                 tt-comercial.dsproftl    = par_dsproftl
                 tt-comercial.cdnvlcgo    = par_cdnvlcgo
                 tt-comercial.cdturnos    = par_cdturnos
@@ -839,12 +845,9 @@ PROCEDURE Grava_Dados:
     DEF BUFFER bcrapttl FOR crapttl.
     DEF BUFFER b-crapdoc FOR crapdoc.
 
-    &SCOPED-DEFINE CAMPOS-TTL cdnatopc cdocpttl tpcttrab nmextemp nrcpfemp~
-                              nmdsecao dsproftl cdnvlcgo dtadmemp vlsalari~
-                              cdturnos nrcadast cdempres tpdrendi vldrendi inpolexp
+    &SCOPED-DEFINE CAMPOS-TTL cdnatopc cdocpttl tpcttrab nmextemp nrcpfemp dsproftl cdnvlcgo dtadmemp vlsalari cdturnos nrcadast cdempres tpdrendi vldrendi inpolexp
 
-    &SCOPED-DEFINE CAMPOS-ENC cdufende nmbairro nmcidade complend dsendere~
-                              nrcepend nrcxapst tpendass nrendere
+    &SCOPED-DEFINE CAMPOS-ENC cdufende nmbairro nmcidade complend dsendere nrcepend nrcxapst tpendass nrendere
     
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -902,7 +905,6 @@ PROCEDURE Grava_Dados:
                tt-comercial-ant.tpcttrab = crapttl.tpcttrab                	
                tt-comercial-ant.cdempres = crapttl.cdempres                	
                tt-comercial-ant.nrcpfemp = STRING(crapttl.nrcpfemp)              	
-               tt-comercial-ant.nmdsecao = crapttl.nmdsecao              	
                tt-comercial-ant.dsproftl = crapttl.dsproftl		
                tt-comercial-ant.cdnvlcgo = crapttl.cdnvlcgo  		
                tt-comercial-ant.nrcadast = crapttl.nrcadast  	
@@ -956,45 +958,51 @@ PROCEDURE Grava_Dados:
                        END.
                    ELSE
                        DO:
-                          ASSIGN aux_cdseqinc = 1.
-                          /* Pegar o sequencial */
-                          FOR LAST crapenc FIELDS(cdseqinc) WHERE 
-                                           crapenc.cdcooper = par_cdcooper AND
-                                           crapenc.nrdconta = par_nrdconta AND
-                                           crapenc.idseqttl = par_idseqttl
-                                           NO-LOCK:
-                              ASSIGN aux_cdseqinc = crapenc.cdseqinc + 1.
-                          END.
-
-                          CREATE crapenc.
-                          ASSIGN
-                              crapenc.cdcooper = par_cdcooper
-                              crapenc.nrdconta = par_nrdconta
-                              crapenc.idseqttl = par_idseqttl
-                              crapenc.tpendass = 9           
-                              crapenc.dsendere = CAPS(par_endrect1)
-                              crapenc.nrendere = par_nrendcom
-                              crapenc.cdseqinc = aux_cdseqinc NO-ERROR.
-                          VALIDATE crapenc.  
-
-                          IF  ERROR-STATUS:ERROR THEN
-                              aux_dscritic = ERROR-STATUS:GET-MESSAGE(1).
-
-                          LEAVE ContadorEnc.
+					      IF par_cepedct1 <> 0 THEN
+						     DO:
+                                ASSIGN aux_cdseqinc = 1.
+                                /* Pegar o sequencial */
+                                FOR LAST crapenc FIELDS(cdseqinc) WHERE 
+                                                 crapenc.cdcooper = par_cdcooper AND
+                                                 crapenc.nrdconta = par_nrdconta AND
+                                                 crapenc.idseqttl = par_idseqttl
+                                                 NO-LOCK:
+                                    ASSIGN aux_cdseqinc = crapenc.cdseqinc + 1.
+                                END.
+                                
+                                CREATE crapenc.
+                                ASSIGN
+                                    crapenc.cdcooper = par_cdcooper
+                                    crapenc.nrdconta = par_nrdconta
+                                    crapenc.idseqttl = par_idseqttl
+                                    crapenc.tpendass = 9           
+                                    crapenc.dsendere = CAPS(par_endrect1)
+                                    crapenc.nrendere = par_nrendcom
+                                    crapenc.cdseqinc = aux_cdseqinc NO-ERROR.
+                                VALIDATE crapenc.  
+                                
+                                IF  ERROR-STATUS:ERROR THEN
+                                    aux_dscritic = ERROR-STATUS:GET-MESSAGE(1).
+                                
+                                LEAVE ContadorEnc.
+							 END.
                        END.
                 END.
             ELSE
                 LEAVE ContadorEnc.
         END.
         
-        ASSIGN tt-comercial-ant.cepedct1 = crapenc.nrcepend
-               tt-comercial-ant.endrect1 = crapenc.dsendere
-               tt-comercial-ant.nrendcom = crapenc.nrendere
-               tt-comercial-ant.complcom = crapenc.complend
-               tt-comercial-ant.bairoct1 = crapenc.nmbairro
-               tt-comercial-ant.cidadct1 = crapenc.nmcidade
-               tt-comercial-ant.ufresct1 = crapenc.cdufende
-               tt-comercial-ant.cxpotct1 = crapenc.nrcxapst.
+        IF par_cepedct1 <> 0 THEN
+		   DO:
+		      ASSIGN tt-comercial-ant.cepedct1 = crapenc.nrcepend
+                     tt-comercial-ant.endrect1 = crapenc.dsendere
+                     tt-comercial-ant.nrendcom = crapenc.nrendere
+                     tt-comercial-ant.complcom = crapenc.complend
+                     tt-comercial-ant.bairoct1 = crapenc.nmbairro
+                     tt-comercial-ant.cidadct1 = crapenc.nmcidade
+                     tt-comercial-ant.ufresct1 = crapenc.cdufende
+                     tt-comercial-ant.cxpotct1 = crapenc.nrcxapst.
+	       END.		 
 
         VALIDATE tt-comercial-ant.
 
@@ -1070,7 +1078,6 @@ PROCEDURE Grava_Dados:
             crapttl.tpcttrab    = par_tpcttrab
             crapttl.nmextemp    = CAPS(par_nmextemp)
             crapttl.nrcpfemp    = par_nrcpfemp
-            crapttl.nmdsecao    = CAPS(par_nmdsecao)
             crapttl.dsproftl    = CAPS(par_dsproftl)
             crapttl.cdnvlcgo    = par_cdnvlcgo
             crapttl.dtadmemp    = par_dtadmemp
@@ -1212,17 +1219,20 @@ PROCEDURE Grava_Dados:
         FIND gncdocp WHERE gncdocp.cdocupa = par_cdocpttl NO-LOCK NO-ERROR.
 
         /* Pessoa politicamente exposta se Natureza da ocupacao = 99 */
-        ASSIGN crapttl.flpolexp = (gncdocp.cdnatocp = 99) WHEN AVAIL gncdocp.
+        ASSIGN crapttl.inpolexp = INT((gncdocp.cdnatocp = 99)) WHEN AVAIL gncdocp.
  
-        ASSIGN
-           crapenc.cdufende = CAPS(par_ufresct1)
-           crapenc.nmbairro = CAPS(par_bairoct1)
-           crapenc.nmcidade = CAPS(par_cidadct1)
-           crapenc.complend = CAPS(par_complcom)
-           crapenc.dsendere = CAPS(par_endrect1)
-           crapenc.nrcepend = par_cepedct1
-           crapenc.nrcxapst = par_cxpotct1
-           crapenc.nrendere = par_nrendcom NO-ERROR.
+        IF par_cepedct1 <> 0 THEN
+		   DO:
+		      ASSIGN
+                 crapenc.cdufende = CAPS(par_ufresct1)
+                 crapenc.nmbairro = CAPS(par_bairoct1)
+                 crapenc.nmcidade = CAPS(par_cidadct1)
+                 crapenc.complend = CAPS(par_complcom)
+                 crapenc.dsendere = CAPS(par_endrect1)
+                 crapenc.nrcepend = par_cepedct1
+                 crapenc.nrcxapst = par_cxpotct1
+                 crapenc.nrendere = par_nrendcom NO-ERROR.
+		   END.
 
         IF  ERROR-STATUS:ERROR THEN
             DO:
@@ -1544,8 +1554,11 @@ PROCEDURE Grava_Dados:
     END.
 
     RELEASE crapttl.
-    RELEASE crapenc.
-    RELEASE crapass.
+	
+	IF par_cepedct1 <> 0 THEN
+	   RELEASE crapenc.
+    
+	RELEASE crapass.
 
     IF  VALID-HANDLE(h-b1wgen0077) THEN
         DELETE OBJECT h-b1wgen0077.
@@ -1613,7 +1626,6 @@ PROCEDURE Grava_Dados:
               tt-comercial-atl.tpcttrab = crapttl.tpcttrab                	
               tt-comercial-atl.cdempres = crapttl.cdempres                	
               tt-comercial-atl.nrcpfemp = STRING(crapttl.nrcpfemp)              	
-              tt-comercial-atl.nmdsecao = crapttl.nmdsecao              	
               tt-comercial-atl.dsproftl = crapttl.dsproftl		
               tt-comercial-atl.cdnvlcgo = crapttl.cdnvlcgo  		
               tt-comercial-atl.nrcadast = crapttl.nrcadast  	
@@ -1704,9 +1716,8 @@ PROCEDURE Grava_Rendimentos:
 
 
     &SCOPED-DEFINE CAMPOS-TTL cdnatopc cdocpttl tpcttrab nmextemp nrcpfemp~
-                              nmdsecao dsproftl cdnvlcgo dtadmemp vlsalari~
-                              cdturnos nrcadast cdempres tpdrendi vldrendi
-
+                              dsproftl cdnvlcgo dtadmemp vlsalari cdturnos~
+							  nrcadast cdempres tpdrendi vldrendi
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "A" THEN 

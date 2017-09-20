@@ -1741,7 +1741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_tpenvest varchar2(1);
     
     -- Acionamentos de retorno
-    CURSOR cr_aciona(pr_dsprotocolo VARCHAR2) IS
+    CURSOR cr_aciona_retorno(pr_dsprotocolo VARCHAR2) IS
       SELECT ac.dsconteudo_requisicao
         FROM tbepr_acionamento ac
        WHERE ac.cdcooper = pr_cdcooper
@@ -1990,12 +1990,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       -- Se houver protocolo e a analise foi encerrada ou derivada
       IF vr_dsprotoc IS NOT NULL AND rw_crawepr.insitest in(2,3) THEN 
         -- Buscar os detalhes do acionamento de retorno
-        OPEN cr_aciona(vr_dsprotoc);
-        FETCH cr_aciona
+        OPEN cr_aciona_retorno(vr_dsprotoc);
+        FETCH cr_aciona_retorno
          INTO vr_dsconteudo_requisicao;
         -- Somente se encontrou
-        IF cr_aciona%FOUND THEN 
-          CLOSE cr_aciona; 
+        IF cr_aciona_retorno%FOUND THEN 
+          CLOSE cr_aciona_retorno; 
           -- Processar as mensagens para adicionar ao retorno
           BEGIN 
             -- Efetuar cast para JSON
@@ -2029,7 +2029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
               null; 
           END; 
         ELSE
-          CLOSE cr_aciona;           
+          CLOSE cr_aciona_retorno;           
         END IF;
         
         -- Se nao encontrou mensagem
@@ -2119,7 +2119,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                           pr_tpenvest    => vr_tpenvest,          --> Tipo de envio
                           pr_dsprotocolo => vr_dsprotoc,
                           pr_dscritic    => vr_dscritic);            
+      
+      -- Caso tenhamos recebido critica de Proposta jah existente na Esteira
+      IF lower(vr_dscritic) LIKE '%proposta%ja existente na esteira%' THEN
 
+        -- Tentaremos enviar um cancelamento para a Esteira 
+        este0001.pc_cancelar_proposta_est(pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
+                                         ,pr_cdagenci => pr_cdagenci          --> Codigo da agencia 
+                                         ,pr_cdoperad => pr_cdoperad          --> codigo do operador
+                                         ,pr_cdorigem => pr_cdorigem          --> Origem da operacao
+                                         ,pr_nrdconta => pr_nrdconta          --> Numero da conta do cooperado
+                                         ,pr_nrctremp => pr_nrctremp          --> Numero da proposta de emprestimo atual/antigo
+                                         ,pr_dtmvtolt => pr_dtmvtolt          --> Data do movimento   
+                                         ,pr_cdcritic => vr_cdcritic          
+                                         ,pr_dscritic => vr_dscritic);
+        -- Somente se não houve erro 
+        IF vr_dscritic IS NULL THEN 
+          -- Tentaremos enviar novamente a proposta para a Esteira
+          pc_enviar_esteira (pr_cdcooper    => pr_cdcooper,          --> Codigo da cooperativa
+                             pr_cdagenci    => pr_cdagenci,          --> Codigo da agencia                                          
+                             pr_cdoperad    => pr_cdoperad,          --> codigo do operador
+                             pr_cdorigem    => pr_cdorigem,          --> Origem da operacao
+                             pr_nrdconta    => pr_nrdconta,          --> Numero da conta do cooperado
+                             pr_nrctremp    => pr_nrctremp,          --> Numero da proposta de emprestimo atual/antigo
+                             pr_dtmvtolt    => pr_dtmvtolt,          --> Data do movimento                                      
+                             pr_comprecu    => NULL,                 --> Complemento do recuros da URI
+                             pr_dsmetodo    => 'POST',               --> Descricao do metodo
+                             pr_conteudo    => vr_obj_proposta_clob, --> Conteudo no Json para comunicacao
+                             pr_dsoperacao  => 'ENVIO DA PROPOSTA PARA ANALISE DE CREDITO',   --> Operacao realizada
+                             pr_tpenvest    => vr_tpenvest,          --> Tipo de envio
+                             pr_dsprotocolo => vr_dsprotoc,
+                             pr_dscritic    => vr_dscritic);              
+        END IF;
+      END IF;
+      
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_obj_proposta_clob);
       dbms_lob.freetemporary(vr_obj_proposta_clob);    
@@ -2926,8 +2959,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 												pr_dsprotocolo => vr_dsprotocolo,
                         pr_dscritic    => vr_dscritic);            
     
-    -- verificar se retornou critica
-    IF vr_dscritic IS NOT NULL THEN
+    -- verificar se retornou critica (Ignorar a critica de Proposta Nao Encontrada
+    IF vr_dscritic IS NOT NULL AND lower(vr_dscritic) NOT LIKE '%proposta nao encontrada%' THEN
       RAISE vr_exc_erro;
     END IF;      
     
@@ -2953,7 +2986,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       --IF TRIM(vr_dscritic) IS NOT NULL THEN
       --  RAISE vr_exc_erro;
       --END IF;
-    END IF;       
+    END IF;   
+    
+    --> Atualizar proposta
+    BEGIN
+      UPDATE crawepr wpr 
+         SET wpr.dtenvest = NULL
+            ,wpr.hrenvest = 0
+            ,wpr.cdopeste = ' '
+       WHERE wpr.cdcooper = pr_cdcooper
+         AND wpr.nrdconta = pr_nrdconta
+         AND wpr.nrctremp = pr_nrctremp;
+    EXCEPTION    
+      WHEN OTHERS THEN
+        vr_dscritic := 'Nao foi possivel atualizar proposta apos cancelamento: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END; 
+    
+    COMMIT;  
+        
     
   EXCEPTION
     WHEN vr_exc_erro THEN

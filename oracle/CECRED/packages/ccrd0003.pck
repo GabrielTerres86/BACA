@@ -69,7 +69,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --
   --             13/06/2017 - Tratar para abrir chamado quando ocorrer algum erro no 
   --                          processamento da conciliacao do cartao Bancoob/Cabal (Lucas Ranghetti #680746)
-  --
+  --             
   --             02/08/2017 - Incluir validacao na pc_crps670 para o trailer do arquivo CEXT, caso o arquivo 
   --                          venha incompleto vamos abrir chamado e rejeitar o arquivo (Lucas Ranghetti #727623)
   --             
@@ -4757,6 +4757,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              teve alteração nos dados de emprestimo, com a inclusão de um veículo PAMPA
                              e o programa entendeu que houve troca de PA, enviando um solicitação de cartão
                              (Douglas - Chamado 708661)
+                             
+                24/07/2017 - Alterar cdoedptl para idorgexp.
+                             PRJ339-CRM  (Odirlei-AMcom)             
+                             
      ..............................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -4778,7 +4782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_titulari   VARCHAR2(4)     := 0;                              --> Titularidade
       vr_tipooper   VARCHAR2(4)     := 0;                              --> Tp. Operac
       vr_nrdocttl   VARCHAR2(200)   := 0;                              --> CI
-      vr_cdoedttl   VARCHAR2(20)    := 0;                              --> Orgão Emissor da CI
+      vr_idorgexp   INTEGER         := 0;                              --> Orgão Emissor da CI
       vr_cdufdttl   VARCHAR2(4)     := 0;                              --> UF da CI
       vr_nmdavali   VARCHAR2(2000);                                    --> Nome Avalista/Representante
       vr_conttip1   PLS_INTEGER     := 0;                              --> Contador de linhas DETALHES Tipo 1
@@ -4982,7 +4986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ,ttl.nrdocttl
             ,ttl.tpdocttl
             ,ttl.cdufdttl
-            ,ttl.cdoedttl
+            ,ttl.idorgexp
             ,ttl.nmextttl
             ,ttl.inpessoa
         FROM crapttl ttl
@@ -5008,7 +5012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       SELECT ass.nmprimtl
             ,ass.tpdocptl
             ,ass.nrdocptl
-            ,ass.cdoedptl
+            ,ass.idorgexp
             ,ass.cdufdptl
             ,ass.dtnasctl
         FROM crapass ass
@@ -5026,7 +5030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ,NVL(ttl.cdestcvl,avt.cdestcvl) cdestcvl
             ,avt.nrcpfcgc
             ,NVL(ttl.nrdocttl,avt.nrdocava) nrdocava
-            ,NVL(ttl.cdoedttl,avt.cdoeddoc) cdoeddoc
+            ,NVL(ttl.idorgexp,avt.idorgexp) idorgexp
             ,NVL(ttl.cdufdttl,avt.cdufddoc) cdufddoc
             ,NVL(ttl.dtnasttl,avt.dtnascto) dtnascto
             ,DECODE(NVL(ttl.cdsexotl,avt.cdsexcto),1,'2',2,'1','0') sexbancoob
@@ -5554,7 +5558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            pr_nrcpfcgc IN VARCHAR2,
                                            pr_titulari IN VARCHAR2,
                                            pr_nrdocttl IN VARCHAR2,
-                                           pr_cdoedttl IN VARCHAR2,
+                                           pr_idorgexp IN INTEGER,
                                            pr_cdufdttl IN VARCHAR2,
                                            pr_inpessoa IN crapass.inpessoa%TYPE) IS
         BEGIN
@@ -5565,6 +5569,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             vr_cdbcobcb NUMBER(10);
             vr_cdagebcb crapcop.cdagebcb%TYPE;
             vr_nrdconta crapass.nrdconta%TYPE;
+            vr_cdorgexp VARCHAR2(200);
+            vr_nmorgexp VARCHAR2(200);
 
           BEGIN
 
@@ -5596,6 +5602,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             
             END IF;
 
+            --> Buscar orgão expedidor
+            vr_cdorgexp := NULL;
+            vr_nmorgexp := NULL; 
+            IF nvl(pr_idorgexp,0) > 0 THEN
+              cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => pr_idorgexp, 
+                                                pr_cdorgao_expedidor => vr_cdorgexp, 
+                                                pr_nmorgao_expedidor => vr_nmorgexp, 
+                                                pr_cdcritic          => vr_cdcritic, 
+                                                pr_dscritic          => vr_dscritic);
+              IF nvl(vr_cdcritic,0) > 0 OR 
+                 TRIM(vr_dscritic) IS NOT NULL THEN
+                vr_cdorgexp := NULL;
+                vr_nmorgexp := NULL; 
+              END IF;  
+            END IF;
+            
+
             -- monta registro de DETALHE (Tipo 2)
             vr_dsdettp2 := ('CCB3'                           /* Pedido */                                                  ||
                             '02'                             /* Dados do Cartão                    */                      ||
@@ -5620,7 +5643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                             '000'                            /* Cod. Rejeição                      */                      ||
                             lpad(' ',16,' ')                 /* PIN                                */                      ||
                             lpad(nvl(pr_nrdocttl,' '),15,' ') /* Identidade RG                     */                      ||
-                            lpad(substr(nvl(pr_cdoedttl,' '),1,3), 3, ' ') /* Orgão Emissor        */                      ||
+                            lpad(substr(nvl(vr_cdorgexp,' '),1,3), 3, ' ') /* Orgão Emissor        */                      ||
                             lpad(nvl(pr_cdufdttl,' '),2,' ')  /* UF Emissora                       */                      ||
                             rpad(nvl(pr_nmextttl,' '),80,' ') /* Nome Completo da Identidade       */                      ||
                             LPAD(vr_cdbcobcb,3,'0')          /* Banco da Conta Vinculada           */                      ||
@@ -5957,7 +5980,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
               -- Zerar vars
               vr_nrdocttl := ' ';
-              vr_cdoedttl := ' ';
+              vr_idorgexp := NULL;
               vr_cdufdttl := ' ';
               vr_titulari := 0;
               vr_tipooper := ' ';
@@ -6029,11 +6052,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- Somente alimenta varíaveis com informações de Documento for Carteira de Identidade
                 IF rw_crapttl.tpdocttl = 'CI' THEN
                   vr_nrdocttl := rw_crapttl.nrdocttl;
-                  vr_cdoedttl := rw_crapttl.cdoedttl;
+                  vr_idorgexp := rw_crapttl.idorgexp;
                   vr_cdufdttl := rw_crapttl.cdufdttl;
                 ELSE
                   vr_nrdocttl := ' ';
-                  vr_cdoedttl := ' ';
+                  vr_idorgexp := NULL;
                   vr_cdufdttl := ' ';
                 END IF;
 
@@ -6182,7 +6205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            rw_crawcrd.nrcpftit,
                                            vr_titulari,
                                            vr_nrdocttl,
-                                           vr_cdoedttl,
+                                           vr_idorgexp,
                                            vr_cdufdttl,
                                            rw_crapttl.inpessoa);
 
@@ -6209,7 +6232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 IF rw_crawcrd.cdgraupr = 9 THEN
                   vr_dtnascto   := rw_crawcrd.dtnasccr;
                   vr_nrdocttl   := ' ';
-                  vr_cdoedttl   := ' ';
+                  vr_idorgexp   := NULL;
                   vr_cdufdttl   := ' ';
                   vr_nmdavali   := rw_crawcrd.nmtitcrd;                
                   vr_sexbancoob := 0;
@@ -6244,12 +6267,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Somente alimenta varíaveis com informações de Documento for Carteira de Identidade
                   IF rw_crapavt.tpdocava = 'CI' THEN
                     vr_nrdocttl := rw_crapavt.nrdocava;
-                    vr_cdoedttl := rw_crapavt.cdoeddoc;
+                    vr_idorgexp := rw_crapavt.idorgexp;
                     vr_cdufdttl := rw_crapavt.cdufddoc;
                     vr_nmdavali := rw_crapavt.nmdavali;
                   ELSE
                     vr_nrdocttl := ' ';
-                    vr_cdoedttl := ' ';
+                    vr_idorgexp := NULL;
                     vr_cdufdttl := ' ';
                     vr_nmdavali := rw_crapavt.nmdavali;
                   END IF;
@@ -6373,7 +6396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                              rw_crawcrd.nrcpfcgc,
                                              vr_titulari,
                                              rw_crapjur.nrinsest,
-                                             ' ',
+                                             NULL,
                                              ' ',
                                              2); -- Pessoa Juridica
                 END IF;
@@ -6405,7 +6428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                            vr_nrcpfcgc,
                                            vr_titulari,
                                            vr_nrdocttl,
-                                           vr_cdoedttl,
+                                           vr_idorgexp,
                                            vr_cdufdttl,
                                            vr_inpessoa);
 
@@ -7155,7 +7178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
             ,avt.cdestcvl
             ,avt.nrcpfcgc
             ,avt.nrdocava
-            ,avt.cdoeddoc
+            ,avt.idorgexp
             ,avt.cdufddoc
             ,avt.dtnascto
             ,DECODE(avt.cdsexcto,1,'2',2,'1','0') sexbancoob

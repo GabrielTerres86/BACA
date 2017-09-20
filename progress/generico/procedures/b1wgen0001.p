@@ -42,7 +42,7 @@
 
    Programa: b1wgen0001.p                  
    Autora  : Mirtes.
-   Data    : 12/09/2005                      Ultima atualizacao: 03/10/2016
+   Data    : 12/09/2005                      Ultima atualizacao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -408,6 +408,11 @@
 							 conta destino igual a zero (AJFink) (SD#572650)
 							 
                 10/07/2016 - inclusão do campo vllimcpa na tabela tt-saldos  (M441 - Roberto Holz (Mouts))
+
+				18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3985,6 +3990,9 @@ PROCEDURE obtem-cabecalho:
     
     DEF VAR aux_cdempres                   AS INT  NO-UNDO.
     DEF VAR aux_qttitula                   AS INT  NO-UNDO.
+	DEF VAR aux_nmsegntl				   LIKE crapttl.nmextttl NO-UNDO.
+
+	DEFINE BUFFER crabttl FOR crapttl.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-cabec.
@@ -4051,6 +4059,16 @@ PROCEDURE obtem-cabecalho:
                   
              ASSIGN aux_cdempres = crapttl.cdempres.
              
+			 FOR FIRST crabttl FIELDS(nmextttl) 
+			                   WHERE crabttl.cdcooper = p-cdcooper       AND
+                                     crabttl.nrdconta = crapass.nrdconta AND
+                                     crabttl.idseqttl = 2           
+                                     NO-LOCK:
+
+               ASSIGN aux_nmsegntl = crabttl.nmextttl.
+
+         END.
+             
          END.
     ELSE
          DO:
@@ -4076,7 +4094,7 @@ PROCEDURE obtem-cabecalho:
            tt-cabec.nrctainv = crapass.nrctainv
            tt-cabec.dtadmemp = crapass.dtadmemp
            tt-cabec.nmprimtl = crapass.nmprimtl
-           tt-cabec.nmsegntl = crapass.nmsegntl
+           tt-cabec.nmsegntl = aux_nmsegntl
            tt-cabec.dtaltera = fgetdtaltera(p-cdcooper)
            tt-cabec.dsnatopc = fgetNatOpc  (p-cdcooper, p-nro-conta)
            tt-cabec.nrramfon = fgetNrRamFon(p-cdcooper)

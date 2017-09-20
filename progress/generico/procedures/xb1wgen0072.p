@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0072.p
     Autor   : Jose Luis Marchezoni
-    Data    : Maio/2010                   Ultima atualizacao: 17/05/2015
+    Data    : Maio/2010                   Ultima atualizacao: 27/04/2017
 
     Objetivo  : BO de Comunicacao XML x BO - CONTAS, RESPONSAVEL LEGAL
 
@@ -14,6 +14,8 @@
                              
                 17/05/2015 - Reformulacao cadastral (Gabriel-RKAM).                          
    
+                27/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+
 .............................................................................*/
 
                                                                              
@@ -42,7 +44,7 @@ DEF VAR aux_dtemddoc AS DATE                                           NO-UNDO.
 DEF VAR aux_dtnascto AS DATE                                           NO-UNDO.
 DEF VAR aux_cdsexcto AS INTE                                           NO-UNDO.
 DEF VAR aux_cdestcvl AS INTE                                           NO-UNDO.
-DEF VAR aux_dsnacion AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdnacion AS INTE                                           NO-UNDO.
 DEF VAR aux_dsnatura AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcepend AS INTE                                           NO-UNDO.
 DEF VAR aux_dsendere AS CHAR                                           NO-UNDO.
@@ -98,7 +100,7 @@ PROCEDURE valores_entrada:
             WHEN "dtnascto" THEN aux_dtnascto = DATE(tt-param.valorCampo).
             WHEN "cdsexcto" THEN aux_cdsexcto = INTE(tt-param.valorCampo).
             WHEN "cdestcvl" THEN aux_cdestcvl = INTE(tt-param.valorCampo).
-            WHEN "dsnacion" THEN aux_dsnacion = tt-param.valorCampo.    
+            WHEN "cdnacion" THEN aux_cdnacion = INTE(tt-param.valorCampo).
             WHEN "dsnatura" THEN aux_dsnatura = tt-param.valorCampo.        
             WHEN "nrcepend" THEN aux_nrcepend = INTE(tt-param.valorCampo).
             WHEN "dsendere" THEN aux_dsendere = tt-param.valorCampo.
@@ -192,9 +194,9 @@ PROCEDURE valores_entrada:
                     WHEN "cdestciv" THEN
                         ASSIGN tt-resp.cdestciv = 
                             INTE(tt-param-i.valorCampo).
-                    WHEN "dsnacion" THEN
-                        ASSIGN tt-resp.dsnacion = 
-                            tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                        ASSIGN tt-resp.cdnacion = 
+                            INTE(tt-param-i.valorCampo).
                     WHEN "dsnatura" THEN
                         ASSIGN tt-resp.dsnatura = 
                             tt-param-i.valorCampo.
@@ -341,7 +343,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_dtnascto,
                              INPUT aux_cdsexcto,
                              INPUT aux_cdestcvl,
-                             INPUT aux_dsnacion,
+                             INPUT aux_cdnacion,
                              INPUT aux_dsnatura,
                              INPUT aux_nrcepend,
                              INPUT aux_dsendere,
@@ -416,7 +418,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_dtnascto,
                             INPUT aux_cdsexcto,
                             INPUT aux_cdestcvl,
-                            INPUT aux_dsnacion,
+                            INPUT aux_cdnacion,
                             INPUT aux_dsnatura,
                             INPUT aux_nrcepend,
                             INPUT aux_dsendere,

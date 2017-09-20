@@ -546,7 +546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 19/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 26/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -612,8 +612,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              20/03/2017 - Ajuste para verificar vencimento da P.M. TIMBO, DEFESA CIVIL TIMBO 
   --                           MEIO AMBIENTE DE TIMBO, TRANSITO DE TIMBO (Lucas Ranghetti #630176)
   --
-  --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174) 
-  -- 
+  --              12/04/2017 - Ajuste para verificar vencimento da P.M. AGROLANDIA (Tiago #647174)  
+    --            
   --              19/04/2017 - Estornar títulos iptu  - Demetrius Wolff - Mouts	  
   --
   --              22/05/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
@@ -622,6 +622,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --              26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
   --                           (Tiago/Fabricio #647174)   
 
+  --              13/06/2017 - Retirado validacao incorreta na procedure pc_retorna_vlr_titulo_iptu
+  --                          (Tiago/Elton #691470)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -1681,6 +1683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                          (leitora ou manual(linha digitavel)) (Odirlei-AMcom)
   --
   --             06/10/2015 - Inclusao do nrsnosnum na criacao da crapcob SD339759 (Odirlei-AMcom)
+  --     
+  --             01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1817,6 +1821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
       vr_dsconmig  VARCHAR2(100);
       vr_nridetit  NUMBER;
       vr_tpdbaixa  INTEGER;
+      vr_flcontig  INTEGER;
       vr_inpessoa  crapass.inpessoa%TYPE;
       vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
       
@@ -2072,6 +2077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                            ,pr_vltitulo  => vr_vltitulo         --> Valor do titulo
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
                            ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
                            
@@ -2257,7 +2263,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,craptit.nrispbds
           ,craptit.inpessoa
           ,craptit.nrcpfcgc
-          ,craptit.tpbxoper)
+          ,craptit.tpbxoper
+          ,craptit.flgconti)
         VALUES
           (rw_crapcop.cdcooper               -- cdcooper
           ,pr_nrdconta                       -- nrdconta
@@ -2292,7 +2299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,nvl(rw_crapban.nrispbif,0)        -- nrispbds
           ,nvl(vr_inpessoa,0)                -- inpessoa
           ,nvl(vr_nrcpfcgc,0)                -- nrcpfcgc
-          ,nvl(vr_tpdbaixa,0))               -- tpbxoper          
+          ,nvl(vr_tpdbaixa,0)                -- tpbxoper      
+          ,nvl(vr_flcontig,0))               -- flgconti   
         RETURNING
           craptit.nrseqdig
          ,craptit.nrdocmto
@@ -4888,6 +4896,12 @@ END pc_gera_titulos_iptu_prog;
   --
   --               25/08/2016 - Caso encontre o parâmetro pagadorvip permite pagar valor menor que o valor do
   --                            documento (M271 - Kelvin)
+  --
+  --               13/06/2017 - Retirado validacao que estava feita de forma incorreta olhando no valor
+  --                            do titulo para nao ocorrer critica 100 (Tiago/Elton #691470)
+  --
+  --               01/08/2017 - Ajustes contigencia CIP. PRJ340-NPC (Odirlei-AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5046,6 +5060,7 @@ END pc_gera_titulos_iptu_prog;
       vr_nrdipatu VARCHAR2(1000);
       vr_nridetit       NUMBER;
       vr_tpdbaixa       INTEGER;
+      vr_flcontig       INTEGER;
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -5615,28 +5630,6 @@ END pc_gera_titulos_iptu_prog;
           END IF;
         END IF;
       ELSE  /* Titulo */
-        IF (to_number(SUBSTR(pr_codigo_barras,16,4)) = 557) AND /* Prefeitura*/
-           (to_number(SUBSTR(pr_codigo_barras,02,1)) = 1)  THEN /* Cod.Segmto*/
-          --Criar erro
-          CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
-                               ,pr_cdagenci => pr_cod_agencia
-                               ,pr_nrdcaixa => vr_nrdcaixa
-                               ,pr_cod_erro => 100
-                               ,pr_dsc_erro => NULL
-                               ,pr_flg_erro => TRUE
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
-          --Se ocorreu erro
-          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          ELSE
-            vr_cdcritic:= 100;
-            vr_dscritic:= NULL;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-        ELSE
           --Selecionar informacoes titulos
           OPEN cr_craptit3 (pr_cdcooper => rw_crapcop.cdcooper
                            ,pr_dtmvtolt => rw_crapdat.dtmvtocd
@@ -5773,7 +5766,6 @@ END pc_gera_titulos_iptu_prog;
             END IF;
           END IF;
         END IF;
-      END IF;
 
       --Nao for IPTU
       IF pr_iptu = 0 THEN
@@ -6274,6 +6266,7 @@ END pc_gera_titulos_iptu_prog;
                            ,pr_vltitulo  => pr_vlfatura         --> Valor do titulo
                            ,pr_nridenti  => vr_nridetit         --> Retornar numero de identificacao do titulo no npc
                            ,pr_tpdbaixa  => vr_tpdbaixa         --> Retornar tipo de baixa
+                           ,pr_flcontig  => vr_flcontig         --> Retornar inf que a CIP esta em modo de contigencia
                            ,pr_cdcritic  => vr_cdcritic         --> Codigo da critico
                            ,pr_dscritic  => vr_dscritic );      --> Descrição da critica
                            
@@ -6529,7 +6522,7 @@ END pc_gera_titulos_iptu_prog;
                     vr_dscritic:= vr_des_erro;
                     --Levantar Excecao
                     RAISE vr_exc_erro;
-                  END IF;
+            END IF;
                   
                 END IF;
                 
@@ -7746,7 +7739,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para retornar valores fatura
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 12/04/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 28/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7766,7 +7759,13 @@ END pc_gera_titulos_iptu_prog;
   --
   --             26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA
   --                          (Tiago/Fabricio #647174) 
-
+  --
+  --             31/05/2017 - Regra para alertar o usuário quando tentar pagar um GPS na modalidade de 
+  --                          pagamento apresentando a seguinte mensagem: GPS deve ser paga na opção 
+  --                          Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)
+  --
+  --             28/07/2017 - Alterar a verificacao de vencimento das faturas de convenio, para que 
+  --                          seja feito atraves de parametrizacao na crapprm (Douglas - Chamado 711440)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7800,6 +7799,18 @@ END pc_gera_titulos_iptu_prog;
         AND   craplft.nrdolote = pr_nrdolote
         AND   craplft.cdseqfat = pr_cdseqfat;
       rw_craplft cr_craplft%ROWTYPE;
+
+      -- Efetuar a busca do valor na tabela
+      CURSOR cr_crapprm_dias_tolera (pr_cdacesso IN VARCHAR) IS
+        SELECT to_number(prm.dsvlrprm) dsvlrprm
+          FROM crapprm prm
+         WHERE prm.nmsistem = 'CRED'
+           AND prm.cdcooper = 0 --> Busca tanto da passada, quanto da geral (se existir)
+           AND prm.cdacesso = pr_cdacesso; --> Trará a cooperativa passada primeiro, e caso não encontre nela, trará da 0(zero)
+
+      -- Acesso a quantidade de dias de tolerancia
+      vr_cdacesso      VARCHAR2(24);
+      vr_qtdias_tolera INTEGER;
 
       --Variaveis Locais
       vr_nrdcaixa INTEGER;
@@ -7913,7 +7924,36 @@ END pc_gera_titulos_iptu_prog;
                      RAISE vr_exc_erro;
                  END IF;
             END IF;
-
+    -- Validar se eh GPS      
+      IF to_number(SUBSTR(pr_codigo_barras,16,4)) = 270 AND
+         to_number(SUBSTR(pr_codigo_barras,2,1)) = 5 THEN
+        BEGIN
+          --Criar Erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => 0
+                               ,pr_dsc_erro => 'GPS deve ser paga na opção Transações - GPS do menu de serviços.'
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro chamada Oracle CXON0000 '||sqlerrm;
+            RAISE vr_exc_erro;
+        END;
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'GPS deve ser paga na opção Transações - GPS do menu de serviços.';
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;         
+      END IF;
+      --
       --Selecionar cadastro empresas conveniadas
       OPEN cr_crapcon (pr_cdcooper => rw_crapcop.cdcooper
                       ,pr_cdempcon => to_number(SUBSTR(pr_codigo_barras,16,4))
@@ -8085,19 +8125,25 @@ END pc_gera_titulos_iptu_prog;
         END IF;
       END IF;
       
-      IF ((rw_crapcon.cdempcon = 2044 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. ITAJAI */
-          (rw_crapcon.cdempcon = 3493 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. PRES GETULIO */
-          (rw_crapcon.cdempcon = 1756 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. GUARAMIRIM */
-          (rw_crapcon.cdempcon = 4539 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TIMBO */
-          (rw_crapcon.cdempcon = 4594 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. TROMBUDO CENTRAL */
-          (rw_crapcon.cdempcon = 0040 AND rw_crapcon.cdsegmto = 1)  OR   /* P.M. AGROLANDIA */
-          (rw_crapcon.cdempcon = 0562 AND rw_crapcon.cdsegmto = 5)  OR   /* DEFESA CIVIL TIMBO */
-          (rw_crapcon.cdempcon = 0563 AND rw_crapcon.cdsegmto = 5)  OR   /* MEIO AMBIENTE DE TIMBO */
-          (rw_crapcon.cdempcon = 0564 AND rw_crapcon.cdsegmto = 5)  OR   /* TRANSITO DE TIMBO */
-          (rw_crapcon.cdempcon = 0524 AND rw_crapcon.cdsegmto = 5)       /* F.M.S TROMBUDO CENTRAL */
-         ) THEN 
+      -- Montar a chave de acesso para buscar os dias de tolerando do convenio
+      -- e identificar se o Convenio pode ser pago vencido
+      vr_cdacesso:= 'VALIDA_PAGTO_' ||
+                    to_char(rw_crapcon.cdempcon) || '_' ||
+                    to_char(rw_crapcon.cdsegmto);
+
+      -- Buscar os dias de tolerancia
+      OPEN cr_crapprm_dias_tolera(pr_cdacesso => vr_cdacesso);
+      FETCH cr_crapprm_dias_tolera INTO vr_qtdias_tolera;
+        
+      -- Identifica se existe a chave para validar o vencimento do convenio
+      -- Validar se fatura esta vencida
+      IF cr_crapprm_dias_tolera%FOUND THEN
+
+        -- Apenas fecha o cursor
+        CLOSE cr_crapprm_dias_tolera;
+
         --Data movimento anterior
-        vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan,'YYYYMMDD');
+        vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan - vr_qtdias_tolera,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
           --Criar Erro
           CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
@@ -8118,34 +8164,13 @@ END pc_gera_titulos_iptu_prog;
             RAISE vr_exc_erro;
           END IF;
         END IF;
+          
+      ELSE
+        -- Como essa chave nao existe, nao validamos o vencimento
+        -- Apenas fecha o cursor
+        CLOSE cr_crapprm_dias_tolera;
       END IF;
 
-      /* SANEPAR */
-      IF rw_crapcon.cdempcon = 0109 AND rw_crapcon.cdsegmto = 2 THEN
-        --Data movimento anterior
-        vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtocd - 25,'YYYYMMDD');
-        IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
-          --Criar Erro
-          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cod_agencia
-                               ,pr_nrdcaixa => vr_nrdcaixa
-                               ,pr_cod_erro => 0
-                               ,pr_dsc_erro => 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.'
-                               ,pr_flg_erro => TRUE
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
-          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          ELSE
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.';
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-        END IF;
-      END IF;
-      
       /* Buscar Sequencial da fatura */
       CXON0014.pc_busca_sequencial_fatura(pr_cdhistor      => rw_crapcon.cdhistor  --Codigo historico
                                          ,pr_codigo_barras => pr_codigo_barras     --Codigo Barras

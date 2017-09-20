@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Junho/2011                        Ultima atualizacao: 03/01/2014
+   Data    : Junho/2011                        Ultima atualizacao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -26,6 +26,10 @@
                             
                 03/01/2014 - Trocar critica 15 Agencia nao cadastrada por 
                              962 PA nao cadastrado (Reinert)
+            
+				18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
             
 .............................................................................*/
 
@@ -223,6 +227,7 @@ PROCEDURE email-creditos:
     DEF VAR aux_nmextcop        AS CHAR             NO-UNDO.
     DEF VAR aux_cdagenci        AS CHAR             NO-UNDO.
     DEF VAR aux_nrcpfcgc        AS CHAR             NO-UNDO.
+	DEF VAR aux_inpolexp        AS CHAR				NO-UNDO.
 
     DEF VAR aux_flgpubli        AS LOGI    FORMAT "Sim/Nao"  NO-UNDO.
     DEF VAR aux_dtaltera        AS DATE                      NO-UNDO.
@@ -258,7 +263,7 @@ PROCEDURE email-creditos:
     FORM crapttl.idseqttl   FORMAT "zzz9"
          crapttl.nmextttl   FORMAT "x(40)"
          aux_nrcpfcgc       FORMAT "x(18)"  AT 47
-         crapttl.flpolexp                   AT 66
+         aux_inpolexp                       AT 66
          aux_flgpubli                       AT 88
          WITH DOWN WIDTH 132  NO-BOX NO-LABELS FRAME f_titulares_fis.
 
@@ -324,14 +329,19 @@ PROCEDURE email-creditos:
                 
                 /* Verifica se é servidor publico */
                 ASSIGN aux_flgpubli = 
-                       CAN-DO(aux_dsocpttl,STRING(crapttl.cdocpttl)).
-
+                       CAN-DO(aux_dsocpttl,STRING(crapttl.cdocpttl))
                        aux_nrcpfcgc = STRING(STRING(crapttl.nrcpfcgc,
                                       "zzzzzzzzzzz"), "xxx.xxx.xxx-xx").
 
+				IF crapttl.inpolexp = 0 THEN
+				   ASSIGN aux_inpolexp = "Nao".
+				ELSE IF crapttl.inpolexp = 1 THEN
+				   ASSIGN aux_inpolexp = "Sim".
+			    ELSE IF crapttl.inpolexp = 2 THEN
+				   ASSIGN aux_inpolexp = "Pendente".
 
                 DISP STREAM str_1 crapttl.idseqttl  crapttl.nmextttl 
-                                  aux_nrcpfcgc      crapttl.flpolexp
+                                  aux_nrcpfcgc      aux_inpolexp
                                   aux_flgpubli
                                   WITH FRAME f_titulares_fis.
 

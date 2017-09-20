@@ -11,6 +11,7 @@
  *				  13/07/2016 - Correcao do acesso a variavel tppessoa do array $_POST. SD 479874. (Carlos R.)
  *                08/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
+ *                25/04/2017 - Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  */
 
     session_start();
@@ -168,6 +169,7 @@
 				regFilho<? echo $i; ?>['cddosexo'] = '<? echo getByTagName($registros[$i]->tags,'cddosexo'); ?>';				
 				regFilho<? echo $i; ?>['cdestciv'] = '<? echo getByTagName($registros[$i]->tags,'cdestciv'); ?>';
 				regFilho<? echo $i; ?>['dsnacion'] = '<? echo getByTagName($registros[$i]->tags,'dsnacion'); ?>';			
+                regFilho<? echo $i; ?>['cdnacion'] = '<? echo getByTagName($registros[$i]->tags,'cdnacion'); ?>';			
 				regFilho<? echo $i; ?>['dsnatura'] = '<? echo getByTagName($registros[$i]->tags,'dsnatura'); ?>';
 				regFilho<? echo $i; ?>['cdcepres'] = '<? echo getByTagName($registros[$i]->tags,'cdcepres'); ?>';
 				regFilho<? echo $i; ?>['dsendres'] = '<? echo getByTagName($registros[$i]->tags,'dsendres'); ?>';
@@ -218,6 +220,7 @@
 			$frm_cdestciv = getByTagName($registros[0]->tags,'cdestciv');
 			$frm_cddosexo = getByTagName($registros[0]->tags,'cddosexo');
 			$frm_dsnacion = getByTagName($registros[0]->tags,'dsnacion');
+            $frm_cdnacion = getByTagName($registros[0]->tags,'cdnacion');
 			$frm_dsnatura = getByTagName($registros[0]->tags,'dsnatura');
 			$frm_cdcepres = getByTagName($registros[0]->tags,'cdcepres');
 			$frm_dsendres = getByTagName($registros[0]->tags,'dsendres');

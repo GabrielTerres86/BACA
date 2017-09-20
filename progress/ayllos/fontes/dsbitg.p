@@ -3,7 +3,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fernando
-   Data    : Fevereiro/2009                     Ultima alteracao: 31/11/2016
+   Data    : Fevereiro/2009                     Ultima alteracao: 18/04/2017
 
    Dados referentes ao programa:
 
@@ -70,6 +70,13 @@
               01/12/2016 - Alterado campo dsdepart para cddepart.
                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                            
+			  18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			               crapass, crapttl, crapjur 
+						  (Adriano - P339).
+
+              19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)  
+                           
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -111,6 +118,7 @@ DEF    VAR par_dsdevice AS CHAR                                         NO-UNDO.
 DEF    VAR par_dtconnec AS CHAR                                         NO-UNDO.
 DEF    VAR par_numipusr AS CHAR                                         NO-UNDO.
 DEF    VAR h-b1wgen9999 AS HANDLE                                       NO-UNDO.
+DEF    VAR h-b1wgen0052b AS HANDLE                                      NO-UNDO.
 
 
 DEFINE NEW SHARED VARIABLE shr_inpessoa      AS INT                     NO-UNDO.
@@ -2366,6 +2374,7 @@ PROCEDURE Exporta_Registros:
     DEF     VAR aux_dstelefo AS CHAR                                   NO-UNDO.
     DEF     VAR aux_cdsexotl AS CHAR                                   NO-UNDO.
     DEF     VAR aux_dtinires AS CHAR                                   NO-UNDO.
+    DEF     VAR aux_cdoedttl AS CHAR                                   NO-UNDO.
     
     DEF BUFFER crabttl FOR crapttl.
     DEF BUFFER crabass FOR crapass.
@@ -2486,6 +2495,26 @@ PROCEDURE Exporta_Registros:
             IF  crapttl.dtemdttl = ?   THEN
                 RETURN "NOK".
             
+            /* Retornar orgao expedidor */
+            IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                RUN sistema/generico/procedures/b1wgen0052b.p 
+                    PERSISTENT SET h-b1wgen0052b.
+
+            ASSIGN aux_cdoedttl = "".
+            RUN busca_org_expedidor IN h-b1wgen0052b 
+                               ( INPUT crapttl.idorgexp,
+                                OUTPUT aux_cdoedttl,
+                                OUTPUT glb_cdcritic, 
+                                OUTPUT glb_dscritic).
+
+            DELETE PROCEDURE h-b1wgen0052b.   
+
+            IF  RETURN-VALUE = "NOK" THEN
+            DO:
+                ASSIGN aux_cdoedttl = 'NAO CADAST'.
+            END.            
+            
+            
             /* registro tipo 3 */                
             ASSIGN aux_nrregist = aux_nrregist + 1
                    aux_dsdlinha = STRING(SUBSTRING(crapass.nrdctitg,1,7),
@@ -2497,7 +2526,7 @@ PROCEDURE Exporta_Registros:
                                   STRING(crapttl.dsnatura,"x(25)")    + 
                                   STRING(aux_cddocttl,"99")           +
                                   STRING(crapttl.nrdocttl,"x(20)")    + 
-                                  STRING(crapttl.cdoedttl,"x(15)")    +
+                                  STRING(aux_cdoedttl,"x(15)")        +
                                   STRING(crapttl.dtemdttl,"99999999") +
                                   STRING(crapttl.cdestcvl,"99")       +
                                   "01" +
@@ -2508,12 +2537,6 @@ PROCEDURE Exporta_Registros:
                                   "000000000000100"                   +
                                   STRING(MONTH(glb_dtmvtolt),"99")    +
                                   STRING(YEAR(glb_dtmvtolt),"9999").
-                        
-            IF  crapttl.dtsalari <> ?   THEN
-                aux_dsdlinha = aux_dsdlinha + 
-                               STRING(MONTH(crapttl.dtsalari),"99")  +
-                               STRING(YEAR(crapttl.dtsalari),"9999").
-                               /* o restante sao brancos */ 
                                       
             PUT STREAM str_1  aux_nrregist FORMAT "99999" "03".
             PUT STREAM str_1  aux_dsdlinha FORMAT "x(143)" SKIP.

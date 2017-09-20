@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps466 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps466 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -12,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Diego
-       Data    : Julho/2006                     Ultima atualizacao: 03/07/2014
+       Data    : Julho/2006                     Ultima atualizacao: 31/07/2017
 
        Dados referentes ao programa:
 
@@ -80,7 +79,14 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    27/05/2014 - Ajuste no sqcabrel = 2 para o relatorio crrl442(Odirlei-AMcom) 
                    
                    03/07/2014 - Ajuste do calculo da data para ano -1 (Tiago Castro - RKAM)
+                                
+                   31/07/2017 - Padronizar as mensagens - Chamado 721285
+                                Tratar os exception others - Chamado 721285
+                                Ajustada mensagem: Hoje não é segunda então não pode haver processamento - Chamado 721285
+                                ( Belli - Envolti )                   
                    
+                   01/08/2017 - Retirada gravação de log para mensagem de erro de data
+                                (Ana - Envolti)                   
     ............................................................................ */
 
     DECLARE
@@ -92,7 +98,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
-      vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
       vr_dtinicio   DATE;
@@ -126,6 +131,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_nmresage crapage.nmresage%TYPE;
       vr_cartaobb NUMBER;
       vr_contaitg NUMBER;
+      
       ------------------------------- CURSORES ---------------------------------
 
       -- Busca dos dados da cooperativa
@@ -313,66 +319,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
         dbms_lob.writeappend(pr_clobdado, length(pr_desdados),pr_desdados);
       END;
 
-      --------------- VALIDACOES INICIAIS -----------------
 
-    BEGIN
-      -- Incluir nome do módulo logado
-      GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
-                                ,pr_action => null);
-      -- Verifica se a cooperativa esta cadastrada
-      OPEN cr_crapcop;
-      FETCH cr_crapcop
-       INTO rw_crapcop;
-      -- Se não encontrar
-      IF cr_crapcop%NOTFOUND THEN
-        -- Fechar o cursor pois haverá raise
-        CLOSE cr_crapcop;
-        -- Montar mensagem de critica
-        vr_cdcritic := 651;
-        RAISE vr_exc_saida;
-      ELSE
-        -- Apenas fechar o cursor
-        CLOSE cr_crapcop;
-      END IF;
+    --------------------------- 
 
-      -- Leitura do calendário da cooperativa
-      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-      FETCH btch0001.cr_crapdat
-       INTO rw_crapdat;
-      -- Se não encontrar
-      IF btch0001.cr_crapdat%NOTFOUND THEN
-        -- Fechar o cursor pois efetuaremos raise
-        CLOSE btch0001.cr_crapdat;
-        -- Montar mensagem de critica
-        vr_cdcritic := 1;
-        RAISE vr_exc_saida;
-      ELSE
-        -- Apenas fechar o cursor
-        CLOSE btch0001.cr_crapdat;
-      END IF;
-
-      -- Validações iniciais do programa
-      BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
-                               ,pr_flgbatch => 1
-                               ,pr_cdprogra => vr_cdprogra
-                               ,pr_infimsol => pr_infimsol
-                               ,pr_cdcritic => vr_cdcritic);
-      -- Se a variavel de erro é <> 0
-      IF vr_cdcritic <> 0 THEN
-        -- Envio centralizado de log de erro
-        RAISE vr_exc_saida;
-      END IF;
-
-      --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
-      --força data ser dia 25 do mes movimentacao
-      vr_diadopro := to_date(to_char(rw_crapdat.dtmvtolt, 'mm')||'25'||to_char(rw_crapdat.dtmvtolt, 'yyyy'),'mmddyyyy');
-      --verifica se o se dia é util senao busca o proximo dia util
-      vr_diadopro := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_diadopro);
-
-      /* Rodar sempre no dia 25 ou proximo dia util */
-      IF   rw_crapdat.dtmvtolt <>  vr_diadopro  THEN
-        RAISE vr_exc_fimprg; 
-      END IF;
+    PROCEDURE pc_processar 
+      IS
+    BEGIN        
       --busca lista de contas centralizadoras
       vr_lscontas := gene0005.fn_busca_conta_centralizadora(pr_cdcooper => pr_cdcooper,
                                                             pr_tpregist => 1);
@@ -395,7 +347,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       -- monta as datas entre 25 e 24 do mes mov.
       vr_dtinicio := to_date(to_char(vr_mmmvtolt,'fm00')||25||vr_yymvtolt, 'mmddyyyy');
       vr_dttfinal := to_date(to_char(rw_crapdat.dtmvtolt, 'mm')||24||to_char(rw_crapdat.dtmvtolt,'yyyy'),'mmddyyyy');
-
+      
       WHILE vr_dtinicio <= vr_dttfinal -- enquanto data inicio for menor ou igual a data final
       LOOP
         /* Para os historicos da aux_lshistor */
@@ -409,8 +361,16 @@ CREATE OR REPLACE PROCEDURE CECRED.
           IF  gene0002.fn_existe_valor(pr_base      => vr_lscontas
                                        ,pr_busca    => rw_craplcm.nrdctabb
                                        ,pr_delimite => ',' ) = 'S'THEN
+                                       
+	          -- Incluir nome do módulo logado - Chamado 721285 31/07/2017
+		        GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL); 
+    
             continue;
           END IF;
+                                                 
+	        -- Incluir nome do módulo logado - Chamado 721285 31/07/2017
+		      GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL); 
+            
           /* Depositos Efetuados */
           IF  rw_craplcm.cdhistor = 646 OR
               rw_craplcm.cdhistor = 314 OR
@@ -519,7 +479,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => 'rl');
 
-      --gera relatoroio crrl441
+      --gera relatorio crrl441
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                              --> Cooperativa conectada
                                  ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt                  --> Data do movimento atual
@@ -535,11 +495,15 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_nrcopias  => 3                                    --> Número de cópias
                                  ,pr_sqcabrel  => 1                                    --> Qual a seq do cabrel
                                  ,pr_des_erro  => vr_dscritic);                       --> Saída com erro
+                                       
+	    -- Incluir nome do módulo logado - Chamado 721285 31/07/2017
+		  GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL); 
 
       IF vr_dscritic IS NOT NULL THEN
         -- Gerar exceção
         RAISE vr_exc_saida;
       END IF;
+
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_clobxml);
       dbms_lob.freetemporary(vr_clobxml);
@@ -588,6 +552,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
              OPEN cr_craplcm3(rw_crapass2.nrdconta);--busca data de lancamento deposito
              FETCH cr_craplcm3 INTO vr_rel_dtmvtolt;
              CLOSE cr_craplcm3;
+
              --verificar situacao da conta
              IF rw_crapass2.cdsitdct = 1 THEN
                 vr_rel_dssitdct := 'NORMAL';
@@ -606,6 +571,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
              ELSE
                 vr_rel_dssitdct := NULL;
              END IF;
+
              vr_qtchfora := NULL;
              vr_qtchqarq := NULL;
              vr_qtpdfora := NULL;
@@ -662,10 +628,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
           CLOSE cr_craplcm2;
         END IF;
       END LOOP;
+
       IF v_gerar = TRUE THEN
         --primeiro registro
         vr_des_chave := vr_tab_relato.first;
         vr_nmarqim := 'crrl442_'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3, '0')||'.lst';
+
         -- cria clob
         dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
         dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
@@ -682,6 +650,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             END IF;
             vr_nmarqim := '/crrl442_'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3, '0')||'.lst';
           END IF;
+
           --cria xml
           pc_escreve_clob(vr_clobxml, '<datas>'
                                     ||'  <titulo>'||vr_tab_relato(vr_des_chave).titulo||'</titulo>'
@@ -697,6 +666,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                     ||'  <qt_fora>'||vr_tab_relato(vr_des_chave).qtpdfora||'</qt_fora>'
                                     ||'  <req_pend>'||vr_tab_relato(vr_des_chave).qtrqfora||'</req_pend>'
                                     ||'</datas>') ;
+                                       
+	        -- Incluir nome do módulo logado - Chamado 721285 31/07/2017
+    		  GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL); 
+
           -- se for ultimo registro ou mudar o PA, fecha tag raiz
           IF vr_des_chave = vr_tab_relato.last OR
              vr_tab_relato(vr_des_chave).cdagenci <> vr_tab_relato(vr_tab_relato.NEXT(vr_des_chave)).cdagenci THEN
@@ -705,6 +678,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
              vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                                    ,pr_cdcooper => pr_cdcooper
                                                    ,pr_nmsubdir => 'rl');
+
              --solicita relatorio crrl442
              gene0002.pc_solicita_relato( pr_cdcooper  => pr_cdcooper                              --> Cooperativa conectada
                                          ,pr_cdprogra  => vr_cdprogra                          --> Programa chamador
@@ -721,6 +695,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                          ,pr_nrcopias  => 3                                    --> Número de cópias
                                          ,pr_sqcabrel  => 2                                    --> Qual a seq do cabrel
                                          ,pr_des_erro  => vr_dscritic);                       --> Saída com erro
+                                       
+	           -- Incluir nome do módulo logado - Chamado 721285 31/07/2017
+       		   GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL); 
 
              IF vr_dscritic IS NOT NULL THEN
              -- Gerar exceção
@@ -736,10 +713,84 @@ CREATE OR REPLACE PROCEDURE CECRED.
            END IF;
              -- Buscar o proximo
           vr_des_chave := vr_tab_relato.NEXT(vr_des_chave);
+
         END LOOP;
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_clobxml);
         dbms_lob.freetemporary(vr_clobxml);
+      END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 31/07/2017 - Chamado 721285        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+        -- Efetuar retorno do erro não tratado
+        vr_cdcritic := 0;
+        vr_dscritic := sqlerrm;
+        -- Gerar exceção
+        RAISE vr_exc_saida;      
+    END pc_processar;
+      
+    --------------- VALIDACOES INICIAIS -----------------
+
+    BEGIN
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
+                                ,pr_action => null);
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapcop;
+      FETCH cr_crapcop
+       INTO rw_crapcop;
+      -- Se não encontrar
+      IF cr_crapcop%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE cr_crapcop;
+        -- Montar mensagem de critica
+        vr_cdcritic := 651;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapcop;
+      END IF;
+
+      -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+       INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+      -- Validações iniciais do programa
+      BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
+                               ,pr_flgbatch => 1
+                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_infimsol => pr_infimsol
+                               ,pr_cdcritic => vr_cdcritic);
+      -- Se a variavel de erro é <> 0
+      IF vr_cdcritic <> 0 THEN
+        -- Envio centralizado de log de erro
+        RAISE vr_exc_saida;
+      END IF;
+
+
+      --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
+      --força data ser dia 25 do mes movimentacao
+      vr_diadopro := to_date(to_char(rw_crapdat.dtmvtolt, 'mm')||'25'||to_char(rw_crapdat.dtmvtolt, 'yyyy'),'mmddyyyy');    
+
+      --verifica se o se dia é util senao busca o proximo dia util
+      vr_diadopro := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => vr_diadopro);
+
+      /* Rodar sempre no dia 25 ou proximo dia util */
+      IF rw_crapdat.dtmvtolt =  vr_diadopro  THEN
+        pc_processar;
       END IF;
 
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
@@ -752,39 +803,18 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       -- Salvar informações atualizadas
       COMMIT;
-
+      
     EXCEPTION
-      WHEN vr_exc_fimprg THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-        -- Envio centralizado de log de erro
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || vr_dscritic );
-        -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-        btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                                 ,pr_cdprogra => vr_cdprogra
-                                 ,pr_infimsol => pr_infimsol
-                                 ,pr_stprogra => pr_stprogra);
-        -- Efetuar commit
-        COMMIT;
       WHEN vr_exc_saida THEN
-        -- Se foi retornado apenas código
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
+        -- Ajustada chamada para buscar a descrição da critica - 31/07/2017 - Chamado 721285
         -- Devolvemos código e critica encontradas das variaveis locais
-        pr_cdcritic := NVL(vr_cdcritic,0);
-        pr_dscritic := vr_dscritic;
+        pr_cdcritic := nvl(vr_cdcritic,0);
+        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 31/07/2017 - Chamado 721285        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
@@ -794,4 +824,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
   END pc_crps466;
 /
-

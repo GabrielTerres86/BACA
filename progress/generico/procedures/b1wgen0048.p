@@ -20,6 +20,8 @@
                 
                 13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)
                 
+                06/09/2017 - Filtrado caracteres especiais qdo carregar ou gravar
+                             dados do campo dsinfadi (Tiago #722921)
 ..............................................................................*/
 
 
@@ -31,6 +33,7 @@
 { sistema/generico/includes/gera_log.i}
 { sistema/generico/includes/gera_erro.i}
 { sistema/generico/includes/b1wgenvlog.i &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
                                                                        
@@ -225,6 +228,104 @@ PROCEDURE obtem-informacoes-adicionais:
         END.
 
     DELETE PROCEDURE h-b1wgen0060.
+
+
+    /*INICIO - Tratamento para retirar caracteres especias do campo dsinfadi*/
+    
+    
+    /*1*/
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+    RUN STORED-PROCEDURE pc_caract_acento
+         aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT tt-inf-adicionais.dsinfadi[1],  /* String para limpeza  */
+                           INPUT 1,         /* Flag para substituir */ 
+                          OUTPUT "").       /* Texto sem caracteres especiais */
+
+    CLOSE STORED-PROC pc_caract_acento
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+    ASSIGN tt-inf-adicionais.dsinfadi[1] = ""                         
+           tt-inf-adicionais.dsinfadi[1] = pc_caract_acento.pr_clstexto
+                          WHEN pc_caract_acento.pr_clstexto <> ?.
+        
+    /*2*/
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+    RUN STORED-PROCEDURE pc_caract_acento
+         aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT tt-inf-adicionais.dsinfadi[2],  /* String para limpeza  */
+                           INPUT 1,         /* Flag para substituir */ 
+                          OUTPUT "").       /* Texto sem caracteres especiais */
+
+    CLOSE STORED-PROC pc_caract_acento
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+    ASSIGN tt-inf-adicionais.dsinfadi[2] = ""                         
+           tt-inf-adicionais.dsinfadi[2] = pc_caract_acento.pr_clstexto
+                          WHEN pc_caract_acento.pr_clstexto <> ?.
+    
+    /*3*/
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+    RUN STORED-PROCEDURE pc_caract_acento
+         aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT tt-inf-adicionais.dsinfadi[3],  /* String para limpeza  */
+                           INPUT 1,         /* Flag para substituir */ 
+                          OUTPUT "").       /* Texto sem caracteres especiais */
+
+    CLOSE STORED-PROC pc_caract_acento
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+    ASSIGN tt-inf-adicionais.dsinfadi[3] = ""                         
+           tt-inf-adicionais.dsinfadi[3] = pc_caract_acento.pr_clstexto
+                          WHEN pc_caract_acento.pr_clstexto <> ?.
+    
+    /*4*/
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+    RUN STORED-PROCEDURE pc_caract_acento
+         aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT tt-inf-adicionais.dsinfadi[4],  /* String para limpeza  */
+                           INPUT 1,         /* Flag para substituir */ 
+                          OUTPUT "").       /* Texto sem caracteres especiais */
+
+    CLOSE STORED-PROC pc_caract_acento
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+    ASSIGN tt-inf-adicionais.dsinfadi[4] = ""                         
+           tt-inf-adicionais.dsinfadi[4] = pc_caract_acento.pr_clstexto
+                          WHEN pc_caract_acento.pr_clstexto <> ?.
+    
+    /*5*/
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+    RUN STORED-PROCEDURE pc_caract_acento
+         aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT tt-inf-adicionais.dsinfadi[5],  /* String para limpeza  */
+                           INPUT 1,         /* Flag para substituir */ 
+                          OUTPUT "").       /* Texto sem caracteres especiais */
+
+    CLOSE STORED-PROC pc_caract_acento
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+    ASSIGN tt-inf-adicionais.dsinfadi[5] = ""                         
+           tt-inf-adicionais.dsinfadi[5] = pc_caract_acento.pr_clstexto
+                          WHEN pc_caract_acento.pr_clstexto <> ?.
+    
+        
+    /*FIM - Tratamento para retirar caracteres especias do campo dsinfadi*/
+
 
     IF  par_flgerlog  THEN
         RUN proc_gerar_log (INPUT par_cdcooper,
@@ -483,6 +584,103 @@ PROCEDURE atualizar-informacoes-adicionais:
 
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
+
+        /*INICIO - Tratamento para retirar caracteres especias do campo dsinfadi*/
+        
+        
+        /*1*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+        RUN STORED-PROCEDURE pc_caract_acento
+             aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_dsinfad1,  /* String para limpeza  */
+                               INPUT 1,         /* Flag para substituir */ 
+                              OUTPUT "").       /* Texto sem caracteres especiais */
+
+        CLOSE STORED-PROC pc_caract_acento
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+        ASSIGN par_dsinfad1 = ""                         
+               par_dsinfad1 = pc_caract_acento.pr_clstexto
+                              WHEN pc_caract_acento.pr_clstexto <> ?.
+            
+        /*2*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+        RUN STORED-PROCEDURE pc_caract_acento
+             aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_dsinfad2,  /* String para limpeza  */
+                               INPUT 1,         /* Flag para substituir */ 
+                              OUTPUT "").       /* Texto sem caracteres especiais */
+
+        CLOSE STORED-PROC pc_caract_acento
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+        ASSIGN par_dsinfad2 = ""                         
+               par_dsinfad2 = pc_caract_acento.pr_clstexto
+                              WHEN pc_caract_acento.pr_clstexto <> ?.
+        
+        /*3*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+        RUN STORED-PROCEDURE pc_caract_acento
+             aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_dsinfad3,  /* String para limpeza  */
+                               INPUT 1,         /* Flag para substituir */ 
+                              OUTPUT "").       /* Texto sem caracteres especiais */
+
+        CLOSE STORED-PROC pc_caract_acento
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+        ASSIGN par_dsinfad3 = ""                         
+               par_dsinfad3 = pc_caract_acento.pr_clstexto
+                              WHEN pc_caract_acento.pr_clstexto <> ?.
+        
+        /*4*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+        RUN STORED-PROCEDURE pc_caract_acento
+             aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_dsinfad4,  /* String para limpeza  */
+                               INPUT 1,         /* Flag para substituir */ 
+                              OUTPUT "").       /* Texto sem caracteres especiais */
+
+        CLOSE STORED-PROC pc_caract_acento
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+        ASSIGN par_dsinfad4 = ""                         
+               par_dsinfad4 = pc_caract_acento.pr_clstexto
+                              WHEN pc_caract_acento.pr_clstexto <> ?.
+        
+        /*5*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+        RUN STORED-PROCEDURE pc_caract_acento
+             aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_dsinfad5,  /* String para limpeza  */
+                               INPUT 1,         /* Flag para substituir */ 
+                              OUTPUT "").       /* Texto sem caracteres especiais */
+
+        CLOSE STORED-PROC pc_caract_acento
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+        ASSIGN par_dsinfad5 = ""                         
+               par_dsinfad5 = pc_caract_acento.pr_clstexto
+                              WHEN pc_caract_acento.pr_clstexto <> ?.
+        
+            
+        /*FIM - Tratamento para retirar caracteres especias do campo dsinfadi*/
+
 
         IF  crapass.inpessoa = 1 THEN
             DO:

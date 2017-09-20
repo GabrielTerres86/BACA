@@ -155,6 +155,7 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Valida selecao de registros para aprovacao
                           INPUT par_dtmvtolt,
                           INPUT par_lisrowid,
                           INPUT 1,
+                          INPUT par_nrcpfapr,
                           OUTPUT "",
                           OUTPUT "",
                           OUTPUT "").
@@ -225,7 +226,7 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* busca opcoes de debito */
 
 END.
 ELSE IF  par_tpoperac = 4 THEN DO: /* Aprovar registros selecionados */
-
+/*
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_valid_repre_legal_trans aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper,
@@ -288,9 +289,42 @@ ELSE IF  par_tpoperac = 4 THEN DO: /* Aprovar registros selecionados */
     IF aux_dscritic <> "" THEN DO:
         ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
         RETURN "NOK".
+    END.   */
+    
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_verifica_idastcjt_pfp aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,   /*Codigo Cooperativa                       */
+                          INPUT par_nrdconta,   /*Conta do Associado                       */
+                          INPUT par_idseqttl,   /*Titularidade do Associado                */
+                          INPUT par_nrcpfapr,   /*pr_nrcpfope                              */
+                          INPUT "INTERNET",     /*Codigo Origem                            */
+                          INPUT par_lisrowid,   /* Lista de ROWIDS                         */                          
+                          INPUT par_flsolest,
+                          OUTPUT "",
+                          OUTPUT 0,             /*Codigo do erro                           */
+                          OUTPUT "").           /*Descricao do erro                        */
+
+    CLOSE STORED-PROC pc_verifica_idastcjt_pfp aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_dsalerta = ""
+           aux_nrcpfcgc = 0
+           aux_cdcritic = pc_verifica_idastcjt_pfp.pr_cdcritic
+                          WHEN pc_verifica_idastcjt_pfp.pr_cdcritic <> ?
+           aux_dscritic = pc_verifica_idastcjt_pfp.pr_dscritic
+                          WHEN pc_verifica_idastcjt_pfp.pr_dscritic <> ?
+           aux_dsalerta = pc_verifica_idastcjt_pfp.pr_dsalerta
+                          WHEN pc_verifica_idastcjt_pfp.pr_dsalerta <> ?.
+  
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    IF aux_dscritic <> "" THEN DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
     END.   
 
-    IF  aux_idastcjt = 1 THEN
+    /*IF  aux_idastcjt = 1 THEN
         DO:
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
             RUN STORED-PROCEDURE pc_cria_trans_pend_folha aux_handproc = PROC-HANDLE NO-ERROR
@@ -406,7 +440,7 @@ ELSE IF  par_tpoperac = 4 THEN DO: /* Aprovar registros selecionados */
                 ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
                 RETURN "NOK".
             END.
-        END.
+        END.*/
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<dsmsg>" + aux_dsalerta + "</dsmsg>".
@@ -1075,8 +1109,8 @@ ELSE IF  par_tpoperac = 14 THEN DO: /* Gerar arquivo de retorno */
 										  "<cdseqlin>" + STRING(tt-arq-folha.cdseqlin)+ "</cdseqlin>" +										
 										  "<dsdlinha>" + tt-arq-folha.dsdlinha +  "</dsdlinha>" +
 										"</dados>".		 
-	END.                  
-	
+END.
+
 END.
 
 RETURN "OK".

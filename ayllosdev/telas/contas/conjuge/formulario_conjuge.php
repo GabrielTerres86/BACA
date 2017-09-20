@@ -9,6 +9,8 @@
  * --------------
  * 001: [13/04/2010] Rodolpho Telmo (DB1): Inserção da propriedade maxlength nos inputs
  * 002: [24/08/2015] Gabriel (RKAM)      : Reformulacao Cadastral (Gabriel)
+ * 003: [13/06/2017] Adrian: Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
  */	
 ?>
 
@@ -41,6 +43,8 @@
 			<option value="CT" <? if (getByTagName($conjuge,'tpdoccje') == "CT"){ echo " selected"; } ?>>CT</option>
 		</select>
 		<input name="nrdoccje" id="nrdoccje" type="text" value="<? echo getByTagName($conjuge,'nrdoccje') ?>" />
+		
+		<br />
 		
 		<label for="cdoedcje">Org.Emi.:</label>
 		<input name="cdoedcje" id="cdoedcje" type="text" value="<? echo getByTagName($conjuge,'cdoedcje') ?>" />

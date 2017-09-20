@@ -1,5 +1,4 @@
 <?php 
-
 	/**************************************************************************
 	      Fonte: limites_alterar.php     	 	                           
 	      Autor: Lucas                                                    
@@ -8,13 +7,11 @@
           Objetivo  : Executa alterações nos limites do coop.		       
                                                                   	 
 	                                                                  	 
-	      Alterações: 23/04/2013 - Incluido novos campos referente ao      
-                                   cadastro de limites Vr Boleto           
-         						   (David Kruger).						    
-	                                                                  
+	Alterações: 23/04/2013 - Incluido novos campos referente ao cadastro de limites Vr Boleto (David Kruger).						    
 	                  04/10/2015 - Reformulacao cadastral                                                 
-                      17/06/2016 - M181 - Alterar o CDAGENCI para          
-                             passar o CDPACTRA (Rafael Maciel - RKAM) 
+                17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM) 
+				26/07/2016 - Corrigi a forma de recuperacao do retorno de erro no XML. SD 479874 (Carlos R.)
+                05/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
 	**************************************************************************/
 	
 	session_start();
@@ -106,8 +103,43 @@
 	$xmlObjLimites = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjLimites->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjLimites->roottag->tags[0]->name) && strtoupper($xmlObjLimites->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjLimites->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	} else {
+
+		/*if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"H")) <> "") {
+			exibeErro($msgError);		
+		}*/
+		
+		$strnomacao = 'CORRIGI_LIMITES_PREPOSTOS';
+
+		// Montar o xml para requisicao
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "<Dados>";
+		$xml .= "    <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
+		$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "    <idseqttl>".$idseqttl."</idseqttl>";
+		$xml .= "    <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+		$xml .= "    <vllimtrf>".$vllimtrf."</vllimtrf>";
+		$xml .= "    <vllimpgo>".$vllimpgo."</vllimpgo>";
+		$xml .= "    <vllimted>".$vllimted."</vllimted>";
+		$xml .= "    <vllimvrb>".$vllimvrb."</vllimvrb>";
+		$xml .= "</Dados>";
+		$xml .= "</Root>";
+
+		$xmlNResult = mensageria($xml, "ATENDA", $strnomacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");	
+		
+		$xml_geral = simplexml_load_string($xmlNResult);	
+		
+		//exibeErro($xml_geral->pralerta);
+		foreach($xml_geral as $newxml){
+		  if ($newxml->pralerta != "OK") {
+		    exibeErro($newxml->pralerta);
+		  }			
+
+		}
+		
 	} 	
 	
 	// Esconde mensagem de aguardo

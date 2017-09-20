@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Maio/94.                          Ultima atualizacao: 25/11/2015
+   Data    : Maio/94.                          Ultima atualizacao: 13/09/2017
 
    Dados referentes ao programa:
 
@@ -540,6 +540,11 @@
               25/11/2015 - Adicionado condicao para conta que exige assinatura conjunta
                            em "Situacao de acesso a conta via internet".
                            (Jorge/David) Projeto 131 - Multipla Assinatura PJ
+
+			  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			               crapass, crapttl, crapjur 
+              			   (Adriano - P339).
+
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0002tt.i }
@@ -1115,8 +1120,7 @@ DO WHILE TRUE:
 
     ASSIGN aux_tplimcre = crapass.tplimcre
            aux_vllimcre = crapass.vllimcre
-           tel_nmtitula = TRIM(crapass.nmprimtl) + " " + 
-                          TRIM(crapass.nmsegntl).
+           tel_nmtitula = TRIM(crapass.nmprimtl) .
             
     IF   crapass.nrdctitg = ""   THEN
          tel_nrdctitg = "00000000".

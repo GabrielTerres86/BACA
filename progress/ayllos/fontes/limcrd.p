@@ -40,6 +40,9 @@
                
                05/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+
+               06/09/2017 - Removida validacao por departamento.
+                            Heitor (Mouts) - Chamado 746901
                             
 ............................................................................ */
 
@@ -365,6 +368,7 @@ DO WHILE TRUE:
             aux_cddopcao = glb_cddopcao.
         END.
 
+   /*
    IF   glb_cddopcao <> "C"  THEN
         IF   glb_cddepart <>  8  AND /* COORD.ADM/FINANCEIRO */
              glb_cddepart <> 20  AND /* TI                   */
@@ -373,7 +377,7 @@ DO WHILE TRUE:
                  BELL.
                  MESSAGE "Sistema liberado somente para Consulta !!!".
                  NEXT.
-             END.
+             END.*/
    
    IF   glb_cddopcao = "C"   THEN
         DO:

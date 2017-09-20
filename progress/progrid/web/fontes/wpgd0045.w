@@ -84,7 +84,6 @@ DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
-DEFINE VARIABLE vetorevento           AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE vetorpac              AS CHAR                           NO-UNDO.
 
 DEFINE TEMP-TABLE ttEventos 
@@ -293,101 +292,87 @@ DEFINE FRAME Web-Frame
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEventos w-html 
 PROCEDURE CriaListaEventos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-    DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
-    DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
-    DEFINE VARIABLE vetormes     AS CHAR EXTENT 12
-           INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-                    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
 
-    FOR EACH crapeap WHERE crapeap.idevento       = INT(ab_unmap.aux_idevento)  AND
-                           crapeap.cdcooper       = INT(ab_unmap.cdcooper)      AND
-                          (crapeap.cdagenci       = INT(ab_unmap.cdagenci)   OR
-                           INT(ab_unmap.cdagenci) = 0) /* Todos os PACS */      AND 
-                           crapeap.dtanoage       = gnpapgd.dtanonov            AND
-                           crapeap.flgevsel       = YES                         NO-LOCK, 
-       FIRST crapedp WHERE crapedp.cdevento       = crapeap.cdevento            AND
-                           crapedp.idevento       = crapeap.idevento            AND
-                           crapedp.cdcooper       = crapeap.cdcooper            AND
-                           crapedp.dtanoage       = crapeap.dtanoage            NO-LOCK,
-        EACH crapadp WHERE crapadp.idevento       = crapeap.idevento            AND
-                           crapadp.cdcooper       = crapeap.cdcooper            AND
-                           crapadp.cdagenci       = crapeap.cdagenci            AND
-                           crapadp.dtanoage       = crapeap.dtanoage            AND
-                           crapadp.cdevento       = crapeap.cdevento            NO-LOCK
-                           BREAK BY crapedp.nmevento
-                                    BY crapadp.cdagenci
-                                       BY crapadp.nrseqdig:
+  DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
+  DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+  DEFINE VARIABLE vetormes     AS CHAR EXTENT 12
+         INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                  "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
 
-        /* Quando for TODOS OS PACS, mostra somente um evento de cada */
-        IF   INT(ab_unmap.cdagenci) = 0       AND
-             NOT FIRST-OF(crapedp.nmevento)   THEN
-             NEXT.
-        
-        FIND FIRST crapagp WHERE crapagp.idevento = INT(ab_unmap.aux_idevento)  AND
-                                 crapagp.cdcooper = crapeap.cdcooper            AND
-                                 crapagp.dtanoage = gnpapgd.dtanonov            AND
-                                 crapagp.cdagenci = crapeap.cdagenci            AND
-                                 crapagp.idstagen = 5                           NO-LOCK NO-ERROR.
+  RUN RodaJavaScript("var mevento=new Array();").
+  
+  FOR EACH crapeap WHERE crapeap.idevento       = INT(ab_unmap.aux_idevento)  AND
+                         crapeap.cdcooper       = INT(ab_unmap.cdcooper)      AND
+                        (crapeap.cdagenci       = INT(ab_unmap.cdagenci)   OR
+                         INT(ab_unmap.cdagenci) = 0) /* Todos os PACS */      AND 
+                         crapeap.dtanoage       = gnpapgd.dtanonov            AND
+                         crapeap.flgevsel       = YES                         NO-LOCK, 
+     FIRST crapedp WHERE crapedp.cdevento       = crapeap.cdevento            AND
+                         crapedp.idevento       = crapeap.idevento            AND
+                         crapedp.cdcooper       = crapeap.cdcooper            AND
+                         crapedp.dtanoage       = crapeap.dtanoage            NO-LOCK,
+      EACH crapadp WHERE crapadp.idevento       = crapeap.idevento            AND
+                         crapadp.cdcooper       = crapeap.cdcooper            AND
+                         crapadp.cdagenci       = crapeap.cdagenci            AND
+                         crapadp.dtanoage       = crapeap.dtanoage            AND
+                         crapadp.cdevento       = crapeap.cdevento            NO-LOCK
+                         BREAK BY crapedp.nmevento
+                                  BY crapadp.cdagenci
+                                     BY crapadp.nrseqdig:
 
-        IF NOT AVAIL crapagp THEN NEXT. 
+      /* Quando for TODOS OS PACS, mostra somente um evento de cada */
+      IF   INT(ab_unmap.cdagenci) = 0       AND
+           NOT FIRST-OF(crapedp.nmevento)   THEN
+           NEXT.
       
-        ASSIGN aux_nrseqeve = IF crapadp.nrseqdig       <> ? AND
-                                 INT(ab_unmap.cdagenci) <> 0 THEN 
-                                 crapadp.nrseqdig
-                              ELSE 0
-               aux_nmevento = crapedp.nmevento.
-                                                                                   
+      FIND FIRST crapagp WHERE crapagp.idevento = INT(ab_unmap.aux_idevento)  AND
+                               crapagp.cdcooper = crapeap.cdcooper            AND
+                               crapagp.dtanoage = gnpapgd.dtanonov            AND
+                               crapagp.cdagenci = crapeap.cdagenci            AND
+                               crapagp.idstagen = 5                           NO-LOCK NO-ERROR.
 
-        /* Monta os detalhes de cada evento */
-        IF   INT(ab_unmap.cdagenci) <> 0   THEN
-             DO:
-                 IF  crapadp.dtinieve <> ?  THEN
-                     aux_nmevento = aux_nmevento + " - " + STRING(crapadp.dtinieve,"99/99/9999").
-                 ELSE
-                 IF  crapadp.nrmeseve <> 0  AND crapadp.nrmeseve <> ? THEN
-                     aux_nmevento = aux_nmevento + " - " + vetormes[crapadp.nrmeseve].
-                 
-                 IF  crapadp.dshroeve <> "" THEN
-                     aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
-             END.
+      IF NOT AVAIL crapagp THEN NEXT. 
     
-        IF  vetorevento = "" THEN
-            vetorevento = "~{" +
-                "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
-        ELSE
-            vetorevento = vetorevento + "," + "~{" +
-                "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                "nrseqeve:'" +  STRING(aux_nrseqeve)     + "'"  + "~}".
+      ASSIGN aux_nrseqeve = IF crapadp.nrseqdig       <> ? AND
+                               INT(ab_unmap.cdagenci) <> 0 THEN 
+                               crapadp.nrseqdig
+                            ELSE 0
+             aux_nmevento = crapedp.nmevento.
+                                                                                 
 
-        /* Monta a opção de todos os eventos quando tiver mais de uma ocorrencia do mesmo evento */
-        IF   LAST-OF(crapedp.nmevento)        AND
-             NOT FIRST-OF(crapedp.nmevento)   THEN
-             DO:
-                 aux_nmevento = crapedp.nmevento + " (TODOS)".
+      /* Monta os detalhes de cada evento */
+      IF   INT(ab_unmap.cdagenci) <> 0   THEN
+           DO:
+               IF  crapadp.dtinieve <> ?  THEN
+                   aux_nmevento = aux_nmevento + " - " + STRING(crapadp.dtinieve,"99/99/9999").
+               ELSE
+               IF  crapadp.nrmeseve <> 0  AND crapadp.nrmeseve <> ? THEN
+                   aux_nmevento = aux_nmevento + " - " + vetormes[crapadp.nrmeseve].
+               
+               IF  crapadp.dshroeve <> "" THEN
+                   aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
+           END.
+  
+      RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci)
+                                             + "',cdcooper:'" +  STRING(crapeap.cdcooper) 
+                                             + "',cdevento:'" +  STRING(crapeap.cdevento) 
+                                             + "',nmevento:'" +  STRING(aux_nmevento)     
+                                             + "',nrseqeve:'" +  STRING(aux_nrseqeve) + "'~});").
+                                             
+      /* Monta a opção de todos os eventos quando tiver mais de uma ocorrencia do mesmo evento */
+      IF   LAST-OF(crapedp.nmevento)        AND
+           NOT FIRST-OF(crapedp.nmevento)   THEN
+           DO:
+               aux_nmevento = crapedp.nmevento + " (TODOS)".
 
-                 vetorevento = vetorevento + "," + "~{" +
-                               "cdagenci:'" +  STRING(crapeap.cdagenci) + "'," + 
-                               "cdcooper:'" +  STRING(crapeap.cdcooper) + "'," +
-                               "cdevento:'" +  STRING(crapeap.cdevento) + "'," +
-                               "nmevento:'" +  STRING(aux_nmevento)     + "'," +
-                               "nrseqeve:'" +  STRING(0)                + "'"  + "~}".
-             END.
+               RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  STRING(crapeap.cdagenci)
+                                             + "',cdcooper:'" +  STRING(crapeap.cdcooper) 
+                                             + "',cdevento:'" +  STRING(crapeap.cdevento) 
+                                             + "',nmevento:'" +  STRING(aux_nmevento)     
+                                             + "',nrseqeve:'" +  STRING(0) + "'~});").
+           END.
 
-    END.
-
-    RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
+  END.
 
 END PROCEDURE.
 

@@ -156,8 +156,16 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                13/04/2015 - Ajuste na validação de daa limite do cancelamento, para que não seja debitado 
                             se o cancelamento ocorrer no mesmo dia da criação do seguro SD-275054 (Odirlei-AMcom)             
                             
+               12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							(Adriano - P339).
+
                04/07/2017 - Ajustes para antecipar o debito dos seguros que caem no fim do mes e que esta
                             data nao é um dia util (Tiago/Thiago #680197)                         
+                            
+               24/07/2017 - Alterar cdoedptl para idorgexp.
+                            PRJ339-CRM  (Odirlei-AMcom)                            
+
                ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -232,13 +240,15 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
            crapass.inpessoa,
            crapass.nmprimtl,
            crapass.nrcpfcgc,
-           crapass.cdoedptl,
+           org.cdorgao_expedidor cdoedptl,
            crapass.dtemdptl,
            crapass.dtnasctl,
            crapass.cdsecext
-      from crapass
+      from crapass,
+           tbgen_orgao_expedidor org
      where crapass.cdcooper = pr_cdcooper
-       and crapass.nrdconta = pr_nrdconta;
+       and crapass.nrdconta = pr_nrdconta
+       AND crapass.idorgexp = org.idorgao_expedidor(+);
   rw_crapass     cr_crapass%rowtype;
   -- Buscar informações de seguros
   cursor cr_crawseg (pr_cdcooper in crawseg.cdcooper%type,
@@ -406,7 +416,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                               dtcancel  crapseg.dtcancel%type,
                               nrcpfcgc  crapass.nrcpfcgc%type,
                               nrdocptl  crapass.nrdocptl%type,
-                              cdoedptl  crapass.cdoedptl%type,
+                              cdoedptl  tbgen_orgao_expedidor.cdorgao_expedidor%TYPE,
                               dtemdptl  crapass.dtemdptl%type,
                               dtnasctl  crapass.dtnasctl%type,
                               dsendres  crawseg.dsendres%type,
@@ -459,7 +469,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   vr_nrcpfcgc      varchar2(11);
   vr_nrdocptl      varchar2(12);
   vr_dtemdptl      varchar2(8);
-  vr_cdoedptl      varchar2(6);
+  vr_cdoedptl      tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
   vr_cdufresd      varchar2(2);
   vr_tpmovmto      number(1);
   vr_cdmovmto      varchar2(1);
@@ -1166,7 +1176,7 @@ begin
     if vr_cratseg(vr_ind_cratseg).tpregist <> 3 then
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_txt,
                      '<nrcpfcgc>'||to_char(vr_cratseg(vr_ind_cratseg).nrcpfcgc)||'</nrcpfcgc>'||
-                     '<nrdocptl>'||vr_cratseg(vr_ind_cratseg).nrdocptl||'</nrdocptl>'||
+                     '<nrdocptl>'||SUBSTR(vr_cratseg(vr_ind_cratseg).nrdocptl,1,15)||'</nrdocptl>'||
                      '<cdoedptl>'||vr_cratseg(vr_ind_cratseg).cdoedptl||'</cdoedptl>'||
                      '<dtnasctl>'||to_char(vr_cratseg(vr_ind_cratseg).dtnasctl, 'dd/mm/yyyy')||'</dtnasctl>'||
                      '<dtemdptl>'||to_char(vr_cratseg(vr_ind_cratseg).dtemdptl, 'dd/mm/yyyy')||'</dtemdptl>'||
@@ -1184,7 +1194,7 @@ begin
         vr_nrcpfcgc := gene0002.fn_mask(vr_cratseg(vr_ind_cratseg).nrcpfcgc,'99999999999');
         vr_nrdocptl := rpad(vr_cratseg(vr_ind_cratseg).nrdocptl, 12, ' ');
         vr_dtemdptl := to_char(vr_cratseg(vr_ind_cratseg).dtemdptl,'ddmmyyyy');
-        vr_cdoedptl := rpad(vr_cratseg(vr_ind_cratseg).cdoedptl, 6, ' ');
+        vr_cdoedptl := rpad(nvl(vr_cratseg(vr_ind_cratseg).cdoedptl,' '), 6, ' ');
       else
         vr_nrcpfcgc := rpad('0',11,'0');
         vr_nrdocptl := rpad(' ',12,' ');
@@ -1325,7 +1335,7 @@ begin
                                              to_char(vr_cratseg(vr_ind_cratseg).dtnasctl, 'ddmmyyyy')||
                                              rpad(vr_nrdocptl, 12, ' ')||
                                              vr_dtemdptl||
-                                             vr_cdoedptl||
+                                             substr(vr_cdoedptl,1,6)||
                                              gene0002.fn_mask(vr_cratseg(vr_ind_cratseg).nrdconta,'9999999999')||
                                              gene0002.fn_mask(vr_cratseg(vr_ind_cratseg).nrcepend,'99999999')||
                                              rpad(vr_cratseg(vr_ind_cratseg).dsendres, 50, ' ')||
@@ -1578,3 +1588,4 @@ exception
     rollback;
 end;
 /
+

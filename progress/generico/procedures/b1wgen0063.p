@@ -2,7 +2,7 @@
 
     Programa: b1wgen0063.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 08/01/2016
+    Data    : Marco/2010                   Ultima atualizacao: 12/06/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSOES
 
@@ -48,6 +48,13 @@
                              
                 08/01/2016 - #350828 Criacao da tela PEP (Carlos)
 
+				12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+			 		        (Adriano - P339).
+
+                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)  
+
 .......................................................................................*/
 
 /*........+++++..................... DEFINICOES .......................................*/
@@ -70,6 +77,7 @@ DEF VAR aux_contador AS INTE                                        NO-UNDO.
 DEF VAR h-b1wgen9999 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0060 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0024 AS HANDLE                                      NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                     NO-UNDO.
 DEF VAR aux_dsmesref AS CHAR                                        NO-UNDO.
 
 FUNCTION BuscaPessoa RETURNS INTEGER
@@ -514,6 +522,8 @@ PROCEDURE Busca_Abertura_PF:
 
     DEF BUFFER crabttl FOR crapttl.
 
+    DEF VAR aux_cdorgexp AS CHAR                                    NO-UNDO.
+
     ASSIGN
         par_dscritic = ""
         par_cdcritic = 0
@@ -532,7 +542,7 @@ PROCEDURE Busca_Abertura_PF:
                LEAVE BuscaAberPf.
             END.
 
-        FOR FIRST crapttl FIELDS(nrcpfcgc nrdocttl cdoedttl cdufdttl 
+        FOR FIRST crapttl FIELDS(nrcpfcgc nrdocttl idorgexp cdufdttl 
                                  idseqttl cdestcvl)
                           WHERE crapttl.cdcooper = par_cdcooper AND
                                 crapttl.nrdconta = par_nrdconta AND
@@ -546,6 +556,26 @@ PROCEDURE Busca_Abertura_PF:
                LEAVE BuscaAberPf.
             END.
 
+        /* Retornar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+            RUN sistema/generico/procedures/b1wgen0052b.p 
+                PERSISTENT SET h-b1wgen0052b.
+
+        ASSIGN aux_cdorgexp = "".
+        RUN busca_org_expedidor IN h-b1wgen0052b 
+                           (INPUT crapttl.idorgexp,
+                            OUTPUT aux_cdorgexp,
+                            OUTPUT par_cdcritic, 
+                            OUTPUT par_dscritic).
+
+        DELETE PROCEDURE h-b1wgen0052b.   
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            ASSIGN aux_cdorgexp = "NAO CADAST.".
+        END.
+    
+
         CREATE tt-abert-psfis.
         ASSIGN 
             tt-abert-psfis.nmprimtl = crapass.nmprimtl
@@ -553,9 +583,9 @@ PROCEDURE Busca_Abertura_PF:
                                                   "zzzz,zzz,9"))
             tt-abert-psfis.nrcpfcgc = STRING(STRING(crapttl.nrcpfcgc,
                                          "99999999999"),"xxx.xxx.xxx-xx")
-            tt-abert-psfis.nrdocmto = TRIM(STRING(crapttl.nrdocttl,"x(11)")) +
+            tt-abert-psfis.nrdocmto = TRIM(STRING(crapttl.nrdocttl,"x(40)")) +
                                       " " +
-                                      TRIM(STRING(crapttl.cdoedttl,"x(05)")) +
+                                      TRIM(STRING(aux_cdorgexp,"x(05)")) +
                                       "/" + STRING(crapttl.cdufdttl,"!(02)").
            
         IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
@@ -603,7 +633,7 @@ PROCEDURE Busca_Abertura_PF:
 
         /* Representante Legal */
         FOR FIRST crapcrl FIELDS(nrdconta nmrespon nrcpfcgc nridenti
-                                 dsorgemi cdufiden)
+                                 idorgexp cdufiden)
                           WHERE crapcrl.cdcooper = par_cdcooper     AND
                                 crapcrl.nrctamen = crapass.nrdconta AND
                                 crapcrl.idseqmen = 1
@@ -612,10 +642,31 @@ PROCEDURE Busca_Abertura_PF:
             IF  crapcrl.nrdconta <> 0   THEN
                 DO: 
                    FOR FIRST crabttl FIELDS(nmextttl nrcpfcgc nrdocttl 
-                                            cdoedttl cdufdttl)
+                                            idorgexp cdufdttl)
                                      WHERE crabttl.cdcooper = par_cdcooper AND
                                            crabttl.nrdconta = crapcrl.nrdconta
                                            NO-LOCK:
+                       
+                       
+                       /* Retornar orgao expedidor */
+                       IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                            RUN sistema/generico/procedures/b1wgen0052b.p 
+                                PERSISTENT SET h-b1wgen0052b.
+
+                       ASSIGN aux_cdorgexp = "".
+                       RUN busca_org_expedidor IN h-b1wgen0052b 
+                                           (INPUT crabttl.idorgexp,
+                                            OUTPUT aux_cdorgexp,
+                                            OUTPUT par_cdcritic, 
+                                            OUTPUT par_dscritic).
+
+                       DELETE PROCEDURE h-b1wgen0052b.   
+
+                       IF  RETURN-VALUE = "NOK" THEN
+                       DO:
+                           ASSIGN aux_cdorgexp = "NAO CADAST.".
+                       END.
+                       
                        ASSIGN 
                            tt-abert-psfis.nmrepleg = crabttl.nmextttl
                            tt-abert-psfis.nrcpfrep = STRING(STRING
@@ -624,9 +675,9 @@ PROCEDURE Busca_Abertura_PF:
                                                            "xxx.xxx.xxx-xx")
                            tt-abert-psfis.nrdocrep = TRIM(STRING
                                                          (crabttl.nrdocttl,
-                                                          "x(11)")) + " " +
+                                                          "x(40)")) + " " +
                                                     TRIM(STRING(
-                                                        crabttl.cdoedttl,
+                                                        aux_cdorgexp,
                                                         "x(05)")) + "/" + 
                                                     STRING(crabttl.cdufdttl,
                                                            "!(02)").
@@ -637,6 +688,26 @@ PROCEDURE Busca_Abertura_PF:
                 END.
             ELSE
                 DO: 
+                
+                   /* Retornar orgao expedidor */
+                   IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                        RUN sistema/generico/procedures/b1wgen0052b.p 
+                            PERSISTENT SET h-b1wgen0052b.
+
+                   ASSIGN aux_cdorgexp = "".
+                   RUN busca_org_expedidor IN h-b1wgen0052b 
+                                       (INPUT crapcrl.idorgexp,
+                                        OUTPUT aux_cdorgexp,
+                                        OUTPUT par_cdcritic, 
+                                        OUTPUT par_dscritic).
+
+                   DELETE PROCEDURE h-b1wgen0052b.   
+
+                   IF  RETURN-VALUE = "NOK" THEN
+                   DO:
+                       ASSIGN aux_cdorgexp = "NAO CADAST.".
+                   END.
+                
                    ASSIGN 
                        tt-abert-psfis.nmrepleg = crapcrl.nmrespon
                        tt-abert-psfis.nrcpfcgc = STRING(STRING
@@ -644,8 +715,8 @@ PROCEDURE Busca_Abertura_PF:
                                                         "99999999999"),
                                                        "xxx.xxx.xxx-xx")
                        tt-abert-psfis.nrdocmto = TRIM(STRING(crapcrl.nridenti,
-                                                            "x(11)")) + " " +
-                                                TRIM(STRING(crapcrl.dsorgemi,
+                                                            "x(40)")) + " " +
+                                                TRIM(STRING(aux_cdorgexp,
                                                             "x(05)")) + "/" +
                                                 STRING(crapcrl.cdufiden,
                                                        "!(02)").
@@ -656,7 +727,7 @@ PROCEDURE Busca_Abertura_PF:
         /* Segundo, Terceiro e Quarto Titular */
         DO aux_contador = 2 TO 4:
             FOR FIRST crabttl FIELDS(nrcpfcgc nmextttl nrdocttl 
-                                     cdoedttl cdufdttl)
+                                     idorgexp cdufdttl)
                               WHERE crabttl.cdcooper = par_cdcooper AND
                                     crabttl.nrdconta = par_nrdconta AND
                                     crabttl.idseqttl = aux_contador NO-LOCK:
@@ -672,16 +743,35 @@ PROCEDURE Busca_Abertura_PF:
                         tt-abert-compf.dstitulo = "2.3.Cooperado(a) Quarto Titular:".
                 END CASE.                 
 
+                /* Retornar orgao expedidor */
+                IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                      RUN sistema/generico/procedures/b1wgen0052b.p 
+                          PERSISTENT SET h-b1wgen0052b.
+
+                ASSIGN aux_cdorgexp = "".
+                RUN busca_org_expedidor IN h-b1wgen0052b 
+                                     (INPUT crabttl.idorgexp,
+                                      OUTPUT aux_cdorgexp,
+                                      OUTPUT par_cdcritic, 
+                                      OUTPUT par_dscritic).
+
+                DELETE PROCEDURE h-b1wgen0052b.   
+
+                IF  RETURN-VALUE = "NOK" THEN
+                DO:
+                     ASSIGN aux_cdorgexp = "NAO CADAST.".
+                END.
+
                 ASSIGN 
                     tt-abert-compf.nmprimtl = crabttl.nmextttl
                     tt-abert-compf.nrcpfcgc = STRING(STRING(crabttl.nrcpfcgc,
                                                            "99999999999"),
                                                     "xxx.xxx.xxx-xx")
                     tt-abert-compf.nrdocmto = TRIM(STRING
-                                                  (crabttl.nrdocttl,"x(11)"))
+                                                  (crabttl.nrdocttl,"x(40)"))
                                              + " " +
                                              TRIM(STRING
-                                                  (crabttl.cdoedttl,"x(05)"))
+                                                  (aux_cdorgexp,"x(05)"))
                                              + "/" + 
                                              STRING(crabttl.cdufdttl,"!(02)").
             END.
@@ -760,6 +850,7 @@ PROCEDURE Busca_Abertura_PJ:
     DEF OUTPUT PARAM TABLE FOR tt-abert-decpj.
 
     DEF VAR aux_dslinhax AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdorgexp AS CHAR                                    NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
 
@@ -849,7 +940,7 @@ PROCEDURE Busca_Abertura_PJ:
         ASSIGN aux_contador = 0.
         /* Qualificacao dos Adminstradores */
         FOR EACH crapavt FIELDS(nrdctato dsproftl nmdavali nrcpfcgc
-                                nrdocava cdoeddoc cdufddoc dsendres
+                                nrdocava idorgexp cdufddoc dsendres
                                 nrendere nmbairro nmcidade cdufresd
                                 nrcepend)
                          WHERE crapavt.cdcooper = par_cdcooper   AND
@@ -868,11 +959,31 @@ PROCEDURE Busca_Abertura_PJ:
             IF  crapavt.nrdctato <> 0 THEN
                 DO:
                    FOR FIRST crabass FIELDS(dsproftl nmprimtl nrcpfcgc
-                                            nrdocptl cdoedptl cdufdptl
+                                            nrdocptl idorgexp cdufdptl
                                             nrdconta)
                                      WHERE crabass.cdcooper = par_cdcooper AND
                                            crabass.nrdconta = crapavt.nrdctato
                                            NO-LOCK:
+                       
+                       /* Retornar orgao expedidor */
+                       IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                              RUN sistema/generico/procedures/b1wgen0052b.p 
+                                  PERSISTENT SET h-b1wgen0052b.
+
+                       ASSIGN aux_cdorgexp = "".
+                       RUN busca_org_expedidor IN h-b1wgen0052b 
+                                             (INPUT crabass.idorgexp,
+                                              OUTPUT aux_cdorgexp,
+                                              OUTPUT par_cdcritic, 
+                                              OUTPUT par_dscritic).
+
+                       DELETE PROCEDURE h-b1wgen0052b.   
+
+                       IF  RETURN-VALUE = "NOK" THEN
+                       DO:
+                             ASSIGN aux_cdorgexp = "NAO CADAST".
+                       END.
+                       
                        ASSIGN 
                            tt-abert-compj.dsproftl = " " + 
                                                     TRIM(crabass.dsproftl) +
@@ -883,10 +994,10 @@ PROCEDURE Busca_Abertura_PJ:
                                                            "99999999999"),
                                                            "xxx.xxx.xxx-xx")
                            tt-abert-compj.nrdocmto = TRIM(STRING
-                                                    (crabass.nrdocptl,"x(11)"))
+                                                    (crabass.nrdocptl,"x(40)"))
                                                     + " " + 
                                                     TRIM(STRING
-                                                    (crabass.cdoedptl,"x(05)"))
+                                                    (aux_cdorgexp,"x(05)"))
                                                     + "/" + 
                                                     STRING(
                                                     crabass.cdufdptl,"!(02)").
@@ -921,6 +1032,26 @@ PROCEDURE Busca_Abertura_PJ:
                 END.
             ELSE
                 DO:
+                   /* Retornar orgao expedidor */
+                   IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                          RUN sistema/generico/procedures/b1wgen0052b.p 
+                              PERSISTENT SET h-b1wgen0052b.
+
+                   ASSIGN aux_cdorgexp = "".
+                   RUN busca_org_expedidor IN h-b1wgen0052b 
+                                         (INPUT crapavt.idorgexp,
+                                          OUTPUT aux_cdorgexp,
+                                          OUTPUT par_cdcritic, 
+                                          OUTPUT par_dscritic).
+
+                   DELETE PROCEDURE h-b1wgen0052b.   
+
+                   IF  RETURN-VALUE = "NOK" THEN
+                   DO:
+                         ASSIGN aux_cdorgexp = "NAO CADAST.".
+                   END.
+                   
+                   
                    ASSIGN 
                        tt-abert-compj.dsproftl = " " + TRIM(crapavt.dsproftl) +
                                                  ", Nome: " + crapavt.nmdavali
@@ -929,10 +1060,10 @@ PROCEDURE Busca_Abertura_PJ:
                                                         "99999999999"),
                                                        "xxx.xxx.xxx-xx")
                        tt-abert-compj.nrdocmto = TRIM(STRING
-                                                   (crapavt.nrdocava,"x(11)"))
+                                                   (crapavt.nrdocava,"x(40)"))
                                                  + " " +
                                                  TRIM(STRING
-                                                   (crapavt.cdoeddoc,"x(05)"))
+                                                   (aux_cdorgexp,"x(05)"))
                                                  + "/" +
                                                  STRING
                                                  (crapavt.cdufddoc,"!(02)").

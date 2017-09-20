@@ -214,6 +214,20 @@
 		
 	</fieldset>
 	
+	<fieldset id="fsetAgendamentoRecarga" name="fsetAgendamentoRecarga" style="padding:0px; margin:0px; padding-bottom:10px; display:none;">
+		
+		<legend><? echo "Informa&ccedil;&atilde;o"; ?></legend>
+		
+		<label for="dstransa"><? echo utf8ToHtml('Telefone:') ?></label>
+		<input type="text" id="dstransa" name="dstransa"/>
+		
+		<label for="dttransa"><? echo utf8ToHtml('Data Cadastro:') ?></label>
+		<input type="text" id="dttransa" name="dttransa"/>
+		
+		<label for="hrtransa"><? echo utf8ToHtml('Hora Cadastro:') ?></label>
+		<input type="text" id="hrtransa" name="hrtransa"/>
+		
+	</fieldset>
 </form>
 
 <script type="text/javascript">

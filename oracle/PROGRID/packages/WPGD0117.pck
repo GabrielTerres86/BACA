@@ -5,14 +5,14 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0117 IS
   --  Sistema  : PROGRID
   --  Sigla    : WPGD
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2016.                   Ultima atualizacao:  09/08/2016
+  --  Data     : Agosto/2016.                   Ultima atualizacao:  23/08/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: 
   -- Objetivo  : Rotinas para geração Relatório de Informações para Ministrante
   --
-  -- Alteracoes:  
+  -- Alteracoes: 23/08/2017 - SD 706932 (Jean Michel) 
   --
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -70,14 +70,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0117 IS
     --  Sistema  : Progrid
     --  Sigla    : WPGD
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Agosto/2016.                   Ultima atualizacao: --/--/----
+    --  Data     : Agosto/2016.                   Ultima atualizacao: 23/08/2017
     --
     --  Dados referentes ao programa:
     --
     --  Frequencia: Sempre que for chamado
     --  Objetivo  : Rotina geração do relatorio da tela WPGD0117 - Relatório de Informações para Ministrante  
     --
-    --  Alteracoes: 
+    --  Alteracoes: 23/08/2017 - SD 706932 (Jean Michel)
     -- .............................................................................*/
 
       -- Buscar informacoes para ministrantes
@@ -111,9 +111,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0117 IS
                decode(TRIM(ca.nrtelvoz),NULL,'Telefone não Cadastrado',
                                         ca.nrtelvoz) || ' falar com ' || cr.nmrespgd ||
                ' (Responsável pelo Progrid no PA).' AS dsrespon
-              ,decode(TRIM(cr.nmctopla),NULL,'Contato não Cadastrado',cr.nmctopla || ' - Telefone (' ||cr.nrdddct1 || ') ' || prgd0002.fn_format_fone(cr.nrtelct1) || 
-               decode(TRIM(cr.nrdddct2),NULL,NULL, ' (' || cr.nrdddct2 || ') ' || prgd0002.fn_format_fone(cr.nrtelct2)))
-                AS dscontat
+              ,DECODE(TRIM(NVL(cr.nrdddct1,'0')),'0',TRIM(cr.nmctopla),TRIM(cr.nmctopla) || ' - Telefone: (' || cr.nrdddct1 || ') ' || cr.nrtelct1 || 
+                 DECODE(TRIM(NVL(cr.nrdddct2,'0')),'0',NULL, ' (' || cr.nrdddct2 || ') ' || cr.nrtelct2)
+               ) AS dscontat 
           FROM crapadp c
               ,crapedp ce
               ,crapage ca
@@ -193,8 +193,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0117 IS
                decode(TRIM(ca.nrtelvoz),NULL,'Telefone não Cadastrado',
                                         ca.nrtelvoz) || ' falar com ' || cr.nmrespgd ||
                ' (Responsável pelo Progrid no PA).'
-              ,decode(TRIM(cr.nmctopla),NULL,'Contato não Cadastrado',cr.nmctopla || ' - Telefone (' ||cr.nrdddct1 || ') ' || cr.nrtelct1 || 
-               decode(TRIM(cr.nrdddct2),NULL,NULL, ' (' || cr.nrdddct2 || ') ' || cr.nrtelct2))
+              ,DECODE(TRIM(NVL(cr.nrdddct1,'0')),'0',TRIM(cr.nmctopla), ' (' || cr.nrdddct1 || ') ' || cr.nrtelct1 || 
+                 DECODE(TRIM(NVL(cr.nrdddct2,'0')),'0',NULL,TRIM(cr.nmctopla) || ' - Telefone: (' || cr.nrdddct2 || ') ' || cr.nrtelct2)
+               )
           FROM crapadp c
               ,crapedp ce
               ,crapage ca

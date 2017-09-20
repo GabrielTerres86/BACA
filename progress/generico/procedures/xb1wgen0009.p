@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0009.p
    Autor   : Guilherme
-   Data    : Março/2009                     Ultima atualizacao: 26/05/2017
+   Data    : Março/2009                     Ultima atualizacao: 28/07/2017
 
    Dados referentes ao programa:
 
@@ -41,6 +41,7 @@
                
                26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
                            contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
+			   28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro
 ............................................................................ */
 
 
@@ -779,7 +780,8 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT TRUE, /* LOG */
                                       OUTPUT aux_nrctrlim, 
-                                      OUTPUT TABLE tt-erro).
+                                      OUTPUT TABLE tt-erro,
+                                      OUTPUT TABLE tt-msg-confirma).
                                     
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -800,9 +802,11 @@ PROCEDURE efetua_inclusao_limite:
             
             RUN piXmlNew.
             RUN piXmlAtributo (INPUT "nrctrlim", INPUT STRING(aux_nrctrlim)).            
+            RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
+                             INPUT "Mensagens").
             RUN piXmlSave.
         END.
-            
+        
         
 END PROCEDURE.
 

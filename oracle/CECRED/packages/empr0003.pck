@@ -31,6 +31,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --                          impressão de novos parágros nos contratos de forma condicional; 
   --                          (Ricardo Linhares)    
   --
+  --             01/09/2017 - Imprimir conta quando o avalista for cooperado
+  --                          Heitor (Mouts) - Chamado 735958
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Verifica da TAB016 se o interveniente esta habilitado
@@ -107,7 +110,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                 ,pr_retxml   IN OUT CLOB              --> Arquivo de retorno do XML
                                 );
-  
+
   /* Imprime o demonstrativo do contrato de emprestimo pre-aprovado */
   PROCEDURE pc_gera_demonst_pre_aprovado(pr_cdcooper IN crawepr.cdcooper%TYPE --> Código da Cooperativa
                                         ,pr_cdagenci IN crawepr.nrdconta%TYPE --> Código da Agencia
@@ -231,8 +234,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
   --                          desta package.(Carlos Rafael Tanholi).
   --
+  --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --			              crapass, crapttl, crapjur 
+  --			 			  (Adriano - P339).
+  --
   --             26/06/2017 - Na procedure pc_imprime_contrato_xml foi retirada a chamada pc_XML_para_arquivo
   --                          pois era desnecessaria (Tiago/Rodrigo).
+  --
+  --             12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+  --		                  crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+  --						 (Adriano - P339).
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -335,7 +346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Castro (RKAM)
-       Data    : Agosto/2014.                         Ultima atualizacao:
+       Data    : Agosto/2014.                         Ultima atualizacao: 12/06/2017
 
        Dados referentes ao programa:
 
@@ -346,6 +357,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
 
        Alteracoes: 08/05/2017 - Case When para buscar CPF e CNPJ atraves do tamanho da
 								string (Andrey - Mouts).
+                   12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+						    	(Adriano - P339).
 
     ............................................................................. */
 
@@ -356,13 +370,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     SELECT  'Nome Proprietário (interveniente garantidor): '||crapass.nmprimtl nmprimtl,
             'Dados pessoais: '||decode(crapass.inpessoa,1,'CPF','CNPJ')||
             ' n.º '||gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa)||
-            decode(crapass.inpessoa,1,' RG n.º '||crapass.nrdocptl||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
+            decode(crapass.inpessoa,1,' RG n.º '||SUBSTR(TRIM(crapass.nrdocptl),1,15)||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
                                       gnetcvl.rsestcvl,'') dados_pessoais,
             'Endereço: '||crapenc.dsendere||', nº '||crapenc.nrendere||', bairro '||crapenc.nmbairro ||', da cidade de '||
             crapenc.nmcidade||'/'||crapenc.cdufende||', CEP '||gene0002.fn_mask_cep(crapenc.nrcepend) dsendere,
             DECODE(nvl(crapass_2.nmprimtl,TRIM(crapcje.nmconjug)),NULL,NULL,'Cônjuge: '||nvl(crapass_2.nmprimtl,crapcje.nmconjug)) ||
             DECODE(nvl(crapass_2.nrcpfcgc,NVL(crapcje.nrcpfcjg,0)),0,'',' CPF n.º '||gene0002.fn_mask_cpf_cnpj(nvl(crapass_2.nrcpfcgc,crapcje.nrcpfcjg),1))||
-            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| nvl(crapass_2.nrdocptl,crapcje.nrdoccje),'')  nrnmconjug
+            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| SUBSTR(TRIM(nvl(crapass_2.nrdocptl,crapcje.nrdoccje)),1,15),'')  nrnmconjug
     FROM  crapass crapass_2, -- Dados do conjuge
           crapcje,
           gnetcvl,
@@ -390,13 +404,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     SELECT  'Nome Proprietário (interveniente garantidor): '||crapass.nmprimtl nmprimtl,
             'Dados pessoais: '||decode(crapass.inpessoa,1,'CPF','CNPJ')||
             ' n.º '||gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa)||
-            decode(crapass.inpessoa,1,' RG n.º '||crapass.nrdocptl||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
+            decode(crapass.inpessoa,1,' RG n.º '||SUBSTR(TRIM(crapass.nrdocptl),1,15)||decode(trim(gnetcvl.rsestcvl), NULL, NULL ,', com o estado civil ')||
                                       gnetcvl.rsestcvl,'') dados_pessoais,
             'Endereço: '||crapenc.dsendere||', nº '||crapenc.nrendere||', bairro '||crapenc.nmbairro ||', da cidade de '||
             crapenc.nmcidade||'/'||crapenc.cdufende||', CEP '||gene0002.fn_mask_cep(crapenc.nrcepend) dsendere,
             DECODE(nvl(crapass_2.nmprimtl,TRIM(crapcje.nmconjug)),NULL,NULL,'Cônjuge: '||nvl(crapass_2.nmprimtl,crapcje.nmconjug)) ||
             DECODE(nvl(crapass_2.nrcpfcgc,NVL(crapcje.nrcpfcjg,0)),0,'',' CPF n.º '||gene0002.fn_mask_cpf_cnpj(nvl(crapass_2.nrcpfcgc,crapcje.nrcpfcjg),1))||
-            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| nvl(crapass_2.nrdocptl,crapcje.nrdoccje),'')  nrnmconjug
+            DECODE(nvl(crapass_2.tpdocptl,crapcje.tpdoccje),'CI',' RG n.º '|| SUBSTR(TRIM(nvl(crapass_2.nrdocptl,crapcje.nrdoccje)),1,15),'')  nrnmconjug
     FROM  crapass crapass_2, -- Dados do conjuge
           crapcje,
           gnetcvl,
@@ -427,12 +441,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
               CASE WHEN crapavt.inpessoa <> 0 THEN /* Se estiver preenchido o inpessoa (1 ou 2) do avalista */
                   DECODE(NVL(crapavt.inpessoa,1),1,
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
-                      ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+                      ' RG n.º '||SUBSTR(TRIM(crapavt.nrdocava),1,15)||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl)),
                   'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2))
               WHEN LENGTH(crapavt.nrcpfcgc) <= 11 THEN /* se não estiver preenchido (0) e for CPF length <= 11 */
                   'CPF n.º'||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 1)||
-                      ' RG n.º '||crapavt.nrdocava||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
+                      ' RG n.º '||SUBSTR(TRIM(crapavt.nrdocava),1,15)||decode(nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
                                   ,NULL, NULL, ', com o estado civil ')||nvl(trim(gnetcvl.dsestcvl),trim(gnetcvl_2.dsestcvl))
               ELSE /* Se não estiver preenchido e for CNPJ */
                   'CNPJ n.º '||gene0002.fn_mask_cpf_cnpj(crapavt.nrcpfcgc, 2) 
@@ -554,7 +568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
 
   CURSOR cr_crawepr_av IS
     SELECT nvl(crapass.nmprimtl,crawepr.nmdaval1) nmdaval1,
-           gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa) dscpfav1,
+           gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc, crapass.inpessoa)||' '||gene0002.fn_mask_conta(crapass.nrdconta) dscpfav1,
            decode(crapass.nrdconta,NULL,
               crawepr.dsendav1##1||', '||crawepr.dsendav1##2,
               crapenc.dsendere||', nº '||crapenc.nrendere||', bairro '||crapenc.nmbairro ||', da cidade de '||
@@ -571,7 +585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
            nvl(nvl(crapass_cje.nmprimtl,crapcje.nmconjug),crawepr.nmcjgav1) nmcjgav1,
            gene0002.fn_mask_cpf_cnpj(nvl(crapass_cje.nrcpfcgc,crapcje.nrcpfcjg),1) nrcpfcjg_1,
            nvl(crapass_2.nmprimtl,crawepr.nmdaval2) nmdaval2,
-           gene0002.fn_mask_cpf_cnpj(crapass_2.nrcpfcgc, crapass_2.inpessoa) dscpfav2,
+           gene0002.fn_mask_cpf_cnpj(crapass_2.nrcpfcgc, crapass_2.inpessoa)||' '||gene0002.fn_mask_conta(crapass_2.nrdconta) dscpfav2,
            decode(crapass_2.nrdconta,NULL,
               crawepr.dsendav2##1||', '||crawepr.dsendav2##2,
               crapenc_2.dsendere||', nº '||crapenc_2.nrendere||', bairro '||crapenc_2.nmbairro ||', da cidade de '||
@@ -839,7 +853,7 @@ BEGIN
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago Castro (RKAM)
-       Data    : Agosto/2014.                         Ultima atualizacao: 26/06/2017
+       Data    : Agosto/2014.                         Ultima atualizacao: 12/06/2017
 
        Dados referentes ao programa:
 
@@ -871,6 +885,14 @@ BEGIN
 
                    26/06/2017 - Removido chamada pc_XML_para_arquivo pois era desnecessario
                                 (Tiago/Rodrigo).
+
+                   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                     crapass, crapttl, crapjur 
+							    (Adriano - P339).
+
+					12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+			                     crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+							    (Adriano - P339).
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
@@ -1001,7 +1023,6 @@ BEGIN
                crapass.nrcpfcgc,
                crapenc.dsendere ||' no. '||crapenc.nrendere||', bairro ' ||rw_crapenc.nmbairro||
                  ', '||crapenc.nmcidade||'-'||crapenc.cdufende ||'-'||'CEP '||crapenc.nrcepend dsendere,
-               crapass.nrfonemp,
               (SELECT craptfc.nrdddtfc||' '||craptfc.nrtelefo FROM craptfc
                                           WHERE cdcooper = crapass.cdcooper
                                             AND nrdconta = crapass.nrdconta
@@ -1240,7 +1261,7 @@ BEGIN
         CLOSE cr_gnetcvl;
               -- monta descricao para o relatorio com os dados do emitente
         vr_campo_01 := 'inscrito no '||vr_tppessoa||' n.° '|| gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa)||
-                     ' e portador do RG n.° '||rw_crawepr.nrdocptl||', com o estado civil '||rw_gnetcvl.rsestcvl||
+                     ' e portador do RG n.° '||SUBSTR(TRIM(rw_crawepr.nrdocptl),1,15)||', com o estado civil '||rw_gnetcvl.rsestcvl||
                      ', residente e domiciliado na '||rw_crapenc.dsendere||', n.° '||rw_crapenc.nrendere||
                      ', bairro '||rw_crapenc.nmbairro|| ', da cidade de '||rw_crapenc.nmcidade||'/'||rw_crapenc.cdufende||
                      ', CEP '||gene0002.fn_mask_cep(rw_crapenc.nrcepend)||', também  qualificado na proposta de abertura de conta corrente indicada no subitem 1.1, designado Emitente.';
@@ -2195,7 +2216,7 @@ BEGIN
         END;
 
     END pc_gera_demonst_pre_aprovado;
-    
+
   /******************************************************************************/
   /**            Procedure para buscar operações dos avalistas.                **/
   /******************************************************************************/

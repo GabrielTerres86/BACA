@@ -2,7 +2,7 @@
 
     Programa: b1wgen0073.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 23/10/2014    
+    Data    : Maio/2010                   Ultima atualizacao: 17/04/2017   
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTATOS
 
@@ -26,6 +26,10 @@
                              
                 23/10/2014 - Condição da remoção da validação de contato apenas
                              para VIACREDI SD. 205276 (Lunelli).
+                             
+				17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
                              
 .............................................................................*/
 
@@ -129,8 +133,7 @@ PROCEDURE Busca_Dados:
            /* Se for associado, pega os dados da crapass */
             IF  tt-crapavt.nrdctato <> 0 THEN
                 DO:
-                    FOR FIRST crapass FIELDS(cdcooper nrdconta dtdemiss
-                                             dsdemail nmprimtl)
+                    FOR FIRST crapass FIELDS(cdcooper nrdconta dtdemiss nmprimtl)
                                       WHERE 
                                       crapass.cdcooper = par_cdcooper AND
                                       crapass.nrdconta = tt-crapavt.nrdctato
@@ -339,7 +342,7 @@ PROCEDURE Busca_Dados_Cto:
                LEAVE Busca.
             END.
 
-        FOR FIRST crapass FIELDS(cdcooper nrdconta dsdemail nmprimtl
+        FOR FIRST crapass FIELDS(cdcooper nrdconta nmprimtl
                                  indnivel cdtipcta)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdctato NO-LOCK:

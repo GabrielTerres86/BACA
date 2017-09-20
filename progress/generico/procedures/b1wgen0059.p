@@ -3,11 +3,11 @@
                            ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-------------------------------------+----------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                  |
+  | Rotina Progress                     | Rotina Oracle PLSQL                    |
   +-------------------------------------+----------------------------------------+
-  | busca-crapope			            | ZOOM0001.pc_busca_operadores         |
-  | busca-crapban					    | ZOOM0001.pc_busca_bancos             |
-  | busca-historico                     | ZOOM0001.pc_busca_historico          |
+  | busca-crapope			            | ZOOM0001.pc_busca_operadores           |
+  | busca-crapban					    | ZOOM0001.pc_busca_bancos               |
+  | busca-historico                     | ZOOM0001.pc_busca_historico            |
   | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
   | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
   | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
@@ -29,7 +29,7 @@
 
     Programa: b1wgen0059.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao:  07/06/2016
+    Data    : Marco/2010                   Ultima atualizacao:  02/08/2017
 
     Objetivo  : Buscar os dados p/ telas de pesquisas ou zoom's
 
@@ -193,6 +193,15 @@
                  07/06/2016 - Adicionar validacao para nao exibir o historico 
                               1019 na tela autori (Lucas Ranghetti #464211)
 
+                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
+                             PRJ339 - CRM (Odirlei-AMcom)       
+							         
+			    02/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							 (Adriano - P339).
+
+				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
+
 .............................................................................*/
 
 
@@ -296,119 +305,6 @@ PROCEDURE busca-gncdfrm:
                         DO:
                            CREATE tt-gncdfrm.
                            BUFFER-COPY gncdfrm TO tt-gncdfrm.
-                        END.
-                END.
-
-             ASSIGN aux_nrregist = aux_nrregist - 1.
-        END.
-
-        LEAVE.
-    END.
-
-    RETURN "OK".
-
-END PROCEDURE.
-
-PROCEDURE busca-gncdnto:
-    /* Pesquisa para NATUREZA OCUPACAO */
-
-    DEF  INPUT PARAM par_cdnatocp AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_rsnatocp AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
-    
-    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-gncdnto.
-
-    ASSIGN aux_nrregist = par_nrregist.
-
-    DO ON ERROR UNDO, RETURN:
-        EMPTY TEMP-TABLE tt-gncdnto. 
-
-        ASSIGN par_rsnatocp = TRIM(par_rsnatocp).
-
-        FOR EACH gncdnto WHERE (IF par_cdnatocp <> 0 THEN 
-                                gncdnto.cdnatocp = par_cdnatocp ELSE TRUE) AND
-                               gncdnto.rsnatocp MATCHES("*" + par_rsnatocp + 
-                                                        "*") NO-LOCK:
-
-            IF  gncdnto.rsnatocp = "" THEN
-                NEXT.
-
-            IF  gncdnto.cdnatocp = 99  THEN
-                NEXT.
-
-            ASSIGN par_qtregist = par_qtregist + 1.
-
-            /* controles da paginaçao */
-            IF  (par_qtregist < par_nriniseq) OR
-                (par_qtregist > (par_nriniseq + par_nrregist)) THEN
-                NEXT.
-
-            IF  aux_nrregist > 0 THEN
-                DO: 
-                   FIND tt-gncdnto OF gncdnto NO-ERROR.
-    
-                   IF   NOT AVAILABLE tt-gncdnto THEN
-                        DO:
-                           CREATE tt-gncdnto.
-                           BUFFER-COPY gncdnto TO tt-gncdnto
-                               ASSIGN 
-                                  tt-gncdnto.cdnatopc = tt-gncdnto.cdnatocp.
-                        END.
-                END.
-
-             ASSIGN aux_nrregist = aux_nrregist - 1.
-        END.
-
-        LEAVE.
-    END.
-
-    RETURN "OK".
-
-END PROCEDURE.
-
-PROCEDURE busca-gncdocp:
-    /* Pesquisa para OCUPACAO */
-
-    DEF  INPUT PARAM par_cdocupa  AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_rsdocupa AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
-    
-    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-gncdocp.
-
-    ASSIGN aux_nrregist = par_nrregist.
-
-    DO ON ERROR UNDO, RETURN:
-        EMPTY TEMP-TABLE tt-gncdocp. 
-
-        ASSIGN par_rsdocupa = TRIM(par_rsdocupa).
-
-        FOR EACH gncdocp WHERE (IF par_cdocupa <> 0 THEN 
-                                gncdocp.cdocupa = par_cdocupa ELSE TRUE) AND
-                               gncdocp.rsdocupa MATCHES("*" + par_rsdocupa + 
-                                                        "*") NO-LOCK:
-
-            IF  gncdocp.rsdocupa = "" THEN
-                NEXT.
-
-            ASSIGN par_qtregist = par_qtregist + 1.
-
-            /* controles da paginaçao */
-            IF  (par_qtregist < par_nriniseq) OR
-                (par_qtregist > (par_nriniseq + par_nrregist)) THEN
-                NEXT.
-
-            IF  aux_nrregist > 0 THEN
-                DO: 
-                   FIND tt-gncdocp OF gncdocp NO-ERROR.
-    
-                   IF   NOT AVAILABLE tt-gncdocp THEN
-                        DO:
-                           CREATE tt-gncdocp.
-                           BUFFER-COPY gncdocp TO tt-gncdocp.
                         END.
                 END.
 
@@ -1005,7 +901,9 @@ PROCEDURE busca-crapnac:
 
             IF  aux_nrregist > 0 THEN
                 DO:
-                   FIND tt-crapnac OF crapnac NO-ERROR.
+                   FIND first tt-crapnac 
+                        where crapnac.cdnacion = tt-crapnac.cdnacion 
+                        NO-ERROR.
     
                    IF   NOT AVAILABLE tt-crapnac THEN
                         DO:
@@ -1041,8 +939,8 @@ PROCEDURE busca-crapnat:
 
         ASSIGN par_dsnatura = TRIM(par_dsnatura).
 
-        FOR EACH crapnat WHERE
-                         crapnat.dsnatura MATCHES("*" + par_dsnatura + "*")
+        FOR EACH crapmun WHERE
+                         crapmun.dscidade MATCHES("*" + par_dsnatura + "*")
                          NO-LOCK:
 
             ASSIGN par_qtregist = par_qtregist + 1.
@@ -1054,12 +952,13 @@ PROCEDURE busca-crapnat:
 
             IF  aux_nrregist > 0 THEN
                 DO:
-                   FIND tt-crapnat OF crapnat NO-ERROR.
+                   FIND tt-crapnat 
+                     WHERE tt-crapnat.dsnatura = crapmun.dscidade NO-ERROR.
 
                    IF   NOT AVAILABLE tt-crapnat THEN
                         DO:
                            CREATE tt-crapnat.
-                           BUFFER-COPY crapnat TO tt-crapnat.
+                           ASSIGN tt-crapnat.dsnatura = crapmun.dscidade.
                         END.
                 END.
 
@@ -1158,7 +1057,9 @@ PROCEDURE busca-crapban:
 
             IF  aux_nrregist > 0 THEN
                 DO:
-                   FIND tt-crapban OF crapban NO-ERROR.
+                   FIND first tt-crapban 
+                      where crapban.cdbccxlt = tt-crapban.cdbccxlt
+                      NO-ERROR.
     
                    IF   NOT AVAILABLE tt-crapban THEN
                         DO:
@@ -1985,7 +1886,7 @@ PROCEDURE zoom-associados:
 
                   FOR EACH crapttl FIELDS(cdcooper nrdconta nmextttl
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao ) 
+                                           dtnasttl  ) 
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmextttl MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,    
@@ -2016,7 +1917,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl
@@ -2046,7 +1946,7 @@ PROCEDURE zoom-associados:
                                           USE-INDEX crapcje1 NO-LOCK,
                        EACH crapttl FIELDS(cdcooper nrdconta 
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao)
+                                           dtnasttl )
                                     WHERE crapttl.cdcooper = par_cdcooper NO-LOCK,                       
                        EACH crapass FIELDS(cdagenci nrdctitg dtdemiss dsnivris)
                             WHERE crapass.cdcooper = crapttl.cdcooper AND
@@ -2075,7 +1975,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(Conj)"
@@ -2100,7 +1999,7 @@ PROCEDURE zoom-associados:
                WHEN 2 THEN DO: /* Nome do pai */
                    FOR EACH crapttl FIELDS(cdcooper nrdconta nmpaittl
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao)
+                                           dtnasttl )
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmpaittl MATCHES ("*" + par_nmdbusca + "*")
                        NO-LOCK,
@@ -2130,7 +2029,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(PAI)"
@@ -2155,7 +2053,7 @@ PROCEDURE zoom-associados:
                WHEN 3 THEN DO: /* Nome da mae */
                    FOR EACH crapttl FIELDS(cdcooper nrdconta nmmaettl
                                            idseqttl nrcpfcgc cdempres
-                                           dtnasttl nmdsecao)
+                                           dtnasttl )
                             WHERE crapttl.cdcooper = par_cdcooper AND
                                   crapttl.nmmaettl MATCHES ("*" + par_nmdbusca + "*")
                                   NO-LOCK,
@@ -2185,7 +2083,6 @@ PROCEDURE zoom-associados:
                            tt-titular.nrdctitg = crapass.nrdctitg
                            tt-titular.idseqttl = crapttl.idseqttl
                            tt-titular.dtnasttl = crapttl.dtnasttl
-                           tt-titular.nmdsecao = crapttl.nmdsecao
                            tt-titular.dtdemiss = crapass.dtdemiss
                            tt-titular.cdempres = crapttl.cdempres
                            tt-titular.nmpesttl = tt-titular.nmextttl + "(MAE)"
@@ -2359,7 +2256,7 @@ PROCEDURE zoom-associados:
                           IF  crapass.inpessoa = 1 THEN
                               DO:            
                                  FOR FIRST crapttl FIELDS(nmextttl nrdconta idseqttl
-                                                          dtnasttl nmdsecao
+                                                          dtnasttl 
                                                           cdempres nrcpfcgc)
                                      WHERE crapttl.cdcooper = par_cdcooper     AND
                                            crapttl.nrdconta = crapass.nrdconta AND
@@ -2384,7 +2281,6 @@ PROCEDURE zoom-associados:
                                          tt-titular.nmextttl = crapttl.nmextttl  
                                          tt-titular.idseqttl = crapttl.idseqttl  
                                          tt-titular.dtnasttl = crapttl.dtnasttl
-                                         tt-titular.nmdsecao = crapttl.nmdsecao
                                          tt-titular.cdempres = crapttl.cdempres
                                          tt-titular.nmpesttl = tt-titular.nmextttl
                                          tt-titular.nmprimtl = tt-titular.nmextttl
@@ -2468,7 +2364,7 @@ PROCEDURE zoom-associados:
                         IF  crapass.inpessoa = 1 THEN /* Pessoa Fisica */
                             DO:
                                FOR FIRST crapttl FIELDS(nmextttl idseqttl
-                                                        dtnasttl nmdsecao
+                                                        dtnasttl 
                                                         cdempres nrcpfcgc)
                                    WHERE crapttl.cdcooper = par_cdcooper     AND
                                          crapttl.nrdconta = crapass.nrdconta AND
@@ -2494,7 +2390,6 @@ PROCEDURE zoom-associados:
                                        tt-titular.nmextttl = crapttl.nmextttl  
                                        tt-titular.idseqttl = crapttl.idseqttl  
                                        tt-titular.dtnasttl = crapttl.dtnasttl
-                                       tt-titular.nmdsecao = crapttl.nmdsecao
                                        tt-titular.cdempres = crapttl.cdempres
                                        tt-titular.nmpesttl = tt-titular.nmextttl
                                        tt-titular.nmprimtl = tt-titular.nmextttl
@@ -2665,7 +2560,6 @@ PROCEDURE zoom-associados:
                                       tt-titular.nrdctitg = crapass.nrdctitg
                                       tt-titular.idseqttl = crapttl.idseqttl
                                       tt-titular.dtnasttl = crapttl.dtnasttl
-                                      tt-titular.nmdsecao = crapttl.nmdsecao
                                       tt-titular.dtdemiss = crapass.dtdemiss
                                       tt-titular.cdempres = crapttl.cdempres
                                       tt-titular.nmpesttl = tt-titular.nmextttl
@@ -4318,3 +4212,199 @@ PROCEDURE busca-produtos:
 
 END PROCEDURE.
 
+PROCEDURE busca-crapass:
+    
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmprimtl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-crapass.
+
+    DEFINE VARIABLE aux_nrregist AS INTEGER     NO-UNDO.
+
+    ASSIGN aux_nrregist = par_nrregist.
+    
+    DO ON ERROR UNDO, RETURN:
+       
+       EMPTY TEMP-TABLE tt-crapass.
+       
+       IF par_nrcpfcgc > 0 AND par_nrdconta = 0 THEN
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper              AND
+                       crapass.inpessoa = par_inpessoa              AND
+                       crapass.nrcpfcgc = par_nrcpfcgc              AND
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  
+                       NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.
+       ELSE
+       IF par_nrdconta > 0 AND par_nrcpfcgc = 0 THEN
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper AND
+                       crapass.inpessoa = par_inpessoa AND
+                       crapass.nrdconta = par_nrdconta AND                       
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.    
+       ELSE
+       IF par_nrdconta > 0 AND par_nrcpfcgc > 0 THEN
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper AND
+                       crapass.inpessoa = par_inpessoa AND
+                       crapass.nrdconta = par_nrdconta AND   
+                       crapass.nrcpfcgc = par_nrcpfcgc AND
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.              
+       ELSE
+          DO:
+              FOR EACH crapass FIELDS(nrdconta nmprimtl inpessoa nrcpfcgc) 
+                       WHERE 
+                       crapass.cdcooper = par_cdcooper              AND
+                       crapass.inpessoa = par_inpessoa              AND
+                       crapass.nmprimtl MATCHES("*" + par_nmprimtl + "*")  NO-LOCK:
+              
+                  ASSIGN par_qtregist = par_qtregist + 1.
+              
+                  /* controles da paginaçao */
+                  IF  (par_qtregist < par_nriniseq) OR
+                      (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+                      NEXT.
+              
+                  IF  aux_nrregist > 0 THEN
+                      DO: 
+                         FIND FIRST tt-crapass 
+                              WHERE tt-crapass.nrdconta = crapass.nrdconta
+                                    NO-ERROR.
+              
+                         IF NOT AVAILABLE tt-crapass THEN
+                            DO:
+                                CREATE tt-crapass.
+                                ASSIGN tt-crapass.nrdconta = crapass.nrdconta
+                                       tt-crapass.nmprimtl = crapass.nmprimtl
+                                       tt-crapass.inpessoa = crapass.inpessoa.
+                                       
+                                IF crapass.inpessoa = 1 THEN 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999"),
+                                                                "xxx.xxx.xxx-xx").
+                                ELSE 
+                                   tt-crapass.nrcpfcgc = STRING(STRING(crapass.nrcpfcgc,"99999999999999"),
+                                                               "xx.xxx.xxx/xx~xx-xx").
+                                VALIDATE tt-crapass.
+                            END.
+                      END.
+              
+                   ASSIGN aux_nrregist = aux_nrregist - 1.
+              END.
+          END.
+    END.
+
+    RETURN "OK".
+
+END PROCEDURE.

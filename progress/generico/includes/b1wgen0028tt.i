@@ -2,7 +2,7 @@
 
    Programa: b1wgen0028tt.i                  
    Autor   : Guilherme
-   Data    : Marco/2008                        Ultima atualizacao: 23/09/2016
+   Data    : Marco/2008                        Ultima atualizacao: 20/04/2017
 
    Dados referentes ao programa:
 
@@ -71,6 +71,10 @@
                             
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-motivos_2via (Oscar).
                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt_dados_promissoria_imp (Oscar).
+               
+			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
                
 ....................................................................................*/
 
@@ -182,10 +186,10 @@ DEF TEMP-TABLE tt-nova_proposta NO-UNDO
     FIELD vlsalari /* "Salario"            */ AS DECI
     FIELD dddebito /* "Dia debito"         */ AS CHAR
     FIELD cdtipcta LIKE crapass.cdtipcta
-    FIELD nrcpfstl LIKE crapass.nrcpfstl
+    FIELD nrcpfstl LIKE crapttl.nrcpfcgc
     FIELD inpessoa LIKE crapass.inpessoa
-    FIELD dtnasstl LIKE crapass.dtnasstl
-    FIELD nrdocstl LIKE crapass.nrdocstl
+    FIELD dtnasstl LIKE crapttl.dtnasttl
+    FIELD nrdocstl LIKE crapttl.nrdocttl
     FIELD nmconjug LIKE crapcje.nmconjug
     FIELD dtnasccj LIKE crapcje.dtnasccj
     FIELD nmtitcrd LIKE crapass.nmprimtl

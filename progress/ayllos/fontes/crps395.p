@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Maio/2004                         Ultima atualizacao: 15/02/2017
+   Data    : Maio/2004                         Ultima atualizacao: 17/07/2017
 
    Dados referentes ao programa:
 
@@ -178,6 +178,17 @@
 
 				15/02/2017 - Ajustando o format do campo nrctrcrd nos relatórios que o utilizam.
 			     		     SD 594718 (Kelvin).
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+              19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                           PRJ339 - CRM (Odirlei-AMcom)             
+                           
+              17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)                
+
 ..............................................................................*/
 
 DEF STREAM str_1.
@@ -220,12 +231,12 @@ DEFINE TEMP-TABLE tt-crawcrd NO-UNDO
     FIELD cdsexotl AS CHARACTER
     FIELD dsdemail LIKE crapcem.dsdemail
     FIELD dsestcvl LIKE gnetcvl.dsestcvl
-    FIELD dsnacion LIKE crapttl.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD nmmaettl LIKE crapttl.nmmaettl
     FIELD complend LIKE crapenc.complend
     FIELD nrtelefo AS CHARACTER
     FIELD nrdoccrd LIKE crawcrd.nrdoccrd
-    FIELD cdoedptl LIKE crapass.cdoedptl
+    FIELD cdoedptl AS CHARACTER
     FIELD nrendere LIKE crapenc.nrendere
     FIELD idseqimp AS INTEGER
     FIELD dddebant LIKE crawcrd.dddebant. /* 2VIA/SENHAOLICIT */
@@ -262,12 +273,12 @@ DEFINE TEMP-TABLE tt-crawcri NO-UNDO
     FIELD cdsexotl AS CHARACTER
     FIELD dsdemail LIKE crapcem.dsdemail
     FIELD dsestcvl LIKE gnetcvl.dsestcvl
-    FIELD dsnacion LIKE crapttl.dsnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
     FIELD nmmaettl LIKE crapttl.nmmaettl
     FIELD complend LIKE crapenc.complend
     FIELD nrtelefo AS CHARACTER
     FIELD nrdoccrd LIKE crawcrd.nrdoccrd
-    FIELD cdoedptl LIKE crapass.cdoedptl
+    FIELD cdoedptl AS CHARACTER
     FIELD nrendere LIKE crapenc.nrendere
     FIELD idseqimp AS INTEGER
     FIELD dddebant LIKE crawcrd.dddebant /* 2VIA/SENHAOLICIT */
@@ -336,6 +347,7 @@ DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR tot_qtaprova AS INTE                                           NO-UNDO.
 DEF VAR aux_dddebito LIKE crawcrd.dddebito                             NO-UNDO.
 DEF VAR aux_admcarta AS CHAR                                           NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                        NO-UNDO.
 
 /******************************************************************************/
 /*********************************** FORM'S ***********************************/
@@ -602,8 +614,8 @@ PROCEDURE Busca_Dados:
   DEF VAR aux_nrtelefo AS CHAR                                         NO-UNDO.
   DEF VAR aux_dsendere LIKE crapenc.dsendere                           NO-UNDO.
   DEF VAR aux_cdsexotl AS CHAR                                         NO-UNDO.
-  DEF VAR aux_cdoedttl LIKE crapttl.cdoedttl                           NO-UNDO.
-  DEF VAR aux_dsnacion LIKE crapttl.dsnacion                           NO-UNDO.
+  DEF VAR aux_cdoedttl AS CHAR                                         NO-UNDO.
+  DEF VAR aux_dsnacion LIKE crapnac.dsnacion                           NO-UNDO.
   DEF VAR aux_nmmaettl LIKE crapttl.nmmaettl                           NO-UNDO.
   DEF VAR aux_dsestcvl LIKE gnetcvl.dsestcvl                           NO-UNDO.
   DEF VAR aux_cdgraupr LIKE crawcrd.cdgraupr                           NO-UNDO.
@@ -715,9 +727,17 @@ PROCEDURE Busca_Dados:
           IF AVAIL crapttl THEN 
           DO:
               ASSIGN aux_cdsexotl = IF crapttl.cdsexotl = 1 THEN "M" ELSE "F"
-                         aux_cdoedttl = crapttl.cdoedttl
-                         aux_dsnacion = crapttl.dsnacion
                          aux_nmmaettl = crapttl.nmmaettl.
+
+              /* Buscar nacionalidade */
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapttl.cdnacion
+                   NO-LOCK NO-ERROR.
+              
+              IF  AVAILABLE crapnac THEN
+                ASSIGN aux_dsnacion = crapnac.dsnacion.
+              ELSE     
+                ASSIGN aux_dsnacion = "".    
 
               IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
                   RUN sistema/generico/procedures/b1wgen0060.p 
@@ -731,6 +751,21 @@ PROCEDURE Busca_Dados:
 
               IF  VALID-HANDLE(h-b1wgen0060) THEN
                   DELETE PROCEDURE h-b1wgen0060.
+              
+              /* Retornar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                      PERSISTENT SET h-b1wgen0052b.
+              
+              ASSIGN aux_cdoedttl = "".
+              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 ( INPUT crapttl.idorgexp,
+                                  OUTPUT aux_cdoedttl,
+                                  OUTPUT glb_cdcritic, 
+                                  OUTPUT glb_dscritic).
+
+              DELETE PROCEDURE h-b1wgen0052b.               
+          
           END.
           ELSE
                   ASSIGN aux_cdsexotl = ""
@@ -746,7 +781,7 @@ PROCEDURE Busca_Dados:
                  aux_nmmaettl = ""
                  aux_dsestcvl = "".           
 
-      FOR FIRST crapass FIELDS (inpessoa dsdemail)
+      FOR FIRST crapass FIELDS (inpessoa)
           WHERE crapass.cdcooper = glb_cdcooper
             AND crapass.nrdconta = crawcrd.nrdconta NO-LOCK: END.
 
@@ -983,10 +1018,18 @@ PROCEDURE Busca_Dados:
           IF AVAIL crapttl THEN 
           DO:
               ASSIGN aux_cdsexotl = IF crapttl.cdsexotl = 1 THEN "M" ELSE "F"
-                         aux_cdoedttl = crapttl.cdoedttl
-                         aux_dsnacion = crapttl.dsnacion
                          aux_nmmaettl = crapttl.nmmaettl.
 
+              /* Buscar nacionalidade */
+              FIND FIRST crapnac
+                   WHERE crapnac.cdnacion = crapttl.cdnacion
+                   NO-LOCK NO-ERROR.
+              
+              IF  AVAILABLE crapnac THEN
+                ASSIGN aux_dsnacion = crapnac.dsnacion.
+              ELSE     
+                ASSIGN aux_dsnacion = "".
+                
               IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
                   RUN sistema/generico/procedures/b1wgen0060.p 
                       PERSISTENT SET h-b1wgen0060.
@@ -999,6 +1042,22 @@ PROCEDURE Busca_Dados:
 
               IF  VALID-HANDLE(h-b1wgen0060) THEN
                   DELETE PROCEDURE h-b1wgen0060.
+                  
+              /* Retornar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                      PERSISTENT SET h-b1wgen0052b.
+
+              ASSIGN aux_cdoedttl = "".
+              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 ( INPUT crapttl.idorgexp,
+                                  OUTPUT aux_cdoedttl,
+                                  OUTPUT glb_cdcritic, 
+                                  OUTPUT glb_dscritic).
+
+              DELETE PROCEDURE h-b1wgen0052b.       
+                  
+                  
           END.
           ELSE
                   ASSIGN aux_cdsexotl = ""
@@ -1014,7 +1073,7 @@ PROCEDURE Busca_Dados:
                  aux_nmmaettl = ""
                  aux_dsestcvl = "".           
 
-      FOR FIRST crapass FIELDS (inpessoa dsdemail)
+      FOR FIRST crapass FIELDS (inpessoa)
           WHERE crapass.cdcooper = glb_cdcooper
             AND crapass.nrdconta = crawcrd.nrdconta NO-LOCK: END.
 

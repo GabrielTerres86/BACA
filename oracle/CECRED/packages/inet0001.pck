@@ -250,28 +250,35 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
   --Tipo de Registro para Limites internet
   TYPE typ_reg_internet IS
     RECORD (idseqttl crapsnh.idseqttl%TYPE
+           ,nrcpfope crapopi.nrcpfope%TYPE
            /* Limite totais */
            ,vllimweb crapsnh.vllimweb%TYPE
            ,vllimpgo crapsnh.vllimpgo%TYPE
            ,vllimtrf crapsnh.vllimtrf%TYPE
            ,vllimted crapsnh.vllimted%TYPE
            ,vllimvrb crapsnh.vllimted%TYPE
+           ,vllimflp crapsnh.vllimflp%TYPE
            /* Limite utilizado */
            ,vlutlweb crapsnh.vllimweb%TYPE
            ,vlutlpgo crapsnh.vllimpgo%TYPE
            ,vlutltrf crapsnh.vllimtrf%TYPE
            ,vlutlted crapsnh.vllimted%TYPE
+           ,vlutlvrb crapsnh.vllimvrb%TYPE
+           ,vlutlflp crapsnh.vllimflp%TYPE
            /* Limite disponivel */
            ,vldspweb crapsnh.vllimweb%TYPE
            ,vldsppgo crapsnh.vllimpgo%TYPE
            ,vldsptrf crapsnh.vllimtrf%TYPE
            ,vldspted crapsnh.vllimted%TYPE
+           ,vldspvrb crapsnh.vllimvrb%TYPE
+           ,vldspflp crapsnh.vllimflp%TYPE     
            /* Limite operacional cadastrado pela cooperativa */
            ,vlwebcop crapsnh.vllimweb%TYPE
            ,vlpgocop crapsnh.vllimpgo%TYPE
            ,vltrfcop crapsnh.vllimtrf%TYPE
            ,vltedcop crapsnh.vllimted%TYPE
-           ,vlvrbcop crapsnh.vllimted%TYPE);
+           ,vlvrbcop crapsnh.vllimted%TYPE
+           ,vlflpcop crapsnh.vllimflp%TYPE );
 
   --Tipo de tabela para limite internet
   TYPE typ_tab_internet IS TABLE OF typ_reg_internet INDEX BY PLS_INTEGER;
@@ -284,7 +291,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
            ,cdageban crapcti.cdageban%TYPE
            ,nrctatrf crapcti.nrctatrf%TYPE
            ,nmtitula VARCHAR2(200)
-           ,nmtitul2 crapass.nmsegntl%TYPE
+           ,nmtitul2 crapttl.nmextttl%TYPE
            ,nrcpfcgc crapcti.nrcpfcgc%TYPE
            ,dscpfcgc VARCHAR2(20)
            ,dstransa VARCHAR2(255)
@@ -340,7 +347,43 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                              ,pr_tab_internet OUT INET0001.typ_tab_internet   --Tabelas de retorno de horarios limite
                              ,pr_cdcritic     OUT INTEGER        --Codigo do erro
                              ,pr_dscritic     OUT VARCHAR2);     -- Descricao do Erro
+  --
+  /* Buscar limites de transacao do preposto*/                              
+  PROCEDURE pc_busca_limites_prepo_trans(pr_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE        --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Preposto
+                                        ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE        --Data do proximo pagamento
+                                        ,pr_dsorigem     IN craplau.dsorigem%TYPE        --Descricao Origem
+                                        ,pr_tab_internet OUT INET0001.typ_tab_internet   --Tabelas de retorno de horarios limite
+                                        ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                        ,pr_dscritic     OUT VARCHAR2);                             
+  --
+  -- Buscar limites operador
+  PROCEDURE pc_busca_limites_opera_trans(pr_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE        --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Operador
+                                        ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE        --Data do proximo pagamento
+                                        ,pr_dsorigem     IN craplau.dsorigem%TYPE        --Descricao Origem
+                                        ,pr_tab_internet OUT INET0001.typ_tab_internet   --Tabelas de retorno de horarios limite
+                                        ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                        ,pr_dscritic     OUT VARCHAR2);
+  --
+  /*Buscar os limites de transacao do operador*/                           
+  PROCEDURE pc_verifica_idastcjt_pfp (pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE --Conta do Associado
+                                     ,pr_idseqttl IN crapttl.idseqttl%type  --> Titularidade do Associado
+                                     ,pr_nrcpfope IN crapass.nrcpfcgc%TYPE  --> CPF do Rep. Legal                                   
+                                     ,pr_dsorigem IN VARCHAR2                --> Codigo Origem
+                                     ,pr_indrowid IN VARCHAR2               --> Lista de Rowid da folha de pagamento
+                                     ,pr_flsolest IN tbfolha_trans_pend.idestouro%TYPE          --> Indicador de solicitacao de estouro de conta (0 – Nao / 1 – Sim)
+                                     ,pr_dsalerta OUT VARCHAR2
+                                     ,pr_cdcritic OUT INTEGER  
+                                     ,pr_dscritic OUT VARCHAR2);
+                                     
 
+  --
   /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
   PROCEDURE pc_verifica_operacao (pr_cdcooper IN crapcop.cdcooper%type  --C¿digo Cooperativa
                                  ,pr_cdagenci IN crapage.cdagenci%type  --Agencia do Associado
@@ -367,7 +410,8 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                  ,pr_tab_limite OUT INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                                  ,pr_tab_internet OUT INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                                  ,pr_cdcritic   OUT INTEGER     --C¿digo do erro
-                                 ,pr_dscritic   OUT VARCHAR2);   --Descricao do erro
+                                 ,pr_dscritic   OUT VARCHAR2 --Descricao do erro
+                                 ,pr_assin_conjunta OUT NUMBER);   --Descricao do erro
 
   /** Chamada para ser utilizada no Progress -
       Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
@@ -443,6 +487,33 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                     ,pr_tab_finalidades OUT typ_tab_finalidades --> Retorno XML finalidades
                                     ,pr_dsretorn        OUT VARCHAR2);   --> Descricao do erro
     
+  /*Procedure para validar reprovacao de transacoes pendentes de um operador*/
+  PROCEDURE pc_verifica_limite_ope_prog (pr_cdcooper     IN crapcop.cdcooper%type  --C¿digo Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE  --Numero da conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE  --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE  --Numero do CPF Operador
+                                        ,pr_cdoperad     IN crapope.cdoperad%TYPE  --Codigo Operador
+                                        ,pr_cddoitem     IN tbgen_trans_pend.cdtransacao_pendente%TYPE -- Cod da transação
+                                        ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE  --Data do proximo pagamento
+                                        ,pr_dsorigem     IN craplau.dsorigem%TYPE  --Descricao Origem
+                                        ,pr_msgretor     OUT VARCHAR2                    
+                                        ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                        ,pr_dscritic     OUT VARCHAR2) ;
+    
+  /*Procedure para validar reprovacao de agendamento com um operador*/
+  PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type  --C¿digo Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE  --Numero da conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE  --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE  --Numero do CPF Operador
+                                        ,pr_cdoperad     IN crapope.cdoperad%TYPE  --Codigo Operador
+                                        ,pr_vllanaut     IN NUMBER -- Valor da transacao
+                                        ,pr_cdtiptra     IN NUMBER
+                                        ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE  --Data do proximo pagamento
+                                        ,pr_dsorigem     IN craplau.dsorigem%TYPE  --Descricao Origem
+                                        ,pr_msgretor     OUT VARCHAR2                    
+                                        ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                        ,pr_dscritic     OUT VARCHAR2);                                                                       
+                                    
     
                                     
 END INET0001;
@@ -455,7 +526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 12/05/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 25/04/2017
   --
   -- Dados referentes ao programa:
   --
@@ -528,7 +599,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --            10/03/2017 - Ajustes na pc_verifica_operacao para liberar agendamento de TED 
   --                         para o ultimo dia util do ano (Tiago/Elton SD586106).
   --
-  --             12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
+  --            25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --		                 crapass, crapttl, crapjur 
+  --						(Adriano - P339).
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -567,7 +642,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     SELECT crapass.cdcooper
           ,crapass.nrdconta
           ,crapass.nmprimtl
-          ,crapass.nmsegntl
           ,crapass.inpessoa
           ,crapass.cdagenci
           ,crapass.vllimcre
@@ -1330,7 +1404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         pr_dscritic := 'Não foi possivel verificar horarios: '|| SQLERRM;    
     END;
   END pc_horario_operacao_prog;
-
+  --
   /* Procedure para buscar os limites para internet */
   PROCEDURE pc_busca_limites (pr_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
                              ,pr_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
@@ -1843,26 +1917,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                     ,pr_cddbanco OUT INTEGER               --Codigo banco
                                     ,pr_dscritic OUT VARCHAR2              --Retorno OK/NOK
                                     ,pr_tab_erro OUT GENE0001.typ_tab_erro) IS --Tabela de retorno de erro
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : pc_valida_conta_destino           Antigo: b1wgen0015.p/valida-conta-destino
-  --  Sistema  : Procedimentos para validar conta de destino da transferencia
-  --  Sigla    : CRED
-  --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 24/05/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Procedimentos para validar conta de destino da transferencia
-  --
-  -- Alterações: 28/07/2015 - Ajustar o tratamento de erros para quando executar o raise o erro seja
-  --                          carregado na tabela de erros e devolvida a rotina que chamou.
-  --                          (Douglas - Chamado 312756)
-  --
-  --             24/05/2016 - M118 - Correção na checagem de existência da CRAPCTI (Marcos-Supero)
-  -- 
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_valida_conta_destino           Antigo: b1wgen0015.p/valida-conta-destino
+    Sistema  : Procedimentos para validar conta de destino da transferencia
+    Sigla    : CRED
+    Autor    : Alisson C. Berrido - Amcom
+    Data     : Junho/2013.                   Ultima atualizacao: 25/04/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Procedimentos para validar conta de destino da transferencia
+  
+   Alterações: 28/07/2015 - Ajustar o tratamento de erros para quando executar o raise o erro seja
+                            carregado na tabela de erros e devolvida a rotina que chamou.
+                            (Douglas - Chamado 312756)
+  
+               24/05/2016 - M118 - Correção na checagem de existência da CRAPCTI (Marcos-Supero)
+
+			   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+		                    crapass, crapttl, crapjur 
+							(Adriano - P339).
+   
+  ---------------------------------------------------------------------------------------------------------------*/
 
   BEGIN
     DECLARE
@@ -1884,6 +1962,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               ,crapcop.fimopstr
         FROM crapcop
         WHERE crapcop.cdagectl = pr_cdagectl;
+
+	  CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE,
+                         pr_nrdconta IN crapttl.nrdconta%TYPE) IS
+      SELECT nmextttl
+        FROM crapttl
+       WHERE crapttl.cdcooper = pr_cdcooper
+         AND crapttl.nrdconta = pr_nrdconta
+         AND crapttl.idseqttl = 2;
+      rw_crapttl cr_crapttl%ROWTYPE;
 
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -2006,8 +2093,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       CLOSE cr_crapcti;
       --Nome do titular
       pr_nmtitula:= rw_crabass.nmprimtl;
+
+	  OPEN cr_crapttl(pr_cdcooper => rw_crabass.cdcooper
+	                 ,pr_nrdconta => rw_crabass.nrdconta);
+
+	  FETCH cr_crapttl INTO rw_crapttl;
+
+	  IF cr_crapttl%FOUND THEN
+
       --Nome do segundo titular
-      pr_nmtitul2:= rw_crabass.nmsegntl;
+        pr_nmtitul2:= rw_crapttl.nmextttl;
+
+	  END IF;
+
+	  CLOSE cr_crapttl;
+
       --Codigo do Banco
       pr_cddbanco:= rw_crabcop.cdbcoctl;
       --Retornar OK
@@ -2023,7 +2123,1402 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
          pr_dscritic:= 'NOK';
     END;
   END pc_valida_conta_destino;
+  --
+  /* Buscar limites de transacao do preposto*/                              
+  PROCEDURE pc_busca_limites_prepo_trans(pr_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE        --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Preposto
+                                        ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE        --Data do proximo pagamento
+                                        ,pr_dsorigem     IN craplau.dsorigem%TYPE        --Descricao Origem
+                                        ,pr_tab_internet OUT INET0001.typ_tab_internet   --Tabelas de retorno de horarios limite
+                                        ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                        ,pr_dscritic     OUT VARCHAR2) IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_limites_preposto       Antigo: 
+    --  Sistema  : Procedure para buscar os limites para preposto - internet
+    --  Sigla    : CRED
+    --  Autor    : Rafael Muniz Monteiro - Mouts
+    --  Data     : Junho/2017.                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -------
+    -- Objetivo  : Procedure para buscar os limites dos preposto para transações da internet
+    
+    -- Atualizacao: 
+    ---------------------------------------------------------------------------------------------------------------
+      /* Cursores Locais */
 
+      --selecionar movimentacoes internet
+      CURSOR cr_crapmvi (pr_cdcooper IN crapmvi.cdcooper%type
+                        ,pr_nrdconta IN crapmvi.nrdconta%type
+                        ,pr_idseqttl IN crapmvi.idseqttl%type
+                        ,pr_dtmvtolt IN crapmvi.dtmvtolt%type) IS
+        SELECT crapmvi.vlmovweb
+              ,crapmvi.vlmovtrf
+              ,crapmvi.vlmovpgo
+              ,crapmvi.vlmovted
+        FROM crapmvi
+        WHERE crapmvi.cdcooper = pr_cdcooper
+        AND   crapmvi.nrdconta = pr_nrdconta
+        AND   (pr_idseqttl = -1 OR (pr_idseqttl <> -1 AND crapmvi.idseqttl = pr_idseqttl))
+        AND   crapmvi.dtmvtolt = pr_dtmvtopg;
+      rw_crapmvi cr_crapmvi%ROWTYPE;
+      --Selecionar informacoes dos lancamentos automaticos
+      CURSOR cr_craplau (pr_cdcooper IN craplau.cdcooper%type
+                        ,pr_nrdconta IN craplau.nrdconta%type
+                        ,pr_idseqttl IN craplau.idseqttl%type
+                        ,pr_dtmvtopg IN craplau.dtmvtopg%type
+                        ,pr_insitlau IN craplau.insitlau%type
+                        ,pr_dsorigem IN craplau.dsorigem%type) IS
+        SELECT craplau.cdcooper
+              ,craplau.dtmvtopg
+              ,craplau.nrdconta
+              ,craplau.cdtiptra
+              ,craplau.vllanaut
+        FROM craplau craplau
+        WHERE craplau.cdcooper = pr_cdcooper
+        AND   craplau.nrdconta = pr_nrdconta
+        AND   (pr_idseqttl = -1 OR (pr_idseqttl <> -1 AND craplau.idseqttl = pr_idseqttl))
+        AND   craplau.dtmvtopg = pr_dtmvtopg
+        AND   craplau.insitlau = pr_insitlau
+        AND   craplau.dsorigem = pr_dsorigem;
+     -- Buscar os pagamentos da folha de pagamento Aprovados para o dia
+     CURSOR cr_crappfp (pr_cdcooper IN craplau.cdcooper%type
+                       ,pr_nrdconta IN craplau.nrdconta%type
+                       ,pr_dtmvtopg IN craplau.dtmvtopg%type) IS
+
+      SELECT nvl(sum(pfp.VLLCTPAG),0) vllctpag
+         FROM crapemp emp
+            , crappfp pfp
+            , crapass ass
+        WHERE emp.cdcooper = pfp.cdcooper
+          AND emp.cdempres = pfp.cdempres
+          AND pfp.cdcooper = pr_cdcooper
+          AND emp.nrdconta = pr_nrdconta
+          AND (TRUNC(pfp.dtmvtolt) = pr_dtmvtopg OR
+               TRUNC(pfp.dtcredit) = pr_dtmvtopg OR
+               TRUNC(pfp.dtdebito) = pr_dtmvtopg OR
+               TRUNC(pfp.dthorcre) = pr_dtmvtopg OR
+               TRUNC(pfp.dthordeb) = pr_dtmvtopg)
+          AND ass.cdcooper = emp.cdcooper
+          AND ass.nrdconta = emp.nrdconta
+          AND pfp.idsitapr = 5 -- Aprovada
+          ;  
+      CURSOR CR_TBCC_LIMITE_PREPOSTO (prc_cdcooper TBCC_LIMITE_PREPOSTO.Cdcooper%type,
+                                      prc_nrdconta TBCC_LIMITE_PREPOSTO.Nrdconta%type,
+                                      prc_nrcpfope TBCC_LIMITE_PREPOSTO.Nrcpf%type ) IS
+        SELECT vllimite_pagto,
+               vllimite_transf,
+               vllimite_ted,
+               vllimite_vrboleto,
+               vllimite_folha
+          FROM TBCC_LIMITE_PREPOSTO
+         WHERE cdcooper = prc_cdcooper
+           AND nrdconta = prc_nrdconta
+           AND nrcpf    = prc_nrcpfope
+        ;      
+      --
+      --Variaveis Locais
+      vr_index        INTEGER;
+      vr_inpessoa     INTEGER;
+      vr_vlutlweb     crapsnh.vllimweb%TYPE;
+      vr_vlutltrf     crapsnh.vllimtrf%TYPE;
+      vr_vlutlpgo     crapsnh.vllimpgo%TYPE;
+      vr_vlutlted     crapsnh.vllimted%TYPE;
+      vr_vlutlvrb     NUMBER;
+      vr_vlutlflp     NUMBER;
+      --
+      vr_tab_vllimweb crapsnh.vllimweb%TYPE;
+      vr_tab_vllimtrf crapsnh.vllimtrf%TYPE;
+      vr_tab_vllimpgo crapsnh.vllimpgo%TYPE;
+      vr_tab_vllimted crapsnh.vllimted%TYPE;
+      vr_tab_vllimvrb crapsnh.vllimted%TYPE;
+      vr_dstextab     craptab.dstextab%TYPE;
+      --
+       
+      --Variaveis de Erro
+      vr_cdcritic     crapcri.cdcritic%TYPE;
+      vr_dscritic     VARCHAR2(4000);
+      --Variaveis Excecao
+      vr_exc_erro EXCEPTION;
+      
+  BEGIN
+    --Inicializar variaveis retorno
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;
+    --Inicializar tabela retorno
+    pr_tab_internet.DELETE;
+
+    --Verificar se o associado existe
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    -- Se n¿o encontrar
+    IF cr_crapass%NOTFOUND THEN
+      -- Fechar o cursor pois haver¿ raise
+      CLOSE cr_crapass;
+      -- Montar mensagem de critica
+      vr_cdcritic:= 0;
+      vr_dscritic:= '2 - Associado nao cadastrado.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    ELSE
+      --Determinar tipo pessoa para busca limite
+      IF rw_crapass.inpessoa > 1 THEN
+        vr_inpessoa:= 2;
+      ELSE
+        vr_inpessoa:= rw_crapass.inpessoa;
+      END IF;
+
+    END IF;
+    -- Fechar o cursor pois haver¿ raise
+    CLOSE cr_crapass;
+    /** Obtem limites da cooperativa **/
+    vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsistem => 'CRED'
+                                            ,pr_tptabela => 'GENERI'
+                                            ,pr_cdempres => 0
+                                            ,pr_cdacesso => 'LIMINTERNT'
+                                            ,pr_tpregist => vr_inpessoa);
+
+    --Se nao encontrou
+    IF vr_dstextab IS NULL THEN
+      pr_cdcritic:= 0;
+      pr_dscritic := '2 - Tabela (LIMINTERNT) nao cadastrada.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --Zerar Variaveis
+    vr_tab_vllimweb:= 0;
+    vr_tab_vllimtrf:= 0;
+    vr_tab_vllimpgo:= 0;
+    vr_tab_vllimted:= 0;
+    vr_tab_vllimvrb:= 0;
+    /** Pessoa fisica **/
+    IF vr_inpessoa = 1 THEN
+      --Limite web
+      vr_tab_vllimweb:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(01,vr_dstextab,';'));
+      --Limite TED
+      vr_tab_vllimted:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(13,vr_dstextab,';'));
+      --Limite Diario
+      vr_tab_vllimvrb:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(15,vr_dstextab,';'));
+                              
+    ELSE
+      --Limite transferencia
+      vr_tab_vllimtrf:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(01,vr_dstextab,';'));
+      --Limite Pagamento
+      vr_tab_vllimpgo:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(06,vr_dstextab,';'));
+      --Limite TED
+      vr_tab_vllimted:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(13,vr_dstextab,';'));
+      --Limite Diario
+      vr_tab_vllimvrb:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(16,vr_dstextab,';'));
+           
+    END IF;
+    --
+    -- Buscar limites preposto
+    vr_index:= pr_idseqttl;
+    -- LIMITES COOPERATIVA
+    pr_tab_internet(vr_index).idseqttl:= pr_idseqttl;
+    pr_tab_internet(vr_index).nrcpfope:= pr_nrcpfope;
+    pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
+    pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
+    pr_tab_internet(vr_index).vltrfcop:= vr_tab_vllimtrf;
+    pr_tab_internet(vr_index).vltedcop:= vr_tab_vllimted;
+    pr_tab_internet(vr_index).vlvrbcop:= vr_tab_vllimvrb;  
+    pr_tab_internet(vr_index).vllimweb:= 0;
+    --
+    pr_tab_internet(vr_index).vllimpgo := 0;
+    pr_tab_internet(vr_index).vllimtrf := 0;
+    pr_tab_internet(vr_index).vllimted := 0;
+    pr_tab_internet(vr_index).vllimvrb := 0;
+    pr_tab_internet(vr_index).vllimflp := 0;
+    /*Valor utilizado*/
+    pr_tab_internet(vr_index).vlutlweb := 0; 
+    pr_tab_internet(vr_index).vlutlpgo := 0;
+    pr_tab_internet(vr_index).vlutltrf := 0;
+    pr_tab_internet(vr_index).vlutlted := 0;
+    pr_tab_internet(vr_index).vlutlvrb := 0;
+    pr_tab_internet(vr_index).vlutlflp := 0;
+           /* Limite disponivel */
+    pr_tab_internet(vr_index).vldspweb := 0;
+    pr_tab_internet(vr_index).vldsppgo := 0;
+    pr_tab_internet(vr_index).vldsptrf := 0;
+    pr_tab_internet(vr_index).vldspted := 0;
+    pr_tab_internet(vr_index).vldspvrb := 0;
+    pr_tab_internet(vr_index).vldspflp := 0;   
+     
+    BEGIN
+      FOR RW_TBCC_LIMITE_PREPOSTO in CR_TBCC_LIMITE_PREPOSTO (pr_cdcooper,
+                                                              pr_nrdconta,
+                                                              pr_nrcpfope) LOOP
+        pr_tab_internet(vr_index).vllimpgo := RW_TBCC_LIMITE_PREPOSTO.VLLIMITE_PAGTO;
+        pr_tab_internet(vr_index).vllimtrf := RW_TBCC_LIMITE_PREPOSTO.VLLIMITE_TRANSF;
+        pr_tab_internet(vr_index).vllimted := RW_TBCC_LIMITE_PREPOSTO.VLLIMITE_TED;
+        pr_tab_internet(vr_index).vllimvrb := RW_TBCC_LIMITE_PREPOSTO.VLLIMITE_VRBOLETO;
+        pr_tab_internet(vr_index).vllimflp := RW_TBCC_LIMITE_PREPOSTO.VLLIMITE_FOLHA;
+      END LOOP;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := '2 - Erro Oracle Cooperativa: '||pr_cdcooper||
+                       ' Nr Conta: '||pr_nrdconta||
+                       ' CPF: '||pr_nrcpfope||
+                       ' '||sqlerrm;
+        RAISE vr_exc_erro;                       
+    END;
+      
+    /** Limite Disponivel (Total - Utilizado) **/
+      --Zerar variaveis
+      vr_vlutlweb:= 0;
+      vr_vlutltrf:= 0;
+      vr_vlutlpgo:= 0;
+      vr_vlutlted:= 0;
+      vr_vlutlflp:= 0;
+      vr_vlutlvrb:= 0;
+
+      /** Acumula valores movimentados pelo titular **/
+      OPEN cr_crapmvi (pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_idseqttl => pr_idseqttl
+                      ,pr_dtmvtolt => pr_dtmvtopg);
+      --Posicionar no primeiro registro
+      FETCH cr_crapmvi INTO rw_crapmvi;
+      --Se encontrou
+      IF cr_crapmvi%FOUND THEN
+        --Valor Utilizado web
+       -- vr_vlutlweb:= rw_crapmvi.vlmovweb;
+        --Valor Utilizado Transferencia
+        vr_vlutltrf:= rw_crapmvi.vlmovtrf;
+        --Valor Utilizado Pagamento
+        vr_vlutlpgo:= rw_crapmvi.vlmovpgo;
+        --Valor Utilizado TED
+        vr_vlutlted:= rw_crapmvi.vlmovted;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_crapmvi;
+
+      --Percorrer todos os lancamentos
+      FOR rw_craplau IN cr_craplau (pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_idseqttl => pr_idseqttl
+                                   ,pr_dtmvtopg => pr_dtmvtopg
+                                   ,pr_insitlau => 1
+                                   ,pr_dsorigem => pr_dsorigem) LOOP
+        IF rw_craplau.cdtiptra IN (1,3,5)  THEN
+          --Acumular valor utilizado transferencia
+          vr_vlutltrf:= vr_vlutltrf + Nvl(rw_craplau.vllanaut,0);
+        ELSIF rw_craplau.cdtiptra = 4 THEN
+          --Acumula valor de TED já agendadas  
+          vr_vlutlted := vr_vlutlted + Nvl(rw_craplau.vllanaut,0);
+        ELSIF rw_craplau.cdtiptra = 6 THEN
+          --Acumula valor de VR Boleto já agendadas 
+          vr_vlutlvrb := nvl(rw_craplau.vllanaut,0);
+        ELSIF rw_craplau.cdtiptra IN (2,10)  THEN
+          --Acumular valor utilizado pagamentos
+          vr_vlutlpgo:= vr_vlutlpgo + Nvl(rw_craplau.vllanaut,0);
+        END IF;
+      END LOOP;
+      -- vr_vlutlflp
+      -- Buscar valores de pagamentos para o tipo folha de pagamento
+      FOR rw_crappfp IN cr_crappfp(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_dtmvtopg => pr_dtmvtopg) LOOP
+          
+        vr_vlutlflp := rw_crappfp.vllctpag;
+      END LOOP;
+         
+      --Se existir valor limite transferencia
+      IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimtrf > 0  THEN
+        --Valor utilizado transferencia
+        pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
+        --Valor disponivel transf. recebe limite menos utilizado transf
+        pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
+      END IF;
+          
+      --Se existir valor limite pagto
+      IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimpgo > 0  THEN
+        --Valor utilizado pagto
+        pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
+        --Valor disponivel pagto. recebe limite menos utilizado pagto
+        pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
+      END IF;
+          
+      --Se existir valor limite ted
+      IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimted > 0  THEN
+        --Valor utilizado ted
+        pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
+        --Valor disponivel ted. recebe limite menos utilizado ted
+        pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
+      END IF;
+        
+
+      --Se existir valor limite Vr Boleto
+      IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimvrb > 0  THEN
+        --Valor utilizado ted
+        pr_tab_internet(vr_index).vlutlvrb:= vr_vlutlvrb;
+        --Valor disponivel ted. recebe limite menos utilizado ted
+        pr_tab_internet(vr_index).vldspvrb:= pr_tab_internet(vr_index).vllimvrb - vr_vlutlvrb;
+      END IF;
+               
+      --Se existir valor limite Folha de pagamento
+      IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimflp > 0  THEN
+        --Valor utilizado Folha de Pagamento
+        pr_tab_internet(vr_index).vlutlflp:= vr_vlutlflp;
+        --Valor disponivel folha de pagamento
+        pr_tab_internet(vr_index).vldspflp:= pr_tab_internet(vr_index).vllimflp - vr_vlutlflp;
+      END IF;             
+
+    EXCEPTION
+       WHEN vr_exc_erro THEN
+         pr_cdcritic:= vr_cdcritic;
+         pr_dscritic:= vr_dscritic;
+       WHEN OTHERS THEN
+         pr_cdcritic:= 0;
+         pr_dscritic:= 'Erro na rotina INET0001.pc_busca_limite_preposto. '||SQLERRM;
+
+  END pc_busca_limites_prepo_trans;
+  
+  --
+  --
+  /*Buscar os limites de transacao do operador*/                             
+  PROCEDURE pc_busca_limites_opera_trans(pr_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE        --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Operador
+                                        ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE        --Data do proximo pagamento
+                                        ,pr_dsorigem     IN craplau.dsorigem%TYPE        --Descricao Origem
+                                        ,pr_tab_internet OUT INET0001.typ_tab_internet   --Tabelas de retorno de horarios limite
+                                        ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                        ,pr_dscritic     OUT VARCHAR2) IS
+
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_limites_operador       Antigo: 
+    --  Sistema  : Procedure para buscar os limites para operador - internet
+    --  Sigla    : CRED
+    --  Autor    : Rafael Muniz Monteiro - Mouts
+    --  Data     : Junho/2017.                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: Sempre que for chamado
+    -- Objetivo  : Procedure para buscar os limites dos operadoroes para transações da internet
+    
+    -- Atualizacao: 
+    ---------------------------------------------------------------------------------------------------------------
+      /* Cursores Locais */
+
+      --selecionar movimentacoes internet
+/*      CURSOR cr_crapmvi (pr_cdcooper IN crapmvi.cdcooper%type
+                        ,pr_nrdconta IN crapmvi.nrdconta%type
+                        ,pr_idseqttl IN crapmvi.idseqttl%type
+                        ,pr_dtmvtolt IN crapmvi.dtmvtolt%type) IS
+        SELECT crapmvi.vlmovweb
+              ,crapmvi.vlmovtrf
+              ,crapmvi.vlmovpgo
+              ,crapmvi.vlmovted
+        FROM crapmvi
+        WHERE crapmvi.cdcooper = pr_cdcooper
+        AND   crapmvi.nrdconta = pr_nrdconta
+        AND   (pr_idseqttl = -1 OR (pr_idseqttl <> -1 AND crapmvi.idseqttl = pr_idseqttl))
+        AND   crapmvi.dtmvtolt = pr_dtmvtopg;
+      rw_crapmvi cr_crapmvi%ROWTYPE;*/
+      --
+      CURSOR cr_crappro (prc_cdcooper IN crappro.cdcooper%type
+                        ,prc_nrdconta IN crappro.nrdconta%type
+                        ,prc_nrcpfope IN crappro.nrcpfope%type
+                        ,prc_dtmvtolt IN crappro.dtmvtolt%type) IS      
+      SELECT pro.cdtippro,
+             pro.vldocmto
+        FROM crappro pro
+       WHERE pro.cdcooper = prc_cdcooper
+         AND pro.nrdconta = prc_nrdconta
+         AND trunc(pro.dtmvtolt) = trunc(prc_dtmvtolt) -- 30 --pr_dtmvtolt
+         AND pro.flgativo        = 1 -- Ativo
+         AND pro.nrcpfope        = prc_nrcpfope
+         AND pro.cdtippro        in (1,2,6,9,13,15,16,17)
+        ; 
+      --        
+      --Selecionar informacoes dos lancamentos automaticos
+      CURSOR cr_craplau (pr_cdcooper IN craplau.cdcooper%type
+                        ,pr_nrdconta IN craplau.nrdconta%type
+                        ,pr_idseqttl IN craplau.idseqttl%type
+                        ,pr_dtmvtopg IN craplau.dtmvtopg%type
+                        ,pr_insitlau IN craplau.insitlau%type
+                        ,pr_dsorigem IN craplau.dsorigem%type
+                        ,pr_nrcpfope IN craplau.nrcpfope%type) IS
+        SELECT craplau.cdcooper
+              ,craplau.dtmvtopg
+              ,craplau.nrdconta
+              ,craplau.cdtiptra
+              ,craplau.vllanaut
+        FROM craplau craplau
+        WHERE craplau.cdcooper = pr_cdcooper
+        AND   craplau.nrdconta = pr_nrdconta
+        AND   (pr_idseqttl = -1 OR (pr_idseqttl <> -1 AND craplau.idseqttl = pr_idseqttl))
+        AND   craplau.dtmvtopg = pr_dtmvtopg
+        AND   craplau.insitlau = pr_insitlau
+        AND   craplau.dsorigem = pr_dsorigem
+        AND   craplau.nrcpfope = pr_nrcpfope;
+     --
+     -- Buscar os pagamentos da folha de pagamento
+     CURSOR cr_crappfp (pr_cdcooper IN craplau.cdcooper%type
+                       ,pr_nrdconta IN craplau.nrdconta%type
+                       ,pr_dtmvtopg IN craplau.dtmvtopg%type
+                       ,pr_nrcpfope IN craplau.nrcpfope%type) IS
+                       
+      SELECT nvl(sum(pfp.VLLCTPAG),0) vllctpag
+         FROM crapemp emp
+            , crappfp pfp
+            , crapass ass
+        WHERE emp.cdcooper = pfp.cdcooper
+          AND emp.cdempres = pfp.cdempres
+          AND pfp.nrcpfapr = pr_nrcpfope
+          AND pfp.cdcooper = pr_cdcooper
+          AND emp.nrdconta = pr_nrdconta
+          AND (TRUNC(pfp.dtmvtolt) = pr_dtmvtopg OR
+               TRUNC(pfp.dtcredit) = pr_dtmvtopg OR
+               TRUNC(pfp.dtdebito) = pr_dtmvtopg OR
+               TRUNC(pfp.dthorcre) = pr_dtmvtopg OR
+               TRUNC(pfp.dthordeb) = pr_dtmvtopg)
+          AND ass.cdcooper = emp.cdcooper
+          AND ass.nrdconta = emp.nrdconta
+          AND pfp.idsitapr = 5 -- Aprovada
+          ;      
+      --
+     CURSOR cr_crapopi (prc_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                        ,prc_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                        ,prc_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Operador
+                        ) IS
+       SELECT opi.vllbolet, --	Valor Limite Boleto, Convenio e Todos os Tributos
+              opi.vllimtrf, --	Valor Limite Transferencia
+              opi.vllimted, --	Valor Limite TED
+              opi.vllimvrb, --	Valor Limite VR Boleto
+              opi.vllimflp  --	Valor Limite Folha de Pagamento
+         FROM crapopi opi
+        WHERE opi.cdcooper = prc_cdcooper
+          AND opi.nrdconta = prc_nrdconta
+          AND opi.nrcpfope = prc_nrcpfope
+         ;      
+      --Variaveis Locais
+      -- Variaveis Operadores
+       
+      vr_index        INTEGER;
+      vr_inpessoa     INTEGER;
+      vr_vlutlweb     crapsnh.vllimweb%TYPE;
+      vr_vlutltrf     crapsnh.vllimtrf%TYPE;
+      vr_vlutlpgo     crapsnh.vllimpgo%TYPE;
+      vr_vlutlted     crapsnh.vllimted%TYPE;
+      vr_vlutlvrb     NUMBER;
+      vr_vlutlflp     NUMBER;
+      --
+      vr_tab_vllimweb crapsnh.vllimweb%TYPE;
+      vr_tab_vllimtrf crapsnh.vllimtrf%TYPE;
+      vr_tab_vllimpgo crapsnh.vllimpgo%TYPE;
+      vr_tab_vllimted crapsnh.vllimted%TYPE;
+      vr_tab_vllimvrb crapsnh.vllimted%TYPE;
+      vr_dstextab     craptab.dstextab%TYPE;
+      --
+       
+      --Variaveis de Erro
+      vr_cdcritic     crapcri.cdcritic%TYPE;
+      vr_dscritic     VARCHAR2(4000);
+      --Variaveis Excecao
+      vr_exc_erro EXCEPTION;
+      
+  BEGIN
+    --Inicializar variaveis retorno
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;
+    --Inicializar tabela retorno
+    pr_tab_internet.DELETE;
+
+    --Verificar se o associado existe
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    -- Se n¿o encontrar
+    IF cr_crapass%NOTFOUND THEN
+      -- Fechar o cursor pois haver¿ raise
+      CLOSE cr_crapass;
+      -- Montar mensagem de critica
+      vr_cdcritic:= 0;
+      vr_dscritic:= '2 - Associado nao cadastrado.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    ELSE
+      --Determinar tipo pessoa para busca limite
+      IF rw_crapass.inpessoa > 1 THEN
+        vr_inpessoa := 2;
+      ELSE
+        vr_inpessoa := rw_crapass.inpessoa;
+      END IF;
+
+    END IF;
+    -- Fechar o cursor pois haver¿ raise
+    CLOSE cr_crapass;
+    /** Obtem limites da cooperativa **/
+    vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsistem => 'CRED'
+                                            ,pr_tptabela => 'GENERI'
+                                            ,pr_cdempres => 0
+                                            ,pr_cdacesso => 'LIMINTERNT'
+                                            ,pr_tpregist => vr_inpessoa);
+
+    --Se nao encontrou
+    IF vr_dstextab IS NULL THEN
+      pr_cdcritic:= 0;
+      pr_dscritic := '2 - Tabela (LIMINTERNT) nao cadastrada.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --Zerar Variaveis
+    vr_tab_vllimweb:= 0;
+    vr_tab_vllimtrf:= 0;
+    vr_tab_vllimpgo:= 0;
+    vr_tab_vllimted:= 0;
+    vr_tab_vllimvrb:= 0;
+    /** Pessoa fisica **/
+    IF vr_inpessoa = 1 THEN
+      --Limite web
+      vr_tab_vllimweb:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(01,vr_dstextab,';'));
+      --Limite TED
+      vr_tab_vllimted:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(13,vr_dstextab,';'));
+      --Limite Diario
+      vr_tab_vllimvrb:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(15,vr_dstextab,';'));
+      -- Incluir o Limite de Folha de Pagamento para a cooperativa
+                              
+                              
+    ELSE
+      --Limite transferencia
+      vr_tab_vllimtrf:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(01,vr_dstextab,';'));
+      --Limite Pagamento
+      vr_tab_vllimpgo:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(06,vr_dstextab,';'));
+      --Limite TED
+      vr_tab_vllimted:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(13,vr_dstextab,';'));
+      --Limite Diario
+      vr_tab_vllimvrb:= GENE0002.fn_char_para_number(
+                          GENE0002.fn_busca_entrada(16,vr_dstextab,';'));
+       -- Incluir o Limite de Folha de Pagamento para a cooperativa
+           
+    END IF;
+    --
+    -- Buscar limites operador
+    vr_index:= pr_idseqttl;
+    pr_tab_internet(vr_index).idseqttl:= pr_idseqttl;
+    pr_tab_internet(vr_index).nrcpfope:= pr_nrcpfope;
+    pr_tab_internet(vr_index).vlwebcop:= vr_tab_vllimweb;
+    pr_tab_internet(vr_index).vlpgocop:= vr_tab_vllimpgo;
+    pr_tab_internet(vr_index).vltrfcop:= vr_tab_vllimtrf;
+    pr_tab_internet(vr_index).vltedcop:= vr_tab_vllimted;
+    pr_tab_internet(vr_index).vlvrbcop:= vr_tab_vllimvrb; 
+    --
+    pr_tab_internet(vr_index).vllimweb := 0;
+    pr_tab_internet(vr_index).vllimpgo := 0;
+    pr_tab_internet(vr_index).vllimtrf := 0;
+    pr_tab_internet(vr_index).vllimted := 0;
+    pr_tab_internet(vr_index).vllimvrb := 0;
+    pr_tab_internet(vr_index).vllimflp := 0;
+    /*Valor utilizado*/
+    pr_tab_internet(vr_index).vlutlweb := 0; 
+    pr_tab_internet(vr_index).vlutlpgo := 0;
+    pr_tab_internet(vr_index).vlutltrf := 0;
+    pr_tab_internet(vr_index).vlutlted := 0;
+    pr_tab_internet(vr_index).vlutlvrb := 0;
+    pr_tab_internet(vr_index).vlutlflp := 0;
+           /* Limite disponivel */
+    pr_tab_internet(vr_index).vldspweb := 0;
+    pr_tab_internet(vr_index).vldsppgo := 0;
+    pr_tab_internet(vr_index).vldsptrf := 0;
+    pr_tab_internet(vr_index).vldspted := 0;
+    pr_tab_internet(vr_index).vldspvrb := 0;
+    pr_tab_internet(vr_index).vldspflp := 0;
+    
+      
+    
+    --
+    BEGIN
+      FOR rw_crapopi IN cr_crapopi(pr_cdcooper
+                                  ,pr_nrdconta
+                                  ,pr_nrcpfope) LOOP
+        pr_tab_internet(vr_index).vllimpgo := rw_crapopi.vllbolet;
+        pr_tab_internet(vr_index).vllimtrf := rw_crapopi.vllimtrf;
+        pr_tab_internet(vr_index).vllimted := rw_crapopi.vllimted;
+        pr_tab_internet(vr_index).vllimvrb := rw_crapopi.vllimvrb;
+        pr_tab_internet(vr_index).vllimflp := rw_crapopi.vllimflp;
+      END LOOP;   
+         
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := '2 - Erro ao buscar os limtes do operador. cooperativa: '||pr_cdcooper||
+                       ' Nr Conta: '||pr_nrdconta||
+                       ' CPF: '||pr_nrcpfope;
+        RAISE vr_exc_erro;
+    END;
+    
+    /** Limite Disponivel (Total - Utilizado) **/
+      --Zerar variaveis
+    vr_vlutlweb:= 0;
+    vr_vlutltrf:= 0;
+    vr_vlutlpgo:= 0;
+    vr_vlutlted:= 0;
+    vr_vlutlvrb:= 0;
+    vr_vlutlflp:= 0;
+
+/*    \** Acumula valores movimentados pelo titular **\
+    OPEN cr_crapmvi (pr_cdcooper => pr_cdcooper
+                    ,pr_nrdconta => pr_nrdconta
+                    ,pr_idseqttl => pr_idseqttl
+                    ,pr_dtmvtolt => pr_dtmvtopg);
+    --Posicionar no primeiro registro
+    FETCH cr_crapmvi INTO rw_crapmvi;
+    --Se encontrou
+    IF cr_crapmvi%FOUND THEN
+      --Valor Utilizado web
+      vr_vlutlweb:= rw_crapmvi.vlmovweb;
+      --Valor Utilizado Transferencia
+      vr_vlutltrf:= rw_crapmvi.vlmovtrf;
+      --Valor Utilizado Pagamento
+      vr_vlutlpgo:= rw_crapmvi.vlmovpgo;
+      --Valor Utilizado TED
+      vr_vlutlted:= rw_crapmvi.vlmovted;
+    END IF;
+    --Fechar Cursor
+    CLOSE cr_crapmvi;*/
+    
+    --
+    
+    /* Tipos de transacoes na tabela crappro
+    -1 - Transferencia 
+    -9 -	TED
+    -2 -	Pagamento
+    -6 -	Pagamento
+    -15 -	Pagamento - Convenio
+    -13 -	Pagamento de GPS
+    -16 -	DARF
+    -17 -	DAS
+    */
+
+    FOR rw_crappro IN cr_crappro(pr_cdcooper,
+                                 pr_nrdconta,
+                                 pr_nrcpfope,
+                                 pr_dtmvtopg) LOOP
+
+      IF rw_crappro.cdtippro IN (2,6,13,15,16,17) THEN -- PAGAMENTO
+        IF rw_crappro.vldocmto < 250000 THEN 
+          vr_vlutlpgo := vr_vlutlpgo + rw_crappro.vldocmto;
+        ELSE -- VR BOLETO
+          vr_vlutlvrb := vr_vlutlvrb + rw_crappro.vldocmto;
+        END IF;
+      ELSIF rw_crappro.cdtippro = 1 THEN -- Tranferencia
+        vr_vlutltrf := vr_vlutltrf + rw_crappro.vldocmto;
+      ELSIF rw_crappro.cdtippro = 9 THEN -- TED
+        vr_vlutlted := vr_vlutlted + rw_crappro.vldocmto;
+      END IF;
+      
+    END LOOP;
+    
+
+    --Percorrer todos os lancamentos
+    FOR rw_craplau IN cr_craplau (pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_idseqttl => pr_idseqttl
+                                 ,pr_dtmvtopg => pr_dtmvtopg
+                                 ,pr_insitlau => 1
+                                 ,pr_dsorigem => pr_dsorigem
+                                 ,pr_nrcpfope => pr_nrcpfope) LOOP
+      IF rw_craplau.cdtiptra IN (1,3,5)  THEN
+        --Acumular valor utilizado transferencia
+        vr_vlutltrf:= vr_vlutltrf + Nvl(rw_craplau.vllanaut,0);
+      ELSIF rw_craplau.cdtiptra = 4 THEN
+        --Acumula valor de TED já agendadas  
+        vr_vlutlted := vr_vlutlted + Nvl(rw_craplau.vllanaut,0);
+      ELSIF rw_craplau.cdtiptra = 6 THEN
+        --Acumula valor de VR Boleto já agendadas 
+        vr_vlutlvrb := nvl(rw_craplau.vllanaut,0);
+      ELSIF rw_craplau.cdtiptra IN (2,10)  THEN
+        --Acumular valor utilizado pagamentos
+        vr_vlutlpgo:= vr_vlutlpgo + Nvl(rw_craplau.vllanaut,0);
+      END IF;
+    END LOOP;
+    --
+    FOR rw_crappfp IN cr_crappfp(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_dtmvtopg => pr_dtmvtopg
+                                ,pr_nrcpfope => pr_nrcpfope) LOOP
+          
+      vr_vlutlflp := rw_crappfp.vllctpag;
+    END LOOP;    
+
+    -- rmm verificar em qual tabela devo buscar para descontar do limite da folha de pagamento
+    --Se existir valor limite transferencia
+    IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimtrf > 0  THEN
+      --Valor utilizado transferencia
+      pr_tab_internet(vr_index).vlutltrf:= vr_vlutltrf;
+      --Valor disponivel transf. recebe limite menos utilizado transf
+      pr_tab_internet(vr_index).vldsptrf:= pr_tab_internet(vr_index).vllimtrf - vr_vlutltrf;
+    END IF;
+          
+    --Se existir valor limite pagto
+    IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimpgo > 0  THEN
+      --Valor utilizado pagto
+      pr_tab_internet(vr_index).vlutlpgo:= vr_vlutlpgo;
+      --Valor disponivel pagto. recebe limite menos utilizado pagto
+      pr_tab_internet(vr_index).vldsppgo:= pr_tab_internet(vr_index).vllimpgo - vr_vlutlpgo;
+    END IF;
+          
+    --Se existir valor limite ted
+    IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimted > 0  THEN
+      --Valor utilizado ted
+      pr_tab_internet(vr_index).vlutlted:= vr_vlutlted;
+      --Valor disponivel ted. recebe limite menos utilizado ted
+      pr_tab_internet(vr_index).vldspted:= pr_tab_internet(vr_index).vllimted - vr_vlutlted;
+    END IF;
+
+    --Se existir valor limite Vr Boleto
+    IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimvrb > 0  THEN
+      --Valor utilizado ted
+      pr_tab_internet(vr_index).vlutlvrb:= vr_vlutlvrb;
+      --Valor disponivel ted. recebe limite menos utilizado ted
+      pr_tab_internet(vr_index).vldspvrb:= pr_tab_internet(vr_index).vllimvrb - vr_vlutlvrb;
+    END IF;
+               
+    --Se existir valor limite Folha de pagamento
+    IF  pr_tab_internet.EXISTS(vr_index) AND pr_tab_internet(vr_index).vllimflp > 0  THEN
+      --Valor utilizado ted
+      pr_tab_internet(vr_index).vlutlflp:= vr_vlutlflp;
+      --Valor disponivel ted. recebe limite menos utilizado ted
+      pr_tab_internet(vr_index).vldspflp:= pr_tab_internet(vr_index).vllimflp - vr_vlutlflp;
+    END IF;             
+
+  EXCEPTION
+     WHEN vr_exc_erro THEN
+       pr_cdcritic:= vr_cdcritic;
+       pr_dscritic:= vr_dscritic;
+     WHEN OTHERS THEN
+       pr_cdcritic:= 0;
+       pr_dscritic:= 'Erro na rotina INET0001.pc_busca_limite_operador. '||SQLERRM;
+  end pc_busca_limites_opera_trans;
+  --
+  PROCEDURE pc_verifica_idastcjt_pfp (pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE --Conta do Associado
+                                     ,pr_idseqttl IN crapttl.idseqttl%type  --> Titularidade do Associado
+                                     ,pr_nrcpfope IN crapass.nrcpfcgc%TYPE  --> CPF do Rep. Legal                                   
+                                     ,pr_dsorigem IN VARCHAR2                --> Codigo Origem
+                                     ,pr_indrowid IN VARCHAR2               --> Lista de Rowid da folha de pagamento
+                                     ,pr_flsolest IN tbfolha_trans_pend.idestouro%TYPE          --> Indicador de solicitacao de estouro de conta (0 – Nao / 1 – Sim)
+                                     ,pr_dsalerta OUT VARCHAR2
+                                     ,pr_cdcritic OUT INTEGER  
+                                     ,pr_dscritic OUT VARCHAR2) IS   -->Codigo do erro
+  /*---------------------------------------------------------------------------------------------------------------
+   Programa : pc_verifica_idastcjt_pfp           Antigo: 
+   Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
+   Sigla    : CRED
+   Autor    : Rafael Muniz Monteiro - Mouts
+   Data     : Junho/2017.                   Ultima atualizacao: 
+  
+  Dados referentes ao programa: Projeto 397
+  
+  Frequencia: -----
+  Objetivo  : Procedure para validar se necessita assinatura conjunta para operarações de folha de
+              pagamento.
+  
+  Alteracoes: 
+            
+  ---------------------------------------------------------------------------------------------------------------*/
+      CURSOR cr_crappfp (prc_indrowid IN VARCHAR2)IS
+        SELECT pfp.dtdebito,
+               pfp.vllctpag
+          FROM crappfp pfp
+         WHERE pfp.rowid like prc_indrowid;
+       --
+       CURSOR cr_crapopi (prc_cdcooper       IN crapcop.cdcooper%TYPE --Codigo Cooperativa
+                         ,prc_nrdconta       IN crapass.nrdconta%TYPE --Conta do Associado
+                         ,prc_nrcpfope       IN crapass.nrcpfcgc%TYPE) IS
+         SELECT 1
+            FROM crapopi opi
+           WHERE opi.cdcooper = prc_cdcooper
+             AND opi.nrdconta = prc_nrdconta
+             AND opi.nrcpfope = prc_nrcpfope
+             AND rownum       = 1;
+       --
+       CURSOR cr_crappfp2 (pr_vr_rowid IN VARCHAR2,
+                           pr_dtdebito IN DATE) IS
+         SELECT nvl(sum(pfp.vllctpag),0) vllctpag
+           FROM crappfp pfp
+          WHERE pfp.rowid like pr_vr_rowid;
+      --
+      -- buscar o numero do CPF
+      CURSOR cr_crapsnh2 (prc_cdcooper crapsnh.cdcooper%type,
+                         prc_nrdconta crapsnh.nrdconta%type,
+                         prc_idseqttl crapsnh.idseqttl%type)IS
+        SELECT c.nrcpfcgc
+          FROM crapsnh c
+         WHERE c.cdcooper = prc_cdcooper
+           AND c.nrdconta = prc_nrdconta
+           AND c.idseqttl = prc_idseqttl
+           AND c.tpdsenha = 1 -- INTERNET
+           ;      
+              
+      --Tipo de Dados para cursor data
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+
+      --Variaveis Locais
+      vr_vldspptl        crapsnh.vllimflp%TYPE ;
+      vr_idseqttl        crapttl.idseqttl%TYPE := 0;
+      va_existe_operador NUMBER(1);
+      vr_dsdmensa        VARCHAR2(100);
+      pr_tab_internet    INET0001.typ_tab_internet;
+      vr_dtdebpfp        crappfp.dtdebito%TYPE;
+      va_nrcpfcgc        crapsnh.nrcpfcgc%type;
+      va_des_reto        VARCHAR2(100);
+      va_dsalerta        VARCHAR2(500);
+      --Tipo da tabela de saldos
+      vr_tab_saldo EXTR0001.typ_tab_saldos;
+      
+      -- Controladores de rowids
+      vr_indrowid  GENE0002.typ_split;
+      vr_indrowid2 GENE0002.typ_split;
+      vr_rowidexe  VARCHAR2(32000);
+      vr_rowid     VARCHAR2(50);
+      vr_rowid2     VARCHAR2(50);
+      vr_vllanmto  crappfp.vllctpag%type;
+      va_data_ant  crappfp.dtdebito%type;
+      va_controle_final BOOLEAN;
+      
+      --Variaveis de Erro
+      vr_cdcritic  crapcri.cdcritic%TYPE;
+      vr_dscritic  VARCHAR2(4000);
+      --Variaveis de Excecao
+      vr_exc_erro  EXCEPTION;
+
+      --Variaveis de Indice
+      --Tabela de memoria de erro
+      vr_tab_erro  GENE0001.typ_tab_erro;
+      --
+      vr_nrdrowid ROWID;
+      vr_dstransa VARCHAR2(100);
+      vr_tp_transa VARCHAR2(100) := 'Folha de Pagamento'; 
+      
+    BEGIN
+      --Inicializar varaivel retorno erro
+      pr_cdcritic:= NULL;
+      pr_dscritic:= NULL;
+      -- variaveis de controle
+      va_data_ant := null;
+      vr_rowidexe := null;
+      vr_idseqttl        := nvl(pr_idseqttl,0);
+      va_existe_operador := 0;
+      va_des_reto        := NULL;
+      va_dsalerta        := NULL;
+      va_nrcpfcgc        := NULL;
+      vr_vllanmto        := 0;      
+      
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      -- Se n¿o encontrar
+      IF cr_crapcop%NOTFOUND THEN
+        -- Fechar o cursor pois havera raise
+        CLOSE cr_crapcop;
+        -- Montar mensagem de critica
+        vr_cdcritic:= 651;
+        vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapcop;
+      END IF;
+      -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se nao encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haver¿ raise
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+      --Verificar se o associado existe
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      -- Se n¿o encontrar
+      IF cr_crapass%NOTFOUND THEN
+        -- Fechar o cursor pois haver¿ raise
+        CLOSE cr_crapass;
+        -- Montar mensagem de critica
+        vr_cdcritic:= 9;
+        vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapass;
+      END IF;
+      --
+      -- Se tiver assinatura conjunta habilitado, buscar  limites do prepos
+      -- ou limites do preposto.
+      -- Quebra a string contendo o rowid separado por virgula
+      vr_indrowid := gene0002.fn_quebra_string(pr_string => pr_indrowid, pr_delimit => ',');
+      --
+      -- LOG VERLOG
+      vr_nrdrowid := NULL;
+      vr_dstransa := 'Validacoes com limites Folha Pag';
+      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => 0
+                          ,pr_dscritic => ''
+                          ,pr_dsorigem => 'INTERNET'
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1 --> TRUE
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                          ,pr_idseqttl => vr_idseqttl
+                          ,pr_nmdatela => 'INTERNET'
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      --
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Parametro CPF do operador'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => pr_nrcpfope);    
+                               
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Tipo Pessoa'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => to_char(rw_crapass.inpessoa)||' Juridico');
+
+      --
+      -- Se for tipo de pessoa juridica, buscar  limites do OPERADOR
+      -- ou limites do PREPOSTO.      
+      IF rw_crapass.inpessoa IN (2,3) THEN
+        -- todos os Rowids selecionados 
+        FOR vr_index IN 1..vr_indrowid.COUNT() LOOP
+          -- ROWID selecionado
+          vr_rowid := vr_indrowid(vr_index);
+          -- buscar informacao Rowid selecionado 
+          FOR rw_crappfp IN cr_crappfp(vr_rowid) LOOP
+            -- Verificar se deve somar o valor ou validara validar os limites
+            IF va_data_ant is null or
+              va_data_ant = rw_crappfp.dtdebito THEN
+              
+              va_data_ant := rw_crappfp.dtdebito;
+              -- somar as quantidades e ir para o proximo registro   
+              vr_vllanmto := vr_vllanmto + rw_crappfp.vllctpag;
+              -- montar uma string com os rowid
+              IF vr_rowidexe IS NULL THEN
+                vr_rowidexe := vr_rowid;
+              ELSE
+                vr_rowidexe := vr_rowidexe ||',' ||vr_rowid;
+              END IF;
+              -- executar se somente encontrar a mesma data
+              va_controle_final := true;
+              
+            ELSE -- mudou a data, portanto validar os limites com as datas processadas
+              -- mudou a data, executar as validacoes de limites com o valor somado anterior
+              gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                       ,pr_nmdcampo => 'Valor da soma lanc'
+                                       ,pr_dsdadant => ''
+                                       ,pr_dsdadatu => vr_vllanmto);
+              -- Verifica se eh operador
+              BEGIN
+                FOR rw_crapopi IN cr_crapopi(pr_cdcooper,
+                                             pr_nrdconta,
+                                             pr_nrcpfope) LOOP
+                  va_existe_operador := 1;
+                END LOOP;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= '1-INET0001.Erro ao buscar operador: '||sqlerrm||  ' rowid: '||vr_indrowid(1);
+                  --Levantar Excecao
+                 RAISE vr_exc_erro;
+              END;             
+              --
+              IF va_existe_operador = 0 THEN -- se for preposto
+                -- Buscar CPF do preposto, para buscar os limites 
+                FOR rw_crapsnh2 IN cr_crapsnh2(pr_cdcooper,
+                                               pr_nrdconta,
+                                               vr_idseqttl) LOOP
+                  va_nrcpfcgc := rw_crapsnh2.nrcpfcgc;
+                END LOOP;               
+                -- log item
+                gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                         ,pr_nmdcampo => 'Tipo usuario'
+                                         ,pr_dsdadant => ''
+                                         ,pr_dsdadatu => 'Preposto');   
+                -- log item
+                gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Data do debito Folha'
+                                         ,pr_dsdadant => ''
+                                         ,pr_dsdadatu => va_data_ant);          
+                -- buscar limites preposto
+                pc_busca_limites_prepo_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                            ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                            ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                            ,pr_nrcpfope     => va_nrcpfcgc  --Numero do CPF
+                                            ,pr_dtmvtopg     => va_data_ant  --Data do debito da folha de pagamento
+                                            ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                            ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                            ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                            ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;        
+                                               
+ 
+              ELSE -- Se for operador
+                -- log item
+                gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                         ,pr_nmdcampo => 'Tipo usuario'
+                                         ,pr_dsdadant => ''
+                                         ,pr_dsdadatu => 'Operador');   
+                -- log item
+                gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                         ,pr_nmdcampo => 'Data do debito Folha'
+                                         ,pr_dsdadant => ''
+                                         ,pr_dsdadatu => va_data_ant); 
+                                              
+                pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                            ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                            ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                            ,pr_nrcpfope     => pr_nrcpfope  --Numero do CPF
+                                            ,pr_dtmvtopg     => va_data_ant  --Data do debito da folha de pagamento
+                                            ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                            ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                            ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                            ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+                             
+                --Se ocorreu erro
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                END IF;        
+              END IF; -- IF verificar operador - buscar limites
+              
+              IF NOT pr_tab_internet.EXISTS(vr_idseqttl) THEN
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Registro de limite para validar assinatura conjunta nao encontrado.';
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;             
+              --
+              -- Limite disponível Folha de  pagamento
+              vr_vldspptl := pr_tab_internet(vr_idseqttl).vldspflp;
+              --
+              -- log item
+              gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                       ,pr_nmdcampo => 'Limite Disponivel'
+                                       ,pr_dsdadant => ''
+                                       ,pr_dsdadatu => vr_vldspptl);  
+                                                                       
+              /** Verifica se pode movimentar em relacao ao que ja foi usado **/
+              IF vr_vllanmto > vr_vldspptl  THEN
+                
+                vr_indrowid2 := gene0002.fn_quebra_string(pr_string => vr_rowidexe, pr_delimit => ',');
+
+                -- Para cada registro selecionado, faremos as validacoes necessarias
+                FOR vr_index IN 1..vr_indrowid2.COUNT() LOOP
+                  -- ROWID do pagamento
+                  vr_rowid2 := vr_indrowid2(vr_index);                
+                  
+                  BEGIN
+                    -- Atualiza o pagamento
+                    UPDATE crappfp
+                       SET crappfp.idsitapr = 6 -- Transacao pendente
+                     WHERE crappfp.rowid = vr_rowid2;
+                  EXCEPTION
+                    WHEN OTHERS THEN
+                      vr_dscritic := 'INET0002 Erro na atualizacao da CRAPPFP (1): ' || SQLERRM;
+                      RAISE vr_exc_erro;
+                  END;                 
+                END LOOP;
+                -- CHAMAR A ROTINA DE PEDENCIA
+                BEGIN
+                  INET0002.pc_cria_trans_pend_folha(pr_cdagenci => 90, 
+                                                    pr_nrdcaixa => 900, 
+                                                    pr_cdoperad => '996', 
+                                                    pr_nmdatela => 'INTERNETBANK', 
+                                                    pr_idorigem => 3, 
+                                                    pr_idseqttl => vr_idseqttl, 
+                                                    pr_nrcpfope => pr_nrcpfope, 
+                                                    pr_nrcpfrep => va_nrcpfcgc, 
+                                                    pr_cdcoptfn => 0, 
+                                                    pr_cdagetfn => 0, 
+                                                    pr_nrterfin => 0, 
+                                                    pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                                    pr_cdcooper => pr_cdcooper, 
+                                                    pr_nrdconta => pr_nrdconta, 
+                                                    pr_flsolest => pr_flsolest, 
+                                                    pr_indrowid => vr_rowidexe, -- Somente os Rowids selecionador da mesma data
+                                                    pr_idastcjt => 1, 
+                                                    pr_cdcritic => vr_cdcritic, 
+                                                    pr_dscritic => vr_cdcritic);
+                  pr_dsalerta := 'Aguardando aprovação dos prepostos, favor verificar nas transações pendentes';
+                  IF vr_cdcritic > 0 OR vr_cdcritic IS NOT NULL THEN
+                    RAISE vr_exc_erro;
+                  END IF; 
+                  --                                                                    
+                    
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_cdcritic:= 0;
+                    vr_dscritic:= 'INET001 - Erro ao chamar pc_cria_trans_pend_folha '||SQLERRM;
+                    RAISE vr_exc_erro;                    
+                END;
+              ELSE
+                -- CHAMAR A ROTINA PARA aprovar
+                BEGIN
+                  FOLH0002.pc_aprovar_pagto_ib(pr_cdcooper => pr_cdcooper, 
+                                               pr_nrdconta => pr_nrdconta, 
+                                               pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                               pr_nrcpfapr => CASE va_existe_operador WHEN 1 
+                                                              THEN pr_nrcpfope
+                                                              ELSE va_nrcpfcgc END, 
+                                               pr_flsolest => pr_flsolest, 
+                                               pr_indrowid => vr_rowidexe, 
+                                               pr_des_reto => va_des_reto, 
+                                               pr_dsalerta => va_dsalerta, 
+                                               pr_dscritic => vr_dscritic);
+                  pr_dsalerta :=  va_dsalerta;
+                  IF  va_des_reto <> 'OK' AND vr_dscritic IS NOT NULL THEN 
+                    RAISE vr_exc_erro;
+                  END IF;                                               
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_cdcritic:= 0;
+                    vr_dscritic:= 'INET001 - Erro ao chamar pc_reprovar_pagto_ib '||SQLERRM;
+                    RAISE vr_exc_erro;                    
+                END;
+              END IF;   
+              --          
+              -- ATUALIZAR AS VARIAVEIS DE CONTROLE
+              -- Gravar as informacoes correntes, da primeira data diferente da processada
+              va_data_ant := rw_crappfp.dtdebito;
+              vr_rowidexe := vr_rowid;
+              vr_vllanmto := rw_crappfp.vllctpag;
+              va_controle_final := false;
+              
+            END IF;  -- fim if principal
+          END LOOP; -- fim for de data e valor
+          --
+        END LOOP; -- Loop do Rowid selecionados na tela
+        --
+        -- Se foi executado para uma data somente rodar no final
+        IF va_controle_final THEN
+          -- mudou a data, executar as validacoes de limites com o valor somado anterior
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Valor da soma lanc'
+                                   ,pr_dsdadant => ''
+                                   ,pr_dsdadatu => vr_vllanmto);
+          -- Verifica se eh operador
+          BEGIN
+            FOR rw_crapopi IN cr_crapopi(pr_cdcooper,
+                                         pr_nrdconta,
+                                         pr_nrcpfope) LOOP
+              va_existe_operador := 1;
+            END LOOP;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= '1-INET0001.Erro ao buscar operador: '||sqlerrm||  ' rowid: '||vr_indrowid(1);
+              --Levantar Excecao
+             RAISE vr_exc_erro;
+          END;             
+          --
+          IF va_existe_operador = 0 THEN -- se for preposto
+            -- Buscar CPF do preposto, para buscar os limites 
+            FOR rw_crapsnh2 IN cr_crapsnh2(pr_cdcooper,
+                                           pr_nrdconta,
+                                           vr_idseqttl) LOOP
+              va_nrcpfcgc := rw_crapsnh2.nrcpfcgc;
+            END LOOP;               
+            -- log item
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Tipo usuario'
+                                     ,pr_dsdadant => ''
+                                     ,pr_dsdadatu => 'Preposto');   
+            -- log item
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                      ,pr_nmdcampo => 'Data do debito Folha'
+                                     ,pr_dsdadant => ''
+                                     ,pr_dsdadatu => va_data_ant);          
+            -- buscar limites preposto
+            pc_busca_limites_prepo_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                        ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                        ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     => va_nrcpfcgc  --Numero do CPF
+                                        ,pr_dtmvtopg     => va_data_ant  --Data do debito da folha de pagamento
+                                        ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                        ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                        ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                        ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+            --Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;        
+                                               
+ 
+          ELSE -- Se for operador
+            -- log item
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Tipo usuario'
+                                     ,pr_dsdadant => ''
+                                     ,pr_dsdadatu => 'Operador');   
+            -- log item
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Data do debito Folha'
+                                     ,pr_dsdadant => ''
+                                     ,pr_dsdadatu => va_data_ant); 
+                                              
+            pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                        ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                        ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     => pr_nrcpfope  --Numero do CPF
+                                        ,pr_dtmvtopg     => va_data_ant  --Data do debito da folha de pagamento
+                                        ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                        ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                        ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                        ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+                             
+            --Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;        
+          END IF; -- IF verificar operador - buscar limites
+              
+          IF NOT pr_tab_internet.EXISTS(vr_idseqttl) THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Registro de limite para validar assinatura conjunta nao encontrado.';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;             
+          --
+          -- Limite disponível Folha de  pagamento
+          vr_vldspptl := pr_tab_internet(vr_idseqttl).vldspflp;
+          --
+          -- log item
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Limite Disponivel'
+                                   ,pr_dsdadant => ''
+                                   ,pr_dsdadatu => vr_vldspptl);  
+                                                                       
+          /** Verifica se pode movimentar em relacao ao que ja foi usado **/
+          IF vr_vllanmto > vr_vldspptl  THEN
+            
+            vr_indrowid2 := gene0002.fn_quebra_string(pr_string => vr_rowidexe, pr_delimit => ',');
+            -- Para cada registro selecionado, faremos as validacoes necessarias
+            FOR vr_index IN 1..vr_indrowid2.COUNT() LOOP
+              -- ROWID do pagamento
+              vr_rowid2 := vr_indrowid2(vr_index);                
+                  
+              BEGIN
+                -- Atualiza o pagamento
+                UPDATE crappfp
+                   SET crappfp.idsitapr = 6 -- Transacao pendente
+                 WHERE crappfp.rowid = vr_rowid2;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'INET0002 Erro na atualizacao da CRAPPFP (1): ' || SQLERRM;
+                  RAISE vr_exc_erro;
+              END;                 
+            END LOOP;             
+            -- CHAMAR A ROTINA DE PEDENCIA
+            BEGIN
+              INET0002.pc_cria_trans_pend_folha(pr_cdagenci => 90, 
+                                                pr_nrdcaixa => 900, 
+                                                pr_cdoperad => '996', 
+                                                pr_nmdatela => 'INTERNETBANK', 
+                                                pr_idorigem => 3, 
+                                                pr_idseqttl => vr_idseqttl, 
+                                                pr_nrcpfope => pr_nrcpfope, 
+                                                pr_nrcpfrep => va_nrcpfcgc, 
+                                                pr_cdcoptfn => 0, 
+                                                pr_cdagetfn => 0, 
+                                                pr_nrterfin => 0, 
+                                                pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                                pr_cdcooper => pr_cdcooper, 
+                                                pr_nrdconta => pr_nrdconta, 
+                                                pr_flsolest => pr_flsolest, 
+                                                pr_indrowid => vr_rowidexe, -- Somente os Rowids selecionador da mesma data
+                                                pr_idastcjt => 1, 
+                                                pr_cdcritic => vr_cdcritic, 
+                                                pr_dscritic => vr_cdcritic);
+              pr_dsalerta := 'Aguardando aprovação dos prepostos, favor verificar nas transações pendentes';
+              IF vr_cdcritic > 0 OR vr_cdcritic IS NOT NULL THEN
+                RAISE vr_exc_erro;
+              END IF;                                                    
+                    
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'INET001 - Erro ao chamar pc_cria_trans_pend_folha '||SQLERRM;
+                RAISE vr_exc_erro;                    
+            END;
+          ELSE
+            -- CHAMAR A ROTINA PARA aprovar
+            BEGIN
+              FOLH0002.pc_aprovar_pagto_ib(pr_cdcooper => pr_cdcooper, 
+                                           pr_nrdconta => pr_nrdconta, 
+                                           pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                           pr_nrcpfapr => CASE va_existe_operador WHEN 1 
+                                                          THEN pr_nrcpfope
+                                                          ELSE va_nrcpfcgc END, 
+                                           pr_flsolest => pr_flsolest, 
+                                           pr_indrowid => vr_rowidexe, 
+                                           pr_des_reto => va_des_reto, 
+                                           pr_dsalerta => va_dsalerta, 
+                                           pr_dscritic => vr_dscritic);
+              pr_dsalerta :=  va_dsalerta;                                  
+              IF  va_des_reto <> 'OK' AND vr_dscritic IS NOT NULL THEN 
+                RAISE vr_exc_erro;
+              END IF;                                               
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'INET001 - Erro ao chamar pc_reprovar_pagto_ib '||SQLERRM;
+                RAISE vr_exc_erro;                    
+            END;
+          END IF;
+            
+        END IF;   
+        COMMIT;     
+      END IF; -- Validar se esá habilitado assinatura conjunta      
+
+    EXCEPTION
+       WHEN vr_exc_erro THEN
+         pr_cdcritic:= vr_cdcritic;
+         pr_dscritic:= vr_dscritic;
+       WHEN OTHERS THEN
+         pr_cdcritic:= 0;
+         pr_dscritic:= 'Erro na rotina INET0001.pc_verifica_idastcjt_pfp. '||SQLERRM;
+         
+         btch0001.pc_log_internal_exception(pr_cdcooper => pr_cdcooper);
+         
+  END pc_verifica_idastcjt_pfp;  
+  --
   /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
   PROCEDURE pc_verifica_operacao (pr_cdcooper IN crapcop.cdcooper%type  --C¿digo Cooperativa
                                  ,pr_cdagenci IN crapage.cdagenci%type  --Agencia do Associado
@@ -2050,7 +3545,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                  ,pr_tab_limite OUT INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                                  ,pr_tab_internet OUT INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                                  ,pr_cdcritic   OUT INTEGER     --C¿digo do erro
-                                 ,pr_dscritic   OUT VARCHAR2) IS   --Descricao do erro
+                                 ,pr_dscritic   OUT VARCHAR2 --Descricao do erro
+                                 ,pr_assin_conjunta OUT NUMBER) IS   
   /*---------------------------------------------------------------------------------------------------------------
     Programa : pc_verifica_operacao           Antigo: b1wgen0015.p/verifica_operacao
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
@@ -2120,6 +3616,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 			  13/06/2017 - Alteração na mensagem de "Conta destino nao habilitada para receber valores da transferencia."
 			               para "Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online"
 						   (Rafael Monteiro - Mouts - 690752)
+
+              04/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397),
+                           Incluído novas regras para definir se deve seguir o fluxo de aprovação
+                           em transações pendentes ou não de acordo com o limite disponível diário
+                           de preposto ou operador para contas PJ.              
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -2169,6 +3670,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            AND snh.cdsitsnh = pr_cdsitsnh;
 
       rw_crapsnh cr_crapsnh%ROWTYPE ;     
+      --
+      -- buscar o numero do CPF
+      CURSOR cr_crapsnh2 (prc_cdcooper crapsnh.cdcooper%type,
+                         prc_nrdconta crapsnh.nrdconta%type,
+                         prc_idseqttl crapsnh.idseqttl%type)IS
+        SELECT c.nrcpfcgc
+          FROM crapsnh c
+         WHERE c.cdcooper = prc_cdcooper
+           AND c.nrdconta = prc_nrdconta
+           AND c.idseqttl = prc_idseqttl
+           AND c.tpdsenha = 1 -- INTERNET
+           ;
+
+	  -- Verifica se o CPF eh de um operador
+      CURSOR cr_crapopi (prc_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                        ,prc_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                        ,prc_nrcpfope     IN crapopi.nrcpfope%TYPE        --Numero do CPF Operador
+                        ) IS
+       SELECT 1
+         FROM crapopi opi
+        WHERE opi.cdcooper = prc_cdcooper
+          AND opi.nrdconta = prc_nrdconta
+          AND opi.nrcpfope = prc_nrcpfope
+         ;      
+
+	  -- Verifica se a conta possui operador     
+     CURSOR cr_crapopi2 (prc_cdcooper     IN crapcop.cdcooper%type        --C¿digo Cooperativa
+                        ,prc_nrdconta     IN crapass.nrdconta%TYPE        --Numero da conta
+                        ) IS
+       SELECT 1
+         FROM crapopi opi
+        WHERE opi.cdcooper = prc_cdcooper
+          AND opi.nrdconta = prc_nrdconta
+          AND rownum       = 1 
+         ;       
 
       --Variaveis Locais
       vr_vlsldisp  NUMBER;
@@ -2192,8 +3728,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_cdcopctl  crapcop.cdcooper%TYPE;
       vr_flvldrep  NUMBER(1) := 0;
       vr_idseqttl  crapttl.idseqttl%TYPE := 0;
+      va_existe_operador NUMBER(1);
+	  vr_operador_conta  NUMBER(1);
       vr_dsdmensa  VARCHAR2(100);
-
+      va_nrcpfcgc  crapsnh.nrcpfcgc%type;
       --Variaveis de Erro
       vr_cdcritic  crapcri.cdcritic%TYPE;
       vr_dscritic  VARCHAR2(4000);
@@ -2205,10 +3743,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_tab_erro  GENE0001.typ_tab_erro;
       --Tipo da tabela de saldos
       vr_tab_saldo EXTR0001.typ_tab_saldos;
+      --
+      vr_nrdrowid ROWID;
+      vr_dstransa VARCHAR2(100);
+      --vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+      vr_tp_transa VARCHAR2(100) := null;     
+      --
     BEGIN
       --Inicializar varaivel retorno erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
+      pr_assin_conjunta := 0; -- Id do fluxo de aprovacao Assinatura conjunta
 
       /** Monta descricao da transacao **/
       pr_dstransa:= 'Validar ';
@@ -2221,22 +3766,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       --Se for transferencia
       IF pr_tpoperac = 1  THEN /** Operacao de Transferencia **/
         IF pr_cdtiptra = 1 THEN
+          vr_tp_transa := 'Transf';
           pr_dstransa:= pr_dstransa || 'Transferencia de Valores';
           vr_dsdmensa:= 'essa transferencia';
         ELSIF pr_cdtiptra = 3 THEN
+          vr_tp_transa := 'Cred Sal';
           pr_dstransa:= pr_dstransa || 'Credito de Salario';
           vr_dsdmensa:= 'esse pagamento';
         END IF;
       ELSIF pr_tpoperac = 4 THEN
+        vr_tp_transa := 'TED';
         pr_dstransa:= pr_dstransa || 'TED';
         vr_dsdmensa:= 'essa transferencia';
       ELSIF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN  /** Operacao de Pagamento / DARF/DAS **/
+        vr_tp_transa := 'Pagamento';
         pr_dstransa:= pr_dstransa || 'Pagamento de Titulos e Faturas';
         vr_dsdmensa:= 'esse pagamento';
       ELSIF pr_tpoperac = 5 THEN  /** Operacao de Transferencia Intercooperativa **/
+        vr_tp_transa := 'Transf Inter';
         pr_dstransa:= pr_dstransa || 'Transferencia Intercooperativa';
         vr_dsdmensa:= 'essa transferencia';
       ELSIF pr_tpoperac = 6 THEN  /** Operacao de Pagamento VR-Boleto **/
+        vr_tp_transa := 'VR Boletos ';
         pr_dstransa:= pr_dstransa || 'Pagamento de VR-Boletos ';
         vr_dsdmensa:= 'esse pagamento';
       END IF;
@@ -2302,27 +3853,158 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      --
+      -- LOG VERLOG
+      vr_nrdrowid := NULL;
+      vr_dstransa := 'Validacoes com limites de transacoes';
+      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => ''
+                          ,pr_dsorigem => pr_dsorigem
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1 --> TRUE
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                          ,pr_idseqttl => pr_idseqttl
+                          ,pr_nmdatela => pr_nmdatela
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      --
+                                 
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Parametro CPF do operador'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => pr_nrcpfope);      
+      -- log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Tipo Transacao'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_tp_transa); 
 
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'id titular'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => pr_idseqttl);               
+      --
       vr_idseqttl := pr_idseqttl;
+      va_existe_operador := 0;
+      --
+      -- Se for tipo de pessoa juridica, buscar  limites do prepos
+      -- ou limites do preposto.
+      IF rw_crapass.inpessoa IN (2,3) THEN
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Tipo Pessoa'
+                                 ,pr_dsdadant => ''
+                                 ,pr_dsdadatu => TO_CHAR(rw_crapass.inpessoa)||' Juridica');   
+        FOR rw_cr_crapopi in cr_crapopi (pr_cdcooper
+                                        ,pr_nrdconta
+                                        ,pr_nrcpfope) LOOP
 
-      IF rw_crapass.idastcjt = 1 AND pr_idseqttl = 1 THEN 
-        OPEN cr_crapsnh(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_tpdsenha => 1           
-                       ,pr_cdsitsnh => 1);
+          va_existe_operador := 1;                        
+        END LOOP;
                        
-        FETCH cr_crapsnh INTO rw_crapsnh;
+        -- Se for preposto
+        IF va_existe_operador = 0 THEN
+          -- log item
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Tipo usuario'
+                                   ,pr_dsdadant => ''
+                                   ,pr_dsdadatu => 'Preposto');      
 
-        IF cr_crapsnh%NOTFOUND THEN
-          CLOSE cr_crapsnh;
-          vr_idseqttl := pr_idseqttl;
-        ELSE                               
-          CLOSE cr_crapsnh;
-          vr_idseqttl := rw_crapsnh.idseqttl;
+          va_nrcpfcgc := null;
+          IF pr_nrcpfope IS NULL OR
+             pr_nrcpfope <= 0 THEN
+            FOR rw_crapsnh2 IN cr_crapsnh2(pr_cdcooper,
+                                           pr_nrdconta,
+                                           vr_idseqttl) LOOP
+              va_nrcpfcgc := rw_crapsnh2.nrcpfcgc;
+            END LOOP;     
+          END IF;
+          -- log item
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'CPF Preposto'
+                                   ,pr_dsdadant => ''
+                                   ,pr_dsdadatu => va_nrcpfcgc);  
+          -- log item
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Data Prox Pagamento'
+                                   ,pr_dsdadant => ''
+                                   ,pr_dsdadatu => pr_dtmvtopg);              
+          -- Se o preposto tem assinatura conjunta, buscar do limite dele
+          IF rw_crapass.idastcjt = 1 THEN
+            -- buscar limites preposto
+            pc_busca_limites_prepo_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                        ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                        ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                        ,pr_nrcpfope	   => NVL(va_nrcpfcgc,pr_nrcpfope)  --Numero do CPF
+                                        ,pr_dtmvtopg     => pr_dtmvtopg  --Data do proximo pagamento
+                                        ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                        ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                        ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                        ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+              --Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;        
+          ELSE -- caso nao for assinatura conjunta, buscar do limite da conta
+            /* Buscar Limites da internet DA CONTA */
+            pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                             ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                             ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                             ,pr_flglimdp     => TRUE         --Indicador limite deposito
+                             ,pr_dtmvtopg     => pr_dtmvtopg  --Data do proximo pagamento
+                             ,pr_flgctrag     => pr_flgctrag  --Indicador validacoes
+                             ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                             ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                             ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                             ,pr_dscritic     => vr_dscritic); --Descricao do erro;
+            --Se ocorreu erro
+            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF; -- Validar se esá habilitado assinatura conjunta            
         END IF;
+        ELSE -- Se for operador
+          -- log item
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Tipo usuario'
+                                   ,pr_dsdadant => ''
+                                   ,pr_dsdadatu => 'Operador');
+          -- log item
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Data Prox Pagamento'
+                                   ,pr_dsdadant => ''
+                                   ,pr_dsdadatu => pr_dtmvtopg);
+                                                                                  
+          -- Buscar limites operador do sistema
+          pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                      ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                      ,pr_idseqttl     => vr_idseqttl  --Identificador Sequencial titulo
+                                      ,pr_nrcpfope	   => pr_nrcpfope  --Numero do CPF
+                                      ,pr_dtmvtopg     => pr_dtmvtopg  --Data do proximo pagamento
+                                      ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                      ,pr_tab_internet => pr_tab_internet --Tabelas de retorno de horarios limite
+                                      ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                      ,pr_dscritic     => vr_dscritic); --Descricao do erro;
 
+          --Se ocorreu erro
+          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;        
       END IF;
-
+      ELSE  
+        -- Log item 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Tipo Pessoa'
+                                 ,pr_dsdadant => ''
+                                 ,pr_dsdadatu => 'Fisica');
+        -- log item
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Data Prox Pagamento'
+                                 ,pr_dsdadant => ''
+                                 ,pr_dsdadatu => pr_dtmvtopg);        
       /* Buscar Limites da internet */
       pc_busca_limites (pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
                        ,pr_nrdconta     => pr_nrdconta  --Numero da conta
@@ -2338,7 +4020,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_erro;
+        END IF; -- Validar se esá habilitado assinatura conjunta                                      
+
       END IF;
+
 
       /** Obtem limites do titular **/
       IF NOT pr_tab_internet.EXISTS(vr_idseqttl) THEN
@@ -2347,6 +4032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
+      --
 
       IF pr_tpoperac = 6 THEN /* VR Boleto */
         --Saldo todos os titulares
@@ -2408,6 +4094,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END IF;
       END IF;
 
+      -- LOG dos limites
+      -- log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Saldo Dispon'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_vldspptl); 
+      -- log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Saldo Todos Titulares'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_vldspttl); 
+      -- log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Limite Diario'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_vllimptl); 
+      -- log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Limite Para Internet'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_vllimttl); 
+      -- log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Limite Ope Coop'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_vllimcop);                                
+                                                                                                                            
       --Se o limite estiver zerado
       IF vr_vllimcop = 0  THEN
         vr_cdcritic:= 0;
@@ -2456,7 +4169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
 
       --Se o limite estiver zerado
-      IF vr_vllimptl = 0 OR vr_vllimttl = 0 THEN
+      IF (vr_vllimptl = 0 OR vr_vllimttl = 0) AND rw_crapass.inpessoa = 1 THEN
         vr_cdcritic:= 0;
         vr_dscritic:= 'Limite para internet nao cadastrado. Entre em contato com seu PA.';
         --Levantar Excecao
@@ -2543,6 +4256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       --Se for transferencia ou ted
       IF pr_tpoperac IN (1,4,5) THEN
         
+        /** Data do agendamento nao pode ser o ultimo dia util do ano **/
         IF pr_idagenda = 2  AND
            pr_tpoperac <> 4 AND 
            pr_dtmvtopg = vr_dtdialim THEN
@@ -2626,7 +4340,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
                IF cr_craptco_trf%FOUND THEN
                  vr_cdcritic := 0;
-                 vr_dscritic := 'Conta destino nao habilitada  para receber valores da transferencia.';
+                 --vr_dscritic := 'Conta destino nao habilitada  para receber valores da transferencia.';
+                 vr_dscritic := '1-Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online.';
                  --Levantar Excecao
                  RAISE vr_exc_erro;
                END IF;
@@ -2638,7 +4353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
              vr_cdcopctl = 17 THEN						  
               vr_cdcritic := 0;
               --vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
-			  vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
+              vr_dscritic := '2-Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
               --Levantar Excecao
               RAISE vr_exc_erro;
             END IF;
@@ -2658,7 +4373,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF cr_crapcti%FOUND AND rw_crapcti.insitcta <> 2 THEN  /** Ativa **/
             vr_cdcritic:= 0;
             --vr_dscritic:= 'Conta destino nao habilitada para receber valores da transferencia.';
-			vr_dscritic := 'Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
+            vr_dscritic := '3-Antes de realizar essa transferencia, e necessario ativar a conta do favorecido pela Conta Online';
             
             --Fechar Cursor
             CLOSE cr_crapcti;
@@ -2746,7 +4461,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
         END IF;
       END IF;
-      
+      -- log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Valor da Transacao'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => pr_vllanmto);                                
       --Se o valor da transacao for zero
       IF pr_vllanmto = 0 THEN
         vr_cdcritic:= 0;
@@ -2756,7 +4475,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
       
       /** Verifica se pode movimentar o valor desejado - limite diario **/
-      IF  pr_vllanmto > vr_vllimptl  THEN
+      IF  pr_vllanmto > vr_vllimptl AND rw_crapass.inpessoa = 1 THEN
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
         --Levantar Excecao
@@ -2770,7 +4489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
-      
+      -- projeto 397
       /** Verifica se titular tem limite para movimentar o valor **/
       IF rw_crapass.inpessoa = 1 AND pr_idseqttl > 1 AND pr_vllanmto > vr_vllimttl THEN
         vr_cdcritic:= 0;
@@ -2780,12 +4499,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
       
       /** Verifica se pode movimentar em relacao ao que ja foi usado **/
-      /** no dia por todos os titulares                              **/
-      IF pr_vllanmto > vr_vldspptl  THEN
+      /** no dia por todos os titulares 
+       **/
+      IF pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa = 1 THEN
         vr_cdcritic:= 0;
         vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
         --Levantar Excecao
         RAISE vr_exc_erro;
+      END IF;
+      
+      vr_operador_conta := 0;
+      FOR rw_cr_crapopi2 in cr_crapopi2(pr_cdcooper
+                                      ,pr_nrdconta) LOOP
+
+        vr_operador_conta := 1;                        
+      END LOOP;
+      -- SE NAO FOR ASSINATURA E NAO TIVER OPERADOR E ULTRAPSSOU O LIMITE DA CONTA, MOSTRAR CRITICA
+      IF rw_crapass.idastcjt = 0 AND vr_operador_conta = 0 AND
+        pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';
+        RAISE vr_exc_erro;
+      ELSIF rw_crapass.idastcjt = 0 AND pr_nrcpfope <= 0 AND
+        pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'O saldo do seu limite diario e insuficiente para ' || vr_dsdmensa || '.';        
+        RAISE vr_exc_erro;
+      ELSIF pr_vllanmto > vr_vldspptl AND rw_crapass.inpessoa IN (2,3) THEN
+        pr_assin_conjunta := 1; -- Deverá gerar fluxo de aprovação assinatura conjunta
       END IF;
       
       /** Verifica se pode movimentar em relacao ao que ja foi usado **/
@@ -2841,7 +4582,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           ELSE
             --Total disponivel recebe valor disponivel + limite credito
             vr_vlsldisp:= nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
-            
+            -- log item
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Saldo disp mais Limite Credito'
+                               ,pr_dsdadant => ''
+                               ,pr_dsdadatu => vr_vlsldisp);                                            
 			      --Se o saldo nao for suficiente
             IF pr_vllanmto > vr_vlsldisp THEN
               --Montar mensagem erro
@@ -3126,10 +4871,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     vr_tab_limite     INET0001.typ_tab_limite;
     vr_tab_internet   INET0001.typ_tab_internet;
     vr_flsgproc       PLS_INTEGER;
+    vr_assin_conjunta number(1);
     -- Variaveis de XML 
     vr_xml_temp VARCHAR2(32767);
+    vr_nrcpfope crapopi.nrcpfope%TYPE;
     
   BEGIN
+    vr_nrcpfope := pr_nrcpfope;
     
     /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
     pc_verifica_operacao (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
@@ -3156,7 +4904,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                          ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                          ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                          ,pr_cdcritic     => pr_cdcritic         --> Codigo do erro
-                         ,pr_dscritic     => pr_dscritic);       --> Descricao do erro
+                         ,pr_dscritic     => pr_dscritic
+                         ,pr_assin_conjunta => vr_assin_conjunta); 
     -- se possui codigo, porém não possui descrição                     
     IF nvl(pr_cdcritic,0) > 0 AND 
        TRIM(pr_dscritic) IS NULL THEN
@@ -3280,30 +5029,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                        ,pr_dscritic OUT VARCHAR2               --> Descrição da critica
                                        ,pr_tab_contas_cadastradas OUT typ_tab_contas_cadastradas --> Retorno XML contas cadastradas
                                        ,pr_dsretorn               OUT VARCHAR2) IS -- Descricao do erro
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : pc_con_contas_cadastradas     Antigo: b1wgen0015.p.consulta-contas-cadastradas
-  --  Sistema  : Procedure para consulta de contas de trnsf cadastradas 
-  --  Sigla    : CRED
-  --  Autor    : Carlos Henrique
-  --  Data     : março/2016.                   Ultima atualizacao: 20/02/2017
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Alteracoes: 06/05/2016 - Inclusao do nmsegntl, pesquisa na crapass pelo nome no
-  --                          cr_crapcti e exibicao das contas bloqueadas para a CECRED.
-  --                          (Jaison/Marcos - SUPERO)
-  --
-  --             25/05/2016 - Ajuste realizados:
-  --                          -> Alterado o index utilizado para montar a tabela de faovericos a fim de 
-  --                             possibilitar a ordenação por nome de favorecido;
-  --                          -> Utilizar rotina genérica para consultar registro da craptab;
-  --                          (Adriano - M117).
-  --
-  --             20/02/2017 - Ajuste no problema que não filtrava os favorecidos, conforme
-  --                          relatado no chamado 605338. (Kelvin)
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+  
+    Programa : pc_con_contas_cadastradas     Antigo: b1wgen0015.p.consulta-contas-cadastradas
+    Sistema  : Procedure para consulta de contas de trnsf cadastradas 
+    Sigla    : CRED
+    Autor    : Carlos Henrique
+    Data     : março/2016.                   Ultima atualizacao: 25/04/2017
+  
+   Dados referentes ao programa:
+  
+   Alteracoes: 06/05/2016 - Inclusao do nmsegntl, pesquisa na crapass pelo nome no
+                            cr_crapcti e exibicao das contas bloqueadas para a CECRED.
+                            (Jaison/Marcos - SUPERO)
+  
+               25/05/2016 - Ajuste realizados:
+                            -> Alterado o index utilizado para montar a tabela de faovericos a fim de 
+                               possibilitar a ordenação por nome de favorecido;
+                            -> Utilizar rotina genérica para consultar registro da craptab;
+                            (Adriano - M117).
+  
+               20/02/2017 - Ajuste no problema que não filtrava os favorecidos, conforme
+                            relatado no chamado 605338. (Kelvin)
+
+			   25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+  
+  ---------------------------------------------------------------------------------------------------------------*/
   -------------------------> VARIAVEIS <-------------------------
     
   BEGIN
@@ -3375,7 +5128,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     SELECT dtdemiss
           ,inpessoa
           ,nmprimtl
-          ,nmsegntl
           ,nrcpfcgc
           ,nrdconta
       FROM crapass
@@ -3384,12 +5136,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     rw_crapass cr_crapass%ROWTYPE;
 
     CURSOR cr_crapttl (pr_cdcooper IN crapcop.cdcooper%TYPE,
-                       pr_nrdconta IN crapass.nrdconta%TYPE) IS
+                       pr_nrdconta IN crapass.nrdconta%TYPE,
+					   pr_idseqttl IN crapttl.idseqttl%TYPE) IS
     SELECT nmextttl
       FROM crapttl
      WHERE crapttl.cdcooper = pr_cdcooper
        AND crapttl.nrdconta = pr_nrdconta
-       AND crapttl.idseqttl = 1;
+       AND crapttl.idseqttl = pr_idseqttl;
     rw_crapttl cr_crapttl%ROWTYPE;
 
     CURSOR cr_crapban (pr_cddbanco IN crapcti.cddbanco%TYPE) IS
@@ -3486,7 +5239,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           IF rw_crapass.inpessoa = 1 THEN
             
             OPEN cr_crapttl(pr_cdcooper => rw_crapcop_cdagectl.cdcooper,
-                            pr_nrdconta => to_number(rw_crapcti.nrctatrf));
+                            pr_nrdconta => to_number(rw_crapcti.nrctatrf),
+							pr_idseqttl => 1);
                             
             FETCH cr_crapttl INTO rw_crapttl;
             
@@ -3498,8 +5252,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             
             CLOSE cr_crapttl;
             
-            vr_aux_nmprimtl := vr_aux_nmprimtl || ' ' || rw_crapass.nmsegntl;
-            vr_aux_nmsegntl := rw_crapass.nmsegntl;
+			OPEN cr_crapttl(pr_cdcooper => rw_crapcop_cdagectl.cdcooper,
+                            pr_nrdconta => to_number(rw_crapcti.nrctatrf),
+							pr_idseqttl => 2);
+                            
+            FETCH cr_crapttl INTO rw_crapttl;
+            
+            IF cr_crapttl%FOUND THEN
+              vr_aux_nmsegntl := rw_crapttl.nmextttl;
+            END IF;
+            
+            CLOSE cr_crapttl;
+            
+            vr_aux_nmprimtl := vr_aux_nmprimtl || ' ' || vr_aux_nmsegntl;
             vr_aux_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc, 1);
             
           ELSE          
@@ -3726,6 +5491,610 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
     END;
     
   END pc_consulta_finalidades;
+  --
+  PROCEDURE pc_verifica_limite_ope_prog (pr_cdcooper     IN crapcop.cdcooper%type  --C¿digo Cooperativa
+                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE  --Numero da conta
+                                        ,pr_idseqttl     IN crapttl.idseqttl%TYPE  --Identificador Sequencial titulo
+                                        ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE  --Numero do CPF Operador
+                                        ,pr_cdoperad     IN crapope.cdoperad%TYPE  --Codigo Operador
+                                        ,pr_cddoitem     IN tbgen_trans_pend.cdtransacao_pendente%TYPE -- Cod da transação
+                                        ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE  --Data do proximo pagamento
+                                        ,pr_dsorigem     IN craplau.dsorigem%TYPE  --Descricao Origem
+                                        ,pr_msgretor     OUT VARCHAR2                    
+                                        ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                        ,pr_dscritic     OUT VARCHAR2) IS
+  /*---------------------------------------------------------------------------------------------------------------
+   Programa : pc_verifica_limite_ope_prog           Antigo: 
+   Sistema  : Fluxo de aprovação de transações pendentes
+   Sigla    : CRED
+   Autor    : Rafael Muniz Monteiro - Mouts
+   Data     : Junho/2017.                   Ultima atualizacao: 
+  
+  Dados referentes ao programa: Projeto 397
+  
+  Frequencia: -----
+  Objetivo  : Procedure para validar os limites de operadores que estão tentando reprovar uma
+              transação pendente.
+  
+  Alteracoes: 
+            
+  ---------------------------------------------------------------------------------------------------------------*/                                        
+    -- CURSORES
+    --
+    CURSOR C1 (prc_cdtransacao_pendente IN NUMBER)IS
+      select tgen.tptransacao,
+             nvl(tpag.vlpagamento,0)     vlpagamento,
+             tpag.dtdebito               dtdebito_tpag,
+             nvl(tted.vlted,0)           vlted,
+             tted.dtdebito               dtbedito_tted,
+             nvl(ttra.vltransferencia,0) vltransferencia,
+             ttra.dtdebito               dtdebito_ttra,
+             nvl(tfol.vlfolha,0)         vlfolha,
+             tfol.dtdebito               dtdebito_tfol,
+             nvl(tddt.vlpagamento,0)     vlpag_darf_das,
+             tddt.dtdebito               dtdebito_tddt    
+        from tbgen_trans_pend            tgen,
+             tbpagto_trans_pend          tpag,
+             tbspb_trans_pend            tted,
+             tbtransf_trans_pend         ttra,
+             tbfolha_trans_pend          tfol,
+             tbpagto_darf_das_trans_pend tddt
+       where tgen.cdcooper             = pr_cdcooper
+         and tgen.nrdconta             = pr_nrdconta
+         and tgen.cdtransacao_pendente = prc_cdtransacao_pendente
+         and tgen.cdtransacao_pendente = tpag.cdtransacao_pendente (+)
+         and tgen.cdcooper             = tpag.cdcooper             (+)
+         and tgen.nrdconta             = tpag.nrdconta             (+)
+         and tgen.cdtransacao_pendente = tted.cdtransacao_pendente (+)
+         and tgen.cdcooper             = tted.cdcooper             (+)
+         and tgen.nrdconta             = tted.nrdconta             (+)
+         and tgen.cdtransacao_pendente = ttra.cdtransacao_pendente (+)
+         and tgen.cdcooper             = ttra.cdcooper             (+)
+         and tgen.nrdconta             = ttra.nrdconta             (+)   
+         and tgen.cdtransacao_pendente = tfol.cdtransacao_pendente (+)
+         and tgen.cdcooper             = tfol.cdcooper             (+)
+         and tgen.nrdconta             = tfol.nrdconta             (+)
+         and tgen.cdtransacao_pendente = tddt.cdtransacao_pendente (+)
+         and tgen.cdcooper             = tddt.cdcooper             (+)
+         and tgen.nrdconta             = tddt.nrdconta             (+);             
+         
+    -- VARIAVEIS
+    vr_cdtransacao_pendente NUMBER;
+    ls_cdtransacao          GENE0002.typ_split;      
+    vr_inicio               NUMBER;
+    vr_qtdade_transa        NUMBER;
+    vr_inicio_sub           NUMBER;
+    vr_result               VARCHAR2(32000);
+    vr_result_final         VARCHAR2(32000);    
+    vr_vlpagamento             NUMBER;
+    vr_vlvrb                   NUMBER;
+    vr_vlted                   NUMBER;
+    vr_vltransferencia         NUMBER;
+    vr_vlfolha                 NUMBER;
+    vr_vlpag_darf_das          NUMBER;  
+    --
+    vr_tab_internet INET0001.typ_tab_internet;
+    vr_cdcritic     crapcri.cdcritic%TYPE;
+    vr_dscritic     VARCHAR2(4000);
+    vr_nrdrowid     ROWID;
+    vr_dstransa     VARCHAR2(100);    
+    vr_dtmvtopg     DATE;
+    --
+    vr_exc_erro  EXCEPTION;
+    vr_exit      EXCEPTION;
+ 
+    
+    
+  BEGIN
+    -- Inicializar
+    pr_msgretor        := 'OK';
+    vr_vlpagamento     := 0;
+    vr_vlvrb           := 0;
+    vr_vlted           := 0;
+    vr_vltransferencia := 0;
+    vr_vlfolha         := 0;
+    vr_vlpag_darf_das  := 0;
+    --
+    -- Buscar o valor de pagamento da transação em aprovacao
+/*    vr_result_final := NULL;
+    -- define a quantidade de cdtransacao_pendente para ser processada
+    BEGIN
+      SELECT (length(pr_cdditens) - length(replace(pr_cdditens, '|')))
+        INTO vr_qtdade_transa
+        FROM dual;  
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao buscar vr_qtdade_transa '||sqlerrm;
+        RAISE vr_exc_erro;
+    END;
 
-END inet0001;
+    vr_inicio := 2;
+    BEGIN
+      SELECT instr(pr_cdditens,',',1,vr_inicio) + 1
+        INTO vr_inicio_sub
+        FROM dual;  
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := '01 - Erro ao buscar vr_inicio_sub '||sqlerrm;
+        RAISE vr_exc_erro;
+    END;*/
+      
+    /*FOR vr_index IN 1..vr_qtdade_transa LOOP
+      -- Buscar inicio para o substr
+      BEGIN
+        SELECT SUBSTR(pr_cdditens,vr_inicio_sub,instr(substr(pr_cdditens,vr_inicio_sub),',')-1)
+          INTO vr_result
+          FROM dual;
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao buscar vr_result '||sqlerrm;
+        RAISE vr_exc_erro;          
+      END;
+      --
+      vr_inicio := vr_inicio + 4;
+      BEGIN
+        SELECT instr(pr_cdditens,',',1,vr_inicio) + 1
+          INTO vr_inicio_sub
+          FROM dual;      
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := '02 - Erro ao buscar vr_inicio_sub '||sqlerrm;
+          RAISE vr_exc_erro;
+      END;      
+      --
+      IF vr_result_final IS NULL THEN
+        vr_result_final := vr_result;
+      ELSE
+        vr_result_final := vr_result_final ||','||vr_result;
+      END IF;
+      
+    END LOOP;*/    
+    --
+    -- Gerar LOG
+    vr_nrdrowid := NULL;
+    vr_dstransa := 'Validacao limite do operador para aprov';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => pr_dsorigem
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => 'INTERNETBANK'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Parametro CPF do operador'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_nrcpfope); 
+                                
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Cod da Transacao'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_cddoitem);                                                      
+    --    
+    -- gerar uma lista
+/*    ls_cdtransacao := gene0002.fn_quebra_string(pr_string => vr_result_final, pr_delimit => ',');*/
+
+    -- Para cada registro selecionado, faremos as validacoes necessarias
+    --FOR vr_index IN 1..ls_cdtransacao.COUNT() LOOP
+     -- ROWID do pagamento
+     vr_cdtransacao_pendente := pr_cddoitem ;--ls_cdtransacao(vr_index);
+     -- Abre o cursor para buscar os valores e somar conforme tipo de transacao
+     FOR R1 IN C1(vr_cdtransacao_pendente) LOOP
+      IF r1.tptransacao in (1,3,5)  THEN /** Operacao de Transferencia **/
+        vr_vltransferencia := vr_vltransferencia + r1.vltransferencia;
+        vr_dtmvtopg        := r1.dtdebito_ttra;
+      ELSIF r1.tptransacao = 4 THEN /** Operacao de TED **/
+        vr_vlted    := vr_vlted + r1.vlted;
+        vr_dtmvtopg := r1.dtbedito_tted;
+      ELSIF r1.tptransacao = 2 OR r1.tptransacao in (6,10,11) THEN  /** Operacao de Pagamento / DARF/DAS **/
+        IF r1.vlpagamento < 25000 THEN -- Pagamento boleto
+          vr_vlpagamento := vr_vlpagamento + r1.vlpagamento + r1.vlpag_darf_das;
+          vr_dtmvtopg := r1.dtdebito_tpag;
+        ELSE -- VR-Boleto
+          vr_vlvrb := vr_vlvrb + r1.vlpagamento;
+          vr_dtmvtopg := r1.dtdebito_tpag;
+        END IF;  
+      ELSIF r1.tptransacao = 9 THEN  /** Operacao de Pagamento Folha de Pagamento **/      
+        vr_vlfolha := vr_vlfolha + r1.vlfolha;
+        vr_dtmvtopg := r1.dtdebito_tfol;
+      END IF;
+             
+     END LOOP;
+     
+    --END LOOP;
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Vl Tranferencia'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vltransferencia);    
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Vl TED'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vlted);                                  
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Vl Pagamento'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vlpagamento);                                  
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Vl Vr Boleto'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vlvrb);                                  
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Vl Folha'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_vlfolha);                                  
+    --
+    BEGIN
+      -- Buscar limites operador do sistema
+      pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                  ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                  ,pr_idseqttl     => pr_idseqttl  --Identificador Sequencial titulo
+                                  ,pr_nrcpfope	   => pr_nrcpfope  --Numero do CPF
+                                  ,pr_dtmvtopg     => vr_dtmvtopg  --Data do proximo pagamento
+                                  ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                  ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                  ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                  ,pr_dscritic     => vr_dscritic); --Descricao do erro; 
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF; -- Validar se esá habilitado assinatura conjunta                                                                        
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao buscar os limites '||sqlerrm;
+        RAISE vr_exc_erro;
+    END; 
+    /** Obtem limites  **/
+    IF NOT vr_tab_internet.EXISTS(pr_idseqttl) THEN
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Registro de limite nao encontrado.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite Transf'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimtrf);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite Pagamento'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vldsppgo);    
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite vrb'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimvrb);        
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite TED'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimted);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite FP'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimflp);
+                                             
+    -- Validar limites de Transferencia
+    IF vr_vltransferencia > 0 THEN
+      IF vr_tab_internet(pr_idseqttl).vllimtrf <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento cadastrado';
+        RAISE vr_exit;
+      END IF;
+      --
+      IF vr_vltransferencia > vr_tab_internet(pr_idseqttl).vllimtrf THEN
+        pr_msgretor := 'O valor de transferencia que esta tentando reprovar e maior que o limite do operador'; 
+        RAISE vr_exit;        
+      END IF;      
+    END IF; 
+    -- Validar limites de Pagamento
+    IF vr_vlpagamento > 0 THEN                                 
+      IF vr_tab_internet(pr_idseqttl).vldsppgo <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento cadastrado';
+        RAISE vr_exit;
+      END IF;
+      --
+      IF vr_vlpagamento > vr_tab_internet(pr_idseqttl).vldsppgo THEN
+        pr_msgretor := 'O valor de pagamento que esta tentando reprovar e maior que o limite do operador'; 
+        RAISE vr_exit;        
+      END IF;
+    END IF;
+    -- Validar limites de Vr boleto
+    IF vr_vlvrb > 0 THEN
+      IF vr_tab_internet(pr_idseqttl).vllimvrb <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento VR-Boleto cadastrado';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF vr_vlvrb > vr_tab_internet(pr_idseqttl).vllimvrb THEN
+        pr_msgretor := 'O valor de pagamento VR-Boleto que esta tentando reprovar e maior que o limite do operador'; 
+        RAISE vr_exit;        
+      END IF;
+    END IF;
+    --
+    IF vr_vlpag_darf_das > 0 THEN
+      IF vr_tab_internet(pr_idseqttl).vldsppgo <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento Darf ou Das cadastrado';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF vr_vlvrb > vr_tab_internet(pr_idseqttl).vldsppgo THEN
+        pr_msgretor := 'O valor de pagamento Darf ou DAs que esta tentando reprovar e maior que o limite do operador'; 
+        RAISE vr_exit;        
+      END IF;      
+    END IF;   
+    
+    IF vr_vlted > 0 THEN
+      IF vr_tab_internet(pr_idseqttl).vllimted <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de TED cadastrado';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF vr_vlted > vr_tab_internet(pr_idseqttl).vllimted THEN
+        pr_msgretor := 'O valor de TED que esta tentando reprovar e maior que o limite do operador'; 
+        RAISE vr_exit;        
+      END IF;       
+    END IF;
+    
+    IF vr_vlfolha > 0 THEN
+      IF vr_tab_internet(pr_idseqttl).vllimflp <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de folha de pagamento cadastrado';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF vr_vlfolha > vr_tab_internet(pr_idseqttl).vllimflp THEN
+        pr_msgretor := 'O valor folha de pagamento que esta tentando reprovar e maior que o limite do operador'; 
+        RAISE vr_exit;        
+      END IF;       
+    END IF;    
+  
+  EXCEPTION
+    WHEN vr_exit THEN
+      NULL;
+    WHEN  vr_exc_erro  THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na proc pc_verifica_limite_ope_prog '||sqlerrm;
+  
+  END pc_verifica_limite_ope_prog;
+
+PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type  --C¿digo Cooperativa
+                                      ,pr_nrdconta     IN crapass.nrdconta%TYPE  --Numero da conta
+                                      ,pr_idseqttl     IN crapttl.idseqttl%TYPE  --Identificador Sequencial titulo
+                                      ,pr_nrcpfope     IN crapopi.nrcpfope%TYPE  --Numero do CPF Operador
+                                      ,pr_cdoperad     IN crapope.cdoperad%TYPE  --Codigo Operador
+                                      ,pr_vllanaut     IN NUMBER -- Valor da transacao
+                                      ,pr_cdtiptra     IN NUMBER
+                                      ,pr_dtmvtopg     IN crapdat.dtmvtolt%TYPE  --Data do proximo pagamento
+                                      ,pr_dsorigem     IN craplau.dsorigem%TYPE  --Descricao Origem
+                                      ,pr_msgretor     OUT VARCHAR2                    
+                                      ,pr_cdcritic     OUT INTEGER        --Codigo do erro
+                                      ,pr_dscritic     OUT VARCHAR2) IS
+  /*---------------------------------------------------------------------------------------------------------------
+   Programa : pc_verifica_limite_ope_prog           Antigo: 
+   Sistema  : Fluxo de aprovação de transações pendentes
+   Sigla    : CRED
+   Autor    : Rafael Muniz Monteiro - Mouts
+   Data     : Junho/2017.                   Ultima atualizacao: 
+  
+  Dados referentes ao programa: Projeto 397
+  
+  Frequencia: -----
+  Objetivo  : Procedure para validar os limites de operadores que estão tentando reprovar uma
+              agendamento pendente.
+  
+  Alteracoes: 
+            
+  ---------------------------------------------------------------------------------------------------------------*/                                      
+    -- CURSORES
+    --
+                 
+         
+    -- VARIAVEIS
+    --
+    vr_tab_internet INET0001.typ_tab_internet;
+    vr_cdcritic     crapcri.cdcritic%TYPE;
+    vr_dscritic     VARCHAR2(4000);
+    vr_nrdrowid     ROWID;
+    vr_dstransa     VARCHAR2(100);    
+    vr_dtmvtopg     DATE;
+    --
+    vr_exc_erro  EXCEPTION;
+    vr_exit      EXCEPTION;
+   
+  BEGIN
+    -- Inicializar
+    pr_msgretor        := 'OK';
+
+    --
+    --
+    -- Gerar LOG
+    vr_nrdrowid := NULL;
+    vr_dstransa := 'Validacao limite do operador cancelamento de agendamento';
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => pr_cdoperad
+                        ,pr_dscritic => ''
+                        ,pr_dsorigem => pr_dsorigem
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 1 --> TRUE
+                        ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                        ,pr_idseqttl => pr_idseqttl
+                        ,pr_nmdatela => 'INTERNETBANK'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_nrdrowid);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Parametro CPF do operador'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_nrcpfope); 
+    --    
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Valor Agendamento'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => pr_vllanaut);    
+                        
+    --
+    BEGIN
+      -- Buscar limites operador do sistema
+      pc_busca_limites_opera_trans(pr_cdcooper     => pr_cdcooper  --Codigo Cooperativa
+                                  ,pr_nrdconta     => pr_nrdconta  --Numero da conta
+                                  ,pr_idseqttl     => pr_idseqttl  --Identificador Sequencial titulo
+                                  ,pr_nrcpfope	   => pr_nrcpfope  --Numero do CPF
+                                  ,pr_dtmvtopg     => vr_dtmvtopg  --Data do proximo pagamento
+                                  ,pr_dsorigem     => pr_dsorigem  --Descricao Origem
+                                  ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                  ,pr_cdcritic     => vr_cdcritic   --Codigo do erro
+                                  ,pr_dscritic     => vr_dscritic); --Descricao do erro; 
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF; -- Validar se esá habilitado assinatura conjunta                                                                        
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao buscar os limites '||sqlerrm;
+        RAISE vr_exc_erro;
+    END; 
+    /** Obtem limites  **/
+    IF NOT vr_tab_internet.EXISTS(pr_idseqttl) THEN
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Registro de limite nao encontrado.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite Transf'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimtrf);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite Pagamento'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vldsppgo);    
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite vrb'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimvrb);        
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite TED'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimted);
+    --
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Limite FP'
+                             ,pr_dsdadant => ''
+                             ,pr_dsdadatu => vr_tab_internet(pr_idseqttl).vllimflp);
+                                             
+    -- Validar limites de Transferencia
+    IF pr_cdtiptra in (1,3,5) THEN
+      IF vr_tab_internet(pr_idseqttl).vllimtrf <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento cadastrado (1)';
+        RAISE vr_exit;
+      END IF;
+      --
+      IF pr_vllanaut > vr_tab_internet(pr_idseqttl).vllimtrf THEN
+        pr_msgretor := 'O valor de transferencia que esta tentando reprovar e maior que o limite do operador(1)'; 
+        RAISE vr_exit;        
+      END IF;      
+    END IF; 
+    -- Validar limites de Pagamento
+    IF pr_cdtiptra = 2 THEN                                 
+      IF vr_tab_internet(pr_idseqttl).vldsppgo <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento cadastrado (2)';
+        RAISE vr_exit;
+      END IF;
+      --
+      IF pr_vllanaut > vr_tab_internet(pr_idseqttl).vldsppgo THEN
+        pr_msgretor := 'O valor de pagamento que esta tentando reprovar e maior que o limite do operador(2)'; 
+        RAISE vr_exit;        
+      END IF;
+    END IF;
+    -- Validar limites de Vr boleto
+    IF pr_cdtiptra = 6 THEN
+      IF vr_tab_internet(pr_idseqttl).vllimvrb <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento VR-Boleto cadastrado (6)';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF pr_vllanaut > vr_tab_internet(pr_idseqttl).vllimvrb THEN
+        pr_msgretor := 'O valor de pagamento VR-Boleto que esta tentando reprovar e maior que o limite do operador (6)'; 
+        RAISE vr_exit;        
+      END IF;
+    END IF;
+    --
+    IF pr_cdtiptra in (10,11) THEN
+      IF vr_tab_internet(pr_idseqttl).vldsppgo <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de pagamento Darf ou Das cadastrado (10)';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF pr_vllanaut > vr_tab_internet(pr_idseqttl).vldsppgo THEN
+        pr_msgretor := 'O valor de pagamento Darf ou DAs que esta tentando reprovar e maior que o limite do operador(10)'; 
+        RAISE vr_exit;        
+      END IF;      
+    END IF; 
+    
+    IF pr_cdtiptra = 4 THEN -- TED
+      IF vr_tab_internet(pr_idseqttl).vllimted <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de TED cadastrado (2)';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF pr_vllanaut > vr_tab_internet(pr_idseqttl).vllimted THEN
+        pr_msgretor := 'O valor de TED que esta tentando reprovar e maior que o limite do operador (2)'; 
+        RAISE vr_exit;        
+      END IF;       
+    END IF;
+    
+    /*IF vr_vlfolha > 0 THEN
+      IF vr_tab_internet(pr_idseqttl).vllimflp <= 0 THEN
+        pr_msgretor := 'Operador nao possui limite de folha de pagamento cadastrado';
+        RAISE vr_exit;
+      END IF;    
+      --
+      IF vr_vlted > vr_tab_internet(pr_idseqttl).vllimflp THEN
+        pr_msgretor := 'O valor folha de pagamento que esta tentando reprovar e maior que o limite do operador'; 
+        RAISE vr_exit;        
+      END IF;       
+    END IF; */   
+  
+  EXCEPTION
+    WHEN vr_exit THEN
+      NULL;
+    WHEN  vr_exc_erro  THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na proc pc_verifica_limite_ope_canc '||sqlerrm;
+  
+  END pc_verifica_limite_ope_canc;    
+  
+
+  
+
+END INET0001;
 /

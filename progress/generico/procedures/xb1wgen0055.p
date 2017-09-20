@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0055.p
    Autor   : Jose Luis
-   Data    : Janeiro/2010                   Ultima atualizacao: 27/07/2015
+   Data    : Janeiro/2010                   Ultima atualizacao: 20/04/2017
 
    Dados referentes ao programa:
 
@@ -20,6 +20,13 @@
                             valida_dados e grava_dados. (Reinert)
                             
                27/07/2015 - Reformulacao cadastral (Gabriel-RKAM).             
+               
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom) 
+               
+			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).          
                
 .............................................................................*/
 
@@ -73,7 +80,6 @@ DEF VAR aux_nmextemp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcpfemp AS DECI                                           NO-UNDO.
 DEF VAR aux_dsproftl AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdnvlcgo AS INTE                                           NO-UNDO.
-DEF VAR aux_nrfonemp AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdturnos AS INTE                                           NO-UNDO.
 DEF VAR aux_dtadmemp AS DATE                                           NO-UNDO.
 DEF VAR aux_vlsalari AS DECI                                           NO-UNDO.
@@ -143,7 +149,6 @@ PROCEDURE valores_entrada:
           WHEN "nrcpfemp" THEN aux_nrcpfemp = DECI(tt-param.valorCampo).
           WHEN "dsproftl" THEN aux_dsproftl = tt-param.valorCampo.
           WHEN "cdnvlcgo" THEN aux_cdnvlcgo = INTE(tt-param.valorCampo).
-          WHEN "nrfonemp" THEN aux_nrfonemp = tt-param.valorCampo.
           WHEN "cdturnos" THEN aux_cdturnos = INTE(tt-param.valorCampo).
           WHEN "dtadmemp" THEN aux_dtadmemp = DATE(tt-param.valorCampo).
           WHEN "vlsalari" THEN aux_vlsalari = DECI(tt-param.valorCampo).
@@ -227,6 +232,9 @@ PROCEDURE valores_entrada:
                     WHEN "dsnacion" THEN
                         ASSIGN tt-resp.dsnacion = 
                             tt-param-i.valorCampo.
+                    WHEN "cdnacion" THEN
+                        ASSIGN tt-resp.cdnacion = 
+                            INTE(tt-param-i.valorCampo).        
                     WHEN "dsnatura" THEN
                         ASSIGN tt-resp.dsnatura = 
                             tt-param-i.valorCampo.
@@ -368,7 +376,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_dtnasttl, 
                              INPUT aux_cdsexotl, 
                              INPUT aux_tpnacion, 
-                             INPUT aux_dsnacion, 
+                             INPUT aux_cdnacion, 
                              INPUT aux_dsnatura,
                              INPUT aux_cdufnatu, 
                              INPUT aux_inhabmen, 
@@ -458,7 +466,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_tpdocttl,
                             INPUT aux_cdufdttl,
                             INPUT aux_cdsexotl,
-                            INPUT aux_dsnacion,
+                            INPUT aux_cdnacion,
                             INPUT aux_cdestcvl,
                             INPUT aux_grescola,
                             INPUT aux_inpessoa,
@@ -477,7 +485,6 @@ PROCEDURE Grava_Dados:
                             INPUT aux_nrcpfemp,
                             INPUT aux_dsproftl,
                             INPUT aux_cdnvlcgo,
-                            INPUT aux_nrfonemp,
                             INPUT aux_cdturnos,
                             INPUT aux_dtadmemp,
                             INPUT aux_vlsalari,

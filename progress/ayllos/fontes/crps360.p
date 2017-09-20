@@ -1,11 +1,10 @@
-
 /* ..........................................................................
 
    Programa: Fontes/crps360.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo        
-   Data    : Dezembro/2003                     Ultima atualizacao: 03/05/2017
+   Data    : Dezembro/2003                     Ultima atualizacao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -52,6 +51,10 @@
                             
                21/01/2014 - Incluir VALIDATE craplot, craplcm (Lucas R.)      
                
+               24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
                03/05/2017 - #643531 Correcao de criticas; Script para retirar 
                             o programa da cadeia da CECRED. (Carlos)
 ............................................................................. */
@@ -70,7 +73,7 @@ DEF TEMP-TABLE crawrel                                               NO-UNDO
     FIELD cdagenci LIKE crapass.cdagenci
     FIELD nrdconta LIKE crapass.nrdconta
     FIELD nmprimtl LIKE crapass.nmprimtl
-    FIELD nmsegntl LIKE crapass.nmsegntl
+    FIELD nmsegntl LIKE crapttl.nmextttl
     FIELD nrfonres AS CHAR
     FIELD cdcmpchq LIKE crapchd.cdcmpchq
     FIELD cdagechq LIKE crapchd.cdagechq
@@ -88,7 +91,7 @@ DEF TEMP-TABLE rel310                                                NO-UNDO
     FIELD cdagenci LIKE crapass.cdagenci
     FIELD nrdconta LIKE crapass.nrdconta
     FIELD nmprimtl LIKE crapass.nmprimtl
-    FIELD nmsegntl LIKE crapass.nmsegntl
+    FIELD nmsegntl LIKE crapttl.nmextttl
     FIELD nrfonres AS CHAR
     FIELD cdbanchq LIKE crapchd.cdbanchq
     FIELD nrcheque LIKE crapchd.nrcheque
@@ -801,11 +804,23 @@ DO  i = 1 TO aux_contador:
                                                  craplcm.vllanmto). 
                     END.
       
+			   IF crapass.inpessoa = 1 THEN
+			      DO:
+				     FOR FIRST crapttl FIELDS(nmextttl)
+					                   WHERE crapttl.cdcooper = crapass.cdcooper AND
+									         crapttl.nrdconta = crapass.nrdconta AND
+											 crapttl.idseqttl = 2
+											 NO-LOCK:
+
+                     END.
+					  
+				  END.
+
                CREATE crawrel.
                ASSIGN crawrel.cdagenci = crapass.cdagenci
                       crawrel.nrdconta = aux_nrdconta
                       crawrel.nmprimtl = crapass.nmprimtl
-                      crawrel.nmsegntl = crapass.nmsegntl
+                      crawrel.nmsegntl = crapttl.nmextttl WHEN AVAIL crapttl
                       crawrel.nrfonres = aux_nrtelefo
                       crawrel.cdbanchq = crapchd.cdbanchq
                       crawrel.nrcheque = crapchd.nrcheque

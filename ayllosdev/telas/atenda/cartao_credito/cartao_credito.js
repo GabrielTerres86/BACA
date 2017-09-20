@@ -55,6 +55,7 @@
  * 037: [05/10/2016] Kelvin		   (CECRED) : Ajuste feito ao realizar o cadastro de um novo cartão no campo  "habilita funcao debito"
 										      conforme solicitado no chamado 508426. (Kelvin)
    038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
+   039: [31/08/2017] Lucas Ranghetti(CECRED): Na Função lerCartaoChip, instanciar AIDGet para podermos enviar a Aplicação para a funcao SMC_EMV_TagsGet.
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -4278,18 +4279,62 @@ function lerCartaoChip() {
 				oPinpad.LCD_Clear();
                 oPinpad.LCD_DisplayString(2, 18, 1, "Processando...");
                 oPinpad.SMC_ReadTracks(0, "", "");
-				// Dados do Chip
-                oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", "");
-				eval("oRetornoJson = " + oRetornoJson);
-				sTagPortador = oRetornoJson.szTagsData;
 				
-                oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", "");
+				// Buscar AIDGet
+				oRetornoJson = oPinpad.SMC_EMV_AIDGet(0); 				
+				eval("oRetornoJson = " + oRetornoJson);
+				szAIDList = oRetornoJson.szAIDList.split(";");					
+				
+				// Busca nome no cartao
+				oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[0]);
+				eval("oRetornoJson = " + oRetornoJson);
+				sTagPortador = oRetornoJson.szTagsData;												
+				
+				if (sTagPortador == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[1]);
+					eval("oRetornoJson = " + oRetornoJson);					
+					sTagPortador = oRetornoJson.szTagsData;		
+				}
+				
+				if (sTagPortador == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F20", szAIDList[2]);
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagPortador = oRetornoJson.szTagsData;		
+				}
+				
+				// Busca Numero do cartao
+				oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[0]);
 				eval("oRetornoJson = " + oRetornoJson);
 				sTagNumeroCartao = oRetornoJson.szTagsData;
 				
-                oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", "");
+				if (sTagNumeroCartao == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[1]);
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagNumeroCartao = oRetornoJson.szTagsData;
+				}
+				
+				if (sTagNumeroCartao == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5A", szAIDList[2]);
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagNumeroCartao = oRetornoJson.szTagsData;
+				}
+				
+				// Buscar Validade do cartao                
+				oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[0]);				
 				eval("oRetornoJson = " + oRetornoJson);
 				sTagDataValidade = oRetornoJson.szTagsData;
+				
+				if (sTagDataValidade == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[1]);				
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagDataValidade = oRetornoJson.szTagsData;
+				}
+												
+				if (sTagDataValidade == ""){
+					oRetornoJson = oPinpad.SMC_EMV_TagsGet(0, "5F24", szAIDList[2]);				
+					eval("oRetornoJson = " + oRetornoJson);
+					sTagDataValidade = oRetornoJson.szTagsData;
+				}
 				
 				// Carrega conteúdo da opção através de ajax
 				$.ajax({
