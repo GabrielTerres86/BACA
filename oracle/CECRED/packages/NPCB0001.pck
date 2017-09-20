@@ -173,6 +173,10 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                  pr_tpdregra     IN INTEGER)               --> Tipo de regra de rollout(1-registro,2-pagamento)
                                  RETURN INTEGER;
   
+  --> Rotina para retornar valor limite de pagamento em contigencia na cip
+  FUNCTION fn_vlcontig_cip ( pr_cdcooper     IN crapcop.cdcooper%TYPE) --> Codigo da cooperativa)               --> Tipo de regra de rollout(1-registro,2-pagamento)
+                             RETURN NUMBER;
+  
   --> Rotina para verificar e montar o código de barras ou a linha digitavel
   PROCEDURE pc_linha_codigo_barras(pr_titulo1  IN OUT NUMBER     --> Campo 1 da linha digitável
                                   ,pr_titulo2  IN OUT NUMBER     --> Campo 2 da linha digitável
@@ -183,11 +187,17 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                   ,pr_cdcritic    OUT NUMBER     --> Retorno do código de crítica
                                   ,pr_dscritic    OUT VARCHAR2); --> Retorno da descrição da crítica
          
+  --> Rotina para gerar log das rotinas NPC
+  PROCEDURE pc_gera_log_npc ( pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa)  
+                             ,pr_nmrotina     IN VARCHAR2              --> Nome da rotina que esta gerando log
+                             ,pr_dsdolog      IN VARCHAR2);            --> Descrição do log
+                             
   --> Rotina para pre-validação do boleto na Nova plataforma de cobrança 
   PROCEDURE pc_valid_titulo_npc ( pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                  ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE --> Data de movimento
                                  ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                  ,pr_tbtitulocip  IN NPCB0001.typ_reg_titulocip --> Registro com os dados do titulo
+                                 ,pr_flcontig     IN INTEGER DEFAULT 0     --> Indicador de contigencia     
                                  ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
                                  ,pr_dscritic    OUT VARCHAR2              --> Descrição da critica
                                  );
@@ -223,6 +233,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                    ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
                                    ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
+                                   ,pr_flcontig    OUT INTEGER               --> Retornar inf que a CIP esta em modo de contigencia
                                    ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
                                    ,pr_dscritic    OUT VARCHAR2);            --> Descrição da critica
   
@@ -266,6 +277,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
   
   --> Declaração geral de exception
   vr_exc_erro        EXCEPTION;
+   
+  --> Nome do arquivo de log mensal
+  vr_dsarqlg         CONSTANT VARCHAR2(20) := 'npc_'||to_char(SYSDATE,'RRRRMM')||'.log'; 
    
   --> Função para montar o número de controle do participante - NUMCTRLPART
   FUNCTION fn_montar_NumCtrlPart(pr_cdbarras   IN VARCHAR2
@@ -434,6 +448,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     WHEN OTHERS THEN
       RETURN 0;      
   END fn_verifica_rollout;
+  
+  --> Rotina para retornar valor limite de pagamento em contigencia na cip
+  FUNCTION fn_vlcontig_cip ( pr_cdcooper     IN crapcop.cdcooper%TYPE) --> Codigo da cooperativa)               --> Tipo de regra de rollout(1-registro,2-pagamento)
+                             RETURN NUMBER IS
+  /* ..........................................................................
+    
+      Programa : fn_vlcontig_cip        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Agosto/2017.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para  retornar valor limite de pagamento em contigencia na cip
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    ----------> VARIAVEIS <-----------
+    vr_dstextab     craptab.dstextab%TYPE;  
+  BEGIN   
+            
+    vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsistem => 'CRED'
+                                              ,pr_tptabela => 'GENERI'
+                                              ,pr_cdempres => 0
+                                              ,pr_cdacesso => 'VLCONTIG_CIP'
+                                              ,pr_tpregist => 0);  
+                                              
+    RETURN gene0002.fn_char_para_number(vr_dstextab);
+      
+  EXCEPTION 
+    WHEN OTHERS THEN
+      RETURN 0;      
+  END fn_vlcontig_cip;
   
   --> Rotina para verificar e montar o código de barras ou a linha digitavel
   PROCEDURE pc_linha_codigo_barras(pr_titulo1  IN OUT NUMBER
@@ -607,12 +658,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         pr_dscritic := SQLERRM;
   END pc_linha_codigo_barras;
   
+  --> Rotina para gerar log das rotinas NPC
+  PROCEDURE pc_gera_log_npc ( pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa)  
+                             ,pr_nmrotina     IN VARCHAR2              --> Nome da rotina que esta gerando log
+                             ,pr_dsdolog      IN VARCHAR2) IS          --> Descrição do log
+  /* ..........................................................................
+    
+      Programa : pc_gera_log_npc        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Agosto/2017.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para gerar log das rotinas NPC
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    ----------> VARIAVEIS <-----------
+
+  BEGIN   
+  
+    BTCH0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
+                               ,pr_ind_tipo_log => 2 -- Erro tratato
+                               ,pr_des_log      => to_char(sysdate,'DD/MM/YYYY - HH24:MI:SS')||' - '
+                                                || pr_nmrotina ||' --> '
+                                                || pr_dsdolog
+                               ,pr_nmarqlog     => vr_dsarqlg);
+  EXCEPTION 
+    WHEN OTHERS THEN
+      NULL;      
+  END pc_gera_log_npc;
   
   --> Rotina para pre-validação do boleto na Nova plataforma de cobrança 
   PROCEDURE pc_valid_titulo_npc ( pr_cdcooper     IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                  ,pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE --> Data de movimento
                                  ,pr_cdctrlcs     IN tbcobran_consulta_titulo.cdctrlcs%TYPE --> Numero de controle da consulta no NPC
                                  ,pr_tbtitulocip  IN NPCB0001.typ_reg_titulocip --> Registro com os dados do titulo
+                                 ,pr_flcontig     IN INTEGER DEFAULT 0     --> Indicador de contigencia     
                                  ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
                                  ,pr_dscritic    OUT VARCHAR2              --> Descrição da critica
                                  ) IS
@@ -638,6 +724,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     --> Buscar dados da consulta
     CURSOR cr_cons_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE ) IS
       SELECT con.dsxml
+             ,con.vltitulo 
+             ,con.dscodbar
+             ,con.flgcontingencia 
         FROM tbcobran_consulta_titulo con
        WHERE con.cdctrlcs = pr_cdctrlcs;
        
@@ -654,6 +743,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_SitTitPg_npc   INTEGER;
     vr_DtLimPgt_npc   DATE;
     vr_IdBloqPg_npc   VARCHAR2(10);
+    vr_vlcontig       NUMBER;
+    vr_de_campo       NUMBER;
+    vr_dtvencto       DATE;
+    
     
   BEGIN     
   
@@ -671,39 +764,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         CLOSE cr_cons_titulo;
       END IF;
       
-      BEGIN
-        -- Criar um XMLTYPE à partir do CLOB retornado
-        vr_xmltitulo := xmltype.createxml(rw_cons_titulo.dsxml);
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao ler XML do titulo: '||pr_cdctrlcs;
-          RAISE vr_exc_erro; 
-      END;
+      --> Apenas se não for contigencia
+      IF pr_flcontig <> 1 THEN
       
-      BEGIN
-        -- BLOCO PARA TRATAR ERROS DE LEITURA DE XML - CASO ROTINA SAIA VIA EXCEPTION OTHERS
+        BEGIN
+          -- Criar um XMLTYPE à partir do CLOB retornado
+          vr_xmltitulo := xmltype.createxml(rw_cons_titulo.dsxml);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao ler XML do titulo: '||pr_cdctrlcs;
+            RAISE vr_exc_erro; 
+        END;
+      
+        BEGIN
+          -- BLOCO PARA TRATAR ERROS DE LEITURA DE XML - CASO ROTINA SAIA VIA EXCEPTION OTHERS
 
-        --> Rotina para retornar dados do XML para temptable
-        NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltitulo.getClobVal()
-                                          ,pr_tbtitulo => vr_tbtitulo
-                                          ,pr_des_erro => vr_des_erro
-                                          ,pr_dscritic => vr_dscritic);
+          --> Rotina para retornar dados do XML para temptable
+          NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltitulo.getClobVal()
+                                            ,pr_tbtitulo => vr_tbtitulo
+                                            ,pr_des_erro => vr_des_erro
+                                            ,pr_dscritic => vr_dscritic);
       
-        -- Se for retornado um erro
-        IF vr_des_erro = 'NOK' THEN
-          RAISE vr_exc_erro; 
-        END IF;    
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao validar titulo CIP: '||pr_cdctrlcs;
-          RAISE vr_exc_erro; 
-      END;
+          -- Se for retornado um erro
+          IF vr_des_erro = 'NOK' THEN
+            RAISE vr_exc_erro; 
+          END IF;    
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao validar titulo CIP: '||pr_cdctrlcs;
+            RAISE vr_exc_erro; 
+        END;
+      END IF;
       
-    ELSE
-      -- Utiliza as informações recebidas por parametro
-      vr_tbtitulo := pr_tbtitulocip;
-    END IF;
+      ELSE
+        -- Utiliza as informações recebidas por parametro
+        vr_tbtitulo := pr_tbtitulocip;
+      END IF;
     
+    --> Se estiver em contigencia somente precisar
+    IF pr_flcontig = 1 THEN
+      vr_vlcontig := fn_vlcontig_cip(pr_cdcooper => pr_cdcooper);
+      
+      --> Validar valor limite de contigencia
+      IF rw_cons_titulo.vltitulo > vr_vlcontig THEN
+        vr_dscritic := 'Sistema temporariamente indisponível para pagamento de boleto de '||
+                       'valor superior a R$'||to_char(vr_vlcontig,'fm999G999G990D00')||'.';
+        RAISE vr_exc_erro;
+      END IF;
+    
+      vr_de_campo     := SUBSTR(rw_cons_titulo.dscodbar,6,4);
+      cxon0014.pc_calcula_data_vencimento 
+                            ( pr_dtmvtolt => pr_dtmvtolt
+                             ,pr_de_campo => vr_de_campo
+                             ,pr_dtvencto => vr_dtvencto
+                             ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
+                             ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
+      
+      
+      --> Verificar se o boleto excedeu a data limite de pagto
+      IF nvl(vr_dtvencto,SYSDATE-365) < pr_dtmvtolt THEN
+        vr_dscritic := 'Atenção boleto vencido: Sistema temporariamente indisponível para esta operação.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      --> Não precisa realizar demais validações
+      RETURN;
+    
+    END IF;
+        
     ----------> VALIDACOES <---------
     vr_SitTitPg_npc := vr_tbtitulo.SitTitPgto;
     vr_DtLimPgt_npc := vr_tbtitulo.DtLimPgtoTit;
@@ -914,6 +1042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                    ,pr_vltitulo    OUT craptit.vltitulo%TYPE --> Valor do titulo
                                    ,pr_nridenti    OUT NUMBER                --> Retornar numero de identificacao do titulo
                                    ,pr_tpdbaixa    OUT INTEGER               --> Retornar tipo de baixa
+                                   ,pr_flcontig    OUT INTEGER               --> Retornar inf que a CIP esta em modo de contigencia
                                    ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
                                    ,pr_dscritic    OUT VARCHAR2              --> Descrição da critica
                                    ) IS
@@ -938,6 +1067,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     CURSOR cr_cons_titulo (pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE ) IS
       SELECT con.dsxml
             ,con.dtmvtolt
+            ,con.vltitulo
+            ,con.dscodbar
+            ,con.flgcontingencia
         FROM tbcobran_consulta_titulo con
        WHERE con.cdctrlcs = pr_cdctrlcs;
        
@@ -951,6 +1083,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     vr_vltitcal       craptit.vltitulo%TYPE;
     vr_tituloCIP      typ_reg_TituloCIP;
     vr_dtvencto       DATE;
+    vr_de_campo       NUMBER;
     
   BEGIN     
   
@@ -966,16 +1099,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       CLOSE cr_cons_titulo;
     END IF;
     
-    --> Rotina para retornar dados do XML para temptable
-    NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
-                                      ,pr_tbtitulo => vr_tituloCIP
-                                      ,pr_des_erro => vr_des_erro
-                                      ,pr_dscritic => vr_dscritic);
+    --> Setar contigencia
+    pr_flcontig := rw_cons_titulo.flgcontingencia; 
     
-    -- Se houve retorno de erro
-    IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
-      RAISE vr_exc_erro;       
-    END IF;  
+    --> Somente ler  dados do xml se nao estiver em contigencia
+    IF pr_flcontig <> 1 THEN    
+      --> Rotina para retornar dados do XML para temptable
+      NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => rw_cons_titulo.dsxml
+                                        ,pr_tbtitulo => vr_tituloCIP
+                                        ,pr_des_erro => vr_des_erro
+                                        ,pr_dscritic => vr_dscritic);
+    
+      -- Se houve retorno de erro
+      IF vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN	  
+        RAISE vr_exc_erro;       
+      END IF;  
+    ELSE
+      --> Calcular vencimento em cima do codigo de barras
+      vr_de_campo     := SUBSTR(rw_cons_titulo.dscodbar,6,4);
+      cxon0014.pc_calcula_data_vencimento 
+                            ( pr_dtmvtolt => pr_dtmvtolt
+                             ,pr_de_campo => vr_de_campo
+                             ,pr_dtvencto => vr_tituloCIP.DtVencTit
+                             ,pr_cdcritic => vr_cdcritic          -- Codigo da Critica
+                             ,pr_dscritic => vr_dscritic);        -- Descricao da Critica
+    
+      vr_tituloCIP.VlrTit := rw_cons_titulo.vltitulo;      
+      vr_tituloCIP.TpAutcRecbtVlrDivgte := 1; -- qlqr valor 
+     
+      IF pr_dtagenda IS NOT NULL THEN
+        vr_dscritic := 'Sistema temporariamente indisponível para esta operação.';
+        RAISE vr_exc_erro;      
+      END IF;
+      
+    
+    END IF;
      
     ----------> VALIDACOES <---------
     
@@ -984,6 +1142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                          ,pr_dtmvtolt    => pr_dtmvtolt   --> Data de movimento
                          ,pr_cdctrlcs    => pr_cdctrlcs   --> Numero de controle da consulta no NPC
                          ,pr_tbtitulocip => vr_tituloCIP  --> Dados consultados na CIP
+                         ,pr_flcontig    => pr_flcontig   --> Indicativo de contigencia
                          ,pr_cdcritic    => vr_cdcritic   --> Codigo da critico
                          ,pr_dscritic    => vr_dscritic); --> Descrição da critica
                          
@@ -1024,7 +1183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         --> Retornar valor do titulo calculado pela NPC
         vr_vltitcal := fn_valor_calc_titulo_npc
                                  ( pr_dtmvtolt  => rw_cons_titulo.dtmvtolt --> Data de movimento                                                                   
-                                  ,pr_tbtitulo  => vr_tituloCIP);          --> Regras de calculo de juros                                 
+                                  ,pr_tbtitulo  => vr_tituloCIP); --> Regras de calculo de juros                                 
                                     
         --> Se valor estiver diferente retornar critica		
         IF vr_vltitcal IS NULL THEN
