@@ -6,7 +6,7 @@
 	
 	Objetivo: Consultar dados do CNAE ou Boleto em aberto.
 	
-	Alteracoes: 
+	Alteracoes: 20/09/2017 - Alterar mensageria para ZOOM0001. PRJ339 - CRM(Odirlei-AMcom)
 
 *************************************************************************/
 
@@ -23,7 +23,7 @@ $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : '';
 $nrconven = (isset($_POST["nrconven"])) ? $_POST["nrconven"] : '';
 
 if ($consulta == 1) { // CNAE
-	$nmprogra = "MATRIC";
+	$nmprogra = "ZOOM0001";
 	$nmeacao = "BUSCA_CNAE";
 } else { // Boleto em aberto
 	$nmprogra = "SSPC0002";

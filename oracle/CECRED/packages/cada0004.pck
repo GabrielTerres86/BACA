@@ -5786,6 +5786,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                     crapass, crapttl, crapjur 
 							    (Adriano - P339).
+                    20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
+                                 PRJ339 - CRM(Odirlei-AMcom) 
 
     -- ..........................................................................*/
     
@@ -5886,7 +5888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
 	  IF cr_crapttl%FOUND THEN
 	    
-        vr_nmsegntl:= rw_crapttl.nmextttl;
+        vr_nmsegntl:= 'E/OU '||rw_crapttl.nmextttl;
 
 	  END IF;
 
