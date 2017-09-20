@@ -70,6 +70,9 @@
 			                crapass, crapttl, crapjur 
               	     	    (Adriano - P339).
 
+		       20/09/2017 - Ajuste para incluir os campos de nome do pai/mae 
+					        (Adriano - P339).
+
 .............................................................................*/
 
 /* DEFINICOES PARA MATRIC[N].P */
@@ -129,7 +132,9 @@ DEFINE TEMP-TABLE tt-crapass NO-UNDO LIKE crapass
     FIELD dsnacion LIKE crapnac.dsnacion
     FIELD cdoedptl AS CHAR
 	FIELD dsdemail LIKE crapcem.dsdemail
-    FIELD inhabmen LIKE crapavt.inhabmen.
+    FIELD inhabmen LIKE crapavt.inhabmen
+	FIELD nmmaettl LIKE crapttl.nmmaettl
+	FIELD nmpaittl LIKE crapttl.nmpaittl.
     
 DEFINE TEMP-TABLE tt-crapavt NO-UNDO 
     FIELD cdcooper LIKE crapavt.cdcooper
