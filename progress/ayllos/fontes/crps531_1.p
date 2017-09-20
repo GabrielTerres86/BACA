@@ -817,7 +817,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
             /* Efetuar a chamada a rotina Oracle */
             RUN STORED-PROCEDURE pc_insere_msg_domicilio
-                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT aux_VlrLanc  /* Valor Lancamento */
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT DEC(aux_VlrLanc)  /* Valor Lancamento */
                                                       ,INPUT aux_CNPJNLiqdant  /* CPNJ Liquidante */
                                                       ,OUTPUT ?).             /* Retorno do Erro */
 
