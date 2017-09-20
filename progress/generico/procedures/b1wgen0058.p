@@ -159,10 +159,17 @@
 
 				 28/03/2017 - Realizado ajuste para que quando filtrar procurador pelo CPF, busque
 							  apenas contas ativas, coforme solicitado no chamado 566363. (Kelvin)
+
+                18/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 							  
 				 26/04/2017 - Ajustado o problema que não carregava os procuradores na tela contas,
 							  conforme solicitado no chamado 659095. (Kelvin)	
 
+                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                             PRJ339 - CRM (Odirlei-AMcom)
+
+                31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
+                             PRJ339 - CRM (Odirlei-AMcom)               
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -187,6 +194,7 @@ DEF VAR aux_ctdpoder AS INT                                            NO-UNDO.
 
 DEF VAR aux_flgisola AS CHAR                                           NO-UNDO.
 DEF VAR aux_flgconju AS CHAR                                           NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                        NO-UNDO.
 
 FUNCTION ValidaUf      RETURNS LOGICAL 
     ( INPUT par_cdufdavt AS CHARACTER ) FORWARD.
@@ -537,6 +545,34 @@ PROCEDURE Busca_Dados_Id:
                      LEAVE BuscaId.
                   END.
 
+              /* Buscar a Nacionalidade */
+              FOR FIRST crapnac FIELDS(dsnacion)
+                                WHERE crapnac.cdnacion = crabavt.cdnacion
+                                      NO-LOCK:
+
+                  ASSIGN tt-crapavt.dsnacion = crapnac.dsnacion.
+
+              END. 
+
+              /* Retornar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                    RUN sistema/generico/procedures/b1wgen0052b.p 
+                        PERSISTENT SET h-b1wgen0052b.
+
+              ASSIGN tt-crapavt.cdoeddoc = "".
+              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 ( INPUT crabavt.idorgexp,
+                                  OUTPUT tt-crapavt.cdoeddoc,
+                                  OUTPUT aux_cdcritic, 
+                                  OUTPUT aux_dscritic).
+
+              DELETE PROCEDURE h-b1wgen0052b.   
+
+              IF  RETURN-VALUE = "NOK" THEN
+              DO:
+                  ASSIGN tt-crapavt.cdoeddoc = 'NAO CADAST'.
+              END.
+
                IF NOT VALID-HANDLE(h-b1wgen9999) THEN
                   RUN sistema/generico/procedures/b1wgen9999.p
                       PERSISTENT SET h-b1wgen9999.
@@ -747,8 +783,8 @@ PROCEDURE Busca_Dados_Ass:
                 PERSISTENT SET h-b1wgen0060.
 
         FOR FIRST crabass FIELDS(cdcooper nrdconta nrcpfcgc nmprimtl tpdocptl 
-                                 nrdocptl cdoedptl cdufdptl dtemdptl dsproftl 
-                                 dtnasctl cdsexotl dsnacion inpessoa)
+                                 nrdocptl idorgexp cdufdptl dtemdptl dsproftl 
+                                 dtnasctl cdsexotl cdnacion inpessoa)
                            WHERE crabass.cdcooper = par_cdcooper AND
                                  crabass.nrdconta = par_nrdctato 
                                  NO-LOCK,
@@ -776,6 +812,7 @@ PROCEDURE Busca_Dados_Ass:
                    ASSIGN par_dscritic = "Endereco nao cadastrado.".
                    LEAVE BuscaAss.
                 END.
+                
             CREATE tt-crapavt.
             ASSIGN tt-crapavt.cddconta = TRIM(STRING(crabass.nrdconta,
                                                      "zzzz,zzz,9"))
@@ -785,13 +822,12 @@ PROCEDURE Busca_Dados_Ass:
                    tt-crapavt.nmdavali    = crabass.nmprimtl
                    tt-crapavt.tpdocava    = crabass.tpdocptl
                    tt-crapavt.nrdocava    = crabass.nrdocptl
-                   tt-crapavt.cdoeddoc    = crabass.cdoedptl
                    tt-crapavt.cdufddoc    = crabass.cdufdptl
                    tt-crapavt.dtemddoc    = crabass.dtemdptl
                    tt-crapavt.dtnascto    = crabass.dtnasctl
                    tt-crapavt.cdsexcto    = crabass.cdsexotl
                    tt-crapavt.cdestcvl    = crabttl.cdestcvl
-                   tt-crapavt.dsnacion    = crabass.dsnacion
+                   tt-crapavt.cdnacion    = crabass.cdnacion
                    tt-crapavt.dsnatura    = crabttl.dsnatura
                    tt-crapavt.nmmaecto    = crabttl.nmmaettl
                    tt-crapavt.nmpaicto    = crabttl.nmpaittl
@@ -813,11 +849,39 @@ PROCEDURE Busca_Dados_Ass:
                    tt-crapavt.tpctrato    = 6 /*Procuradores*/
                    NO-ERROR.
 
+                   /* Buscar a Nacionalidade */
+                   FOR FIRST crapnac FIELDS(dsnacion)
+                                     WHERE crapnac.cdnacion = crabass.cdnacion
+                                           NO-LOCK:
+
+                       ASSIGN tt-crapavt.dsnacion = crapnac.dsnacion.
+
+                   END.
+
             IF  ERROR-STATUS:ERROR THEN
                 DO:
                    ASSIGN par_dscritic = ERROR-STATUS:GET-MESSAGE(1).
                    UNDO BuscaAss, LEAVE BuscaAss.
                 END.
+
+            /* Retornar orgao expedidor */
+            IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                RUN sistema/generico/procedures/b1wgen0052b.p 
+                    PERSISTENT SET h-b1wgen0052b.
+
+            ASSIGN tt-crapavt.cdoeddoc = "".
+            RUN busca_org_expedidor IN h-b1wgen0052b 
+                               (INPUT crabass.idorgexp,
+                                OUTPUT tt-crapavt.cdoeddoc,
+                                OUTPUT par_cdcritic, 
+                                OUTPUT par_dscritic).
+
+            DELETE PROCEDURE h-b1wgen0052b.   
+
+            IF  RETURN-VALUE = "NOK" THEN
+            DO:
+                UNDO BuscaAss, LEAVE BuscaAss.
+            END.    
 
             IF NOT VALID-HANDLE(h-b1wgen9999) THEN
                RUN sistema/generico/procedures/b1wgen9999.p
@@ -1048,7 +1112,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexcto AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -1101,6 +1165,7 @@ PROCEDURE Valida_Dados:
     DEF VAR tab_persocio AS DECI                                    NO-UNDO.
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.
     DEF VAR aux_inpessoa AS INTE                                    NO-UNDO.
+    DEF VAR aux_idorgexp AS INTE                                    NO-UNDO.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Valida dados do Representante/Procurador"
@@ -1302,6 +1367,25 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
+        /* Identificar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+            RUN sistema/generico/procedures/b1wgen0052b.p 
+                PERSISTENT SET h-b1wgen0052b.
+
+        ASSIGN aux_idorgexp = 0.
+        RUN identifica_org_expedidor IN h-b1wgen0052b 
+                           (INPUT par_cdoeddoc,
+                            OUTPUT aux_idorgexp,
+                            OUTPUT aux_cdcritic, 
+                            OUTPUT aux_dscritic).
+
+        DELETE PROCEDURE h-b1wgen0052b.   
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            LEAVE Valida.
+        END.                
+
         IF  NOT ValidaUf(par_cdufddoc) THEN
             DO:
                ASSIGN aux_cdcritic = 33.
@@ -1407,13 +1491,14 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  NOT CAN-FIND(crapnac WHERE crapnac.dsnacion = par_dsnacion) THEN
+        IF  NOT CAN-FIND(crapnac WHERE crapnac.cdnacion = par_cdnacion) THEN
             DO:
                ASSIGN aux_cdcritic = 28.
                LEAVE Valida.
             END.
 
-        IF  NOT CAN-FIND(crapnat WHERE crapnat.dsnatura = par_dsnatura) AND 
+        IF  NOT CAN-FIND(crapmun WHERE crapmun.dscidade = par_dsnatura   AND 
+                                       crapmun.cdestado = par_cdufddoc ) AND 
             par_cdufddoc <> "EX"                                        THEN
             DO:
                ASSIGN aux_cdcritic = 29.
@@ -1875,7 +1960,7 @@ PROCEDURE Valida_Dados:
                                           INPUT tt-resp.dtnascin,
                                           INPUT tt-resp.cddosexo,
                                           INPUT tt-resp.cdestciv,
-                                          INPUT tt-resp.dsnacion,
+                                          INPUT tt-resp.cdnacion,
                                           INPUT tt-resp.dsnatura,
                                           INPUT tt-resp.cdcepres,
                                           INPUT tt-resp.dsendres,
@@ -2858,7 +2943,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dtnascto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexcto AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
@@ -2916,6 +3001,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_dsrotina AS CHAR                                    NO-UNDO.
     DEF VAR aux_inpessoa AS INT                                     NO-UNDO.
     DEF VAR aux_stsnrcal AS LOGICAL                                 NO-UNDO.
+    DEF VAR aux_idorgexp AS INT                                     NO-UNDO. 
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "I" THEN 
@@ -3552,19 +3638,40 @@ PROCEDURE Grava_Dados:
             OTHERWISE ASSIGN aux_cdsexcto = INTEGER(par_cdsexcto).
         END CASE.
 
+        
+        /* Identificar orgao expedidor */
+        IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+            RUN sistema/generico/procedures/b1wgen0052b.p 
+                PERSISTENT SET h-b1wgen0052b.
+
+        ASSIGN aux_idorgexp = 0.
+        RUN identifica_org_expedidor IN h-b1wgen0052b 
+                           (INPUT UPPER(par_cdoeddoc),
+                            OUTPUT aux_idorgexp,
+                            OUTPUT aux_cdcritic, 
+                            OUTPUT aux_dscritic).
+
+        DELETE PROCEDURE h-b1wgen0052b.   
+
+        IF  RETURN-VALUE = "NOK" THEN
+        DO:
+            UNDO Grava, LEAVE Grava.
+        END.
+
+
         IF  par_nrdctato = 0 THEN
             DO:
                ASSIGN crapavt.nmdavali    = UPPER(par_nmdavali)
                       crapavt.tpdocava    = par_tpdocava
                       crapavt.nrdocava    = par_nrdocava
-                      crapavt.cdoeddoc    = UPPER(par_cdoeddoc)
+                      crapavt.idorgexp    = aux_idorgexp
                       crapavt.cdufddoc    = UPPER(par_cdufddoc)
                       crapavt.dsproftl    = UPPER(par_dsproftl)
                       crapavt.dtemddoc    = par_dtemddoc
                       crapavt.dtnascto    = par_dtnascto
                       crapavt.cdsexcto    = aux_cdsexcto
                       crapavt.cdestcvl    = par_cdestcvl
-                      crapavt.dsnacion    = UPPER(par_dsnacion)
+                      crapavt.cdnacion    = par_cdnacion
                       crapavt.dsnatura    = UPPER(par_dsnatura)
                       crapavt.nrcepend    = par_nrcepend
                       crapavt.dsendres[1] = UPPER(par_dsendere)
@@ -3698,7 +3805,7 @@ PROCEDURE Grava_Dados:
                              INPUT tt-resp.dtnascin,
                              INPUT tt-resp.cddosexo,
                              INPUT tt-resp.cdestciv,
-                             INPUT tt-resp.dsnacion,
+                             INPUT tt-resp.cdnacion,
                              INPUT tt-resp.dsnatura,
                              INPUT INT(tt-resp.cdcepres),
                              INPUT tt-resp.dsendres,
@@ -4048,6 +4155,7 @@ PROCEDURE Exclui_Dados:
     DEF VAR aux_tpatlcad AS INT                                     NO-UNDO.
     DEF VAR aux_msgatcad AS CHAR                                    NO-UNDO.
     DEF VAR aux_chavealt AS CHAR                                    NO-UNDO.   
+    DEF VAR aux_cdorgexp AS CHAR                                    NO-UNDO.   
 
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
 
@@ -4181,6 +4289,25 @@ Exclui: DO TRANSACTION
                             crapcrl.idseqmen = crapavt.nrctremp
                             NO-LOCK:
                      
+                       /* Retornar orgao expedidor */
+                       IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                              RUN sistema/generico/procedures/b1wgen0052b.p 
+                                  PERSISTENT SET h-b1wgen0052b.
+
+                       ASSIGN aux_cdorgexp = "".
+                       RUN busca_org_expedidor IN h-b1wgen0052b 
+                                             ( INPUT crapcrl.idorgexp,
+                                              OUTPUT aux_cdorgexp,
+                                              OUTPUT aux_cdcritic, 
+                                              OUTPUT aux_dscritic).
+
+                       DELETE PROCEDURE h-b1wgen0052b.   
+
+                       IF  RETURN-VALUE = "NOK" THEN
+                       DO:
+                           UNDO Exclui, LEAVE Exclui.
+                       END.                         
+                     
                        IF NOT VALID-HANDLE(h-b1wgen0072) THEN
                           RUN sistema/generico/procedures/b1wgen0072.p
                           PERSISTENT SET h-b1wgen0072.
@@ -4203,13 +4330,13 @@ Exclui: DO TRANSACTION
                                             INPUT crapcrl.nmrespon,
                                             INPUT crapcrl.tpdeiden,
                                             INPUT crapcrl.nridenti,
-                                            INPUT crapcrl.dsorgemi,
+                                            INPUT aux_cdorgexp,
                                             INPUT crapcrl.cdufiden,
                                             INPUT crapcrl.dtemiden,
                                             INPUT crapcrl.dtnascin,
                                             INPUT crapcrl.cddosexo,
                                             INPUT crapcrl.cdestciv,
-                                            INPUT crapcrl.dsnacion,
+                                            INPUT crapcrl.cdnacion,
                                             INPUT crapcrl.dsnatura,
                                             INPUT crapcrl.cdcepres,
                                             INPUT crapcrl.dsendres,
