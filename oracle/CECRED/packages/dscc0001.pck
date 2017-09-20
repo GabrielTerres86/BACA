@@ -424,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 20/09/2017
   --
   --  Dados referentes ao programa:
   --
@@ -432,6 +432,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Alteracoes: 22/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
   --  
+      20/09/2017 - #753579 Utilizando o parametro pr_dsiduser concatenado com _, rotina 
+                   DSCC0001.pc_gera_impressao_bordero, chamada pela DSCC0002.pc_imprime_bordero_ib pois o
+                   comando rm está removendo todos os relatórios "crrl519_bordero_*" da cooperativa (Carlos)
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -2057,7 +2060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                          ,pr_cdcooper => pr_cdcooper
                                          ,pr_nmsubdir => '/rl');
 
-    vr_nmarquiv := 'crrl519_bordero_'||pr_dsiduser;
+    vr_nmarquiv := 'crrl519_bordero_'||pr_dsiduser||'_';
 
     --> Remover arquivo existente   
     vr_dscomand := 'rm '||vr_dsdireto||'/'||vr_nmarquiv||'* 2>/dev/null';
