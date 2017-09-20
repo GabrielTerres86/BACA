@@ -96,6 +96,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                
                06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão
                             tratada exceção 9999 ( Belli Envolti ) - Ch 665812
+
+               20/09/2017 - Ajuste no cursor crapcst para nao mais efetuar validacao atraves
+			                do nrborder = 0 e sim atraves de leitura da crapcdb quando o cheque
+							nao tiver data de devolução. (Daniel) 
                
      ............................................................................. */
 
@@ -221,7 +225,26 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          WHERE crapcst.cdcooper  = pr_cdcooper
          AND   crapcst.dtlibera  > pr_dtmvtolt
          AND   crapcst.dtlibera  <= pr_dtmvtopr
-         AND   crapcst.nrborder = 0; -- cheque nao descontado 
+
+      --   AND   crapcst.nrborder = 0; -- cheque nao descontado 
+
+		 AND  (crapcst.dtdevolu IS NOT NULL OR
+                (crapcst.dtdevolu IS NULL  AND
+                   --Ignorar cheques descontados
+                   NOT EXISTS (SELECT 1
+                                 FROM crapcdb cdb
+                                WHERE cdb.cdcooper = crapcst.cdcooper
+                                  AND cdb.nrdconta = crapcst.nrdconta
+                                  AND cdb.dtlibera = crapcst.dtlibera
+                                  AND cdb.dtlibbdc IS NOT NULL
+                                  AND cdb.cdcmpchq = crapcst.cdcmpchq
+                                  AND cdb.cdbanchq = crapcst.cdbanchq
+                                  AND cdb.cdagechq = crapcst.cdagechq
+                                  AND cdb.nrctachq = crapcst.nrctachq
+                                  AND cdb.nrcheque = crapcst.nrcheque
+                                  AND cdb.dtdevolu IS NULL)));
+
+
        rw_crapcst cr_crapcst%ROWTYPE;
 
        --Selecionar informacoes Custodia para relatório
