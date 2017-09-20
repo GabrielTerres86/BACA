@@ -2863,7 +2863,7 @@ PROCEDURE verifica_titulo:
         
 
     /* Verificar se retornou critica */
-    IF  aux_cdcritic > 0 OR
+   /* IF  aux_cdcritic > 0 OR
         par_dscritic <> ""  THEN
         DO:
              RUN gera_erro (INPUT par_cdcooper,
@@ -2878,7 +2878,7 @@ PROCEDURE verifica_titulo:
     IF par_dscritic <> "" THEN
                 DO:                    
                     RETURN "NOK".
-                END.
+                END.*/
         
     ASSIGN par_dtdifere = FALSE
            par_vldifere = FALSE
