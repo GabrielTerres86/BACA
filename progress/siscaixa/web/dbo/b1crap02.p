@@ -81,6 +81,9 @@
                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)  
              
+               17/07/2017 - Ajustes para nao buscar IDORGEXP para pessoa jur.
+                            PRJ339 - CRM (Odirlei-AMcom)  
+             
 ........................................................................... */
 
 /*---------------------------------------------------------------*/
@@ -437,30 +440,32 @@ PROCEDURE consulta-conta:
 
     END.   /*  FOR EACH */
     
-    
-    /* Retornar orgao expedidor */
-    IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-        RUN sistema/generico/procedures/b1wgen0052b.p 
-            PERSISTENT SET h-b1wgen0052b.
+    IF crapass.inpessoa = 1 THEN
+    DO:
+      /* Retornar orgao expedidor */
+      IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+          RUN sistema/generico/procedures/b1wgen0052b.p 
+              PERSISTENT SET h-b1wgen0052b.
 
-    ASSIGN aux_cdorgexp = "".
-    RUN busca_org_expedidor IN h-b1wgen0052b 
-                       ( INPUT crapass.idorgexp,
-                        OUTPUT aux_cdorgexp,
-                        OUTPUT i-cod-erro, 
-                        OUTPUT c-desc-erro).
+      ASSIGN aux_cdorgexp = "".
+      RUN busca_org_expedidor IN h-b1wgen0052b 
+                         ( INPUT crapass.idorgexp,
+                          OUTPUT aux_cdorgexp,
+                          OUTPUT i-cod-erro, 
+                          OUTPUT c-desc-erro).
 
-    DELETE PROCEDURE h-b1wgen0052b.   
+      DELETE PROCEDURE h-b1wgen0052b.   
     
-    IF c-desc-erro <> "" THEN
-    DO:       
-        RUN cria-erro (INPUT p-cooper,
-                       INPUT p-cod-agencia,
-                       INPUT p-nro-caixa,
-                       INPUT i-cod-erro,
-                       INPUT c-desc-erro,
-                       INPUT YES).
-        LEAVE.
+      IF c-desc-erro <> "" THEN
+      DO:       
+          RUN cria-erro (INPUT p-cooper,
+                         INPUT p-cod-agencia,
+                         INPUT p-nro-caixa,
+                         INPUT i-cod-erro,
+                         INPUT c-desc-erro,
+                         INPUT YES).
+          LEAVE.
+      END.        
     END.        
     
     ASSIGN tt-conta.identidade = crapass.nrdocptl
