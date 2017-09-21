@@ -925,6 +925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            pr_tbTituloCIP := NULL;
            pr_des_erro    := 'OK';
            
+           --> Garantir a gravação da tabela tbcobran_consulta_titulo
+           COMMIT;
            --> Sair da procedure sem validação e sem numero de controle de consulta
            --> para que a rotina trate o titulo como fora do rollout npc
            RETURN;
