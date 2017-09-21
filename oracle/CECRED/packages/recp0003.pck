@@ -22,13 +22,13 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0003 IS
 END RECP0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
-  ---------------------------------------------------------------------------------------------------------------
+/*  ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : RECP0003
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/03/2017
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 21/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -44,8 +44,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --             02/05/2017 - Remocao do SAVEPOINT. (Jaison/James)
   --
   --             03/05/2017 - Salvar registros por arquivo e desfazer acoes se aconteceu erro numa linha. (Jaison/James)
-  --
-  ---------------------------------------------------------------------------------------------------------------
+
+     21/09/2017 - #756229 Setando pr_flgemail true nas rotinas pc_imp_arq_acordo_cancel e pc_imp_arq_acordo_quitado
+                  quando ocorrer erro nos comandos de extração de zip, listagem dos arquivos extraídos e conversão 
+                  txt para unix para que os responsáveis pelo negócio sejam avisados por e-mail (Carlos)
+  ---------------------------------------------------------------------------------------------------------------*/
 
   vr_flgerlog BOOLEAN := FALSE;
 
@@ -311,6 +314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
+          pr_flgemail := TRUE;
           CONTINUE;
         END IF;
 
@@ -329,6 +333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
+          pr_flgemail := TRUE;
           CONTINUE;
         END IF;
 
@@ -348,6 +353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
+          pr_flgemail := TRUE;
           CONTINUE;
         END IF;
 
@@ -415,7 +421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                         ,pr_dscritic => 'ARQUIVO INCONSISTENTE');
 
                    pr_flgemail := TRUE;
-				   ROLLBACK;
+                   ROLLBACK;
                    -- Fim do arquivo
                    EXIT;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
@@ -781,11 +787,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
+          pr_flgemail := TRUE;
           CONTINUE;
         END IF;
 
         -- Lista todos os arquivos .txt do diretorio criado
-        vr_endarqtxt:= vr_endarqui || '/' || vr_nmtmparq;
+        vr_endarqtxt := vr_endarqui || '/' || vr_nmtmparq;
 
         -- Buscar todos os arquivos extraidos na nova pasta
         gene0001.pc_lista_arquivos(pr_path     => vr_endarqtxt
@@ -799,6 +806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
+          pr_flgemail := TRUE;
           CONTINUE;
         END IF;
 
@@ -818,6 +826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pc_controla_log_batch(pr_cdcooper => vr_cdcooper
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
+          pr_flgemail := TRUE;
           CONTINUE;
         END IF;
 
@@ -888,7 +897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                         ,pr_dscritic => 'Arquivo: ' || vr_nmarqtxt || ' ' || 'ARQUIVO INCONSISTENTE');
                    --Fim do arquivo
                    pr_flgemail := TRUE;
-				   ROLLBACK;
+                   ROLLBACK;
                    EXIT LEITURA_TXT;
                  ELSIF SUBSTR(vr_setlinha,1,1) = 'T' THEN
                    CONTINUE;                                          
