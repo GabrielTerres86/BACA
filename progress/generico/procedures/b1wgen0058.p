@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 26/04/2017
+    Data    : Marco/2010                   Ultima atualizacao: 20/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -170,6 +170,10 @@
 
                 31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)               
+                
+                20/09/2017 - Alterado validacao naturalidade CRAPMUN.
+                             PRJ339 - CRM (Odirlei-AMcom)  
+
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1497,8 +1501,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  NOT CAN-FIND(crapmun WHERE crapmun.dscidade = par_dsnatura   AND 
-                                       crapmun.cdestado = par_cdufddoc ) AND 
+        IF  NOT CAN-FIND(crapmun WHERE crapmun.dscidade = par_dsnatura ) AND 
             par_cdufddoc <> "EX"                                        THEN
             DO:
                ASSIGN aux_cdcritic = 29.
