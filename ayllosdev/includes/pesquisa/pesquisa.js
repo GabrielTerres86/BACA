@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Fevereiro/2010 
  * OBJETIVO     : Biblioteca de funcionalidades reponsáveis por controlar as rotinas de pesquisas genéricas que foram desenvolvidas
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
  * --------------
  * 001: [10/03/2010] Gabriel Capoia      (DB1): Criada a função montaSelect
  * 002: [16/03/2010] Rodolpho Telmo      (DB1): Criada funções para Pesquisa de Associado Genérica
@@ -1313,6 +1313,92 @@ function selecionaPesquisaEndereco(resultado, idForm, cNumero) {
 
 /*!
  * ALTERAÇÃO  : 012
+ * OBJETIVO   : Esta função é chamada no click do mouse em cima de algum resultado da pesquisa de endereço de associado, 
+ *              onde irá retornar os dados para o campo contido no parâmetro "resultado"
+ * PARÂMETROS : resultado -> Uma string no formado "campoNome|campoValor", onde o campoNome é o nome do campo ao qual
+ *                           receberá o valor contido no campoValor
+ */
+function selecionaPesquisaEnderecoAssociado(resultado, idForm, cNumero) {	
+	// O layout do parâmetro resultado é:
+	// "nomeCampo;resultado|nomeCampo;resultado"
+	var arrayCampos	   = new Array();	
+	var arrayResultado = new Array();	
+
+	arrayCampos = resultado.split("|");
+	
+	cCep = arrayCampos[0].split(";")[0];
+	
+	for( var i in arrayCampos ) {		
+		arrayResultado 	= arrayCampos[i].split(";");
+		var campoNome 	= arrayResultado[0];
+		var campoValor 	= arrayResultado[1];		
+		// Retornando resultado do item selecionado aos devidos campos
+		$("input[name='"+campoNome+"'],select[name='"+campoNome+"']",'#'+idForm).val(campoValor);
+	}	
+	
+	// Essa variável global é alimentada com uma função específica da rotina que está utilizando a pesquisa
+	// Essa função será executada após a seleção do registro
+	// Exemplo de utilização na tela CADDNE
+	if (typeof mtSelecaoEndereco != "undefined") mtSelecaoEndereco();
+	
+	$('.fecharPesquisa','#divPesquisaEnderecoAssociado').click();
+	$('#'+cCep,'#'+idForm ).trigger('blur');	
+	$('#'+cNumero,'#'+idForm).focus();	
+}
+
+/*!
+ * ALTERAÇÃO  : 
+ * OBJETIVO   : Função genérica que monta dinâmicamente o formulário de pesquisa "formPesquisa"
+ *			    o cabeçalho da tabela que irá exibir o resultado da pesquisa
+ * PARÂMETROS : idForm 			-> 
+ *              camposOrigem	-> 
+ *              divBloqueia   	-> 
+ *              nrcpfcgc	    -> 
+ */
+function mostraPesquisaEnderecoAssociado(idForm, camposOrigem, divBloqueia,frmNrcpfcgc) {
+	var idRotina = divBloqueia.attr('id');
+	
+	var nrcpfcgc = normalizaNumero($('#nrcpfcgc', '#' + frmNrcpfcgc).val());
+	
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando Pesquisa Endereço...");
+	
+	//Click para fechar modal
+	$('.fecharPesquisa','#divPesquisaEnderecoAssociado').unbind('click').bind('click', function() {
+		
+		$('#divResultadoPesquisaEnderecoAssociado').empty();		
+		
+		if ( typeof divBloqueia == 'object' ) {
+			fechaRotina($('#divPesquisaEnderecoAssociado'),divBloqueia);
+		} else {
+			fechaRotina($('#divPesquisaEnderecoAssociado'));
+		}
+	});
+	
+	//Guarda informação em hiddenfield dentro do pesquisa_endereco.php
+	$("#camposOrigem","#divPesquisaEnderecoAssociado").val(camposOrigem);
+	
+	//Guarda informação em hiddenfield dentro do pesquisa_endereco.php
+	$("#idForm","#divPesquisaEnderecoAssociado").val(idForm);
+	
+	//Guarda informação em hiddenfield dentro do pesquisa_endereco.php
+	$("#nrcpfcgc","#divPesquisaEnderecoAssociado").val(nrcpfcgc);
+	
+	$("#divPesquisaRodape").remove();
+	
+	hideMsgAguardo();	
+	
+	//Exibe a modal
+	exibeRotina($('#divPesquisaEnderecoAssociado'));	
+	
+	realizaPesquisaEnderecoAssociado(1,20,'N','');
+	
+	$('#divPesquisaEnderecoAssociado').focus();
+	
+}
+
+/*!
+ * ALTERAÇÃO  : 012
  * OBJETIVO   : Função genérica que monta dinâmicamente o formulário de pesquisa "formPesquisa"
  *              Esta função é responsável por inserir neste formulário os filtros de pesquisa e o cabeçalho da tabela que irá exibir o resultado da pesquisa
  * PARÂMETROS : idForm 			-> 
@@ -1372,6 +1458,69 @@ function mostraPesquisaEndereco(idForm, camposOrigem, divBloqueia, vCEP) {
 		
 	}
 	
+}
+
+/*!
+ * ALTERAÇÃO  : 012
+ * OBJETIVO   : Função genérica que chama a função "realizaPesquisaEndereçoAssociado2. Este tratamento é para 
+ *              acertar um BUG do IE em relação as mensagens de aguardo.
+ */
+function realizaPesquisaEnderecoAssociado(nriniseq, quantReg, auto, idRotina) {	
+	showMsgAguardo("Aguarde, pesquisando endere&ccedil;o ...");
+	setTimeout( 'realizaPesquisaEnderecoAssociado2("'+nriniseq+'", "'+quantReg+'", "'+auto+'", "'+idRotina+'")', 200 );	
+	return false;
+}
+
+/*!
+ * ALTERAÇÃO  : 012
+ * OBJETIVO   : Função chamada a partir do botão "Iniciar Pesquisa" da tela "pesquisa_endereco.php"
+ *              Esta função passa a requisição via POST da pesquisa para o arquivo "realiza_pesquisa_endereco.php"
+ * PARÂMETROS : nriniseq	-> Nr. inicial da paginação
+ *              quantReg	-> Quantidade de registros que serão exibidos a cada paginação
+ *              auto		-> [Opcional] Caso for 'S' e para o CEP digitado existir somente um endereço, então já selecioná-lo
+ *              idRotina	-> [Opcional] 
+ */
+function realizaPesquisaEnderecoAssociado2(nriniseq, quantReg, auto, idRotina) {
+
+	if( !verificaSemaforo() ) { return false; }
+	
+	var idForm 			= $('#idForm', '#divPesquisaEnderecoAssociado').val();
+	var camposOrigem 	= $('#camposOrigem', '#divPesquisaEnderecoAssociado').val();
+	var nrcpfcgc 		= $('#nrcpfcgc', '#divPesquisaEnderecoAssociado').val();	
+	
+	if (typeof auto == 'undefined' && auto != 'S')  {
+		auto = 'N';
+	} 
+	
+	// Carrega dados da conta através de ajax
+	$.ajax({
+		//async: false,
+		type: "POST",  
+		url: UrlSite + "includes/pesquisa/realiza_pesquisa_endereco_associado.php", 
+		data: {
+			auto			: auto,
+			nrcpfcgc 		: nrcpfcgc,			
+			nriniseq 		: nriniseq,
+			quantReg 		: quantReg,
+			camposOrigem 	: camposOrigem,
+			idForm 			: idForm,
+			idRotina		: idRotina,
+			redirect 		: "html_ajax" // Tipo de retorno do ajax
+		},
+		error: function(objAjax,responseError,objExcept) {
+			semaforo--;
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","bloqueiaFundo($('#divPesquisaEndereco'))");
+		},
+		success: function(response) {
+			semaforo--;
+		    $("#divResultadoPesquisaEnderecoAssociado").html(response);
+			zebradoLinhaTabela($('#divPesquisaItens > table > tbody > tr'));
+			$('#divPesquisaRodape').formataRodapePesquisa();	
+		}			
+	});
+	
+	return false;
 }
 
 /*!
@@ -1598,7 +1747,16 @@ $.fn.extend({
 			return false;
 		});
 	},	
-	
+	buscaEnderecoAssociado: function(nomeForm, camposOrigem, divRotina, frmNrcpfcgc) {
+		var cLovendco = $(this); 
+		
+			cLovendco.unbind('click').bind('click', function() { 
+				if(!cLovendco.prev().hasClass('campoTelaSemBorda')) {
+					mostraPesquisaEnderecoAssociado(nomeForm, camposOrigem, divRotina, frmNrcpfcgc);								
+				}
+			});
+		
+	},
 	/*!
 	 * ALTERAÇÃO  : 014
 	 * OBJETIVO   : Controlar os métodos para os campos de Conta. Controla os eventos do ENTER,

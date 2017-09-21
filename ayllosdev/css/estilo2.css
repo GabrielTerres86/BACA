@@ -12,6 +12,7 @@
  * 004: [17/02/2012] Rog�rius Milit�o      (DB1): Alterado "form.formulario a" para ajustar a novo botao. 
  * 005: [19/04/2012] Rogerius Milit�o/Guilherme Strube (DB1/CECRED): Adaptar divBotoes para tag img
  * 006: [17/11/2014] J�ssica			   (DB1): Inserido um divRotina2 para atender a op��o C da tela Movtos.
+ * 007: [15/09/2017] Kelvin Souza Ott      (CECRED): Alterações referente a melhoria 339.
  */	
 
 *  {font-family:Arial,Helvetica,sans-serif;font-size:12px;margin:0px;padding:0px;border:0px;text-decoration:none;}
@@ -74,12 +75,13 @@ body { background-color:#DFE0D6; behavior: url(csshover2.htc); }
 /* DIVs OCULTAS */
 #divRotina,#divJanelaDaRotina,#divAnotacoes,#divConsultaRamoAtiv,#divConsultaNatJuridica,
 #divRotina2,
-#divMsgsAlerta,#divPesquisa,#divPesquisaEndereco,#divFormularioEndereco,#divPesquisaAssociado,#divUsoGenerico,#divPesquisaEmpresa
+#divMsgsAlerta,#divPesquisa,#divPesquisaEndereco,#divPesquisaEnderecoAssociado,#divFormularioEndereco,#divPesquisaAssociado,#divUsoGenerico,#divPesquisaEmpresa
 {position:absolute;visibility:hidden;}
 
 #divRotina 				{width:545px;z-index:90;}
 #divRotina2 				{width:650px;z-index:91;}
 #divPesquisaEndereco        {width:545px;z-index:99;height:300px;}
+#divPesquisaEnderecoAssociado {width:545px;z-index:99;height:300px;}
 #divFormularioEndereco    {width:545px;z-index:100;height:300px;}
 #divPesquisa		         {width:500px;z-index:101;height:300px;}
 #divPesquisaAssociado       {width:550px;z-index:102;}
@@ -181,7 +183,9 @@ div.divPesquisaItens {height:129px;overflow-x:hidden;overflow-y:scroll;width:100
 div.divPesquisaItens table {width:100%;}
 div.divPesquisaItens table tbody tr td {font-size:12px;padding:0px 2px;}
 #divCabecalhoPesquisaEndereco{width:515px;}
+#divCabecalhoPesquisaEnderecoAssociado{width:515px;}
 #divResultadoPesquisaEndereco {width:515px;}
+#divResultadoPesquisaEnderecoAssociado {width:515px;}
 #divResultadoPesquisaNome{height:150px;width:470px;}
 
 /* FORMUL�RIO PESQUISA ASSOCIADO */ 

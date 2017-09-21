@@ -6,6 +6,8 @@
  * OBJETIVO     : Mostrar tela MATRIC
  * --------------
  * ALTERAÇÕES   : Adicionado pesquisa CEP. ( Rodolpho/Rogérius. (DB1) ).
+ *				  
+ *				  15/09/2017 - Alterações referente a melhoria 339 (Kelvin).	
  * --------------
  */
 ?>
@@ -79,6 +81,9 @@
 																	<td>
 																		<!-- INCLUDE DA TELA DE PESQUISA ENDERECO -->
 																		<? require_once("../../includes/pesquisa/pesquisa_endereco.php"); ?>
+																		
+																		<!-- INCLUDE DA TELA DE PESQUISA ENDERECO ASSOCIADO -->
+																		<? require_once("../../includes/pesquisa/pesquisa_endereco_associado.php"); ?>
 
 																		<!-- INCLUDE DA TELA DE INCLUSAO ENDERECO -->
 																		<? require_once("../../includes/pesquisa/formulario_endereco.php"); ?>

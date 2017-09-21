@@ -99,7 +99,22 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
        
   /* Tabela para guardar as naturezas de ocupação */
   TYPE typ_tab_natureza_ocupacao IS TABLE OF typ_natureza_ocupacao INDEX BY PLS_INTEGER;
+  
+  /*Tabela para guardar enderecos*/  
+  TYPE typ_endereco IS RECORD
+    (nmlogradouro  tbcadast_pessoa_endereco.nmlogradouro%TYPE
+    ,dscomplemento tbcadast_pessoa_endereco.dscomplemento%TYPE
+    ,nrlogradouro  tbcadast_pessoa_endereco.nrlogradouro%TYPE   
+    ,nmbairro      tbcadast_pessoa_endereco.nmbairro%TYPE
+    ,nrcep         tbcadast_pessoa_endereco.nrcep%TYPE  
+    ,dscidade      crapmun.dscidade%TYPE 
+    ,tpendereco    tbcadast_pessoa_endereco.tpendereco%TYPE
+    ,cdestado      crapmun.cdestado%TYPE
+    ,tporigem      tbcadast_pessoa_endereco.tporigem_cadastro%TYPE);
 
+  /* Tabela para guardar as naturezas de ocupação */
+  TYPE typ_tab_endereco IS TABLE OF typ_endereco INDEX BY PLS_INTEGER;
+  
   /* Tabela para guardar as ocupações */
   TYPE typ_ocupacoes IS RECORD 
     (cdocupa  gncdocp.cdocupa%TYPE
@@ -410,7 +425,17 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                 ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
                                 ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
                                 ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
-                                ,pr_des_erro  OUT VARCHAR2);                                         
+                                ,pr_des_erro  OUT VARCHAR2);         
+                                
+  PROCEDURE pc_busca_endereco_web(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  -- Código do cpf/cnpj
+                                 ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
+                                 ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
+                                 ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
+                                 ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                                 ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
+                                 ,pr_des_erro  OUT VARCHAR2);                                                              
                                                                                                                    
 END ZOOM0001;
 /
@@ -422,7 +447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 08/05/2017
+   Data    : 30/11/2015                       Ultima atualizacao: 15/09/2017
 
    Dados referentes ao programa:
 
@@ -445,8 +470,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
 			                     (Adriano - SD 614408). 
                
                08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
-                            (Jonata - RKAM).        
-                                                    
+                            (Jonata - RKAM).     
+                  
+               15/09/2017 - Alterações referente a melhoria 339 (Kelvin).                                     
   ---------------------------------------------------------------------------------------------------------------*/
   
   /*PROCEDURE RESPONSAVEL POR ENCONTRAR OPERADORES*/
@@ -5825,7 +5851,320 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                          '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
       
   END pc_busca_conta_cosif;
+  
+  PROCEDURE pc_busca_endereco(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  -- Código da natureza
+                             ,pr_nrregist IN INTEGER                -- Número de registro
+                             ,pr_nriniseq IN INTEGER                -- Número sequencial do registro
+                             ,pr_qtregist OUT INTEGER               -- Quantidade de registro
+                             ,pr_nmdcampo OUT VARCHAR2              -- Nome do campo com erro
+                             ,pr_tab_endereco OUT typ_tab_endereco  --Tabela de enderecos
+                             ,pr_tab_erro OUT gene0001.typ_tab_erro -- Tabela Erros
+                             ,pr_des_erro OUT VARCHAR2) IS          -- Tabela de erros 
+    /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_endereco                            
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Kelvin
+    Data     : Setembro/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Buscar enderecos do associado 
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+  
+  CURSOR cr_endereco(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
+    SELECT pen.nmlogradouro
+          ,pen.nrlogradouro
+          ,pen.dscomplemento
+          ,pen.nmbairro
+          ,pen.nrcep  
+          ,mun.dscidade   
+          ,pen.tpendereco 
+          ,mun.cdestado    
+          ,pen.tporigem_cadastro tporigem
+      FROM tbcadast_pessoa pes
+          ,tbcadast_pessoa_endereco pen
+          ,crapmun mun          
+     WHERE pes.idpessoa = pen.idpessoa       
+       AND pen.idcidade = mun.idcidade
+       AND pen.tpendereco IN (9,10,13)  -- comercial/residencial/correspondencia
+       AND pes.nrcpfcgc = pr_nrcpfcgc;
+  
+  rw_endereco cr_endereco%ROWTYPE;
+  
+  vr_nrregist INTEGER := nvl(pr_nrregist,9999);
+  
+  --Variaveis de Criticas
+  vr_exc_erro EXCEPTION;
+  
+  vr_index PLS_INTEGER;
+  
 
+                                
+  BEGIN
+    pr_qtregist := 0;
+    
+    --Limpar tabelas auxiliares
+    pr_tab_endereco.DELETE;  
+                       
+    FOR rw_gncdnto IN cr_endereco(pr_nrcpfcgc => pr_nrcpfcgc) LOOP
+     
+      --Indice para a temp-table
+      vr_index := pr_tab_endereco.COUNT + 1;
+      
+      --Quantidade de registros
+      pr_qtregist := nvl(pr_qtregist,0) + 1;
+      
+      -- controles da paginacao 
+      IF (pr_qtregist < pr_nriniseq) OR
+         (pr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         --Proxima linha
+          CONTINUE;
+      END IF; 
+      
+      --Numero Registros
+      IF vr_nrregist > 0 THEN 
+        
+        --Verificar se já existe na temp-table                             
+        IF NOT pr_tab_endereco.EXISTS(vr_index) THEN  
+                      
+            --Popular dados na tabela memoria
+            pr_tab_endereco(vr_index).nmlogradouro  := rw_gncdnto.nmlogradouro;
+            pr_tab_endereco(vr_index).nrlogradouro  := rw_gncdnto.nrlogradouro;
+            pr_tab_endereco(vr_index).dscomplemento := rw_gncdnto.dscomplemento;
+            pr_tab_endereco(vr_index).nmbairro      := rw_gncdnto.nmbairro;
+            pr_tab_endereco(vr_index).nrcep         := rw_gncdnto.nrcep;
+            pr_tab_endereco(vr_index).dscidade      := rw_gncdnto.dscidade;
+            pr_tab_endereco(vr_index).tpendereco    := rw_gncdnto.tpendereco;  
+            pr_tab_endereco(vr_index).cdestado      := rw_gncdnto.cdestado; 
+            pr_tab_endereco(vr_index).tporigem      := rw_gncdnto.tporigem;             
+                       
+          END IF;  
+          
+      END IF;
+      
+      --Diminuir registros
+      vr_nrregist := nvl(vr_nrregist, 0) - 1; 
+      
+    END LOOP;
+    
+    --Retorno OK
+    pr_des_erro := 'OK'; 
+    
+  END pc_busca_endereco;
+  
+  PROCEDURE pc_busca_endereco_web(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  -- Código do cpf/cnpj
+                                 ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
+                                 ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
+                                 ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
+                                 ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
+                                 ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                                 ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                 ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
+                                 ,pr_des_erro  OUT VARCHAR2)IS          --Saida OK/NOK
+                                    
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_endereco_web                            
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Kelvin  
+    Data     : Setembro/2017                          Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Buscar enderecos do associado 
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3); 
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    --Tabela de natureza de ocupação
+    vr_tab_endereco typ_tab_endereco;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_cdnatocp gncdnto.cdnatocp%TYPE;
+    
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;   
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+        
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;    
+  
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+      
+    --Limpar tabela dados
+    vr_tab_endereco.DELETE;
+      
+    --Inicializar Variaveis
+    vr_cdcritic:= 0;                         
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+  
+    IF TRIM(pr_nrcpfcgc) IS NULL THEN
+      vr_dscritic := 'CPF/CNPJ nao informado.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    pc_busca_endereco(pr_nrcpfcgc => pr_nrcpfcgc -- Descrição da natureza
+                     ,pr_nrregist => pr_nrregist -- Número de registro
+                     ,pr_nriniseq => pr_nriniseq -- Número sequencial do registro
+                     ,pr_qtregist => vr_qtregist -- Quantidade de registro
+                     ,pr_nmdcampo => pr_nmdcampo -- Nome do campo com erro
+                     ,pr_tab_endereco => vr_tab_endereco -- Tabela naturezas
+                     ,pr_tab_erro => vr_tab_erro --Tabela Erros
+                     ,pr_des_erro => vr_des_reto); --Tabela de erros 
+                           
+    --Se Ocorreu erro
+    IF vr_des_reto <> 'OK' THEN       
+       
+      --Se possuir erro na tabela
+      IF vr_tab_erro.COUNT > 0 THEN
+        
+        --Mensagem Erro
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        
+      ELSE  
+        
+        --Mensagem Erro
+        vr_dscritic:= 'Erro na pc_busca_endereco_web.';
+        
+      END IF;          
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;  
+            
+    END IF;
+    
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);                                          
+      
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><enderecos>');
+      
+    --Buscar Primeiro registro
+    vr_index:= vr_tab_endereco.FIRST;
+        
+    --Percorrer todos os historicos
+    WHILE vr_index IS NOT NULL LOOP
+      
+      -- Carrega os dados           
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<endereco>'||
+                                                     '<nmlogradouro>'  || vr_tab_endereco(vr_index).nmlogradouro  || '</nmlogradouro>' ||
+                                                     '<nrlogradouro>'  || vr_tab_endereco(vr_index).nrlogradouro  || '</nrlogradouro>' || 
+                                                     '<dscomplemento>' || vr_tab_endereco(vr_index).dscomplemento || '</dscomplemento>'||  
+                                                     '<nmbairro>'      || vr_tab_endereco(vr_index).nmbairro      || '</nmbairro>'     ||  
+                                                     '<nrcep>'         || vr_tab_endereco(vr_index).nrcep         || '</nrcep>'        ||  
+                                                     '<dscidade>'      || vr_tab_endereco(vr_index).dscidade      || '</dscidade>'     ||  
+                                                     '<tpendereco>'    || vr_tab_endereco(vr_index).tpendereco    || '</tpendereco>'   ||  
+                                                     '<cdestado>'      || vr_tab_endereco(vr_index).cdestado      || '</cdestado>'     ||    
+                                                     '<tporigem>'      || vr_tab_endereco(vr_index).tporigem      || '</tporigem>>'    ||
+                                                   '</endereco>'); 
+                                                              
+      --Proximo Registro
+      vr_index:= vr_tab_endereco.NEXT(vr_index); 
+    
+    END LOOP;
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</enderecos></Root>'
+                           ,pr_fecha_xml      => TRUE);
+                  
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'enderecos'            --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtregist         --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                             
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);  
+                                   
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+                                      
+    --Retorno
+    pr_des_erro:= 'OK'; 
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK          
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                                                            
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_gncdnto_web --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+  
+  END pc_busca_endereco_web;
   
 END ZOOM0001;
 /

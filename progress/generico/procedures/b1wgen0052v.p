@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 21/01/2016
+    Data    : Junho/2010                      Ultima atualizacao: 15/09/2017
   
     Dados referentes ao programa:
   
@@ -138,6 +138,8 @@
 
 				29/11/2016 - Incluso bloqueio de criacao de novas contas na cooperativa
                              Transulcred (Daniel)
+							 
+				15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
 ........................................................................*/
 
 
@@ -247,6 +249,15 @@ PROCEDURE Valida_Dados :
     DEF  INPUT PARAM par_cdmotdem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inhabmen AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
@@ -417,6 +428,15 @@ PROCEDURE Valida_Dados :
                               INPUT par_cdocpttl,
                               INPUT par_inhabmen,
                               INPUT par_dthabmen,
+							  INPUT par_nrcepcor,
+							  INPUT par_dsendcor,
+							  INPUT par_nrendcor,
+							  INPUT par_complcor,
+							  INPUT par_nrpstcor,
+							  INPUT par_nmbaicor,
+							  INPUT par_cdufcorr,
+							  INPUT par_nmcidcor,
+							  INPUT par_idoricor,
                              OUTPUT par_nmdcampo,
                              OUTPUT par_cdcritic,
                              OUTPUT par_dscritic ) NO-ERROR.
@@ -447,6 +467,15 @@ PROCEDURE Valida_Dados :
                               INPUT par_nmbairro,
                               INPUT par_nmcidade,
                               INPUT par_cdufende,
+							  INPUT par_nrcepcor,
+							  INPUT par_dsendcor,
+							  INPUT par_nrendcor,
+							  INPUT par_complcor,
+							  INPUT par_nrpstcor,
+							  INPUT par_nmbaicor,
+							  INPUT par_cdufcorr,
+							  INPUT par_nmcidcor,
+							  INPUT par_idoricor,
                              OUTPUT par_nmdcampo,
                              OUTPUT par_cdcritic,
                              OUTPUT par_dscritic ) NO-ERROR.
@@ -2495,6 +2524,15 @@ PROCEDURE Valida_Fis PRIVATE :
     DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inhabmen AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
+	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -2842,7 +2880,76 @@ PROCEDURE Valida_Fis PRIVATE :
                       par_cdcritic = 40.
                LEAVE ValidaFis.
             END.
+		
+		/* CEP CORRESPONDENCIA */
+        IF  par_nrcepcor = 0 THEN
+            DO:
+               ASSIGN par_nmdcampo = "nrcepend"
+                      par_cdcritic = 34.
+               LEAVE ValidaFis.
+            END.
+        ELSE
+        IF  NOT CAN-FIND(FIRST crapdne 
+                         WHERE crapdne.nrceplog = par_nrcepcor)  THEN
+            DO:
+                ASSIGN par_nmdcampo = "nrcepcor"
+                       par_dscritic = "CEP nao cadastrado.".
+                LEAVE ValidaFis.
+            END.
 
+        /* End. CORRESPONDENCIA */
+        IF  par_dsendcor = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "dsendcor"
+                      par_cdcritic = 31.
+               LEAVE ValidaFis.
+            END.
+
+        /* Bairro CORRESPONDENCIA */
+        IF  par_nmbaicor = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmbaicor"
+                      par_cdcritic = 47.
+               LEAVE ValidaFis.
+            END.
+
+        /* Cidade CORRESPONDENCIA*/
+        IF  par_nmcidcor = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmcidcor"
+                      par_cdcritic = 32.
+               LEAVE ValidaFis.
+            END.
+
+        /* unidade da federacao - CORRESPONDENCIA */
+        IF  NOT ValidaUF(par_cdufcorr) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdufcorr"
+                      par_cdcritic = 33.
+               LEAVE ValidaFis.
+            END.
+
+        IF  NOT CAN-FIND(FIRST crapdne
+                         WHERE crapdne.nrceplog = par_nrcepcor  
+                           AND (TRIM(par_dsendcor) MATCHES 
+                               ("*" + TRIM(crapdne.nmextlog) + "*")
+                            OR TRIM(par_dsendcor) MATCHES
+                               ("*" + TRIM(crapdne.nmreslog) + "*"))) THEN
+            DO:
+                ASSIGN par_dscritic = "Endereco nao pertence ao CEP."
+                       par_nmdcampo = "nrcepcor".
+                LEAVE ValidaFis.
+            END.
+
+        /* Empresa */
+        IF  NOT CAN-FIND(crapemp WHERE crapemp.cdcooper = par_cdcooper AND
+                                       crapemp.cdempres = par_cdempres) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdempres"
+                      par_cdcritic = 40.
+               LEAVE ValidaFis.
+            END.
+		
         /* Cad.Emp */
         IF  par_cdcooper <> 5 THEN
         DO:
@@ -2914,6 +3021,15 @@ PROCEDURE Valida_Jur PRIVATE :
     DEF  INPUT PARAM par_nmbairro AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -3064,7 +3180,65 @@ PROCEDURE Valida_Jur PRIVATE :
                 LEAVE ValidaJur.
             END.
         
-        
+        /* CEP CORRESPONDENCIA */
+        IF  par_nrcepcor = 0 THEN
+            DO:
+               ASSIGN par_nmdcampo = "nrcepend"
+                      par_cdcritic = 34.
+               LEAVE ValidaJur.
+            END.
+        ELSE
+        IF  NOT CAN-FIND(FIRST crapdne 
+                         WHERE crapdne.nrceplog = par_nrcepcor)  THEN
+            DO:
+                ASSIGN par_nmdcampo = "nrcepcor"
+                       par_dscritic = "CEP nao cadastrado.".
+                LEAVE ValidaJur.
+            END.
+
+        /* End. CORRESPONDENCIA */
+        IF  par_dsendcor = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "dsendcor"
+                      par_cdcritic = 31.
+               LEAVE ValidaJur.
+            END.
+
+        /* Bairro CORRESPONDENCIA */
+        IF  par_nmbaicor = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmbaicor"
+                      par_cdcritic = 47.
+               LEAVE ValidaJur.
+            END.
+
+        /* Cidade CORRESPONDENCIA*/
+        IF  par_nmcidcor = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmcidcor"
+                      par_cdcritic = 32.
+               LEAVE ValidaJur.
+            END.
+
+        /* unidade da federacao - CORRESPONDENCIA */
+        IF  NOT ValidaUF(par_cdufcorr) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdufcorr"
+                      par_cdcritic = 33.
+               LEAVE ValidaJur.
+            END.
+
+        IF  NOT CAN-FIND(FIRST crapdne
+                         WHERE crapdne.nrceplog = par_nrcepcor  
+                           AND (TRIM(par_dsendcor) MATCHES 
+                               ("*" + TRIM(crapdne.nmextlog) + "*")
+                            OR TRIM(par_dsendcor) MATCHES
+                               ("*" + TRIM(crapdne.nmreslog) + "*"))) THEN
+            DO:
+                ASSIGN par_dscritic = "Endereco nao pertence ao CEP."
+                       par_nmdcampo = "nrcepcor".
+                LEAVE ValidaJur.
+            END.
 
         ASSIGN aux_returnvl = "OK".
 

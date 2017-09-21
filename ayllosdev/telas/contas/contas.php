@@ -20,6 +20,7 @@
  * [30/01/2015] Andre Santos(SUPERO): Incluir o item Convenio CDC
  * [03/08/2015] Reformulacao cadastral (Gabriel-RKAM)
  * [19/09/2015] Gabriel (RKAM) Projeto 217: Ajuste para chamada da rotina Produtos.
+ * [15/09/2017] Kelvin (CECRED) : Alterações referente a melhoria 339 (Kelvin).
 
  */
  
@@ -140,6 +141,8 @@
 																			</table>																			
 																		</div>	
 																		
+																		<!-- INCLUDE DA TELA DE PESQUISA ENDERECO ASSOCIADO -->
+																		<? require_once("../../includes/pesquisa/pesquisa_endereco_associado.php"); ?>
 																		
 																		<!-- INCLUDE DA TELA DE PESQUISA ENDERECO -->
 																		<? require_once("../../includes/pesquisa/pesquisa_endereco.php"); ?>

@@ -11,6 +11,7 @@
  * 002: [05/07/2011] Henrique Pettenuci       Adicionado os campos nrdoapto e cddbloco.
  * 003: [22/07/2015] Gabriel 		   (RKAM) Reformulacao cadastral.
  * 004: [20/04/2016] Heitor            (RKAM) Limitado o campo NRENDERE em 5 posicoes, chamado 435477 
+ * 005: [15/09/2017] Kelvin			   (CECRED) Alterações referente a melhoria 339.
  */
 
 var nomeForm = 'frmEndereco'; // Nome do Formulário 
@@ -294,7 +295,7 @@ function controlaLayout(operacao) {
 	rInicio.addClass('rotulo').css('width','120px');
 	rTemp.addClass('rotulo-linha').css('width','165px');	
 	rVlParc.addClass('rotulo-linha').css('width','55px');
-	rQtParc.addClass('rotulo-linha').css('width','205px');
+	rQtParc.addClass('rotulo-linha').css('width','205px');	
 
 	if ( $.browser.msie ) { 
 		rQtParc.addClass('rotulo-linha').css('width','208px');
@@ -314,6 +315,8 @@ function controlaLayout(operacao) {
 	var rEst	= $('label[for="cdufende"],label[for="ib_cdufende"]','#'+nomeForm);	
 	var rCid	= $('label[for="nmcidade"],label[for="ib_nmcidade"]','#'+nomeForm);
 	var rOri	= $('label[for="idorigem"],label[for="ib_idorigem"]','#'+nomeForm);
+	var rFlgutires = $('label[for="flgutires"]', '#' + nomeForm);
+	var rLovendco = $('label[for="lovendco"]', '#' + nomeForm);	
 	
 	rCep.addClass('rotulo').css('width','55px');
 	rEnd.addClass('rotulo-linha').css('width','25px');
@@ -326,6 +329,8 @@ function controlaLayout(operacao) {
 	rCid.addClass('rotulo').css('width','55px');
 	rEst.addClass('rotulo-linha').css('width','52px');
 	rOri.addClass('rotulo').css('width','55px');
+	rFlgutires.addClass('rotulo').css('width', '185px');
+	rLovendco.addClass('rotulo-linha').css('width', '260px');
 	
 	// CAMPOS - IMÓVEL
 	var cImovel	= $('#incasprp,#ib_incasprp','#'+nomeForm);
@@ -354,6 +359,8 @@ function controlaLayout(operacao) {
 	var cEst	= $('#cdufende,#ib_cdufende','#'+nomeForm);	
 	var cCid	= $('#nmcidade,#ib_nmcidade','#'+nomeForm);
 	var cOri	= $('#idorigem,#ib_idorigem','#'+nomeForm);
+	var cFlgutires = $('#flgutires', '#' + nomeForm);
+	
 
 	cCep.addClass('cep pesquisa').css('width','65px').attr('maxlength','9');
 	cEnd.addClass('alphanum').css('width','240px').attr('maxlength','40');
@@ -364,6 +371,7 @@ function controlaLayout(operacao) {
 	cEst.css('width','62px');
 	cCid.addClass('alphanum').css('width','300px').attr('maxlength','25');
 	cOri.css('width','87px');
+	cFlgutires.addClass('rotulo-linha');
 	
 	if ( $.browser.msie ) {
 		cNum.addClass('numerocasa').css('width','44px').attr('maxlength','6');
@@ -404,7 +412,24 @@ function controlaLayout(operacao) {
 	controlaPesquisas();
 	divRotina.centralizaRotinaH();	
 	controlaFoco(operacao);
-
+	
+	cFlgutires.bind("click", function() {
+		if (cFlgutires.is(':checked')) {
+		  $('#nrcepend', '#' + 'fieldCorrespondencia').val($('#nrcepend', '#' + 'fieldResidencial').val());
+		  $('#dsendere', '#' + 'fieldCorrespondencia').val($('#dsendere', '#' + 'fieldResidencial').val());
+		  $('#nrendere', '#' + 'fieldCorrespondencia').val($('#nrendere', '#' + 'fieldResidencial').val());
+		  $('#complend', '#' + 'fieldCorrespondencia').val($('#complend', '#' + 'fieldResidencial').val());
+		  $('#nmbairro', '#' + 'fieldCorrespondencia').val($('#nmbairro', '#' + 'fieldResidencial').val());
+		  $('#cdufende', '#' + 'fieldCorrespondencia').val($('#cdufende', '#' + 'fieldResidencial').val());
+		  $('#nmcidade', '#' + 'fieldCorrespondencia').val($('#nmcidade', '#' + 'fieldResidencial').val());
+		  $('#idorigem', '#' + 'fieldCorrespondencia').val($('#idorigem', '#' + 'fieldResidencial').val());
+		  $('#nrcxapst', '#' + 'fieldCorrespondencia').val($('#nrcxapst', '#' + 'fieldResidencial').val());
+		  $('#nrdoapto', '#' + 'fieldCorrespondencia').val($('#nrdoapto', '#' + 'fieldResidencial').val());
+		  $('#cddbloco', '#' + 'fieldCorrespondencia').val($('#cddbloco', '#' + 'fieldResidencial').val());
+		  
+		} 
+	});
+	
 	return false;	
 }	
 
@@ -418,6 +443,7 @@ function controlaPesquisas() {
 	// 2) o sexto campo é o campo q será focado após o retorno ao formulario de origem, que
 	// pelo requisito na maioria dos casos será o NUMERO do endereço	
 	var camposOrigem = 'nrcepend;dsendere;nrendere;complend;nrcxapst;nmbairro;cdufende;nmcidade';	
+	var camposCor = 'nrcepend;dsendere;nrendere;complend;nrcxapst;nmbairro;cdufende;nmcidade;idorigem';	
 	
 	/*-------------------------------------*/
 	/*       CONTROLE DAS PESQUISAS        */
@@ -482,6 +508,12 @@ function controlaPesquisas() {
 		return false;
 		
 	});
+	
+	
+	/*--------------------------------------------------*/
+	/*    CONTROLE ENDEREÇO COBRANÇA  (CORRESPONDENCIA) */
+	/*--------------------------------------------------*/	
+	$('#lovendco','#fieldCorrespondencia').buscaEnderecoAssociado('fieldCorrespondencia', camposCor, divRotina, 'frmCabContas');	
 	
 	// CEP DE CORRESPONDENCIA
 	$('#nrcepend','#fieldCorrespondencia').buscaCEP('fieldCorrespondencia', camposOrigem, divRotina);

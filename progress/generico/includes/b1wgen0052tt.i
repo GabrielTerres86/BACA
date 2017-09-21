@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0052tt.i
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 04/01/2016
+    Data    : Junho/2010                      Ultima atualizacao: 15/09/2017
   
     Dados referentes ao programa:
   
@@ -60,6 +60,8 @@
                 28/01/2016 - Incluidos campos referentes a origem do endereco
                              e licenca ambiental na tt-crapass
                              Melhoria 147 (Heitor - RKAM)
+							 
+				15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
 .............................................................................*/
 
 /* DEFINICOES PARA MATRIC[N].P */
@@ -115,7 +117,18 @@ DEFINE TEMP-TABLE tt-crapass NO-UNDO LIKE crapass
     FIELD nrtelcel AS DEC
     FIELD cdopetfn AS INTE
     FIELD idorigee AS INTE
-    FIELD nrlicamb AS DECI.
+    FIELD nrlicamb AS DECI
+	FIELD nrcepcor LIKE crapenc.nrcepend
+	FIELD dsendcor LIKE crapenc.dsendere
+	FIELD nrendcor LIKE crapenc.nrendere
+	FIELD complcor LIKE crapenc.complend
+	FIELD nmbaicor LIKE crapenc.nmbairro
+	FIELD nmcidcor LIKE crapenc.nmcidade
+	FIELD cdufcorr LIKE crapenc.cdufende
+	FIELD nrpstcor LIKE crapenc.nrcxapst
+	FIELD idoricor AS INTE.
+	
+	
     
 DEFINE TEMP-TABLE tt-crapavt NO-UNDO 
     FIELD cdcooper LIKE crapavt.cdcooper

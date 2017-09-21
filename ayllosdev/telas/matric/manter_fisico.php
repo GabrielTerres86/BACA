@@ -12,6 +12,7 @@
  *                09/07/2015 - Projeto Reformulacao Cadastral (Gabriel-RKAM). 
 				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
 				  25/10/2016 - M310 - Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
+				  15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
  */
 ?> 
 
@@ -55,6 +56,15 @@
 	$inhabmen = (isset($_POST['inhabmen'])) ? $_POST['inhabmen'] : '' ;
 	$dthabmen = (isset($_POST['dthabmen'])) ? $_POST['dthabmen'] : '' ;
 	$idorigee = (isset($_POST['idorigee'])) ? $_POST['idorigee'] : '' ;
+	$nrcepcor = (isset($_POST['nrcepcor'])) ? $_POST['nrcepcor'] : '' ;
+	$dsendcor = (isset($_POST['dsendcor'])) ? $_POST['dsendcor'] : '' ;
+	$nrendcor = (isset($_POST['nrendcor'])) ? $_POST['nrendcor'] : '' ;
+	$complcor = (isset($_POST['complcor'])) ? $_POST['complcor'] : '' ;
+	$nrpstcor = (isset($_POST['nrpstcor'])) ? $_POST['nrpstcor'] : '' ;
+	$nmbaicor = (isset($_POST['nmbaicor'])) ? $_POST['nmbaicor'] : '' ;
+	$cdufcorr = (isset($_POST['cdufcorr'])) ? $_POST['cdufcorr'] : '' ;
+	$nmcidcor = (isset($_POST['nmcidcor'])) ? $_POST['nmcidcor'] : '' ;
+	$idoricor = (isset($_POST['idoricor'])) ? $_POST['idoricor'] : '' ;
 
 	$arrayFilhos = (isset($_POST['arrayFilhos'])) ? $_POST['arrayFilhos'] : '';
 	
@@ -316,7 +326,25 @@
 		//Cidade
 		if ( $GLOBALS['nmcidade'] == ''  ) exibirErro('error','Cidade deve ser preenchida.','Alerta - Ayllos','focaCampoErro(\'nmcidade\',\'frmFisico\');',false);
 		
+		//-----------------------------
+		//		    Endereco Correspondencia	  
+		//-----------------------------
+
+		//CEP
+		if ( $GLOBALS['nrcepcor'] == '' || $GLOBALS['nrcepcor'] == 0 ) exibirErro('error','CEP deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nrcepcor\',\'frmFisico\');',false);
 		
+		//Endereço
+		if ( $GLOBALS['dsendcor'] == ''  ) exibirErro('error','Endereço deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'dsendcor\',\'frmFisico\');',false);
+		
+		//Bairro
+		if ( $GLOBALS['nmbaicor'] == ''  ) exibirErro('error','Bairro deve ser preenchido.','Alerta - Ayllos','focaCampoErro(\'nmbaicor\',\'frmFisico\');',false);
+		
+		//U.F.
+		if ( $GLOBALS['cdufcorr'] == ''  ) exibirErro('error','U.F. deve ser selecionado.','Alerta - Ayllos','focaCampoErro(\'cdufcorr\',\'frmFisico\');',false);
+
+		//Cidade
+		if ( $GLOBALS['nmcidcor'] == ''  ) exibirErro('error','Cidade deve ser preenchida.','Alerta - Ayllos','focaCampoErro(\'nmcidcor\',\'frmFisico\');',false);
+				
 		//-----------------------------
 		//   Entrada/Saída Cooperado	  
 		//-----------------------------

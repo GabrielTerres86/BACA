@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0052.p
     Autor   : Jose Luis Marchezoni
-    Data    : Junho/2010                   Ultima atualizacao: 13/07/2015
+    Data    : Junho/2010                   Ultima atualizacao: 15/09/2017
 
     Objetivo  : BO de Comunicacao XML x BO - Tela MATRIC
 
@@ -23,7 +23,9 @@
                 13/07/2015 - Reformulacao cadastral (Gabriel-RKAM).
 
                 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
-				             Transferencia entre PAs (Heitor - RKAM)				
+				             Transferencia entre PAs (Heitor - RKAM)	
+
+				15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
 .............................................................................*/
 
                                                                              
@@ -120,7 +122,15 @@ DEF VAR aux_inconrfb AS INTE                                           NO-UNDO.
 DEF VAR aux_hrinicad AS INTE                                           NO-UNDO.
 DEF VAR aux_idorigee AS INTE                                           NO-UNDO.
 DEF VAR aux_nrlicamb AS DECI                                           NO-UNDO.
-
+DEF VAR aux_nrcepcor AS INTE                                           NO-UNDO.
+DEF VAR aux_dsendcor AS CHAR                                           NO-UNDO.
+DEF VAR aux_nrendcor AS INTE                                           NO-UNDO.
+DEF VAR aux_complcor AS CHAR                                           NO-UNDO.
+DEF VAR aux_nrpstcor AS INTE                                           NO-UNDO.
+DEF VAR aux_nmbaicor AS CHAR                                           NO-UNDO.
+DEF VAR aux_cdufcorr AS CHAR                                           NO-UNDO.
+DEF VAR aux_nmcidcor AS CHAR                                           NO-UNDO.
+DEF VAR aux_idoricor AS INTE                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -222,7 +232,15 @@ PROCEDURE valores_entrada:
             WHEN "hrinicad" THEN aux_hrinicad = INTE(tt-param.valorCampo).
             WHEN "idorigee" THEN aux_idorigee = INTE(tt-param.valorCampo).
             WHEN "nrlicamb" THEN aux_nrlicamb = DECI(tt-param.valorCampo).
-
+			WHEN "nrcepcor" THEN aux_nrcepcor = INTE(tt-param.valorCampo).
+            WHEN "dsendcor" THEN aux_dsendcor = tt-param.valorCampo.
+            WHEN "nrendcor" THEN aux_nrendcor = INTE(tt-param.valorCampo).
+            WHEN "complcor" THEN aux_complcor = tt-param.valorCampo.
+            WHEN "nrpstcor" THEN aux_nrpstcor = INTE(tt-param.valorCampo).
+            WHEN "nmbaicor" THEN aux_nmbaicor = tt-param.valorCampo.
+            WHEN "cdufcorr" THEN aux_cdufcorr = tt-param.valorCampo.
+            WHEN "nmcidcor" THEN aux_nmcidcor = tt-param.valorCampo.
+			WHEN "idoricor" THEN aux_idoricor = INTE(tt-param.valorCampo).			
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
@@ -740,7 +758,7 @@ PROCEDURE Valida_Cidades:
                                INPUT aux_nmdatela,
                                INPUT aux_idorigem,
                                INPUT aux_nmcidade,
-                               INPUT aux_cdufende,
+                               INPUT aux_cdufende,							   
                               OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN
@@ -839,6 +857,15 @@ PROCEDURE Valida_Dados:
                              INPUT aux_dthabmen,
                              INPUT TABLE tt-crapavt,
                              INPUT TABLE tt-crapcrl,
+							 INPUT aux_nrcepcor,
+							 INPUT aux_dsendcor,
+							 INPUT aux_nrendcor,
+							 INPUT aux_complcor,
+							 INPUT aux_nrpstcor,
+							 INPUT aux_nmbaicor,
+							 INPUT aux_cdufcorr,
+							 INPUT aux_nmcidcor,
+							 INPUT aux_idoricor,
                             OUTPUT aux_nrctanov,
                             OUTPUT aux_qtparcel,
                             OUTPUT aux_vlparcel,
@@ -1041,6 +1068,15 @@ PROCEDURE Grava_Dados:
                             INPUT TABLE tt-bens,
                             INPUT aux_idorigee,
                             INPUT aux_nrlicamb,
+							INPUT aux_nrcepcor,
+							INPUT aux_dsendcor,
+							INPUT aux_nrendcor,
+							INPUT aux_complcor,
+							INPUT aux_nrpstcor,
+							INPUT aux_nmbaicor,
+							INPUT aux_cdufcorr,
+							INPUT aux_nmcidcor,
+							INPUT aux_idoricor,
                            OUTPUT aux_msgretor,
                            OUTPUT aux_tpatlcad,
                            OUTPUT aux_msgatcad,

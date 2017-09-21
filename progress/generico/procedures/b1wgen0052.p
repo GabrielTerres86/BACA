@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 16/03/2016
+    Data    : Junho/2010                      Ultima atualizacao: 15/09/2017
   
     Dados referentes ao programa:
   
@@ -106,7 +106,7 @@
                              problema com validacao da data de nascimento.
                              Heitor (Mouts) - Chamado 702785
 
-
+				15/09/2017 - Alterações referente a melhoria 339 (Kelvin).
 ............................................................................*/
 
 
@@ -552,6 +552,16 @@ PROCEDURE Valida_Dados:
     
     DEF  INPUT PARAM TABLE FOR tt-crapavt.
     DEF  INPUT PARAM TABLE FOR tt-crapcrl.
+	
+	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_nrctanov AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_qtparcel AS INTE                           NO-UNDO.
@@ -750,6 +760,15 @@ PROCEDURE Valida_Dados:
               INPUT par_cdmotdem,
               INPUT par_inhabmen,
               INPUT par_dthabmen,
+			  INPUT par_nrcepcor,
+			  INPUT par_dsendcor,
+			  INPUT par_nrendcor,
+			  INPUT par_complcor,
+			  INPUT par_nrpstcor,
+			  INPUT par_nmbaicor,
+			  INPUT par_cdufcorr,
+			  INPUT par_nmcidcor,
+			  INPUT par_idoricor,
              OUTPUT par_msgretor,
              OUTPUT par_nmdcampo,
              OUTPUT aux_cdcritic,
@@ -1182,7 +1201,7 @@ PROCEDURE Valida_Cidades:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.	
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
@@ -1593,15 +1612,22 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_nmttlrfb AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inconrfb AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_hrinicad AS INTE                           NO-UNDO.
-
+	
     DEF  INPUT PARAM TABLE FOR tt-crapavt.
     DEF  INPUT PARAM TABLE FOR tt-crapcrl.
     DEF  INPUT PARAM TABLE FOR tt-bens.
-
-    DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-
-
+	DEF  INPUT PARAM par_nrcepcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_dsendcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrendcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_complcor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nrpstcor AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM par_nmbaicor AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_cdufcorr AS CHAR                           NO-UNDO.
+	DEF  INPUT PARAM par_nmcidcor AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idoricor AS INTE                           NO-UNDO.
+	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
@@ -1632,9 +1658,9 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
 
 
-    DEF BUFFER crabavt FOR crapavt.
-    
-    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+    DEF BUFFER crabavt FOR crapavt.    
+	
+	ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dscritic = "Erro na gravacao dos dados. "
            aux_cdcritic = 0
            aux_returnvl = "NOK"
@@ -2593,6 +2619,15 @@ PROCEDURE Grava_Dados:
                  INPUT par_dthabmen,
                  INPUT TABLE tt-crapavt,
                  INPUT TABLE tt-crapcrl,
+				 INPUT par_nrcepcor,
+				 INPUT par_dsendcor,
+				 INPUT par_nrendcor,
+				 INPUT par_complcor,
+				 INPUT par_nrpstcor,
+				 INPUT par_nmbaicor,
+				 INPUT par_cdufcorr,
+				 INPUT par_nmcidcor,
+				 INPUT par_idoricor,			 
                 OUTPUT aux_nrctanov,
                 OUTPUT aux_qtparcel,
                 OUTPUT aux_vlparcel,
@@ -2693,6 +2728,15 @@ PROCEDURE Grava_Dados:
               INPUT TABLE tt-bens,
               INPUT par_idorigee,
               INPUT par_nrlicamb,
+			  INPUT par_nrcepcor,
+			  INPUT par_dsendcor,
+			  INPUT par_nrendcor,
+			  INPUT par_complcor,
+			  INPUT par_nrpstcor,
+			  INPUT par_nmbaicor,
+			  INPUT par_cdufcorr,
+			  INPUT par_nmcidcor,
+			  INPUT par_idoricor,
              OUTPUT par_msgretor,
              OUTPUT aux_cdcritic,
              OUTPUT aux_dscritic,
