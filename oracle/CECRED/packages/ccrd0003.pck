@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 08/08/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 21/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -75,6 +75,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             
   --             08/08/2017 - #724754 Ajuste no procedimento pc_crps672 para filtrar apenas as cooperativas 
   --                          ativas para não solicitar relatórios para as inativas (Carlos)
+  --
+  --             21/09/2017 - Validar ultima linha do arquivo corretamente no pc_crps672 (Lucas Ranghetti #753170)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6570,7 +6572,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 04/07/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 21/09/2017
 
        Dados referentes ao programa:
 
@@ -6696,6 +6698,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                    18/07/2017 - Utilizar o nome do titular do cartão na importação do arquivo CCR3
                                 para atualizar no Ayllos, a fim de manter as informalçoes identicas
                                 com o SIPAG (Douglas - Chamado 709215) 
+                                
+                   21/09/2017 - Validar ultima linha do arquivo corretamente (Lucas Ranghetti #753170)
     ............................................................................ */
 
     DECLARE
@@ -7905,9 +7909,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           pc_log_message;
           CONTINUE;
         END IF;
-
-        /* Verificar se o arquivo esta completo - Ultima linha */
-        vr_comando:= 'tail -2 '||vr_direto_connect||'/'||vr_vet_nmarquiv(i);
+        
+        /* o comando abaixo ignora quebras de linha atraves do 'grep -v' e o 'tail -1' retorna
+             a ultima linha do resultado do grep */
+        vr_comando:= 'grep -v '||'''^$'' '||vr_direto_connect||'/'||vr_vet_nmarquiv(i)||'| tail -1';
 
         --Executar o comando no unix
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -7921,16 +7926,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           pc_log_message;
           CONTINUE;
         END IF;
-                              
+                 
         --Verificar se a ultima linha é o Trailer
-        IF SUBSTR(vr_saida_tail,001,06) <> 'CCR309' AND   -- Antigo 
-           SUBSTR(vr_saida_tail,351,06) <> 'CCR309' THEN  -- Servidor "_AIX"             
+        IF SUBSTR(vr_saida_tail,1,6) <> 'CCR309' THEN  
           vr_cdcritic:= 999;
           vr_dscritic:= 'Arquivo incompleto.';  
           -- gerar o log
           pc_log_arq_invalido(pr_nmdarqui => vr_vet_nmarquiv(i));
-          -- levantar excecao
-          CONTINUE;
+            
+          CONTINUE; -- Proximo arquivo
         END IF;
 
         -- Guardar a maior sequencia processada
