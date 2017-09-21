@@ -855,6 +855,9 @@ PROCEDURE gerenciar-operador.
            aux_cdcritic = 0
            aux_dscritic = "".
 
+    FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
+                             crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.           
+
     FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
    
     IF  NOT AVAILABLE crapcop  THEN
@@ -1132,7 +1135,7 @@ PROCEDURE gerenciar-operador.
                    crapopi.nmoperad = par_nmoperad
                    crapopi.dsdemail = par_dsdemail
                    crapopi.dsdcargo = par_dsdcargo
-				   crapopi.flgsitop = IF par_desdacao = "CADASTRAR" THEN
+				   crapopi.flgsitop = IF par_desdacao = "CADASTRAR" AND crapass.idastcjt = 1 THEN
 										            FALSE
 									            ELSE
 										            par_flgsitop.
