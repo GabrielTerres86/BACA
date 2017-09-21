@@ -173,6 +173,10 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0001 is
                                  pr_tpdregra     IN INTEGER)               --> Tipo de regra de rollout(1-registro,2-pagamento)
                                  RETURN INTEGER;
   
+  --> Rotina para validar se ainda esta no periodo de convivencia
+  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) --> Data de movimento                                     
+                                     RETURN INTEGER;
+                                     
   --> Rotina para retornar valor limite de pagamento em contigencia na cip
   FUNCTION fn_vlcontig_cip ( pr_cdcooper     IN crapcop.cdcooper%TYPE) --> Codigo da cooperativa)               --> Tipo de regra de rollout(1-registro,2-pagamento)
                              RETURN NUMBER;
@@ -271,6 +275,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
        INDEX BY PLS_INTEGER;
   vr_dstextab_rollout_pag     typ_tab_dstextab;
   vr_dstextab_rollout_reg     typ_tab_dstextab;
+  
+  --> Armazenar data de convivencia
+  vr_dstextab_dtconviv        craptab.dstextab%TYPE;
   
   --> Para garantir o valor atualizado, informação será buscada a cada hora
   vr_nrctrlhr        NUMBER;
@@ -394,7 +401,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         -- ou passou a hora
         to_char(SYSDATE,'HH24') <> vr_nrctrlhr THEN
      
+       --> Inicializar/zerar valores
        vr_nrctrlhr := to_char(SYSDATE,'HH24');
+       vr_dstextab_dtconviv    := NULL;
+       vr_dstextab_rollout_reg.delete; 
+       vr_dstextab_rollout_pag.delete; 
      
        --> Buscar dados
        vr_dstextab := TABE0001.fn_busca_dstextab
@@ -448,6 +459,92 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
     WHEN OTHERS THEN
       RETURN 0;      
   END fn_verifica_rollout;
+  
+  --> Rotina para validar se ainda esta no periodo de convivencia
+  FUNCTION fn_valid_periodo_conviv ( pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) --> Data de movimento                                     
+                                     RETURN INTEGER IS
+  /* ..........................................................................
+    
+      Programa : fn_valid_periodo_conviv        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(Amcom)
+      Data     : Setembro/2017.                   Ultima atualizacao: 18/09/2017
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para validar se ainda esta no periodo de convivencia
+      Alteração : 
+        
+    ..........................................................................*/
+    -----------> CURSORES <-----------
+    ----------> VARIAVEIS <-----------
+    vr_dstextab     craptab.dstextab%TYPE;  
+    vr_tab_campos   gene0002.typ_split;  
+    vr_cdacesso     craptab.cdacesso%TYPE;
+    vr_index        INTEGER;
+    vr_dtconviv     DATE;
+    
+  BEGIN   
+  
+     --> Definir cdacesso conforme tipo de rollout
+     vr_cdacesso := 'DTCONVIV_NPC';
+     vr_dstextab := TRIM(vr_dstextab_dtconviv);
+     
+     -- Se ainda nao possui o valor da craptab
+     IF vr_dstextab is NULL OR 
+        -- ou passou a hora
+        to_char(SYSDATE,'HH24') <> vr_nrctrlhr THEN
+     
+       --> Inicializar/zerar valores
+       vr_nrctrlhr             := to_char(SYSDATE,'HH24');
+       vr_dstextab_dtconviv    := NULL;
+       vr_dstextab_rollout_reg.delete; 
+       vr_dstextab_rollout_pag.delete;
+     
+       --> Buscar dados
+       vr_dstextab := TABE0001.fn_busca_dstextab
+                                       (pr_cdcooper => 3
+                                       ,pr_nmsistem => 'CRED'
+                                       ,pr_tptabela => 'GENERI'
+                                       ,pr_cdempres => 0
+                                       ,pr_cdacesso => vr_cdacesso
+                                       ,pr_tpregist => 0); 
+      
+        --> Guardar valores 
+        vr_dstextab_dtconviv := vr_dstextab;
+      END IF;
+      
+      --> senao nao possui informação
+      IF vr_dstextab IS NULL THEN
+        RETURN 0; 
+      END IF;
+      
+      --> Verificar se é uma data valida
+      BEGIN
+        vr_dtconviv := to_date(vr_dstextab,'DD/MM/RRRR');
+      EXCEPTION
+        WHEN OTHERS THEN
+          NPCB0001.pc_gera_log_npc(pr_cdcooper => 3, 
+                                   pr_nmrotina => 'fn_valid_periodo_conviv', 
+                                   pr_dsdolog  => 'Parametro possui Data invalida('||vr_dstextab||').');
+          RETURN 0;   
+      END;
+            
+      --> Validar se ainda nao passou da data de conveniencia
+      IF pr_dtmvtolt <= vr_dtconviv  THEN        
+        --> Retornar 1 - ainda esta mp periodo de convivencia
+        RETURN 1;
+        
+      END IF;        
+      
+      RETURN 0;
+      
+  EXCEPTION 
+    WHEN OTHERS THEN
+      RETURN 0;      
+  END fn_valid_periodo_conviv;
   
   --> Rotina para retornar valor limite de pagamento em contigencia na cip
   FUNCTION fn_vlcontig_cip ( pr_cdcooper     IN crapcop.cdcooper%TYPE) --> Codigo da cooperativa)               --> Tipo de regra de rollout(1-registro,2-pagamento)
