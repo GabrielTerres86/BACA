@@ -182,7 +182,7 @@
 			<input type="image" id="btnnseg" src="<?php echo $UrlImagens; ?>botoes/2via.gif"      <?php if (!in_array("2",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcao2via();return false;'"; } ?>>
 			<input type="image" id="btnreno" src="<?php echo $UrlImagens; ?>botoes/renovar.gif"   <?php if (!in_array("R",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoRenovar();return false;'"; } ?>>
 			<input type="image" id="btntaa"  src="<?php echo $UrlImagens; ?>botoes/taa.gif"   <?php if (!in_array("U",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoTAA();return false;'"; } ?>>
-			<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(1);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
+			<input type="image" id="btndossie" src="<?php echo $UrlImagens; ?>botoes/dossie.gif" class="FluxoNavega" onclick="dossieDigdoc(1);return false;">
 			
 			<br style="clear:both;" />
 			
