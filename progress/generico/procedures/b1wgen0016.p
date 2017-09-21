@@ -37,7 +37,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 14/09/2017
+    Data    : Abril/2006                     Ultima Atualizacao: 21/09/2017
     
     Dados referentes ao programa:
 
@@ -508,6 +508,10 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
                            
               14/09/2017 - Adicionar no campo nrrefere como String (Lucas Ranghetti #756034)
+			  
+			  21/09/2017 - Ajustar procedure convenios_aceitos para indicar os convenios que podem
+			               ser cadastrados para debito automatico (David).
+						   
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -2544,6 +2548,8 @@ PROCEDURE convenios_aceitos:
     DEF VAR aux_hrtitini AS CHAR                                           NO-UNDO.
     DEF VAR aux_hrtitfim AS CHAR                                           NO-UNDO.
     DEF VAR aux_hrcancel AS CHAR                                           NO-UNDO.
+	DEF VAR aux_fldebaut AS LOGI                                           NO-UNDO.
+	DEF VAR aux_cdhisdeb LIKE crapcon.cdhistor                             NO-UNDO.
     
     EMPTY TEMP-TABLE tt-convenios_aceitos.
 
@@ -2583,6 +2589,46 @@ PROCEDURE convenios_aceitos:
     FOR EACH crapcon NO-LOCK WHERE crapcon.cdcooper = par_cdcooper  AND
                                    crapcon.flginter = TRUE 
                                    BY crapcon.nmextcon:
+								   
+		ASSIGN aux_cdhisdeb = crapcon.cdhistor.
+
+        IF  crapcon.flgcnvsi = TRUE THEN
+			DO:		    				
+                FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
+                                          crapscn.cdempcon <> 0)                       AND
+                                          crapscn.cdsegmto = STRING(crapcon.cdsegmto)  AND
+                                          crapscn.dsoparre = 'E'                       AND
+                                         (crapscn.cddmoden = 'A'                       OR
+                                          crapscn.cddmoden = 'C') NO-LOCK NO-ERROR.
+                IF  NOT AVAIL crapscn THEN
+                    ASSIGN aux_fldebaut = NO.
+                ELSE
+                    ASSIGN aux_fldebaut = YES.
+            END.
+        ELSE
+            DO:                 
+                FIND FIRST gnconve WHERE (gnconve.cdhiscxa = crapcon.cdhistor AND
+                                          gnconve.flgativo = TRUE             AND
+                                          gnconve.nmarqatu <> ""              AND
+                                          gnconve.cdhisdeb <> 0)              OR 
+                                         (gnconve.cdconven = 87               AND
+                                          gnconve.flgativo = TRUE             AND
+                                          gnconve.nmarqatu <> ""              AND
+                                          gnconve.cdhisdeb <> 0               AND 
+                                          crapcon.cdempcon = 1058)            OR
+                                         (gnconve.cdconven = 108              AND
+                                          gnconve.flgativo = TRUE             AND
+                                          gnconve.nmarqatu <> ""              AND
+                                          gnconve.cdhisdeb <> 0               AND 
+                                          crapcon.cdempcon = 1085)                            
+                                          NO-LOCK NO-ERROR.                           
+
+                IF  NOT AVAILABLE gnconve  THEN
+                    ASSIGN aux_fldebaut = NO.
+                ELSE 
+                    ASSIGN aux_fldebaut = YES
+                           aux_cdhisdeb = gnconve.cdhisdeb.					
+            END.								   
     
         CREATE tt-convenios_aceitos.
         ASSIGN tt-convenios_aceitos.nmextcon = crapcon.nmextcon
@@ -2590,14 +2636,16 @@ PROCEDURE convenios_aceitos:
                tt-convenios_aceitos.cdempcon = crapcon.cdempcon 
                tt-convenios_aceitos.cdsegmto = crapcon.cdsegmto
                tt-convenios_aceitos.hhoraini = IF crapcon.flgcnvsi THEN aux_hhsicini ELSE aux_hrtitini
-               tt-convenios_aceitos.hhorafim = IF crapcon.flgcnvsi THEN aux_hhsicfim ELSE aux_hrtitfim.
+               tt-convenios_aceitos.hhorafim = IF crapcon.flgcnvsi THEN aux_hhsicfim ELSE aux_hrtitfim
+			   tt-convenios_aceitos.fldebaut = aux_fldebaut
+			   tt-convenios_aceitos.cdhisdeb = aux_cdhisdeb.
 
         IF (((crapcon.cdempcon = 24 OR crapcon.cdempcon = 98) AND 
               crapcon.cdsegmto = 5) OR (crapcon.cdempcon = 119 AND 
               crapcon.cdsegmto = 2)) THEN 
             tt-convenios_aceitos.hhoracan = "Estorno não permitido para este convênio".
         ELSE
-            tt-convenios_aceitos.hhoracan = IF crapcon.flgcnvsi THEN aux_hhsiccan ELSE aux_hrcancel.
+            tt-convenios_aceitos.hhoracan = IF crapcon.flgcnvsi THEN aux_hhsiccan ELSE aux_hrcancel.			
 
     END. 
 

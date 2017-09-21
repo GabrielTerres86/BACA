@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Junho/2007.                       Ultima atualizacao: 31/03/2015
+   Data    : Junho/2007.                       Ultima atualizacao: 21/09/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -47,6 +47,9 @@
                             
                28/07/2015 - Adição de parâmetro flmobile para indicar que a origem
                             da chamada é do mobile (Dionathan)
+							
+			   21/09/2017 - Retornar tag indicando se o convenio pode ser 
+			                cadastrado em debaut (David).
                
 ..............................................................................*/
  
@@ -236,12 +239,37 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
                                            "<hhoraini>" + STRING(tt-convenios_aceitos.hhoraini) + "</hhoraini>" +
                                            "<hhorafim>" + STRING(tt-convenios_aceitos.hhorafim) + "</hhorafim>" +
                                            "<hhoracan>" + STRING(tt-convenios_aceitos.hhoracan) + "</hhoracan>" +
+										   "<fldebaut>" + STRING(tt-convenios_aceitos.fldebaut) + "</fldebaut>" +
+										   "<cdhisdeb>" + STRING(tt-convenios_aceitos.cdhisdeb) + "</cdhisdeb>" +
                                            "</CONVENIO>".
         
         END.
 
         CREATE xml_operacao.
         ASSIGN xml_operacao.dslinxml = "</CONVENIOS_ACEITOS>".
+		
+		CREATE xml_operacao.
+		ASSIGN xml_operacao.dslinxml = "<SEGMENTOS>".
+		CREATE xml_operacao.
+		ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>0</cdsegmto><dssegmto>Todos</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>1</cdsegmto><dssegmto>Prefeituras</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>2</cdsegmto><dssegmto>Saneamento</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>3</cdsegmto><dssegmto>Energia Elétrica e Gás</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>4</cdsegmto><dssegmto>Telecomunicações</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>5</cdsegmto><dssegmto>Órgãos Governamentais</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>6</cdsegmto><dssegmto>Órgãos Identificados pelo CNPJ</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>7</cdsegmto><dssegmto>Multas de Trânsito</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<SEGMENTO><cdsegmto>8</cdsegmto><dssegmto>Uso Exclusivo do Banco</dssegmto></SEGMENTO>".
+		CREATE xml_operacao.
+		ASSIGN xml_operacao.dslinxml = "</SEGMENTOS>".
             
         RUN proc_geracao_log (INPUT TRUE).
     END.
