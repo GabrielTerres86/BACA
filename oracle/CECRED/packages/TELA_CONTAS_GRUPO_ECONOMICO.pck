@@ -296,9 +296,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                                                             ,2,'Carga Manutenção'
                                                             ,ope_inc.nmoperad) as nmoperad_inclusao,
                    tbcc_grupo_economico_integ.dtinclusao,
-                   decode(tbcc_grupo_economico_integ.cdoperad_exclusao,1,'Carga Manutenção'
+                   decode(tbcc_grupo_economico_integ.cdoperad_exclusao,'1','Carga Manutenção'
                                                                       ,tbcc_grupo_economico_integ.cdoperad_exclusao) as cdoperad_exclusao,
-                   decode(tbcc_grupo_economico_integ.cdoperad_exclusao,1,'Carga Manutenção'
+                   decode(tbcc_grupo_economico_integ.cdoperad_exclusao,'1','Carga Manutenção'
                                                                       ,ope_exc.nmoperad) as nmoperad_exclusao,
                    tbcc_grupo_economico_integ.dtexclusao,
                    tbcc_grupo_economico_integ.nmintegrante
