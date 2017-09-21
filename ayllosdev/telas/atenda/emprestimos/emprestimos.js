@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 03/08/2016
+ * FONTE        : emprestimos.js                            Última alteração: 21/09/2017
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -107,6 +107,7 @@
  * 086: [29/03/2017] Ajustado para nao permitir selecionar finalidade de tipo 2 - cessao de credito( PRJ343 - Cessao de credito - Odirlei-AMcom)
  * 087: [25/04/2017] Adicionado tratamentos para o projeto 337 - Motor de crédito. (Reinert)
  * 088: [12/06/2017] Retornar o protocolo. (Jaison/Marcos - PRJ337)
+ * 089: [21/09/2017] Ajustes realizado para que nao ser possivel inserir caracteres invalidos nas descricoes dos bens de hipoteca. (Kelvin - 751548)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -4408,8 +4409,8 @@ function insereHipoteca(operacao, opContinua) {
 
     eval('var arrayHipoteca' + i + ' = new Object();');
     eval('arrayHipoteca' + i + '["dscatbem"] = $("#dscatbem","#frmHipoteca").val();');
-    eval('arrayHipoteca' + i + '["dsbemfin"] = $("#dsbemfin","#frmHipoteca").val();');
-    eval('arrayHipoteca' + i + '["dscorbem"] = $("#dscorbem","#frmHipoteca").val();');
+    eval('arrayHipoteca' + i + '["dsbemfin"] = removeCaracteresInvalidos($("#dsbemfin","#frmHipoteca").val(), true);');
+    eval('arrayHipoteca' + i + '["dscorbem"] = removeCaracteresInvalidos($("#dscorbem","#frmHipoteca").val(), true);');
     eval('arrayHipoteca' + i + '["idseqhip"] = $("#idseqhip","#frmHipoteca").val();');
     eval('arrayHipoteca' + i + '["vlmerbem"] = $("#vlmerbem","#frmHipoteca").val();');
     eval('arrayHipoteca' + i + '["lsbemfin"] = "";');
