@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.CCET0001 IS
+CREATE OR REPLACE PACKAGE CCET0001 IS
 
 -- contaMeses
 FUNCTION fn_qtd_meses(pr_data_1 IN DATE
@@ -166,7 +166,7 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                       
 END CCET0001;
 /
-create or replace package body cecred.CCET0001 is
+create or replace package body CCET0001 is
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -1922,6 +1922,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_vlemprst => pr_vlemprst
                                    ,pr_dtdpagto => pr_dtdpagto
                                    ,pr_dtlibera => pr_dtlibera
+                                   ,pr_tpemprst => pr_tpemprst
                                    ,pr_valoriof => vr_vlrdoiof
                                    ,pr_dscritic => vr_dscritic);
                                    
@@ -2491,6 +2492,7 @@ create or replace package body cecred.CCET0001 is
                                  ,pr_vlemprst => pr_vlemprst
                                  ,pr_dtdpagto => pr_dtdpagto
                                  ,pr_dtlibera => pr_dtlibera
+                                 ,pr_tpemprst => pr_tpemprst
                                  ,pr_valoriof => vr_vlrdoiof
                                  ,pr_dscritic => vr_dscritic);
                                    
