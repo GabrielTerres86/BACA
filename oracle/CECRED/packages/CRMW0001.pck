@@ -191,6 +191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                 ON e.cdcooper = a.cdcooper
                AND e.nrdconta = a.nrdconta
                AND e.idseqttl = a.idseqttl
+               AND e.cdseqinc = 1
          LEFT JOIN crapass x
                 ON x.cdcooper = a.cdcooper
                AND x.nrdconta = a.nrdconta
@@ -198,7 +199,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                 ON z.cdestcvl = a.cdestcvl
              WHERE a.cdcooper = pr_cdcooper
                AND a.nrdconta = pr_nrdconta
-               AND e.tpendass = 10 -- Endereço residencial
                AND e.idseqttl > 1; -- Outros titulares
           rw_titulares cr_titulares%ROWTYPE;
 
@@ -273,16 +273,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                      COALESCE(x.cdagenci, t.cdagenci) codigoagencia,
                      COALESCE(x.nrcpfcgc, t.nrcpfcgc) nrcpfcnpj,
                      CASE
-                       WHEN x.inpessoa = 1 THEN
+                       WHEN j.inpessoa = 1 THEN
                         'F'
                        ELSE
-                        'J'
+                        CASE
+                          WHEN t.nrdctato > 0 THEN
+                          
+                           CASE
+                             WHEN x.inpessoa = 1 THEN
+                              'F'
+                             ELSE
+                              'J'
+                           END
+                        
+                          ELSE
+                          
+                           CASE
+                             WHEN t.inpessoa = 1 THEN
+                              'F'
+                             ELSE
+                              'J'
+                           END
+                        END
                      END tipopessoa,
                      TO_CHAR(COALESCE(x.dtnasctl, t.dtnascto, y.dtnasttl),'DD/MM/YYYY') dtnascimento,
                      COALESCE(x.nmprimtl, t.nmdavali) nomecompleto,
-                     COALESCE(t.dsproftl, x.dsproftl) nomecargo,
-                     COALESCE(y.tpdocttl, x.tpdocttl, t.tpdocava) sigla,
-                     COALESCE(y.nrdocttl, x.nrdocttl, t.nrdocava) nrdocumento,
+                     CASE
+                       WHEN j.inpessoa = 1 THEN
+                        ''
+                       ELSE
+                        COALESCE(t.dsproftl, x.dsproftl)
+                     END nomecargo,
+                    COALESCE(y.tpdocttl, t.tpdocava) sigla,
+                     COALESCE(y.nrdocttl, t.nrdocava) nrdocumento,
                      COALESCE(e.dsendere, t.dsendres##1, t.dsendres##2) logradouro,
                      COALESCE(e.nrendere, t.nrendere) numeroendereco,
                      COALESCE(e.nmbairro, t.nmbairro) nomebairro,
@@ -302,6 +325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                   ON e.cdcooper = t.cdcooper
                  AND e.nrdconta = t.nrdctato
                  AND e.idseqttl = 1
+                 AND e.cdseqinc = 1
           LEFT JOIN crapass x
                   ON x.cdcooper = t.cdcooper
                  AND x.nrdconta = t.nrdctato
@@ -311,14 +335,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                  AND y.idseqttl = 1
           LEFT JOIN gnetcvl z
                  ON z.cdestcvl = t.cdestcvl
-         
+                 
+          LEFT JOIN crapass j
+                 ON j.cdcooper = t.cdcooper
+                AND j.nrdconta = t.nrdconta
+
           LEFT JOIN gnetcvl d
                  ON d.cdestcvl = y.cdestcvl
          
                WHERE t.cdcooper = pr_cdcooper
                  AND t.tpctrato = 6 -- Representantes legal
                  AND t.nrdconta = pr_nrdconta -- Número da conta
-                 AND e.tpendass = 10 -- Endereço residencial
                  AND t.dsproftl IN ('SOCIO/PROPRIETARIO',
                                     'DIRETOR/ADMINISTRADOR',
                                     'PROCURADOR',
@@ -621,7 +648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                               
         -- Representante Legal
         
-        IF rw_titular.tipopessoa = 'J' THEN
+       -- IF rw_titular.tipopessoa = 'J' THEN
         
             gene0002.pc_escreve_xml(pr_xml            => vr_xml_clob
                                    ,pr_texto_completo => vr_xml_temp
@@ -703,7 +730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                    ,pr_texto_completo => vr_xml_temp
                                    ,pr_texto_novo     => '</representantelegal>');   
                                
-        END IF;                            
+        --END IF;                            
                                
         -- fechamento do XML
 
