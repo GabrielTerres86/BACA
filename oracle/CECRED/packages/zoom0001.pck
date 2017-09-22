@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 22/02/2017
+    Data     : 30/11/2015.                   Ultima atualizacao: 04/08/2017
   
    Dados referentes ao programa:
   
@@ -20,6 +20,10 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                             (Andrei - RKAM).
                             
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
+               04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
+                                           
+               08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
+                            (Jonata - RKAM).
                                            
   ---------------------------------------------------------------------------------------------------------------*?
   
@@ -280,6 +284,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
   PROCEDURE pc_busca_finalidades_empr_web(pr_cdfinemp  IN crapfin.cdfinemp%TYPE -- Código da finalidade
                                          ,pr_dsfinemp  IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                          ,pr_flgstfin  IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
+                                         ,pr_lstipfin  IN VARCHAR2 DEFAULT NULL -- lista com os tipo de finalidade ou nulo para todas
                                          ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
                                          ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
                                          ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
@@ -349,6 +354,99 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                  ,pr_cdcritic OUT PLS_INTEGER          -- Codigo Erro
                                  ,pr_dscritic OUT VARCHAR2);          -- Descricao Erro                                                                                          
                                                                                                                                          
+  PROCEDURE pc_busca_operacao_conta(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE --> Codigo da operacao
+                                   ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE --> Descricao da operacao
+                                   ,pr_nrregist   IN INTEGER                       --> Quantidade de registros                            
+                                   ,pr_nriniseq   IN INTEGER                       --> Qunatidade inicial
+                                   ,pr_xmllog     IN VARCHAR2                      --> XML com informacoes de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER                   --> Codigo da critica
+                                   ,pr_dscritic  OUT VARCHAR2                      --> Descricao da critica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2                      --> Nome do Campo
+                            	     ,pr_des_erro  OUT VARCHAR2);                   --> Saida OK/NOK
+                                                                                                        
+  PROCEDURE pc_busca_dominios(pr_idtipo_dominio     IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
+                             ,pr_dstipo_dominio     IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
+                             ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                             ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                             ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                             ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                             ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                             ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                             ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                             ,pr_des_erro  OUT VARCHAR2);
+  
+  PROCEDURE pc_busca_descricao_dominios(pr_idtipo_dominio   IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- Tipo do dominio
+                                       ,pr_idgarantia       IN VARCHAR2 --Código da garantia
+                                       ,pr_idmodalidade     IN VARCHAR2 --Código da modalidade
+                                       ,pr_idconta_cosif    IN VARCHAR2 --Código da conta cosif
+                                       ,pr_idorigem_recurso IN VARCHAR2 --Código da origem recurso
+                                       ,pr_idindexador      IN VARCHAR2 --Código da indexador
+                                       ,pr_idvariacao_cambial IN VARCHAR2 --Código da variacao cambial
+                                       ,pr_idnat_operacao     IN VARCHAR2 --Código da natureza operacao
+                                       ,pr_idcaract_especial  IN VARCHAR2 --Código da caracteritica especial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2);
+   
+  PROCEDURE pc_busca_descricao_associados(pr_cdcooper   IN crapcop.cdcooper%TYPE -- Código da cooperativa
+                                         ,pr_nrdconta   IN crapass.nrdconta%TYPE -- Número da contaca especial
+                                         ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                         ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                         ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                         ,pr_des_erro  OUT VARCHAR2);
+                                         
+  PROCEDURE pc_busca_conta_cosif(pr_idgarantia     IN VARCHAR2       -->Código da garantia
+                                ,pr_idtipo_dominio IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
+                                ,pr_dstipo_dominio IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
+                                ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                                ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                ,pr_des_erro  OUT VARCHAR2);                                         
+                                                                                                                   
+  PROCEDURE pc_busca_nacionalidades(pr_cdnacion  IN crapnac.cdnacion%TYPE -- código da nacionalidade
+                                   ,pr_dsnacion  IN crapnac.dsnacion%TYPE -- descrição da nacionalidade
+                                   ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                                   ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                   ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2);     
+                                   
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2);  
+                                     
+  PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
+                         ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
+                         ,pr_flserasa  IN tbgen_cnae.flserasa%TYPE --Negativar SERASA
+                         ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                         ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                         ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                         ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                         ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                         ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                         ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                         ,pr_des_erro  OUT VARCHAR2);                                                                                    
+                                                                                                                                         
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -359,7 +457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 08/03/2017
+   Data    : 30/11/2015                       Ultima atualizacao: 04/08/2017
 
    Dados referentes ao programa:
 
@@ -375,10 +473,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                12/06/2016 - Criação das rotinas para consulta de linhas de crédito e finalidades de empréstimo
                             (Andrei - RKAM).
                     
+               07/02/2017 - Criacao da pc_busca_operacao_conta. (Jaison/Oscar - PRJ335)
                22/02/2017 - Conversão da rotina busca-gncdnto (Adriano - SD 614408).
                                                    
 			   08/03/2017 - Ajuste para enviar corretamente o campo cdocupa no xml de retorno
 			                (Adriano - SD 614408).                               
+               
+               08/05/2017 - Ajustes para incluir rotinas de pesquisa de dominios e descrição de associado
+                            (Jonata - RKAM).        
+                                                    
+			   04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).       
+                                                    
   ---------------------------------------------------------------------------------------------------------------*/
   
   /*PROCEDURE RESPONSAVEL POR ENCONTRAR OPERADORES*/
@@ -3378,6 +3483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                      ,pr_cdfinemp IN crapfin.cdfinemp%TYPE -- Código da finalidade
                                      ,pr_dsfinemp IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                      ,pr_flgstfin IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
+                                     ,pr_lstipfin IN VARCHAR2 DEFAULT NULL -- lista com os tipo de finalidade ou nulo para todas
                                      ,pr_nrregist IN INTEGER               -- Número de registro
                                      ,pr_nriniseq IN INTEGER               -- Número sequencial do registro
                                      ,pr_qtregist OUT INTEGER              -- Quantidade de registro
@@ -3392,14 +3498,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei
-    Data     : Julho/2016                           Ultima atualizacao:
+    Data     : Julho/2016                           Ultima atualizacao: 29/03/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Pesquisa finalidades de empréstimo
     
-    Alterações : 
+    Alterações : 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
+                              PRJ343 - Cessao de credito. (Odirlei-Amcom)
     -------------------------------------------------------------------------------------------------------------*/                                    
   
   CURSOR cr_crapfin(pr_cdcooper IN crapfin.cdcooper%TYPE
@@ -3416,6 +3523,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
      OR crapfin.cdfinemp = pr_cdfinemp)
     AND(pr_flgstfin = 3 --Todas as situações
      OR crapfin.flgstfin = pr_flgstfin)
+    AND (pr_lstipfin IS NULL OR 
+         'S' = gene0002.fn_existe_valor(pr_base  => pr_lstipfin, 
+                                        pr_busca => crapfin.tpfinali, 
+                                        pr_delimite => ',')
+         ) 
     AND UPPER(crapfin.dsfinemp) LIKE '%' || pr_dsfinemp || '%';
   rw_crapfin cr_crapfin%ROWTYPE;
   
@@ -3476,6 +3588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
   PROCEDURE pc_busca_finalidades_empr_web(pr_cdfinemp  IN crapfin.cdfinemp%TYPE -- Código da finalidade
                                          ,pr_dsfinemp  IN crapfin.dsfinemp%TYPE -- Descrição da finalidade
                                          ,pr_flgstfin  IN crapfin.flgstfin%TYPE -- Situação da finalidade: 0 - Não ativas / 1 - Aitvas / 3 - Todas
+                                         ,pr_lstipfin  IN VARCHAR2              -- lista com os tipo de finalidade ou nulo para todas
                                          ,pr_nrregist  IN INTEGER               -- Quantidade de registros                            
                                          ,pr_nriniseq  IN INTEGER               -- Qunatidade inicial
                                          ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
@@ -3491,14 +3604,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei  
-    Data     : Julho/2016                          Ultima atualizacao:
+    Data     : Julho/2016                          Ultima atualizacao: 29/03/2017
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Pesquisa finalidades de empréstimo para WEB, apenas chama a pc_busca_finalidades_empr.
     
-    Alterações : 
+    Alterações : 29/03/2017 - Inclusao do filtro de lista por tipo de finalidade.
+                              PRJ343 - Cessao de credito. (Odirlei-Amcom)
+                               
     -------------------------------------------------------------------------------------------------------------*/                                    
    --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -3565,6 +3680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                              ,pr_cdfinemp => nvl(pr_cdfinemp,0) -- Código da finalidade
                              ,pr_dsfinemp => UPPER(pr_dsfinemp) -- Descrição da finalidade
                              ,pr_flgstfin => pr_flgstfin        -- Situação da finalidade
+                             ,pr_lstipfin => pr_lstipfin        -- lista com os tipo de finalidade ou nulo para todas
                              ,pr_nrregist => pr_nrregist        -- Número de registro
                              ,pr_nriniseq => pr_nriniseq        -- Número sequencial do registro
                              ,pr_qtregist => vr_qtregist        -- Quantidade de registro
@@ -3831,6 +3947,148 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic:= 'Erro na pc_busca_finalidades_empr_car --> '|| SQLERRM;
       
   END pc_busca_finalidades_empr_car; 
+  
+  PROCEDURE pc_busca_operacao_conta(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE --> Codigo da operacao
+                                   ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE --> Descricao da operacao
+                                   ,pr_nrregist   IN INTEGER                       --> Quantidade de registros                            
+                                   ,pr_nriniseq   IN INTEGER                       --> Qunatidade inicial
+                                   ,pr_xmllog     IN VARCHAR2                      --> XML com informacoes de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER                   --> Codigo da critica
+                                   ,pr_dscritic  OUT VARCHAR2                      --> Descricao da critica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2                      --> Nome do Campo
+                            	     ,pr_des_erro  OUT VARCHAR2) IS                  --> Saida OK/NOK
+                                  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_operacao_conta              Antiga: 
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jaison Fernando
+    Data     : Fevereiro/2017                       Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia : -----
+    Objetivo   : Pesquisa Operacoes de Conta Corrente.
+    
+    Alteracoes : 
+    -------------------------------------------------------------------------------------------------------------*/                                    
+    CURSOR cr_operacao(pr_cdoperacao IN tbcc_operacao.cdoperacao%TYPE
+                      ,pr_dsoperacao IN tbcc_operacao.dsoperacao%TYPE) IS
+      SELECT ope.cdoperacao
+            ,upper(ope.dsoperacao) dsoperacao
+        FROM tbcc_operacao ope
+       WHERE ope.cdoperacao = DECODE(pr_cdoperacao, 0, ope.cdoperacao, pr_cdoperacao)
+         AND(TRIM(pr_dsoperacao) IS NULL
+          OR upper(ope.dsoperacao) LIKE '%' || upper(pr_dsoperacao) || '%');
+
+    -- Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+
+    -- Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+
+    -- Variaveis de Excecoes
+    vr_exc_erro  EXCEPTION;
+
+    vr_nrregist INTEGER := pr_nrregist;
+
+  BEGIN
+    -- Inicializar Variaveis
+    vr_cdcritic := 0;
+    vr_dscritic := NULL;
+
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><operacoes>');
+
+    FOR rw_operacao IN cr_operacao(pr_cdoperacao => nvl(pr_cdoperacao,0)
+                                  ,pr_dsoperacao => pr_dsoperacao) LOOP
+
+      vr_qtregist := nvl(vr_qtregist,0) + 1;
+
+      -- controles da paginacao
+      IF (vr_qtregist < pr_nriniseq) OR
+         (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         -- Proximo
+          CONTINUE;
+      END IF;
+
+      -- Numero Registros
+      IF vr_nrregist > 0 THEN
+
+        -- Carrega os dados
+        gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<operacao>'||
+                                                     '  <cdoperacao>' || rw_operacao.cdoperacao ||'</cdoperacao>'||
+                                                     '  <dsoperacao>' || rw_operacao.dsoperacao ||'</dsoperacao>'||
+                                                     '</operacao>');
+       END IF;
+
+       -- Diminuir registros
+       vr_nrregist:= nvl(vr_nrregist,0) - 1;
+
+    END LOOP;
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</operacoes></Root>'
+                           ,pr_fecha_xml      => TRUE);
+
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que ira receber o novo atributo
+                             ,pr_tag   => 'operacoes'         --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtregist         --> Valor do atributo
+                             ,pr_numva => 0                   --> Numero da localizacao da TAG na arvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descricao de erros
+
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);
+
+    -- Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Retorno
+    pr_des_erro:= 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_des_erro:= 'NOK';
+
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_des_erro:= 'NOK';
+
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_operacao_conta --> '|| SQLERRM;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_operacao_conta;
   
   PROCEDURE pc_busca_gncdnto(pr_cdnatocp IN gncdnto.cdnatocp%TYPE -- Código da natureza
                             ,pr_rsnatocp IN gncdnto.rsnatocp%TYPE -- Descrição da natureza
@@ -4759,6 +5017,1192 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
       pr_dscritic:= 'Erro na pc_busca_gncdocp_car --> '|| SQLERRM;
       
   END pc_busca_gncdocp_car; 
+  PROCEDURE pc_busca_nacionalidades(pr_cdnacion  IN crapnac.cdnacion%TYPE -- código da nacionalidade
+                                   ,pr_dsnacion  IN crapnac.dsnacion%TYPE -- descrição da nacionalidade
+                                   ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                                   ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                   ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+  Programa : pc_busca_nacionalidades                            antiga: 
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Sigla    : CRED
+  Autor    : Adriano - CECRED
+  Data     : Junho/2017                           Ultima atualizacao:
+    
+  Dados referentes ao programa:
+    
+  Frequencia: -----
+  Objetivo   : Pesquisa de dominios
+    
+  Alterações : 
+  -------------------------------------------------------------------------------------------------------------*/    
+                        
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+    
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+    
+  --Variaveis de Excecoes
+  vr_exc_erro  EXCEPTION;                                       
+    
+  BEGIN
+    
+    --Inicializa as variaveis  
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+	  
+    TELA_CADNAC.pc_busca_nacionalidades(pr_cdnacion => pr_cdnacion 
+                                       ,pr_dsnacion => pr_dsnacion
+                                       ,pr_nrregist => pr_nrregist
+                                       ,pr_nriniseq => pr_nriniseq
+                                       ,pr_xmllog   => pr_xmllog
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic 
+                                       ,pr_retxml   => pr_retxml
+                                       ,pr_nmdcampo => pr_nmdcampo
+                                       ,pr_des_erro => pr_des_erro);
+                                       
+    IF pr_des_erro <> 'OK' THEN
+     
+      IF nvl(vr_cdcritic,0) = 0    AND
+         TRIM(vr_dscritic) IS NULL THEN
+      
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADNAC.pc_busca_nacionalidades.';
+          
+      END IF;
+    
+      RAISE vr_exc_erro;
+      
+    END IF;                                           
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_busca_nacionalidades --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_busca_nacionalidades;
+  
+  PROCEDURE pc_consulta_orgao_expedidor(pr_cdorgao_expedidor IN tbgen_orgao_expedidor.cdorgao_expedidor%TYPE --> Código orgão expedidor
+                                       ,pr_nmorgao_expedidor IN tbgen_orgao_expedidor.nmorgao_expedidor%TYPE --> Descrição orgão expedidor
+                                       ,pr_nrregist IN INTEGER               -- Quantidade de registros                            
+                                       ,pr_nriniseq IN INTEGER               -- Qunatidade inicial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+  Programa : pc_consulta_orgao_expedidor                            antiga: 
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Sigla    : CRED
+  Autor    : Adriano - CECRED
+  Data     : Junho/2017                           Ultima atualizacao:
+    
+  Dados referentes ao programa:
+    
+  Frequencia: -----
+  Objetivo   : Rotina para buscar orgão expedidor
+    
+  Alterações : 
+  -------------------------------------------------------------------------------------------------------------*/    
+                        
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+    
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+    
+  --Variaveis de Excecoes
+  vr_exc_erro  EXCEPTION;                                       
+    
+  BEGIN
+    
+    --Inicializa as variaveis  
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    TELA_CADORG.pc_consulta_orgao_expedidor(pr_cdorgao_expedidor => pr_cdorgao_expedidor 
+                                           ,pr_nmorgao_expedidor => pr_nmorgao_expedidor
+                                           ,pr_nrregist => pr_nrregist
+                                           ,pr_nriniseq => pr_nriniseq
+                                           ,pr_xmllog   => pr_xmllog
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic 
+                                           ,pr_retxml   => pr_retxml
+                                           ,pr_nmdcampo => pr_nmdcampo
+                                           ,pr_des_erro => pr_des_erro);
+                                       
+    IF pr_des_erro <> 'OK' THEN
+     
+      IF nvl(vr_cdcritic,0) = 0    AND
+         TRIM(vr_dscritic) IS NULL THEN
+      
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADORG.pc_consulta_orgao_expedidor.';
+          
+      END IF;
+    
+      RAISE vr_exc_erro;
+      
+    END IF;                                           
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_consulta_orgao_expedidor --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_consulta_orgao_expedidor;
+  
+  PROCEDURE pc_busca_cnae(pr_cdcnae    IN tbgen_cnae.cdcnae%TYPE -- código CNAE
+                         ,pr_dscnae    IN tbgen_cnae.dscnae%TYPE -- descrição CNAE
+                         ,pr_flserasa  IN tbgen_cnae.flserasa%TYPE --Negativar SERASA
+                         ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                         ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                         ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                         ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                         ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                         ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                         ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                         ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+  Programa : pc_busca_cnae                                       antiga: 
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Sigla    : CRED
+  Autor    : Adriano - CECRED
+  Data     : Junho/2017                           Ultima atualizacao: 04/08/2017
+    
+  Dados referentes ao programa:
+    
+  Frequencia: -----
+  Objetivo   : Pesquisa de códigod CNAE
+    
+  Alterações : 04/08/2017 - Ajuste para inclusao do parametros flserasa (Adriano).
+  -------------------------------------------------------------------------------------------------------------*/    
+                        
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+    
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+    
+  --Variaveis de Excecoes
+  vr_exc_erro  EXCEPTION;                                       
+    
+  BEGIN
+    
+    --Inicializa as variaveis  
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+      
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log                              
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+	  
+    TELA_CADCNA.pc_busca_cnae(pr_cdcnae => pr_cdcnae
+                             ,pr_dscnae => pr_dscnae
+                             ,pr_flserasa => pr_flserasa
+                             ,pr_nriniseq => pr_nriniseq
+                             ,pr_nrregist => pr_nrregist
+                             ,pr_xmllog   => pr_xmllog
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_retxml   => pr_retxml
+                             ,pr_nmdcampo => pr_nmdcampo
+                             ,pr_des_erro => pr_des_erro);
+                                       
+    IF pr_des_erro <> 'OK' THEN
+     
+      IF nvl(vr_cdcritic,0) = 0    AND
+         TRIM(vr_dscritic) IS NULL THEN
+      
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADCNA.pc_busca_cnae.';
+          
+      END IF;
+    
+      RAISE vr_exc_erro;
+      
+    END IF;                                           
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_busca_cnae --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_busca_cnae;
+
+  PROCEDURE pc_busca_dominios(pr_idtipo_dominio     IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
+                             ,pr_dstipo_dominio     IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
+                             ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                             ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                             ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                             ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                             ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                             ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                             ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                             ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_dominios                            antiga: 
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jonata
+    Data     : Maio/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de dominios
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/    
+                        
+    CURSOR cr_tbrisco_dominio_tipo(pr_idtipo_dominio IN tbrisco_dominio_tipo.idtipo_dominio%TYPE
+                                  ,pr_dstipo_dominio IN tbrisco_dominio_tipo.dstipo_dominio%TYPE) IS
+    SELECT dominio.idtipo_dominio
+          ,dominio.dstipo_dominio
+          ,dominio.flpossui_subdominio
+          ,dominio.cdtamanho_dominio
+      FROM tbrisco_dominio_tipo dominio
+     WHERE(pr_idtipo_dominio = 0
+        OR dominio.idtipo_dominio = pr_idtipo_dominio)
+       AND (TRIM(pr_dstipo_dominio) IS NULL
+        OR UPPER(dominio.dstipo_dominio) LIKE '%' || UPPER(pr_dstipo_dominio) || '%');			
+    rw_tbrisco_dominio_tipo cr_tbrisco_dominio_tipo%ROWTYPE;
+  	
+    CURSOR cr_tbrisco_dominio(pr_idtipo_dominio IN tbrisco_dominio.idtipo_dominio%TYPE)IS
+    SELECT opcoes.iddominio
+          ,opcoes.cddominio
+          ,opcoes.dsdominio
+          ,opcoes.cdsubdominio
+          ,opcoes.dssubdominio
+          ,opcoes.flregistro_padrao
+          ,RISC0003.fn_valor_opcao_dominio(iddominio) dsdvalor
+          ,RISC0003.fn_descri_opcao_dominio(iddominio) descricao
+          ,row_number() over (partition by opcoes.cddominio order by opcoes.cddominio) nrseq
+          ,COUNT(*) OVER (PARTITION BY opcoes.cddominio) qtdregis
+      FROM tbrisco_dominio opcoes
+     WHERE opcoes.idtipo_dominio = pr_idtipo_dominio
+     ORDER BY opcoes.cddominio, opcoes.cdsubdominio; 
+    rw_tbrisco_dominio cr_tbrisco_dominio%ROWTYPE;
+	
+    CURSOR cr_dominio(pr_dsdominio IN tbrisco_dominio.dsdominio%TYPE)IS                    
+    SELECT tbrisco_dominio.cddominio
+          ,tbrisco_dominio.dsdominio
+          ,tbrisco_dominio.iddominio
+      FROM tbrisco_dominio
+     WHERE tbrisco_dominio.idtipo_dominio = 2
+       AND tbrisco_dominio.dsdominio = pr_dsdominio;
+    rw_dominio cr_dominio%ROWTYPE;
+    
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+    vr_nrregist INTEGER;
+    vr_contador INTEGER :=0;
+    vr_flgfirst BOOLEAN := TRUE;
+       
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;                                       
+    
+    BEGIN
+      
+      --limpar tabela erros
+      vr_tab_erro.DELETE;
+      
+      --Inicializar Variaveis
+      vr_nrregist:= pr_nrregist;
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+	  
+    OPEN cr_tbrisco_dominio_tipo(pr_idtipo_dominio => pr_idtipo_dominio
+                                ,pr_dstipo_dominio => pr_dstipo_dominio);
+									
+	  FETCH cr_tbrisco_dominio_tipo INTO rw_tbrisco_dominio_tipo;
+	  
+	  IF cr_tbrisco_dominio_tipo%NOTFOUND THEN
+	  
+	    vr_dscritic := 'Dominio [' || pr_idtipo_dominio || '] solicitado nao existe.';
+      RAISE vr_exc_erro; 
+	  
+    END IF;
+	  
+	  -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?><dados/>');
+  
+    FOR rw_tbrisco_dominio IN cr_tbrisco_dominio(pr_idtipo_dominio => pr_idtipo_dominio) LOOP
+      
+      --Incrementar Quantidade Registros do Parametro
+      vr_qtregist:= nvl(vr_qtregist,0) + 1;
+          
+      /* controles da paginacao */
+      IF (vr_qtregist < pr_nriniseq) OR
+         (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+         --Proximo Titular
+        CONTINUE;
+      END IF; 
+          
+      --Numero Registros
+      IF vr_nrregist > 0 THEN 
+                    
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dados', pr_posicao => 0, pr_tag_nova => 'dominio', pr_tag_cont => NULL, pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'idtipo_dominio', pr_tag_cont => rw_tbrisco_dominio_tipo.idtipo_dominio, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dstipo_dominio', pr_tag_cont => rw_tbrisco_dominio.descricao, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'iddominio', pr_tag_cont => rw_tbrisco_dominio.iddominio, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'cdsubdominio', pr_tag_cont => lpad(rw_tbrisco_dominio.cdsubdominio,rw_tbrisco_dominio_tipo.cdtamanho_dominio ,'0'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dssubdominio', pr_tag_cont => rw_tbrisco_dominio.dssubdominio, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'flregistro_padrao', pr_tag_cont => rw_tbrisco_dominio.flregistro_padrao, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dsdvalor', pr_tag_cont => rw_tbrisco_dominio.dsdvalor, pr_des_erro => vr_dscritic);
+  		  
+        IF rw_tbrisco_dominio.nrseq = 1 OR 
+           vr_flgfirst                  THEN
+          
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'cddominio', pr_tag_cont => lpad(rw_tbrisco_dominio.cddominio,rw_tbrisco_dominio_tipo.cdtamanho_dominio,'0'), pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dsdominio', pr_tag_cont => rw_tbrisco_dominio.dsdominio, pr_des_erro => vr_dscritic);
+        
+        ELSE
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'cddominio', pr_tag_cont => ' ', pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dsdominio', pr_tag_cont => ' ', pr_des_erro => vr_dscritic);
+        
+        END IF;
+        
+        IF pr_idtipo_dominio = 8 THEN
+         
+          OPEN cr_dominio(pr_dsdominio => risc0003.fn_descri_opcao_dominio(rw_tbrisco_dominio.iddominio));
+          
+          FETCH cr_dominio INTO rw_dominio;
+          
+          CLOSE cr_dominio;  
+        
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'nrctacosif', pr_tag_cont => rw_dominio.cddominio, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dsctacosif', pr_tag_cont => rw_dominio.dsdominio, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'iddominioctacosif', pr_tag_cont => rw_dominio.iddominio, pr_des_erro => vr_dscritic);
+
+        END IF;
+        
+        vr_contador := vr_contador + 1;
+        vr_flgfirst := FALSE;
+        
+      END IF;
+        
+      --Diminuir registros
+      vr_nrregist:= nvl(vr_nrregist,0) - 1; 
+        
+    END LOOP;       
+                   
+    -- Insere atributo na tag Dados com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'dados'            --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'             --> Nome do atributo
+                             ,pr_atval => vr_qtregist    --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                               
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;  
+    
+    -- Insere atributo na tag Dados com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'dados'            --> Nome da TAG XML
+                             ,pr_atrib => 'flpossui_subdominio'             --> Nome do atributo
+                             ,pr_atval => rw_tbrisco_dominio_tipo.flpossui_subdominio --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                               
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Insere atributo na tag Dados com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'dados'            --> Nome da TAG XML
+                             ,pr_atrib => 'dstipo_dominio'             --> Nome do atributo
+                             ,pr_atval => rw_tbrisco_dominio_tipo.dstipo_dominio --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                               
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_dominios --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_busca_dominios;
+
+  PROCEDURE pc_busca_descricao_dominios(pr_idtipo_dominio   IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- Tipo do dominio
+                                       ,pr_idgarantia       IN VARCHAR2 --Código da garantia
+                                       ,pr_idmodalidade     IN VARCHAR2 --Código da modalidade
+                                       ,pr_idconta_cosif    IN VARCHAR2 --Código da conta cosif
+                                       ,pr_idorigem_recurso IN VARCHAR2 --Código da origem recurso
+                                       ,pr_idindexador      IN VARCHAR2 --Código da indexador
+                                       ,pr_idvariacao_cambial IN VARCHAR2 --Código da variacao cambial
+                                       ,pr_idnat_operacao     IN VARCHAR2 --Código da natureza operacao
+                                       ,pr_idcaract_especial  IN VARCHAR2 --Código da caracteritica especial
+                                       ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                       ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                       ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                       ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_dominios                            antiga: 
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jonata
+    Data     : Maio/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de dominios
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/    
+    
+    CURSOR cr_dominio(pr_dsdominio IN tbrisco_dominio.dsdominio%TYPE)IS                    
+    SELECT tbrisco_dominio.cddominio
+          ,tbrisco_dominio.dsdominio
+		  ,tbrisco_dominio.iddominio
+      FROM tbrisco_dominio
+     WHERE tbrisco_dominio.idtipo_dominio = 2
+       AND tbrisco_dominio.dsdominio = pr_dsdominio;
+    rw_dominio cr_dominio%ROWTYPE;
+
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Variaveis Locais    
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+    vr_contador INTEGER :=0;
+    vr_descricao VARCHAR2(2000);
+    vr_iddominio tbrisco_dominio.iddominio%TYPE:=0;
+       
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;                                       
+    
+    BEGIN
+      
+      --limpar tabela erros
+      vr_tab_erro.DELETE;
+      
+      --Inicializar Variaveis
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+    IF trim(pr_idgarantia) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idgarantia;
+    
+    ELSIF TRIM(pr_idmodalidade) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idmodalidade;
+      
+    ELSIF TRIM(pr_idconta_cosif) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idconta_cosif;
+      
+    ELSIF TRIM(pr_idorigem_recurso) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idorigem_recurso;
+      
+    ELSIF TRIM(pr_idindexador) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idindexador;
+      
+    ELSIF TRIM(pr_idvariacao_cambial) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idvariacao_cambial;
+      
+    ELSIF TRIM(pr_idnat_operacao) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idnat_operacao;
+      
+    ELSIF TRIM(pr_idcaract_especial) IS NOT NULL THEN
+      
+      vr_descricao:= pr_idcaract_especial;
+      
+    END IF;
+    
+    vr_iddominio:= RISC0003.fn_busca_iddominio(pr_idtipo_dominio => pr_idtipo_dominio
+                                              ,pr_dsvlrdom       => vr_descricao);
+                                 
+    IF trim(vr_descricao) IS NOT NULL AND
+       vr_iddominio <> 0              THEN
+       
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?><Root/>');
+                      
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'dominios', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominios', pr_posicao => 0, pr_tag_nova => 'dominio', pr_tag_cont => null, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'iddominio', pr_tag_cont => vr_iddominio, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'descricao', pr_tag_cont => Risc0003.fn_descri_opcao_dominio(pr_iddominio => vr_iddominio), pr_des_erro => vr_dscritic);
+
+      IF trim(pr_idgarantia)    IS NOT NULL OR 
+         TRIM(pr_idconta_cosif) IS NOT NULL THEN
+       
+        OPEN cr_dominio(pr_dsdominio => risc0003.fn_descri_opcao_dominio(vr_iddominio));
+        
+        FETCH cr_dominio INTO rw_dominio;
+        
+        CLOSE cr_dominio;  
+      
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'nrctacosif', pr_tag_cont => rw_dominio.cddominio, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'dsctacosif', pr_tag_cont => rw_dominio.dsdominio, pr_des_erro => vr_dscritic);
+		gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => 0, pr_tag_nova => 'iddominioctacosif', pr_tag_cont => rw_dominio.iddominio, pr_des_erro => vr_dscritic);
+
+      END IF;
+       
+    END IF;
+            
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_descricao_dominios --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_busca_descricao_dominios;
+
+  PROCEDURE pc_busca_descricao_associados(pr_cdcooper   IN crapcop.cdcooper%TYPE -- Código da cooperativa
+                                         ,pr_nrdconta   IN crapass.nrdconta%TYPE -- Número da contaca especial
+                                         ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                         ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                         ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                         ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_descricao_associados                            antiga: 
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jonata
+    Data     : Maio/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de descrição de associados
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/    
+            
+    CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
+    SELECT crapass.nrdconta
+          ,crapass.nmprimtl
+          ,crapass.dsnivris
+          ,crapass.nrcpfcgc
+          ,crapass.inpessoa
+      FROM crapass      
+     WHERE crapass.cdcooper = pr_cdcooper
+       AND crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;     
+                               
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Variaveis Locais    
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+    vr_contador INTEGER :=0;
+    vr_descricao VARCHAR2(2000);
+       
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;                                       
+    
+    BEGIN
+      
+      --limpar tabela erros
+      vr_tab_erro.DELETE;
+      
+      --Inicializar Variaveis
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+            
+    IF nvl(pr_cdcooper,0) = 0 THEN
+    
+      vr_dscritic:= 'Código da cooperativa inválido.';
+      RAISE vr_exc_erro;
+      
+    END IF;
+    
+    IF nvl(pr_nrdconta,0) = 0 THEN
+    
+      vr_dscritic:= 'Conta inválida.';
+      RAISE vr_exc_erro;
+      
+    END IF;
+    
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+                   
+    FETCH cr_crapass INTO rw_crapass;
+    
+    IF cr_crapass%NOTFOUND THEN
+      
+      --Fechar o cursor 
+      CLOSE cr_crapass;
+      
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 9);
+      RAISE vr_exc_erro;
+          
+    END IF;
+    
+    --Fechar o cursor 
+    CLOSE cr_crapass;   
+    
+    -- Criar cabeçalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?><Root/>');
+                      
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'conta', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'conta', pr_posicao => 0, pr_tag_nova => 'info', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'info', pr_posicao => 0, pr_tag_nova => 'nmprimtl', pr_tag_cont => rw_crapass.nmprimtl, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'info', pr_posicao => 0, pr_tag_nova => 'nrcpfcgc', pr_tag_cont => gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc, rw_crapass.inpessoa), pr_des_erro => vr_dscritic);
+    
+    --Se o dsnivris do cooperado for vazio deve retornar 'A' pois este valor será utilizado para setar o campo de classificação da tela MOVRGP como default 'A'.
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'info', pr_posicao => 0, pr_tag_nova => 'dsnivris', pr_tag_cont => nvl(trim(rw_crapass.dsnivris),'A'), pr_des_erro => vr_dscritic);
+
+            
+  EXCEPTION
+    WHEN vr_exc_erro THEN        
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                       
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+        
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_descricao_associados --> '|| SQLERRM;
+        
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+    
+  END pc_busca_descricao_associados;
+  
+  PROCEDURE pc_busca_conta_cosif(pr_idgarantia     IN VARCHAR2       -->Código da garantia
+                                ,pr_idtipo_dominio IN tbrisco_dominio_tipo.idtipo_dominio%TYPE -- código do dominio
+                                ,pr_dstipo_dominio IN tbrisco_dominio_tipo.dstipo_dominio%TYPE -- descrição do dominio
+                                ,pr_nrregist  IN INTEGER                 -- Quantidade de registros                            
+                                ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                ,pr_des_erro  OUT VARCHAR2)IS
+  
+  /*---------------------------------------------------------------------------------------------------------------
+    
+    Programa : pc_busca_conta_cosif                            antiga: 
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Jonata
+    Data     : Junho/2017                           Ultima atualizacao:
+    
+    Dados referentes ao programa:
+    
+    Frequencia: -----
+    Objetivo   : Pesquisa de conta cosif 
+    
+    Alterações : 
+    -------------------------------------------------------------------------------------------------------------*/    
+                        
+    CURSOR cr_tbrisco_dominio_tipo(pr_idtipo_dominio IN tbrisco_dominio_tipo.idtipo_dominio%TYPE
+                                  ,pr_dstipo_dominio IN tbrisco_dominio_tipo.dstipo_dominio%TYPE) IS
+    SELECT dominio.idtipo_dominio
+          ,dominio.dstipo_dominio
+          ,dominio.flpossui_subdominio
+          ,dominio.cdtamanho_dominio
+      FROM tbrisco_dominio_tipo dominio
+     WHERE(pr_idtipo_dominio = 0
+        OR dominio.idtipo_dominio = pr_idtipo_dominio)
+       AND (TRIM(pr_dstipo_dominio) IS NULL
+        OR UPPER(dominio.dstipo_dominio) LIKE '%' || UPPER(pr_dstipo_dominio) || '%');			
+    rw_tbrisco_dominio_tipo cr_tbrisco_dominio_tipo%ROWTYPE;
+  	
+    CURSOR cr_tbrisco_dominio(pr_idtipo_dominio IN tbrisco_dominio.idtipo_dominio%TYPE
+                             ,pr_dsdominio      IN tbrisco_dominio.dsdominio%TYPE)IS
+    SELECT opcoes.iddominio
+          ,opcoes.cddominio
+          ,opcoes.dsdominio
+          ,opcoes.cdsubdominio
+          ,opcoes.dssubdominio
+          ,opcoes.flregistro_padrao
+          ,RISC0003.fn_valor_opcao_dominio(iddominio) dsdvalor
+          ,RISC0003.fn_descri_opcao_dominio(iddominio) descricao
+          ,row_number() over (partition by opcoes.cddominio order by opcoes.cddominio) nrseq
+          ,COUNT(*) OVER (PARTITION BY opcoes.cddominio) qtdregis
+      FROM tbrisco_dominio opcoes
+     WHERE opcoes.idtipo_dominio = pr_idtipo_dominio
+       AND opcoes.dsdominio      = pr_dsdominio
+     ORDER BY opcoes.cddominio, opcoes.cdsubdominio; 
+    rw_tbrisco_dominio cr_tbrisco_dominio%ROWTYPE;
+	
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;   
+    vr_xml_temp VARCHAR2(32726) := ''; 
+    vr_nrregist INTEGER;
+    vr_contador INTEGER :=0;
+    vr_flgfirst BOOLEAN := TRUE;
+       
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+    
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;                                       
+    vr_exc_erro  EXCEPTION;                                       
+    
+    BEGIN
+      
+      --limpar tabela erros
+      vr_tab_erro.DELETE;
+      
+      --Inicializar Variaveis
+      vr_nrregist:= pr_nrregist;
+      vr_cdcritic:= 0;
+      vr_dscritic:= NULL;
+      
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+	  
+      OPEN cr_tbrisco_dominio_tipo(pr_idtipo_dominio => pr_idtipo_dominio
+                                  ,pr_dstipo_dominio => pr_dstipo_dominio);
+  									
+      FETCH cr_tbrisco_dominio_tipo INTO rw_tbrisco_dominio_tipo;
+  	  
+      IF cr_tbrisco_dominio_tipo%NOTFOUND THEN
+  	  
+        vr_dscritic := 'Dominio [' || pr_idtipo_dominio || '] solicitado nao existe.';
+        RAISE vr_exc_erro; 
+  	  
+      END IF;
+  	  
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?><dados/>');
+    
+      FOR rw_tbrisco_dominio IN cr_tbrisco_dominio(pr_idtipo_dominio => pr_idtipo_dominio
+                                                  ,pr_dsdominio      => risc0003.fn_descri_opcao_dominio(pr_idgarantia)) LOOP
+        
+        --Incrementar Quantidade Registros do Parametro
+        vr_qtregist:= nvl(vr_qtregist,0) + 1;
+            
+        /* controles da paginacao */
+        IF (vr_qtregist < pr_nriniseq) OR
+           (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+           --Proximo Titular
+          CONTINUE;
+        END IF; 
+            
+        --Numero Registros
+        IF vr_nrregist > 0 THEN 
+                      
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dados', pr_posicao => 0, pr_tag_nova => 'dominio', pr_tag_cont => NULL, pr_des_erro => vr_dscritic); 
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'idtipo_dominio', pr_tag_cont => rw_tbrisco_dominio_tipo.idtipo_dominio, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dstipo_dominio', pr_tag_cont => rw_tbrisco_dominio.descricao, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'iddominio', pr_tag_cont => rw_tbrisco_dominio.iddominio, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'cdsubdominio', pr_tag_cont => lpad(rw_tbrisco_dominio.cdsubdominio,rw_tbrisco_dominio_tipo.cdtamanho_dominio ,'0'), pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dssubdominio', pr_tag_cont => rw_tbrisco_dominio.dssubdominio, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'flregistro_padrao', pr_tag_cont => rw_tbrisco_dominio.flregistro_padrao, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dsdvalor', pr_tag_cont => rw_tbrisco_dominio.dsdvalor, pr_des_erro => vr_dscritic);
+    		  
+          IF rw_tbrisco_dominio.nrseq = 1 OR 
+             vr_flgfirst                  THEN
+            
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'cddominio', pr_tag_cont => lpad(rw_tbrisco_dominio.cddominio,rw_tbrisco_dominio_tipo.cdtamanho_dominio,'0'), pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dsdominio', pr_tag_cont => rw_tbrisco_dominio.dsdominio, pr_des_erro => vr_dscritic);
+          
+          ELSE
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'cddominio', pr_tag_cont => ' ', pr_des_erro => vr_dscritic);
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dominio', pr_posicao => vr_contador, pr_tag_nova => 'dsdominio', pr_tag_cont => ' ', pr_des_erro => vr_dscritic);
+          
+          END IF;
+          
+          vr_contador := vr_contador + 1;
+          vr_flgfirst := FALSE;
+          
+        END IF;
+          
+        --Diminuir registros
+        vr_nrregist:= nvl(vr_nrregist,0) - 1; 
+          
+      END LOOP;       
+                     
+      -- Insere atributo na tag Dados com a quantidade de registros
+      gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                               ,pr_tag   => 'dados'            --> Nome da TAG XML
+                               ,pr_atrib => 'qtregist'             --> Nome do atributo
+                               ,pr_atval => vr_qtregist    --> Valor do atributo
+                               ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                               ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                                 
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;  
+      
+      -- Insere atributo na tag Dados com a quantidade de registros
+      gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                               ,pr_tag   => 'dados'            --> Nome da TAG XML
+                               ,pr_atrib => 'flpossui_subdominio'             --> Nome do atributo
+                               ,pr_atval => rw_tbrisco_dominio_tipo.flpossui_subdominio --> Valor do atributo
+                               ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                               ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                                 
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Insere atributo na tag Dados com a quantidade de registros
+      gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                               ,pr_tag   => 'dados'            --> Nome da TAG XML
+                               ,pr_atrib => 'dstipo_dominio'             --> Nome do atributo
+                               ,pr_atval => rw_tbrisco_dominio_tipo.dstipo_dominio --> Valor do atributo
+                               ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                               ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+                                 
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN        
+        -- Erro
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+          
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+                                         
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_erro:= 'NOK';
+          
+        -- Erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na ZOOM0001.pc_busca_conta_cosif --> '|| SQLERRM;
+          
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');   
+      
+  END pc_busca_conta_cosif;
+
 
 END ZOOM0001;
 /
