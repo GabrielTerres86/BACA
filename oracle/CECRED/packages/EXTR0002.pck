@@ -18720,7 +18720,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
        Sistema : 
        Sigla   : EXTR
        Autor   : Tiago 
-       Data    : Julho/15.                    Ultima atualizacao: 23/11/2015
+       Data    : Julho/15.                    Ultima atualizacao: 22/09/2017
 
        Dados referentes ao programa:
 
@@ -18732,6 +18732,9 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
 
        Alteracoes: 23/11/2015 - Ajustado para excluir os lanctos futuros referente
                                 a Folha de Pagamento. (Andre Santos - SUPERO)
+
+                   22/09/2017 - Verifica se o historico existe na listagem para NAO exclusao.
+                                (Jaison/Mauricio(Mouts) - PRJ407)
       ..............................................................................*/												      
       DECLARE
         
@@ -18817,7 +18820,16 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
            vr_dscritic := 'Exclusao de lancamento nao permitida.';
            RAISE vr_exc_erro;
         END IF;
-        
+
+        -- Verifica se o historico existe na listagem para NAO exclusao
+        IF GENE0002.fn_existe_valor(pr_base     => GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'LAUTOM_HIST_NAO_EXC')
+                                   ,pr_busca    => pr_cdhistor
+                                   ,pr_delimite => ',') = 'S' THEN
+           vr_cdcritic := 0;
+           vr_dscritic := 'Exclusao de lancamento nao permitida. (Historico nao permitido)';
+           RAISE vr_exc_erro;
+        END IF;
+
         --Verifica na tabela de parametro se o historico
         --pode ser excluido(mudar situacao do registro)        
         pc_verifica_hist_lan_del(pr_cdcooper => pr_cdcooper
