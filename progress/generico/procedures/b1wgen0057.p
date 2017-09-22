@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 28/08/2017
+    Data    : Marco/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -38,7 +38,11 @@
                               PRJ339 - CRM (Odirlei-AMcom)				 
 
                  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
-							  CH, RE, PP E CT. (PRJ339 - Reinert)                              
+							  CH, RE, PP E CT. (PRJ339 - Reinert)    
+
+				 22/09/2017 - Ajuste realizado na tela Contas/Dados Pessoais/Conjuge
+						      onde o telefone comercial do conjugue estava sendo
+							  carregado errado. PRJ339 (Kelvin).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -433,9 +437,10 @@ PROCEDURE Busca_Dados_Id:
                    ASSIGN tt-crapcje.nmextemp = "NAO CADASTRADO".
 
                /* Telefone Comercial*/
-               FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper  AND
+               FOR FIRST craptfc WHERE craptfc.cdcooper = crabttl.cdcooper AND
                                        craptfc.nrdconta = crabttl.nrdconta AND
-                                       craptfc.tptelefo = 3 NO-LOCK:
+                                       craptfc.tptelefo = 3				   AND
+									   craptfc.idseqttl = 1  NO-LOCK:
                    ASSIGN tt-crapcje.nrfonemp = string(craptfc.nrtelefo)
 				          tt-crapcje.nrramemp = craptfc.nrdramal.
                END.
