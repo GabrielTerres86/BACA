@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Setembro/94.                     Ultima atualizacao: 22/09/2016
+       Data    : Setembro/94.                     Ultima atualizacao: 22/09/2017
 
        Dados referentes ao programa:
 
@@ -53,6 +53,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
 
                    22/09/2016 - Removi do proc_bath e passei para o proc_message
                                 o log 661, SD 402979. (Carlos Rafael Tanholi)
+
+                   22/09/2017 - Ignorar os cartões CECRED no processo de limpeza 
+                                das tabelas crawcrd/crapcrd (Douglas - Chamado 760181)                                 
     ............................................................................ */
 
     DECLARE
@@ -292,6 +295,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
                  WHERE crapcrd.cdcooper = pr_cdcooper
                    AND crapcrd.dtcancel <= (rw_crapdat.dtmvtolt - 1095)
                    AND TO_CHAR(crapcrd.cdadmcrd) NOT IN ('83','84','85','86','87','88')
+                   AND crapcrd.cdadmcrd NOT BETWEEN 10 AND 80 -- Cartões CECRED
                    AND crawcrd.cdcooper = crapcrd.cdcooper
                    AND crawcrd.nrdconta = crapcrd.nrdconta
                    AND crawcrd.nrctrcrd = crapcrd.nrctrcrd);
@@ -309,7 +313,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
         DELETE crapcrd
          WHERE crapcrd.cdcooper = pr_cdcooper
            AND crapcrd.dtcancel <= (rw_crapdat.dtmvtolt - 1095)
-           AND TO_CHAR(crapcrd.cdadmcrd) NOT IN ('83','84','85','86','87','88');
+           AND TO_CHAR(crapcrd.cdadmcrd) NOT IN ('83','84','85','86','87','88')
+           AND crapcrd.cdadmcrd NOT BETWEEN 10 AND 80; -- Cartões CECRED
         
         vr_qtcrddel := SQL%ROWCOUNT;
         
