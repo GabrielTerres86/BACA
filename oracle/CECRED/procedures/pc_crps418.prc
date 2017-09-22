@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Mirtes
-       Data    : Novembro/2004                     Ultima atualizacao: 05/12/14
+       Data    : Novembro/2004                     Ultima atualizacao: 21/08/2017
 
        Frequencia: Semanal.
        Objetivo  : Gerar relatorio 378 - Restricoes Analise Borderos
@@ -49,6 +49,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
 
                    05/12/2014 - Correção na lógica de busca da data quando maior que terça
                                 conforme solicitação do Daniel Z. (Marcos-Supero)
+                                
+                   21/08/2017 - #723707 Troca de cláusula "dsrestri like" por "cdocorre in"
+                                no cursor cr_crapabc (Carlos)
 
     ............................................................................ */
 
@@ -188,14 +191,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
               AND abc.nrborder = pr_nrborder
               AND abc.nrdconta = pr_nrdconta
               AND abc.nrcpfcgc > 0
-              AND (abc.dsrestri LIKE 'Valor maximo por emitente excedido%'
-                OR abc.dsrestri LIKE 'Maximo por emitente excedido%'
-                OR abc.dsrestri LIKE 'Percentual de cheques do emitente excedido no contrato.%'
-                OR abc.dsrestri LIKE 'CPF consta no SPC%'
-                OR abc.dsrestri LIKE 'Valor maximo por contrato excedido%'
-                OR abc.dsrestri LIKE 'Quantidade de cheques devolvidos  do emitente excedido%')
+              AND abc.cdocorre IN (1,2,3,6,7)
             ORDER BY abc.nrcpfcgc;
-
           -- Busca dados dos borderos de descontos de cheque por associado e limite de crédito
           CURSOR cr_crapbdclim IS
             SELECT bdc.nrdconta
@@ -595,4 +592,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps418(pr_cdcooper IN crapcop.cdcooper%TY
     END;
   END pc_crps418;
 /
-
