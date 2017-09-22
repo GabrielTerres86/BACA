@@ -34,7 +34,7 @@
 
     Programa: b1wgen0011.p
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 07/01/2016
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/09/2017
     
     Dados referentes ao programa:
 
@@ -137,6 +137,9 @@
                   
 				  03/03/2016 - Ajustado rotina devido a agrupar anexo quando possuia mais
 				               de um destinatario(Odirlei-AMcom)
+                       
+          21/09/2017 - #756235 Criada a funcao f_validar_email para nao ter 
+                       problemas na geracao dos arquivos de spool (Carlos)
 
 ..............................................................................*/
 
@@ -160,6 +163,20 @@ DEF VAR aux_msgremet AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscomand AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_nmarqtxt AS CHAR                                           NO-UNDO.
+
+FUNCTION f_validar_email RETURNS LOGICAL (INPUT par_dsdemail AS CHAR):
+
+    IF par_dsdemail = ""              OR /* vazio */
+       NOT par_dsdemail MATCHES "*@*" OR /* nao tem arroba */
+       par_dsdemail MATCHES "* *"     OR /* tem espaco */
+       par_dsdemail MATCHES "*/*"THEN    /* tem barra */
+    DO:
+        RETURN FALSE.
+    END.   
+
+    RETURN TRUE.
+    
+END FUNCTION.
 
 PROCEDURE converte_arquivo.
 
@@ -302,9 +319,9 @@ PROCEDURE enviar_email.
     
         ASSIGN aux_dsdemail = TRIM(ENTRY(aux_qtdemail,p-lista_emails,",")).
         
-        IF  aux_dsdemail = ""  THEN
+        IF NOT f_validar_email(INPUT aux_dsdemail) THEN
             NEXT.
-        
+
         ASSIGN aux_dsarquiv = ""
                aux_dsanexos = ""
                aux_dsarqlog = ""
@@ -498,7 +515,7 @@ PROCEDURE enviar_email_spool.
     
         ASSIGN aux_dsdemail = TRIM(ENTRY(aux_qtdemail,p-lista_emails,",")).
         
-        IF  aux_dsdemail = ""  THEN
+        IF NOT f_validar_email(INPUT aux_dsdemail) THEN
             NEXT.
         
         ASSIGN aux_dsarquiv = ""
@@ -648,7 +665,7 @@ PROCEDURE enviar_email_completo:
     
        ASSIGN aux_dsdemail = TRIM(ENTRY(aux_qtdemail,par_lsemails,",")).
        
-       IF aux_dsdemail = ""  THEN
+       IF NOT f_validar_email(INPUT aux_dsdemail) THEN
           NEXT.
            
        ASSIGN aux_dsarquiv = ""
@@ -755,12 +772,4 @@ PROCEDURE enviar_email_completo:
 
 END PROCEDURE.
 
-
-
-
 /*............................................................................*/
-
-
-
-
-
