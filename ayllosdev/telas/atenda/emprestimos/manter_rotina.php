@@ -26,6 +26,10 @@
  * 016: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
  * 017: [01/03/2016] Adicionado cdpactra na chamada da rotina grava-proposta-completa PRJ Esteira de Credito. (Odirlei-AMcom/Oscar) 
  * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
+ * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
+ * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
+ * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
+ * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  */
 ?>
 
@@ -67,7 +71,7 @@
 	$tdccjav2 = (isset($_POST['tdccjav2'])) ? $_POST['tdccjav2'] : '' ;
 	$ende2av2 = (isset($_POST['tdccjav2'])) ? $_POST['ende2av2'] : '' ;
 	$nmcidav2 = (isset($_POST['nmcidav2'])) ? $_POST['nmcidav2'] : '' ;
-	$dsnacio2 = (isset($_POST['dsnacio2'])) ? $_POST['dsnacio2'] : '' ;
+	$cdnacio2 = (isset($_POST['cdnacio2'])) ? $_POST['cdnacio2'] : '' ;
 	$vlrenme2 = (isset($_POST['vlrenme2'])) ? $_POST['vlrenme2'] : '' ;
 	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '' ;
 	$flgcmtlc = (isset($_POST['flgcmtlc'])) ? $_POST['flgcmtlc'] : '' ;
@@ -92,7 +96,7 @@
 	$tdccjav1 = (isset($_POST['tdccjav1'])) ? $_POST['tdccjav1'] : '' ;
 	$ende2av1 = (isset($_POST['ende2av1'])) ? $_POST['ende2av1'] : '' ;
 	$nmcidav1 = (isset($_POST['nmcidav1'])) ? $_POST['nmcidav1'] : '' ;
-	$dsnacio1 = (isset($_POST['dsnacio1'])) ? $_POST['dsnacio1'] : '' ;
+	$cdnacio1 = (isset($_POST['cdnacio1'])) ? $_POST['cdnacio1'] : '' ;
 	$nrcpfav2 = (isset($_POST['nrcpfav2'])) ? $_POST['nrcpfav2'] : '' ;
 	$nmdcjav2 = (isset($_POST['nmdcjav2'])) ? $_POST['nmdcjav2'] : '' ;
 	$doccjav2 = (isset($_POST['doccjav2'])) ? $_POST['doccjav2'] : '' ;
@@ -146,7 +150,8 @@
 	$dsjusren = (isset($_POST['dsjusren'])) ? $_POST['dsjusren'] : '' ;
 	$dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '' ;
 	$flgconsu = (isset($_POST['flgconsu'])) ? $_POST['flgconsu'] : '' ;
-	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '';
+	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '' ;
+	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;
@@ -174,7 +179,7 @@
 	$dsdocav2 = trim(str_replace( $array1, $array2, $dsdocav2));
 	$ende2av2 = trim(str_replace( $array1, $array2, $ende2av2));
 	$nmcidav2 = trim(str_replace( $array1, $array2, $nmcidav2));
-	$dsnacio2 = trim(str_replace( $array1, $array2, $dsnacio2));
+	$cdnacio2 = trim(str_replace( $array1, $array2, $cdnacio2));
 	$dsnivris = trim(str_replace( $array1, $array2, $dsnivris));
 	$nmempcje = trim(str_replace( $array1, $array2, $nmempcje));
 	$dsobserv = trim(str_replace( $array1, $array2, $dsobserv));
@@ -183,7 +188,7 @@
 	$dsdocav1 = trim(str_replace( $array1, $array2, $dsdocav1));
 	$ende2av1 = trim(str_replace( $array1, $array2, $ende2av1));
 	$nmcidav1 = trim(str_replace( $array1, $array2, $nmcidav1));
-	$dsnacio1 = trim(str_replace( $array1, $array2, $dsnacio1));
+	$cdnacio1 = trim(str_replace( $array1, $array2, $cdnacio1));
 	$nmdcjav2 = trim(str_replace( $array1, $array2, $nmdcjav2));
 	$dsdbeavt = trim(str_replace( $array1, $array2, $dsdbeavt));
 	$dsdfinan = trim(str_replace( $array1, $array2, $dsdfinan));
@@ -296,10 +301,21 @@
            exit;
 		}
 		
-		$oMensagem = $xmlObj->roottag->tags[0]->tags[0];        
-        echo 'showError("inform","'.getByTagName($oMensagem->tags,'dsmensag').'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';        
+		$oMensagem = getByTagName($xmlObj->roottag->tags[0]->tags[0]->tags,'dsmensag');
+        $arMessage = explode("###", $oMensagem);
+        $dsmensag1 = '<div style=\"text-align:left;\">'.$arMessage[0].'</div>';
+        $dsmensag2 = '';
+        if (count($arMessage) > 1) {
+            $dsmensag2 = $arMessage[1];
+            $dsmensag2 = str_replace('[APROVAR]',  '<img src=\"../../../imagens/geral/motor_APROVAR.png\"  height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[DERIVAR]',  '<img src=\"../../../imagens/geral/motor_DERIVAR.png\"  height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[INFORMAR]', '<img src=\"../../../imagens/geral/motor_INFORMAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[REPROVAR]', '<img src=\"../../../imagens/geral/motor_REPROVAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = '<div style=\"text-align:left; height:100px; overflow-x:hidden; padding-right:25px; font-size:11px; font-weight:normal;\">'.$dsmensag2.'</div>';
+        }
+
+        echo 'showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina);controlaOperacao();");';
         exit;
-        
     }
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
@@ -325,7 +341,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<nrctremp>'.$nrctremp.'</nrctremp>';
@@ -359,7 +374,7 @@
 	$xml .= '		<tdccjav2>'.$tdccjav2.'</tdccjav2>';
 	$xml .= '		<ende2av2>'.$ende2av2.'</ende2av2>';
 	$xml .= '		<nmcidav2>'.$nmcidav2.'</nmcidav2>';
-	$xml .= '		<dsnacio2>'.$dsnacio2.'</dsnacio2>';
+	$xml .= '		<cdnacio2>'.$cdnacio2.'</cdnacio2>';
 	$xml .= '		<vlrenme2>'.$vlrenme2.'</vlrenme2>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '		<flgcmtlc>'.$flgcmtlc.'</flgcmtlc>';
@@ -384,7 +399,7 @@
 	$xml .= '		<tdccjav1>'.$tdccjav1.'</tdccjav1>';
 	$xml .= '		<ende2av1>'.$ende2av1.'</ende2av1>';
 	$xml .= '		<nmcidav1>'.$nmcidav1.'</nmcidav1>';
-	$xml .= '		<dsnacio1>'.$dsnacio1.'</dsnacio1>';
+	$xml .= '		<cdnacio1>'.$cdnacio1.'</cdnacio1>';
 	$xml .= '		<nrcpfav2>'.$nrcpfav2.'</nrcpfav2>';
 	$xml .= '		<nmdcjav2>'.$nmdcjav2.'</nmdcjav2>';
 	$xml .= '		<doccjav2>'.$doccjav2.'</doccjav2>';
@@ -534,6 +549,20 @@
 			die();
 		}
 		
+	}
+		
+	if ($procedure == 'grava-proposta-completa' && $blqpreap == true){
+		
+		// Montar o xml para requisicao
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+			
+		$xmlResult = mensageria($xml, "CADPRE" , 'BLOQ_PRE_APRV_REF', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");	
+		$xmlObj    = getObjectXML($xmlResult);
 	}
 	
 	echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\"))");bloqueiaFundo($("#divError"));';
