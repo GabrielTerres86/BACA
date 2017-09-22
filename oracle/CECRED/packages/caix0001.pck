@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
   --  Sistema  : Rotinas referentes a Tela BCAIXA
   --  Sigla    : CAIX
   --  Autor    : Lucas Ranghetti
-  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 06/10/2016
+  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 20/06/2017
   --
   -- Dados referentes ao programa:
   --
@@ -15,7 +15,15 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
 
   -- Alteracoes: 06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
   --
-  --
+  -- 20/06/2017 - Criada procedure para gerar LOG pc_gera_log no retorno da Gene0002 
+  --              Setado modulo
+  --              Padrão de mensagens 
+  --              Incluido parametro de entrada com o nome do programa na procedure pc_saldo_cofre 
+  --              Incluido parametro de entrada com o nome do programa na procedure pc_gera_relato 
+  --              Incluido parametro de entrada com a indica a etapa de execução da tela de chamada
+  --                nas seguintes procedures pc_saldo_caixas - pc_saldo_cofre - pc_saldo_total - pc_gera_relato
+  --              ( Belli - Envolti - 20/06/2017 - Chamado 660322)
+
   -----------------------------------------------------------------------------------------------------------
 
   TYPE typ_reg_crapbcx IS
@@ -52,6 +60,7 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
                            ,pr_cdoperad IN crapope.cdoperad%TYPE   -- Operador
                            ,pr_cdprogra IN VARCHAR2                -- Programa
                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   -- Data movimento
+                           ,pr_inetapa  IN VARCHAR2                -- etapa de execução da tela de chamada
                            ,pr_nmarqimp OUT VARCHAR2               -- Arquivo Impressao
                            ,pr_saldotot OUT NUMBER                 -- Saldo Total
                            ,pr_dscritic OUT crapcri.dscritic%TYPE  -- Descricao da critica
@@ -61,6 +70,8 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
                           ,pr_cdagenci IN crapage.cdagenci%TYPE   -- Agencia/PA
                           ,pr_nrdcaixa IN INTEGER                 -- Caixa
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   -- Data movimento
+                          ,pr_cdprogra IN VARCHAR2                -- Programa
+                          ,pr_inetapa  IN VARCHAR2                -- etapa de execução da tela de chamada
                           ,pr_nmarqimp OUT VARCHAR2               -- Arquivo Impressao
                           ,pr_saldotot OUT NUMBER                 -- Saldo Total
                           ,pr_dscritic OUT crapcri.dscritic%TYPE  -- Descricao da critica
@@ -73,6 +84,7 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
                           ,pr_cdoperad IN crapope.cdoperad%TYPE   -- Operador
                           ,pr_cdprogra IN VARCHAR2                -- Programa
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   -- Data movimento
+                          ,pr_inetapa  IN VARCHAR2                -- etapa de execução da tela de chamada
                           ,pr_nmarqimp OUT VARCHAR2               -- Arquivo Impressao
                           ,pr_saldotot OUT NUMBER                 -- Saldo Total
                           ,pr_dscritic OUT crapcri.dscritic%TYPE  -- Descricao da critica
@@ -96,9 +108,22 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE    -- Data movimento
                           ,pr_tpcaicof IN VARCHAR2                 -- Caixa/Cofre/Total
                           ,pr_saldotot IN NUMBER                   -- Saldo Total
+                          ,pr_cdprogra IN VARCHAR2                 -- Programa
+                          ,pr_inetapa  IN VARCHAR2                 -- etapa de execução da tela de chamada
                           ,pr_tab_crapbcx IN typ_tab_crapbcx       -- Registros da crapbcx
                           ,pr_nmarqimp OUT VARCHAR2                -- Caminho do arquivo
                           ,pr_dscritic OUT crapcri.dscritic%TYPE); -- Descricao da critica
+
+ PROCEDURE pc_gera_log(pr_cdcooper     IN  crapcop.cdcooper%TYPE     -- Cooperativa
+                      ,pr_modulo       IN  VARCHAR2                  -- Modulo que disparou
+                      ,pr_acao         IN  VARCHAR2                  -- Ação do modulo
+                      ,pr_cdagenci     IN  crapage.cdagenci%TYPE     -- Agencia/PA
+                      ,pr_nrdcaixa     IN  INTEGER                   -- Caixa
+                      ,pr_dtmvtolt     IN  crapdat.dtmvtolt%TYPE     -- Data movimento
+                      ,pr_tpcaicof     IN  VARCHAR2                  -- Tipo de pequisa
+                      ,pr_dscritic_in  IN  crapcri.dscritic%TYPE     -- Descricao da critica Entrada
+                      ,pr_dscritic_out OUT crapcri.dscritic%TYPE     -- Descricao da critica Saida
+   ) ; 
 
 END CAIX0001;
 /
@@ -110,17 +135,30 @@ create or replace package body cecred.CAIX0001 is
   --  Sistema  : Rotinas referentes a Tela BCAIXA
   --  Sigla    : CAIX
   --  Autor    : Lucas Ranghetti
-  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 24/06/2016
+  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 20/09/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar procedures referentes a tela bcaixa Opcao T
-
   -- Alteracoes: 11/03/2015 - Conversao de Progress -->> Oracle (Lucas R. #245838)
   --
   --             24/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
   --                          sobre o campo cdopecxa.(Carlos Rafael Tanholi).
+  --
+  --             20/06/2017 - Criada procedure para gerar LOG pc_gera_log no retorno da Gene0002 
+  --                          Setado modulo
+  --                          Padrão de mensangnes 
+  --                          Incluido parametro de entrada com o nome do programa na procedure pc_saldo_cofre 
+  --                          Incluido parametro de entrada com o nome do programa na procedure pc_gera_relato 
+  --                          Incluido parametro de entrada que indica a etapa de execução da tela de chamada
+  --                            nas seguintes procedures pc_saldo_caixas - pc_saldo_cofre - pc_saldo_total 
+  --                            - pc_gera_relato: Executa o relatório apenas no 2o momento
+  --                          ( Belli - Envolti - 20/06/2017 - Chamado 660322)
+  --
+  --             20/09/2017 - Alterada pc_gera_log para não gravar nome de arquivo de log e gravar cdprograma
+  --                          (Ana - Envolti - 20/09/2017 - Chamado 746134)
+  --  
   -----------------------------------------------------------------------------------------------------------
 
   -- Cursores genericos
@@ -135,9 +173,11 @@ create or replace package body cecred.CAIX0001 is
 
   -- Variaveis Globais dentro da package
 
+  -- mensgaem que vai para o usuario - 23/06/2017 - Chamado 660322
+  vr_dscritic_padrao    VARCHAR2(2000) := 'Nao foi possivel gerar impressao, tente mais tarde';
+            
   -- Variaveis de impressão
   vr_nmarqimp VARCHAR2(200);
-  vr_nmdafila VARCHAR2(200);
 
   PROCEDURE pc_saldo_caixas(pr_cdcooper IN crapcop.cdcooper%TYPE   -- Cooperativa
                            ,pr_cdagenci IN crapage.cdagenci%TYPE   -- Agencia/PA
@@ -146,6 +186,7 @@ create or replace package body cecred.CAIX0001 is
                            ,pr_cdoperad IN crapope.cdoperad%TYPE   -- Operador
                            ,pr_cdprogra IN VARCHAR2                -- Programa
                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   -- Data movimento
+                           ,pr_inetapa  IN VARCHAR2                -- etapa de execução da tela de chamada
                            ,pr_nmarqimp OUT VARCHAR2               -- Arquivo Impressao
                            ,pr_saldotot OUT NUMBER                 -- Saldo Total
                            ,pr_dscritic OUT crapcri.dscritic%TYPE  -- Descricao da critica
@@ -156,7 +197,7 @@ create or replace package body cecred.CAIX0001 is
    Sistema : CRED
    Sigla   : CAIX0001
    Autor   : Lucas Eduardo Ranghetti
-   Data    : Fevereiro/2015.                        Ultima atualizacao: 11/03/2015
+   Data    : Fevereiro/2015.                        Ultima atualizacao: 20/06/2017
 
    Dados referentes ao programa:
 
@@ -173,6 +214,13 @@ create or replace package body cecred.CAIX0001 is
 
                11/03/2015 - Conversao de Progress -->> Oracle (Lucas R. #245838)
 
+               20/06/2017 - Dispara procedure para gerar LOG pc_gera_log 
+                            Setado modulo
+                            Padrão de mensagens 
+                            Incluido parametro de entrada com a indica a etapa de execução da tela de chamada:
+                            Executa o relatório apenas no 2o momento
+                            ( Belli - Envolti - 20/06/2017 - Chamado 660322)
+
   ............................................................................. */
   BEGIN
     DECLARE
@@ -182,6 +230,12 @@ create or replace package body cecred.CAIX0001 is
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
+
+      -- Variável de crítica log - 20/06/2017 - Chamado 660322 
+      vr_dscritic_out     VARCHAR2  (10000);
+     
+      -- Variaveis de posicionamento de modulo - 20/06/2017 - Chamado 660322
+      vr_acao             VARCHAR2   (100); 
 
       --Variaveis de indices
       vr_index PLS_INTEGER := 0;
@@ -233,6 +287,11 @@ create or replace package body cecred.CAIX0001 is
       END;
 
     BEGIN
+      
+	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
+      vr_acao := 'CAIX0001.pc_saldo_caixas';      
+		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => vr_acao);
+
       -- Limpar temp-table
       vr_tab_crapbcx.DELETE;
 
@@ -270,6 +329,7 @@ create or replace package body cecred.CAIX0001 is
 
           --Se possui erro no vetor
           IF vr_tab_erro.Count > 0 THEN
+      
             vr_cdcritic:= vr_tab_erro(1).cdcritic;
             vr_dscritic:= vr_tab_erro(1).dscritic;
             RAISE vr_exc_saida;
@@ -312,6 +372,7 @@ create or replace package body cecred.CAIX0001 is
 
       IF vr_tab_crapbcx.COUNT = 0 THEN
         vr_dscritic := 'Nao ha caixas com saldo para o PA informado.';
+        vr_dscritic_padrao := null;
         RAISE vr_exc_saida;
       END IF;
 
@@ -362,7 +423,9 @@ create or replace package body cecred.CAIX0001 is
       dbms_lob.close(vr_des_xml);
       dbms_lob.freetemporary(vr_des_xml);
 
-
+      -- Incluido novo parametro na chamada - Chamado 660322 - 23/06/2017
+      -- Incluido parametro de entrada com a indica a etapa de execução da tela de chamada - Chamado 660322 - 26/06/2017
+      -- Executa o relatório apenas no 2o momento
       -- Gerar relatorio de cofre
       pc_gera_relato(pr_cdcooper => pr_cdcooper,
                      pr_cdagenci => pr_cdagenci,
@@ -370,6 +433,8 @@ create or replace package body cecred.CAIX0001 is
                      pr_dtmvtolt => pr_dtmvtolt,
                      pr_tpcaicof => 'CAIXA',
                      pr_saldotot => pr_saldotot,
+                     pr_cdprogra => pr_cdprogra,
+                     pr_inetapa  => pr_inetapa,
                      pr_tab_crapbcx => vr_tab_crapbcx,
                      pr_nmarqimp => vr_nmarqimp,
                      pr_dscritic => vr_dscritic);
@@ -385,10 +450,41 @@ create or replace package body cecred.CAIX0001 is
     EXCEPTION
       -- Rotina de geracao de erro
       WHEN vr_exc_saida THEN
+        CAIX0001.pc_gera_log(pr_cdcooper
+                            ,pr_cdprogra
+                            ,vr_acao
+                            ,pr_cdagenci
+                            ,pr_nrdcaixa
+                            ,pr_dtmvtolt
+                            ,'CAIXA'
+                            ,vr_dscritic
+                            ,vr_dscritic_out
+                            );
+                                             
+        if vr_dscritic_padrao is null then
         -- Monta mensagem de erro
         pr_dscritic := vr_dscritic;
+        else
+          -- mensagem que vai para o usuario - 20/06/2017 - Chamado 660322 
+          pr_dscritic := vr_dscritic_padrao;          
+        end if;                
+            
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 20/06/2017 - Chamado 660322        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         pr_dscritic := 'Erro na consulta dos boletins de caixa CAIX0001.pc_saldo_caixas: ' || SQLERRM;
+        CAIX0001.pc_gera_log ( 
+              pr_cdcooper
+             ,pr_cdprogra
+             ,vr_acao
+             ,pr_cdagenci
+             ,pr_nrdcaixa
+             ,pr_dtmvtolt
+             ,'CAIXA'
+             ,pr_dscritic
+             ,vr_dscritic_out
+            );
+         pr_dscritic := vr_dscritic_padrao;
     END;
 
   END pc_saldo_caixas;
@@ -397,17 +493,20 @@ create or replace package body cecred.CAIX0001 is
                           ,pr_cdagenci IN crapage.cdagenci%TYPE   -- Agencia/PA
                           ,pr_nrdcaixa IN INTEGER                 -- Caixa
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   -- Data movimento
+                          ,pr_cdprogra IN VARCHAR2                -- Programa
+                          ,pr_inetapa  IN VARCHAR2                -- etapa de execução da tela de chamada
                           ,pr_nmarqimp OUT VARCHAR2               -- Arquivo Impressao
                           ,pr_saldotot OUT NUMBER                 -- Saldo Total
                           ,pr_dscritic OUT crapcri.dscritic%TYPE  -- Descricao da critica
                           ,pr_clobxmlc OUT CLOB) IS               -- Registros da crapbcx
+                                                  
   /* .............................................................................
 
    Programa: pc_saldo_cofre                 Antigo: b1wgen0120.p --> BuscaDados - Opção "T"
    Sistema : CRED
    Sigla   : CAIX0001
    Autor   : Lucas Eduardo Ranghetti
-   Data    : Março/2015.                        Ultima atualizacao:
+   Data    : Março/2015.                        Ultima atualizacao: 20/06/2017
 
    Dados referentes ao programa:
 
@@ -415,14 +514,26 @@ create or replace package body cecred.CAIX0001 is
    Objetivo  : Consultar saldo atual em Cofre.
 
    Alteracoes:
+              20/06/2017 - Dispara procedure para gerar LOG pc_gera_log 
+                           Setado modulo
+                           Padrão de mensagens 
+                           Incluido parametro de entrada com o nome do programa na procedure pc_saldo_cofre 
+                           Incluido parametro de entrada com a indica a etapa de execução da tela de chamada:
+                           Executa o relatório apenas no 2o momento
+                           ( Belli - Envolti - 20/06/2017 - Chamado 660322)
 
   ............................................................................. */
   BEGIN
     DECLARE
 
     -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
+
+      -- Variável de crítica log - 20/06/2017 - Chamado 660322 
+      vr_dscritic_out     VARCHAR2  (10000);
+     
+      -- Variaveis de posicionamento de modulo - 20/06/2017 - Chamado 660322
+      vr_acao             VARCHAR2   (100); 
 
       --Variaveis de indices
       vr_index PLS_INTEGER := 0;
@@ -463,11 +574,16 @@ create or replace package body cecred.CAIX0001 is
       END;
 
     BEGIN
+      
+	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
+      vr_acao := 'CAIX0001.pc_saldo_cofre';      
+		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => vr_acao);
+      
       -- Limpar temp-table
       vr_tab_crapbcx.DELETE;
 
       pr_saldotot := 0;
-
+ 
       -- Buscar saldo de cofres
       OPEN cr_crapslc(pr_cdcooper => pr_cdcooper
                      ,pr_cdagenci => nvl(pr_cdagenci,0));
@@ -489,6 +605,7 @@ create or replace package body cecred.CAIX0001 is
       -- Se não criou registros na temp-table gera critica e levanta exceção
       IF vr_tab_crapbcx.COUNT = 0 THEN
         vr_dscritic := 'Nao ha saldo em cofre para o PA informado.';
+        vr_dscritic_padrao := null;
         RAISE vr_exc_saida;
       END IF;
 
@@ -524,6 +641,9 @@ create or replace package body cecred.CAIX0001 is
       dbms_lob.freetemporary(vr_des_xml);
 
 
+      -- Incluido novo parametro na chamada - Chamado 660322 - 23/06/2017
+      -- Incluido parametro de entrada com a indica a etapa de execução da tela de chamada - Chamado 660322 - 26/06/2017
+      -- Executa o relatório apenas no 2o momento
       -- Gerar relatorio de caixa
       pc_gera_relato(pr_cdcooper => pr_cdcooper,
                      pr_cdagenci => pr_cdagenci,
@@ -531,6 +651,8 @@ create or replace package body cecred.CAIX0001 is
                      pr_dtmvtolt => pr_dtmvtolt,
                      pr_tpcaicof => 'COFRE',
                      pr_saldotot => pr_saldotot,
+                     pr_cdprogra => pr_cdprogra,
+                     pr_inetapa  => pr_inetapa,
                      pr_tab_crapbcx => vr_tab_crapbcx,
                      pr_nmarqimp => vr_nmarqimp,
                      pr_dscritic => vr_dscritic);
@@ -545,10 +667,45 @@ create or replace package body cecred.CAIX0001 is
 
     EXCEPTION
       WHEN vr_exc_saida THEN
+        -- Dispara geração de log - 20/06/2017 - Chamado 660322 
+        CAIX0001.pc_gera_log (pr_cdcooper
+                             ,pr_cdprogra
+                             ,vr_acao
+                             ,pr_cdagenci
+                             ,pr_nrdcaixa
+                             ,pr_dtmvtolt
+                             ,'COFRE'
+                             ,vr_dscritic
+                             ,vr_dscritic_out
+                             );
+                                             
+        if vr_dscritic_padrao is null then
+          -- Monta mensagem de erro
         pr_dscritic := vr_dscritic;
+        else
+          -- mensagem que vai para o usuario - 20/06/2017 - Chamado 660322 
+          pr_dscritic := vr_dscritic_padrao;          
+        end if;      
+        
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 20/06/2017 - Chamado 660322        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Rotina de geracao de erro
         pr_dscritic := 'Erro na consulta dos saldos em cofre CAIX0001.pc_saldo_cofre: ' || SQLERRM;
+                     
+        -- Dispara geração de log - 20/06/2017 - Chamado 660322 
+        CAIX0001.pc_gera_log (pr_cdcooper
+                             ,pr_cdprogra
+                             ,vr_acao
+                             ,pr_cdagenci
+                             ,pr_nrdcaixa
+                             ,pr_dtmvtolt
+                             ,'COFRE'
+                             ,pr_dscritic
+                             ,vr_dscritic_out
+                             );
+                             
+          pr_dscritic := vr_dscritic_padrao;
     END;
 
   END pc_saldo_cofre;
@@ -560,6 +717,7 @@ create or replace package body cecred.CAIX0001 is
                           ,pr_cdoperad IN crapope.cdoperad%TYPE   -- Operador
                           ,pr_cdprogra IN VARCHAR2                -- Programa
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   -- Data movimento
+                          ,pr_inetapa  IN VARCHAR2                -- etapa de execução da tela de chamada
                           ,pr_nmarqimp OUT VARCHAR2               -- Arquivo Impressao
                           ,pr_saldotot OUT NUMBER                 -- Saldo Total
                           ,pr_dscritic OUT crapcri.dscritic%TYPE  -- Descricao da critica
@@ -570,7 +728,7 @@ create or replace package body cecred.CAIX0001 is
    Sistema : CRED
    Sigla   : CAIX0001
    Autor   : Lucas Eduardo Ranghetti
-   Data    : Março/2015.                        Ultima atualizacao:
+   Data    : Março/2015.                        Ultima atualizacao: 20/06/2017
 
    Dados referentes ao programa:
 
@@ -578,17 +736,27 @@ create or replace package body cecred.CAIX0001 is
    Objetivo  : Consultar saldo atual em Cofre e em Caixa.
 
    Alteracoes:
+               20/06/2017 - Dispara procedure para gerar LOG pc_gera_log 
+                            Setado modulo
+                            Padrão de mensagens 
+                            Incluido parametro de entrada com a indica a etapa de execução da tela de chamada
+                            Executa o relatório apenas no 2o momento
+                           ( Belli - Envolti - 20/06/2017 - Chamado 660322)
 
   ............................................................................. */
   BEGIN
     DECLARE
 
       -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
 
+      -- Variável de crítica log - 20/06/2017 - Chamado 660322 
+      vr_dscritic_out     VARCHAR2  (10000);
+     
+      -- Variaveis de posicionamento de modulo - 20/06/2017 - Chamado 660322
+      vr_acao             VARCHAR2   (100); 
+
       --Variaveis de indices
---      vr_index PLS_INTEGER := 0;
       vr_index VARCHAR2(5);
 
       -- Tratamento de erros
@@ -600,11 +768,8 @@ create or replace package body cecred.CAIX0001 is
       vr_vltotcai NUMBER;
       vr_vltotcof NUMBER;
       vr_totcaipa NUMBER;
-      vr_totcaico NUMBER;
       vr_vltaaint NUMBER;
       vr_nmarqimp VARCHAR2(100);
-
-      vr_contador PLS_INTEGER := 0;
 
       -- Tabela de erros
       vr_tab_erro   GENE0001.typ_tab_erro;
@@ -675,6 +840,11 @@ create or replace package body cecred.CAIX0001 is
       END;
 
     BEGIN
+      
+	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
+      vr_acao := 'CAIX0001.pc_saldo_total';      
+		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => vr_acao);
+      
       -- Limpar temp-table
       vr_tab_crapbcx.DELETE;
 
@@ -682,7 +852,6 @@ create or replace package body cecred.CAIX0001 is
       vr_vltotcai := 0;
       vr_vltotcof := 0;
       vr_totcaipa := 0;
-      vr_totcaico := 0;
       vr_vltaaint := 0;
 
       -- Buscar valores de caixa
@@ -803,6 +972,7 @@ create or replace package body cecred.CAIX0001 is
       -- Se não criou registros na temp-table gera critica e levanta exceção
       IF vr_tab_crapbcx.COUNT = 0 THEN
         vr_dscritic := 'Nao ha caixas/cofres com saldo para o PA informado.';
+        vr_dscritic_padrao := null;
         RAISE vr_exc_saida;
       END IF;
 
@@ -845,6 +1015,9 @@ create or replace package body cecred.CAIX0001 is
       dbms_lob.close(vr_des_xml);
       dbms_lob.freetemporary(vr_des_xml);
 
+      -- Incluido novo parametro na chamada - Chamado 660322 - 23/06/2017
+      -- Incluido parametro de entrada com a indica a etapa de execução da tela de chamada - Chamado 660322 - 26/06/2017
+      -- Executa o relatório apenas no 2o momento
       -- Gerar relatorio de caixa
       pc_gera_relato(pr_cdcooper => pr_cdcooper,
                      pr_cdagenci => pr_cdagenci,
@@ -852,6 +1025,8 @@ create or replace package body cecred.CAIX0001 is
                      pr_dtmvtolt => pr_dtmvtolt,
                      pr_tpcaicof => 'TOTAL',
                      pr_saldotot => pr_saldotot,
+                     pr_cdprogra => pr_cdprogra,
+                     pr_inetapa  => pr_inetapa,
                      pr_tab_crapbcx => vr_tab_crapbcx,
                      pr_nmarqimp => vr_nmarqimp,
                      pr_dscritic => vr_dscritic);
@@ -866,10 +1041,48 @@ create or replace package body cecred.CAIX0001 is
 
     EXCEPTION
       WHEN vr_exc_saida THEN
+        -- Dispara geração de log - 20/06/2017 - Chamado 660322 
+        CAIX0001.pc_gera_log ( 
+              pr_cdcooper
+             ,pr_cdprogra
+             ,vr_acao
+             ,pr_cdagenci
+             ,pr_nrdcaixa
+             ,pr_dtmvtolt
+             ,'TOTAL'
+             ,vr_dscritic
+             ,vr_dscritic_out
+            );
+                                             
+        if vr_dscritic_padrao is null then
+          -- Monta mensagem de erro
         pr_dscritic := vr_dscritic;
+        else
+          -- mensagem que vai para o usuario - 20/06/2017 - Chamado 660322 
+          pr_dscritic := vr_dscritic_padrao;          
+        end if;      
+            
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 20/06/2017 - Chamado 660322        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Rotina de geracao de erro
         pr_dscritic := 'Erro na consulta dos saldos em cofre/caixa CAIX0001.pc_saldo_total: ' || SQLERRM;
+                     
+        -- Dispara geração de log - 20/06/2017 - Chamado 660322 
+        CAIX0001.pc_gera_log ( 
+              pr_cdcooper
+             ,pr_cdprogra
+             ,vr_acao
+             ,pr_cdagenci
+             ,pr_nrdcaixa
+             ,pr_dtmvtolt
+             ,'TOTAL'
+             ,pr_dscritic
+             ,vr_dscritic_out
+            );
+            
+        -- mensgaem que vai para o usuario - 20/06/2017 - Chamado 660322
+        pr_dscritic := vr_dscritic_padrao;
     END;
 
   END pc_saldo_total;
@@ -891,7 +1104,7 @@ create or replace package body cecred.CAIX0001 is
     Sistema : CRED
     Sigla   : CAIX0001
     Autor   : Lucas Eduardo Ranghetti
-    Data    : Fevereiro/2015.                        Ultima atualizacao: 05/08/2014
+    Data    : Fevereiro/2015.                        Ultima atualizacao: 20/06/2017
 
     Dados referentes ao programa:
 
@@ -949,6 +1162,9 @@ create or replace package body cecred.CAIX0001 is
                 04/11/2015 - Alteração da pesquisa de GPS INSS(LGP)  (Guilherme/SUPERO)
 
                 26/11/2015 - Correção do cálculo da fita de caixa  (Guilherme/SUPERO)
+  
+                20/06/2017 - Setado modulo  ( Belli - Envolti - 20/06/2017 - Chamado 660322)
+                
  ------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -959,9 +1175,6 @@ create or replace package body cecred.CAIX0001 is
 
       vr_flgsemhi INTEGER := 0;
       vr_vlrttdeb NUMBER := 0;
-      vr_nrctadeb NUMBER := 0;
-      vr_nrctacrd NUMBER := 0;
-      vr_dtmvtolt DATE;
       vr_flgouthi BOOLEAN := FALSE;
       vr_vlrttctb NUMBER  := 0;
       vr_qtrttctb INTEGER := 0;
@@ -1399,6 +1612,10 @@ create or replace package body cecred.CAIX0001 is
         rw_craptvl cr_craptvl%ROWTYPE;
 
     BEGIN
+      
+	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
+		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'CAIX0001.pc_disp_dados_bole_caixa');
+
       -- Iniciar Valores zerados
       pr_vlcredit := 0;
       pr_vldebito := 0;
@@ -1449,9 +1666,6 @@ create or replace package body cecred.CAIX0001 is
       END IF;
       -- Fechar Cursor
       CLOSE cr_crapbcx;
-
-      -- Utilizar no lugar de crapdat
-      vr_dtmvtolt := rw_crapbcx.dtmvtolt;
 
       -- Verificar se agencia existe
       OPEN cr_crapage(pr_cdcooper => pr_cdcooper,
@@ -2145,6 +2359,8 @@ create or replace package body cecred.CAIX0001 is
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 20/06/2017 - Chamado 660322        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Rotina de geracao de erro
         vr_dscritic := 'Erro na consulta dos boletins de caixa CAIX0001.pc_disp_dados_bole_caixa: ' || SQLERRM;
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -2164,10 +2380,11 @@ create or replace package body cecred.CAIX0001 is
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE   -- Data movimento
                           ,pr_tpcaicof IN VARCHAR2                -- Caixa/Cofre/Total
                           ,pr_saldotot IN NUMBER                  -- Saldo Total
+                          ,pr_cdprogra IN VARCHAR2                -- Programa
+                          ,pr_inetapa  IN VARCHAR2                -- etapa de execução da tela de chamada
                           ,pr_tab_crapbcx IN typ_tab_crapbcx      -- Registros da crapbcx
                           ,pr_nmarqimp OUT VARCHAR2               -- Caminho do arquivo
                           ,pr_dscritic OUT crapcri.dscritic%TYPE) IS    -- Descricao da critica
-
 
 /* .............................................................................
 
@@ -2175,7 +2392,7 @@ create or replace package body cecred.CAIX0001 is
    Sistema : CRED
    Sigla   : CAIX0001
    Autor   : Lucas Eduardo Ranghetti
-   Data    : Março/2015.                        Ultima atualizacao: 05/05/2015
+   Data    : Março/2015.                        Ultima atualizacao: 20/06/2017
 
    Dados referentes ao programa:
 
@@ -2185,12 +2402,17 @@ create or replace package body cecred.CAIX0001 is
    Alteracoes: 05/05/2015 - Alterado o campo flg_impri da procedure pc_solicita_relato de 'S' para 'N'
                             para não gerar o arquivo pdf no diretório audit_pdf (Lucas Ranghetti #281494)
 
+               20/06/2017 - Dispara procedure para gerar LOG pc_gera_log 
+                            Setado modulo
+                            Padrão de mensagens 
+                            Incluido parametro de entrada com o nome do programa na procedure pc_gera_relato 
+                            ( Belli - Envolti - 20/06/2017 - Chamado 660322 )
+                            
   ............................................................................. */
   BEGIN
     DECLARE
 
       -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
 
       --Variaveis de indices
@@ -2202,12 +2424,8 @@ create or replace package body cecred.CAIX0001 is
        -- Variável de Controle de XML
       vr_des_xml      CLOB;
       vr_path_arquivo VARCHAR2(1000);
-      vr_dspathcop    VARCHAR2(4000);
-      vr_texto_completo VARCHAR2(32600); --> Variável para armazenar os dados do XML antes de incluir no CLOB
 
       -- Variaveis pdf
-      vr_nmarqpdf VARCHAR2(100) := '';
-      vr_nmauxpdf VARCHAR2(100) := '';
       vr_nmarqimp VARCHAR2(100) := '';
 
       vr_nmrescop VARCHAR2(10) := ' ';
@@ -2231,6 +2449,9 @@ create or replace package body cecred.CAIX0001 is
       END;
 
     BEGIN
+
+	    -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
+		  GENE0001.pc_set_modulo(pr_module => pr_cdprogra, pr_action => 'CAIX0001.pc_gera_relato');
 
       -- Buscar cooperativa
       OPEN cr_crapcop;
@@ -2326,8 +2547,12 @@ create or replace package body cecred.CAIX0001 is
                                     ,pr_des_erro => vr_dscritic); */
 
       -- Gerando o relatório nas pastas /rl
+      --Incluído parametro de entrada que indica a etapa de execução da tela de chamada: 
+      --executa o relatório apenas no 2o momento - Chamado 660322 - 26/06/2017
+
+      if pr_inetapa <> '0' then
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
-                                 ,pr_cdprogra  => 'bcaixa'
+                                 ,pr_cdprogra  => pr_cdprogra
                                  ,pr_dtmvtolt  => pr_dtmvtolt
                                  ,pr_dsxml     => vr_des_xml
                                  ,pr_dsxmlnode => '/bcaixa'
@@ -2346,6 +2571,7 @@ create or replace package body cecred.CAIX0001 is
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
+      END IF;
 
       -- Liberando a memória alocada pro CLOB
       -- Finaliza o XML
@@ -2357,10 +2583,89 @@ create or replace package body cecred.CAIX0001 is
         -- Rotina de geracao de erro
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 20/06/2017 - Chamado 660322        
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Rotina de geracao de erro
         pr_dscritic := 'Erro na impressao dos boletins de caixa CAIX0001.pc_gera_relato: ' || SQLERRM;
     END;
   END pc_gera_relato;
 
+ --- ---
+
+  PROCEDURE pc_gera_log(pr_cdcooper     IN  crapcop.cdcooper%TYPE     -- Cooperativa
+                       ,pr_modulo       IN  VARCHAR2                  -- Modulo que disparou
+                       ,pr_acao         IN  VARCHAR2                  -- Ação do modulo
+                       ,pr_cdagenci     IN  crapage.cdagenci%TYPE     -- Agencia/PA
+                       ,pr_nrdcaixa     IN  INTEGER                   -- Caixa
+                       ,pr_dtmvtolt     IN  crapdat.dtmvtolt%TYPE     -- Data movimento
+                       ,pr_tpcaicof     IN  VARCHAR2                  -- Tipo de pequisa
+                       ,pr_dscritic_in  IN  crapcri.dscritic%TYPE     -- Descricao da critica Entrada
+                       ,pr_dscritic_out OUT crapcri.dscritic%TYPE     -- Descricao da critica Saida
+   ) IS
+
+/* .............................................................................
+
+   Programa: pc_gera_log
+   Sistema : CRED
+   Sigla   : CAIX0001
+   Autor   : Cesar Belli - Envolti - Chamado 660322
+   Data    : Junho/2017.                        Ultima atualizacao: 20/09/2017
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamada.
+   Objetivo  : Gerar log de boletim de caixa
+   Alteracoes: 20/09/2017 - Alterada pc_gera_log para não gravar nome de arquivo de log e gravar cdprograma
+                            (Ana - Envolti - 20/09/2017 - Chamado 746134)
+    
+  ............................................................................. */
+  
+    -- Tratamento de erros
+    vr_exc_saida           EXCEPTION;
+      
+    -- Variaveis de inclusão de log 
+    vr_idprglog            tbgen_prglog.idprglog%TYPE := 0;  
+    vr_dsmensagem          tbgen_prglog_ocorrencia.dsmensagem%TYPE := null;
+    vr_modulo              tbgen_prglog.cdprograma%TYPE;  
+  BEGIN
+    --Ajuste nmarqlog e cdprograma - Chamado 746134
+    vr_modulo := NVL(trim(pr_modulo), 'CAIX0001');
+    
+	  -- Incluir nome do módulo logado - Chamado 660322 20/06/2017
+		GENE0001.pc_set_modulo(pr_module => vr_modulo, pr_action => 'CAIX0001.pc_gera_log');
+
+    vr_dsmensagem := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_modulo 
+                             || ' --> ' 
+                             || 'ALERTA: '       || pr_dscritic_in    
+                             || ' pr_cdcooper='  || pr_cdcooper
+                             || ' ,pr_cdagenci=' || pr_cdagenci
+                             || ' ,pr_nrdcaixa=' || pr_nrdcaixa
+                             || ' ,pr_dtmvtolt=' || pr_dtmvtolt
+                             || ' ,pr_tpcaicof=' || pr_tpcaicof                              
+                             || ' - Module: ' || vr_modulo 
+                             || ' - Action: ' || pr_acao;
+
+     cecred.pc_log_programa(pr_dstiplog      => 'O',              -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                            pr_cdprograma    => vr_modulo,        -- tbgen_prglog
+                            pr_cdcooper      => pr_cdcooper,      -- tbgen_prglog
+                            pr_tpexecucao    => 1,                -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                            pr_tpocorrencia  => 4,                -- tbgen_prglog_ocorrencia -- 4 Mensagem
+                            pr_cdcriticidade => 0,                -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                            pr_dsmensagem    => vr_dsmensagem,    -- tbgen_prglog_ocorrencia
+                            pr_flgsucesso    => 1,                -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
+                            pr_nmarqlog      => NULL,
+                            pr_idprglog      => vr_idprglog
+                            );
+      
+           
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 20/06/2017 - Chamado 660322        
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
+      -- Rotina de geracao de erro
+      pr_dscritic_out := 'Erro no log dos boletins de caixa CAIX0001.pc_gera_log: ' || SQLERRM;
+  
+  END pc_gera_log;
+  ---
 end CAIX0001;
 /
