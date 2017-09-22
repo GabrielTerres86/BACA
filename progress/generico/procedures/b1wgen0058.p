@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 20/09/2017
+    Data    : Marco/2010                   Ultima atualizacao: 21/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -174,6 +174,9 @@
                 20/09/2017 - Alterado validacao naturalidade CRAPMUN.
                              PRJ339 - CRM (Odirlei-AMcom)  
 
+				21/09/2017 - Ajuste para utilizar o for first para validar a naturalidade
+				             (Adriano - SD 761431)
+ 
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1501,8 +1504,14 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        IF  NOT CAN-FIND(crapmun WHERE crapmun.dscidade = par_dsnatura ) AND 
-            par_cdufddoc <> "EX"                                        THEN
+	    FOR FIRST crapmun FIELDS(dscidade) 
+		    WHERE crapmun.dscidade = par_dsnatura
+			      NO-LOCK:
+												  
+        END.				
+
+        IF  NOT AVAIL crapmun     AND 
+            par_cdufddoc <> "EX"  THEN
             DO:
                ASSIGN aux_cdcritic = 29.
                LEAVE Valida.
