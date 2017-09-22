@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Junho/2003.                         Ultima atualizacao: 14/10/2016
+   Data    : Junho/2003.                         Ultima atualizacao: 24/07/2017
 
    Dados referentes ao programa:
 
@@ -178,11 +178,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
              
               14/10/2016 - Conversao Progress >> Oracle PLSQL (Jonata-MOUTs)
 
-			  19/01/2017 - Ajuste na gravacao das datas nas tabelas lot e rej.
-			               Quando executava pela COMPEFORA, os registros de lancamento
-						   nao eram encontrados, imprimindo em branco.
-						   Jonata (Mouts) - Chamado 588174
+			        19/01/2017 - Ajuste na gravacao das datas nas tabelas lot e rej.
+			                     Quando executava pela COMPEFORA, os registros de lancamento
+      						         nao eram encontrados, imprimindo em branco.
+			      			         Jonata (Mouts) - Chamado 588174
 
+              01/02/2017 - Tratar incorporacao da Transulcred. (Fabricio)	   
+  
+              21/06/2017 - Inclusão na tabela de erros Oracle
+                         - Padronização de logs
+                         - Inclusão validação e log 191 para integrações com críticas
+                         - Chamado 696499 (Ana Volles - Envolti)
+
+              21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                           (Ana - Envolti - Chamado 746134)
    ............................................................................. */
 
   -- Constantes do programa
@@ -240,7 +249,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
   /*  codigo de agencia com digito calculado: ex. 3164-01 = 3164012  */
   vr_tab_lsagenci typ_tab_valores_n;
   
-  
   -- Lista de contas dos convênios
   vr_tab_contas typ_tab_valores_n;
   vr_tab_conta2 typ_tab_valores_n; 
@@ -290,6 +298,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
   vr_tot_qtintcre PLS_INTEGER := 0;
   vr_tot_vlintcre NUMBER      := 0;
   
+  --Chamado 696499
+  --Variaveis de inclusão de log 
+  vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;      
+   
   -- Tipos para gravação dos totais integrados 
   TYPE typ_reg_totais IS RECORD(vlcompdb NUMBER 
                                ,qtcompdb PLS_INTEGER
@@ -527,6 +539,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
                              ,pr_nrdctabb  IN pls_integer
                              ,pr_dscritic OUT VARCHAR2) IS
   BEGIN
+    --Inclusão nome do módulo logado - Chamado 696499
+    gene0001.pc_set_modulo(pr_module => 'PC_CRPS346'
+                          ,pr_action => 'pc_leitura_saldos');
+
     -- Somente se houver Registro de Saldo
     IF substr(pr_dslinhar,42,1) = '0' OR substr(pr_dslinhar,42,1) = '2' THEN 
       -- Verifica se existe registro na temp-table
@@ -560,6 +576,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS346(pr_cdcooper  IN crapcop.cdcooper%T
     END IF;
   EXCEPTION
     WHEN OTHERS THEN
+      --Inclusão na tabela de erros Oracle - Chamado 696499
+      CECRED.pc_internal_exception( pr_cdcooper => NULL
+                                   ,pr_compleme => pr_dscritic );
+
       pr_dscritic := 'Erro nao tratado na leitura do saldo --> '||sqlerrm;
   END;
   
@@ -567,6 +587,7 @@ BEGIN
   -- Incluir nome do modulo logado
   GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                             ,pr_action => null);
+                            
   -- Verifica se a cooperativa esta cadastrada
   OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
   FETCH cr_crapcop
@@ -629,6 +650,8 @@ BEGIN
     vr_tab_crapcop(2).cdcooper := 4;  /* Incorporacao Concredi */
   ELSIF pr_cdcooper = 13 THEN
     vr_tab_crapcop(2).cdcooper := 15; /* Incorporacao Credimilsul */
+  ELSIF pr_cdcooper = 9 THEN
+    vr_tab_crapcop(2).cdcooper := 17; /* Incorporacao Transulcred */
   END IF;
     
   -- inicializar variavel de controle se existe algum arquivo a ser processado
@@ -640,6 +663,7 @@ BEGIN
     vr_tab_crapcop(vr_idx).nmarquiv := 'deb558_346_' 
                                     || to_char(vr_dtleiarq,'rrrrmmdd')
                                     || '_' || to_char(vr_tab_crapcop(vr_idx).cdcooper,'fm00')||'.bb';
+
     -- Buscar o convênio conforme CRAPTAB
     vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => vr_tab_crapcop(vr_idx).cdcooper 
                                              ,pr_nmsistem => 'CRED'
@@ -647,6 +671,7 @@ BEGIN
                                              ,pr_cdempres => 0
                                              ,pr_cdacesso => 'COMPEARQBB'
                                              ,pr_tpregist => 346);
+
     -- Se não encontrar
     IF trim(vr_dstextab) IS NULL THEN
       -- Gerar critica 55
@@ -656,11 +681,13 @@ BEGIN
     ELSE
       -- Guardar numero do convênio
       vr_tab_crapcop(vr_idx).cdconven := SUBSTR(vr_dstextab,1,9);
+
       -- Busca o arquivo DEB558 em um unico arquivo 
       vr_nomedarq := 'deb558%'||to_char(vr_dtleiarq,'DDMMRR')||'%'||to_char(vr_tab_crapcop(vr_idx).cdconven,'fm000000000') || '%';
       
       -- Busca os arquivos da pasta compbb
       gene0001.pc_lista_arquivos(vr_nmdircop||'/compbb', vr_nomedarq, vr_dslisarq, vr_dscritic);
+
       -- Se houver erro
       IF vr_dscritic IS NOT NULL THEN 
         RAISE vr_exc_saida;
@@ -693,6 +720,7 @@ BEGIN
                                            ,pr_cdempres => 0
                                            ,pr_cdacesso => 'COMPECHQBB'
                                            ,pr_tpregist => 0);
+
   IF trim(vr_dstextab) IS NULL THEN
     vr_flgchqbb := FALSE;
   ELSE
@@ -706,6 +734,7 @@ BEGIN
                                            ,pr_cdempres => 0
                                            ,pr_cdacesso => 'VALORESVLB'
                                            ,pr_tpregist => 0);
+
   IF trim(vr_dstextab) IS NOT NULL THEN
     vr_vlchqvlb := to_number(gene0002.fn_busca_entrada(2,vr_dstextab,';'));
   ELSE
@@ -772,14 +801,23 @@ BEGIN
     -- Limpar tabela de saldos
     vr_tab_crawdpb.delete;
       
-    -- Enviar critica 219 ao LOG
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra || ' --> '
-                                               || gene0001.fn_busca_critica(219) || ' --> ' 
-                                               || vr_tab_crapcop(vr_idx).nmarquiv);
+    --Geração de log de erro - Chamado 696499
+    --Enviar critica 219 ao LOG
+    vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                           ' --> ' || 'ALERTA: ' ||gene0001.fn_busca_critica(219) ||
+                           ': '||vr_tab_crapcop(vr_idx).nmarquiv;
       
+    cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                           pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                           pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                           pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_tpocorrencia  => 4,            -- tbgen_prglog_ocorrencia - 4 - Mensagem
+                           pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                           pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                           pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                           pr_nmarqlog      => NULL, 
+                           pr_idprglog      => vr_idprglog);
+
     -- Efetuar abertura do arquivo 
     gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdircop||'/integra/'
                             ,pr_nmarquiv => vr_tab_crapcop(vr_idx).nmarquiv
@@ -1825,12 +1863,22 @@ BEGIN
         -- Enviar critica 263 ao log
         -- 263 - ARQUIVO VAZIO;
         vr_cdcritic := 263;
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                   || vr_cdprogra || ' --> '
-                                                   || gene0001.fn_busca_critica(263) || ' --> ' 
-                                                   || vr_tab_crapcop(vr_idx).cdcooper);      
+
+        --Geração de log de erro - Chamado 696499
+        vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                               ' --> ' || 'ERRO: ' ||gene0001.fn_busca_critica(263) ||
+                               ' Cdcooper='||vr_tab_crapcop(vr_idx).cdcooper;
+
+        cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                               pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                               pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                               pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                               pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                               pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                               pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                               pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                               pr_nmarqlog      => NULL, 
+                               pr_idprglog      => vr_idprglog);
       END IF;
     ELSE 
       -- Arquivo não está vazio, iniciaremos a montagem do relatório 
@@ -2043,13 +2091,30 @@ BEGIN
         
     END IF;
       
-    -- Ao final do processamento, gerar critica 190 ao LOG 
-    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra || ' --> '
-                                               || gene0001.fn_busca_critica(190) || ' --> ' 
-                                               || vr_tab_crapcop(vr_idx).nmarquiv);      
+    --Geração de log de erro - Chamado 696499
+    --Inclusão validação e log 191 para integrações com críticas
+    IF vr_dscritic IS NULL THEN
+      --Enviar critica 190 ao LOG
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ALERTA: ' ||gene0001.fn_busca_critica(190) ||
+                             ': '||vr_tab_crapcop(vr_idx).nmarquiv;
+    ELSE
+      --Enviar critica 191 ao LOG
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ALERTA: ' ||gene0001.fn_busca_critica(191) ||
+                             ': '||vr_tab_crapcop(vr_idx).nmarquiv;
+    END IF;
+      
+    cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                           pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                           pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                           pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_tpocorrencia  => 4,            -- tbgen_prglog_ocorrencia - 4 - Mensagem
+                           pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                           pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                           pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                           pr_nmarqlog      => NULL, 
+                           pr_idprglog      => vr_idprglog);
       
     -- Move arquivo integrado para o diretorio salvar
     gene0001.pc_OSCommand_Shell(pr_des_comando => 'mv ' || vr_nmdircop||'/integra/'||vr_tab_crapcop(vr_idx).nmarquiv|| ' ' || vr_nmdircop||'/salvar'
@@ -2106,12 +2171,21 @@ EXCEPTION
     END IF;
     -- Se foi gerada critica para envio ao log
     IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
+      --Geração de log de erro - Chamado 696499
+      --Enviar critica 258 ao LOG
+      vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                             ' --> ' || 'ERRO: ' ||vr_dscritic;
+
+      cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                             pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                             pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                             pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                             pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                             pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                             pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                             pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                             pr_nmarqlog      => NULL, 
+                             pr_idprglog      => vr_idprglog);
     END IF;
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
@@ -2129,12 +2203,49 @@ EXCEPTION
     -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
+
+    --Geração de log de erro - Chamado 696499
+    vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                           ' --> ' || 'ERRO: ' ||vr_dscritic;
+
+    cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                           pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                           pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                           pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                           pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                           pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                           pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                           pr_nmarqlog      => NULL, 
+                           pr_idprglog      => vr_idprglog);
+ 
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
     pr_dscritic := sqlerrm;
+
+    --Geração de log de erro - Chamado 696499
+    vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
+                           ' --> ' || 'ERRO: ' ||pr_dscritic;
+
+    --Geração de log de erro - Chamado 696499
+    cecred.pc_log_programa(pr_dstiplog      => 'E',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                           pr_cdprograma    => vr_cdprogra,  -- tbgen_prglog
+                           pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                           pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_tpocorrencia  => 2,            -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                           pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                           pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                           pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                           pr_nmarqlog      => NULL, 
+                           pr_idprglog      => vr_idprglog);
+
+    --Inclusão na tabela de erros Oracle - Chamado 696499
+    CECRED.pc_internal_exception( pr_cdcooper => pr_cdcooper
+                                 ,pr_compleme => pr_dscritic );
+
     -- Efetuar rollback
     ROLLBACK;
 END PC_CRPS346;

@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Maio/2000.                      Ultima atualizacao: 22/06/2016
+   Data    : Maio/2000.                      Ultima atualizacao: 06/06/2017
 
    Dados referentes ao programa:
 
@@ -91,6 +91,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                             
                22/06/2016 - Correcao para o uso de parte do indice da CRAPTAB nesta rotina.
                             (Carlos Rafael Tanholi).
+
+               04/11/2016 - Ajustar cursor de custodia de cheques - Projeto 300 (Rafael) 
+               
+               06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão
+                            tratada exceção 9999 ( Belli Envolti ) - Ch 665812
+               
+               21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
+                            (Ana - Envolti - Chamado 746134)
      ............................................................................. */
 
      DECLARE
@@ -214,7 +222,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          FROM crapcst
          WHERE crapcst.cdcooper  = pr_cdcooper
          AND   crapcst.dtlibera  > pr_dtmvtolt
-         AND   crapcst.dtlibera  <= pr_dtmvtopr;
+         AND   crapcst.dtlibera  <= pr_dtmvtopr
+         AND   crapcst.nrborder = 0; -- cheque nao descontado 
        rw_crapcst cr_crapcst%ROWTYPE;
 
        --Selecionar informacoes Custodia para relatório
@@ -231,6 +240,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                ,crapcst.dtmvtolt
          FROM crapcst crapcst
          WHERE crapcst.cdcooper  = pr_cdcooper
+          AND  crapcst.nrborder  = 0 -- cheque nao descontado 
           AND (crapcst.dtdevolu >= pr_dtmvtolt OR
                crapcst.dtlibera >  pr_dtmvtoan OR
                crapcst.dtmvtolt <= pr_dtmvtolt);
@@ -396,8 +406,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
 
        --Variaveis de Excecao
        vr_exc_erro  EXCEPTION;
-       vr_exc_pula  EXCEPTION;
-
+       vr_exc_pula  EXCEPTION;   
 
        --Procedure para limpar os dados das tabelas de memoria
        PROCEDURE pc_limpa_tabela IS
@@ -423,6 +432,115 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          --Escrever no arquivo XML
          dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
        END;
+
+	   -- Gerar LOG
+	   PROCEDURE pc_log IS
+     BEGIN
+        -- ..........................................................................
+        --
+        --  Programa : pc_log
+        --  Sistema : Conta-Corrente - Cooperativa de Credito
+        --  Sigla    : CRED
+        --  Autor    : Cesar Belli - Envolti
+        --  Data     : Junho/2017              Ultima atualizacao: 06/06/2017
+        --
+        --  Dados referentes ao programa:
+        --
+        --  Frequencia: Sempre que for chamado
+        --  Objetivo  : Gravar tabelas de logs TBEGN_PRGLOG e TBGEN_PRGLOG_OCORRENCIA
+        --              conforme parâmetros
+        -- ...........................................................................
+        --          
+       DECLARE
+         vr_modulo           VARCHAR2   (100);
+         vr_acao             VARCHAR2   (100);            
+         vr_nmarqlog         VARCHAR2  (4000) := NULL;    
+         vr_dstpocorrencia   varchar2  (4000);
+         vr_des_log          varchar2  (4000);  
+         vr_tpocorrencia     number       (5) := null; 
+         vr_cdretorno        crapcri.cdcritic%TYPE;
+         vr_dsretorno        crapcri.dscritic%TYPE;
+         vr_idprglog         tbgen_prglog.idprglog%TYPE := 0;  
+         pr_tab_crapcri      cecred.gene0001.typ_tab_crapcri;
+         --
+       BEGIN          
+         --
+         vr_tpocorrencia := 1; -- 1 erro de negócio
+         IF vr_cdcritic > 0 THEN
+            BEGIN
+              -- Falta buscar vr_tpocorrencia  
+              cecred.gene0001.pc_le_crapcri(
+                                pr_cdcritic    => vr_cdcritic,
+                                pr_tab_crapcri => pr_tab_crapcri,
+                                pr_cdretorno   => vr_cdretorno,
+                                pr_dsretorno   => vr_dsretorno);
+                                                                      
+              IF vr_cdretorno = 1 THEN
+                 --Se possui erro na tabela erros
+                 IF pr_tab_crapcri.Count > 0 THEN        
+                     vr_tpocorrencia := pr_tab_crapcri(pr_tab_crapcri.first).tpcritic;
+                 END IF;
+              END IF;                           
+              vr_tpocorrencia := NVL(vr_tpocorrencia,1);
+            EXCEPTION
+              WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - gene0001.pc_le_crapcri' 
+                || ' , vr_des_erro=' || vr_des_erro
+                || ' , vr_cdcritic=' || vr_cdcritic
+                 ); 
+                DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - 1 - Verificar essa saida com erro=' || sqlerrm); 
+                vr_tpocorrencia := 0;
+            END;       
+         END IF;
+   
+         if vr_tpocorrencia in (3, 4) then
+           vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
+         elsif vr_tpocorrencia in (1, 2) then
+           vr_dstpocorrencia := 'ERRO: '; -- 1 erro de negócio 
+         else
+           vr_dstpocorrencia := 'ALERTA: '; -- 4 mensagem
+         end if;
+         
+         DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
+                           
+         vr_des_log := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra 
+         || ' --> ' 
+         || vr_dstpocorrencia
+         || vr_des_erro                                  
+         || ' - Module: ' || vr_modulo || ' - Action: ' || vr_acao;
+
+         BEGIN        
+           cecred.pc_log_programa(
+           pr_dstiplog      => 'O',              -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+           pr_cdprograma    => vr_cdprogra,      -- tbgen_prglog
+           pr_cdcooper      => pr_cdcooper,      -- tbgen_prglog
+           pr_tpexecucao    => 1,                -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+           pr_tpocorrencia  => vr_tpocorrencia,  -- tbgen_prglog_ocorrencia
+           pr_cdcriticidade => 0,                -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+           pr_dsmensagem    => vr_des_log,       -- tbgen_prglog_ocorrencia
+           pr_flgsucesso    => 1,                -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
+           pr_nmarqlog      => vr_nmarqlog,
+           pr_idprglog      => vr_idprglog
+           );
+         EXCEPTION
+           WHEN OTHERS THEN
+             DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - cecred.pc_log_programa' 
+             || ' , vr_des_log= '  || vr_des_log
+             || ' , pr_cdcooper= ' || pr_cdcooper
+             || ' , vr_cdcritic= ' || vr_cdcritic); 
+             DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - 3 Verificar essa saida com erro=' || sqlerrm);
+         END;
+               
+       EXCEPTION
+           WHEN OTHERS THEN
+             DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG' 
+             || ' , vr_des_erro= ' || vr_des_erro
+             || ' , pr_cdcooper= ' || pr_cdcooper
+             || ' , vr_cdcritic= ' || vr_cdcritic); 
+             DBMS_OUTPUT.PUT_LINE('PC_CRPS287 - PC_LOG - Final - Verificar essa saida com erro=' || sqlerrm);                   
+       END;
+     END pc_log;
+     --
 
      ---------------------------------------
      -- Inicio Bloco Principal pc_crps287
@@ -762,6 +880,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                      RAISE vr_exc_erro;
                  END;
                ELSE
+
                  --Incrementa cheques compensados
                  vr_tot_qtchcomp:= Nvl(vr_tot_qtchcomp,0) + 1;
                  --Incrementa valor cheques compensados
@@ -780,30 +899,36 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                                                      ,pr_cdcritic => vr_cdcritic          --Codigo erro
                                                      ,pr_dscritic => vr_des_erro          --Descricao erro
                                                      ,pr_tab_erro => vr_tab_erro);        --Tabela de erros
+
                  --Se Ocorreu erro
                  IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
                    --Se possui erro na tabela erros
                    IF vr_tab_erro.Count > 0 THEN
-                     vr_des_erro:= vr_tab_erro(vr_tab_erro.LAST).dscritic;
+                     
+                      -- Ignora descrição não tratada pois ela foi montada - ch 665812
+                      if vr_cdcritic <> 9999 then
+                          vr_des_erro:= vr_tab_erro(vr_tab_erro.LAST).dscritic;
+                      end if;
                    ELSE
                      vr_des_erro:= 'Erro no calculo do bloqueio do cheque.';
                    END IF;
                    --Complementar mensagem erro
-                   vr_des_erro:= vr_des_erro || 'Conta/dv: '||rw_crapcst.nrdconta||
-                                              ' Banco: '||rw_crapcst.cdbanchq||
-                                              ' Agencia: '||rw_crapcst.cdagechq||
-                                              ' Conta cheque: '||rw_crapcst.nrctachq||
-                                              ' CMC7: '||rw_crapcst.dsdocmc7||
-                                              ' Valor: '||To_Char(rw_crapcst.vlcheque,'999g999g999g990d00');
+                   vr_des_erro:= vr_des_erro || ' - nrdconta: '||rw_crapcst.nrdconta||
+                                              ' ,cdbanchq: '||rw_crapcst.cdbanchq||
+                                              ' ,cdagechq: '||rw_crapcst.cdagechq||
+                                              ' ,nrctachq: '||rw_crapcst.nrctachq||
+                                              ' ,dsdocmc7: '||rw_crapcst.dsdocmc7||
+                                              ' ,vlcheque: '||To_Char(rw_crapcst.vlcheque,'999g999g999g990d00');
+                   
                    --Escrever erro log
-                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                             ,pr_ind_tipo_log => 2 -- Erro tratato
-                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                               || vr_cdprogra || ' --> '
-                                                               || vr_des_erro);
+                   pc_log;
+                                                                                  
                    --Continuar processamento com proximo registro
                    CONTINUE loop_crapcst;
                  END IF;
+                 --Inclusão nome do módulo logado - Chamado 696499
+                 gene0001.pc_set_modulo(pr_module => 'PC_CRPS287'
+                                       ,pr_action => null);
 
                  /* RUN deposito-bloqueado. */
 
