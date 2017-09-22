@@ -2,7 +2,7 @@
 
     Programa: b1wgen0069.p
     Autor   : Jose Luis (DB1)
-    Data    : Abril/2010                   Ultima atualizacao: 03/08/2015  
+    Data    : Abril/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - FINANCEIRO - FATURAMENTO
 
@@ -25,7 +25,9 @@
 
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)		 
-                                       
+                      
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -313,7 +315,8 @@ PROCEDURE Grava_Dados:
 
     DEF VAR aux_anoftbru AS INTE                                    NO-UNDO.
     DEF VAR aux_mesftbru AS INTE                                    NO-UNDO.
-
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
+ 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
         aux_dstransa = (IF par_cddopcao = "E" THEN "Exclui" 
@@ -385,6 +388,11 @@ PROCEDURE Grava_Dados:
                 UNDO Grava, LEAVE Grava.
             END.
             
+        IF  crapass.inpessoa <> 1 THEN
+            ASSIGN aux_idseqttl = 0.
+        ELSE 
+            ASSIGN aux_idseqttl = par_idseqttl.
+            
         IF  par_cddopcao = "I" OR
             par_cddopcao = "A" THEN
             DO:
@@ -394,7 +402,7 @@ PROCEDURE Grava_Dados:
                                        crapdoc.nrdconta = par_nrdconta AND
                                        crapdoc.tpdocmto = 12            AND
                                        crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl AND
+                                       crapdoc.idseqttl = aux_idseqttl AND
                                        crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
         
@@ -421,7 +429,7 @@ PROCEDURE Grava_Dados:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 12
-                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.idseqttl = aux_idseqttl
                                            crapdoc.nrcpfcgc = crapass.nrcpfcgc.
                                     VALIDATE crapdoc.        
                                     LEAVE ContadorDoc12.

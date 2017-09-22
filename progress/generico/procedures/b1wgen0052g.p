@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 15/07/2016
+    Data    : Junho/2010                      Ultima atualizacao: 22/09/2017
   
     Dados referentes ao programa:
   
@@ -153,6 +153,9 @@
 
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)			
+                             
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
                                                      
 
@@ -2593,6 +2596,7 @@ PROCEDURE Altera_Jur PRIVATE :
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR h-b1craptfc  AS HANDLE                                  NO-UNDO.
 
@@ -2649,6 +2653,8 @@ PROCEDURE Altera_Jur PRIVATE :
                 
         END. /* ContadorJur */
 
+        ASSIGN aux_idseqttl = 0.
+
         IF  par_natjurid <> crabjur.natjurid OR
             par_nmfansia <> crabjur.nmfansia OR 
             par_cdrmativ <> crabjur.cdrmativ THEN
@@ -2660,7 +2666,7 @@ PROCEDURE Altera_Jur PRIVATE :
         					   crapdoc.nrdconta = crabjur.nrdconta AND
         					   crapdoc.tpdocmto = 10               AND
         					   crapdoc.dtmvtolt = par_dtmvtolt     AND
-        					   crapdoc.idseqttl = 1                AND
+        					   crapdoc.idseqttl = aux_idseqttl     AND
                      crapdoc.nrcpfcgc = par_nrcpfcgc
         					   EXCLUSIVE NO-ERROR.
         
@@ -2687,7 +2693,7 @@ PROCEDURE Altera_Jur PRIVATE :
         								   crapdoc.flgdigit = FALSE
         								   crapdoc.dtmvtolt = par_dtmvtolt
         								   crapdoc.tpdocmto = 10
-        								   crapdoc.idseqttl = 1
+        								   crapdoc.idseqttl = aux_idseqttl
                            crapdoc.nrcpfcgc = par_nrcpfcgc.
         							VALIDATE crapdoc.
         						END.

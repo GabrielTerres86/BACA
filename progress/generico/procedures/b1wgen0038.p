@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 17/01/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
     
     Dados referentes ao programa:
 
@@ -104,6 +104,8 @@
                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                             Projeto 339 - CRM. (Lombardi)
                             
+               22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                            o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
 
 
@@ -1573,6 +1575,7 @@ PROCEDURE alterar-endereco:
     DEF VAR aux_msgrvcad AS CHAR                                    NO-UNDO.
     DEF VAR aux_persemon AS DECI                                    NO-UNDO.
     DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
+    DEF VAR aux_idseqttl AS INT                                     NO-UNDO.    
 
     DEF VAR h-b1wgen0056 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
@@ -1617,10 +1620,12 @@ PROCEDURE alterar-endereco:
                     UNDO TRANS_ENDERECO, LEAVE TRANS_ENDERECO.
                 END.
             
-            aux_nrcpfcgc = crapttl.nrcpfcgc.
+            ASSIGN aux_nrcpfcgc = crapttl.nrcpfcgc
+                   aux_idseqttl = par_idseqttl.
           END.
         ELSE 
-            aux_nrcpfcgc = crapass.nrcpfcgc.
+            ASSIGN aux_nrcpfcgc = crapass.nrcpfcgc
+                   aux_idseqttl = 0.
         
         ASSIGN aux_tpendass = IF   par_tpendass <> 0    THEN 
                                    par_tpendass
@@ -1825,7 +1830,7 @@ PROCEDURE alterar-endereco:
                                              crapdoc.nrdconta = par_nrdconta AND
                                              crapdoc.tpdocmto = 3            AND
                                              crapdoc.dtmvtolt = par_dtmvtolt AND
-                                             crapdoc.idseqttl = par_idseqttl AND
+                                             crapdoc.idseqttl = aux_idseqttl AND
                                              crapdoc.nrcpfcgc = aux_nrcpfcgc
                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
@@ -1852,7 +1857,7 @@ PROCEDURE alterar-endereco:
                                            crapdoc.flgdigit = FALSE
                                            crapdoc.dtmvtolt = par_dtmvtolt
                                            crapdoc.tpdocmto = 3
-                                           crapdoc.idseqttl = par_idseqttl
+                                           crapdoc.idseqttl = aux_idseqttl
                                            crapdoc.nrcpfcgc = aux_nrcpfcgc.
                                     VALIDATE crapdoc.
                                             
