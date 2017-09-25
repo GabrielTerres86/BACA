@@ -43,7 +43,7 @@
 
    Programa: b1wgen0081.p                  
    Autora  : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 25/05/2015
+   Data    : 29/11/2010                        Ultima atualizacao: 25/09/2017
 
    Dados referentes ao programa:
 
@@ -196,6 +196,9 @@
                07/03/2017 - Ajuste no comando can-do realizado na variavel aux_lsoperad. Estava pesquisando
                             por ",<Departamento>," quando na verdade deveria pesquisar apenas por "<Departamento>"
                             Heitor (Mouts) - Chamado 606151
+
+			  25/09/2017 - Inclusao do departamento 14 - Produtos, na listagem do Demonstrativo de aplicacoes
+						   procedure consulta-extrato-rdca. SD 759762. (Carlos Rafael Tanholi)
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -5573,7 +5576,7 @@ PROCEDURE consulta-extrato-rdca.
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_tpaplrdc = 0
-           aux_lsoperad = ",20,18,8,6,9,".
+           aux_lsoperad = ",20,18,8,6,9,14,".
 
     FIND craprda WHERE craprda.cdcooper = par_cdcooper AND
                        craprda.nrdconta = par_nrdconta AND
