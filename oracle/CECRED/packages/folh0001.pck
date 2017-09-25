@@ -264,7 +264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 07/06/2016
+   Data    : Maio/2015                      Ultima atualizacao: 24/08/2017
 
    Dados referentes ao programa:
 
@@ -278,6 +278,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                
                20/09/2016 - #523941 Criação de log de controle de início, erros e fim de execução
                             do job pc_processo_controlador (Carlos)
+               
+               12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
+               
+               24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto
+                            na procedure pc_valida_arq_folha_ib (Lucas Ranghetti #729039)               
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -293,7 +298,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        AND craplcs.nrdconta = pr_nrdconta -- CRAPLCS.NRDCONTA (LCS LOOP)
        AND craplcs.cdhistor = pr_cdhisdev -- VR_CDHISDEV
        AND craplcs.nrdocmto = pr_nrdocmto; -- CRAPLCS.NRDOCMTO (LCS LOOP)
+  
   vr_exis_lcs NUMBER;
+  vr_idprglog NUMBER;
 
   /* Procedure responsável por retornar a hora, em formato texto, do inicio e fim do horário de transações  */
   PROCEDURE pc_hrtransfer_internet(pr_cdcooper    IN craptab.cdcooper%TYPE
@@ -469,19 +476,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       RETURN vr_vltarifa;
     EXCEPTION
       WHEN vr_exc_erro THEN
+
         -- Enviar detalhamento do erro ao LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA. Erro --> '||vr_dscritic)
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina fn_valor_tarifa_folha. Detalhes: TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA - ' || vr_dscritic) 
+                             , pr_idprglog => vr_idprglog);                             
         -- Retornar -1
         RETURN -1;
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
         -- Enviar detalhamento do erro ao LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA. Erro --> '||SQLERRM)
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina fn_valor_tarifa_folha. Detalhes: TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA - ' || SQLERRM) 
+                             , pr_idprglog => vr_idprglog);
+                
         -- Retornar -1
         RETURN -1;
     END;
@@ -537,18 +554,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Enviar detalhamento do erro ao LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA. Erro --> '||vr_dscritic)
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina fn_histor_tarifa_folha. Detalhes: TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA - ' || vr_dscritic)
+                             , pr_idprglog => vr_idprglog);
+        
         -- Retornar zero
         RETURN -1;
       WHEN OTHERS THEN
+        
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+        
         -- Enviar detalhamento do erro ao LOG
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA. Erro --> '||SQLERRM)
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina fn_histor_tarifa_folha. Detalhes: TARIFA DE SERVICO – CONVENIO ' || pr_cdcontar || ' – NAO PODE SER BUSCADA - ' || SQLERRM)
+                             , pr_idprglog => vr_idprglog);
         -- Retornar zero
         RETURN -1;
     END;
@@ -587,6 +614,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+        
         -- Retornar erro
         RETURN 'Operador desconhecido.';
     END;
@@ -835,6 +864,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         WHEN vr_exc_erro THEN
           RAISE vr_exc_erro;
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+          
           vr_dscritic := 'Empresa '||rw_crappfp.cdempres||'. Erro: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
@@ -846,17 +877,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': Estouro fora horario -'||vr_dscritic
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_reprov_estouro_horario. Detalhes: Estouro fora horario - ' || vr_dscritic
+                             , pr_idprglog => vr_idprglog);
+
     WHEN OTHERS THEN
       ROLLBACK;
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
       -- efetuar o raise
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': Estouro fora horario -'||SQLERRM
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_reprov_estouro_horario. Detalhes: Estouro fora horario - ' || SQLERRM
+                             , pr_idprglog => vr_idprglog);
+      
   END pc_reprov_estouro_horario;
 
 
@@ -878,6 +918,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -- Alterações:
   --             25/01/2016 - Melhorias nas mensagens de log de erro (Marcos-Supero)
   --
+  --             23/03/2017 - Ajuste para poder habilitar folha para empresas com
+  --                          movimento de pagamento maior que 12 meses, conforme solicitado
+  --                          no chamado 628488 (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Busca email da empresa
@@ -887,6 +930,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            , emp.nrdconta
            , emp.dtultufp -- data do ultimo credito do produto folha
            , emp.dtavsufp -- data do ultimo alerta da falta de uso do produto folha
+           , emp.flgpgtib
+           , emp.dtinccan
            , ROWID  dsdrowid
         FROM crapemp emp
        WHERE emp.cdcooper = pr_cdcooper
@@ -896,6 +941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_qtmescan   crapprm.dsvlrprm%TYPE;
     vr_qtultpag   NUMBER;
     vr_dsmensag   VARCHAR2(4000);
+    vr_qtultlib   NUMBER;
 
     -- Variaveis de Erro
     vr_cdcritic   crapcri.cdcritic%TYPE;
@@ -918,16 +964,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- Define a quantidade de meses entre a data do ultimo lançamento e a atual
         vr_qtultpag := trunc(MONTHS_BETWEEN(SYSDATE,NVL(rw_crapemp.dtultufp, SYSDATE)));
 
-        -- Se a quantidade de meses é igual ou superior a de cancelamento
-        IF vr_qtultpag >= vr_qtmescan THEN
+        --Define a quantidade de meses entre a data de cancelamento ou liberação da folha e a atual
+        vr_qtultlib := trunc(MONTHS_BETWEEN(SYSDATE,NVL(rw_crapemp.dtinccan, SYSDATE)));
+
+        /* 1 - Se a quantidade de meses é igual ou superior a de cancelamento
+           2 - se a quantidade de meses da ultima data de liberação da folha
+           é maior ou igual a data parametrizada para cancelamento.
+           3 - Se a folha está liberada*/
+        IF vr_qtultpag >= vr_qtmescan AND            
+           vr_qtultlib >= vr_qtmescan AND 
+           rw_crapemp.flgpgtib = 1 THEN
 
           BEGIN
             -- Atualizar o flag de acesso ao folha para não liberado
             UPDATE crapemp
                SET flgpgtib = 0 -- Não liberado
+                  ,dtinccan = TRUNC(SYSDATE)
              WHERE ROWID    = rw_crapemp.dsdrowid;
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper); 
               vr_dscritic := 'Erro ao atualizar FLGPGTIB. '||SQLERRM;
               RAISE vr_exc_erro;
           END;
@@ -962,7 +1018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           END IF;
 
           -- Adicionar mensagem nas anotações da atenda
-          CADA0001 .pc_grava_dados(pr_cdcooper => pr_cdcooper
+          CADA0001.pc_grava_dados(pr_cdcooper => pr_cdcooper
                                  ,pr_cdoperad => '1' -- Operador principal - super-usuario
                                  ,pr_cdagenci => 0
                                  ,pr_nrdcaixa => 0
@@ -1025,6 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                WHERE ROWID    = rw_crapemp.dsdrowid;
             EXCEPTION
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                 vr_dscritic := 'Erro ao atualizar DTAVSUFP. '||SQLERRM;
                 RAISE vr_exc_erro;
             END;
@@ -1037,6 +1094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         WHEN vr_exc_erro THEN
           vr_dscritic := '- Empresa '||rw_crapemp.cdempres||'. Erro: '||vr_dscritic;
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_dscritic := '- Empresa '||rw_crapemp.cdempres||'. Erro: '||SQLERRM;
       END;
     END LOOP; -- cr_crapemp
@@ -1047,18 +1105,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': Cancelamento sem uso -'||vr_dscritic
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_aviso_cancel_emp_sem_uso. Detalhes: Cancelamento sem uso - ' || vr_dscritic
+                           , pr_idprglog => vr_idprglog);
+      
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': Cancelamento sem uso -'||vr_dscritic
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_aviso_cancel_emp_sem_uso. Detalhes: Cancelamento sem uso - ' || vr_dscritic
+                           , pr_idprglog => vr_idprglog);      
+      
   END pc_aviso_cancel_emp_sem_uso;
 
   /* Aprova automaticamente os estouros com regularização do saldo */
@@ -1167,6 +1235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                AND flsitdeb = 0; --> Ainda nao debitado
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               vr_dscritic := ' – ERRO NAO TRATADO AO APROVAR PGTOS SEM SALDO - ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
@@ -1213,6 +1282,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         WHEN OTHERS THEN
           -- Desfazer a operacao
           ROLLBACK;
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+          
           -- efetuar o raise
           vr_dscritic := '- Empresa '||rw_crapemp.cdempres||' - '||SQLERRM;
       END;
@@ -1223,18 +1294,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': APROVACAO DE ESTOURO – ' ||vr_dscritic
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_aprova_estouros_automatico. Detalhes: APROVACAO DE ESTOURO - ' || vr_dscritic
+                           , pr_idprglog => vr_idprglog);      
+     
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': APROVACAO DE ESTOURO – ' || SQLERRM)
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_aprova_estouros_automatico. Detalhes: APROVACAO DE ESTOURO - ' || SQLERRM
+                           , pr_idprglog => vr_idprglog);
+                             
   END pc_aprova_estouros_automatico;
 
   /* Alerta créditos pendentes após portabilidade */
@@ -1354,10 +1436,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                     '</td>' ||
                   '</tr>';
 
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – NO VALOR TOTAL DE R$ ' || to_char(rw_crapemp.vllctpag,'fm9g999g999g999g999g990d00') || ' NÃO SERA EFETUADO DEVIDO HORARIO PORTABILIDADE')
-                                  ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_alerta_creditos_pendentes. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – NO VALOR TOTAL DE R$ ' || to_char(rw_crapemp.vllctpag,'fm9g999g999g999g999g990d00') || ' NÃO SERA EFETUADO DEVIDO HORARIO PORTABILIDADE'
+                           , pr_idprglog => vr_idprglog);
 
       vr_contagem := vr_contagem + 1;
     END LOOP;
@@ -1377,7 +1462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                 ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                 ,pr_des_erro        => vr_dscritic);
       IF vr_dscritic IS NOT NULL  THEN
-        vr_dscritic := (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROBLEMA AO SOLICITAR EMAIL CRED PENDEN - ' || vr_dscritic);
+        vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_alerta_creditos_pendentes. Detalhes: PROBLEMA AO SOLICITAR EMAIL CRED PENDEN - ' || vr_dscritic;
         RAISE vr_exc_erro;
       END IF;
 
@@ -1390,18 +1475,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => vr_dscritic
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => vr_dscritic
+                           , pr_idprglog => vr_idprglog);
+     
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA - ' || SQLERRM)
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_alerta_creditos_pendentes. Detalhes: CREDITO DE FOLHA - ' || vr_dscritic
+                           , pr_idprglog => vr_idprglog);
+      
   END pc_alerta_creditos_pendentes;
 
   /* Alerta transferências pendentes de retorno do SPB  */
@@ -1516,10 +1612,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                     '<td align="right">' ||rw_transfer.nrctatrf ||'</td>' ||
                   '</tr>';
 
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA CTASAL – EMP ' || rw_transfer.cdempres || ' - CTA '||rw_transfer.nrdconta||' – NO VALOR TOTAL DE R$ ' || to_char(rw_transfer.vllancto,'fm9g999g999g999g999g990d00') || ' NAO OBTEVE RETORNO DO SPB!'
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Errotratado na rotina pc_alerta_transf_penden_spb. Detalhes: CREDITO DE FOLHA CTASAL – EMP ' || rw_transfer.cdempres || ' - CTA '||rw_transfer.nrdconta||' – NO VALOR TOTAL DE R$ ' || to_char(rw_transfer.vllancto,'fm9g999g999g999g999g990d00') || ' NAO OBTEVE RETORNO DO SPB!'
+                           , pr_idprglog => vr_idprglog);     
 
     END LOOP;
     -- Somente se encontrou algum pagamento
@@ -1545,7 +1644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                 ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                 ,pr_des_erro        => vr_dscritic);
       IF vr_dscritic IS NOT NULL  THEN
-        vr_dscritic := (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': AVISO TRANSF. CTASAL PENDEN - ERRO NO EMAIL - ' || vr_dscritic);
+        vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_alerta_transf_penden_spb. Detalhes: AVISO TRANSF. CTASAL PENDEN - ERRO NO EMAIL - ' || vr_dscritic;
         RAISE vr_exc_erro;
       END IF;
 
@@ -1558,18 +1657,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- envia ao LOG o problema ocorrido
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => vr_dscritic
-                                  ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => vr_dscritic
+                           , pr_idprglog => vr_idprglog);
+        
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- envia ao LOG o problema ocorrido
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': AVISO TRANSF. CTASAL PENDEN - ERRO NO EMAIL - ' || SQLERRM)
-                                  ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro na rotina pc_alerta_transf_penden_spb. Detalhes: AVISO TRANSF. CTASAL PENDEN - ERRO NO EMAIL - ' || SQLERRM
+                           , pr_idprglog => vr_idprglog);
+       
   END pc_alerta_transf_penden_spb;
 
 
@@ -1680,7 +1790,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              AND idsitlct = 'E';
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – ERRO NAO TRATATO AO DEVOLVER CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ': ' || SQLERRM;
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);            
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_concili_estornos_pendentes. Detalhes: ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – DEVOLUCAO DE CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ' - ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
 
@@ -1702,7 +1813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
           -- Verificar se existe informacao, e gerar erro caso nao exista
           IF NOT vr_hasfound THEN
-            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – ERRO NAO TRATATO AO DEVOLVER CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ': ' || 'NAO ENCONTROU NUMERO DO LOTE.';
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_concili_estornos_pendentes. Detalhes: ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – DEVOLUCAO DE CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ': ' || 'NAO ENCONTROU NUMERO DO LOTE.';
             RAISE vr_exc_erro;
           END IF;
 
@@ -1742,7 +1853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                               INTO rw_craplot.nrseqdig;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – ERRO NAO TRATATO AO DEVOLVER CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ': ' || SQLERRM;
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado rotina pc_concili_estornos_pendentes. Detalhes: ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – DEVOLUCAO DE CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ' - ' || SQLERRM;
                 RAISE vr_exc_erro;
             END;
           ELSE -- Se Existir
@@ -1762,7 +1874,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 INTO rw_craplot.nrseqdig;
             EXCEPTION
               WHEN OTHERS THEN
-                vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – ERRO NAO TRATATO AO DEVOLVER CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ': ' || SQLERRM;
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_concili_estornos_pendentes. Detalhes: ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – DEVOLUCAO DE CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') ||' - ' || SQLERRM;
                 RAISE vr_exc_erro;
             END;
           END IF;
@@ -1794,7 +1907,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                ,pr_cdcooper);
           EXCEPTION
             WHEN OTHERS THEN
-              vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.nrdconta || ' – ERRO NAO TRATATO AO DEVOLVER CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ': ' || SQLERRM;
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+              vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_concili_estornos_pendentes. Detalhes: ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.nrdconta || ' – DEVOLUCAO DE CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') ||' - ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
           -- Enviar e-mail informando para a empresa da devolução
@@ -1812,10 +1926,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                     ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                     ,pr_des_erro        => vr_dscritic);
           -- envia ao LOG
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.nrdconta || ' – DEVOLUÇÃO TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ' EFETUADA COM SUCESSO. '
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_concili_estornos_pendentes. Detalhes: DEVOLUÇÃO TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ' EFETUADA COM SUCESSO.'
+                               , pr_idprglog => vr_idprglog);
 
           --Efetua COMMIT
           COMMIT;
@@ -1825,18 +1942,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            -- Desfazer a operacao
           ROLLBACK;
           -- envia ao LOG o problema ocorrido
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => vr_dscritic
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => vr_dscritic
+                               , pr_idprglog => vr_idprglog);
+          
         WHEN OTHERS THEN
           -- Desfazer a operacao
           ROLLBACK;
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           -- envia ao LOG o problema ocorrido
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – ERRO NAO TRATATO AO DEVOLVER CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ': ' || SQLERRM)
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_concili_estornos_pendentes. Detalhes: ESTORNO DO PAGAMENTO – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.vllancto || ' – DEVOLUCAO DE CREDITOS COM PROBLEMA, TOTAL DE R$ ' || to_char(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00') || ' - ' || SQLERRM
+                               , pr_idprglog => vr_idprglog);          
       END;
     END LOOP;
   EXCEPTION
@@ -1844,18 +1969,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- envia ao LOG o problema ocorrido
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => vr_dscritic
-                                  ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => vr_dscritic
+                           , pr_idprglog => vr_idprglog);
+        
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO DO PAGAMENTO - ' || SQLERRM)
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_concili_estornos_pendentes. Detalhes: ESTORNO DO PAGAMENTO ' || ' - ' || SQLERRM
+                           , pr_idprglog => vr_idprglog); 
+    
   END pc_concili_estornos_pendentes;
 
   -- Realiza o Processamento de débitos dos pagamentos aprovados
@@ -2071,6 +2205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           COMMIT;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             vr_cdcritic := 9999;
             vr_dscritic := 'Erro ao atualizar CAPAS de Pagamentos Divergentes: '||SQLERRM;
             -- Executa a exceção
@@ -2098,6 +2233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                    AND flsitdeb = 0; --> Ainda nao debitado
               EXCEPTION
                 WHEN OTHERS THEN
+                  CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);                  
                   vr_cdcritic := 9999;
                   vr_dscritic := 'Erro ao atualizar o registro na CRAPPFP: '||SQLERRM;
                   RAISE vr_exc_erro;
@@ -2127,12 +2263,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                         ,pr_des_erro        => vr_dscritic);
 
               -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                         pr_nmarqlog     => 'FOLHIB',
-                                         pr_ind_tipo_log => 2, -- Erro tratato
-                                         pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||':' ||
-                                                            ' DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) ||
-                                                            ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' NÃO EFETUADO DEVIDO DESASSOCIACAO DA EMPRESA COOPERADA');
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                   , pr_cdprograma => 'FOLH0001' 
+                                   , pr_cdcooper => pr_cdcooper
+                                   , pr_tpexecucao => 0
+                                   , pr_tpocorrencia => 2 
+                                   , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_debito_pagto_aprovados. Detalhes: DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) || ' NO VALOR DE R$ ' || TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO DEVIDO DESASSOCIACAO DA EMPRESA COOPERADA'
+                                   , pr_idprglog => vr_idprglog);
+              
             -- Verifica se o pagamento expirou (DTDEBITO anterior ao DTMVTOAN)
             ELSIF rw_crapemp.flpgtexp = 'S' THEN
 
@@ -2148,6 +2286,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                    AND pfp.dtdebito < pr_rw_crapdat.dtmvtoan; --> Data prevista anterior ha dois dias
               EXCEPTION
                 WHEN OTHERS THEN
+                  CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                   vr_cdcritic := 9999;
                   vr_dscritic := 'Erro ao atualizar o registro na CRAPPFP: '||SQLERRM;
                   RAISE vr_exc_erro;
@@ -2229,15 +2368,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
               END IF;
 
               -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                        ,pr_nmarqlog     => 'FOLHIB'
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||':'
-                                                         || ' DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '
-                                                         || TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta))
-                                                         || ' NO VALOR DE R$ '
-                                                         ||  TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.')
-                                                         ||' NAO EFETUADO DEVIDO FALTA DE SALDO HA MAIS DE DOIS DIAS');
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                   , pr_cdprograma => 'FOLH0001' 
+                                   , pr_cdcooper => pr_cdcooper
+                                   , pr_tpexecucao => 0
+                                   , pr_tpocorrencia => 2 
+                                   , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_debito_pagto_aprovados. Detalhes: DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA ' || TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) || ' NO VALOR DE R$ ' ||  TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' NAO EFETUADO DEVIDO FALTA DE SALDO HA MAIS DE DOIS DIAS'
+                                   , pr_idprglog => vr_idprglog);
+              
             ELSE
 
               IF rw_crapemp.idsitapr != 4 THEN
@@ -2342,12 +2480,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 END IF;
 
                 -- Envio centralizado de log de erro
-                btch0001.pc_gera_log_batch(pr_cdcooper   => pr_cdcooper,
-                                           pr_nmarqlog     => 'FOLHIB',
-                                           pr_ind_tipo_log => 2, -- Erro tratato
-                                           pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||':' ||
-                                                              ' DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) ||
-                                                              ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' NÃO EFETUADO DEVIDO A FALTA DE SALDO EM CONTA');
+                CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                     , pr_cdprograma => 'FOLH0001' 
+                                     , pr_cdcooper => pr_cdcooper
+                                     , pr_tpexecucao => 0
+                                     , pr_tpocorrencia => 2 
+                                     , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_debito_pagto_aprovados. Detalhes: DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) || ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' NÃO EFETUADO DEVIDO A FALTA DE SALDO EM CONTA'
+                                     , pr_idprglog => vr_idprglog);                
 
                 BEGIN
                    UPDATE crappfp
@@ -2361,6 +2500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                 EXCEPTION
                    WHEN OTHERS THEN
+                      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                       vr_cdcritic := 9999;
                       vr_dscritic := 'Erro ao atualizar o registro na CRAPPFP: '||SQLERRM;
                       -- Executa a exceção
@@ -2407,6 +2547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                   EXCEPTION
                     WHEN OTHERS THEN
+                      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                       vr_cdcritic := 9999;
                       vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
                       -- fecha cursor de lote e da tab
@@ -2451,6 +2592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                      WHERE ROWID = rw_craplot.rowid;
                   EXCEPTION
                     WHEN OTHERS THEN
+                      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                       vr_cdcritic := 9999;
                       vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
                       -- Executa a exceção
@@ -2486,6 +2628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                ,pr_cdcooper);
                   EXCEPTION
                     WHEN OTHERS THEN
+                      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                       vr_errhisto := rw_crappfp.cdhisdeb;
                       vr_cdcritic := 9999;
                       vr_dscritic := 'Erro ao inserir craplcm: ' || rw_crapemp.nrdconta || SQLERRM;
@@ -2506,18 +2649,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                      AND flsitdeb = 0; --> Ainda nao debitado
                  EXCEPTION
                    WHEN OTHERS THEN
+                     CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                      vr_cdcritic := 9999;
                      vr_dscritic := 'Erro ao atualizar o registro na CRAPPFP: '||SQLERRM;
                      -- Executa a exceção
                      RAISE vr_exc_erro;
                 END;
                 -- Grava no log
-                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                           pr_nmarqlog     => 'FOLHIB',
-                                           pr_ind_tipo_log => 2, -- Erro tratato
-                                           pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||':' ||
-                                                              ' DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) ||
-                                                              ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' EFETUADO COM SUCESSO!');
+                CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                     , pr_cdprograma => 'FOLH0001' 
+                                     , pr_cdcooper => pr_cdcooper
+                                     , pr_tpexecucao => 0
+                                     , pr_tpocorrencia => 2 
+                                     , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_debito_pagto_aprovados. Detalhes: DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) || ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' EFETUADO COM SUCESSO!'
+                                     , pr_idprglog => vr_idprglog);
 
               END IF;
             END IF;
@@ -2540,6 +2685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
              EXCEPTION
                WHEN OTHERS THEN
+                 CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                  ROLLBACK;
                  vr_cdcritic := 9999;
                  vr_dscritic := 'Erro ao atualizar o registro na CRAPPFP: '||SQLERRM;
@@ -2568,22 +2714,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              COMMIT;
 
              -- Grava no log o erro
-             btch0001.pc_gera_log_batch(pr_cdcooper   => pr_cdcooper,
-                                        pr_nmarqlog     => 'FOLHIB',
-                                        pr_ind_tipo_log => 2, -- Erro tratato
-                                        pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||':' ||
-                                                         ' DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) ||
-                                                         ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto, 'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' ERRO: ERRO ENCONTRADO '|| vr_dscritic );
+             CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 2 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_debito_pagto_aprovados. Detalhes: DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) || ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto, 'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || ' - ' || vr_dscritic 
+                                 , pr_idprglog => vr_idprglog);
+             
            WHEN OTHERS THEN
              -- Desfazer a operacao
              ROLLBACK;
+             CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
              -- Grava no log o erro
-             btch0001.pc_gera_log_batch(pr_cdcooper   => pr_cdcooper,
-                                        pr_nmarqlog     => 'FOLHIB',
-                                        pr_ind_tipo_log => 2, -- Erro tratato
-                                        pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||':' ||
-                                                         ' DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) ||
-                                                         ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') ||' ERRO: ERRO NÃO TRATADO ENCONTRADO '|| SQLERRM );
+             CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 2 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_debito_pagto_aprovados. Detalhes: DEBITO DE FOLHA – EMP '||TO_CHAR(rw_crapemp.cdempres) ||' – CONTA '|| TO_CHAR(gene0002.fn_mask_conta(rw_crapemp.nrdconta)) || ' NO VALOR DE R$ '|| TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS=,. ') || ' - ' || SQLERRM 
+                                 , pr_idprglog => vr_idprglog);             
          END;
        END LOOP;
      END pc_debito_pagto_aprovados;
@@ -4381,14 +4531,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           RETURNING craplot.rowid INTO rw_craplot_tec.rowid;
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+          
           vr_dscritic := '060 - Lote inexistente.';
 
           -- Envia o erro para o LOG
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 3 -- Erro nao tratado
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
-                                    ,pr_nmarqlog     => 'FOLHIB');
-
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 3 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro não tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: ' || ' - ' || vr_dscritic
+                                 , pr_idprglog => vr_idprglog);
+          
           -- Mensagem informando o erro
           vr_dsmensag := 'Houve erro inesperado na inclusão do lote CTASAL. ' ||
                          'Abaixo trazemos o erro retornado durante a operação: <br> ' ||
@@ -4417,12 +4572,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
       BEGIN
         -- Adicionamos no LOG o inicio do pagamento
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1 -- Processo Normal
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                      rw_crapemp.cdempres || ' – INICIANDO CREDITO DOS EMPREGADOS – VALOR TOTAL PREVISTO DE R$ ' ||
-                                                      TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – INICIANDO CREDITO DOS EMPREGADOS – VALOR TOTAL PREVISTO DE R$ ' || TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
+                             , pr_idprglog => vr_idprglog);        
 
         -- Inicializa as variaveis
         vr_blnerror    := FALSE;
@@ -4485,6 +4641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 RETURNING craplot.rowid INTO rw_craplot.rowid;
             EXCEPTION
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                 vr_blnerror := TRUE;
                 EXIT; -- Sai do loop 1..3
             END;
@@ -4513,10 +4670,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_dscritic := '060 - Lote inexistente.';
 
           -- Envia o erro para o LOG
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 2 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro não tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: ' || vr_dscritic
+                               , pr_idprglog => vr_idprglog);      
 
           -- Mensagem informando o erro
           vr_dsmensag := 'Houve erro inesperado na busca do numero do lote ('|| vr_lotechav ||') ' ||
@@ -4573,13 +4733,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             END;
 
             -- Adicionamos no LOG o aviso de problema
-            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' NO VALOR DE R$ ' ||
-                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                          ' NÃO SERA EFETUADO, MOTIVO: '||NVL(vr_dsalerta,vr_dscritic)
-                                      ,pr_nmarqlog     => 'FOLHIB');
+            CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 2 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO SERA EFETUADO, MOTIVO: '||NVL(vr_dsalerta,vr_dscritic)
+                                 , pr_idprglog => vr_idprglog);
+           
             CONTINUE;
           END IF;
 
@@ -4651,34 +4812,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 ROLLBACK;
 
                 -- Envia o erro para o LOG
-                BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratato
-                                          ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                              'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                              ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' ||
-                                                              rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' ||
-                                                              TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                              ' NÃO EFETUADO: ' || SQLERRM
-                                          ,pr_nmarqlog     => 'FOLHIB');                 
+                CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                     , pr_cdprograma => 'FOLH0001' 
+                                     , pr_cdcooper => pr_cdcooper
+                                     , pr_tpexecucao => 0
+                                     , pr_tpocorrencia => 2 
+                                     , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' || rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO: ' || SQLERRM
+                                     , pr_idprglog => vr_idprglog);                
             END IF;              
                          
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               vr_idsitlct := 'E';
               vr_dsobslct := 'Problema encontrado no crédito ao empregado: '||SQLERRM;
               vr_blnerror := TRUE;
               ROLLBACK;
 
               -- Envia o erro para o LOG
-              BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                            'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                            ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' ||
-                                                            rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' ||
-                                                            TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                            ' NÃO EFETUADO: ' || SQLERRM
-                                        ,pr_nmarqlog     => 'FOLHIB');
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                   , pr_cdprograma => 'FOLH0001' 
+                                   , pr_cdcooper => pr_cdcooper
+                                   , pr_tpexecucao => 0
+                                   , pr_tpocorrencia => 2 
+                                   , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  CREDITO ' || rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO: ' || SQLERRM
+                                   , pr_idprglog => vr_idprglog);
+              
           END;
 
           BEGIN
@@ -4689,6 +4848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              WHERE ROWID = rw_craplfp.rowid;
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               vr_blnerror := TRUE;
           END;
 
@@ -4703,13 +4863,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Se NAO ocorreu erro na inclusao da LCM ou atualizacao da LOT/LFP
           IF NOT vr_blnerror THEN
             -- Adicionamos no LOG o sucesso ocorrido no pagamento
-            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 1 -- Processo Normal
-                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – CREDITO ' ||
-                                                          rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' ||
-                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
-                                      ,pr_nmarqlog     => 'FOLHIB');
+            CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 1 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – CREDITO ' ||rw_craplfp.cdhiscre || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
+                                 , pr_idprglog => vr_idprglog);           
           END IF;
 
           -- Caso tenha desconto em folha
@@ -4756,6 +4916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                      AND crapfol.dtrefere = pr_rw_crapdat.dtultdia;
 
                 WHEN OTHERS THEN
+                  CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                   vr_blnerror := TRUE;
                   vr_dscritic := SQLERRM;
               END;
@@ -4763,14 +4924,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
               -- Se ocorreu erro na inclusao/atualizacao da FOL ou atualizacao da ASS
               IF vr_blnerror THEN
                 -- Envia o erro para o LOG porem continua o processo
-                BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                          ,pr_ind_tipo_log => 2 -- Erro tratato
-                                          ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                              'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                              ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – NO VALOR DE R$ ' ||
-                                                              TO_CHAR(vr_vlsalliq,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                              ': Problema encontrado -> '||vr_dscritic
-                                          ,pr_nmarqlog     => 'FOLHIB');
+                CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                     , pr_cdprograma => 'FOLH0001' 
+                                     , pr_cdcooper => pr_cdcooper
+                                     , pr_tpexecucao => 0
+                                     , pr_tpocorrencia => 2 
+                                     , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – NO VALOR DE R$ ' || TO_CHAR(vr_vlsalliq,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' - ' || vr_dscritic
+                                     , pr_idprglog => vr_idprglog);
+
               END IF;
 
               -- Inicializa as variaveis
@@ -4830,6 +4991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                        WHERE ROWID = rw_crapavs.rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
+                        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                         vr_blnerror := TRUE;
                         vr_dscritic := SQLERRM;
                     END;
@@ -4837,14 +4999,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                     -- Se ocorreu erro na PC_CRPS120_1 ou atualizacao da AVS
                     IF vr_blnerror THEN
                       -- Envia o erro para o LOG porem continua o processo
-                      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                                    'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                                    ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – AVISO NO VALOR DE R$ ' ||
-                                                                    TO_CHAR(vr_vldebtot,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                                    ': Erro -> ' || vr_cdcritic || ' - ' || vr_dscritic
-                                                ,pr_nmarqlog     => 'FOLHIB');
+                      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                           , pr_cdprograma => 'FOLH0001' 
+                                           , pr_cdcooper => pr_cdcooper
+                                           , pr_tpexecucao => 0
+                                           , pr_tpocorrencia => 2 
+                                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – AVISO NO VALOR DE R$ ' || TO_CHAR(vr_vldebtot,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,. ')  || vr_cdcritic || ' - ' || vr_dscritic
+                                           , pr_idprglog => vr_idprglog);
+                      
                     END IF;
 
                   -- Aviso de Plano de Cotas
@@ -4889,6 +5051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                        WHERE ROWID = rw_crapavs.rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
+                        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                         vr_blnerror := TRUE;
                         vr_dscritic := SQLERRM;
                     END;
@@ -4896,14 +5059,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                     -- Se ocorreu erro na PC_CRPS120_2 ou atualizacao da AVS
                     IF vr_blnerror THEN
                       -- Envia o erro para o LOG porem continua o processo
-                      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                                    'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                                    ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – AVISO NO VALOR DE R$ ' ||
-                                                                    TO_CHAR(rw_crapavs.vldebito,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                                    ': Erro - ' || vr_dscritic
-                                                ,pr_nmarqlog     => 'FOLHIB');
+                      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                           , pr_cdprograma => 'FOLH0001' 
+                                           , pr_cdcooper => pr_cdcooper
+                                           , pr_tpexecucao => 0
+                                           , pr_tpocorrencia => 2 
+                                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' – AVISO NO VALOR DE R$ ' || TO_CHAR(rw_crapavs.vldebito,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,. ')  || ' - ' || vr_dscritic
+                                           , pr_idprglog => vr_idprglog);
+                      
                     END IF;
 
                   END IF; -- Avisos EMP/COT
@@ -4983,16 +5146,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                  ,pr_cdcooper);
                     EXCEPTION
                       WHEN OTHERS THEN
+                        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                         -- Envia o erro para o LOG
-                        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                                  ,pr_ind_tipo_log => 2 -- Erro tratato
-                                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                                      'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                                      ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  DEBITO ' ||
-                                                                      vr_cdhistor || ' NO VALOR DE R$ ' ||
-                                                                      TO_CHAR(vr_tot_lanc,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                                      ' NÃO EFETUADO: ' || SQLERRM
-                                                  ,pr_nmarqlog     => 'FOLHIB');
+                        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                             , pr_cdprograma => 'FOLH0001' 
+                                             , pr_cdcooper => pr_cdcooper
+                                             , pr_tpexecucao => 0
+                                             , pr_tpocorrencia => 2 
+                                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(vr_nrdconta)) || ' –  DEBITO ' || vr_cdhistor || ' NO VALOR DE R$ ' || TO_CHAR(vr_tot_lanc,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADO: ' || SQLERRM
+                                             , pr_idprglog => vr_idprglog);
+                        
                     END;
 
                   END IF; -- tot_lanc > 0
@@ -5240,11 +5403,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         END;
 
         -- Adicionamos no LOG o encerramento do processo de credito desta empresa
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1 -- Processo Normal
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                      rw_crapemp.cdempres || ' – ENCERRAMENTO DO PROCESSO DE CREDITO'
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – ENCERRAMENTO DO PROCESSO DE CREDITO'
+                             , pr_idprglog => vr_idprglog);
+        
         -- Gravação final
         COMMIT;
       EXCEPTION
@@ -5252,20 +5418,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Desfazemos alterações até o momento adicionamos ao
           -- log da empresa o erro tratado
           ROLLBACK;
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1 -- Processo Normal
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||vr_dscritic
-                                  ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' ' || vr_dscritic
+                               , pr_idprglog => vr_idprglog);
+          
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           -- Desfazemos alterações até o momento adicionamos ao
           -- log da empresa o erro não tratado
           ROLLBACK;
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1 -- Processo Normal
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||SQLERRM
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_coop. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' ' || SQLERRM
+                               , pr_idprglog => vr_idprglog);
+
       END;
     END LOOP; -- cr_crapemp
 
@@ -5299,6 +5472,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- efetuar o raise
       raise_application_error(-25000, 'Erro FOLH0001.PC_CREDITO_PAGTO_APROVADOS: '||vr_dscritic);
   END pc_cr_pagto_aprovados_coop;
@@ -5652,13 +5828,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           RETURNING craplot.rowid INTO rw_craplot_tec.rowid;
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);  
+        
           vr_dscritic := '060 - Lote inexistente.';
 
           -- Envia o erro para o LOG
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 3 -- Erro nao tratado
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 3 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_ctasal. Detalhes: ' || vr_dscritic
+                               , pr_idprglog => vr_idprglog);          
 
           -- Mensagem informando o erro
           vr_dsmensag := 'Houve erro inesperado na inclusão do lote CTASAL. ' ||
@@ -5693,12 +5874,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
       BEGIN
         -- Adicionamos no LOG o inicio do pagamento
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1 -- Processo Normal
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                      rw_crapemp.cdempres || ' – INICIANDO CREDITO DOS EMPREGADOS – VALOR TOTAL PREVISTO DE R$ ' ||
-                                                      TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – INICIANDO CREDITO DOS EMPREGADOS – VALOR TOTAL PREVISTO DE R$ ' || TO_CHAR(rw_crapemp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')
+                             , pr_idprglog => vr_idprglog);        
 
         -- Inicializa as variaveis
         vr_blnerror    := FALSE;
@@ -5761,6 +5943,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 RETURNING craplot.rowid INTO rw_craplot.rowid;
             EXCEPTION
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                 vr_blnerror := TRUE;
                 EXIT; -- Sai do loop 1..3
             END;
@@ -5789,11 +5972,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_dscritic := '060 - Lote inexistente.';
 
           -- Envia o erro para o LOG
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' || vr_dscritic
-                                    ,pr_nmarqlog     => 'FOLHIB');
-
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 2 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_ctasal. Detalhes: ' || vr_dscritic
+                               , pr_idprglog => vr_idprglog);
+          
           -- Mensagem informando o erro
           vr_dsmensag := 'Houve erro inesperado na busca do numero do lote ('|| vr_lotechav ||') ' ||
                          'para a empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp || '. ' ||
@@ -5845,14 +6031,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                WHERE ROWID = rw_craplfp.rowid;
             END;
 
-            -- Adicionamos no LOG o aviso de problema
-            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' NO VALOR DE R$ ' ||
-                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                          ' NÃO SERA EFETUADO, MOTIVO: '||NVL(vr_dsalerta,vr_dscritic)
-                                      ,pr_nmarqlog     => 'FOLHIB');
+            CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 2 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO SERA EFETUADO, MOTIVO: '||NVL(vr_dsalerta,vr_dscritic)
+                                 , pr_idprglog => vr_idprglog);
+            
             CONTINUE;
           END IF;
 
@@ -5916,6 +6102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                        ,rw_craplfp.progress_recid); -- Recid do pagamento para busca da empresa em possiveis estornos
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               vr_blnerror := TRUE;
               vr_dscritic := SQLERRM;
               -- Atualiza com sucesso ou erro
@@ -5928,15 +6115,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Se ocorreu erro na inclusao da LCS ou atualizacao da LFP
           IF vr_blnerror THEN
             -- Envia o erro para o LOG porem continua o processo
-            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                          'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                          ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' – TRANSFERENCIA ' ||
-                                                          vr_cdhistec || ' NO VALOR DE R$ ' ||
-                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                          ' NÃO EFETUADA: ' || vr_dscritic
-                                      ,pr_nmarqlog     => 'FOLHIB');
+            CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 2 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' – TRANSFERENCIA ' || vr_cdhistec || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' NÃO EFETUADA: ' || vr_dscritic
+                                 , pr_idprglog => vr_idprglog);
+            
           ELSE
             -- Marca como possui CTASAL
             vr_blctasal := TRUE;
@@ -5959,18 +6145,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                WHERE ROWID = rw_craplfp.rowid;
             EXCEPTION
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
                 vr_blnerror := TRUE;
             END;
 
             -- Adicionamos no LOG o sucesso ocorrido na transferencia do pagamento
-            BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 1 -- Processo Normal
-                                      ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                          rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' – TRANSFERENCIA ' ||
-                                                          vr_cdhistec || ' NO VALOR DE R$ ' ||
-                                                          TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||
-                                                          ' SOLICITADA COM SUCESSO – AGUARDAR TRANSMISSAO'
-                                      ,pr_nmarqlog     => 'FOLHIB');
+            CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                 , pr_cdprograma => 'FOLH0001' 
+                                 , pr_cdcooper => pr_cdcooper
+                                 , pr_tpexecucao => 0
+                                 , pr_tpocorrencia => 1 
+                                 , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – EMPREGADO ' || ltrim(gene0002.fn_mask_conta(rw_craplfp.nrdconta)) || ' – TRANSFERENCIA ' || vr_cdhistec || ' NO VALOR DE R$ ' || TO_CHAR(rw_craplfp.vllancto,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') || ' SOLICITADA COM SUCESSO – AGUARDAR TRANSMISSAO'
+                                 , pr_idprglog => vr_idprglog);           
 
           END IF;
 
@@ -6169,15 +6355,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                 -- Se retornar critica
                 IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-
+                  
                   -- Envia o erro para o LOG
-                  BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                            ,pr_ind_tipo_log => 2 -- Erro tratato
-                                            ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                                'CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres ||
-                                                                ' – CONTA ' || rw_crapemp.nrdconta || ' –  ERRO NAO TRATADO COM AS TECS SALARIO: ' ||
-                                                                vr_cdcritic || '-' || vr_dscritic
-                                            ,pr_nmarqlog     => 'FOLHIB');
+                  CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                       , pr_cdprograma => 'FOLH0001' 
+                                       , pr_cdcooper => pr_cdcooper
+                                       , pr_tpexecucao => 0
+                                       , pr_tpocorrencia => 2 
+                                       , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – CONTA ' || rw_crapemp.nrdconta || ' –  ERRO COM AS TECS SALARIO: ' || vr_cdcritic || '-' || vr_dscritic
+                                       , pr_idprglog => vr_idprglog);
 
                   -- Destinatarios responsaveis pelos avisos
                   vr_emailds2 :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
@@ -6259,11 +6445,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         END;
 
         -- Adicionamos no LOG o encerramento do processo de credito desta empresa
-        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1 -- Processo Normal
-                                  ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                      rw_crapemp.cdempres || ' – ENCERRAMENTO DO PROCESSO DE CREDITO'
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' – ENCERRAMENTO DO PROCESSO DE CREDITO'
+                             , pr_idprglog => vr_idprglog);
+        
         -- Gravação final
         COMMIT;
       EXCEPTION
@@ -6271,20 +6460,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Desfazemos alterações até o momento adicionamos ao
           -- log da empresa o erro tratado
           ROLLBACK;
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1 -- Processo Normal
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||vr_dscritic
-                                  ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' '||vr_dscritic
+                               , pr_idprglog => vr_idprglog);
+            
         WHEN OTHERS THEN
           -- Desfazemos alterações até o momento adicionamos ao
           -- log da empresa o erro não tratado
           ROLLBACK;
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1 -- Processo Normal
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': CREDITO DE FOLHA – EMP ' ||
-                                                        rw_crapemp.cdempres || ' – ERRO NO PROCESSO --> '||SQLERRM
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cr_pagto_aprovados_ctasal. Detalhes: CREDITO DE FOLHA – EMP ' || rw_crapemp.cdempres || ' ' ||SQLERRM
+                               , pr_idprglog => vr_idprglog);
+          
       END;
     END LOOP; -- cr_crapemp
 
@@ -6318,6 +6514,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- efetuar o raise
       raise_application_error(-25000, 'Erro FOLH0001.PC_CREDITO_PAGTO_APROVADOS: '||vr_dscritic);
   END pc_cr_pagto_aprovados_ctasal;
@@ -6392,7 +6591,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          AND vltarapr = 0;-- Sem tarifa...
     EXCEPTION -- Se ocorrer algum erro
       WHEN OTHERS THEN
-        vr_dscritic := (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': TARIFA DE SERVICO GRATIS – ERRO NAO TRATADO AO DESCONTAR TARIFA - ' || upper(SQLERRM));
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+        vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_cobra_tarifas_pendentes. Detalhes: TARIFA DE SERVICO GRATIS – DESCONTAR TARIFA - ' || upper(SQLERRM);
         RAISE vr_exc_erro;
     END;
 
@@ -6407,10 +6607,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            WHERE crappfp.rowid = rw_lista_pfp.rowid;
         EXCEPTION -- Se ocorrer algum erro
           WHEN OTHERS THEN
-            vr_dscritic := (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                            ': TARIFA DE SERVICO – EMP ' || rw_lista_pfp.cdempres|| 
-                            ' – CONTA ' || rw_lista_pfp.nrdconta|| 
-                            ' – ERRO NAO TRATADO AO LANCAR TARIFA DE R$ ' || to_char(rw_lista_pfp.vltottar,'fm9g999g999g999g999g990d00') || ' - ' || upper(SQLERRM));
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cobra_tarifas_pendentes. Detalhes: TARIFA DE SERVICO – EMP ' || rw_lista_pfp.cdempres || ' – CONTA ' || rw_lista_pfp.nrdconta|| ' – LANCAMENTO TARIFA DE R$ ' || to_char(rw_lista_pfp.vltottar,'fm9g999g999g999g999g990d00') || ' - ' || upper(SQLERRM);
             RAISE vr_exc_erro;
         END;
 
@@ -6440,18 +6638,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- efetuar o raise
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => vr_dscritic
-                                    ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 1 
+                               , pr_dsmensagem => vr_dscritic
+                               , pr_idprglog => vr_idprglog);
+      
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- efetuar o raise
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 1
-                                    ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': TARIFA DE SERVICO – ' || SQLERRM)
-                                    ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_cobra_tarifas_pendentes. Detalhes: TARIFA DE SERVICO – ' || SQLERRM
+                           , pr_idprglog => vr_idprglog);
+     
   END pc_cobra_tarifas_pendentes;
 
 
@@ -6607,6 +6816,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);  
+          
             IF cr_craplot%ISOPEN THEN
               CLOSE cr_craplot;
             END IF;
@@ -6698,6 +6909,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         END IF;
         
         ROLLBACK;        
+        
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+        
         -- se ocorreu algum erro durante a criac?o
         pr_dscritic := 'Erro ao inserir/atualizar lote '||rw_craplot.nrdolote||': '||SQLERRM;
     END pc_insere_lote;
@@ -6825,6 +7039,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         WHEN vr_exc_erro THEN
        pr_dscritic := vr_dscritic;
      WHEN OTHERS THEN
+       CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+       
        pr_dscritic := 'Erro na rotina FOLH0002.pc_cria_tarifa_folha: ' || SQLERRM;
 
    END pc_cria_tarifa_folha;
@@ -7016,8 +7232,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                       ,rw_craplot.rowid;
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               vr_email_erro := '060 - LOTE INEXISTENTE';
-              vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA – 060 - LOTE INEXISTENTE';
+              vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA – 060 - LOTE INEXISTENTE';
               RAISE vr_exc_erro;
           END;
         END IF;
@@ -7088,8 +7305,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           ,rw_craplcs.nrridlfp);
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_email_erro := SQLERRM;
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA – ' || vr_email_erro;
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA – ' || vr_email_erro;
           RAISE vr_exc_erro;
       END;
 
@@ -7121,8 +7339,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              ,rw_craplot.rowid;
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_email_erro := SQLERRM;
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA – ' || vr_email_erro;
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA – ' || vr_email_erro;
           RAISE vr_exc_erro;
       END;
 
@@ -7135,8 +7354,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND progress_recid = rw_craplcs.nrridlfp;
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_email_erro := SQLERRM;
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA – ' || vr_email_erro;
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA – ' || vr_email_erro;
           RAISE vr_exc_erro;
       END;
 
@@ -7168,8 +7388,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          WHERE ROWID = rw_craplcs.rowid;
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_email_erro := SQLERRM;
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA – EMP ' ||rw_crapemp.cdempres|| ' -' || vr_email_erro;
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA – EMP ' ||rw_crapemp.cdempres|| ' - ' || vr_email_erro;
           RAISE vr_exc_erro;
       END;
     END LOOP;
@@ -7187,7 +7408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
       IF NOT vr_hasfound THEN
         vr_email_erro := '060 - LOTE INEXISTENTE';
-        vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - 060 - LOTE INEXISTENTE';
+        vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - 060 - LOTE INEXISTENTE';
         RAISE vr_exc_erro;
       END IF;
 
@@ -7248,8 +7469,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                    ,rw_craplot.rowid;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             vr_email_erro := '060 - LOTE INEXISTENTE';
-            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - 060 - LOTE INEXISTENTE';
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - 060 - LOTE INEXISTENTE';
             RAISE vr_exc_erro;
         END;
       ELSE -- Se existir, atualiza
@@ -7289,8 +7511,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                    ,rw_craplot.rowid;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             vr_email_erro := '060 - LOTE INEXISTENTE';
-            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - 060 - LOTE INEXISTENTE';
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - 060 - LOTE INEXISTENTE';
             RAISE vr_exc_erro;
         END;
       END IF;
@@ -7323,8 +7546,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                    ,pr_cdcooper);
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_email_erro := SQLERRM;
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - ' || vr_email_erro;
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro nao tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA - EMP '||tb_lancamentos(vr_chave).cdempres||' - ' || vr_email_erro;
           RAISE vr_exc_erro;
       END;
       -- Conteudo do e-mail informando para a empresa a devolução
@@ -7344,10 +7568,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                 ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                 ,pr_des_erro        => vr_dscritic);
       -- envia ao LOG
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO de TRFSAL REJEITADA - EMP ' || tb_lancamentos(vr_chave).cdempres || ' – CONTA ' || tb_lancamentos(vr_chave).nrdconta || ' – DEVOLUÇÃO TOTAL DE R$ ' || to_char(tb_lancamentos(vr_chave).vllanmto,'fm9g999g999g999g999g990d00') || ' EFETUADA COM SUCESSO. '
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO de TRFSAL REJEITADA - EMP ' || tb_lancamentos(vr_chave).cdempres || ' – CONTA ' || tb_lancamentos(vr_chave).nrdconta || ' – DEVOLUÇÃO TOTAL DE R$ ' || to_char(tb_lancamentos(vr_chave).vllanmto,'fm9g999g999g999g999g990d00') || ' EFETUADA COM SUCESSO. '
+                           , pr_idprglog => vr_idprglog);
+      
       -- Buscar próxim indice
       vr_chave := tb_lancamentos.next(vr_chave);
     END LOOP;
@@ -7360,10 +7588,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- Desfazer a operacao
       ROLLBACK;
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => vr_dscritic
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => vr_dscritic
+                           , pr_idprglog => vr_idprglog);      
 
       vr_email_destino := gene0001.fn_param_sistema('CRED',pr_cdcooper, 'FOLHAIB_EMAIL_ALERT_PROC') || ','
                        || gene0001.fn_param_sistema('CRED',pr_cdcooper, 'FOLHAIB_EMAIL_ALERT_FIN');
@@ -7388,19 +7619,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       COMMIT;
       IF vr_dscritic IS NOT NULL THEN
         -- envia ao LOG o problema ocorrido
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO TEC DE FOLHA - ' || vr_dscritic)
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA - ' || vr_dscritic
+                             , pr_idprglog => vr_idprglog);
+        
       END IF;
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       -- envia ao LOG o problema ocorrido
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 1
-                                ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO TEC DE FOLHA –  GERAL - ' || SQLERRM)
-                                ,pr_nmarqlog     => 'FOLHIB');
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'FOLH0001' 
+                           , pr_cdcooper => pr_cdcooper
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 1 
+                           , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA –  GERAL - ' || SQLERRM
+                           , pr_idprglog => vr_idprglog);
 
       vr_email_destino := gene0001.fn_param_sistema('CRED',pr_cdcooper, 'FOLHAIB_EMAIL_ALERT_PROC') || ','
                        || gene0001.fn_param_sistema('CRED',pr_cdcooper, 'FOLHAIB_EMAIL_ALERT_FIN');
@@ -7425,10 +7666,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       COMMIT;
       IF vr_dscritic IS NOT NULL THEN
         -- envia ao LOG o problema ocorrido
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => (TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ESTORNO TEC DE FOLHA - ' || vr_dscritic)
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => pr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_estorno_automati_rejeicoes. Detalhes: ESTORNO TEC DE FOLHA - ' || vr_dscritic
+                             , pr_idprglog => vr_idprglog);
+        
       END IF;
 
   END pc_estorno_automati_rejeicoes;
@@ -7557,14 +7802,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          WHERE ROWID = rw_crappfp.lfp_rowid;
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           -- Envia o erro para o LOG
-          BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': ' ||
-                                                        'COMPROV. SALARIO LIQ. – EMP ' || rw_crappfp.cdempres ||
-                                                        ' – FUNC. ' || rw_crappfp.nrdconta || ' –  ' ||
-                                                        'ERRO NA MONTAGEM: ' || SQLERRM
-                                    ,pr_nmarqlog     => 'FOLHIB');
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'FOLH0001' 
+                               , pr_cdcooper => pr_cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 2 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_atualiza_xml_comprov_liquid. Detalhes: COMPROV. SALARIO LIQ. – EMP ' || rw_crappfp.cdempres || ' – FUNC. ' || rw_crappfp.nrdconta || ' – ' || SQLERRM
+                               , pr_idprglog => vr_idprglog);
+         
       END;
 
     END LOOP; -- cr_crappfp
@@ -7576,6 +7823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
   END pc_atualiza_xml_comprov_liquid;
 
   /* Esta rotina é acionada diretamente pelo Job */
@@ -7675,7 +7923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         IF NOT vr_hasfound THEN
           -- Gerar excecao
           vr_cdcritic := 1;
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') ||  ': PROCESSO CONTROLADOR – ' || gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Erro tratado na rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ' || gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         END IF;
 
@@ -7694,7 +7942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 01 - Alerta ou cancelamento automático das empresas sem uso ------------------------
 
           -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 01 - ';
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 01 - ';
 
           -- Executada apenas uma vez por dia
           vr_dtsemus := to_date(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_CHECK_SEM_USO'),'DD/MM/RRRR');
@@ -7729,7 +7977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 02 - Aprovação automática de estouros com saldo ------------------------------------
 
           -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 02 - ';
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 02 - ';
 
           -- Acionar a rotina 02
           pc_aprova_estouros_automatico (vr_cdcooper, rw_crapdat);
@@ -7737,7 +7985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 03 - Reprovação automática de estouros com horário de análise expirado -------------
 
           -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 03 - ';
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 03 - ';
 
           -- Busca o horário limite para análise de estouros
           vr_dtexpest := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.fn_param_sistema('CRED', vr_cdcooper,'FOLHAIB_HOR_LIM_ANA_EST'), 'DD/MM/RRRR HH24:MI');
@@ -7777,7 +8025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 04 - Alerta de créditos após a expiração da portabilidade --------------------------
 
           -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 04 - ';
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 04 - ';
 
           -- Busca o horário limite para portabilidade em folha
           vr_dtexppor := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.FN_param_sistema('CRED', vr_cdcooper,'FOLHAIB_HOR_LIM_PORTAB'), 'DD/MM/RRRR HH24:MI');
@@ -7821,7 +8069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 06.03 - Atualiza o XML do comprovante liquido --------------------------------------
 
             -- Prepara mensagem de erro
-            vr_dscritic := to_char(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 05 - ';
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 05 - ';
 
             -- Acionar a rotina 05
             pc_debito_pagto_aprovados (vr_cdcooper, rw_crapdat);
@@ -7832,7 +8080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           IF vr_hrlimcop > SYSDATE AND FOLH0001.fn_valida_hrtransfer(vr_cdcooper, TO_DATE(TO_CHAR(SYSDATE,'HH24:MI'),'HH24:MI')) THEN
 
             -- Prepara mensgem de erro
-            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 06.01 - ';
+            vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 06.01 - ';
             
             --Acionar a rotina 6.1
             pc_cr_pagto_aprovados_coop(vr_cdcooper, rw_crapdat);
@@ -7842,7 +8090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             
             IF vr_hrlimpor > SYSDATE AND to_char(SYSDATE,'sssss') BETWEEN rw_crapcop.iniopstr AND rw_crapcop.fimopstr THEN
                
-               vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 06.01 - ';
+               vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 06.01 - ';
 
                --Acionar a rotina 6.2
                pc_cr_pagto_aprovados_ctasal(vr_cdcooper, rw_crapdat);
@@ -7859,7 +8107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 08 - Conciliação dos pagamentos pendentes de devolução -----------------------------
 
           -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 08 - ';
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 08 - ';
 
           -- Busca a data e hora da última execucao nos parâmetros de sistema
           vr_dtcobtar := to_date(gene0001.fn_param_sistema('CRED',vr_cdcooper,'FOLHAIB_CONCILI_ESTORNO'),'DD/MM/RRRR HH24:MI:SS');
@@ -7896,7 +8144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 09 - Estorno automático de rejeições TEC -------------------------------------------
 
           -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 09 - ';
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 09 - ';
 
           -- Busca a data e hora da última execucao nos parâmetros de sistema
           vr_dtcobtar := to_date(gene0001.fn_param_sistema('CRED',vr_cdcooper,'FOLHAIB_ESTORNO_TEC'),'DD/MM/RRRR HH24:MI:SS');
@@ -7933,7 +8181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -------- ROTINA 10 - Alerta as 19:00 de TRFSAL sem retorno SPB -------------------------------------------
 
           -- Prepara mensgem de erro
-          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ': PROCESSO CONTROLADOR – ROTINA 10 - ';
+          vr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - FOLH0001 --> Rotina pc_processo_controlador. Detalhes: PROCESSO CONTROLADOR – ROTINA 10 - ';
 
           -- Executada apenas uma vez por dia após as 19:00
           vr_dtavispb := to_date(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_SEM_RETORN_SPB'),'DD/MM/RRRR');
@@ -7977,10 +8225,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- Desfazer a operacao
         ROLLBACK;
         -- envia ao LOG o problema ocorrido
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      => vr_dscritic
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => vr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => vr_dscritic
+                             , pr_idprglog => vr_idprglog);
 
       WHEN OTHERS THEN
 
@@ -7990,11 +8241,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
         -- Desfazer a operacao
         ROLLBACK;
+        
+        CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
+        
         -- envia ao LOG o problema ocorrido
-        btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                  ,pr_ind_tipo_log => 1
-                                  ,pr_des_log      =>  vr_dscritic || SQLERRM
-                                  ,pr_nmarqlog     => 'FOLHIB');
+        CECRED.pc_log_programa(pr_dstiplog => 'O'
+                             , pr_cdprograma => 'FOLH0001' 
+                             , pr_cdcooper => vr_cdcooper
+                             , pr_tpexecucao => 0
+                             , pr_tpocorrencia => 1 
+                             , pr_dsmensagem => vr_dscritic || SQLERRM
+                             , pr_idprglog => vr_idprglog);       
 
       END;
     END LOOP;
@@ -8009,6 +8266,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     WHEN OTHERS THEN
       -- Desfazer a operacao
       ROLLBACK;
+      
+      CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
+      
   END pc_processo_controlador;
 
   -- Validar a combinação Conta + CPF
@@ -8304,6 +8564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   EXCEPTION
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
       pr_dscritic := 'Erro na PC_VALIDA_LANCTO_FOLHA: '||SQLERRM;
   END pc_valida_lancto_folha;
 
@@ -8389,6 +8650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Dados>Rotina com erros</Dados></Root>');
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
       pr_dscritic := 'Erro geral na rotina pc_valida_arq_folha_web: '||SQLERRM;
       pr_des_erro := pr_dscritic;
       -- Carregar XML padrao para variavel de retorno nao utilizada.
@@ -8413,7 +8675,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : IB
   --  Sigla    : CRED
   --  Autor    : Renato Darosci - SUPERO
-  --  Data     : Maio/2015.                   Ultima atualizacao: 27/01/2015
+  --  Data     : Maio/2015.                   Ultima atualizacao: 24/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -8431,6 +8693,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             04/03/2016 - Incluido validacao para não permitir numero no CPF com mais de 11 digito
   --                          (Odirlei-AMcom)  
+  --
+  --             24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto (Lucas Ranghetti #729039)
   ---------------------------------------------------------------------------------------------------------------
 
     -- CURSORES
@@ -8531,6 +8795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_nmprimtl    crapass.nmprimtl%TYPE;
     vr_idtpcont    VARCHAR2(1);
     vr_cddbanco    NUMBER;
+    vr_idremess    NUMBER;
     vr_nrdconta    NUMBER;
     vr_vlrpagto    NUMBER;
     vr_vltotpag    NUMBER;
@@ -8573,6 +8838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         vr_tbcritic(nrindice).vlrpagto := to_char((to_number(TRIM(pr_vlrpagto))/100),'FM9G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.');
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           vr_tbcritic(nrindice).vlrpagto := TRIM(pr_vlrpagto);
       END;
 
@@ -8700,6 +8966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         vr_tpregist := to_number(substr(vr_tbarquiv(ind), 8, 1));
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           -- Erro
           pr_dscritic := 'Tipo do registro inválido! Linha: '||ind||'.';
           -- Adiciona a crítica
@@ -8713,11 +8980,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_cddbanco := to_number(substr(vr_tbarquiv(ind),1,3));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CNPJ divergente do cadastro da empresa
             vr_dscriarq := 'Banco inválido no header do arquivo!';
             CONTINUE;
         END;
+        
+        BEGIN
+          vr_idremess := to_number(substr(vr_tbarquiv(ind),143,1));
+        EXCEPTION
+          WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);  
+            vr_dscriarq := 'Identificador de remessa inválido!';
+            CONTINUE;
+        END;
 
+        IF vr_idremess <> 1 THEN         
+          pr_dscritic := 'Arquivo importado nao e do tipo Remessa';
+          -- Adiciona a crítica
+          RAISE vr_excerror;       
+        END IF;
+        
         -- Verifica se o código do banco é 85 - Validando o inicio da linha
         -- Comentado pois já recebemos 001 do Vetor
         --IF vr_cddbanco <> 85 THEN
@@ -8785,11 +9068,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_tpservic := substr(vr_tbarquiv(ind), 10, 2);
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Erro
             vr_dscrilot := 'Tipo de Serviço inválido! Código: '||vr_tpservic;
             -- Adiciona a crítica
             CONTINUE;
         END;
+
+        -- Caso o Cursor ja estiver aberto, vamos fecha-lo antes de abrir novamente
+        IF cr_crapofp%ISOPEN THEN
+          CLOSE cr_crapofp;
+        END IF;
 
         -- Buscar o registro do tipo do serviço na CRAPOFP
         OPEN  cr_crapofp(pr_cdcooper, vr_tpservic);
@@ -8797,10 +9086,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
         -- Se não encontrar registros
         IF cr_crapofp%NOTFOUND THEN
+          CLOSE cr_crapofp;
           -- Criticar a falta do registro
           vr_dscrilot := 'Tipo de Serviço inválido! Código: '||vr_tpservic||' [Err.: 001]';
           CONTINUE;
         ELSE
+          CLOSE cr_crapofp;
           -- Caso seja cooperativa
           IF vr_idtpempr = 'C' THEN
             -- Os campos de histórico devem estar informados
@@ -8821,9 +9112,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           END IF;
         END IF;
 
-        -- Fecha o cursor
-        CLOSE cr_crapofp;
-
         -- Verificar o CNPJ
         BEGIN
           -- Validar o CNPJ
@@ -8834,6 +9122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           END IF;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Erro
             vr_dscrilot := 'CNPJ do arquivo inválido! CPNJ: '||TRIM(substr(vr_tbarquiv(ind), 19, 14));
             -- Adiciona a crítica
@@ -8845,6 +9134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_cddbanco := to_number(substr(vr_tbarquiv(ind),1,3));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CNPJ divergente do cadastro da empresa
             vr_dscrilot := 'Banco inválido no header do lote!';
             CONTINUE;
@@ -8892,6 +9182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             vr_vltotpag := NVL(vr_vltotpag,0) + (to_number(TRIM(Substr(vr_tbarquiv(ind),120,15)))/100);
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               NULL; -- Valores inválidos não serão somados
           END;
 
@@ -8900,6 +9191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             vr_cddbanco := to_number(substr(vr_tbarquiv(ind),1,3));
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               -- Criticar CNPJ divergente do cadastro da empresa
               vr_dscritic := 'Banco inválido!';
               -- Adiciona a crítica
@@ -8946,6 +9238,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             vr_cddbanco := to_number(substr(vr_tbarquiv(ind),21,3));
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               -- Criticar CNPJ divergente do cadastro da empresa
               vr_dscritic := 'Banco inválido!';
               -- Adiciona a crítica
@@ -8993,6 +9286,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               -- Criticar CNPJ divergente do cadastro da empresa
               vr_dscritic := 'Número da Conta inválido!';
               -- Adiciona a crítica
@@ -9020,6 +9314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               -- Criticar CNPJ divergente do cadastro da empresa
               vr_dscritic := 'Valor de Pagamento inválido!';
               -- Adiciona a crítica
@@ -9088,6 +9383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             vr_cddbanco := to_number(substr(vr_tbarquiv(ind),1,3));
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               -- Criticar CNPJ divergente do cadastro da empresa
               vr_dscritic := 'Banco inválido!';
               -- Adiciona a crítica
@@ -9135,6 +9431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               -- Criticar CNPJ divergente do cadastro da empresa
               vr_dscritic := 'Número do CPF inválido!';
               -- Adiciona a crítica
@@ -9277,6 +9574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_cddbanco := to_number(substr(vr_tbarquiv(ind),1,3));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CNPJ divergente do cadastro da empresa
             vr_dscritic := 'Banco inválido no trailer do lote!';
             -- Refaz a contagem dos registros
@@ -9398,6 +9696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_cddbanco := to_number(substr(vr_tbarquiv(ind),1,3));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CNPJ divergente do cadastro da empresa
             vr_dscritic := 'Banco inválido no trailer do arquivo!';
             -- Refaz a contagem dos registros
@@ -9549,7 +9848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                                     ||'<dsdconta>'||vr_tbcritic(ind).dsdconta||'</dsdconta>'
                                                     ||'<dscpfcgc>'||vr_tbcritic(ind).dscpfcgc||'</dscpfcgc>'
                                                     ||'<dscritic>'||vr_dscritic ||'</dscritic>'
-                                                    ||'<dsorigem>'||vr_tbcritic(ind).dsorigem||'</dsorigem>'
+                                                    ||'<dsorigem>'||NVL(vr_tbcritic(ind).dsorigem, ' ')||'</dsorigem>'
                                                     ||'<vlrpagto>'||vr_tbcritic(ind).vlrpagto||'</vlrpagto>'
                                                     ||'</critica>'||chr(13));
 
@@ -9676,6 +9975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        -- Converter o XML
       pr_retxml := vr_retxml.getClobVal();
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
       GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
 
       pr_dscritic := 'Erro geral na rotina pc_valida_arq_folha_ib: '||SQLERRM;
@@ -9774,6 +10074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Dados>Rotina com erros</Dados></Root>');
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
       pr_dscritic := 'Erro geral na rotina pc_valida_arq_compr_web: '||SQLERRM;
       pr_des_erro := pr_dscritic;
       -- Carregar XML padrao para variavel de retorno nao utilizada.
@@ -10003,6 +10304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          vr_tbcritic(vr_cdcompro)(nrindice).vlrpagto := to_char((to_number(TRIM(pr_vlrpagto))/100),'FM9G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.');
       EXCEPTION
         WHEN OTHERS THEN
+         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
          vr_tbcritic(vr_cdcompro)(nrindice).vlrpagto := TRIM(pr_vlrpagto);
       END;
 
@@ -10142,6 +10444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         vr_tpregist := to_number(substr(vr_tbarquiv(ind), 0, 1));
       EXCEPTION
         WHEN OTHERS THEN
+          CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
           -- Erro
           pr_dscritic := GENE0007.fn_convert_db_web('Tipo do registro invalido! Linha: '||ind||'.');
           -- Adiciona a crítica
@@ -10159,6 +10462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_nrdocnpj := to_number(TRIM(Substr(vr_tbarquiv(ind),83,8)));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CNPJ inválido
             pr_dscritic := GENE0007.fn_convert_db_web('Caracteres invalidos no CNPJ!');
             RAISE vr_excerror;
@@ -10193,6 +10497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_dtrefere := to_date(TRIM(Substr(vr_tbarquiv(ind),97,6)), 'YYYYMM');
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CNPJ inválido
             pr_dscritic := GENE0007.fn_convert_db_web('Caracteres invalidos na Data Referencia!');
             RAISE vr_excerror;
@@ -10216,6 +10521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_nrdconta := to_number(TRIM(Substr(vr_tbarquiv(ind),108,12)));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CNPJ inválido
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos na Conta!');
             vr_dserrfun := vr_dscritic;
@@ -10270,6 +10576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_cdfuncio := to_number(TRIM(Substr(vr_tbarquiv(ind),37,5)));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CPF inválido
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Código do Funcionário!');
             vr_dserrfun := vr_dscritic;
@@ -10293,6 +10600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_nrcpfcgc := to_number(TRIM(Substr(vr_tbarquiv(ind),42,11)));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CPF inválido
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no CPF!');
             vr_dserrfun := vr_dscritic;
@@ -10345,6 +10653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             vr_dtadmiss := to_date(TRIM(Substr(vr_tbarquiv(ind),100,8)), 'YYYYMMDD');
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
               -- Criticar CNPJ inválido
               vr_dscritic := GENE0007.fn_convert_db_web('Data de admissão inválida!');
               vr_dserrfun := vr_dscritic;
@@ -10466,6 +10775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_cdevento := TRIM(Substr(vr_tbarquiv(ind),25,7));
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CPF inválido
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Código do Evento!');
             -- Adiciona a crítica
@@ -10486,6 +10796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlevento := to_number(TRIM(Substr(vr_tbarquiv(ind),58,9)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar CPF inválido
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Valor do Evento!');
             -- Adiciona a crítica
@@ -10527,6 +10838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlrefere := to_number(TRIM(Substr(vr_tbarquiv(ind),75,5)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar referência
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos na Referência!');
 
@@ -10581,6 +10893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vltotdes := to_number(TRIM(Substr(vr_tbarquiv(ind),22,15)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Total de Descontos! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10595,6 +10908,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vltotvcm := to_number(TRIM(Substr(vr_tbarquiv(ind),37,15)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Total de Vencimentos! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10610,6 +10924,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vltotliq := NVL(vr_vltotliq,0) + vr_vlliqind;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Valor Líquido! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10640,6 +10955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlslrbas := to_number(TRIM(Substr(vr_tbarquiv(ind),77,15)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Salário Base! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10654,6 +10970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlslinss := to_number(TRIM(Substr(vr_tbarquiv(ind),92,15)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Salário Contr.INSS! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10668,6 +10985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlfxirpf := to_number(TRIM(Substr(vr_tbarquiv(ind),107,4)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos na Faixa IRPF! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10682,6 +11000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlbsfgts := to_number(TRIM(Substr(vr_tbarquiv(ind),111,15)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos na Base Calc.FGTS! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10696,6 +11015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlfgtsms := to_number(TRIM(Substr(vr_tbarquiv(ind),126,10)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no FGTS do Mês! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10710,6 +11030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vlbsirpf := to_number(TRIM(Substr(vr_tbarquiv(ind),136,15)))/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             vr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Base Calc.IRPF! ['||TRIM(GENE0002.fn_mask_conta(vr_nrdconta))||']');
 
@@ -10740,6 +11061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_vltotarq := NVL(to_number(TRIM(Substr(vr_tbarquiv(ind),66,15))),0)/100;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             pr_dscritic := GENE0007.fn_convert_db_web('Caracteres invalidos no Total do Arquivo! ');
             RAISE vr_excerror;
@@ -10757,6 +11079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_qttotarq := NVL(to_number(TRIM(Substr(vr_tbarquiv(ind),81,10))),0);
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
             -- Criticar valor
             pr_dscritic := GENE0007.fn_convert_db_web('Caracteres inválidos no Total de Linhas do Arquivo! ');
            RAISE vr_excerror;
@@ -10963,6 +11286,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        -- Converter o XML
       pr_retxml := vr_retxml.getClobVal();
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
 
       pr_dscritic := 'Erro geral na rotina pc_valida_compr_folha: '||SQLERRM;
@@ -11145,6 +11470,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 INTO vr_nrseqpag;
         EXCEPTION
           WHEN OTHERS THEN
+            CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+            
             pr_dscritic := 'Erro ao atualizar CRAPPFP: '||SQLERRM;
             RAISE vr_excerror;
         END;
@@ -11280,6 +11607,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                RETURNING pfp.nrseqpag INTO vr_nrseqpag;
             EXCEPTION
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                
                 pr_dscritic := 'Erro ao atualizar CRAPPFP: '||SQLERRM;
                 RAISE vr_excerror;
             END;
@@ -11292,6 +11621,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                  AND lfp.nrseqpag = vr_nrseqpag;
             EXCEPTION
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                
                 pr_dscritic := 'Erro ao excluir CRAPLFP: '||SQLERRM;
                 RAISE vr_excerror;
             END;
@@ -11356,6 +11687,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
             EXCEPTION
               WHEN OTHERS THEN
+                CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                
                 pr_dscritic := 'Erro ao inserir CRAPPFP: '||SQLERRM;
                 RAISE vr_excerror;
             END;
@@ -11447,6 +11780,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                 rw_craplfp.nrcpfemp := TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node)));
               EXCEPTION
                 WHEN OTHERS THEN
+                  CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+                  
                   pr_dscritic := 'CPF do empregado invalido: '||TO_NUMBER(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node))) ||' conta: '||rw_craplfp.nrdconta ;
                   RAISE vr_excerror;
               END;
@@ -11463,6 +11798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             INSERT INTO craplfp VALUES rw_craplfp;
           EXCEPTION
             WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+              
               pr_dscritic := 'Erro ao inserir CRAPLFP: '||SQLERRM;
               RAISE vr_excerror;
           END;
@@ -11496,6 +11833,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       WHEN vr_excerror THEN
         RAISE vr_excerror;
       WHEN OTHERS THEN
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+        
         pr_dscritic := 'Erro na leitura do XML. Rotina PC_GRAVAR_ARQ_FOLHA_IB: '||SQLERRM;
         RAISE vr_excerror;
     END;
@@ -11514,6 +11853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                    '<Root><Dados>Rotina com erros</Dados></Root>';
     WHEN OTHERS THEN
       ROLLBACK;
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+      
       pr_dscritic := 'Erro geral PC_GRAVAR_ARQ_FOLHA_IB: '||SQLERRM;
       -- Carregar XML
       pr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -11684,6 +12025,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       WHEN vr_erro THEN
           NULL; -- Retorna a critica ja informada
       WHEN OTHERS THEN
+         CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+         
          pr_cdcritic := 0;
          pr_dscritic := 'Erro ao Gravar Comprovantes - Entre em contato com seu PA: ['||SQLERRM||']';
      END;
@@ -11807,6 +12150,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                    '<Root><Dados>Rotina com erros</Dados></Root>';
     WHEN OTHERS THEN
       ROLLBACK;
+      CECRED.pc_internal_exception;
+      
       pr_dscritic := 'Erro geral PC_CONSULTA_ARQ_FOLHA_IB: '||SQLERRM;
       -- Carregar XML
       pr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -11963,6 +12308,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0     , pr_tag_nova => 'flgsal', pr_tag_cont => ' - ', pr_des_erro => vr_dscritic);
 
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
+      
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
@@ -12226,6 +12573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                             ,pr_tag_cont => 'Problemas ao consultar lancamentos para esta conta.'
                             ,pr_des_erro => vr_dscritic);        
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_cdcooper => vr_cdcooper);
       gene0007.pc_insere_tag(pr_xml => pr_retxml
                             ,pr_tag_pai => 'Root'
                             ,pr_posicao => 0
@@ -12279,6 +12627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     WHEN OTHERS THEN
       pr_dscritic := 'ERRO: Nao foi possivel inserir tbfolha_lanaut.';  
       ROLLBACK;      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper); 
   END pc_inserir_lanaut;
 
   PROCEDURE pc_excluir_lanaut(pr_cdcooper IN  tbfolha_lanaut.cdcooper%TYPE                                   
@@ -12316,6 +12665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     WHEN OTHERS THEN
       pr_dscritic := 'ERRO: Nao foi possivel excluir tbfolha_lanaut.';   
       ROLLBACK;      
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
   END pc_excluir_lanaut;                           
   
   
@@ -12342,6 +12692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     WHEN OTHERS THEN
       pr_dscritic := 'ERRO: Nao foi possivel excluir tbfolha_lanaut.';   
       ROLLBACK;          
+      CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
   END pc_excluir_lanaut_dia;
 
   /* Função para validar se a hora informada esta dentro do horário de operacao do SPB*/
