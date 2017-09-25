@@ -12,7 +12,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
      Frequencia: Executado via Job
      Objetivo  : Realizar importação do arquivo de Cessao de fatura de cartao
 
-     Alteracoes: 
+     Alteracoes: 12/09/2017 - Adicionar validacao para impedir a importacao de cessao
+                              duplicada. Ajustado para nao abortar importacao quando
+                              apresentar erro durante a execucao do shell (Anderson).
 
   ............................................................................ */
 
@@ -101,6 +103,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps714 (pr_cdcooper IN crapcop.cdcooper%T
        AND epr.dtmvtolt       = pr_dtmvtolt
        AND epr.vlemprst       = pr_vlemprst;
   rw_cessao cr_cessao%ROWTYPE;
+
+  --> Verificar se existe uma cessao ja importada
+  CURSOR cr_cessao_cad (pr_cdcooper tbcrd_cessao_credito.cdcooper%TYPE,
+                        pr_nrdconta tbcrd_cessao_credito.nrdconta%TYPE,      
+                        pr_nrcartao tbcrd_cessao_credito.nrconta_cartao%TYPE,
+                        pr_dtmvtolt crapepr.dtmvtolt%TYPE,
+                        pr_vlemprst crapepr.vlemprst%TYPE)IS
+    SELECT epr.nrctremp
+      FROM tbcrd_cessao_credito ces
+      JOIN crapepr epr
+        ON epr.cdcooper       = ces.cdcooper
+       AND epr.nrdconta       = ces.nrdconta
+       AND epr.nrctremp       = ces.nrctremp
+     WHERE ces.cdcooper       = pr_cdcooper
+       AND ces.nrdconta       = pr_nrdconta
+       AND ces.nrconta_cartao = pr_nrcartao
+       AND epr.dtmvtolt       = pr_dtmvtolt
+       AND epr.vlemprst       = pr_vlemprst;
+  rw_cessao_cad cr_cessao_cad%ROWTYPE;
   
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
   
@@ -323,7 +344,7 @@ BEGIN
   vr_dsscript := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                            pr_cdcooper => pr_cdcooper,
                                            pr_cdacesso => 'SHELL_CRPS714');                                           
-
+  
   pc_carga_tabela_tipo_cartao(vr_dscritic);
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_saida;
@@ -446,11 +467,26 @@ BEGIN
         vr_dtvencto := trunc(add_months(vr_dtvencto,1),'MM');
       END IF;
       
+      --> Busca codigo do tipo de cartao
       pc_tipo_cartao(vr_cdadmcrd_bcb, vr_cdadmcrd);
       IF vr_cdadmcrd = 0 THEN
         vr_dscritic := 'Administradora de Cartão '||vr_cdadmcrd_bcb||' não encontrada.';
         RAISE vr_exc_prox;
       END IF;
+
+      --> Valida cessao importada em duplicidade
+      OPEN cr_cessao_cad (pr_cdcooper => rw_crapcop.cdcooper,
+                          pr_nrdconta => rw_crapass.nrdconta,
+                          pr_nrcartao => vr_nrcartao,
+                          pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                          pr_vlemprst => vr_vldevido);
+      FETCH cr_cessao_cad INTO rw_cessao_cad;
+      IF cr_cessao_cad%FOUND THEN
+        CLOSE cr_cessao_cad;
+        vr_dscritic := 'Cessão de Crédito já importada (Contrato: '|| rw_cessao_cad.nrctremp ||').';
+        RAISE vr_exc_prox;
+      END IF;
+      CLOSE cr_cessao_cad;
       
       ----------------->> CHAMADA ROTINA PROGRESS <<----------------
       vr_lsdparam :=  rw_crapcop.cdcooper ||';'|| --> 'par_cdcooper' 
@@ -475,11 +511,15 @@ BEGIN
                             ,pr_typ_saida   => vr_typ_saida
                             ,pr_des_saida   => vr_dscritic);
       
-      -- Se ocorreu erro dar RAISE
+      /* Nao vamos abortar caso apresente algum erro na chamada do Shell, pois em alguns 
+         casos, o shell retorna erro mas executa normalmente o crps714, gerando o emprestimo 
+         de cessao, porem marcando com erro no arquivo log. Dessa forma, a area de negocio 
+         acaba por entendendo que nao importou e pode realizar a importacao em duplicidade da
+         cessao. Caso for necessario consultar essa informacao, esta salva na crapcso.
       IF vr_typ_saida = 'ERR' THEN        
         vr_dscritic:= 'Erro ao gerar cessao: '|| vr_dscritic;
         RAISE vr_exc_prox;
-      END IF;
+      END IF; */
   
       ----------------->> FIM CHAMADA ROTINA PROGRESS <<----------------
       
