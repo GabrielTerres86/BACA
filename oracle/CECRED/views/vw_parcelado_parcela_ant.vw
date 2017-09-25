@@ -192,8 +192,8 @@ select
       else 'X' end as SitPclAnt
 from
   crapass ass,
-	crapcop cop,
-	crapepr epr,
+  crapcop cop,
+  crapepr epr,
   crappep pep,
   craplem lem
 WHERE ass.cdcooper = cop.cdcooper
