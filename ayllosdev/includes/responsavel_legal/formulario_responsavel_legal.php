@@ -9,7 +9,7 @@
  * 				  24/04/2012 : Ajustes referente ao projeto GP - Sócios Menores (Adriano).
  *                
  *				  16/07/2015 : Reformulacao cadastral (Gabriel-RKAM).
- *
+ *                25/04/2017 : Alterado campo dsnacion para cdnacion. (Projeto 339 - Odirlei-AMcom)
  *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
  *							   CH, RE, PP E CT. (PRJ339 - Reinert)
  */	
@@ -72,11 +72,13 @@
 		<label for="sexoFem" class="radio">Fem.</label>
 		<br />
 			
-		<label for="dsnacion" class="rotulo rotulo-70">Nacional.:</label>
+		<label for="cdnacion" class="rotulo rotulo-70">Nacional.:</label>
+        <input name="cdnacion" id="cdnacion" type="text" value="<? echo $frm_cdnacion; ?>" />
+        <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsnacion" id="dsnacion" type="text" value="<? echo $frm_dsnacion; ?>" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<br />
 		
-		<label for="dsnatura" style="margin-left:5px;">Natural de:</label>
+		<label for="dsnatura" class="rotulo rotulo-70">Natural de:</label>
 		<input name="dsnatura" id="dsnatura" type="text" value="<? echo $frm_dsnatura; ?>" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />
