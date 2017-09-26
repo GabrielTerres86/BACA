@@ -38,12 +38,14 @@
 |   ratings-cooperado                    | RATI0001.pc_ratings_cooperado       |
 |   descricao-situacao                   | RATI0001.fn_descricao_situacao      |
 |   verifica_operacoes                   | RATI0001.pc_verifica_operacoes      |  
-|   proc_calcula					     | RATI0001.pc_proc_calcula            |
+|   proc_calcula                         | RATI0001.pc_proc_calcula            |
 |   verifica_atualizacao                 | RATI0001.pc_verifica_atualizacao    |
 |   atualiza_rating                      | RATI0001.pc_atualiza_rating         |
-|   valida-itens-rating				     | RATI0001.pc_valida_itens_rating     |
+|   valida-itens-rating                  | RATI0001.pc_valida_itens_rating     |
 |   verifica_rating                      | RATI0001.pc_verifica_rating         |
 |   gera_rating                          | RATI0001.pc_gera_rating             |
+|   obtem_emprestimo_risco               | RATI0002.pc_obtem_emprestimo_risco  |
+|   grava_rating                         | RATI0001.pc_grava_rating            |
 +----------------------------------------+-------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -206,7 +208,7 @@
               26/06/2015 - Ajuste na procedure "obtem_emprestimo_risco" para
                            o projeto de provisao. (James)  
 
-			  03/07/2015 - Projeto 217 Reformula? Cadastral IPP Entrada
+                          03/07/2015 - Projeto 217 Reformula? Cadastral IPP Entrada
                            Ajuste nos codigos de natureza juridica para o
                            existente na receita federal (Tiago Castro - RKAM)           
                            
@@ -222,18 +224,21 @@
               21/12/2015 - Alterada data permitida pra recalculo do rating para
                            permitir na data 29/12 (Lucas Lunelli)
                            
-			  03/06/2016 - Alteracao na atribuicao de notas do rating, se for AA, deve
-			               assumir a nota referente ao risco A.
-						   Chamado 431839 (Andrey - RKAM)
+                          03/06/2016 - Alteracao na atribuicao de notas do rating, se for AA, deve
+                                       assumir a nota referente ao risco A.
+                                                   Chamado 431839 (Andrey - RKAM)
 
               21/03/2017 - Alterado rotina obtem_emprestimo_risco, para definir menor
                            risco como Risco E aux_innivris = 6.
                            PRJ343 - Cessao de cartao de credito(Odirlei-AMcom)
 
+              25/04/2017 - Alterado rotina pc_obtem_emprestimo_risco para chamada da rotina oracle.
+                           PRJ337 - Motor de Credito (Odirlei-Amcom)
+
               22/06/2017 - Alterado rotina obtem-emprestimo-risco, para retornar menor
                            risco como Risco D aux_innivris = 5.
                            PRJ343 - Cessao de cartao de credito (Anderson)
-
+                           
               25/07/2017 - Alterado para ignorar algumas validacoes para os emprestimos de
                            cessao da fatura de cartao de credito (Anderson).
 .............................................................................*/
@@ -246,7 +251,7 @@
 { sistema/generico/includes/b1wgen0043tt.i }
 { sistema/generico/includes/b1wgen9999tt.i }
 { sistema/generico/includes/b1wgen0027tt.i }
-
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_nrdrowid AS ROWID                                        NO-UNDO.
 DEF VAR aux_cdcritic AS INTE                                         NO-UNDO.
@@ -4089,195 +4094,72 @@ PROCEDURE obtem_emprestimo_risco:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nivrisco AS CHAR                            NO-UNDO.
 
-    DEF  VAR aux_contador    AS INTE                                 NO-UNDO.
-    DEF  VAR aux_flgrefin    AS LOG                                  NO-UNDO.
-    DEF  VAR aux_vlr_arrasto AS DECIMAL                              NO-UNDO.
-    DEF  VAR aux_innivris LIKE crapris.innivris                      NO-UNDO.    
-
-    DEF  BUFFER b1-crapfin FOR crapfin.
-
-    EMPTY TEMP-TABLE tt-erro.
-    EMPTY TEMP-TABLE tt-ocorren.
-
-    /* Risco A */
-    ASSIGN aux_innivris = 2
-           aux_flgrefin = FALSE.
-
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "USUARI"     AND
-                       craptab.cdempres = 11           AND
-                       craptab.cdacesso = "RISCOBACEN" AND
-                       craptab.tpregist = 000 
-                       NO-LOCK NO-ERROR.
-
-    IF NOT AVAILABLE craptab THEN 
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = 
-                  "NOT AVAIL craptab;CRED;USUARI;11;RISCOBACEN'".
-
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,            /** Sequencia **/
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).        
-                                     
-           RETURN "NOK".   
-       END.
-       
-    ASSIGN aux_vlr_arrasto = DEC(SUBSTRING(craptab.dstextab,3,9)).
-           
-    FOR FIRST crapdat FIELDS(dtmvtoan dtmvtolt dtmvtopr inproces) 
-                      WHERE crapdat.cdcooper = par_cdcooper
-                            NO-LOCK: END.
-
-    IF NOT VALID-HANDLE(h-b1wgen0027) THEN
-       RUN sistema/generico/procedures/b1wgen0027.p
-           PERSISTENT SET h-b1wgen0027.
+    DEF VAR aux_dsctrliq AS CHAR                                     NO-UNDO.
+    DEF VAR aux_contador AS INTE                                     NO-UNDO.
     
-    /* Buscar o pior risco da ultima central */
-    RUN lista_ocorren IN h-b1wgen0027(INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nrdconta,
-                                      INPUT crapdat.dtmvtolt,
-                                      INPUT crapdat.dtmvtopr,
-                                      INPUT crapdat.inproces,
-                                      INPUT par_idorigem,
-                                      INPUT par_idseqttl,
-                                      INPUT par_nmdatela,
-                                      INPUT FALSE,
-                                      OUTPUT TABLE tt-erro,
-                                      OUTPUT TABLE tt-ocorren).
+    /* Usar contratos enviados */    
+    IF TRIM(par_dsctrliq) <> "" AND UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN    
+       ASSIGN aux_dsctrliq = par_dsctrliq.  
     
-    IF RETURN-VALUE <> "OK" THEN
-       DO:
-           DELETE PROCEDURE h-b1wgen0027.
-           RETURN "NOK".
-       END.
+    /* Percorre todos os contratos enviados */
+    DO aux_contador = 1 TO EXTENT(par_nrctrliq):
+       IF par_nrctrliq[aux_contador] = 0 THEN
+           NEXT.
     
-    IF VALID-HANDLE(h-b1wgen0027) THEN
-       DELETE PROCEDURE h-b1wgen0027.    
+       IF aux_dsctrliq <> "" THEN
+          ASSIGN aux_dsctrliq = aux_dsctrliq + ",".
 
-    FIND tt-ocorren NO-LOCK NO-ERROR.
-    IF AVAIL tt-ocorren AND tt-ocorren.innivris <> 0 THEN
-       ASSIGN aux_innivris = tt-ocorren.innivris.
- 
-    IF TRIM(par_dsctrliq)        <> ""                AND 
-       UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN
-       ASSIGN aux_flgrefin = TRUE.
-    ELSE
-    DO:
-        /* Percorre todos os contratos  */
-        DO aux_contador = 1 TO EXTENT(par_nrctrliq):
-    
-           IF par_nrctrliq[aux_contador] = 0 THEN
-              NEXT.
-
-           ASSIGN aux_flgrefin = TRUE.
-           LEAVE.
-    
-        END.
+       ASSIGN aux_dsctrliq = aux_dsctrliq + STRING(par_nrctrliq[aux_contador]).
     END.
 
-    /* Verificacao para saber se eh refinancimento */
-    IF aux_flgrefin THEN
-       DO:
-           FOR LAST crapris FIELDS(innivris)
-                            WHERE crapris.cdcooper = par_cdcooper     AND
-                                  crapris.nrdconta = par_nrdconta     AND 
-                                  crapris.dtrefere = crapdat.dtmvtoan AND 
-                                  crapris.inddocto = 1                AND 
-                                  crapris.cdorigem = 3                AND
-                                  crapris.vldivida > aux_vlr_arrasto
-                                  NO-LOCK: END.
-                            
-           IF AVAILABLE crapris THEN
-              DO:
-                  IF crapris.innivris > aux_innivris THEN
-                     ASSIGN aux_innivris = crapris.innivris.
-              END.      
-           ELSE
-              DO:
-                  FOR LAST crapris FIELDS(innivris)
-                                   WHERE crapris.cdcooper = par_cdcooper     AND
-                                         crapris.nrdconta = par_nrdconta     AND
-                                         crapris.dtrefere = crapdat.dtmvtoan AND
-                                         crapris.inddocto = 1                AND
-                                         crapris.cdorigem = 3
-                                         NO-LOCK: END.
-                                        
-                  IF AVAILABLE crapris THEN
-                     DO:
-                         /* Caso possuir Prejuizo para as operacoes abaixo do 
-                            valor de arrasto, o Risco sera "H".
-                            Senao o Risco sera "A" e nao precisamos verificar 
-                            o pior risco entre as operacoes                   */
-                         IF crapris.innivris = 10 THEN
-                            DO:
-                                IF crapris.innivris > aux_innivris THEN
-                                   ASSIGN aux_innivris = crapris.innivris.
-                            END.
-                            
-                     END. /* END IF AVAILABLE crapris THEN */
-              END.
-            
-       END. /* END IF aux_flgrefin THEN */
-
-    /* Somente vamos verificar a cessao de credito, caso possui a finalidade */
-    IF par_cdfinemp > 0 THEN
-       DO:
-          FOR FIRST b1-crapfin FIELDS(tpfinali)
-                               WHERE b1-crapfin.cdcooper = par_cdcooper AND 
-                                     b1-crapfin.cdfinemp = par_cdfinemp
-                                     NO-LOCK: END.
-        
-          IF AVAIL b1-crapfin AND b1-crapfin.tpfinali = 1 THEN
-             DO:
-                 /* Risco D */
-                 IF aux_innivris < 5 THEN
-                    ASSIGN aux_innivris = 5.
-
-             END. /* END IF AVAIL crapfin THEN */
-
-       END. /* END IF par_cdfinemp > 0 THEN */
-
-    /* Chamado: 522658 */
-    IF par_cdlcremp > 0 THEN
-       DO:
-           IF par_cdcooper = 2 AND CAN-DO("800,850,900",STRING(par_cdlcremp)) THEN
-              DO:
-                  /* Risco E */
-                  IF aux_innivris < 6 THEN
-                     ASSIGN aux_innivris = 6.
-              END.
-           ELSE 
-           IF par_cdcooper <> 2 AND CAN-DO("800,900",STRING(par_cdlcremp)) THEN
-              DO:
-                  /* Risco E */
-                  IF aux_innivris < 6 THEN
-                     ASSIGN aux_innivris = 6.
-              END.
-              
-       END. /* END IF par_cdfinemp > 0 THEN */
-
-    IF aux_innivris = 10 THEN
-      ASSIGN aux_innivris = 9.    
-
-    RUN descricoes_risco(INPUT par_cdcooper,
-                         INPUT 0,
-                         INPUT 0,
-                         INPUT 0,
-                         INPUT aux_innivris,
-                         OUTPUT TABLE tt-impressao-risco,
-                         OUTPUT TABLE tt-impressao-risco-tl).
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
-    FIND FIRST tt-impressao-risco NO-LOCK NO-ERROR.
-    IF AVAIL tt-impressao-risco  THEN
-       ASSIGN par_nivrisco = tt-impressao-risco.dsdrisco.
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_obtem_emprestimo_risco
+     aux_handproc = PROC-HANDLE NO-ERROR 
+                 ( INPUT par_cdcooper /* pr_cdcooper --> Codigo da cooperativa */
+                  ,INPUT par_cdagenci /* pr_cdagenci --> Codigo de agencia */
+                  ,INPUT par_nrdcaixa /* pr_nrdcaixa --> Numero do caixa */
+                  ,INPUT par_cdoperad /* pr_cdoperad --> Codigo do operador */
+                  ,INPUT par_nrdconta /* pr_nrdconta --> Numero da conta */
+                  ,INPUT par_idseqttl /* pr_idseqttl --> Sequencial do titular */
+                  ,INPUT par_idorigem /* pr_idorigem --> Identificado de oriem */
+                  ,INPUT par_nmdatela /* pr_nmdatela --> Nome da tela */
+                  ,INPUT (IF par_flgerlog THEN  "S" ELSE "N") /* pr_flgerlog --> identificador se deve gerar log S-Sim e N-Nao */
+                  ,INPUT par_cdfinemp /* pr_cdfinemp --> Finalidade do emprestimo */
+                  ,INPUT par_cdlcremp /* pr_cdlcremp --> Linha de credito do emprestimo */
+                  ,INPUT aux_dsctrliq /* pr_dsctrliq --> Lista de descriçoes de situaçao dos contratos */
+                  /* --------- OUT --------- */
+                  ,OUTPUT ""          /* pr_nivrisco --> Retorna nivel do risco  */
+                  ,OUTPUT ""          /* pr_dscritic --> Descriçao da critica    */
+                  ,OUTPUT 0 ).        /* pr_cdcritic --> Codigo da critica).     */
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_obtem_emprestimo_risco
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+
+    ASSIGN aux_cdcritic = pc_obtem_emprestimo_risco.pr_cdcritic
+                             WHEN pc_obtem_emprestimo_risco.pr_cdcritic <> ?
+           aux_dscritic = pc_obtem_emprestimo_risco.pr_dscritic
+                             WHEN pc_obtem_emprestimo_risco.pr_dscritic <> ?.
+
+    IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+      DO:
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1, /*sequencia*/
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic).  
+
+         RETURN "NOK".
+      END.    
+
+    ASSIGN par_nivrisco = pc_obtem_emprestimo_risco.pr_nivrisco
+                          WHEN pc_obtem_emprestimo_risco.pr_nivrisco <> ?.
 
     RETURN "OK".
 
@@ -4968,7 +4850,7 @@ PROCEDURE calcula_rating_fisica:
     /**********************************************************************
      Item 1_6 - Tipo de residencia.
     **********************************************************************/ 
-     
+    
     IF AVAIL crapenc THEN
        DO:
           CASE crapenc.incasprp:
@@ -4977,7 +4859,7 @@ PROCEDURE calcula_rating_fisica:
               WHEN 2           THEN   aux_nrseqite = 2.    /* Financiado */
               WHEN 4 OR WHEN 5 THEN   aux_nrseqite = 3.  /* Familiar/Cedido */
               WHEN 3           THEN   aux_nrseqite = 4.    /*  Alugado */
-			  WHEN 0           THEN   aux_nrseqite = 4.    /*  Alugado */
+              WHEN 0           THEN   aux_nrseqite = 4.    /*  Alugado */
 
           END CASE. 
        END.
@@ -5286,7 +5168,7 @@ PROCEDURE calcula_rating_fisica:
 
   
     IF crapcot.vldcotas > 0 OR 
-	  (aux_vlendivi = 0 AND crapcot.vldcotas = 0) THEN
+	    (aux_vlendivi = 0 AND crapcot.vldcotas = 0) THEN
        DO:
 			/* aux_vlutiliz vem do saldo utiliza. Dividir pelas cotas */
 			ASSIGN aux_vlendiv2 = (aux_vlendivi / crapcot.vldcotas)
@@ -5705,7 +5587,7 @@ PROCEDURE calcula_rating_juridica:
     CASE crapjur.cdseteco:
 
        WHEN   0   THEN   ASSIGN   aux_nrseqite = 4. /* Agronegocio*/
-	   WHEN   1   THEN   ASSIGN   aux_nrseqite = 4. /* Agronegocio*/
+       WHEN   1   THEN   ASSIGN   aux_nrseqite = 4. /* Agronegocio*/
        WHEN   2   THEN   ASSIGN   aux_nrseqite = 2. /* Comercio */
        WHEN   3   THEN   ASSIGN   aux_nrseqite = 3. /* Industria */
        WHEN   4   THEN   ASSIGN   aux_nrseqite = 1. /* Servicos */
@@ -5903,18 +5785,18 @@ PROCEDURE calcula_rating_juridica:
 
     IF aux_vlmedfat > 0 THEN
        DO:
-			ASSIGN aux_vlendivi = (aux_vlendivi / aux_vlmedfat)
+          ASSIGN aux_vlendivi = (aux_vlendivi / aux_vlmedfat)
 
-				   aux_nrseqite = IF   aux_vlendivi <= 3   THEN
-									   1
-								  ELSE
-								  IF   aux_vlendivi <= 8   THEN
-									   2
-								  ELSE
-								  IF   aux_vlendivi <= 20  THEN
-									   3
-								  ELSE
-									   4. 
+                 aux_nrseqite = IF   aux_vlendivi <= 3   THEN
+                                   1
+                                ELSE
+                                IF   aux_vlendivi <= 8   THEN
+                                   2
+                                ELSE
+                                IF   aux_vlendivi <= 20  THEN
+                                   3
+                                ELSE
+                                   4. 
        END.
     ELSE
        ASSIGN aux_nrseqite = 4.
@@ -6453,8 +6335,8 @@ PROCEDURE criticas_rating_fis:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
-    DEF VAR aux_nrsequen          AS INTE                             NO-UNDO.
-	DEF VAR aux_flgcescr          AS LOG INIT FALSE                   NO-UNDO.
+    DEF VAR aux_nrsequen          AS INTE                            NO-UNDO.
+    DEF VAR aux_flgcescr          AS LOG INIT FALSE                  NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -6509,7 +6391,7 @@ PROCEDURE criticas_rating_fis:
                             INPUT-OUTPUT aux_dscritic).            
          END.
 
-	/* Nao efetuar validacoes quando for calcular soh a nota cooperado */
+    /* Nao efetuar validacoes quando for calcular soh a nota cooperado */
     IF  par_tpctrrat <> 0  AND
         par_nrctrrat <> 0  THEN
     DO:
@@ -6541,7 +6423,7 @@ PROCEDURE criticas_rating_fis:
                                              INPUT-OUTPUT aux_dscritic).
                           END.
 
-                      END.
+    END.
                  ELSE 
                       DO:
                           FIND craplcr WHERE craplcr.cdcooper = par_cdcooper AND
@@ -6551,15 +6433,15 @@ PROCEDURE criticas_rating_fis:
                           IF   NOT AVAILABLE craplcr   THEN
                                DO:
                                    aux_nrsequen = aux_nrsequen + 1.
-                                 
+
                                    RUN gera_erro (INPUT par_cdcooper,
                                                   INPUT par_cdagenci,
                                                   INPUT par_nrdcaixa,
                                                   INPUT aux_nrsequen,
                                                   INPUT 363,
                                                   INPUT-OUTPUT aux_dscritic).
-                               END.  
-                               
+        END.
+
                           /* Condicao para caso a Finalidade for Cessao de Credito */
                           FOR FIRST crapfin FIELDS(tpfinali)
                                              WHERE crapfin.cdcooper = crawepr.cdcooper AND 
@@ -6592,7 +6474,7 @@ PROCEDURE criticas_rating_fis:
              END.
     END.
 
-	/* Nao validaremos os itens a seguir em caso de cessao de credito */
+	  /* Nao validaremos os itens a seguir em caso de cessao de credito */
     IF aux_flgcescr THEN
         DO:
           IF CAN-FIND (FIRST tt-erro) THEN
@@ -6715,7 +6597,7 @@ PROCEDURE criticas_rating_jur:
     DEF  VAR         aux_nrsequen AS INTE                            NO-UNDO.
     DEF  VAR         aux_vlmedfat AS DECI                            NO-UNDO.
     DEF  VAR         aux_dtadmsoc AS DATE                            NO-UNDO.
-	DEF  VAR         aux_flgcescr AS LOG INIT FALSE                  NO-UNDO.
+    DEF  VAR         aux_flgcescr AS LOG INIT FALSE                  NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
@@ -6807,7 +6689,7 @@ PROCEDURE criticas_rating_jur:
              END.
     END.
 
-	/* Nao validaremos os itens a seguir em caso de cessao de credito */
+	  /* Nao validaremos os itens a seguir em caso de cessao de credito */
     IF aux_flgcescr THEN
         DO:
           IF CAN-FIND (FIRST tt-erro) THEN
@@ -6831,7 +6713,7 @@ PROCEDURE criticas_rating_jur:
                             INPUT-OUTPUT aux_dscritic). 
          END.
     ELSE
-    IF   crapjur.cdseteco = 0   THEN
+    IF   crapjur.cdseteco = 0   THEN  /* Setor economico */
          DO:
              aux_nrsequen = aux_nrsequen + 1.
 
@@ -7361,7 +7243,7 @@ PROCEDURE nivel_comprometimento:
                                                     OUTPUT par_qtprecal,
                                                     OUTPUT TABLE tt-erro).
              DELETE PROCEDURE h-b1wgen0002.
-                          
+             
              IF   RETURN-VALUE <> "OK"   THEN
                   DO:
                       FIND FIRST tt-erro NO-LOCK NO-ERROR.
@@ -7387,7 +7269,6 @@ PROCEDURE nivel_comprometimento:
                 ASSIGN par_vltotpre = par_vltotpre + crapebn.vlparepr.
 
              END.
-
 
              ASSIGN aux_valorpre = 0.     
 
