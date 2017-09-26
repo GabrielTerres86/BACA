@@ -28,6 +28,10 @@
                              
                 22/09/2016 - Ajuste para não desativar o banco 7 - BNDS, conforme
                              solicitado no chamado 507147. (Kelvin)
+
+			    22/09/2017 - Ajuste para que as agencias do banco 128 permancecam ativos
+				 		     (Adriano - SD 72388).
+
 ..............................................................................*/
 
 { includes/var_batch.i {1} }
@@ -48,6 +52,8 @@ DEF VAR aux_cdsitagb AS CHAR FORMAT "x(1)"                             NO-UNDO.
 DEF VAR aux_nrcnpjag AS DEC  FORMAT "99999999999999"                   NO-UNDO.
 
 ASSIGN glb_cdprogra = "crps567".
+DEF VAR aux_nrispbif AS INT                                            NO-UNDO.
+DEF VAR aux_flgativa AS CHAR FORMAT "x(1)"                             NO-UNDO.
 
 RUN fontes/iniprg.p.
 
@@ -119,7 +125,9 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                aux_nmageban = SUBSTR(aux_setlinha,58,30)
                aux_cdcidade = INTE(SUBSTR(aux_setlinha,102,6))
                aux_cdsitagb = SUBSTR(aux_setlinha,148,1)
-               aux_nrcnpjag = DECI(SUBSTR(aux_setlinha,88,14)).
+                   aux_nrcnpjag = DECI(SUBSTR(aux_setlinha,88,14))
+                   aux_nrispbif = INTE(SUBSTR(aux_setlinha,222,7))
+                   aux_flgativa = SUBSTR(aux_setlinha,221,1).
 
         IF   aux_cdbccxlt = 0   THEN DO: 
              ASSIGN glb_dscritic = "Arquivo importado - " + 
@@ -146,16 +154,22 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                
                   END.
            
-     
+                            IF aux_flgativa = "S" THEN
+                               DO:
                 CREATE crapban.
                 ASSIGN crapban.cdbccxlt = aux_cdbccxlt.
+                                ASSIGN crapban.nrispbif = aux_nrispbif.
              END.
  
+                     END.
+                IF aux_flgativa = "S" THEN
+                   DO:
             ASSIGN crapban.nmresbcc = aux_nmdbanco
                    crapban.nmextbcc = aux_nmdbanco
                    crapban.dtmvtolt = glb_dtmvtolt
                    crapban.cdoperad = glb_cdoperad.
             VALIDATE crapban.
+                  END.
             LEAVE.
  
          END.    /** Fim do WHILE TRUE **/               
@@ -185,7 +199,8 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
             END.        
             ELSE DO:
                 IF   crapagb.cdsitagb <> aux_cdsitagb AND
-                     crapagb.cddbanco <> 7 THEN /*Nao faz para o banco 7 - BNDS*/
+                             crapagb.cddbanco <> 7            AND  /*Nao faz para o banco 7 - BNDS*/
+							 crapagb.cddbanco <> 128          THEN /*Nao faz para o banco 128 - BCAM MS BANK*/
                      ASSIGN crapagb.cdsitagb = aux_cdsitagb
                             crapagb.dtmvtolt = glb_dtmvtolt 
                             crapagb.cdoperad = glb_cdoperad.
@@ -204,25 +219,31 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                      ASSIGN crapagb.nmageban = aux_nmageban
                             crapagb.dtmvtolt = glb_dtmvtolt 
                             crapagb.cdoperad = glb_cdoperad.
+                        
             END.    
 
+                         
             LEAVE.
 
          END. /*** Fim do DO WHILE TRUE ***/
          
-         /*Nao faz para o banco 7*/
-         IF aux_cdbccxlt <> 7 THEN
+            IF aux_cdbccxlt <> 7   AND  /*Nao faz para o banco 7 - BNDS*/
+			   aux_cdbccxlt <> 128 THEN /*Nao faz para o banco 128 - BCAM MS BANK*/
             DO:
          /* Se a agencia em questao eh "9999" */
          IF aux_cdageban = 9999 THEN
          DO:
              FOR EACH crapagb WHERE crapagb.cddbanco = aux_cdbccxlt
                               EXCLUSIVE-LOCK:
+						
                  /* desativar todas as agencias do banco */
                  ASSIGN crapagb.cdsitagb = "N".
+
              END.
          END.
+               
     END.                 
+            
     END.                 
 
     UNIX SILENT VALUE("mv " + aux_nmarqdat + " salvar").
