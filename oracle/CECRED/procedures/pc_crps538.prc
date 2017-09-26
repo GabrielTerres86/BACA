@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 01/09/2017
+   Data    : Novembro/2009.                   Ultima atualizacao: 26/09/2017
 
    Dados referentes ao programa:
 
@@ -364,8 +364,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
 
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
-			               o nome do arquivo apos processamento, iremos gerar o arquivo
-						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
+                            o nome do arquivo apos processamento, iremos gerar o arquivo
+                            _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
+
+               26/09/2017 - Ajuste para validar o valor e a data de vencimento do título
+                            somente quando estiver fora do período de convivência da NPC.
+                            Títulos estavam sendo devolvidos com a crítica 63.
+                            (SD#764044-AJFink)
    .............................................................................*/
 
      DECLARE
@@ -4431,8 +4436,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  END IF;
 
                  --> Se cobrança ja esta na regra de rollout da nova plataforma de cobrança, 
-                 IF vr_flgdnpcb = 1 THEN                                      
-                   
+                 IF vr_flgdnpcb = 1
+                 --> e esta fora do periodo de convivencia /*SD#764044*/
+                 AND npcb0001.fn_valid_periodo_conviv (rw_crapdat.dtmvtolt) = 0 THEN
+
                    cxon0014.pc_calcula_data_vencimento(pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                                        pr_de_campo => substr(vr_dscodbar_ori,6,4),
                                                        pr_dtvencto => vr_dtvencto,
