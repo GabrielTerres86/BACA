@@ -424,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 31/08/2017
   --
   --  Dados referentes ao programa:
   --
@@ -432,6 +432,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Alteracoes: 22/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
   --  
+                  31/08/2017 - Ajuste para gravar corretamente o nrseqdig nas tabelas crapcdb, craplot
+                              (Adriano - SD 746028).
+                              
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -3701,7 +3704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_adicionar_cheques_bordero
     Sistema : Ayllos Web
     Autor   : Lucas Reinert
-    Data    : Novembro/2016                 Ultima atualizacao:
+    Data    : Novembro/2016                 Ultima atualizacao: 31/08/2017
 
     Dados referentes ao programa:
 
@@ -3709,7 +3712,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Objetivo  : Rotina para adicionar cheques ao boredero de desconto
 
-    Alteracoes: -----
+    Alteracoes: 31/08/2017 - Ajuste para gravar corretamente o nrseqdig nas tabelas crapcdb, craplot
+                            (Adriano - SD 746028).
+                           
   ..............................................................................*/
 	
 	-- Variável de críticas
@@ -3743,6 +3748,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   -- PlTable com erros de validação de custódia
   vr_tab_erro_cust cust0001.typ_erro_custodia;
 	
+  --> Buscar dados lote
+  CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
+                    pr_dtmvtolt craplot.dtmvtolt%TYPE,
+                    pr_cdagenci craplot.cdagenci%TYPE,
+                    pr_cdbccxlt craplot.cdbccxlt%TYPE,
+                    pr_nrdolote craplot.nrdolote%TYPE) IS
+    SELECT lot.progress_recid
+          ,lot.nrseqdig
+      FROM craplot lot
+     WHERE lot.cdcooper = pr_cdcooper
+       AND lot.dtmvtolt = pr_dtmvtolt
+       AND lot.cdagenci = pr_cdagenci
+       AND lot.cdbccxlt = pr_cdbccxlt
+       AND lot.nrdolote = pr_nrdolote
+       FOR UPDATE;
+  rw_craplot cr_craplot%ROWTYPE;
+    
 	-- Buscar bordero de desconto de cheque
 	CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
 	                 ,pr_nrdconta IN crapbdc.nrdconta%TYPE
@@ -3782,6 +3804,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		-- Fecha cursor
 		CLOSE cr_crapbdc;
 		
+    --> Buscar dados lote
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                    pr_dtmvtolt => rw_crapbdc.dtmvtolt,
+                    pr_cdagenci => rw_crapbdc.cdagenci,
+                    pr_cdbccxlt => rw_crapbdc.cdbccxlt,
+                    pr_nrdolote => rw_crapbdc.nrdolote);
+                    
+    FETCH cr_craplot INTO rw_craplot;
+    
+    -- Se NAO encontrar
+    IF cr_craplot%NOTFOUND THEN
+      
+      CLOSE cr_craplot;
+      
+      vr_cdcritic := 0;
+      vr_dscritic := 'Registro de Lote nao encontrado.';
+      
+      RAISE vr_exc_erro;
+      
+    END IF;
+    
+    CLOSE cr_craplot;
+		
+    vr_nrseqdig := rw_craplot.nrseqdig;
+    
 		-- Se o bordero já estiver liberado
 		IF rw_crapbdc.insitbdc > 2 THEN
 		  -- Gera crítica	
@@ -3811,6 +3858,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		-- Iterar sobre os cheques parametrizados para inclusão no bordero
 		FOR idx IN pr_tab_cheques.first..pr_tab_cheques.last LOOP
       
+		  vr_nrseqdig := vr_nrseqdig + 1;
+
 		  -- Verificar Cheque
 			CUST0001.pc_ver_cheque(pr_cdcooper => pr_cdcooper
 			                      ,pr_nrcustod => pr_nrdconta
@@ -3912,8 +3961,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 				END;
 
 			END IF;
-      
-      vr_nrseqdig := vr_nrseqdig + 1;
       
       BEGIN 
 				-- Insere registro na crapcdb
@@ -4079,11 +4126,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           ,lot.vlinfodb = lot.vlinfodb + vr_vlcompdb
           ,lot.vlinfocr = lot.vlinfocr + vr_vlcompcr
           ,lot.qtinfoln = lot.qtinfoln + vr_qtcompln
-		 WHERE lot.cdcooper = pr_cdcooper
- 			 AND lot.dtmvtolt = rw_crapbdc.dtmvtolt
-		   AND lot.nrdolote = rw_crapbdc.nrdolote
-			 AND lot.cdagenci = rw_crapbdc.cdagenci
-			 AND lot.cdbccxlt = rw_crapbdc.cdbccxlt;
+		 WHERE lot.progress_recid = rw_craplot.progress_recid;
+     
 		-- Atualiza Flag de exigencia de assinatura do cooperado
 		UPDATE crapbdc bdc
        SET bdc.flgassin = 1
@@ -7235,7 +7279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                              
                 26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
                              PRJ300-Desconto de cheque(Lombardi) 
-                             
+
                 27/07/2017 - Ajuste para verificar custódia também para cheques que não são 
                              da cooperativa. PRJ300-Desconto de cheque(Lombardi)
 
