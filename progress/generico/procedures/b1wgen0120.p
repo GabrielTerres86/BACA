@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0120.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                     Ultima atualizacao: 13/04/2017
+    Data    : Outubro/2011                     Ultima atualizacao: 15/08/2017
 
     Objetivo  : Tranformacao BO tela BCAIXA
 
@@ -111,7 +111,10 @@
 				             #625135 (Tiago/Elton)
 				
                 26/06/2017 - Incluido parametro de etapa com valor 0 para procedure Busca_Dados e valor 1 para procedure imprime_caixa_cofre
-            				 Chamado 660322 - (Belli Envolti)
+            				         Chamado 660322 - (Belli Envolti)
+                
+                15/08/2017 - Ajuste para permitir o fechamento de caixas de dias diferentes do dia atual
+                             (Lucas Ranghetti #665982)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -500,7 +503,7 @@ PROCEDURE Busca_Dados:
                     
                     FIND LAST crapbcx WHERE 
                               crapbcx.cdcooper = par_cdcooper   AND
-                              crapbcx.dtmvtolt = par_dtmvtolt   AND
+                              crapbcx.dtmvtolt = par_dtmvtolx   AND
                               crapbcx.cdagenci = par_cdagencx   AND
                               crapbcx.nrdcaixa = par_nrdcaixx   AND
                               crapbcx.cdopecxa = par_cdopecxa   AND
@@ -526,8 +529,9 @@ PROCEDURE Busca_Dados:
                          crapage.cdagenci = par_cdagencx NO-LOCK NO-ERROR.
 
                     IF  AVAIL crapage THEN
-                        IF  crapage.cdagecbn <> 0 AND
-                            crapage.vercoban      THEN
+                        IF  crapage.cdagecbn <> 0       AND                            
+                            crapage.vercoban            AND
+                            par_dtmvtolt = par_dtmvtolx THEN
                             DO:
 
                                 IF  NOT VALID-HANDLE(h-b1crap80) THEN
@@ -4499,6 +4503,8 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_dsdcompl AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_vldocmto AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolx AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_operauto AS CHAR                           NO-UNDO.
 
     DEF OUTPUT PARAM aux_nrdrecid AS RECID                          NO-UNDO.
     DEF OUTPUT PARAM aux_nrdlacre AS INTE                           NO-UNDO.
@@ -4532,6 +4538,9 @@ PROCEDURE Grava_Dados:
     DEF VAR in99           AS INTE                                  NO-UNDO.
     DEF VAR aux_indsangr   AS LOGI                                  NO-UNDO.
     DEF VAR aux_vlsdcaix   AS DECI                                  NO-UNDO.
+    DEF VAR aux_dsopecxa   AS CHAR                                  NO-UNDO.
+    DEF VAR aux_dsoperad   AS CHAR                                  NO-UNDO.    
+    DEF VAR aux_dstxtlog   AS CHAR                                  NO-UNDO.    
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -4541,6 +4550,9 @@ PROCEDURE Grava_Dados:
            aux_cdcritic = 0
            aux_returnvl = "NOK"
            aux_idorigem = par_idorigem.
+    
+    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper 
+                 NO-LOCK NO-ERROR.        
     
     Grava: DO TRANSACTION
         ON ERROR  UNDO Grava, LEAVE Grava
@@ -4553,7 +4565,7 @@ PROCEDURE Grava_Dados:
                 Contador: DO aux_contador = 1 TO 10:
 
                     FIND LAST crapbcx WHERE crapbcx.cdcooper = par_cdcooper AND
-                                            crapbcx.dtmvtolt = par_dtmvtolt AND
+                                            crapbcx.dtmvtolt = par_dtmvtolx AND
                                             crapbcx.cdagenci = par_cdagencx AND
                                             crapbcx.nrdcaixa = par_nrdcaixx AND
                                             crapbcx.cdopecxa = par_cdopecxa AND
@@ -4614,6 +4626,48 @@ PROCEDURE Grava_Dados:
                        crapbcx.vldsdfin = par_vldentra - par_vldsaida
                        crapbcx.ipmaqcxa = ""
                        aux_nrdrecid     = RECID(crapbcx).
+
+                /* Buscar nome do operador de caixa */    
+                FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                                     AND crapope.cdoperad = par_cdopecxa
+                                     NO-LOCK NO-ERROR.
+                                     
+                IF  AVAILABLE crapope THEN
+                    ASSIGN aux_dsopecxa = crapope.nmoperad.
+                    
+                /* Buscar nome do operador - Coordenador */    
+                FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
+                                     AND crapope.cdoperad = par_operauto
+                                     NO-LOCK NO-ERROR.
+                                     
+                IF  AVAILABLE crapope THEN
+                    ASSIGN aux_dsoperad = crapope.nmoperad.                                  
+                       
+                /***********************************************************************************************
+                  Se a data do fechamento for a mesma da data da abertura nao sera necessario a apresentacao do
+                  campo Liberado pelo Coordenador no log, pois nao sera exigida a senha dele nesses casos.
+                ************************************************************************************************/    
+                                              
+                IF  par_dtmvtolt <> par_dtmvtolx THEN
+                    ASSIGN aux_dstxtlog = STRING(par_dtmvtolt,"99/99/9999") + " "   +
+                                          STRING(TIME,"HH:MM:SS") + " '-->' "       +                                        
+                                          " Operador: " + par_cdopecxa + " - "      + 
+                                          aux_dsopecxa                              +
+                                          ", fechou o caixa referente ao dia "      + 
+                                          STRING(par_dtmvtolx,"99/99/9999")         +                                          
+                                          ". Liberado pelo coordenador: "           +  
+                                          par_operauto + " - " + aux_dsoperad.
+                ELSE
+                    ASSIGN aux_dstxtlog = STRING(par_dtmvtolt,"99/99/9999") + "  "  +
+                                          STRING(TIME,"HH:MM:SS") + "'-->' "        +
+                                          " Operador: " + par_cdopecxa + " - "      +
+                                          aux_dsopecxa                              +
+                                          ", fechou o caixa referente ao dia "      + 
+                                          STRING(par_dtmvtolx,"99/99/9999").
+
+                UNIX SILENT VALUE("echo " + aux_dstxtlog              +
+                                  " >> /usr/coop/" + crapcop.dsdircop +
+                                  "/log/bcaixa.log").
 
             END. /* IF  par_cddopcao = "F" */
         ELSE

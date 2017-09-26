@@ -4,14 +4,15 @@
    Sistema : Conta-Corrente - Cooperativa 
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Junho/2004                   Ultima atualizacao: 
+   Data    : Junho/2004                   Ultima atualizacao: 05/09/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
    Objetivo  : Rotina para mostrar na tela as CRITICAS DA SUMLOT.
 
-   Alteracoes:
+   Alteracoes: 05/09/2017 - Nao esconder o conteudo da tela quando exibir a mensagem 
+                            de confirmacao (Lucas Ranghetti #665982)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -39,10 +40,6 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
         END.
   
 END.
-
-ASSIGN edi_criticas:SCREEN-VALUE = "".
-CLEAR FRAME fra_criticas ALL.
-HIDE FRAME fra_criticas NO-PAUSE.
 
 VIEW FRAME f_cmd.
 PAUSE(0).
