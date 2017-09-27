@@ -15,7 +15,7 @@ begin
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
  
-  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBDOMIC_PROCESSA_ARQ_SILOC',
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBDOMIC_PROCESSA_ARQ_SILOC_1',
                                 job_type            => 'PLSQL_BLOCK',
                                 job_action          => 'declare 
   vr_dscritic varchar(2000);
