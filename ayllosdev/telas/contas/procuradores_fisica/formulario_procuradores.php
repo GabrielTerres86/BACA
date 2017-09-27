@@ -14,6 +14,8 @@
  *
  *				  28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
  *							   CH, RE, PP E CT. (PRJ339 - Reinert)
+ *
+ * 				  25/09/2017 - Adicionado uma lista de valores para carregar orgao emissor (PRJ339 - Kelvin).
  */	
 ?>
 	
@@ -67,6 +69,8 @@
 			
 			<label for="cdoeddoc" class="rotulo-linha">Org.Emi.:</label>
 			<input name="cdoeddoc" id="cdoeddoc" type="text" value="<? echo getByTagName($registros[0]->tags,'cdoeddoc') ?>" />
+			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+			<input name="nmoeddoc" id="nmoeddoc" type="text" style="display:none;" />
 			
 			<label for="cdufddoc" class="rotulo-linha">U.F.:</label>
 			<? echo selectEstado('cdufddoc', getByTagName($registros[0]->tags,'cdufddoc'), 1) ?>

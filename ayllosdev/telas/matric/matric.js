@@ -50,6 +50,7 @@
  * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
  * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
  * 027: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                        
+ * 028: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
 // Definição de algumas variáveis globais 
@@ -1786,9 +1787,28 @@ function controlaPesquisas() {
 	}
 	
 	/*-------------------------------*/
+	/*  CONTROLE ORGAO EMISSOR		 */
+	/*-------------------------------*/	
+    var linkOrgao = $('a:eq(0)', '#frmFisico');
+    if (linkOrgao.prev().hasClass('campoTelaSemBorda')) {
+        linkOrgao.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
+	} else {
+        linkOrgao.css('cursor', 'pointer').unbind('click').bind('click', function () {
+		var filtrosPesq = "Código;cdoedptl;100px;S;|Descrição;nmoedptl;200px;S;";
+		var colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+		mostraPesquisa("ZOOM0001", "BUSCA_ORGAO_EXPEDIDOR", "Org&atilde;o expedidor", "30", filtrosPesq, colunas, '','','frmFisico');
+	});
+
+        /*linkOrgao.prev().bind('blur', function () {            
+			buscaDescricao("ZOOM0001", "BUSCA_ORGAO_EXPEDIDOR", "Org&atilde;o expedidor", $(this).attr('name'), 'nmoedptl', $(this).val(), 'nmoedptl', '', 'frmFiltro');
+			return false;
+		});		*/
+	}
+	
+	/*-------------------------------*/
 	/*  CONTROLE TIPO NACIONALIDADE  */
 	/*-------------------------------*/	
-    var linkTpNacio = $('a:eq(0)', '#frmFisico');
+    var linkTpNacio = $('a:eq(1)', '#frmFisico');
     if (linkTpNacio.prev().hasClass('campoTelaSemBorda')) {
         linkTpNacio.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -1815,7 +1835,7 @@ function controlaPesquisas() {
 	/*  CONTROLE NACIONALIDADE  */
 	/*--------------------------*/	
 	
-    var linkNaciona = $('a:eq(1)', '#frmFisico');
+    var linkNaciona = $('a:eq(2)', '#frmFisico');
 	
     if (linkNaciona.prev().hasClass('campoTelaSemBorda')) {
         linkNaciona.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
@@ -1843,7 +1863,7 @@ function controlaPesquisas() {
 	/*--------------------------*/
 	/*  CONTROLE NATURALIDADE   */
 	/*--------------------------*/	
-    var linkNatura = $('a:eq(2)', '#frmFisico');
+    var linkNatura = $('a:eq(3)', '#frmFisico');
     if (linkNatura.prev().hasClass('campoTelaSemBorda')) {
         linkNatura.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -1861,7 +1881,7 @@ function controlaPesquisas() {
 	/*-------------------------------*/
 	/*     CONTROLE ESTADO CIVIL     */
 	/*-------------------------------*/	
-    var linkEstCivil = $('a:eq(3)', '#frmFisico');
+    var linkEstCivil = $('a:eq(4)', '#frmFisico');
     if (linkEstCivil.prev().hasClass('campoTelaSemBorda')) {
         linkEstCivil.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -1910,7 +1930,7 @@ function controlaPesquisas() {
 	/*-------------------------------*/
 	/*        CONTROLE EMPRESA       */
 	/*-------------------------------*/	
-    var linkEmp = $('a:eq(4)', '#frmFisico');
+    var linkEmp = $('a:eq(5)', '#frmFisico');
     if (linkEmp.prev().hasClass('campoTelaSemBorda')) {
         linkEmp.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -1944,7 +1964,7 @@ function controlaPesquisas() {
 	/*-------------------------------*/
 	/*        CONTROLE OCUPAÇÃO      */
 	/*-------------------------------*/	
-    var linkEmp = $('a:eq(5)', '#frmFisico');
+    var linkEmp = $('a:eq(6)', '#frmFisico');
     if (linkEmp.prev().hasClass('campoTelaSemBorda')) {
         linkEmp.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -1973,7 +1993,7 @@ function controlaPesquisas() {
 		});
 	}
 	
-    var linkMotivo = $('a:eq(7)', '#frmFisico');
+    var linkMotivo = $('a:eq(8)', '#frmFisico');
     if (linkMotivo.prev().hasClass('campoTelaSemBorda')) {
         linkMotivo.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
 	} else {
@@ -2136,7 +2156,7 @@ function controlaPesquisas() {
 	/*    CONTROLE ENDEREÇO FISICO E JURIDICO        */
 	/*-----------------------------------------------*/
 	// ALTERAÇÃO 001: adicionado o controle do endereco de pessoa fisica e juridica	
-    var linkEnderecoFisico = $('a:eq(6)', '#frmFisico');
+    var linkEnderecoFisico = $('a:eq(7)', '#frmFisico');
     if (linkEnderecoFisico.prev().hasClass('campoTelaSemBorda')) {
         linkEnderecoFisico.addClass('lupa').css('cursor', 'auto');
 	} else {

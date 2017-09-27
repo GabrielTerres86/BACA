@@ -13,6 +13,7 @@
  *	                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava. 
  * 004: [28/08/2017] Lucas Reinert		 : Alterado tipos de documento para utilizarem CI, CN, 
  *              						   CH, RE, PP E CT. (PRJ339 - Reinert)
+ * 005: [25/09/2017] Kelvin              : Adicionado uma lista de valores para carregar orgao emissor (PRJ339).
  */	
 ?>
 
@@ -52,7 +53,9 @@
 		
 		<label for="cdoedcje">Org.Emi.:</label>
 		<input name="cdoedcje" id="cdoedcje" type="text" value="<? echo getByTagName($conjuge,'cdoedcje') ?>" />
-					
+		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+        <input name="nmoedcje" id="nmoedcje" type="text" style="display:none;" />
+		
 		<label for="cdufdcje">U.F.:</label>
 		<? echo selectEstado('cdufdcje', getByTagName($conjuge,'cdufdcje'), 1) ?>
 		

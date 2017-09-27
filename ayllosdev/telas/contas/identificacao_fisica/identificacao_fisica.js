@@ -25,6 +25,7 @@
  * 015: [25/04/2017] Odirlei(AMcom)	     : Alterado campo dsnacion para cdnacion. (Projeto 339)
  * 016: [31/07/2017](Odirlei-AMcom)      : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM .
  * 017: [12/08/2017] Lombardi            : Criada a função dossieDigidoc.
+ * 018: [25/09/2017] Kelvin			     : Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
  */
 
 
@@ -569,7 +570,7 @@ function controlaLayout() {
 	cNatureza.css('width','73px');
 	cTpDocumento.css('width','40px');
 	cDocumento.addClass('alphanum').css({'width':'400px','text-align':'right'}).attr('maxlength','40');
-	cOrgEmissor.addClass('alpha').css('width','46px').attr('maxlength','5');
+	cOrgEmissor.addClass('alpha').css('width','60px').attr('maxlength','7');
 	cEstados.css('width','41px');
 	cDataEmissao.addClass('data').css('width','73px');
 
@@ -843,7 +844,16 @@ function controlaPesquisas() {
 					colunas 	= 'Código;tpnacion;20%;right|Tipo Nacionalidade;destpnac;80%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;
-
+				
+				// Orgao Emissor
+				} else if (campoAnterior == 'cdoedttl'){			
+					procedure	= 'BUSCA_ORGAO_EXPEDIDOR';
+					titulo      = 'Org&atilde;o expedidor';
+					qtReg		= '30';
+					filtrosPesq = 'Código;cdoedttl;100px;S;|Descrição;nmoedttl;200px;S;';
+					colunas = 'Código;cdorgao_expedidor;25%;left|Descrição;nmorgao_expedidor;75%;left';
+					mostraPesquisa("ZOOM0001", procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);									
+					return false;
 				// Curso Superior
 				} else if ( campoAnterior == 'cdfrmttl' ) {
 					procedure	= 'busca_formacao';
