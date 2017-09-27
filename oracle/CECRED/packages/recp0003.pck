@@ -1242,8 +1242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                   ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
                                                   ,pr_cdhistor => 2194                                         --> Codigo historico 2194 - CR.DESB.ACORD
                                                   ,pr_vllanmto => rw_nracordo.vlbloqueado                      --> Valor da parcela emprestimo
-                                                  ,pr_nrparepr => rw_nracordo.nracordo                         --> Número parcelas empréstimo
-                                                  ,pr_nrctremp => 0                                            --> Número do contrato de empréstimo
+                                                  ,pr_nrparepr => 0                                            --> Número parcelas empréstimo
+                                                  ,pr_nrctremp => rw_nracordo.nracordo                         --> Número do contrato de empréstimo
                                                   ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
                                                   ,pr_tab_erro => vr_tab_erro);                                --> Tabela com possíves erros
                     --Se Retornou erro
@@ -1288,8 +1288,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                  ,pr_nrdconta => rw_crapass.nrdconta                          --> Número da conta
                                                  ,pr_cdhistor => 2181                                         --> Codigo historico
                                                  ,pr_vllanmto => vr_vllancam - rw_nracordo.vlbloqueado        --> Valor do credito
-                                                 ,pr_nrparepr => rw_nracordo.nracordo                         --> Número do Acordo
-                                                 ,pr_nrctremp => 0                                            --> Número do contrato de empréstimo
+                                                 ,pr_nrparepr => 0                                            --> Número do Acordo
+                                                 ,pr_nrctremp => rw_nracordo.nracordo                         --> Número do contrato de empréstimo
                                                  ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
                                                  ,pr_tab_erro => vr_tab_erro);                                --> Tabela com possíves erros
 
