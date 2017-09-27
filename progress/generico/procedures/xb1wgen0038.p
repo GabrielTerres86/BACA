@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/xb1wgen0038.p
     Autor   : David
-    Data    : Maio/2010                      Ultima atualizacao: 13/08/2015
+    Data    : Maio/2010                      Ultima atualizacao: 27/09/2017
 
     Dados referentes ao programa:
 
@@ -32,10 +32,12 @@
                 04/04/2012 - Adicionado idorigem na chamada da proc. busca-endereco
                              da BO 38. (Jorge)
                              
-                 13/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+                13/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
 				 
-				 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de 
+				01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de 
 				              Transferencia entre PAs (Heitor - RKAM)
+							  
+				27/09/2017 - Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339 - Kelvin).
 
 .............................................................................*/
 
@@ -397,13 +399,10 @@ PROCEDURE validar-endereco:
                                  INPUT aux_dsendere, 
                                  INPUT aux_nrendere, 
                                  INPUT aux_nrcepend, 
-                                 INPUT aux_complend, 
-                                 INPUT aux_nrdoapto,
-                                 INPUT aux_cddbloco,
+                                 INPUT aux_complend,                                  
                                  INPUT aux_nmbairro, 
                                  INPUT aux_nmcidade, 
-                                 INPUT aux_cdufende, 
-                                 INPUT aux_nrcxapst, 
+                                 INPUT aux_cdufende,                                  
                                  INPUT aux_tpendass,
                                  INPUT FALSE,
                                  INPUT TRUE, 
@@ -453,13 +452,10 @@ PROCEDURE alterar-endereco:
                                  INPUT aux_dsendere,
                                  INPUT aux_nrendere,
                                  INPUT aux_nrcepend,
-                                 INPUT aux_complend,
-                                 INPUT aux_nrdoapto,
-                                 INPUT aux_cddbloco,
+                                 INPUT aux_complend,                                 
                                  INPUT aux_nmbairro,
                                  INPUT aux_nmcidade,
-                                 INPUT aux_cdufende,
-                                 INPUT aux_nrcxapst,
+                                 INPUT aux_cdufende,                                 
                                  INPUT aux_qtprebem,
                                  INPUT aux_vlprebem,
                                  INPUT aux_tpendass,

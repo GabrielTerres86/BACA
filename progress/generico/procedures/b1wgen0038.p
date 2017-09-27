@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0038.p
     Autor     : David
-    Data      : Janeiro/2009                  Ultima Atualizacao: 22/09/2017
+    Data      : Janeiro/2009                  Ultima Atualizacao: 27/09/2017
     
     Dados referentes ao programa:
 
@@ -109,6 +109,8 @@
 
                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                             o idseqttl como zero (Luacas Ranghetti #756813)
+			   
+			   27/09/2017 - Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339 - Kelvin).
 .............................................................................*/
 
 
@@ -1345,13 +1347,10 @@ PROCEDURE validar-endereco:
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrendere AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_complend AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdoapto AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cddbloco AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_complend AS CHAR                           NO-UNDO.    
     DEF  INPUT PARAM par_nmbairro AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrcxapst AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_tpendass AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgrepli AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
@@ -1544,13 +1543,10 @@ PROCEDURE alterar-endereco:
     DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrendere AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_complend AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdoapto AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cddbloco AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_complend AS CHAR                           NO-UNDO.    
     DEF  INPUT PARAM par_nmbairro AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrcxapst AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_qtprebem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlprebem AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_tpendass AS INTE                           NO-UNDO.
@@ -1902,10 +1898,7 @@ PROCEDURE alterar-endereco:
 
         ASSIGN crapenc.dsendere = CAPS(par_dsendere)
                crapenc.nrendere = par_nrendere
-               crapenc.complend = CAPS(par_complend)
-               crapenc.nrdoapto = par_nrdoapto   
-               crapenc.cddbloco = CAPS(par_cddbloco)
-               crapenc.nrcxapst = par_nrcxapst
+               crapenc.complend = CAPS(par_complend)                              
                crapenc.nrcepend = par_nrcepend
                crapenc.nmcidade = CAPS(par_nmcidade)
                crapenc.nmbairro = CAPS(par_nmbairro)

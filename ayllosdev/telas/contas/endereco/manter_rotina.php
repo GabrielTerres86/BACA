@@ -15,6 +15,7 @@
  * 005: [01/12/2016] Renato Darosci (Supero): P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                                            pois a BO não utiliza o mesmo.
  * 006: [08/05/2017] Rafael Monteiro (Mouts): Remover caracteres especiais do campo complemento do endereco. Chamado 664305.
+ * 007: [27/09/2017] Kelvin  (CECRED)    	: Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
  */
 
     session_start();
@@ -34,14 +35,11 @@
 	$vlalugue = (isset($_POST['vlalugue'])) ? $_POST['vlalugue'] : '';
 	$dsendere = (isset($_POST['dsendere'])) ? $_POST['dsendere'] : '';
 	$nrendere = (isset($_POST['nrendere'])) ? $_POST['nrendere'] : '';
-	$complend = (isset($_POST['complend'])) ? $_POST['complend'] : '';
-	$nrdoapto = (isset($_POST['nrdoapto'])) ? $_POST['nrdoapto'] : '';
-	$cddbloco = (isset($_POST['cddbloco'])) ? $_POST['cddbloco'] : '';
+	$complend = (isset($_POST['complend'])) ? $_POST['complend'] : '';	
 	$nmbairro = (isset($_POST['nmbairro'])) ? $_POST['nmbairro'] : '';
 	$nrcepend = (isset($_POST['nrcepend'])) ? $_POST['nrcepend'] : '';
 	$nmcidade = (isset($_POST['nmcidade'])) ? $_POST['nmcidade'] : '';
 	$cdufende = (isset($_POST['cdufende'])) ? $_POST['cdufende'] : '';
-	$nrcxapst = (isset($_POST['nrcxapst'])) ? $_POST['nrcxapst'] : '';
 	$dtinires = (isset($_POST['dtinires'])) ? $_POST['dtinires'] : '';
 	$nranores = (isset($_POST['nranores'])) ? $_POST['nranores'] : '';
 	$qtprebem = (isset($_POST['qtprebem'])) ? $_POST['qtprebem'] :  0;
@@ -89,14 +87,11 @@
 	$xml .= "		<vlalugue>".$vlalugue."</vlalugue>";                
 	$xml .= "		<dsendere>".$dsendere."</dsendere>";                
 	$xml .= "		<nrendere>".$nrendere."</nrendere>";                
-	$xml .= "		<complend>".removeCaracteresInvalidos(retiraAcentos($complend))."</complend>";
-	$xml .= "		<nrdoapto>".$nrdoapto."</nrdoapto>";  
-	$xml .= "		<cddbloco>".$cddbloco."</cddbloco>";  
+	$xml .= "		<complend>".removeCaracteresInvalidos(retiraAcentos($complend))."</complend>";	
 	$xml .= "		<nrcepend>".$nrcepend."</nrcepend>";                
 	$xml .= "		<nmbairro>".$nmbairro."</nmbairro>";                
 	$xml .= "		<nmcidade>".$nmcidade."</nmcidade>";                
 	$xml .= "		<cdufende>".$cdufende."</cdufende>";                
-	$xml .= "		<nrcxapst>".$nrcxapst."</nrcxapst>";	           
 	$xml .= "		<cddopcao>".$cddopcao."</cddopcao>";	
 	$xml .= "		<dtinires>".$dtinires."</dtinires>";	  
 	$xml .= "		<qtprebem>".$qtprebem."</qtprebem>";
