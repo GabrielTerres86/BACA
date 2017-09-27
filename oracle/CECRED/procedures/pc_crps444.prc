@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 01/09/2017
+     Data    : Marco/2005.                     Ultima atualizacao: 26/09/2017
 
      Dados referentes ao programa:
 
@@ -346,6 +346,9 @@ BEGIN
 
                  01/09/2017 - Ajustado critica 110 no AAMMDD_XX_CRITICAITG.txt
                               (Rafael Faria - Supero)
+
+                 26/09/2017 - Integrar lancamentos referentes a nova conta centralizadora 205048.
+                              (Jaison/Elton)
      ............................................................................. */
 
   DECLARE
@@ -2816,7 +2819,7 @@ BEGIN
                                    SUBSTR(vr_setlinha,178,4),'MMDDYYYY'),'DD.MM.YYYY');
            END IF;
            vr_flgarqvz:= FALSE;
-           IF vr_nrdocmto <> 5048 THEN
+           IF vr_nrdocmto <> 205048 THEN
              IF INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) > 0 THEN
                IF SUBSTR(vr_setlinha,123,1) <> '*' AND
                   vr_dshistor NOT IN ('0144TRANSF AGENDADA',
