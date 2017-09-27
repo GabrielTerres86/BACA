@@ -100,15 +100,15 @@
                 06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
                              (Guilherme/SUPERO)
 
-			    17/11/2016 - #549653 Ajustes de formats das quantidades para rotinas do bcaixa (Carlos)
+			          17/11/2016 - #549653 Ajustes de formats das quantidades para rotinas do bcaixa (Carlos)
 				
                 06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
                              
                 10/01/2016 - #587076 aumento de formats para o boletim de caixa (Carlos)
 
-				13/04/2017 - Inserido o campo nrsequen no create da tt-estorno
-				             #625135 (Tiago/Elton)
+				        13/04/2017 - Inserido o campo nrsequen no create da tt-estorno
+				                     #625135 (Tiago/Elton)
 				
                 26/06/2017 - Incluido parametro de etapa com valor 0 para procedure Busca_Dados e valor 1 para procedure imprime_caixa_cofre
             				         Chamado 660322 - (Belli Envolti)
@@ -4102,7 +4102,7 @@ PROCEDURE Valida_Dados:
             DO:
                 FIND LAST crapbcx WHERE 
                           crapbcx.cdcooper = par_cdcooper AND
-                          crapbcx.dtmvtolt = par_dtmvtolt AND
+                          crapbcx.dtmvtolt = par_dtmvtolx AND
                           crapbcx.cdagenci = par_cdagencx AND
                           crapbcx.nrdcaixa = par_nrdcaixx AND
                           crapbcx.cdopecxa = par_cdopecxa AND
@@ -4626,7 +4626,7 @@ PROCEDURE Grava_Dados:
                        crapbcx.vldsdfin = par_vldentra - par_vldsaida
                        crapbcx.ipmaqcxa = ""
                        aux_nrdrecid     = RECID(crapbcx).
-
+                       
                 /* Buscar nome do operador de caixa */    
                 FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
                                      AND crapope.cdoperad = par_cdopecxa
