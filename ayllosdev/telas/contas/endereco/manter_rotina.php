@@ -14,6 +14,7 @@
  *									        como int e passei a mesma para a funcao validaDados que ha usava como sendo global.SD 479874.
  * 005: [01/12/2016] Renato Darosci (Supero): P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                                            pois a BO não utiliza o mesmo.
+ * 006: [08/05/2017] Rafael Monteiro (Mouts): Remover caracteres especiais do campo complemento do endereco. Chamado 664305.
  */
 
     session_start();
@@ -88,7 +89,7 @@
 	$xml .= "		<vlalugue>".$vlalugue."</vlalugue>";                
 	$xml .= "		<dsendere>".$dsendere."</dsendere>";                
 	$xml .= "		<nrendere>".$nrendere."</nrendere>";                
-	$xml .= "		<complend>".$complend."</complend>";                
+	$xml .= "		<complend>".removeCaracteresInvalidos(retiraAcentos($complend))."</complend>";
 	$xml .= "		<nrdoapto>".$nrdoapto."</nrdoapto>";  
 	$xml .= "		<cddbloco>".$cddbloco."</cddbloco>";  
 	$xml .= "		<nrcepend>".$nrcepend."</nrcepend>";                
