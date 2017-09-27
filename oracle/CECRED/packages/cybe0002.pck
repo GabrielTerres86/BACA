@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 13/11/2015
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 20/07/2017
   --
   --  Dados referentes ao programa:
   --
@@ -23,6 +23,12 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   --              13/11/2015 - Correcao na rotina pc_grava_arquivo_reafor, existia uma
   --                           chamada da rotina pc_incrementa_linha passando 8 como parametro
   --                           quando o correto seria passar 1. Chamado 347582 (Heitor - RKAM)                            
+  --
+  --              20/07/2017 - Inclusão do módulo e ação logado no oracle
+  --                         - Inclusão da  chamada de procedure em exception others
+  --                         - Colocado logs no padrão
+  --                         - Tratamento tipo do log da critica de retorno de remessa
+  --                           ( Belli - Envolti - Chamado 669487/719114 )
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -274,7 +280,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   -- Rotina para preparar e direcionar o retorno dos arquivos da remessa
   PROCEDURE pc_retorno_remessa(pr_idtpreme IN crapcrb.idtpreme%TYPE --> Tipo da Remessa
                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da Remessa
-                              ,pr_dscritic OUT VARCHAR2);           --> Retorno de crítica
+                              ,pr_dscritic OUT VARCHAR2            --> Retorno de crítica
+                              ,pr_dstiplog OUT VARCHAR2            --> Tipo de Log
+                              );
 
   -- Rotina para direcionar a devolução diária dos retornos
   PROCEDURE pc_devolu_diaria(pr_idtpreme IN crapcrb.idtpreme%TYPE --> Tipo da Remessa
@@ -286,7 +294,12 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   -- Geracao do arquivo da Reabilitação Forçada
   PROCEDURE pc_grava_arquivo_reafor(pr_cdcooper IN crapcop.cdcooper%TYPE);
 
-
+  -- Controla log em banco de dados
+  PROCEDURE pc_controla_log_batch(pr_dstiplog   IN VARCHAR2,              -- Tipo de Log
+                                  pr_dscritic   IN VARCHAR2 DEFAULT NULL, -- Descrição do Log
+                                  pr_cdprograma IN VARCHAR2               -- Código da rotina
+                                  ); 
+  --
 END CYBE0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
@@ -295,7 +308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 17/02/2017
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 21/07/2017
   --
   --  Dados referentes ao programa:
   --
@@ -317,6 +330,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --              17/02/2017 - #551213 Log de início, erros e fim de execução do procedimento
   --                           pc_gra_arquivo_reafor (jbcybe_arquivo_reafor) (Carlos)
+  --  
+  --              27/04/2017 - #654523 Retirada do vr_cdprogra pois o procedimento do job não é 
+  --                           um programa da crapprg, utilizada para crps (Carlos)
+  --
+  --              23/06/2017 - #674963 Retirado o log do proc_message e inserido apenas na tabela 
+  --                           tbgen_prglog_ocorrencia concatenando os parâmetros idtpreme, dtmvtolt
+  --                           e nrseqarq (Carlos)                         
+  --
+  --              21/07/2017 - Inclusão do módulo e ação logado no oracle
+  --                         - Inclusão da  chamada de procedure em exception others
+  --                         - Colocado logs no padrão
+  --                         - Tratamento tipo do log da critica de retorno de remessa
+  --                           ( Belli - Envolti - Chamado 669487/719114 )
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -550,6 +576,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_dscomd VARCHAR2(4000);
       vr_retval varchar2(4000);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_dinamic_function');
       -- Montagem do comando
       vr_dscomd := 'begin :result := ' || pr_nmfuncao || '('''||pr_rowid||'''); end;';
       -- Executar dinamicamente
@@ -581,6 +609,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_dscomd VARCHAR2(4000);
       vr_retval varchar2(4000);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_dinamic_function 2');
       -- Montagem do comando
       vr_dscomd := 'begin :result := ' || pr_nmfuncao || '('''||pr_rowid||''','''||pr_dsaux||'''); end;';
       -- Executar dinamicamente
@@ -615,6 +645,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     vr_idx      NUMBER;
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_quebra_string');
+    
     --Se a string estiver nula retorna count = 0 no vetor
     IF nvl(pr_string,'#') = '#' THEN
       RETURN vr_vlret;
@@ -664,6 +697,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_nmrescop crapcop.nmrescop%TYPE := ' ';
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_nom_cooperativa');
+    
     -- Coop 16 - Viacredi AV - Retornamos Altovale
     IF pr_cdcooper = 16 THEN
       RETURN 'ALTOVALE';
@@ -718,6 +754,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_flgativo crappbc.flgativo%TYPE;
       rw_prep     cr_prep_penden%ROWTYPE;
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_remessa_encerrada');
+      
       -- Buscar o tipo de retorno do Bureaux
       OPEN cr_crappbc;
       FETCH cr_crappbc
@@ -799,6 +838,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   rw_crapcop cr_crapcop%ROWTYPE;
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_cdclient_serasa');
+      
      -- Buscar dados da cooperativa
      OPEN  cr_crapcop(pr_cdcooper);
      FETCH cr_crapcop INTO rw_crapcop;
@@ -837,6 +879,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     DECLARE
       vr_dtbasbus VARCHAR2(8);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_chbusca_ppware');
+      
       -- Busca cabeçalho da remessa
       OPEN cr_crapcrb(pr_rowid);
       FETCH cr_crapcrb
@@ -872,6 +917,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
     /* ...........................................................................*/
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_chbusca_cobemp');
+      
       -- Busca cabeçalho da remessa
       OPEN cr_crapcrb(pr_rowid);
       FETCH cr_crapcrb
@@ -905,6 +953,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_cdcooper NUMBER;
       vr_cdclient VARCHAR2(5);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_nmarquiv_env_serasa');
+      
       -- Busca do nome do arquivo a renomear
       OPEN cr_nmarquiv_r(pr_rowid);
       FETCH cr_nmarquiv_r
@@ -944,6 +995,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_cdcooper NUMBER;
       vr_cdclient VARCHAR2(5);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_nmarquiv_ret_serasa');
+      
       -- Busca do nome do arquivo enviado para montagem do retorno
       OPEN cr_nmarquiv_r(pr_rowid);
       FETCH cr_nmarquiv_r
@@ -1001,6 +1055,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_nrremenv VARCHAR2(3);
       vr_nrremret VARCHAR2(3);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_valida_retor_serasa');
+      
       -- Busca da remessa dentro do clob do arquivo enviado
       OPEN cr_arqenv;
       FETCH cr_arqenv
@@ -1061,6 +1118,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
     /* ...........................................................................*/
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_chvrem_serasa');
+      
       -- Busca do nome do arquivo enviado para montagem do retorno
       OPEN cr_nmarquiv_r(pr_rowid);
       FETCH cr_nmarquiv_r
@@ -1117,6 +1177,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_deslinha VARCHAR2(32767);      
       vr_nrremret VARCHAR2(3);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_nmarquiv_dev_serasa');
+      
       -- Busca informações do arquivo retornado
       OPEN cr_craparb_r(pr_rowid);
       FETCH cr_craparb_r
@@ -1182,6 +1245,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_nmarquiv craparb.nmarquiv%TYPE;
       vr_nmextarq VARCHAR2(100);
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_nmarquiv_ret_sms');
+      
       -- Busca cabeçalho da remessa
       OPEN cr_crapcrb(pr_rowid);
       FETCH cr_crapcrb
@@ -1230,6 +1296,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            AND arb.cdestarq = 3; --> Envio
       vr_nmarquiv craparb.nmarquiv%TYPE;
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_nmarquiv_ret_spc');
+      
       -- Busca cabeçalho da remessa
       OPEN cr_crapcrb(pr_rowid);
       FETCH cr_crapcrb
@@ -1290,7 +1359,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       rw_crapcrb cr_crapcrb%ROWTYPE;
 
     BEGIN
-
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lst_estagio_bureaux');
+      
       -- Busca detalhes da remessa
       OPEN cr_crapcrb;
       FETCH cr_crapcrb INTO rw_crapcrb;
@@ -1464,7 +1535,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            AND cdestarq = 4;          --> Retorno
       vr_nrseqret craparb.nrseqarq%TYPE;
     BEGIN
-
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lst_estagio_remessa');
+      
       -- Valores iniciais
       pr_dssitenv := 'PE';
       pr_dssitret := 'PE';
@@ -1548,6 +1621,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
   /* ...........................................................................*/
   BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.fn_des_evento_remessa');
+      
      -- Verifica a Situacao do Estagio
      IF pr_cdesteve = 1 THEN    -- Agendada
         RETURN 'AGENDAMENTO';
@@ -1601,6 +1677,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             AND erb.dtmvtolt = pr_dtmvtolt;
       vr_nrseqenv craperb.nrseqeve%TYPE;
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_insere_evento_remessa');
+      
       -- Busca a ultima sequencia do evento
       OPEN cr_nrseqenv;
       FETCH cr_nrseqenv
@@ -1626,6 +1705,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
              ,pr_dslogeve);
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_insere_evento_remessa -->  '||SQLERRM;
     END;
@@ -1681,6 +1762,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_qtd_bureaux NUMBER(10)     := 0;
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lista_bureaux');
+      
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -1749,6 +1833,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_lista_bureaux: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_lista_bureaux: '||SQLERRM;
 
@@ -1843,7 +1930,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_lstconta    VARCHAR2(32767);
 
   BEGIN
-
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lista_contas_associ');
+      
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -1940,6 +2029,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_lista_contas_associ: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_lista_contas_associ: '||SQLERRM;
 
@@ -2018,6 +2110,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_contrato    VARCHAR2(32767);
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lista_contratos_associ');
+      
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -2099,6 +2194,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_lista_contratos_associ: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_lista_contratos_associ: '||SQLERRM;
 
@@ -2184,6 +2282,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_erro        BOOLEAN;
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_grava_reafor');
+      
      -- Inicializa Variavel
      vr_erro := FALSE;
      -- Extrair informações padrão do xml - parametros
@@ -2294,6 +2395,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
         EXCEPTION
            WHEN OTHERS THEN
+             -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+             CECRED.pc_internal_exception; 
+        
               pr_des_erro := 'Erro ao inserir o registro na CRAPREA: '||SQLERRM;
               RAISE vr_excerror;
         END;
@@ -2309,6 +2413,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             WHERE rea.rowid = pr_rowid;
         EXCEPTION
            WHEN OTHERS THEN
+             -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+             CECRED.pc_internal_exception;
+             
               pr_des_erro := 'Erro ao atualizar o registro na CRAPREA: '||SQLERRM;
               RAISE vr_excerror;
         END;
@@ -2326,6 +2433,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         ROLLBACK;
         pr_des_erro := 'Erro geral na rotina pc_grava_reafor: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_grava_reafor: '||SQLERRM;
@@ -2390,6 +2500,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_cdoperad    VARCHAR2(500);
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_exclui_reafor');
+      
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -2433,6 +2546,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
          WHERE rea.rowid = pr_rowid;
      EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+          CECRED.pc_internal_exception; 
            pr_des_erro := 'Erro ao deletar o registro na CRAPREA: '||SQLERRM;
            RAISE vr_excerror;
      END;
@@ -2449,6 +2564,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         ROLLBACK;
         pr_des_erro := 'Erro geral na rotina pc_exclui_reafor: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_exclui_reafor: '||SQLERRM;
@@ -2551,7 +2669,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_tab_tags    gene0007.typ_tab_tagxml;       --> PL Table para armazenar TAG´s do XML
 
   BEGIN
-
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lista_dados_reafor');
+      
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -2631,6 +2751,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_lista_dados_reafor: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_lista_dados_reafor: '||SQLERRM;
 
@@ -2797,7 +2920,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_tab_tags    gene0007.typ_tab_tagxml;       --> PL Table para armazenar TAG´s do XML
 
   BEGIN
-
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorna_reafor');
+      
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -2969,6 +3094,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_retorna_reafor: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_retorna_reafor: '||SQLERRM;
 
@@ -3058,6 +3186,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_tab_tags    gene0007.typ_tab_tagxml;       --> PL Table para armazenar TAG´s do XML
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lista_dados_logrbc');
+      
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -3227,6 +3358,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_lista_dados_logrbc: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_lista_dados_logrbc: '||SQLERRM;
 
@@ -3384,6 +3518,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_tab_tags    gene0007.typ_tab_tagxml;       --> PL Table para armazenar TAG´s do XML
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_lista_eventos_logrcb');      
 
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -3562,6 +3698,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_lista_eventos_logrcb: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_lista_eventos_logrcb: '||SQLERRM;
 
@@ -3662,6 +3801,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_cdoperad    VARCHAR2(500);
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_solic_cancel_remes_logrbc');      
+
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -3784,6 +3926,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_solic_cancel_remes_logrbc: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_solic_cancel_remes_logrbc: '||SQLERRM;
 
@@ -3882,6 +4027,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_cancel_remessa_logrbc');      
+
      -- Inicia Variavel
      vr_dscancel := '';
      vr_dsmotcan := '';
@@ -3988,6 +4136,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           WHEN vr_exc_upd THEN
              RAISE vr_excerror;
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+            CECRED.pc_internal_exception; 
              pr_des_erro := 'Nao foi possivel efetuar o cancelamento. Erro: '||SQLERRM;
              RAISE vr_excerror;
         END;
@@ -4003,6 +4153,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 1 -- Sucesso               --> Flag
                                 ,pr_dslogeve => vr_dsmotcan                --> Motivo Log Evento
                                 ,pr_dscritic => vr_dscritic);              --> Descrisao da Critica
+
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_cancel_remessa_logrbc');  	                                
         -- Se houve erro
         IF vr_dscritic IS NOT NULL THEN
            pr_des_erro := 'Erro na rotina PC_INSERE_EVENTO_REMESSA. Erro: '||vr_dscritic;
@@ -4030,6 +4183,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            WHEN vr_exc_upd THEN
               RAISE vr_excerror;
            WHEN OTHERS THEN
+             -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+             CECRED.pc_internal_exception; 
               pr_des_erro := 'Nao foi possivel efetuar o cancelamento na tabela CRAPCRB. Erro: '||SQLERRM;
               RAISE vr_excerror;
         END;
@@ -4044,6 +4199,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 1 -- Sucesso               --> Flag
                                 ,pr_dslogeve => vr_dsmotcan                --> Motivo Log Evento
                                 ,pr_dscritic => vr_dscritic);              --> Descrisao da Critica
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_cancel_remessa_logrbc');  
         -- Se houve erro
         IF vr_dscritic IS NOT NULL THEN
            pr_des_erro := 'Erro na rotina PC_INSERE_EVENTO_REMESSA. Erro: '||vr_dscritic;
@@ -4066,6 +4223,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         ROLLBACK;
         pr_des_erro := 'Erro geral na rotina pc_cancel_remessa_logrbc: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_cancel_remessa_logrbc: '||SQLERRM;
@@ -4134,6 +4294,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_cdoperad    VARCHAR2(500);
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_dados_gerais_prmrbc');      
 
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -4180,6 +4342,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception;
+        
         pr_des_erro := 'Erro geral na rotina pc_dados_gerais_prmrbc: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_dados_gerais_prmrbc: '||SQLERRM;
 
@@ -4271,6 +4436,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_cdoperad    VARCHAR2(500);
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_dados_bureaux_prmrbc');      
+
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -4316,6 +4484,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception;
+        
         pr_des_erro := 'Erro geral na rotina pc_dados_bureaux_prmrbc: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_dados_bureaux_prmrbc: '||SQLERRM;
 
@@ -4410,6 +4581,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            vr_validahr := TO_NUMBER(REPLACE(pr_horario,':',''));
         EXCEPTION
            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception;
+              
               pr_dscriti := 'Horario Invalido! Favor informar o horario no formato [HH:MM].';
         END;
         -- Validacao eh um horario valido
@@ -4417,11 +4591,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            vr_hrdenvio:= TO_CHAR(TO_DATE(pr_horario,'HH24:MI'),'HH24:MI');
         EXCEPTION
            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               pr_dscriti := 'Horario Invalido! Favor informar o horario no formato [HH:MM].';
         END;
      END;
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_grava_gerais_prmrbc');      
 
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -4505,6 +4683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
      EXCEPTION
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception; 
            pr_des_erro := 'Nao foi possivel atualizar o horario de envio! Erro: '||SQLERRM;
            RAISE vr_excerror;
      END;
@@ -4519,6 +4699,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
      EXCEPTION
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception; 
            pr_des_erro := 'Nao foi possivel atualizar o horario de retorno! Erro: '||SQLERRM;
            RAISE vr_excerror;
      END;
@@ -4533,6 +4715,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
      EXCEPTION
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception; 
            pr_des_erro := 'Nao foi possivel atualizar o horario de encerramento! Erro: '||SQLERRM;
            RAISE vr_excerror;
      END;
@@ -4547,6 +4731,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
      EXCEPTION
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception; 
            pr_des_erro := 'Nao foi possivel atualizar o horario de encerramento! Erro: '||SQLERRM;
            RAISE vr_excerror;
      END;
@@ -4561,6 +4747,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
      EXCEPTION
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception; 
            pr_des_erro := 'Nao foi possivel atualizar a lista de e-mail! Erro: '||SQLERRM;
            RAISE vr_excerror;
      END;
@@ -4575,6 +4763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
      EXCEPTION
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception; 
            pr_des_erro := 'Nao foi possivel atualizar o diretorio temporario! Erro: '||SQLERRM;
            RAISE vr_excerror;
      END;
@@ -4593,6 +4783,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         -- Desfaz as Alteracao
         ROLLBACK;
 
@@ -4681,6 +4874,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_cdoperad    VARCHAR2(500);
 
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_grava_bureaux_prmrbc');      
+
      -- Extrair informações padrão do xml - parametros
      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                              ,pr_cdcooper => vr_cdcooper
@@ -4877,6 +5073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                    ,pr_idtpsoli);
         EXCEPTION
            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               pr_des_erro := 'Nao foi possivel inserir o registro na tabela CRAPPBC! Erro: '||SQLERRM;
               RAISE vr_excerror;
         END;
@@ -4912,6 +5110,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             WHERE pbc.idtpreme = pr_idtpreme;
         EXCEPTION
            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               pr_des_erro := 'Nao foi possivel atualizar o registro na tabela CRAPPBC! Erro: '||SQLERRM;
               RAISE vr_excerror;
         END;
@@ -4928,6 +5128,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados>Rotina com erros</Dados></Root>');
      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
+        
         pr_des_erro := 'Erro geral na rotina pc_grava_bureaux_prmrbc: '||SQLERRM;
         pr_dscritic := 'Erro geral na rotina pc_grava_bureaux_prmrbc: '||SQLERRM;
 
@@ -4973,6 +5176,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           WHERE arb.idtpreme = pr_idtpreme
             AND arb.dtmvtolt = pr_dtmvtolt;
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_insere_arquivo_bureaux');      
+
       -- Busca a ultima sequencia do evento
       OPEN cr_nrseqarq;
       FETCH cr_nrseqarq
@@ -4998,6 +5204,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
              ,pr_flproces);
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception;
+        
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_insere_arquivo_bureaux --> '||SQLERRM;
     END;
@@ -5030,6 +5239,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_dslista  VARCHAR2(4000); -- Lista de arquivos do diretório
       vr_lstarqre gene0002.typ_split; -- Lista de arquivos
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_limpeza_diretorio');      
+
       -- Primeiro testamos se o diretório já não está vazio
       gene0001.pc_lista_arquivos(pr_path => pr_nmdireto         --> Dir a limpar
                                 ,pr_pesq => NULL                --> Qualquer arquivo
@@ -5067,6 +5279,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> na rotina CYBE0002.pc_limpeza_diretorio -->  '||SQLERRM;
     END;
@@ -5103,6 +5317,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
          WHERE pbc.idtpreme = pr_idtpreme;
       vr_idtpsoli crappbc.idtpsoli%TYPE;
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_solicita_remessa');      
+
       -- Buscar tipo do Bureaux
       OPEN cr_pbc;
       FETCH cr_pbc
@@ -5116,6 +5333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                            ,pr_dtmvtolt);   --> Data passada
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+          CECRED.pc_internal_exception; 
           -- Retorna o erro para a procedure chamadora
           pr_dscritic := 'Erro ao inserir CRAPCRB ['||pr_idtpreme||'] --> '||SQLERRM;
           RETURN;
@@ -5129,6 +5348,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 0                  --> Não houve erro
                                 ,pr_dslogeve => 'Remessa ao Bureaux '||pr_idtpreme||' agendada com sucesso pelo processo controlador em '||to_char(SYSDATE,'dd/mm/yyyy')||' as '||to_char(SYSDATE,'hh24:mi:ss')
                                 ,pr_dscritic => pr_dscritic);   --> Retorno de crítica
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_solicita_remessa 1');  
       ELSE
         -- Sob-Demanda
         pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme        --> Bureaux passado
@@ -5137,6 +5358,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 0                  --> Não houve erro
                                 ,pr_dslogeve => 'Remessa ao Bureaux '||pr_idtpreme||' solicitada sob-demanda com sucesso em '||to_char(SYSDATE,'dd/mm/yyyy')||' as '||to_char(SYSDATE,'hh24:mi:ss')
                                 ,pr_dscritic => pr_dscritic);   --> Retorno de crítica
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_solicita_remessa 2');  
       END IF;
       -- Se retornou erro
       IF pr_dscritic IS NOT NULL THEN
@@ -5145,6 +5368,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_solicita_remessa --> '||SQLERRM;
     END;
@@ -5199,6 +5424,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_nrseqori craparb.nrseqarq%TYPE; --> Sequencia de gravação do arquivo Zip
       vr_nmarqret  VARCHAR2(1000);        --> Nome do arquivo de retorno
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_busca_arq_remessa');      
+
       -- Resetar controle de erro
       vr_nrseqare := NULL;
       -- Armazenar o diretório de arquivos temporário
@@ -5209,7 +5437,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Testar retorno de erro
       IF vr_dscritic IS NOT NULL THEN
         -- Incrementar o erro
-        vr_dscritic := 'Erro na rotina CYBE0002.pc_busca_arquivos_remessa --> Ao limpar dir temp --> '||vr_dscritic;
+        vr_dscritic := 'CYBE0002.pc_busca_arquivos_remessa - Ao limpar dir temp - '||vr_dscritic;
         RAISE vr_excerror;
       END IF;
       -- Busca diretório base do arquivo origem da remessa
@@ -5222,6 +5450,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_dschvbsc := fn_dinamic_function(vr_dsfnburm,vr_rowid);
       EXCEPTION
         WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+          CECRED.pc_internal_exception; 
           vr_dscritic := 'Erro ao acionar funcao dinâmica para busca dos arquivos da remessa --> '||SQLERRM;
           RAISE vr_excerror;
       END;
@@ -5279,6 +5509,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                   ,pr_flerreve => 0 --> Sucesso
                                   ,pr_dslogeve => 'Arquivo '||vr_nmarqret||' encontrado! Iniciando descompactacao...'
                                   ,pr_dscritic => vr_dscritic);
+	        -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_busca_arq_remessa 1');  
           -- Se retornou erro
           IF vr_dscritic IS NOT NULL THEN
             vr_nrseqare := vr_nrseqori;
@@ -5294,6 +5526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                ,pr_dsdestin => vr_dir_temp                   --> Diretório descompactação
                                ,pr_dspasswd => NULL                          --> Sem senha
                                ,pr_des_erro => vr_dscritic);                 --> Erros
+  	      -- Retorna do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_busca_arq_remessa'); 
           -- Se houve retorno de erro
           IF vr_dscritic IS NOT NULL THEN
             vr_nrseqare := vr_nrseqori;
@@ -5344,6 +5578,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                       ,pr_flerreve => 0 --> Sucesso
                                       ,pr_dslogeve => 'Arquivo '||vr_lstarqzp(vr_id2)||' descompactado.'
                                       ,pr_dscritic => vr_dscritic);
+	            -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_busca_arq_remessa 2');  
               -- Se retornou erro
               IF vr_dscritic IS NOT NULL THEN
                 vr_nrseqare := vr_nrseqarq;
@@ -5375,6 +5611,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                   ,pr_flerreve => 0 --> Sucesso
                                   ,pr_dslogeve => 'Arquivo '||vr_nmarqret||' para envio encontrado! '
                                   ,pr_dscritic => vr_dscritic);
+	        -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_busca_arq_remessa 3');  
           -- Se retornou erro
           IF vr_dscritic IS NOT NULL THEN
             vr_nrseqare := vr_nrseqori;
@@ -5389,7 +5627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Testar retorno de erro
         IF vr_dscritic IS NOT NULL THEN
           -- Incrementar o erro
-          vr_dscritic := 'Erro na rotina CYBE0002.pc_busca_arquivos_remessa --> Ao limpar dir temp --> '||vr_dscritic;
+          vr_dscritic := 'CYBE0002.pc_busca_arquivos_remessa - Ao limpar dir temp - '||vr_dscritic;
           RAISE vr_excerror;
         END IF;
       END LOOP; --> Arquivos retornados
@@ -5403,13 +5641,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 1 --> Erro
                                 ,pr_dslogeve => vr_dscritic
                                 ,pr_dscritic => pr_dscritic);
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_busca_arq_remessa 4');  
         -- Gravamos
         COMMIT;
         -- Devolvemos o problema
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
-        pr_dscritic := 'Erro --> rotina CYBE0002.pc_busca_arquivos_remessa --> '||SQLERRM;
+        pr_dscritic := 'CYBE0002.pc_busca_arquivos_remessa - '||SQLERRM;
     END;
   END pc_busca_arq_remessa;
 
@@ -5443,6 +5685,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_flenviad   BOOLEAN := FALSE; --> Flag para indicar que o arquivo foi enviado
       vr_typ_saida  VARCHAR2(3);      --> Saída do comando no OS
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envia_remessa_cd');      
+
       -- Primeiramente checamos se o arquivo por ventura já não está na pasta enviados
       IF gene0001.fn_exis_arquivo(pr_caminho => pr_dsdirend||'/'||pr_nmarquiv) THEN
         -- O que ocorreu é que a cópia anterior não havia sido enviada nos 5 minutos que
@@ -5483,6 +5728,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_envia_remessa_cd --> '||SQLERRM;
     END;
@@ -5521,6 +5768,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_comand_ftp VARCHAR2(4000); --> Comando montado do envio ao FTP
       vr_typ_saida  VARCHAR2(3);    --> Saída de erro
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa_ftp');      
+
       --Chama script específico para conexão de ftp segura
       IF pr_idenvseg = 'S' THEN
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
@@ -5551,6 +5801,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_envio_arquivo_ftp --> '||SQLERRM;
     END;
@@ -5668,6 +5920,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            AND crb.dtcancel IS NULL;
       rw_arb cr_arb%ROWTYPE;
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa');      
+
       -- LImpar sequencia arquivo com erro
       vr_nrseqare := NULL;
       -- Armazenar o diretório de arquivos temporário
@@ -5710,6 +5965,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                               ,pr_flerreve => 0 --> Sucesso
                               ,pr_dslogeve => vr_dscritic
                               ,pr_dscritic => vr_dscritic);
+	    -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa 1');  
       -- Se retornou erro, incrementar a mensagem e retornoar
       IF vr_dscritic IS NOT NULL THEN
         raise vr_excerror;
@@ -5731,6 +5988,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               vr_dschvrem := fn_dinamic_function(rw_pbc.dsfnchrm,rw_arb.rowid);
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+                CECRED.pc_internal_exception; 
                 pr_dscritic := 'Erro ao acionar funcao dinamica para montar chave da remessa --> '||SQLERRM;
                 RETURN;
             END;
@@ -5768,6 +6027,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                     ,pr_flerreve => 1 --> Erro
                                     ,pr_dslogeve => 'Remessa aguardando envio de remessas precedentes.'
                                     ,pr_dscritic => pr_dscritic);
+	          -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa 2');  
             -- Se retornou erro, incrementar a mensagem e retornoar
             IF pr_dscritic IS NOT NULL THEN
               RETURN;
@@ -5793,6 +6054,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             rw_arb.nmarqren := fn_dinamic_function(rw_pbc.dsfnrnen,rw_arb.rowid);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               vr_nrseqare := rw_arb.nrseqarq;
               vr_dscritic := 'Erro ao acionar funcao para renomeamento dos arquivo a enviar ao Bureaux --> '||SQLERRM;
               raise vr_excerror;
@@ -5812,10 +6075,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                     ,pr_flerreve => 0 --> Sucesso
                                     ,pr_dslogeve => 'Arquivo renomeado para envio. Novo nome: '||rw_arb.nmarqren
                                     ,pr_dscritic => vr_dscritic);
+	          -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+        	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa 3');  
             -- Gravar as informações
             COMMIT;
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               -- Retornar descrição do problema
               vr_nrseqare := rw_arb.nrseqarq;
               vr_dscritic := 'Erro durante atualizacao do rename do arquivo: '||SQLERRM;
@@ -5835,6 +6102,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                      ,pr_caminho  => vr_dir_temp     --> Dir temp
                                      ,pr_arquivo  => vr_nmarquiv     --> Nome original
                                      ,pr_des_erro => vr_dscritic);
+  	    -- Retorna do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa'); 
         -- Se retornou erro, incrementar a mensagem e retornoar
         IF vr_dscritic IS NOT NULL THEN
           vr_nrseqare := rw_arb.nrseqarq;
@@ -5879,6 +6148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => vr_flgerror --> Testado acima
                                 ,pr_dslogeve => vr_dslogeve
                                 ,pr_dscritic => vr_dscritic);
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa 4');  
         -- Gravamos os eventos
         COMMIT;
         -- Validação de erro ocorrido anteriormente e somente parar
@@ -5901,6 +6172,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             COMMIT;
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               -- Gravamos o evento relacionado ao arquivo
               pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme
                                       ,pr_dtmvtolt => pr_dtmvtolt
@@ -5909,6 +6182,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                       ,pr_flerreve => 1 --> Erro
                                       ,pr_dslogeve => 'Arquivo enviado, porem houve erro ao atualizar sua situacao: '||SQLERRM
                                       ,pr_dscritic => vr_dscritic);
+	            -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa 5');  
               -- Gravamos os eventos
               COMMIT;
               -- Retornar descrição genérica pois o erro específico já foi gravado
@@ -5926,6 +6201,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 0 -- Sucesso
                                 ,pr_dslogeve => 'Total de arquivos enviados ao Bureaux: '||vr_qtdenvio
                                 ,pr_dscritic => vr_dscritic);
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_envio_remessa 6');  
         -- Gravamos os eventos
         COMMIT;
       END IF;
@@ -5944,12 +6221,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Retornar o problema encontrado
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_envio_remessa --> '||SQLERRM;
     END;
   END pc_envio_remessa;
 
 
+  -- Inclusão do parâmetro tipo de log - Chamado 719114 - 07/08/2017
   -- Rotina para efetuar o retorno dos arquivos de remessas Connect Direct
   PROCEDURE pc_retorno_arquivo_cd(pr_idtpreme IN crapcrb.idtpreme%TYPE --> Tipo da Remessa
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da Remessa
@@ -5958,7 +6238,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                  ,pr_dsdirrcd IN crappbc.dsdrrtcd%TYPE --> Diretório recebidos
                                  ,pr_nmarquiv IN craparb.nmarquiv%TYPE --> Nome do padrão de retorno
                                  ,pr_dsfnchrt IN crappbc.dsfnchrt%TYPE --> Função que faz a checagem dos retornos para garatir a relação com o envio
-                                 ,pr_qtretorn OUT NUMBER               --> Numero de arquivos retornados
+                                 ,pr_qtretorn OUT NUMBER               --> Numero de arquivos retornados                                
+                                 ,pr_dstiplog OUT VARCHAR2             --> Tipo de Log
                                  ,pr_dscritic OUT VARCHAR2) IS         --> Retorno de crítica
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
@@ -5967,7 +6248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 06/04/2015
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 21/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -5976,7 +6257,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --             do Connect Direct e após consumí-los, mover a pasta recebidos
     --
     -- Alteracoes: 06/04/2015 - Alteração para recebimento e acionamento de função de checagem de retorno
-    --                          para validar se o retorno encontrado é vinculado ao arquivo enviado (Marcos-Supero)
+    --                          para validar se o retorno encontrado é vinculado ao arquivo enviado (Marcos-Supero)                       
+    --
+    --             21/07/2017 - Inclusão do módulo e ação logado no oracle
+    --                          Inclusão da chamada de procedure em exception others
+    --                          Colocado logs no padrão
+    --                        ( Belli - Envolti - Chamado 719114)
+    --    
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       vr_typ_saida  VARCHAR2(3);         --> Saída do comando no OS
@@ -5985,6 +6272,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_nrseqarq craparb.nrseqarq%TYPE; --> Sequencia de gravação do arquivo
       vr_flchkret VARCHAR2(1);           --> Retorno S/N de validação do retorno atual X arquivo enviado
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_arquivo_cd');
+
+      -- Inicializar sem tipo de log - Chamado 719114 - 07/08/2017      
+      pr_dstiplog := NULL;    
+
       -- Inicializar quantidade de retornos
       pr_qtretorn := 0;
       -- Usamos rotina para listar os arquivos da pasta conforme padrão passado
@@ -5994,6 +6287,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_des_erro => pr_dscritic); --> Possível erro
       -- Se retorno erro:
       IF pr_dscritic IS NOT NULL THEN
+      -- Ajuste rastrear Log - Chamado 719114 - 07/08/2017  
+        pr_dscritic := 'pc_retorno_arquivo_cd - gene0001.pc_lista_arquivos - ' || pr_dscritic;
         RETURN;
       END IF;
       -- Separar a lista de arquivos encontradas com função existente
@@ -6002,6 +6297,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       IF vr_lstarqre.count() = 0 THEN
         -- Gerar erro
         pr_dscritic := 'Arquivo ainda nao retornado pelo SERASA';
+        -- Situação tratada como ocorrencia - Chamado 719114 - 07/08/2017
+        pr_dstiplog := 'O';
         RETURN;
       END IF;
       -- Para cada arquivo encontrado na pasta
@@ -6021,6 +6318,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             vr_flchkret := fn_dinamic_function(pr_dsfnchrt,vr_rowid_arq,pr_dsdirrec||'/'||vr_lstarqre(vr_idx));
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               pr_dscritic := 'Erro ao acionar funcao dinamica para checagem do retorno --> '||SQLERRM;
               RETURN;
           END;
@@ -6060,6 +6359,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 0 --> Sucesso
                                 ,pr_dslogeve => 'Arquivo '||vr_lstarqre(vr_idx)||' retornado com sucesso.'
                                 ,pr_dscritic => pr_dscritic);
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_arquivo_cd 1');  
         -- Se retornou erro
         IF pr_dscritic IS NOT NULL THEN
           RETURN;
@@ -6071,8 +6372,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       END LOOP; --> Arquivos retornados
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
-        pr_dscritic := 'Erro --> rotina CYBE0002.pc_retorno_arquivo_serasa --> '||SQLERRM;
+        pr_dscritic := 'pc_retorno_arquivo_cd - '||SQLERRM;
     END;
   END pc_retorno_arquivo_cd;
 
@@ -6097,7 +6400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 23/03/2016
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 21/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -6108,7 +6411,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --                          para validar se o retorno encontrado é vinculado ao arquivo enviado (Marcos-Supero)
     --
     --             23/03/2016 - Adicionado tratamento para identificar se é necessário fazer
-    --                          a chamada do ftp seguro conforme solicitado no chamado 412682. (Kelvin)
+    --                          a chamada do ftp seguro conforme solicitado no chamado 412682. (Kelvin)                       
+    --
+    --             21/07/2017 - Inclusão do módulo e ação logado no oracle
+    --                          Inclusão da chamada de procedure em exception others
+    --                          Colocado logs no padrão
+    --                        ( Belli - Envolti - Chamado 719114)
+    --
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       vr_dir_temp VARCHAR2(4000);        -- Armazenar o diretório de arquivos temporário
@@ -6119,7 +6428,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_lstarqre gene0002.typ_split;    --> Split de arquivos encontrados
       vr_nrseqarq craparb.nrseqarq%TYPE; --> Sequencia de gravação do arquivo
       vr_flchkret VARCHAR2(1);           --> Retorno S/N de validação do retorno atual X arquivo enviado
+
+  	  -- Excluida variavel vr_idprglog - Chamado 719114 - 07/08/2017  
+      
+  	  -- Variaveis para módulo e ação logado - Chamado 719114 - 21/07/2017 
+      vr_modulo    VARCHAR2(100);
+      vr_acao      VARCHAR2(100);
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+      DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
+      vr_acao := 'CYBE0002.pc_retorno_arquivo_ftp';
+    	GENE0001.pc_set_modulo(pr_module => vr_modulo, pr_action => vr_acao);      
+
       -- Inicializar quantidade de retornos
       pr_qtretorn := 0;
       -- Buscar diretório temporário
@@ -6139,7 +6459,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       ELSE 
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');   
-      END IF;                      
+      END IF;
+                    
       
       -- Preparar o comando de conexão e envio ao FTP
       vr_comand_ftp := vr_script_ftp
@@ -6175,13 +6496,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_lstarqre := fn_quebra_string(pr_string => vr_dslstarq, pr_delimit => ',');
         -- Se não encontrou nenhum arquivo
         IF vr_lstarqre.count() = 0 THEN
-          -- Gravar no proc_message e retornar para o programa
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
-                                     pr_ind_tipo_log => 2, -- erro tratado 
-                                     pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                        || 'CYBE0002.pc_retorno_arquivo_ftp --> '
-                                                        || 'Retorno ainda nao encontrado no FTP.', 
-                                     pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+          -- Atualização de log para o padrão - 21/07/2017 - Chamado 719114
+          -- Gravar na tabela tbgen_prglog_ocorrencia e retornar para o programa
+          pc_controla_log_batch(pr_dstiplog   => 'O',
+                                pr_dscritic   => 'Retorno ainda nao encontrado no FTP.' ||
+                                                 ' - pr_idtpreme: ' || pr_idtpreme ||
+                                                 ' ,pr_dtmvtolt: ' || pr_dtmvtolt ||
+                                                 ' ,pr_nrseqarq: ' || pr_nrseqarq ||
+                                                 ' ,arq: '         || pr_nmarquiv || 
+                                                 ' ,dir_local: '   || vr_dir_temp || 
+                                                 ' ,dir_remoto: '  || pr_ftp_path,
+                                pr_cdprograma => 'jbcyb_controle_remessas');
           RETURN;
         END IF;
         -- Para cada arquivo encontrado no ZIP
@@ -6201,6 +6526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               vr_flchkret := fn_dinamic_function(pr_dsfnchrt,vr_rowid_arq,vr_dir_temp||'/'||vr_lstarqre(vr_idx));
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+                CECRED.pc_internal_exception; 
                 pr_dscritic := 'Erro ao acionar funcao dinamica para checagem do retorno --> '||SQLERRM;
                 RETURN;
             END;
@@ -6231,6 +6558,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                   ,pr_flerreve => 0 --> Sucesso
                                   ,pr_dslogeve => 'Arquivo '||vr_lstarqre(vr_idx)||' retornado com sucesso.'
                                   ,pr_dscritic => pr_dscritic);
+	        -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_arquivo_ftp 1');  
           -- Se retornou erro
           IF pr_dscritic IS NOT NULL THEN
             RETURN;
@@ -6243,6 +6572,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_retorno_arquivo_ftp --> '||SQLERRM;
     END;
@@ -6301,6 +6632,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_typ_said   VARCHAR2(3);           --> Retorno das chamadas ao SO
       --
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_demanda');      
+
       -- Buscar caracteristicas do Bureaux
       OPEN cr_crappbc;
       FETCH cr_crappbc
@@ -6325,6 +6659,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             vr_nmarquiv := fn_dinamic_function(rw_pbc.dsfnrndv,rw_arb.rowid);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               -- Devemos inserir o evento do erro e
               pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme
                                       ,pr_dtmvtolt => rw_arb.dtmvtolt
@@ -6346,6 +6682,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                      ,pr_caminho  => vr_dir_temp     --> Dir temp
                                      ,pr_arquivo  => vr_nmarquiv     --> Nome a devolver
                                      ,pr_des_erro => vr_dscritic);
+  	    -- Retorna do módulo e ação logado - Chamado 719114 - 21/07/2017
+      	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_demanda');
         -- Se retornou erro, incrementar a mensagem e retornoar
         IF vr_dscritic IS NOT NULL THEN
           -- Devemos inserir o evento do erro e
@@ -6400,6 +6738,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            WHERE ROWID = rw_arb.rowid;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+            CECRED.pc_internal_exception;
+            
             -- Se houve erro, temos de desfazer essa atualização, senão
             -- o arquivo poderá ficar marcado como devolvido só que não
             ROLLBACK;
@@ -6439,15 +6780,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Devolvemos o problema
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception;
+        
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> na rotina CYBE0002.pc_devolu_demanda --> '||SQLERRM;
     END;
   END pc_devolu_demanda;
 
+  -- Inclusão do parâmetro tipo de log - Chamado 719114 - 07/08/2017
   -- Rotina para preparar e direcionar o retorno dos arquivos da remessa
   PROCEDURE pc_retorno_remessa(pr_idtpreme IN crapcrb.idtpreme%TYPE --> Tipo da Remessa
                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data da Remessa
-                              ,pr_dscritic OUT VARCHAR2) IS         --> Retorno de crítica
+                              ,pr_dscritic OUT VARCHAR2             --> Retorno de crítica
+                              ,pr_dstiplog OUT VARCHAR2             --> Tipo de Log
+                                ) IS  
+                                     
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -6455,7 +6803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 07/10/2015
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 21/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -6466,7 +6814,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     -- Alteracoes: 06/04/2015 - Passagem da função de checagem do retorno (Marcos-Supero)
     --
     --             07/10/2015 - PRJ210 - Remoção de parâmetro global para parâmetro por Bureaux
-    --                          e também devolução no retorno sob-demanda (Marcos-Supero)
+    --                          e também devolução no retorno sob-demanda (Marcos-Supero)                        
+    --
+    --             21/07/2017 - Inclusão do módulo e ação logado no oracle
+    --                          Inclusão da chamada de procedure em exception others
+    --                          Colocado logs no padrão
+    --                        ( Belli - Envolti - Chamado 719114)
     --
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
@@ -6594,7 +6947,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_qtretaux NUMBER;
       --listagem de erros para montagem do e-mail
       vr_dslsterr VARCHAR2(4000);
+      
+      -- Variavel para tratar o parâmetro tipo de log - Chamado 719114 - 07/08/2017
+      vr_dstiplog VARCHAR2(1) := NULL;
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_remessa');
+
+      -- inicializar parâmetro tipo de log - Chamado 719114 - 07/08/2017      
+      pr_dstiplog := NULL; 
 
       -- Busca das informações para retorno da remessa
       OPEN cr_crb;
@@ -6677,6 +7038,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                   ,pr_flerreve => 0 --> Sucesso
                                   ,pr_dslogeve => vr_dscritic
                                   ,pr_dscritic => pr_dscritic);
+	        -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_remessa 1');  
           -- Se retornou erro, incrementar a mensagem e retornoar
           IF pr_dscritic IS NOT NULL THEN
             RETURN;
@@ -6702,6 +7065,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               vr_dschvrem := fn_dinamic_function(rw_crb.dsfnchrm,rw_ret.rowid);
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+                CECRED.pc_internal_exception; 
                 pr_dscritic := 'Erro ao acionar funcao dinamica para montar chave da remessa --> '||SQLERRM;
                 RETURN;
             END;
@@ -6731,6 +7096,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                     ,pr_flerreve => 1 --> Erro
                                     ,pr_dslogeve => 'Remessa aguardando recebimento de todas as remessas precedentes.'
                                     ,pr_dscritic => pr_dscritic);
+	          -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_remessa 2');
             -- Se retornou erro, incrementar a mensagem e retornoar
             IF pr_dscritic IS NOT NULL THEN
               RETURN;
@@ -6747,7 +7114,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           vr_nmarquiv := fn_dinamic_function(rw_crb.dsfnburt,rw_ret.rowid);
         EXCEPTION
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao acionar funcao dinamica para montar padrao de retorno do Bureaux --> '||SQLERRM;
+            -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+            CECRED.pc_internal_exception;
+            
+            pr_dscritic := 'Ao acionar funcao dinamica para montar padrao de retorno do Bureaux - '||SQLERRM;
             RETURN;
         END;
         -- Esta função deverá obrigatoriamente retorno algum padrão de busca
@@ -6759,6 +7129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Se chegou neste ponto, passamos por todas as consistências
         -- e podemos enfim, prosseguir com o processo de retorno
         IF rw_crb.idtpenvi = 'C' THEN
+          -- Inclusão do parâmetro tipo de log - Chamado 719114 - 07/08/2017  
           -- Retorno via Connect Direct
           pc_retorno_arquivo_cd(pr_idtpreme => pr_idtpreme      --> Tipo da Remessa
                                ,pr_dtmvtolt => pr_dtmvtolt      --> Data da Remessa
@@ -6768,6 +7139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                ,pr_nmarquiv => vr_nmarquiv      --> Nome do padrão de retorno
                                ,pr_dsfnchrt => rw_crb.dsfnchrt  --> Função para checagem da ligação retorno X envio
                                ,pr_qtretorn => vr_qtretaux      --> Quantidade retornada
+                               ,pr_dstiplog => vr_dstiplog      --> Tipo de Log
                                ,pr_dscritic => pr_dscritic);    --> Retorno de crítica
         ELSIF rw_crb.idtpenvi = 'F' THEN
           -- Retorno via FTP
@@ -6786,6 +7158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         END IF;
         -- Gravamos os eventos ocorridos
         COMMIT;
+
         -- Se houve retorno, incrementar
         vr_qtretorn := vr_qtretorn + vr_qtretaux;
         -- Se houve erro
@@ -6798,6 +7171,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                   ,pr_flerreve => 1 --> Erro
                                   ,pr_dslogeve => pr_dscritic
                                   ,pr_dscritic => vr_dscritic); --> Usamos a auxiliar para evitar sobescrita
+	        -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_remessa 3');                                  
           -- Se retornou erro, incrementar a mensagem e retornoar
           IF vr_dscritic IS NOT NULL THEN
             RETURN;
@@ -6810,7 +7185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- retorno, só haverá um registro neste loop e logo abaixo sairemos
         IF pr_dscritic IS NOT NULL AND rw_crb.idopreto = 'M' THEN
           -- Incrementamos a listagem de erros para montagem do e-mail
-          vr_dslsterr := vr_dslsterr || '<br>Nao foi possivel retornar '||vr_nmarquiv||'. Motivo: ' || pr_dscritic;
+          vr_dslsterr := vr_dslsterr || '<br>Nao foi possivel retornar '||vr_nmarquiv||'. Motivo: ' || pr_dscritic;          
         END IF;
       END LOOP;
 
@@ -6823,7 +7198,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                 ,pr_flerreve => 0 -- Sucesso
                                 ,pr_dslogeve => 'Total de arquivos recebidos do Bureaux: '||vr_qtretorn
                                 ,pr_dscritic => vr_dscritic);
-
+	      -- Retorno do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_retorno_remessa 4');
         -- Se a remessa for do tipo de controle sob-demanda
         IF rw_crb.idtpsoli = 'D' THEN
           -- Acionamos a rotina que faz a devolução de remessas sob-demanda
@@ -6844,10 +7220,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Se houve montagem de erros em Multi_Retornos
       IF vr_dslsterr IS NOT NULL THEN
         -- Retornamos no parâmetro
-        pr_dscritic := vr_dslsterr;
+        pr_dscritic := vr_dslsterr;        
+        -- Retorna parâmetro tipo de log - Chamado 719114 - 07/08/2017  
+        pr_dstiplog := vr_dstiplog;
       END IF;
     EXCEPTION
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception;
+        
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> rotina CYBE0002.pc_retorno_remessa --> '||SQLERRM;
     END;
@@ -6911,6 +7292,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       --
       vr_dslstarq cecred.typ_simplestringarray; --> Lista de arquivos encontrados
     BEGIN
+  	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+    	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_diaria');      
+
       -- Buscar caracteristicas do Bureaux
       OPEN cr_crappbc;
       FETCH cr_crappbc
@@ -6967,6 +7351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             vr_nmarquiv := fn_dinamic_function(rw_pbc.dsfnrndv,rw_arb.rowid);
           EXCEPTION
             WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               -- Devemos inserir o evento do erro e
               pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme
                                       ,pr_dtmvtolt => rw_arb.dtmvtolt
@@ -6988,6 +7374,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                      ,pr_caminho  => vr_dir_temp     --> Dir temp
                                      ,pr_arquivo  => vr_nmarquiv     --> Nome a devolver
                                      ,pr_des_erro => vr_dscritic);
+  	    -- Retorna do módulo e ação logado - Chamado 719114 - 21/07/2017
+      	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_diaria');
         -- Se retornou erro, incrementar a mensagem e retornoar
         IF vr_dscritic IS NOT NULL THEN
           -- Devemos inserir o evento do erro e
@@ -7042,6 +7430,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            WHERE ROWID = rw_arb.rowid;
         EXCEPTION
           WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+            CECRED.pc_internal_exception; 
             -- Se houve erro, temos de desfazer essa atualização, senão
             -- o arquivo poderá ficar marcado como devolvido só que não
             ROLLBACK;
@@ -7069,6 +7459,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                            ,pr_dsdestin => vr_dir_temp||'/'||vr_nom_arquiv --> Arquivo ZIP
                            ,pr_dspasswd => NULL                            --> Sem senha
                            ,pr_des_erro => vr_dscritic);                   --> Erros
+  	  -- Retorna do módulo e ação logado - Chamado 719114 - 21/07/2017
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_diaria');
       -- Se houve retorno de erro
       IF vr_dscritic IS NOT NULL THEN
         -- Retornar e desfazer as alterações
@@ -7095,6 +7487,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Devolvemos o problema
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception; 
         -- Retorna o erro para a procedure chamadora
         pr_dscritic := 'Erro --> na rotina CYBE0002.pc_devolu_diaria --> '||SQLERRM;
     END;
@@ -7110,7 +7504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 09/06/2015
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 21/07/2017
     --
     -- Dados referentes ao programa:
     --
@@ -7144,7 +7538,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --              em feriados, pois eles não vem buscar os arquivos (Marcos-Supero)
     --
     -- 26/10/2016 - Incluir condição nos cursores CR_PREP_PENDEM e CR_ENV_PENDEM para não retornar
-    --              registros referente ao tipo de remessa SMSDEBAUT. (Renato Darosci - Supero)
+    --              registros referente ao tipo de remessa SMSDEBAUT. (Renato Darosci - Supero)                         
+    --
+    -- 21/07/2017 - Inclusão do módulo e ação logado no oracle
+    --            - Inclusão da chamada de procedure em exception others
+    --            - Colocado logs no padrão
+    --              ( Belli - Envolti - Chamado 719114)
+    --
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis para exceção
@@ -7193,29 +7593,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
-      vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_REMESSAS';
-      vr_nomdojob    VARCHAR2(40) := 'JBCYBER_CONTROLE_REMESSAS';
-      vr_flgerlog    BOOLEAN := FALSE;
-
-      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
-                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
-        --> Controlar geração de log de execução dos jobs 
-        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
-                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-      END pc_controla_log_batch;
+      vr_nomdojob    VARCHAR2(40) := 'JBCYB_CONTROLE_REMESSAS';
+  
+      -- Excluida variavel vr_flgerlog - Chamado 719114 - 07/08/2017
+	    -- Excluida PROCEDURE pc_controla_log_batch interna e incluida como externa - Chamado 719114 - 07/08/2017          
+      
+      -- Variaveis tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
+      vr_dstiplog    VARCHAR2(1);
 
     BEGIN
+	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+	    GENE0001.pc_set_modulo(pr_module => vr_nomdojob, pr_action => 'CYBE0002.pc_controle_remessas');
+        
       -- Esta rotina somente poderá ser executada de 2ª a 6ª
       IF to_char(SYSDATE,'d') NOT IN(1,7) THEN
-
+          
+        -- Incluido parametro - Chamado 719114 - 07/08/2017
         -- Log de inicio de execucao
-        pc_controla_log_batch(pr_dstiplog => 'I');
+        pc_controla_log_batch(pr_dstiplog   => 'I',
+                              pr_cdprograma => vr_nomdojob);
 
         -- Buscar parâmetros gerais
         vr_hora_envio      := gene0001.fn_param_sistema('CRED',0,'AUTBUR_HORA_ENVIO');      --> Hora de início da preparação / Envio
@@ -7249,9 +7645,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               -- Desfazer agendamentos
               ROLLBACK;
               
+              -- Incluido parametro - Chamado 719114 - 07/08/2017
               -- Log de erro de execucao
-              pc_controla_log_batch(pr_dstiplog => 'E',
-                                    pr_dscritic => vr_dscritic);
+              pc_controla_log_batch(pr_dstiplog   => 'E',
+                                    pr_dscritic   => vr_dscritic,
+                                    pr_cdprograma => vr_nomdojob);
               
               -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
               -- arquivo deste Bureaux juntamente dos problemas ocorridos.
@@ -7292,9 +7690,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
 
+            -- Incluido parametro - Chamado 719114 - 07/08/2017
             -- Log de erro de execucao
-            pc_controla_log_batch(pr_dstiplog => 'E',
-                                  pr_dscritic => vr_dscritic);
+            pc_controla_log_batch(pr_dstiplog   => 'E',
+                                  pr_dscritic   => vr_dscritic,
+                                  pr_cdprograma => vr_nomdojob);
 
             -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
             -- arquivo deste Bureaux juntamente dos problemas ocorridos.
@@ -7342,6 +7742,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                  AND crb.dtmvtolt = rw_crb.dtmvtolt;
             EXCEPTION
               WHEN OTHERS THEN
+                -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+                CECRED.pc_internal_exception; 
+                
                 -- rollback das informa
                 ROLLBACK;
                 -- Fecha cursor
@@ -7363,9 +7766,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               -- rollback das informa
               ROLLBACK;
 
+              -- Incluido parametro - Chamado 719114 - 07/08/2017
               -- Log de erro de execucao
-              pc_controla_log_batch(pr_dstiplog => 'E',
-                                    pr_dscritic => vr_dscritic);
+              pc_controla_log_batch(pr_dstiplog   => 'E',
+                                    pr_dscritic   => vr_dscritic,
+                                    pr_cdprograma => vr_nomdojob);
 
               -- Fecha cursor
               IF cr_verf_remessa%ISOPEN THEN
@@ -7402,9 +7807,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
 
+            -- Incluido parametro - Chamado 719114 - 07/08/2017
             -- Log de erro de execucao
-            pc_controla_log_batch(pr_dstiplog => 'E',
-                                  pr_dscritic => vr_dscritic);  
+            pc_controla_log_batch(pr_dstiplog   => 'E',
+                                  pr_dscritic   => vr_dscritic,
+                                  pr_cdprograma => vr_nomdojob);  
 
             -- Enviaremos e-mail para a área de crédito para avisar do problema no envio
             -- do arquivo deste Bureaux juntamente dos problemas ocorridos.
@@ -7436,16 +7843,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             END IF;
           END IF;
 
+          -- Tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
           -- Proceder com o retorno das remessas
           pc_retorno_remessa(pr_idtpreme => rw_crb.idtpreme
                             ,pr_dtmvtolt => rw_crb.dtmvtolt
-                            ,pr_dscritic => vr_dscritic);
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_dstiplog => vr_dstiplog);
+          
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
             
+            -- Incluido parametro - Chamado 719114 - 07/08/2017
             -- Log de erro de execucao
-            pc_controla_log_batch(pr_dstiplog => 'E',
-                                  pr_dscritic => vr_dscritic);
+            pc_controla_log_batch(pr_dstiplog   => NVL(vr_dstiplog,'E'),
+                                  pr_dscritic   => vr_dscritic,
+                                  pr_cdprograma => vr_nomdojob);
 
             -- Enviaremos e-mail para a área de crédito para avisar do problema no envio
             -- do arquivo deste Bureaux juntamente dos problemas ocorridos.
@@ -7502,9 +7914,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               -- Se houver retorno de crítica
               IF vr_dscritic IS NOT NULL THEN
 
+                -- Incluido parametro - Chamado 719114 - 07/08/2017
                 -- Log de erro de execucao
-                pc_controla_log_batch(pr_dstiplog => 'E',
-                                      pr_dscritic => vr_dscritic);  
+                pc_controla_log_batch(pr_dstiplog   => 'E',
+                                      pr_dscritic   => vr_dscritic,
+                                      pr_cdprograma => vr_nomdojob);  
 
                 -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
                 -- arquivo deste Bureaux juntamente dos problemas ocorridos.
@@ -7530,24 +7944,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Gravação final
         COMMIT;
 
+        -- Incluido parametro - Chamado 719114 - 07/08/2017
         -- Log de fim da execucao
-        pc_controla_log_batch(pr_dstiplog => 'F');
+        pc_controla_log_batch(pr_dstiplog   => 'F',
+                              pr_cdprograma => vr_nomdojob);
 
       END IF; --> Somente de 2ª a 6ª
 
     EXCEPTION
       WHEN vr_excerror THEN
+        -- Atualização de log para o padrão - 21/07/2017 - Chamado 719114
+        vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || ' --> ' || 
+                               'ERRO: ' || 'CYBE0002.pc_controle_remessas - ' || vr_dscritic;                                                                  
         -- Gerar o erro no arquivo de log do Batch
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 3
-                                  ,pr_des_log      => 'Erro esperado na rotina CYBE0002.pc_controle_remessas --> '||vr_dscritic
-                                  ,pr_nmarqlog     => 'proc_autbur');
+                                  ,pr_des_log      => vr_dscritic
+                                  ,pr_nmarqlog     => 'proc_autbur'
+                                  ,pr_cdprograma   => vr_nomdojob);
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception (pr_cdcooper => 3);
+        -- Atualização de log para o padrão - 21/07/2017 - Chamado 719114
+        vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || ' --> ' || 
+                               'ERRO: ' || 'CYBE0002.pc_controle_remessas - ' || SQLERRM;   
         -- Gerar o erro no arquivo de log do Batch
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 3
-                                  ,pr_des_log      => 'Erro não esperado na rotina CYBE0002.pc_controle_remessas --> '||SQLERRM
-                                  ,pr_nmarqlog     => 'proc_autbur');
+                                  ,pr_des_log      => vr_dscritic
+                                  ,pr_nmarqlog     => 'proc_autbur'
+                                  ,pr_cdprograma   => vr_nomdojob);
     END;
   END pc_controle_remessas;
 
@@ -7560,7 +7986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --  Sistema  : Rotina para gravar os arquivos em ZIP
   --  Sigla    : CRED
   --  Autor    : Andre Santos - SUPERO
-  --  Data     : Janeiro/2015.                   Ultima atualizacao: 11/09/2015
+  --  Data     : Janeiro/2015.                   Ultima atualizacao: 21/07/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7572,7 +7998,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --                           no projeto (Marcos-Supero)
   --
   --              11/09/2015 - Inclusao dos nomes dos parametros na chamada da
-  --                           pc_clob_para_arquivo. (Jaison/Marcos-Supero)
+  --                           pc_clob_para_arquivo. (Jaison/Marcos-Supero)                        
+  --
+  --              21/07/2017 - Inclusão do módulo e ação logado no oracle
+  --                           Inclusão da chamada de procedure em exception others
+  --                           Colocado logs no padrão
+  --                           ( Belli - Envolti - Chamado 719114)
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- Cursores
 
@@ -7647,9 +8079,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida EXCEPTION;
 
-  vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'pc_grava_arquivo_reafor';
-  vr_nomdojob  CONSTANT VARCHAR2(100)         := 'jbcybe_arquivo_reafor';
-  vr_flgerlog  BOOLEAN := FALSE;
+  vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcyb_arquivo_reafor';
+  
+  -- Excluida variavel vr_flgerlog - Chamado 719114 - 07/08/2017  
 
   --Funcao para retornar cpf/cnpj
   FUNCTION fn_busca_cpfcgc (pr_nrcpfcgc IN NUMBER) RETURN VARCHAR2 IS
@@ -7675,6 +8107,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            RETURN(NULL);
         EXCEPTION
            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
               vr_cdcritic:= 0;
               vr_dscritic:= 'Erro ao validar cpf/cnpj. '||SQLERRM;
               RAISE vr_exc_saida;
@@ -7688,6 +8122,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         dbms_lob.open(vr_des_xml1, dbms_lob.lob_readwrite);
      EXCEPTION
         WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+        CECRED.pc_internal_exception;
+        
         --Variavel de erro recebe erro ocorrido
         vr_cdcritic:= 0;
         vr_dscritic:= 'Erro ao inicializar CLOB. Rotina pc_crps652.pc_inicializa_clob. '||sqlerrm;
@@ -7723,6 +8160,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         END CASE;
      EXCEPTION
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception;
+           
            vr_cdcritic:= 0;
            vr_dscritic:= 'Erro ao escrever no CLOB. '||sqlerrm;
            --Levantar Excecao
@@ -8017,6 +8457,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               AND rea.flenvarq = 0;
         EXCEPTION
            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+              CECRED.pc_internal_exception; 
+        
               -- Limpa Tabela de Memoria
               vr_tab_craprea.DELETE;
               -- Erro do Sistema
@@ -8030,31 +8473,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         WHEN vr_exe_saida THEN
            NULL; -- Finaliza a operacao
         WHEN OTHERS THEN
+           -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
+           CECRED.pc_internal_exception;
+        
            -- Limpa Tabela de Memoria
            vr_tab_craprea.DELETE;
            -- Erro do Sistema
            pr_dscritic := 'Erro na rotina pc_reab_forcada_credito: '||SQLERRM;
-     END pc_reab_forcada_credito;
-
-    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
-                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
-      --> Controlar geração de log de execução dos jobs 
-      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3              --> Cooperativa
-                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
-
-                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
-                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
-                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
-                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-    END pc_controla_log_batch;
+     END pc_reab_forcada_credito; 
+      
+     -- Excluida PROCEDURE pc_controla_log_batch interna e incluida como externa - Chamado 719114 - 07/08/2017 
 
   -- INICIO DA PROCEDURE
   BEGIN
+	  -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_grava_arquivo_reafor');      
 
+     -- Incluido parametro - Chamado 719114 - 07/08/2017
      -- Início do programa
-     pc_controla_log_batch('I');
+     pc_controla_log_batch( pr_dstiplog   => 'I'
+                           ,pr_cdprograma => vr_nomdojob);
 
      -- Verifica se a cooperativa esta cadastrada
      OPEN cr_crapcop1(pr_cdcooper => pr_cdcooper);
@@ -8165,7 +8603,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                                   ,pr_caminho  => vr_caminho
                                   ,pr_arquivo  => vr_tab_nmclob(1)
                                   ,pr_des_erro => vr_dscritic);
-
+	   -- Retorna do módulo e ação logado - Chamado 719114 - 21/07/2017
+  	 GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_grava_arquivo_reafor');   
      -- Testa retorno
      IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
@@ -8237,8 +8676,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      --Salvar informacoes no banco de dados
      COMMIT;
 
+     -- Incluido parametro - Chamado 719114 - 07/08/2017
      -- Log de fim do programa
-     pc_controla_log_batch('F');     
+     pc_controla_log_batch( pr_dstiplog   => 'F'
+                           ,pr_cdprograma => vr_nomdojob);     
 
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -8246,8 +8687,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 
+      -- Incluido parametro - Chamado 719114 - 07/08/2017
       -- Log de erro no programa
-      pc_controla_log_batch('E', vr_dscritic);
+      pc_controla_log_batch( pr_dstiplog   => 'E'
+                            ,pr_dscritic   => vr_dscritic || 
+                             ' - pr_cdcooper: ' || pr_cdcooper
+                            ,pr_cdprograma => vr_nomdojob);
 
       -- Efetuar rollback
       ROLLBACK;
@@ -8257,13 +8702,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     
       -- Efetuar retorno do erro nao tratado
       vr_dscritic := SQLERRM;
-      
+
+      -- Incluido parametro - Chamado 719114 - 07/08/2017      
       -- Log de erro no programa
-      pc_controla_log_batch('E', vr_dscritic);
+      pc_controla_log_batch( pr_dstiplog   => 'E'
+                            ,pr_dscritic   => vr_dscritic || 
+                             ' - pr_cdcooper: ' || pr_cdcooper
+                            ,pr_cdprograma => vr_nomdojob);
 
       -- Efetuar rollback
       ROLLBACK;
   END pc_grava_arquivo_reafor;
 
+
+  -- Controla Controla log em banco de dados
+  PROCEDURE pc_controla_log_batch(pr_dstiplog   IN VARCHAR2,              -- Tipo de Log
+                                  pr_dscritic   IN VARCHAR2 DEFAULT NULL, -- Descrição do Log
+                                  pr_cdprograma IN VARCHAR2               -- Código da rotina
+                                  )
+  IS
+  -----------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_controla_log_batch
+  --  Sistema  : Rotina para gravar os arquivos em ZIP
+  --  Sigla    : CRED
+  --  Autor    : Cesar Belli - Envolti 
+  --  Data     : Agosto/2017.                   Ultima atualizacao: 07/08/2017
+  --  Chamado  : 669487/719114.
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Rotina executada em qualquer frequencia.
+  -- Objetivo  : Controla log em banco de dados.
+  --
+  -- Alteracoes:  
+  --             
+  ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    vr_tpocorrencia       tbgen_prglog_ocorrencia.tpocorrencia%type;
+    --
+  BEGIN         
+    IF pr_dstiplog IN ('O', 'I', 'F') THEN
+      vr_tpocorrencia     := 4; 
+    ELSE
+      vr_tpocorrencia     := 2; 
+    END IF;      
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdprograma    => NVL(pr_cdprograma,'CYBE0002'), 
+                           pr_cdcooper      => 3, 
+                           pr_tpexecucao    => 2, --job
+                           pr_tpocorrencia  => vr_tpocorrencia,
+                           pr_cdcriticidade => 0, --baixa
+                           pr_dsmensagem    => pr_dscritic,                             
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => NULL);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => 3);                                                             
+  END pc_controla_log_batch;
+    
 END  CYBE0002;
 /
