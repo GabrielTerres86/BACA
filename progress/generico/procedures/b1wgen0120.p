@@ -4102,7 +4102,7 @@ PROCEDURE Valida_Dados:
             DO:
                 FIND LAST crapbcx WHERE 
                           crapbcx.cdcooper = par_cdcooper AND
-                          crapbcx.dtmvtolt = par_dtmvtolt AND
+                          crapbcx.dtmvtolt = par_dtmvtolx AND
                           crapbcx.cdagenci = par_cdagencx AND
                           crapbcx.nrdcaixa = par_nrdcaixx AND
                           crapbcx.cdopecxa = par_cdopecxa AND
