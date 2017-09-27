@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 12/12/2016
+   Data    : 20/11/2006                        Ultima atualizacao: 17/08/2017
 
    Dados referentes ao programa:
 
@@ -188,17 +188,27 @@
                07/03/2016 - #407136 - Incluido novo filtro ao verificar se o operador
                             pertence a forca tarefa da VIACREDI. Estava considerando de forma
                             parcial (Ex: Operador 294 e 2941). (Heitor - RKAM)
-                            
+
                30/05/2016 - Adicionado campo de codigo identificador no layout do BB
                             nas procedures gerar_compel_prcctl, gerar_compel_dscchq,
                             gerar_compel_custodia, gerar_compel, gerar_digita e 
-                            gerar_compel_altoVale (Douglas - Chamado 445731)
+                            gerar_compel_altoVale (Douglas - Chamado 445731) 
 
 			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
 							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
 							SD 476097. Carlos Rafael Tanholi.
 
+               04/11/2016 - Cheques custodiados deverao ter o numero do bordero
+                            igual a zero. (Projeto 300 - Rafael) 							
+
                12/12/2016 - Ajuste gerar_titulo Nova Plataforma de Cobrana. PRJ340 - NPC (Odirlei-AMcom)
+               
+               23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)                            
+               
+               31/05/2017 - Ajustado código da agencia do PA ao enviar arquivo COB605. (Rafael)
+               
+               17/08/2017 - #738442 Retiradas as mensagens informativas 
+                            "Verificando registros para geracao de arquivo(s)" (Carlos)
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -874,8 +884,6 @@ PROCEDURE gerar_doctos:
    DEF VAR glb_dsdctitg AS CHAR                                       NO-UNDO.
    DEF VAR glb_stsnrcal AS LOGICAL                                    NO-UNDO.
    DEF VAR aux_flgerror AS LOGICAL                                    NO-UNDO.
-   DEF VAR aux_contador AS INTE                                       NO-UNDO.
-
 
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
@@ -893,8 +901,7 @@ PROCEDURE gerar_doctos:
 
    /* Contadores de arquivo e registros */
    ASSIGN ret_qtarquiv = 0
-          ret_totregis = 0
-          aux_contador = 0.
+          ret_totregis = 0.
 
     FOR EACH craptvl WHERE craptvl.cdcooper  = par_cdcooper    AND
                           craptvl.dtmvtolt  = par_dtmvtolt    AND
@@ -908,13 +915,6 @@ PROCEDURE gerar_doctos:
                           BREAK BY craptvl.cdagenci
                                 BY craptvl.cdbccrcb :
 
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
-
-       
        IF   FIRST-OF(craptvl.cdagenci)  THEN
             DO:
                 ASSIGN aux_qtregarq = 0
@@ -1263,7 +1263,6 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_cdfatven AS DEC                                        NO-UNDO.
    DEF VAR aux_cdsituac AS INT                                        NO-UNDO.
    DEF VAR aux_nrdahora AS INT                                        NO-UNDO.
-   DEF VAR aux_contador AS INT                                        NO-UNDO.
    DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
    DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
    
@@ -1272,8 +1271,7 @@ PROCEDURE gerar_titulo:
    ASSIGN aux_qttitcxa = 0
           aux_qttitprg = 0
           aux_vltitcxa = 0
-          aux_vltitprg = 0
-          aux_contador = 0.
+          aux_vltitprg = 0.
 
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper 
                       NO-LOCK NO-ERROR.
@@ -1313,12 +1311,6 @@ PROCEDURE gerar_titulo:
                           NO-LOCK BREAK BY craptit.cdagenci
                                          BY craptit.cdbccxlt 
                                           BY craptit.nrdolote: 
-
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
 
        IF FIRST-OF(craptit.cdagenci) THEN
           DO:
@@ -1526,7 +1518,7 @@ PROCEDURE gerar_titulo:
               " "                    FORMAT "x(18)"         /* Filler */    
               aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
               aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"
+              aux_tpdocmto           FORMAT "x(3)"              
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
@@ -1551,7 +1543,8 @@ PROCEDURE gerar_titulo:
               "0001"                 FORMAT "x(4)"     /* VERSAO */
               aux_nrsqarhd           FORMAT "9999999999"
               aux_tpdocmto           FORMAT "x(3)"
-              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */                           aux_nrseqarq           FORMAT "9999999999"
+              FILL(" ",34)           FORMAT "x(34)"    /* FILLER */
+              aux_nrseqarq           FORMAT "9999999999"
               SKIP.*/
        ELSE
           PUT STREAM str_1
@@ -1560,7 +1553,7 @@ PROCEDURE gerar_titulo:
               crapage.cdcomchq       FORMAT "999"
               aux_tpcaptur           FORMAT "9"             /* Tipo de captura */ 
               " "                    FORMAT "x(6)"          /* Filler */    
-              crapcop.cdagectl       FORMAT "9999"
+              crapage.cdagepac       FORMAT "9999"          /* Agencia remetente */
               aux_nrdolote           FORMAT "9999999"       /* NUMERO LOTE */
               aux_nrseqdig           FORMAT "999"           /* SEQ NO LOTE */
               YEAR(par_dtmvtolt)     FORMAT "9999"          /* DATA FORMATO */
@@ -1571,9 +1564,9 @@ PROCEDURE gerar_titulo:
               "0000001"              FORMAT "x(7)"       /* VERSAO */
               aux_nrsqarhd           FORMAT "9999999999" /* SEQ. do arquivo troca */
               " "                    FORMAT "x(18)"         /* Filler */    
-              aux_nrispbif_rem       FORMAT "99999999"   /* ISPB recebedor   */
-              aux_nrispbif           FORMAT "99999999"    /* ISPB favorecido  */                          
-              aux_tpdocmto           FORMAT "x(3)"
+              aux_nrispbif_rem       FORMAT "99999999"      /* ISPB recebedor   */
+              aux_nrispbif           FORMAT "99999999"      /* ISPB favorecido  */                          
+              aux_tpdocmto           FORMAT "x(3)"              
               aux_nrseqarq           FORMAT "9999999999"
               SKIP.
               
@@ -1655,7 +1648,8 @@ PROCEDURE gerar_titulo:
                   YEAR(par_dtmvtolt)   FORMAT "9999"   /* DATA FORMATO */
                   MONTH(par_dtmvtolt)  FORMAT "99"     /* YYYYMMDD*/
                   DAY(par_dtmvtolt)    FORMAT "99"
-                  aux_vltotarq * 100   FORMAT "99999999999999999" /* VL Arq */                    FILL(" ",41)         FORMAT "x(41)"  /* FILLER */
+                  aux_vltotarq * 100   FORMAT "99999999999999999" /* VL Arq */
+                  FILL(" ",41)         FORMAT "x(41)"  /* FILLER */
                   aux_nrispbif_rem     FORMAT "99999999"   /* ISPB Remetente*/  
                   FILL(" ",11)         FORMAT "x(11)"  /* FILLER */
                   aux_nrseqarq         FORMAT "9999999999"  /* SEQUENCIA */
@@ -2546,6 +2540,7 @@ PROCEDURE gerar_digita:
                                       crapcst.dtlibera > aux_dtliber1  AND
                                       crapcst.dtlibera <= aux_dtliber2 AND
                                       crapcst.insitprv = 0             AND
+                                      crapcst.nrborder = 0             AND                                      
                                     ((par_cdagenci <> 0                AND
                                       crapcst.cdagenci = par_cdagenci) OR
                                       par_cdagenci = 0)                AND
@@ -3970,8 +3965,6 @@ PROCEDURE gerar_compel_prcctl:
             RETURN.
         END.
 
-   ASSIGN aux_contador = 0.
-
    FOR EACH crapchd WHERE crapchd.cdcooper  = par_cdcooper       AND
                           crapchd.dtmvtolt  = par_dtmvtolt       AND
                           crapchd.cdagenci >= par_cdageini       AND
@@ -3981,12 +3974,6 @@ PROCEDURE gerar_compel_prcctl:
                           crapage.cdagenci  = crapchd.cdagenci   AND
                           crapage.cdbanchq  = crapcop.cdbcoctl
                           NO-LOCK BREAK BY crapchd.cdagenci:
-
-       ASSIGN aux_contador = aux_contador + 1.
-
-       MESSAGE "Verificando registros para geracao de arquivo(s) (" +
-                STRING(aux_contador) + ")... Cooperativa: " + 
-                STRING(par_cdcooper).
 
        IF   FIRST-OF(crapchd.cdagenci)  THEN
             DO:
@@ -4762,7 +4749,8 @@ PROCEDURE gerar_tic604:
 
     /* Cheques - Custodia - Nao Enviados e Situacao 0 ou 2  - Inclusao */
     FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper     AND
-                           crapcst.dtmvtolt = crapdat.dtmvtoan
+                           crapcst.dtmvtolt = crapdat.dtmvtoan AND
+                           crapcst.nrborder = 0                
                            NO-LOCK:
         
         DO aux_contador2 = 1 TO 10:
@@ -4845,7 +4833,8 @@ PROCEDURE gerar_tic604:
 
     /* Cheques - Custodia - Ja Enviados e Situacao 1  - Exclusao */
     FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper     AND
-                           crapcst.dtdevolu = crapdat.dtmvtoan
+                           crapcst.dtdevolu = crapdat.dtmvtoan AND
+                           crapcst.nrborder = 0
                             NO-LOCK:
          
         DO aux_contador2 = 1 TO 10:
@@ -5997,7 +5986,8 @@ PROCEDURE reativar_tic604:
    /* Cheques - Custodia - Nao Enviados e Situacao 0 ou 2  - Inclusao */
    FOR EACH crapcst WHERE crapcst.cdcooper = par_cdcooper      AND
                           crapcst.dtmvtolt = crapdat.dtmvtoan  AND
-                          crapcst.dtenvtic = crapdat.dtmvtolt
+                          crapcst.dtenvtic = crapdat.dtmvtolt  AND
+                          crapcst.nrborder = 0
                           NO-LOCK:
       
        DO aux_contador2 = 1 TO 10:
