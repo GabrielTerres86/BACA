@@ -103,7 +103,10 @@
 
                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                             Projeto 339 - CRM. (Lombardi)
-                            
+               
+               16/08/2017 - Ajuste realizado para que ao informar cep 0 no endereço do tipo (13,14)
+							 e exista registro na crapenc, deletamos o mesmo. (Kelvin/Andrino)
+
                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                             o idseqttl como zero (Luacas Ranghetti #756813)
 .............................................................................*/
@@ -1705,6 +1708,21 @@ PROCEDURE alterar-endereco:
                            VALIDATE crapenc.
                         END.
                 END.
+			ELSE
+			   DO:
+			   
+			      IF (aux_tpendass = 13   OR 
+					 aux_tpendass = 14)  AND
+					 par_nrcepend = 0    THEN
+				     DO:
+					    
+						DELETE crapenc.
+						
+					    aux_flgtrans = TRUE.
+						LEAVE TRANS_ENDERECO.
+				     END.	
+			   
+			   END.
 
             LEAVE.
 
