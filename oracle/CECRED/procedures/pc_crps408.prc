@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                  Ultima atualizacao: 24/04/2017
+   Data    : Setembro/2004.                  Ultima atualizacao: 26/09/2017
 
    Dados referentes ao programa:
 
@@ -182,6 +182,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
                24/07/2017 - Alterar cdoedptl para idorgexp.
                             PRJ339-CRM  (Odirlei-AMcom)
+
+			   26/09/2017 - Ajuste para alimentar corretamente a vr_nmsegtal, 
+			                para evitar que impacte no layout dos arquivos
+							(Adriano - SD 762235).
+ 
 ............................................................................. */
 
   -- Data do movimento
@@ -1023,7 +1028,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
             CLOSE cr_crapjur;
 
-            vr_nmsegtal := '';
+            vr_nmsegtal := ' ';
 
           END IF;
 
