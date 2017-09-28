@@ -268,6 +268,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --
   --              06/02/2017 - Projeto 319 - Envio de SMS para boletos de cobranca (Andrino - Mout's)
   --
+  --              25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --			               crapass, crapttl, crapjur 
+  --						  (Adriano - P339).
+  --
   --              12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
   --
   --              23/06/2017 - Na rotina pc_inst_alt_dados_arq_rem_085 foi alterado para fechar o cursor correto
@@ -383,7 +387,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           ,ass.nrcpfcgc
           ,ass.inpessoa
           ,ass.cdcooper
-          ,ass.nrcpfstl
           ,ass.cdagenci
           ,ass.nrctacns
           ,ass.idastcjt
@@ -8357,8 +8360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
 
         -- Recusar a instrucao
-        vr_dscritic := 'Excedido prazo cancelamento da instrucao automatica de negativacao! ' ||
-                       'Negativacao Serasa nao efetuada!';
+        vr_dscritic := 'Excedido prazo cancelamento da instrucao automatica de negativacao! Canc instr negativacao nao efetuado!';
         RAISE vr_exc_erro;        
       END IF;
       
@@ -8382,8 +8384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
 
         -- Recusar a instrucao
-        vr_dscritic := 'Titulo ja enviado para Negativacao. ' ||
-                       'Negativacao Serasa nao efetuada!';
+        vr_dscritic := 'Titulo ja enviado para Negativacao! Canc instr negativacao nao efetuado!';
         RAISE vr_exc_erro;        
       END IF;
                 
