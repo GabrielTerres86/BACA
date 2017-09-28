@@ -245,8 +245,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
               26/05/2017 - Incluido tratamento para cdrefere da linha F para
                            AGUAS DE GUARAMIRIM (Tiago/Fabricio #640336)
                            
+              26/06/2017 - Incluido tratamento para cdrefere da linha F para
+                           SANEPAR (Tiago/Fabricio #640336)                           
+
               04/07/2017 - Incluir nvl para a varial vr_vrlanmto pois se o valor estivesse
                            vazio ia dar pau no programa (Lucas Ranghetti #706349)
+             
+              16/08/2017 - Aumentar o format da referencia para 23 posições (Lucas Ranghetti #681634)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -1167,7 +1172,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,108) THEN  
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,101,108) THEN  
 
             vr_dslinreg := 'F' 
                     || to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1355,7 +1361,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
         /* 53 - Foz do Brasil */
         /* 54 - AGUAS DE MASSARANDUBA */  
 		  /* 108 - AGUAS DE GUARAMIRIM */
-          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,108) THEN        
+          /* 101 - SANEPAR */
+          ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,101,108) THEN        
           -- Enviar linha ao arquivo 
           vr_dslinreg := 'F'
                       ||to_char(rw_crapatr.cdrefere,'fm00000000')
@@ -1485,8 +1492,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           -- Todos outros casos 
           -- Enviar linha ao arquivo 
           vr_dslinreg := 'F'
-                      ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
-                      ||LPAD(' ',3,' ')
+                        ||to_char(rw_crapatr.cdrefere,'fm00000000000000000000000')
+                        ||LPAD(' ',2,' ')
                       ||to_char(vr_nragenci,'fm0000')
                       ||RPAD(vr_nrdconta,14,' ')
                       ||vr_dtmvtolt
