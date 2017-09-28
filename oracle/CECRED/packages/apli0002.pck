@@ -5249,6 +5249,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            -- Apenas fechar o cursor
            CLOSE cr_crapsli;
         END IF;
+
+        -- Demetrius - Melhoria 460
+        BEGIN
+          UPDATE crapsli ci
+          SET ci.vlsddisp = greatest(0,ci.vlsddisp - pr_vllanmto)
+          WHERE ci.cdcooper = pr_cdcooper
+            AND ci.nrdconta = pr_nrdconta
+            AND TO_CHAR(ci.dtrefere,'MM') = TO_CHAR(last_day(pr_dtmvtolt),'MM')
+            AND TO_CHAR(ci.dtrefere,'RRRR') = TO_CHAR(last_day(pr_dtmvtolt),'RRRR');
+        EXCEPTION
+          WHEN others THEN
+             -- Monta critica
+             vr_cdcritic := NULL;
+             vr_dscritic := 'Erro ao atualizar CRAPSLI: ' || SQLERRM;
+               
+             -- Gera exceção
+             RAISE vr_exc_erro;
+        END;
         
         BEGIN
           UPDATE craplot
