@@ -121,7 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Sidnei - Precise
-   Data    : Abril/2008                        Ultima atualizacao: 14/12/2016
+   Data    : Abril/2008                        Ultima atualizacao: 04/09/2017
    Dados referentes ao programa:
 
    Frequencia: Anual (Batch)
@@ -230,6 +230,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                23/03/2017 - Alterada chamada da procedure de imunidade tributária para
                             evitar nova leitura na crapass (Rodrigo)
                             
+               04/09/2017 - Mudanca para calcular tambem no ultimo dia util do ano
+                            M439 (Tiago/Thiago #635669).             
 ............................................................................. */
 
       -- Código do programa
@@ -244,6 +246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       -- Variaveis gerais
       vr_dstextab craptab.dstextab%TYPE;
       vr_inprvdef PLS_INTEGER;
+      vr_flultdia BOOLEAN;
       --vr_ininccmi PLS_INTEGER;
       vr_increret PLS_INTEGER;
       vr_txdretor NUMBER(17,10);
@@ -297,8 +300,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       vr_vljuraut NUMBER(17,2) :=0;
       vr_vlbasjur NUMBER(17,2) :=0;
       vr_vljurcap NUMBER(17,2) :=0;
+      aux_vljurcap NUMBER(17,2) :=0;
       vr_vlmedcap NUMBER(17,2) :=0;
       vr_vldeirrf NUMBER(17,2) :=0;
+      aux_vldeirrf NUMBER(17,2) :=0;
       vr_vlprirrf tbcotas_faixas_irrf.vlpercentual_irrf%type;
       vr_vljursdm NUMBER(17,2) :=0;
       vr_flgimune BOOLEAN;
@@ -456,10 +461,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           FROM crapass
          WHERE cdcooper = pr_cdcooper
            AND EXISTS(SELECT 1 
-                        FROM crapdir 
-                       WHERE crapass.cdcooper = crapdir.cdcooper
-                         AND crapass.nrdconta = crapdir.nrdconta
-                         AND crapdir.dtmvtolt = pr_dtmvtolt);
+                        FROM crapsld 
+                       WHERE crapass.cdcooper = crapsld.cdcooper
+                         AND crapass.nrdconta = crapsld.nrdconta);
       TYPE typ_tab_crapass 
         IS TABLE OF cr_crapass_carga%ROWTYPE 
           INDEX BY PLS_INTEGER;
@@ -490,6 +494,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
            AND crapdir.dtmvtolt = pr_dtmvtolt
            AND crapcot.cdcooper = crapdir.cdcooper
            AND crapcot.nrdconta = crapdir.nrdconta;
+           
+      -- Cursor com informacoes referentes a cotas e recursos
+      CURSOR cr_crapcot2 IS
+        SELECT crapcot.cdcooper
+              ,crapcot.nrdconta
+              ,crapcot.qtraimfx
+              ,crapcot.vldcotas
+              ,crapcot.vlrearda
+              ,crapcot.vlrearpp
+              ,crapcot.vlpvardc
+              ,crapcot.ROWID nrrowid
+              ,0 smposano
+              ,crapcot.vlcapmes##1 + crapcot.vlcapmes##2 + crapcot.vlcapmes##3 + crapcot.vlcapmes##4 +  crapcot.vlcapmes##5 +  crapcot.vlcapmes##6 +
+               crapcot.vlcapmes##7 + crapcot.vlcapmes##8 + crapcot.vlcapmes##9 + crapcot.vlcapmes##10 + crapcot.vlcapmes##11 + crapcot.vldcotas vlcapmes
+              ,crapass.dtdemiss dtdemiss 
+              ,0 smposano##12
+              ,crapcot.vldcotas vlcapmes##12
+              ,crapcot.vlrenrda##12
+              ,crapcot.vlrenrpp_ir##12
+          FROM crapcot,
+               crapass
+         WHERE crapcot.cdcooper = pr_cdcooper
+           AND crapcot.cdcooper = crapass.cdcooper
+           AND crapcot.nrdconta = crapass.nrdconta;
+           
       /* Armazenar em PLTABLE com Bulk */     
       TYPE typ_tab_crapcot IS 
         TABLE OF cr_crapcot%ROWTYPE
@@ -718,7 +747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           pr_vlprirrf := 0;
         ELSE
           -- Efetuaremos o calculo 
-          pr_vldeirrf := GREATEST(TRUNC((vr_vljurcap * (vr_regist.vlpercent/100)) - vr_regist.vldeducao, 2),0);
+          pr_vldeirrf := GREATEST(TRUNC((pr_vljurcap * (vr_regist.vlpercent/100)) - vr_regist.vldeducao, 2),0);
           pr_vlprirrf := vr_regist.vlpercent;
         END IF;
       EXCEPTION
@@ -726,6 +755,100 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           pr_vldeirrf := -1;  -- Rotinas chamadoras tratarão -1 como retorno com erro
           pr_vlprirrf := 0;
       END;                  
+
+      --busca e soma os valores dos lancamentos com historico especifico na CRAPLCT
+      PROCEDURE pc_busca_soma_hist(pr_cdcooper IN  crapcop.cdcooper%TYPE
+                                  ,pr_nrdconta IN  crapass.nrdconta%TYPE
+                                  ,pr_cdhistor IN  craphis.cdhistor%TYPE
+                                  ,pr_vlrtotal OUT NUMBER
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE
+                                  ,pr_dscritic OUT crapcri.dscritic%TYPE) IS      
+      
+        vr_exc_erro EXCEPTION;
+      
+        CURSOR cr_craphis(pr_cdcooper craphis.cdcooper%TYPE
+                         ,pr_cdhistor craphis.cdhistor%TYPE) IS
+          SELECT *
+            FROM craphis
+           WHERE craphis.cdcooper = pr_cdcooper
+             AND craphis.cdhistor = pr_cdhistor;
+        rw_craphis cr_craphis%ROWTYPE;
+             
+        CURSOR cr_lanlct(pr_cdcooper crapcop.cdcooper%TYPE
+                         ,pr_nrdconta crapass.nrdconta%TYPE
+                         ,pr_cdhistor craphis.cdhistor%TYPE
+                         ,pr_dtiniper crapdat.dtmvtolt%TYPE
+                         ,pr_dtfimper crapdat.dtmvtolt%TYPE) IS
+          SELECT NVL(SUM(craplct.vllanmto),0) vlrtotal
+            FROM craplct
+           WHERE craplct.cdcooper = pr_cdcooper
+             AND craplct.nrdconta = pr_nrdconta
+             AND craplct.cdhistor = pr_cdhistor
+             AND craplct.dtmvtolt BETWEEN pr_dtiniper AND pr_dtfimper;
+        rw_lanlct cr_lanlct%ROWTYPE;     
+        
+        CURSOR cr_perdat(pr_cdcooper crapcop.cdcooper%TYPE) IS
+          SELECT crapdat.dtmvtolt
+            FROM crapdat
+           WHERE crapdat.cdcooper = pr_cdcooper;
+        rw_perdat cr_perdat%ROWTYPE;
+        
+      BEGIN
+        pr_vlrtotal := 0;  
+      
+        OPEN cr_perdat(pr_cdcooper => pr_cdcooper);
+        FETCH cr_perdat INTO rw_perdat;
+
+        IF cr_perdat%NOTFOUND THEN
+           CLOSE cr_perdat;
+           pr_cdcritic := 0;
+           pr_dscritic := 'Data da cooperativa nao encontrada.';
+           RAISE vr_exc_erro;
+        END IF;
+        
+        CLOSE cr_perdat;        
+      
+        OPEN cr_craphis(pr_cdcooper => pr_cdcooper
+                       ,pr_cdhistor => pr_cdhistor);
+        FETCH cr_craphis INTO rw_craphis;
+        
+        IF cr_craphis%NOTFOUND THEN
+           CLOSE cr_craphis;
+           pr_cdcritic := 0;
+           pr_dscritic := 'Historico nao encontrado.';
+           RAISE vr_exc_erro;
+        END IF;
+        
+        CLOSE cr_craphis;
+        
+        OPEN cr_lanlct(pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta
+                      ,pr_cdhistor => pr_cdhistor
+                      ,pr_dtiniper => TO_DATE('0101'||TO_CHAR(rw_perdat.dtmvtolt,'RRRR'),'DDMMRRRR')   --Primeiro dia do ano
+                      ,pr_dtfimper => TO_DATE('3112'||TO_CHAR(rw_perdat.dtmvtolt,'RRRR'),'DDMMRRRR')); --Ultimo dia do ano
+        FETCH cr_lanlct INTO rw_lanlct;
+
+        IF cr_lanlct%NOTFOUND THEN
+           CLOSE cr_lanlct;
+           pr_cdcritic := 0;
+           pr_dscritic := 'Lancamentos nao encontrados.';
+           RAISE vr_exc_erro;
+        END IF;
+        
+        CLOSE cr_lanlct;
+        
+        
+        pr_vlrtotal := rw_lanlct.vlrtotal;        
+        
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          ROLLBACK;
+        WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          pr_dscritic := 'Erro geral na rotina pc_busca_soma_hist, detalhes: '||SQLERRM;
+          ROLLBACK;
+      END pc_busca_soma_hist;
+
 
     BEGIN -- Rotina principal
 
@@ -767,13 +890,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         CLOSE btch0001.cr_crapdat;
         -- Guardar dia atual
         vr_dtmvtolt := rw_crapdat.dtmvtolt;
+        
+        
+        IF vr_dtmvtolt = gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
+                                                     pr_dtmvtolt => TO_DATE('31/12'||TO_CHAR(vr_dtmvtolt,'RRRR'),'DD/MM/RRRR'), 
+                                                     pr_tipo     => 'A') THEN
         -- Busca o ultimo dia util do ano anterior
+          vr_dtmvtaan := vr_dtmvtolt;
+          -- Montagem das datas para busca das informações
+          vr_dtliminf := to_date('3112'||(to_char(vr_dtmvtolt,'YYYY')-1),'DDMMYYYY'); -- Busca o ultimo dia do ano de dois anos atras
+          vr_dtlimsup := TO_DATE('0101'||(TO_CHAR(vr_dtmvtolt,'YYYY')+1),'DDMMYYYY'); -- Pega o primeiro dia do ano
+          vr_flultdia := TRUE;
+                                                     
+        ELSE
+          -- Busca o ultimo dia util do ano anterior
         vr_dtmvtaan := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                                    pr_dtmvtolt => trunc(vr_dtmvtolt,'YYYY') - 1, -- busca a data de 31/12 do ano anterior
                                                    pr_tipo     => 'A'); -- Dia anterior
         -- Montagem das datas para busca das informações
         vr_dtliminf := to_date('3112'||(to_char(vr_dtmvtolt,'YYYY')-2),'DDMMYYYY'); -- Busca o ultimo dia do ano de dois anos atras
         vr_dtlimsup := trunc(vr_dtmvtolt,'YYYY'); -- Pega o primeiro dia do ano
+          vr_flultdia := FALSE;   
+      END IF;
+        
       END IF;
 
       /*  Carrega tabela de execucao do programa lockando o registro para evitar execuções paralelas */
@@ -954,10 +1093,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         vr_tab_crapass(rw_crapass_carga.nrdconta) := rw_crapass_carga;
       END LOOP;
 
+      IF vr_flultdia = TRUE THEN
+         OPEN cr_crapcot2;
+      ELSE        
       -- Varredura das informações de Cotas dos Cooperados
       OPEN cr_crapcot(vr_dtmvtaan);
+      END IF;
+      
       LOOP 
+        IF vr_flultdia = TRUE THEN
+           FETCH cr_crapcot2 BULK COLLECT INTO vr_tab_crapcot LIMIT 2000; 
+        ELSE 
         FETCH cr_crapcot BULK COLLECT INTO vr_tab_crapcot LIMIT 2000; 
+        END IF;
+        
         EXIT WHEN vr_tab_crapcot.count = 0;
         -- Leitura da porção lida em memória
         FOR idx IN 1 .. vr_tab_crapcot.COUNT LOOP  
@@ -1082,12 +1231,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             /* Juros ao capital | IRRF s/ juros ao capita */
             IF vr_txjurcap > 0  THEN
               
+              aux_vljurcap:= 0;
+              aux_vldeirrf:= 0;              
+              
               vr_vljurcap := ROUND(vr_vlmedcap * vr_txjurcap,2);
+              
+              --Buscar lancamentos 926[JUROS CAPITAL] e 922[IR JUROS CAP]
+              pc_busca_soma_hist(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => vr_tab_crapcot(idx).nrdconta
+                                ,pr_cdhistor => 926 --> JUROS CAPITAL
+                                ,pr_vlrtotal => aux_vljurcap
+                                ,pr_cdcritic => vr_cdcritic
+                                ,pr_dscritic => vr_dscritic);
+
+              IF TRIM(vr_dscritic) IS NOT NULL THEN
+                 vr_dscritic := vr_dscritic || ' - Coop: ' || pr_cdcooper || ' - Conta: ' || vr_tab_crapcot(idx).nrdconta;
+                 RAISE vr_exc_saida;
+              END IF;
+              
               tt_vljurcap := tt_vljurcap + vr_vljurcap;
+              
+              --Buscar lancamentos 926[JUROS CAPITAL] e 922[IR JUROS CAP]
+              IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa = 1 THEN
+                
+                  pc_busca_soma_hist(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => vr_tab_crapcot(idx).nrdconta
+                                    ,pr_cdhistor => 922 --> IR JUROS CAP
+                                    ,pr_vlrtotal => aux_vldeirrf
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic);
+                                    
+                  IF TRIM(vr_dscritic) IS NOT NULL THEN
+                     vr_dscritic := vr_dscritic || ' - Coop: ' || pr_cdcooper || ' - Conta: ' || vr_tab_crapcot(idx).nrdconta;
+                     RAISE vr_exc_saida;
+                  END IF;
+                  
+              END IF;
+              
+              aux_vljurcap := aux_vljurcap + vr_vljurcap;
               
               /* Busca percentual de IRRF baseado na faixa do valor */
               pc_calcula_irrf(vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
-                             ,vr_vljurcap
+                             ,aux_vljurcap
                              ,vr_vldeirrf
                              ,vr_vlprirrf);
               -- Quando o calculo retornar -1 é pq houve erro
@@ -1096,6 +1281,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                              ' Cooperativa: ' || pr_cdcooper || '. Conta: ' || vr_tab_crapcot(idx).nrdconta || '. Tipo Pessoa: ' || vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa || '. Valor: ' || vr_vljurcap;
                 RAISE vr_exc_saida;
               END IF;
+              
+              IF aux_vldeirrf > 0 THEN
+                 vr_vldeirrf := vr_vldeirrf - aux_vldeirrf;
+              END IF; 
+              
+              aux_vldeirrf := 0;
+              aux_vljurcap := 0;
+              
               
             ELSE
               vr_vlbasjur := 0;
@@ -1428,7 +1621,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         END LOOP;/* Fim do LOOP -- leitura da pltabe vr_tab_crapcot */ 
       END LOOP; /*  Fim do LOOP --  Leitura do crapcot  */
 
+      IF cr_crapcot%ISOPEN THEN
       CLOSE cr_crapcot;      
+      END IF;        
+
+      IF cr_crapcot2%ISOPEN THEN
+         CLOSE cr_crapcot2;
+      END IF;        
 
       -- Se for processo definitivo e existirem informações na pltable      
       IF vr_inprvdef = 1 AND vr_tab_crrl048.count > 0 THEN 
@@ -2544,6 +2743,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         IF cr_crapcot%ISOPEN THEN
           CLOSE cr_crapcot;
         END IF;
+        IF cr_crapcot2%ISOPEN THEN
+          CLOSE cr_crapcot2;
+        END IF;        
         IF cr_craptab%ISOPEN THEN
           CLOSE cr_craptab;
         END IF;        
@@ -2561,6 +2763,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- fechar cursores abertos
         IF cr_crapcot%ISOPEN THEN
           CLOSE cr_crapcot;
+        END IF;
+        IF cr_crapcot2%ISOPEN THEN
+          CLOSE cr_crapcot2;
         END IF;
         IF cr_craptab%ISOPEN THEN
           CLOSE cr_craptab;

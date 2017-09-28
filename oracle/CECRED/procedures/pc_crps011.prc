@@ -18,7 +18,7 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                       Ultima atualizacao: 27/06/2016
+   Data    : Janeiro/92.                       Ultima atualizacao: 04/09/2017
 
    Dados referentes ao programa:
 
@@ -112,6 +112,8 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
 
                27/06/2016 - M325 - Tributacao Juros ao Capital (Guilherme/SUPERO)
 
+               04/09/2017 - M439 Modificado cursor cr_craplct para somar todos 
+                            lancamentos dentro do ano (Tiago/Thiago #635669)
     ............................................................................ */
 
   ------------------------------- CURSORES ---------------------------------
@@ -210,31 +212,25 @@ create or replace procedure cecred.pc_crps011 (pr_cdcooper in crapcop.cdcooper%t
   cursor cr_craplct (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrctares in crapass.nrdconta%type,
                      pr_dtmvtolt in crapdat.dtmvtolt%type) is
-    select juros.cdcooper,
+    SELECT juros.cdcooper,
            juros.nrdconta,
-           juros.dtmvtolt,
-           juros.cdhistor cdhistor_juros,
-           juros.vllanmto vllanmto_juros,
-           ir.cdhistor cdhistor_ir,
-           ir.vllanmto vllanmto_ir,
-           ir.nrdocmto
-      from craplct juros,
+           '926' cdhistor_juros,
+           SUM(juros.vllanmto) vllanmto_juros,
+           '922' cdhistor_ir,
+           SUM(ir.vllanmto) vllanmto_ir
+      FROM craplct juros,
            craplct ir
-     where juros.cdcooper = pr_cdcooper
-       and juros.nrdconta > pr_nrctares
-       and juros.cdhistor = 926
-       and trunc(juros.dtmvtolt,'yyyy') = trunc(pr_dtmvtolt, 'yyyy') --> Dentro do ano
-       -- Somente o ultimo lançamento
-       and juros.dtmvtolt = (select max(lct.dtmvtolt)
-                               from craplct lct
-                              where lct.cdcooper = juros.cdcooper
-                                and lct.nrdconta = juros.nrdconta
-                                and lct.cdhistor = juros.cdhistor)
+     WHERE juros.cdcooper = pr_cdcooper
+       AND juros.nrdconta > pr_nrctares
+       AND juros.cdhistor = 926
+       AND trunc(juros.dtmvtolt,'yyyy') = trunc(pr_dtmvtolt, 'yyyy') --> Dentro do ano
        -- Podendo ou não haver IR sobre os juros
-       and ir.cdcooper (+) = juros.cdcooper
-       and ir.nrdconta (+) = juros.nrdconta
-       and ir.dtmvtolt (+) = juros.dtmvtolt
-       and ir.cdhistor (+) = 922;
+       AND ir.cdcooper (+) = juros.cdcooper
+       AND ir.nrdconta (+) = juros.nrdconta
+       AND ir.dtmvtolt (+) = juros.dtmvtolt
+       AND ir.cdhistor (+) = 922
+    GROUP BY juros.cdcooper, juros.nrdconta, '926', '922';
+       
   -- Calcula saldo da poupanca programada
   cursor cr_craprpp (pr_cdcooper in crapcop.cdcooper%type,
                      pr_nrctares in crapass.nrdconta%type,
@@ -878,7 +874,7 @@ BEGIN
                                 vr_nrctares,
                                 rw_crapdat.dtmvtolt) loop
     vr_ind_craprda := lpad(rw_craplct.nrdconta, 10, '0');
-    vr_craprda(vr_ind_craprda).dtmvtolt       := rw_craplct.dtmvtolt;
+    vr_craprda(vr_ind_craprda).dtmvtolt       := rw_crapdat.dtmvtolt;
     vr_craprda(vr_ind_craprda).vllanmto_juros := nvl(rw_craplct.vllanmto_juros, 0);
     vr_craprda(vr_ind_craprda).vllanmto_ir    := nvl(rw_craplct.vllanmto_ir, 0);
   end loop;
