@@ -16,6 +16,10 @@
  *                             (Jaison/Anderson)
  *
  *                19/01/2016 - Alterado layout do form de conveio e adicionado lupa para o CEP. (Reinert)
+
+                  27/09/2017 - Ajute para chamar a rotina de consulta do CNAE da package zoom0001
+                              (Adriano - SD 765556).
+
  * --------------
  */
 
@@ -43,7 +47,7 @@ function acessaOpcaoAba() {
         },
 		success: function(response) {
             $('#divConteudoOpcao').html(response);
-        }
+}
     });
 }
 
@@ -126,7 +130,7 @@ function manterRotina(operacao) {
 			showError('inform',msgRetorno,'Alerta - Ayllos','bloqueiaFundo(divRotina);' + fncRetorno);
             eval(response);
 
-        }
+}
     });
 }
 
@@ -182,7 +186,7 @@ function controlaLayout(operacao) {
     rDstelefone.addClass('rotulo').css({'width': '110px'});
     rDsemail.addClass('rotulo').css({'width': '110px'});
     rDslink_google_maps.addClass('rotulo').css({'width': '110px'});
-
+	
 	cFlgconve.addClass('campo').css('width','50px');
 	cDtinicon.addClass('campo').addClass('data').css({'width':'85px'});
     cNmfantasia.addClass('campo').css({'width':'370px'}).attr('maxlength','500');
@@ -287,7 +291,7 @@ function controlaLayout(operacao) {
 			return false;
 		}
 	});
-	
+
 	
 	cIdcidade.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {
@@ -530,7 +534,7 @@ function controlaPesquisas() {
 					qtReg		= '30';
 					filtrosPesq = 'Codigo;cdcnae;60px;S;0;;descricao|CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
 					colunas     = 'Codigo;cdcnae;20%;right|CNAE;dscnae;80%;left';			
-					mostraPesquisa('MATRIC',procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
+					mostraPesquisa('ZOOM0001', procedure, titulo, qtReg, filtrosPesq, colunas, divRotina);
 					return false;
 				
                 // CEP
@@ -563,7 +567,7 @@ function controlaPesquisas() {
         procedure	= 'BUSCA_CNAE';
 		titulo      = 'CNAE';		
 		filtrosDesc = 'flserasa|2'; // 2 - Todos
-		buscaDescricao('MATRIC',procedure,titulo,$(this).attr('name'),'dscnae',$(this).val(),'dscnae',filtrosDesc,'frmConvenioCdc');
+		buscaDescricao('ZOOM0001', procedure, titulo, $(this).attr('name'), 'dscnae', $(this).val(), 'dscnae', filtrosDesc, 'frmConvenioCdc');
 		return false;
     });
 
@@ -592,11 +596,11 @@ function abreFiliais(idmatriz) {
 		success: function(response) {
 			$('#divConteudoOpcao').html(response);
             controlaLayoutTabela();
-			layoutPadrao();
-			hideMsgAguardo();
-			bloqueiaFundo(divRotina);
-			$(this).fadeIn(1000);
-			divRotina.centralizaRotinaH();
+	layoutPadrao();
+	hideMsgAguardo();
+	bloqueiaFundo(divRotina);	
+	$(this).fadeIn(1000);
+	divRotina.centralizaRotinaH(); 
 			return false;
 		}
 	});
