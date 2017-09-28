@@ -166,7 +166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                LEFT JOIN crapenc e
                       ON e.cdcooper = a.cdcooper
                      AND e.nrdconta = a.nrdconta
-                     AND e.idseqttl = 1               
+                     AND e.idseqttl = 1
+                     AND e.tpendass = DECODE(a.inpessoa, 1, 10, 2, 9, 3, 9)               
                LEFT JOIN gnetcvl z
                       ON z.cdestcvl = t.cdestcvl
                LEFT JOIN craptab s
@@ -177,8 +178,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                       ON r.cdseteco = j.cdseteco
                      AND r.cdrmativ = j.cdrmativ
                    WHERE a.cdcooper = pr_cdcooper
-                     AND a.nrdconta = pr_nrdconta
-                     AND e.tpendass = DECODE(a.inpessoa, 1, 10, 2, 9);
+                     AND a.nrdconta = pr_nrdconta;
+                     
           rw_titular cr_titular%ROWTYPE;
 
           -- Retorna dados dos demais titulares da conta
