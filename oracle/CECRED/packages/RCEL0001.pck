@@ -2153,7 +2153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					DELETE FROM tbrecarga_operacao WHERE idoperacao = rw_operacao.idoperacao;
 					-- Efetuar commit
 					COMMIT;
-        END IF;
+				END IF;
 				-- Gerar log
 				pc_gera_log_erro(pr_cdcooper => pr_cdcooper
 												,pr_nrdconta => pr_nrdconta
@@ -2234,14 +2234,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
         -- Valor do repasse
         vr_vlrepasse := pr_vlrecarga - vr_vrreceita;
       
-					-- Apenas atualiza operação de recarga
-					UPDATE tbrecarga_operacao
-						 SET dsnsu_operadora = vr_nsuoperadora
-								,dsnsu_tendencia = vr_nsutendencia
+				-- Apenas atualiza operação de recarga
+				UPDATE tbrecarga_operacao
+					 SET dsnsu_operadora = vr_nsuoperadora
+							,dsnsu_tendencia = vr_nsutendencia
 							,insit_operacao  = 2 -- Processado
-								,dtdebito        = rw_crapdat.dtmvtocd
-                ,dtrepasse       = vr_dtrepasse 
-                ,vlrepasse       = vr_vlrepasse
+							,dtdebito        = rw_crapdat.dtmvtocd
+							,dtrepasse       = vr_dtrepasse 
+							,vlrepasse       = vr_vlrepasse
 					 WHERE idoperacao = rw_operacao.idoperacao;
 				
 				-- Buscar sequence
@@ -4310,7 +4310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_index    VARCHAR2(100);
       vr_vldinami VARCHAR2(1000);
       vr_dsdmensg VARCHAR2(1000);
-			
+      
       -- Variaveis de critica
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -4491,7 +4491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_dsprotoc  => vr_dsprotoc
                                   ,pr_cdcritic  => vr_cdcritic
                                   ,pr_dscritic  => vr_dscritic);
-																	
+        
         vr_index := rpad(rw_tbrecarga.cdcanal,2,'#')||  --dsorigem
                     lpad(rw_crapass.cdagenci,10,'0')||  --cdagenci
                     lpad(rw_crapass.nrdconta,10,'0')||  --nrdconta
@@ -4574,6 +4574,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 
 							ELSE -- Senão tratar erro genérico
 								-- Erros validados pelo sistema da CECRED
+								vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+															 '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+															 '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+															 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+															 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
 															 '#Motivo#=Não foi possível efetuar a recarga.';
 							END IF;
 						ELSE
