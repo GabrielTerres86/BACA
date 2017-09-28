@@ -35,6 +35,8 @@
 *
 *
 *			     15/07/2016 - Incluir flg de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
+*
+*				 26/09/2017 - Correcao no label do campo dtdemis. SD 761666 (Carlos Rafael Tanholi)
 */	
 
 //recupera tag com a conta consorcio
@@ -185,14 +187,14 @@ $vr_nrctacns = getByTagName($registro,'nrctacns');
 		<label for="dtabtcoo">Como Cooperado => Abertura:</label>
 		<input name="dtabtcoo" id="dtabtcoo" type="text" value="<? echo getByTagName($registro,'dtabtcoo') ?>" />
 		
-		<label for="dtelimin"><? echo utf8ToHtml('Demissão:') ?></label>
+		<label for="dtelimin">Encerramento:</label>
 		<input name="dtelimin" id="dtelimin" type="text" value="<? echo getByTagName($registro,'dtelimin') ?>" />
 		<br />
 		
 		<label for="dtabtcct">Como Correntista => Abertura:</label>
 		<input name="dtabtcct" id="dtabtcct" type="text" value="<? echo getByTagName($registro,'dtabtcct') ?>" />		
 		
-		<label for="dtdemiss">Encerramento:</label>
+		<label for="dtdemiss">Demiss&atilde;o:</label>
 		<input name="dtdemiss" id="dtdemiss" type="text" value="<? echo getByTagName($registro,'dtdemiss') ?>" />
 	</fieldset>
 	
