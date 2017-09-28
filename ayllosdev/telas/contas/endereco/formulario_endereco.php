@@ -9,7 +9,6 @@
  * --------------
  * 001: [05/07/2011] Henrique Pettenuci - Adicionado os campos nrdoapto e cddbloco.
  * 002: [04/08/2015] Gabriel (Rkam)	    - Reformulacao cadastral.
- * 003: [27/09/2017] Kelvin  (CECRED)	- Removido campos nrdoapto, cddbloco e nrcxapst (PRJ339).
  */	 
 ?>
 <form name="frmEndereco" id="frmEndereco" class="formulario">
@@ -54,12 +53,19 @@
 		
 		<label for="complend"><? echo utf8ToHtml('Compl.:') ?></label>
 		<input name="complend" id="complend" type="text" value="<? echo getByTagName($endereco,'complend') ?>" />
-
+			
+		<label for="nrdoapto"><? echo utf8ToHtml('Apto.:') ?></label>
+		<input name="nrdoapto" id="nrdoapto" type="text" value="<? echo getByTagName($endereco,'nrdoapto') ?>" />
+		
+		<label for="cddbloco"><? echo utf8ToHtml('Bloco:') ?></label>
+		<input name="cddbloco" id="cddbloco" type="text" value="<? echo getByTagName($endereco,'cddbloco') ?>" />
 		<br />
 		
 		<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 		<input name="nmbairro" id="nmbairro" type="text" value="<? echo getByTagName($endereco,'nmbairro') ?>" />								
 		
+		<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
+		<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo getByTagName($endereco,'nrcxapst') ?>" />		
 		<br />	
 		
 		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
@@ -99,11 +105,18 @@
 		<label for="complend"><? echo utf8ToHtml('Compl.:') ?></label>
 		<input name="complend" id="complend" type="text" value="<? echo getByTagName($enderecoCorrespondencia,'complend') ?>" />
 			
+		<label for="nrdoapto"><? echo utf8ToHtml('Apto.:') ?></label>
+		<input name="nrdoapto" id="nrdoapto" type="text" value="<? echo getByTagName($enderecoCorrespondencia,'nrdoapto') ?>" />
+		
+		<label for="cddbloco"><? echo utf8ToHtml('Bloco:') ?></label>
+		<input name="cddbloco" id="cddbloco" type="text" value="<? echo getByTagName($enderecoCorrespondencia,'cddbloco') ?>" />
 		<br />
 		
 		<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 		<input name="nmbairro" id="nmbairro" type="text" value="<? echo getByTagName($enderecoCorrespondencia,'nmbairro') ?>" />								
 		
+		<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
+		<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo getByTagName($enderecoCorrespondencia,'nrcxapst') ?>" />		
 		<br />	
 		
 		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
@@ -142,12 +155,19 @@
 		
 		<label for="complend"><? echo utf8ToHtml('Compl.:') ?></label>
 		<input name="complend" id="complend" type="text" value="<? echo getByTagName($enderecoComplementar,'complend') ?>" />
-
+			
+		<label for="nrdoapto"><? echo utf8ToHtml('Apto.:') ?></label>
+		<input name="nrdoapto" id="nrdoapto" type="text" value="<? echo getByTagName($enderecoComplementar,'nrdoapto') ?>" />
+		
+		<label for="cddbloco"><? echo utf8ToHtml('Bloco:') ?></label>
+		<input name="cddbloco" id="cddbloco" type="text" value="<? echo getByTagName($enderecoComplementar,'cddbloco') ?>" />
 		<br />
 		
 		<label for="nmbairro"><? echo utf8ToHtml('Bairro:') ?></label>
 		<input name="nmbairro" id="nmbairro" type="text" value="<? echo getByTagName($enderecoComplementar,'nmbairro') ?>" />								
 		
+		<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
+		<input name="nrcxapst" id="nrcxapst" type="text" value="<? echo getByTagName($enderecoComplementar,'nrcxapst') ?>" />		
 		<br />	
 		
 		<label for="nmcidade"><? echo utf8ToHtml('Cidade:') ?></label>
