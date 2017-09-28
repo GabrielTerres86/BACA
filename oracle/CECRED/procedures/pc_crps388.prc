@@ -1504,31 +1504,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                       ||rpad(rw_craplau.cdseqtel,60,' ')
                       ||RPAD(' ',20,' ')||'0';
         ELSIF rw_gnconve.cdconven = 112 THEN -- chubb seguros
-              vr_dslinreg := 'F'
-                    || to_char(rw_crapatr.cdrefere,'fm00000000000000000000000')
-                    || RPAD(' ',2,' ') 
-                    || to_char(vr_nragenci,'fm0000') 
-                    || RPAD(vr_nrdconta,14,' ') 
-                    || vr_dtmvtolt 
-                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                    || '00' 
-                    || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
-                    || RPAD(' ',4,' ') || '0';
+          -- Enviar linha ao arquivo 
+          vr_dslinreg := 'F'
+                      ||to_char(rw_crapatr.cdrefere,'fm00000000000000000000000')
+                      ||LPAD(' ',2,' ')
+                      ||to_char(vr_nragenci,'fm0000')
+                      ||RPAD(vr_nrdconta,14,' ')
+                      ||vr_dtmvtolt
+                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                      ||'00'
+                      ||rpad(rw_craplau.cdseqtel,60,' ')
+                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                      ||RPAD(' ',12,' ')||'0';                
           ELSE
+            -- Todos outros casos 
+            -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
-                    || to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
-                    || RPAD(' ',3,' ') 
-                    || to_char(vr_nragenci,'fm0000') 
-                    || RPAD(vr_nrdconta,14,' ') 
-                    || vr_dtmvtolt 
-                    || to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
-                    || '00' 
-                    || rpad(rw_craplau.cdseqtel,60,' ') 
-                    || to_char(rw_craplau.tppessoa_dest,'fm0') 
-                    || to_char(rw_craplau.nrcpfcgc_dest,'fm000000000000000') 
-                    || RPAD(' ',4,' ') || '0';                    
+                      ||to_char(rw_crapatr.cdrefere,'fm0000000000000000000000')
+                      ||LPAD(' ',3,' ')
+                      ||to_char(vr_nragenci,'fm0000')
+                      ||RPAD(vr_nrdconta,14,' ')
+                      ||vr_dtmvtolt
+                      ||to_char((rw_craplcm.vllanmto * 100),'fm000000000000000')
+                      ||'00'
+                      ||rpad(rw_craplau.cdseqtel,60,' ')
+                      ||TO_CHAR(vr_dtmvtopr,'rrrrmmdd')
+                      ||RPAD(' ',12,' ')||'0';                       
           END IF;            
         END IF;
         
