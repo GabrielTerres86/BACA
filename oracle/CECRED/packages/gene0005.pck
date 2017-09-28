@@ -1,21 +1,25 @@
 CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
-  ---------------------------------------------------------------------------------------------------------------
-  --
-  --  Programa : GENE0005
-  --  Sistema  : Rotinas auxiliares para busca de informacõees do negocio
-  --  Sigla    : GENE
-  --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 11/02/2016
-  --
-  -- Dados referentes ao programa:
-  --
-  -- Frequencia: -----
-  -- Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
-  --
-  -- Observacoes: Conversao da function B1wgen0055.ValidaNome para PL/SQL -> pc_valida_nome
-  --              (Jean Michel).
-  --
-  ---------------------------------------------------------------------------------------------------------------
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : GENE0005
+    Sistema  : Rotinas auxiliares para busca de informacõees do negocio
+    Sigla    : GENE
+    Autor    : Marcos Ernani Martini - Supero
+    Data     : Maio/2013.                   Ultima atualizacao: 20/03/2017
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Centralizar rotinas auxiliares para buscas de informacões do negocio
+  
+   Observacoes: Conversao da function B1wgen0055.ValidaNome para PL/SQL -> pc_valida_nome
+                (Jean Michel).
+                
+   Alterações: 20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
+                           (Adriano - SD 620221).
+
+  
+  ---------------------------------------------------------------------------------------------------------------*/
 
   -- Tipo tabela para comportar um registro com os dados de feriado
   TYPE typ_tab_feriado IS
@@ -127,6 +131,14 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                                pr_feriado   IN INTEGER DEFAULT 1,         --> Considerar feriados ( 0-False, 1-True)
                                pr_excultdia IN INTEGER DEFAULT 0 );       --> Desconsiderar Feriado 31/12 ( 0-False, 1-True)
 
+  --Validar o cpf
+  PROCEDURE pc_valida_cpf (pr_nrcalcul IN NUMBER --Numero a ser verificado
+                          ,pr_stsnrcal OUT BOOLEAN); --Situacao
+                          
+  --Validar o cnpj
+  PROCEDURE pc_valida_cnpj (pr_nrcalcul IN NUMBER  --Numero a ser verificado
+                           ,pr_stsnrcal OUT BOOLEAN); --Situacao
+                           
   /* Procedure para validar cpf ou cnpj */
   PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
                                ,pr_stsnrcal OUT BOOLEAN     --Situacao
@@ -183,6 +195,25 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                              ,pr_des_erro  OUT VARCHAR2                    --> Status erro
                              ,pr_dscritic  OUT VARCHAR2);
 
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2); --> Retorno de erro	
+
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+ 		                         ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+ 		                         ,pr_dtfimcal IN DATE) --> Data final do cálculo
+ 							      RETURN INTEGER;
+								 
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+	                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                          ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+								  RETURN INTEGER;
+																	
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -192,7 +223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 10/06/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 15/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -210,7 +241,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          crapass em campos de indice que possuem UPPER
   --                          (Adriano - SD 463762).
   --
+  --			       16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
   --
+  --             20/03/2017 - Ajuste para disponibilizar as rotinas de validação de cpf e cnpj como públicas
+  --                          (Adriano - SD 620221).
+  --
+  --             23/03/2017 - Criado procedure para verificar departamento do operador. (Reinert)
+  --
+  --             15/05/2017 - Correcao na fn_valida_dia_util para abortar execucao quando for passada uma data nula.
+  --                          SD 670255.(Carlos Rafael Tanholi)
+  --
+  --             16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
+  --                          novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
   ---------------------------------------------------------------------------------------------------------------
 
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
@@ -884,6 +926,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                04/10/2013 - Retirado insitctr = P no Ratinf do BNDES (Renato - Supero)
 
                07/01/2015 - Incluido possibilidade de buscar o saldo atual (Andrino - RKAM)
+
+			   24/07/2017 - Incluido Replace de ';' para ',' na lista de contratos 
+			                a liquidar (Marcos-Supero)
+
      ............................................................................. */
 
      DECLARE
@@ -924,7 +970,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
        -- Selecionar informacoes dos emprestimos
        CURSOR cr_crapepr(pr_nrdconta IN crapepr.nrdconta%TYPE) IS
-         SELECT nrctremp
+         SELECT nrctremp,
+                vlsdeved,
+                vlsdevat
            FROM crapepr
           WHERE cdcooper = pr_cdcooper
             AND nrdconta = pr_nrdconta
@@ -1022,7 +1070,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
        -- Se nao houver contas para liquidar
        IF Upper(pr_dsctrliq) != Upper('Sem liquidacoes') THEN
          -- Quantidade contas recebe numero entradas da string
-         vr_tab_dsctrliq:= GENE0002.fn_quebra_string(pr_string  => pr_dsctrliq, pr_delimit => ',');
+         vr_tab_dsctrliq:= GENE0002.fn_quebra_string(pr_string  => replace(pr_dsctrliq,';',','), pr_delimit => ',');
 
          -- Se o vetor retornar vazio
          IF vr_tab_dsctrliq.Count=0 THEN
@@ -1069,6 +1117,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
              -- Calcular o saldo devedor do emprestimo cfme o tipo da chamada:
              -- PAra chamadas do tipo 1 (Proveniente da conversão da fontes/saldo_utiliza.p)
              IF pr_tpdecons = 1 THEN
+               IF UPPER(pr_cdprogra) = 'CRPS405' THEN
+                  vr_vlsdeved := rw_crapepr.vlsdevat;
+               ELSE
                -- Utilizar a pc_calc_saldo_epr
                EMPR0001.pc_calc_saldo_epr(pr_cdcooper   => pr_cdcooper         --> Codigo da Cooperativa
                                          ,pr_rw_crapdat => pr_tab_crapdat      --> Vetor com dados de parametro (CRAPDAT)
@@ -1088,6 +1139,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                  -- Gerar critica
                  RAISE vr_exc_erro;
                END IF;
+
+			 END IF;
              ELSE --> E uma chamada provenitente da bo b1wgen9999, procedure saldo_utiliza
                -- Utilizaremos a pc_saldo_devedor_epr
                EMPR0001.pc_saldo_devedor_epr(pr_cdcooper   => pr_cdcooper           --> Cooperativa conectada
@@ -1347,12 +1400,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --                            - Alterado para tratar o ultimo dia util do ano ao invez do ultimo dia do ano
     --                              devido a compe financeira utlizar o ultimo dia util do ano para o fechamento anual
     --                              SD 240181 (Odirlei-AMcom)
+    --
+    --                 15/05/2017 - Correcao para abortar execucao quando for passada uma data nula, evitando
+    --                              que a rotina caia no loop infinito gerando atraso no processo. SD 670255.
+    --                              (Carlos Rafael Tanholi)    
     -- .............................................................................
     DECLARE
       -- Data auxiliar
       vr_dtmvtolt  crapdat.dtmvtolt%TYPE;
       vr_excultdia INTEGER;
       vr_dtultano  crapdat.dtmvtolt%TYPE;
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;      
       
       -- Buscar informacoes dos feriados
       CURSOR cr_crapfer (pr_excultdia IN INTEGER) IS
@@ -1362,6 +1421,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Indica pra tabela de feriados
       vr_index BINARY_INTEGER;
     BEGIN
+      -- valida data nula  
+      IF pr_dtmvtolt IS NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    
       -- Iniciar com a data passada removendo as horas
       vr_dtmvtolt := TRUNC(pr_dtmvtolt);
       
@@ -1422,11 +1486,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       -- Retornar a data calculada
       RETURN vr_dtmvtolt;
     EXCEPTION
+			WHEN vr_exc_saida THEN
+        BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                  ,pr_ind_tipo_log => 1 -- Processo normal
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0005 --> fn_valida_dia_util - Coop.: '||pr_cdcooper||' - Data inválida (NULL)');
+        RETURN NULL;
       WHEN OTHERS THEN
         -- Iniciar LOG de execucão
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Processo normal
-                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> Coop. --> '||pr_cdcooper||' --> Não foi possivel verificar data util para o dia --> '||vr_dtmvtolt);
+                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - GENE0005 --> fn_valida_dia_util - Coop.: '||pr_cdcooper||' - Não foi possivel verificar data util para o dia: '||vr_dtmvtolt);
         RETURN null;
     END;
   END fn_valida_dia_util;
@@ -1468,36 +1537,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                                
   END pc_valida_dia_util;  
   
-  /* Procedure para validar cpf ou cnpj */
-  PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
-                               ,pr_stsnrcal OUT BOOLEAN     --Situacao
-                               ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
-  BEGIN
-    -- ..........................................................................
-    --
-    --  Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj
-    --  Sistema  : Rotinas genericas
-    --  Sigla    : GENE
-    --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Validar cpf e cnpj informado
-    --
-    --   Alteracoes: 19/07/2013 - Conversao Progress para Oracle - Alisson (AMcom)
-    -- .............................................................................
-    DECLARE
-      --Variavel erro
-      vr_flgok BOOLEAN;
-      -- Variavel de retorno de erro
-      vr_des_erro VARCHAR2(4000);
-      -- Variavel de Excecao
-      vr_exc_erro EXCEPTION;
-
       --Validar o cpf
-      FUNCTION fn_valida_cpf (pr_nrcalcul IN NUMBER) RETURN BOOLEAN IS --Numero a ser verificado
+  PROCEDURE pc_valida_cpf (pr_nrcalcul IN NUMBER --Numero a ser verificado
+                          ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
       BEGIN
         DECLARE
           --Variaveis Locais
@@ -1512,20 +1554,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
              pr_nrcalcul IN (11111111111,22222222222,33333333333,44444444444,55555555555,
                              66666666666,77777777777,88888888888,99999999999) THEN
             --Retornar com erro
-            RETURN(FALSE);
+        pr_stsnrcal := FALSE;
           ELSE
             --Inicializar variaveis calculo
             vr_vlrdpeso:= 9;
             vr_nrposica:= 0;
             vr_vlcalcul:= 0;
+        
             --Calcular digito
             FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 2 LOOP
               vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
               --Diminuir peso
               vr_vlrdpeso:= vr_vlrdpeso-1;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto = 10 THEN
               --Digito recebe zero
               vr_nrdigito:= 0;
@@ -1543,8 +1588,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
               --Diminuir peso
               vr_vlrdpeso:= vr_vlrdpeso-1;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto = 10 THEN
               --Digito multiplicado 10
               vr_nrdigito:= vr_nrdigito * 10;
@@ -1555,16 +1602,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
 
             --Comparar digito calculado com informado
             IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,2)) <> vr_nrdigito  THEN
-              RETURN(FALSE);
+          pr_stsnrcal := FALSE;
             ELSE
-              RETURN(TRUE);
+          pr_stsnrcal := TRUE;
             END IF;
+        
           END IF;
         END;
-      END fn_valida_cpf;
+  END pc_valida_cpf;
 
       --Validar o cnpj
-      FUNCTION fn_valida_cnpj (pr_nrcalcul IN NUMBER) RETURN BOOLEAN IS --Numero a ser verificado
+  PROCEDURE pc_valida_cnpj (pr_nrcalcul IN NUMBER  --Numero a ser verificado
+                           ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
       BEGIN
         DECLARE
           --Variaveis Locais
@@ -1577,7 +1626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         BEGIN
           IF LENGTH(pr_nrcalcul) < 3 THEN
             --Retornar com erro
-            RETURN(FALSE);
+        pr_stsnrcal := FALSE;
           ELSE
             vr_vlcalcul:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),1,1)) * 2;
             vr_vlresult:= TO_NUMBER(SUBSTR(TO_CHAR(pr_nrcalcul,'fm00000000000000'),2,1)) +
@@ -1619,8 +1668,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                 vr_vlrdpeso:= 2;
               END IF;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto < 2  THEN
               --Digito recebe zero
               vr_nrdigito:= 0;
@@ -1628,13 +1679,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
               --Digito recebe 11 menos resto
               vr_nrdigito:= 11 - vr_vldresto;
             END IF;
+        
             --Comparar digito calculado com informado
             IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul) - 1,1)) <> vr_nrdigito  THEN
-              RETURN(FALSE);
+          pr_stsnrcal := FALSE;
             END IF;
 
             vr_vlrdpeso:= 2;
             vr_vlcalcul:= 0;
+        
             --Calcular digito
             FOR vr_nrposica IN REVERSE 1..LENGTH(pr_nrcalcul) - 1 LOOP
               vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(pr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
@@ -1645,8 +1698,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                 vr_vlrdpeso:= 2;
               END IF;
             END LOOP;
+        
             --Calcular resto modulo 11
             vr_vldresto:= Mod(vr_vlcalcul,11);
+        
             IF  vr_vldresto < 2  THEN
               --Digito recebe zero
               vr_nrdigito:= 0;
@@ -1654,16 +1709,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
               --Digito recebe 11 menos resto
               vr_nrdigito:= 11 - vr_vldresto;
             END IF;
+        
             --Comparar digito calculado com informado
             IF TO_NUMBER(SUBSTR(pr_nrcalcul,LENGTH(pr_nrcalcul),1)) <> vr_nrdigito  THEN
-              RETURN(FALSE);
+          pr_stsnrcal := FALSE;
             ELSE
               --Retornar Verdadeiro
-              RETURN(TRUE);
+          pr_stsnrcal := TRUE;
             END IF;
+        
           END IF;
+      
         END;
-      END fn_valida_cnpj;
+    
+  END pc_valida_cnpj;
+      
+  /* Procedure para validar cpf ou cnpj */
+  PROCEDURE pc_valida_cpf_cnpj (pr_nrcalcul IN NUMBER       --Numero a ser verificado
+                               ,pr_stsnrcal OUT BOOLEAN     --Situacao
+                               ,pr_inpessoa OUT INTEGER) IS --Tipo Inscricao Cedente
+  BEGIN
+    /* ..........................................................................
+    
+      Programa : pc_valida_cpf_cnpj            Antigo: b1wgen9999.p/valida-cpf-cnpj
+      Sistema  : Rotinas genericas
+      Sigla    : GENE
+      Autor    : Alisson C. Berrido - Amcom
+      Data     : Julho/2013.                   Ultima atualizacao: 20/03/2017
+    
+      Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado
+       Objetivo  : Validar cpf e cnpj informado
+    
+       Alteracoes: 19/07/2013 - Conversao Progress para Oracle - Alisson (AMcom)
+       
+                   20/03/2017 - Ajuste para disponibilizar as rotinas de validação de 
+                                cpf e cnpj como públicas
+                               (Adriano - SD 620221).
+
+     .............................................................................*/
+    DECLARE
+      --Variavel erro
+      vr_flgok BOOLEAN;
+      -- Variavel de retorno de erro
+      vr_des_erro VARCHAR2(4000);
+      -- Variavel de Excecao
+      vr_exc_erro EXCEPTION;
 
     BEGIN
       --Inicializar variaveis retorno
@@ -1673,17 +1765,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       IF LENGTH(pr_nrcalcul) > 11 THEN
         --Pessoa juridica
         pr_inpessoa:= 2;
+        
         --Validar CNPJ
-        pr_stsnrcal:= fn_valida_cnpj (pr_nrcalcul => pr_nrcalcul);
+        pc_valida_cnpj (pr_nrcalcul => pr_nrcalcul
+                       ,pr_stsnrcal => pr_stsnrcal);
+                       
       ELSE
         --Pessoa Fisica
         pr_inpessoa:= 1;
-        --Validar CNPJ
-        pr_stsnrcal:= fn_valida_cpf (pr_nrcalcul => pr_nrcalcul);
+
+        --Validar CPF
+        pc_valida_cpf (pr_nrcalcul => pr_nrcalcul
+                      ,pr_stsnrcal => pr_stsnrcal);
+
         --Se nao validou tentar como cnpj
         IF NOT pr_stsnrcal THEN
           --Validar CNPJ
-          pr_stsnrcal:= fn_valida_cnpj (pr_nrcalcul => pr_nrcalcul);
+          pc_valida_cnpj (pr_nrcalcul => pr_nrcalcul
+                         ,pr_stsnrcal => pr_stsnrcal);
           --Se validou
           IF pr_stsnrcal THEN
             --Pessoa Juridica
@@ -2471,6 +2570,301 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         pr_dscritic := 'Problemas ao buscar Tabela de Motivos '||pr_cdproduto||'. Erro na GENE0005.pc_busca_motivos: '||sqlerrm;
     END;
   END pc_busca_motivos;
+
+
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : pc_gera_inconsistencia
+    --   Sistema : Conta-Corrente - Cooperativa de Credito
+    --   Sigla   : CRED
+    --   Autor   : Jaison Fernando
+    --   Data    : Novembro/2016                      Ultima atualizacao:           
+    --
+    --   Dados referentes ao programa:
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedimento para cadastrar as inconsistencias.
+    --
+    --   Alteracoes:                                                                     
+    -- .............................................................................
+    DECLARE
+
+      -- Cursor para verificar se deve enviar email online
+      CURSOR cr_inconsist_grp IS
+        SELECT decode(pr_tpincons,1,'Alerta: ', 'Erro: ') || a.nminconsist_grp dscabecalho
+          FROM tbgen_inconsist_grp a
+         WHERE a.idinconsist_grp = pr_iddgrupo
+           AND a.tpconfig_email <> 0 -- Deve ser diferente de NAO ENVIAR EMAIL
+           AND a.tpconfig_email = decode(pr_tpincons,1, 2, -- Se o erro for de alerta, enviar somente se estiver configurado para ERROS E ALERTAS
+                                                        a.tpconfig_email)
+           AND a.tpperiodicidade_email = 1; -- Enviar email Online
+      rw_inconsist_grp cr_inconsist_grp%ROWTYPE;
+      
+      -- Cursor para buscar o grupo de pessoas para recebimento do email
+      CURSOR cr_inconsist_email IS
+        SELECT a.dsendereco_email
+          FROM tbgen_inconsist_email_grp a
+         WHERE a.idinconsist_grp = pr_iddgrupo
+           AND a.cdcooper = pr_cdcooper;
+      
+		  -- Cursor da data
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_dscritic crapcri.dscritic%TYPE;
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis Gerais
+      vr_idincons tbgen_inconsist_grp.idinconsist_grp%TYPE;
+      vr_dsdesti VARCHAR2(4000);
+      vr_dscorpo VARCHAR2(4000);
+
+    BEGIN
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+
+      -- Busca o proximo ID
+      vr_idincons := fn_sequence(pr_nmtabela => 'tbgen_inconsist'
+                                ,pr_nmdcampo => 'idinconsist'
+                                ,pr_dsdchave => '0');
+
+      BEGIN
+        INSERT INTO tbgen_inconsist
+                   (idinconsist
+                   ,cdcooper
+                   ,idinconsist_grp
+                   ,tpinconsist
+                   ,dhinconsist
+                   ,dtmvtolt
+                   ,dsregistro_referencia
+                   ,tbgen_inconsist.dsinconsist)
+             VALUES(vr_idincons
+                   ,pr_cdcooper
+                   ,pr_iddgrupo
+                   ,pr_tpincons
+                   ,SYSDATE
+                   ,rw_crapdat.dtmvtolt
+                   ,pr_dsregist
+                   ,pr_dsincons);
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao incluir inconsistencia: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;
+
+      -- Rotina para verificacao de envio de email
+      OPEN cr_inconsist_grp;
+      FETCH cr_inconsist_grp INTO rw_inconsist_grp;
+      IF cr_inconsist_grp%FOUND THEN
+        
+        -- Busca as pessoas para envio do email
+        FOR rw_inconsist_email IN cr_inconsist_email LOOP
+          IF vr_dsdesti IS NULL THEN
+            vr_dsdesti := rw_inconsist_email.dsendereco_email;
+          ELSE
+            vr_dsdesti := vr_dsdesti ||';'||rw_inconsist_email.dsendereco_email;
+          END IF;
+        END LOOP;
+
+        -- Se possuir destinatario deve enviar email
+        IF vr_dsdesti IS NOT NULL THEN    
+          -- Monta o corpo do email
+          vr_dscorpo := '<html><body>'||
+                        '<b>Inconsistencia:</b> '|| pr_dsincons||'<br>'||
+                        '<b>Registro de Referencia:</b> '||pr_dsregist||'<br>'||
+                        '<b>Data/Hora Ocorrencia:</b> '||to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS')||
+                        '</body></html>';
+          
+          -- Chama rotina para envio do e-mail
+          gene0003.pc_solicita_email(pr_cdprogra        => 'GENE0005'
+                                    ,pr_des_destino     => vr_dsdesti
+                                    ,pr_des_assunto     => rw_inconsist_grp.dscabecalho
+                                    ,pr_des_corpo       => vr_dscorpo
+                                    ,pr_des_anexo       => NULL
+                                    ,pr_flg_enviar      => 'N'
+                                    ,pr_des_erro        => vr_dscritic);
+          
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        END IF; -- Fim da verificacao se possui destinatario
+      END IF;
+      CLOSE cr_inconsist_grp;
+
+			pr_des_erro := 'OK';
+
+    EXCEPTION
+			WHEN vr_exc_saida THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := 'Erro na GENE0005.pc_gera_inconsistencia: ' || SQLERRM;
+    END;
+
+  END pc_gera_inconsistencia;  
+
+  FUNCTION fn_calc_qtd_dias_uteis(pr_cdcooper IN crapcop.cdcooper%TYPE
+		                             ,pr_dtinical IN DATE  --> Data de inicio do cálculo
+		                             ,pr_dtfimcal IN DATE) --> Data final do cálculo
+																 RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_calc_qtd_dias_uteis       Antigo B1wgen0009.p/calc_qtd_dias_uteis
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Dezembro/2016                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Calcular a quantidade de dias úteis entre a data inicial e final
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Quantidade de dias úteis
+		  vr_qtdiasut NUMBER := -1; -- Consideramos a data atual D-0
+			vr_dtrefere DATE;
+		
+		  -- Verificar se a data é um feriado
+			CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE
+			                 ,pr_dtrefere IN crapdat.dtmvtolt%TYPE) IS
+        SELECT 1
+				  FROM crapfer fer
+				 WHERE fer.cdcooper = pr_cdcooper
+				   AND fer.dtferiad = pr_dtrefere;
+			rw_crapfer cr_crapfer%ROWTYPE;
+    BEGIN
+			-- Atribuir data de referência
+			vr_dtrefere := pr_dtinical;
+		  LOOP
+			  EXIT WHEN vr_dtrefere > pr_dtfimcal;
+			
+				-- Se for sábado ou domingo
+				IF to_char(vr_dtrefere, 'D') = 1 OR
+					 to_char(vr_dtrefere, 'D') = 7 THEN
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;
+			  END IF;
+				
+				-- Verificar se a data é um feriado
+				OPEN cr_crapfer(pr_cdcooper => pr_cdcooper
+				               ,pr_dtrefere => vr_dtrefere);
+				FETCH cr_crapfer INTO rw_crapfer;
+				
+			  IF cr_crapfer%FOUND THEN
+					-- Fechar cursor
+					CLOSE cr_crapfer;
+				  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+					CONTINUE;					
+				END IF;
+				-- Fechar cursor
+				CLOSE cr_crapfer;				
+				
+				vr_qtdiasut := vr_qtdiasut + 1; -- Incrementa quantidade de dias úteis
+			  vr_dtrefere := vr_dtrefere + 1; -- Busca próxima data
+				
+			END LOOP;
+			
+			RETURN vr_qtdiasut;
+		
+		END;																 
+  END fn_calc_qtd_dias_uteis;
+
+  FUNCTION fn_valida_depart_operad(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+		                              ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
+		                              ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
+																	,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
+																  RETURN INTEGER IS
+	BEGIN
+		/* .............................................................................
+   Programa: fn_valida_depart_operad      
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
+   Data    : Fevereiro/2017                       Ultima Atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (on-line)
+   Objetivo  : Verificar se operador pertence a algum departamento parametrizado
+
+   Alteracoes: 
+
+
+   ............................................................................. */
+    DECLARE
+		  -- Retorno do cursor
+      vr_result NUMBER;
+
+      -- Cursor para verificar se o operador está em algum dos departamentos parametrizados
+			CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
+											 ,pr_cdoperad IN crapope.cdoperad%TYPE
+											 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+      -- Cursor para verificar se o operador não está em algum dos departamentos parametrizados
+			CURSOR cr_crapope_neg(pr_cdcooper IN crapope.cdcooper%TYPE
+													 ,pr_cdoperad IN crapope.cdoperad%TYPE
+													 ,pr_dsdepart IN crapdpo.dsdepart%TYPE) IS
+				SELECT 1
+				FROM crapope ope
+						,crapdpo dpo
+				WHERE ope.cdcooper = pr_cdcooper
+					AND upper(ope.cdoperad) = upper(pr_cdoperad)
+					AND dpo.cdcooper = ope.cdcooper
+					AND dpo.cddepart = ope.cddepart
+					AND upper(dpo.dsdepart) NOT IN (SELECT regexp_substr(upper(pr_dsdepart),'[^;]+', 1, LEVEL) FROM dual
+													 CONNECT BY regexp_substr(upper(pr_dsdepart), '[^;]+', 1, LEVEL) IS NOT NULL);
+
+
+    BEGIN
+			-- Buscar por departamentos listados
+      IF pr_flgnegac = 0 THEN
+				-- Se retornou algum registro, operador está em algum departamento listado
+				OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+											 ,pr_cdoperad => pr_cdoperad
+											 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope;
+				
+			ELSE -- Buscar por departamentos NÃO listados
+				-- Se retornou algum registro, operador NÃO está nos departamentos listados
+				OPEN cr_crapope_neg(pr_cdcooper => pr_cdcooper
+													 ,pr_cdoperad => pr_cdoperad
+													 ,pr_dsdepart => pr_dsdepart);
+				FETCH cr_crapope_neg INTO vr_result;
+				-- Fechar cursor
+				CLOSE cr_crapope_neg;
+			END IF;
+      
+      RETURN NVL(vr_result, 0);
+		END;																 
+  END fn_valida_depart_operad;
 
 END GENE0005;
 /
