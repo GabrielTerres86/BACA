@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 08/10/2015
+ Data : Setembro/2009                Última Alteração: 28/09/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -79,6 +79,10 @@
 			     	      da aplicação SD - 266191 (Kelvin)
 						  
 			 08/10/2015 - Reformulacao cadastral (Gabriel-RKAM)  
+
+             29/03/2017 - Inclui validacao para uso da senha do operador para o resgate de aplicacoes. SD 632578
+
+             28/09/2017 - Correcao na simulacao de aplicacoes atraves ATENDA - APLICACOES. SD 685979. (Carlos Rafael Tanholi)
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -514,8 +518,9 @@ function cadastrarResgate(flmensag) {
     var vlresgat = $("#vlresgat", "#frmResgate").val().replace(/\./g, "");
     var dtresgat = $("#dtresgat", "#frmResgate").val();
     var flgctain = $("#flgctain", "#frmResgate").val();
-    var cdopera2 = $("#cdopera2", "#frmResgate").val();
-    var cddsenha = $("#cddsenha", "#frmResgate").val();
+    // consiste check "Autorizar operação" 
+    var cdopera2 = ( $("#flautori").is(':checked') ) ? $("#cdopera2", "#frmResgate").val() : '';
+    var cddsenha = ( $("#flautori").is(':checked') ) ? $("#cddsenha", "#frmResgate").val() : '';
 
     if (tpresgat == "P" || tpresgat == 1) {
         // Valida valor do resgate
@@ -737,7 +742,8 @@ function selecionaCarencia(periodo, qtdiaapl, carencia, dtcarenc, simulacao) {
         $("#qtdiacar", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).val(carencia);
         $("#dtcarenc", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).val(dtcarenc);
         $("#dtvencto", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).focus();
-
+		// seta o periodo da aplicacao
+        $("#cdperapl", "#frmSimula" + $("#tpaplica option:selected", "#frmSimular").text()).val(cdperapl);
         $("#divCarencia").css("visibility", "hidden");
 
         calculaPermanencia();
@@ -809,7 +815,7 @@ function calcularSaldoAcumulado() {
         return false;
     }
 
-    if (tpaplica == 2 && parseInt(cdperapl, 10) <= 0) {
+    if (tpaplica == 8 && parseInt(cdperapl, 10) <= 0) {
         showError("error", "Informe a car&ecirc;ncia.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
