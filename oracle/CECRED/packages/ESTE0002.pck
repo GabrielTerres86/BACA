@@ -681,6 +681,13 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       RETURN NULL;
   END fn_des_incadpos;
   
+  --> Rotina para remover caracteres do telefone
+  FUNCTION fn_somente_numeros_telefone(pr_nrtelefo VARCHAR2) RETURN VARCHAR2 IS
+  
+  BEGIN
+    RETURN replace(replace(replace(replace(replace(pr_nrtelefo,' ',''),'-',''),'.',''),')',''),'(','');
+  END;
+  
   --> Rotina para retornar descrição de atraso
   FUNCTION fn_des_pontualidade (pr_qtdiaatr  IN NUMBER) --> qtd dias de atraso
                                 RETURN VARCHAR2 IS 
@@ -1712,10 +1719,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
         END IF;
       
         vr_obj_generic2.put('ddd', rw_craptfc.nrdddtfc);
-        vr_obj_generic2.put('numero'
-                           ,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(rw_craptfc.nrtelefo,' ',''), '-', ''),'(',''),')','')
-                                   ,'.'
-                                   ,''));
+        vr_obj_generic2.put('numero',fn_somente_numeros_telefone(rw_craptfc.nrtelefo));
         -- Adicionar telefone na lista
         vr_lst_generic2.append(vr_obj_generic2.to_json_value());
       END LOOP;
@@ -3499,7 +3503,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
       ELSE
         vr_obj_generic2.put('tipo', 'MOVEL');
       END IF;*/
-      vr_obj_generic2.put('numero', replace(replace(replace(pr_rw_crapavt.nrfonres,' ',''),'-',''),'.','')); 
+      vr_obj_generic2.put('numero', fn_somente_numeros_telefone(pr_rw_crapavt.nrfonres)); 
       -- Adicionar telefone na lista
       vr_lst_generic2.append(vr_obj_generic2.to_json_value());
       -- Adicionar o array telefone no objeto
@@ -4240,7 +4244,7 @@ CREATE OR REPLACE PACKAGE BODY ESTE0002 IS
               vr_obj_generico.put('tipo', 'MOVEL');
             END IF;
             
-            vr_obj_generico.put('numero', replace(replace(REPLACE(rw_crapcje.nrfonemp,' ',''),'-',''),'.',''));
+            vr_obj_generico.put('numero', fn_somente_numeros_telefone(rw_crapcje.nrfonemp));
             -- Adicionar telefone na lista
             vr_lst_generic2.append(vr_obj_generico.to_json_value());
             -- Adicionar o array telefone no objeto Conjuge

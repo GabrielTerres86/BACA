@@ -578,6 +578,18 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                            ,pr_flgerlog IN INTEGER               --> Identificador de geração de log
                            ,pr_cdcritic OUT NUMBER               --> Codigo Critica
                            ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
+
+
+  /* ***************************************************************************
+     
+     Procedimento para atualização das perguntas de Garantia e Liquidez após 
+     alteração dos avalistas na proposta de Empréstimo 
+                                       
+     *************************************************************************** */
+  PROCEDURE pc_atuali_garant_liquid_epr(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                       ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
+                                       ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
+                                       ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro						   
                                     
 END RATI0001;
 /
@@ -11700,6 +11712,256 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
             
   END pc_grava_rating;
  
+  /* ***************************************************************************
+     
+     Procedimento para atualização das perguntas de Garantia e Liquidez após 
+     alteração dos avalistas na proposta de Empréstimo 
+                                       
+     *************************************************************************** */
+  PROCEDURE pc_atuali_garant_liquid_epr(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                       ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
+                                       ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
+                                       ,pr_dscritic    OUT VARCHAR2) IS          --> Descrição de erro						   
+  /* ..........................................................................
+
+     Programa: pc_atuali_garant_liquid_epr
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Marcos - Supero
+     Data    : Setembro/2017.                          Ultima Atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que chamado por outros programas.
+     Objetivo  :  Contar a quantidade de avalistas da proposta
+                  e responder as perguntas de garantia e liquidez
+
+     Alteracoes:  
+
+  ............................................................................. */
+    
+    -- Variaveis para manter critica
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(4000);
+    
+    -- Variaveis para contagem
+    vr_qtdavali PLS_INTEGER := 0;
+    vr_qtavlter PLS_INTEGER := 0;
+    vr_qtavlsoc PLS_INTEGER := 0;
+    
+    -- Busca dados da proposta
+    CURSOR cr_crawepr IS
+      SELECT ass.inpessoa
+            ,wpr.nrctaav1
+            ,wpr.nrctaav2
+        FROM crawepr wpr
+            ,crapass ass
+       WHERE wpr.cdcooper = ass.cdcooper
+         AND wpr.nrdconta = ass.nrdconta                  
+         AND wpr.cdcooper = pr_cdcooper
+         AND wpr.nrdconta = pr_nrdconta
+         AND wpr.nrctremp = pr_nrctrato;
+    rw_crawepr cr_crawepr%ROWTYPE;     
+    
+    -- Busca CPF do Avalista com conta na Cooperativa
+    CURSOR cr_crapass(pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT nrcpfcgc
+        FROM crapass 
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta;
+    vr_nrcpfcgc crapass.nrcpfcgc%TYPE;      
+    
+    -- Buscar avalistas terceiros
+    CURSOR cr_crapavt IS
+      SELECT crapavt.nrcpfcgc 
+        FROM crapavt
+       WHERE crapavt.cdcooper = pr_cdcooper
+         AND crapavt.nrdconta = pr_nrdconta
+         AND crapavt.nrctremp = pr_nrctrato
+         AND crapavt.tpctrato = 1; -- Aval
+    
+    -- Testar se o avalista é sócio da empresa
+    CURSOR cr_crapavt_socio(pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
+      SELECT 1
+        FROM crapavt
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND nrcpfcgc = pr_nrcpfcgc
+         AND nrctremp = 0 -- Não é vinculado a contrato
+         AND tpctrato = 6 -- Socio
+         AND UPPER(dsproftl) IN('SOCIO/PROPRIETARIO'
+                               ,'SOCIO ADMINISTRADOR'
+                               ,'DIRETOR/ADMINISTRADOR'
+                               ,'SINDICO'
+                               ,'ADMINISTRADOR');
+    vr_indsocio NUMBER;
+    
+    -- Respostas do Rating
+    vr_nrgarope crapprp.nrgarope%TYPE; 
+    vr_nrliquid crapprp.nrliquid%TYPE;
+    
+  BEGIN
+    
+    -- Busca dados da proposta
+    OPEN cr_crawepr;
+    FETCH cr_crawepr
+     INTO rw_crawepr;
+    -- Se nao encontrar
+    IF cr_crawepr%NOTFOUND THEN
+      vr_dscritic := gene0001.fn_busca_critica(535);
+      close cr_crawepr;
+      raise vr_exc_erro;
+    END IF;
+    CLOSE cr_crawepr; 
+    
+    -- Testar se o avalista 1 existe 
+    IF rw_crawepr.nrctaav1 <> 0 THEN
+      -- Somente para PJ
+      IF rw_crawepr.inpessoa = 2 THEN
+        -- Testar se o avalista não é sócio também, busca CPF dele
+        vr_nrcpfcgc := NULL;
+        OPEN cr_crapass(pr_nrdconta => rw_crawepr.nrctaav1);
+        FETCH cr_crapass 
+         INTO vr_nrcpfcgc;
+        CLOSE cr_crapass; 
+        -- Com o CPF verificar se o mesmo é
+        vr_indsocio := 0;
+        OPEN cr_crapavt_socio(pr_nrcpfcgc => vr_nrcpfcgc);
+        FETCH cr_crapavt_socio
+         INTO vr_indsocio;
+        CLOSE cr_crapavt_socio; 
+        -- Se for o mesmo
+        IF vr_indsocio = 1 THEN
+          -- Incrementar avalista socio
+          vr_qtavlsoc := vr_qtavlsoc + 1;
+        ELSE
+          -- Incrementar avalista terceiro
+          vr_qtavlter := vr_qtavlter + 1;
+        END IF;
+      ELSE
+        -- Incrementar avalistas
+        vr_qtdavali := vr_qtdavali + 1;           
+      END IF; 
+    END IF;
+
+    -- Testar se o avalista 2 existe 
+    IF rw_crawepr.nrctaav2 <> 0 THEN
+      -- Somente para PJ
+      IF rw_crawepr.inpessoa = 2 THEN
+        -- Testar se o avalista não é sócio também, busca CPF dele
+        vr_nrcpfcgc := NULL;
+        OPEN cr_crapass(pr_nrdconta => rw_crawepr.nrctaav2);
+        FETCH cr_crapass 
+         INTO vr_nrcpfcgc;
+        CLOSE cr_crapass; 
+        -- Com o CPF verificar se o mesmo é
+        vr_indsocio := 0;
+        OPEN cr_crapavt_socio(pr_nrcpfcgc => vr_nrcpfcgc);
+        FETCH cr_crapavt_socio
+         INTO vr_indsocio;
+        CLOSE cr_crapavt_socio; 
+        -- Se for o mesmo
+        IF vr_indsocio = 1 THEN
+          -- Incrementar avalista socio
+          vr_qtavlsoc := vr_qtavlsoc + 1;
+        ELSE
+          -- Incrementar avalista terceiro
+          vr_qtavlter := vr_qtavlter + 1;
+        END IF;
+      ELSE
+        -- Incrementar avalistas
+        vr_qtdavali := vr_qtdavali + 1;           
+      END IF;   
+    END IF;
+    
+    -- Trazer todos avalistas externos
+    FOR rw_crapavt IN cr_crapavt LOOP
+      -- Somente para PJ
+      IF rw_crawepr.inpessoa = 2 THEN
+        -- Com o CPF verificar se o mesmo é
+        vr_indsocio := 0;
+        OPEN cr_crapavt_socio(pr_nrcpfcgc => rw_crapavt.nrcpfcgc);
+        FETCH cr_crapavt_socio
+         INTO vr_indsocio;
+        CLOSE cr_crapavt_socio; 
+        -- Se for o mesmo
+        IF vr_indsocio = 1 THEN
+          -- Incrementar avalista socio
+          vr_qtavlsoc := vr_qtavlsoc + 1;
+        ELSE
+          -- Incrementar avalista terceiro
+          vr_qtavlter := vr_qtavlter + 1;
+        END IF;
+      ELSE
+        -- Incrementar avalistas
+        vr_qtdavali := vr_qtdavali + 1;
+      END IF;
+    END LOOP;  
+    
+    -- Respostas do Rating conforme tipo de pessoa
+    IF rw_crawepr.inpessoa = 1 THEN
+      -- Para PF soh contamos a quantidade de avalistas
+      IF vr_qtdavali > 0 THEN
+        vr_nrgarope := 9; -- Garantia Pessoal
+        -- Para Liquidez temos de verificar 1 ou mais
+        IF vr_qtdavali = 1 THEN 
+          vr_nrliquid := 11; -- Até uma garantia pessoal
+        ELSE
+          vr_nrliquid := 10; -- Acima de uma garantia pessoal
+        END IF;
+      ELSE
+        vr_nrgarope := 10; -- Sem Garantia
+        vr_nrliquid := 9;  -- Sem Garantia
+      END IF;
+    ELSE
+      -- Para PJ temos de responder conforme avalistas sócios ou terceiros
+      IF vr_qtavlsoc + vr_qtavlter = 0 THEN
+        vr_nrgarope := 11; -- Sem Garantia
+        vr_nrliquid := 11; -- Sem Garantia
+      ELSE
+        -- Havendo pelo menos uma garantia sócio
+        IF vr_qtavlsoc > 0 THEN 
+          -- Se houver pelo menos uma terceira
+          IF vr_qtavlter > 0 THEN
+            vr_nrgarope := 9; --Garantia Pessoal Terceiros
+          ELSE
+            vr_nrgarope := 10; --Garantia Pessoal Sócios
+          END IF;  
+          -- Liquidez temos de verificar 1 ou mais / Se teve pelo menos 1 terceiro
+          IF vr_qtavlsoc > 1 OR vr_qtavlter > 0 THEN
+            vr_nrliquid := 14; -- Acima 1 gar. sóc. ou 1 sócio e 1 terc
+          ELSE
+            vr_nrliquid := 16; -- Até uma garantia pessoal Sócios
+          END IF;
+        ELSE
+          vr_nrgarope := 9; --Garantia Pessoal Terceiros
+          -- Liquidez temos de verificar 1 ou mais
+          IF vr_qtavlter > 1 THEN
+            vr_nrliquid := 12; -- Acima de uma garantia pessoal terceiros
+          ELSE
+            vr_nrliquid := 15; -- Até uma garantia pessoal terceiros
+          END IF;
+        END IF;
+      END IF;
+    END IF;
+    
+    -- Finalmente, efetuar a atualização do registro de pergunta da proposta
+    UPDATE crapprp prp
+       SET prp.nrgarope = vr_nrgarope
+          ,prp.nrliquid = vr_nrliquid
+     WHERE prp.cdcooper = pr_cdcooper
+       AND prp.nrdconta = pr_nrdconta
+       AND prp.nrctrato = pr_nrctrato;
+    COMMIT;   
+       
+  EXCEPTION                                               
+    WHEN vr_exc_erro THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro tratado em RATI0001.pc_atuali_garant_liquid_epr --> '||vr_dscritic;
+    WHEN OTHERS THEN
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado RATI0001.pc_atuali_garant_liquid_epr --> '||sqlerrm;
+  END pc_atuali_garant_liquid_epr;                                             
 
 END RATI0001;
 /
