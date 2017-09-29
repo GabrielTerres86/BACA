@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 20/07/2017
+   Data    : 04/05/2011                        Ultima atualizacao: 29/09/2017
     
    Dados referentes ao programa:
    
@@ -191,6 +191,8 @@
               20/07/2017 - Incluido validaçao para nao conseguir incluir debito automatico quando
                            o primeiro titular da conta é de menor (Tiago/Thiago #652776)
                            
+              29/09/2017 - Validar identificacao de consumidor também para casos
+			               em que for digitado zero (Lucas Ranghetti #765804)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1105,7 +1107,13 @@ PROCEDURE valida-dados:
             END.
 
         IF  par_cddopcao = "I"  THEN
-            DO:   
+            DO:                                 
+                IF  par_cdrefere = 0 THEN              
+                    DO:
+                        ASSIGN aux_dscritic = "Informe o Codigo Identificador "
+                               par_nmdcampo = "cdrefere".
+                        LEAVE Valida.
+                    END.
                               
                 IF  par_cdhistor = 0 THEN
                     DO:
