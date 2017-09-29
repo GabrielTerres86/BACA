@@ -213,6 +213,10 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 		                          ,pr_dsdepart IN VARCHAR2              --> Lista de departamentos separados por ;
 		                          ,pr_flgnegac IN INTEGER DEFAULT 0)    --> Flag de negação dos departamentos parametrizados (NOT IN pr_dsdepart)
 								  RETURN INTEGER;
+
+  FUNCTION fn_saldo_conta_investimento(pr_cdcooper IN crapsli.cdcooper%TYPE  --> Cooperativa
+                                      ,pr_nrdconta IN crapsli.nrdconta%TYPE) --> Conta cooperado
+                                       RETURN NUMBER;
 																	
   END GENE0005;
 /
@@ -1335,8 +1339,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     DECLARE
      -- Buscar das informacães de bloqueio judicial na conta
      CURSOR cr_crapblj IS
-       SELECT vlbloque
-             ,vlresblq
+       -- Demetrius colocado funcao SUM -- melhoria 460
+       SELECT nvl(sum(vlbloque),0) vlbloque
+             ,nvl(sum(vlresblq),0) vlresblq
          FROM crapblj
         WHERE cdcooper = pr_cdcooper
           AND nrdconta = pr_nrdconta
@@ -2865,6 +2870,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       RETURN NVL(vr_result, 0);
 		END;																 
   END fn_valida_depart_operad;
+
+  FUNCTION fn_saldo_conta_investimento(pr_cdcooper IN crapsli.cdcooper%TYPE  --> Cooperativa
+	                                  ,pr_nrdconta IN crapsli.nrdconta%TYPE) --> Conta cooperado
+								  RETURN NUMBER IS
+  BEGIN
+    DECLARE
+      vr_vlsddisp   crapsli.vlsddisp%TYPE;
+
+      CURSOR cr_crapsli(pr_cdcooper IN crapsli.cdcooper%TYPE
+                       ,pr_nrdconta IN crapsli.nrdconta%TYPE) IS
+        SELECT vlsddisp
+          FROM crapsli
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND dtrefere = LAST_DAY(TRUNC(sysdate));
+    BEGIN
+      OPEN cr_crapsli(pr_cdcooper => pr_cdcooper
+                 	 ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapsli INTO vr_vlsddisp;
+      IF cr_crapsli%NOTFOUND THEN
+        vr_vlsddisp := 0;
+      END IF;
+     CLOSE cr_crapsli;
+
+     RETURN NVL(vr_vlsddisp, 0);
+	 
+    END;
+  END fn_saldo_conta_investimento;
+
   
 END GENE0005;
 /
