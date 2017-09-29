@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 21/01/2016
+    Data    : Junho/2010                      Ultima atualizacao: 25/04/2017
   
     Dados referentes ao programa:
   
@@ -138,6 +138,19 @@
 
 				29/11/2016 - Incluso bloqueio de criacao de novas contas na cooperativa
                              Transulcred (Daniel)
+
+                25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+					
+                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                           PRJ339 - CRM (Odirlei-AMcom)               
+
+                31/07/2017 - Alterado leitura da CRAPNAT pela CRAPMUN.
+                             PRJ339 - CRM (Odirlei-AMcom)        
+				
+				17/08/2017- Ajuste na tela matric onde a opcao "X", "J" e pessoa juridica
+							nao estava funcionando devido a alteracao do campo IDORGEXP. (Kelvins)
+							
+                             
 ........................................................................*/
 
 
@@ -158,6 +171,7 @@ DEF VAR aux_tpctrato3 AS LOGICAL NO-UNDO.
 DEF VAR aux_tpctrato4 AS LOGICAL NO-UNDO.
 DEF VAR aux_tpctrato8 AS LOGICAL NO-UNDO.
 DEF VAR h-b1wgen0060 AS HANDLE                                      NO-UNDO.
+DEF VAR h-b1wgen0052b AS HANDLE                                     NO-UNDO.
 
 FUNCTION ConverteCpfCnpj RETURNS DECIMAL PRIVATE
   ( INPUT par_nrcpfcgc AS CHARACTER )  FORWARD.
@@ -222,7 +236,7 @@ PROCEDURE Valida_Dados :
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexotl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -258,6 +272,7 @@ PROCEDURE Valida_Dados :
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR hb1wgen0052b AS HANDLE                                  NO-UNDO.
     DEF VAR aux_inpessoa AS INTE                                    NO-UNDO.
+    DEF VAR aux_idorgexp AS INTE                                    NO-UNDO.
     
     ASSIGN par_dscritic = ""
            par_cdcritic = 0
@@ -353,6 +368,31 @@ PROCEDURE Valida_Dados :
             LEAVE Valida.
         
         
+        IF par_inpessoa <> 2 AND
+           par_cddopcao <> "X" AND
+		   par_cddopcao <> "J" THEN
+           DO:
+              /* Identificar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                      PERSISTENT SET h-b1wgen0052b.
+
+              ASSIGN aux_idorgexp = 0.
+              RUN identifica_org_expedidor IN h-b1wgen0052b 
+                                 ( INPUT par_cdoedptl,
+                                  OUTPUT aux_idorgexp,
+                                  OUTPUT par_cdcritic, 
+                                  OUTPUT par_dscritic).
+
+              DELETE PROCEDURE h-b1wgen0052b.   
+              
+              IF  RETURN-VALUE = "NOK" THEN
+              DO:
+                  LEAVE Valida.
+              END.
+              
+           END.
+        
 
         /* validacao especifica por operacao */
         CASE par_cddopcao:
@@ -402,7 +442,7 @@ PROCEDURE Valida_Dados :
                               INPUT par_dtnasctl,
                               INPUT par_cdsexotl,
                               INPUT par_tpnacion,
-                              INPUT par_dsnacion,
+                              INPUT par_cdnacion,
                               INPUT par_dsnatura,
                               INPUT par_cdufnatu,
                               INPUT par_cdestcvl,
@@ -911,6 +951,7 @@ PROCEDURE Valida_Procurador :
     DEF VAR aux_nrdmeses AS INT                                     NO-UNDO.
     DEF VAR aux_dsdidade AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
+    DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
 
     DEF BUFFER btt-crapavt FOR tt-crapavt.
 
@@ -1074,6 +1115,25 @@ PROCEDURE Valida_Procurador :
                   LEAVE Procurador.
 
                END.
+
+            /* Identificar orgao expedidor */
+            IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                RUN sistema/generico/procedures/b1wgen0052b.p 
+                    PERSISTENT SET h-b1wgen0052b.
+
+            ASSIGN aux_idorgexp = 0.
+            RUN identifica_org_expedidor IN h-b1wgen0052b 
+                               ( INPUT tt-crapavt.cdoeddoc,
+                                OUTPUT aux_idorgexp,
+                                OUTPUT par_cdcritic, 
+                                OUTPUT par_dscritic).
+
+            DELETE PROCEDURE h-b1wgen0052b.   
+
+            IF  RETURN-VALUE = "NOK" THEN
+            DO:
+                LEAVE Procurador.
+            END.   
 
             /* Unidade da Federacao do documento */
             IF NOT ValidaUf(tt-crapavt.cdufddoc) THEN
@@ -2480,7 +2540,7 @@ PROCEDURE Valida_Fis PRIVATE :
     DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsexotl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
@@ -2618,21 +2678,12 @@ PROCEDURE Valida_Fis PRIVATE :
             END.
 
         /* Nacionalidade */
-        IF  NOT CAN-FIND(crapnac WHERE crapnac.dsnacion = par_dsnacion) THEN
+        IF  NOT CAN-FIND(crapnac WHERE crapnac.cdnacion = par_cdnacion) THEN
             DO:
-               ASSIGN par_nmdcampo = "dsnacion"
+               ASSIGN par_nmdcampo = "cdnacion"
                       par_cdcritic = 28.
                LEAVE ValidaFis.
             END.
-
-        /* Natural De */
-          IF  NOT CAN-FIND(crapnat WHERE crapnat.dsnatura = par_dsnatura) AND 
-              par_tpnacion = 1   THEN
-              DO:
-                 ASSIGN par_nmdcampo = "dsnatura"
-                        par_cdcritic = 29.
-                 LEAVE ValidaFis.
-              END.
 
         IF  NOT ValidaUF(par_cdufnatu) THEN
             DO:
@@ -2643,6 +2694,8 @@ PROCEDURE Valida_Fis PRIVATE :
 
         IF   par_cdufnatu <> "EX" THEN
              DO:
+        
+                 /* Natural De */                        
                  FIND FIRST crapmun WHERE crapmun.dscidade = par_dsnatura AND 
                                           crapmun.cdestado = par_cdufnatu 
                                           NO-LOCK NO-ERROR.
@@ -2650,7 +2703,8 @@ PROCEDURE Valida_Fis PRIVATE :
                  IF   NOT AVAIL crapmun   THEN
                       DO:
                           ASSIGN par_nmdcampo = "cdufnatu"
-                                 par_dscritic = "U.F nao corresponde a cidade informada.".
+                                 par_dscritic = " Naturalidade nao cadastrada ou " + 
+                                                "U.F. nao corresponde a cidade informada.".
                           LEAVE ValidaFis.
                       END.
              END.
