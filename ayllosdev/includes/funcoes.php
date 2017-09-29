@@ -1,76 +1,76 @@
 <?php
-/*
-******************************************************************************
-ATENCAO! CONVERSAO PROGRESS - ORACLE
-ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
+	/*
+	******************************************************************************
+	ATENCAO! CONVERSAO PROGRESS - ORACLE
+	ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
 
-PARA QUALQUER ALTERACAO QUE ENVOLVA PARAMETROS DE COMUNICACAO NESSE FONTE,
-A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
-- GUILHERME STRUBE (CECRED)
-- MARCOS MARTINI (SUPERO)
-- GUILHERME BOETTCHER (SUPERO)
-*******************************************************************************
+	PARA QUALQUER ALTERACAO QUE ENVOLVA PARAMETROS DE COMUNICACAO NESSE FONTE,
+	A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
+	- GUILHERME STRUBE (CECRED)
+	- MARCOS MARTINI (SUPERO)
+	- GUILHERME BOETTCHER (SUPERO)
+	*******************************************************************************
 
+	 * FONTE        : funcoes.php
+	 * CRIAÇÃO      : David
+	 * DATA CRIAÇÃO : Julho/2007
+	 * OBJETIVO     : Biblioteca de Funções
+	 * --------------
+	 * ALTERAÇÕES   :
+	 * --------------
+	 * XXX: [27/01/2009] Guilherme     (CECRED) : Criada as funções addDiasNaData, subDiasNaData, diffData
+	 * XXX: [08/10/2009] David         (CECRED) : Alteração na função validaPermissao
+	 * 001: [11/02/2010] Rodolpho Telmo   (DB1) : Criada função getByTabName
+	 * 002: [10/03/2010] Rodolpho Telmo   (DB1) : Criada função exibirErro
+	 * 003: [10/03/2010] Rodolpho Telmo   (DB1) : Criada função selectEstado
+	 * 004: [30/03/2010] Rodolpho Telmo   (DB1) : Criada função formatarCPF_CNPJ
+	 * 005: [07/04/2010] Rodolpho Telmo   (DB1) : Criada função preencheString
+	 * 006: [14/04/2010] Rodolpho Telmo   (DB1) : Criada função juntaTexto
+	 * 007: [15/04/2010] Rodolpho Telmo   (DB1) : Criada função utf8ToHtml
+	 * 008: [16/04/2010] Rodolpho Telmo   (DB1) : Criada função retiraAcentos
+	 * 009: [16/04/2010] Rodolpho Telmo   (DB1) : Criada função retiraSerialize
+	 * 010: [16/04/2010] Rodolpho Telmo   (DB1) : Alterada função exibirErro
+	 * 011: [16/04/2010] Rodolpho Telmo   (DB1) : Criada função exibirConfirmacao
+	 * 012: [20/05/2010] Rodolpho Telmo   (DB1) : Alterada função selectEstado
+	 * 013: [28/07/2010] David         (CECRED) : Incluir a função sendMail
+	 * 014: [21/09/2010] David         (CECRED) : Incluir função visualizaPDF
+	 * 015: [22/10/2010] David         (CECRED) : Incluir tratamento para permissão de acesso na função getDataXML
+	 * 016: [18/04/2011] Rogérius Militão (DB1) : Criada a função formataCep
+	 * 017: [19/05/2011] Rodolpho Telmo   (DB1) : Criada a função mascara
+	 * 018: [16/06/2011] Jorge		   (CECRED)	: Alterada funcao exibirErro() e exibirMensagens()		
+	 * 019: [06/07/2011] Rogérius Militão (DB1)	: Criada a função xmlFilho()		
+	 * 020: [02/08/2011] Rogérius Militão (DB1)	: Criada a função formataMoeda()		
+	 * 021: [02/08/2011] Rogérius Militão (DB1)	: Criada a função converteFloat()		
+	 * 022: [03/08/2011] Rogérius Militão (DB1)	: Criada a função formataTaxa()	
+	 * 023: [08/09/2011] David (CECRED)         : Ajuste na função redirecionaErro, utilizando o SIDLOGIN 
+	 * 024: [26/12/2011] David (CECRED)         : Retirar acento do estado Roraima
+	 * 025: [25/04/2012] Tiago         (CECRED) : Criada a função formataContaDVsimples()
+	 * 026: [01/06/2012] David Kistner (CECRED) : Criada função CheckNavigator() e ajuste na visualizaPDF()
+	 * 027: [05/05/2014] Petter Rafael (Supero) : Criar functions para trabalho com Oracle
+	 * 028: [17/05/2014] Petter Rafael (Supero) : Alterar mensageria para comportar validação sistemica por requisição
+	 * 029: [12/08/2014] Jonata (RKAM)          : Utilizar o nome da tela enviado como parametro na mensageria com o Oracle.
+	 * 030: [20/11/2014] Vanessa (CECRED)       : Alterada a função visualizaPDF para tratar as teds migradas.
+	 * 031: [17/04/2015] Petter Rafael (Supero)	: Implementar controle de encoding nas funções dbProcedure() e dbConnect().
+	 * 032: [09/08/2015] Lucas Lunelli         	: Criada função removeCaracteresInvalidos().
+	 * 033: [14/07/2015] Gabriel       (RKAM)   : Incluir estado EX para estrangeiro.
+	 * 034: [20/07/2015] Kelvin					: Alteração na função removeCaracteresInvalidos() para alterar os scapes da string.
+	 * 035: [13/08/2015] James					: Remover o caminho "/var/www/ayllos/xml/"
+	 * 036: [14/08/2015] Lucas Ranghetti(CECRED): Incluir função visualizaArquivo para fazer download do arquivo ou gerar pdf na mesma function.
+	 * 037: [30/12/2015] Jaison (CECRED)		: Criada a funcao retornaKeyArrayMultidimensional.
+	 * 038: [11/07/2016] Carlos Rafael Tanholi: Removi o codigo da funcao mensageria que registrava as requisicoes nos arquivo da pasta xml/(in.xml | out.xml).
+	 * 039: [20/07/2016] Carlos Rafael Tanholi: Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
+	 * 040: [25/07/2016] Carlos Rafael Tanholi: Correcao na expressao regular da funcao formatar(). SD 479874. 
+	 * 031: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria 
+	 * 042: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
+	 * 043: [18/10/2016] Kelvin (CECRED)        : Ajustes feito na funcao RemoveCaracteresInvalidos para codificar a string antes de tratar.
+	 * 044: [08/02/2016] Kelvin (CECRED)        : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
+	 * 045: [28/09/2017] Jean Michel (CECRED)   : Adicionado função get_http_response_code para retornar o status code de arquivo ou domínio
+	 */
 
- * FONTE        : funcoes.php
- * CRIAÇÃO      : David
- * DATA CRIAÇÃO : Julho/2007
- * OBJETIVO     : Biblioteca de Funções
- * --------------
- * ALTERAÇÕES   :
- * --------------
- * XXX: [27/01/2009] Guilherme     (CECRED) : Criada as funções addDiasNaData, subDiasNaData, diffData
- * XXX: [08/10/2009] David         (CECRED) : Alteração na função validaPermissao
- * 001: [11/02/2010] Rodolpho Telmo   (DB1) : Criada função getByTabName
- * 002: [10/03/2010] Rodolpho Telmo   (DB1) : Criada função exibirErro
- * 003: [10/03/2010] Rodolpho Telmo   (DB1) : Criada função selectEstado
- * 004: [30/03/2010] Rodolpho Telmo   (DB1) : Criada função formatarCPF_CNPJ
- * 005: [07/04/2010] Rodolpho Telmo   (DB1) : Criada função preencheString
- * 006: [14/04/2010] Rodolpho Telmo   (DB1) : Criada função juntaTexto
- * 007: [15/04/2010] Rodolpho Telmo   (DB1) : Criada função utf8ToHtml
- * 008: [16/04/2010] Rodolpho Telmo   (DB1) : Criada função retiraAcentos
- * 009: [16/04/2010] Rodolpho Telmo   (DB1) : Criada função retiraSerialize
- * 010: [16/04/2010] Rodolpho Telmo   (DB1) : Alterada função exibirErro
- * 011: [16/04/2010] Rodolpho Telmo   (DB1) : Criada função exibirConfirmacao
- * 012: [20/05/2010] Rodolpho Telmo   (DB1) : Alterada função selectEstado
- * 013: [28/07/2010] David         (CECRED) : Incluir a função sendMail
- * 014: [21/09/2010] David         (CECRED) : Incluir função visualizaPDF
- * 015: [22/10/2010] David         (CECRED) : Incluir tratamento para permissão de acesso na função getDataXML
- * 016: [18/04/2011] Rogérius Militão (DB1) : Criada a função formataCep
- * 017: [19/05/2011] Rodolpho Telmo   (DB1) : Criada a função mascara
- * 018: [16/06/2011] Jorge		   (CECRED)	: Alterada funcao exibirErro() e exibirMensagens()		
- * 019: [06/07/2011] Rogérius Militão (DB1)	: Criada a função xmlFilho()		
- * 020: [02/08/2011] Rogérius Militão (DB1)	: Criada a função formataMoeda()		
- * 021: [02/08/2011] Rogérius Militão (DB1)	: Criada a função converteFloat()		
- * 022: [03/08/2011] Rogérius Militão (DB1)	: Criada a função formataTaxa()	
- * 023: [08/09/2011] David (CECRED)         : Ajuste na função redirecionaErro, utilizando o SIDLOGIN 
- * 024: [26/12/2011] David (CECRED)         : Retirar acento do estado Roraima
- * 025: [25/04/2012] Tiago         (CECRED) : Criada a função formataContaDVsimples()
- * 026: [01/06/2012] David Kistner (CECRED) : Criada função CheckNavigator() e ajuste na visualizaPDF()
- * 027: [05/05/2014] Petter Rafael (Supero) : Criar functions para trabalho com Oracle
- * 028: [17/05/2014] Petter Rafael (Supero) : Alterar mensageria para comportar validação sistemica por requisição
- * 029: [12/08/2014] Jonata (RKAM)          : Utilizar o nome da tela enviado como parametro na mensageria com o Oracle.
- * 030: [20/11/2014] Vanessa (CECRED)       : Alterada a função visualizaPDF para tratar as teds migradas.
- * 031: [17/04/2015] Petter Rafael (Supero)	: Implementar controle de encoding nas funções dbProcedure() e dbConnect().
- * 032: [09/08/2015] Lucas Lunelli         	: Criada função removeCaracteresInvalidos().
- * 033: [14/07/2015] Gabriel       (RKAM)   : Incluir estado EX para estrangeiro.
- * 034: [20/07/2015] Kelvin					: Alteração na função removeCaracteresInvalidos() para alterar os scapes da string.
- * 035: [13/08/2015] James					: Remover o caminho "/var/www/ayllos/xml/"
- * 036: [14/08/2015] Lucas Ranghetti(CECRED): Incluir função visualizaArquivo para fazer download do arquivo ou gerar pdf na mesma function.
- * 037: [30/12/2015] Jaison (CECRED)		: Criada a funcao retornaKeyArrayMultidimensional.
- * 038: [11/07/2016] Carlos Rafael Tanholi: Removi o codigo da funcao mensageria que registrava as requisicoes nos arquivo da pasta xml/(in.xml | out.xml).
- * 039: [20/07/2016] Carlos Rafael Tanholi: Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
- * 040: [25/07/2016] Carlos Rafael Tanholi: Correcao na expressao regular da funcao formatar(). SD 479874. 
- * 031: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria 
- * 042: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
- * 043: [18/10/2016] Kelvin (CECRED)        : Ajustes feito na funcao RemoveCaracteresInvalidos para codificar a string antes de tratar.
- * 044: [08/02/2016] Kelvin (CECRED)        : Adicionado na funcao removeCaracteresInvalidos os caracteres ("º","°","ª") para ajustar o chamado 562089.
- */
-?>
-<?php
-// Função para requisição de dados através de XML 
-// Função retorna string com XML de retorno	
-// Includes necessárias: - includes/config.php
+	// Função para requisição de dados através de XML 
+	// Função retorna string com XML de retorno	
+	// Includes necessárias: - includes/config.php
+	
 function getDataXML($xmlRequest,$flgPermissao=true,$flgBlank=true,$codCooper=0) {
 	global $DataServer; // Nome do servidor com base de dados PROGRESS
 	global $glbvars;
@@ -1664,4 +1664,9 @@ class XmlMensageria {
     }
 }
 
+// Função para retornar o status code de arquivo ou domínio
+function get_http_response_code($url) {
+	$headers = get_headers($url);
+	return substr($headers[0], 9, 3);
+}
 ?>

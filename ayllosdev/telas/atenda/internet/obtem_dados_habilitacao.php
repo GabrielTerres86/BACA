@@ -61,11 +61,12 @@
 <form action="" method="post" name="frmOpHabilitacao" id="frmOpHabilitacao" onSubmit="return false;">
 		<fieldset>
 			<legend><? echo utf8ToHtml('Habilitação') ?></legend>
-			<div id="divBotoes">
-				<input type="image" src="<? echo $UrlImagens; ?>botoes/cadastramento_de_limite.gif" onClick="obtemDadosLimites();return false;" />
-				<input type="image" src="<? echo $UrlImagens; ?>botoes/cadastramento_de_contas.gif" onClick="carregaContas();return false;" />
+			<div id="divBotoes" style="width: 620px;">
+				<a href="#" class="botao" id="btnvoltar" name="btnCadastroLimite" onClick="obtemDadosLimites();return false;" >&nbsp;Cadastramento de Limite&nbsp;</a>
+				<a href="#" class="botao" id="btnvoltar" name="btnCadastroConta" onClick="carregaContas();return false;" >&nbsp;Cadastramento de Contas&nbsp;</a>
+				<a href="#" class="botao" id="btnvoltar" name="btnDesativaPush" onClick="desativarPush();return false;" >&nbsp;Desativar alertas do Cecred Mobile&nbsp;</a>
 				<br />
-				<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick = "acessaOpcaoAba('<? echo count($glbvars["opcoesTela"])?>','<? echo $idPrincipal ?>','<? echo $glbvars["opcoesTela"][$idPrincipal]?>');" >
+				<a href="#" class="botao" id="btnvoltar" name="btnvoltar" onClick="acessaOpcaoAba('<? echo count($glbvars["opcoesTela"])?>','<? echo $idPrincipal ?>','<? echo $glbvars["opcoesTela"][$idPrincipal]?>');" 		>&nbsp;Voltar&nbsp;</a>
 			</div>
 		</fieldset>
 	</form>

@@ -1,7 +1,7 @@
 /*************************************************************************
  Fonte: internet.js                                               
  Autor: David                                                     
- Data : Junho/2008                   Última Alteração: 26/08/2016
+ Data : Junho/2008                   Última Alteração: 04/09/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Internet da tela  
              ATENDA                                               
@@ -10,17 +10,14 @@
                                                                   
              22/10/2010 - Alteracao na acessaOpcaoAba (David)     
 																  
-			 10/01/2011 - Retirar a parte de Cobranca (Gabriel)  
+						 10/01/2011 - Retirar a parte de Cobranca (Gabriel)  
                                                                   
-             08/07/2011 - Tratado na funcao                       
-                          selecionaTitularInternet, a habilitacao 
-						  do botao Liberacao (Fabricio)          
+             08/07/2011 - Tratado na funcao selecionaTitularInternet,
+													a habilitacao do botao Liberacao (Fabricio)          
 						                                          
-			 13/07/2011 - Alterado para layout padrão            
-			  			  (Gabriel - DB1)						  
+						 13/07/2011 - Alterado para layout padrão (Gabriel - DB1)						  
 						                                          
-			 17/05/2012 - Projeto TED Internet	(Lucas)           
-						                                          
+						 17/05/2012 - Projeto TED Internet	(Lucas)           
 						                                          
 			 27/06/2012 - Alterado funcao carregarContrato(),    
 						  novo esquema para impressao.(Jorge)    
@@ -64,7 +61,10 @@
                           formatação da tela (Dionathan).
 						  
              07/09/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+						 
              26/08/2016 - Alteracao da function validaResponsaveis, SD 510426 (Jean Michel)
+						 
+						 04/09/2017 - Inclusão de novas functions, Prj. 354 (Jean Michel)
 
 *********************************************************************************/
 
@@ -86,6 +86,8 @@ var idastcjt;
 var qtdTitular;
 var confPJ = false;
 var exibePJ = false;
+
+var idmobile;
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) { 
@@ -1946,7 +1948,50 @@ function controlaLayout( nomeForm ){
 		$("#frmDadosTitInternet").hide();
 		$("#divInternetPrincipal").hide();
 		$("#divResponsaveisAss").hide();
-	}else if( nomeForm == 'divResponsaveisAss' ){
+	}else if( nomeForm == 'frmOpDesativaPush'){
+		
+		$("#divDispositivos").show();	
+		$("#divPrincipalPJ").hide();
+		$("#divBotoes").hide();
+		$("#frmDadosTitInternet").hide();
+		$("#divInternetPrincipal").hide();
+		$("#divResponsaveisAss").hide();
+		
+		ajustarCentralizacao();
+		
+		var divRegistro = $('div.divRegistros','#divDispositivos');		
+		var tabela      = $('table', divRegistro );
+		var linha       = $('table > tbody > tr', divRegistro );
+		
+		divRegistro.css({'height':'50%','width':'100%'});
+		
+		if($("#qtdDispositivos").val() > 0){
+			var ordemInicial = new Array();
+			ordemInicial = [[2,0]];
+			
+			var arrayLargura = new Array();
+			arrayLargura[0] = '100px';
+			arrayLargura[1] = '200px';
+			
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'right';
+			arrayAlinha[1] = 'right';
+			arrayAlinha[2] = 'right';
+		}else{
+			$("#btnDesativar").hide();
+			$("#btnvoltar").css({'margin-left':'260px'});
+		}
+		
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('.divDispositivos > table > thead').remove();
+				
+		$('table', tabela).removeClass();
+		$('th', tabela).unbind('click');
+		$('.headerSort', tabela).removeClass();
+		$('#frmOpDesativaPush').addClass('formulario');
+		$("#divConteudoOpcao").css("width","100%");
+	} else if( nomeForm == 'divResponsaveisAss' ){
 				
 		$("#divResponsaveisAss").show();
 		$("#divPrincipalPJ").hide();
@@ -2311,5 +2356,55 @@ function selecionarTodos(){
 		}else{
 			$(this).prop('checked',false);
 		}
+	});
+}
+
+function desativarPush(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando listagem de dispositivos...");
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/listagem_push.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divConteudoOpcao").html(response);
+		}				
+	});
+}
+
+function selecionaMobile(id){
+	idmobile = id;
+}
+function desativarEnvioPush(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando listagem de dispositivos...");
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/desativa_push.php",
+		data: {
+			idmobile: idmobile,
+			redirect: "script_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval(response);
+		}				
 	});
 }
