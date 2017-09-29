@@ -776,7 +776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 					(Adriano - P339).
                      
         11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
-        
+      
         28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40 pois estava estourando (Tiago #724513).      
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -3672,6 +3672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              09/08/2017 - Ajuste ao mostrar lançamento futuro de cred de cobranca NPC (Rafael)
   -- 
+  --              29/09/2017 - Ajuste na hora de montar a campo dscedent qdo for pagamento de GPS (Tiago/Adriano)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -5736,8 +5737,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).vllanmto:= rw_craplcm2.vllanmto;
 
         --Pagamentos Internet
-        IF rw_craphis.cdhistor = 508 THEN
-          pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor ||' - '|| rw_craplcm2.dscedent,1,50);
+        IF rw_craphis.cdhistor = 508 THEN                                                    --*Nao remover replace os traços sao diferentes
+          pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor ||' - '|| REPLACE(rw_craplcm2.dscedent,'–', '-'),1,50);
         ELSE
           IF rw_craplcm2.cdhistor IN (24,27,47,78,156,191,338,351,399,573,657) THEN
             pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor || rw_craplcm2.cdpesqbb,1,50);
