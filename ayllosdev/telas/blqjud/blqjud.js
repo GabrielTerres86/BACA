@@ -20,7 +20,7 @@
 
                   29/07/2016 - Ajuste para controle de permissão sobre as subrotinas de cada opção
                                (Adriano - SD 492902).
- * --------------
+  * --------------
  */
  
 var arrbloqueios = new Array();
@@ -1068,14 +1068,11 @@ function gravarBloqueio() {
 
             // Bloqueia Creditos Futuros ? Sim/Nao
            if (this.checked) {
-               //flblcrft = 'true';              
-               flblcrft = 1;  // Deverá passar o valor do Flag como 0 ou 1
+               flblcrft = 'true';              
            }
-           else {
-               //flblcrft = 'false';
-               flblcrft = 0;
-               vlrSaldoLau = 0; // Se nao bloqueia, vlr para LAUTOM é zero.
-           }
+           else {flblcrft    = 'false';
+                 vlrSaldoLau = 0; // Se nao bloqueia, vlr para LAUTOM é zero.
+                }
     });
 	
     var nrSeqAtual  = 0;
@@ -1124,7 +1121,7 @@ function gravarBloqueio() {
             cdmodali: strCdmodali,
             vlbloque: strVlbloque,
             vlresblq: strVlresblq,
-			cddopcao: cddopcao,
+            cddopcao: cddopcao,
             cdoperac: cdoperac,
 			redirect: "script_ajax"
 		}, 
@@ -1271,15 +1268,7 @@ function efetuaDesbloqueio() {
 	
 	var nrofides = $("#nrofides","#frmDesbloqueio").val();
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
-	
-	var fldestrf = 0;
-
-	if (flgradio == 'true') {
-	    fldestrf = 1;
-	} else {
-	    fldestrf = 0;
-	}
-
+	var dsinfdes = $("#dsinfdes","#frmDesbloqueio").val();	
 	
 	if (nrofides == '') {
 		showError('error','Número do Ofício de Desbloqueio não informado.','Alerta - BLQJUD','focaCampoErro(\'nrofides\',\'frmDesbloqueio\');');
@@ -1321,6 +1310,7 @@ function efetuaDesbloqueio() {
 			nrofides: nrofides,
 			dtenvdes: dtenvdes,
 			dsinfdes: dsinfdes,
+			fldestrf: flgradio,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) { 
@@ -1409,7 +1399,7 @@ function mostraSenha() {
 		dataType: 'html',
 		url: UrlSite + 'telas/blqjud/senha.php', 
 		data: {
-			cddopcao: cddopcao,
+		    cddopcao: cddopcao,
             cdoperac: cdoperac,
 			redirect: 'html_ajax'
 			}, 
