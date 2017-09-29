@@ -524,7 +524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 11/09/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 28/09/2017
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -770,13 +770,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         05/04/2017 - #455742 Melhorias de performance. Ajuste de passagem dos parâmetros inpessoa
                      e nrcpfcgc para não consultar novamente o associado nos packages 
                      apli0001 e imut0001 (Carlos)
-
+                     
         26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			         crapass, crapttl, crapjur 
 					(Adriano - P339).
                      
         11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).
         
+        28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40 pois estava estourando (Tiago #724513).      
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -6824,7 +6825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 28/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -6837,6 +6838,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              
   --              20/04/2016 - Remover comando rm e incluir direto na tela impres 
   --                           (Lucas Ranghetti/Rodrigo #399412)
+  --
+  --              28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40
+  --                           pois estava estourando (Tiago #724513)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                
         /* Cursores Locais */
@@ -7230,7 +7234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                  '<nrdocmto>' || SUBSTR(vr_tab_extrato_conta(vr_index_extrato).nrdocmto,1,12) || '</nrdocmto>' ||
                   '<vllanmto>' || to_char(vr_tab_extrato_conta(vr_index_extrato).vllanmto,'fm999999g990d00') || '</vllanmto>' ||
                   '<indebcre>' || vr_tab_extrato_conta(vr_index_extrato).indebcre || '</indebcre>' ||
-                  '<vldiario>' || to_char(vr_vldiario,'fm999999g990d00mi') || '</vldiario>' ||
+                  '<vldiario>' || to_char(vr_vldiario,'fm9999999g990d00mi') || '</vldiario>' ||
               '</lancto>';
               --Escrever lancamento no XML
               gene0002.pc_escreve_xml(pr_clobxml, pr_dstexto,vr_dstexto);
@@ -12013,7 +12017,7 @@ END pc_consulta_ir_pj_trim;
   --
   --              11/04/2016 - Exibir numero de conta cartão para o emprestimos de cessao de credito.
   --                           PRJ-343 - Cessao de Credito(Odirlei-AMcom)                   
-  --
+  -- 
   --              26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
   -- 		                   crapass, crapttl, crapjur 
   -- 						  (Adriano - P339).
@@ -18926,7 +18930,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
            vr_dscritic := 'Exclusao de lancamento nao permitida.';
            RAISE vr_exc_erro;
         END IF;
-        
+
         --Verifica na tabela de parametro se o historico
         --pode ser excluido(mudar situacao do registro)        
         pc_verifica_hist_lan_del(pr_cdcooper => pr_cdcooper
