@@ -282,7 +282,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                
                24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto
-                            na procedure pc_valida_arq_folha_ib (Lucas Ranghetti #729039)               
+                            na procedure pc_valida_arq_folha_ib (Lucas Ranghetti #729039)
+
+               29/09/2017 - Correção para não processar o débito e crédito quando folha
+                            na situação 6 - Transação Pendente. Proj. 397
+                            Rafael (Mouts)
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -2068,6 +2072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        AND pfp.cdcooper = ass.cdcooper
        AND emp.nrdconta = ass.nrdconta
        AND pfp.idsitapr > 3 --> Aprovados
+       AND pfp.idsitapr <> 6 -- Transação pendente
        AND pfp.flsitdeb = 0 --> Ainda nao debitado
      GROUP BY emp.cdempres
              ,emp.nrdconta
@@ -4280,6 +4285,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND ass.cdcooper  = emp.cdcooper
            AND ass.nrdconta  = emp.nrdconta
            AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.idsitapr  <> 6 --> Transação Pendente
            AND pfp.flsitdeb  = 1 --> Ja debitados
            AND pfp.flsitcre  = 0 --> Ainda nao creditados
            AND lfp.idtpcont  = 'C'
@@ -5569,6 +5575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND ass.cdcooper  = emp.cdcooper
            AND ass.nrdconta  = emp.nrdconta
            AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.idsitapr  <> 6 --> Transação Pendente
            AND pfp.flsitdeb  = 1 --> Ja debitados
            AND pfp.flsitcre  IN (0,2) --> Ainda nao creditados           
            AND lfp.idtpcont  = 'T'
