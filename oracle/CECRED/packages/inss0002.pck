@@ -327,7 +327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 17/07/2017
+   Data     : 27/08/2015                        Ultima atualizacao: 29/09/2017
 
    Dados referentes ao programa:
 
@@ -366,6 +366,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             
                17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
                             e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)
+                            
+               29/09/2017 - Corrigido caracter invalida na procedure pc_gps_arrecadar_sicredi (Tiago/Adriano).             
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -2169,8 +2171,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             ,vr_cdoperad
             ,rw_craplot.nrseqdig + 1
             ,TRIM(rw_crapass.nrdctitg)
-            ,'GPS – Identificador ' || pr_cdidenti -- (campo beneficiario do formulário);
-            ,vr_dsorigem || ' - PAGAMENTO ON-LINE – GUIA PREVIDENCIA SOCIAL'
+            ,'GPS - Identificador ' || pr_cdidenti -- (campo beneficiario do formulário);
+            ,vr_dsorigem || ' - PAGAMENTO ON-LINE - GUIA PREVIDENCIA SOCIAL'
             );
       EXCEPTION
         WHEN OTHERS THEN
