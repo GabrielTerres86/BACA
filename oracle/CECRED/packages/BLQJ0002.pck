@@ -134,23 +134,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         FROM crapblj a
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
-         AND a.nroficio LIKE pr_nroficio||'%'
+         AND a.nroficio = pr_nroficio --LIKE pr_nroficio||'%'
          AND a.cdmodali = pr_cdmodali
          AND a.dtblqfim IS NULL; -- Que nao esteja desbloqueado
     rw_crapblj cr_crapblj%ROWTYPE;
 
+/* Demetrius
     -- Cursor para verificar o numero de oficio que devera ser utilizado
     CURSOR cr_crapblj_2 IS
       SELECT a.nroficio
         FROM crapblj a
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
-         AND a.nroficio LIKE pr_nroficio||'%'
+         AND a.nroficio = pr_nroficio --LIKE pr_nroficio||'%'
          AND a.cdmodali = pr_cdmodali
        ORDER BY nroficio DESC;
     rw_crapblj_2 cr_crapblj_2%ROWTYPE;
 
-
+*/
     -- Registro sobre a data do sistema
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -175,13 +176,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     FETCH cr_crapblj INTO rw_crapblj;
       
     -- Se ja existir registro, deve-se cancelar com erro
+    /* --thiago rodrigues
     IF cr_crapblj%FOUND THEN
       CLOSE cr_crapblj;
       vr_dscritic := 'Ja existe bloqueio para o oficio informado!';
       RAISE vr_exc_saida;
     END IF;
     CLOSE cr_crapblj;
-
+    */ --fim thiago rodrigues
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -277,6 +279,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
 
     -- Busca o numero do oficio que sera utilizado
+    vr_nroficio := pr_nroficio; --thiago rodrigues
+    --thiago rodrigues
+    /*
     OPEN cr_crapblj_2;
     FETCH cr_crapblj_2 INTO rw_crapblj_2;
     
@@ -294,6 +299,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;    
     CLOSE cr_crapblj_2;
       
+    */ --fim thiago rodrigues
     -- Inclui o bloqueio judicial
     blqj0001.pc_inclui_bloqueio_jud(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -390,6 +396,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     CLOSE cr_crapblj;
 
     
+
+/* Demetrius -- a logica de valor está na BLQJ0001.pc_efetua_desbloqueio_jud
+
     -- Verifica se o bloqueio solicitado eh superior ao bloqueio existente
     -- Neste caso deve-se desbloquear somente o valor existente
     IF pr_vlbloque > rw_crapblj.vlbloque THEN
@@ -432,6 +441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
 
     ELSE -- Se o valor solicitado eh o mesmo valor que esta bloqueado
             
+*/
       IF pr_fldestrf = 0 THEN
         vr_fldestrf := FALSE;
         vr_dsinfdes := 'Desbloqueio BACENJUD';
@@ -452,6 +462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                         ,pr_dsinfdes  => vr_dsinfdes
                                         ,pr_fldestrf  => vr_fldestrf
                                         ,pr_tpcooperad=> 1 -- Efetuar a busca por conta
+                                        ,pr_vldesblo  => vr_vlbloqueio
                                         ,pr_tab_erro  => vr_tab_erro);
       -- Verifica se ocorreu erro na rotina
       IF vr_tab_erro.exists(vr_tab_erro.first) THEN
@@ -459,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         RAISE vr_exc_saida;
       END IF;
     
-    END IF;
+ --   END IF;   -- pr_vlbloque < rw_crapblj.vlbloque
     
   EXCEPTION
     WHEN vr_exc_saida THEN
