@@ -2068,6 +2068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
        AND pfp.cdcooper = ass.cdcooper
        AND emp.nrdconta = ass.nrdconta
        AND pfp.idsitapr > 3 --> Aprovados
+       AND pfp.idsitapr <> 6 -- Transação pendente
        AND pfp.flsitdeb = 0 --> Ainda nao debitado
      GROUP BY emp.cdempres
              ,emp.nrdconta
@@ -4280,6 +4281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND ass.cdcooper  = emp.cdcooper
            AND ass.nrdconta  = emp.nrdconta
            AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.idsitapr  <> 6 --> Transação Pendente
            AND pfp.flsitdeb  = 1 --> Ja debitados
            AND pfp.flsitcre  = 0 --> Ainda nao creditados
            AND lfp.idtpcont  = 'C'
@@ -5569,6 +5571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            AND ass.cdcooper  = emp.cdcooper
            AND ass.nrdconta  = emp.nrdconta
            AND pfp.idsitapr  > 3 --> Aprovados
+           AND pfp.idsitapr  <> 6 --> Transação Pendente
            AND pfp.flsitdeb  = 1 --> Ja debitados
            AND pfp.flsitcre  IN (0,2) --> Ainda nao creditados           
            AND lfp.idtpcont  = 'T'

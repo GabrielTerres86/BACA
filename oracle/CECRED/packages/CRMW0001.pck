@@ -60,6 +60,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
          vr_dscritic crapcri.dscritic%TYPE;
          vr_xml_clob CLOB;      
          vr_xml_temp VARCHAR2(32726) := '';
+         
+          -- Buscar os endereços de uma conta
+          CURSOR cr_endereco(pr_cdcooper IN crapenc.cdcooper%TYPE
+                             ,pr_nrdconta IN crapenc.nrdconta%TYPE
+                             ,pr_idseqttl IN crapenc.idseqttl%TYPE
+                             ,pr_tpendass IN crapenc.tpendass%TYPE) IS 
+          
+          SELECT e.dsendere logradouro,
+                 e.nrendere numeroendereco,
+                 e.nmbairro nomebairro,
+                 e.nmcidade nomecidade,
+                 e.cdufende siglaestado,
+                 e.nrcepend cep,
+                 e.nrdoapto numeroapto,
+                 e.cddbloco bloco,
+                 e.complend complemento
+
+            FROM crapenc e
+
+           WHERE e.cdcooper = pr_cdcooper
+             AND e.nrdconta = pr_nrdconta
+             AND e.idseqttl = pr_idseqttl
+             AND ((e.tpendass = pr_tpendass) OR (pr_tpendass = 0))
+             
+           ORDER BY e.cdseqinc;
+             
+          rw_endereco cr_endereco%ROWTYPE;
+
        
           -- Buscar os telefones ativos de uma conta
           CURSOR cr_telefones(pr_cdcooper IN craptfc.cdcooper%TYPE
@@ -138,7 +166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                LEFT JOIN crapenc e
                       ON e.cdcooper = a.cdcooper
                      AND e.nrdconta = a.nrdconta
-                     AND e.idseqttl = 1               
+                     AND e.idseqttl = 1
+                     AND e.tpendass = DECODE(a.inpessoa, 1, 10, 2, 9, 3, 9)               
                LEFT JOIN gnetcvl z
                       ON z.cdestcvl = t.cdestcvl
                LEFT JOIN craptab s
@@ -149,8 +178,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                       ON r.cdseteco = j.cdseteco
                      AND r.cdrmativ = j.cdrmativ
                    WHERE a.cdcooper = pr_cdcooper
-                     AND a.nrdconta = pr_nrdconta
-                     AND e.tpendass = DECODE(a.inpessoa, 1, 10, 2, 9);
+                     AND a.nrdconta = pr_nrdconta;
+                     
           rw_titular cr_titular%ROWTYPE;
 
           -- Retorna dados dos demais titulares da conta
@@ -172,26 +201,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                    a.dsproftl nomecargo,
                    a.tpdocttl sigla,
                    a.nrdocttl nrdocumento,
-                   e.dsendere logradouro,
-                   e.nrendere numeroendereco,
-                   e.nmbairro nomebairro,
-                   e.nmcidade nomecidade,
-                   e.cdufende siglaestado,
-                   e.nrcepend cep,
-                   e.nrdoapto numeroapto,
-                   e.cddbloco bloco,
-                   e.complend complemento,
                    a.dsnatura naturalidade,
                    a.nmpaittl nomepai,
                    a.nmmaettl nomemae,
                    z.cdestcvl codigoestadocivil,
                    z.rsestcvl dsestadocivil
               FROM crapttl a
-         LEFT JOIN crapenc e
-                ON e.cdcooper = a.cdcooper
-               AND e.nrdconta = a.nrdconta
-               AND e.idseqttl = a.idseqttl
-               AND e.cdseqinc = 1
          LEFT JOIN crapass x
                 ON x.cdcooper = a.cdcooper
                AND x.nrdconta = a.nrdconta
@@ -199,7 +214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                 ON z.cdestcvl = a.cdestcvl
              WHERE a.cdcooper = pr_cdcooper
                AND a.nrdconta = pr_nrdconta
-               AND e.idseqttl > 1; -- Outros titulares
+               AND a.idseqttl > 1; -- Outros titulares
           rw_titulares cr_titulares%ROWTYPE;
 
           -- Retorna dados dos operadores ativos na conta
@@ -207,10 +222,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                               ,pr_nrdconta IN crapopi.nrdconta%TYPE) IS
             SELECT w.nmoperad nomeoperador,
                    w.nrcpfope cpfoperador,
-                   w.dsdcargo cargooperador
+                   w.dsdcargo || DECODE(w.flgsitop, 0, '/BLOQUEADO', 1, '/ATIVO') cargooperador 
               FROM crapopi w
              WHERE w.cdcooper = pr_cdcooper
-               AND w.flgsitop = 1 -- Situação do operador (1-Ativo)
+--               AND w.flgsitop = 1 -- Situação do operador (1-Ativo)
                AND w.nrdconta = pr_nrdconta;
           rw_operadores cr_operadores%ROWTYPE;
 
@@ -273,27 +288,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                      COALESCE(x.cdagenci, t.cdagenci) codigoagencia,
                      COALESCE(x.nrcpfcgc, t.nrcpfcgc) nrcpfcnpj,
                      CASE
-                       WHEN j.inpessoa = 1 THEN
+                       WHEN t.nrdctato = 0 THEN
                         'F'
                        ELSE
                         CASE
-                          WHEN t.nrdctato > 0 THEN
-                          
-                           CASE
-                             WHEN x.inpessoa = 1 THEN
-                              'F'
-                             ELSE
-                              'J'
-                           END
-                        
+                          WHEN x.inpessoa = 1 THEN
+                           'F'
                           ELSE
-                          
-                           CASE
-                             WHEN t.inpessoa = 1 THEN
-                              'F'
-                             ELSE
-                              'J'
-                           END
+                           'J'
                         END
                      END tipopessoa,
                      TO_CHAR(COALESCE(x.dtnasctl, t.dtnascto, y.dtnasttl),'DD/MM/YYYY') dtnascimento,
@@ -304,7 +306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                        ELSE
                         COALESCE(t.dsproftl, x.dsproftl)
                      END nomecargo,
-                    COALESCE(y.tpdocttl, t.tpdocava) sigla,
+                     COALESCE(y.tpdocttl, t.tpdocava) sigla,
                      COALESCE(y.nrdocttl, t.nrdocava) nrdocumento,
                      COALESCE(e.dsendere, t.dsendres##1, t.dsendres##2) logradouro,
                      COALESCE(e.nrendere, t.nrendere) numeroendereco,
@@ -317,7 +319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                      COALESCE(e.complend, t.complend) complemento,
                      COALESCE(y.dsnatura, t.dsnatura) naturalidade,
                      COALESCE(y.nmpaittl, t.nmpaicto) nomepai,
-                     COALESCE(y.nmextttl, t.nmmaecto) nomemae,
+                     COALESCE(y.nmmaettl, t.nmmaecto) nomemae,
                      Coalesce(d.cdestcvl, z.cdestcvl) codigoestadocivil,
                      Coalesce(d.rsestcvl, z.rsestcvl) dsestadocivil
                 FROM crapavt t
@@ -345,15 +347,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
          
                WHERE t.cdcooper = pr_cdcooper
                  AND t.tpctrato = 6 -- Representantes legal
-                 AND t.nrdconta = pr_nrdconta -- Número da conta
-                 AND t.dsproftl IN ('SOCIO/PROPRIETARIO',
+                 AND t.nrdconta = pr_nrdconta; -- Número da conta
+                /* AND t.dsproftl IN ('SOCIO/PROPRIETARIO',
                                     'DIRETOR/ADMINISTRADOR',
                                     'PROCURADOR',
                                     'SOCIO COTISTA',
                                     'SOCIO ADMINISTRADOR',
                                     'SINDICO',
                                     'TESOUREIRO',
-                                    'ADMINISTRADOR'); -- Responsaveis legais
+                                    'ADMINISTRADOR'); */ -- Responsaveis legais
           rw_representantes cr_representantes%ROWTYPE;                                    
 
        BEGIN
@@ -389,23 +391,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                 '<nrcpfcnpj>'         || rw_titular.nrcpfcnpj         || '</nrcpfcnpj>' ||
                                 '<tipopessoa>'        || rw_titular.tipopessoa        || '</tipopessoa>' ||
                                 '<dtnascimento>'      || rw_titular.dtnascimento      || '</dtnascimento>' ||
-                                '<nomecompleto>'      || rw_titular.nomecompleto      || '</nomecompleto>' ||
-                                '<nomefantasia>'      || rw_titular.nomefantasia      || '</nomefantasia>' ||
-                                '<nomecargo>'         || rw_titular.nomecargo         || '</nomecargo>' ||
+                                '<nomecompleto>'      || gene0007.fn_caract_controle(rw_titular.nomecompleto)      || '</nomecompleto>' ||
+                                '<nomefantasia>'      || gene0007.fn_caract_controle(rw_titular.nomefantasia)      || '</nomefantasia>' ||
+                                '<nomecargo>'         || gene0007.fn_caract_controle(rw_titular.nomecargo)         || '</nomecargo>' ||
                                 '<tipodocumento>'     ||
                                   '<sigla>'           || rw_titular.sigla             || '</sigla>' ||
                                   '<nrdocumento>'     || rw_titular.nrdocumento       || '</nrdocumento>' ||                                  
                                 '</tipodocumento>'    ||
                                 '<ramoatividade>'     ||
                                   '<codigoatividade>' || rw_titular.codigoatividade   || '</codigoatividade>' ||
-                                  '<descricaoatividade>'|| rw_titular.descricaoatividade || '</descricaoatividade>' ||                                  
+                                  '<descricaoatividade>'|| gene0007.fn_caract_controle(rw_titular.descricaoatividade) || '</descricaoatividade>' ||                                  
                                 '</ramoatividade>'    ||
                                 '<setoreconomico>'    ||
                                   '<codigosetoreco>'  || rw_titular.codigosetoreco       || '</codigosetoreco>' ||
-                                  '<descricaosetoreco>' || rw_titular.descricaosetoreco  || '</descricaosetoreco>' ||                                  
+                                  '<descricaosetoreco>' || gene0007.fn_caract_controle(rw_titular.descricaosetoreco)  || '</descricaosetoreco>' ||                                  
                                 '</setoreconomico>'   ||
                                 '<endereco>'          ||
-                                  '<logradouro>'      || rw_titular.logradouro     || '</logradouro>'     ||
+                                  '<logradouro>'      || gene0007.fn_caract_controle(rw_titular.logradouro)     || '</logradouro>'     ||
                                   '<numeroendereco>'  || rw_titular.numeroendereco || '</numeroendereco>' ||
                                   '<nomebairro>'      || rw_titular.nomebairro     || '</nomebairro>'     ||
                                   '<nomecidade>'      || rw_titular.nomecidade     || '</nomecidade>'     ||
@@ -458,7 +460,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                    ,pr_texto_novo     => '<titulares>');          
 
             FOR rw_titulares IN cr_titulares(pr_cdcooper => pr_cdcooper
-                                            ,pr_nrdconta => pr_nrdconta) LOOP                       
+                                            ,pr_nrdconta => pr_nrdconta) LOOP
+                                            
+                OPEN cr_endereco(pr_cdcooper => rw_titulares.codigocooperativa
+                                ,pr_nrdconta => rw_titulares.numeroconta
+                                ,pr_idseqttl => rw_titulares.seqtitularidade
+                                ,pr_tpendass => 10 /* Endereco residencial */);
+                                
+                FETCH cr_endereco INTO rw_endereco;
+
+                IF cr_endereco%NOTFOUND THEN
+ 
+                   CLOSE cr_endereco;
+                  
+                   OPEN cr_endereco(pr_cdcooper  => rw_titulares.codigocooperativa
+                                    ,pr_nrdconta => rw_titulares.numeroconta
+                                    ,pr_idseqttl => rw_titulares.seqtitularidade
+                                    ,pr_tpendass => 0);
+                                    
+                   FETCH cr_endereco INTO rw_endereco;
+
+                END IF;
+                
+                CLOSE cr_endereco;
+          
                                             
                 gene0002.pc_escreve_xml(pr_xml            => vr_xml_clob
                                ,pr_texto_completo => vr_xml_temp      
@@ -471,29 +496,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                 '<nrcpfcnpj>'         || rw_titulares.nrcpfcnpj         || '</nrcpfcnpj>' ||
                                 '<tipopessoa>'        || rw_titulares.tipopessoa        || '</tipopessoa>' ||
                                 '<dtnascimento>'      || rw_titulares.dtnascimento      || '</dtnascimento>' ||
-                                '<nomecompleto>'      || rw_titulares.nomecompleto      || '</nomecompleto>' ||
-                                '<nomecargo>'         || rw_titulares.nomecargo         || '</nomecargo>' ||
+                                '<nomecompleto>'      || gene0007.fn_caract_controle(rw_titulares.nomecompleto)      || '</nomecompleto>' ||
+                                '<nomecargo>'         || gene0007.fn_caract_controle(rw_titulares.nomecargo)         || '</nomecargo>' ||
                                 '<tipodocumento>'     ||
                                   '<sigla>'           || rw_titulares.sigla             || '</sigla>' ||
                                   '<nrdocumento>'     || rw_titulares.nrdocumento       || '</nrdocumento>' ||                                  
                                 '</tipodocumento>'    ||
                                 '<endereco>'          ||
-                                  '<logradouro>'      || rw_titulares.logradouro     || '</logradouro>'     ||
-                                  '<numeroendereco>'  || rw_titulares.numeroendereco || '</numeroendereco>' ||
-                                  '<nomebairro>'      || rw_titulares.nomebairro     || '</nomebairro>'     ||
-                                  '<nomecidade>'      || rw_titulares.nomecidade     || '</nomecidade>'     ||
-                                  '<siglaestado>'     || rw_titulares.siglaestado    || '</siglaestado>'    ||
-                                  '<cep>'             || rw_titulares.cep            || '</cep>'            ||
-                                  '<numeroapto>'      || rw_titulares.numeroapto     || '</numeroapto>'     || 
-                                  '<bloco>'           || rw_titulares.bloco          || '</bloco>'          ||
-                                  '<complemento>'     || rw_titulares.complemento    || '</complemento>'    ||
+                                  '<logradouro>'      || gene0007.fn_caract_controle(rw_endereco.logradouro)     || '</logradouro>'     ||
+                                  '<numeroendereco>'  || rw_endereco.numeroendereco || '</numeroendereco>' ||
+                                  '<nomebairro>'      || rw_endereco.nomebairro     || '</nomebairro>'     ||
+                                  '<nomecidade>'      || rw_endereco.nomecidade     || '</nomecidade>'     ||
+                                  '<siglaestado>'     || rw_endereco.siglaestado    || '</siglaestado>'    ||
+                                  '<cep>'             || rw_endereco.cep            || '</cep>'            ||
+                                  '<numeroapto>'      || rw_endereco.numeroapto     || '</numeroapto>'     || 
+                                  '<bloco>'           || rw_endereco.bloco          || '</bloco>'          ||
+                                  '<complemento>'     || gene0007.fn_caract_controle(rw_endereco.complemento)    || '</complemento>'    ||
                                 '</endereco>'         ||
                                 '<naturalidade>'      || rw_titulares.naturalidade   || '</naturalidade>'   ||
-                                '<nomepai>'           || rw_titulares.nomepai        || '</nomepai>'        ||
-                                '<nomemae>'           || rw_titulares.nomemae        || '</nomemae>'        ||
+                                '<nomepai>'           || gene0007.fn_caract_controle(rw_titulares.nomepai)        || '</nomepai>'        ||
+                                '<nomemae>'           || gene0007.fn_caract_controle(rw_titulares.nomemae)        || '</nomemae>'        ||
                                 '<estadocivil>'       ||
                                   '<codigoestadocivil>' || rw_titulares.codigoestadocivil || '</codigoestadocivil>' ||
-                                  '<dsestadocivil>'     || rw_titulares.dsestadocivil     || '</dsestadocivil>'     ||
+                                  '<dsestadocivil>'     || gene0007.fn_caract_controle(rw_titulares.dsestadocivil)     || '</dsestadocivil>'     ||
                                 '</estadocivil>');
                                 
                                 
@@ -549,9 +574,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                      ,pr_texto_completo => vr_xml_temp      
                                      ,pr_texto_novo     => 
                                      '<operador>' ||
-                                       '<nomeoperador>'  || rw_operadores.nomeoperador  || '</nomeoperador>'  ||
+                                       '<nomeoperador>'  || gene0007.fn_caract_controle(rw_operadores.nomeoperador)  || '</nomeoperador>'  ||
                                        '<cpfoperador>'   || rw_operadores.cpfoperador   || '</cpfoperador>'   ||
-                                       '<cargooperador>' || rw_operadores.cargooperador || '</cargooperador>' ||
+                                       '<cargooperador>' || gene0007.fn_caract_controle(rw_operadores.cargooperador) || '</cargooperador>' ||
                                      '</operador>');                                          
                                               
             END LOOP;
@@ -583,14 +608,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                     '<nrcpfcnpj>'         || rw_responsavel.nrcpfcnpj         || '</nrcpfcnpj>' ||
                                     '<tipopessoa>'        || rw_responsavel.tipopessoa        || '</tipopessoa>' ||
                                     '<dtnascimento>'      || rw_responsavel.dtnascimento      || '</dtnascimento>' ||
-                                    '<nomecompleto>'      || rw_responsavel.nomecompleto      || '</nomecompleto>' ||
-                                    '<nomecargo>'         || rw_responsavel.nomecargo         || '</nomecargo>' ||
+                                    '<nomecompleto>'      || gene0007.fn_caract_controle(rw_responsavel.nomecompleto)      || '</nomecompleto>' ||
+                                    '<nomecargo>'         || gene0007.fn_caract_controle(rw_responsavel.nomecargo)         || '</nomecargo>' ||
                                     '<tipodocumento>'     ||
                                       '<sigla>'           || rw_responsavel.sigla             || '</sigla>' ||
                                       '<nrdocumento>'     || rw_responsavel.nrdocumento       || '</nrdocumento>' ||                                  
                                     '</tipodocumento>'    ||
                                     '<endereco>'          ||
-                                      '<logradouro>'      || rw_responsavel.logradouro     || '</logradouro>'     ||
+                                      '<logradouro>'      || gene0007.fn_caract_controle(rw_responsavel.logradouro)     || '</logradouro>'     ||
                                       '<numeroendereco>'  || rw_responsavel.numeroendereco || '</numeroendereco>' ||
                                       '<nomebairro>'      || rw_responsavel.nomebairro     || '</nomebairro>'     ||
                                       '<nomecidade>'      || rw_responsavel.nomecidade     || '</nomecidade>'     ||
@@ -598,14 +623,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                       '<cep>'             || rw_responsavel.cep            || '</cep>'            ||
                                       '<numeroapto>'      || rw_responsavel.numeroapto     || '</numeroapto>'     || 
                                       '<bloco>'           || rw_responsavel.bloco          || '</bloco>'          ||
-                                      '<complemento>'     || rw_responsavel.complemento    || '</complemento>'    ||
+                                      '<complemento>'     || gene0007.fn_caract_controle(rw_responsavel.complemento)    || '</complemento>'    ||
                                     '</endereco>'         ||
                                     '<naturalidade>'      || rw_responsavel.naturalidade   || '</naturalidade>'   ||
-                                    '<nomepai>'           || rw_responsavel.nomepai        || '</nomepai>'        ||
-                                    '<nomemae>'           || rw_responsavel.nomemae        || '</nomemae>'        ||
+                                    '<nomepai>'           || gene0007.fn_caract_controle(rw_responsavel.nomepai)        || '</nomepai>'        ||
+                                    '<nomemae>'           || gene0007.fn_caract_controle(rw_responsavel.nomemae)        || '</nomemae>'        ||
                                     '<estadocivil>'       ||
                                       '<codigoestadocivil>' || rw_responsavel.codigoestadocivil || '</codigoestadocivil>' ||
-                                      '<dsestadocivil>'     || rw_responsavel.dsestadocivil     || '</dsestadocivil>'     ||
+                                      '<dsestadocivil>'     || gene0007.fn_caract_controle(rw_responsavel.dsestadocivil)     || '</dsestadocivil>'     ||
                                     '</estadocivil>');
                                     
                     -- Telefones
@@ -621,11 +646,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                              ,pr_texto_completo => vr_xml_temp      
                                              ,pr_texto_novo     => 
                                              '<telefone>' ||
-                                               '<dstipotelefone>'     || rw_telefones.dstipotelefone     || '</dstipotelefone>'     ||
+                                               '<dstipotelefone>'     || gene0007.fn_caract_controle(rw_telefones.dstipotelefone)     || '</dstipotelefone>'     ||
                                                '<codigotipotelefone>' || rw_telefones.codigotipotelefone || '</codigotipotelefone>' ||
                                                '<dddtelefone>'        || rw_telefones.dddtelefone        || '</dddtelefone>'        ||
                                                '<numerotelefone>'     || rw_telefones.numerotelefone     || '</numerotelefone>'     ||
-                                               '<nomepessoacontato>'  || rw_telefones.nomepessoacontato  || '</nomepessoacontato>'  ||
+                                               '<nomepessoacontato>'  || gene0007.fn_caract_controle(rw_telefones.nomepessoacontato)  || '</nomepessoacontato>'  ||
                                              '</telefone>');
                                                       
                     END LOOP;
@@ -668,14 +693,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                       '<nrcpfcnpj>'         || rw_representantes.nrcpfcnpj         || '</nrcpfcnpj>' ||
                                       '<tipopessoa>'        || rw_representantes.tipopessoa        || '</tipopessoa>' ||
                                       '<dtnascimento>'      || rw_representantes.dtnascimento      || '</dtnascimento>' ||
-                                      '<nomecompleto>'      || rw_representantes.nomecompleto      || '</nomecompleto>' ||
-                                      '<nomecargo>'         || rw_representantes.nomecargo         || '</nomecargo>' ||
+                                      '<nomecompleto>'      || gene0007.fn_caract_controle(rw_representantes.nomecompleto)      || '</nomecompleto>' ||
+                                      '<nomecargo>'         || gene0007.fn_caract_controle(rw_representantes.nomecargo)         || '</nomecargo>' ||
                                       '<tipodocumento>'     ||
                                         '<sigla>'           || rw_representantes.sigla             || '</sigla>' ||
                                         '<nrdocumento>'     || rw_representantes.nrdocumento       || '</nrdocumento>' ||                                  
                                       '</tipodocumento>'    ||
                                       '<endereco>'          ||
-                                        '<logradouro>'      || rw_representantes.logradouro     || '</logradouro>'     ||
+                                        '<logradouro>'      || gene0007.fn_caract_controle(rw_representantes.logradouro)     || '</logradouro>'     ||
                                         '<numeroendereco>'  || rw_representantes.numeroendereco || '</numeroendereco>' ||
                                         '<nomebairro>'      || rw_representantes.nomebairro     || '</nomebairro>'     ||
                                         '<nomecidade>'      || rw_representantes.nomecidade     || '</nomecidade>'     ||
@@ -683,14 +708,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                         '<cep>'             || rw_representantes.cep            || '</cep>'            ||
                                         '<numeroapto>'      || rw_representantes.numeroapto     || '</numeroapto>'     || 
                                         '<bloco>'           || rw_representantes.bloco          || '</bloco>'          ||
-                                        '<complemento>'     || rw_representantes.complemento    || '</complemento>'    ||
+                                        '<complemento>'     || gene0007.fn_caract_controle(rw_representantes.complemento)    || '</complemento>'    ||
                                       '</endereco>'         ||
                                       '<naturalidade>'      || rw_representantes.naturalidade   || '</naturalidade>'   ||
-                                      '<nomepai>'           || rw_representantes.nomepai        || '</nomepai>'        ||
-                                      '<nomemae>'           || rw_representantes.nomemae        || '</nomemae>'        ||
+                                      '<nomepai>'           || gene0007.fn_caract_controle(rw_representantes.nomepai)        || '</nomepai>'        ||
+                                      '<nomemae>'           || gene0007.fn_caract_controle(rw_representantes.nomemae)        || '</nomemae>'        ||
                                       '<estadocivil>'       ||
                                         '<codigoestadocivil>' || rw_representantes.codigoestadocivil || '</codigoestadocivil>' ||
-                                        '<dsestadocivil>'     || rw_representantes.dsestadocivil     || '</dsestadocivil>'     ||
+                                        '<dsestadocivil>'     || gene0007.fn_caract_controle(rw_representantes.dsestadocivil)     || '</dsestadocivil>'     ||
                                       '</estadocivil>');
                                       
                 -- Telefones
@@ -706,11 +731,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CRMW0001 is
                                          ,pr_texto_completo => vr_xml_temp      
                                          ,pr_texto_novo     => 
                                          '<telefone>' ||
-                                           '<dstipotelefone>'     || rw_telefones.dstipotelefone     || '</dstipotelefone>'     ||
+                                           '<dstipotelefone>'     || gene0007.fn_caract_controle(rw_telefones.dstipotelefone)     || '</dstipotelefone>'     ||
                                            '<codigotipotelefone>' || rw_telefones.codigotipotelefone || '</codigotipotelefone>' ||
                                            '<dddtelefone>'        || rw_telefones.dddtelefone        || '</dddtelefone>'        ||
                                            '<numerotelefone>'     || rw_telefones.numerotelefone     || '</numerotelefone>'     ||
-                                           '<nomepessoacontato>'  || rw_telefones.nomepessoacontato  || '</nomepessoacontato>'  ||
+                                           '<nomepessoacontato>'  || gene0007.fn_caract_controle(rw_telefones.nomepessoacontato)  || '</nomepessoacontato>'  ||
                                          '</telefone>');
                                                           
                 END LOOP;
