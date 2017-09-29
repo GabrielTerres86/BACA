@@ -1527,17 +1527,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         FETCH cr_crapnac INTO vr_dsnacion;
         CLOSE cr_crapnac;
 
-        --> Buscar orgão expedidor
-        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
-                                          pr_cdorgao_expedidor => vr_cdorgexp, 
-                                          pr_nmorgao_expedidor => vr_nmorgexp, 
-                                          pr_cdcritic          => vr_cdcritic, 
-                                          pr_dscritic          => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR 
-           TRIM(vr_dscritic) IS NOT NULL THEN
-          vr_cdorgexp := NULL;
-          vr_nmorgexp := NULL; 
-        END IF;                                     
+        vr_cdorgexp := NULL;
+        vr_nmorgexp := NULL;
+        IF nvl(rw_crapass.idorgexp,0) <> 0 THEN 
+          --> Buscar orgão expedidor
+          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapass.idorgexp, 
+                                            pr_cdorgao_expedidor => vr_cdorgexp, 
+                                            pr_nmorgao_expedidor => vr_nmorgexp, 
+                                            pr_cdcritic          => vr_cdcritic, 
+                                            pr_dscritic          => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR 
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_cdorgexp := NULL;
+            vr_nmorgexp := NULL; 
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
+          END IF;                                     
+        END IF;                                   
 
         pr_tab_associado(vr_index).nrmatric:= rw_crapass.nrmatric;
         pr_tab_associado(vr_index).indnivel:= rw_crapass.indnivel;
@@ -1600,33 +1606,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         
         vr_cdorgexp := NULL;
         vr_nmorgexp := NULL;
-        --> Buscar orgão expedidor
-        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl2.idorgexp, 
-                                          pr_cdorgao_expedidor => vr_cdorgexp, 
-                                          pr_nmorgao_expedidor => vr_nmorgexp, 
-                                          pr_cdcritic          => vr_cdcritic, 
-                                          pr_dscritic          => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR 
-           TRIM(vr_dscritic) IS NOT NULL THEN
-          vr_cdorgexp := NULL;
-          vr_nmorgexp := NULL; 
-        END IF; 
-        
+        IF nvl(rw_crapttl2.idorgexp,0) <> 0 THEN
+          --> Buscar orgão expedidor
+          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl2.idorgexp, 
+                                            pr_cdorgao_expedidor => vr_cdorgexp, 
+                                            pr_nmorgao_expedidor => vr_nmorgexp, 
+                                            pr_cdcritic          => vr_cdcritic, 
+                                            pr_dscritic          => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR 		  
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_cdorgexp := NULL;
+            vr_nmorgexp := NULL; 
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
+          END IF; 
+        END IF;
         pr_tab_associado(vr_index).cdoedstl:= vr_cdorgexp;
         
         vr_cdorgexp := NULL;
         vr_nmorgexp := NULL;
         --> Buscar orgão expedidor
-        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapcrl.idorgexp, 
-                                          pr_cdorgao_expedidor => vr_cdorgexp, 
-                                          pr_nmorgao_expedidor => vr_nmorgexp, 
-                                          pr_cdcritic          => vr_cdcritic, 
-                                          pr_dscritic          => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR 
-           TRIM(vr_dscritic) IS NOT NULL THEN
-          vr_cdorgexp := NULL;
-          vr_nmorgexp := NULL; 
-        END IF; 
+        IF nvl(rw_crapcrl.idorgexp,0) <> 0 THEN
+          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapcrl.idorgexp, 
+                                            pr_cdorgao_expedidor => vr_cdorgexp, 
+                                            pr_nmorgao_expedidor => vr_nmorgexp, 
+                                            pr_cdcritic          => vr_cdcritic, 
+                                            pr_dscritic          => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR 
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_cdorgexp := NULL;
+            vr_nmorgexp := NULL; 
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;          
+          END IF; 
+        END IF;
         
         pr_tab_associado(vr_index).cdoedrsp:= vr_cdorgexp;
         
@@ -1648,16 +1661,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_cdorgexp := NULL;
         vr_nmorgexp := NULL;
         --> Buscar orgão expedidor
-        cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl3.idorgexp, 
-                                          pr_cdorgao_expedidor => vr_cdorgexp, 
-                                          pr_nmorgao_expedidor => vr_nmorgexp, 
-                                          pr_cdcritic          => vr_cdcritic, 
-                                          pr_dscritic          => vr_dscritic);
-        IF nvl(vr_cdcritic,0) > 0 OR 
-           TRIM(vr_dscritic) IS NOT NULL THEN
-          vr_cdorgexp := NULL;
-          vr_nmorgexp := NULL; 
-        END IF; 
+        IF nvl(rw_crapttl3.idorgexp,0) <> 0 THEN
+          cada0001.pc_busca_orgao_expedidor(pr_idorgao_expedidor => rw_crapttl3.idorgexp, 
+                                            pr_cdorgao_expedidor => vr_cdorgexp, 
+                                            pr_nmorgao_expedidor => vr_nmorgexp, 
+                                            pr_cdcritic          => vr_cdcritic, 
+                                            pr_dscritic          => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR 
+             TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_cdorgexp := NULL;
+            vr_nmorgexp := NULL; 
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
+          END IF; 
+        END IF;
         
         pr_tab_associado(vr_index).cdoedttl:= vr_cdorgexp;
         
