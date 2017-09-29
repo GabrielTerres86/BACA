@@ -271,15 +271,15 @@
                             que qnd quebra a pagina e a primeira linha esta em branco
                             nao conta como uma pagina nova (Douglas - Chamado 405904)
                             
-                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
                 02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
                              = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
 			  
- 			    14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
-				 			(Andrey Formigari - RKAM)
+			   14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
+							(Andrey Formigari - RKAM)
 			  
-                15/09/2016 - Inclusao dos parametros default na rotina oracle
+               15/09/2016 - Inclusao dos parametros default na rotina oracle
 				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
 
 		        25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
@@ -298,6 +298,10 @@
                               PRJ339 - CRM (Odirlei-AMcom) 
 
 				 29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+         
+         28/09/2017 - Ajuste leitura IDORGEXP.
+                      PRJ339 - CRM (Odirlei-AMcom) 
+         
 ..............................................................................*/
 
 
@@ -1343,7 +1347,7 @@ PROCEDURE confirmar-novo-limite:
 
         IF  aux_dscritic <> ""  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
-         
+            
 		FIND crapope WHERE crapope.cdcooper = par_cdcooper
 		               AND UPPER(crapope.cdoperad) = UPPER(par_cdoperad)
 					   NO-LOCK NO-ERROR.
@@ -7120,31 +7124,33 @@ PROCEDURE obtem-dados-contrato:
                                                        "xxx.xxx.xxx-xx")
                        tt-repres-ctr.dsdocrep = crapavt.nrdocava.
                            
-                       
-                /* Retornar orgao expedidor */
-                IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-                    RUN sistema/generico/procedures/b1wgen0052b.p 
-                        PERSISTENT SET h-b1wgen0052b.
+                ASSIGN tt-repres-ctr.cdoedrep = "".  
+                IF crapavt.idorgexp <> 0 THEN 
+                DO:
+                  /* Retornar orgao expedidor */
+                  IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                      RUN sistema/generico/procedures/b1wgen0052b.p 
+                          PERSISTENT SET h-b1wgen0052b.
 
-                ASSIGN tt-repres-ctr.cdoedrep = "".
-                RUN busca_org_expedidor IN h-b1wgen0052b 
+                  RUN busca_org_expedidor IN h-b1wgen0052b 
                                    (INPUT crapavt.idorgexp,
                                     OUTPUT tt-repres-ctr.cdoedrep,
                                     OUTPUT aux_cdcritic, 
                                     OUTPUT aux_dscritic).
 
-                DELETE PROCEDURE h-b1wgen0052b. 
+                  DELETE PROCEDURE h-b1wgen0052b. 
                 
-                IF  RETURN-VALUE = "NOK" THEN
-                DO:
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
+                  IF  RETURN-VALUE = "NOK" THEN
+                  DO:
+                      RUN gera_erro (INPUT par_cdcooper,
+                                     INPUT par_cdagenci,
+                                     INPUT par_nrdcaixa,
+                                     INPUT 1,            /** Sequencia **/
+                                     INPUT aux_cdcritic,
+                                     INPUT-OUTPUT aux_dscritic).
 
-                    RETURN "NOK".
+                      RETURN "NOK".
+                  END.
                 END.
                            
                 IF  crapavt.nrdctato <> 0  THEN
@@ -7162,62 +7168,70 @@ PROCEDURE obtem-dados-contrato:
                                                             "xxx.xxx.xxx-xx")
                                    tt-repres-ctr.dsdocrep = crabass.nrdocptl.
                                    
-                            /* Retornar orgao expedidor */
-                            IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-                                RUN sistema/generico/procedures/b1wgen0052b.p 
-                                    PERSISTENT SET h-b1wgen0052b.
-
-                            ASSIGN tt-repres-ctr.cdoedrep = "".
-                            RUN busca_org_expedidor IN h-b1wgen0052b 
-                                               (INPUT crabass.idorgexp,
-                                                OUTPUT tt-repres-ctr.cdoedrep,
-                                                OUTPUT aux_cdcritic, 
-                                                OUTPUT aux_dscritic).
-
-                            DELETE PROCEDURE h-b1wgen0052b. 
-                            
-                            IF  RETURN-VALUE = "NOK" THEN
+							ASSIGN tt-repres-ctr.cdoedrep = "".       
+                            IF crabass.idorgexp <> 0 THEN
                             DO:
-                                RUN gera_erro (INPUT par_cdcooper,
-                                               INPUT par_cdagenci,
-                                               INPUT par_nrdcaixa,
-                                               INPUT 1,            /** Sequencia **/
-                                               INPUT aux_cdcritic,
-                                               INPUT-OUTPUT aux_dscritic).
+                              /* Retornar orgao expedidor */
+                              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                                      PERSISTENT SET h-b1wgen0052b.
 
-                                RETURN "NOK".
-                            END.       
+                              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                                 (INPUT crabass.idorgexp,
+                                                  OUTPUT tt-repres-ctr.cdoedrep,
+                                                  OUTPUT aux_cdcritic, 
+                                                  OUTPUT aux_dscritic).
+
+                              DELETE PROCEDURE h-b1wgen0052b. 
+                            
+                              IF  RETURN-VALUE = "NOK" THEN
+                              DO:
+                                  RUN gera_erro (INPUT par_cdcooper,
+                                                 INPUT par_cdagenci,
+                                                 INPUT par_nrdcaixa,
+                                                 INPUT 1,            /** Sequencia **/
+                                                 INPUT aux_cdcritic,
+                                                 INPUT-OUTPUT aux_dscritic).
+
+                                  RETURN "NOK".
+                              END.       
+                      END.
                     END.
                 
             END. /** Fim do FOR EACH crapavt **/
         END.
     ELSE
         DO:
-            /* Retornar orgao expedidor */
-            IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-                RUN sistema/generico/procedures/b1wgen0052b.p 
-                    PERSISTENT SET h-b1wgen0052b.
-
+        
             ASSIGN aux_cdorgexp = "".
-            RUN busca_org_expedidor IN h-b1wgen0052b 
-                               (INPUT crapass.idorgexp,
-                                OUTPUT aux_cdorgexp,
-                                OUTPUT aux_cdcritic, 
-                                OUTPUT aux_dscritic).
-
-            DELETE PROCEDURE h-b1wgen0052b. 
-            
-            IF  RETURN-VALUE = "NOK" THEN
+            IF crapass.idorgexp <> 0 THEN 
             DO:
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
+            
+              /* Retornar orgao expedidor */
+              IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+                  RUN sistema/generico/procedures/b1wgen0052b.p 
+                     PERSISTENT SET h-b1wgen0052b.
 
-                RETURN "NOK".
-            END.    
+              RUN busca_org_expedidor IN h-b1wgen0052b 
+                                 (INPUT crapass.idorgexp,
+                                  OUTPUT aux_cdorgexp,
+                                  OUTPUT aux_cdcritic, 
+                                  OUTPUT aux_dscritic).
+
+              DELETE PROCEDURE h-b1wgen0052b. 
+            
+              IF  RETURN-VALUE = "NOK" THEN
+              DO:
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,            /** Sequencia **/
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+
+                  RETURN "NOK".
+              END.    
+            END.
         
             ASSIGN tt-dados-ctr.nrcpfcgc = "CPF: " +
                                            STRING(STRING(crapass.nrcpfcgc,
