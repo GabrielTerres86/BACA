@@ -22,7 +22,7 @@ BEGIN
   Programa : pc_log_programa
   Sistema : Todos
   Autor   : Carlos Henrique/CECRED
-  Data    : Março/2017                   Ultima atualizacao: 24/07/2017  
+  Data    : Março/2017                   Ultima atualizacao: 29/09/2017  
 
   Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
               Abrir chamado e enviar e-mail quando necessário.
@@ -44,6 +44,10 @@ BEGIN
 
               27/07/2017 - Inclusão nvl para validação de PR_IDPRGLOG
                            (Ana Volles - Envolti - Chamado 696499)
+                           
+              29/09/2017 - Inclusão dos parâmetros cd_prioridade=5 (normal) e 
+                           cd_nivel_indisponibilidade=4 (Operação normal) para a abertura de
+                           chamados (Carlos)
   .......................................................................................... */
   DECLARE 
   
@@ -280,17 +284,18 @@ BEGIN
           vr_texto_chamado1:= gene0007.fn_caract_acento(pr_texto_chamado);
           
           -- Usar o utl.escape para substituir caracteres de html para o comando entender
-            vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
-                               utl_url.escape(vr_mensagem_chamado);
-          vr_titulo_chamado:= utl_url.escape('Evento Monitoracao');
-          vr_usuario_sd:= utl_url.escape('monitor sistemas');
+          vr_texto_chamado := utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
+                              utl_url.escape(vr_mensagem_chamado);
+          vr_titulo_chamado := utl_url.escape('Evento Monitoracao');
+          vr_usuario_sd := utl_url.escape('monitor sistemas');
           
           -- Comando para abrir chamado no softdesk
-          vr_comando:= 'curl -k ' || '"'||vr_link_softdesk||'/modulos/incidente/'
+          vr_comando := 'curl -k ' || '"'||vr_link_softdesk||'/modulos/incidente/'
                     || 'api.php?cd_area=2&cd_usuario='||vr_usuario_sd||'&tt_chamado='
-                    ||vr_titulo_chamado|| '&ds_chamado='|| vr_texto_chamado 
-                    || '&cd_categoria=586'||'&cd_grupo_solucao=128&cd_servico=57&cd_tipo_chamado=5"'  
-                    || ' 2> /dev/null';                  
+                    || vr_titulo_chamado || '&ds_chamado=' || vr_texto_chamado 
+                    || '&cd_categoria=586'||'&cd_grupo_solucao=128&cd_servico=57&cd_tipo_chamado=5'
+                    || '&cd_prioridade=5&cd_nivel_indisponibilidade=4"'
+                    || ' 2> /dev/null';
                     
           --Executar o comando no unix
           GENE0001.pc_OScommand(pr_typ_comando => 'S'
