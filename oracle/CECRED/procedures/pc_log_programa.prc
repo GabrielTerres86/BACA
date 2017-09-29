@@ -14,15 +14,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_log_programa(
   pr_texto_chamado IN VARCHAR2                                   DEFAULT NULL, -- Texto do chamado
   pr_destinatario_email IN VARCHAR2                              DEFAULT NULL, -- Destinatario do email
   pr_flreincidente IN INTEGER                                    DEFAULT 0,    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
-  PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                           -- Identificador unico da tabela (sequence)
-  ) IS          
-  PRAGMA AUTONOMOUS_TRANSACTION;
+  PR_IDPRGLOG      IN OUT tbgen_prglog.idprglog%type                  -- Identificador unico da tabela (sequence)
+  ) IS
+  PRAGMA AUTONOMOUS_TRANSACTION;  
 BEGIN
   /* .......................................................................................
   Programa : pc_log_programa
   Sistema : Todos
   Autor   : Carlos Henrique/CECRED
-  Data    : Março/2017                   Ultima atualizacao: 24/05/2017  
+  Data    : Março/2017                   Ultima atualizacao: 24/07/2017  
 
   Objetivo  : Logar execuções, ocorrências, erros ou mensagens dos programas.
               Abrir chamado e enviar e-mail quando necessário.
@@ -38,6 +38,12 @@ BEGIN
                            
               24/05/2017 - Incluir validacao para nao dar erro ao armazenar o numero do chamado
                            (Lucas Ranghetti #678334)
+                           
+              24/07/2017 - Inclusão validação para leitura modulo/ação do banco
+                           (Ana Volles - Envolti - Chamado 696499)
+
+              27/07/2017 - Inclusão nvl para validação de PR_IDPRGLOG
+                           (Ana Volles - Envolti - Chamado 696499)
   .......................................................................................... */
   DECLARE 
   
@@ -59,6 +65,9 @@ BEGIN
   vr_nrchamado NUMBER;
   vr_usuario_sd VARCHAR2(20);
   vr_dtpesquisa DATE := SYSDATE;
+
+  vr_modulo VARCHAR2(100);
+  vr_acao   VARCHAR2(100);
   
   exc_saida EXCEPTION;
   
@@ -90,7 +99,7 @@ BEGIN
   /* Função para inserir na tabela tbgen_prglog */
   FUNCTION fn_insert_tbgen_prglog(pr2_dhfim      tbgen_prglog.dhfim%type                 DEFAULT NULL,
                                   pr2_flgsucesso tbgen_prglog.flgsucesso%type            DEFAULT 1) 
-                                  RETURN tbgen_prglog.idprglog%TYPE IS    
+                                  RETURN tbgen_prglog.idprglog%TYPE IS
   BEGIN   
     BEGIN
       	    
@@ -125,7 +134,7 @@ BEGIN
     RETURN vr_idprglog;
 
   END fn_insert_tbgen_prglog;
-  
+
   /* Função para inserir na tabela tbgen_prglog_ocorrencia */
   PROCEDURE insert_tbgen_prglog_ocorrencia IS 
   BEGIN   
@@ -162,7 +171,7 @@ BEGIN
   CASE 
     ----Início----------------------------------------------------------
     WHEN upper(pr_dstiplog) = 'I' THEN
-      IF PR_IDPRGLOG = 0 THEN -- Executa apenas na primeira chamada
+      IF nvl(PR_IDPRGLOG,0) = 0 THEN -- Executa apenas na primeira chamada
 
         -- Verifica a última execução do programa no dia
         OPEN cr_ultima_execucao;
@@ -180,7 +189,7 @@ BEGIN
     ----Fim-------------------------------------------------------------
     WHEN upper(pr_dstiplog) = 'F' THEN
       BEGIN 
-        IF PR_IDPRGLOG = 0 THEN
+        IF nvl(PR_IDPRGLOG,0) = 0 THEN
           -- Verifica a última execução do programa no dia
           OPEN cr_ultima_execucao;
           FETCH cr_ultima_execucao INTO rw_ultima_execucao;
@@ -213,7 +222,17 @@ BEGIN
     ----Ocorrência/Erro-------------------------------------------------
     WHEN upper(pr_dstiplog) = 'O' OR upper(pr_dstiplog) = 'E' THEN
       BEGIN           
-        
+
+        --Verifica se o programa que chamou esta rotina informou module
+        --Chamado 696499
+        IF INSTR(vr_dsmensagem, 'Module', 1, 1) = 0 THEN
+
+           --Inclusão leitura modulo/ação do banco
+           DBMS_APPLICATION_INFO.read_module(module_name => vr_modulo, action_name => vr_acao);
+           vr_dsmensagem := vr_dsmensagem || ' - Module: ' || vr_modulo ||
+                                             ' - Action: ' || vr_acao;
+        END IF;
+
         IF nvl(PR_IDPRGLOG, 0) = 0 THEN
           -- Verifica a última execução do programa no dia
           OPEN cr_ultima_execucao;
@@ -221,8 +240,6 @@ BEGIN
           
           -- Se não encontrar a última execuçao, cria tbgen_prglog
           IF cr_ultima_execucao%NOTFOUND THEN
-                     
-            vr_dsmensagem := pr_dsmensagem;
 
             PR_IDPRGLOG := fn_insert_tbgen_prglog(pr2_dhfim      => SYSDATE,
                                                   pr2_flgsucesso => 0);
@@ -263,7 +280,7 @@ BEGIN
           vr_texto_chamado1:= gene0007.fn_caract_acento(pr_texto_chamado);
           
           -- Usar o utl.escape para substituir caracteres de html para o comando entender
-          vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
+            vr_texto_chamado:= utl_url.escape(vr_texto_chamado1) || '<br><br>' || 
                                utl_url.escape(vr_mensagem_chamado);
           vr_titulo_chamado:= utl_url.escape('Evento Monitoracao');
           vr_usuario_sd:= utl_url.escape('monitor sistemas');
@@ -280,15 +297,15 @@ BEGIN
                                ,pr_des_comando => vr_comando
                                ,pr_typ_saida   => vr_typ_saida
                                ,pr_des_saida   => vr_chamado);
-              
+                               
           BEGIN                  
-            -- Irá sempre retornar a saida como: Chamado no Soft desk: numero
-            vr_nrchamado:= substr(TRIM(REPLACE(REPLACE(vr_chamado,chr(13),NULL),chr(10),NULL)),23,10);
+          -- Irá sempre retornar a saida como: Chamado no Soft desk: numero
+          vr_nrchamado:= substr(TRIM(REPLACE(REPLACE(vr_chamado,chr(13),NULL),chr(10),NULL)),23,10);
           EXCEPTION
             WHEN OTHERS THEN
               vr_nrchamado:= 0; -- Ocorreu erro ao abrir o chamado
           END;     
-         
+          
           -- Texto do chamado + o chamado aberto
           vr_texto_email:= pr_texto_chamado || pr_dsmensagem ||'<br><br><b>'||'Chamado no Softdesk: '||
                            vr_nrchamado||'.</b>';                   
