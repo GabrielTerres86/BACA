@@ -4968,7 +4968,8 @@ END pc_gera_titulos_iptu_prog;
       CURSOR cr_crapcco (pr_codigo_barras IN VARCHAR2
                         ,pr_cddbanco      IN crapcco.cddbanco%TYPE) IS
         SELECT crapcco.cddbanco,
-               crapcco.dsorgarq
+               crapcco.dsorgarq,
+               crapcco.flgregis
         FROM crapcco
         WHERE SUBSTR(gene0002.fn_mask(crapcco.nrconven,'9999999'),2,4) = SUBSTR(pr_codigo_barras,20,4)
         AND crapcco.cddbanco = pr_cddbanco
@@ -4980,7 +4981,8 @@ END pc_gera_titulos_iptu_prog;
                          ,pr_nrconven IN crapcco.nrconven%type
                          ,pr_cddbanco IN crapcco.cddbanco%TYPE) IS
         SELECT crapcco.cddbanco,
-               crapcco.dsorgarq
+               crapcco.dsorgarq,
+               crapcco.flgregis
         FROM crapcco
         WHERE crapcco.cdcooper = pr_cdcooper
         AND   crapcco.nrconven = pr_nrconven
@@ -5005,12 +5007,17 @@ END pc_gera_titulos_iptu_prog;
               ,crapcob.dsinform
               ,crapcob.inpagdiv
               ,crapcob.vlminimo
-        FROM crapcob
+              ,crapceb.flgpgdiv
+        FROM crapcob,
+             crapceb
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.nrcnvcob = pr_nrcnvcob
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrdocmto = pr_nrdocmto
-        AND   crapcob.nrdctabb = pr_nrdctabb;
+        AND   crapcob.nrdctabb = pr_nrdctabb
+        AND   crapcob.cdcooper = crapceb.cdcooper(+)
+        AND   crapcob.nrdconta = crapceb.nrdconta(+)
+        AND   crapcob.nrcnvcob = crapceb.nrconven(+);
       rw_crapcob cr_crapcob%ROWTYPE;
 
       -- Verificacao de codigo de barras fraudulento
@@ -5061,6 +5068,7 @@ END pc_gera_titulos_iptu_prog;
       vr_nridetit       NUMBER;
       vr_tpdbaixa       INTEGER;
       vr_flcontig       INTEGER;
+      vr_invalcon       INTEGER;
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -6465,8 +6473,48 @@ END pc_gera_titulos_iptu_prog;
             
             IF TRIM(vr_dstextab) IS NULL THEN
               
+              --> Validar valor no periodo de convivencia
+              vr_invalcon := cecred.npcb0002.fn_valid_val_conv ( pr_cdcooper => rw_crapcop.cdcooper,
+                                                                 pr_dtmvtolt => rw_crapdat.dtmvtocd,
+                                                                 pr_flgregis => rw_crapcco.flgregis,
+                                                                 pr_flgpgdiv => rw_crapcob.flgpgdiv,
+                                                                 pr_vlinform => pr_valor_informado,
+                                                                 pr_vltitulo => pr_vlfatura);
+              
+              --> Se retornou 1-permite ou 0-nao permite, deve validar pela rotina
+              --> caso retornar 3-nao validado, deve fazer as demais validações
+              IF vr_invalcon IN (1,0) THEN
+                -- se retornou 0-nao permite deve gerar cririca
+                IF vr_invalcon = 0 THEN 
+                  --Montar mensagem de erro
+                  vr_des_erro:= 'Cob. Reg. - Valor informado '||
+                                to_char(pr_valor_informado, 'fm999g999g990d00')||
+                                ' menor que valor doc. '||
+                                to_char(pr_vlfatura,'fm999g999g990D00');
+                  pr_msgalert := vr_des_erro;
+                  --Criar erro
+                  CXON0000.pc_cria_erro(pr_cdcooper => pr_cooper
+                                       ,pr_cdagenci => pr_cod_agencia
+                                       ,pr_nrdcaixa => vr_nrdcaixa
+                                       ,pr_cod_erro => 0
+                                       ,pr_dsc_erro => vr_des_erro
+                                       ,pr_flg_erro => TRUE
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+                  --Se ocorreu erro
+                  IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                    --Levantar Excecao
+                    RAISE vr_exc_erro;
+                  ELSE
+                    vr_cdcritic:= 0;
+                    vr_dscritic:= vr_des_erro;
+                    --Levantar Excecao
+                    RAISE vr_exc_erro;
+                  END IF;
+                
+                END IF;
               -- nao autoriza pagamento divergente
-              IF nvl(rw_crapcob.inpagdiv,0) = 0 THEN                 
+              ELSIF nvl(rw_crapcob.inpagdiv,0) = 0 THEN                 
               --Montar mensagem de erro
               vr_des_erro:= 'Cob. Reg. - Valor informado '||
                             to_char(pr_valor_informado, 'fm999g999g990d00')||
