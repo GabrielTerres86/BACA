@@ -3,12 +3,12 @@
 	/************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Setembro/2009                ⁄ltima AlteraÁ„o: 26/12/2014 
+	 Data : Setembro/2009                √öltima Altera√ß√£o: 26/12/2014 
 	                                                                  
-	 Objetivo  : Mostrar opcao Principal da rotina de AplicaÁıes da   
+	 Objetivo  : Mostrar opcao Principal da rotina de Aplica√ß√µes da   
 	             tela ATENDA                                          
 	                                                                  	 
-	 AlteraÁıes: 04/10/2010 - AdaptaÁ„o para novas opÁıes Incluir,    
+	 Altera√ß√µes: 04/10/2010 - Adapta√ß√£o para novas op√ß√µes Incluir,    
 	                          Alterar e Excluir (David).              
 																	   
 	             01/12/2010 - Alterado a chamda da BO b1wgen0004.p    
@@ -20,15 +20,15 @@
                  04/06/2013 - Incluir ajustes bloqueio judicial       
 	                          (Lucas R).  
 
-				 30/04/2014 - Ajustes referente ao projeto captaÁ„o 
+				 30/04/2014 - Ajustes referente ao projeto capta√ß√£o 
 							 (Adriano).
 
-			     24/07/2014 - Ajustes referente ao projeto captaÁ„o, inclusao
-							  de novas condicoes para verificar se È produto
+			     24/07/2014 - Ajustes referente ao projeto capta√ß√£o, inclusao
+							  de novas condicoes para verificar se √© produto
 							  novo ou antigo (Jean Michel).
 							  
 				 26/12/2014 - Ajuste para corrigir o problema de permitir 
-                              o cadastro de aplicaÁıes com data de    
+                              o cadastro de aplica√ß√µes com data de    
                               vencimento errada (SD - 237402)		
   						     (Adriano).	
 
@@ -36,12 +36,12 @@
 	
 	session_start();
 	
-	// Includes para controle da session, vari·veis globais de controle, e biblioteca de funÁıes	
+	// Includes para controle da session, vari√°veis globais de controle, e biblioteca de fun√ß√µes	
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÈtodo POST
+	// Verifica se tela foi chamada pelo m√©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -51,14 +51,14 @@
 		exibeErro($msgError);		
 	}	
 	
-	// Verifica se n˙mero da conta foi informado
+	// Verifica se n√∫mero da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
 
-	// Verifica se n˙mero da conta È um inteiro v·lido
+	// Verifica se n√∫mero da conta √© um inteiro v√°lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
@@ -81,7 +81,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjAplicacoes = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjAplicacoes->roottag->tags[0]->name) == "ERRO") {
 		
 		$msgErro = $xmlObjAplicacoes->roottag->tags[0]->cdata;
@@ -96,14 +96,14 @@
 	$aplicacoes   = $xmlObjAplicacoes->roottag->tags;	
 	$qtAplicacoes = count($aplicacoes);
 	
-	// Procura indÌce da opÁ„o "@"
+	// Procura ind√≠ce da op√ß√£o "@"
 	$idPrincipal = array_search("@",$glbvars["opcoesTela"]);
 	
 	if ($idPrincipal === false) {
 		$idPrincipal = 0;
 	}		
 	
-	// FunÁ„o para exibir erros na tela atravÈs de javascript
+	// Fun√ß√£o para exibir erros na tela atrav√©s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
@@ -112,7 +112,7 @@
 		exit();
 	}
 
-		// Monta o xml de requisiÁ„o
+		// Monta o xml de requisi√ß√£o
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= "	<Cabecalho>";
@@ -136,8 +136,29 @@
 	$xmlObjBlqJud = getObjectXML($xmlResult);
 	
 	$vlbloque = $xmlObjBlqJud->roottag->tags[0]->attributes['VLBLOQUE']; 
+  
+  // Montar o xml de Requisicao
+	$xml = '';
+	$xml .= "<Root>";
+	$xml .= "	<Cabecalho>";
+	$xml .= "		<Bo>b1wgen0155.p</Bo>";
+	$xml .= "		<Proc>retorna-sld-conta-invt</Proc>";
+	$xml .= "	</Cabecalho>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
 	
-	// Se ocorrer um erro, mostra crÌtica
+	$xmlResult = getDataXML($xml);
+	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObjSldContInesvest = getObjectXML($xmlResult);
+	
+	$vlsldinv = $xmlObjSldContInesvest->roottag->tags[0]->attributes['VLRESBLQ'];
+	
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjBlqJud->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 	
@@ -156,7 +177,7 @@
 	
 	controlaLayout();
 			
-	// Aumenta tamanho do div onde o conte˙do da opÁ„o ser· visualizado
+	// Aumenta tamanho do div onde o conte√∫do da op√ß√£o ser√° visualizado
 	$("#divConteudoOpcao").css("height","280px");
 
 	$("#btnVoltar").unbind("click");
@@ -382,7 +403,7 @@
 		return $(this).setMaskOnKeyUp("DECIMAL","zz.zzz.zz9,99","",e); 
 	});
 
-	//Ocultar e Exibir campos de Periodo - Tela Impress„o
+	//Ocultar e Exibir campos de Periodo - Tela Impress√£o
 	var src = $("#tpmodelo","#frmImpressao").val();
 	$("#tpmodelo","#frmImpressao").change(function() {
 		var src   = $(this).val();
@@ -395,7 +416,7 @@
 
 	});
 
-	//Ocultar e Exibir campos de Periodo - Tela Impress„o
+	//Ocultar e Exibir campos de Periodo - Tela Impress√£o
 	var src = $("#tprelato","#frmImpressao").val();
 	
 	$("#tprelato","#frmImpressao").change(function() {
@@ -437,6 +458,6 @@
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
 
-	// Bloqueia conte˙do que est· ·tras do div da rotina
+	// Bloqueia conte√∫do que est√° √°tras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));	
 </script>

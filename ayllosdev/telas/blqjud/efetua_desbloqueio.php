@@ -3,12 +3,12 @@
 	//***********************************************************************************//
 	//*** Fonte: efetua_desbloqueio.php                                               ***//
 	//*** Autor: Lucas R.                                                             ***//
-	//*** Data : Julho/2013                   Última Alteração:  03/05/2017           ***//
+	//*** Data : Julho/2013                   Ãšltima AlteraÃ§Ã£o:  03/05/2017           ***//
 	//***                                                                             ***//
 	//*** Objetivo  : Efetua o Desbloqueio Judicial                                   ***//	
 	//***                                                                             ***//
 	//***                          								                      ***//
-	//*** Alterações: 14/03/2014 - verificando desbloqueio judicial (Carlos)          ***//
+	//*** AlteraÃ§Ãµes: 14/03/2014 - verificando desbloqueio judicial (Carlos)          ***//
 	//***															                  ***//
 	//***			  15/09/2014 - Ajuste em processo de desbloqueio judicial. 		  ***//
 	//***						   (Jorge/Gielow - SD 175038)						  ***//
@@ -19,42 +19,46 @@
 	//***															                  ***//
 	//***			  03/05/2017 - Passagem do parametro NROFIDES para gravacao dos   ***//
 	//***					       dados. (Jaison/Andrino)                            ***//
-	//***															                  ***//
+	//***															                                          ***//
+  //***       29/09/2017 - Melhoria 339 - (Andrey Formigari - Mouts)          ***//
 	//***********************************************************************************//
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");		
 	require_once("../../includes/controla_secao.php");
 	
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 	
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
 	
-    $nrdconta = $_POST["nrdconta"];     
-    $nroficio = $_POST["nroficio"];
+  $nrdconta = $_POST["nrdconta"];     
+  $nroficio = $_POST["nroficio"];
 	$nrctacon = $_POST["nrctacon"];
 	$dtenvdes = $_POST["dtenvdes"];
 	$dsinfdes = $_POST["dsinfdes"];
-	$fldestrf = $_POST["fldestrf"];	
+	$fldestrf = $_POST["fldestrf"];
+  $vldesblo = $_POST["vldesblo"];	
+	$cdmodali = $_POST["cdmodali"];	
     
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlRegistro  = "";
 	$xmlRegistro .= "<Root>";
 	$xmlRegistro .= "	<Dados>";
 	$xmlRegistro .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlRegistro .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-    $xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
+  $xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
 	$xmlRegistro .= "		<nroficio>".$nroficio."</nroficio>";
 	$xmlRegistro .= "		<nrctacon>".$nrctacon."</nrctacon>"; 
-	$xmlRegistro .= "       <dtenvdes>".$dtenvdes."</dtenvdes>";
-	$xmlRegistro .= "       <dsinfdes>".$dsinfdes."</dsinfdes>";
-	$xmlRegistro .= "       <fldestrf>".$fldestrf."</fldestrf>";
-	
+	$xmlRegistro .= "   <dtenvdes>".$dtenvdes."</dtenvdes>";
+	$xmlRegistro .= "   <dsinfdes>".$dsinfdes."</dsinfdes>";
+	$xmlRegistro .= "   <fldestrf>".$fldestrf."</fldestrf>";
+	$xmlRegistro .= "   <vldesblo>".$vldesblo."</vldesblo>";
+	$xmlRegistro .= "   <cdmodali>".$cdmodali."</cdmodali>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
 		
@@ -66,14 +70,14 @@
 
 	$msgErro = $xmlObjConsulta->roottag->tags[0]->tags[0]->tags[4]->cdata;
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjConsulta->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($msgErro);
 	}else{
 		echo "showError('inform','Opera&ccedil;&atilde;o efetuada com sucesso!','Informe - BLQJUD','hideMsgAguardo();estadoInicial();');";
 	}
 	
-	// Função para exibir erros na tela através de javascript
+	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
 	function exibeErro($msgErro) {
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","hideMsgAguardo();");';
 		exit();

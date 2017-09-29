@@ -169,6 +169,70 @@ PROCEDURE busca-contas-cooperado:
 
 END PROCEDURE.
 
+PROCEDURE consulta-bloqueio-jud-oficio:
+
+    RUN consulta-bloqueio-jud-oficio IN hBO (INPUT aux_cdcooper,
+										     INPUT aux_nrctacon,
+										     INPUT aux_nroficon,
+										     OUTPUT TABLE tt-dados-blq-oficio,
+										     OUTPUT TABLE tt-erro).
+    
+    IF  RETURN-VALUE <> "OK" THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+            IF  NOT AVAILABLE tt-erro THEN
+                DO:
+                   CREATE tt-erro.
+                   ASSIGN tt-erro.dscritic = "Registro nao encontrado.".
+                END.
+
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
+            RUN piXmlSave.
+
+        END.
+    ELSE
+        DO:
+           RUN piXmlNew.
+           RUN piXmlExport (INPUT TEMP-TABLE tt-dados-blq-oficio:HANDLE, INPUT "DADO_BLQ").
+           RUN piXmlSave.
+        END.
+
+
+END PROCEDURE.
+
+PROCEDURE retorna-sld-conta-invt:
+
+	RUN retorna-sld-conta-invt IN hBO (INPUT aux_cdcooper,
+									   INPUT aux_nrdconta,
+									   INPUT aux_dtmvtolt,
+									   OUTPUT aux_vlresblq).
+    
+    IF RETURN-VALUE = "NOK" THEN
+    DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+        IF NOT AVAILABLE tt-erro THEN
+        DO:
+            CREATE tt-erro.
+            ASSIGN tt-erro.dscritic = "Nao foi possivel consultar os " +
+                                      "registros.".
+        END.
+
+        RUN piXmlNew.
+        RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
+        RUN piXmlSave.
+    END.
+    ELSE
+    DO:
+        RUN piXmlNew.
+        RUN piXmlAtributo (INPUT "vlresblq", INPUT aux_vlresblq).
+        RUN piXmlSave.
+    END.
+
+END PROCEDURE.
+
 PROCEDURE consulta-bloqueio-jud:
 
     RUN consulta-bloqueio-jud IN hBO (INPUT aux_cdcooper,
