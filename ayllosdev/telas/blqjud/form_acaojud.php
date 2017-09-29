@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Mostrar campos da opcao B - Bloqueio
  * --------------
- * ALTERAÇÕES   : Melhoria 339 - Andrey Formigari (Mouts)
+ * ALTERAÇÕES   : Melhoria 460 - Andrey Formigari (Mouts)
  * --------------
  */
 

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Mostrar tela BLQJUD
  * --------------
- * ALTERAÇÕES   : 29/09/2017 - Melhoria 339 - (Andrey Formigari - Mouts)
+ * ALTERAÇÕES   : 29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
  *					   
  * --------------
  */

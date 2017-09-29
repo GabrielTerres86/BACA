@@ -26,7 +26,7 @@
 	//*** 						   para ajustar o problema do chamado		                 ***//
 	//***	  					   562089 (Kelvin)							                         ***//  
   //***                                                                      ***//
-  //***             29/09/2017 - Melhoria 339 - (Andrey Formigari - Mouts)   ***//
+  //***             29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)   ***//
 	//****************************************************************************//
 	
 	

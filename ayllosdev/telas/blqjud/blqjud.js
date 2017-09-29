@@ -20,7 +20,8 @@
 
                   29/07/2016 - Ajuste para controle de permissão sobre as subrotinas de cada opção
                                (Adriano - SD 492902).
-                  29/09/2017 - Melhoria 339 - (Andrey Formigari - Mouts)
+
+                  29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
  * --------------
  */
  
