@@ -206,6 +206,7 @@ create or replace package cecred.PAGA0002 is
            ,dttransa DATE
            ,hrtransa INTEGER
            ,nrdocmto INTEGER
+					 ,insitlau INTEGER
            ,dssitlau VARCHAR2(100)
            ,dslindig VARCHAR2(300)
            ,dscedent VARCHAR2(300)
@@ -236,7 +237,15 @@ create or replace package cecred.PAGA0002 is
            ,vlrjuros NUMBER
            ,vlrtotal NUMBER
            ,vlrrecbr NUMBER
-           ,vlrperce NUMBER);   
+           ,vlrperce NUMBER
+           ,idlancto NUMBER(15)
+					 ,dscritic VARCHAR2(100)
+           ,gps_cddpagto NUMBER
+           ,gps_dscompet VARCHAR2(7)
+           ,gps_cdidenti NUMBER
+           ,gps_vlrdinss NUMBER
+           ,gps_vlrouent NUMBER
+           ,gps_vlrjuros NUMBER);
            
   --Tipo de tabela de memoria para dados de agendamentos
   TYPE typ_tab_dados_agendamento IS TABLE OF typ_reg_dados_agendamento INDEX BY PLS_INTEGER;
@@ -680,6 +689,23 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                                       /* parametros de saida */
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
+                                      
+  PROCEDURE pc_obtem_agendamentos(pr_cdcooper               IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
+                                 ,pr_cdagenci               IN crapage.cdagenci%TYPE              --> Código do PA
+                                 ,pr_nrdcaixa               IN craplot.nrdcaixa%TYPE              --> Numero do Caixa
+                                 ,pr_nrdconta               IN crapass.nrdconta%TYPE              --> Numero da Conta
+                                 ,pr_dsorigem               IN VARCHAR2                           --> Descricao da Origem
+                                 ,pr_dtmvtolt               IN crapdat.dtmvtolt%TYPE              --> Data de Movimentacao Atual
+                                 ,pr_dtageini               IN crapdat.dtmvtolt%TYPE              --> Data de Agendamento Inicial
+                                 ,pr_dtagefim               IN crapdat.dtmvtolt%TYPE              --> Data de Agendamento Final
+                                 ,pr_insitlau               IN craplau.insitlau%TYPE              --> Situacao do Lancamento
+                                 ,pr_iniconta               IN INTEGER                            --> Numero de Registros da Tela
+                                 ,pr_nrregist               IN INTEGER                            --> Numero da Registros
+                                 ,pr_dstransa              OUT VARCHAR2                           --> Descricao da Transacao
+                                 ,pr_qttotage              OUT INTEGER                            --> Quantidade Total de Agendamentos
+                                 ,pr_tab_dados_agendamento OUT PAGA0002.typ_tab_dados_agendamento --> Tabela com Informacoes de Agendamentos
+                                 ,pr_cdcritic              OUT PLS_INTEGER                        --> Código da crítica
+                                 ,pr_dscritic              OUT VARCHAR2);                                      
 end PAGA0002;
 /
 create or replace package body cecred.PAGA0002 is
@@ -8598,6 +8624,7 @@ create or replace package body cecred.PAGA0002 is
           ,lau.nmprepos
           ,lau.dslindig
           ,lau.idlancto
+          ,lau.nrseqagp
       FROM craplau lau
     WHERE (lau.cdcooper = pr_cdcooper
       AND  lau.nrdconta = pr_nrdconta
@@ -8745,6 +8772,27 @@ create or replace package body cecred.PAGA0002 is
 
     rw_darf_das cr_darf_das%ROWTYPE;
     
+    VC_TIPO_PROTOCOLO_GPS CONSTANT number(5) := 13;
+    
+     CURSOR cr_gps(pr_cdcooper IN crappro.cdcooper%TYPE
+                  ,pr_nrdconta IN crappro.nrdconta%TYPE
+                  ,pr_nrseqaut IN crappro.nrseqaut%TYPE
+                  ,pr_dtmvtolt IN crappro.dtmvtolt%TYPE) IS
+         SELECT TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(3, pro.dsinform##3, '#')), ':')) cddpagto
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(4, pro.dsinform##3, '#')), ':')) dscompet
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(5, pro.dsinform##3, '#')), ':')) cdidenti              
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, pro.dsinform##3, '#')), ':')) vlrdinss
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, pro.dsinform##3, '#')), ':')) vlrouent
+              , TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, pro.dsinform##3, '#')), ':')) vlrjuros              
+           FROM crappro pro
+          WHERE pro.cdcooper = pr_cdcooper
+            AND pro.nrdconta = pr_nrdconta
+            AND pro.nrseqaut = pr_nrseqaut
+            AND pro.dtmvtolt = pr_dtmvtolt
+            AND pro.cdtippro = VC_TIPO_PROTOCOLO_GPS;
+                     
+    rw_gps cr_gps%ROWTYPE;
+
     ---------------> VARIAVEIS DE ERROS <-----------------
     vr_exc_erro     EXCEPTION;
     vr_cdcritic     crapcri.cdcritic%TYPE;
@@ -8779,6 +8827,14 @@ create or replace package body cecred.PAGA0002 is
     vr_vlrtotal tbpagto_agend_darf_das.vlprincipal%TYPE := 0;
     vr_vlrrecbr tbpagto_agend_darf_das.vlreceita_bruta%TYPE := 0;
     vr_vlrperce tbpagto_agend_darf_das.vlpercentual%TYPE := 0;
+
+    -- GPS
+    vr_gps_cddpagto craplgp.cddpagto%TYPE; -- 03 - Código de pagamento
+    vr_gps_dscompet VARCHAR2(10);            -- 04 - Competência
+    vr_gps_cdidenti craplgp.cdidenti%TYPE; -- 05 - Identificador
+    vr_gps_vlrdinss craplgp.vlrdinss%TYPE; -- 06 - Valor INSS (R$)
+    vr_gps_vlrouent craplgp.vlrouent%TYPE; -- 09 - Valor Outras Entidades (R$)
+    vr_gps_vlrjuros craplgp.vlrjuros%TYPE; -- 10 - ATM / Multa e Juros (R$)
 
     vr_nmprimtl crapass.nmprimtl%TYPE := '';
     vr_tab_dados_agendamento PAGA0002.typ_tab_dados_agendamento;
@@ -8928,12 +8984,13 @@ create or replace package body cecred.PAGA0002 is
             END IF;
 
             -- Se for GPS, nao permite cancelar na tela de Agendamentos            
-            IF rw_craplau.dscedent LIKE '%GPS IDENTIFICADOR%' THEN
+            /*
+            IF rw_craplau.nrseqagp > 0 THEN
               vr_incancel := 3;
-            END IF;    
+            END IF;   */         
 
             -- Se for DARF/DAS e jah foi efetivado nao pode ser permitido o cancelamento.
-            IF rw_craplau.cdtiptra = 10 AND rw_craplau.insitlau = 2 THEN
+            IF (rw_craplau.cdtiptra = 10 OR (rw_craplau.cdtiptra = 2 AND rw_craplau.nrseqagp > 0)) AND rw_craplau.insitlau = 2 THEN
               vr_incancel := 2;
             END IF;
 
@@ -9102,6 +9159,45 @@ create or replace package body cecred.PAGA0002 is
           CLOSE cr_crapopi;
         END IF;
         
+        -- Se for GPS
+        IF rw_craplau.nrseqagp > 0 THEN
+        
+          vr_dstiptra := 'GPS';
+                  
+          OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
+                     ,pr_nrdconta => rw_craplau.nrdconta
+                     ,pr_nrseqaut => rw_craplau.nrseqagp
+                     ,pr_dtmvtolt => rw_craplau.dtmvtolt);
+
+          FETCH cr_gps INTO rw_gps;
+
+          IF cr_gps%NOTFOUND THEN
+            CLOSE cr_gps;
+--            vr_dscritic := 'Lançamento não encontrado';
+--            RAISE vr_exc_erro;
+          ELSE
+
+            CLOSE cr_gps;
+            vr_gps_cddpagto := rw_gps.cddpagto;
+            vr_gps_dscompet := rw_gps.dscompet;
+            vr_gps_cdidenti := rw_gps.cdidenti;
+            vr_gps_vlrdinss := to_number(rw_gps.vlrdinss,'9G999D99');
+            vr_gps_vlrouent := to_number(rw_gps.vlrouent,'9G999D99');
+            vr_gps_vlrjuros := to_number(rw_gps.vlrjuros,'9G999D99');
+          END IF;
+
+        ELSE
+          vr_gps_cddpagto := 0;
+          vr_gps_dscompet := '';
+          vr_gps_cdidenti := 0;
+          vr_gps_vlrdinss := 0;
+          vr_gps_vlrouent := 0;
+          vr_gps_vlrjuros := 0;
+          
+        END IF;
+        
+        
+
         vr_cdindice := vr_tab_dados_agendamento.COUNT() + 1;
 
         vr_tab_dados_agendamento(vr_cdindice).dtmvtopg := rw_craplau.dtmvtopg;
@@ -9109,6 +9205,7 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).dttransa := rw_craplau.dttransa;
         vr_tab_dados_agendamento(vr_cdindice).hrtransa := rw_craplau.hrtransa;
         vr_tab_dados_agendamento(vr_cdindice).nrdocmto := rw_craplau.nrdocmto;
+				vr_tab_dados_agendamento(vr_cdindice).insitlau := rw_craplau.insitlau;
         vr_tab_dados_agendamento(vr_cdindice).dssitlau := vr_dssitlau;
         vr_tab_dados_agendamento(vr_cdindice).dscedent := rw_craplau.dscedent;
         vr_tab_dados_agendamento(vr_cdindice).dtvencto := rw_craplau.dtvencto;
@@ -9142,6 +9239,15 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).vlrtotal := vr_vlrtotal;
         vr_tab_dados_agendamento(vr_cdindice).vlrrecbr := vr_vlrrecbr;
         vr_tab_dados_agendamento(vr_cdindice).vlrperce := vr_vlrperce;
+        vr_tab_dados_agendamento(vr_cdindice).idlancto := rw_craplau.idlancto;
+		vr_tab_dados_agendamento(vr_cdindice).dscritic := ''; -- Alimentar DSCRITIC - P.285 Novo InternetBanking
+        -- GPS
+        vr_tab_dados_agendamento(vr_cdindice).gps_cddpagto := vr_gps_cddpagto;
+        vr_tab_dados_agendamento(vr_cdindice).gps_dscompet := vr_gps_dscompet;
+        vr_tab_dados_agendamento(vr_cdindice).gps_cdidenti := vr_gps_cdidenti;
+        vr_tab_dados_agendamento(vr_cdindice).gps_vlrdinss := vr_gps_vlrdinss;
+        vr_tab_dados_agendamento(vr_cdindice).gps_vlrouent := vr_gps_vlrouent;
+        vr_tab_dados_agendamento(vr_cdindice).gps_vlrjuros := vr_gps_vlrjuros;
 
       END IF;
 
@@ -9318,6 +9424,12 @@ create or replace package body cecred.PAGA0002 is
                                                   ||  '<vlrrecbr>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).vlrrecbr) || '</vlrrecbr>'
                                                   ||  '<vlrperce>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).vlrperce) || '</vlrperce>'
                                                   ||  '<incancel>' || NVL(TO_CHAR(vr_tab_dados_agendamento(vr_contador).incancel),0) || '</incancel>'
+                                                  ||  '<gps_cddpagto>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_cddpagto) || '</gps_cddpagto>'
+                                                  ||  '<gps_dscompet>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_dscompet) || '</gps_dscompet>'
+                                                  ||  '<gps_cdidenti>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_cdidenti) || '</gps_cdidenti>'
+                                                  ||  '<gps_vlrdinss>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_vlrdinss) || '</gps_vlrdinss>'
+                                                  ||  '<gps_vlrouent>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_vlrouent) || '</gps_vlrouent>'
+                                                  ||  '<gps_vlrjuros>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).gps_vlrjuros) || '</gps_vlrjuros>'                                                                                                                                                                                                                                                          
                                                 || '</dados>');
       END LOOP;
 

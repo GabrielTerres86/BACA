@@ -79,7 +79,10 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,nmoperad crapopi.nmoperad%TYPE
           ,nrcpfope crappro.nrcpfope%TYPE
           ,cdbcoctl crapcop.cdbcoctl%TYPE
-          ,cdagectl crapcop.cdagectl%TYPE);
+          ,cdagectl crapcop.cdagectl%TYPE
+					,nrcelular   VARCHAR2(100)
+          ,nmoperadora VARCHAR2(100)
+					,nrnsuope    VARCHAR2(100));
 
   /* Definição da PL Table de registros de protocolos */
   TYPE typ_tab_protocolo IS TABLE OF typ_reg_protocolo INDEX BY PLS_INTEGER;
@@ -241,6 +244,15 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
                                  ,pr_nrdocmto IN VARCHAR2               --> Número do documento
                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
                                  ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição da critica
+
+  -- Efetua a busca do protocolo utilizando a chave cdcooper/dsprotoc                                
+  PROCEDURE pc_busca_protocolo_por_protoc (pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                          ,pr_nrdconta IN crapopi.nrdconta%TYPE  --> Conta
+                                          ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
+                                          ,pr_cdorigem IN NUMBER
+                                          ,pr_protocolo OUT typ_tab_protocolo    --> PL Table de registros
+                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
+                                          ,pr_dscritic OUT crapcri.dscritic%TYPE);
                                                                
   /* Procedure para montar o protocolo de segurança */
   PROCEDURE pc_monta_protocolo(pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
@@ -1892,6 +1904,194 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         
     END;
   END pc_busca_protocolo;
+
+  -- 
+  PROCEDURE pc_busca_protocolo_por_protoc (pr_cdcooper IN crappro.cdcooper%TYPE  --> Código da cooperativa
+                                          ,pr_nrdconta IN crapopi.nrdconta%TYPE  --> Conta
+                                          ,pr_dsprotoc IN crappro.dsprotoc%TYPE  --> Protocolo
+                                          ,pr_cdorigem IN NUMBER
+                                          ,pr_protocolo OUT typ_tab_protocolo    --> PL Table de registros
+                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código do erro
+                                          ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição do erro    
+  BEGIN
+    DECLARE     
+
+      -- Buscar dados das Cooperativas
+      CURSOR cr_crapcop(pr_cdcooper IN crappro.cdcooper%TYPE) IS 
+      SELECT cop.cdbcoctl
+            ,cop.cdagectl
+						,cop.cdagesic
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+      -- Buscar dados dos protocolos
+      CURSOR cr_crappro(pr_cdcooper IN crappro.cdcooper%TYPE
+                       ,pr_dsprotoc IN crappro.dsprotoc%TYPE) IS
+      SELECT pro.dsprotoc
+            ,pro.cdtippro
+            ,pro.nrcpfope
+            ,pro.dtmvtolt
+            ,pro.dttransa
+            ,pro.hrautent
+            ,pro.vldocmto
+            ,pro.nrdocmto
+            ,pro.nrseqaut
+            ,pro.dsinform##1 
+            ,pro.dsinform##2 
+            ,pro.dsinform##3 
+            ,pro.flgagend
+            ,pro.nmprepos
+            ,pro.nrcpfpre
+            ,pro.dscedent              
+        FROM crappro pro
+        WHERE pro.cdcooper = pr_cdcooper
+          AND upper(pro.dsprotoc) = upper(pr_dsprotoc)
+          AND pro.flgativo = 1; --Ativo
+      rw_crappro cr_crappro%ROWTYPE;
+      
+      -- Busca dados de operação
+      CURSOR cr_crapopi(pr_cdcooper IN crapopi.cdcooper%TYPE      --> Código da cooperativa
+                       ,pr_nrdconta IN crapopi.nrdconta%TYPE      --> Número da conta
+                       ,pr_nrcpfope IN crappro.nrcpfope%TYPE) IS  --> Número da operação
+      SELECT opi.nmoperad
+        FROM crapopi opi
+       WHERE opi.cdcooper = pr_cdcooper
+         AND opi.nrdconta = pr_nrdconta
+         AND opi.nrcpfope = pr_nrcpfope
+         AND rownum = 1;
+      rw_crapopi cr_crapopi%ROWTYPE;
+      
+      vr_exc_erro EXCEPTION;                
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+      vr_vet_dados gene0002.typ_split;
+      vr_exc_iter EXCEPTION;             
+      vr_index NUMBER;                
+      vr_nmoperad   crapopi.nmoperad%TYPE; 
+
+    BEGIN
+      
+
+      -- Busca dados da Cooperativa
+      OPEN cr_crapcop(pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      IF cr_crapcop%NOTFOUND THEN
+        CLOSE cr_crapcop;
+        vr_cdcritic:= 651;
+        vr_dscritic:= NULL;
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_crapcop;
+      
+      -- Busca o protocolo
+      OPEN cr_crappro(pr_cdcooper => pr_cdcooper
+                     ,pr_dsprotoc => pr_dsprotoc);
+                       
+        FETCH cr_crappro INTO rw_crappro;
+        
+        IF cr_crappro%NOTFOUND THEN
+          CLOSE cr_crappro;
+          vr_cdcritic := 0;
+          vr_dscritic := 'Protocolo nao encontrado.';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_crappro; 
+        END IF;
+        
+        -- Validar para TAA
+        IF pr_cdorigem = 3 AND (rw_crappro.cdtippro = 5 OR rw_crappro.cdtippro = 6) THEN
+          RAISE vr_exc_iter;
+        END IF;
+
+        -- Valida protocolo Favorecido
+        /*IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
+          RAISE vr_exc_iter;
+        END IF; */
+
+        vr_nmoperad := '';
+
+        -- Busca dados sobre operação
+        OPEN cr_crapopi(pr_cdcooper => pr_cdcooper, 
+                        pr_nrdconta => pr_nrdconta, 
+                        pr_nrcpfope => rw_crappro.nrcpfope);
+        
+        FETCH cr_crapopi INTO rw_crapopi;
+
+        -- Verifica se retornou registro na tupla
+        IF cr_crapopi%FOUND THEN
+          CLOSE cr_crapopi;
+          vr_nmoperad := rw_crapopi.nmoperad;
+        ELSE
+          CLOSE cr_crapopi;
+        END IF;
+
+        -- Criar indice para registro
+        vr_index := 1;
+
+        -- Grava dados do registro
+        pr_protocolo(vr_index).cdtippro := rw_crappro.cdtippro;
+        pr_protocolo(vr_index).dtmvtolt := rw_crappro.dtmvtolt;
+        pr_protocolo(vr_index).dttransa := rw_crappro.dttransa;
+        pr_protocolo(vr_index).hrautent := rw_crappro.hrautent;
+        pr_protocolo(vr_index).vldocmto := rw_crappro.vldocmto;
+        pr_protocolo(vr_index).nrdocmto := rw_crappro.nrdocmto;
+        pr_protocolo(vr_index).nrseqaut := rw_crappro.nrseqaut;
+        pr_protocolo(vr_index).dsinform##1 := rw_crappro.dsinform##1;
+        pr_protocolo(vr_index).dsinform##2 := rw_crappro.dsinform##2;
+        pr_protocolo(vr_index).dsinform##3 := rw_crappro.dsinform##3;
+        pr_protocolo(vr_index).dsprotoc := rw_crappro.dsprotoc;
+        pr_protocolo(vr_index).flgagend := rw_crappro.flgagend;
+        pr_protocolo(vr_index).nmprepos := rw_crappro.nmprepos;
+        pr_protocolo(vr_index).nrcpfpre := rw_crappro.nrcpfpre;
+        pr_protocolo(vr_index).nmoperad := vr_nmoperad;
+        pr_protocolo(vr_index).nrcpfope := rw_crappro.nrcpfope;
+
+        IF rw_crappro.cdtippro IN (2,6,9) THEN
+          pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdbcoctl;
+          pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
+				ELSIF rw_crappro.cdtippro IN (16,17,18,19) THEN
+					pr_protocolo(vr_index).cdbcoctl := rw_crapcop.cdagesic;
+					pr_protocolo(vr_index).cdagectl := rw_crapcop.cdagectl;
+        END IF;
+				
+				IF rw_crappro.cdtippro IN (20) THEN
+					pr_protocolo(vr_index).nrcelular   := TRIM(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'));
+					pr_protocolo(vr_index).nmoperadora := TRIM(gene0002.fn_busca_entrada(3, rw_crappro.dsinform##2, '#'));
+					pr_protocolo(vr_index).nrnsuope    := TRIM(gene0002.fn_busca_entrada(4, rw_crappro.dsinform##2, '#'));
+				END IF;
+
+        -- Valida TAA
+        IF pr_cdorigem = 4 THEN
+          -- Para transferência
+          IF pr_protocolo(vr_index).cdtippro = 1 THEN
+            pr_protocolo(vr_index).dscedent := substr(gene0002.fn_busca_entrada(2, rw_crappro.dsinform##2, '#'), 19);
+          ELSE
+            -- Verifica campo da tabela
+            IF rw_crappro.dscedent IS NULL THEN
+              pr_protocolo(vr_index).dscedent := 'PAGAMENTO TAA';
+            ELSE
+              pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+            END IF;
+          END IF;
+        ELSE
+          pr_protocolo(vr_index).dscedent := rw_crappro.dscedent;
+        END IF;   
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_dscritic := vr_dscritic;
+      WHEN vr_exc_iter THEN
+        NULL;
+        
+      WHEN OTHERS THEN
+        pr_cdcritic := NVL(vr_cdcritic,0);
+        pr_dscritic := 'Erro em GENE0006.pc_busca_protocolo: ' || SQLERRM;
+        
+    END;
+  END pc_busca_protocolo_por_protoc;  
+  
   
   /* Responsável por buscar as informações do protocolo informado
      Possui a mesma funcionalidade da rotina acima, porem utiliza gravacao em tabelas para serem
