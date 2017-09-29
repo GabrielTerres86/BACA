@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: principal.php                                             
 	 Autor: David                                                     
-	 Data : Setembro/2009                Última Alteração: 21/07/2016
+	 Data : Setembro/2009                Última Alteração: 26/12/2014 
 	                                                                  
 	 Objetivo  : Mostrar opcao Principal da rotina de Aplicações da   
 	             tela ATENDA                                          
@@ -32,9 +32,6 @@
                               vencimento errada (SD - 237402)		
   						     (Adriano).	
 
-				 21/07/2016 - Inicializei a varivale $xml, tratei o retorno do XML "ERRO"
-							  consisti os indices do XML retornados. SD 479874 (Carlos R.)
-							  
 	************************************************************************/
 	
 	session_start();
@@ -67,7 +64,6 @@
 	}
 	
 	// Montar o xml de Requisicao
-	$xml = '';
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -86,16 +82,17 @@
 	$xmlObjAplicacoes = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (isset($xmlObjAplicacoes->roottag->tags[0]->name) && strtoupper($xmlObjAplicacoes->roottag->tags[0]->name) == "ERRO") {
+	if (strtoupper($xmlObjAplicacoes->roottag->tags[0]->name) == "ERRO") {
 		
-		$msgErro = ( isset($xmlObjAplicacoes->roottag->tags[0]->cdata) ) ? $xmlObjAplicacoes->roottag->tags[0]->cdata : '';
+		$msgErro = $xmlObjAplicacoes->roottag->tags[0]->cdata;
 		if($msgErro == null || $msgErro == ''){
-			$msgErro = ( isset($xmlObjAplicacoes->roottag->tags[0]->tags[0]->tags[4]->cdata) ) ? $xmlObjAplicacoes->roottag->tags[0]->tags[0]->tags[4]->cdata : '';
+			$msgErro = $xmlObjAplicacoes->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}
 		
 		exibeErro($msgErro);		
 	} 
 	
+	//$aplicacoes   = $xmlObjAplicacoes->roottag->tags[0]->tags;	
 	$aplicacoes   = $xmlObjAplicacoes->roottag->tags;	
 	$qtAplicacoes = count($aplicacoes);
 	
@@ -424,16 +421,16 @@
 	$("#divDadosAplicacao").css("display","none");
 	$("#divAplicacoesPrincipal").css("display","block");
 		
-	var auxApl = "<?php echo (isset($aplicacoes[0]->tags[1]->cdata)) ? $aplicacoes[0]->tags[1]->cdata : ''; ?>";
+	var auxApl = "<?php echo $aplicacoes[0]->tags[1]->cdata; ?>";
 	
 	if (idLinha > 0) {
-		selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo ( isset($aplicacoes[0]->tags[16]->cdata) ) ? $aplicacoes[0]->tags[16]->cdata : ''; ?>');	
+		selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo $aplicacoes[0]->tags[16]->cdata; ?>');	
 	} else {
 		
 		if(auxApl != ""){
-			selecionaAplicacao(0,<?php echo $qtAplicacoes; ?>,'<?php echo ( isset($aplicacoes[0]->tags[1]->cdata) ) ? $aplicacoes[0]->tags[1]->cdata : ''; ?>','<?php echo ( isset($aplicacoes[0]->tags[16]->cdata) ) ? $aplicacoes[0]->tags[16]->cdata : ''; ?>');				
+			selecionaAplicacao(0,<?php echo $qtAplicacoes; ?>,'<?php echo $aplicacoes[0]->tags[1]->cdata; ?>','<?php echo $aplicacoes[0]->tags[16]->cdata; ?>');				
 		}else{
-			selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo ( isset($aplicacoes[0]->tags[16]->cdata) ) ? $aplicacoes[0]->tags[16]->cdata : ''; ?>');	
+			selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo $aplicacoes[0]->tags[16]->cdata; ?>');	
 		}
 	}
 	
