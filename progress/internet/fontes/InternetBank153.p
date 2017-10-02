@@ -421,6 +421,7 @@ ELSE IF par_tpoperac = 7 THEN DO:
     RUN STORED-PROCEDURE pc_gps_detalhar_cdbarras aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper,
                           INPUT par_sftcdbar,
+						  INPUT INT(par_flmobile),
                           OUTPUT 0,
                           OUTPUT "",
                           OUTPUT "").

@@ -1030,6 +1030,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)   
        
                  14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
+
+	 --          02/10/2017 - Alteração da mensagem de validação de pagamento GPS (prj 356.2 - Ricardo Linhares)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -1323,7 +1325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- GPS -- Convênio 270 e Segmento 5
         IF vr_cdempcon = 270 AND vr_cdsegmto = 5 THEN
 					IF pr_flmobile = 1 THEN -- Canal Mobile
-						vr_dscritic := 'Pagamento de GPS não disponível, utilize a Conta Online.';
+												vr_dscritic := 'Pagamento de GPS deve ser pago na opção ''Pagamentos - GPS.';
 					ELSE -- Conta Online
 									vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
 					END IF;

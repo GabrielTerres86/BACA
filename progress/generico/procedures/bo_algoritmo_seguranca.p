@@ -103,6 +103,9 @@
 				24/03/2017 - Adicionado parametro na lista_protocolos para que posssa
                              ser filtrado por uma lista fixa de protocolos. PR354.1
                              (Dionathan)
+
+				02/10/2017 - Ajustado campos Banco e Agência para Pagamentos GPS
+							 (PRJ 356.2 - Ricardo Linhares)
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -590,6 +593,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
+														OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17
@@ -601,6 +605,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
+														OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17
