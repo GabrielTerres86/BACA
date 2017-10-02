@@ -508,6 +508,11 @@
                            xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
                            
               14/09/2017 - Adicionar no campo nrrefere como String (Lucas Ranghetti #756034)
+              28/07/2017 - Alterar as rotinas verifica_convenio e paga_convenio para que chamem as 
+                           respectivas rotinas convertidas em Oracle (Douglas - Chamado 711440)
+
+              11/09/2017 - Adicionado campos para consulta de agendamento de GPS
+                           xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -1564,7 +1569,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                   DO:
                     ASSIGN aux_dstiptra = "Pagamento de Boletos Diversos".
                   END.
-                  ELSE 
+                ELSE
                   DO:
                     ASSIGN aux_dstiptra = "GPS".
                   END.
@@ -3455,6 +3460,18 @@ PROCEDURE obtem-agendamentos:
             ASSIGN tt-dados-agendamento.dtperiod = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtperiod".
             ASSIGN tt-dados-agendamento.dtvendrf = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvendrf".
             ASSIGN tt-dados-agendamento.nrcpfcgc =     (xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc".
+            ASSIGN tt-dados-agendamento.gps_cddpagto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_cddpagto".
+            ASSIGN tt-dados-agendamento.gps_dscompet = (xText:NODE-VALUE) WHEN xField:NAME = "gps_dscompet".
+            ASSIGN tt-dados-agendamento.gps_cdidenti = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_cdidenti".
+            ASSIGN tt-dados-agendamento.gps_vlrdinss = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrdinss".
+            ASSIGN tt-dados-agendamento.gps_vlrouent = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrouent".
+            ASSIGN tt-dados-agendamento.gps_vlrjuros = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrjuros".
+            ASSIGN tt-dados-agendamento.gpscddpagto = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_cddpagto".
+            ASSIGN tt-dados-agendamento.gpsdscompet =    (xText:NODE-VALUE) WHEN xField:NAME = "gps_dscompet".
+            ASSIGN tt-dados-agendamento.gpscdidenti = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_cdidenti".
+            ASSIGN tt-dados-agendamento.gpsvlrdinss = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrdinss".
+            ASSIGN tt-dados-agendamento.gpsvlrouent = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrouent".
+            ASSIGN tt-dados-agendamento.gpsvlrjuros = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrjuros". 
                                      
                     END.
                                                  
@@ -3707,7 +3724,7 @@ PROCEDURE cancelar-agendamento:
        
             /* Procedimento do internetbank pc_verifica_limite_ope_prog */
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-        
+                            
             RUN STORED-PROCEDURE pc_verifica_limite_ope_canc aux_handproc = PROC-HANDLE NO-ERROR
                                 (INPUT par_cdcooper
                                 ,INPUT par_nrdconta
@@ -7071,8 +7088,8 @@ PROCEDURE aprova_trans_pend:
                 RUN proc_geracao_log.
                   RETURN "NOK".
                            
-              END. 
-
+                                        END.
+                                
               CLOSE STORED-PROC pc_valida_apv_master
               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 

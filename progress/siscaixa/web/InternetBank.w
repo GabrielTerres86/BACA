@@ -3842,6 +3842,14 @@ PROCEDURE proc_operacao38:
                    xml_operacao38.nrcelular 
                    xml_operacao38.nmoperadora 
                    
+                   /* GPS */
+                   xml_operacao38.gpscddpagto
+                   xml_operacao38.gpsdscompet
+                   xml_operacao38.gpscdidenti
+                   xml_operacao38.gpsvlrdinss
+                   xml_operacao38.gpsvlrouent
+                   xml_operacao38.gpsvlrjuros
+                   
                    xml_operacao38.dscabfim.
 				   
         END.

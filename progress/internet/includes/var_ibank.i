@@ -143,6 +143,9 @@
                            
 			  12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                            
+              11/09/2017 - Adicionado campos para consulta de agendamento de GPS
+                           xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
+                           
 ..............................................................................*/
 
 DEF TEMP-TABLE xml_operacao                                             NO-UNDO
@@ -415,7 +418,14 @@ DEF TEMP-TABLE xml_operacao38                                           NO-UNDO
     FIELD dtvendrf AS CHAR
     FIELD nrddd    AS CHAR
     FIELD nrcelular AS CHAR
-    FIELD nmoperadora AS CHAR.
+    FIELD nmoperadora AS CHAR
+	FIELD nmoperadora AS CHAR
+    FIELD gpscddpagto AS CHAR
+    FIELD gpsdscompet AS CHAR
+    FIELD gpscdidenti AS CHAR
+    FIELD gpsvlrdinss AS CHAR
+    FIELD gpsvlrouent AS CHAR
+    FIELD gpsvlrjuros AS CHAR. 
 
 DEF TEMP-TABLE xml_operacao88                                           NO-UNDO
     FIELD dscabini AS CHAR

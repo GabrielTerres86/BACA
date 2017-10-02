@@ -47,6 +47,9 @@
                06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
                             tt-dados-agendamento (Projeto 321 - Lombardi).
 
+			   06/03/2017 - Adicionados para o GPS (Previdência Social)
+							(Prj 354.2 - Ricardo Linhares).
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-convenios_aceitos NO-UNDO
@@ -99,7 +102,13 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD vlrperce AS DECIMAL /* Prj. 338 */
     FIELD nrddd    AS INT     /* Prj. 321 */
     FIELD nrcelular AS CHAR   /* Prj. 321 */
-    FIELD nmoperadora AS CHAR. /* Prj. 321 */
+    FIELD nmoperadora AS CHAR /* Prj. 321 */
+    FIELD gps_cddpagto AS DECI
+    FIELD gps_dscompet AS CHAR
+    FIELD gps_cdidenti AS DECI
+    FIELD gps_vlrdinss AS DECI
+    FIELD gps_vlrouent AS DECI
+    FIELD gps_vlrjuros AS DECI.
     
 
 DEF TEMP-TABLE tt-transacoes_operadores NO-UNDO
