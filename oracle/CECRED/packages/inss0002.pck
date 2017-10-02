@@ -30,13 +30,13 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 
                27/05/2016 - SD456783 - Corrigida a linha digitável da LAU quando vindo por Leitora de Cod Barras
                             Retirada validação de Data Agendamento quando apenas validação (Guilherme/SUPERO)
-  
+
                22/06/2016 - Alterada a pasta de gravacao do arquivo XML de salvar/ para salvar/gps/
 							Correcao do parametro passado para a pc_verifica_operacao informando que
                             trata-se de um agendamento ou pagamento (Guilherme/SUPERO)
-                            
+
                23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
-                            sobre o campo cdopecxa.(Carlos Rafael Tanholi).       
+                            sobre o campo cdopecxa.(Carlos Rafael Tanholi).
 
                03/08/2016 - Alteração na nomenclatura dos nomes dos XMLs de comunicação com o
                             Sicredi, adicionado os milisecundos (Guilherme/SUPERO)
@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
    Autor    : Renato Darosci - Supero
    Objetivo : GPS - Realizar a gravação dos Agendamentos de GPS
   ---------------------------------------------------------------------------------------------------------------*/
-  PROCEDURE pc_gps_agmto_novo(pr_cdcooper   IN NUMBER
+ PROCEDURE pc_gps_agmto_novo(pr_cdcooper   IN NUMBER
                              ,pr_nrdconta   IN NUMBER
                              ,pr_tpdpagto   IN NUMBER
                              ,pr_cdagenci   IN NUMBER
@@ -244,7 +244,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                              ,pr_dslitera  OUT VARCHAR2
                              ,pr_cdultseq  OUT NUMBER
                              ,pr_dscritic  OUT VARCHAR2);
-
+                             
 
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Renato Darosci - Supero
@@ -347,7 +347,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                ,pr_idagendamento IN NUMBER
                                ,pr_cdcritic1     OUT NUMBER  --> Código da crítica
                                ,pr_dscritic1     OUT VARCHAR2) ;
-
+                               
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
    Objetivo : GPS - Validar código de barras
@@ -419,24 +419,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                05/09/2016 - SD 490844 - Removido o código que limpava a variável
                             vr_cdlindig quando o agendamento era feito pelo código
                             de barras (procedure pc_gps_agmto_novo). (Carlos)
-                            
+
                02/02/2017 - Incluir chamada da procedure pc_insere_movimento_internet para
                             gravar registro na tabela crapmvi, para somar as movimentacoes
                             de GPS junto com as outras. (Lucas Ranghetti #556489)
-                            
+
                06/03/2017 - Ajustado no cursor da craplgp na procedure pc_gps_agmto_novo para
                             converter cddidenti para numero antes de realizar a clausula where
                             pois a autoconversao do oracle nao convertia de forma adequada
-                            (Tiago/Fabricio SD616352).             
+                            (Tiago/Fabricio SD616352).
                             
                25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 
-               25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos 
+              25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos 
                            em que o dia que antecede o final de semana ou feriado nacional
                            (Lucas Ranghetti #671126)      
-                            
+
               17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
                             e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)						    
                             
@@ -926,7 +926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     BEGIN
       UPDATE craplot SET craplot.qtcompln = NVL(craplot.qtcompln, 0) + 1
                         ,craplot.qtinfoln = NVL(craplot.qtinfoln, 0) + 1
-                        ,craplot.vlcompdb = NVL(craplot.vlcompdb, 0) + NVL(pr_vlrtotal, 0)              
+                        ,craplot.vlcompdb = NVL(craplot.vlcompdb, 0) + NVL(pr_vlrtotal, 0)
                         ,craplot.vlinfodb = NVL(craplot.vlinfodb, 0) + NVL(pr_vlrtotal, 0)
       WHERE craplot.ROWID = pr_craplot.ROWID
       RETURNING craplot.nrseqdig INTO pr_sequenci;
@@ -1182,13 +1182,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         END IF;
         -- Fechar o cursor
         CLOSE cr_gps;
-        
+
         vr_dtdebito := rw_gps.dtdebito;
 
       ELSE -- Pagamento ou apenas Validação
         IF pr_indpagto = 'A' THEN
           vr_dtdebito := pr_dtvencto;
-        ELSE -- apenas VALIDACAO 
+        ELSE -- apenas VALIDACAO
           vr_dtdebito := pr_dtmvtolt;
         END IF;
       END IF;
@@ -1219,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                  ,pr_dsdadant => ''
                                  ,pr_dsdadatu => pr_nrcpfope);  
         --               
-
+                                                                  
       EXCEPTION
         WHEN OTHERS THEN
           pr_dscritic := 'Erro chamada GERAR LOG GPS '||SQLERRM;
@@ -1526,7 +1526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           pr_dscritic := 'Erro chamada pr_cdlindig '||SQLERRM;
           RAISE vr_exc_saida;
       END;
-
+            
       BEGIN                             
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'pr_nrcpfope'
@@ -1546,245 +1546,245 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     --
     ELSE
 
-    -- Gerar cabeçalho do envelope SOAP
-    inss0001.pc_gera_cabecalho_soap(pr_idservic => 5 -- idservic
-                                   ,pr_nmmetodo => 'arr:InValidarArrecadacaoGPS' -- Nome Metodo
-                                   ,pr_username => vr_usr_sicredi -- Username
-                                   ,pr_password => vr_pwd_sicredi -- Password
-                                   ,pr_dstexto  => vr_dstexto -- Texto do Arquivo de Dados
-                                   ,pr_des_reto => pr_des_reto -- Retorno OK/NOK
-                                   ,pr_dscritic => pr_dscritic); -- Descricao da Critica
-    --Se ocorreu erro
-    IF pr_des_reto <> 'OK'
-    OR TRIM(pr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-
-    /*Monta as tags de envio
-    OBS.: O valor das tags deve respeitar a formatacao presente na
-          base do SICREDI do contrario, a operacao nao sera
-          realizada. */
-
-    /* BLOCO: v1:UnidadeAtendimento */
-    vr_dstexto := vr_dstexto || '<v1:UnidadeAtendimento>' ||
-                  '<v1:Cooperativa>' ||
-                    '<v1:CodigoCooperativa>' || rw_crapcop.cdagesic || '</v1:CodigoCooperativa>' ||
-                  '</v1:Cooperativa>' ||
-                 /*Devido a limitacao do SICREDI, PA com no maximo dois digitos, foi
-                                                   definido que sempre sera enviado o PA 2 (Sem os zeros) ao inves
-                                                   do par_cdagenci.*/
-                  '<v1:NumeroUnidadeAtendimento>2</v1:NumeroUnidadeAtendimento>' ||
-                  '</v1:UnidadeAtendimento>';
-
-    /* BLOCO: arr:guiaPrevidenciaSocial */
-    IF NVL(TRIM(pr_cdbarras),' ') <> ' ' THEN
-      -- Com Código de barras
-      vr_dstexto := vr_dstexto ||
-                    '<arr:guiaPrevidenciaSocial v15:ID="0">' ||
-                      '<v15:CodigoBarra>'   || pr_cdbarras ||   '</v15:CodigoBarra>' ||
-                      '<v15:FormaCaptacao>' || vr_dstiparr || '</v15:FormaCaptacao>' ||
-                    '</arr:guiaPrevidenciaSocial>';
-    ELSIF  NVL(TRIM(pr_dslindig),' ') <> ' ' THEN
-      -- Com Linha Digitavel
-      vr_dstexto := vr_dstexto ||
-                    '<arr:guiaPrevidenciaSocial v15:ID="0">' ||
-                      '<v15:LinhaDigitada>' || pr_dslindig || '</v15:LinhaDigitada>' ||
-                      '<v15:FormaCaptacao>' || vr_dstiparr || '</v15:FormaCaptacao>' ||
-                    '</arr:guiaPrevidenciaSocial>';
-    ELSE
-      -- Digitação Manual
-      vr_dstexto := vr_dstexto ||
-                    '<arr:guiaPrevidenciaSocial v15:ID="0">' ||
-                      '<v15:IdentificacaoPessoa>' || vr_cdidenti || '</v15:IdentificacaoPessoa>' ||
-                      '<v15:Receita>' || vr_cddpagto || '</v15:Receita>' ||
-                     /*Mesmo que nao haja valor, somos obrigados a enviar "0" pois o SICREDI nao aceita valor nulo.*/
-                      '<v15:ValorPrincipal>' || REPLACE(REPLACE(NVL(pr_vlrdinss, '0'), '.', ''),',','.') ||
-                        '</v15:ValorPrincipal>' ||
-
-                      '<v15:DataVencimento>' || vr_dtdenvio || '</v15:DataVencimento>' ||
-
-                      '<v15:AtualizacaoMonetaria>' || REPLACE(REPLACE(NVL(pr_vlrjuros, '0'), '.', ''),',','.') ||
-                        '</v15:AtualizacaoMonetaria>' ||
-                      '<v15:Competencia>' || vr_mmaacomp || '</v15:Competencia>' ||
-
-                      '<v15:ValorOutrasEntidades>' || REPLACE(REPLACE(NVL(pr_vlrouent, '0'), '.', ''),',','.') ||
-                        '</v15:ValorOutrasEntidades>' ||
-
-                      '<v15:FormaCaptacao>' || vr_dstiparr || '</v15:FormaCaptacao>' ||
-                    '</arr:guiaPrevidenciaSocial>';
-    END IF;
-
-    vr_dstexto := vr_dstexto ||
-                  '<arr:canal>TERMINAL_FINANCEIRO</arr:canal>' ||
-                  '<arr:formaPagamento>DINHEIRO</arr:formaPagamento>' ||
-                  '<arr:aceitaGpsArrecadada>NAO</arr:aceitaGpsArrecadada>';
-
-    /* BLOCO: arr:autenticacao */
-    vr_dstexto := vr_dstexto ||
-                  '<arr:autenticacao>' ||
-                      '<aut:usuario>CECR</aut:usuario>' || -- No Máximo 4 Letras/números
-                      '<aut:terminal>1</aut:terminal>' ||
-                 /*O numero da autenticacao eh obrigatorio porem, neste xml de validacao,
-                   enviaremos uma autenticacao ficticia pois a autenticacao real
-                   sera gerada e enviada apenas no xml de arrecadacao.
-                   Apesar de ser obrigatorio o envio de um valor, o SICREDI nao ira
-                   valida-lo*/
-                      '<aut:numeroAutenticacao>0001</aut:numeroAutenticacao>' ||
-                  '</arr:autenticacao>';
-
-    --FECHA AS TAGS E FINALIZA O XML
-    vr_dstexto := vr_dstexto || '</arr:InValidarArrecadacaoGPS>' ||
-                                '</soapenv:Body>' ||
-                                '</soapenv:Envelope>';
-
-      vr_nmdatela := 'INTERNETBANK';
-    -- Envia o xml
-    inss0001.pc_efetua_requisicao_soap(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
-                                      ,pr_cdagenci => pr_cdagenci -- Codigo Agencia
-                                      ,pr_nrdcaixa => pr_nrdcaixa -- Numero Caixa
-                                      ,pr_idservic => 7 -- Identificador Servico
-                                      ,pr_dsservic => 'Validar GPS' -- Descricao Servico
-                                      ,pr_nmmetodo => 'OutValidarArrecadacaoGPS' -- Nome Método
-                                      ,pr_dstexto  => vr_dstexto -- Texto com a msg XML
-                                      ,pr_msgenvio => vr_msgenvio -- Mensagem Envio
-                                      ,pr_msgreceb => vr_msgreceb -- Mensagem Recebimento
-                                      ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
-                                      ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo LOG
-                                        ,pr_nmdatela => vr_nmdatela -- Nome da Tela
-                                      ,pr_des_reto => pr_des_reto -- Saida OK/NOK
-                                      ,pr_dscritic => pr_dscritic); -- Mensagem Erro
-    --Se ocorreu erro
-    IF pr_des_reto <> 'OK'
-    OR TRIM(pr_dscritic) IS NOT NULL THEN
-
-      /* Tratamento para Erros Genericos do SICREDI */
-      IF pr_dscritic LIKE '%LPX-00229%'
-      OR pr_dscritic LIKE '%GenericJDBCException%'
-      OR pr_dscritic LIKE '%hibernate.exception%' THEN
-         pr_dscritic := 'ATENÇÃO: Falha na execucao do metodo de Validar GPS! ERR-SVC';
-      END IF;
-
-      RAISE vr_exc_saida;
-    END IF;
-
-    --Verifica Falha no Pacote
-    inss0001.pc_obtem_fault_packet(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
-                                    ,pr_nmdatela => vr_nmdatela -- Nome da Tela
-                                  ,pr_cdagenci => pr_cdagenci -- Codigo Agencia
-                                  ,pr_nrdcaixa => pr_nrdcaixa -- Numero Caixa
-                                  ,pr_dsderror => 'SOAP-ENV:-950' -- Descricao Servico
-                                  ,pr_msgenvio => vr_msgenvio -- Mensagem Envio
-                                  ,pr_msgreceb => vr_msgreceb -- Mensagem Recebimento
-                                  ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
-                                  ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo log
-                                  ,pr_des_reto => pr_des_reto -- Saida OK/NOK
-                                  ,pr_dscritic => pr_dscritic); -- Mensagem Erro
-    --Se ocorreu erro
-    IF pr_des_reto <> 'OK'
-    OR TRIM(pr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    ELSE
-      BEGIN
-      /** Valida SOAP retornado pelo WebService **/
-      gene0002.pc_arquivo_para_xml (pr_nmarquiv => vr_msgreceb    --> Nome do caminho completo)
-                                   ,pr_xmltype  => vr_xml         --> Saida para o XML
-                                   ,pr_des_reto => pr_des_reto    --> Descrição OK/NOK
-                                   ,pr_dscritic => pr_dscritic    --> Descricao Erro
-                                   ,pr_tipmodo  => 2);
-
+      -- Gerar cabeçalho do envelope SOAP
+      inss0001.pc_gera_cabecalho_soap(pr_idservic => 5 -- idservic
+                                     ,pr_nmmetodo => 'arr:InValidarArrecadacaoGPS' -- Nome Metodo
+                                     ,pr_username => vr_usr_sicredi -- Username
+                                     ,pr_password => vr_pwd_sicredi -- Password
+                                     ,pr_dstexto  => vr_dstexto -- Texto do Arquivo de Dados
+                                     ,pr_des_reto => pr_des_reto -- Retorno OK/NOK
+                                     ,pr_dscritic => pr_dscritic); -- Descricao da Critica
       --Se ocorreu erro
       IF pr_des_reto <> 'OK'
       OR TRIM(pr_dscritic) IS NOT NULL THEN
-         RAISE vr_exc_saida;
-      END IF;
-
-      --Realizar o Parse do Arquivo XML
-      vr_xmldoc := xmldom.newdomdocument(vr_xml);
-
-      -- Busca o primeiro nível
-      vr_nodo := xmldom.makenode(vr_xmldoc);
-
-      -- TAG
-      vr_nodo := xmldom.getFirstChild(vr_nodo); -- TAG <S:Envelope/>
-      vr_nodo := xmldom.getFirstChild(vr_nodo); -- TAG <S:Body/>
-
-      vr_nodo := xmldom_getChildNodeLike(vr_nodo, '%OutValidarArrecadacaoGPS'); -- TAG <ns7:OutValidarArrecadacaoGPS/>
-      vr_nodo := xmldom_getChildNodeLike(vr_nodo, '%gpsValida'); -- TAG <ns7:gpsValida/>
-      vr_nodo := xmldom.getFirstChild(vr_nodo); -- Texto da TAG
-
-      --Se o retorno da tag não for TRUE
-      IF XMLDOM.getNodeValue(vr_nodo) IS NULL OR XMLDOM.getNodeValue(vr_nodo) <> 'true' THEN
         RAISE vr_exc_saida;
       END IF;
 
-      EXCEPTION
-        WHEN OTHERS THEN
-                  
-        pr_dscritic := 'Validacao de GPS nao efetuada.';
+      /*Monta as tags de envio
+      OBS.: O valor das tags deve respeitar a formatacao presente na
+            base do SICREDI do contrario, a operacao nao sera
+            realizada. */
+
+      /* BLOCO: v1:UnidadeAtendimento */
+      vr_dstexto := vr_dstexto || '<v1:UnidadeAtendimento>' ||
+                    '<v1:Cooperativa>' ||
+                      '<v1:CodigoCooperativa>' || rw_crapcop.cdagesic || '</v1:CodigoCooperativa>' ||
+                    '</v1:Cooperativa>' ||
+                   /*Devido a limitacao do SICREDI, PA com no maximo dois digitos, foi
+                                                     definido que sempre sera enviado o PA 2 (Sem os zeros) ao inves
+                                                     do par_cdagenci.*/
+                    '<v1:NumeroUnidadeAtendimento>2</v1:NumeroUnidadeAtendimento>' ||
+                    '</v1:UnidadeAtendimento>';
+
+      /* BLOCO: arr:guiaPrevidenciaSocial */
+      IF NVL(TRIM(pr_cdbarras),' ') <> ' ' THEN
+        -- Com Código de barras
+        vr_dstexto := vr_dstexto ||
+                      '<arr:guiaPrevidenciaSocial v15:ID="0">' ||
+                        '<v15:CodigoBarra>'   || pr_cdbarras ||   '</v15:CodigoBarra>' ||
+                        '<v15:FormaCaptacao>' || vr_dstiparr || '</v15:FormaCaptacao>' ||
+                      '</arr:guiaPrevidenciaSocial>';
+      ELSIF  NVL(TRIM(pr_dslindig),' ') <> ' ' THEN
+        -- Com Linha Digitavel
+        vr_dstexto := vr_dstexto ||
+                      '<arr:guiaPrevidenciaSocial v15:ID="0">' ||
+                        '<v15:LinhaDigitada>' || pr_dslindig || '</v15:LinhaDigitada>' ||
+                        '<v15:FormaCaptacao>' || vr_dstiparr || '</v15:FormaCaptacao>' ||
+                      '</arr:guiaPrevidenciaSocial>';
+      ELSE
+        -- Digitação Manual
+        vr_dstexto := vr_dstexto ||
+                      '<arr:guiaPrevidenciaSocial v15:ID="0">' ||
+                        '<v15:IdentificacaoPessoa>' || vr_cdidenti || '</v15:IdentificacaoPessoa>' ||
+                        '<v15:Receita>' || vr_cddpagto || '</v15:Receita>' ||
+                       /*Mesmo que nao haja valor, somos obrigados a enviar "0" pois o SICREDI nao aceita valor nulo.*/
+                        '<v15:ValorPrincipal>' || REPLACE(REPLACE(NVL(pr_vlrdinss, '0'), '.', ''),',','.') ||
+                          '</v15:ValorPrincipal>' ||
+
+                        '<v15:DataVencimento>' || vr_dtdenvio || '</v15:DataVencimento>' ||
+
+                        '<v15:AtualizacaoMonetaria>' || REPLACE(REPLACE(NVL(pr_vlrjuros, '0'), '.', ''),',','.') ||
+                          '</v15:AtualizacaoMonetaria>' ||
+                        '<v15:Competencia>' || vr_mmaacomp || '</v15:Competencia>' ||
+
+                        '<v15:ValorOutrasEntidades>' || REPLACE(REPLACE(NVL(pr_vlrouent, '0'), '.', ''),',','.') ||
+                          '</v15:ValorOutrasEntidades>' ||
+
+                        '<v15:FormaCaptacao>' || vr_dstiparr || '</v15:FormaCaptacao>' ||
+                      '</arr:guiaPrevidenciaSocial>';
+      END IF;
+
+      vr_dstexto := vr_dstexto ||
+                    '<arr:canal>TERMINAL_FINANCEIRO</arr:canal>' ||
+                    '<arr:formaPagamento>DINHEIRO</arr:formaPagamento>' ||
+                    '<arr:aceitaGpsArrecadada>NAO</arr:aceitaGpsArrecadada>';
+
+      /* BLOCO: arr:autenticacao */
+      vr_dstexto := vr_dstexto ||
+                    '<arr:autenticacao>' ||
+                        '<aut:usuario>CECR</aut:usuario>' || -- No Máximo 4 Letras/números
+                        '<aut:terminal>1</aut:terminal>' ||
+                   /*O numero da autenticacao eh obrigatorio porem, neste xml de validacao,
+                     enviaremos uma autenticacao ficticia pois a autenticacao real
+                     sera gerada e enviada apenas no xml de arrecadacao.
+                     Apesar de ser obrigatorio o envio de um valor, o SICREDI nao ira
+                     valida-lo*/
+                        '<aut:numeroAutenticacao>0001</aut:numeroAutenticacao>' ||
+                    '</arr:autenticacao>';
+
+      --FECHA AS TAGS E FINALIZA O XML
+      vr_dstexto := vr_dstexto || '</arr:InValidarArrecadacaoGPS>' ||
+                                  '</soapenv:Body>' ||
+                                  '</soapenv:Envelope>';
+
+      vr_nmdatela := 'INTERNETBANK';
+      -- Envia o xml
+      inss0001.pc_efetua_requisicao_soap(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
+                                        ,pr_cdagenci => pr_cdagenci -- Codigo Agencia
+                                        ,pr_nrdcaixa => pr_nrdcaixa -- Numero Caixa
+                                        ,pr_idservic => 7 -- Identificador Servico
+                                        ,pr_dsservic => 'Validar GPS' -- Descricao Servico
+                                        ,pr_nmmetodo => 'OutValidarArrecadacaoGPS' -- Nome Método
+                                        ,pr_dstexto  => vr_dstexto -- Texto com a msg XML
+                                        ,pr_msgenvio => vr_msgenvio -- Mensagem Envio
+                                        ,pr_msgreceb => vr_msgreceb -- Mensagem Recebimento
+                                        ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
+                                        ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo LOG
+                                        ,pr_nmdatela => vr_nmdatela -- Nome da Tela
+                                        ,pr_des_reto => pr_des_reto -- Saida OK/NOK
+                                        ,pr_dscritic => pr_dscritic); -- Mensagem Erro
+      --Se ocorreu erro
+      IF pr_des_reto <> 'OK'
+      OR TRIM(pr_dscritic) IS NOT NULL THEN
+
+        /* Tratamento para Erros Genericos do SICREDI */
+        IF pr_dscritic LIKE '%LPX-00229%'
+        OR pr_dscritic LIKE '%GenericJDBCException%'
+        OR pr_dscritic LIKE '%hibernate.exception%' THEN
+           pr_dscritic := 'ATENÇÃO: Falha na execucao do metodo de Validar GPS! ERR-SVC';
+        END IF;
 
         RAISE vr_exc_saida;
-      END;
-    END IF;
+      END IF;
 
-    -- Elimina os arquivos utilizados para requisição
-    inss0001.pc_elimina_arquivos_requis(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
-                                         ,pr_cdprogra => vr_nmdatela -- Codigo Programa
-                                       ,pr_msgenvio => vr_msgenvio -- Mensagem Envio
-                                       ,pr_msgreceb => vr_msgreceb -- Mensagem Recebimento
-                                       ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
-                                       ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo Log
-                                       ,pr_des_reto => pr_des_reto -- Saida OK/NOK
-                                       ,pr_dscritic => pr_dscritic); -- Mensagem Erro
+      --Verifica Falha no Pacote
+      inss0001.pc_obtem_fault_packet(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
+                                    ,pr_nmdatela => vr_nmdatela -- Nome da Tela
+                                    ,pr_cdagenci => pr_cdagenci -- Codigo Agencia
+                                    ,pr_nrdcaixa => pr_nrdcaixa -- Numero Caixa
+                                    ,pr_dsderror => 'SOAP-ENV:-950' -- Descricao Servico
+                                    ,pr_msgenvio => vr_msgenvio -- Mensagem Envio
+                                    ,pr_msgreceb => vr_msgreceb -- Mensagem Recebimento
+                                    ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
+                                    ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo log
+                                    ,pr_des_reto => pr_des_reto -- Saida OK/NOK
+                                    ,pr_dscritic => pr_dscritic); -- Mensagem Erro
+      --Se ocorreu erro
+      IF pr_des_reto <> 'OK'
+      OR TRIM(pr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      ELSE
+        BEGIN
+        /** Valida SOAP retornado pelo WebService **/
+        gene0002.pc_arquivo_para_xml (pr_nmarquiv => vr_msgreceb    --> Nome do caminho completo)
+                                     ,pr_xmltype  => vr_xml         --> Saida para o XML
+                                     ,pr_des_reto => pr_des_reto    --> Descrição OK/NOK
+                                     ,pr_dscritic => pr_dscritic    --> Descricao Erro
+                                     ,pr_tipmodo  => 2);
 
-    IF pr_des_reto <> 'OK'
-    OR TRIM(pr_dscritic) IS NOT NULL THEN
-      --Retorno NOK
-      RAISE vr_exc_saida;
-    END IF;
-
-
-    -- Se necessita chamar Arrecada GPS
-    IF pr_indpagto = 'P' THEN
-
-       pc_gps_arrecadar_sicredi(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagenci
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_idorigem => pr_idorigem
-                               ,pr_dtmvtolt => pr_dtmvtolt
-                                 ,pr_nmdatela => vr_nmdatela
-                               ,pr_cdoperad => pr_cdoperad
-                               ,pr_inproces => pr_inproces
-                               ,pr_idleitur => pr_idleitur
-                               ,pr_cddpagto => pr_cddpagto
-                               ,pr_cdidenti => pr_cdidenti
-                               ,pr_dtvencto => pr_dtvencto
-                               ,pr_cdbarras => pr_cdbarras
-                               ,pr_dslindig => pr_dslindig
-                               ,pr_mmaacomp => vr_mmaacomp
-                               ,pr_vlrdinss => pr_vlrdinss
-                               ,pr_vlrouent => pr_vlrouent
-                               ,pr_vlrjuros => pr_vlrjuros
-                               ,pr_vlrtotal => pr_vlrtotal
-                               ,pr_idseqttl => pr_idseqttl
-                               ,pr_tpdpagto => pr_tpdpagto
-                               ,pr_nrdconta => pr_nrdconta
-                               ,pr_inpesgps => pr_inpesgps
-                               ,pr_nrseqagp => pr_nrseqagp
-                               ,pr_dslitera => pr_dslitera
-                               ,pr_sequenci => pr_sequenci
-                               ,pr_nrseqaut => pr_nrseqaut
-                               ,pr_cdcritic => pr_cdcritic
-                               ,pr_dscritic => pr_dscritic
-                               ,pr_des_reto => pr_des_reto);
-
+        --Se ocorreu erro
         IF pr_des_reto <> 'OK'
         OR TRIM(pr_dscritic) IS NOT NULL THEN
-          --Retorno NOK
+           RAISE vr_exc_saida;
+        END IF;
 
+        --Realizar o Parse do Arquivo XML
+        vr_xmldoc := xmldom.newdomdocument(vr_xml);
+
+        -- Busca o primeiro nível
+        vr_nodo := xmldom.makenode(vr_xmldoc);
+
+        -- TAG
+        vr_nodo := xmldom.getFirstChild(vr_nodo); -- TAG <S:Envelope/>
+        vr_nodo := xmldom.getFirstChild(vr_nodo); -- TAG <S:Body/>
+
+        vr_nodo := xmldom_getChildNodeLike(vr_nodo, '%OutValidarArrecadacaoGPS'); -- TAG <ns7:OutValidarArrecadacaoGPS/>
+        vr_nodo := xmldom_getChildNodeLike(vr_nodo, '%gpsValida'); -- TAG <ns7:gpsValida/>
+        vr_nodo := xmldom.getFirstChild(vr_nodo); -- Texto da TAG
+
+        --Se o retorno da tag não for TRUE
+        IF XMLDOM.getNodeValue(vr_nodo) IS NULL OR XMLDOM.getNodeValue(vr_nodo) <> 'true' THEN
           RAISE vr_exc_saida;
         END IF;
 
-    END IF;
+        EXCEPTION
+          WHEN OTHERS THEN
+                  
+          pr_dscritic := 'Validacao de GPS nao efetuada.';
+
+          RAISE vr_exc_saida;
+        END;
+      END IF;
+
+      -- Elimina os arquivos utilizados para requisição
+      inss0001.pc_elimina_arquivos_requis(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
+                                         ,pr_cdprogra => vr_nmdatela -- Codigo Programa
+                                         ,pr_msgenvio => vr_msgenvio -- Mensagem Envio
+                                         ,pr_msgreceb => vr_msgreceb -- Mensagem Recebimento
+                                         ,pr_movarqto => vr_movarqto -- Nome Arquivo mover
+                                         ,pr_nmarqlog => vr_nmarqlog -- Nome Arquivo Log
+                                         ,pr_des_reto => pr_des_reto -- Saida OK/NOK
+                                         ,pr_dscritic => pr_dscritic); -- Mensagem Erro
+
+      IF pr_des_reto <> 'OK'
+      OR TRIM(pr_dscritic) IS NOT NULL THEN
+        --Retorno NOK
+        RAISE vr_exc_saida;
+      END IF;
+
+
+      -- Se necessita chamar Arrecada GPS
+      IF pr_indpagto = 'P' THEN
+
+         pc_gps_arrecadar_sicredi(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_idorigem => pr_idorigem
+                                 ,pr_dtmvtolt => pr_dtmvtolt
+                                 ,pr_nmdatela => vr_nmdatela
+                                 ,pr_cdoperad => pr_cdoperad
+                                 ,pr_inproces => pr_inproces
+                                 ,pr_idleitur => pr_idleitur
+                                 ,pr_cddpagto => pr_cddpagto
+                                 ,pr_cdidenti => pr_cdidenti
+                                 ,pr_dtvencto => pr_dtvencto
+                                 ,pr_cdbarras => pr_cdbarras
+                                 ,pr_dslindig => pr_dslindig
+                                 ,pr_mmaacomp => vr_mmaacomp
+                                 ,pr_vlrdinss => pr_vlrdinss
+                                 ,pr_vlrouent => pr_vlrouent
+                                 ,pr_vlrjuros => pr_vlrjuros
+                                 ,pr_vlrtotal => pr_vlrtotal
+                                 ,pr_idseqttl => pr_idseqttl
+                                 ,pr_tpdpagto => pr_tpdpagto
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_inpesgps => pr_inpesgps
+                                 ,pr_nrseqagp => pr_nrseqagp
+                                 ,pr_dslitera => pr_dslitera
+                                 ,pr_sequenci => pr_sequenci
+                                 ,pr_nrseqaut => pr_nrseqaut
+                                 ,pr_cdcritic => pr_cdcritic
+                                 ,pr_dscritic => pr_dscritic
+                                 ,pr_des_reto => pr_des_reto);
+
+          IF pr_des_reto <> 'OK'
+          OR TRIM(pr_dscritic) IS NOT NULL THEN
+            --Retorno NOK
+
+            RAISE vr_exc_saida;
+          END IF;
+
+      END IF;
     END IF;
     ----------------------------
     -- Retorno OK
@@ -1912,7 +1912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
   BEGIN
     pr_des_reto := 'NOK';
-
+    
     IF TRIM(pr_dshistor) IS NULL THEN
       vr_dshistor := UPPER('GPS Identificador ') || pr_cdidenti;
     ELSE
@@ -2267,7 +2267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                            ,pr_tpoperac => 2 -- Pagamento
                                            ,pr_vllanmto => pr_vlrtotal
                                            ,pr_dscritic => pr_dscritic);
-                                           
+
        IF TRIM(pr_dscritic) IS NOT NULL THEN
          RAISE vr_exc_saida;
     END IF;
@@ -2782,7 +2782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             ,pr_nrdrowid => vr_nrdrowid);
 
   END pc_gps_agmto_consulta;
-
+  
 
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
@@ -2998,14 +2998,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               --Levantar Excecao
                RAISE vr_exc_saida;
             END IF; 
-            
+
             IF NOT pr_tab_internet.EXISTS(1) THEN
               pr_cdcritic:= 0;
               pr_dscritic:= 'Registro de limite para validar cancelamento GPS nao encontrado.';
               --Levantar Excecao
               RAISE vr_exc_saida;
             END IF; 
-            
+
              vr_vldsppgo := pr_tab_internet(1).vldsppgo;            
             /** Verifica se pode movimentar em relacao ao que ja foi usado **/
             IF rw_agmto.vltotal_gps > vr_vldsppgo  THEN
@@ -3333,7 +3333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_dscritic   VARCHAR2(32767);       -- Usar para mensagem de retorno para tela
      vr_dsmsglog   VARCHAR2(32767) := ''; -- Usar para mensagem a ser gravada no log (VERLOG)
      vr_dtcompet   VARCHAR(6);
-
+     
      vr_nmextttl   VARCHAR2(100);
      vr_dsinfor1   crappro.dsinform##1%TYPE;
      vr_dsinfor2   crappro.dsinform##2%TYPE;
@@ -3348,16 +3348,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_nrseqaut   NUMBER;
      vr_cdcritic   NUMBER;
      vr_des_reto   VARCHAR2(500);
-
+    
      vr_nrcpfcgc      crapsnh.nrcpfcgc%type;
      vr_dscedent   VARCHAR2(300);
 
-     FUNCTION fn_centraliza(pr_frase IN VARCHAR2, pr_tamlinha IN PLS_INTEGER) RETURN VARCHAR2 IS 
+     FUNCTION fn_centraliza(pr_frase IN VARCHAR2, pr_tamlinha IN PLS_INTEGER) RETURN VARCHAR2 IS
        vr_contastr PLS_INTEGER;
   BEGIN
        vr_contastr := TRUNC( (pr_tamlinha - LENGTH(TRIM(pr_frase))) / 2 ,0);
        RETURN LPAD(NVL(' ',' '),vr_contastr,' ')||TRIM(pr_frase);
-     END fn_centraliza;          
+     END fn_centraliza;
 
   BEGIN
      vr_cdbarras := NVL(pr_cdbarras,' ');
@@ -3696,28 +3696,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         pr_dscritic := vr_dscritic;
         RAISE vr_exit;
       ELSE      
-       -- Se descrição for nula e há código de erro
-       IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        -- Se descrição for nula e há código de erro
+        IF NVL(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
           pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           vr_dsmsglog := pr_dscritic; -- Mantém mesma mensagem no log
           -- Exception
           RAISE vr_exc_saida;
-       END IF;
+        END IF;
 
-       IF pr_idorigem = 2 THEN
-         pr_dscritic := REPLACE(REPLACE(vr_dscritic,'(NEGOCIO)','(SICREDI)'),'(VALIDACAO)','(SICREDI)');
-       END IF;
+        IF pr_idorigem = 2 THEN
+          pr_dscritic := REPLACE(REPLACE(vr_dscritic,'(NEGOCIO)','(SICREDI)'),'(VALIDACAO)','(SICREDI)');
+        END IF;
 
-       IF vr_dscritic LIKE '%ERR-SVC%' THEN
+        IF vr_dscritic LIKE '%ERR-SVC%' THEN
           pr_dscritic := TRIM(REPLACE(vr_dscritic,'ERR-SVC','(Erro no serviço)'));
-       ELSE
+        ELSE
           pr_dscritic := vr_dscritic;
-       END IF;
+        END IF;
 
-       vr_dsmsglog := pr_dscritic; -- Mantém mesma mensagem no log
-       -- Exception
-       RAISE vr_exc_saida;
-    END IF;
+        vr_dsmsglog := pr_dscritic; -- Mantém mesma mensagem no log
+        -- Exception
+        RAISE vr_exc_saida;
+      END IF;
     END IF;
 
     /************************* CALCULO DE DATA (DIA UTEIS) *************************/
@@ -4223,7 +4223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          ||to_char(to_date(rw_crapcop.hrinisac,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hrinisac,'SSSSS'),'MI'),'00')||' as '
          ||to_char(to_date(rw_crapcop.hrfimsac,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hrfimsac,'SSSSS'),'MI'),'00') ,48);
        vr_tab_literal(39):= fn_centraliza('OUVIDORIA - '||rw_crapcop.nrtelouv,48);
-       vr_tab_literal(40):= fn_centraliza('Atendimento nos dias uteis das '         
+       vr_tab_literal(40):= fn_centraliza('Atendimento nos dias uteis das '
          ||to_char(to_date(rw_crapcop.hriniouv,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hriniouv,'SSSSS'),'MI'),'00')||' as '
          ||to_char(to_date(rw_crapcop.hrfimouv,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hrfimouv,'SSSSS'),'MI'),'00') ,48);
        vr_tab_literal(41):= ' ';
@@ -4234,7 +4234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        vr_tab_literal(46):= ' ';
        vr_tab_literal(47):= ' ';
        vr_tab_literal(48):= ' ';
-       vr_tab_literal(49):= ' ';       
+       vr_tab_literal(49):= ' ';
        vr_tab_literal(50):= ' ';
        vr_tab_literal(51):= ' ';
        vr_tab_literal(52):= ' ';
@@ -4451,7 +4451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       COMMIT; -- Commitar o LOG
   END pc_gps_agmto_novo;
 
-
+  
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Andre Santos/SUPERO
    Objetivo : GPS - Efetuar pagamento de GPS
@@ -4570,7 +4570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_dspesgps      VARCHAR2(15);
      vr_dtmvtolt      DATE;
      vr_nrcpfcgc      crapsnh.nrcpfcgc%type;
-
+     
      vr_lindigi1 VARCHAR2(50);
      vr_lindigi2 VARCHAR2(50);
 
@@ -4805,7 +4805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
      -- Sempre passa a data que já está no CX-online
      vr_dtmvtolt := rw_crapdat.dtmvtocd;
-
+     
      -- Atribui o histórico
      IF TRIM(pr_dshistor) IS NULL THEN
        vr_dshistor := UPPER('GPS Identificador ') || pr_dsidenti;
@@ -4859,19 +4859,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
            -- Exception
            RAISE vr_exc_saida;
-        END IF;
+         END IF;
 
-        IF pr_idorigem = 2 THEN
-          pr_dscritic := REPLACE(REPLACE(vr_dscritic,'(NEGOCIO)','(SICREDI)'),'(VALIDACAO)','(SICREDI)');
-        END IF;
+         IF pr_idorigem = 2 THEN
+           pr_dscritic := REPLACE(REPLACE(vr_dscritic,'(NEGOCIO)','(SICREDI)'),'(VALIDACAO)','(SICREDI)');
+         END IF;
 
-        IF vr_dscritic LIKE '%ERR-SVC%' THEN
-          pr_dscritic := TRIM(REPLACE(vr_dscritic,'ERR-SVC','(Erro no serviço)'));
-        ELSE
-          pr_dscritic := vr_dscritic;
-        END IF;
-        RAISE vr_exc_saida;
-     END IF;
+         IF vr_dscritic LIKE '%ERR-SVC%' THEN
+           pr_dscritic := TRIM(REPLACE(vr_dscritic,'ERR-SVC','(Erro no serviço)'));
+         ELSE
+           pr_dscritic := vr_dscritic;
+         END IF;
+         RAISE vr_exc_saida;
+       END IF;
      END IF;
 
 
@@ -4879,7 +4879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        -- Retornar valores
        pr_dslitera := vr_literal;
        pr_cdultseq := vr_nrseqaut;
-       
+
        --Selecionar informacoes dos boletins dos caixas
         /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
         FOR i IN 1 .. 100 LOOP
@@ -4898,10 +4898,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               vr_cdcritic:= 698;
               pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
               --Fechar Cursor
-              CLOSE cr_existe_bcx;              
+              CLOSE cr_existe_bcx;
               --Levantar Excecao
               RAISE vr_exc_saida;
-            ELSE  
+            ELSE
               vr_cdcritic := NULL;
               --Fechar Cursor
               CLOSE cr_existe_bcx;
@@ -4927,7 +4927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       -- se encontrou erro ao buscar lote, abortar programa
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
-      ELSE  
+      ELSE
         --Atualizar tabela crapbcx
         BEGIN
          UPDATE crapbcx SET crapbcx.qtcompln = nvl(crapbcx.qtcompln,0) + 1
@@ -4938,9 +4938,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            vr_dscritic := 'Erro ao atualizar tabela crapbcx. Erro: '||SQLERRM;
            --Levantar Excecao
            RAISE vr_exc_saida;
-        END;        
+        END;
       END IF;
-       
+
      END IF;
 
      IF NVL(pr_nrdconta,0) > 0 THEN
@@ -5122,45 +5122,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     WHEN vr_exit THEN
       -- SAIR COM A TRANSACAO PENDENTE
       COMMIT;
-     WHEN vr_exc_saida THEN
-        -- Desfaz todas as alteracoes
-        ROLLBACK;
-        pr_dscritic := 'Pagamento não efetuado! =>' || pr_dscritic;
-        pr_dslitera := NULL;
-        pr_cdultseq := NULL;
-        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => pr_cdoperad
-                            ,pr_dscritic => NVL(pr_dscritic,' ')
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => vr_dstransa
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 0 --> 0-FALSE/ERRO
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+    WHEN vr_exc_saida THEN
+      -- Desfaz todas as alteracoes
+      ROLLBACK;
+      pr_dscritic := 'Pagamento não efetuado! =>' || pr_dscritic;
+      pr_dslitera := NULL;
+      pr_cdultseq := NULL;
+      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => NVL(pr_dscritic,' ')
+                          ,pr_dsorigem => vr_dsorigem
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 0 --> 0-FALSE/ERRO
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                           ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => pr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
+                          ,pr_nmdatela => pr_nmdatela
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
       COMMIT; -- Commitar o LOG
-     WHEN OTHERS THEN
-        -- Desfaz todas as alteracoes
-        ROLLBACK;
-        pr_dscritic := 'Erro e01: '||SQLCODE;
-        pr_dscritic := 'Pagamento não efetuado! =>' || pr_dscritic;
-        pr_dslitera := NULL;
-        pr_cdultseq := NULL;
-        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => pr_cdoperad
-                            ,pr_dscritic => 'Erro pc_gps_pagamento: '||SQLERRM
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => vr_dstransa
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 0 --> 0-FALSE/ERRO
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+    WHEN OTHERS THEN
+      -- Desfaz todas as alteracoes
+      ROLLBACK;
+      pr_dscritic := 'Erro e01: '||SQLCODE;
+      pr_dscritic := 'Pagamento não efetuado! =>' || pr_dscritic;
+      pr_dslitera := NULL;
+      pr_cdultseq := NULL;
+      GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => 'Erro pc_gps_pagamento: '||SQLERRM
+                          ,pr_dsorigem => vr_dsorigem
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 0 --> 0-FALSE/ERRO
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                           ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => pr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
-      COMMIT; -- Commitar o LOG
+                          ,pr_nmdatela => pr_nmdatela
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+     COMMIT; -- Commitar o LOG
   END pc_gps_pagamento;
   --
 
@@ -7295,7 +7295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             ELSE
               vr_dstransa := 'Pagamento de PGS';
             END IF;
-
+            
             vr_reslote := vr_dstransa;
 
             -- Validar Saldos
@@ -7342,7 +7342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                    ,pr_texto_completo => vr_xml_temp
                                    ,pr_texto_novo     =>
                                    '<cdpagmto>' || SUBSTR(pr_cdbarras,20,4)                                    || '</cdpagmto>' ||
-                                   '<dtcompet>' || SUBSTR(pr_cdbarras,42,2)  || SUBSTR(pr_cdbarras,38,4)       || '</dtcompet>' ||
+                                   '<dtcompet>' || SUBSTR(pr_cdbarras,42,2)  || '/' || SUBSTR(pr_cdbarras,38,4)|| '</dtcompet>' ||
                                    '<dsidenti>' || SUBSTR(pr_cdbarras,24,14)                                   || '</dsidenti>' ||
                                    '<vldoinss>' || TO_NUMBER(SUBSTR(pr_cdbarras,6,10)) / 100                   || '</vldoinss>' ||
                                    '<vloutent>0,00</vloutent>' ||
