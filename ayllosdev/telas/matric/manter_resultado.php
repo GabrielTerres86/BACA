@@ -325,6 +325,8 @@
 																			 '$comercialCdEstado', '$comercialDsCidade', '$comercialTporigem', '$nrInscricao', '$nrLicenca', '$cdNatureza', '$cdSetor', '$cdRamo',
 																			 '$cdCnae', '$dtInicioAtividade', '$cdNaturezaOcupacao');");
 			
+			$metodoNao = "showError('error', 'Relacionamento n&atilde;o iniciado, cadastro n&atilde;o permitido!', 'Alerta - Ayllos');";
+			
 			exibirConfirmacao('Cadastro já existe na base, deseja iniciar relacionamento?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
 			
 		}
