@@ -7160,7 +7160,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                           ,pr_nrseqaut => vr_nrseqaut
                                           ,pr_flmobile => pr_flmobile
                                           ,pr_dshistor => pr_dshistor
-                                          ,pr_assconju => vr_assconju
                                           ,pr_cdcritic => pr_cdcritic
                                           ,pr_dscritic => pr_dscritic
                                           ,pr_des_reto => vr_des_reto);
