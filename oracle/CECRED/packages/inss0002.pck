@@ -347,12 +347,12 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                ,pr_idagendamento IN NUMBER
                                ,pr_cdcritic1     OUT NUMBER  --> Código da crítica
                                ,pr_dscritic1     OUT VARCHAR2) ;
-                                   
+
   /*---------------------------------------------------------------------------------------------------------------
    Autor    : Ricardo Linhares
    Objetivo : GPS - Validar código de barras
   ---------------------------------------------------------------------------------------------------------------*/                                        
-
+                               
       PROCEDURE pc_gps_validar(pr_cdcooper IN crapcop.cdcooper%TYPE
                               ,pr_nrdconta IN crapass.nrdconta%TYPE
                               ,pr_cdagenci IN NUMBER        
@@ -435,8 +435,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
                25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos 
                            em que o dia que antecede o final de semana ou feriado nacional
-                           (Lucas Ranghetti #671126)     
-						   
+                           (Lucas Ranghetti #671126)      
+                            
               17/07/2017 - Nao gerar RAISE caso chegue ao final do processo de pagto de GPS
                             e o Sicredi tenha aceitado o mesmo. (Chamado 704313) - (Fabricio)						    
                             
@@ -508,7 +508,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   vr_dsdtexto    VARCHAR2(32000);
   vr_nrdrowid    ROWID;
   vr_nrdrowid1   ROWID;
-  vr_dtcompet   VARCHAR(6); 
+  vr_dtcompet   VARCHAR(6);
 
 
   vr_exc_saida      EXCEPTION;       --> Controle de Exceção
@@ -1010,16 +1010,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          AND gps.nrdconta = p_nrdconta
          AND gps.nrseqagp = p_nrseqagp;
     rw_gps    cr_gps%ROWTYPE;
-    CURSOR cr_crapsnh (prc_cdcooper crapsnh.cdcooper%type,
-                       prc_nrdconta crapsnh.nrdconta%type,
-                       prc_idseqttl crapsnh.idseqttl%type)IS
-      SELECT c.nrcpfcgc
-        FROM crapsnh c
-       WHERE c.cdcooper = prc_cdcooper
-         AND c.nrdconta = prc_nrdconta
-         AND c.idseqttl = prc_idseqttl
-         AND c.tpdsenha = 1 -- INTERNET
-         ;    
 
     vr_raizcoop VARCHAR2(255);
     vr_msgenvio VARCHAR2(255);
@@ -1229,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                  ,pr_dsdadant => ''
                                  ,pr_dsdadatu => pr_nrcpfope);  
         --               
-                                                                  
+
       EXCEPTION
         WHEN OTHERS THEN
           pr_dscritic := 'Erro chamada GERAR LOG GPS '||SQLERRM;
@@ -1536,7 +1526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           pr_dscritic := 'Erro chamada pr_cdlindig '||SQLERRM;
           RAISE vr_exc_saida;
       END;
-      
+
       BEGIN                             
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'pr_nrcpfope'
@@ -3727,7 +3717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        vr_dsmsglog := pr_dscritic; -- Mantém mesma mensagem no log
        -- Exception
        RAISE vr_exc_saida;
-      END IF;
+    END IF;
     END IF;
 
     /************************* CALCULO DE DATA (DIA UTEIS) *************************/
@@ -7071,6 +7061,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            vr_vltotgps        NUMBER; --valor total do GPS atual
            vr_tpvalid         VARCHAR2(1);
            vr_assconju        NUMBER;
+           vr_dshistor VARCHAR2(300);
+           vr_reslote VARCHAR2(300);
 
            -- Verificar a existencia do registro na tabela CRAPLGP
              CURSOR cr_craplgp(pr_cdcooper   craplgp.cdcooper%TYPE
@@ -7099,6 +7091,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
           BEGIN
             
+
+          IF TRIM(pr_dshistor) IS NULL THEN
+            vr_dshistor := UPPER('GPS Identificador ') || pr_cdidenti;
+          ELSE
+            vr_dshistor := 'GPS – ' || pr_dshistor;
+          END IF;              
+          
+           
             -- Leitura do calendário da cooperativa
             OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
             FETCH btch0001.cr_crapdat
@@ -7296,6 +7296,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               vr_dstransa := 'Pagamento de PGS';
             END IF;
 
+            vr_reslote := vr_dstransa;
+
             -- Validar Saldos
             INET0001.pc_verifica_operacao (pr_cdcooper => pr_cdcooper          --Código Cooperativa
                                           ,pr_cdagenci => 90                   --Agencia do Associado
@@ -7346,9 +7348,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                    '<vloutent>0,00</vloutent>' ||
                                    '<vlatmjur>0,00</vlatmjur>' ||
                                    '<vlrtotal>' || TO_NUMBER(SUBSTR(pr_cdbarras,6,10)) / 100                   || '</vlrtotal>' ||
-                                   '<dtmvtpgt>' || TO_CHAR(vr_dtmvtopg,'DD/MM/RRRR')                          || '</dtmvtpgt>' ||
+                                   '<dtmvtpgt>' || TO_CHAR(vr_dtmvtopg,'DD/MM/RRRR')                           || '</dtmvtpgt>' ||
                                    '<dsmsgope>' || nvl(vr_dsmsgope,' ')                                        || '</dsmsgope>' ||
-                                   '<dsreslot>GPS - Previdência Social</dsreslot>');
+                                   '<dshistor>' || nvl(vr_dshistor,' ')                                        || '</dshistor>' ||                                   
+                                   '<dsreslot>' || vr_reslote || '</dsreslot>');
 
 
             gene0002.pc_escreve_xml(pr_xml            => pr_retxml
@@ -7412,14 +7415,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          WHEN vr_exc_saida THEN
             pr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                          '<Root><Dados>' || pr_dscritic || '</Dados></Root>';
-      WHEN OTHERS THEN
+         WHEN OTHERS THEN
             pr_dscritic := 'Erro geral na rotina pc_gps_detalhes: '||SQLERRM;
             pr_retxml := '<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                          '<Root><Dados>' || pr_dscritic || '</Dados></Root>';      
       END;
 
-    END;
-    
+    END;  
+
     IF pr_idagendamento = 1 THEN -- PAGAR
       INSS0002.pc_gps_pagamento(pr_cdcooper => vr_cdcooper, 
                                 pr_nrdconta => vr_nrdconta, 
