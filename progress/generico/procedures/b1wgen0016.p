@@ -3460,12 +3460,6 @@ PROCEDURE obtem-agendamentos:
             ASSIGN tt-dados-agendamento.dtperiod = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtperiod".
             ASSIGN tt-dados-agendamento.dtvendrf = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvendrf".
             ASSIGN tt-dados-agendamento.nrcpfcgc =     (xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc".
-            ASSIGN tt-dados-agendamento.gps_cddpagto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_cddpagto".
-            ASSIGN tt-dados-agendamento.gps_dscompet = (xText:NODE-VALUE) WHEN xField:NAME = "gps_dscompet".
-            ASSIGN tt-dados-agendamento.gps_cdidenti = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_cdidenti".
-            ASSIGN tt-dados-agendamento.gps_vlrdinss = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrdinss".
-            ASSIGN tt-dados-agendamento.gps_vlrouent = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrouent".
-            ASSIGN tt-dados-agendamento.gps_vlrjuros = DECI(xText:NODE-VALUE) WHEN xField:NAME = "gps_vlrjuros".
             ASSIGN tt-dados-agendamento.gpscddpagto = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_cddpagto".
             ASSIGN tt-dados-agendamento.gpsdscompet =    (xText:NODE-VALUE) WHEN xField:NAME = "gps_dscompet".
             ASSIGN tt-dados-agendamento.gpscdidenti = DEC(xText:NODE-VALUE) WHEN xField:NAME = "gps_cdidenti".
