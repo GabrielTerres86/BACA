@@ -32,7 +32,7 @@
 						foreach( $dados as $banco) { 
 						$mtdClick = "selecionaBloqueio('".$seq."', ".getByTagName($banco->tags,'IDMODALI').");";
 					?>
-						<tr class="tr_oficio ofi_<?=preg_replace("/[^0-9]/", "", getByTagName($banco->tags,'NMROFICI'))?>" onclick= "<? echo $mtdClick; ?>" onFocus="<? echo $mtdClick; ?>"> 
+						<tr class="tr_oficio ofi_<?=preg_replace("/[^0-9]/", "", getByTagName($banco->tags,'NMROFICI'))?>_<?php echo getByTagName($banco->tags,'NRDCONTA'); ?>" onclick= "<? echo $mtdClick; ?>" onFocus="<? echo $mtdClick; ?>"> 
 							<td style="width: 79px;" id="nrdconta" ><span><?php echo formataContaDV(getByTagName($banco->tags,'NRDCONTA')); ?></span>
 								<?php echo formataContaDV(getByTagName($banco->tags,'NRDCONTA')); ?>
 							</td>

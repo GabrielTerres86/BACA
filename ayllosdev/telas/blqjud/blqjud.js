@@ -1744,10 +1744,10 @@ function uncheck(){
 	flgradio = 'false';
 }
 
-function selecionaOficio(oficio) {
+function selecionaOficio(oficio, conta) {
     $('form#frmConsultaDados div.divRegistros table tr.tr_oficio').hide();
-    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio).css('display', 'table-row');
-    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio).first().click();
+    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio + "_" + conta).css('display', 'table-row');
+    $('form#frmConsultaDados div.divRegistros table tr.ofi_' + oficio + "_" + conta).first().click();
 }
 
 function selecionaBloqueio(seq, cdmodali) {

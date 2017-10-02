@@ -33,7 +33,7 @@
 					<? 
 						$seq = 0;
 						foreach( $oficios as $oficio) { 
-						$mtdClick = "selecionaOficio('".preg_replace("/[^0-9]/", "", getByTagName($oficio->tags,'NROFICIO'))."');";
+						$mtdClick = "selecionaOficio('".preg_replace("/[^0-9]/", "", getByTagName($oficio->tags,'NROFICIO'))."', ".getByTagName($oficio->tags,'NRDCONTA').");";
 					?>
 						<tr onclick= "<? echo $mtdClick; ?>" onFocus="<? echo $mtdClick; ?>"> 
 							<td id="nrdconta" ><span style="display: none;"><?php echo formataContaDV(getByTagName($oficio->tags,'NRDCONTA')); ?></span>
