@@ -2838,6 +2838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                             ,pr_cdoperad => pr_cdoperad
                             ,pr_nmdatela => pr_nmdatela
                             ,pr_dsdrowid => rw_agmto.rowid
+							,pr_nrcpfope => 0
                             ,pr_flmobile => pr_flmobile
                             ,pr_dscritic => pr_dscritic);
                             
