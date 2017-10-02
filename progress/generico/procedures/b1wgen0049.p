@@ -123,8 +123,7 @@ PROCEDURE obtem-contatos:
                 /** Telefone **/
                 FIND FIRST craptfc WHERE craptfc.cdcooper = par_cdcooper     AND
                                          craptfc.nrdconta = crapavt.nrdctato AND
-                                         craptfc.idseqttl = 1 				 AND
-										 craptfc.tptelefo = 1
+                                         craptfc.idseqttl = 1                
                                          NO-LOCK NO-ERROR.
                                           
                 /** E-Mail **/
@@ -322,8 +321,7 @@ PROCEDURE consultar-dados-contato:
             /** Telefone **/
             FIND FIRST craptfc WHERE craptfc.cdcooper = par_cdcooper     AND
                                      craptfc.nrdconta = crapavt.nrdctato AND
-                                     craptfc.idseqttl = 1                AND
-									 craptfc.tptelefo = 1  
+                                     craptfc.idseqttl = 1                
                                      NO-LOCK NO-ERROR.
                                
             /** E-Mail **/
@@ -506,8 +504,7 @@ PROCEDURE consultar-dados-cooperado-contato:
     /** Telefone **/
     FIND FIRST craptfc WHERE craptfc.cdcooper = par_cdcooper AND 
                              craptfc.nrdconta = par_nrdctato AND 
-                             craptfc.idseqttl = 1            AND 
-							 craptfc.tptelefo = 1 NO-LOCK NO-ERROR.
+                             craptfc.idseqttl = 1            NO-LOCK NO-ERROR.
                                   
     /** E-Mail **/
     FIND crapcem WHERE crapcem.cdcooper = par_cdcooper AND 
