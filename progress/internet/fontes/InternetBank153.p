@@ -59,7 +59,6 @@ DEF INPUT PARAM par_dtdiadeb AS CHAR                                  NO-UNDO.
 DEF INPUT PARAM par_tpvalida AS CHAR                                  NO-UNDO.
 DEF INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF INPUT PARAM par_dshistor AS CHAR                                  NO-UNDO.
-DEF INPUT PARAM par_idseqttl AS INTE                                  NO-UNDO.
 DEF INPUT PARAM par_indtpaga AS INTE                                  NO-UNDO.
 DEF INPUT PARAM par_vlrlote  AS DECI                                  NO-UNDO.
 

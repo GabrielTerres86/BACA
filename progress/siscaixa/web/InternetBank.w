@@ -7277,7 +7277,6 @@ PROCEDURE proc_operacao153:
                                                    INPUT aux_tpvalida,
                                                    INPUT aux_flmobile,
                                                    INPUT aux_dshistor,
-                                                   INPUT aux_idseqttl,
                                                    INPUT aux_indtpaga,
                                                    INPUT aux_vlrlote,
                                                   OUTPUT aux_dsmsgerr,

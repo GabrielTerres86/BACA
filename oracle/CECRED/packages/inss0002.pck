@@ -1267,7 +1267,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                     ,pr_nrcpfope => pr_nrcpfope                 --CPF operador
                                     ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
                                     ,pr_nmdatela => pr_nmdatela          -- Nome da tela
-                                    ,pr_dstransa => vr_dstransa          --Descricao da transacao
+								    ,pr_flgexage => 0  -- 1 - Efetua agendamento / 0 - não efetua agendamento
+									,pr_dstransa => vr_dstransa          --Descricao da transacao
                                     ,pr_tab_limite   => vr_tab_limite    --Tabelas de retorno de horarios limite
                                     ,pr_tab_internet => vr_tab_internet  --Tabelas de retorno de horarios limite
                                     ,pr_cdcritic => pr_cdcritic          --Código do erro

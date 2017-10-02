@@ -103,12 +103,12 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD nrddd    AS INT     /* Prj. 321 */
     FIELD nrcelular AS CHAR   /* Prj. 321 */
     FIELD nmoperadora AS CHAR /* Prj. 321 */
-    FIELD gps_cddpagto AS DECI
-    FIELD gps_dscompet AS CHAR
-    FIELD gps_cdidenti AS DECI
-    FIELD gps_vlrdinss AS DECI
-    FIELD gps_vlrouent AS DECI
-    FIELD gps_vlrjuros AS DECI.
+    FIELD gpscddpagto AS DECI
+    FIELD gpsdscompet AS CHAR
+    FIELD gpscdidenti AS DECI
+    FIELD gpsvlrdinss AS DECI
+    FIELD gpsvlrouent AS DECI
+    FIELD gpsvlrjuros AS DECI.
     
 
 DEF TEMP-TABLE tt-transacoes_operadores NO-UNDO
