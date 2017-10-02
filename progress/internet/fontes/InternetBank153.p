@@ -1,4 +1,4 @@
-ï»¿/*..............................................................................
+/*..............................................................................
 
    Programa: sistema/internet/fontes/InternetBank153.p
    Sistema : Internet - Cooperativa de Credito
@@ -9,22 +9,22 @@
    Dados referentes ao programa:
 
    Frequencia: Sempre que houver acesso nas telas do GPS
-   Objetivo  : Realizar as transaÃ§Å‘es da tela de Agendamento de GPS
-                Tipo OperaÃ§Äƒo => 1 - Consulta dos dados de agendamentos de GPS
-                Tipo OperaÃ§Äƒo => 2 - Desativar agendamento
-                Tipo OperaÃ§Äƒo => 3 - Efetua pagamento GPS
-                Tipo OperaÃ§Äƒo => 4 - Consultar dados da cooperativa quanto ao GPS
-                Tipo OperaÃ§Äƒo => 5 - Efetua Agendamento de GPS
-                Tipo OperaÃ§Äƒo => 6 - Realizar a chamada da rotina de validaÃ§Äƒo SICREDI
-                Tipo OperaÃ§Äƒo => 7 - Detalhar Codigo de barras
-                Tipo OperaÃ§Äƒo => 8 - Validar agendamento / pagamento GPS
+   Objetivo  : Realizar as transaçoes da tela de Agendamento de GPS
+                Tipo Operaçao => 1 - Consulta dos dados de agendamentos de GPS
+                Tipo Operaçao => 2 - Desativar agendamento
+                Tipo Operaçao => 3 - Efetua pagamento GPS
+                Tipo Operaçao => 4 - Consultar dados da cooperativa quanto ao GPS
+                Tipo Operaçao => 5 - Efetua Agendamento de GPS
+                Tipo Operaçao => 6 - Realizar a chamada da rotina de validaçao SICREDI
+                Tipo Operaçao => 7 - Detalhar Codigo de barras
+                Tipo Operaçao => 8 - Validar agendamento / pagamento GPS
    
    Alteracoes: 30/05/2016 - Tratar aux_dscritic de retorno com "<> ?" na operacao 6
                             (Guilherme/SUPERO)
 
                22/06/2016 - Ajuste na data passada na operacao 6 (Guilherme/Supero)                            
                
-               06/09/2017 - AdiÃ§ao de ValidaÃ§oes e Detalhamento de cÃ³digo de Barras
+               06/09/2017 - Adiçao de Validaçoes e Detalhamento de código de Barras
                             para projeto Mobile (P356.2 GPS - Ricardo Linhares)
                
 ..............................................................................*/
@@ -71,7 +71,8 @@ DEF VAR aux_dscritic AS CHAR                                          NO-UNDO.
 DEF VAR xml_req      AS LONGCHAR                                      NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                         NO-UNDO.
 DEF VAR aux_dtvalida AS DATE                                          NO-UNDO.
-DEF VAR h-b1wgen0014 AS HANDLE                                        NO-UNDO.
+DEF VAR h-b1wgen0014 AS HANDLE                                        NO-UNDO.	
+DEF VAR aux_idastcjt AS INTE                                          NO-UNDO.
 
 IF par_flmobile = yes THEN DO:
 
@@ -81,7 +82,59 @@ IF par_flmobile = yes THEN DO:
     ASSIGN par_idfisjur = crapass.inpessoa.
   ELSE 
     ASSIGN par_idfisjur = 1.
-END.
+END.	   
+
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+RUN STORED-PROCEDURE pc_verifica_rep_assinatura
+   aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT  par_cdcooper,
+                   INPUT  par_nrdconta,
+                   INPUT  par_idseqttl,
+                   INPUT  3,   /* cdorigem */
+                   OUTPUT 0,   /* idastcjt */
+                   OUTPUT 0,   /* nrcpfcgc */
+                   OUTPUT "",  /* nmprimtl */
+                   OUTPUT 0,   /* flcartma */
+                   OUTPUT 0,   /* cdcritic */
+                   OUTPUT ""). /* dscritic */
+
+
+CLOSE STORED-PROC pc_verifica_rep_assinatura 
+     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_idastcjt = 0
+       aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_idastcjt = pc_verifica_rep_assinatura.pr_idastcjt 
+                          WHEN pc_verifica_rep_assinatura.pr_idastcjt <> ?
+       aux_cdcritic = pc_verifica_rep_assinatura.pr_cdcritic 
+                          WHEN pc_verifica_rep_assinatura.pr_cdcritic <> ?
+       aux_dscritic = pc_verifica_rep_assinatura.pr_dscritic
+                          WHEN pc_verifica_rep_assinatura.pr_dscritic <> ?. 
+
+IF aux_cdcritic <> 0   OR
+  aux_dscritic <> ""  THEN
+  DO:
+     IF aux_dscritic = "" THEN
+        DO:
+           FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                              NO-LOCK NO-ERROR.
+
+           IF AVAIL crapcri THEN
+              ASSIGN aux_dscritic = crapcri.dscritic.
+           ELSE
+              ASSIGN aux_dscritic =  "Nao foi possivel validar o Representante " +
+                                     "Legal.".
+
+        END.
+
+     ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+
+     RETURN "NOK".
+  END.
 
 IF  par_tpoperac = 1 THEN DO: /* Consulta */
 
@@ -208,7 +261,7 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<dsmsg>Pagamento(s) efetuado(s) com sucesso!</dsmsg>" + 
-                                   "<idastcjt>" + STRING(pc_gps_pagamento.pr_assconju) + "</idastcjt>" + 
+                                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
                                    "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
 
     RETURN "OK".
@@ -297,14 +350,14 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<dsmsg>Agendamento(s) efetuado(s) com sucesso!</dsmsg>" +
-                                   "<idastcjt>" + STRING(pc_gps_agmto_novo.pr_assconju) + "</idastcjt>" + 
+                                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
                                    "<dsprotoc>" + pc_gps_agmto_novo.pr_dsprotoc + "</dsprotoc>".
     RETURN "OK".
 
 END.
 ELSE IF  par_tpoperac = 6 THEN DO:
      
-    /* Realizar a chamada da rotina de validaÃ§Äƒo SICREDI */
+    /* Realizar a chamada da rotina de validaçao SICREDI */
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
 
@@ -381,7 +434,7 @@ ELSE IF  par_tpoperac = 6 THEN DO:
         END.
 
         IF aux_dscritic MATCHES('*LPX-00229*') THEN
-           ASSIGN aux_dscritic = 'Falha na execucao do metodo de Validar GPS! (Erro no serviÃ§o)'.
+           ASSIGN aux_dscritic = 'Falha na execucao do metodo de Validar GPS! (Erro no serviço)'.
 
         ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
         RETURN "NOK".
@@ -449,7 +502,7 @@ ELSE IF par_tpoperac = 7 THEN DO:
 END.
 ELSE IF par_tpoperac = 8 THEN DO:
    
-   /* Realizar a chamada da rotina de validaÃ§Äƒo SICREDI */
+   /* Realizar a chamada da rotina de validaçao SICREDI */
     
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 

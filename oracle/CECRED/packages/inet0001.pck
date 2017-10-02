@@ -3916,7 +3916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         vr_tp_transa := 'TED';
         pr_dstransa:= pr_dstransa || 'TED';
         vr_dsdmensa:= 'essa transferencia';
-      ELSIF pr_tpoperac = 2 OR pr_tpoperac = 10 OR pr_tpoperac = 13 THEN  /** Operacao de Pagamento / DARF/DAS/GPS **/
+      ELSIF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN  /** Operacao de Pagamento / DARF/DAS/GPS **/
         vr_tp_transa := 'Pagamento';
 		pr_dstransa:= pr_dstransa || 'Pagamento de Titulos e Faturas';
         vr_dsdmensa:= 'esse pagamento';

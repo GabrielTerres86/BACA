@@ -418,7 +418,6 @@ DEF TEMP-TABLE xml_operacao38                                           NO-UNDO
     FIELD dtvendrf AS CHAR
     FIELD nrddd    AS CHAR
     FIELD nrcelular AS CHAR
-    FIELD nmoperadora AS CHAR
 	FIELD nmoperadora AS CHAR
     FIELD gpscddpagto AS CHAR
     FIELD gpsdscompet AS CHAR
