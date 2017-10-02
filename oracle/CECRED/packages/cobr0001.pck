@@ -3036,7 +3036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
     Sistema  : Rotina para buscar as parcelas que pertencem a um carnê, de acordo com a parcela selecionada
     Sigla    : COBR
     Autor    : Douglas Quisinski - CECRED
-    Data     : Junho/2015.                      Ultima atualizacao: 03/10/2016
+    Data     : Junho/2015.                      Ultima atualizacao: 29/09/2017
 
     Dados referentes ao programa:
     
@@ -3046,6 +3046,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
     Alteracoes: 08/07/2015 - Alterar o tipo das variaveis do xml para CLOB (Douglas - Chamado 303663)
 
 			    03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+                
+                29/09/2017 - Ajustar o campo flgdprot e adicionar os campos de Serasa
+                             (Douglas - Chamado 754911)
     ............................................................................. */
     DECLARE
       -- Variáveis para identificar os boletos
@@ -3169,13 +3172,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
           cob.vljurdia,
           cob.tpdmulta,
           cob.vlrmulta,
-          cob.flgdprot,
+          DECODE(cob.flgdprot, 1, 'S','N') flgdprot,
           cob.qtdiaprt,
           cob.indiaprt,
           cob.insitpro,
           cob.cdtpinav,
           cob.nrinsava,
           cob.incobran,
+          DECODE(cob.flserasa, 1, 'S','N') flserasa,
+          cob.qtdianeg,
+          cob.inserasa,
           ass.nrcpfcgc,
           ass.inpessoa,
           ass.nmprimtl
@@ -3463,6 +3469,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                                                      || '<nrconven>' || rw_crapcco.nrconven  || '</nrconven>'
                                                      || '<nrdctabb>' || rw_parcelas.nrdctabb || '</nrdctabb>'
                                                      || '<flgaceit>' || rw_parcelas.flgaceit || '</flgaceit>'
+                                                     || '<flserasa>' || rw_parcelas.flserasa || '</flserasa>'
+                                                     || '<qtdianeg>' || rw_parcelas.qtdianeg || '</qtdianeg>'
+                                                     || '<inserasa>' || rw_parcelas.inserasa || '</inserasa>'
                                                      || '</boleto>');
             END LOOP;
             

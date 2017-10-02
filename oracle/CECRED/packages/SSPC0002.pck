@@ -102,6 +102,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
   --             			   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
   --					 	   (Andrei - RKAM).
   --              
+  --              27/09/2017 - Ajuste para validar se o convenio permite negativar no serasa ao invés de 
+  --                           verificar se o boleto permite (Douglas - Chamado 754911)
   ---------------------------------------------------------------------------------------------------------------
   -- Rotina para alterar o indicador do Serasa para envio do boleto
   -- ao Serasa no proximo processo
@@ -117,8 +119,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
     -- Cursor sobre o boleto do parametro
     CURSOR cr_crapcob IS
       SELECT crapcob.ROWID,
-             crapcob.flserasa, 
+             crapceb.flserasa, 
              crapcob.inserasa, 
+             crapcob.flgdprot,
+             crapcob.qtdiaprt,
              crapcob.vltitulo,
              crapcob.dtvencto,
              crapcob.nrinssac,
@@ -127,11 +131,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
              crapcco.nrdolote,
              crapcco.nrconven
         FROM crapcco,
-             crapcob
+             crapcob,
+             crapceb
        WHERE crapcob.cdcooper = pr_cdcooper
          AND crapcob.nrcnvcob = pr_nrcnvcob
          AND crapcob.nrdconta = pr_nrdconta
          AND crapcob.nrdocmto = pr_nrdocmto
+         AND crapceb.cdcooper = crapcob.cdcooper
+         AND crapceb.nrdconta = crapcob.nrdconta
+         AND crapceb.nrconven = crapcob.nrcnvcob
          AND crapcco.cdcooper = crapcob.cdcooper
          AND crapcco.nrconven = crapcob.nrcnvcob;
     rw_crapcob cr_crapcob%ROWTYPE;
@@ -250,6 +258,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
     ELSIF rw_crapcob.inserasa = 7 THEN -- Acao Judicial
       vr_dsincons := 'Boleto ja negativado na Serasa (Acao Judicial).';
     END IF;
+    
+    -- Verificar se já foi identificada alguma inconsistencia
+    IF TRIM(vr_dsincons) IS NULL THEN
+      -- Verificar se o titulo está em PROTESTO
+      IF rw_crapcob.flgdprot = 1 AND
+         rw_crapcob.qtdiaprt > 0 THEN
+        vr_dsincons := 'Boleto esta em processo de Protesto' || 
+                       ' - Solicitacao de negativacao nao pode ser executada.';
+      END IF;
+    END IF;
+    
     
     -- Se possuir mensagem de erro, gera inconsistencia
     IF vr_dsincons IS NOT NULL THEN
