@@ -191,6 +191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --
   --             22/02/2017 - Alteracao para passar pr_nrparcel na pc_cria_lancamento_cc. (Jaison/James)
   --
+  --             02/10/2017 - Tratamento no update da tabela CRAPCYC para tratamento da origem 2. (Heitor - Mouts) - Chamado 760624.
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -2414,7 +2415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                , cdmotcin = 1
                , dtaltera = BTCH0001.rw_crapdat.dtmvtolt
            WHERE cdcooper = rw_acordo_contrato.cdcooper
-             AND cdorigem = rw_acordo_contrato.cdorigem
+             AND cdorigem = DECODE(rw_acordo_contrato.cdorigem,2,3,rw_acordo_contrato.cdorigem)
              AND nrdconta = rw_acordo_contrato.nrdconta
              AND nrctremp = rw_acordo_contrato.nrctremp;
              
@@ -2432,7 +2433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                ,flgehvip
                                ,cdmotcin)
                         VALUES (rw_acordo_contrato.cdcooper  -- cdcooper
-                               ,rw_acordo_contrato.cdorigem  -- cdorigem
+                               ,DECODE(rw_acordo_contrato.cdorigem,2,3,rw_acordo_contrato.cdorigem)  -- cdorigem
                                ,rw_acordo_contrato.nrdconta  -- nrdconta
                                ,rw_acordo_contrato.nrctremp  -- nrctremp
                                ,pr_cdoperad                  -- cdoperad
