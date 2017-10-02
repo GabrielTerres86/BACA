@@ -154,31 +154,33 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
-  PROCEDURE pc_grava_parcel_pos_fixado(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
-                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da Conta
-                                      ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE     --> Data de Calculo
-                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do contrato
-                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
-                                      ,pr_vlemprst  IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
-                                      ,pr_qtparepr  IN crapepr.qtpreemp%TYPE     --> Quantidade de parcelas
-                                      ,pr_dtcarenc  IN crawepr.dtcarenc%TYPE     --> Data da Carência
-                                      ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE     --> Data do pagamento
-                                      ,pr_vlpreemp OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
-                                      ,pr_txdiaria OUT crawepr.txdiaria%TYPE     --> Taxa diaria
-                                      ,pr_txmensal OUT crawepr.txmensal%TYPE     --> Taxa mensal
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
-                                      ,pr_dscritic OUT crapcri.dscritic%TYPE);
+  PROCEDURE pc_grava_parcel_pos_fixado(pr_cdcooper         IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
+                                      ,pr_nrdconta         IN crapass.nrdconta%TYPE     --> Numero da Conta
+                                      ,pr_dtcalcul         IN crapdat.dtmvtolt%TYPE     --> Data de Calculo
+                                      ,pr_nrctremp         IN crapepr.nrctremp%TYPE     --> Numero do contrato
+                                      ,pr_cdlcremp         IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
+                                      ,pr_vlemprst         IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
+                                      ,pr_qtparepr         IN crapepr.qtpreemp%TYPE     --> Quantidade de parcelas
+                                      ,pr_dtcarenc         IN crawepr.dtcarenc%TYPE     --> Data da Carência
+                                      ,pr_dtdpagto         IN crapepr.dtdpagto%TYPE     --> Data do pagamento
+                                      ,pr_qtdias_carencia  IN tbepr_posfix_param_carencia.qtddias%TYPE --> Quantidade de Dias
+                                      ,pr_vlpreemp        OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
+                                      ,pr_txdiaria        OUT crawepr.txdiaria%TYPE     --> Taxa diaria
+                                      ,pr_txmensal        OUT crawepr.txmensal%TYPE     --> Taxa mensal
+                                      ,pr_cdcritic        OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                      ,pr_dscritic        OUT crapcri.dscritic%TYPE);
 
-  PROCEDURE pc_busca_vl_prest_pos_prog(pr_cdcooper  IN crapepr.cdcooper%TYPE   --> Codigo da Cooperativa
-                                      ,pr_dtcalcul  IN crapdat.dtmvtoan%TYPE   --> Data de Calculo
-                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE   --> Codigo da linha de credito
-                                      ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE   --> Quantidade de prestacoes
-                                      ,pr_dtcarenc  IN crawepr.dtcarenc%TYPE   --> Data de Pagamento da Primeira Carência
-                                      ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE   --> Data do pagamento
-                                      ,pr_vlsdeved  IN crapepr.vlsdeved%TYPE   --> Valor do saldo devedor
-                                      ,pr_vlpreemp OUT crapepr.vlpreemp%TYPE   --> Valor da prestacao
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo da critica
-                                      ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao da critica
+  PROCEDURE pc_busca_vl_prest_pos_prog(pr_cdcooper         IN crapepr.cdcooper%TYPE   --> Codigo da Cooperativa
+                                      ,pr_dtcalcul         IN crapdat.dtmvtoan%TYPE   --> Data de Calculo
+                                      ,pr_cdlcremp         IN crapepr.cdlcremp%TYPE   --> Codigo da linha de credito
+                                      ,pr_qtpreemp         IN crapepr.qtpreemp%TYPE   --> Quantidade de prestacoes
+                                      ,pr_dtcarenc         IN crawepr.dtcarenc%TYPE   --> Data de Pagamento da Primeira Carência
+                                      ,pr_dtdpagto         IN crapepr.dtdpagto%TYPE   --> Data do pagamento
+                                      ,pr_vlsdeved         IN crapepr.vlsdeved%TYPE   --> Valor do saldo devedor
+                                      ,pr_qtdias_carencia  IN tbepr_posfix_param_carencia.qtddias%TYPE --> Quantidade de Dias
+                                      ,pr_vlpreemp        OUT crapepr.vlpreemp%TYPE   --> Valor da prestacao
+                                      ,pr_cdcritic        OUT crapcri.cdcritic%TYPE   --> Codigo da critica
+                                      ,pr_dscritic        OUT crapcri.dscritic%TYPE); --> Descricao da critica
 
   PROCEDURE pc_alt_numero_parcelas_pos(pr_cdcooper      IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
                                       ,pr_nrdconta      IN crapass.nrdconta%TYPE     --> Numero da Conta
@@ -212,6 +214,11 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                       ,pr_tpatualizacao OUT tbepr_posfix_param_index.tpatualizacao%TYPE --> Tipo de Atualizacao Indexador
                                       ,pr_cdcritic      OUT crapcri.cdcritic%TYPE                       --> Codigo da critica
                                       ,pr_dscritic      OUT crapcri.dscritic%TYPE);                     --> Descricao da critica
+
+  PROCEDURE pc_busca_qtd_dias_carencia(pr_idcarencia  IN tbepr_posfix_param_carencia.idcarencia%TYPE --> Codigo da Carencia
+                                      ,pr_qtddias    OUT tbepr_posfix_param_carencia.qtddias%TYPE    --> Quantidade de Dias
+                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                       --> Codigo da critica
+                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE);                     --> Descricao da critica
   
   PROCEDURE pc_efetua_lcto_juros_remun(pr_cdcooper IN  crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
                                       ,pr_dtcalcul IN  crapdat.dtmvtolt%TYPE     --> Data de Calculo
@@ -376,17 +383,18 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                        ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
-  PROCEDURE pc_busca_prest_principal_pos(pr_cdcooper  IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
-                                        ,pr_dtefetiv  IN crapepr.dtmvtolt%TYPE     --> Data de Efetivação do Emprestimo
-                                        ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE     --> Data de calculo das parcelas
-                                        ,pr_cdlcremp  IN craplcr.cdlcremp%TYPE     --> Codigo da Linha de Credito
-                                        ,pr_dtcarenc  IN crawepr.dtcarenc%TYPE     --> Data de Pagamento da Primeira Carencia
-                                        ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE     --> Data do pagamento
-                                        ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE     --> Quantidade de prestacoes
-                                        ,pr_vlemprst  IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
-                                        ,pr_vlpreemp OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
-                                        ,pr_vljurcor OUT crapepr.vlpreemp%TYPE     --> Valor do Juros de Correcao
-                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+  PROCEDURE pc_busca_prest_principal_pos(pr_cdcooper         IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
+                                        ,pr_dtefetiv         IN crapepr.dtmvtolt%TYPE     --> Data de Efetivação do Emprestimo
+                                        ,pr_dtcalcul         IN crapdat.dtmvtolt%TYPE     --> Data de calculo das parcelas
+                                        ,pr_cdlcremp         IN craplcr.cdlcremp%TYPE     --> Codigo da Linha de Credito
+                                        ,pr_dtcarenc         IN crawepr.dtcarenc%TYPE     --> Data de Pagamento da Primeira Carencia
+                                        ,pr_dtdpagto         IN crapepr.dtdpagto%TYPE     --> Data do pagamento
+                                        ,pr_qtpreemp         IN crapepr.qtpreemp%TYPE     --> Quantidade de prestacoes
+                                        ,pr_vlemprst         IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
+                                        ,pr_qtdias_carencia  IN tbepr_posfix_param_carencia.qtddias%TYPE --> Quantidade de Dias
+                                        ,pr_vlpreemp        OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
+                                        ,pr_vljurcor        OUT crapepr.vlpreemp%TYPE     --> Valor do Juros de Correcao
+                                        ,pr_cdcritic            OUT crapcri.cdcritic%TYPE     --> Codigo da critica
                                         ,pr_dscritic OUT crapcri.dscritic%TYPE);   --> Descricao da critica
 
   PROCEDURE pc_efetua_liquidacao_empr_pos(pr_cdcooper   IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
@@ -910,7 +918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       --  Condicao para verificar se estamos calculando o Juros de Carencia
       --------------------------------------------------------------------------------------------------
       IF pr_dtcarenc = pr_datafinal THEN
-        
+        NULL; -- JFF
       END IF;
       
       --------------------------------------------------------------------------------------------------
@@ -2652,20 +2660,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
   END pc_valida_dados_pos_fixado;
 
-  PROCEDURE pc_grava_parcel_pos_fixado(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
-                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da Conta
-                                      ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE     --> Data de Calculo
-                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE     --> Numero do contrato
-                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
-                                      ,pr_vlemprst  IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
-                                      ,pr_qtparepr  IN crapepr.qtpreemp%TYPE     --> Quantidade de parcelas
-                                      ,pr_dtcarenc  IN crawepr.dtcarenc%TYPE     --> Data da Carência
-                                      ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE     --> Data do pagamento
-                                      ,pr_vlpreemp OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
-                                      ,pr_txdiaria OUT crawepr.txdiaria%TYPE     --> Taxa diaria
-                                      ,pr_txmensal OUT crawepr.txmensal%TYPE     --> Taxa mensal
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
-                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
+  PROCEDURE pc_grava_parcel_pos_fixado(pr_cdcooper         IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
+                                      ,pr_nrdconta         IN crapass.nrdconta%TYPE     --> Numero da Conta
+                                      ,pr_dtcalcul         IN crapdat.dtmvtolt%TYPE     --> Data de Calculo
+                                      ,pr_nrctremp         IN crapepr.nrctremp%TYPE     --> Numero do contrato
+                                      ,pr_cdlcremp         IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
+                                      ,pr_vlemprst         IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
+                                      ,pr_qtparepr         IN crapepr.qtpreemp%TYPE     --> Quantidade de parcelas
+                                      ,pr_dtcarenc         IN crawepr.dtcarenc%TYPE     --> Data da Carência
+                                      ,pr_dtdpagto         IN crapepr.dtdpagto%TYPE     --> Data do pagamento
+                                      ,pr_qtdias_carencia  IN tbepr_posfix_param_carencia.qtddias%TYPE --> Quantidade de Dias
+                                      ,pr_vlpreemp        OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
+                                      ,pr_txdiaria        OUT crawepr.txdiaria%TYPE     --> Taxa diaria
+                                      ,pr_txmensal        OUT crawepr.txmensal%TYPE     --> Taxa mensal
+                                      ,pr_cdcritic        OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                      ,pr_dscritic        OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
   BEGIN
     /* .............................................................................
 
@@ -2723,7 +2732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                     ,pr_dtcalcul        => pr_dtcalcul
                                     ,pr_cdlcremp        => pr_cdlcremp
                                     ,pr_dtcarenc        => pr_dtcarenc
-                                    ,pr_qtdias_carencia => 0 -- JFF
+                                    ,pr_qtdias_carencia => pr_qtdias_carencia
                                     ,pr_dtdpagto        => pr_dtdpagto
                                     ,pr_qtpreemp        => pr_qtparepr
                                     ,pr_vlemprst        => pr_vlemprst
@@ -2821,16 +2830,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
   END pc_grava_parcel_pos_fixado;
 
-  PROCEDURE pc_busca_vl_prest_pos_prog(pr_cdcooper  IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
-                                      ,pr_dtcalcul  IN crapdat.dtmvtoan%TYPE     --> Data do movimento anterior
-                                      ,pr_cdlcremp  IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
-                                      ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE     --> Quantidade de prestacoes
-                                      ,pr_dtcarenc  IN crawepr.dtcarenc%TYPE     --> Data de Pagamento da Primeira Carência
-                                      ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE     --> Data do pagamento
-                                      ,pr_vlsdeved  IN crapepr.vlsdeved%TYPE     --> Valor do saldo devedor
-                                      ,pr_vlpreemp OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
-                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
+  PROCEDURE pc_busca_vl_prest_pos_prog(pr_cdcooper         IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
+                                      ,pr_dtcalcul         IN crapdat.dtmvtoan%TYPE     --> Data do movimento anterior
+                                      ,pr_cdlcremp         IN crapepr.cdlcremp%TYPE     --> Codigo da linha de credito
+                                      ,pr_qtpreemp         IN crapepr.qtpreemp%TYPE     --> Quantidade de prestacoes
+                                      ,pr_dtcarenc         IN crawepr.dtcarenc%TYPE     --> Data de Pagamento da Primeira Carência
+                                      ,pr_dtdpagto         IN crapepr.dtdpagto%TYPE     --> Data do pagamento
+                                      ,pr_vlsdeved         IN crapepr.vlsdeved%TYPE     --> Valor do saldo devedor
+                                      ,pr_qtdias_carencia  IN tbepr_posfix_param_carencia.qtddias%TYPE --> Quantidade de Dias
+                                      ,pr_vlpreemp        OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
+                                      ,pr_cdcritic        OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                      ,pr_dscritic        OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
   BEGIN
     /* .............................................................................
 
@@ -2864,7 +2874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                     ,pr_dtcalcul        => pr_dtcalcul
                                     ,pr_cdlcremp        => pr_cdlcremp
                                     ,pr_dtcarenc        => pr_dtcarenc
-                                    ,pr_qtdias_carencia => 0 -- JFF
+                                    ,pr_qtdias_carencia => pr_qtdias_carencia
                                     ,pr_dtdpagto        => pr_dtdpagto
                                     ,pr_qtpreemp        => pr_qtpreemp
                                     ,pr_vlemprst        => pr_vlsdeved
@@ -3959,6 +3969,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
     END;
 
   END pc_busca_tip_atualiz_index;
+
+  PROCEDURE pc_busca_qtd_dias_carencia(pr_idcarencia  IN tbepr_posfix_param_carencia.idcarencia%TYPE --> Codigo da Carencia
+                                      ,pr_qtddias    OUT tbepr_posfix_param_carencia.qtddias%TYPE    --> Quantidade de Dias
+                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                       --> Codigo da critica
+                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS                   --> Descricao da critica
+  BEGIN
+    /* .............................................................................
+
+       Programa: pc_busca_qtd_dias_carencia
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Jaison Fernando
+       Data    : Outubro/2017                         Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado.
+
+       Objetivo  : Busca a quantidade de dias da carencia.
+
+       Alteracoes: 
+    ............................................................................. */
+
+    DECLARE
+
+      -- Busca os dados
+      CURSOR cr_param(pr_idcarencia IN tbepr_posfix_param_carencia.idcarencia%TYPE) IS
+        SELECT qtddias
+          FROM tbepr_posfix_param_carencia
+         WHERE idcarencia = pr_idcarencia;
+
+      -- Variaveis
+      vr_qtddias tbepr_posfix_param_carencia.qtddias%TYPE;
+
+    BEGIN
+      OPEN  cr_param(pr_idcarencia => pr_idcarencia);
+      FETCH cr_param INTO vr_qtddias;
+      CLOSE cr_param;
+      pr_qtddias := NVL(vr_qtddias,0);
+    EXCEPTION
+
+      WHEN OTHERS THEN
+        -- Apenas retornar a variavel de saida
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na procedure pc_busca_qtd_dias_carencia: ' || SQLERRM;
+
+    END;
+
+  END pc_busca_qtd_dias_carencia;
   
   PROCEDURE pc_efetua_lcto_juros_remun(pr_cdcooper IN  crapdat.cdcooper%TYPE     --> Codigo da Cooperativa
                                       ,pr_dtcalcul IN  crapdat.dtmvtolt%TYPE     --> Data de Calculo
@@ -6117,18 +6176,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
     
   END pc_busca_prest_pago_mes_pos;
 
-  PROCEDURE pc_busca_prest_principal_pos(pr_cdcooper  IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
-                                        ,pr_dtefetiv  IN crapepr.dtmvtolt%TYPE     --> Data de Efetivação do Emprestimo
-                                        ,pr_dtcalcul  IN crapdat.dtmvtolt%TYPE     --> Data de calculo das parcelas
-                                        ,pr_cdlcremp  IN craplcr.cdlcremp%TYPE     --> Codigo da Linha de Credito
-                                        ,pr_dtcarenc  IN crawepr.dtcarenc%TYPE     --> Data de Pagamento da Primeira Carencia
-                                        ,pr_dtdpagto  IN crapepr.dtdpagto%TYPE     --> Data do pagamento
-                                        ,pr_qtpreemp  IN crapepr.qtpreemp%TYPE     --> Quantidade de prestacoes
-                                        ,pr_vlemprst  IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
-                                        ,pr_vlpreemp OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
-                                        ,pr_vljurcor OUT crapepr.vlpreemp%TYPE     --> Valor do Juros de Correcao
-                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da critica
-                                        ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
+  PROCEDURE pc_busca_prest_principal_pos(pr_cdcooper         IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa
+                                        ,pr_dtefetiv         IN crapepr.dtmvtolt%TYPE     --> Data de Efetivação do Emprestimo
+                                        ,pr_dtcalcul         IN crapdat.dtmvtolt%TYPE     --> Data de calculo das parcelas
+                                        ,pr_cdlcremp         IN craplcr.cdlcremp%TYPE     --> Codigo da Linha de Credito
+                                        ,pr_dtcarenc         IN crawepr.dtcarenc%TYPE     --> Data de Pagamento da Primeira Carencia
+                                        ,pr_dtdpagto         IN crapepr.dtdpagto%TYPE     --> Data do pagamento
+                                        ,pr_qtpreemp         IN crapepr.qtpreemp%TYPE     --> Quantidade de prestacoes
+                                        ,pr_vlemprst         IN crapepr.vlemprst%TYPE     --> Valor do emprestimo
+                                        ,pr_qtdias_carencia  IN tbepr_posfix_param_carencia.qtddias%TYPE --> Quantidade de Dias
+                                        ,pr_vlpreemp        OUT crapepr.vlpreemp%TYPE     --> Valor da prestacao
+                                        ,pr_vljurcor        OUT crapepr.vlpreemp%TYPE     --> Valor do Juros de Correcao
+                                        ,pr_cdcritic        OUT crapcri.cdcritic%TYPE     --> Codigo da critica
+                                        ,pr_dscritic        OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
   BEGIN
     /* .............................................................................
 
@@ -6163,7 +6223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                     ,pr_dtcalcul        => pr_dtcalcul
                                     ,pr_cdlcremp        => pr_cdlcremp
                                     ,pr_dtcarenc        => pr_dtcarenc
-                                    ,pr_qtdias_carencia => 0 -- JFF
+                                    ,pr_qtdias_carencia => pr_qtdias_carencia
                                     ,pr_dtdpagto        => pr_dtdpagto
                                     ,pr_qtpreemp        => pr_qtpreemp
                                     ,pr_vlemprst        => pr_vlemprst
