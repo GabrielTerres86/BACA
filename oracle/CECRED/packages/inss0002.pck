@@ -7097,6 +7097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
           vr_sequenci   NUMBER;       
           vr_nrseqaut   NUMBER;
           vr_des_reto   VARCHAR2(500);        
+		  vr_ass_conju  NUMBER(1);
 
           BEGIN
             
@@ -7284,11 +7285,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                           ,pr_nrcpfope => pr_nrcpfope          --CPF operador
                                           ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos
                                           ,pr_nmdatela => 'INTERNETBANK'       -- Nome da tela
+										  ,pr_flgexage => 0
                                           ,pr_dstransa => vr_dstransa          --Descricao da transacao
                                           ,pr_tab_limite   => vr_tab_limite    --Tabelas de retorno de horarios limite
                                           ,pr_tab_internet => vr_tab_internet  --Tabelas de retorno de horarios limite
                                           ,pr_cdcritic => pr_cdcritic          --Código do erro
-                                          ,pr_dscritic => pr_dscritic);
+                                          ,pr_dscritic => pr_dscritic
+										  ,pr_assin_conjunta => vr_ass_conju);
 
               IF NVL(pr_cdcritic,0) > 0 OR TRIM(pr_dscritic) IS NOT NULL THEN
                 RAISE vr_exc_saida;
