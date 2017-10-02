@@ -666,6 +666,7 @@
 			        	      solicitado no chamado 626091 (Kelvin). 
                  17/03/2017 - Incluido IP da transacao na proc_operacao75.
                             PRJ335 - OFSAA (Odirlei-AMcom)
+				 
 				 04/05/2017 - Alterado parametro dtmvtolt para dtmvtocd na operacao 176 - 
 							  Integralizacao de cotas. (Reinert)
                               
@@ -673,6 +674,9 @@
                  21/03/2017 - Segunda fase projeto Boleto SMS
                               PRJ319.2 - SMS Cobrança(Ricardo Linhares)                             
 
+				 06/09/2017 - Alterações na chamada de pagamento GPS.
+							  (P.356.2 - Ricardo Linhares)
+                              
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1211,6 +1215,10 @@ DEF VAR aux_tppacote AS INTE                                            NO-UNDO.
 
 /*  Operacao 176/177 */
 DEF VAR aux_vintegra AS DECIMAL										   NO-UNDO.
+
+/* Operacao 153 */
+DEF VAR aux_indtpaga AS INTE NO-UNDO.
+DEF VAR aux_vlrlote AS DECI NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -7220,6 +7228,7 @@ PROCEDURE proc_operacao153:
            aux_tpoperac = INTE(  GET-VALUE("tpoperac"))
            aux_tpdpagto = INTE(  GET-VALUE("tpdpagto"))
            aux_sftcdbar = STRING(GET-VALUE("sftcdbar"))
+           aux_cdbarras = STRING(GET-VALUE("cdbarras"))           
            aux_cdpagmto = INTE(  GET-VALUE("cdpagmto"))
            aux_dtcompet = STRING(GET-VALUE("dtcompet"))
            aux_dsidenti = STRING(GET-VALUE("dsidenti"))
@@ -7231,7 +7240,10 @@ PROCEDURE proc_operacao153:
            aux_idfisjur = INTE(  GET-VALUE("idfisjur"))
            aux_idleitur = INTE(  GET-VALUE("idleitur"))
            aux_dtdiadeb = STRING(GET-VALUE("dtdebito"))
-           aux_tpvalida = STRING(GET-VALUE("tpvalida")).
+           aux_tpvalida = STRING(GET-VALUE("tpvalida"))
+           aux_dshistor = STRING(GET-VALUE("dshistor"))
+           aux_indtpaga = INTE(  GET-VALUE("indtpaga"))
+           aux_vlrlote  = DECI(  GET-VALUE("vlrlote")).           
 
     RUN sistema/internet/fontes/InternetBank153.p (INPUT aux_cdcooper,
                                                    INPUT aux_dtmvtolt,
@@ -7242,6 +7254,7 @@ PROCEDURE proc_operacao153:
                                                    INPUT aux_tpoperac,
                                                    INPUT aux_tpdpagto,
                                                    INPUT aux_sftcdbar,
+                                                   INPUT aux_cdbarras,
                                                    INPUT aux_cdpagmto,
                                                    INPUT aux_dtcompet,
                                                    INPUT aux_dsidenti,
@@ -7254,8 +7267,14 @@ PROCEDURE proc_operacao153:
                                                    INPUT aux_idleitur,
                                                    INPUT aux_dtdiadeb,
                                                    INPUT aux_tpvalida,
+                                                   INPUT aux_flmobile,
+                                                   INPUT aux_dshistor,
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_indtpaga,
+                                                   INPUT aux_vlrlote,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
+
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
     ELSE

@@ -309,6 +309,7 @@ PROCEDURE process-web-request :
                       INPUT "CRAP089A",
                       INPUT get-value("nrseqagp"),  /* ROWID */
 					            INPUT 0, /*nrcpfope*/
+					  INPUT 0, /* flmobile */
                       OUTPUT "").
               
               CLOSE STORED-PROC pc_gps_agmto_desativar
