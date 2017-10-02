@@ -389,6 +389,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                    
  PROCEDURE pc_gps_detalhar_cdbarras(pr_cdcooper IN crapcop.cdcooper%TYPE
                                    ,pr_cdbarras IN VARCHAR
+                                   ,pr_flmobile IN INTEGER DEFAULT 0
                                    ,pr_cdcritic OUT PLS_INTEGER  --> Código da crítica
                                    ,pr_dscritic OUT VARCHAR2     --> Descrição da crítica
                                    ,pr_retxml   OUT CLOB);                               
@@ -1770,6 +1771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_inpesgps => pr_inpesgps
                                  ,pr_nrseqagp => pr_nrseqagp
+                                 ,pr_dshistor => pr_dshistor
                                  ,pr_dslitera => pr_dslitera
                                  ,pr_sequenci => pr_sequenci
                                  ,pr_nrseqaut => pr_nrseqaut
@@ -1914,9 +1916,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     pr_des_reto := 'NOK';
     
     IF TRIM(pr_dshistor) IS NULL THEN
-      vr_dshistor := UPPER('GPS Identificador ') || pr_cdidenti;
+      vr_dshistor := UPPER('Identificador ') || pr_cdidenti;
     ELSE
-      vr_dshistor := 'GPS – ' || pr_dshistor;
+      vr_dshistor := pr_dshistor;
     END IF;    
 
     /*-------------------BUSCA COOPERATIVA--------------------*/
@@ -3364,9 +3366,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_cdlindig := NVL(pr_cdlindig,' ');
 
      IF TRIM(pr_dshistor) IS NULL THEN
-       vr_dscedent := UPPER('GPS Identificador ') || pr_dsidenti;
+       vr_dscedent := UPPER('Identificador ') || pr_dsidenti;
      ELSE
-       vr_dscedent := 'GPS – ' || pr_dshistor;
+       vr_dscedent := pr_dshistor;
      END IF;
 
      -- Configurar dados conforme a origem
@@ -4808,9 +4810,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      
      -- Atribui o histórico
      IF TRIM(pr_dshistor) IS NULL THEN
-       vr_dshistor := UPPER('GPS Identificador ') || pr_dsidenti;
+       vr_dshistor := UPPER('Identificador ') || pr_dsidenti;
      ELSE
-       vr_dshistor := 'GPS – ' || pr_dshistor;
+       vr_dshistor := pr_dshistor;
      END IF;           
 
      -- Chamada da procedure de validacao do SICREDI
@@ -7093,9 +7095,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             
 
           IF TRIM(pr_dshistor) IS NULL THEN
-            vr_dshistor := UPPER('GPS Identificador ') || pr_cdidenti;
+            vr_dshistor := UPPER('Identificador ') || pr_cdidenti;
           ELSE
-            vr_dshistor := 'GPS – ' || pr_dshistor;
+            vr_dshistor := pr_dshistor;
           END IF;              
           
            
@@ -7112,10 +7114,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             END IF;
             
             -- tipo validação sicredi
-            IF pr_dtdebito > rw_crapdat.dtmvtolt  THEN
-              vr_tpvalid := 'A';
+  
+          IF pr_indtpaga = 1  THEN
+              vr_tpvalid := 'V';              
             ELSE
-              vr_tpvalid := 'V';            
+              vr_tpvalid := 'A';
             END IF;
           
            -- Chama a rotina para validação do Sicredi
@@ -7186,52 +7189,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
             pr_cdcritic := 0;
 
-            -- Validações do Código de Barras
-
-            IF SUBSTR(pr_cdbarras,0,1) <> '8' THEN
-              IF pr_flmobile = 1 THEN
-                pr_dscritic := 'Boleto deve ser pago na opção ''Pagamentos - Boletos e Convênios''.';
-              ELSE
-                pr_dscritic := 'Boleto deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços.';
-              END IF;
-              RAISE vr_exc_saida;
-            END IF;
-
-            vr_dsempcon := to_char(TO_NUMBER(SUBSTR(pr_cdbarras, 16,4)));
-            vr_dssegmto := to_char(TO_NUMBER(SUBSTR(pr_cdbarras, 2,1)));
-
-            IF vr_dsempcon = '328' AND vr_dssegmto = '5' THEN
-              IF pr_flmobile = 1 THEN
-                pr_dscritic := 'DAS deve ser pago na opção ''Pagamentos - DAS''.';
-              ELSE
-                pr_dscritic := 'DAS deve ser pago na opção ''Transações - DAS'' do menu de serviços.';
-              END IF;
-              RAISE vr_exc_saida;
-            END IF;
-
-            SELECT REGEXP_INSTR (vr_dsempcon, '64|153|154|385') INTO vr_qtexpr
-            FROM dual;
-
-            IF vr_qtexpr > 0 AND vr_dssegmto = 5 THEN
-              IF pr_flmobile = 1 THEN
-              pr_dscritic := 'DARF deve ser pago na opção ''Pagamentos - DARF''.';
-              ELSE
-                pr_dscritic := 'DARF deve ser pago na opção ''Transações - DARF'' do menu de serviços.';
-              END IF;
-              RAISE vr_exc_saida;
-            END IF;
-
-            IF NOT(vr_dsempcon = 270 AND vr_dssegmto = '5') THEN
-              IF pr_flmobile = 1 THEN
-              pr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos e Convênios''';
-              ELSE
-                pr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços.';
-              END IF;
-              RAISE vr_exc_saida;
-            END IF;
-
-
-
            -- Valida competência para agendamento
 
            IF pr_indtpaga = 2 THEN
@@ -7291,12 +7248,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
             -- Verifica se é agendamento ou pagamento
             IF pr_indtpaga = 2 THEN
-              vr_dstransa := 'Agendamento de PGS';
+              vr_dstransa := 'Agendamento de GPS';
             ELSE
-              vr_dstransa := 'Pagamento de PGS';
+              vr_dstransa := 'Pagamento de GPS';
             END IF;
             
             vr_reslote := vr_dstransa;
+
+            -- Aqui valida total com lotes
 
             -- Validar Saldos
             INET0001.pc_verifica_operacao (pr_cdcooper => pr_cdcooper          --Código Cooperativa
@@ -7374,6 +7333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   
   PROCEDURE pc_gps_detalhar_cdbarras(pr_cdcooper IN crapcop.cdcooper%TYPE
                                     ,pr_cdbarras IN VARCHAR
+                                    ,pr_flmobile IN INTEGER DEFAULT 0
                                     ,pr_cdcritic OUT PLS_INTEGER  --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2     --> Descrição da crítica
                                     ,pr_retxml   OUT CLOB) IS
@@ -7387,6 +7347,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
       BEGIN
 
       pr_cdcritic := 0;
+
+
+            -- Validações do Código de Barras
+
+            IF SUBSTR(pr_cdbarras,0,1) <> '8' THEN
+              IF pr_flmobile = 1 THEN
+                pr_dscritic := 'Boleto deve ser pago na opção ''Pagamentos - Boletos e Convênios''.';
+              ELSE
+                pr_dscritic := 'Boleto deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços.';
+              END IF;
+              RAISE vr_exc_saida;
+            END IF;
+
+            vr_dsempcon := to_char(TO_NUMBER(SUBSTR(pr_cdbarras, 16,4)));
+            vr_dssegmto := to_char(TO_NUMBER(SUBSTR(pr_cdbarras, 2,1)));
+
+            IF vr_dsempcon = '328' AND vr_dssegmto = '5' THEN
+              IF pr_flmobile = 1 THEN
+                pr_dscritic := 'DAS deve ser pago na opção ''Pagamentos - DAS''.';
+              ELSE
+                pr_dscritic := 'DAS deve ser pago na opção ''Transações - DAS'' do menu de serviços.';
+              END IF;
+              RAISE vr_exc_saida;
+            END IF;
+
+            SELECT REGEXP_INSTR (vr_dsempcon, '64|153|154|385') INTO vr_qtexpr
+            FROM dual;
+
+            IF vr_qtexpr > 0 AND vr_dssegmto = 5 THEN
+              IF pr_flmobile = 1 THEN
+              pr_dscritic := 'DARF deve ser pago na opção ''Pagamentos - DARF''.';
+              ELSE
+                pr_dscritic := 'DARF deve ser pago na opção ''Transações - DARF'' do menu de serviços.';
+              END IF;
+              RAISE vr_exc_saida;
+            END IF;
+
+            IF NOT(vr_dsempcon = 270 AND vr_dssegmto = '5') THEN
+              IF pr_flmobile = 1 THEN
+              pr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos - Boletos e Convênios''';
+              ELSE
+                pr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços.';
+              END IF;
+              RAISE vr_exc_saida;
+            END IF;
 
       dbms_lob.createtemporary(pr_retxml, TRUE);
       dbms_lob.open(pr_retxml, dbms_lob.lob_readwrite);

@@ -133,7 +133,7 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Desativacao */
                           INPUT "996", /* cdoperad */
                           INPUT "INTERNETBANK", /* nmdatela */
                           INPUT par_dsdrowid,
-						              INPUT par_nrcpfope,
+						  INPUT par_nrcpfope,
                           INPUT INT(par_flmobile),
                           OUTPUT "").
 
@@ -418,6 +418,7 @@ ELSE IF par_tpoperac = 7 THEN DO:
     RUN STORED-PROCEDURE pc_gps_detalhar_cdbarras aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper,
                           INPUT par_sftcdbar,
+						  INPUT INT(par_flmobile),
                           OUTPUT 0,
                           OUTPUT "",
                           OUTPUT "").

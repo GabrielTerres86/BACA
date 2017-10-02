@@ -9206,7 +9206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                              , pr_dscritic => vr_dscritic);
                                            
             IF pr_idorigem = 4 THEN
-              vr_dscedent := gene0007.fn_caract_acento(
+            vr_dscedent := gene0007.fn_caract_acento(
                                          NVL(TRIM(vr_tbtitulo.NomFantsBenfcrioOr)   -- Nome Fantasia do Beneficiário Original
                                             ,TRIM(vr_tbtitulo.Nom_RzSocBenfcrioOr)));-- Razão Social do Beneficiário Original
             END IF;
@@ -10201,6 +10201,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               28/07/2017 - Alterar a verificacao de vencimento das faturas de convenio, para que 
     --                             seja feito atraves de parametrizacao na crapprm (Douglas - Chamado 711440)
     --												   
+    --               02/10/2017 - Alteração da mensagem de validação de pagamento GPS (prj 356.2 - Ricardo Linhares)
+
     -- ..........................................................................
 
   BEGIN
@@ -10585,7 +10587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 			IF SUBSTR(pr_cdbarras,16,4) = '0270' THEN
 				vr_cdcritic := 0;
 				IF pr_flmobile = 1 THEN -- Canal Mobile
-				  vr_dscritic := 'Pagamento de GPS não disponível, utilize a Conta Online.';
+				  vr_dscritic := 'Pagamento de GPS deve ser pago na opção ''Pagamentos - GPS.';
 				ELSE -- Conta Online							
 				  vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
 				END IF;
