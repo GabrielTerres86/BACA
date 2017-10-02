@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS082
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Janeiro/94.                         Ultima atualizacao: 02/03/2016
+     Data    : Janeiro/94.                         Ultima atualizacao: 12/09/2017
 
      Dados referentes ao programa:
 
@@ -63,6 +63,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS082
                  02/03/2016 - Removido coluna "% atraso" do relatório crrl068 conforme
                               solicitado no chamado 400346 (Kelvin).
 
+                 12/09/2017 - #749442 Alterado o tipo da variável e parametro qtprepag das
+                              rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
+                              crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
   ............................................................................. */
     DECLARE
 
@@ -228,7 +231,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS082
 
       -- Variáveis para passagem a rotina pc_calcula_lelem
       vr_diapagto INTEGER;
-      vr_qtprepag     crapepr.qtprepag%TYPE;
+      vr_qtprepag     crapepr.qtprecal%TYPE;
       vr_qtprecal     crapepr.qtprecal%TYPE;
       vr_qtprecal_lem crapepr.qtprecal%TYPE;
       vr_vlprepag     craplem.vllanmto%TYPE;
