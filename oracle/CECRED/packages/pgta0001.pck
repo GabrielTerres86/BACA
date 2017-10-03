@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades de Pagamento de Titulos Lote
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao:  22/02/2016
+--  Data     : Abril/2014.                   Ultima atualizacao:  05/07/2017
 --
 -- Dados referentes ao programa:
 --
@@ -25,6 +25,10 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
 --
 --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 --
+--             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
+--
+--             05/07/2017 - Ajuste nas procedures pc_rejeitar_arq_pgto e pc_gerar_arq_log_pgto
+--                          para buscarem tambem arquivos com extensao .TXT gerados no sistema MATERA (Diego).
 ---------------------------------------------------------------------------------------------------------------
 
     -- Tabela de memoria que ira conter os titulos que foram marcados como retorno
@@ -115,6 +119,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                                     ,pr_dtmvtopg      IN craplau.dtmvtopg%TYPE
                                     ,pr_vllanaut      IN craplau.vllanaut%TYPE
                                     ,pr_dtvencto      IN craplau.dtvencto%TYPE
+                                    ,pr_vldocnto      IN crapdpt.vltitulo%TYPE
                                     ,pr_cddbanco      IN craplau.cddbanco%TYPE
                                     ,pr_cdageban      IN craplau.cdageban%TYPE
                                     ,pr_nrctadst      IN craplau.nrctadst%TYPE
@@ -123,6 +128,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
                                     ,pr_nrterfin      IN craplau.nrterfin%TYPE
                                     ,pr_nrcpfope      IN craplau.nrcpfope%TYPE
                                     ,pr_idtitdda      IN craplau.idtitdda%TYPE
+                                    ,pr_cdctrlcs      IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                     ,pr_dstransa      OUT VARCHAR2
                                     ,pr_cdcritic      OUT INTEGER                -- Código do erro
                                     ,pr_dscritic      OUT VARCHAR2);
@@ -211,7 +217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
 --  Sigla    : PGTA
 --  Autor    : Daniel Zimmermann
---  Data     : Maio/2014.                   Ultima atualizacao: 22/02/2016
+--  Data     : Maio/2014.                   Ultima atualizacao: 28/08/2017
 --
 -- Dados referentes ao programa:
 --
@@ -234,13 +240,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
 --
+--             18/05/2017 - Ajustado rotina pc_processar_arq_pgto para realizar consulta NPC.
+--                     
+--             28/08/2017 - Ajustado rotina pc_gerar_arq_ret_pgto para gravar situação da transação corretamente
+--                          ao gravar o log da operação
+--                          (Adriano - SD 738594).
+--
+--             12/09/2017 - Ajuste contigencia NPC. PRJ340 (Odirlei-AMcom)   
 ---------------------------------------------------------------------------------------------------------------
 
 
   -- Descricao e codigo da critica
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(4000);
-  
+  vr_des_erro VARCHAR2(4000);
+
   --Tipo de Dados para cursor data
   rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
   
@@ -1115,7 +1129,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
      SELECT crapass.nrdconta
            ,crapass.cdagenci
            ,crapass.nrcpfcgc
-           ,crapass.inpessoa
+          -- ,crapass.inpessoa
+		   ,DECODE(crapass.inpessoa,1,1,2,2,2) inpessoa
        FROM crapass crapass
       WHERE crapass.cdcooper = pr_cdcooper
         AND crapass.nrdconta = pr_nrdconta;
@@ -1333,7 +1348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   END;
 
   END pc_efetua_aceite_cancel;
-
+  
   -- Procedure para identificar se o titulo eh da cooperativa, ou se eh de outra IF
   PROCEDURE pc_identifica_interbancario(pr_cdcooper  IN INTEGER      --Codigo Cooperativa
                                        ,pr_codbarra  IN VARCHAR2     --Codigo Barras
@@ -2034,7 +2049,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --  Sistema  : Rotinas genericas focando nas funcionalidades do pagamento por arquivo
     --  Sigla    : PGTA
     --  Autor    : Desconhecido (Nao colocou cabeçalho quando criou a procedure)
-    --  Data     : Desconhecido                     Ultima atualizacao: 16/03/2017
+    --  Data     : Desconhecido                     Ultima atualizacao: 21/03/2017
     --
     -- Dados referentes ao programa:
     --
@@ -2047,6 +2062,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     --                        - Ajustado para quando a data de pagamento do titulo for anterior a data de 
     --                          movimento, assumir que a data de pagamento será a data de movimento    
     --                       (Douglas - Chamado 629635)
+	--           
+	--             21/03/2017 - Incluido DECODE para tratamento de inpessoa > 2 (Diego).
     ---------------------------------------------------------------------------------------------------------------
   DECLARE
 
@@ -2058,7 +2075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        SELECT crapass.nrdconta
              ,crapass.cdagenci
              ,crapass.nrcpfcgc
-             ,crapass.inpessoa
+             --,crapass.inpessoa
+			 ,DECODE(crapass.inpessoa,1,1,2,2,2) inpessoa
         FROM crapass crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -2996,6 +3014,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        vr_cdocorre VARCHAR2(5);
        vr_dtmvtolt DATE;
 
+       -- variaveis NCP
+       vr_nrdocbenf NUMBER;  
+       vr_tppesbenf VARCHAR2(100); 
+       vr_dsbenefic VARCHAR2(100); 
+       vr_vlrtitulo NUMBER;       
+       vr_cdctrlcs  VARCHAR2(100);  
+       vr_tbtitulocip NPCB0001.typ_reg_titulocip;        
+       vr_flblq_valor INTEGER;
+       vr_flgtitven   INTEGER;
+       vr_flcontig    NUMBER;
+
 
        vr_exc_critico EXCEPTION;
        vr_tab_erro GENE0001.typ_tab_erro;
@@ -3165,43 +3194,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               vr_lindigi4 := 0;
               vr_lindigi5 := 0;
 
-              PAGA0001.pc_verifica_titulo (pr_cdcooper => pr_cdcooper           --Codigo da cooperativa
-                                          ,pr_nrdconta => rw_crapdpt.nrdconta   --Numero da conta
-                                          ,pr_idseqttl => 1                     --FIXO ---> Sequencial titular
-                                          ,pr_idagenda => 2                     --Indicador agendamento 2-Agendamento
-                                          ,pr_lindigi1 => vr_lindigi1           --Linha digitavel 1
-                                          ,pr_lindigi2 => vr_lindigi2           --Linha digitavel 2
-                                          ,pr_lindigi3 => vr_lindigi3           --Linha digitavel 3
-                                          ,pr_lindigi4 => vr_lindigi4           --Linha digitavel 4
-                                          ,pr_lindigi5 => vr_lindigi5           --Linha digitavel 5
-                                          ,pr_cdbarras => vr_dscodbar           --IN OUT --Codigo de Barras
-                                          ,pr_vllanmto => rw_crapdpt.vldpagto   --Valor Lancamento
-                                          ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
-                                          ,pr_idorigem => pr_idorigem           --Indicador de origem
-                                          ,pr_indvalid => 1                     --nao validar
-										                      ,pr_flmobile => 0                     --Indicador mobile
-                                          -- Abaixo, todas OUT...
-                                          ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
-                                          ,pr_vlfatura => vr_vlfatura           --Valor fatura
-                                          ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
-                                          ,pr_vldifere => vr_vldifere           --Indicador valor diferente
-                                          ,pr_nrctacob => vr_nrctacob           --Numero Conta Cobranca
-                                          ,pr_insittit => vr_insittit           --Indicador Situacao Titulo
-                                          ,pr_intitcop => vr_intitcop           --Indicador Titulo Cooperativa
-                                          ,pr_nrcnvcob => vr_nrcnvcob           --Numero Convenio Cobranca
-                                          ,pr_nrboleto => vr_nrboleto           --Numero Boleto
-                                          ,pr_nrdctabb => vr_nrdctabb           --Numero conta
-                                          ,pr_dstransa => vr_dstransa           --Descricao transacao
-                                          ,pr_cobregis => vr_cobregis           --Cobranca Registrada
-                                          ,pr_msgalert => vr_msgalert           --mensagem alerta
-                                          ,pr_vlrjuros => vr_vlrjuros           --Valor Juros
-                                          ,pr_vlrmulta => vr_vlrmulta           --Valor Multa
-                                          ,pr_vldescto => vr_vldescto           --Valor desconto
-                                          ,pr_vlabatim => vr_vlabatim           --Valor Abatimento
-                                          ,pr_vloutdeb => vr_vloutdeb           --Valor saida debito
-                                          ,pr_vloutcre => vr_vloutcre           --Valor saida credito
-                                          ,pr_cdcritic => vr_cdcritic           --C-odigo da critica
-                                          ,pr_dscritic => vr_dscritic);         --Descricao critica
+              
+              -- Chamar a rotina de consulta dos dados      
+              NPCB0002.pc_consultar_titulo_cip(pr_cdcooper      => pr_cdcooper 
+                                              ,pr_nrdconta      => rw_crapdpt.nrdconta      
+                                              ,pr_cdagenci      => 90
+                                              ,pr_flmobile      => 0
+                                              ,pr_dtmvtolt      => trunc(SYSDATE)
+                                              ,pr_titulo1       => vr_lindigi1  
+                                              ,pr_titulo2       => vr_lindigi2  
+                                              ,pr_titulo3       => vr_lindigi3  
+                                              ,pr_titulo4       => vr_lindigi4  
+                                              ,pr_titulo5       => vr_lindigi5  
+                                              ,pr_codigo_barras => vr_dscodbar  
+                                              ,pr_cdoperad      => 996  
+                                              ,pr_idorigem      => pr_idorigem     
+                                              ,pr_nrdocbenf     => vr_nrdocbenf
+                                              ,pr_tppesbenf     => vr_tppesbenf
+                                              ,pr_dsbenefic     => vr_dsbenefic      
+                                              ,pr_vlrtitulo     => vr_vlrtitulo      
+                                              ,pr_vlrjuros      => vr_vlrjuros       
+                                              ,pr_vlrmulta      => vr_vlrmulta       
+                                              ,pr_vlrdescto     => vr_vldescto      
+                                              ,pr_cdctrlcs      => vr_cdctrlcs       
+                                              ,pr_tbtitulocip   => vr_tbtitulocip    
+                                              ,pr_flblq_valor   => vr_flblq_valor    
+                                              ,pr_fltitven      => vr_flgtitven
+                                              ,pr_flcontig     => vr_flcontig
+                                              ,pr_des_erro      => vr_des_erro       
+                                              ,pr_cdcritic      => vr_cdcritic       
+                                              ,pr_dscritic      => vr_dscritic);     
+                                                   
+              -- Se der erro não retorna informações   
+              IF vr_des_erro = 'NOK' THEN
+                IF vr_cdcritic IN (940,950) THEN 
+                  
+                  vr_cdcritic := 0;
+                  vr_dscritic := NULL;
+                END IF;
+              END IF;
+              
+              --> Validar apenas se nao encontrou erro
+              IF nvl(vr_cdcritic,0) = 0 AND 
+                 TRIM(vr_dscritic) IS NULL THEN
+                 
+                PAGA0001.pc_verifica_titulo (pr_cdcooper => pr_cdcooper           --Codigo da cooperativa
+                                            ,pr_nrdconta => rw_crapdpt.nrdconta   --Numero da conta
+                                            ,pr_idseqttl => 1                     --FIXO ---> Sequencial titular
+                                            ,pr_idagenda => 2                     --Indicador agendamento 2-Agendamento
+                                            ,pr_lindigi1 => vr_lindigi1           --Linha digitavel 1
+                                            ,pr_lindigi2 => vr_lindigi2           --Linha digitavel 2
+                                            ,pr_lindigi3 => vr_lindigi3           --Linha digitavel 3
+                                            ,pr_lindigi4 => vr_lindigi4           --Linha digitavel 4
+                                            ,pr_lindigi5 => vr_lindigi5           --Linha digitavel 5
+                                            ,pr_cdbarras => vr_dscodbar           --IN OUT --Codigo de Barras
+                                            ,pr_vllanmto => rw_crapdpt.vldpagto   --Valor Lancamento
+                                            ,pr_dtagenda => vr_dtmvtopg           --IN OUT --Data agendamento
+                                            ,pr_idorigem => pr_idorigem           --Indicador de origem
+                                            ,pr_indvalid => 1                     --nao validar
+			      	                      ,pr_flmobile => 0                     --Indicador mobile
+                                            ,pr_cdctrlcs => vr_cdctrlcs           --Numero de controle de connsulta NPC
+                                           -- Abaixo, todas OUT...
+                                            ,pr_nmextbcc => vr_nmextbcc           --Nome do banco
+                                            ,pr_vlfatura => vr_vlfatura           --Valor fatura
+                                            ,pr_dtdifere => vr_dtdifere           --Indicador data diferente
+                                            ,pr_vldifere => vr_vldifere           --Indicador valor diferente
+                                            ,pr_nrctacob => vr_nrctacob           --Numero Conta Cobranca
+                                            ,pr_insittit => vr_insittit           --Indicador Situacao Titulo
+                                            ,pr_intitcop => vr_intitcop           --Indicador Titulo Cooperativa
+                                            ,pr_nrcnvcob => vr_nrcnvcob           --Numero Convenio Cobranca
+                                            ,pr_nrboleto => vr_nrboleto           --Numero Boleto
+                                            ,pr_nrdctabb => vr_nrdctabb           --Numero conta
+                                            ,pr_dstransa => vr_dstransa           --Descricao transacao
+                                            ,pr_cobregis => vr_cobregis           --Cobranca Registrada
+                                            ,pr_msgalert => vr_msgalert           --mensagem alerta
+                                            ,pr_vlrjuros => vr_vlrjuros           --Valor Juros
+                                            ,pr_vlrmulta => vr_vlrmulta           --Valor Multa
+                                            ,pr_vldescto => vr_vldescto           --Valor desconto
+                                            ,pr_vlabatim => vr_vlabatim           --Valor Abatimento
+                                            ,pr_vloutdeb => vr_vloutdeb           --Valor saida debito
+                                            ,pr_vloutcre => vr_vloutcre           --Valor saida credito
+                                            ,pr_cdcritic => vr_cdcritic           --C-odigo da critica
+                                            ,pr_dscritic => vr_dscritic);         --Descricao critica
+              
+              END IF;
+                                          
               --Se nao ocorreu erro
               IF NVL(vr_cdcritic,0) = 0 AND TRIM(vr_dscritic) IS NULL THEN
                  IF gene0002.fn_existe_valor(pr_base => 'BD' -- Situacoes de SUCESSO
@@ -3229,6 +3306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                  ,pr_dtmvtopg => vr_dtmvtopg
                                                  ,pr_vllanaut => rw_crapdpt.vldpagto
                                                  ,pr_dtvencto => rw_crapdpt.dtvencto
+                                                 ,pr_vldocnto => rw_crapdpt.vltitulo
                                                  ,pr_cddbanco => 0
                                                  ,pr_cdageban => 0
                                                  ,pr_nrctadst => 0
@@ -3237,6 +3315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                  ,pr_nrterfin => 0
                                                  ,pr_nrcpfope => 0
                                                  ,pr_idtitdda => 0
+                                                 ,pr_cdctrlcs => vr_cdctrlcs
                                                  ,pr_dstransa => vr_dstransa
                                                  ,pr_cdcritic => vr_cdcritic           --Código da critica
                                                  ,pr_dscritic => vr_dscritic);         --Descricao critica
@@ -3434,6 +3513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                     ,pr_dtmvtopg      IN craplau.dtmvtopg%TYPE
                                     ,pr_vllanaut      IN craplau.vllanaut%TYPE
                                     ,pr_dtvencto      IN craplau.dtvencto%TYPE
+                                    ,pr_vldocnto      IN crapdpt.vltitulo%TYPE
                                     ,pr_cddbanco      IN craplau.cddbanco%TYPE
                                     ,pr_cdageban      IN craplau.cdageban%TYPE
                                     ,pr_nrctadst      IN craplau.nrctadst%TYPE
@@ -3442,6 +3522,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                     ,pr_nrterfin      IN craplau.nrterfin%TYPE
                                     ,pr_nrcpfope      IN craplau.nrcpfope%TYPE
                                     ,pr_idtitdda      IN craplau.idtitdda%TYPE
+                                    ,pr_cdctrlcs      IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
                                     ,pr_dstransa      OUT VARCHAR2
                                     ,pr_cdcritic      OUT INTEGER                -- Código do erro
                                     ,pr_dscritic      OUT VARCHAR2) IS
@@ -3471,6 +3552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               ,crapass.cdagenci
               ,crapass.nrcpfcgc
               ,crapass.inpessoa
+              ,crapass.idastcjt
           FROM crapass crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
@@ -3520,6 +3602,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       vr_tpdvalor NUMBER := 0;
 
       vr_nrcpfpre NUMBER := 0;
+      vr_nrcpfcgc NUMBER := 0;
+      vr_inpessoa NUMBER := 0;
+      vr_idastcjt NUMBER := 0;
+
+      vr_cdcoptfn NUMBER := 0;
+      vr_cdagetfn NUMBER := 0;
+      vr_nrterfin NUMBER := 0;
 
       vr_nmprepos VARCHAR2(4000);
 
@@ -3570,6 +3659,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            RAISE vr_exc_saida;
          ELSE
            -- Apenas fechar o cursor
+           vr_inpessoa := rw_crapass.inpessoa;
+           vr_idastcjt := rw_crapass.idastcjt;
            CLOSE cr_crapass;
          END IF;
 
@@ -3675,6 +3766,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          vr_nrcpfpre := 0;
 
 
+
+         IF (vr_inpessoa = 2 OR vr_inpessoa = 3) AND 
+              vr_idastcjt = 1 THEN
+              --Cria transacao pendente de pagamento
+              INET0002.pc_cria_trans_pend_pagto( pr_cdagenci => 90             --> Codigo do PA
+                                                ,pr_nrdcaixa => 900            --> Numero do Caixa
+                                                ,pr_cdoperad => '996'          --> Codigo do Operados
+                                                ,pr_nmdatela => 'INTERNETBANK' --> Nome da Tela
+                                                ,pr_idorigem => 3              --> Origem da solicitacao
+                                                ,pr_idseqttl => pr_idseqttl    --> Sequencial de Titular
+                                                ,pr_nrcpfope => pr_nrcpfope    --> Numero do cpf do operador juridico
+                                                ,pr_nrcpfrep => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE NVL(vr_nrcpfcgc,0) END) --> Numero do cpf do representante legal
+                                                ,pr_cdcoptfn => vr_cdcoptfn    --> Cooperativa do Terminal
+                                                ,pr_cdagetfn => vr_cdagetfn    --> Agencia do Terminal
+                                                ,pr_nrterfin => vr_nrterfin    --> Numero do Terminal Financeiro
+                                                ,pr_dtmvtolt => pr_dtmvtolt    --> Data do movimento
+                                                ,pr_cdcooper => pr_cdcooper    --> Codigo da cooperativa
+                                                ,pr_nrdconta => pr_nrdconta    --> Numero da Conta
+                                                ,pr_idtippag => pr_idtpdpag    --> Identificacao do tipo de pagamento (1 – Convenio / 2 – Titulo)
+                                                ,pr_vllanmto => pr_vllanaut    --> Valor do pagamento
+                                                ,pr_dtmvtopg => pr_dtmvtopg    --> Data do debito
+                                                ,pr_idagenda => 2              --> Indica se o pagamento foi agendado (1 – Online / 2 – Agendamento)
+                                                ,pr_dscedent => pr_dscedent    --> Descricao do cedente do documento
+                                                ,pr_dscodbar => pr_dscodbar    --> Descricao do codigo de barras
+                                                ,pr_dslindig => vr_dslindig    --> Descricao da linha digitavel
+                                                ,pr_vlrdocto => pr_vldocnto    --> Valor do documento
+                                                ,pr_dtvencto => pr_dtvencto    --> Data de vencimento do documento
+                                                ,pr_tpcptdoc => 2              --> Tipo de captura do documento
+                                                ,pr_idtitdda => 0              --> Identificador do titulo no DDA
+                                                ,pr_idastcjt => vr_idastcjt    --> Indicador de Assinatura Conjunta
+												,pr_cdctrlcs => pr_cdctrlcs	   --> Controle de consulta NPC
+                                                ,pr_cdcritic => vr_cdcritic    --> Codigo de Critica
+                                                ,pr_dscritic => vr_dscritic);  --> Descricao de Critica
+
+              -- Verificar se retornou critica
+              IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                -- se possui codigo, porém não possui descrição
+                IF nvl(vr_cdcritic,0) > 0 AND
+                   TRIM(vr_dscritic) IS NULL THEN
+                  -- buscar descrição
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+                END IF;
+                vr_dscritic := vr_dscritic||' - '||pr_dscedent;
+
+                -- Se retornou critica , deve abortar
+                RAISE vr_exc_saida;
+              END IF;
+         ELSE 
          BEGIN
             INSERT INTO craplau
                (cdcooper
@@ -3708,7 +3848,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                ,nrcpfpre
                ,nmprepos
                ,idtitdda
-               ,tpdvalor)
+               ,tpdvalor
+               ,cdctrlcs)
              VALUES
                (pr_cdcooper
                ,pr_nrdconta
@@ -3741,7 +3882,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                ,vr_nrcpfpre
                ,vr_nmprepos
                ,pr_idtitdda
-               ,vr_tpdvalor);
+               ,vr_tpdvalor
+               ,nvl(pr_cdctrlcs,' '));
          EXCEPTION
             WHEN OTHERS THEN
                vr_dscritic := 'Nao foi possivel agendar o pagamento. ';
@@ -3749,6 +3891,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                --Levantar Excecao
                RAISE vr_exc_saida;
          END;
+       END IF;
+
 
          BEGIN
             UPDATE craplot
@@ -3791,8 +3935,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          END;
 
          -- DDA
-         IF pr_idtitdda > 0 THEN
-
+         IF pr_idtitdda > 0 OR 
+            TRIM(pr_cdctrlcs) IS NOT NULL THEN
+           --> Rotina não atualiza como agendado, pois titulo pode ser de outra instituição
+            -- fazendo com que não encontre o titulo para atualizar
+            NULL;
+            /*
             DDDA0001.pc_atualz_situac_titulo_sacado(pr_cdcooper => pr_cdcooper
                                                    ,pr_cdagecxa => pr_cdagenci
                                                    ,pr_nrdcaixa => 900
@@ -3803,25 +3951,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                                    ,pr_idseqttl => pr_idseqttl
                                                    ,pr_idtitdda => pr_idtitdda
                                                    ,pr_cdsittit => 2 -- Agendado
-                                                   ,pr_flgerlog => FALSE
-                                                   ,pr_des_erro => vr_dscritic
-                                                   ,pr_tab_erro => vr_tab_erro);
+                                                   ,pr_flgerlog => 0                -- Gerar Log
+                                                   ,pr_cdctrlcs => pr_cdctrlcs      -- Codigo de controle de consulta NPC
+                                                   ,pr_cdcritic => vr_cdcritic      -- Codigo de critica
+                                                   ,pr_dscritic => vr_dscritic);    -- Descrição de critica
 
-            IF TRIM(vr_dscritic) IS NOT NULL OR
-               vr_tab_erro.COUNT > 0 THEN
-
-               -- Tenta buscar o erro no vetor de erro
-               IF vr_tab_erro.COUNT > 0 THEN
-                  vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-                  vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-               ELSE
-                  vr_cdcritic:= 0;
-                  vr_dscritic:= 'Falha na requisicao ao DDA..';
-               END IF;
-
+            --Se ocorreu erro
+            IF nvl(vr_cdcritic,0) > 0 OR 
+               TRIM(vr_dscritic) IS NOT NULL THEN        
+              --Levantar Excecao
                RAISE vr_exc_saida;
+            END IF;*/
 
-            END IF;
          END IF;
 
 
@@ -3862,6 +4003,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
               craplau.cdcooper
              ,craplau.dtmvtopg
              ,craplau.nrdconta
+             ,craplau.idtitdda
+             ,craplau.cdctrlcs
              ,craplau.ROWID
         FROM craplau craplau
        WHERE craplau.cdcooper = pr_cdcooper
@@ -3956,6 +4099,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                  -- Levantar excecao
                  RAISE vr_exc_saida;
            END;
+        
+           IF rw_craplau_sit_1.idtitdda > 0 OR 
+              TRIM(rw_craplau_sit_1.cdctrlcs) IS NOT NULL THEN 
+    
+              --Atualizar situacao titulo
+              DDDA0001.pc_atualz_situac_titulo_sacado (pr_cdcooper => pr_cdcooper   --Codigo da Cooperativa
+                                                      ,pr_cdagecxa => pr_cdagenci   --Codigo da Agencia
+                                                      ,pr_nrdcaixa => 900           --Numero do Caixa
+                                                      ,pr_cdopecxa => '996'         --Codigo Operador Caixa
+                                                      ,pr_nmdatela => 'INTERNETBANK'--Nome da tela
+                                                      ,pr_idorigem => 3             --Indicador Origem
+                                                      ,pr_nrdconta => pr_nrdconta   --Numero da Conta
+                                                      ,pr_idseqttl => 1             --Sequencial do titular
+                                                      ,pr_idtitdda => rw_craplau_sit_1.idtitdda   --Indicador Titulo DDA
+                                                      ,pr_cdctrlcs => rw_craplau_sit_1.cdctrlcs   --Identificador da consulta
+                                                      ,pr_cdsittit => 1                --Situacao Titulo
+                                                      ,pr_flgerlog => 0                --Gerar Log
+                                                      ,pr_cdcritic => vr_cdcritic      --Codigo de critica
+                                                      ,pr_dscritic => vr_dscritic);    --Descrição de critica
+              --Se ocorreu erro
+              IF nvl(vr_cdcritic,0) > 0 OR 
+                 TRIM(vr_dscritic) IS NOT NULL THEN        
+                --Levantar Excecao
+                RAISE vr_exc_saida;
+              END IF;
+            
+            END IF; 
+        
         ELSE
            IF  pr_dscritic IS NULL THEN -- Se nao for NULO é pq caiu no cursor LAU_2
                vr_dscritic := 'Nao foi possivel localizar agendamento do pagamento.';
@@ -4046,8 +4217,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Monta nome do Arquivo de Erro (.ERR)
     vr_nmarquivo_err := REPLACE(UPPER(pr_nmarquiv),'.REM','.ERR');
 
+	vr_nmarquivo_err := REPLACE(UPPER(vr_nmarquivo_err),'.TXT','.ERR');
+
     -- Monta nome do Arquivo de Log (.LOG)
     vr_nmarquivo_log := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	vr_nmarquivo_log := REPLACE(UPPER(vr_nmarquivo_log),'.TXT','.LOG');
 
     -- Verificar qual Tipo de Retorno o Cooperado Possui
     OPEN cr_crapcpt(pr_cdcooper => pr_cdcooper
@@ -4555,6 +4730,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
       -- Define nome do arquivo .LOG com base nome do Arquivo de Remessa
       vr_nmarquiv := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
+
+	  vr_nmarquiv := REPLACE(UPPER(vr_nmarquiv),'.TXT','.LOG');
 
       -- Define o diretório do arquivo
       vr_utlfileh := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
@@ -5090,7 +5267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                         ,pr_dsorigem => vr_dsorigem
                         ,pr_dstransa => 'Gerado arquivo de retorno de pagamento por arquivo: ' || vr_nmarquiv
                         ,pr_dttransa => pr_dtmvtolt
-                        ,pr_flgtrans => 0 -- TRUE
+                        ,pr_flgtrans => 1 -- TRUE
                         ,pr_hrtransa => to_number(to_char(SYSDATE,'SSSSS'))
                         ,pr_idseqttl => 1
                         ,pr_nmdatela => ' '
