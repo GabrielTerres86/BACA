@@ -6887,7 +6887,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             vr_idseqttl := TO_NUMBER(r2.dsdadatu);
           ELSIF 'pr_idleitur' = r2.nmdcampo THEN
             vr_idleitur := TO_NUMBER(r2.dsdadatu);
-          ELSIF 'vr_cdbarras' = r2.nmdcampo THEN
+          ELSIF 'pr_cdbarras' = r2.nmdcampo THEN
             vr_cdbarras := r2.dsdadatu;
           ELSIF 'pr_sftcdbar' = r2.nmdcampo THEN
             vr_sftcdbar := r2.dsdadatu;
