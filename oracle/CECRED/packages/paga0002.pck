@@ -9131,6 +9131,8 @@ create or replace package body cecred.PAGA0002 is
         
         -- Se for GPS
         IF rw_craplau.nrseqagp > 0 THEN
+
+		  vr_dstiptra := 'GPS';
                   
           OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
                      ,pr_nrdconta => rw_craplau.nrdconta
