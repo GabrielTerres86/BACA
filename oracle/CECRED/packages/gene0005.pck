@@ -223,7 +223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 15/05/2017
+  --  Data     : Maio/2013.                   Ultima atualizacao: 28/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -253,8 +253,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --
   --             16/05/2017 - Alterada a rotina pc_saldo_utiliza para quando chamada pelo crps405 não efetuar 
   --                          novo cálculo pois o saldo do contrato já foi calculado anteriormente (Rodrigo)
+  --      
+  --             28/09/2017 - Incluir validação para caso o tamanho do cpf for maior 
+  --                          que 11 posições não aceite o cadastro do mesmo 
+  --                          (Lucas Ranghetti #717352)   
   ---------------------------------------------------------------------------------------------------------------
-  
+
    -- Variaveis utilizadas na PC_CONSULTA_ITG_DIGITO_X
    vr_nrctacef       crapprm.dsvlrprm%TYPE;
    vr_nrctaint       crapprm.dsvlrprm%TYPE;
@@ -1540,6 +1544,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       --Validar o cpf
   PROCEDURE pc_valida_cpf (pr_nrcalcul IN NUMBER --Numero a ser verificado
                           ,pr_stsnrcal OUT BOOLEAN) IS --Situacao
+   /****************************************************************************************  
+       Programa : pc_valida_cpf
+       Sistema  : Conta-Corrente - Cooperativa de Credito
+       Sigla    : CRED                          
+       Autor    : Alisson C. Berrido - Amcom
+       Data     : Julho/2013.                                   Ultima Alteração: 28/09/2017
+    
+       Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado
+       Objetivo  : Validar cpf informado
+              
+       Alterações: 28/09/2017 - Incluir validação para caso o tamanho do cpf for maior 
+                                que 11 posições não aceite o cadastro do mesmo 
+                                (Lucas Ranghetti #717352)   
+   *****************************************************************************************/
       BEGIN
         DECLARE
           --Variaveis Locais
@@ -1551,6 +1571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
           vr_vlresult INTEGER:= 0;
         BEGIN
           IF LENGTH(pr_nrcalcul) < 5 OR
+             LENGTH(pr_nrcalcul) > 11 OR
              pr_nrcalcul IN (11111111111,22222222222,33333333333,44444444444,55555555555,
                              66666666666,77777777777,88888888888,99999999999) THEN
             --Retornar com erro
@@ -2865,6 +2886,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       RETURN NVL(vr_result, 0);
 		END;																 
   END fn_valida_depart_operad;
-  
+
 END GENE0005;
 /
