@@ -6700,6 +6700,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 com o SIPAG (Douglas - Chamado 709215) 
                                 
                    21/09/2017 - Validar ultima linha do arquivo corretamente (Lucas Ranghetti #753170)
+                   
+                   25/09/2017 - Ajustado importação do arquivo CCR3, para integrar os cartões PURO CREDITO
+                                quando o titular do cartão não possuir vinculo com a conta
+                              - Ajustado a flgdebit para verificar na linha do arquivo se o cartão possui
+                                conta para debitar
+                              (Douglas - Chamado 746057)
     ............................................................................ */
 
     DECLARE
@@ -6737,6 +6743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_nrdctitg   NUMBER;
       vr_nmtitcrd   VARCHAR2(50);                                      --> Nome do Titular do cartão
       vr_dtentr2v   DATE;                                              --> Data de entrada do registro de segunda via
+      vr_valida_avt BOOLEAN;                                           --> Identifica se devemos validar o avalista
       -- Tratamento de registros do arquivo
       vr_nrctatp1   NUMBER          := 0;                              --> Número da conta do registro Tipo 1
       vr_nrctatp2   NUMBER          := 0;                              --> Número da conta do registro Tipo 2
@@ -9054,6 +9061,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         CLOSE cr_crapjur;
                       END IF;
 
+                      -- A regra de negócio da área de Cartões é que cartão múltiplo ou 
+                      -- puro débito somente poderá ser solicitado para o representante legal 
+                      -- que assine isoladamente pela empresa. 
+                      -- E o cartão puro crédito para pessoas vinculadas a empresa e 
+                      -- não necessariamente a conta corrente.
+
+                      -- Inicialmente vamos validar o REPRESENTANTE
+                      vr_valida_avt := TRUE;
+                      --  Verificar o cartão que estamos processando possui uma conta de débito vinculada
+                      IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
+                        -- Se o cartão for PURO CREDITO, não validamos o representante
+                        vr_valida_avt := FALSE;
+                      END IF;
+
                       -- Busca registro de representante para pessoa jurídica
                       OPEN cr_crapavt(pr_cdcooper => rw_crapass.cdcooper,
                                       pr_nrdconta => rw_crapass.nrdconta,
@@ -9064,37 +9085,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       IF cr_crapavt%NOTFOUND THEN
                         -- Fechar o cursor
                         CLOSE cr_crapavt;
-                        -- Montar mensagem de critica
-                        vr_dscritic := 'Representante nao encontrado. Conta/DV: ' || rw_crapass.nrdconta ||
-                                       ' CPF: '                                   || vr_nrcpfcgc;
-                        -- gravar log do erro
-                        pc_log_message;
+                        
+                        -- Se não encontramos o representante, e conforme regra acima 
+                        -- para cartão PURO CREDITO não validamos o representante 
+                        IF vr_valida_avt THEN
+                          -- Se o cartão possui conta vinculada e nao encontramos o 
+                          -- representante, vamos levantar a exceção
 
-                        -- fecha cursor 
-                        CLOSE cr_crapass;
-                        CLOSE cr_crawcrd;
-                        CONTINUE;
+                          -- Montar mensagem de critica
+                          vr_dscritic := 'Representante nao encontrado. Conta/DV: ' || rw_crapass.nrdconta ||
+                                         ' CPF: '                                   || vr_nrcpfcgc;
+                          -- gravar log do erro
+                          pc_log_message;
+
+                          -- fecha cursor 
+                          CLOSE cr_crapass;
+                          CLOSE cr_crawcrd;
+                          CONTINUE;
+                        END IF;
                       ELSE
                         -- Apenas fechar o cursor
                         CLOSE cr_crapavt;
+                        -- Se encontramos o avalista vamos utilizar para carregar 
+                        -- os dados de saldo
+                        vr_valida_avt := TRUE;
                       END IF;
 
-                      -- Verifica se representante encontrado é cooperado
-                      OPEN cr_crapass_avt(pr_cdcooper => rw_crapass.cdcooper,
-                                          pr_nrcpfcgc => rw_crapavt.nrcpfcgc);
-                      FETCH cr_crapass_avt INTO rw_crapass_avt;
+                      IF vr_valida_avt THEN
+                        -- Verifica se representante encontrado é cooperado
+                        OPEN cr_crapass_avt(pr_cdcooper => rw_crapass.cdcooper,
+                                            pr_nrcpfcgc => rw_crapavt.nrcpfcgc);
+                        FETCH cr_crapass_avt INTO rw_crapass_avt;
 
-                      -- Se nao for cooperado, pega os dados da tabela de representantes
-                      IF cr_crapass_avt%NOTFOUND THEN
-                        vr_nmextttl := rw_crapavt.nmdavali;
+                        -- Se nao for cooperado, pega os dados da tabela de representantes
+                        IF cr_crapass_avt%NOTFOUND THEN
+                          vr_nmextttl := rw_crapavt.nmdavali;
+                          vr_vlsalari := 0;
+                        ELSE -- Se for cooperado, pega os dados da conta
+                          vr_nmextttl := rw_crapass_avt.nmprimtl;
+                          vr_vlsalari := rw_crapass_avt.vlsalari;
+                        END IF;
+
+                        -- fechar o cursor
+                        CLOSE cr_crapass_avt;
+                      ELSE
+                        -- Se não encontramos o avalista, vamos utilizar os dados do 
+                        -- arquivo
+                        -- Buscar o nome embossado no plastico do cartao 
+                        vr_nmextttl := TRIM(substr(vr_des_text,57,23));
                         vr_vlsalari := 0;
-                      ELSE -- Se for cooperado, pega os dados da conta
-                        vr_nmextttl := rw_crapass_avt.nmprimtl;
-                        vr_vlsalari := rw_crapass_avt.vlsalari;
                       END IF;
-
-                      -- fechar o cursor
-                      CLOSE cr_crapass_avt;
                     END IF;
                   ELSE
                     -- fechar os cursores
@@ -9128,7 +9168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   
                   /* Caso a Conta vinculada estiver 0, significa que o cartao eh do tipo OUTROS,
                      para os cartoes do tipo OUTROS sera puro CREDITO... */
-                  IF vr_nrctatp2 = 0 THEN
+                  IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
                      vr_flgdebit := 0;
                   ELSE
                      vr_flgdebit := 1;
@@ -9438,7 +9478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       vr_nrseqcrd := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => vr_cdcooper);
                       
                       -- olha o indicador de funcao debito direto na linha que esta sendo processada
-                      IF vr_nrctatp2 = 0 THEN
+                      IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
                         vr_flgdebit := 0;
                       ELSE
                         vr_flgdebit := 1;
