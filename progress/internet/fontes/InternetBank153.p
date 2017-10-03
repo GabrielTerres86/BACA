@@ -511,7 +511,7 @@ ELSE IF par_tpoperac = 8 THEN DO:
                           INPUT 90,                   /* pr_cdagenci */
                           INPUT "900",                /* pr_nrdcaixa */
                           INPUT 3,                    /* pr_idorigem */
-                          INPUT "INTERNETBANK",       /* pr_nmdatela */
+                          INPUT "INTERNETBAN2",       /* pr_nmdatela */
                           INPUT "996",                /* pr_cdoperad */
                           INPUT STRING(par_cdpagmto), /* pr_cddpagto */                          
                           INPUT par_dsidenti,         /* pr_cdidenti */
