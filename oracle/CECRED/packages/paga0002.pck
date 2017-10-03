@@ -778,6 +778,8 @@ create or replace package body cecred.PAGA0002 is
   --                          para evitar possível repetição do problema relatado no chamado (Carlos)
   --
   --             22/02/2017 - Ajustes para correçao de crítica de pagamento DARF/DAS (Lucas Lunelli - P.349.2)
+  
+                 03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2)
   --
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -2332,6 +2334,8 @@ create or replace package body cecred.PAGA0002 is
                   14/05/2015 - Conversão Progress -> Oracle SD280901 (Odirlei-AMcom)
 
                   24/09/2015 - Realizado a inclusão do pr_nmdatela (Adriano - SD 328034).
+                  
+                  03/10/2017 - Ajuste da mensagem de erro. (Ricardo Linhares - prj 356.2).                  
 
 
     .................................................................................*/
@@ -2508,10 +2512,6 @@ create or replace package body cecred.PAGA0002 is
           -- buscar descrição
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
 
-        END IF;
-
-        IF TRIM(pr_dscedent) IS NOT NULL THEN
-          vr_dscritic := vr_dscritic||' - '||pr_dscedent;
         END IF;
 
         -- Se retornou critica , deve abortar
