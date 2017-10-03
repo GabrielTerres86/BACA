@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 25/11/2016
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -78,6 +78,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
   --              (Lucas Ranghetti/Elton)                             
+  --
+  -- 09/05/2017 - Executei a limpeza da PLTABLE vr_tab_moedatx na pc_rendi_apl_pos_com_resgate, garantindo 
+  --              assim o carregamento correto das taxa de moedas por data.(Carlos Rafael Tanholi - SD 631979)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -7838,7 +7841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
   --
   -- Programa: pc_rendi_apl_pos_com_resgate - Antiga b1wgen0004.rendi_apl_pos_com_resgate
   -- Autor   : ---
-  -- Data    : ---                        Ultima atualizacao: 25/06/2014
+  -- Data    : ---                        Ultima atualizacao: 09/05/2017
   --
   -- Dados referentes ao programa:
   --
@@ -7850,6 +7853,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
   --             07/04/2014 - Alterações referente ao novo indexador de poupanca
   --                          (Jean Michel).
   --             25/06/2014 - Ajustes no tratamento de exceção (Marcos-Supero)
+  --
+  --             09/05/2017 - Executei a limpeza da PLTABLE vr_tab_moedatx, garantindo
+  --                          assim o carregamento correto das taxa de moedas por data
+  --                          (Carlos Rafael Tanholi - SD 631979)
   -- .......................................................................................
   BEGIN
     DECLARE
@@ -7985,8 +7992,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END LOOP;
       END IF;
 
-      -- Se o vetor de moedas ainda não possuir informacões
-      IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper) LOOP
           -- MOntar a chave do registro com o tipo + data
@@ -7999,7 +8004,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
             vr_tab_moedatx(vr_idx_moeda).txaplmes := (POWER((1 + rw_crapmfx.vlmoefix / 100),(1 / 252)) - 1) * 100;
           END IF;
         END LOOP;
-      END IF;
 
       -- Data de liberacao do projeto novo indexador de poupanca
       vr_datlibpr := to_date('01/07/2014','dd/mm/yyyy');
@@ -8029,6 +8033,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                              ,pr_cdcritic => 211
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
+
+            vr_dscritic := vr_dscritic || ' (' || vr_idx_moeda || ')'; 
 
             pr_des_reto := 'NOK';
             RAISE vr_exc_erro;
