@@ -372,7 +372,7 @@ ELSE IF  par_tpoperac = 6 THEN DO:
                           INPUT "900",          /* pr_nrdcaixa */
                           INPUT 3,              /* pr_idorigem */
                           INPUT par_dtmvtolt,   /* pr_dtmvtolt */
-                          INPUT "INTERNETBANK",       /* pr_nmdatela */
+                          INPUT "INTERNETBAN2",       /* pr_nmdatela */
                           INPUT "996",                /* pr_cdoperad */
                           INPUT 1,                    /* pr_inproces */
                           INPUT par_idleitur,         /* pr_idleitur -  indicador de leitura 1-leitora/0-manual */
