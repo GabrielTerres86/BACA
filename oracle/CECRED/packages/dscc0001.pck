@@ -1859,13 +1859,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --               
     --               21/07/2017 - Inclusão do IOF no borderô. 
     --                            PRJ300 - Desconto de cheque (Lombardi)
-    --               
+	--
+	--               26/09/2017 - Alterado para buscar o valor total de cheques no bordero
+    --                            para cálculo de tarifa ao invés do valor do limite de desconto cheques
     -- .........................................................................*/
 
     ----------->>> CURSORES  <<<--------
     --> Buscar dados do bordero
     CURSOR cr_crapbdc IS
-      SELECT *
+      SELECT crapbdc.*,
+             (SELECT nvl(sum(c.vlcheque),0) 
+                from crapcdb c 
+               where c.nrborder = crapbdc.nrborder 
+                 and c.cdcooper = pr_cdcooper) vlchequetot
         FROM crapbdc
        WHERE crapbdc.cdcooper = pr_cdcooper
          AND crapbdc.nrdconta = pr_nrdconta
@@ -2175,7 +2181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         -- Busca valor da tarifa
         TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
                                              ,pr_cdbattar => vr_cdbattar
-                                             ,pr_vllanmto => rw_craplim.vllimite
+                                             ,pr_vllanmto => rw_crapbdc.vlchequetot --rw_craplim.vllimite
                                              ,pr_cdprogra => 'DSCC0001'
                                              ,pr_cdhistor => vr_cdhistor
                                              ,pr_cdhisest => vr_cdhisest
@@ -2222,7 +2228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                      ,pr_nrctrlim => rw_craplim.nrctrlim
                                      ,pr_dtinivig => rw_craplim.dtinivig
                                      ,pr_qtdiavig => rw_craplim.qtdiavig                               
-                                     ,pr_vlemprst => rw_craplim.vllimite
+                                     ,pr_vlemprst => rw_crapbdc.vlchequetot --rw_craplim.vllimite
                                      ,pr_txmensal => rw_crapbdc.txmensal
                                      ,pr_txcetano => vr_txcetano
                                      ,pr_txcetmes => vr_txcetmes
