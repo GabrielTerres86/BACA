@@ -135,6 +135,41 @@ CREATE OR REPLACE PACKAGE CECRED.RATI0002 is
                                       ,pr_retxml   OUT CLOB                 --> Arquivo de retorno do XML
                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
+  /******************************************************************************/
+  /**      Procedure para trazer o risco na proposta de emprestimo.            **/
+  /******************************************************************************/
+  PROCEDURE pc_obtem_emprestimo_risco( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                      ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                      ,pr_cdfinemp IN crapepr.cdfinemp%TYPE  --> Finalidade do emprestimo
+                                      ,pr_cdlcremp IN crapepr.cdlcremp%TYPE  --> Linha de credito do emprestimo
+                                      ,pr_dsctrliq IN VARCHAR2               --> Lista de descrições de situação dos contratos
+                                      ------ OUT ------
+                                      ,pr_nivrisco     OUT VARCHAR2          --> Retorna nivel do risco
+                                      ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                      ,pr_cdcritic     OUT INTEGER);         --> Codigo da critica                                       
+                                      
+  /******************************************************************************/
+  /**      Procedure para atualizar o risco na proposta de emprestimo.         **/
+  /******************************************************************************/
+  PROCEDURE pc_atualiza_risco_proposta(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de movimento
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_nrctremp IN crapepr.nrctremp%TYPE  --> Numero de contrato                                      
+                                      ------ OUT ------                                      
+                                      ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                      ,pr_cdcritic     OUT INTEGER);         --> Codigo da critica                                      
 END RATI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
@@ -2407,6 +2442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       CURSOR cr_crawepr IS
         SELECT crawepr.nrseqpac,
                crawepr.cdlcremp,
+               crawepr.cdfinemp,
                crawepr.vlpreemp,
                crawepr.vlemprst,
                craplcr.qtrecpro,
@@ -2558,7 +2594,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Variaveis de critica
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
-
+      
+      -- Obrigatoriedade analise automatica da Esteira
+      vr_inobriga VARCHAR2(1) := 'N';
+      
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
     BEGIN
@@ -2601,8 +2640,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                                pr_cdacesso => 'EXC_ANALISE_CREDITO')||
                      ';';
 
+      -- Abre os dados do associado
+      OPEN cr_crapass(pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_dscritic := 'Associado nao cadastrado. Favor verificar!';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_crapass;
+      
+      -- BUscar identificador de obrigação de análise automática
+      este0001.pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
+                                             ,pr_inpessoa => rw_crapass.inpessoa
+                                             ,pr_cdfinemp => rw_crawepr.cdfinemp
+                                             ,pr_cdlcremp => rw_crawepr.cdlcremp
+                                             ,pr_inobriga => vr_inobriga
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+      -- Tratar erros
+      IF vr_dscritic IS NOT NULL OR vr_cdcritic > 0 THEN 
+        RAISE vr_exc_saida;
+      END IF;
+      
       -- Verifica se a linha de credito atual esta parametrizada para nao possuir analise
-      IF instr(vr_dslinhas,';'||rw_crawepr.cdlcremp||';') > 0 THEN
+      IF instr(vr_dslinhas,';'||rw_crawepr.cdlcremp||';') > 0 OR vr_inobriga = 'S' THEN
 	    BEGIN
           UPDATE crawepr
              SET nrseqpac = 0
@@ -2626,16 +2688,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
         -- Encerra o processo sem erro, pois eh previsto isso
         RETURN;
       END IF;
-
-      -- Abre os dados do associado
-      OPEN cr_crapass(pr_nrdconta);
-      FETCH cr_crapass INTO rw_crapass;
-      IF cr_crapass%NOTFOUND THEN
-        CLOSE cr_crapass;
-        vr_dscritic := 'Associado nao cadastrado. Favor verificar!';
-        RAISE vr_exc_saida;
-      END IF;
-      CLOSE cr_crapass;
 
       -- Atualiza o indice da tabela
       vr_ind := 1;
@@ -3114,5 +3166,436 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       -- Converte o XML para CLOB
       pr_retxml := vr_retxml.getclobval();
   END;
+  
+  
+  /******************************************************************************/
+  /**      Procedure para trazer o risco na proposta de emprestimo.            **/
+  /******************************************************************************/
+  PROCEDURE pc_obtem_emprestimo_risco( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencial do titular
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                      ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+                                      ,pr_cdfinemp IN crapepr.cdfinemp%TYPE  --> Finalidade do emprestimo
+                                      ,pr_cdlcremp IN crapepr.cdlcremp%TYPE  --> Linha de credito do emprestimo
+                                      ,pr_dsctrliq IN VARCHAR2               --> Lista de descrições de situação dos contratos
+                                      ------ OUT ------
+                                      ,pr_nivrisco     OUT VARCHAR2          --> Retorna nivel do risco
+                                      ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                      ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_obtem_emprestimo_risco        Antiga: b1wgen0043.p/obtem_emprestimo_risco
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Odirlei Busana(Amcom)
+    --  Data     : Abril/2016.                   Ultima atualizacao: 30/01/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para trazer o risco na proposta de emprestimo.
+    --
+    --  Alteração : 
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <-----------------    
+    
+    --> Buscar risco
+    CURSOR cr_crapris (pr_cdcooper  crapris.cdcooper%TYPE,
+                       pr_nrdconta  crapris.nrdconta%TYPE,
+                       pr_dtrefere  crapris.dtrefere%TYPE,
+                       pr_vlarrasto crapris.vldivida%TYPE)IS
+    SELECT /*+index_desc (ris CRAPRIS##CRAPRIS1)*/
+           ris.innivris,
+           ris.dtdrisco
+      FROM crapris ris
+     WHERE ris.cdcooper = pr_cdcooper
+       AND ris.nrdconta = pr_nrdconta
+       AND ris.dtrefere = pr_dtrefere
+       AND ris.inddocto = 1
+       AND ris.cdorigem = 3
+       AND (ris.vldivida > pr_vlarrasto OR 
+            pr_vlarrasto = 0);
+    rw_crapris cr_crapris%ROWTYPE;   
+    
+    --> Buscar dados da finalidade
+    CURSOR cr_crapfin (pr_cdcooper crapfin.cdcooper%TYPE,
+                       pr_cdfinemp crapfin.cdfinemp%TYPE) IS
+      SELECT fin.tpfinali
+        FROM crapfin fin
+       WHERE fin.cdcooper = pr_cdcooper
+         AND fin.cdfinemp = pr_cdfinemp;
+    rw_crapfin cr_crapfin%ROWTYPE;
+                
+    --Registro do tipo calendario
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+    
+    --------------> TEMPTABLE <-----------------
+    vr_tab_ocorren   CADA0004.typ_tab_ocorren;  
+    vr_tab_nrctrliq  gene0002.typ_split; 
+    vr_tab_impress_risco     rati0001.typ_tab_impress_risco;
+    vr_tab_impress_risco_tl  rati0001.typ_tab_impress_risco;
+    
+            
+    --------------> VARIAVEIS <-----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    vr_des_reto VARCHAR2(10);
+    vr_exc_erro EXCEPTION;
+    vr_tab_erro gene0001.typ_tab_erro;
+    
+    vr_dstextab_riscobacen craptab.dstextab%TYPE;
+    vr_innivris  NUMBER;
+    vr_vlarrast  NUMBER;
+    vr_flgrefin  BOOLEAN := FALSE;
+    
+  BEGIN
+  
+    --> Risco A 
+    vr_innivris := 2;
+    vr_flgrefin := FALSE;
+    
+    -- busca o risco bacen
+    vr_dstextab_riscobacen := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                        ,pr_nmsistem => 'CRED'
+                                                        ,pr_tptabela => 'USUARI'
+                                                        ,pr_cdempres => 11
+                                                        ,pr_cdacesso => 'RISCOBACEN'
+                                                        ,pr_tpregist => 000);
+    IF TRIM(vr_dstextab_riscobacen) IS NULL THEN
+      vr_dscritic := 'Registro nao encontrado craptab;CRED;USUARI;11;RISCOBACEN';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    vr_vlarrast := SUBSTR(vr_dstextab_riscobacen,3,9);
+    
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois haverá raise
+      CLOSE BTCH0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_cdcritic:= 1;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    --> Buscar o pior risco da ultima central 
+    CADA0004.pc_lista_ocorren
+                    (pr_cdcooper => pr_cdcooper --> Codigo da cooperativa
+                    ,pr_cdagenci => pr_cdagenci --> Codigo de agencia
+                    ,pr_nrdcaixa => pr_nrdcaixa --> Numero do caixa
+                    ,pr_cdoperad => pr_cdoperad --> Codigo do operador
+                    ,pr_nrdconta => pr_nrdconta --> Numero da conta
+                    ,pr_rw_crapdat => rw_crapdat--> Data da cooperativa
+                    ,pr_idorigem => pr_idorigem --> Identificado de oriem
+                    ,pr_idseqttl => pr_idseqttl --> sequencial do titular
+                    ,pr_nmdatela => pr_nmdatela --> Nome da tela
+                    ,pr_flgerlog => 'N'         --> identificador se deve gerar log S-Sim e N-Nao
+                    ------ OUT ------
+                    ,pr_tab_ocorren  => vr_tab_ocorren   --> retorna temptable com os dados dos convenios
+                    ,pr_des_reto     => vr_des_reto          --> OK ou NOK
+                    ,pr_tab_erro     => vr_tab_erro );
+     
+    -- Se houve retorno não Ok
+    IF vr_des_reto = 'NOK' THEN
+      -- Retornar a mensagem de erro
+      vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+      vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+
+      -- Limpar tabela de erros
+      vr_tab_erro.DELETE;
+
+      RAISE vr_exc_erro;
+    END IF;                                   
+    
+    --> Extrair valor
+    IF vr_tab_ocorren.exists(vr_tab_ocorren.first) AND vr_tab_ocorren(vr_tab_ocorren.first).innivris <> 0 THEN
+      vr_innivris := vr_tab_ocorren(vr_tab_ocorren.first).innivris;
+    END IF;
+    
+    IF TRIM(pr_dsctrliq) IS NOT NULL AND UPPER(TRIM(pr_dsctrliq)) <> 'SEM LIQUIDACOES' THEN
+      --> Percorre todos os contratos
+      vr_tab_nrctrliq := gene0002.fn_quebra_string(REPLACE(pr_dsctrliq,';',','),',');
+      
+      IF vr_tab_nrctrliq.count >  0 THEN  
+        FOR i IN vr_tab_nrctrliq.first..vr_tab_nrctrliq.last LOOP          
+         IF NVL(TRIM(vr_tab_nrctrliq(i)),'0') = '0' THEN
+           continue;
+         END IF; 
+         
+         vr_flgrefin := TRUE;
+         EXIT;
+      
+        END LOOP;
+      END IF;
+    END IF;
+    
+    --> Verificacao para saber se eh refinancimento
+    IF vr_flgrefin THEN
+      --> buscar ultimo risco verificando valor arrasto
+      OPEN cr_crapris (pr_cdcooper  => pr_cdcooper,
+                       pr_nrdconta  => pr_nrdconta,
+                       pr_dtrefere  => rw_crapdat.dtmvtoan,
+                       pr_vlarrasto => vr_vlarrast);
+      FETCH cr_crapris INTO rw_crapris;                 
+      IF cr_crapris%FOUND THEN
+        CLOSE cr_crapris;
+        IF rw_crapris.innivris > vr_innivris THEN
+          vr_innivris := rw_crapris.innivris;
+        END IF;
+      ELSE
+        CLOSE cr_crapris;  
+        --> buscar ultimo risco
+        OPEN cr_crapris (pr_cdcooper  => pr_cdcooper,
+                         pr_nrdconta  => pr_nrdconta,
+                         pr_dtrefere  => rw_crapdat.dtmvtoan,
+                         pr_vlarrasto => 0);
+        
+        FETCH cr_crapris INTO rw_crapris;
+        IF cr_crapris%FOUND THEN  
+          CLOSE cr_crapris;     
+          --> Caso possuir Prejuizo para as operacoes abaixo do valor de arrasto, o Risco sera "H".
+          --  Senao o Risco sera "A" e nao precisamos verificar o pior risco entre as operacoes                   */
+         IF rw_crapris.innivris = 10 THEN
+           IF rw_crapris.innivris > vr_innivris THEN
+             vr_innivris := rw_crapris.innivris;
+           END IF;  
+         END IF;
+                            
+        ELSE 
+          CLOSE cr_crapris;
+        END IF;
+      END IF;
+    
+    END IF;
+    
+    --> Somente vamos verificar a cessao de credito, caso possui a finalidade
+    IF pr_cdfinemp > 0 THEN
+      --> Buscar dados da finalidade
+      OPEN cr_crapfin (pr_cdcooper => pr_cdcooper,
+                       pr_cdfinemp => pr_cdfinemp);
+      FETCH cr_crapfin INTO rw_crapfin; 
+      
+      IF cr_crapfin%FOUND AND 
+         rw_crapfin.tpfinali = 1 THEN
+        CLOSE cr_crapfin;
+        
+        --> Risco D
+        IF vr_innivris < 5 THEN
+          vr_innivris := 5;
+        END IF;  
+        
+      ELSE
+        CLOSE cr_crapfin;
+      END IF;
+      
+    END IF;
+    
+    --> Chamado: 522658
+    IF pr_cdlcremp > 0 THEN
+      IF pr_cdcooper = 2 AND 
+         pr_cdlcremp IN (800,850,900) THEN
+        --> Risco E 
+        IF vr_innivris < 6 THEN
+          vr_innivris := 6;
+        END IF;  
+      ELSIF pr_cdcooper <> 2 AND 
+            pr_cdlcremp IN (800,900) THEN
+        --> Risco E 
+        IF vr_innivris < 6 THEN
+          vr_innivris := 6;
+        END IF;  
+      END IF;
+              
+    END IF; --> END IF pr_cdfinemp > 0 THEN 
+  
+    IF vr_innivris = 10 THEN
+      vr_innivris := 9;
+    END IF;
+    
+    -- Obter as descricoes do risco, provisao , etc ...
+    RATI0001.pc_descricoes_risco
+                       (pr_cdcooper             => pr_cdcooper             --> Cooperativa conectada
+                       ,pr_inpessoa             => 0                       --> Tipo de pessoa
+                       ,pr_nrnotrat             => 0                       --> Valor baseado no calculo do rating
+                       ,pr_nrnotatl             => 0                       --> Valor baseado no calculo do risco
+                       ,pr_nivrisco             => vr_innivris             --> Nivel do Risco
+                       ,pr_tab_impress_risco_cl => vr_tab_impress_risco    --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
+                       ,pr_tab_impress_risco_tl => vr_tab_impress_risco_tl --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
+                       ,pr_des_reto             => vr_des_reto);
+    
+   
+    IF vr_tab_impress_risco.exists(vr_tab_impress_risco.first) THEN
+      pr_nivrisco := vr_tab_impress_risco(vr_tab_impress_risco.first).dsdrisco;
+    END IF;   
+  
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+      -- Se foi retornado apenas código
+      IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      --Variavel de erro recebe erro ocorrido
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_obtem_emprestimo_risco ' ||
+                     SQLERRM;      
+  END pc_obtem_emprestimo_risco;
+  
+  /******************************************************************************/
+  /**      Procedure para atualizar o risco na proposta de emprestimo.         **/
+  /******************************************************************************/
+  PROCEDURE pc_atualiza_risco_proposta(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da tela
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de movimento
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_nrctremp IN crapepr.nrctremp%TYPE  --> Numero de contrato                                      
+                                      ------ OUT ------                                      
+                                      ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
+                                      ,pr_cdcritic     OUT INTEGER) IS       --> Codigo da critica
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_atualiza_risco_proposta        Antiga: b1wgen0002.p/atualiza_risco_proposta
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Odirlei Busana(Amcom)
+    --  Data     : Abril/2016.                   Ultima atualizacao: 30/01/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para atualizar o risco na proposta de emprestimo.
+    --
+    --  Alteração : 
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <-----------------    
+    
+    --> Buscar dados da proposta de emprestimo
+    CURSOR cr_crawepr ( pr_cdcooper  crawepr.cdcooper%TYPE,
+                        pr_nrdconta  crawepr.nrdconta%TYPE,
+                        pr_nrctremp  crawepr.nrctremp%TYPE) IS
+      SELECT epr.cdfinemp,
+             epr.cdlcremp,
+             epr.nrctremp,
+             to_char(epr.nrctrliq##1) || ',' || to_char(epr.nrctrliq##2) || ',' ||
+             to_char(epr.nrctrliq##3) || ',' || to_char(epr.nrctrliq##4) || ',' ||
+             to_char(epr.nrctrliq##5) || ',' || to_char(epr.nrctrliq##6) || ',' ||
+             to_char(epr.nrctrliq##7) || ',' || to_char(epr.nrctrliq##8) || ',' ||
+             to_char(epr.nrctrliq##9) || ',' || to_char(epr.nrctrliq##10) dsliquid,
+             epr.rowid
+        FROM crawepr epr
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp;
+    rw_crawepr cr_crawepr%ROWTYPE;
+                
+    --Registro do tipo calendario
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+    
+    --------------> TEMPTABLE <-----------------
+    
+            
+    --------------> VARIAVEIS <-----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    vr_des_reto VARCHAR2(10);
+    vr_exc_erro EXCEPTION;
+    
+    vr_dsnivris VARCHAR2(100);
+    
+    
+  BEGIN
+    
+    --> Buscar dados da proposta de emprestimo
+    OPEN cr_crawepr ( pr_cdcooper  => pr_cdcooper,
+                      pr_nrdconta  => pr_nrdconta,
+                      pr_nrctremp  => pr_nrctremp);
+    FETCH cr_crawepr INTO rw_crawepr;
+    IF cr_crawepr%NOTFOUND THEN
+      CLOSE cr_crawepr;
+      vr_cdcritic := 510;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crawepr;      
+    END IF;
+    
+    -- Obtem o pior risco dentre as propostas
+    pc_obtem_emprestimo_risco( pr_cdcooper => pr_cdcooper         --> Codigo da cooperativa
+                              ,pr_cdagenci => pr_cdagenci         --> Codigo de agencia
+                              ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do caixa
+                              ,pr_cdoperad => pr_cdoperad         --> Codigo do operador
+                              ,pr_nrdconta => pr_nrdconta         --> Numero da conta
+                              ,pr_idseqttl => 1                   --> Sequencial do titular
+                              ,pr_idorigem => pr_idorigem         --> Identificado de oriem
+                              ,pr_nmdatela => pr_nmdatela         --> Nome da tela
+                              ,pr_flgerlog => 'N'                 --> identificador se deve gerar log S-Sim e N-Nao
+                              ,pr_cdfinemp => rw_crawepr.cdfinemp --> Finalidade do emprestimo
+                              ,pr_cdlcremp => rw_crawepr.cdlcremp --> Linha de credito do emprestimo
+                              ,pr_dsctrliq => rw_crawepr.dsliquid --> Lista de descrições de situação dos contratos
+                              ------ OUT ------
+                              ,pr_nivrisco => vr_dsnivris         --> Retorna nivel do risco
+                              ,pr_dscritic => vr_dscritic         --> Descrição da critica
+                              ,pr_cdcritic => vr_cdcritic);       --> Codigo da critica
+      
+    IF TRIM(vr_dscritic) IS NOT NULL OR
+       nvl(vr_cdcritic,0) > 0 THEN
+      RAISE vr_exc_erro; 
+    END IF;   
+      
+    --> Atualizar risco
+    BEGIN
+      UPDATE crawepr
+         SET crawepr.dsnivris = UPPER(vr_dsnivris)
+       WHERE crawepr.rowid = rw_crawepr.rowid;   
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Nao foi possivel atualizar risco da proposta: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END; 
+    
+    
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+      -- Se foi retornado apenas código
+      IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      --Variavel de erro recebe erro ocorrido
+      pr_cdcritic := nvl(vr_cdcritic,0);
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+
+      -- Montar descrição de erro não tratado
+      pr_dscritic := 'Erro não tratado na pc_obtem_emprestimo_risco ' ||
+                     SQLERRM;      
+  END pc_atualiza_risco_proposta;
+  
 END rati0002;
 /
