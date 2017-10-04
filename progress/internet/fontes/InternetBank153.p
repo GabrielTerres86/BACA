@@ -77,10 +77,11 @@ IF par_flmobile = yes THEN DO:
 
   FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
   
-  IF AVAILABLE crapdat  THEN
+  IF AVAILABLE crapass  THEN
     ASSIGN par_idfisjur = crapass.inpessoa.
   ELSE 
     ASSIGN par_idfisjur = 1.
+	
 END.	   
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
@@ -253,17 +254,32 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
  
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    IF aux_dscritic <> "" THEN DO:
-        ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-        RETURN "NOK".
-    END.
+	IF par_flmobile = yes THEN DO:
+		IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
+			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+			RETURN "NOK".
+		END.
 
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "<dsmsg>Pagamento(s) efetuado(s) com sucesso!</dsmsg>" + 
-                                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-                                   "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
+		CREATE xml_operacao.
+		ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
+									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
+									   "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
 
-    RETURN "OK".
+		RETURN "OK".	
+	END.
+	ELSE DO:
+		IF aux_dscritic <> "" THEN DO:
+			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+			RETURN "NOK".
+		END.
+
+		CREATE xml_operacao.
+		ASSIGN xml_operacao.dslinxml = "<dsmsg>Pagamento(s) efetuado(s) com sucesso!</dsmsg>" + 
+									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
+									   "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
+
+		RETURN "OK".
+	END.
 END.
 ELSE IF  par_tpoperac = 4 THEN DO: /* Consultar dados da cooperativa quanto ao GPS */
     
@@ -342,16 +358,31 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
  
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    IF aux_dscritic <> "" THEN DO:
-        ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-        RETURN "NOK".
-    END.
+	IF par_flmobile = yes THEN DO:
+		IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
+			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+			RETURN "NOK".
+		END.
 
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = "<dsmsg>Agendamento(s) efetuado(s) com sucesso!</dsmsg>" +
-                                   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-                                   "<dsprotoc>" + pc_gps_agmto_novo.pr_dsprotoc + "</dsprotoc>".
-    RETURN "OK".
+		CREATE xml_operacao.
+		ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
+									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
+									   "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
+
+		RETURN "OK".	
+	END.
+	ELSE DO:	
+		IF aux_dscritic <> "" THEN DO:
+			ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+			RETURN "NOK".
+		END.
+
+		CREATE xml_operacao.
+		ASSIGN xml_operacao.dslinxml = "<dsmsg>Agendamento(s) efetuado(s) com sucesso!</dsmsg>" +
+									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
+									   "<dsprotoc>" + pc_gps_agmto_novo.pr_dsprotoc + "</dsprotoc>".
+		RETURN "OK".
+	END.
 
 END.
 ELSE IF  par_tpoperac = 6 THEN DO:
