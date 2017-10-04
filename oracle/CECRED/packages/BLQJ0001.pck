@@ -1938,10 +1938,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
          AND blj.dtblqfim IS NULL
          AND (blj.cdmodali = pr_cdmodali OR NVL(pr_cdmodali,0) = 0)
-      ORDER BY blj.cdcooper
-             , blj.nroficio
-             , blj.nrcpfcgc
-             , blj.cdmodali;
+-- Demetrius
+--      ORDER BY blj.cdcooper
+--             , blj.nroficio
+--             , blj.nrcpfcgc
+--             , blj.cdmodali;
+      ORDER BY blj.cdmodali
+             , blj.dtblqini
+             , blj.hrblqini
+             , blj.dtblqfim
+             , blj.hrblqfim;
+
+    -- Total bloqueado
+    CURSOR cr_crapbljtot(pr_nrcpfcgc crapblj.nrcpfcgc%TYPE) IS
+      SELECT NVL(SUM(blj.vlbloque),0)
+        FROM crapblj blj
+       WHERE blj.cdcooper = pr_cdcooper
+         AND blj.nroficio = pr_nroficio
+         AND blj.nrdconta = pr_nrctacon
+         AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
+           OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
+         AND blj.dtblqfim IS NULL
+         AND (blj.cdmodali = pr_cdmodali OR NVL(pr_cdmodali,0) = 0);
     
     -- Buscar pelo lançamento
     CURSOR cr_craplcm(pr_nrdconta  craplcm.nrdconta%TYPE
@@ -1964,8 +1982,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_nrdregis      NUMBER;
     vr_nmprimtl      VARCHAR2(100);
     vr_fldestrf      NUMBER;
-    vr_vldesblo      NUMBER := GENE0002.fn_char_para_number(pr_vldesblo);
+--    vr_vldesblo      NUMBER := GENE0002.fn_char_para_number(pr_vldesblo);
+    vr_vldesblo      NUMBER := pr_vldesblo;
     ww_vldesblo      NUMBER;
+    vr_vltotblq      NUMBER;
     
     -- EXCEPTIONS
     vr_exp_erro       EXCEPTION;
@@ -1990,6 +2010,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       vr_fldestrf := 1; -- TRUE
     ELSE 
       vr_fldestrf := 0; -- FALSE
+    END IF;
+
+    -- verificar se valor informado na tela maior que bloqueado
+    OPEN  cr_crapbljtot(vr_nrcpfcgc);
+    FETCH cr_crapbljtot INTO vr_vltotblq;
+    CLOSE cr_crapbljtot;
+    IF vr_vldesblo > vr_vltotblq THEN
+      vr_dscritic := 'Valor de desbloqueio R$ '||vr_vldesblo||' maior que o valor bloqueado R$ '||vr_vltotblq;
+      RAISE vr_exp_erro;
     END IF;
     
     -- Percorrer todos os bloqueios da conta
