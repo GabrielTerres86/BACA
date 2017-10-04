@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 26/09/2017
+     Data    : Marco/2005.                     Ultima atualizacao: 03/10/2017
 
      Dados referentes ao programa:
 
@@ -349,6 +349,10 @@ BEGIN
 
                  26/09/2017 - Integrar lancamentos referentes a nova conta centralizadora 205048.
                               (Jaison/Elton)
+                              
+                 03/10/2017 - SD761668 - Alteração da descrição do histórico OB 12 STN de 
+                              DEBITO para CREDITO (Marcos-Supero)             
+                              
      ............................................................................. */
 
   DECLARE
@@ -1123,7 +1127,7 @@ BEGIN
 
         vr_tab_historico('0632OB 12 STN').nrctaori := 1179;
         vr_tab_historico('0632OB 12 STN').nrctades := 4894;
-        vr_tab_historico('0632OB 12 STN').dsrefere := '"DEBITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+        vr_tab_historico('0632OB 12 STN').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. OB 12 STN NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
 
         vr_tab_historico('0633SEGURO').nrctaori := 1179;
         vr_tab_historico('0633SEGURO').nrctades := 4894;

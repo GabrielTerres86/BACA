@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Gabriel
-   Data    : Outubro/2011                          Ultima alteracao: 20/06/2017
+   Data    : Outubro/2011                          Ultima alteracao: 03/10/2017
 
    Dados referentes ao programa:
 
@@ -32,7 +32,8 @@
                20/06/2017 - Geraçao de tabela com lançamentos contábeis centralizados de 
                             cada cooperativa filiada na central para posterior geraçao de 
                             arquivo para o Matera. (Jonatas-Supero)                                  
-                            
+               
+               03/10/2017 - SD762958 - Ajuste no rateio das tarifas por PA (Marcos-Supero)             
 ............................................................................ */
 
 { includes/var_batch.i }
@@ -226,107 +227,6 @@ Deposito: DO TRANSACTION ON ERROR UNDO, RETURN:
                                                   UNDO, LEAVE Deposito.
                                               END.
 
-
-                                         /*Linhas com valor total*/
-                                         FIND tt-detlctctl WHERE 
-                                              tt-detlctctl.cdcooper = crapcop.cdcooper AND
-                                              tt-detlctctl.cdhistor = 1008 AND
-                                              tt-detlctctl.cdagenci = 0 AND
-                                              tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
-     
-                                         IF  NOT AVAILABLE tt-detlctctl  THEN
-                                             DO:
-                                                  CREATE tt-detlctctl.
-                                                  ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
-                                                         tt-detlctctl.cdhistor = 1008
-                                                         tt-detlctctl.cdagenci = 0 
-                                                         tt-detlctctl.nrdconta = crapcop.nrctactl
-                                                         tt-detlctctl.nrctadeb = 1452
-                                                         tt-detlctctl.nrctacrd = 7254
-                                                         tt-detlctctl.dsrefere = "CREDITO C/C " + 
-                                                                                 STRING(crapcop.nrctactl,"zzzz,zzz,9") + 
-                                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
-                                                                                 " RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA"
-                                                         tt-detlctctl.intiplct = 0.
-                                         
-                                             END.
-                                             ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto.
-                                         
-                                         /*Linhas com valor total*/
-                                         FIND tt-detlctctl WHERE 
-                                              tt-detlctctl.cdcooper = aux_cdcooper AND
-                                              tt-detlctctl.cdhistor = 1007 AND
-                                              tt-detlctctl.cdagenci = 0 AND
-                                              tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
-     
-                                         IF  NOT AVAILABLE tt-detlctctl  THEN
-                                             DO:
-                                                  CREATE tt-detlctctl.
-                                                  ASSIGN tt-detlctctl.cdcooper = aux_cdcooper
-                                                         tt-detlctctl.cdhistor = 1007
-                                                         tt-detlctctl.cdagenci = 0 
-                                                         tt-detlctctl.nrdconta = aux_nrctactl
-                                                         tt-detlctctl.nrctadeb = 8308
-                                                         tt-detlctctl.nrctacrd = 1452
-                                                         tt-detlctctl.dsrefere = "DEBITO C/C " + 
-                                                                                 STRING(aux_nrctactl,"zzzz,zzz,9") + 
-                                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
-                                                                                 " PAGAS A OUTRAS COOPERATIVAS DO SISTEMA"
-                                                         tt-detlctctl.intiplct = 0.
-                                         
-                                             END.
-                                             ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto.
-                                             
-                                         /*Linhas com valor por agencia*/
-                                         FIND tt-detlctctl WHERE 
-                                              tt-detlctctl.cdcooper = crapcop.cdcooper AND
-                                              tt-detlctctl.cdhistor = 1008 AND
-                                              tt-detlctctl.cdagenci = crapldt.cdpacrem AND
-                                              tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
-     
-                                         IF  NOT AVAILABLE tt-detlctctl  THEN
-                                             DO:
-                                                  CREATE tt-detlctctl.
-                                                  ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
-                                                         tt-detlctctl.cdhistor = 1008
-                                                         tt-detlctctl.cdagenci = crapldt.cdpacrem 
-                                                         tt-detlctctl.nrdconta = crapcop.nrctactl
-                                                         tt-detlctctl.nrctadeb = 1452
-                                                         tt-detlctctl.nrctacrd = 7254
-                                                         tt-detlctctl.dsrefere = "CREDITO C/C " + 
-                                                                                 STRING(crapcop.nrctactl,"zzzz,zzz,9") + 
-                                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
-                                                                                 " RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA"
-                                                         tt-detlctctl.intiplct = 1.
-                                             END.
-                
-                                             ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto.
-             
-                                         /*Linhas com valor por agencia*/
-                                         FIND tt-detlctctl WHERE 
-                                              tt-detlctctl.cdcooper = aux_cdcooper AND
-                                              tt-detlctctl.cdhistor = 1007 AND
-                                              tt-detlctctl.cdagenci = tt-crapldt.cdpacdst AND
-                                              tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
-     
-                                         IF  NOT AVAILABLE tt-detlctctl  THEN
-                                             DO:
-                                                  CREATE tt-detlctctl.
-                                                  ASSIGN tt-detlctctl.cdcooper = aux_cdcooper
-                                                         tt-detlctctl.cdhistor = 1007
-                                                         tt-detlctctl.cdagenci = tt-crapldt.cdpacdst
-                                                         tt-detlctctl.nrdconta = aux_nrctactl
-                                                         tt-detlctctl.nrctadeb = 8308
-                                                         tt-detlctctl.nrctacrd = 1452
-                                                         tt-detlctctl.dsrefere = "DEBITO C/C " + 
-                                                                                 STRING(aux_nrctactl,"zzzz,zzz,9") + 
-                                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
-                                                                                 " PAGAS A OUTRAS COOPERATIVAS DO SISTEMA"
-                                                         tt-detlctctl.intiplct = 1.
-                                             END.
-                
-                                             ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto.             
-                                              
                                      END.
                               END.                              
                           END.                                  
@@ -483,6 +383,56 @@ PROCEDURE emite-relatorio-609:
                      
                     DOWN WITH FRAME f_list609.
     
+                    /* Linhas com valor total - Credito */
+                    FIND tt-detlctctl WHERE 
+                         tt-detlctctl.cdcooper = crabcop.cdcooper AND
+                         tt-detlctctl.cdhistor = 1008 AND
+                         tt-detlctctl.cdagenci = 0 AND
+                         tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
+
+                    IF  NOT AVAILABLE tt-detlctctl  THEN
+                        DO:
+                             CREATE tt-detlctctl.
+                             ASSIGN tt-detlctctl.cdcooper = crabcop.cdcooper
+                                    tt-detlctctl.cdhistor = 1008
+                                    tt-detlctctl.cdagenci = 0 
+                                    tt-detlctctl.nrdconta = crabcop.nrctactl
+                                    tt-detlctctl.nrctadeb = 1452
+                                    tt-detlctctl.nrctacrd = 7254
+                                    tt-detlctctl.dsrefere = "CREDITO C/C " + 
+                                                            STRING(crabcop.nrctactl,"zzzz,zzz,9") + 
+                                                            " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                            " RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA"
+                                    tt-detlctctl.intiplct = 0.
+                    
+                        END.
+                    ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto.
+                     
+                    /* Linhas com valor total - Debito */
+                    FIND tt-detlctctl WHERE 
+                         tt-detlctctl.cdcooper = crapcop.cdcooper AND
+                         tt-detlctctl.cdhistor = 1007 AND
+                         tt-detlctctl.cdagenci = 0 AND
+                         tt-detlctctl.intiplct = 0 EXCLUSIVE-LOCK NO-ERROR.
+
+                    IF  NOT AVAILABLE tt-detlctctl  THEN
+                        DO:
+                             CREATE tt-detlctctl.
+                             ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
+                                    tt-detlctctl.cdhistor = 1007
+                                    tt-detlctctl.cdagenci = 0 
+                                    tt-detlctctl.nrdconta = crapcop.nrctactl
+                                    tt-detlctctl.nrctadeb = 8308
+                                    tt-detlctctl.nrctacrd = 1452
+                                    tt-detlctctl.dsrefere = "DEBITO C/C " + 
+                                                            STRING(crapcop.nrctactl,"zzzz,zzz,9") + 
+                                                            " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                            " PAGAS A OUTRAS COOPERATIVAS DO SISTEMA"
+                                    tt-detlctctl.intiplct = 0.
+                    
+                        END.
+                    ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto.
+                    
                     ASSIGN aux_vllanmto = 0.
                  END.
     
@@ -505,6 +455,31 @@ PROCEDURE emite-relatorio-609:
                          
                          DOWN WITH FRAME f_list609-2.
     
+                         /* Linhas com valor por agencia */
+                         FIND tt-detlctctl WHERE 
+                              tt-detlctctl.cdcooper = crapcop.cdcooper AND
+                              tt-detlctctl.cdhistor = 1007 AND
+                              tt-detlctctl.cdagenci = tt-crapldt.cdpacdst AND
+                              tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                         IF  NOT AVAILABLE tt-detlctctl  THEN
+                             DO:
+                                  CREATE tt-detlctctl.
+                                  ASSIGN tt-detlctctl.cdcooper = crapcop.cdcooper
+                                         tt-detlctctl.cdhistor = 1007
+                                         tt-detlctctl.cdagenci = tt-crapldt.cdpacdst
+                                         tt-detlctctl.nrdconta = crapcop.nrctactl
+                                         tt-detlctctl.nrctadeb = 8308
+                                         tt-detlctctl.nrctacrd = 1452
+                                         tt-detlctctl.dsrefere = "DEBITO C/C " + 
+                                                                 STRING(crapcop.cdagectl,"zzzz,zzz,9") + 
+                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                                 " PAGAS A OUTRAS COOPERATIVAS DO SISTEMA"
+                                         tt-detlctctl.intiplct = 1.
+                             END.
+                
+                             ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto. 
+                         
                          ASSIGN aux_vllanmto = 0.
                      END.
             END.
@@ -526,6 +501,31 @@ PROCEDURE emite-relatorio-609:
                                              WITH FRAME f_list609-2.
     
                         DOWN WITH FRAME f_list609-2.
+                        
+                        /*Linhas com valor por agencia*/
+                         FIND tt-detlctctl WHERE 
+                              tt-detlctctl.cdcooper = crabcop.cdcooper AND
+                              tt-detlctctl.cdhistor = 1008 AND
+                              tt-detlctctl.cdagenci = tt-crapldt.cdpacrem AND
+                              tt-detlctctl.intiplct = 1 EXCLUSIVE-LOCK NO-ERROR.
+     
+                         IF  NOT AVAILABLE tt-detlctctl  THEN
+                             DO:
+                                  CREATE tt-detlctctl.
+                                  ASSIGN tt-detlctctl.cdcooper = crabcop.cdcooper
+                                         tt-detlctctl.cdhistor = 1008
+                                         tt-detlctctl.cdagenci = tt-crapldt.cdpacrem 
+                                         tt-detlctctl.nrdconta = crabcop.nrctactl
+                                         tt-detlctctl.nrctadeb = 1452
+                                         tt-detlctctl.nrctacrd = 7254
+                                         tt-detlctctl.dsrefere = "CREDITO C/C " + 
+                                                                 STRING(crabcop.nrctactl,"zzzz,zzz,9") + 
+                                                                 " CECRED REF. TARIFA DEPOSITO INTERCOOPERATIVO" +
+                                                                 " RECEBIDA DE OUTRAS COOPERATIVAS DO SISTEMA"
+                                         tt-detlctctl.intiplct = 1.
+                             END.
+                
+                             ASSIGN tt-detlctctl.vllamnto = tt-detlctctl.vllamnto + aux_vllanmto.
                         
                         ASSIGN aux_vllanmto = 0.
                      END.

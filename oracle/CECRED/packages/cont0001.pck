@@ -58,13 +58,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   --             lançamentos centralizados
   --  Sigla    : CONT
   --  Autor    : Jonatas Jaqmam Pereira - Supero
-  --  Data     : Maio/2017.                   Ultima atualizacao: 26/09/2017
+  --  Data     : Maio/2017.                   Ultima atualizacao: 03/10/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Diário
   -- Objetivo  : Rotinas para geração de arquivos contábeis para o Radar/Matera de
   --             lançamentos centralizados
+  --
+  -- Alterações : 03/10/2017 - Ajustes na CC Debito Histórico 851 - Marcos(Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -433,7 +435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(777).nrctades := 1452;
         vr_tab_historico(777).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. CONTRIBUICAO PARA RESERVA PARA RISCOS DE VALORES DOS POSTOS DE ATENDIMENTO – RRV';             
                 
-        vr_tab_historico(851).nrctaori := 4825;
+        vr_tab_historico(851).nrctaori := 4453;
         vr_tab_historico(851).nrctades := 1452;
         vr_tab_historico(851).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. REPASSE CONTRIBUICAO SINDICAL';             
                 
