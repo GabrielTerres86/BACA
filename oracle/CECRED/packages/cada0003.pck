@@ -5,12 +5,16 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 26/11/2015
+  --  Data     : Julho/2014.                   Ultima atualizacao: 04/08/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas utilizadas para as telas MATRIC, CONTAS e ATENDA referente a cadastros
+  --
+  --  Alteracoes: 04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao do tipo de registro
@@ -22,19 +26,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
 
   -- Definicao do tipo de tabela registro
   TYPE typ_tab_crapmun IS TABLE OF typ_reg_crapmun INDEX BY PLS_INTEGER;
-
-  -- Rotina para buscar do CNAE
-  PROCEDURE pc_busca_cnae(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
-                         ,pr_dscnae   IN tbgen_cnae.dscnae%TYPE --> Descricao do CNAE
-                         ,pr_flserasa IN PLS_INTEGER DEFAULT 2  --> 0=Nao negativa, 1=Negativa, 2=Todos
-                         ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
-                         ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
-                         ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                         ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                         ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                         ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                         ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                         ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
 
   -- Rotina para buscar o relacionamento de responsavel legal para usar usado no AyllosWeb
   PROCEDURE pc_busca_rlc_rsp_legal_web(pr_cdrelacionamento IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
@@ -473,7 +464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 21/02/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 04/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -533,8 +524,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          geração do relatório
   --                          (Adriano - SD 614408).		    	
   --
+  --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+  --
+  --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+  --		                  crapass, crapttl, crapjur 
+  -- 						 (Adriano - P339).
+  --
+  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
+  --
   --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)		 
+  --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)		   
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -544,144 +543,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      WHERE tbchq.cdcooper = pr_cdcooper
        AND tbchq.nrdconta = pr_nrdconta;
     rw_tbchq_param_conta cr_tbchq_param_conta%ROWTYPE;
-
-  -- Rotina para buscar do CNAE
-  PROCEDURE pc_busca_cnae(pr_cdcnae   IN tbgen_cnae.cdcnae%TYPE --> Codigo do CNAE
-                         ,pr_dscnae   IN tbgen_cnae.dscnae%TYPE --> Descricao do CNAE
-                         ,pr_flserasa IN PLS_INTEGER DEFAULT 2  --> 0=Nao negativa, 1=Negativa, 2=Todos
-                         ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
-                         ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
-                         ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
-                         ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                         ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
-                         ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                         ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
-                         ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
-
-      -- Cursor sobre a tabela do CNAE
-      CURSOR cr_tbgen_cnae IS
-        SELECT cdcnae,
-               gene0007.fn_caract_acento(dscnae) dscnae,
-               count(1) over() retorno
-          FROM tbgen_cnae
-         WHERE cdcnae = decode(nvl(pr_cdcnae,0),0,cdcnae, pr_cdcnae)
-           AND (trim(pr_dscnae) IS NULL
-            OR  UPPER(dscnae) LIKE '%'||UPPER(pr_dscnae)||'%')
-           AND flserasa = decode(nvl(pr_flserasa,2),2,flserasa, pr_flserasa)
-         ORDER BY cdcnae;
-
-      -- Variável de críticas
-      vr_cdcritic      crapcri.cdcritic%TYPE;
-      vr_dscritic      VARCHAR2(10000);
-
-      -- Variaveis de log
-      vr_cdoperad      VARCHAR2(100);
-      vr_cdcooper      NUMBER;
-      vr_nmdatela      VARCHAR2(100);
-      vr_nmeacao       VARCHAR2(100);
-      vr_cdagenci      VARCHAR2(100);
-      vr_nrdcaixa      VARCHAR2(100);
-      vr_idorigem      VARCHAR2(100);
-
-      -- Tratamento de erros
-      vr_exc_saida     EXCEPTION;
-
-      -- Variaveis gerais
-      vr_contador PLS_INTEGER := 0;
-      vr_posreg   PLS_INTEGER := 0;
-      vr_xml_temp VARCHAR2(32726) := '';
-      vr_clob     CLOB;
-    BEGIN
-
-        gene0004.pc_extrai_dados(pr_xml => pr_retxml
-                                ,pr_cdcooper => vr_cdcooper
-                                ,pr_nmdatela => vr_nmdatela
-                                ,pr_nmeacao  => vr_nmeacao
-                                ,pr_cdagenci => vr_cdagenci
-                                ,pr_nrdcaixa => vr_nrdcaixa
-                                ,pr_idorigem => vr_idorigem
-                                ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => vr_dscritic);
-
-        -- Monta documento XML de ERRO
-        dbms_lob.createtemporary(vr_clob, TRUE);
-        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-        -- Criar cabeçalho do XML
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                               ,pr_texto_completo => vr_xml_temp
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
-
-        -- Loop sobre a tabela de CNAE
-        FOR rw_tbgen_cnae IN cr_tbgen_cnae LOOP
-
-          -- Incrementa o contador de registros
-          vr_posreg := vr_posreg + 1;
-
-          -- Se for o primeiro registro, insere uma tag com o total de registros existentes no filtro
-          IF vr_posreg = 1 THEN
-            gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                                   ,pr_texto_completo => vr_xml_temp
-                                   ,pr_texto_novo     => '<CNAE qtregist="' || rw_tbgen_cnae.retorno || '">');
-          END IF;
-
-          -- Enviar somente se a linha for superior a linha inicial
-          IF nvl(pr_nriniseq,0) <= vr_posreg THEN
-
-            -- Carrega os dados
-            gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                                   ,pr_texto_completo => vr_xml_temp
-                                   ,pr_texto_novo     => '<inf>'||
-                                                            '<cdcnae>' || rw_tbgen_cnae.cdcnae ||'</cdcnae>'||
-                                                            '<dscnae>' || rw_tbgen_cnae.dscnae ||'</dscnae>'||
-                                                         '</inf>');
-            vr_contador := vr_contador + 1;
-          END IF;
-
-          -- Deve-se sair se o total de registros superar o total solicitado
-          EXIT WHEN vr_contador > nvl(pr_nrregist,99999);
-
-        END LOOP;
-
-        -- Se nao possuir nenhum registro, envia a quantidade de registros zerada
-        IF vr_posreg = 0 THEN
-          gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                                 ,pr_texto_completo => vr_xml_temp
-                                 ,pr_texto_novo     => '<CNAE qtregist="0">');
-        END IF;
-
-        -- Encerrar a tag raiz
-        gene0002.pc_escreve_xml(pr_xml            => vr_clob
-                               ,pr_texto_completo => vr_xml_temp
-                               ,pr_texto_novo     => '</CNAE></Dados>'
-                               ,pr_fecha_xml      => TRUE);
-
-        -- Atualiza o XML de retorno
-        pr_retxml := xmltype(vr_clob);
-
-        -- Libera a memoria do CLOB
-        dbms_lob.close(vr_clob);
-
-    EXCEPTION
-      WHEN vr_exc_saida THEN
-
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-
-      WHEN OTHERS THEN
-
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na busca do CNAE: ' || SQLERRM;
-
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-  END pc_busca_cnae;
 
 
   -- Rotina para buscar o relacionamento de responsavel legal para execucao via progress
@@ -1699,12 +1560,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                             ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                             ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
 
+    /* ..........................................................................
+    --
+    --  Programa : pc_duplica_conta
+    --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
+    --  Sigla    : CADA
+    --  Autor    : 
+    --  Data     :                      Ultima atualizacao: 24/07/2017
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Rotina para duplicar informações do cadastro do cooperado.
+    --
+    --  Alteracoes:  24/07/2017 - Alterar cdoedptl para idorgexp.
+    --                            PRJ339-CRM  (Odirlei-AMcom)
+    -- .............................................................................*/
+
       -- Cursor sobre a tabela de associados
       CURSOR cr_crapass IS
         SELECT inpessoa,
                nrcpfcgc,
-               dsnacion,
-               dtnasttl,
+               cdnacion,
                dsproftl,
                nmprimtl
           FROM crapass
@@ -1892,7 +1769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            nrcadast,
            nmprimtl,
            dtnasctl,
-           dsnacion,
+           cdnacion,
            dsproftl,
            dtadmiss,
            dtdemiss,
@@ -1901,7 +1778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            inpessoa,
            tpdocptl,
            nrdocptl,
-           cdoedptl,
+           idorgexp,
            cdufdptl,
            dtemdptl,
            nmpaiptl,
@@ -1921,27 +1798,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            inadimpl,
            inedvmto,
            inlbacen,
-           dsregcas,
-           cdoedrsp,
-           cdufdrsp,
-           nmrespon,
-           inhabmen,
-           nrcpfrsp,
-           nrdocrsp,
-           tpdocrsp,
-           dtemdrsp,
-           qtdepend,
-           dsendcol,
            iniscpmf,
-           cdoedttl,
            tpvincul,
-           nrfonemp,
            dtcnscpf,
            cdsitcpf,
            inccfcop,
            dtccfcop,
            indrisco,
-           dsdemail,
            dtcnsscr,
            nrnotatl,
            inrisctl,
@@ -1963,7 +1826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                nrcadast,
                nmprimtl,
                dtnasctl,
-               dsnacion,
+               cdnacion,
                dsproftl,
                rw_crapdat.dtmvtolt, -- COnforme Sarah, utilizar a data atual para a data de Admissao
                dtdemiss,
@@ -1972,7 +1835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                inpessoa,
                tpdocptl,
                nrdocptl,
-               cdoedptl,
+               idorgexp,
                cdufdptl,
                dtemdptl,
                nmpaiptl,
@@ -1992,27 +1855,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                inadimpl,
                inedvmto,
                inlbacen,
-               dsregcas,
-               cdoedrsp,
-               cdufdrsp,
-               nmrespon,
-               inhabmen,
-               nrcpfrsp,
-               nrdocrsp,
-               tpdocrsp,
-               dtemdrsp,
-               qtdepend,
-               dsendcol,
                iniscpmf,
-               cdoedttl,
                tpvincul,
-               nrfonemp,
                dtcnscpf,
                cdsitcpf,
                inccfcop,
                dtccfcop,
                indrisco,
-               dsdemail,
                dtcnsscr,
                nrnotatl,
                inrisctl,
@@ -2137,7 +1986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            cdufresd,
            dtmvtolt,
            cdcooper,
-           dsnacion,
+           cdnacion,
            nrendere,
            complend,
            nmbairro,
@@ -2148,7 +1997,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            cdagenci,
            dsproftl,
            nrdctato,
-           cdoeddoc,
+           idorgexp,
            dtemddoc,
            cdufddoc,
            dtvalida,
@@ -2225,7 +2074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                cdufresd,
                dtmvtolt,
                cdcooper,
-               dsnacion,
+               cdnacion,
                nrendere,
                complend,
                nmbairro,
@@ -2236,7 +2085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                cdagenci,
                dsproftl,
                nrdctato,
-               cdoeddoc,
+               idorgexp,
                dtemddoc,
                cdufddoc,
                dtvalida,
@@ -2340,7 +2189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              nmextttl,
              inpessoa,
              nrcpfcgc,
-             dsnacion,
+             cdnacion,
              dtnasttl,
              cdsexotl,
              cdgraupr,
@@ -2349,7 +2198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              dsproftl,
              tpdocttl,
              nrdocttl,
-             cdoedttl,
+             idorgexp,
              cdufdttl,
              dtemdttl,
              nmmaettl,
@@ -2368,19 +2217,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              nrcpfemp,
              dtadmemp,
              cdnvlcgo,
-             nrfonemp,
              vlsalari,
-             dtsalari,
              indnivel,
              dtcnscpf,
              cdsitcpf,
              inhabmen,
              dthabmen,
-             nrcertif,
              dtdememp,
              cdturnos,
-             tprendim,
-             vlrendim,
              tpdrendi##1,
              tpdrendi##2,
              tpdrendi##3,
@@ -2405,7 +2249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  nmextttl,
                  rw_crapass.inpessoa,
                  rw_crapass.nrcpfcgc,
-                 rw_crapass.dsnacion,
+                 rw_crapass.cdnacion,
                  dtnasttl,
                  cdsexotl,
                  0,
@@ -2414,7 +2258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  rw_crapass.dsproftl,
                  tpdocttl,
                  nrdocttl,
-                 cdoedttl,
+                 idorgexp,
                  cdufdttl,
                  dtemdttl,
                  nmmaettl,
@@ -2433,19 +2277,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  nrcpfemp,
                  dtadmemp,
                  cdnvlcgo,
-                 nrfonemp,
                  vlsalari,
-                 dtsalari,
                  indnivel,
                  dtcnscpf,
                  cdsitcpf,
                  inhabmen,
                  dthabmen,
-                 nrcertif,
                  dtdememp,
                  cdturnos,
-                 tprendim,
-                 vlrendim,
                  tpdrendi##1,
                  tpdrendi##2,
                  tpdrendi##3,
@@ -2485,7 +2324,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              dtnasccj,
              tpdoccje,
              nrdoccje,
-             cdoedcje,
+             idorgexp,
              cdufdcje,
              dtemdcje,
              grescola,
@@ -2512,7 +2351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  dtnasccj,
                  tpdoccje,
                  nrdoccje,
-                 cdoedcje,
+                 idorgexp,
                  cdufdcje,
                  dtemdcje,
                  grescola,
@@ -2555,7 +2394,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
              qtfilial,
              qtfuncio,
              nmtalttl,
-             vlcapsoc,
              vlcaprea,
              dtregemp,
              nrregemp,
@@ -2584,7 +2422,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  qtfilial,
                  qtfuncio,
                  nmtalttl,
-                 vlcapsoc,
                  vlcaprea,
                  dtregemp,
                  nrregemp,
@@ -2873,13 +2710,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            nrdconta,
            nrcpfcgc,
            nmrespon,
-           dsorgemi,
+           idorgexp,
            cdufiden,
            dtemiden,
            dtnascin,
            cddosexo,
            cdestciv,
-           dsnacion,
+           cdnacion,
            dsnatura,
            cdcepres,
            dsendres,
@@ -2903,13 +2740,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                nrdconta,
                nrcpfcgc,
                nmrespon,
-               dsorgemi,
+               idorgexp,
                cdufiden,
                dtemiden,
                dtnascin,
                cddosexo,
                cdestciv,
-               dsnacion,
+               cdnacion,
                dsnatura,
                cdcepres,
                dsendres,
