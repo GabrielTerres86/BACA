@@ -1839,30 +1839,7 @@ PROCEDURE efetua_liber_anali_bordero:
          /* Acumula Total IOF */
          ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
 
-       END.
-                          
-       /* Daniel */
-       IF par_cddopcao = "L" THEN 
-       DO:
-         ASSIGN aux_qtdiaiof = craptdb.dtvencto - par_dtmvtolt.
-
-         IF aux_qtdiaiof > 365 THEN
-             aux_qtdiaiof = 365.
-         
-         IF aux_inpessoa = 1 THEN
-           /* IOF Operacacao PF */
-           aux_periofop = aux_qtdiaiof * 0.0082.
-         ELSE
-           /* IOF Operacacao PJ */
-           aux_periofop = aux_qtdiaiof * 0.0041.
-
-         /* Calculo IOF */
-         ASSIGN aux_vliofcal = (craptdb.vlliquid * aux_periofop) / 100.
-
-         /* Acumula Total IOF */
-         ASSIGN aux_vltotiof = aux_vltotiof + aux_vliofcal.
-
-       END.
+       END.                          
                           
    END.  /*  Fim do FOR EACH craptdb  */
 
