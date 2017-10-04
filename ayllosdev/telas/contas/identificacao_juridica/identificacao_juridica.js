@@ -197,7 +197,7 @@ function controlaLayout(operacao) {
 
 	// Controla a altura da tela
 	divRotina.css('width','552px');	
-	$('#divConteudoOpcao').css('height','322px');
+	$('#divConteudoOpcao').css('height','352px');
 
 	// Razão Social / Tipo Natureza / CNPJ
 	var camposGrupo1	= $('#nmprimtl, #inpessoa, #nrcpfcgc','#frmDadosIdentJuridica');	
