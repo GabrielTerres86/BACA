@@ -1932,7 +1932,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
        WHERE ass.cdcooper = blj.cdcooper 
          AND ass.nrdconta = blj.nrdconta
          AND blj.cdcooper = pr_cdcooper
-         AND blj.nroficio = pr_nroficio  
+         AND blj.nroficio = pr_nroficio
+         AND blj.nrdconta = pr_nrctacon -- Demetrius
          AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
            OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
          AND blj.dtblqfim IS NULL
