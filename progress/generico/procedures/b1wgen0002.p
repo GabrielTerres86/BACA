@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 10/07/2017
+   Data    : 14/09/2005                        Ultima atualizacao: 29/09/2017
 
    Dados referentes ao programa:
 
@@ -713,6 +713,10 @@
                            de cessao da fatura do cartao de credito (Anderson).
 
 			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+
+			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
+			               Alterar Somente Avalista (Marcos-Supero)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -12976,7 +12980,40 @@ PROCEDURE atualiza_dados_avalista_proposta:
 
                DELETE PROCEDURE h-b1wgen9999.
 
+               /* Para Alterar Somente Avalista e Proposta já aprovada */
+               IF par_dsdopcao = "ASA" AND crawepr.insitapr = 1 THEN 
+                  DO:
+                  
+                     VALIDATE crawepr.
                
+                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                     
+                     /* Acionar rotina para atualizar as respostas do Rating  */
+                     /* referente a Garantia e Liquidez conforme a quantidade */
+                     /* e tipo dos avalistas informados                       */
+                     RUN STORED-PROCEDURE pc_atuali_garant_liquid_epr
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                           INPUT par_nrdconta, /* Conta da Proposta */
+                                                           INPUT par_nrctremp, /* Numero da Proposta */
+                                                          OUTPUT "").          /* Descrição da crítica */
+                     
+                     /* Fechar o procedimento para buscarmos o resultado */ 
+                     CLOSE STORED-PROC pc_atuali_garant_liquid_epr
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                     ASSIGN aux_dscritic = pc_atuali_garant_liquid_epr.pr_dscritic
+                                              WHEN pc_atuali_garant_liquid_epr.pr_dscritic <> ?.
+
+                     IF aux_dscritic <> "" THEN
+                        LEAVE.
+                  END.
+                 
+               ELSE DO:
+                   
+                  /* Quando não aprovada, devemos verificar se temos o Motor na Cooperativa */ 
+                 
                FIND FIRST crapass 
                     WHERE crapass.cdcooper = par_cdcooper   
                       AND crapass.nrdconta = par_nrdconta
@@ -13135,6 +13172,8 @@ PROCEDURE atualiza_dados_avalista_proposta:
                              END.
                       END. 
                  END.  
+              END.     
+
         LEAVE.
 
     END. /* DO WHILE TRUE TRANSACTION */

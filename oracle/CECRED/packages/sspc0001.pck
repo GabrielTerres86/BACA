@@ -482,6 +482,7 @@ PROCEDURE pc_busca_intippes(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Cód. da
 													 ,pr_nrdconta IN crapass.nrdconta%TYPE     --> Nr. da conta
 													 ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
 													 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
+													 ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
 													 ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
 													 ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
 													 ,pr_inpessoa OUT NUMBER);                 --> 1-Física; 2- Jurídica
@@ -524,6 +525,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --              26/06/2017 - Incluido o campo nrconbir nas pesquisas da crapcbd, melhoria de performance
   --                           (Tiago/Rodrigo #700127).
 --
+  --              28/09/2017 - Utilização do atributo classe da consulta da Ibratan
+  --                           (Marcos-Supero).
 --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -3390,6 +3393,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_flgrechq BOOLEAN;               --> Flag para indicar se eh consulta Recheque    
     vr_nrseqdet crapcbd.nrseqdet%TYPE; --> Numero da sequencia de consulta
     vr_database VARCHAR2(06);          --> Data base para as consultas SCR, no formato AAAAMM
+    vr_dsclasse VARCHAR2(100);         --> Classe da consulta
     vr_inlocnac craprsc.inlocnac%TYPE; --> Indicador de SPC local ou nacional
     vr_insitchq PLS_INTEGER;           --> Tipo de chque (1-Estadual, 2-Nacional, 3-Serasa)
     vr_inpefref crapprf.inpefref%TYPE; --> Indicador de 1-Pefin ou 2-Refin
@@ -3445,6 +3449,9 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
       
       -- Limpa as variaveis gerais
       vr_database := NULL;
+      vr_dsclasse := NULL;
+      vr_intippes := NULL;
+      vr_inpessoa := NULL;
       
 ------------- BUSCA OS DADOS DO CRAPCBD (titular da consulta) -------------
       BEGIN
@@ -3452,6 +3459,10 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/TIPO',         'S',vr_nmtagger, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/DOCUMENTO',    'S',vr_crapcbd.nrcpfcgc, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/DATA_BASE',    'S',vr_database, vr_dscritic);
+        -- Somente para Motor
+        IF pr_tpconaut = 'M' THEN 
+          pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/CLASSE',       'S',vr_dsclasse, vr_dscritic);        
+        END IF;  
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/CADASTRO/IDENTIFICACAO/RAZAO_SOCIAL', 'S',vr_crapcbd.nmtitcon, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/CADASTRO/SITUACAO-CADASTRAL/DT_INICIO', 'D',vr_crapcbd.dtatuend, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/CADASTRO/LOCALIZACAO/ENDERECO', 'S',vr_crapcbd.dsendere, vr_dscritic);
@@ -3526,6 +3537,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
 												 ,pr_nrdconta => pr_nrdconta
 												 ,pr_nrctremp => pr_nrdocmto
 												 ,pr_nrcpfcgc => vr_crapcbd.nrcpfcgc
+                         ,pr_dsclasse => vr_dsclasse
 												 ,pr_intippes => vr_intippes 
 												 ,pr_nrctapes => vr_nrdconta
 												 ,pr_inpessoa => vr_inpessoa); 
@@ -3533,7 +3545,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
 				-- Caso não tenhamos conseguido encontrar o tipo 
 				IF vr_intippes IS NULL or vr_inpessoa IS NULL THEN
 					-- Gerar erro
-					vr_dscritic := 'Erro ao verificar tipo de pessoa CPF: '||vr_crapcbd.nrcpfcgc;
+					vr_dscritic := 'Erro ao verificar tipo de pessoa CPF/CNPJ: '||vr_crapcbd.nrcpfcgc;
 					RAISE vr_exc_saida;
 				END IF;
 
@@ -3626,6 +3638,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
          WHERE nrconbir = pr_nrconbir
            AND nrcpfcgc = vr_crapcbd.nrcpfcgc
            AND cdbircon = rw_crapbir.cdbircon
+           AND intippes = vr_intippes
         RETURN nrseqdet, inpessoa 
           INTO vr_nrseqdet, vr_inpessoa;
       EXCEPTION
@@ -9800,6 +9813,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 														 ,pr_nrdconta IN crapass.nrdconta%TYPE     --> Nr. da conta
 														 ,pr_nrctremp IN crapepr.nrctremp%TYPE     --> Nr. do contrato de empréstimo
 														 ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE     --> Nr. do CPF/CNPJ
+														 ,pr_dsclasse IN VARCHAR2                  --> Classe Ibratan
 														 ,pr_nrctapes OUT NUMBER                   --> Conta relacionada
 														 ,pr_intippes OUT NUMBER                   --> 1-Titular; 2-Avalista; 3-Conjuge; 7-Repr. Legal/Procurador; 0-Erro.
 														 ,pr_inpessoa OUT NUMBER) IS               --> 1-Física; 2- Jurídica
@@ -9837,6 +9851,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 			vr_inpessoa_av1 crapass.inpessoa%TYPE;
 			vr_nrcpfcgc_av2 crapass.nrcpfcgc%TYPE;
 			vr_inpessoa_av2 crapass.inpessoa%TYPE;
+			vr_stsnrcal BOOLEAN; --> validação tipo de pessoa
 			
 			-- Cursor sobre os dados de emprestimo
 			CURSOR cr_crawepr IS
@@ -9923,7 +9938,7 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 				CLOSE cr_crapcje;
 				
 				-- Caso o CPF do conjuge for o da consulta
-				IF vr_nrcpfcgc_cje = pr_nrcpfcgc THEN
+				IF vr_nrcpfcgc_cje = pr_nrcpfcgc AND NVL(pr_dsclasse,'C') = 'C' THEN
 					 -- Conjuge
 					 pr_nrctapes := vr_nrdconta_cje;
 				   pr_intippes := 3;
@@ -9980,13 +9995,13 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 			END LOOP;			
 			
 			-- Caso for um dos avalistas da proposta
-			IF vr_nrcpfcgc_av1 = pr_nrcpfcgc THEN 
+			IF vr_nrcpfcgc_av1 = pr_nrcpfcgc AND NVL(pr_dsclasse,'A') = 'A' THEN 
 				-- Avalista
 				pr_intippes := 2;
         pr_nrctapes := vr_nrdconta_av1;
 				pr_inpessoa := vr_inpessoa_av1;
 				RETURN;
-			ELSIF vr_nrcpfcgc_av2 = pr_nrcpfcgc THEN
+			ELSIF vr_nrcpfcgc_av2 = pr_nrcpfcgc AND NVL(pr_dsclasse,'A') = 'A' THEN
 				-- Avalista				
 				pr_intippes := 2;
         pr_nrctapes := vr_nrdconta_av2;
@@ -9994,18 +10009,34 @@ PROCEDURE pc_verifica_situacao_xml(pr_nrconbir crapcbd.nrconbir%TYPE, --> Numero
 				RETURN;				
 			END IF;
 			
+      -- Sem conta
+      pr_nrctapes := 0;
+			
+      -- Buscar tipo de pessoa
+      gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc
+                                 ,pr_stsnrcal => vr_stsnrcal
+                                 ,pr_inpessoa => pr_inpessoa);
+      
+	  IF NVL(pr_dsclasse,' ') = 'S' THEN
+        pr_intippes := 4;          
+      ELSIF NVL(pr_dsclasse,' ') = 'T' THEN
+        pr_intippes := 6;          
+      ELSE
 			-- Qualquer outro caso retornaremos o tipo 7 - Representante Legal/Procurador e PF
 			pr_intippes := 7;
-      pr_nrctapes := 0;
-      pr_inpessoa := 1;
+      END IF;  
 			
 		EXCEPTION
 			WHEN vr_exc_erro THEN
 				-- Retorna Tipo pessoa com 0 -> Erro
         pr_intippes := 0;
+        pr_nrctapes := 0;
+        pr_inpessoa := 0;
 			WHEN OTHERS THEN
 				-- Retorna Tipo pessoa com 0 -> Erro
         pr_intippes := 0;
+        pr_nrctapes := 0;
+        pr_inpessoa := 0;
 		END;
 	END pc_busca_intippes;
 
