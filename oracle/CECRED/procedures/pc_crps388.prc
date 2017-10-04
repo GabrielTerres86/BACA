@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autora  : Mirtes
-  Data    : Abril/2004                          Ultima atualizacao: 28/09/2017
+  Data    : Abril/2004                          Ultima atualizacao: 04/10/2017
 
   Dados referentes ao programa:
 
@@ -255,6 +255,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
               
               28/09/2017 - Aumentar o format da referencia para 23 posições somente 
                            para a CHUBB mantendo os convenios do else com 22 (Lucas Ranghetti #766211)
+                           
+              04/10/2017 - Alterar o craplau.nrdocmto pelo crapatr.cdrefere na exibição da
+                           referencia no arquivo para a MAPFRE pois estava calculando a 
+                           quantidade a completar com espaços baseado no nrdocmto e deveria
+                           se basear no cdrefere  (Lucas Ranghetti #769738)
   ..............................................................................*/
 
   ----------------------------- ESTRUTURAS de MEMORIA -----------------------------
@@ -1311,7 +1316,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
                 
             vr_dslinreg := 'F' 
                     || rw_crapatr.cdrefere 
-                    || LPAD(' ',25 - length(rw_craplau.nrdocmto),' ') 
+                    || LPAD(' ',25 - length(rw_crapatr.cdrefere),' ') 
                     || to_char(vr_nragenci,'fm0000') 
                     || RPAD(vr_nrdconta,14,' ') 
                     || vr_dtmvtolt 
@@ -1495,7 +1500,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps388(pr_cdcooper IN crapcop.cdcooper%TY
           -- Enviar linha ao arquivo 
           vr_dslinreg := 'F'
                       ||rw_crapatr.cdrefere
-                      ||LPAD(' ',25-length(rw_craplau.nrdocmto),' ')
+                      ||LPAD(' ',25-length(rw_crapatr.cdrefere),' ')
                       ||to_char(vr_nragenci,'fm0000')
                       ||RPAD(vr_nrdconta,14,' ')
                       ||vr_dtmvtolt
