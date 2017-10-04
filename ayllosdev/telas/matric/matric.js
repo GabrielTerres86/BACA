@@ -49,9 +49,10 @@
 			                                    crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava.
  * 025: [31/07/2017] Odirlei Busana   (AMcom) : Aumentado campo dsnatura de 25 para 50, PRJ339-CRM.	
  * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
- * 027: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                        
- * 028: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
- * 029: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
+ * 028: [28/08/2017] Kelvin			  (CECRED): Criando opcao de solicitar relacionamento caso cnpj informado esteja cadastrado na cooperativa. (Kelvin)
+ * 029: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                        
+ * 030: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 031: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  */
 
 // Definição de algumas variáveis globais 
@@ -487,7 +488,7 @@ function manterRotina() {
         idorigee = $('#idorigee', '#frmJuridico').val();
         nrlicamb = $('#nrlicamb', '#frmJuridico').val();
 		// Indicador se estã conectado no banco de producao
-        inbcprod = $('#inbcprod', '#frmCabMatric').val();
+        inbcprod = $('#inbcprod', '#frmCabMatric').val();		
 					
 		//Normalilza os campos de valor
         vlparcel = number_format(parseFloat(vlparcel.replace(/[.R$ ]*/g, '').replace(',', '.')), 2, ',', '');
@@ -546,7 +547,7 @@ function manterRotina() {
 				nmttlrfb: nmttlrfb, hrinicad: hrinicad, arrayFilhos: arrayFilhos,
 				arrayFilhosAvtMatric: arrayFilhosAvtMatric, 
 				arrayBensMatric: arrayBensMatric, idorigee: idorigee,
-				nrlicamb: nrlicamb,
+				nrlicamb: nrlicamb, 
 				redirect: 'script_ajax'
 			}, 
             error: function (objAjax, responseError, objExcept) {
@@ -3180,5 +3181,148 @@ function validaAcessoEexecuta(UrlSite, tipo) {
 	});
 }
 
+
+}
+
+function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpessoa, nmpessoaReceita, tpsexo, dtnascimento,
+								    tpdocumento, nrdocumento, idorgaoExpedidor, cdufOrgaoExpedidor, dtemissaoDocumento,
+								    tpnacionalidade, inhabilitacaoMenor, dthabilitacaoMenor, cdestadoCivil, nmmae,
+								    nmconjugue, nmpai, naturalidadeDsCidade, naturalidadeCdEstado,comercialNrddd, comercialNrTelefone,
+								    residencialNrddd, residencialNrTelefone, celularCdOperadora, celularNrDdd, celularNrTelefone, residencialNrCep,
+								    residencialNmLogradouro, residencialNrLogradouro, residencialDsComplemento, residencialNmBairro,
+								    residencialCdEstado, residencialDsCidade, residencialTporigem, correspondenciaNrCep,
+								    correspondenciaNmLogradouro, correspondenciaNrLogradouro, correspondenciaDsComplemento,
+								    correspondenciaNmBairro, correspondenciaCdEstado, correspondenciaDsCidade, correspondenciaTporigem,
+								    dsnacion, cdExpedidor, dsdemail, nmfantasia, comercialNrCep, comercialNmLogradouro, comercialNrLogradouro,
+								    comercialDsComplemento, comercialNmBairro, comercialCdEstado, comercialDsCidade, comercialTporigem,
+									nrInscricao, nrLicenca, cdNatureza, cdSetor, cdRamo, cdCnae, dtInicioAtividade, cdNaturezaOcupacao, 
+									cdNacionalidade) {
+																			 
+	var bo = 'b1wgen0059.p';	
+	var nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
+	
+	$('#tpdocptl', '#' + nomeForm).val(tpdocumento);
+	$('#nrdocptl', '#' + nomeForm).val(nrdocumento);
+	$('#nmttlrfb', '#' + nomeForm).val(nmpessoaReceita);
+	$('#cdsitcpf', '#' + nomeForm).val(cdsituacaoRfb);
+	$('#nmprimtl', '#' + nomeForm).val(nmpessoa);  
+	$('#dtcnscpf', '#' + nomeForm).val(dtconsultarfb);		
+	$('#dsdemail', '#' + nomeForm).val(dsdemail);
+	$('#nrcepcor', '#' + nomeForm).val(correspondenciaNrCep);
+	$('#dsendcor', '#' + nomeForm).val(correspondenciaNmLogradouro);
+	$('#nrendcor', '#' + nomeForm).val(correspondenciaNrLogradouro);
+	$('#complcor', '#' + nomeForm).val(correspondenciaDsComplemento);
+	$('#nmbaicor', '#' + nomeForm).val(correspondenciaNmBairro) ;
+	$('#cdufcorr', '#' + nomeForm).val(correspondenciaCdEstado);
+	$('#nmcidcor', '#' + nomeForm).val(correspondenciaDsCidade);
+	$('#idoricor', '#' + nomeForm).val(correspondenciaTporigem); 
+	
+	
+	if (inpessoa == 1) {
+		$('#dsnacion', '#' + nomeForm).val(dsnacion);
+		$('#inhabmen', '#' + nomeForm).val(inhabilitacaoMenor);
+		$('#dthabmen', '#' + nomeForm).val(dthabilitacaoMenor);		
+		$('#cdestcvl', '#' + nomeForm).val(cdestadoCivil);	
+		$('#tpnacion', '#' + nomeForm).val(tpnacionalidade);
+		$('#cdoedptl', '#' + nomeForm).val(cdExpedidor);
+		$('#cdnacion', '#' + nomeForm).val(cdNacionalidade);
+		$('#cdufdptl', '#' + nomeForm).val(cdufOrgaoExpedidor);
+		$('#dtemdptl', '#' + nomeForm).val(dtemissaoDocumento);
+		$('#dtnasctl', '#' + nomeForm).val(dtnascimento); 
+		$('#nmconjug', '#' + nomeForm).val(nmconjugue);
+		$('#nmmaettl', '#' + nomeForm).val(nmmae);	
+		$('#nmpaittl', '#' + nomeForm).val(nmpai);
+		$('#dsnatura', '#' + nomeForm).val(naturalidadeDsCidade);
+		$('#cdufnatu', '#' + nomeForm).val(naturalidadeCdEstado);
+		$('#nrdddres', '#' + nomeForm).val(residencialNrddd);
+		$('#nrtelres', '#' + nomeForm).val(residencialNrTelefone);
+		$('#cdopetfn', '#' + nomeForm).val(celularCdOperadora);
+		$('#nrdddcel', '#' + nomeForm).val(celularNrDdd);
+		$('#nrtelcel', '#' + nomeForm).val(celularNrTelefone);
+		$('#nrcepend', '#' + nomeForm).val(residencialNrCep);
+		$('#dsendere', '#' + nomeForm).val(residencialNmLogradouro);
+		$('#nrendere', '#' + nomeForm).val(residencialNrLogradouro);
+		$('#complend', '#' + nomeForm).val(residencialDsComplemento);
+		$('#nmbairro', '#' + nomeForm).val(residencialNmBairro);
+		$('#cdufende', '#' + nomeForm).val(residencialCdEstado);
+		$('#nmcidade', '#' + nomeForm).val(residencialDsCidade);
+		$('#idorigee', '#' + nomeForm).val(residencialTporigem); 
+		$('#cdocpttl', '#' + nomeForm).val(cdNaturezaOcupacao); 
+				
+		if (tpsexo == 1) {
+			$('#sexoFem', '#' + nomeForm).prop('checked', false);	  	
+			$('#sexoMas', '#' + nomeForm).prop('checked', true);
+		}
+		else {
+			$('#sexoMas', '#' + nomeForm).prop('checked', false);
+			$('#sexoFem', '#' + nomeForm).prop('checked', true);	  		
+		}
+		
+		procedure = 'busca_tipo_nacionalidade';
+		titulo = 'Tipo Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'tpnacion', 'destpnac', tpnacionalidade, 'destpnac', filtrosDesc, nomeForm);
+		
+		procedure = 'busca_tipo_nacionalidade';
+		titulo = 'Tipo Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'tpnacion', 'destpnac', tpnacionalidade, 'destpnac', filtrosDesc, nomeForm);
+		
+		procedure = 'busca_estado_civil';
+		titulo = 'Estado Civil';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'cdestcvl', 'dsestcvl', cdestadoCivil, 'dsestcvl', filtrosDesc, 'frmFisico');
+		
+		procedure = 'BUSCOCUPACAO';
+		titulo = 'Ocupação';
+		filtrosDesc = '';
+		buscaDescricao("ZOOM0001", procedure, titulo, 'cdocpttl', 'dsocpttl', cdNaturezaOcupacao, 'rsdocupa', filtrosDesc, 'frmFisico');
+		
+		procedure = 'BUSCANACIONALIDADES';
+		titulo = 'Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao("ZOOM0001", procedure, titulo, 'cdnacion', 'dsnacion', cdNacionalidade, 'dsnacion', filtrosDesc, 'frmFisico');
+	}
+	else if (inpessoa == 2){		
+		$('#nmfansia', '#' + nomeForm).val(nmfantasia);
+		$('#nrcepend', '#' + nomeForm).val(comercialNrCep);
+		$('#dsendere', '#' + nomeForm).val(comercialNmLogradouro);
+		$('#nrendere', '#' + nomeForm).val(comercialNrLogradouro);
+		$('#complend', '#' + nomeForm).val(comercialDsComplemento);
+		$('#nmbairro', '#' + nomeForm).val(comercialNmBairro);
+		$('#cdufende', '#' + nomeForm).val(comercialCdEstado);
+		$('#nmcidade', '#' + nomeForm).val(comercialDsCidade);
+		$('#idorigee', '#' + nomeForm).val(comercialTporigem); 	
+		$('#nrdddtfc', '#' + nomeForm).val(comercialNrddd);
+		$('#nrtelefo', '#' + nomeForm).val(comercialNrTelefone);
+		$('#nrinsest', '#' + nomeForm).val(nrInscricao); 		
+		$('#nrlicamb', '#' + nomeForm).val(nrLicenca);
+		$('#natjurid', '#' + nomeForm).val(cdNatureza);		
+		$('#cdseteco', '#' + nomeForm).val(cdSetor);
+		$('#cdrmativ', '#' + nomeForm).val(cdRamo);
+		$('#cdcnae', '#' + nomeForm).val(cdCnae);
+		$('#dtiniatv', '#' + nomeForm).val(dtInicioAtividade);	
+		
+		procedure = 'busca_natureza_juridica';
+		titulo = 'Nat. Jurídica';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'natjurid', 'rsnatjur', cdNatureza, 'rsnatjur', filtrosDesc, 'frmJuridico');
+		
+		procedure = 'busca_setor_economico';
+		titulo = 'Setor Econômico';
+		filtrosDesc = '';
+		buscaDescricao(bo, procedure, titulo, 'cdseteco', 'nmseteco', cdSetor, 'nmseteco', filtrosDesc, 'frmJuridico');				
+
+		procedure = 'busca_ramo_atividade';
+		titulo = 'Ramo Atividade';
+		filtrosDesc = 'cdseteco';
+		buscaDescricao(bo, procedure, titulo, 'cdrmativ', 'dsrmativ', cdRamo, 'nmrmativ', filtrosDesc, 'frmJuridico');
+
+		procedure = 'BUSCA_CNAE';
+		titulo = 'CNAE';
+		filtrosDesc = 'flserasa|2';
+		buscaDescricao('ZOOM0001', procedure, titulo, 'cdcnae', 'dscnae', cdCnae, 'dscnae', filtrosDesc, 'frmJuridico');				
+		
+	}
 
 }
