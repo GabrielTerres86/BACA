@@ -58,13 +58,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   --             lançamentos centralizados
   --  Sigla    : CONT
   --  Autor    : Jonatas Jaqmam Pereira - Supero
-  --  Data     : Maio/2017.                   Ultima atualizacao: 02/05/2017
+  --  Data     : Maio/2017.                   Ultima atualizacao: 03/10/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Diário
   -- Objetivo  : Rotinas para geração de arquivos contábeis para o Radar/Matera de
   --             lançamentos centralizados
+  --
+  -- Alterações : 03/10/2017 - Ajustes na CC Debito Histórico 851 - Marcos(Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -143,7 +145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                             pr_retfile  OUT VARCHAR2) IS
     
   BEGIN
-    
+         
          
     -- Define o diretório do arquivo
     vr_utlfileh := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
@@ -453,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
 
    END;  
-    
+
 
   BEGIN
 
@@ -521,7 +523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
       END IF;
       
-      
+
       --Prefixo de código de acesso para busca de parametros.      
       IF rw_craplcm.cdhistor in (440,446,544,545,1024,1069,1160,1161) THEN
         
@@ -938,9 +940,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
         vr_tab_historico(2270).nrctaori := 4894;
         vr_tab_historico(2270).nrctades := 1455;
         vr_tab_historico(2270).dsrefere := 'DEBITO C/C pr_nrctafmt CECRED REF. DEVOLUCAO REMETIDA DE COBRANCA';    
-        
+
    END;  
-             
+
     
   BEGIN
 
@@ -994,7 +996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       
     END LOOP;
     --
-    
+
 
     FOR rw_craplcm in cr_craplcm LOOP
       
@@ -1130,7 +1132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     END IF;
     CLOSE cr_vlsdeved;     
          
-         
+
     IF nvl(vr_vlsdeved,0) <> 0 then
 
       cont0001.pc_abre_arquivo(pr_cdcooper,pr_dtmvtolt,'RECURSOS_CAIXA',pr_retfile);
@@ -1238,17 +1240,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
                                       ,pr_dtmvtopr IN DATE) IS
     
   BEGIN
-    
+
     btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                pr_ind_tipo_log => 2, -- Erro tratado
                                pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                 || 'CONT0001.pc_gera_arquivos_contabeis' || ' --> '
                                                 || 'Inicio gerarao arquivos contabeis de lancamentos centralizacao');
-  
+    
     FOR rw_crapcop IN cr_crapcop LOOP
 
       vr_dscritic := null;
-      
+
       --Arquivo de lançamentos centralizado
       CONT0001.pc_gera_arq_centralizacao(rw_crapcop.cdcooper,pr_dtmvtolt,vr_retfile,vr_dscritic);
       
@@ -1285,7 +1287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
       END IF;       
       
     END LOOP;
-    
+
     --Limpa os dados da tabela de lançamentos centralizados.
     DELETE FROM TBCONTAB_LANCTOS_CENTRALIZA;
     COMMIT;
