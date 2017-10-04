@@ -367,7 +367,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
 		CREATE xml_operacao.
 		ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
 									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-									   "<dsprotoc>" + (IF pc_gps_pagamento.pr_dsprotoc <> ? THEN pc_gps_pagamento.pr_dsprotoc ELSE "") + "</dsprotoc>".
+									   "<dsprotoc>" + (IF pc_gps_agmto_novo.pr_dsprotoc <> ? THEN pc_gps_agmto_novo.pr_dsprotoc ELSE "") + "</dsprotoc>".
 
 		RETURN "OK".	
 	END.
