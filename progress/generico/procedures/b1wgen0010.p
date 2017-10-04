@@ -3987,7 +3987,7 @@ PROCEDURE cria_tt-consulta-blt.
      /* Se o boleto nao possui as informacoes de Negativacao, vamos buscar do convenio */
      IF (tt-consulta-blt.flserasa = FALSE OR 
          tt-consulta-blt.qtdianeg = 0)  AND
-         tt-consulta-blt.inserasa = 0  THEN
+         tt-consulta-blt.inserasa = "0" THEN
      DO:
          IF NOT (tt-consulta-blt.flgdprot = TRUE AND 
                  tt-consulta-blt.qtdiaprt > 0)   THEN
@@ -4008,7 +4008,7 @@ PROCEDURE cria_tt-consulta-blt.
      DO:
          IF NOT (tt-consulta-blt.flserasa = TRUE AND 
                  tt-consulta-blt.qtdianeg > 0)   OR
-                 tt-consulta-blt.inserasa <> 0   THEN
+                 tt-consulta-blt.inserasa <> "0" THEN
          DO:
              ASSIGN tt-consulta-blt.qtdiaprt = 0
                     tt-consulta-blt.flgdprot = crapceb.flprotes.
@@ -5178,8 +5178,9 @@ PROCEDURE proc_nosso_numero.
                   tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt.
 
            /* Se o boleto nao possui as informacoes de Negativacao, vamos buscar do convenio */
-           IF tt-consulta-blt.flserasa = FALSE OR 
-              tt-consulta-blt.qtdianeg = 0     THEN
+           IF (tt-consulta-blt.flserasa = FALSE OR 
+               tt-consulta-blt.qtdianeg = 0 )   AND 
+               tt-consulta-blt.inserasa = "N"  THEN
            DO:
                IF NOT (tt-consulta-blt.flgdprot = TRUE AND 
                        tt-consulta-blt.qtdiaprt > 0)   THEN
@@ -5199,7 +5200,8 @@ PROCEDURE proc_nosso_numero.
               tt-consulta-blt.qtdiaprt = 0     THEN
            DO:
                IF NOT (tt-consulta-blt.flserasa = TRUE AND 
-                       tt-consulta-blt.qtdianeg > 0)   THEN
+                       tt-consulta-blt.qtdianeg > 0 )  OR
+                       tt-consulta-blt.inserasa <> "N" THEN
                DO:
                    ASSIGN tt-consulta-blt.qtdiaprt = 0
                           tt-consulta-blt.flgdprot = crapceb.flprotes.
