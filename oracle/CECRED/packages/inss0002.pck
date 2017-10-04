@@ -1927,7 +1927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     pr_des_reto := 'NOK';
     
     IF TRIM(pr_dshistor) IS NULL THEN
-      vr_dshistor := UPPER('Identificador ') || pr_cdidenti;
+      vr_dshistor := UPPER('GPS - Identificador ') || pr_cdidenti;
     ELSE
       vr_dshistor := pr_dshistor;
     END IF;    
@@ -3378,7 +3378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_cdlindig := NVL(pr_cdlindig,' ');
 
      IF TRIM(pr_dshistor) IS NULL THEN
-       vr_dscedent := UPPER('Identificador ') || pr_dsidenti;
+       vr_dscedent := UPPER('GPS - Identificador ') || pr_dsidenti;
      ELSE
        vr_dscedent := pr_dshistor;
      END IF;
@@ -4816,7 +4816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      
      -- Atribui o histórico
      IF TRIM(pr_dshistor) IS NULL THEN
-       vr_dshistor := UPPER('Identificador ') || pr_dsidenti;
+       vr_dshistor := UPPER('GPS - Identificador ') || pr_dsidenti;
      ELSE
        vr_dshistor := pr_dshistor;
      END IF;           
@@ -7103,7 +7103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             
 
           IF TRIM(pr_dshistor) IS NULL THEN
-            vr_dshistor := UPPER('Identificador ') || pr_cdidenti;
+            vr_dshistor := UPPER('GPS - Identificador ') || pr_cdidenti;
           ELSE
             vr_dshistor := pr_dshistor;
           END IF;              
