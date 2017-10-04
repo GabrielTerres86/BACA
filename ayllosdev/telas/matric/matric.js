@@ -51,6 +51,7 @@
  * 026: [04/08/2017] Adriano          (CECRED): Ajuste para chamar a package zoom001 na busca de código cnae.
  * 027: [19/09/2017] Kelvin			  (CECRED): Ajuste no problema ao carregar contas com situacao de cpf diferente de 0. (PRJ339)			                        
  * 028: [25/09/2017] Kelvin			  (CECRED):	Adicionado uma lista de valores para carregar orgao emissor. (PRJ339)			                         
+ * 029: [29/09/2017] Adriano          (CECRED): Ajuste para forçar a nacionalidade como 42 - Brasileira ao informar o tp. nacionalidade como 1 - Brasileiro.
  */
 
 // Definição de algumas variáveis globais 
@@ -1352,7 +1353,7 @@ function formataPessoaFisica() {
 	
 		if ($(this).val() == 1) { // Se for brasileiro/a
 			cCdufnatu.val("").habilitaCampo();
-            cCodNacion.val("37");
+            cCodNacion.val("42");
 			cDesNacion.val("BRASILEIRA");
 			controlaPesquisas();
 			cDesNatura.focus();
