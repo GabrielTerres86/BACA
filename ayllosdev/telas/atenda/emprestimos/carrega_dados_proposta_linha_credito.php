@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 28/09/2016
  * OBJETIVO     : Carrega os dados da proposta a partir do campo Linha de Credito
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 25/04/2017 - Incluido retorno da variável inobriga
  * --------------
  */
 	session_start();
@@ -18,6 +18,7 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : ''; 
 	$cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
 	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '';
+  $dsctrliq = (isset($_POST['dsctrliq'])) ? $_POST['dsctrliq'] : '';
 	
 	$xml  = "<Root>";
 	$xml .= "	<Cabecalho>";
@@ -25,7 +26,7 @@
 	$xml .= "		<Proc>carrega_dados_proposta_linha_credito</Proc>";
 	$xml .= "	</Cabecalho>";
 	$xml .= "	<Dados>";
-	$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml .= "		<cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
 	$xml .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
@@ -35,6 +36,7 @@
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<cdfinemp>".$cdfinemp."</cdfinemp>";
 	$xml .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
+  $xml .= "		<dsctrliq>".$dsctrliq."</dsctrliq>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	
@@ -46,5 +48,6 @@
 		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"$('#cdlcremp').val('');$('#cdlcremp').val('');$('#cdlcremp').attr('aux','');",false);
 	}else{
 		echo "$('#nivrisco').val('".$xmlObjeto->roottag->tags[0]->attributes['DSNIVRIS']."');";
+		echo "inobriga = '".$xmlObjeto->roottag->tags[0]->attributes['INOBRIGA']."';";
 	}
 ?>
