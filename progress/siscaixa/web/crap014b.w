@@ -3,7 +3,7 @@
 Programa: siscaixa/web/crap014b.w
 Sistema : Caixa On-line                                       
 Sigla   : CRED    
-                                             Ultima atualizacao: 11/09/2015
+                                             Ultima atualizacao: 29/12/2016
    
 Dados referentes ao programa:
 
@@ -66,6 +66,8 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                          Chamado 229313 (Jean Reddiga - RKAM).    
             
             11/09/2015 - Melhoria 21 (Tiago/Fabricio).               
+
+            29/12/2016 - Tratamento Nova Plataforma de cobrança PRJ340 - NPC (Odirlei-AMcom)  
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -98,6 +100,11 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_intitcop AS CHARACTER FORMAT "X(256)":U
        FIELD v_cpfsacado  AS CHARACTER FORMAT "X(256)":U
        FIELD v_cpfcedente   AS CHARACTER FORMAT "X(256)":U
+       FIELD v_nmbenefi     AS CHARACTER FORMAT "X(256)":U
+       FIELD v_nrdocbnf     AS CHARACTER FORMAT "X(256)":U
+       FIELD c_dsdocbnf     AS CHARACTER FORMAT "X(256)":U
+       FIELD v_inpesbnf     AS CHARACTER FORMAT "X(256)":U
+       FIELD v_cdctrlcs     AS CHARACTER FORMAT "X(256)":U
        FIELD v_cod          AS CHARACTER FORMAT "X(256)":U
        FIELD v_senha        AS CHARACTER FORMAT "X(256)":U.
        
@@ -145,6 +152,7 @@ DEFINE VARIABLE c_codbarras AS CHARACTER  NO-UNDO.
 DEFINE VARIABLE c_intitcop  AS CHARACTER  NO-UNDO. 
 DEFINE VARIABLE c_conta     AS CHARACTER  NO-UNDO.
 DEFINE VARIABLE c_nome      AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE c_nmbenefi  AS CHARACTER  NO-UNDO.
 
 DEFINE VARIABLE h_b1crap00   AS HANDLE    NO-UNDO.
 DEFINE VARIABLE h-b1crap20   AS HANDLE    NO-UNDO.
@@ -216,8 +224,8 @@ DEF TEMP-TABLE w-craperr  NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_mensagem1 ab_unmap.v_mensagem2  ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorinf ab_unmap.v_intitcop ab_unmap.v_cpfcedente ab_unmap.v_cpfsacado ab_unmap.v_cod ab_unmap.v_senha  
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_mensagem1 ab_unmap.v_mensagem2  ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorinf ab_unmap.v_intitcop ab_unmap.v_cpfcedente ab_unmap.v_cpfsacado ab_unmap.v_cod ab_unmap.v_senha
+&Scoped-Define ENABLED-OBJECTS   ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_mensagem1 ab_unmap.v_mensagem2  ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorinf ab_unmap.v_intitcop ab_unmap.v_cpfcedente ab_unmap.v_nmbenefi ab_unmap.v_nrdocbnf ab_unmap.c_dsdocbnf ab_unmap.v_inpesbnf ab_unmap.v_cdctrlcs ab_unmap.v_cpfsacado ab_unmap.v_cod ab_unmap.v_senha  
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_nome ab_unmap.v_conta ab_unmap.v_mensagem1 ab_unmap.v_mensagem2  ab_unmap.vh_foco ab_unmap.v_caixa ab_unmap.v_codbarras ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_tit1 ab_unmap.v_tit2 ab_unmap.v_tit3 ab_unmap.v_tit4 ab_unmap.v_tit5 ab_unmap.v_valordoc ab_unmap.v_valorinf ab_unmap.v_intitcop ab_unmap.v_cpfcedente ab_unmap.v_nmbenefi ab_unmap.v_nrdocbnf ab_unmap.c_dsdocbnf ab_unmap.v_inpesbnf ab_unmap.v_cdctrlcs ab_unmap.v_cpfsacado ab_unmap.v_cod ab_unmap.v_senha
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -319,6 +327,26 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+    ab_unmap.v_nmbenefi AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1      
+    ab_unmap.v_nrdocbnf AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1   
+    ab_unmap.c_dsdocbnf AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1         
+    ab_unmap.v_inpesbnf AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1         
+    ab_unmap.v_cdctrlcs AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1      
     ab_unmap.v_cpfsacado AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -534,6 +562,16 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
    ("v_cpfcedente":U,"ab_unmap.v_cpfcedente":U,ab_unmap.v_cpfcedente:HANDLE IN FRAME {&FRAME-NAME}). 
   RUN htmAssociate
+   ("v_nmbenefi":U,"ab_unmap.v_nmbenefi":U,ab_unmap.v_nmbenefi:HANDLE IN FRAME {&FRAME-NAME}).  
+  RUN htmAssociate
+   ("v_nrdocbnf":U,"ab_unmap.v_nrdocbnf":U,ab_unmap.v_nrdocbnf:HANDLE IN FRAME {&FRAME-NAME}).  
+   RUN htmAssociate
+   ("c_dsdocbnf":U,"ab_unmap.c_dsdocbnf":U,ab_unmap.c_dsdocbnf:HANDLE IN FRAME {&FRAME-NAME}).  
+  RUN htmAssociate
+   ("v_inpesbnf":U,"ab_unmap.v_inpesbnf":U,ab_unmap.v_inpesbnf:HANDLE IN FRAME {&FRAME-NAME}).   
+  RUN htmAssociate
+   ("v_cdctrlcs":U,"ab_unmap.v_cdctrlcs":U,ab_unmap.v_cdctrlcs:HANDLE IN FRAME {&FRAME-NAME}).     
+  RUN htmAssociate
    ("v_cpfsacado":U,"ab_unmap.v_cpfsacado":U,ab_unmap.v_cpfsacado:HANDLE IN FRAME {&FRAME-NAME}). 
   RUN htmAssociate
    ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}). 
@@ -635,6 +673,7 @@ PROCEDURE process-web-request :
   DEFINE VARIABLE aux_recidcob     AS INT64.
   DEFINE VARIABLE aux_dsmanual     AS CHAR.
   DEFINE VARIABLE aux_tpcptdoc     AS INTE.
+  DEFINE VARIABLE aux_cdsittit     AS INTE.
 
   RUN outputHeader.
   {include/i-global.i}
@@ -649,8 +688,27 @@ PROCEDURE process-web-request :
          c_conta      = get-value("v_pconta") 
          c_nome       = get-value("v_pnome")
          c_intitcop   = get-value("v_intitcop") 
+         v_nrdocbnf   = get-value("v_nrdocbnf")
+         v_nmbenefi   = get-value("v_nmbenefi")
+         v_inpesbnf   = get-value("v_inpesbnf")
+         v_cdctrlcs   = get-value("v_cdctrlcs")
          aux_dsmanual = get-value("manual") 
          vh_foco     = "21".
+
+  IF v_nrdocbnf <> "" THEN DO:
+    IF v_cpfcedente = "" THEN
+    DO:
+      ASSIGN v_cpfcedente = v_nrdocbnf.
+    END.
+  
+    IF v_inpesbnf = "1" THEN
+         ASSIGN c_dsdocbnf = STRING(DEC(v_nrdocbnf),"99999999999")
+                c_dsdocbnf = STRING(c_dsdocbnf,"xxx.xxx.xxx-xx").
+    ELSE
+         ASSIGN c_dsdocbnf = STRING(DEC(v_nrdocbnf),"99999999999999")
+                c_dsdocbnf = STRING(c_dsdocbnf,"xx.xxx.xxx/xxxx-xx").  
+  END.
+  
 
   IF REQUEST_METHOD = "POST":U THEN DO:    
     /* STEP 1 -
@@ -694,6 +752,62 @@ PROCEDURE process-web-request :
                de_tit4     = 0
                de_tit5     = 0.
 
+        
+          /* Popular campo novamente caso apresente erro e 
+            necessite apresentar na tela*/
+          IF v_nrdocbnf <> "" THEN DO:
+  
+            IF v_inpesbnf = "1" THEN
+                 ASSIGN c_dsdocbnf = STRING(DEC(v_nrdocbnf),"99999999999")
+                        c_dsdocbnf = STRING(c_dsdocbnf,"xxx.xxx.xxx-xx").
+            ELSE
+                 ASSIGN c_dsdocbnf = STRING(DEC(v_nrdocbnf),"99999999999999")
+                        c_dsdocbnf = STRING(c_dsdocbnf,"xx.xxx.xxx/xxxx-xx").  
+          END.
+          
+        /* Se possui consulta NPC é necessario informar pagador*/
+        IF v_cdctrlcs <> "" THEN
+        DO:
+          
+          /* Nao deve ser obrigado campo do CPF/CNPJ ou conta
+          IF INT(v_conta) = 0 AND 
+             (DECI(v_cpfsacado) = 0 OR 
+              v_cpfsacado = "" )THEN
+          DO:   
+            
+            {&out} '<script>alert("Favor informar Conta ou CPF\CNPJ do Pagador.");</script>' SKIP.         
+             RUN displayFields.
+             RUN enableFields.
+             RUN outputFields.
+             NEXT. 
+          END.
+          */
+          
+          /* Validar CPF/CNPJ Pagador */
+          IF (DECI(v_cpfsacado) > 0 )THEN
+          DO: 
+            RUN sistema/generico/procedures/b1wgen9999.p
+               PERSISTENT SET h-b1wgen9999.
+
+            RUN valida-cpf-cnpj IN h-b1wgen9999
+                                (INPUT DECI(v_cpfsacado),
+                                OUTPUT p-stsnrcal,
+                                OUTPUT p-inpessoa).
+                               
+            DELETE PROCEDURE h-b1wgen9999.
+
+            IF   NOT p-stsnrcal    THEN
+                 DO:
+                     {&out} '<script>alert("CPF/CNPJ do pagador com erro.");</script>' SKIP.         
+                     RUN displayFields.
+                     RUN enableFields.
+                     RUN outputFields.
+                     NEXT.
+                 END.  
+          END.     
+        END.
+        
+        
         IF  UPPER(aux_dsmanual) = "MANUAL" THEN
             DO:
                 ASSIGN de_tit1     = DECIMAL(get-value("ptitulo1"))
@@ -784,6 +898,7 @@ PROCEDURE process-web-request :
                  INPUT 0,
                  INPUT 0,
                  INPUT ?,
+                 INPUT v_cdctrlcs, /*pr_cdctrlcs*/
                  OUTPUT 0,
                  OUTPUT 0,
                  OUTPUT 0,
@@ -855,7 +970,7 @@ PROCEDURE process-web-request :
         IF v_mensagem2 = ? THEN
            v_mensagem2 = " ".
 
-        IF p_confvalor THEN
+        IF p_confvalor AND v_cdctrlcs = "" THEN
             ASSIGN v_mensagem1 =
              "O Valor Digitado difere do Valor Codificado".
 
@@ -965,6 +1080,7 @@ PROCEDURE process-web-request :
                                INPUT par_vloutdeb,
                                INPUT par_vloutcre,
                                INPUT aux_tpcptdoc, 
+                               INPUT v_cdctrlcs, /* pr_cdctrlcs*/
                                OUTPUT 0, /* aux_rowidcob, */
                                OUTPUT 0, /*aux_indpagto,*/
                                OUTPUT 0, /*aux_nrcnvbol,*/
@@ -1036,9 +1152,82 @@ PROCEDURE process-web-request :
                          END.
                          UNDO.
                      END.     
+                     
+                     /* Se for um titulo NPC*/
+                     IF l-houve-erro = NO AND 
+                        TRIM(v_cdctrlcs) <> "" THEN
+                     DO:
+                      
+                       /* Determinar situacao titulo */
+                       IF aux-intitcop = 1 THEN
+                          ASSIGN aux_cdsittit = 3.  /* Pg.IntraBanc. */
+                       ELSE
+                          ASSIGN aux_cdsittit = 4. /* Pg.InterBanc. */
+                       
+                       
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                       RUN STORED-PROCEDURE pc_atualz_situac_titulo_sacado
+                           aux_handproc = PROC-HANDLE NO-ERROR
+                              (  INPUT crapcop.cdcooper  /* pr_cdcooper */ 
+                                ,INPUT INT(v_pac)        /* pr_cdagecxa */ 
+                                ,INPUT INT(v_caixa)      /* pr_nrdcaixa */ 
+                                ,INPUT v_operador        /* pr_cdopecxa */ 
+                                ,INPUT "CRAP014"         /* pr_nmdatela */ 
+                                ,INPUT 2  /* caixa */    /* pr_idorigem */ 
+                                ,INPUT INT(v_conta)      /* pr_nrdconta */ 
+                                ,INPUT 0                 /* pr_idseqttl */ 
+                                ,INPUT ""                 /* pr_idtitdda */ 
+                                ,INPUT aux_cdsittit      /* pr_cdsittit */ 
+                                ,INPUT 0                 /* pr_flgerlog */ 
+                                ,INPUT crapdat.dtmvtolt  /* pr_dtmvtolt */  
+                                ,INPUT c_codbarras       /* pr_dscodbar */ 
+                                ,INPUT v_cdctrlcs        /* pr_cdctrlcs */ 
+                               ,OUTPUT 0                 /* pr_cdcritic */ 
+                               ,OUTPUT "" ).             /* pr_dscritic */ 
+                             
+
+                       CLOSE STORED-PROC pc_atualz_situac_titulo_sacado
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                       
+                       ASSIGN  aux_cdcritic = 0
+                               aux_dscritic = ""
+                               aux_cdcritic = pc_atualz_situac_titulo_sacado.pr_cdcritic 
+                                              WHEN pc_atualz_situac_titulo_sacado.pr_cdcritic <> ?
+                               aux_dscritic = pc_atualz_situac_titulo_sacado.pr_dscritic 
+                                              WHEN pc_atualz_situac_titulo_sacado.pr_dscritic <> ?.
+                       
+                       
+                       IF  aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+                           ASSIGN l-houve-erro = YES.
+                           FOR EACH w-craperr:
+                               DELETE w-craperr.
+                           END.
+                           FOR EACH craperr NO-LOCK WHERE
+                                    craperr.cdcooper = crapcop.cdcooper  AND
+                                    craperr.cdagenci =  INT(v_pac)       AND
+                                    craperr.nrdcaixa =  INT(v_caixa):
+
+                              CREATE w-craperr.
+                              ASSIGN w-craperr.cdagenci   = craperr.cdagenc
+                                     w-craperr.nrdcaixa   = craperr.nrdcaixa
+                                     w-craperr.nrsequen   = craperr.nrsequen
+                                     w-craperr.cdcritic   = craperr.cdcritic
+                                     w-craperr.dscritic   = craperr.dscritic
+                                     w-craperr.erro       = craperr.erro.
+                           END.
+                           UNDO.
+                       END.
+                     
+                     END. /* Fim atualizar titulo CIP */
+                     
+                     
                  END.  /* do transaction */
                  
-                 IF  p-indpagto <> 0 THEN 
+                 IF  l-houve-erro = NO AND 
+                     p-indpagto <> 0 THEN 
                      DO: 
                          /*** No caso de erro, somente mostra message no log pois a 
                          procedure abaixo nao interfere no pagamento do titulo ***/
@@ -1053,7 +1242,9 @@ PROCEDURE process-web-request :
                                      p-rowidcob = ROWID(crapcob).
                                  END.
 
-                                 RUN liquidacao-intrabancaria-dda IN h-b1wgen0088 (INPUT p-rowidcob, /* ROWID(crapcob),*/
+                                 RUN liquidacao-intrabancaria-dda IN h-b1wgen0088(INPUT crapcop.cdcooper,
+                                                                                  INPUT crapdat.dtmvtolt,
+                                                                                  INPUT aux_recidcob,   
                                                                                   OUTPUT ret_dsinserr).
                 
                                  DELETE PROCEDURE h-b1wgen0088.
@@ -1066,6 +1257,7 @@ PROCEDURE process-web-request :
                      END.                                    
                    
                  IF  l-houve-erro = YES  THEN  DO:
+                 
                      RUN verifica-erro (INPUT v_pac, INPUT v_caixa).
                  END.
                  
@@ -1189,6 +1381,7 @@ PROCEDURE process-web-request :
              INPUT 0,
              INPUT 0,
              INPUT ?,
+             INPUT v_cdctrlcs, /* pr_cdctrlcs */
              OUTPUT 0,
              OUTPUT 0,
              OUTPUT 0,
@@ -1260,7 +1453,7 @@ PROCEDURE process-web-request :
     IF v_mensagem2 = ? THEN
        v_mensagem2 = " ".
 
-    IF p_confvalor THEN
+    IF p_confvalor AND v_cdctrlcs = "" THEN
        ASSIGN v_mensagem1 = "O Valor Digitado difere do Valor Codificado".
     
     IF p_confdata THEN
