@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
     Sistema : Cobranca - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Rafael
-    Data    : janeiro/2012.                     Ultima atualizacao: 14/07/2017
+    Data    : janeiro/2012.                     Ultima atualizacao: 20/09/2017
  
     Dados referentes ao programa:
  
@@ -94,6 +94,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
                              
                 14/07/2017 - Retirado verificação do inproces da crapdat. Dessa forma
                              o programa pode ser executado todos os dias. (Rafael)
+
+                20/09/2017 - Ajustado para que e a validação de envio do titulo para a CIP
+                             seja feita com duas variáveis, pois caso o pagador não seja DDA
+                             e o primeiro titulo identificado como dentro da faixa de ROLLOUT,
+                             todos os titulos que serão processados em seguida tambem serão
+                             registrados (Douglas - Chamado 756559)
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps618';     -- Nome do programa
@@ -294,6 +300,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps618(pr_cdcooper  IN craptab.cdcooper%t
   vr_inauxtab           NUMBER;
   vr_tppessoa           VARCHAR2(1);
   vr_flgsacad           NUMBER;
+  vr_flgrollout         INTEGER;
   vr_cdcritic           NUMBER;
   vr_dscritic           VARCHAR2(1000);
   vr_des_erro           VARCHAR2(10);
@@ -611,7 +618,7 @@ BEGIN
     END IF;
     -- Fechar 
     CLOSE BTCH0001.cr_crapdat;
-        
+    
     -- Log de início da execução
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
                           pr_dstiplog  => 'I');
@@ -661,6 +668,11 @@ BEGIN
     -- Limpar registros de memória
     vr_tb_remessa_dda.DELETE();
     vr_tb_retorno_dda.DELETE();
+
+    -- Inicializar ROLLOUT e o sacado DDA
+    vr_flgrollout := 0;
+    vr_flgsacad   := 0;
+    vr_insitpro   := 0; -- nao eh sacado DDA 
     
     -- Rotina para registrar os títulos na CIP
     FOR rw_titulos IN cr_titulos(pr_cdcooper => rw_crapcop.cdcooper
@@ -669,8 +681,14 @@ BEGIN
                                 ,pr_dtmvtoan => rw_crapdat.dtmvtoan
                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
       
+      -- Inicializar o ROLLOUT a cada titulo
+      vr_flgrollout := 0;
+      vr_insitpro   := 0; -- nao eh sacado DDA 
+      
       -- Se for o primeiro NRINSSAC
       IF rw_titulos.nrseqreg = 1 THEN
+        -- Inicializar a FLAG DDA para cada sacado
+        vr_flgsacad := 0;
           
         -- Verificar o tipo da inscrição
         IF rw_titulos.cdtpinsc = 1 THEN
@@ -689,13 +707,6 @@ BEGIN
         -- Verifica se ocorreu erro
         IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
-        END IF;
-          
-        -- Verifica sacado - Se TRUE
-        IF vr_flgsacad = 1 THEN
-          vr_insitpro := 2;   -- enviar/enviado p/ CIP
-        ELSE
-          vr_insitpro := 0;   -- nao eh sacado DDA 
         END IF;
           
       END IF; -- FIM: rw_titulos.nrseqreg = 1
@@ -726,12 +737,17 @@ BEGIN
       END IF; -- FIM: rw_titulos.vltitulo > vr_vllimcab
       
       --> Verificar rollout da plataforma de cobrança
-      IF 1 = NPCB0001.fn_verifica_rollout 
+      vr_flgrollout := NPCB0001.fn_verifica_rollout 
                                  ( pr_cdcooper     => rw_titulos.cdcooper, --> Codigo da cooperativa
                                    pr_dtmvtolt     => rw_crapdat.dtmvtolt, --> Data de movimento
                                    pr_vltitulo     => rw_titulos.vltitulo, --> Valor do titulo
-                                   pr_tpdregra     => 1)    THEN           --> Tipo de regra de rollout(1-registro,2-pagamento)      
-        vr_insitpro := 2;
+                                   pr_tpdregra     => 1);                  --> Tipo de regra de rollout(1-registro,2-pagamento)      
+      
+      -- Verifica sacado - Se TRUE
+      IF vr_flgsacad = 1 OR vr_flgrollout = 1 THEN
+        vr_insitpro := 2;   -- enviar/enviado p/ CIP
+      ELSE
+        vr_insitpro := 0;   -- nao eh sacado DDA 
       END IF;
 
       -- Se sacado for DDA, entao titulo eh DDA 

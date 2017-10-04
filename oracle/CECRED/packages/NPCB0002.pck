@@ -86,6 +86,13 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
                                     ,pr_cdcritic    OUT INTEGER               --> Codigo da critico
                                     ,pr_dscritic    OUT VARCHAR2 );           --> Descrição da critica
                                        
+  --> Validar valor dos titulos durante o periodo de convivencia
+  FUNCTION fn_valid_val_conv ( pr_cdcooper IN INTEGER,
+                               pr_dtmvtolt IN DATE,
+                               pr_flgregis IN INTEGER,
+                               pr_flgpgdiv IN INTEGER,
+                               pr_vlinform IN NUMBER,
+                               pr_vltitulo IN NUMBER )RETURN INTEGER;                                     
 END NPCB0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
@@ -159,7 +166,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            cob.inpagdiv,
            decode(ass.inpessoa,1,ass.nmprimtl,jur.nmfansia) dsbenefic,
            ass.nrcpfcgc nrdocbenf,
-           decode(ass.inpessoa,1,'F','J') tppesbenf           
+           decode(ass.inpessoa,1,'F','J') tppesbenf,      
+           ceb.flgpgdiv,
+           cob.flgregis
       FROM crapcob cob
          , crapceb ceb
          , crapcco cco
@@ -217,6 +226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
     vr_tab_erro        GENE0001.typ_tab_erro;
     vr_critica_data    BOOLEAN:= FALSE;
     vr_flcontig        INTEGER := 0;
+    vr_flconviv        INTEGER := 0;
     
   BEGIN
                
@@ -376,11 +386,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
         END IF;
       END IF;
       
+      vr_flconviv := NPCB0001.fn_valid_periodo_conviv (rw_crapdat.dtmvtolt);
+      
       -- verificar se autoriza pagto divergente
       IF rw_crapcob.inpagdiv = 0 THEN
         pr_flblq_valor := 1; -- não autorizar pagto divergente
       ELSE
         pr_flblq_valor := 0; -- permite alterar o valor a pagar do boleto
+      END IF;
+      
+      --> Se for periodo de convivencia
+      IF vr_flconviv = 1 THEN      
+        --> Liberar o campo no periodo de convivencia
+        pr_flblq_valor := 0;        
       END IF;
       
       pr_vlrjuros  := nvl(vr_vlrjuros,0);
@@ -594,8 +612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Objetivo  : Rotina para consultar o titulo na CIP, realizar a gravação do 
                   retorno da consulta e retornar a tab com os dados recebidos
                   
-      Alteração : 20/09/2017 - Incluido tratamento para periodo de convivencia.
-							   PRJ340 - NPC(Odirlei-AMcom) 
+      Alteração : 
         
     ..........................................................................*/
     
@@ -862,6 +879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
        
        -- Inserir o registro consultado na tabela de registro de consulta
        BEGIN
+       
          INSERT INTO tbcobran_consulta_titulo(cdctrlcs
                                              ,nrdident
                                              ,cdcooper
@@ -893,8 +911,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                                              ,nvl(vr_cdcritic_req,0)      -- cdcritic
                                              ,pr_flcontig );              -- flgcontingencia
        
+         
+       
        EXCEPTION
          WHEN OTHERS THEN
+           --> Gerar log para facilitar identificação de erros
+           BEGIN
+             NPCB0001.pc_gera_log_npc( pr_cdcooper => pr_cdcooper,
+                                       pr_nmrotina => 'pc_consultar_titulo_cip', 
+                                       pr_dsdolog  => 'Erro ao registrar consulta CIP -> '||
+                                                      ' cdctrlcs: '   ||vr_cdctrlcs ||
+                                                      ' ,nrdident: '  ||nvl(pr_tbTituloCIP.NumIdentcTit,0) ||
+                                                      ' ,cdcooper: '  ||pr_cdcooper                        ||
+                                                      ' ,cdagenci: '  ||pr_cdagenci                        ||
+                                                      ' ,dtmvtolt: '  ||pr_dtmvtolt                        ||
+                                                      ' ,tpconsulta: '||vr_tpconcip                        || 
+                                                      ' ,dhconsulta: '||SYSDATE                            ||
+                                                      ' ,dscodbar: '  ||pr_tbTituloCIP.NumCodBarras          ||
+                                                      ' ,vltitulo: '  ||pr_tbTituloCIP.VlrTit                ||
+                                                      ' ,nrispbds: '  ||nvl(pr_tbTituloCIP.ISPBPartDestinatario,0)|| 
+                                                      ' ,cdcanal: '   ||NPCB0001.fn_canal_pag_NPC(pr_cdagenci,0) || 
+                                                      ' ,cdoperad: '  || pr_cdoperad                             ||
+                                                      ' ,xmltit:   '  || vr_xmltit ||
+                                                      ' ,cdcritic: '  || nvl(vr_cdcritic_req,0)                  ||
+                                                      ' ,flcontig: '  || pr_flcontig );                 
+             
+           EXCEPTION
+             WHEN OTHERS THEN
+               NULL;
+           END; 
            vr_dscritic := 'Erro ao registrar consulta CIP: '||SQLERRM;
            RAISE vr_exc_erro;
        END;
@@ -925,6 +970,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
            pr_tbTituloCIP := NULL;
            pr_des_erro    := 'OK';
            
+           --> Garantir a gravação da tabela tbcobran_consulta_titulo
+           COMMIT;
            --> Sair da procedure sem validação e sem numero de controle de consulta
            --> para que a rotina trate o titulo como fora do rollout npc
            RETURN;
@@ -1337,6 +1384,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       pr_cdcritic := 0;
       pr_dscritic := 'Nao foi possivel enviar titulo em contigencia cip: '||SQLERRM; 
   END pc_proc_tit_contigencia;
+  
+  
+  FUNCTION fn_valid_val_conv ( pr_cdcooper IN INTEGER,
+                               pr_dtmvtolt IN DATE,
+                               pr_flgregis IN INTEGER,
+                               pr_flgpgdiv IN INTEGER,
+                               pr_vlinform IN NUMBER,
+                               pr_vltitulo IN NUMBER )RETURN INTEGER IS
+  /* ..........................................................................
+    
+      Programa : fn_valid_val_conv        
+      Sistema  : Conta-Corrente - Cooperativa de Credito
+      Sigla    : CRED
+      Autor    : Odirlei Busana(AMcom)
+      Data     : Setembro/2017.                   Ultima atualizacao: 
+    
+      Dados referentes ao programa:
+    
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para validar valor dos titulos no periodo de convivencia
+      Alteração : 
+        
+    ..........................................................................*/
+  
+    vr_flconviv  INTEGER;
+    vr_idrollout INTEGER;
+  BEGIN
+  
+    vr_flconviv := NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt);
+      
+    IF vr_flconviv = 1 THEN
+    
+      -- Verificar se o titulo está na faixa de rollout
+      vr_idrollout := NPCB0001.fn_verifica_rollout( pr_cdcooper => pr_cdcooper
+                                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                                   ,pr_vltitulo => pr_vltitulo
+                                                   ,pr_tpdregra => 2);
+    
+      IF pr_flgregis = 0 THEN
+        --> se estiver no rollout e valor informado for menor que valor do titulo
+        IF vr_idrollout = 1 AND pr_vlinform < pr_vltitulo THEN
+          RETURN 0; -- Nao permitir        
+        ELSE
+          -- se nao estiver no rollout ou valor nao for menor
+          RETURN 1; -- permitir        
+        END IF;
+      --> Convenio com registro
+      ELSE
+        IF pr_flgpgdiv = 0 THEN
+           -- Se o valor informado for menor que valor do titulo
+           IF pr_vlinform < pr_vltitulo THEN
+             RETURN 0; -- Nao permitir     
+           ELSE
+             -- se nao estiver no rollout ou valor nao for menor
+             RETURN 1; -- permitir 
+           END IF;  
+        END IF;
+      END IF;
+    END IF;
+    
+    RETURN 3; -- nao valida esta situação 
+  
+  END;
 
 END NPCB0002;
 /
