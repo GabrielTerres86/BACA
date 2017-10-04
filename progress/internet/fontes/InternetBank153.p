@@ -263,7 +263,7 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
 		CREATE xml_operacao.
 		ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
 									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-									   "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
+									   "<dsprotoc>" + (IF pc_gps_pagamento.pr_dsprotoc <> ? THEN pc_gps_pagamento.pr_dsprotoc ELSE "") + "</dsprotoc>".
 
 		RETURN "OK".	
 	END.
@@ -367,7 +367,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
 		CREATE xml_operacao.
 		ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
 									   "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
-									   "<dsprotoc>" + pc_gps_pagamento.pr_dsprotoc + "</dsprotoc>".
+									   "<dsprotoc>" + (IF pc_gps_pagamento.pr_dsprotoc <> ? THEN pc_gps_pagamento.pr_dsprotoc ELSE "") + "</dsprotoc>".
 
 		RETURN "OK".	
 	END.
