@@ -1303,6 +1303,9 @@ function efetuaDesbloqueio() {
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
 	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
 	var vldesblo = converteMoedaFloat($("#vldesblo", "#frmDesbloqueio").val());
+
+    // cpf pode ter mais de uma conta, por isso, pegar a conta selecionada
+	nrdconta = normalizaNumero($('#frmConsultaDados .divRegistros tr.corSelecao td:first span').text());
 	
 	var fldestrf = 0;
 
@@ -1751,7 +1754,8 @@ function selecionaOficio(oficio, conta) {
 }
 
 function selecionaBloqueio(seq, cdmodali) {
-	if (arrbloqueios[seq]['flblcrft'] == "yes"){
+    $('#divDesbloqueio').css({ 'display': 'block' });
+    if (arrbloqueios[seq]['flblcrft'] == "yes") {
 		$('#flblcrft','#frmAcaojud').val(arrbloqueios[seq]['flblcrft']).attr('disabled','true').attr('checked','true');
 	}else{
 		$('#flblcrft','#frmAcaojud').val(arrbloqueios[seq]['flblcrft']).attr('disabled','true');

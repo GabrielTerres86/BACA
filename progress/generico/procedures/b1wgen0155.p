@@ -1237,8 +1237,7 @@ PROCEDURE consulta-bloqueio-jud:
     IF  par_operacao = "D" THEN
         aux_query = aux_query + " AND crapblj.dtblqfim = ?".
 
-    IF  par_nroficio = "" THEN
-        aux_query = aux_query + " BY crapblj.nroficio DESC".
+    aux_query = aux_query + " BY crapblj.nrdconta:".
     
     QUERY q_crapblj:QUERY-CLOSE().
     QUERY q_crapblj:QUERY-PREPARE(aux_query).

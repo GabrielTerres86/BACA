@@ -44,6 +44,7 @@
 	$fldestrf = $_POST["fldestrf"];
   $vldesblo = $_POST["vldesblo"];	
 	$cdmodali = $_POST["cdmodali"];	
+  $nrofides = $_POST["nrofides"];	
     
 	// Monta o xml de requisição
 	$xmlRegistro  = "";
@@ -59,6 +60,7 @@
 	$xmlRegistro .= "   <fldestrf>".$fldestrf."</fldestrf>";
 	$xmlRegistro .= "   <vldesblo>".$vldesblo."</vldesblo>";
 	$xmlRegistro .= "   <cdmodali>".$cdmodali."</cdmodali>";
+  $xmlRegistro .= "   <nrofides>".$nrofides."</nrofides>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
 		
