@@ -3358,7 +3358,8 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 								    correspondenciaNmBairro, correspondenciaCdEstado, correspondenciaDsCidade, correspondenciaTporigem,
 								    dsnacion, cdExpedidor, dsdemail, nmfantasia, comercialNrCep, comercialNmLogradouro, comercialNrLogradouro,
 								    comercialDsComplemento, comercialNmBairro, comercialCdEstado, comercialDsCidade, comercialTporigem,
-									nrInscricao, nrLicenca, cdNatureza, cdSetor, cdRamo, cdCnae, dtInicioAtividade, cdNaturezaOcupacao) {
+									nrInscricao, nrLicenca, cdNatureza, cdSetor, cdRamo, cdCnae, dtInicioAtividade, cdNaturezaOcupacao, 
+									cdNacionalidade) {
 																			 
 	var bo = 'b1wgen0059.p';	
 	var nomeForm = (inpessoa == 1) ? 'frmFisico' : 'frmJuridico';
@@ -3387,6 +3388,7 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		$('#cdestcvl', '#' + nomeForm).val(cdestadoCivil);	
 		$('#tpnacion', '#' + nomeForm).val(tpnacionalidade);
 		$('#cdoedptl', '#' + nomeForm).val(cdExpedidor);
+		$('#cdnacion', '#' + nomeForm).val(cdNacionalidade);
 		$('#cdufdptl', '#' + nomeForm).val(cdufOrgaoExpedidor);
 		$('#dtemdptl', '#' + nomeForm).val(dtemissaoDocumento);
 		$('#dtnasctl', '#' + nomeForm).val(dtnascimento); 
@@ -3433,6 +3435,11 @@ function populaCamposRelacionamento(dtconsultarfb, nrcpfcgc, cdsituacaoRfb, nmpe
 		titulo = 'Ocupação';
 		filtrosDesc = '';
 		buscaDescricao("ZOOM0001", procedure, titulo, 'cdocpttl', 'dsocpttl', cdNaturezaOcupacao, 'rsdocupa', filtrosDesc, 'frmFisico');
+		
+		procedure = 'BUSCANACIONALIDADES';
+		titulo = 'Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao("ZOOM0001", procedure, titulo, 'cdnacion', 'dsnacion', cdNacionalidade, 'dsnacion', filtrosDesc, 'frmFisico');
 	}
 	else if (inpessoa == 2){		
 		$('#nmfansia', '#' + nomeForm).val(nmfantasia);

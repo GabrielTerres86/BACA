@@ -1427,6 +1427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             ,psf.cduf_orgao_expedidor cdufOrgaoExpedidor
             ,psf.dtemissao_documento dtemissaoDocumento
             ,psf.tpnacionalidade
+            ,psf.cdnacionalidade
             ,psf.inhabilitacao_menor inhabilitacaoMenor
             ,psf.dthabilitacao_menor dthabilitacaoMenor
             ,psf.cdestado_civil cdestadoCivil 
@@ -1710,6 +1711,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdCnae', pr_tag_cont => rw_tbcadast_pessoa.cdCnae, pr_des_erro => vr_dscritic);            
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'dtInicioAtividade', pr_tag_cont => to_char(rw_tbcadast_pessoa.dtInicioAtividade,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);            
             gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdNaturezaOcupacao', pr_tag_cont => rw_tbcadast_pessoa.cdNaturezaOcupacao, pr_des_erro => vr_dscritic);            
+             
+            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'infcadastro', pr_posicao => 0, pr_tag_nova => 'cdNacionalidade', pr_tag_cont => rw_tbcadast_pessoa.cdNacionalidade, pr_des_erro => vr_dscritic);            
              
           END IF;
             
