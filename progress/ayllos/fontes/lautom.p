@@ -416,6 +416,7 @@ DO WHILE TRUE:
        /* Lancamentos de debitos de folha */
        FOR EACH crappfp WHERE crappfp.cdcooper =  glb_cdcooper 
                           AND crappfp.idsitapr > 3 /* Aprovados */
+                          AND crappfp.idsitapr <> 6 /* Transacao Pendente */
                           AND crappfp.flsitdeb = 0 /* Ainda nao debitado */
                           NO-LOCK
           ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper
@@ -487,6 +488,7 @@ DO WHILE TRUE:
        /* Lancamentos de Debitos de Tarifas */
        FOR EACH crappfp WHERE crappfp.cdcooper =  glb_cdcooper
                           AND crappfp.idsitapr > 3 /* Aprovados */
+                          AND crappfp.idsitapr <> 6 /* Transacao Pendente */
                           AND crappfp.flsittar = 0 /* Ainda nao debitado a tarifa */
                           AND crappfp.vltarapr > 0 /* Com tarifa a cobrar */
                           NO-LOCK
