@@ -30,6 +30,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                              
                 31/08/2017 - Criado procedure para buscar o retorno do registro
                              CIP dos titulos da carga por faixa de rollout. (Rafael)
+                             
+                28/09/2017 - Ajuste para buscar o retorno apenas da operação em pendente
+                             utilizando o idopleg, pois estava buscando todos os retornos,
+                             assim ocorria de ainda nao ter o retorno da transação e acabava
+                             pegando da instrução anterior, assim o nrauttit ficava desposiionado.
+                             SD722965 (Odirlei-AMcom)
   ******************************************************************************/
   -- CONSTANTES
   vr_cdprogra     CONSTANT VARCHAR2(10) := 'crps718';     -- Nome do programa
@@ -166,9 +172,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
                                    ,pr_des_erro => vr_des_erro
                                    ,pr_dscritic => vr_dscritic);
                      
-    END LOOP;  
-    
-  END pc_trata_retorno_erro;     
+    END LOOP;         
+  
+  END pc_trata_retorno_erro;  
   
   --> Procedure para processar o retorno de inclusaon do titulo do NPC-CIP
   PROCEDURE pc_ret_inclusao_tit_npc ( pr_idtitleg       IN  crapcob.idtitleg%TYPE --> Identificador do titulo no legado
@@ -633,7 +639,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
     --> Buscar retornos 
     CURSOR cr_retnpc (pr_cdlegado IN tbjdnpcdstleg_jd2lg_optit."CdLeg"@jdnpcbisql%type
                      ,pr_nrispbif IN tbjdnpcdstleg_jd2lg_optit."ISPBAdministrado"@jdnpcbisql%TYPE
-                     ,pr_idtitleg IN tbjdnpcdstleg_jd2lg_optit."IdTituloLeg"@jdnpcbisql%TYPE) IS
+                     ,pr_idtitleg IN tbjdnpcdstleg_jd2lg_optit."IdTituloLeg"@jdnpcbisql%TYPE
+                     ,pr_idopeleg IN tbjdnpcdstleg_jd2lg_optit."IdOpLeg"@jdnpcbisql%TYPE) IS
       SELECT tit."ISPBAdministrado" AS nrispbif
             ,tit."TpOpJD"           AS tpoperac
             ,tit."IdOpJD"           AS idoperac
@@ -648,6 +655,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
        WHERE tit."CdLeg"            = pr_cdlegado
          AND tit."ISPBAdministrado" = pr_nrispbif
          AND tit."IdTituloLeg"      = pr_idtitleg
+         AND tit."IdOpLeg"          = pr_idopeleg
          AND tit."TpOpJD"           IN ('RI','RA','RB')
        ORDER BY tit."DtHrOpJD" ASC;
     rw_retnpc cr_retnpc%ROWTYPE;
@@ -684,6 +692,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
           cob.idtitleg,
           cob.inenvcip,
           cob.ininscip,
+          cob.idopeleg,
           ret.cdocorre
           FROM crapret ret, 
                crapcob cob, crapcco cco --, crapceb ceb 
@@ -707,7 +716,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
         --> buscar retornos disponibilizados
         FOR rw_retnpc IN cr_retnpc(pr_cdlegado => 'LEG'
                                   ,pr_nrispbif => '5463212'
-                                  ,pr_idtitleg => rw.idtitleg ) LOOP
+                                  ,pr_idtitleg => rw.idtitleg
+                                  ,pr_idopeleg => rw.idopeleg) LOOP
                       
 
           IF rw_retnpc.tpoperac = 'RI' AND rw.inenvcip = 2 THEN --> Retorno Inclusao          
@@ -880,7 +890,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps718(pr_cdcooper  IN craptab.cdcooper%t
           SELECT 
             cob.idtitleg,
             cob.inenvcip,
-            cob.ininscip
+            cob.ininscip,
+            cob.idopeleg
             FROM crapcob cob, crapcco cco --, crapceb ceb 
           WHERE cco.cdcooper > 0
             AND cco.cddbanco = 85
@@ -1014,7 +1025,7 @@ BEGIN
     END IF;
     -- Fechar 
     CLOSE BTCH0001.cr_crapdat;
-    
+        
     -- Log de início da execução
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
                           pr_dstiplog  => 'I');
@@ -1044,7 +1055,7 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
     
-    COMMIT;                                          
+    COMMIT;                                              
     
     -- Log de fim da execução
     pc_controla_log_batch(pr_cdcooper  => rw_crapcop.cdcooper,
