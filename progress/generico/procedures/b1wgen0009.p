@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 28/07/2017
+   Data    : Marco/2009                     Última atualizacao: 04/10/2017
    
    Dados referentes ao programa:
 
@@ -283,7 +283,10 @@
            17/07/2017 - Ajustes na geraçao do registro de LOG na exclusao do bordero
                         Projeto 300. (Lombardi)
 					                
-		   29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+		       29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+           
+           04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
+                        de novo limite. (Chamado 768648) - (Fabricio)
 					                
 ............................................................................. */
 
@@ -543,38 +546,8 @@ PROCEDURE busca_dados_dscchq:
             DELETE PROCEDURE h-b1wgen0001.
             RETURN "NOK".
             
-        END.
-        ELSE
-        DO:
-            RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
-                                             INPUT par_nrdconta,
-                                             INPUT par_cdagenci,
-                                             INPUT par_nrdcaixa,
-                                             INPUT par_dtmvtolt,
-                                             INPUT par_idorigem,
-                                             OUTPUT TABLE tt-erro).
-
-            IF  RETURN-VALUE = "NOK"  THEN
-            DO:
-                IF  par_flgerlog  THEN
-                DO:
-                    RUN proc_gerar_log (INPUT par_cdcooper,
-                                        INPUT par_cdoperad,
-                                        INPUT aux_dscritic,
-                                        INPUT aux_dsorigem,
-                                        INPUT aux_dstransa,
-                                        INPUT FALSE,
-                                        INPUT par_idseqttl,
-                                        INPUT par_nmdatela,
-                                        INPUT par_nrdconta,
-                                       OUTPUT aux_nrdrowid). 
-
-                END.             
-                
-                DELETE PROCEDURE h-b1wgen0001.
-                RETURN "NOK".
-            END.
-        END.
+        END.        
+        DELETE PROCEDURE h-b1wgen0001.
     END.
 
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper   AND
@@ -683,6 +656,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEFINE OUTPUT PARAMETER TABLE FOR tt-msg-confirma.
     
     DEFINE VARIABLE aux_regalias AS CHARACTER       NO-UNDO.
+    DEFINE VARIABLE h-b1wgen0001 AS HANDLE          NO-UNDO.
     DEFINE VARIABLE h-b1wgen0058 AS HANDLE          NO-UNDO.
     DEFINE VARIABLE h-b1wgen0110 AS HANDLE          NO-UNDO.
     DEF VAR         h-b1wgen9999 AS HANDLE          NO-UNDO.
@@ -715,6 +689,42 @@ PROCEDURE busca_dados_limite_incluir:
 
     IF RETURN-VALUE <> "OK" THEN
         RETURN "NOK".*/
+        
+    RUN sistema/generico/procedures/b1wgen0001.p
+        PERSISTENT SET h-b1wgen0001.
+
+    IF  VALID-HANDLE(h-b1wgen0001)  THEN
+    DO:
+        RUN ver_cadastro IN h-b1wgen0001(INPUT par_cdcooper,
+                                         INPUT par_nrdconta,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_dtmvtolt,
+                                         INPUT par_idorigem,
+                                        OUTPUT TABLE tt-erro).
+
+        IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            IF  par_flgerlog  THEN
+            DO:
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT aux_dstransa,
+                                    INPUT FALSE,
+                                    INPUT par_idseqttl,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid). 
+
+            END.             
+                    
+            DELETE PROCEDURE h-b1wgen0001.
+            RETURN "NOK".
+        END.
+        DELETE PROCEDURE h-b1wgen0001.
+    END.
 
     /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND

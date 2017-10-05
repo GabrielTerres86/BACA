@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0156.p
     Autor   : Jorge I. Hamaguchi
-    Data    : Maio/2013                Ultima Atualizacao: 24/11/2014
+    Data    : Maio/2013                Ultima Atualizacao: 21/09/2017
      
     Dados referentes ao programa:
    
@@ -34,6 +34,10 @@
 
 			   06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                             departamento passando a considerar o código (Renato Darosci)
+                            
+               21/09/2017 - Atualizado possibilidades de cod. de porte de beneficiario
+                            PF/PJ de acordo com a atualizacao do layout promovida pelo BRDE.
+                            (Chamado 732059) - (Fabricio)
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0156tt.i }
@@ -1013,27 +1017,68 @@ PROCEDURE fechar_lote:
         IF crapipc.cdsetben = 0 THEN
             aux_dscriti3 = aux_dscriti3 +
                            " - Setor de atividade (CNAE) nao cadastrado.\n".
-                
-        /* pessao fisica pode ter porte 11,12,16 ou 17 */
-        IF  crapass.inpessoa = 1 AND 
-            NOT CAN-DO("11,12,16,17",STRING(crapipc.cdporben)) THEN
-            aux_dscriti3 = aux_dscriti3 +
-                           " - Porte conta fisica deve ser 11,12,16 ou 17.\n".
-        IF  crapass.inpessoa <> 1 AND 
-            NOT CAN-DO("21,22,23,24,25,26,27",STRING(crapipc.cdporben)) THEN
-            aux_dscriti3 = aux_dscriti3 +
-                           " - Porte conta juridica deve ser de 21 a 27.\n".
-        IF  crapass.inpessoa <> 1 AND crapipc.dtvencnd = ? THEN
-            aux_dscriti3 = aux_dscriti3 +
-                           " - Data vencimento CND nao informado.\n".
-        IF  crapass.inpessoa <> 1 AND
-            NOT CAN-FIND(FIRST crapapc NO-LOCK
-                         WHERE crapapc.cdcooper = crapipc.cdcooper
-                           AND crapapc.nrdolote = crapipc.nrdolote
-                           AND crapapc.nrdconta = crapipc.nrdconta) THEN 
-            aux_dscriti3 = aux_dscriti3 +
-                           " - Conta PJ deve ter no minimo 1 avalista.\n".
+                           
+        IF crapass.inpessoa = 1 THEN
+        DO:
+            FOR FIRST crapprm FIELDS(crapprm.dsvlrprm) WHERE crapprm.cdacesso = 'BRDE_PORTE_COOP_PF' NO-LOCK. END.
+            
+            IF NOT avail crapprm THEN
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Problema ao carregar portes do cooperado PF.".
 
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 0,  /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                RETURN "NOK".            
+            END.
+            /* PF pode ter porte 11, 12, 13, 14 ou 17 - atualizacao layout BRDE (Setembro/2017 - Fabricio) */
+            IF NOT CAN-DO(crapprm.dsvlrprm, STRING(crapipc.cdporben)) THEN
+                aux_dscriti3 = aux_dscriti3 +
+                               " - Porte conta fisica deve ser 11,12,13,14 ou 17.\n".
+                               
+            IF crapipc.cdporben = 17   AND
+               crapipc.cdgenben <> 230 THEN
+                aux_dscriti3 = aux_dscriti3 +
+                               " - Porte 17 PF somente com genero 230.\n".
+        END.
+        ELSE
+        DO:
+            FOR FIRST crapprm FIELDS(crapprm.dsvlrprm) WHERE crapprm.cdacesso = 'BRDE_PORTE_COOP_PJ' NO-LOCK. END.
+            
+            IF NOT avail crapprm THEN
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Problema ao carregar portes do cooperado PJ.".
+
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 0,  /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                RETURN "NOK".            
+            END.
+            /* PJ pode ter porte 21, 24, 25, 26 ou 27 - atualizacao layout BRDE (Setembro/2017 - Fabricio) */
+            IF NOT CAN-DO(crapprm.dsvlrprm, STRING(crapipc.cdporben)) THEN
+                aux_dscriti3 = aux_dscriti3 +
+                              " - Porte conta juridica deve ser de 21 a 27.\n".
+                           
+            IF crapipc.dtvencnd = ? THEN
+                aux_dscriti3 = aux_dscriti3 +
+                              " - Data vencimento CND nao informado.\n".
+                           
+            IF NOT CAN-FIND(FIRST crapapc NO-LOCK
+                            WHERE crapapc.cdcooper = crapipc.cdcooper
+                              AND crapapc.nrdolote = crapipc.nrdolote
+                              AND crapapc.nrdconta = crapipc.nrdconta) THEN 
+                aux_dscriti3 = aux_dscriti3 +
+                              " - Conta PJ deve ter no minimo 1 avalista.\n".
+        
+        END.
 
         IF  aux_dscriti3 <> "" THEN
         DO:
