@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2008.                       Ultima atualizacao: 27/06/2016
+   Data    : Abril/2008.                       Ultima atualizacao: 11/09/2017
    
    Dados referentes ao programa:
    
@@ -40,6 +40,9 @@
 
                06/03/2017 - Adicionados campos nrddd, nrcelular e nmoperadora em 
                            xml_operacao38 (Projeto 321 - Lombardi).
+
+               11/09/2017 - Adicionado novos  campos para consulta de agendamentos
+							do GPS. (Projeto 356.2 - Ricardo Linhares).
 
 ..............................................................................*/
  
@@ -266,6 +269,13 @@ IF  VALID-HANDLE(h-b1wgen0016)  THEN
                    xml_operacao38.nrddd       = "<nrddd>" +       STRING(tt-dados-agendamento.nrddd)                     + "</nrddd>"
                    xml_operacao38.nrcelular   = "<nrcelular>" +   STRING(tt-dados-agendamento.nrcelular)                 + "</nrcelular>"
                    xml_operacao38.nmoperadora = "<nmoperadora>" + TRIM(STRING(tt-dados-agendamento.nmoperadora))         + "</nmoperadora>"
+                   /* gps */
+                   xml_operacao38.gpscddpagto = "<gpscddpagto>" + STRING(tt-dados-agendamento.gpscddpagto)               + "</gpscddpagto>"
+                   xml_operacao38.gpsdscompet = "<gpsdscompet>" + STRING(tt-dados-agendamento.gpsdscompet)               + "</gpsdscompet>"
+                   xml_operacao38.gpscdidenti = "<gpscdidenti>" + STRING(tt-dados-agendamento.gpscdidenti)               + "</gpscdidenti>"
+                   xml_operacao38.gpsvlrdinss = "<gpsvlrdinss>" + TRIM(STRING(tt-dados-agendamento.gpsvlrdinss,"zzz,zzz,zz9.99")) + "</gpsvlrdinss>"
+                   xml_operacao38.gpsvlrouent = "<gpsvlrouent>" + TRIM(STRING(tt-dados-agendamento.gpsvlrouent,"zzz,zzz,zz9.99")) + "</gpsvlrouent>"
+                   xml_operacao38.gpsvlrjuros = "<gpsvlrjuros>" + TRIM(STRING(tt-dados-agendamento.gpsvlrjuros,"zzz,zzz,zz9.99")) + "</gpsvlrjuros>"
                    
                    xml_operacao38.dscabfim = "</AGENDAMENTO>".
                    
