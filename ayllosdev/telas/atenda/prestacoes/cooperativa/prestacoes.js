@@ -47,6 +47,7 @@
  * 038: [15/03/2016] Odirlei (AMCOM): Alterado rotina mostraEmail para verificar se deve permitir o envio de email para o comite. PRJ207 - Esteira
  * 039: [27/07/2016] Alterado função controlaFoco(Evandro - RKAM)
  * 040: [22/06/2017] Alterado para mostrar frame de portabilidade independente de ter selecionado um contrato ou não. (Projeto 357 - Reinert)
+ * 041: [05/10/2017] Adicionado campo vliofcpl no formulário (Diogo - MoutS - Projeto 410 - RF 23)
 
  */
 
@@ -637,10 +638,10 @@ function controlaLayout(operacao) {
 	} else if ( in_array(operacao,['TC']) ) {
 
 		nomeForm = 'frmDadosPrest';
-		altura   = '445px';
+		altura   = '475px';
 		largura  = '485px';
 
-		var rRotulos     = $('label[for="nrctremp"],label[for="qtaditiv"],label[for="vlemprst"],label[for="vlsdeved"],label[for="vlpreemp"],label[for="vlprepag"],label[for="vlpreapg"],label[for="dslcremp"],label[for="dsdaval1"],label[for="dsdaval2"],label[for="dsdpagto"],label[for="dsfinemp"],label[for="vlmtapar"],label[for="vlmrapar"],label[for="vltotpag"]','#'+nomeForm); 
+		var rRotulos     = $('label[for="nrctremp"],label[for="qtaditiv"],label[for="vlemprst"],label[for="vlsdeved"],label[for="vlpreemp"],label[for="vlprepag"],label[for="vlpreapg"],label[for="dslcremp"],label[for="dsdaval1"],label[for="dsdaval2"],label[for="dsdpagto"],label[for="dsfinemp"],label[for="vlmtapar"],label[for="vlmrapar"],label[for="vltotpag"],label[for="vliofcpl"]','#'+nomeForm);
 		var cTodos       = $('select,input','#'+nomeForm);
 
 		var rRotuloLinha = $('label[for="cdpesqui"],label[for="txmensal"],label[for="txjuremp"],label[for="vljurmes"],label[for="vljuracu"],label[for="dspreapg"],label[for="qtmesdec"]','#'+nomeForm);
@@ -650,18 +651,20 @@ function controlaLayout(operacao) {
 		var r_Linha2    = $('label[for="txmensal"],label[for="txjuremp"],label[for="vljurmes"],label[for="vljuracu"],label[for="dspreapg"],label[for="qtmesdec"]','#'+nomeForm );
 		var cTodosGr    = $('#dsdaval1,#dsdaval2,#dsdpagto,#dslcremp,#dsfinemp','#'+nomeForm);
 
-		var cMoeda      = $('#vlemprst,#vlsdeved,#vlpreemp,#vlprepag,#vlpreapg,#vljuracu,#vljurmes,#vlmtapar,#vlmrapar,#vltotpag','#'+nomeForm);
+		var cMoeda      = $('#vlemprst,#vlsdeved,#vlpreemp,#vlprepag,#vlpreapg,#vljuracu,#vljurmes,#vlmtapar,#vlmrapar,#vltotpag,#vliofcpl','#'+nomeForm);
 		var cContrato   = $('#nrctremp','#'+nomeForm);
 		var cTaxaMes	= $('#txmensal','#'+nomeForm);
 		var cTaxaJuros  = $('#txjuremp','#'+nomeForm);
 		var cMesesDeco  = $('#qtmesdec','#'+nomeForm);
 		var cQtAditiv   = $('#qtaditiv','#'+nomeForm);
+		var cVlIofCpl   = $('#vliofcpl','#'+nomeForm);
 
 		cQtAditiv.addClass('inteiro');
 		cTaxaMes.addClass('porcento_7');
 		cTaxaJuros.addClass('porcento_7');
 		cContrato.setMask('INTEGER','zzz.zzz.zz9','.','');
 		cMesesDeco.addClass('inteiro');
+		cVlIofCpl.addClass('porcento');
 
 		cMoeda.addClass('moeda');
 		cTodos.addClass('campo').css('width','131px');
@@ -1691,6 +1694,7 @@ function atualizaTela(){
 		$('#vlmtapar','#frmDadosPrest').val( arrayRegistros['vlmtapar'] );
 		$('#vlmrapar','#frmDadosPrest').val( arrayRegistros['vlmrapar'] );
 		$('#vltotpag','#frmDadosPrest').val( arrayRegistros['vltotpag'] );
+		$('#vliofcpl','#frmDadosPrest').val( arrayRegistros['vliofcpl'] );
 
 	}else if (in_array(operacao,['C_PREJU'])){
 
